@@ -394,7 +394,7 @@ pub async fn list_slos(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<SloQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let slos = seed_slos(tenant_id);
 
@@ -429,13 +429,13 @@ pub async fn list_slos(
         .collect();
 
     let total = filtered.len() as i64;
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "items": filtered,
             "total": total,
         }),
         "获取 SLO 列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -455,7 +455,7 @@ pub async fn get_slo(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
-) -> Json<ApiResponse<Slo>> {
+) -> ApiResponse<Slo> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let slos = seed_slos(tenant_id);
     let slo = slos
@@ -482,7 +482,7 @@ pub async fn get_slo(
             updated_at: Utc::now(),
         });
 
-    Json(ApiResponse::success(slo, "获取 SLO 详情成功"))
+    ApiResponse::success(slo, "获取 SLO 详情成功")
 }
 
 #[utoipa::path(
@@ -499,7 +499,7 @@ pub async fn create_slo(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SloRequest>,
-) -> Json<ApiResponse<Slo>> {
+) -> ApiResponse<Slo> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let now = Utc::now();
     let compliance = 100.0;
@@ -525,7 +525,7 @@ pub async fn create_slo(
         updated_at: now,
     };
 
-    Json(ApiResponse::success(slo, "SLO 创建成功"))
+    ApiResponse::success(slo, "SLO 创建成功")
 }
 
 #[utoipa::path(
@@ -547,7 +547,7 @@ pub async fn update_slo(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Json(req): Json<SloRequest>,
-) -> Json<ApiResponse<Slo>> {
+) -> ApiResponse<Slo> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let now = Utc::now();
     let slo = Slo {
@@ -571,7 +571,7 @@ pub async fn update_slo(
         updated_at: now,
     };
 
-    Json(ApiResponse::success(slo, "SLO 更新成功"))
+    ApiResponse::success(slo, "SLO 更新成功")
 }
 
 #[utoipa::path(
@@ -591,11 +591,8 @@ pub async fn delete_slo(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({ "id": id.to_string() }),
-        "SLO 删除成功",
-    ))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(serde_json::json!({ "id": id.to_string() }), "SLO 删除成功")
 }
 
 #[utoipa::path(
@@ -615,7 +612,7 @@ pub async fn delete_slo(
 pub async fn get_slo_summary(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<SloSummary>> {
+) -> ApiResponse<SloSummary> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let slos = seed_slos(tenant_id);
     let violations = seed_violations(tenant_id);
@@ -649,7 +646,7 @@ pub async fn get_slo_summary(
         recent_violations: violations,
     };
 
-    Json(ApiResponse::success(summary, "获取 SLO 摘要成功"))
+    ApiResponse::success(summary, "获取 SLO 摘要成功")
 }
 
 #[utoipa::path(
@@ -665,7 +662,7 @@ pub async fn get_slo_summary(
 pub async fn get_slo_budget(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<SloBudget>>> {
+) -> ApiResponse<Vec<SloBudget>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let slos = seed_slos(tenant_id);
     let now = Utc::now();
@@ -704,7 +701,7 @@ pub async fn get_slo_budget(
         })
         .collect();
 
-    Json(ApiResponse::success(budgets, "获取 SLO 错误预算成功"))
+    ApiResponse::success(budgets, "获取 SLO 错误预算成功")
 }
 
 #[utoipa::path(
@@ -721,7 +718,7 @@ pub async fn get_slo_trend(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(query): Query<SloTrendQuery>,
-) -> Json<ApiResponse<Vec<SloTrendPoint>>> {
+) -> ApiResponse<Vec<SloTrendPoint>> {
     let period = query.period.unwrap_or_else(|| "7d".to_string());
     let hours = match period.as_str() {
         "1h" => 1,
@@ -750,7 +747,7 @@ pub async fn get_slo_trend(
         });
     }
 
-    Json(ApiResponse::success(points, "获取 SLO 趋势成功"))
+    ApiResponse::success(points, "获取 SLO 趋势成功")
 }
 
 #[utoipa::path(
@@ -772,7 +769,7 @@ pub async fn list_slo_violations(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<SloViolationQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
@@ -797,7 +794,7 @@ pub async fn list_slo_violations(
         .take(page_size as usize)
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "items": items,
             "total": total,
@@ -805,7 +802,7 @@ pub async fn list_slo_violations(
             "page_size": page_size,
         }),
         "获取 SLO 违规记录成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -825,15 +822,15 @@ pub async fn resolve_slo_violation(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({
             "id": id.to_string(),
             "resolved": true,
             "resolved_at": Utc::now().to_rfc3339(),
         }),
         "SLO 违规已处理",
-    ))
+    )
 }
 
 // ==================== 路由注册 ====================

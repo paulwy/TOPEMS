@@ -1,4 +1,4 @@
-use axum::{extract::Path, extract::Query, extract::State, routing::get, Extension, Json, Router};
+use axum::{extract::Path, extract::Query, extract::State, routing::get, Extension, Router};
 use bigdecimal::BigDecimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -75,7 +75,7 @@ pub async fn list_statistics(
     Extension(claims): Extension<Claims>,
     Query(query): Query<StatisticsQuery>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -124,7 +124,7 @@ pub async fn list_statistics(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "statistics": statistics,
                     "total": total,
@@ -132,11 +132,11 @@ pub async fn list_statistics(
                     "page_size": page_size
                 }),
                 "获取生产批次统计列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取生产批次统计列表失败: {}", e);
-            Json(ApiResponse::server_error("获取生产批次统计列表失败"))
+            ApiResponse::server_error("获取生产批次统计列表失败")
         }
     }
 }
@@ -152,7 +152,7 @@ pub async fn get_statistics_summary(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -228,16 +228,16 @@ pub async fn get_statistics_summary(
             };
 
             match serde_json::to_value(summary) {
-                Ok(value) => Json(ApiResponse::success(value, "获取 PDM 统计汇总成功")),
+                Ok(value) => ApiResponse::success(value, "获取 PDM 统计汇总成功"),
                 Err(e) => {
                     tracing::error!("序列化 PDM 统计汇总失败: {}", e);
-                    Json(ApiResponse::server_error("获取 PDM 统计汇总失败"))
+                    ApiResponse::server_error("获取 PDM 统计汇总失败")
                 }
             }
         }
         Err(e) => {
             tracing::error!("获取 PDM 统计汇总失败: {}", e);
-            Json(ApiResponse::server_error("获取 PDM 统计汇总失败"))
+            ApiResponse::server_error("获取 PDM 统计汇总失败")
         }
     }
 }
@@ -258,7 +258,7 @@ pub async fn get_statistics(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -319,17 +319,17 @@ pub async fn get_statistics(
             };
 
             match serde_json::to_value(detail) {
-                Ok(value) => Json(ApiResponse::success(value, "获取生产批次统计详情成功")),
+                Ok(value) => ApiResponse::success(value, "获取生产批次统计详情成功"),
                 Err(e) => {
                     tracing::error!("序列化统计详情失败: {}", e);
-                    Json(ApiResponse::server_error("获取生产批次统计详情失败"))
+                    ApiResponse::server_error("获取生产批次统计详情失败")
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::not_found("该产品无生产批次统计信息")),
+        Ok(None) => ApiResponse::not_found("该产品无生产批次统计信息"),
         Err(e) => {
             tracing::error!("获取生产批次统计详情失败: {}", e);
-            Json(ApiResponse::server_error("获取生产批次统计详情失败"))
+            ApiResponse::server_error("获取生产批次统计详情失败")
         }
     }
 }

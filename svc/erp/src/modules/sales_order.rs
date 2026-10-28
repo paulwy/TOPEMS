@@ -81,14 +81,14 @@ pub async fn list_sales_orders(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<SalesOrder>>> {
+) -> ApiResponse<PaginatedResponse<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -130,9 +130,7 @@ pub async fn list_sales_orders(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("查询销售订单失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询销售订单失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询销售订单失败".to_string()));
         }
     };
 
@@ -147,14 +145,14 @@ pub async fn list_sales_orders(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("查询销售订单总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询销售订单总数失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询销售订单总数失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(sales_orders, total, page, page_size),
         "获取销售订单列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -177,14 +175,14 @@ pub async fn get_sales_order(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<SalesOrder>> {
+) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query_as::<_, SalesOrder>(
@@ -195,15 +193,11 @@ pub async fn get_sales_order(
     .await;
 
     match result {
-        Ok(Some(sales_order)) => Json(ApiResponse::success(sales_order, "获取销售订单成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "销售订单不存在".to_string(),
-        ))),
+        Ok(Some(sales_order)) => ApiResponse::success(sales_order, "获取销售订单成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("销售订单不存在".to_string())),
         Err(e) => {
             tracing::error!("查询销售订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询销售订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询销售订单失败".to_string()))
         }
     }
 }
@@ -225,14 +219,14 @@ pub async fn create_sales_order(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<CreateSalesOrderRequest>,
-) -> Json<ApiResponse<SalesOrder>> {
+) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     let customer_result = sqlx::query_scalar::<_, String>(only_own_schema_query!(
@@ -282,9 +276,7 @@ pub async fn create_sales_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             // D6：commit 成功后发布 typed 事件；失败入重试队列。
@@ -330,16 +322,12 @@ pub async fn create_sales_order(
                 sales_order.id,
             )
             .await;
-            Json(ApiResponse::success(sales_order, "创建销售订单成功"))
+            ApiResponse::success(sales_order, "创建销售订单成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
-            "创建销售订单失败".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::Internal("创建销售订单失败".to_string())),
         Err(e) => {
             tracing::error!("创建销售订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建销售订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建销售订单失败".to_string()))
         }
     }
 }
@@ -366,14 +354,14 @@ pub async fn update_sales_order(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<UpdateSalesOrderRequest>,
-) -> Json<ApiResponse<SalesOrder>> {
+) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -405,9 +393,7 @@ pub async fn update_sales_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
@@ -417,16 +403,12 @@ pub async fn update_sales_order(
                 sales_order.id,
             )
             .await;
-            Json(ApiResponse::success(sales_order, "更新销售订单成功"))
+            ApiResponse::success(sales_order, "更新销售订单成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "销售订单不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("销售订单不存在".to_string())),
         Err(e) => {
             tracing::error!("更新销售订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新销售订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新销售订单失败".to_string()))
         }
     }
 }
@@ -451,14 +433,14 @@ pub async fn delete_sales_order(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -483,9 +465,7 @@ pub async fn delete_sales_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
@@ -495,19 +475,12 @@ pub async fn delete_sales_order(
                 id,
             )
             .await;
-            Json(ApiResponse::success(
-                "删除成功".to_string(),
-                "删除销售订单成功",
-            ))
+            ApiResponse::success("删除成功".to_string(), "删除销售订单成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "销售订单不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("销售订单不存在".to_string())),
         Err(e) => {
             tracing::error!("删除销售订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除销售订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除销售订单失败".to_string()))
         }
     }
 }
@@ -520,9 +493,9 @@ async fn update_sales_order_status(
     success_message: &'static str,
     error_message: &'static str,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-) -> Json<ApiResponse<SalesOrder>> {
+) -> ApiResponse<SalesOrder> {
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -543,16 +516,11 @@ async fn update_sales_order_status(
     .await;
 
     match result {
-        Ok(Some(sales_order)) => Json(ApiResponse::success(sales_order, success_message)),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "销售订单不存在".to_string(),
-        ))),
+        Ok(Some(sales_order)) => ApiResponse::success(sales_order, success_message),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("销售订单不存在".to_string())),
         Err(e) => {
             tracing::error!("{}: {}", error_message, e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "查询销售订单失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("查询销售订单失败", e))
         }
     }
 }
@@ -572,7 +540,7 @@ pub async fn approve_sales_order(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<SalesOrder>> {
+) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -650,7 +618,7 @@ pub async fn ship_sales_order(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<SalesOrder>> {
+) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -693,7 +661,7 @@ pub async fn complete_sales_order(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<SalesOrder>> {
+) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -736,7 +704,7 @@ pub async fn cancel_sales_order(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<SalesOrder>> {
+) -> ApiResponse<SalesOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -831,14 +799,14 @@ async fn batch_create_sales_orders(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<BatchCreateOrdersRequest>,
-) -> Json<ApiResponse<Vec<SalesOrder>>> {
+) -> ApiResponse<Vec<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     let mut created = Vec::new();
     for req in &body.orders {
@@ -875,9 +843,7 @@ async fn batch_create_sales_orders(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
     for o in &created {
@@ -889,7 +855,7 @@ async fn batch_create_sales_orders(
         )
         .await;
     }
-    Json(ApiResponse::success(created, "批量创建销售订单成功"))
+    ApiResponse::success(created, "批量创建销售订单成功")
 }
 
 async fn batch_update_sales_orders(
@@ -899,14 +865,14 @@ async fn batch_update_sales_orders(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<BatchUpdateOrdersRequest>,
-) -> Json<ApiResponse<Vec<SalesOrder>>> {
+) -> ApiResponse<Vec<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -934,9 +900,7 @@ async fn batch_update_sales_orders(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
     for o in &updated {
@@ -948,7 +912,7 @@ async fn batch_update_sales_orders(
         )
         .await;
     }
-    Json(ApiResponse::success(updated, "批量更新销售订单成功"))
+    ApiResponse::success(updated, "批量更新销售订单成功")
 }
 
 async fn batch_update_status(
@@ -1007,14 +971,14 @@ pub async fn batch_approve_sales_orders(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<BatchIdsRequest>,
-) -> Json<ApiResponse<Vec<SalesOrder>>> {
+) -> ApiResponse<Vec<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     match batch_update_status(&state, &claims, txn, &body.ids, "approved").await {
         Ok(orders) => {
@@ -1030,13 +994,11 @@ pub async fn batch_approve_sales_orders(
                 )
                 .await;
             }
-            Json(ApiResponse::success(orders, "批量审批成功"))
+            ApiResponse::success(orders, "批量审批成功")
         }
         Err(e) => {
             tracing::error!("批量审批销售订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "批量审批销售订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("批量审批销售订单失败".to_string()))
         }
     }
 }
@@ -1057,14 +1019,14 @@ pub async fn batch_ship_sales_orders(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<BatchShipRequest>,
-) -> Json<ApiResponse<Vec<SalesOrder>>> {
+) -> ApiResponse<Vec<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     match batch_update_status(&state, &claims, txn, &body.ids, "shipped").await {
         Ok(orders) => {
@@ -1080,13 +1042,11 @@ pub async fn batch_ship_sales_orders(
                 )
                 .await;
             }
-            Json(ApiResponse::success(orders, "批量发货成功"))
+            ApiResponse::success(orders, "批量发货成功")
         }
         Err(e) => {
             tracing::error!("批量发货销售订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "批量发货销售订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("批量发货销售订单失败".to_string()))
         }
     }
 }
@@ -1107,14 +1067,14 @@ pub async fn batch_complete_sales_orders(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<BatchIdsRequest>,
-) -> Json<ApiResponse<Vec<SalesOrder>>> {
+) -> ApiResponse<Vec<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     match batch_update_status(&state, &claims, txn, &body.ids, "completed").await {
         Ok(orders) => {
@@ -1130,13 +1090,11 @@ pub async fn batch_complete_sales_orders(
                 )
                 .await;
             }
-            Json(ApiResponse::success(orders, "批量完成成功"))
+            ApiResponse::success(orders, "批量完成成功")
         }
         Err(e) => {
             tracing::error!("批量完成销售订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "批量完成销售订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("批量完成销售订单失败".to_string()))
         }
     }
 }
@@ -1157,14 +1115,14 @@ pub async fn batch_cancel_sales_orders(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<BatchCancelRequest>,
-) -> Json<ApiResponse<Vec<SalesOrder>>> {
+) -> ApiResponse<Vec<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     match batch_update_status(&state, &claims, txn, &body.ids, "cancelled").await {
         Ok(orders) => {
@@ -1180,13 +1138,11 @@ pub async fn batch_cancel_sales_orders(
                 )
                 .await;
             }
-            Json(ApiResponse::success(orders, "批量取消成功"))
+            ApiResponse::success(orders, "批量取消成功")
         }
         Err(e) => {
             tracing::error!("批量取消销售订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "批量取消销售订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("批量取消销售订单失败".to_string()))
         }
     }
 }
@@ -1206,14 +1162,14 @@ pub async fn get_sales_order_stats(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<SalesOrderStatsResponse>> {
+) -> ApiResponse<SalesOrderStatsResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
     let total: i64 = sqlx::query_scalar(only_own_schema_query!(
         "erp",
@@ -1227,7 +1183,7 @@ pub async fn get_sales_order_stats(
     let pending_total_amount: f64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COALESCE(SUM(total_amount), 0) FROM erp.sales_orders WHERE deleted_at IS NULL AND status IN ('pending', 'draft')")).fetch_one(&mut **txn).await.unwrap_or(0.0);
     let shipped_total_amount: f64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COALESCE(SUM(total_amount), 0) FROM erp.sales_orders WHERE deleted_at IS NULL AND status = 'shipped'")).fetch_one(&mut **txn).await.unwrap_or(0.0);
     let completed_total_amount: f64 = sqlx::query_scalar(only_own_schema_query!("erp", "SELECT COALESCE(SUM(total_amount), 0) FROM erp.sales_orders WHERE deleted_at IS NULL AND status = 'completed'")).fetch_one(&mut **txn).await.unwrap_or(0.0);
-    Json(ApiResponse::success(
+    ApiResponse::success(
         SalesOrderStatsResponse {
             total,
             by_status,
@@ -1237,5 +1193,5 @@ pub async fn get_sales_order_stats(
             completed_total_amount,
         },
         "获取销售订单统计成功",
-    ))
+    )
 }

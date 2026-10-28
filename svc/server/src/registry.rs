@@ -11,7 +11,7 @@ use crate::providers::{AccountBalanceProvider, InProcProvider};
 use axum::extract::Request;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use axum::{Json, Router};
+use axum::Router;
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -129,10 +129,10 @@ impl ModuleRegistry {
                 "/api/{svc}/health",
                 axum::routing::get(
                     |axum::extract::Path(svc): axum::extract::Path<String>| async move {
-                        Json(ApiResponse::success(
+                        ApiResponse::success(
                             serde_json::json!({ "module": svc, "status": "ok" }),
                             "module health ok",
-                        ))
+                        )
                     },
                 ),
             )
@@ -143,7 +143,7 @@ impl ModuleRegistry {
                 "/plugin-health/{code}/api/plugins/info",
                 axum::routing::get(
                     |axum::extract::Path(code): axum::extract::Path<String>| async move {
-                        Json(ApiResponse::success(
+                        ApiResponse::success(
                             serde_json::json!({
                                 "code": code,
                                 "name": code,
@@ -155,7 +155,7 @@ impl ModuleRegistry {
                                 "permissions": [],
                             }),
                             "plugin info",
-                        ))
+                        )
                     },
                 ),
             )
@@ -163,10 +163,10 @@ impl ModuleRegistry {
                 "/plugin-health/{code}/api/plugins/health",
                 axum::routing::get(
                     |axum::extract::Path(code): axum::extract::Path<String>| async move {
-                        Json(ApiResponse::success(
+                        ApiResponse::success(
                             serde_json::json!({ "module": code, "status": "running" }),
                             "plugin health ok",
-                        ))
+                        )
                     },
                 ),
             )
@@ -212,7 +212,7 @@ impl Default for ModuleRegistry {
 async fn not_found_handler(_req: Request) -> impl IntoResponse {
     (
         StatusCode::NOT_FOUND,
-        Json(ApiResponse::<()>::not_found("接口不存在，请检查路径")),
+        ApiResponse::<()>::not_found("接口不存在，请检查路径"),
     )
 }
 
@@ -220,9 +220,7 @@ async fn not_found_handler(_req: Request) -> impl IntoResponse {
 fn handle_panic(_payload: Box<dyn Any + Send + 'static>) -> Response {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiResponse::<()>::server_error(
-            "服务器内部错误，请稍后重试",
-        )),
+        ApiResponse::<()>::server_error("服务器内部错误，请稍后重试"),
     )
         .into_response()
 }

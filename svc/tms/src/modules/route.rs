@@ -84,13 +84,11 @@ pub async fn list_routes(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -149,13 +147,11 @@ pub async fn list_routes(
                 "page": page,
                 "page_size": page_size
             });
-            Json(ApiResponse::success(response_data, "获取路线列表成功"))
+            ApiResponse::success(response_data, "获取路线列表成功")
         }
         Err(e) => {
             tracing::error!("获取路线列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取路线列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取路线列表失败".to_string()))
         }
     }
 }
@@ -178,13 +174,11 @@ pub async fn create_route(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateRouteRequest>,
-) -> Json<ApiResponse<Route>> {
+) -> ApiResponse<Route> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -215,16 +209,14 @@ pub async fn create_route(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(route, "路线创建成功"))
+            ApiResponse::success(route, "路线创建成功")
         }
         Err(e) => {
             tracing::error!("创建路线失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "路线创建失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("路线创建失败".to_string()))
         }
     }
 }
@@ -249,13 +241,11 @@ pub async fn get_route(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Route>> {
+) -> ApiResponse<Route> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -278,15 +268,11 @@ pub async fn get_route(
     .await;
 
     match result {
-        Ok(Some(route)) => Json(ApiResponse::success(route, "获取路线成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "路线不存在".to_string(),
-        ))),
+        Ok(Some(route)) => ApiResponse::success(route, "获取路线成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("路线不存在".to_string())),
         Err(e) => {
             tracing::error!("获取路线失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取路线失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取路线失败".to_string()))
         }
     }
 }
@@ -313,13 +299,11 @@ pub async fn update_route(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateRouteRequest>,
-) -> Json<ApiResponse<Route>> {
+) -> ApiResponse<Route> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
@@ -356,19 +340,15 @@ pub async fn update_route(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(route, "路线更新成功"))
+            ApiResponse::success(route, "路线更新成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "路线不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("路线不存在".to_string())),
         Err(e) => {
             tracing::error!("更新路线失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新路线失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新路线失败".to_string()))
         }
     }
 }
@@ -393,13 +373,11 @@ pub async fn delete_route(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
@@ -415,19 +393,15 @@ pub async fn delete_route(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success("".to_string(), "路线删除成功"))
+            ApiResponse::success("".to_string(), "路线删除成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "路线不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("路线不存在".to_string())),
         Err(e) => {
             tracing::error!("删除路线失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除路线失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除路线失败".to_string()))
         }
     }
 }

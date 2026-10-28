@@ -200,7 +200,7 @@ pub async fn retry_due_events(db: &PgPool, publisher: &Option<Arc<EventPublisher
 // 作为 upsert 快照返回，search 逐行 UPSERT 进自有投影，补齐"停消费期间/历史
 // 未发事件"造成的差距。不占用事件流，幂等可重复调用。
 
-use axum::{extract::State, Json};
+use axum::extract::State;
 use topems_shared_core::response::ApiResponse;
 
 use super::ApiState;
@@ -209,7 +209,7 @@ use super::ApiState;
 /// 供 search 启动 backfill；返回扁平列表，每项即一条 SearchableEntityChangedPayload。
 pub async fn searchable_snapshot(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<SearchableEntityChangedPayload>>> {
+) -> ApiResponse<Vec<SearchableEntityChangedPayload>> {
     let db = &state.db;
     let mut out: Vec<SearchableEntityChangedPayload> = Vec::new();
 
@@ -295,5 +295,5 @@ pub async fn searchable_snapshot(
         "[erp] searchable-snapshot 返回 {} 条实体供 search backfill",
         out.len()
     );
-    Json(ApiResponse::success(out, "快照"))
+    ApiResponse::success(out, "快照")
 }

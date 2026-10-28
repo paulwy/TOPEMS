@@ -70,9 +70,9 @@ pub async fn register_device(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<RegisterDevice>,
-) -> Json<ApiResponse<Device>> {
+) -> ApiResponse<Device> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
-        return e;
+        return e.0;
     }
 
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
@@ -93,8 +93,8 @@ pub async fn register_device(
     .fetch_one(&pool)
     .await
     {
-        Ok(device) => Json(ApiResponse::success(device, "注册设备成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("注册设备失败", e))),
+        Ok(device) => ApiResponse::success(device, "注册设备成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("注册设备失败", e)),
     }
 }
 
@@ -112,7 +112,7 @@ pub async fn register_device(
 pub async fn list_devices(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -126,14 +126,14 @@ pub async fn list_devices(
         .fetch_all(&pool)
         .await
     {
-        Ok(devices) => Json(ApiResponse::success(
+        Ok(devices) => ApiResponse::success(
             serde_json::json!({
                 "items": devices,
                 "total": devices.len()
             }),
             "获取设备列表成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -156,7 +156,7 @@ pub async fn get_device(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Device>> {
+) -> ApiResponse<Device> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -173,9 +173,9 @@ pub async fn get_device(
     .fetch_one(&pool)
     .await
     {
-        Ok(device) => Json(ApiResponse::success(device, "获取设备成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("设备未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(device) => ApiResponse::success(device, "获取设备成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("设备未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -185,9 +185,9 @@ pub async fn update_device(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateDevice>,
-) -> Json<ApiResponse<Device>> {
+) -> ApiResponse<Device> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -218,9 +218,9 @@ pub async fn update_device(
     .fetch_one(&pool)
     .await
     {
-        Ok(device) => Json(ApiResponse::success(device, "更新设备成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("设备未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+        Ok(device) => ApiResponse::success(device, "更新设备成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("设备未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
 }
 
@@ -229,9 +229,9 @@ pub async fn delete_device(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
 
@@ -246,12 +246,12 @@ pub async fn delete_device(
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
-                Json(ApiResponse::success(true, "删除设备成功"))
+                ApiResponse::success(true, "删除设备成功")
             } else {
-                Json(ApiResponse::not_found("设备未找到"))
+                ApiResponse::not_found("设备未找到")
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
     }
 }
 
@@ -262,9 +262,9 @@ pub async fn update_device_location(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateDeviceLocation>,
-) -> Json<ApiResponse<DeviceLocationRecord>> {
+) -> ApiResponse<DeviceLocationRecord> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
-        return e;
+        return e.0;
     }
 
     match sqlx::query_as::<_, Device>(only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1"))
@@ -302,13 +302,13 @@ pub async fn update_device_location(
                         status: device.status.clone(),
                     };
                     ws_manager.broadcast_location_update(ws_msg).await;
-                    Json(ApiResponse::success(record, "更新设备位置成功"))
+                    ApiResponse::success(record, "更新设备位置成功")
                 }
-                Err(e) => Json(ApiResponse::from(TopemsError::internal("更新位置失败", e))),
+                Err(e) => ApiResponse::from(TopemsError::internal("更新位置失败", e)),
             }
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("设备未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询设备失败", e))),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("设备未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询设备失败", e)),
     }
 }
 
@@ -317,7 +317,7 @@ pub async fn get_device_tracking(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
     Query(query): Query<TrackingQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // Build query based on time range
     let sql = if query.start_time.is_some() && query.end_time.is_some() {
         "id, tenant_id, device_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength, recorded_at, created_at FROM gis.device_location_records WHERE device_id = $1 AND recorded_at >= $2 AND recorded_at <= $3 ORDER BY recorded_at DESC LIMIT $4"
@@ -394,16 +394,16 @@ pub async fn get_device_tracking(
                 serde_json::json!({})
             };
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "trajectory": trajectory,
                     "records": records,
                     "total": records.len()
                 }),
                 "获取设备轨迹成功",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询轨迹失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询轨迹失败", e)),
     }
 }
 
@@ -418,7 +418,7 @@ pub async fn get_device_history(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
     Query(query): Query<TrackingQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // Similar to tracking but returns all location records
     let limit = query.limit.unwrap_or(50);
 
@@ -452,7 +452,7 @@ pub async fn get_device_history(
             let avg_battery =
                 records.iter().filter_map(|r| r.battery_level).sum::<i32>() / total_records as i32;
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "records": records,
                     "total": total_records,
@@ -462,12 +462,9 @@ pub async fn get_device_history(
                     }
                 }),
                 "获取设备历史位置成功",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "查询历史位置失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询历史位置失败", e)),
     }
 }
 
@@ -478,7 +475,7 @@ pub async fn get_device_track_statistics(
     State(pool): State<PgPool>,
     Extension(_claims): Extension<Claims>,
     Path(device_id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let records = sqlx::query_as::<_, DeviceLocationRecord>(
         "SELECT id, tenant_id, device_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength, recorded_at, created_at FROM gis.device_location_records WHERE device_id = $1 ORDER BY recorded_at ASC",
     )
@@ -487,7 +484,7 @@ pub async fn get_device_track_statistics(
     .await;
 
     match records {
-        Ok(records) if records.is_empty() => Json(ApiResponse::success(
+        Ok(records) if records.is_empty() => ApiResponse::success(
             serde_json::json!({
                 "total_distance": 0.0,
                 "avg_speed": 0.0,
@@ -497,7 +494,7 @@ pub async fn get_device_track_statistics(
                 "end_time": null,
             }),
             "暂无轨迹数据",
-        )),
+        ),
         Ok(records) => {
             let points: Vec<TrackPoint> = records
                 .iter()
@@ -530,12 +527,9 @@ pub async fn get_device_track_statistics(
                     "end_time": null,
                 }),
             };
-            Json(ApiResponse::success(resp, "获取轨迹统计成功"))
+            ApiResponse::success(resp, "获取轨迹统计成功")
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "查询轨迹统计失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询轨迹统计失败", e)),
     }
 }
 
@@ -544,7 +538,7 @@ pub async fn get_device_track_statistics(
 pub async fn list_devices_with_tracks(
     State(pool): State<PgPool>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let rows = sqlx::query(
         "SELECT DISTINCT ON (device_id) device_id, position, speed, recorded_at \
          FROM gis.device_location_records \
@@ -571,12 +565,9 @@ pub async fn list_devices_with_tracks(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(items, "获取设备轨迹列表成功"))
+            ApiResponse::success(items, "获取设备轨迹列表成功")
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "查询设备轨迹列表失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询设备轨迹列表失败", e)),
     }
 }
 
@@ -609,7 +600,7 @@ pub async fn report_device_location(
     headers: HeaderMap,
     Path(device_code): Path<String>,
     Json(payload): Json<UpdateDeviceLocation>,
-) -> Json<ApiResponse<DeviceLocationRecord>> {
+) -> ApiResponse<DeviceLocationRecord> {
     // 1) 双通道认证解析出设备行
     let device = if let Some(Ok(token)) = headers.get("X-Device-Token").map(|v| v.to_str()) {
         // 1a) 设备级凭证通道：sha256(hex) 比对存储摘要列
@@ -624,10 +615,10 @@ pub async fn report_device_location(
         {
             Ok(d) => d,
             Err(sqlx::Error::RowNotFound) => {
-                return Json(ApiResponse::unauthorized("未认证：设备凭证无效"));
+                return ApiResponse::unauthorized("未认证：设备凭证无效");
             }
             Err(e) => {
-                return Json(ApiResponse::from(TopemsError::internal("查询设备失败", e)));
+                return ApiResponse::from(TopemsError::internal("查询设备失败", e));
             }
         }
     } else {
@@ -638,13 +629,13 @@ pub async fn report_device_location(
             .and_then(|h| h.strip_prefix("Bearer "))
             .map(str::to_string);
         let Some(jwt) = jwt else {
-            return Json(ApiResponse::unauthorized(
+            return ApiResponse::unauthorized(
                 "未认证：缺少 Authorization Bearer token 或 X-Device-Token",
-            ));
+            );
         };
         let claims = match verify_jwt_token(&jwt, &auth_state.jwt_secret) {
             Ok(claims) => claims,
-            Err(_) => return Json(ApiResponse::unauthorized("未认证：token 无效或已过期")),
+            Err(_) => return ApiResponse::unauthorized("未认证：token 无效或已过期"),
         };
 
         // 2) 查设备（deleted_at 过滤）
@@ -667,23 +658,23 @@ pub async fn report_device_location(
                         None => false,
                     };
                     if !owned {
-                        return Json(ApiResponse::forbidden("无权上报该租户的设备"));
+                        return ApiResponse::forbidden("无权上报该租户的设备");
                     }
                 }
                 d
             }
             Err(sqlx::Error::RowNotFound) => {
-                return Json(ApiResponse::not_found("设备未找到"));
+                return ApiResponse::not_found("设备未找到");
             }
             Err(e) => {
-                return Json(ApiResponse::from(TopemsError::internal("查询设备失败", e)));
+                return ApiResponse::from(TopemsError::internal("查询设备失败", e));
             }
         }
     };
 
     // 3) 两通道共用：状态启用校验（在租户/凭证校验之后）
     if device.status != "active" {
-        return Json(ApiResponse::forbidden("设备未启用，禁止上报"));
+        return ApiResponse::forbidden("设备未启用，禁止上报");
     }
 
     // 4) 写入上报记录并广播（租户取设备归属租户）
@@ -716,9 +707,9 @@ pub async fn report_device_location(
                 status: device.status.clone(),
             };
             ws_manager.broadcast_location_update(ws_msg).await;
-            Json(ApiResponse::success(record, "上报位置成功"))
+            ApiResponse::success(record, "上报位置成功")
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("上报位置失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("上报位置失败", e)),
     }
 }
 

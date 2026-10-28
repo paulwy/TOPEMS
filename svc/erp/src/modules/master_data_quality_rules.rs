@@ -259,7 +259,7 @@ pub async fn create_quality_rule(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateQualityRuleRequest>,
-) -> Json<ApiResponse<QualityRule>> {
+) -> ApiResponse<QualityRule> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -296,10 +296,10 @@ pub async fn create_quality_rule(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 QualityRule {
                     id,
                     name: req.name,
@@ -314,14 +314,11 @@ pub async fn create_quality_rule(
                     updated_at: now,
                 },
                 "质量规则创建成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 创建质量规则失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "创建质量规则失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("创建质量规则失败", e))
         }
     }
 }
@@ -343,7 +340,7 @@ pub async fn list_quality_rules(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<QualityRule>>> {
+) -> ApiResponse<PaginatedResponse<QualityRule>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -412,17 +409,17 @@ pub async fn list_quality_rules(
                 .filter_map(|r| quality_rule_from_row(r).ok())
                 .collect();
             let total = items.len() as i64;
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "质量规则列表",
-            ))
+            )
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询质量规则失败: {}", e);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(vec![], 0, page, page_size),
                 "质量规则列表（空）",
-            ))
+            )
         }
     }
 }
@@ -442,7 +439,7 @@ pub async fn get_quality_rule(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<QualityRule>> {
+) -> ApiResponse<QualityRule> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -450,7 +447,7 @@ pub async fn get_quality_rule(
     };
     let rid = match uuid::Uuid::parse_str(&rule_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的规则 ID")),
+        Err(_) => return ApiResponse::bad_request("无效的规则 ID"),
     };
 
     let sql = format!(
@@ -459,16 +456,16 @@ pub async fn get_quality_rule(
     );
     match sqlx::query(&sql).bind(rid).fetch_optional(&mut **txn).await {
         Ok(Some(row)) => match quality_rule_from_row(&row) {
-            Ok(rule) => Json(ApiResponse::success(rule, "质量规则详情")),
+            Ok(rule) => ApiResponse::success(rule, "质量规则详情"),
             Err(e) => {
                 tracing::warn!("[erp-mdm] 解析质量规则失败: {}", e);
-                Json(ApiResponse::from(TopemsError::internal("解析规则失败", e)))
+                ApiResponse::from(TopemsError::internal("解析规则失败", e))
             }
         },
-        Ok(None) => Json(ApiResponse::not_found("未找到质量规则")),
+        Ok(None) => ApiResponse::not_found("未找到质量规则"),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询质量规则失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
+            ApiResponse::from(TopemsError::internal("查询失败", e))
         }
     }
 }
@@ -489,7 +486,7 @@ pub async fn update_quality_rule(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateQualityRuleRequest>,
-) -> Json<ApiResponse<QualityRule>> {
+) -> ApiResponse<QualityRule> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -497,7 +494,7 @@ pub async fn update_quality_rule(
     };
     let rid = match uuid::Uuid::parse_str(&rule_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的规则 ID")),
+        Err(_) => return ApiResponse::bad_request("无效的规则 ID"),
     };
 
     // 先查询现有规则
@@ -511,16 +508,16 @@ pub async fn update_quality_rule(
         .await
     {
         Ok(Some(row)) => quality_rule_from_row(&row),
-        Ok(None) => return Json(ApiResponse::not_found("未找到质量规则")),
+        Ok(None) => return ApiResponse::not_found("未找到质量规则"),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询质量规则失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::internal("查询失败", e)));
+            return ApiResponse::from(TopemsError::internal("查询失败", e));
         }
     };
 
     let existing = match existing {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("解析失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("解析失败", e)),
     };
 
     let now = chrono::Utc::now();
@@ -558,10 +555,10 @@ pub async fn update_quality_rule(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 QualityRule {
                     id: rid,
                     name,
@@ -576,11 +573,11 @@ pub async fn update_quality_rule(
                     updated_at: now,
                 },
                 "质量规则更新成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 更新质量规则失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("更新失败", e)))
+            ApiResponse::from(TopemsError::internal("更新失败", e))
         }
     }
 }
@@ -600,7 +597,7 @@ pub async fn delete_quality_rule(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -608,7 +605,7 @@ pub async fn delete_quality_rule(
     };
     let rid = match uuid::Uuid::parse_str(&rule_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的规则 ID")),
+        Err(_) => return ApiResponse::bad_request("无效的规则 ID"),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -622,23 +619,23 @@ pub async fn delete_quality_rule(
     match result {
         Ok(res) => {
             if res.rows_affected() == 0 {
-                Json(ApiResponse::not_found("未找到质量规则"))
+                ApiResponse::not_found("未找到质量规则")
             } else {
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("事务提交失败: {}", e);
-                        return Json(ApiResponse::server_error("事务提交失败"));
+                        return ApiResponse::server_error("事务提交失败");
                     }
                 }
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     serde_json::json!({ "rule_id": rule_id, "deleted": true }),
                     "质量规则删除成功",
-                ))
+                )
             }
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 删除质量规则失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("删除失败", e)))
+            ApiResponse::from(TopemsError::internal("删除失败", e))
         }
     }
 }
@@ -663,7 +660,7 @@ pub async fn run_quality_check(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<RunQualityCheckRequest>,
-) -> Json<ApiResponse<QualityReport>> {
+) -> ApiResponse<QualityReport> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -672,7 +669,7 @@ pub async fn run_quality_check(
     // 1. 加载规则
     let rules = load_quality_rules(txn, req.domain.as_deref(), req.rule_ids.as_deref()).await;
     if rules.is_empty() {
-        return Json(ApiResponse::not_found("未找到匹配的质量规则"));
+        return ApiResponse::not_found("未找到匹配的质量规则");
     }
 
     // 2. 加载主数据记录（排除已销毁）
@@ -739,16 +736,16 @@ pub async fn run_quality_check(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         report,
         &format!(
             "质量检查完成：检查 {} 条记录，发现 {} 个问题",
             total_checked, total_issues
         ),
-    ))
+    )
 }
 
 /// V39.0 AC-11: 查询质量报告（分页 + domain 过滤）
@@ -768,7 +765,7 @@ pub async fn get_quality_report(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<QualityReport>>> {
+) -> ApiResponse<PaginatedResponse<QualityReport>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -809,17 +806,17 @@ pub async fn get_quality_report(
                 .filter_map(|r| quality_report_from_row(r).ok())
                 .collect();
             let total = items.len() as i64;
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "质量报告列表",
-            ))
+            )
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询质量报告失败: {}", e);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(vec![], 0, page, page_size),
                 "质量报告列表（空）",
-            ))
+            )
         }
     }
 }

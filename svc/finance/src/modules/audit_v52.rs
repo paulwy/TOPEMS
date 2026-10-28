@@ -1691,12 +1691,12 @@ pub async fn create_audit_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAuditRuleRequest>,
-) -> Json<ApiResponse<AuditRule>> {
+) -> ApiResponse<AuditRule> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     match AutoAuditEngine::create_rule(&state.pool, tenant_id, req, &created_by).await {
-        Ok(rule) => Json(ApiResponse::success(rule, "审计规则创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(rule) => ApiResponse::success(rule, "审计规则创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1704,7 +1704,7 @@ pub async fn list_audit_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuditRuleQueryParams>,
-) -> Json<ApiResponse<Vec<AuditRule>>> {
+) -> ApiResponse<Vec<AuditRule>> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1713,8 +1713,8 @@ pub async fn list_audit_rules_handler(
     match AutoAuditEngine::list_rules(&state.pool, tenant_id, params.category, params.is_active)
         .await
     {
-        Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(rules) => ApiResponse::success(rules, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1723,11 +1723,11 @@ pub async fn update_audit_rule_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAuditRuleRequest>,
-) -> Json<ApiResponse<AuditRule>> {
+) -> ApiResponse<AuditRule> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoAuditEngine::update_rule(&state.pool, id, tenant_id, req).await {
-        Ok(rule) => Json(ApiResponse::success(rule, "更新成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(rule) => ApiResponse::success(rule, "更新成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1735,11 +1735,11 @@ pub async fn delete_audit_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoAuditEngine::delete_rule(&state.pool, id, tenant_id).await {
-        Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(_) => ApiResponse::success((), "删除成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1747,7 +1747,7 @@ pub async fn get_audit_findings_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuditFindingQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1766,7 +1766,7 @@ pub async fn get_audit_findings_handler(
     )
     .await
     {
-        Ok((items, total)) => Json(ApiResponse::success(
+        Ok((items, total)) => ApiResponse::success(
             serde_json::json!({
                 "items": items,
                 "total": total,
@@ -1774,8 +1774,8 @@ pub async fn get_audit_findings_handler(
                 "page_size": page_size,
             }),
             "查询成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1792,7 +1792,7 @@ pub async fn resolve_finding_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<ResolveFindingRequest>,
-) -> Json<ApiResponse<AuditFinding>> {
+) -> ApiResponse<AuditFinding> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let resolved_by = claims.username.clone();
     match AutoAuditEngine::resolve_finding(
@@ -1804,8 +1804,8 @@ pub async fn resolve_finding_handler(
     )
     .await
     {
-        Ok(finding) => Json(ApiResponse::success(finding, "问题已处理")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(finding) => ApiResponse::success(finding, "问题已处理"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1813,11 +1813,11 @@ pub async fn run_audit_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RunAuditRequest>,
-) -> Json<ApiResponse<Vec<AuditFinding>>> {
+) -> ApiResponse<Vec<AuditFinding>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoAuditEngine::run_audit(&state.pool, tenant_id, req.rule_ids).await {
-        Ok(findings) => Json(ApiResponse::success(findings, "审计执行完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(findings) => ApiResponse::success(findings, "审计执行完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1825,11 +1825,11 @@ async fn detect_anomalies_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<DetectAnomalyRequest>,
-) -> Json<ApiResponse<Vec<AnomalyAlert>>> {
+) -> ApiResponse<Vec<AnomalyAlert>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AnomalyDetector::detect(&state.pool, tenant_id, req).await {
-        Ok(alerts) => Json(ApiResponse::success(alerts, "异常检测完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(alerts) => ApiResponse::success(alerts, "异常检测完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1837,7 +1837,7 @@ pub async fn get_anomaly_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AnomalyAlertQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1856,7 +1856,7 @@ pub async fn get_anomaly_alerts_handler(
     )
     .await
     {
-        Ok((items, total)) => Json(ApiResponse::success(
+        Ok((items, total)) => ApiResponse::success(
             serde_json::json!({
                 "items": items,
                 "total": total,
@@ -1864,8 +1864,8 @@ pub async fn get_anomaly_alerts_handler(
                 "page_size": page_size,
             }),
             "查询成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1880,15 +1880,15 @@ pub async fn get_anomaly_alerts_handler(
 pub async fn get_detection_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<DetectionSummary>> {
+) -> ApiResponse<DetectionSummary> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
     match AnomalyDetector::get_summary(&state.pool, tenant_id).await {
-        Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(summary) => ApiResponse::success(summary, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1896,7 +1896,7 @@ pub async fn configure_detection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let detection_type = req
         .get("detection_type")
@@ -1914,8 +1914,8 @@ pub async fn configure_detection_handler(
     match AnomalyDetector::configure(&state.pool, tenant_id, detection_type, enabled, parameters)
         .await
     {
-        Ok(_) => Json(ApiResponse::success((), "配置更新成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(_) => ApiResponse::success((), "配置更新成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1923,7 +1923,7 @@ pub async fn get_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertHistoryQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1942,7 +1942,7 @@ pub async fn get_alerts_handler(
     )
     .await
     {
-        Ok((items, total)) => Json(ApiResponse::success(
+        Ok((items, total)) => ApiResponse::success(
             serde_json::json!({
                 "items": items,
                 "total": total,
@@ -1950,8 +1950,8 @@ pub async fn get_alerts_handler(
                 "page_size": page_size,
             }),
             "查询成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1967,26 +1967,26 @@ pub async fn create_alert_config_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAlertConfigRequest>,
-) -> Json<ApiResponse<AlertConfig>> {
+) -> ApiResponse<AlertConfig> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AlertManager::create_config(&state.pool, tenant_id, req).await {
-        Ok(config) => Json(ApiResponse::success(config, "预警配置创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(config) => ApiResponse::success(config, "预警配置创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn list_alert_configs_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<AlertConfig>>> {
+) -> ApiResponse<Vec<AlertConfig>> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
     match AlertManager::list_configs(&state.pool, tenant_id).await {
-        Ok(configs) => Json(ApiResponse::success(configs, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(configs) => ApiResponse::success(configs, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1995,11 +1995,11 @@ pub async fn acknowledge_alert_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<AcknowledgeAlertRequest>,
-) -> Json<ApiResponse<AlertHistory>> {
+) -> ApiResponse<AlertHistory> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AlertManager::acknowledge(&state.pool, id, tenant_id, &req.acknowledged_by).await {
-        Ok(history) => Json(ApiResponse::success(history, "预警已确认")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(history) => ApiResponse::success(history, "预警已确认"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 

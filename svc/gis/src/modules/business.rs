@@ -37,7 +37,7 @@ pub async fn list_business_locations(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -89,7 +89,7 @@ pub async fn list_business_locations(
                 .await
                 .map(|row| row.get::<i64, _>(0))
                 .unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "business_locations": locations,
                     "total": total,
@@ -97,12 +97,9 @@ pub async fn list_business_locations(
                     "page_size": page_size
                 }),
                 "获取业务位置列表成功",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库查询失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 
@@ -120,9 +117,9 @@ pub async fn create_business_location(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateBusinessLocation>,
-) -> Json<ApiResponse<BusinessLocation>> {
+) -> ApiResponse<BusinessLocation> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::BusinessLocationWrite).await {
-        return e;
+        return e.0;
     }
     let status = payload.status.unwrap_or_else(|| "active".to_string());
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
@@ -148,8 +145,8 @@ pub async fn create_business_location(
     .fetch_one(&pool)
     .await
     {
-        Ok(location) => Json(ApiResponse::success(location, "创建业务位置成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库插入失败", e))),
+        Ok(location) => ApiResponse::success(location, "创建业务位置成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库插入失败", e)),
     }
 }
 
@@ -170,7 +167,7 @@ pub async fn get_business_location(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<BusinessLocation>> {
+) -> ApiResponse<BusinessLocation> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -188,9 +185,9 @@ pub async fn get_business_location(
     .fetch_one(&pool)
     .await
     {
-        Ok(location) => Json(ApiResponse::success(location, "获取业务位置成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("业务位置未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
+        Ok(location) => ApiResponse::success(location, "获取业务位置成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("业务位置未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 
@@ -212,9 +209,9 @@ pub async fn update_business_location(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<CreateBusinessLocation>,
-) -> Json<ApiResponse<BusinessLocation>> {
+) -> ApiResponse<BusinessLocation> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::BusinessLocationWrite).await {
-        return e;
+        return e.0;
     }
     let status = payload.status.unwrap_or_else(|| "active".to_string());
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
@@ -242,9 +239,9 @@ pub async fn update_business_location(
     .fetch_one(&pool)
     .await
     {
-        Ok(location) => Json(ApiResponse::success(location, "更新业务位置成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("业务位置未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库更新失败", e))),
+        Ok(location) => ApiResponse::success(location, "更新业务位置成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("业务位置未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库更新失败", e)),
     }
 }
 
@@ -265,9 +262,9 @@ pub async fn delete_business_location(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::BusinessLocationWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
     match sqlx::query(only_own_schema_query!(
@@ -281,15 +278,12 @@ pub async fn delete_business_location(
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
-                Json(ApiResponse::success(true, "删除业务位置成功"))
+                ApiResponse::success(true, "删除业务位置成功")
             } else {
-                Json(ApiResponse::not_found("业务位置未找到"))
+                ApiResponse::not_found("业务位置未找到")
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库删除失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库删除失败", e)),
     }
 }
 
@@ -297,7 +291,7 @@ pub async fn list_business_locations_by_type(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(business_type): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -315,14 +309,14 @@ pub async fn list_business_locations_by_type(
     .fetch_all(&pool)
     .await
     {
-        Ok(locations) => Json(ApiResponse::success(
+        Ok(locations) => ApiResponse::success(
             serde_json::json!({
                 "business_locations": locations,
                 "total": locations.len()
             }),
             "获取业务位置列表成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 

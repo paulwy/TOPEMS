@@ -404,7 +404,7 @@ pub async fn list_versions(
     Extension(claims): Extension<Claims>,
     Path(document_id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<Vec<DocumentVersion>>> {
+) -> ApiResponse<Vec<DocumentVersion>> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -429,10 +429,10 @@ pub async fn list_versions(
     .fetch_all(&state.pool)
     .await;
     match result {
-        Ok(versions) => Json(ApiResponse::success(versions, "获取文档版本成功")),
+        Ok(versions) => ApiResponse::success(versions, "获取文档版本成功"),
         Err(e) => {
             tracing::error!("获取文档版本失败: {}", e);
-            Json(ApiResponse::server_error("获取文档版本失败"))
+            ApiResponse::server_error("获取文档版本失败")
         }
     }
 }
@@ -444,7 +444,7 @@ pub async fn create_version(
     Path(document_id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateDocumentVersionRequest>,
-) -> Json<ApiResponse<DocumentVersion>> {
+) -> ApiResponse<DocumentVersion> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -456,7 +456,7 @@ pub async fn create_version(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     if req.version_number.trim().is_empty() || req.title.trim().is_empty() {
-        return Json(ApiResponse::bad_request("版本号和标题不能为空"));
+        return ApiResponse::bad_request("版本号和标题不能为空");
     }
     let changes = req.changes.unwrap_or_default();
     let created_by = req.created_by.unwrap_or_else(|| "system".to_string());
@@ -486,10 +486,10 @@ pub async fn create_version(
     .await;
 
     match result {
-        Ok(version) => Json(ApiResponse::success(version, "创建文档版本成功")),
+        Ok(version) => ApiResponse::success(version, "创建文档版本成功"),
         Err(e) => {
             tracing::error!("创建文档版本失败: {}", e);
-            Json(ApiResponse::server_error("创建文档版本失败"))
+            ApiResponse::server_error("创建文档版本失败")
         }
     }
 }
@@ -500,7 +500,7 @@ pub async fn get_version(
     Extension(claims): Extension<Claims>,
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<DocumentVersion>> {
+) -> ApiResponse<DocumentVersion> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -525,11 +525,11 @@ pub async fn get_version(
     .fetch_optional(&state.pool)
     .await;
     match result {
-        Ok(Some(version)) => Json(ApiResponse::success(version, "获取文档版本成功")),
-        Ok(None) => Json(ApiResponse::not_found("文档版本不存在")),
+        Ok(Some(version)) => ApiResponse::success(version, "获取文档版本成功"),
+        Ok(None) => ApiResponse::not_found("文档版本不存在"),
         Err(e) => {
             tracing::error!("获取文档版本失败: {}", e);
-            Json(ApiResponse::server_error("获取文档版本失败"))
+            ApiResponse::server_error("获取文档版本失败")
         }
     }
 }
@@ -541,7 +541,7 @@ pub async fn update_version(
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateDocumentVersionRequest>,
-) -> Json<ApiResponse<DocumentVersion>> {
+) -> ApiResponse<DocumentVersion> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -590,11 +590,11 @@ pub async fn update_version(
     .fetch_optional(&state.pool)
     .await;
     match result {
-        Ok(Some(version)) => Json(ApiResponse::success(version, "更新文档版本成功")),
-        Ok(None) => Json(ApiResponse::not_found("文档版本不存在")),
+        Ok(Some(version)) => ApiResponse::success(version, "更新文档版本成功"),
+        Ok(None) => ApiResponse::not_found("文档版本不存在"),
         Err(e) => {
             tracing::error!("更新文档版本失败: {}", e);
-            Json(ApiResponse::server_error("更新文档版本失败"))
+            ApiResponse::server_error("更新文档版本失败")
         }
     }
 }
@@ -605,7 +605,7 @@ pub async fn delete_version(
     Extension(claims): Extension<Claims>,
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -625,11 +625,11 @@ pub async fn delete_version(
     .execute(&state.pool)
     .await;
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "删除文档版本成功")),
-        Ok(_) => Json(ApiResponse::not_found("文档版本不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "删除文档版本成功"),
+        Ok(_) => ApiResponse::not_found("文档版本不存在"),
         Err(e) => {
             tracing::error!("删除文档版本失败: {}", e);
-            Json(ApiResponse::server_error("删除文档版本失败"))
+            ApiResponse::server_error("删除文档版本失败")
         }
     }
 }
@@ -641,7 +641,7 @@ pub async fn publish_version(
     Extension(claims): Extension<Claims>,
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<DocumentVersion>> {
+) -> ApiResponse<DocumentVersion> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -656,7 +656,7 @@ pub async fn publish_version(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("启动发布事务失败: {}", e);
-            return Json(ApiResponse::server_error("发布文档版本失败"));
+            return ApiResponse::server_error("发布文档版本失败");
         }
     };
 
@@ -676,10 +676,10 @@ pub async fn publish_version(
 
     let version = match result {
         Ok(Some(v)) => v,
-        Ok(None) => return Json(ApiResponse::not_found("文档版本不存在")),
+        Ok(None) => return ApiResponse::not_found("文档版本不存在"),
         Err(e) => {
             tracing::error!("发布文档版本失败: {}", e);
-            return Json(ApiResponse::server_error("发布文档版本失败"));
+            return ApiResponse::server_error("发布文档版本失败");
         }
     };
 
@@ -700,15 +700,15 @@ pub async fn publish_version(
     .await
     {
         tracing::error!("同步文档当前版本失败: {}", e);
-        return Json(ApiResponse::server_error("发布文档版本失败"));
+        return ApiResponse::server_error("发布文档版本失败");
     }
 
     if let Err(e) = tx.commit().await {
         tracing::error!("提交发布事务失败: {}", e);
-        return Json(ApiResponse::server_error("发布文档版本失败"));
+        return ApiResponse::server_error("发布文档版本失败");
     }
 
-    Json(ApiResponse::success(version, "发布文档版本成功"))
+    ApiResponse::success(version, "发布文档版本成功")
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
@@ -719,7 +719,7 @@ pub async fn upload_version(
     Path(document_id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     mut multipart: Multipart,
-) -> Json<ApiResponse<DocumentVersion>> {
+) -> ApiResponse<DocumentVersion> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -742,7 +742,7 @@ pub async fn upload_version(
                 Ok(data) => bytes = Some(data.to_vec()),
                 Err(e) => {
                     tracing::error!("读取上传文件失败: {}", e);
-                    return Json(ApiResponse::bad_request("读取上传文件失败"));
+                    return ApiResponse::bad_request("读取上传文件失败");
                 }
             }
         }
@@ -750,7 +750,7 @@ pub async fn upload_version(
 
     let bytes = match bytes {
         Some(b) if !b.is_empty() => b,
-        _ => return Json(ApiResponse::bad_request("上传文件不能为空")),
+        _ => return ApiResponse::bad_request("上传文件不能为空"),
     };
     let doc_type = get_document_type(&state, tenant_id, document_id).await;
     let version_number = next_version_number(&state, tenant_id, document_id).await;
@@ -794,10 +794,10 @@ pub async fn upload_version(
     .await;
 
     match result {
-        Ok(version) => Json(ApiResponse::success(version, "上传文档版本成功")),
+        Ok(version) => ApiResponse::success(version, "上传文档版本成功"),
         Err(e) => {
             tracing::error!("上传文档版本失败: {}", e);
-            Json(ApiResponse::server_error("上传文档版本失败"))
+            ApiResponse::server_error("上传文档版本失败")
         }
     }
 }
@@ -808,7 +808,7 @@ pub async fn download_version(
     Extension(claims): Extension<Claims>,
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -847,12 +847,12 @@ pub async fn download_version(
                     })
                 })
                 .unwrap_or_default();
-            Json(ApiResponse::success(download, "获取文档下载地址成功"))
+            ApiResponse::success(download, "获取文档下载地址成功")
         }
-        Ok(None) => Json(ApiResponse::not_found("文档版本不存在")),
+        Ok(None) => ApiResponse::not_found("文档版本不存在"),
         Err(e) => {
             tracing::error!("获取文档下载地址失败: {}", e);
-            Json(ApiResponse::server_error("获取文档下载地址失败"))
+            ApiResponse::server_error("获取文档下载地址失败")
         }
     }
 }

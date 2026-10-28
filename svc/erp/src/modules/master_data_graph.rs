@@ -1157,7 +1157,7 @@ fn suggest_completions(
 pub async fn get_master_data_graph(
     State(state): State<ApiState>,
     Query(params): Query<GraphQuery>,
-) -> Json<ApiResponse<MasterDataGraph>> {
+) -> ApiResponse<MasterDataGraph> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
     let store = get_knowledge_graph_store();
@@ -1215,7 +1215,7 @@ pub async fn get_master_data_graph(
 
     let connected_components = count_connected_components(&limited_nodes, &limited_edges);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         MasterDataGraph {
             nodes: limited_nodes,
             edges: limited_edges,
@@ -1226,7 +1226,7 @@ pub async fn get_master_data_graph(
             connected_components,
         },
         "主数据图谱",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1240,15 +1240,15 @@ pub async fn get_master_data_graph(
 pub async fn get_graph_node(
     State(state): State<ApiState>,
     Path(node_id): Path<String>,
-) -> Json<ApiResponse<GraphNode>> {
+) -> ApiResponse<GraphNode> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
     let store = get_knowledge_graph_store();
 
     let nodes = store.graph_nodes.read().await;
     match nodes.iter().find(|n| n.id == node_id) {
-        Some(node) => Json(ApiResponse::success(node.clone(), "图节点详情")),
-        None => Json(ApiResponse::not_found("未找到图节点")),
+        Some(node) => ApiResponse::success(node.clone(), "图节点详情"),
+        None => ApiResponse::not_found("未找到图节点"),
     }
 }
 
@@ -1264,7 +1264,7 @@ pub async fn get_node_neighbors(
     State(state): State<ApiState>,
     Path(node_id): Path<String>,
     Query(params): Query<NeighborQuery>,
-) -> Json<ApiResponse<Vec<GraphNode>>> {
+) -> ApiResponse<Vec<GraphNode>> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
     let store = get_knowledge_graph_store();
@@ -1308,7 +1308,7 @@ pub async fn get_node_neighbors(
         .cloned()
         .collect();
 
-    Json(ApiResponse::success(neighbors, "节点邻居列表"))
+    ApiResponse::success(neighbors, "节点邻居列表")
 }
 
 #[utoipa::path(
@@ -1321,7 +1321,7 @@ pub async fn get_node_neighbors(
 pub async fn get_shortest_path(
     State(state): State<ApiState>,
     Query(params): Query<ShortestPathQuery>,
-) -> Json<ApiResponse<Vec<String>>> {
+) -> ApiResponse<Vec<String>> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
     let store = get_knowledge_graph_store();
@@ -1329,8 +1329,8 @@ pub async fn get_shortest_path(
     let edges = store.graph_edges.read().await;
 
     match shortest_path_bfs(&edges, &params.source, &params.target) {
-        Some(path) => Json(ApiResponse::success(path, "最短路径")),
-        None => Json(ApiResponse::not_found("未找到路径")),
+        Some(path) => ApiResponse::success(path, "最短路径"),
+        None => ApiResponse::not_found("未找到路径"),
     }
 }
 
@@ -1346,7 +1346,7 @@ pub async fn multi_hop_traversal(
     State(state): State<ApiState>,
     Path(node_id): Path<String>,
     Query(params): Query<MultiHopQuery>,
-) -> Json<ApiResponse<Vec<(String, usize)>>> {
+) -> ApiResponse<Vec<(String, usize)>> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
     let store = get_knowledge_graph_store();
@@ -1379,7 +1379,7 @@ pub async fn multi_hop_traversal(
         .filter(|(id, _)| id != &node_id)
         .collect();
 
-    Json(ApiResponse::success(result, "多跳遍历结果"))
+    ApiResponse::success(result, "多跳遍历结果")
 }
 
 #[utoipa::path(
@@ -1389,7 +1389,7 @@ pub async fn multi_hop_traversal(
     tag = "Master Data",
     responses((status = 200, description = "获取图谱统计成功", body = ApiResponse<serde_json::Value>))
 )]
-pub async fn get_graph_stats(State(state): State<ApiState>) -> Json<ApiResponse<GraphStats>> {
+pub async fn get_graph_stats(State(state): State<ApiState>) -> ApiResponse<GraphStats> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
     let store = get_knowledge_graph_store();
@@ -1399,7 +1399,7 @@ pub async fn get_graph_stats(State(state): State<ApiState>) -> Json<ApiResponse<
 
     let stats = calculate_graph_stats(&nodes, &edges);
 
-    Json(ApiResponse::success(stats, "图谱统计"))
+    ApiResponse::success(stats, "图谱统计")
 }
 
 // ==================== 知识图谱 Handlers ====================
@@ -1415,15 +1415,15 @@ pub async fn get_graph_stats(State(state): State<ApiState>) -> Json<ApiResponse<
 pub async fn get_concept(
     State(state): State<ApiState>,
     Path(concept_id): Path<String>,
-) -> Json<ApiResponse<Concept>> {
+) -> ApiResponse<Concept> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
     let store = get_knowledge_graph_store();
 
     let concepts = store.concepts.read().await;
     match concepts.iter().find(|c| c.id == concept_id) {
-        Some(concept) => Json(ApiResponse::success(concept.clone(), "概念详情")),
-        None => Json(ApiResponse::not_found("未找到概念")),
+        Some(concept) => ApiResponse::success(concept.clone(), "概念详情"),
+        None => ApiResponse::not_found("未找到概念"),
     }
 }
 
@@ -1443,7 +1443,7 @@ pub async fn get_concept(
 pub async fn list_concepts(
     State(state): State<ApiState>,
     Query(params): Query<ConceptQuery>,
-) -> Json<ApiResponse<PaginatedResponse<Concept>>> {
+) -> ApiResponse<PaginatedResponse<Concept>> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
     let store = get_knowledge_graph_store();
@@ -1487,10 +1487,10 @@ pub async fn list_concepts(
         .take(page_size as usize)
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total as i64, page, page_size),
         "概念列表",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1509,7 +1509,7 @@ pub async fn list_concepts(
 pub async fn list_triples(
     State(state): State<ApiState>,
     Query(params): Query<TripleQuery>,
-) -> Json<ApiResponse<PaginatedResponse<KnowledgeTriple>>> {
+) -> ApiResponse<PaginatedResponse<KnowledgeTriple>> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
     let store = get_knowledge_graph_store();
@@ -1553,10 +1553,10 @@ pub async fn list_triples(
         .take(page_size as usize)
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total as i64, page, page_size),
         "知识三元组列表",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1568,14 +1568,14 @@ pub async fn list_triples(
 )]
 pub async fn list_inference_rules(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<InferenceRule>>> {
+) -> ApiResponse<Vec<InferenceRule>> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
     let store = get_knowledge_graph_store();
 
     let rules = store.inference_rules.read().await.clone();
 
-    Json(ApiResponse::success(rules, "推理规则列表"))
+    ApiResponse::success(rules, "推理规则列表")
 }
 
 #[utoipa::path(
@@ -1588,7 +1588,7 @@ pub async fn list_inference_rules(
 pub async fn run_inference(
     State(state): State<ApiState>,
     Json(req): Json<InferenceRequest>,
-) -> Json<ApiResponse<InferenceResult>> {
+) -> ApiResponse<InferenceResult> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
     let store = get_knowledge_graph_store();
@@ -1757,7 +1757,7 @@ pub async fn run_inference(
     drop(edges);
     drop(nodes);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         InferenceResult {
             entity_id: req.entity_id,
             inferred_triples: inferred,
@@ -1766,7 +1766,7 @@ pub async fn run_inference(
             total_inferred,
         },
         "推理结果",
-    ))
+    )
 }
 
 // ==================== 智能推荐 Handlers ====================
@@ -1781,7 +1781,7 @@ pub async fn run_inference(
 pub async fn get_similar_entities(
     State(state): State<ApiState>,
     Query(params): Query<SimilarEntityQuery>,
-) -> Json<ApiResponse<Vec<SimilarEntity>>> {
+) -> ApiResponse<Vec<SimilarEntity>> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
     let store = get_knowledge_graph_store();
@@ -1801,7 +1801,7 @@ pub async fn get_similar_entities(
         min_sim,
     );
 
-    Json(ApiResponse::success(results, "相似实体推荐"))
+    ApiResponse::success(results, "相似实体推荐")
 }
 
 #[utoipa::path(
@@ -1814,7 +1814,7 @@ pub async fn get_similar_entities(
 pub async fn get_association_recommendations(
     State(state): State<ApiState>,
     Query(params): Query<AssociationQuery>,
-) -> Json<ApiResponse<Vec<AssociationRecommendation>>> {
+) -> ApiResponse<Vec<AssociationRecommendation>> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
     let store = get_knowledge_graph_store();
@@ -1834,7 +1834,7 @@ pub async fn get_association_recommendations(
         min_conf,
     );
 
-    Json(ApiResponse::success(results, "关联推荐"))
+    ApiResponse::success(results, "关联推荐")
 }
 
 #[utoipa::path(
@@ -1847,7 +1847,7 @@ pub async fn get_association_recommendations(
 pub async fn get_completion_suggestions(
     State(state): State<ApiState>,
     Query(params): Query<CompletionQuery>,
-) -> Json<ApiResponse<Vec<CompletionSuggestion>>> {
+) -> ApiResponse<Vec<CompletionSuggestion>> {
     let _ = &state;
     ensure_knowledge_graph_initialized().await;
     let store = get_knowledge_graph_store();
@@ -1867,7 +1867,7 @@ pub async fn get_completion_suggestions(
         min_conf,
     );
 
-    Json(ApiResponse::success(results, "数据补全建议"))
+    ApiResponse::success(results, "数据补全建议")
 }
 
 #[cfg(test)]

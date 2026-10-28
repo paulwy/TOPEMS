@@ -60,7 +60,7 @@ pub async fn record_version(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<RecordVersionRequest>,
-) -> Json<ApiResponse<MasterDataVersion>> {
+) -> ApiResponse<MasterDataVersion> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -103,10 +103,10 @@ pub async fn record_version(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 MasterDataVersion {
                     id: id.to_string(),
                     master_data_id,
@@ -120,11 +120,11 @@ pub async fn record_version(
                     created_at: now.to_rfc3339(),
                 },
                 "版本记录成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 记录版本失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("记录版本失败", e)))
+            ApiResponse::from(TopemsError::internal("记录版本失败", e))
         }
     }
 }
@@ -147,7 +147,7 @@ pub async fn get_versions(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<MasterDataVersion>>> {
+) -> ApiResponse<PaginatedResponse<MasterDataVersion>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -198,17 +198,17 @@ pub async fn get_versions(
                 })
                 .collect();
             let total = items.len() as i64;
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "版本历史列表",
-            ))
+            )
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询版本历史失败: {}", e);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(vec![], 0, page, page_size),
                 "版本历史列表（空）",
-            ))
+            )
         }
     }
 }
@@ -228,7 +228,7 @@ pub async fn get_version(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<MasterDataVersion>> {
+) -> ApiResponse<MasterDataVersion> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -247,7 +247,7 @@ pub async fn get_version(
     .await;
 
     match rows {
-        Ok(Some(row)) => Json(ApiResponse::success(
+        Ok(Some(row)) => ApiResponse::success(
             MasterDataVersion {
                 id: row
                     .try_get::<uuid::Uuid, _>("id")
@@ -274,11 +274,11 @@ pub async fn get_version(
                     .to_rfc3339(),
             },
             "版本详情",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("未找到版本")),
+        ),
+        Ok(None) => ApiResponse::not_found("未找到版本"),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询版本详情失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("查询版本失败", e)))
+            ApiResponse::from(TopemsError::internal("查询版本失败", e))
         }
     }
 }
@@ -299,7 +299,7 @@ pub async fn rollback_to_version(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -343,7 +343,7 @@ pub async fn rollback_to_version(
 
             if let Err(e) = update_result {
                 tracing::warn!("[erp-mdm] 回滚更新失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::internal("回滚更新失败", e)));
+                return ApiResponse::from(TopemsError::internal("回滚更新失败", e));
             }
 
             // 3. 记录回滚版本快照（新版本 = max + 1）
@@ -378,10 +378,10 @@ pub async fn rollback_to_version(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "rolled_back_to_version": target_version,
                     "new_version_number": new_version,
@@ -392,12 +392,12 @@ pub async fn rollback_to_version(
                     "rolled_back_at": now.to_rfc3339(),
                 }),
                 &format!("成功回滚到版本 v{}", target_version),
-            ))
+            )
         }
-        Ok(None) => Json(ApiResponse::not_found("未找到要回滚的版本")),
+        Ok(None) => ApiResponse::not_found("未找到要回滚的版本"),
         Err(e) => {
             tracing::warn!("[erp-mdm] 回滚查询失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("回滚查询失败", e)))
+            ApiResponse::from(TopemsError::internal("回滚查询失败", e))
         }
     }
 }

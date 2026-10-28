@@ -1448,12 +1448,12 @@ async fn create_scenario_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateScenarioRequest>,
-) -> Json<ApiResponse<DecisionScenario>> {
+) -> ApiResponse<DecisionScenario> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match DecisionEngine::create_scenario(&pool, tenant_id, req).await {
-        Ok(scenario) => Json(ApiResponse::success(scenario, "场景创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(scenario) => ApiResponse::success(scenario, "场景创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1462,12 +1462,12 @@ pub async fn evaluate_scenario_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<Option<EvaluateScenarioRequest>>,
-) -> Json<ApiResponse<DecisionResult>> {
+) -> ApiResponse<DecisionResult> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match DecisionEngine::evaluate_scenario(&pool, tenant_id, id, req).await {
-        Ok(result) => Json(ApiResponse::success(result, "决策评估完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "决策评估完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1475,7 +1475,7 @@ pub async fn get_decision_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<DecisionResult>> {
+) -> ApiResponse<DecisionResult> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1483,15 +1483,15 @@ pub async fn get_decision_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match DecisionEngine::get_decision(&pool, tenant_id, id).await {
-        Ok(result) => Json(ApiResponse::success(result, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 async fn list_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<DecisionScenario>>> {
+) -> ApiResponse<Vec<DecisionScenario>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1499,8 +1499,8 @@ async fn list_scenarios_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match DecisionEngine::list_scenarios(&pool, tenant_id).await {
-        Ok(scenarios) => Json(ApiResponse::success(scenarios, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(scenarios) => ApiResponse::success(scenarios, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1508,7 +1508,7 @@ pub async fn get_alternatives_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1516,8 +1516,8 @@ pub async fn get_alternatives_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match DecisionEngine::get_alternatives(&pool, tenant_id, id).await {
-        Ok(alts) => Json(ApiResponse::success(alts, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(alts) => ApiResponse::success(alts, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1525,19 +1525,19 @@ async fn compare_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CompareScenariosRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match DecisionEngine::compare_scenarios(&pool, tenant_id, req.scenario_ids).await {
-        Ok(result) => Json(ApiResponse::success(result, "对比完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "对比完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn get_decision_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<DecisionResult>>> {
+) -> ApiResponse<Vec<DecisionResult>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1545,8 +1545,8 @@ pub async fn get_decision_history_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match DecisionEngine::get_decision_history(&pool, tenant_id).await {
-        Ok(history) => Json(ApiResponse::success(history, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(history) => ApiResponse::success(history, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1555,12 +1555,12 @@ pub async fn sensitivity_analysis_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<SensitivityAnalysisRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match DecisionEngine::sensitivity_analysis(&pool, tenant_id, id, req).await {
-        Ok(result) => Json(ApiResponse::success(result, "敏感性分析完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "敏感性分析完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1585,19 +1585,19 @@ pub async fn create_alert_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAlertRuleRequest>,
-) -> Json<ApiResponse<AlertRule>> {
+) -> ApiResponse<AlertRule> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AlertEngine::create_alert_rule(&pool, tenant_id, req).await {
-        Ok(rule) => Json(ApiResponse::success(rule, "预警规则创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(rule) => ApiResponse::success(rule, "预警规则创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn get_alert_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<AlertRule>>> {
+) -> ApiResponse<Vec<AlertRule>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1605,8 +1605,8 @@ pub async fn get_alert_rules_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match AlertEngine::get_alert_rules(&pool, tenant_id).await {
-        Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(rules) => ApiResponse::success(rules, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1614,12 +1614,12 @@ pub async fn evaluate_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<EvaluateAlertsRequest>,
-) -> Json<ApiResponse<Vec<AlertV60>>> {
+) -> ApiResponse<Vec<AlertV60>> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AlertEngine::evaluate_alerts(&pool, tenant_id, req).await {
-        Ok(alerts) => Json(ApiResponse::success(alerts, "预警评估完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(alerts) => ApiResponse::success(alerts, "预警评估完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1627,7 +1627,7 @@ pub async fn get_active_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
-) -> Json<ApiResponse<Vec<AlertV60>>> {
+) -> ApiResponse<Vec<AlertV60>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1635,8 +1635,8 @@ pub async fn get_active_alerts_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match AlertEngine::get_active_alerts(&pool, tenant_id, params).await {
-        Ok(alerts) => Json(ApiResponse::success(alerts, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(alerts) => ApiResponse::success(alerts, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -1662,12 +1662,12 @@ async fn acknowledge_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<AlertV60>> {
+) -> ApiResponse<AlertV60> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AlertEngine::acknowledge_alert(&pool, tenant_id, id).await {
-        Ok(alert) => Json(ApiResponse::success(alert, "预警已确认")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(alert) => ApiResponse::success(alert, "预警已确认"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1675,19 +1675,19 @@ pub async fn resolve_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<AlertV60>> {
+) -> ApiResponse<AlertV60> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AlertEngine::resolve_alert(&pool, tenant_id, id).await {
-        Ok(alert) => Json(ApiResponse::success(alert, "预警已解决")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(alert) => ApiResponse::success(alert, "预警已解决"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn get_alert_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<AlertV60>>> {
+) -> ApiResponse<Vec<AlertV60>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1695,8 +1695,8 @@ pub async fn get_alert_history_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match AlertEngine::get_alert_history(&pool, tenant_id).await {
-        Ok(history) => Json(ApiResponse::success(history, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(history) => ApiResponse::success(history, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1704,12 +1704,12 @@ pub async fn configure_channel_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ConfigureChannelRequest>,
-) -> Json<ApiResponse<AlertChannel>> {
+) -> ApiResponse<AlertChannel> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AlertEngine::configure_channel(&pool, tenant_id, req).await {
-        Ok(channel) => Json(ApiResponse::success(channel, "渠道配置成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(channel) => ApiResponse::success(channel, "渠道配置成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1719,12 +1719,12 @@ pub async fn create_task_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTaskRequest>,
-) -> Json<ApiResponse<ScheduleTask>> {
+) -> ApiResponse<ScheduleTask> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match IntelligentScheduler::create_task(&pool, tenant_id, req).await {
-        Ok(task) => Json(ApiResponse::success(task, "任务创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(task) => ApiResponse::success(task, "任务创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1732,7 +1732,7 @@ pub async fn get_tasks_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TaskQueryParams>,
-) -> Json<ApiResponse<Vec<ScheduleTask>>> {
+) -> ApiResponse<Vec<ScheduleTask>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1740,8 +1740,8 @@ pub async fn get_tasks_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match IntelligentScheduler::get_tasks(&pool, tenant_id, params).await {
-        Ok(tasks) => Json(ApiResponse::success(tasks, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(tasks) => ApiResponse::success(tasks, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1749,12 +1749,12 @@ async fn schedule_task_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ScheduleTask>> {
+) -> ApiResponse<ScheduleTask> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match IntelligentScheduler::schedule_task(&pool, tenant_id, id).await {
-        Ok(task) => Json(ApiResponse::success(task, "调度成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(task) => ApiResponse::success(task, "调度成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1762,12 +1762,12 @@ pub async fn execute_task_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ScheduleExecution>> {
+) -> ApiResponse<ScheduleExecution> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match IntelligentScheduler::execute_task(&pool, tenant_id, id).await {
-        Ok(execution) => Json(ApiResponse::success(execution, "任务执行成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(execution) => ApiResponse::success(execution, "任务执行成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1775,7 +1775,7 @@ pub async fn get_execution_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ScheduleExecution>> {
+) -> ApiResponse<ScheduleExecution> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1783,8 +1783,8 @@ pub async fn get_execution_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match IntelligentScheduler::get_execution(&pool, tenant_id, id).await {
-        Ok(execution) => Json(ApiResponse::success(execution, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(execution) => ApiResponse::success(execution, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1797,7 +1797,7 @@ pub async fn list_executions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ExecutionQueryParams>,
-) -> Json<ApiResponse<Vec<ScheduleExecution>>> {
+) -> ApiResponse<Vec<ScheduleExecution>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1805,8 +1805,8 @@ pub async fn list_executions_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match IntelligentScheduler::list_executions(&pool, tenant_id, params.task_id).await {
-        Ok(executions) => Json(ApiResponse::success(executions, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(executions) => ApiResponse::success(executions, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1815,12 +1815,12 @@ pub async fn update_task_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTaskRequest>,
-) -> Json<ApiResponse<ScheduleTask>> {
+) -> ApiResponse<ScheduleTask> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match IntelligentScheduler::update_schedule(&pool, tenant_id, id, req).await {
-        Ok(task) => Json(ApiResponse::success(task, "更新成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(task) => ApiResponse::success(task, "更新成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1828,12 +1828,12 @@ pub async fn pause_task_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ScheduleTask>> {
+) -> ApiResponse<ScheduleTask> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match IntelligentScheduler::pause_task(&pool, tenant_id, id).await {
-        Ok(task) => Json(ApiResponse::success(task, "任务已暂停")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(task) => ApiResponse::success(task, "任务已暂停"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1841,12 +1841,12 @@ pub async fn resume_task_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ScheduleTask>> {
+) -> ApiResponse<ScheduleTask> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match IntelligentScheduler::resume_task(&pool, tenant_id, id).await {
-        Ok(task) => Json(ApiResponse::success(task, "任务已恢复")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(task) => ApiResponse::success(task, "任务已恢复"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 

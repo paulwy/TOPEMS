@@ -190,7 +190,7 @@ pub async fn list_projects(
     Extension(claims): Extension<Claims>,
     Query(query): Query<ProjectQuery>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<Vec<PdmProject>>> {
+) -> ApiResponse<Vec<PdmProject>> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -223,10 +223,10 @@ pub async fn list_projects(
     .await;
 
     match result {
-        Ok(projects) => Json(ApiResponse::success(projects, "获取项目列表成功")),
+        Ok(projects) => ApiResponse::success(projects, "获取项目列表成功"),
         Err(e) => {
             tracing::error!("获取项目列表失败: {}", e);
-            Json(ApiResponse::server_error("获取项目列表失败"))
+            ApiResponse::server_error("获取项目列表失败")
         }
     }
 }
@@ -237,7 +237,7 @@ pub async fn create_project(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreatePdmProjectRequest>,
-) -> Json<ApiResponse<PdmProject>> {
+) -> ApiResponse<PdmProject> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -249,10 +249,10 @@ pub async fn create_project(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     if req.project_no.trim().is_empty() {
-        return Json(ApiResponse::bad_request("项目编号不能为空"));
+        return ApiResponse::bad_request("项目编号不能为空");
     }
     if req.name.trim().is_empty() {
-        return Json(ApiResponse::bad_request("项目名称不能为空"));
+        return ApiResponse::bad_request("项目名称不能为空");
     }
     let status = req.status.unwrap_or_else(|| "planning".to_string());
     let phase = req.phase.unwrap_or_else(|| "initiation".to_string());
@@ -284,13 +284,13 @@ pub async fn create_project(
     .await;
 
     match result {
-        Ok(project) => Json(ApiResponse::success(project, "创建项目成功")),
+        Ok(project) => ApiResponse::success(project, "创建项目成功"),
         Err(e) => {
             tracing::error!("创建项目失败: {}", e);
             if e.to_string().contains("unique") {
-                Json(ApiResponse::conflict("项目编号已存在"))
+                ApiResponse::conflict("项目编号已存在")
             } else {
-                Json(ApiResponse::server_error("创建项目失败"))
+                ApiResponse::server_error("创建项目失败")
             }
         }
     }
@@ -302,7 +302,7 @@ pub async fn get_project(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<PdmProject>> {
+) -> ApiResponse<PdmProject> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -327,11 +327,11 @@ pub async fn get_project(
     .await;
 
     match result {
-        Ok(Some(project)) => Json(ApiResponse::success(project, "获取项目成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目不存在")),
+        Ok(Some(project)) => ApiResponse::success(project, "获取项目成功"),
+        Ok(None) => ApiResponse::not_found("项目不存在"),
         Err(e) => {
             tracing::error!("获取项目失败: {}", e);
-            Json(ApiResponse::server_error("获取项目失败"))
+            ApiResponse::server_error("获取项目失败")
         }
     }
 }
@@ -343,7 +343,7 @@ pub async fn update_project(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdatePdmProjectRequest>,
-) -> Json<ApiResponse<PdmProject>> {
+) -> ApiResponse<PdmProject> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -393,11 +393,11 @@ pub async fn update_project(
     .await;
 
     match result {
-        Ok(Some(project)) => Json(ApiResponse::success(project, "更新项目成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目不存在")),
+        Ok(Some(project)) => ApiResponse::success(project, "更新项目成功"),
+        Ok(None) => ApiResponse::not_found("项目不存在"),
         Err(e) => {
             tracing::error!("更新项目失败: {}", e);
-            Json(ApiResponse::server_error("更新项目失败"))
+            ApiResponse::server_error("更新项目失败")
         }
     }
 }
@@ -408,7 +408,7 @@ pub async fn delete_project(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -428,11 +428,11 @@ pub async fn delete_project(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "删除项目成功")),
-        Ok(_) => Json(ApiResponse::not_found("项目不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "删除项目成功"),
+        Ok(_) => ApiResponse::not_found("项目不存在"),
         Err(e) => {
             tracing::error!("删除项目失败: {}", e);
-            Json(ApiResponse::server_error("删除项目失败"))
+            ApiResponse::server_error("删除项目失败")
         }
     }
 }
@@ -445,7 +445,7 @@ pub async fn update_project_status(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProjectStatusRequest>,
-) -> Json<ApiResponse<PdmProject>> {
+) -> ApiResponse<PdmProject> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -457,7 +457,7 @@ pub async fn update_project_status(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     if req.status.trim().is_empty() {
-        return Json(ApiResponse::bad_request("项目状态不能为空"));
+        return ApiResponse::bad_request("项目状态不能为空");
     }
     let result = sqlx::query_as::<_, PdmProject>(&format!(
         "UPDATE pdm_projects p SET status = $3, updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL RETURNING {PROJECT_COLUMNS}"
@@ -468,11 +468,11 @@ pub async fn update_project_status(
     .fetch_optional(&state.pool)
     .await;
     match result {
-        Ok(Some(project)) => Json(ApiResponse::success(project, "更新项目状态成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目不存在")),
+        Ok(Some(project)) => ApiResponse::success(project, "更新项目状态成功"),
+        Ok(None) => ApiResponse::not_found("项目不存在"),
         Err(e) => {
             tracing::error!("更新项目状态失败: {}", e);
-            Json(ApiResponse::server_error("更新项目状态失败"))
+            ApiResponse::server_error("更新项目状态失败")
         }
     }
 }
@@ -484,7 +484,7 @@ pub async fn update_project_phase(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProjectPhaseRequest>,
-) -> Json<ApiResponse<PdmProject>> {
+) -> ApiResponse<PdmProject> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -496,7 +496,7 @@ pub async fn update_project_phase(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     if req.phase.trim().is_empty() {
-        return Json(ApiResponse::bad_request("项目阶段不能为空"));
+        return ApiResponse::bad_request("项目阶段不能为空");
     }
     let result = sqlx::query_as::<_, PdmProject>(&format!(
         "UPDATE pdm_projects p SET phase = $3, updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL RETURNING {PROJECT_COLUMNS}"
@@ -507,11 +507,11 @@ pub async fn update_project_phase(
     .fetch_optional(&state.pool)
     .await;
     match result {
-        Ok(Some(project)) => Json(ApiResponse::success(project, "更新项目阶段成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目不存在")),
+        Ok(Some(project)) => ApiResponse::success(project, "更新项目阶段成功"),
+        Ok(None) => ApiResponse::not_found("项目不存在"),
         Err(e) => {
             tracing::error!("更新项目阶段失败: {}", e);
-            Json(ApiResponse::server_error("更新项目阶段失败"))
+            ApiResponse::server_error("更新项目阶段失败")
         }
     }
 }
@@ -522,7 +522,7 @@ pub async fn list_members(
     Extension(claims): Extension<Claims>,
     Path(project_id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<Vec<ProjectMember>>> {
+) -> ApiResponse<Vec<ProjectMember>> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -547,10 +547,10 @@ pub async fn list_members(
     .fetch_all(&state.pool)
     .await;
     match result {
-        Ok(members) => Json(ApiResponse::success(members, "获取项目成员成功")),
+        Ok(members) => ApiResponse::success(members, "获取项目成员成功"),
         Err(e) => {
             tracing::error!("获取项目成员失败: {}", e);
-            Json(ApiResponse::server_error("获取项目成员失败"))
+            ApiResponse::server_error("获取项目成员失败")
         }
     }
 }
@@ -563,7 +563,7 @@ pub async fn add_member(
     Path(project_id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<AddProjectMemberRequest>,
-) -> Json<ApiResponse<ProjectMember>> {
+) -> ApiResponse<ProjectMember> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -575,7 +575,7 @@ pub async fn add_member(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     if req.user_id.trim().is_empty() || req.role.trim().is_empty() {
-        return Json(ApiResponse::bad_request("成员用户和角色不能为空"));
+        return ApiResponse::bad_request("成员用户和角色不能为空");
     }
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"
@@ -598,10 +598,10 @@ pub async fn add_member(
     .fetch_one(&state.pool)
     .await;
     match result {
-        Ok(member) => Json(ApiResponse::success(member, "保存项目成员成功")),
+        Ok(member) => ApiResponse::success(member, "保存项目成员成功"),
         Err(e) => {
             tracing::error!("保存项目成员失败: {}", e);
-            Json(ApiResponse::server_error("保存项目成员失败"))
+            ApiResponse::server_error("保存项目成员失败")
         }
     }
 }
@@ -614,7 +614,7 @@ pub async fn update_member(
     Path((project_id, user_id)): Path<(Uuid, String)>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProjectMemberRequest>,
-) -> Json<ApiResponse<ProjectMember>> {
+) -> ApiResponse<ProjectMember> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -645,11 +645,11 @@ pub async fn update_member(
     .fetch_optional(&state.pool)
     .await;
     match result {
-        Ok(Some(member)) => Json(ApiResponse::success(member, "更新项目成员成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目成员不存在")),
+        Ok(Some(member)) => ApiResponse::success(member, "更新项目成员成功"),
+        Ok(None) => ApiResponse::not_found("项目成员不存在"),
         Err(e) => {
             tracing::error!("更新项目成员失败: {}", e);
-            Json(ApiResponse::server_error("更新项目成员失败"))
+            ApiResponse::server_error("更新项目成员失败")
         }
     }
 }
@@ -661,7 +661,7 @@ pub async fn remove_member(
     Extension(claims): Extension<Claims>,
     Path((project_id, user_id)): Path<(Uuid, String)>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -681,11 +681,11 @@ pub async fn remove_member(
     .execute(&state.pool)
     .await;
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "移除项目成员成功")),
-        Ok(_) => Json(ApiResponse::not_found("项目成员不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "移除项目成员成功"),
+        Ok(_) => ApiResponse::not_found("项目成员不存在"),
         Err(e) => {
             tracing::error!("移除项目成员失败: {}", e);
-            Json(ApiResponse::server_error("移除项目成员失败"))
+            ApiResponse::server_error("移除项目成员失败")
         }
     }
 }
@@ -696,7 +696,7 @@ pub async fn list_phases(
     Extension(claims): Extension<Claims>,
     Path(project_id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<Vec<ProjectPhase>>> {
+) -> ApiResponse<Vec<ProjectPhase>> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -721,10 +721,10 @@ pub async fn list_phases(
     .fetch_all(&state.pool)
     .await;
     match result {
-        Ok(phases) => Json(ApiResponse::success(phases, "获取项目阶段成功")),
+        Ok(phases) => ApiResponse::success(phases, "获取项目阶段成功"),
         Err(e) => {
             tracing::error!("获取项目阶段失败: {}", e);
-            Json(ApiResponse::server_error("获取项目阶段失败"))
+            ApiResponse::server_error("获取项目阶段失败")
         }
     }
 }
@@ -736,7 +736,7 @@ pub async fn create_phase(
     Path(project_id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateProjectPhaseRequest>,
-) -> Json<ApiResponse<ProjectPhase>> {
+) -> ApiResponse<ProjectPhase> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -748,7 +748,7 @@ pub async fn create_phase(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     if req.phase.trim().is_empty() || req.name.trim().is_empty() {
-        return Json(ApiResponse::bad_request("阶段标识和名称不能为空"));
+        return ApiResponse::bad_request("阶段标识和名称不能为空");
     }
     let status = req.status.unwrap_or_else(|| "pending".to_string());
     let result = sqlx::query_as::<_, ProjectPhase>(
@@ -772,10 +772,10 @@ pub async fn create_phase(
     .fetch_one(&state.pool)
     .await;
     match result {
-        Ok(phase) => Json(ApiResponse::success(phase, "创建项目阶段成功")),
+        Ok(phase) => ApiResponse::success(phase, "创建项目阶段成功"),
         Err(e) => {
             tracing::error!("创建项目阶段失败: {}", e);
-            Json(ApiResponse::server_error("创建项目阶段失败"))
+            ApiResponse::server_error("创建项目阶段失败")
         }
     }
 }
@@ -787,7 +787,7 @@ pub async fn update_phase(
     Path((project_id, phase_id)): Path<(Uuid, Uuid)>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProjectPhaseByIdRequest>,
-) -> Json<ApiResponse<ProjectPhase>> {
+) -> ApiResponse<ProjectPhase> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -827,11 +827,11 @@ pub async fn update_phase(
     .fetch_optional(&state.pool)
     .await;
     match result {
-        Ok(Some(phase)) => Json(ApiResponse::success(phase, "更新项目阶段成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目阶段不存在")),
+        Ok(Some(phase)) => ApiResponse::success(phase, "更新项目阶段成功"),
+        Ok(None) => ApiResponse::not_found("项目阶段不存在"),
         Err(e) => {
             tracing::error!("更新项目阶段失败: {}", e);
-            Json(ApiResponse::server_error("更新项目阶段失败"))
+            ApiResponse::server_error("更新项目阶段失败")
         }
     }
 }
@@ -842,7 +842,7 @@ pub async fn delete_phase(
     Extension(claims): Extension<Claims>,
     Path((project_id, phase_id)): Path<(Uuid, Uuid)>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -862,11 +862,11 @@ pub async fn delete_phase(
     .execute(&state.pool)
     .await;
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "删除项目阶段成功")),
-        Ok(_) => Json(ApiResponse::not_found("项目阶段不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "删除项目阶段成功"),
+        Ok(_) => ApiResponse::not_found("项目阶段不存在"),
         Err(e) => {
             tracing::error!("删除项目阶段失败: {}", e);
-            Json(ApiResponse::server_error("删除项目阶段失败"))
+            ApiResponse::server_error("删除项目阶段失败")
         }
     }
 }

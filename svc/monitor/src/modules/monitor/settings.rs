@@ -69,7 +69,7 @@ pub async fn list_settings(
     State(state): State<AppState>,
     Query(params): Query<SettingsQuery>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<std::collections::HashMap<String, JsonValue>>> {
+) -> ApiResponse<std::collections::HashMap<String, JsonValue>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     let rows = if let Some(cat) = &params.category {
@@ -103,15 +103,13 @@ pub async fn list_settings(
             }
         }
         Err(e) => {
-            return Json(
-                ApiResponse::<std::collections::HashMap<String, JsonValue>>::from(
-                    TopemsError::internal("获取设置列表失败", e),
-                ),
-            )
+            return ApiResponse::<std::collections::HashMap<String, JsonValue>>::from(
+                TopemsError::internal("获取设置列表失败", e),
+            );
         }
     }
 
-    Json(ApiResponse::success(map, "获取设置成功"))
+    ApiResponse::success(map, "获取设置成功")
 }
 
 /// PUT /settings — 批量 upsert 设置
@@ -129,7 +127,7 @@ pub async fn batch_update_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<BatchUpdateRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let mut updated = 0;
 
@@ -153,10 +151,10 @@ pub async fn batch_update_settings(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "updated": updated, "total": payload.settings.len() }),
         "设置保存成功",
-    ))
+    )
 }
 
 /// GET /settings/{key} — 获取单个设置
@@ -177,7 +175,7 @@ pub async fn get_setting(
     State(state): State<AppState>,
     Path(key): Path<String>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<SettingItem>> {
+) -> ApiResponse<SettingItem> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match sqlx::query(
@@ -193,20 +191,17 @@ pub async fn get_setting(
             let k: String = row.try_get("key").unwrap_or(key);
             let v: JsonValue = row.try_get("value").unwrap_or(JsonValue::Null);
             let cat: Option<String> = row.try_get("category").ok();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 SettingItem {
                     key: k,
                     value: v,
                     category: cat,
                 },
                 "获取设置成功",
-            ))
+            )
         }
-        Ok(None) => Json(ApiResponse::<SettingItem>::not_found("设置不存在")),
-        Err(e) => Json(ApiResponse::<SettingItem>::from(TopemsError::internal(
-            "操作失败",
-            e,
-        ))),
+        Ok(None) => ApiResponse::<SettingItem>::not_found("设置不存在"),
+        Err(e) => ApiResponse::<SettingItem>::from(TopemsError::internal("操作失败", e)),
     }
 }
 
@@ -229,7 +224,7 @@ pub async fn update_setting(
     Path(key): Path<String>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<SingleUpdateRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let category = payload
         .category
@@ -248,13 +243,8 @@ pub async fn update_setting(
     .execute(&state.pool)
     .await
     {
-        Ok(_) => Json(ApiResponse::success(
-            serde_json::json!({ "key": key }),
-            "设置更新成功",
-        )),
-        Err(e) => Json(ApiResponse::<serde_json::Value>::from(
-            TopemsError::internal("操作失败", e),
-        )),
+        Ok(_) => ApiResponse::success(serde_json::json!({ "key": key }), "设置更新成功"),
+        Err(e) => ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e)),
     }
 }
 
@@ -276,7 +266,7 @@ pub async fn delete_setting(
     State(state): State<AppState>,
     Path(key): Path<String>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match sqlx::query(
@@ -288,9 +278,9 @@ pub async fn delete_setting(
     .await
     {
         Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success(serde_json::json!({ "key": key }), "设置删除成功"))
+            ApiResponse::success(serde_json::json!({ "key": key }), "设置删除成功")
         }
-        Ok(_) => Json(ApiResponse::<serde_json::Value>::not_found("设置不存在")),
-        Err(e) => Json(ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e))),
+        Ok(_) => ApiResponse::<serde_json::Value>::not_found("设置不存在"),
+        Err(e) => ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e)),
     }
 }

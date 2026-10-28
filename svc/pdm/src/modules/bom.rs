@@ -558,11 +558,11 @@ pub struct BomDifferences {
 
 fn parse_optional_uuid(
     value: &Option<String>,
-) -> Result<Option<Uuid>, Json<ApiResponse<serde_json::Value>>> {
+) -> Result<Option<Uuid>, ApiResponse<serde_json::Value>> {
     match value {
         Some(raw) if !raw.trim().is_empty() => Uuid::parse_str(raw)
             .map(Some)
-            .map_err(|_| Json(ApiResponse::bad_request("product_id 不是有效 UUID"))),
+            .map_err(|_| ApiResponse::bad_request("product_id 不是有效 UUID")),
         _ => Ok(None),
     }
 }
@@ -571,12 +571,12 @@ fn json_value<T: Serialize>(
     value: T,
     success_msg: &str,
     error_msg: &str,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match serde_json::to_value(value) {
-        Ok(value) => Json(ApiResponse::success(value, success_msg)),
+        Ok(value) => ApiResponse::success(value, success_msg),
         Err(e) => {
             tracing::error!("PDM BOM 响应序列化失败: {}", e);
-            Json(ApiResponse::server_error(error_msg))
+            ApiResponse::server_error(error_msg)
         }
     }
 }
@@ -593,7 +593,7 @@ pub async fn list_bom_versions(
     Extension(claims): Extension<Claims>,
     Query(query): Query<BomVersionQuery>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -634,7 +634,7 @@ pub async fn list_bom_versions(
         Ok(items) => json_value(items, "获取 BOM 版本列表成功", "获取 BOM 版本列表失败"),
         Err(e) => {
             tracing::error!("获取 BOM 版本列表失败: {}", e);
-            Json(ApiResponse::server_error("获取 BOM 版本列表失败"))
+            ApiResponse::server_error("获取 BOM 版本列表失败")
         }
     }
 }
@@ -652,7 +652,7 @@ pub async fn get_bom_version(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -679,10 +679,10 @@ pub async fn get_bom_version(
 
     match result {
         Ok(Some(item)) => json_value(item, "获取 BOM 版本成功", "获取 BOM 版本失败"),
-        Ok(None) => Json(ApiResponse::not_found("BOM 版本不存在")),
+        Ok(None) => ApiResponse::not_found("BOM 版本不存在"),
         Err(e) => {
             tracing::error!("获取 BOM 版本失败: {}", e);
-            Json(ApiResponse::server_error("获取 BOM 版本失败"))
+            ApiResponse::server_error("获取 BOM 版本失败")
         }
     }
 }
@@ -699,7 +699,7 @@ pub async fn create_bom_version(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(payload): Json<CreateBomVersionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -738,7 +738,7 @@ pub async fn create_bom_version(
         Ok(item) => json_value(item, "创建 BOM 版本成功", "创建 BOM 版本失败"),
         Err(e) => {
             tracing::error!("创建 BOM 版本失败: {}", e);
-            Json(ApiResponse::server_error("创建 BOM 版本失败"))
+            ApiResponse::server_error("创建 BOM 版本失败")
         }
     }
 }
@@ -757,7 +757,7 @@ pub async fn update_bom_version(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateBomVersionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -801,10 +801,10 @@ pub async fn update_bom_version(
 
     match result {
         Ok(Some(item)) => json_value(item, "更新 BOM 版本成功", "更新 BOM 版本失败"),
-        Ok(None) => Json(ApiResponse::not_found("BOM 版本不存在")),
+        Ok(None) => ApiResponse::not_found("BOM 版本不存在"),
         Err(e) => {
             tracing::error!("更新 BOM 版本失败: {}", e);
-            Json(ApiResponse::server_error("更新 BOM 版本失败"))
+            ApiResponse::server_error("更新 BOM 版本失败")
         }
     }
 }
@@ -822,7 +822,7 @@ pub async fn delete_bom_version(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -843,10 +843,10 @@ pub async fn delete_bom_version(
         Ok(done) if done.rows_affected() > 0 => {
             json_value(true, "删除 BOM 版本成功", "删除 BOM 版本失败")
         }
-        Ok(_) => Json(ApiResponse::not_found("BOM 版本不存在")),
+        Ok(_) => ApiResponse::not_found("BOM 版本不存在"),
         Err(e) => {
             tracing::error!("删除 BOM 版本失败: {}", e);
-            Json(ApiResponse::server_error("删除 BOM 版本失败"))
+            ApiResponse::server_error("删除 BOM 版本失败")
         }
     }
 }
@@ -858,7 +858,7 @@ async fn update_bom_status(
     id: Uuid,
     status: &'static str,
     message: &'static str,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -886,10 +886,10 @@ async fn update_bom_status(
 
     match result {
         Ok(Some(item)) => json_value(item, message, "更新 BOM 状态失败"),
-        Ok(None) => Json(ApiResponse::not_found("BOM 版本不存在")),
+        Ok(None) => ApiResponse::not_found("BOM 版本不存在"),
         Err(e) => {
             tracing::error!("更新 BOM 状态失败: {}", e);
-            Json(ApiResponse::server_error("更新 BOM 状态失败"))
+            ApiResponse::server_error("更新 BOM 状态失败")
         }
     }
 }
@@ -908,7 +908,7 @@ pub async fn activate_bom_version(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     update_bom_status(state, claims, headers, id, "active", "启用 BOM 版本成功").await
 }
 
@@ -926,7 +926,7 @@ pub async fn archive_bom_version(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     update_bom_status(state, claims, headers, id, "archived", "归档 BOM 版本成功").await
 }
 
@@ -942,7 +942,7 @@ pub async fn list_bom_items(
     Extension(claims): Extension<Claims>,
     Query(query): Query<BomItemQuery>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -974,7 +974,7 @@ pub async fn list_bom_items(
         Ok(items) => json_value(items, "获取 BOM 明细列表成功", "获取 BOM 明细列表失败"),
         Err(e) => {
             tracing::error!("获取 BOM 明细列表失败: {}", e);
-            Json(ApiResponse::server_error("获取 BOM 明细列表失败"))
+            ApiResponse::server_error("获取 BOM 明细列表失败")
         }
     }
 }
@@ -992,7 +992,7 @@ pub async fn get_bom_item(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1019,10 +1019,10 @@ pub async fn get_bom_item(
 
     match result {
         Ok(Some(item)) => json_value(item, "获取 BOM 明细成功", "获取 BOM 明细失败"),
-        Ok(None) => Json(ApiResponse::not_found("BOM 明细不存在")),
+        Ok(None) => ApiResponse::not_found("BOM 明细不存在"),
         Err(e) => {
             tracing::error!("获取 BOM 明细失败: {}", e);
-            Json(ApiResponse::server_error("获取 BOM 明细失败"))
+            ApiResponse::server_error("获取 BOM 明细失败")
         }
     }
 }
@@ -1039,7 +1039,7 @@ pub async fn create_bom_item(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(payload): Json<CreateBomItemRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1056,7 +1056,7 @@ pub async fn create_bom_item(
         Ok(item) => json_value(item, "创建 BOM 明细成功", "创建 BOM 明细失败"),
         Err(e) => {
             tracing::error!("创建 BOM 明细失败: {}", e);
-            Json(ApiResponse::server_error("创建 BOM 明细失败"))
+            ApiResponse::server_error("创建 BOM 明细失败")
         }
     }
 }
@@ -1102,7 +1102,7 @@ pub async fn update_bom_item(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(payload): Json<UpdateBomItemRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1141,10 +1141,10 @@ pub async fn update_bom_item(
 
     match result {
         Ok(Some(item)) => json_value(item, "更新 BOM 明细成功", "更新 BOM 明细失败"),
-        Ok(None) => Json(ApiResponse::not_found("BOM 明细不存在")),
+        Ok(None) => ApiResponse::not_found("BOM 明细不存在"),
         Err(e) => {
             tracing::error!("更新 BOM 明细失败: {}", e);
-            Json(ApiResponse::server_error("更新 BOM 明细失败"))
+            ApiResponse::server_error("更新 BOM 明细失败")
         }
     }
 }
@@ -1162,7 +1162,7 @@ pub async fn delete_bom_item(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1183,10 +1183,10 @@ pub async fn delete_bom_item(
         Ok(done) if done.rows_affected() > 0 => {
             json_value(true, "删除 BOM 明细成功", "删除 BOM 明细失败")
         }
-        Ok(_) => Json(ApiResponse::not_found("BOM 明细不存在")),
+        Ok(_) => ApiResponse::not_found("BOM 明细不存在"),
         Err(e) => {
             tracing::error!("删除 BOM 明细失败: {}", e);
-            Json(ApiResponse::server_error("删除 BOM 明细失败"))
+            ApiResponse::server_error("删除 BOM 明细失败")
         }
     }
 }
@@ -1205,7 +1205,7 @@ pub async fn batch_create_bom_items(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(payload): Json<BatchCreateBomItemsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1224,7 +1224,7 @@ pub async fn batch_create_bom_items(
             Ok(row) => created.push(row),
             Err(e) => {
                 tracing::error!("批量创建 BOM 明细失败: {}", e);
-                return Json(ApiResponse::server_error("批量创建 BOM 明细失败"));
+                return ApiResponse::server_error("批量创建 BOM 明细失败");
             }
         }
     }
@@ -1244,7 +1244,7 @@ pub async fn compare_bom_versions(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(payload): Json<CompareBomVersionsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1263,7 +1263,7 @@ pub async fn compare_bom_versions(
         (Ok(a), Ok(b)) => (a, b),
         (Err(e), _) | (_, Err(e)) => {
             tracing::error!("BOM 对比读取明细失败: {}", e);
-            return Json(ApiResponse::server_error("BOM 对比失败"));
+            return ApiResponse::server_error("BOM 对比失败");
         }
     };
 
@@ -1356,7 +1356,7 @@ async fn fetch_items_by_bom(
     tag = "pdm",
     responses((status = 200, description = "OK")),
 )]
-pub async fn list_bom_comparisons() -> Json<ApiResponse<serde_json::Value>> {
+pub async fn list_bom_comparisons() -> ApiResponse<serde_json::Value> {
     json_value(
         Vec::<BomComparison>::new(),
         "获取 BOM 对比列表成功",
@@ -1372,8 +1372,6 @@ pub async fn list_bom_comparisons() -> Json<ApiResponse<serde_json::Value>> {
     params(("id" = Uuid, Path, description = "BOM 对比 ID")),
     responses((status = 200, description = "OK")),
 )]
-pub async fn get_bom_comparison(Path(_id): Path<Uuid>) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_found(
-        "BOM 对比结果未持久化，请重新发起对比",
-    ))
+pub async fn get_bom_comparison(Path(_id): Path<Uuid>) -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_found("BOM 对比结果未持久化，请重新发起对比")
 }

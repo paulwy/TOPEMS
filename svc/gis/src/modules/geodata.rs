@@ -46,9 +46,9 @@ pub async fn upload_geodata(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
-) -> Json<ApiResponse<GeoData>> {
+) -> ApiResponse<GeoData> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
-        return e;
+        return e.0;
     }
 
     let mut file_data: Vec<u8> = Vec::new();
@@ -65,9 +65,9 @@ pub async fn upload_geodata(
                         Ok(bytes) => file_data = bytes.to_vec(),
                         Err(e) => {
                             tracing::warn!("读取文件失败: {}", e);
-                            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                            return ApiResponse::from(TopemsError::ValidationFailed(
                                 "读取文件失败".to_string(),
-                            )));
+                            ));
                         }
                     }
                 } else if field_name == "name" {
@@ -87,15 +87,15 @@ pub async fn upload_geodata(
             Ok(None) => break,
             Err(e) => {
                 tracing::warn!("解析上传数据失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                return ApiResponse::from(TopemsError::ValidationFailed(
                     "解析上传数据失败".to_string(),
-                )));
+                ));
             }
         }
     }
 
     if file_data.is_empty() {
-        return Json(ApiResponse::bad_request("请上传文件"));
+        return ApiResponse::bad_request("请上传文件");
     }
 
     // Parse GeoJSON if format is geojson
@@ -104,9 +104,9 @@ pub async fn upload_geodata(
             Ok(data) => Some(data),
             Err(e) => {
                 tracing::warn!("GeoJSON解析失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                return ApiResponse::from(TopemsError::ValidationFailed(
                     "GeoJSON解析失败".to_string(),
-                )));
+                ));
             }
         }
     } else {
@@ -150,9 +150,9 @@ pub async fn upload_geodata(
                     }
                 }
             }
-            Json(ApiResponse::success(geodata, "上传地理数据成功"))
+            ApiResponse::success(geodata, "上传地理数据成功")
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("上传失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("上传失败", e)),
     }
 }
 
@@ -194,7 +194,7 @@ async fn insert_feature(
 pub async fn list_geodata(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -208,14 +208,14 @@ pub async fn list_geodata(
         .fetch_all(&pool)
         .await
     {
-        Ok(data) => Json(ApiResponse::success(
+        Ok(data) => ApiResponse::success(
             serde_json::json!({
                 "geodata": data,
                 "total": data.len()
             }),
             "获取地理数据列表成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -224,7 +224,7 @@ pub async fn get_geodata(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<GeoData>> {
+) -> ApiResponse<GeoData> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -241,9 +241,9 @@ pub async fn get_geodata(
     .fetch_one(&pool)
     .await
     {
-        Ok(data) => Json(ApiResponse::success(data, "获取地理数据成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("地理数据未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(data) => ApiResponse::success(data, "获取地理数据成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("地理数据未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -253,9 +253,9 @@ pub async fn update_geodata(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateGeoData>,
-) -> Json<ApiResponse<GeoData>> {
+) -> ApiResponse<GeoData> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
-        return e;
+        return e.0;
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -283,9 +283,9 @@ pub async fn update_geodata(
     .fetch_one(&pool)
     .await
     {
-        Ok(data) => Json(ApiResponse::success(data, "更新地理数据成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("地理数据未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+        Ok(data) => ApiResponse::success(data, "更新地理数据成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("地理数据未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
 }
 
@@ -294,9 +294,9 @@ pub async fn delete_geodata(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
-        return e;
+        return e.0;
     }
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
 
@@ -311,12 +311,12 @@ pub async fn delete_geodata(
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
-                Json(ApiResponse::success(true, "删除地理数据成功"))
+                ApiResponse::success(true, "删除地理数据成功")
             } else {
-                Json(ApiResponse::not_found("地理数据未找到"))
+                ApiResponse::not_found("地理数据未找到")
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
     }
 }
 
@@ -326,9 +326,9 @@ pub async fn convert_geodata(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<ConvertRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
-        return e;
+        return e.0;
     }
 
     // Get source data
@@ -344,37 +344,37 @@ pub async fn convert_geodata(
             match payload.target_format.as_str() {
                 "geojson" => {
                     if let Some(geojson) = geodata.geojson_data {
-                        Json(ApiResponse::success(
+                        ApiResponse::success(
                             serde_json::json!({
                                 "format": "geojson",
                                 "data": geojson
                             }),
                             "转换成功",
-                        ))
+                        )
                     } else {
-                        Json(ApiResponse::bad_request("源数据不是GeoJSON格式"))
+                        ApiResponse::bad_request("源数据不是GeoJSON格式")
                     }
                 }
                 "csv" => {
                     // Simplified CSV conversion
                     if let Some(geojson) = geodata.geojson_data {
                         let csv_data = convert_geojson_to_csv(&geojson);
-                        Json(ApiResponse::success(
+                        ApiResponse::success(
                             serde_json::json!({
                                 "format": "csv",
                                 "data": csv_data
                             }),
                             "转换成功",
-                        ))
+                        )
                     } else {
-                        Json(ApiResponse::bad_request("源数据不是GeoJSON格式"))
+                        ApiResponse::bad_request("源数据不是GeoJSON格式")
                     }
                 }
-                _ => Json(ApiResponse::bad_request("不支持的目标格式")),
+                _ => ApiResponse::bad_request("不支持的目标格式"),
             }
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("地理数据未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("地理数据未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -415,7 +415,7 @@ pub async fn list_geofeatures(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -432,13 +432,13 @@ pub async fn list_geofeatures(
     .fetch_all(&pool)
     .await
     {
-        Ok(features) => Json(ApiResponse::success(
+        Ok(features) => ApiResponse::success(
             serde_json::json!({
                 "features": features,
                 "total": features.len()
             }),
             "获取地理要素列表成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }

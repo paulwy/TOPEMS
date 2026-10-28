@@ -126,7 +126,7 @@ impl From<SyncTaskRow> for SyncTask {
 pub async fn create_task(
     State(state): State<AppState>,
     Json(req): Json<CreateSyncTaskRequest>,
-) -> Json<ApiResponse<SyncTask>> {
+) -> ApiResponse<SyncTask> {
     let tenant_id = Uuid::nil();
     let source_id = req.source_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
     let now = chrono::Utc::now();
@@ -156,12 +156,10 @@ pub async fn create_task(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(row) => Json(ApiResponse::success(row.into(), "同步任务创建成功")),
+        Ok(row) => ApiResponse::success(row.into(), "同步任务创建成功"),
         Err(e) => {
             tracing::error!("创建同步任务失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建同步任务失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建同步任务失败".to_string()))
         }
     }
 }
@@ -182,7 +180,7 @@ pub async fn create_task(
 pub async fn get_task(
     State(state): State<AppState>,
     axum::extract::Path(task_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Option<SyncTask>>> {
+) -> ApiResponse<Option<SyncTask>> {
     match Uuid::parse_str(&task_id) {
         Ok(id) => {
             let row = sqlx::query_as::<_, SyncTaskRow>(
@@ -193,21 +191,14 @@ pub async fn get_task(
             .await;
 
             match row {
-                Ok(opt) => Json(ApiResponse::success(
-                    opt.map(|r| r.into()),
-                    "查询同步任务成功",
-                )),
+                Ok(opt) => ApiResponse::success(opt.map(|r| r.into()), "查询同步任务成功"),
                 Err(e) => {
                     tracing::error!("查询同步任务失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::Internal(
-                        "查询同步任务失败".to_string(),
-                    )))
+                    ApiResponse::from(TopemsError::Internal("查询同步任务失败".to_string()))
                 }
             }
         }
-        Err(_) => Json(ApiResponse::from(TopemsError::ValidationFailed(
-            "任务ID格式错误".to_string(),
-        ))),
+        Err(_) => ApiResponse::from(TopemsError::ValidationFailed("任务ID格式错误".to_string())),
     }
 }
 
@@ -230,7 +221,7 @@ pub async fn update_status(
     axum::extract::Path(task_id): axum::extract::Path<String>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateStatusRequest>,
-) -> Json<ApiResponse<SyncTask>> {
+) -> ApiResponse<SyncTask> {
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -260,18 +251,14 @@ pub async fn update_status(
             .fetch_one(&state.pool)
             .await
             {
-                Ok(row) => Json(ApiResponse::success(row.into(), "同步任务状态更新成功")),
+                Ok(row) => ApiResponse::success(row.into(), "同步任务状态更新成功"),
                 Err(e) => {
                     tracing::error!("更新同步任务状态失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::Internal(
-                        "更新同步任务状态失败".to_string(),
-                    )))
+                    ApiResponse::from(TopemsError::Internal("更新同步任务状态失败".to_string()))
                 }
             }
         }
-        Err(_) => Json(ApiResponse::from(TopemsError::ValidationFailed(
-            "任务ID格式错误".to_string(),
-        ))),
+        Err(_) => ApiResponse::from(TopemsError::ValidationFailed("任务ID格式错误".to_string())),
     }
 }
 
@@ -284,7 +271,7 @@ pub async fn update_status(
         (status = 200, description = "OK"),
     ),
 )]
-pub async fn get_pending(State(state): State<AppState>) -> Json<ApiResponse<Vec<SyncTask>>> {
+pub async fn get_pending(State(state): State<AppState>) -> ApiResponse<Vec<SyncTask>> {
     match sqlx::query_as::<_, SyncTaskRow>(
         only_own_schema_query!("integration", r#"
         SELECT id, tenant_id, sync_type, source_module, target_module, source_entity, source_id, source_code, status, retry_count, max_retries, error_message, next_retry_at, executed_at, created_at, updated_at FROM integration.core_inter_module_sync
@@ -297,11 +284,11 @@ pub async fn get_pending(State(state): State<AppState>) -> Json<ApiResponse<Vec<
     {
         Ok(rows) => {
             let tasks: Vec<SyncTask> = rows.into_iter().map(|r| r.into()).collect();
-            Json(ApiResponse::success(tasks, "查询待处理同步任务成功"))
+            ApiResponse::success(tasks, "查询待处理同步任务成功")
         }
         Err(e) => {
             tracing::error!("查询待处理同步任务失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("查询待处理同步任务失败".to_string())))
+            ApiResponse::from(TopemsError::Internal("查询待处理同步任务失败".to_string()))
         }
     }
 }
@@ -315,7 +302,7 @@ pub async fn get_pending(State(state): State<AppState>) -> Json<ApiResponse<Vec<
         (status = 200, description = "OK"),
     ),
 )]
-pub async fn get_statistics(State(state): State<AppState>) -> Json<ApiResponse<SyncStatistics>> {
+pub async fn get_statistics(State(state): State<AppState>) -> ApiResponse<SyncStatistics> {
     let result: Result<SyncStatistics, sqlx::Error> = async {
         let total_tasks = sqlx::query_scalar::<_, i64>(only_own_schema_query!("integration", "SELECT COUNT(*) FROM integration.core_inter_module_sync"))
             .fetch_one(&state.pool)
@@ -356,12 +343,10 @@ pub async fn get_statistics(State(state): State<AppState>) -> Json<ApiResponse<S
     .await;
 
     match result {
-        Ok(stats) => Json(ApiResponse::success(stats, "获取同步统计数据成功")),
+        Ok(stats) => ApiResponse::success(stats, "获取同步统计数据成功"),
         Err(e) => {
             tracing::error!("获取同步统计数据失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取同步统计数据失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取同步统计数据失败".to_string()))
         }
     }
 }
@@ -381,7 +366,7 @@ pub async fn retry_failed(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RetryFailedRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let now = chrono::Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -450,15 +435,13 @@ pub async fn retry_failed(
     };
 
     match result {
-        Ok(res) => Json(ApiResponse::success(
+        Ok(res) => ApiResponse::success(
             serde_json::json!({ "retried_count": res.rows_affected() }),
             "重试失败任务成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("重试失败任务失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "重试失败任务失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("重试失败任务失败".to_string()))
         }
     }
 }
@@ -477,7 +460,7 @@ pub async fn retry_failed(
 pub async fn trigger_scm_wms(
     State(state): State<AppState>,
     Json(req): Json<TriggerSyncRequest>,
-) -> Json<ApiResponse<SyncTask>> {
+) -> ApiResponse<SyncTask> {
     match Uuid::parse_str(&req.entity_id) {
         Ok(id) => {
             let now = chrono::Utc::now();
@@ -499,16 +482,16 @@ pub async fn trigger_scm_wms(
             .fetch_one(&state.pool)
             .await
             {
-                Ok(row) => Json(ApiResponse::success(row.into(), "触发SCM→WMS同步成功")),
+                Ok(row) => ApiResponse::success(row.into(), "触发SCM→WMS同步成功"),
                 Err(e) => {
                     tracing::error!("触发SCM→WMS同步失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::Internal("触发SCM→WMS同步失败".to_string())))
+                    ApiResponse::from(TopemsError::Internal("触发SCM→WMS同步失败".to_string()))
                 }
             }
         }
-        Err(_) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+        Err(_) => ApiResponse::from(TopemsError::ValidationFailed(
             "采购订单ID格式错误".to_string(),
-        ))),
+        )),
     }
 }
 
@@ -526,7 +509,7 @@ pub async fn trigger_scm_wms(
 pub async fn trigger_wms_crm(
     State(state): State<AppState>,
     Json(req): Json<TriggerSyncRequest>,
-) -> Json<ApiResponse<SyncTask>> {
+) -> ApiResponse<SyncTask> {
     match Uuid::parse_str(&req.entity_id) {
         Ok(id) => {
             let now = chrono::Utc::now();
@@ -548,16 +531,16 @@ pub async fn trigger_wms_crm(
             .fetch_one(&state.pool)
             .await
             {
-                Ok(row) => Json(ApiResponse::success(row.into(), "触发WMS→CRM同步成功")),
+                Ok(row) => ApiResponse::success(row.into(), "触发WMS→CRM同步成功"),
                 Err(e) => {
                     tracing::error!("触发WMS→CRM同步失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::Internal("触发WMS→CRM同步失败".to_string())))
+                    ApiResponse::from(TopemsError::Internal("触发WMS→CRM同步失败".to_string()))
                 }
             }
         }
-        Err(_) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+        Err(_) => ApiResponse::from(TopemsError::ValidationFailed(
             "出库单ID格式错误".to_string(),
-        ))),
+        )),
     }
 }
 
@@ -575,7 +558,7 @@ pub async fn trigger_wms_crm(
 pub async fn trigger_srm_scm(
     State(state): State<AppState>,
     Json(req): Json<TriggerSyncRequest>,
-) -> Json<ApiResponse<SyncTask>> {
+) -> ApiResponse<SyncTask> {
     match Uuid::parse_str(&req.entity_id) {
         Ok(id) => {
             let now = chrono::Utc::now();
@@ -597,16 +580,16 @@ pub async fn trigger_srm_scm(
             .fetch_one(&state.pool)
             .await
             {
-                Ok(row) => Json(ApiResponse::success(row.into(), "触发SRM→SCM同步成功")),
+                Ok(row) => ApiResponse::success(row.into(), "触发SRM→SCM同步成功"),
                 Err(e) => {
                     tracing::error!("触发SRM→SCM同步失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::Internal("触发SRM→SCM同步失败".to_string())))
+                    ApiResponse::from(TopemsError::Internal("触发SRM→SCM同步失败".to_string()))
                 }
             }
         }
-        Err(_) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+        Err(_) => ApiResponse::from(TopemsError::ValidationFailed(
             "供应商ID格式错误".to_string(),
-        ))),
+        )),
     }
 }
 
@@ -665,7 +648,7 @@ struct SyncStatsAggRow {
 )]
 pub async fn get_integration_sync_stats(
     State(state): State<AppState>,
-) -> Json<ApiResponse<IntegrationSyncStatsResp>> {
+) -> ApiResponse<IntegrationSyncStatsResp> {
     let result: Result<IntegrationSyncStatsResp, sqlx::Error> = async {
         let (total_syncs,): (i64,) = sqlx::query_as(only_own_schema_query!(
             "integration",
@@ -737,12 +720,10 @@ pub async fn get_integration_sync_stats(
     .await;
 
     match result {
-        Ok(stats) => Json(ApiResponse::success(stats, "获取同步统计成功")),
+        Ok(stats) => ApiResponse::success(stats, "获取同步统计成功"),
         Err(e) => {
             tracing::error!("获取同步统计失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取同步统计失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取同步统计失败".to_string()))
         }
     }
 }
@@ -779,7 +760,7 @@ struct SyncHistoryRow {
 pub async fn get_sync_history(
     State(state): State<AppState>,
     axum::extract::Query(q): axum::extract::Query<SyncHistoryQuery>,
-) -> Json<ApiResponse<Vec<SyncHistoryItemResp>>> {
+) -> ApiResponse<Vec<SyncHistoryItemResp>> {
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
@@ -849,12 +830,10 @@ pub async fn get_sync_history(
     .await;
 
     match result {
-        Ok(items) => Json(ApiResponse::success(items, "获取同步历史成功")),
+        Ok(items) => ApiResponse::success(items, "获取同步历史成功"),
         Err(e) => {
             tracing::error!("获取同步历史失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取同步历史失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取同步历史失败".to_string()))
         }
     }
 }
@@ -885,7 +864,7 @@ pub struct IntegrationEndpointResp {
 )]
 pub async fn list_endpoints(
     State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<IntegrationEndpointResp>>> {
+) -> ApiResponse<Vec<IntegrationEndpointResp>> {
     let endpoints = vec![
         IntegrationEndpointResp {
             id: "erp-connections".into(),
@@ -987,5 +966,5 @@ pub async fn list_endpoints(
 
     // state 仅用于保持签名一致（供中间件链路使用）
     let _ = state;
-    Json(ApiResponse::success(endpoints, "获取集成端点列表成功"))
+    ApiResponse::success(endpoints, "获取集成端点列表成功")
 }

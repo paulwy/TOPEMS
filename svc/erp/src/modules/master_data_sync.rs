@@ -218,7 +218,7 @@ fn get_sync_store() -> Arc<SyncStore> {
 pub async fn create_sync_job(
     State(state): State<ApiState>,
     Json(payload): Json<CreateSyncJobRequest>,
-) -> Json<ApiResponse<SyncJob>> {
+) -> ApiResponse<SyncJob> {
     let _ = &state;
     let now = chrono::Utc::now();
     let job_id = uuid::Uuid::new_v4().to_string();
@@ -270,7 +270,7 @@ pub async fn create_sync_job(
         execute_sync_job(job_id).await;
     });
 
-    Json(ApiResponse::success(job, "同步任务创建成功"))
+    ApiResponse::success(job, "同步任务创建成功")
 }
 
 #[allow(
@@ -394,14 +394,14 @@ fn simulate_sync_step(target_system: &str, operation: &str) -> bool {
 pub async fn get_sync_job(
     Path(id): Path<String>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<SyncJob>> {
+) -> ApiResponse<SyncJob> {
     let _ = &state;
     let store = get_sync_store();
     let jobs = store.jobs.lock().await;
 
     match jobs.iter().find(|j| j.id == id) {
-        Some(job) => Json(ApiResponse::success(job.clone(), "同步任务详情")),
-        None => Json(ApiResponse::not_found("未找到同步任务")),
+        Some(job) => ApiResponse::success(job.clone(), "同步任务详情"),
+        None => ApiResponse::not_found("未找到同步任务"),
     }
 }
 
@@ -422,7 +422,7 @@ pub async fn get_sync_job(
 pub async fn list_sync_jobs(
     Query(params): Query<ListSyncJobsParams>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let _ = &state;
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -461,7 +461,7 @@ pub async fn list_sync_jobs(
         .cloned()
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "items": items,
             "total": total,
@@ -470,7 +470,7 @@ pub async fn list_sync_jobs(
             "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
         }),
         "同步任务列表",
-    ))
+    )
 }
 
 /// V41.0 AC-13: 重试失败任务
@@ -486,18 +486,18 @@ pub async fn list_sync_jobs(
 pub async fn retry_sync_job(
     Path(id): Path<String>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<SyncJob>> {
+) -> ApiResponse<SyncJob> {
     let _ = &state;
     let store = get_sync_store();
     let mut jobs = store.jobs.lock().await;
 
     let job_pos = match jobs.iter().position(|j| j.id == id) {
         Some(pos) => pos,
-        None => return Json(ApiResponse::not_found("未找到同步任务")),
+        None => return ApiResponse::not_found("未找到同步任务"),
     };
 
     if jobs[job_pos].retry_count >= jobs[job_pos].max_retries {
-        return Json(ApiResponse::bad_request("已达到最大重试次数"));
+        return ApiResponse::bad_request("已达到最大重试次数");
     }
 
     jobs[job_pos].retry_count += 1;
@@ -522,7 +522,7 @@ pub async fn retry_sync_job(
         execute_sync_job(job_id).await;
     });
 
-    Json(ApiResponse::success(job, "同步任务已重试"))
+    ApiResponse::success(job, "同步任务已重试")
 }
 
 /// V41.0 AC-13: 取消同步任务
@@ -538,21 +538,21 @@ pub async fn retry_sync_job(
 pub async fn cancel_sync_job(
     Path(id): Path<String>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<SyncJob>> {
+) -> ApiResponse<SyncJob> {
     let _ = &state;
     let store = get_sync_store();
     let mut jobs = store.jobs.lock().await;
 
     let job_pos = match jobs.iter().position(|j| j.id == id) {
         Some(pos) => pos,
-        None => return Json(ApiResponse::not_found("未找到同步任务")),
+        None => return ApiResponse::not_found("未找到同步任务"),
     };
 
     if jobs[job_pos].status == SyncStatus::Completed
         || jobs[job_pos].status == SyncStatus::Failed
         || jobs[job_pos].status == SyncStatus::Compensated
     {
-        return Json(ApiResponse::bad_request("当前状态不可取消"));
+        return ApiResponse::bad_request("当前状态不可取消");
     }
 
     jobs[job_pos].status = SyncStatus::Failed;
@@ -561,7 +561,7 @@ pub async fn cancel_sync_job(
     jobs[job_pos].error_message = Some("任务已被取消".to_string());
 
     let job = jobs[job_pos].clone();
-    Json(ApiResponse::success(job, "同步任务已取消"))
+    ApiResponse::success(job, "同步任务已取消")
 }
 
 /// V41.0 AC-13: 触发补偿
@@ -577,22 +577,20 @@ pub async fn cancel_sync_job(
 pub async fn trigger_compensation(
     Path(id): Path<String>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<SyncJob>> {
+) -> ApiResponse<SyncJob> {
     let _ = &state;
     let store = get_sync_store();
     let mut jobs = store.jobs.lock().await;
 
     let job_pos = match jobs.iter().position(|j| j.id == id) {
         Some(pos) => pos,
-        None => return Json(ApiResponse::not_found("未找到同步任务")),
+        None => return ApiResponse::not_found("未找到同步任务"),
     };
 
     if jobs[job_pos].status != SyncStatus::Failed
         && jobs[job_pos].status != SyncStatus::PartiallyFailed
     {
-        return Json(ApiResponse::bad_request(
-            "只有失败或部分失败的任务才能触发补偿",
-        ));
+        return ApiResponse::bad_request("只有失败或部分失败的任务才能触发补偿");
     }
 
     jobs[job_pos].status = SyncStatus::Compensating;
@@ -628,7 +626,7 @@ pub async fn trigger_compensation(
     jobs[job_pos].updated_at = chrono::Utc::now();
     let job = jobs[job_pos].clone();
 
-    Json(ApiResponse::success(job, "补偿执行完成"))
+    ApiResponse::success(job, "补偿执行完成")
 }
 
 fn simulate_compensation(target_system: &str, operation: &str) -> bool {
@@ -645,7 +643,7 @@ fn simulate_compensation(target_system: &str, operation: &str) -> bool {
     responses((status = 200, description = "获取同步统计成功", body = ApiResponse<serde_json::Value>))
 )]
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-pub async fn get_sync_stats(State(state): State<ApiState>) -> Json<ApiResponse<SyncStats>> {
+pub async fn get_sync_stats(State(state): State<ApiState>) -> ApiResponse<SyncStats> {
     let _ = &state;
     let store = get_sync_store();
     let jobs = store.jobs.lock().await;
@@ -732,7 +730,7 @@ pub async fn get_sync_stats(State(state): State<ApiState>) -> Json<ApiResponse<S
 
     let dead_letter_count = dead_letters.len() as u64;
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         SyncStats {
             total_jobs,
             successful,
@@ -745,7 +743,7 @@ pub async fn get_sync_stats(State(state): State<ApiState>) -> Json<ApiResponse<S
             sync_per_system: system_stats,
         },
         "同步统计数据",
-    ))
+    )
 }
 
 // --- 死信队列 Handlers ---
@@ -766,7 +764,7 @@ pub async fn get_sync_stats(State(state): State<ApiState>) -> Json<ApiResponse<S
 pub async fn list_dead_letters(
     Query(params): Query<ListDeadLettersParams>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<DeadLetterEntry>>> {
+) -> ApiResponse<Vec<DeadLetterEntry>> {
     let _ = &state;
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -799,7 +797,7 @@ pub async fn list_dead_letters(
         .cloned()
         .collect();
 
-    Json(ApiResponse::success(items, "死信队列列表"))
+    ApiResponse::success(items, "死信队列列表")
 }
 
 /// V41.0 AC-13: 重放死信
@@ -815,14 +813,14 @@ pub async fn list_dead_letters(
 pub async fn replay_dead_letter(
     Path(id): Path<String>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let _ = &state;
     let store = get_sync_store();
     let mut dead_letters = store.dead_letters.lock().await;
 
     let pos = match dead_letters.iter().position(|d| d.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到死信记录")),
+        None => return ApiResponse::not_found("未找到死信记录"),
     };
 
     let job_id = dead_letters[pos].job_id.clone();
@@ -842,7 +840,7 @@ pub async fn replay_dead_letter(
         });
     }
 
-    Json(ApiResponse::success(true, "死信重放成功"))
+    ApiResponse::success(true, "死信重放成功")
 }
 
 /// V41.0 AC-13: 批量重放死信
@@ -857,7 +855,7 @@ pub async fn replay_dead_letter(
 pub async fn batch_replay_dead_letters(
     State(state): State<ApiState>,
     Json(payload): Json<BatchReplayRequest>,
-) -> Json<ApiResponse<u64>> {
+) -> ApiResponse<u64> {
     let _ = &state;
     let store = get_sync_store();
     let mut dead_letters = store.dead_letters.lock().await;
@@ -890,7 +888,7 @@ pub async fn batch_replay_dead_letters(
         });
     }
 
-    Json(ApiResponse::success(replayed, "批量重放完成"))
+    ApiResponse::success(replayed, "批量重放完成")
 }
 
 /// V41.0 AC-13: 删除死信

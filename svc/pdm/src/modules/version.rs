@@ -78,7 +78,7 @@ pub async fn list_versions(
     Extension(claims): Extension<Claims>,
     Query(query): Query<VersionQuery>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -141,7 +141,7 @@ pub async fn list_versions(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "versions": versions,
                     "total": total,
@@ -149,11 +149,11 @@ pub async fn list_versions(
                     "page_size": page_size
                 }),
                 "获取版本列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取版本列表失败: {}", e);
-            Json(ApiResponse::server_error("获取版本列表失败"))
+            ApiResponse::server_error("获取版本列表失败")
         }
     }
 }
@@ -171,7 +171,7 @@ pub async fn create_version(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateVersionRequest>,
-) -> Json<ApiResponse<Version>> {
+) -> ApiResponse<Version> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -184,10 +184,10 @@ pub async fn create_version(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.version_no.is_empty() {
-        return Json(ApiResponse::bad_request("版本号不能为空"));
+        return ApiResponse::bad_request("版本号不能为空");
     }
     if req.version_label.is_empty() {
-        return Json(ApiResponse::bad_request("版本标签不能为空"));
+        return ApiResponse::bad_request("版本标签不能为空");
     }
 
     let result = sqlx::query_as::<_, Version>(
@@ -213,10 +213,10 @@ pub async fn create_version(
     .await;
 
     match result {
-        Ok(version) => Json(ApiResponse::success(version, "版本创建成功")),
+        Ok(version) => ApiResponse::success(version, "版本创建成功"),
         Err(e) => {
             tracing::error!("创建版本失败: {}", e);
-            Json(ApiResponse::server_error("创建版本失败"))
+            ApiResponse::server_error("创建版本失败")
         }
     }
 }
@@ -237,7 +237,7 @@ pub async fn get_version(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<Version>> {
+) -> ApiResponse<Version> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -263,11 +263,11 @@ pub async fn get_version(
     .await;
 
     match result {
-        Ok(Some(version)) => Json(ApiResponse::success(version, "获取版本成功")),
-        Ok(None) => Json(ApiResponse::not_found("版本不存在")),
+        Ok(Some(version)) => ApiResponse::success(version, "获取版本成功"),
+        Ok(None) => ApiResponse::not_found("版本不存在"),
         Err(e) => {
             tracing::error!("获取版本失败: {}", e);
-            Json(ApiResponse::server_error("获取版本失败"))
+            ApiResponse::server_error("获取版本失败")
         }
     }
 }
@@ -290,7 +290,7 @@ pub async fn update_version(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateVersionRequest>,
-) -> Json<ApiResponse<Version>> {
+) -> ApiResponse<Version> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -335,11 +335,11 @@ pub async fn update_version(
     .await;
 
     match result {
-        Ok(Some(version)) => Json(ApiResponse::success(version, "版本更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("版本不存在")),
+        Ok(Some(version)) => ApiResponse::success(version, "版本更新成功"),
+        Ok(None) => ApiResponse::not_found("版本不存在"),
         Err(e) => {
             tracing::error!("更新版本失败: {}", e);
-            Json(ApiResponse::server_error("更新版本失败"))
+            ApiResponse::server_error("更新版本失败")
         }
     }
 }
@@ -360,7 +360,7 @@ pub async fn delete_version(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -380,11 +380,11 @@ pub async fn delete_version(
             .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "版本删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("版本不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "版本删除成功"),
+        Ok(_) => ApiResponse::not_found("版本不存在"),
         Err(e) => {
             tracing::error!("删除版本失败: {}", e);
-            Json(ApiResponse::server_error("删除版本失败"))
+            ApiResponse::server_error("删除版本失败")
         }
     }
 }

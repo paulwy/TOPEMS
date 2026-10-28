@@ -1,4 +1,4 @@
-use axum::{extract::State, Json};
+use axum::extract::State;
 use serde::{Deserialize, Serialize};
 
 use crate::shared::AppState;
@@ -35,7 +35,7 @@ pub struct PermissionDef {
     tag = "pdm",
     responses((status = 200, description = "OK")),
 )]
-pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
     let runtime_url =
         std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8031".to_string());
 
@@ -54,7 +54,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         ])),
         category: Some("manufacturing".to_string()),
     };
-    Json(ApiResponse::success(info, "Plugin info"))
+    ApiResponse::success(info, "Plugin info")
 }
 
 #[utoipa::path(
@@ -64,16 +64,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     tag = "pdm",
     responses((status = 200, description = "OK")),
 )]
-pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<String>> {
+pub async fn plugin_health_check(State(state): State<AppState>) -> ApiResponse<String> {
     let db_healthy = sqlx::query("SELECT 1").fetch_one(&state.pool).await.is_ok();
 
     if db_healthy {
-        Json(ApiResponse::success(
-            "healthy".to_string(),
-            "Plugin is healthy",
-        ))
+        ApiResponse::success("healthy".to_string(), "Plugin is healthy")
     } else {
-        Json(ApiResponse::server_error("Database connection failed"))
+        ApiResponse::server_error("Database connection failed")
     }
 }
 

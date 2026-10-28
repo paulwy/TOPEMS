@@ -4,7 +4,6 @@
 //! 从 master_data_refs.rs 拆分。
 
 use axum::extract::{Extension, Path, Query, State};
-use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
@@ -182,7 +181,7 @@ pub async fn list_data_assets(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<DataAssetSummary>>> {
+) -> ApiResponse<Vec<DataAssetSummary>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -248,11 +247,11 @@ pub async fn list_data_assets(
                     fields: get_domain_fields(&domain),
                 });
             }
-            Json(ApiResponse::success(assets, "数据资产目录列表"))
+            ApiResponse::success(assets, "数据资产目录列表")
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询数据资产目录失败: {}", e);
-            Json(ApiResponse::success(vec![], "数据资产目录列表（空）"))
+            ApiResponse::success(vec![], "数据资产目录列表（空）")
         }
     }
 }
@@ -303,7 +302,7 @@ pub async fn get_data_asset_detail(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<DataAssetSummary>> {
+) -> ApiResponse<DataAssetSummary> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -335,7 +334,7 @@ pub async fn get_data_asset_detail(
 
             let quality_score = calculate_domain_quality_score(&mut *db, &domain).await;
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 DataAssetSummary {
                     domain: domain.clone(),
                     domain_name: domain_display_name(&domain),
@@ -347,11 +346,11 @@ pub async fn get_data_asset_detail(
                     fields: get_domain_fields(&domain),
                 },
                 "数据资产详情",
-            ))
+            )
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询数据资产详情失败: {}", e);
-            Json(ApiResponse::not_found("未找到数据资产"))
+            ApiResponse::not_found("未找到数据资产")
         }
     }
 }

@@ -1285,7 +1285,7 @@ impl AutoComplianceReviewer {
 pub async fn get_risk_dashboard_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<RiskDashboard>> {
+) -> ApiResponse<RiskDashboard> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1294,8 +1294,8 @@ pub async fn get_risk_dashboard_handler(
     };
 
     match RealTimeRiskMonitor::get_dashboard(&pool, tenant_id).await {
-        Ok(dashboard) => Json(ApiResponse::success(dashboard, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(dashboard) => ApiResponse::success(dashboard, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1309,7 +1309,7 @@ pub async fn get_risk_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
-) -> Json<ApiResponse<Vec<RiskAlert>>> {
+) -> ApiResponse<Vec<RiskAlert>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1319,21 +1319,21 @@ pub async fn get_risk_alerts_handler(
 
     if let Some(ref cat) = params.category {
         match RealTimeRiskMonitor::get_alerts_by_category(&pool, tenant_id, cat.clone()).await {
-            Ok(alerts) => return Json(ApiResponse::success(alerts, "查询成功")),
-            Err(e) => return Json(crate::shared::err_resp(e)),
+            Ok(alerts) => return ApiResponse::success(alerts, "查询成功"),
+            Err(e) => return crate::shared::err_resp(e),
         }
     }
 
     if let Some(ref ent) = params.entity {
         match RealTimeRiskMonitor::get_alerts_by_entity(&pool, tenant_id, ent.clone()).await {
-            Ok(alerts) => return Json(ApiResponse::success(alerts, "查询成功")),
-            Err(e) => return Json(crate::shared::err_resp(e)),
+            Ok(alerts) => return ApiResponse::success(alerts, "查询成功"),
+            Err(e) => return crate::shared::err_resp(e),
         }
     }
 
     match RealTimeRiskMonitor::get_alerts_by_category(&pool, tenant_id, String::new()).await {
-        Ok(alerts) => Json(ApiResponse::success(alerts, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(alerts) => ApiResponse::success(alerts, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1341,13 +1341,13 @@ async fn acknowledge_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(alert_id): Path<Uuid>,
-) -> Json<ApiResponse<RiskAlert>> {
+) -> ApiResponse<RiskAlert> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match RealTimeRiskMonitor::acknowledge_alert(&pool, tenant_id, alert_id).await {
-        Ok(alert) => Json(ApiResponse::success(alert, "已确认")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(alert) => ApiResponse::success(alert, "已确认"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -1372,13 +1372,13 @@ async fn resolve_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(alert_id): Path<Uuid>,
-) -> Json<ApiResponse<RiskAlert>> {
+) -> ApiResponse<RiskAlert> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match RealTimeRiskMonitor::resolve_alert(&pool, tenant_id, alert_id).await {
-        Ok(alert) => Json(ApiResponse::success(alert, "已解决")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(alert) => ApiResponse::success(alert, "已解决"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1388,20 +1388,20 @@ pub async fn score_transaction_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ScoreTransactionRequest>,
-) -> Json<ApiResponse<FraudScore>> {
+) -> ApiResponse<FraudScore> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match AntiFraudEngine::score_transaction(&pool, tenant_id, req).await {
-        Ok(score) => Json(ApiResponse::success(score, "评分完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(score) => ApiResponse::success(score, "评分完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn get_fraud_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<FraudRule>>> {
+) -> ApiResponse<Vec<FraudRule>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1410,8 +1410,8 @@ pub async fn get_fraud_rules_handler(
     };
 
     match AntiFraudEngine::get_fraud_rules(&pool, tenant_id).await {
-        Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(rules) => ApiResponse::success(rules, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1428,7 +1428,7 @@ pub async fn update_fraud_rule_handler(
     Extension(claims): Extension<Claims>,
     Path(rule_id): Path<Uuid>,
     Json(req): Json<UpdateFraudRuleRequest>,
-) -> Json<ApiResponse<FraudRule>> {
+) -> ApiResponse<FraudRule> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
@@ -1443,8 +1443,8 @@ pub async fn update_fraud_rule_handler(
     )
     .await
     {
-        Ok(rule) => Json(ApiResponse::success(rule, "更新成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(rule) => ApiResponse::success(rule, "更新成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1452,13 +1452,13 @@ pub async fn get_fraud_score_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(transaction_id): Path<String>,
-) -> Json<ApiResponse<FraudScore>> {
+) -> ApiResponse<FraudScore> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match AntiFraudEngine::get_score(&pool, tenant_id, transaction_id).await {
-        Ok(score) => Json(ApiResponse::success(score, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(score) => ApiResponse::success(score, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1468,14 +1468,14 @@ pub async fn review_entity_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ReviewEntityRequest>,
-) -> Json<ApiResponse<Vec<ReviewResult>>> {
+) -> ApiResponse<Vec<ReviewResult>> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     let reviewer = claims.username.clone();
 
     match AutoComplianceReviewer::review_entity(&pool, tenant_id, req, reviewer).await {
-        Ok(results) => Json(ApiResponse::success(results, "审查完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(results) => ApiResponse::success(results, "审查完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1489,7 +1489,7 @@ pub async fn get_review_results_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReviewResultQueryParams>,
-) -> Json<ApiResponse<Vec<ReviewResult>>> {
+) -> ApiResponse<Vec<ReviewResult>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1505,8 +1505,8 @@ pub async fn get_review_results_handler(
     )
     .await
     {
-        Ok(results) => Json(ApiResponse::success(results, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(results) => ApiResponse::success(results, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1514,7 +1514,7 @@ pub async fn get_compliance_status_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((entity_type, entity_id)): Path<(String, String)>,
-) -> Json<ApiResponse<Vec<ReviewWorkflow>>> {
+) -> ApiResponse<Vec<ReviewWorkflow>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1525,8 +1525,8 @@ pub async fn get_compliance_status_handler(
     match AutoComplianceReviewer::get_compliance_status(&pool, tenant_id, entity_type, entity_id)
         .await
     {
-        Ok(workflows) => Json(ApiResponse::success(workflows, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(workflows) => ApiResponse::success(workflows, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1534,13 +1534,13 @@ pub async fn create_workflow_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateWorkflowRequest>,
-) -> Json<ApiResponse<ReviewWorkflow>> {
+) -> ApiResponse<ReviewWorkflow> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match AutoComplianceReviewer::create_review_workflow(&pool, tenant_id, req).await {
-        Ok(workflow) => Json(ApiResponse::success(workflow, "创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(workflow) => ApiResponse::success(workflow, "创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1548,13 +1548,13 @@ pub async fn advance_workflow_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(workflow_id): Path<Uuid>,
-) -> Json<ApiResponse<ReviewWorkflow>> {
+) -> ApiResponse<ReviewWorkflow> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match AutoComplianceReviewer::advance_workflow(&pool, tenant_id, workflow_id).await {
-        Ok(workflow) => Json(ApiResponse::success(workflow, "推进成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(workflow) => ApiResponse::success(workflow, "推进成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1568,7 +1568,7 @@ pub async fn generate_compliance_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ComplianceReportQueryParams>,
-) -> Json<ApiResponse<ComplianceReport>> {
+) -> ApiResponse<ComplianceReport> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
@@ -1580,8 +1580,8 @@ pub async fn generate_compliance_report_handler(
     )
     .await
     {
-        Ok(report) => Json(ApiResponse::success(report, "报告生成成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(report) => ApiResponse::success(report, "报告生成成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 

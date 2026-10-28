@@ -100,14 +100,14 @@ pub async fn list_suppliers(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<Supplier>>> {
+) -> ApiResponse<PaginatedResponse<Supplier>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
 
     let page = params.page_or_default();
@@ -158,9 +158,7 @@ pub async fn list_suppliers(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("查询供应商失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询供应商失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询供应商失败".to_string()));
         }
     };
 
@@ -176,14 +174,14 @@ pub async fn list_suppliers(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("查询供应商总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询供应商总数失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询供应商总数失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(suppliers, total, page, page_size),
         "获取供应商列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -207,14 +205,14 @@ pub async fn get_supplier(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Supplier>> {
+) -> ApiResponse<Supplier> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query_as::<_, Supplier>(
@@ -226,15 +224,11 @@ pub async fn get_supplier(
     .await;
 
     match result {
-        Ok(Some(supplier)) => Json(ApiResponse::success(supplier, "获取供应商成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "供应商不存在".to_string(),
-        ))),
+        Ok(Some(supplier)) => ApiResponse::success(supplier, "获取供应商成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("供应商不存在".to_string())),
         Err(e) => {
             tracing::error!("查询供应商失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询供应商失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询供应商失败".to_string()))
         }
     }
 }
@@ -257,14 +251,14 @@ pub async fn create_supplier(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<CreateSupplierRequest>,
-) -> Json<ApiResponse<Supplier>> {
+) -> ApiResponse<Supplier> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query_as::<_, Supplier>(
@@ -294,20 +288,16 @@ pub async fn create_supplier(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(supplier, "创建供应商成功"))
+            ApiResponse::success(supplier, "创建供应商成功")
         }
 
-        Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
-            "创建供应商失败".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::Internal("创建供应商失败".to_string())),
         Err(e) => {
             tracing::error!("创建供应商失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建供应商失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建供应商失败".to_string()))
         }
     }
 }
@@ -335,14 +325,14 @@ pub async fn update_supplier(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<UpdateSupplierRequest>,
-) -> Json<ApiResponse<Supplier>> {
+) -> ApiResponse<Supplier> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query_as::<_, Supplier>(
@@ -372,20 +362,16 @@ pub async fn update_supplier(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(supplier, "更新供应商成功"))
+            ApiResponse::success(supplier, "更新供应商成功")
         }
 
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "供应商不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("供应商不存在".to_string())),
         Err(e) => {
             tracing::error!("更新供应商失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新供应商失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新供应商失败".to_string()))
         }
     }
 }
@@ -410,14 +396,14 @@ pub async fn delete_supplier(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -433,22 +419,15 @@ pub async fn delete_supplier(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
-                "删除成功".to_string(),
-                "删除供应商成功",
-            ))
+            ApiResponse::success("删除成功".to_string(), "删除供应商成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "供应商不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("供应商不存在".to_string())),
         Err(e) => {
             tracing::error!("删除供应商失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除供应商失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除供应商失败".to_string()))
         }
     }
 }

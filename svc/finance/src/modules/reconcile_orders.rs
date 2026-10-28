@@ -84,17 +84,17 @@ pub struct UpdateItemRequest {
     pub remark: Option<String>,
 }
 
-fn internal_error(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
+fn internal_error(msg: &str) -> (StatusCode, ApiResponse<serde_json::Value>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiResponse::server_error(msg)),
+        ApiResponse::server_error(msg),
     )
 }
 
-fn not_found(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
+fn not_found(msg: &str) -> (StatusCode, ApiResponse<serde_json::Value>) {
     // finance 统一信封契约：业务错误一律 HTTP 200，由 body.code 承载业务码。
     // （此前返回真实 HTTP 404，被 BFF 契约冒烟误判为"路由缺失 route_missing"。）
-    (StatusCode::OK, Json(ApiResponse::not_found(msg)))
+    (StatusCode::OK, ApiResponse::not_found(msg))
 }
 
 fn parse_date(s: &Option<String>) -> Option<NaiveDate> {
@@ -153,8 +153,7 @@ fn item_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 pub async fn list_reconcile_orders(
     State(state): State<AppState>,
     Query(params): Query<ListReconcileQuery>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
@@ -212,10 +211,10 @@ pub async fn list_reconcile_orders(
         };
 
     let items: Vec<serde_json::Value> = rows.iter().map(order_to_json).collect();
-    Ok(Json(ApiResponse::success(
+    Ok(ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "获取对账订单列表成功",
-    )))
+    ))
 }
 
 #[utoipa::path(
@@ -234,8 +233,7 @@ pub async fn list_reconcile_orders(
 pub async fn get_reconcile_order(
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let row =
         match sqlx::query(only_own_schema_query!("finance",
         "SELECT id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
@@ -279,10 +277,10 @@ pub async fn get_reconcile_order(
         serde_json::Value::Array(items.iter().map(item_to_json).collect()),
     );
 
-    Ok(Json(ApiResponse::success(
+    Ok(ApiResponse::success(
         serde_json::Value::Object(data),
         "获取对账订单成功",
-    )))
+    ))
 }
 
 #[utoipa::path(
@@ -301,8 +299,7 @@ pub async fn get_reconcile_order(
 pub async fn get_reconcile_items(
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let rows = match sqlx::query(only_own_schema_query!("finance",
         "SELECT id, order_id, source_type, source_id, source_no, source_date, source_amount, \
                 matched, match_id, match_amount, difference, status, remark, created_at, updated_at \
@@ -319,17 +316,16 @@ pub async fn get_reconcile_items(
     };
 
     let items: Vec<serde_json::Value> = rows.iter().map(item_to_json).collect();
-    Ok(Json(ApiResponse::success(
+    Ok(ApiResponse::success(
         serde_json::json!({ "items": items }),
         "获取对账明细成功",
-    )))
+    ))
 }
 
 pub async fn create_reconcile_order(
     State(state): State<AppState>,
     Json(req): Json<CreateReconcileRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let counterparty_ids: Vec<Uuid> = req
         .counterparty_ids
         .clone()
@@ -341,9 +337,7 @@ pub async fn create_reconcile_order(
     if counterparty_ids.is_empty() {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(ApiResponse::bad_request(
-                "缺少 counterparty_id 或 counterparty_ids",
-            )),
+            ApiResponse::bad_request("缺少 counterparty_id 或 counterparty_ids"),
         ));
     }
 
@@ -381,10 +375,10 @@ pub async fn create_reconcile_order(
         orders.push(order_to_json(&row));
     }
 
-    Ok(Json(ApiResponse::success(
+    Ok(ApiResponse::success(
         serde_json::json!({ "orders": orders }),
         "创建对账订单成功",
-    )))
+    ))
 }
 
 /// 自动对账：按 counterparty_ids（缺省为全部未完成订单）批量建单并返回汇总。
@@ -392,17 +386,16 @@ pub async fn create_reconcile_order(
 pub async fn auto_reconcile(
     State(state): State<AppState>,
     Json(req): Json<CreateReconcileRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let start_date = parse_date(&req.start_date);
     let end_date = parse_date(&req.end_date);
 
     let counterparty_ids = req.counterparty_ids.clone().unwrap_or_default();
     if counterparty_ids.is_empty() {
-        return Ok(Json(ApiResponse::success(
+        return Ok(ApiResponse::success(
             serde_json::json!({ "reconciled_count": 0, "total_difference": 0, "orders": [] }),
             "自动对账完成（未指定对账对象）",
-        )));
+        ));
     }
 
     let mut orders = Vec::new();
@@ -435,14 +428,14 @@ pub async fn auto_reconcile(
         orders.push(order_to_json(&row));
     }
 
-    Ok(Json(ApiResponse::success(
+    Ok(ApiResponse::success(
         serde_json::json!({
             "reconciled_count": 0,
             "total_difference": 0,
             "orders": orders,
         }),
         "自动对账完成",
-    )))
+    ))
 }
 
 #[utoipa::path(
@@ -461,8 +454,7 @@ pub async fn auto_reconcile(
 pub async fn confirm_reconcile_order(
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let row = match sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE finance.reconcile_orders SET status = 'confirmed', updated_at = NOW() \
@@ -482,10 +474,10 @@ pub async fn confirm_reconcile_order(
         }
     };
 
-    Ok(Json(ApiResponse::success(
+    Ok(ApiResponse::success(
         order_to_json(&row),
         "确认对账订单成功",
-    )))
+    ))
 }
 
 #[utoipa::path(
@@ -505,8 +497,7 @@ pub async fn dispute_reconcile_order(
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
     Json(req): Json<DisputeReconcileRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let _remark = req.reason;
     let row = match sqlx::query(only_own_schema_query!(
         "finance",
@@ -527,10 +518,10 @@ pub async fn dispute_reconcile_order(
         }
     };
 
-    Ok(Json(ApiResponse::success(
+    Ok(ApiResponse::success(
         order_to_json(&row),
         "对账订单已标记争议",
-    )))
+    ))
 }
 
 #[utoipa::path(
@@ -549,8 +540,7 @@ pub async fn dispute_reconcile_order(
 pub async fn cancel_reconcile_order(
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE finance.reconcile_orders SET status = 'cancelled', updated_at = NOW() \
@@ -565,10 +555,10 @@ pub async fn cancel_reconcile_order(
             if res.rows_affected() == 0 {
                 return Err(not_found("对账订单不存在或不可取消"));
             }
-            Ok(Json(ApiResponse::success(
+            Ok(ApiResponse::success(
                 serde_json::json!({ "cancelled": true, "id": order_id.to_string() }),
                 "取消对账订单成功",
-            )))
+            ))
         }
         Err(e) => {
             tracing::error!("取消对账订单失败: {}", e);
@@ -595,8 +585,7 @@ pub async fn update_reconcile_item(
     State(state): State<AppState>,
     Path((order_id, item_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateItemRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let source_date = parse_date(&req.source_date);
     let matched = req.matched;
     let match_amount = req.match_amount;
@@ -654,10 +643,7 @@ pub async fn update_reconcile_item(
         .execute(&state.pool)
         .await;
 
-    Ok(Json(ApiResponse::success(
-        item_to_json(&row),
-        "更新对账明细成功",
-    )))
+    Ok(ApiResponse::success(item_to_json(&row), "更新对账明细成功"))
 }
 
 #[allow(clippy::as_conversions)]

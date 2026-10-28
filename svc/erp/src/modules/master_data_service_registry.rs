@@ -111,7 +111,7 @@ impl ServiceRegistryStore {
 pub async fn mdm_service_register(
     State(state): State<ApiState>,
     Json(req): Json<MdmServiceRegisterRequest>,
-) -> Json<ApiResponse<MdmServiceInfo>> {
+) -> ApiResponse<MdmServiceInfo> {
     let _ = &state;
     let mut registry = SERVICE_REGISTRY.lock().await;
 
@@ -132,7 +132,7 @@ pub async fn mdm_service_register(
 
     registry.services.insert(service_id, service.clone());
 
-    Json(ApiResponse::success(service, "服务注册成功"))
+    ApiResponse::success(service, "服务注册成功")
 }
 
 // gate: admin-only
@@ -147,16 +147,16 @@ pub async fn mdm_service_register(
 pub async fn mdm_service_deregister(
     State(state): State<ApiState>,
     Path(service_id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let _ = &state;
     let mut registry = SERVICE_REGISTRY.lock().await;
 
     match registry.services.remove(&service_id) {
-        Some(_) => Json(ApiResponse::success(
+        Some(_) => ApiResponse::success(
             serde_json::json!({ "service_id": service_id, "deregistered": true }),
             "服务注销成功",
-        )),
-        None => Json(ApiResponse::not_found("未找到该服务")),
+        ),
+        None => ApiResponse::not_found("未找到该服务"),
     }
 }
 
@@ -172,7 +172,7 @@ pub async fn mdm_service_deregister(
 pub async fn mdm_service_heartbeat(
     State(state): State<ApiState>,
     Path(service_id): Path<String>,
-) -> Json<ApiResponse<MdmServiceInfo>> {
+) -> ApiResponse<MdmServiceInfo> {
     let _ = &state;
     let mut registry = SERVICE_REGISTRY.lock().await;
 
@@ -180,9 +180,9 @@ pub async fn mdm_service_heartbeat(
         Some(service) => {
             service.last_heartbeat = chrono::Utc::now().to_rfc3339();
             service.status = "healthy".to_string();
-            Json(ApiResponse::success(service.clone(), "心跳更新成功"))
+            ApiResponse::success(service.clone(), "心跳更新成功")
         }
-        None => Json(ApiResponse::not_found("未找到该服务")),
+        None => ApiResponse::not_found("未找到该服务"),
     }
 }
 
@@ -196,7 +196,7 @@ pub async fn mdm_service_heartbeat(
 pub async fn mdm_service_list(
     State(state): State<ApiState>,
     Query(params): Query<MdmServiceQuery>,
-) -> Json<ApiResponse<Vec<MdmServiceInfo>>> {
+) -> ApiResponse<Vec<MdmServiceInfo>> {
     let _ = &state;
     let registry = SERVICE_REGISTRY.lock().await;
 
@@ -219,7 +219,7 @@ pub async fn mdm_service_list(
         .cloned()
         .collect();
 
-    Json(ApiResponse::success(filtered, "服务列表"))
+    ApiResponse::success(filtered, "服务列表")
 }
 
 #[utoipa::path(
@@ -233,13 +233,13 @@ pub async fn mdm_service_list(
 pub async fn mdm_service_health(
     State(state): State<ApiState>,
     Path(service_id): Path<String>,
-) -> Json<ApiResponse<MdmServiceInfo>> {
+) -> ApiResponse<MdmServiceInfo> {
     let _ = &state;
     let registry = SERVICE_REGISTRY.lock().await;
 
     match registry.services.get(&service_id) {
-        Some(service) => Json(ApiResponse::success(service.clone(), "服务健康状态")),
-        None => Json(ApiResponse::not_found("未找到该服务")),
+        Some(service) => ApiResponse::success(service.clone(), "服务健康状态"),
+        None => ApiResponse::not_found("未找到该服务"),
     }
 }
 

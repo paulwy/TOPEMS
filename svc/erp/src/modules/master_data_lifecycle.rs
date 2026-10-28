@@ -112,7 +112,7 @@ pub async fn archive_master_data_ref(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ArchiveRequest>,
-) -> Json<ApiResponse<MasterDataRef>> {
+) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -140,10 +140,10 @@ pub async fn archive_master_data_ref(
     match row {
         Ok(Some(existing)) => {
             if existing.status == "archived" {
-                return Json(ApiResponse::bad_request("主数据已处于归档状态"));
+                return ApiResponse::bad_request("主数据已处于归档状态");
             }
             if existing.status == "destroyed" {
-                return Json(ApiResponse::bad_request("已销毁的主数据无法归档"));
+                return ApiResponse::bad_request("已销毁的主数据无法归档");
             }
 
             let old_status = existing.status.clone();
@@ -196,27 +196,27 @@ pub async fn archive_master_data_ref(
                             if let Some(t) = guard.take() {
                                 if let Err(e) = t.commit().await {
                                     tracing::error!("事务提交失败: {}", e);
-                                    return Json(ApiResponse::server_error("事务提交失败"));
+                                    return ApiResponse::server_error("事务提交失败");
                                 }
                             }
-                            Json(ApiResponse::success(row.into(), "主数据归档成功"))
+                            ApiResponse::success(row.into(), "主数据归档成功")
                         }
                         Err(e) => {
                             tracing::warn!("[erp-mdm] 查询归档后数据失败: {}", e);
-                            Json(ApiResponse::server_error("归档成功但查询失败"))
+                            ApiResponse::server_error("归档成功但查询失败")
                         }
                     }
                 }
                 Err(e) => {
                     tracing::warn!("[erp-mdm] 归档主数据失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::internal("归档失败", e)))
+                    ApiResponse::from(TopemsError::internal("归档失败", e))
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::not_found("未找到主数据引用")),
+        Ok(None) => ApiResponse::not_found("未找到主数据引用"),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
+            ApiResponse::from(TopemsError::internal("查询失败", e))
         }
     }
 }
@@ -238,7 +238,7 @@ pub async fn restore_master_data_ref(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<RestoreRequest>,
-) -> Json<ApiResponse<MasterDataRef>> {
+) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -266,7 +266,7 @@ pub async fn restore_master_data_ref(
     match row {
         Ok(Some(existing)) => {
             if existing.status != "archived" {
-                return Json(ApiResponse::bad_request("只有已归档的主数据才能恢复"));
+                return ApiResponse::bad_request("只有已归档的主数据才能恢复");
             }
 
             let old_status = existing.status.clone();
@@ -316,27 +316,27 @@ pub async fn restore_master_data_ref(
                             if let Some(t) = guard.take() {
                                 if let Err(e) = t.commit().await {
                                     tracing::error!("事务提交失败: {}", e);
-                                    return Json(ApiResponse::server_error("事务提交失败"));
+                                    return ApiResponse::server_error("事务提交失败");
                                 }
                             }
-                            Json(ApiResponse::success(row.into(), "主数据恢复成功"))
+                            ApiResponse::success(row.into(), "主数据恢复成功")
                         }
                         Err(e) => {
                             tracing::warn!("[erp-mdm] 查询恢复后数据失败: {}", e);
-                            Json(ApiResponse::server_error("恢复成功但查询失败"))
+                            ApiResponse::server_error("恢复成功但查询失败")
                         }
                     }
                 }
                 Err(e) => {
                     tracing::warn!("[erp-mdm] 恢复主数据失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::internal("恢复失败", e)))
+                    ApiResponse::from(TopemsError::internal("恢复失败", e))
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::not_found("未找到主数据引用")),
+        Ok(None) => ApiResponse::not_found("未找到主数据引用"),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
+            ApiResponse::from(TopemsError::internal("查询失败", e))
         }
     }
 }
@@ -358,7 +358,7 @@ pub async fn schedule_destruction(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ScheduleDestructionRequest>,
-) -> Json<ApiResponse<MasterDataRef>> {
+) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -389,7 +389,7 @@ pub async fn schedule_destruction(
     match row {
         Ok(Some(existing)) => {
             if existing.status == "destroyed" {
-                return Json(ApiResponse::bad_request("已销毁的主数据无法安排销毁计划"));
+                return ApiResponse::bad_request("已销毁的主数据无法安排销毁计划");
             }
 
             let old_status = existing.status.clone();
@@ -442,27 +442,27 @@ pub async fn schedule_destruction(
                             if let Some(t) = guard.take() {
                                 if let Err(e) = t.commit().await {
                                     tracing::error!("事务提交失败: {}", e);
-                                    return Json(ApiResponse::server_error("事务提交失败"));
+                                    return ApiResponse::server_error("事务提交失败");
                                 }
                             }
-                            Json(ApiResponse::success(row.into(), "销毁计划已安排"))
+                            ApiResponse::success(row.into(), "销毁计划已安排")
                         }
                         Err(e) => {
                             tracing::warn!("[erp-mdm] 查询销毁计划数据失败: {}", e);
-                            Json(ApiResponse::server_error("计划安排成功但查询失败"))
+                            ApiResponse::server_error("计划安排成功但查询失败")
                         }
                     }
                 }
                 Err(e) => {
                     tracing::warn!("[erp-mdm] 安排销毁计划失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::internal("安排失败", e)))
+                    ApiResponse::from(TopemsError::internal("安排失败", e))
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::not_found("未找到主数据引用")),
+        Ok(None) => ApiResponse::not_found("未找到主数据引用"),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
+            ApiResponse::from(TopemsError::internal("查询失败", e))
         }
     }
 }
@@ -483,7 +483,7 @@ pub async fn cancel_destruction(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<MasterDataRef>> {
+) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -511,9 +511,7 @@ pub async fn cancel_destruction(
     match row {
         Ok(Some(existing)) => {
             if existing.status != "pending_destruction" {
-                return Json(ApiResponse::bad_request(
-                    "只有待销毁状态的主数据才能取消销毁计划",
-                ));
+                return ApiResponse::bad_request("只有待销毁状态的主数据才能取消销毁计划");
             }
 
             let old_status = existing.status.clone();
@@ -563,27 +561,27 @@ pub async fn cancel_destruction(
                             if let Some(t) = guard.take() {
                                 if let Err(e) = t.commit().await {
                                     tracing::error!("事务提交失败: {}", e);
-                                    return Json(ApiResponse::server_error("事务提交失败"));
+                                    return ApiResponse::server_error("事务提交失败");
                                 }
                             }
-                            Json(ApiResponse::success(row.into(), "销毁计划已取消"))
+                            ApiResponse::success(row.into(), "销毁计划已取消")
                         }
                         Err(e) => {
                             tracing::warn!("[erp-mdm] 查询取消销毁后数据失败: {}", e);
-                            Json(ApiResponse::server_error("取消成功但查询失败"))
+                            ApiResponse::server_error("取消成功但查询失败")
                         }
                     }
                 }
                 Err(e) => {
                     tracing::warn!("[erp-mdm] 取消销毁计划失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::internal("取消失败", e)))
+                    ApiResponse::from(TopemsError::internal("取消失败", e))
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::not_found("未找到主数据引用")),
+        Ok(None) => ApiResponse::not_found("未找到主数据引用"),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
+            ApiResponse::from(TopemsError::internal("查询失败", e))
         }
     }
 }
@@ -605,7 +603,7 @@ pub async fn destroy_master_data_ref(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<DestroyRequest>,
-) -> Json<ApiResponse<MasterDataRef>> {
+) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -633,7 +631,7 @@ pub async fn destroy_master_data_ref(
     match row {
         Ok(Some(existing)) => {
             if existing.status == "destroyed" {
-                return Json(ApiResponse::bad_request("主数据已处于销毁状态"));
+                return ApiResponse::bad_request("主数据已处于销毁状态");
             }
 
             let old_status = existing.status.clone();
@@ -686,27 +684,27 @@ pub async fn destroy_master_data_ref(
                             if let Some(t) = guard.take() {
                                 if let Err(e) = t.commit().await {
                                     tracing::error!("事务提交失败: {}", e);
-                                    return Json(ApiResponse::server_error("事务提交失败"));
+                                    return ApiResponse::server_error("事务提交失败");
                                 }
                             }
-                            Json(ApiResponse::success(row.into(), "主数据已销毁（软删除）"))
+                            ApiResponse::success(row.into(), "主数据已销毁（软删除）")
                         }
                         Err(e) => {
                             tracing::warn!("[erp-mdm] 查询销毁后数据失败: {}", e);
-                            Json(ApiResponse::server_error("销毁成功但查询失败"))
+                            ApiResponse::server_error("销毁成功但查询失败")
                         }
                     }
                 }
                 Err(e) => {
                     tracing::warn!("[erp-mdm] 销毁主数据失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::internal("销毁失败", e)))
+                    ApiResponse::from(TopemsError::internal("销毁失败", e))
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::not_found("未找到主数据引用")),
+        Ok(None) => ApiResponse::not_found("未找到主数据引用"),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
+            ApiResponse::from(TopemsError::internal("查询失败", e))
         }
     }
 }
@@ -728,7 +726,7 @@ pub async fn list_archived(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<MasterDataRef>>> {
+) -> ApiResponse<PaginatedResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -779,17 +777,17 @@ pub async fn list_archived(
         Ok(data) => {
             let total = data.len() as i64;
             let items: Vec<MasterDataRef> = data.into_iter().map(Into::into).collect();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "已归档主数据列表",
-            ))
+            )
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询已归档主数据失败: {}", e);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(vec![], 0, page, page_size),
                 "已归档主数据列表（空）",
-            ))
+            )
         }
     }
 }
@@ -811,7 +809,7 @@ pub async fn list_pending_destruction(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<MasterDataRef>>> {
+) -> ApiResponse<PaginatedResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -863,17 +861,17 @@ pub async fn list_pending_destruction(
         Ok(data) => {
             let total = data.len() as i64;
             let items: Vec<MasterDataRef> = data.into_iter().map(Into::into).collect();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "待销毁主数据列表",
-            ))
+            )
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询待销毁主数据失败: {}", e);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(vec![], 0, page, page_size),
                 "待销毁主数据列表（空）",
-            ))
+            )
         }
     }
 }

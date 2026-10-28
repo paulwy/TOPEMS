@@ -17,7 +17,7 @@ use crate::models::{AppState, CreateIntegrationEventRequest, IntegrationEvent, S
         (status = 200, description = "OK"),
     ),
 )]
-pub async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<SyncStats>> {
+pub async fn get_sync_stats(State(state): State<AppState>) -> ApiResponse<SyncStats> {
     let lims_qms_result = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total,
@@ -105,10 +105,7 @@ pub async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<S
         last_sync,
     };
 
-    Json(ApiResponse::success(
-        stats,
-        "Sync stats retrieved successfully",
-    ))
+    ApiResponse::success(stats, "Sync stats retrieved successfully")
 }
 
 #[utoipa::path(
@@ -120,9 +117,7 @@ pub async fn get_sync_stats(State(state): State<AppState>) -> Json<ApiResponse<S
         (status = 200, description = "OK"),
     ),
 )]
-pub async fn list_events(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<IntegrationEvent>>> {
+pub async fn list_events(State(state): State<AppState>) -> ApiResponse<Vec<IntegrationEvent>> {
     match sqlx::query_as::<_, IntegrationEvent>(only_own_schema_query!(
         "integration",
         "SELECT id, source_system, target_system, event_type, source_record_id,
@@ -132,16 +127,10 @@ pub async fn list_events(
     .fetch_all(&state.pool)
     .await
     {
-        Ok(events) => Json(ApiResponse::success(
-            events,
-            "Events retrieved successfully",
-        )),
+        Ok(events) => ApiResponse::success(events, "Events retrieved successfully"),
         Err(e) => {
             tracing::error!("Failed to fetch events: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "Failed to fetch events",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("Failed to fetch events", e))
         }
     }
 }
@@ -159,7 +148,7 @@ pub async fn list_events(
 pub async fn create_event(
     State(state): State<AppState>,
     Json(req): Json<CreateIntegrationEventRequest>,
-) -> Json<ApiResponse<IntegrationEvent>> {
+) -> ApiResponse<IntegrationEvent> {
     let id = Uuid::new_v4();
     let source_uuid = req.source_record_id.and_then(|s| Uuid::parse_str(&s).ok());
 
@@ -181,13 +170,10 @@ pub async fn create_event(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(event) => Json(ApiResponse::success(event, "Event created successfully")),
+        Ok(event) => ApiResponse::success(event, "Event created successfully"),
         Err(e) => {
             tracing::error!("Failed to create event: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "Failed to create event",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("Failed to create event", e))
         }
     }
 }

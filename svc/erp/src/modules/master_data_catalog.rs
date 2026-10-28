@@ -567,10 +567,10 @@ async fn get_popular_entries(limit: usize) -> Vec<CatalogEntry> {
 pub async fn search_catalog_handler(
     State(state): State<ApiState>,
     Query(params): Query<CatalogSearchQuery>,
-) -> Json<ApiResponse<CatalogSearchResult>> {
+) -> ApiResponse<CatalogSearchResult> {
     let _ = &state;
     let result = search_catalog(&params).await;
-    Json(ApiResponse::success(result, "数据目录搜索成功"))
+    ApiResponse::success(result, "数据目录搜索成功")
 }
 
 /// GET /catalog/{entry_id} — 获取目录条目详情
@@ -585,11 +585,11 @@ pub async fn search_catalog_handler(
 pub async fn get_catalog_entry_handler(
     State(state): State<ApiState>,
     Path(entry_id): Path<String>,
-) -> Json<ApiResponse<CatalogEntry>> {
+) -> ApiResponse<CatalogEntry> {
     let _ = &state;
     match get_catalog_entry(&entry_id).await {
-        Some(entry) => Json(ApiResponse::success(entry, "目录条目获取成功")),
-        None => Json(ApiResponse::not_found("未找到目录条目")),
+        Some(entry) => ApiResponse::success(entry, "目录条目获取成功"),
+        None => ApiResponse::not_found("未找到目录条目"),
     }
 }
 
@@ -605,10 +605,10 @@ pub async fn get_catalog_entry_handler(
 pub async fn create_catalog_entry_handler(
     State(state): State<ApiState>,
     Json(req): Json<CatalogEntryRequest>,
-) -> Json<ApiResponse<CatalogEntry>> {
+) -> ApiResponse<CatalogEntry> {
     let _ = &state;
     let entry = create_catalog_entry(&req).await;
-    Json(ApiResponse::success(entry, "目录条目创建成功"))
+    ApiResponse::success(entry, "目录条目创建成功")
 }
 
 /// PUT /catalog/{entry_id} — 更新目录条目
@@ -624,11 +624,11 @@ pub async fn update_catalog_entry_handler(
     State(state): State<ApiState>,
     Path(entry_id): Path<String>,
     Json(req): Json<CatalogEntryRequest>,
-) -> Json<ApiResponse<CatalogEntry>> {
+) -> ApiResponse<CatalogEntry> {
     let _ = &state;
     match update_catalog_entry(&entry_id, &req).await {
-        Some(entry) => Json(ApiResponse::success(entry, "目录条目更新成功")),
-        None => Json(ApiResponse::not_found("未找到目录条目")),
+        Some(entry) => ApiResponse::success(entry, "目录条目更新成功"),
+        None => ApiResponse::not_found("未找到目录条目"),
     }
 }
 
@@ -644,15 +644,15 @@ pub async fn update_catalog_entry_handler(
 pub async fn delete_catalog_entry_handler(
     State(state): State<ApiState>,
     Path(entry_id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let _ = &state;
     if delete_catalog_entry(&entry_id).await {
-        Json(ApiResponse::success(
+        ApiResponse::success(
             serde_json::json!({ "entry_id": entry_id, "deleted": true }),
             "目录条目删除成功",
-        ))
+        )
     } else {
-        Json(ApiResponse::not_found("未找到目录条目"))
+        ApiResponse::not_found("未找到目录条目")
     }
 }
 
@@ -665,12 +665,10 @@ pub async fn delete_catalog_entry_handler(
     operation_id = "get_catalog_stats_handler",
     responses((status = 200, description = "OK")),
 )]
-pub async fn get_catalog_stats_handler(
-    State(state): State<ApiState>,
-) -> Json<ApiResponse<CatalogStats>> {
+pub async fn get_catalog_stats_handler(State(state): State<ApiState>) -> ApiResponse<CatalogStats> {
     let _ = &state;
     let stats = get_catalog_stats().await;
-    Json(ApiResponse::success(stats, "目录统计获取成功"))
+    ApiResponse::success(stats, "目录统计获取成功")
 }
 
 /// GET /catalog/popular — 获取热门条目
@@ -687,9 +685,9 @@ pub async fn get_catalog_stats_handler(
 pub async fn get_popular_entries_handler(
     State(state): State<ApiState>,
     Query(params): Query<PopularEntriesQuery>,
-) -> Json<ApiResponse<Vec<CatalogEntry>>> {
+) -> ApiResponse<Vec<CatalogEntry>> {
     let _ = &state;
     let limit = params.limit.unwrap_or(10).min(50);
     let entries = get_popular_entries(limit).await;
-    Json(ApiResponse::success(entries, "热门条目获取成功"))
+    ApiResponse::success(entries, "热门条目获取成功")
 }

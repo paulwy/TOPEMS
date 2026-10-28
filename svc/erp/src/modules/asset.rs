@@ -46,14 +46,14 @@ pub async fn list_assets(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<Asset>>> {
+) -> ApiResponse<PaginatedResponse<Asset>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetRead).await {
-        return e;
+        return e.0;
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -91,16 +91,14 @@ pub async fn list_assets(
             .fetch_one(&mut **txn)
             .await;
             let total = count_result.unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(assets, total, page, page_size),
                 "获取资产列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取资产列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取资产列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取资产列表失败".to_string()))
         }
     }
 }
@@ -124,29 +122,29 @@ pub async fn create_asset(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateAssetRequest>,
-) -> Json<ApiResponse<Asset>> {
+) -> ApiResponse<Asset> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetWrite).await {
-        return e;
+        return e.0;
     }
     if req.name.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "资产名称不能为空".to_string(),
-        )));
+        ));
     }
     if req.asset_number.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "资产编号不能为空".to_string(),
-        )));
+        ));
     }
     // 超管落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400，禁止落全零
     let tenant_id = match resolve_create_tenant(&claims) {
         Ok(t) => t,
-        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -187,11 +185,11 @@ pub async fn create_asset(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(asset.clone(), "资产创建成功")),
+                ApiResponse::success(asset.clone(), "资产创建成功"),
                 "success".to_string(),
                 None,
             )
@@ -199,9 +197,7 @@ pub async fn create_asset(
         Err(e) => {
             tracing::error!("创建资产失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "资产创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("资产创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -254,14 +250,14 @@ pub async fn get_asset(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Asset>> {
+) -> ApiResponse<Asset> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetRead).await {
-        return e;
+        return e.0;
     }
     let result = sqlx::query_as::<_, Asset>(
         only_own_schema_query!("erp", "
@@ -274,15 +270,11 @@ pub async fn get_asset(
     .fetch_optional(&mut **txn)
     .await;
     match result {
-        Ok(Some(asset)) => Json(ApiResponse::success(asset, "获取资产成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "资产不存在".to_string(),
-        ))),
+        Ok(Some(asset)) => ApiResponse::success(asset, "获取资产成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("资产不存在".to_string())),
         Err(e) => {
             tracing::error!("获取资产失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取资产失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取资产失败".to_string()))
         }
     }
 }
@@ -310,14 +302,14 @@ pub async fn update_asset(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateAssetRequest>,
-) -> Json<ApiResponse<Asset>> {
+) -> ApiResponse<Asset> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetWrite).await {
-        return e;
+        return e.0;
     }
     let existing = sqlx::query_as::<_, Asset>(
         only_own_schema_query!("erp", "SELECT id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
@@ -330,16 +322,9 @@ pub async fn update_asset(
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "资产不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("资产不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询资产失败: {}",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询资产失败: {}", e)),
     };
     let request_data = serde_json::to_value(&req).ok();
     let name = req.name.unwrap_or(existing.name);
@@ -396,11 +381,11 @@ pub async fn update_asset(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(asset.clone(), "资产更新成功")),
+                ApiResponse::success(asset.clone(), "资产更新成功"),
                 "success".to_string(),
                 None,
             )
@@ -408,9 +393,7 @@ pub async fn update_asset(
         Err(e) => {
             tracing::error!("更新资产失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "资产更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("资产更新失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -463,14 +446,14 @@ pub async fn delete_asset(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetWrite).await {
-        return e;
+        return e.0;
     }
     let result = sqlx::query(only_own_schema_query!(
         "erp",
@@ -484,28 +467,24 @@ pub async fn delete_asset(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success("".to_string(), "资产删除成功")),
+                ApiResponse::success("".to_string(), "资产删除成功"),
                 "success".to_string(),
                 None,
             )
         }
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "资产不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("资产不存在".to_string())),
             "error".to_string(),
             Some("资产不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除资产失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "资产删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("资产删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )

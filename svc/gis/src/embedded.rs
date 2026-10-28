@@ -446,7 +446,7 @@ async fn list_device_locations_by_map(
     State(pool): State<sqlx::PgPool>,
     Extension(claims): Extension<Claims>,
     Path(map_id): Path<uuid::Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -463,14 +463,14 @@ async fn list_device_locations_by_map(
     .fetch_all(&pool)
     .await
     {
-        Ok(locations) => Json(ApiResponse::success(
+        Ok(locations) => ApiResponse::success(
             serde_json::json!({
                 "device_locations": locations,
                 "total": locations.len()
             }),
             "获取设备位置列表成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 
@@ -478,7 +478,7 @@ async fn create_device_location(
     State(pool): State<sqlx::PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<modules::device::CreateDeviceLocation>,
-) -> Json<ApiResponse<DeviceLocation>> {
+) -> ApiResponse<DeviceLocation> {
     if let Err(e) = shared::permission::check_permission(
         &pool,
         &claims,
@@ -486,7 +486,7 @@ async fn create_device_location(
     )
     .await
     {
-        return e;
+        return e.0;
     }
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
     match sqlx::query_as::<_, DeviceLocation>(
@@ -507,8 +507,8 @@ async fn create_device_location(
     .fetch_one(&pool)
     .await
     {
-        Ok(location) => Json(ApiResponse::success(location, "创建设备位置成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库插入失败", e))),
+        Ok(location) => ApiResponse::success(location, "创建设备位置成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库插入失败", e)),
     }
 }
 
@@ -517,7 +517,7 @@ async fn update_device_location(
     Extension(claims): Extension<Claims>,
     Path(id): Path<uuid::Uuid>,
     Json(payload): Json<modules::device::CreateDeviceLocation>,
-) -> Json<ApiResponse<DeviceLocation>> {
+) -> ApiResponse<DeviceLocation> {
     if let Err(e) = shared::permission::check_permission(
         &pool,
         &claims,
@@ -525,7 +525,7 @@ async fn update_device_location(
     )
     .await
     {
-        return e;
+        return e.0;
     }
     let tenant_filter: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -555,11 +555,11 @@ async fn update_device_location(
     .fetch_one(&pool)
     .await
     {
-        Ok(location) => Json(ApiResponse::success(location, "更新设备位置成功")),
+        Ok(location) => ApiResponse::success(location, "更新设备位置成功"),
         Err(sqlx::Error::RowNotFound) => {
-            Json(ApiResponse::not_found("设备位置未找到"))
+            ApiResponse::not_found("设备位置未找到")
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库更新失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库更新失败", e)),
     }
 }
 
@@ -567,7 +567,7 @@ async fn delete_device_location(
     State(pool): State<sqlx::PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<uuid::Uuid>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     if let Err(e) = shared::permission::check_permission(
         &pool,
         &claims,
@@ -575,7 +575,7 @@ async fn delete_device_location(
     )
     .await
     {
-        return e;
+        return e.0;
     }
     let tenant_filter: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -596,14 +596,11 @@ async fn delete_device_location(
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
-                Json(ApiResponse::success(true, "删除设备位置成功"))
+                ApiResponse::success(true, "删除设备位置成功")
             } else {
-                Json(ApiResponse::not_found("设备位置未找到"))
+                ApiResponse::not_found("设备位置未找到")
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库删除失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库删除失败", e)),
     }
 }

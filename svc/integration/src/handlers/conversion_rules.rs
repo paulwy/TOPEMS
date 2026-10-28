@@ -25,18 +25,12 @@ use crate::models::AppState;
 )]
 pub async fn list_conversion_rules_api(
     State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<ConversionRule>>> {
+) -> ApiResponse<Vec<ConversionRule>> {
     match list_conversion_rules(&state.pool).await {
-        Ok(rules) => Json(ApiResponse::success(
-            rules,
-            "Conversion rules retrieved successfully",
-        )),
+        Ok(rules) => ApiResponse::success(rules, "Conversion rules retrieved successfully"),
         Err(e) => {
             tracing::error!("Failed to fetch conversion rules: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "Failed to fetch conversion rules",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("Failed to fetch conversion rules", e))
         }
     }
 }
@@ -57,7 +51,7 @@ pub async fn list_conversion_rules_api(
 pub async fn get_conversion_rule_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ConversionRule>> {
+) -> ApiResponse<ConversionRule> {
     match sqlx::query_as::<_, ConversionRule>(
         only_own_schema_query!("integration", "SELECT id, tenant_id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1"),
     )
@@ -65,11 +59,11 @@ pub async fn get_conversion_rule_api(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(rule) => Json(ApiResponse::success(rule, "Conversion rule found")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("Conversion rule not found")),
+        Ok(rule) => ApiResponse::success(rule, "Conversion rule found"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("Conversion rule not found"),
         Err(e) => {
             tracing::error!("Failed to fetch conversion rule: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to fetch conversion rule", e)))
+            ApiResponse::from(TopemsError::internal("Failed to fetch conversion rule", e))
         }
     }
 }
@@ -87,7 +81,7 @@ pub async fn get_conversion_rule_api(
 pub async fn create_conversion_rule_api(
     State(state): State<AppState>,
     Json(req): Json<CreateConversionRuleRequest>,
-) -> Json<ApiResponse<ConversionRule>> {
+) -> ApiResponse<ConversionRule> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -117,16 +111,10 @@ pub async fn create_conversion_rule_api(
     };
 
     match insert_conversion_rule(&state.pool, &rule).await {
-        Ok(_) => Json(ApiResponse::success(
-            rule,
-            "Conversion rule created successfully",
-        )),
+        Ok(_) => ApiResponse::success(rule, "Conversion rule created successfully"),
         Err(e) => {
             tracing::error!("Failed to create conversion rule: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "Failed to create conversion rule",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("Failed to create conversion rule", e))
         }
     }
 }
@@ -149,7 +137,7 @@ pub async fn update_conversion_rule_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateConversionRuleRequest>,
-) -> Json<ApiResponse<ConversionRule>> {
+) -> ApiResponse<ConversionRule> {
     let now = Utc::now();
 
     let row = sqlx::query(
@@ -173,7 +161,7 @@ pub async fn update_conversion_rule_api(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             ConversionRule {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -198,14 +186,11 @@ pub async fn update_conversion_rule_api(
                 updated_at: r.get("updated_at"),
             },
             "Conversion rule updated successfully",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("Conversion rule not found")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("Conversion rule not found"),
         Err(e) => {
             tracing::error!("Failed to update conversion rule: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "Failed to update conversion rule",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("Failed to update conversion rule", e))
         }
     }
 }
@@ -226,7 +211,7 @@ pub async fn update_conversion_rule_api(
 pub async fn delete_conversion_rule_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     match sqlx::query(only_own_schema_query!(
         "integration",
         "UPDATE integration.conversion_rules SET deleted_at = NOW() WHERE id = $1"
@@ -237,20 +222,14 @@ pub async fn delete_conversion_rule_api(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::not_found("Conversion rule not found"))
+                ApiResponse::not_found("Conversion rule not found")
             } else {
-                Json(ApiResponse::success(
-                    (),
-                    "Conversion rule deleted successfully",
-                ))
+                ApiResponse::success((), "Conversion rule deleted successfully")
             }
         }
         Err(e) => {
             tracing::error!("Failed to delete conversion rule: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "Failed to delete conversion rule",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("Failed to delete conversion rule", e))
         }
     }
 }
@@ -271,18 +250,14 @@ pub async fn delete_conversion_rule_api(
 pub async fn get_rule_executions_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<ConversionExecution>>> {
+) -> ApiResponse<Vec<ConversionExecution>> {
     match get_rule_executions(&state.pool, id, 100).await {
-        Ok(executions) => Json(ApiResponse::success(
-            executions,
-            "Rule executions retrieved successfully",
-        )),
+        Ok(executions) => {
+            ApiResponse::success(executions, "Rule executions retrieved successfully")
+        }
         Err(e) => {
             tracing::error!("Failed to fetch rule executions: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "Failed to fetch rule executions",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("Failed to fetch rule executions", e))
         }
     }
 }
@@ -305,7 +280,7 @@ pub async fn execute_conversion_rule_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(req): Json<ExecuteConversionRequest>,
-) -> Json<ApiResponse<ExecuteConversionResponse>> {
+) -> ApiResponse<ExecuteConversionResponse> {
     let rule = match sqlx::query_as::<_, ConversionRule>(
         only_own_schema_query!("integration", "SELECT id, tenant_id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1"),
     )
@@ -315,16 +290,16 @@ pub async fn execute_conversion_rule_api(
     {
         Ok(r) => r,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::not_found("Conversion rule not found"))
+            return ApiResponse::not_found("Conversion rule not found")
         }
         Err(e) => {
             tracing::error!("Failed to fetch rule: {}", e);
-            return Json(ApiResponse::from(TopemsError::internal("Failed to fetch rule", e)));
+            return ApiResponse::from(TopemsError::internal("Failed to fetch rule", e));
         }
     };
 
     if !rule.is_enabled {
-        return Json(ApiResponse::bad_request("Conversion rule is not enabled"));
+        return ApiResponse::bad_request("Conversion rule is not enabled");
     }
 
     let execution_id = Uuid::new_v4();
@@ -366,10 +341,7 @@ pub async fn execute_conversion_rule_api(
     .execute(&state.pool)
     .await;
 
-    Json(ApiResponse::success(
-        response,
-        "Conversion executed successfully",
-    ))
+    ApiResponse::success(response, "Conversion executed successfully")
 }
 
 #[utoipa::path(
@@ -388,7 +360,7 @@ pub async fn execute_conversion_rule_api(
 pub async fn enable_conversion_rule_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ConversionRule>> {
+) -> ApiResponse<ConversionRule> {
     match sqlx::query_as::<_, ConversionRule>(
         only_own_schema_query!("integration", "UPDATE integration.conversion_rules SET is_enabled = true, status = 'active', updated_at = $2 WHERE id = $1 RETURNING *"),
     )
@@ -397,11 +369,11 @@ pub async fn enable_conversion_rule_api(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(rule) => Json(ApiResponse::success(rule, "Conversion rule enabled successfully")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("Conversion rule not found")),
+        Ok(rule) => ApiResponse::success(rule, "Conversion rule enabled successfully"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("Conversion rule not found"),
         Err(e) => {
             tracing::error!("Failed to enable conversion rule: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to enable conversion rule", e)))
+            ApiResponse::from(TopemsError::internal("Failed to enable conversion rule", e))
         }
     }
 }
@@ -422,7 +394,7 @@ pub async fn enable_conversion_rule_api(
 pub async fn disable_conversion_rule_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ConversionRule>> {
+) -> ApiResponse<ConversionRule> {
     match sqlx::query_as::<_, ConversionRule>(
         only_own_schema_query!("integration", "UPDATE integration.conversion_rules SET is_enabled = false, status = 'inactive', updated_at = $2 WHERE id = $1 RETURNING *"),
     )
@@ -431,11 +403,11 @@ pub async fn disable_conversion_rule_api(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(rule) => Json(ApiResponse::success(rule, "Conversion rule disabled successfully")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("Conversion rule not found")),
+        Ok(rule) => ApiResponse::success(rule, "Conversion rule disabled successfully"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("Conversion rule not found"),
         Err(e) => {
             tracing::error!("Failed to disable conversion rule: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to disable conversion rule", e)))
+            ApiResponse::from(TopemsError::internal("Failed to disable conversion rule", e))
         }
     }
 }

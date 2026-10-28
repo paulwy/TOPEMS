@@ -127,7 +127,7 @@ impl ApiGatewayStore {
 pub async fn mdm_gateway_route(
     State(state): State<ApiState>,
     Json(req): Json<GatewayRouteRequest>,
-) -> Json<ApiResponse<GatewayResponse>> {
+) -> ApiResponse<GatewayResponse> {
     let _ = &state;
     let mut gateway = API_GATEWAY.lock().await;
 
@@ -154,7 +154,7 @@ pub async fn mdm_gateway_route(
         latency_ms: latency,
     };
 
-    Json(ApiResponse::success(response, "网关路由成功"))
+    ApiResponse::success(response, "网关路由成功")
 }
 
 // gate: admin-only
@@ -169,7 +169,7 @@ pub async fn mdm_gateway_route(
 pub async fn mdm_gateway_batch(
     State(state): State<ApiState>,
     Json(req): Json<GatewayBatchRequest>,
-) -> Json<ApiResponse<Vec<GatewayResponse>>> {
+) -> ApiResponse<Vec<GatewayResponse>> {
     let _ = &state;
     let mut gateway = API_GATEWAY.lock().await;
 
@@ -195,7 +195,7 @@ pub async fn mdm_gateway_batch(
         });
     }
 
-    Json(ApiResponse::success(responses, "批量请求完成"))
+    ApiResponse::success(responses, "批量请求完成")
 }
 
 // gate: admin-only
@@ -210,7 +210,7 @@ pub async fn mdm_gateway_batch(
 pub async fn mdm_gateway_aggregate(
     State(state): State<ApiState>,
     Json(req): Json<GatewayAggregateRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let _ = &state;
     let mut gateway = API_GATEWAY.lock().await;
 
@@ -230,14 +230,14 @@ pub async fn mdm_gateway_aggregate(
         );
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "entities": aggregated,
             "aggregated_at": chrono::Utc::now().to_rfc3339(),
             "sources": vec!["erp", "crm", "finance"],
         }),
         "聚合查询完成",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -248,9 +248,7 @@ pub async fn mdm_gateway_aggregate(
     responses((status = 200, description = "获取 MDM 网关统计成功", body = ApiResponse<serde_json::Value>))
 )]
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-pub async fn mdm_gateway_stats(
-    State(state): State<ApiState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn mdm_gateway_stats(State(state): State<ApiState>) -> ApiResponse<serde_json::Value> {
     let _ = &state;
     let gateway = API_GATEWAY.lock().await;
 
@@ -260,7 +258,7 @@ pub async fn mdm_gateway_stats(
         0.0
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "total_requests": gateway.request_count,
             "error_count": gateway.error_count,
@@ -272,7 +270,7 @@ pub async fn mdm_gateway_stats(
             "routes": gateway.routes,
         }),
         "网关统计",
-    ))
+    )
 }
 
 #[cfg(test)]

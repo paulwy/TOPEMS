@@ -50,7 +50,7 @@ pub async fn list_supplies(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<OfficeSupply>>> {
+) -> ApiResponse<PaginatedResponse<OfficeSupply>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -103,16 +103,14 @@ pub async fn list_supplies(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(supplies, total, page, page_size),
                 "获取办公用品列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取办公用品列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取办公用品列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取办公用品列表失败".to_string()))
         }
     }
 }
@@ -135,16 +133,14 @@ pub async fn create_supply(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateOfficeSupplyRequest>,
-) -> Json<ApiResponse<OfficeSupply>> {
+) -> ApiResponse<OfficeSupply> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("用品名称", &req.name) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            e.to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
     }
 
     let id = Uuid::new_v4();
@@ -174,11 +170,11 @@ pub async fn create_supply(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(supply.clone(), "办公用品创建成功")),
+                ApiResponse::success(supply.clone(), "办公用品创建成功"),
                 "success".to_string(),
                 None,
             )
@@ -186,9 +182,7 @@ pub async fn create_supply(
         Err(e) => {
             tracing::error!("创建办公用品失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "办公用品创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("办公用品创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -242,7 +236,7 @@ pub async fn get_supply(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<OfficeSupply>> {
+) -> ApiResponse<OfficeSupply> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -260,15 +254,11 @@ pub async fn get_supply(
     .await;
 
     match result {
-        Ok(Some(supply)) => Json(ApiResponse::success(supply, "获取办公用品成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "办公用品不存在".to_string(),
-        ))),
+        Ok(Some(supply)) => ApiResponse::success(supply, "获取办公用品成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("办公用品不存在".to_string())),
         Err(e) => {
             tracing::error!("获取办公用品失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取办公用品失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取办公用品失败".to_string()))
         }
     }
 }
@@ -295,7 +285,7 @@ pub async fn update_supply(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateOfficeSupplyRequest>,
-) -> Json<ApiResponse<OfficeSupply>> {
+) -> ApiResponse<OfficeSupply> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -311,16 +301,9 @@ pub async fn update_supply(
     let existing = match existing {
         Ok(Some(s)) => s,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "办公用品不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("办公用品不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询办公用品失败: {}",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询办公用品失败: {}", e)),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -359,11 +342,11 @@ pub async fn update_supply(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(supply.clone(), "办公用品更新成功")),
+                ApiResponse::success(supply.clone(), "办公用品更新成功"),
                 "success".to_string(),
                 None,
             )
@@ -371,9 +354,7 @@ pub async fn update_supply(
         Err(e) => {
             tracing::error!("更新办公用品失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "办公用品更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("办公用品更新失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -428,7 +409,7 @@ pub async fn delete_supply(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -447,28 +428,24 @@ pub async fn delete_supply(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success("".to_string(), "办公用品删除成功")),
+                ApiResponse::success("".to_string(), "办公用品删除成功"),
                 "success".to_string(),
                 None,
             )
         }
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "办公用品不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("办公用品不存在".to_string())),
             "error".to_string(),
             Some("办公用品不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除办公用品失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "办公用品删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("办公用品删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )

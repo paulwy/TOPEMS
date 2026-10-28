@@ -646,13 +646,13 @@ async fn ensure_auto_classifier_initialized() {
 pub async fn classification_classify_entity(
     State(state): State<ApiState>,
     Path(entity_id): Path<String>,
-) -> Json<ApiResponse<ClassificationResult>> {
+) -> ApiResponse<ClassificationResult> {
     let _ = &state;
     ensure_auto_classifier_initialized().await;
     let profiles = build_entity_profiles();
     let profile = match profiles.iter().find(|p| p.id == entity_id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到实体")),
+        None => return ApiResponse::not_found("未找到实体"),
     };
     let categories = get_auto_classifier_store().categories.lock().await.clone();
     let rules = get_auto_classifier_store().rules.lock().await.clone();
@@ -662,7 +662,7 @@ pub async fn classification_classify_entity(
         .lock()
         .await
         .insert(entity_id.clone(), result.clone());
-    Json(ApiResponse::success(result, "分类完成"))
+    ApiResponse::success(result, "分类完成")
 }
 
 /// POST /classification/batch-classify — 批量分类
@@ -676,7 +676,7 @@ pub async fn classification_classify_entity(
 pub async fn classification_batch_classify(
     State(state): State<ApiState>,
     Json(req): Json<BatchClassifyRequest>,
-) -> Json<ApiResponse<Vec<ClassificationResult>>> {
+) -> ApiResponse<Vec<ClassificationResult>> {
     let _ = &state;
     ensure_auto_classifier_initialized().await;
     let profiles = build_entity_profiles();
@@ -700,10 +700,7 @@ pub async fn classification_batch_classify(
         results.push(result);
     }
     let count = results.len();
-    Json(ApiResponse::success(
-        results,
-        &format!("批量分类完成（{} 条）", count),
-    ))
+    ApiResponse::success(results, &format!("批量分类完成（{} 条）", count))
 }
 
 /// GET /classification/suggest-tags/{id} — 标签推荐
@@ -718,17 +715,17 @@ pub async fn classification_batch_classify(
 pub async fn classification_suggest_tags(
     State(state): State<ApiState>,
     Path(entity_id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let _ = &state;
     ensure_auto_classifier_initialized().await;
     let profiles = build_entity_profiles();
     let profile = match profiles.iter().find(|p| p.id == entity_id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到实体")),
+        None => return ApiResponse::not_found("未找到实体"),
     };
     let categories = get_auto_classifier_store().categories.lock().await.clone();
     let tags = suggest_tags_internal(profile, &categories);
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "entity_id": entity_id,
             "domain": profile.domain,
@@ -736,7 +733,7 @@ pub async fn classification_suggest_tags(
             "tag_count": tags.len(),
         }),
         "标签推荐完成",
-    ))
+    )
 }
 
 /// GET /classification/categories — 分类类别列表
@@ -750,7 +747,7 @@ pub async fn classification_suggest_tags(
 pub async fn classification_list_categories(
     State(state): State<ApiState>,
     Query(params): Query<ListCategoriesQuery>,
-) -> Json<ApiResponse<Vec<Category>>> {
+) -> ApiResponse<Vec<Category>> {
     let _ = &state;
     ensure_auto_classifier_initialized().await;
     let categories = get_auto_classifier_store().categories.lock().await;
@@ -770,7 +767,7 @@ pub async fn classification_list_categories(
         })
         .cloned()
         .collect();
-    Json(ApiResponse::success(filtered, "分类类别列表"))
+    ApiResponse::success(filtered, "分类类别列表")
 }
 
 /// POST /classification/learn-rule — 学习新规则
@@ -784,12 +781,12 @@ pub async fn classification_list_categories(
 pub async fn classification_learn_rule(
     State(state): State<ApiState>,
     Json(req): Json<LearnRuleRequest>,
-) -> Json<ApiResponse<ClassificationRule>> {
+) -> ApiResponse<ClassificationRule> {
     let _ = &state;
     ensure_auto_classifier_initialized().await;
     let categories = get_auto_classifier_store().categories.lock().await;
     if !categories.iter().any(|c| c.id == req.category_id) {
-        return Json(ApiResponse::bad_request("目标类别不存在"));
+        return ApiResponse::bad_request("目标类别不存在");
     }
     drop(categories);
     let rule = ClassificationRule {
@@ -808,7 +805,7 @@ pub async fn classification_learn_rule(
         .lock()
         .await
         .push(rule.clone());
-    Json(ApiResponse::success(rule, "规则学习完成"))
+    ApiResponse::success(rule, "规则学习完成")
 }
 
 /// GET /classification/stats — 分类统计
@@ -823,7 +820,7 @@ pub async fn classification_learn_rule(
 pub async fn classification_get_stats(
     State(state): State<ApiState>,
     Query(params): Query<ClassificationStatsQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let _ = &state;
     ensure_auto_classifier_initialized().await;
     let categories = get_auto_classifier_store().categories.lock().await.clone();
@@ -884,7 +881,7 @@ pub async fn classification_get_stats(
         training_samples: classifications.len() as i64,
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "total_categories": filtered_cats.len(),
             "total_rules": total_rules,
@@ -894,5 +891,5 @@ pub async fn classification_get_stats(
             "model": model,
         }),
         "分类统计",
-    ))
+    )
 }

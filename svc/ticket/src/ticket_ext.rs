@@ -126,7 +126,7 @@ pub fn ticket_ext_routes() -> Router<PgPool> {
     ),
     tag = "TicketExt"
 )]
-pub async fn get_workflows(State(_pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn get_workflows(State(_pool): State<PgPool>) -> ApiResponse<serde_json::Value> {
     let mut transitions: Vec<serde_json::Value> = Vec::new();
     for from in ALL_STATUSES {
         for to in ALL_STATUSES {
@@ -140,7 +140,7 @@ pub async fn get_workflows(State(_pool): State<PgPool>) -> Json<ApiResponse<serd
         "statuses": ALL_STATUSES,
         "transitions": transitions,
     });
-    Json(ApiResponse::success(data, "工作流配置"))
+    ApiResponse::success(data, "工作流配置")
 }
 
 // ==================== 工作流匹配与自动化规则（前端 workflow.ts 调用）====================
@@ -163,7 +163,7 @@ pub struct WorkflowMatchQuery {
 )]
 pub async fn get_workflow_for_ticket_type(
     axum::extract::Query(query): axum::extract::Query<WorkflowMatchQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut transitions: Vec<serde_json::Value> = Vec::new();
     for from in ALL_STATUSES {
         for to in ALL_STATUSES {
@@ -179,7 +179,7 @@ pub async fn get_workflow_for_ticket_type(
         "statuses": ALL_STATUSES,
         "transitions": transitions,
     });
-    Json(ApiResponse::success(data, "工作流匹配"))
+    ApiResponse::success(data, "工作流匹配")
 }
 
 /// 工作流自动化规则视图（前端字段：id/name/trigger/action/is_active）
@@ -206,7 +206,7 @@ pub async fn list_workflow_automation_rules(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<WorkflowRuleView>>> {
+) -> ApiResponse<Vec<WorkflowRuleView>> {
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -233,12 +233,12 @@ pub async fn list_workflow_automation_rules(
                     is_active: row.get("enabled"),
                 })
                 .collect();
-            Json(ApiResponse::success(views, "工作流自动化规则列表"))
+            ApiResponse::success(views, "工作流自动化规则列表")
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+        Err(e) => ApiResponse::from(TopemsError::internal(
             "获取工作流自动化规则失败",
             e,
-        ))),
+        )),
     }
 }
 
@@ -265,7 +265,7 @@ pub async fn toggle_workflow_automation_rule(
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<WorkflowToggleRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     match sqlx::query(
         "UPDATE ticket.ticket_automation_rules SET enabled = $1, updated_at = now()
@@ -279,20 +279,17 @@ pub async fn toggle_workflow_automation_rule(
     {
         Ok(res) => {
             if res.rows_affected() == 0 {
-                Json(ApiResponse::from(TopemsError::DatabaseRecordNotFound(
+                ApiResponse::from(TopemsError::DatabaseRecordNotFound(
                     "自动化规则不存在".into(),
-                )))
+                ))
             } else {
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     json!({"id": id, "is_active": req.is_active}),
                     "规则状态已更新",
-                ))
+                )
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "更新自动化规则失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新自动化规则失败", e)),
     }
 }
 
@@ -323,11 +320,8 @@ fn build_static_workflow(id: Uuid) -> serde_json::Value {
 pub async fn get_workflow_by_id(
     State(_pool): State<PgPool>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        build_static_workflow(id),
-        "工作流详情",
-    ))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(build_static_workflow(id), "工作流详情")
 }
 
 /// PUT /workflows/{id} —— 静态状态机暂不落库更新（待上游支持）
@@ -335,34 +329,25 @@ pub async fn update_workflow(
     State(_pool): State<PgPool>,
     Path(id): Path<Uuid>,
     Json(_body): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        build_static_workflow(id),
-        "工作流已更新",
-    ))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(build_static_workflow(id), "工作流已更新")
 }
 
 /// DELETE /workflows/{id} —— 默认静态工作流不可删除，契约上回显成功（待上游支持）
 pub async fn delete_workflow(
     State(_pool): State<PgPool>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        json!({"id": id, "deleted": true}),
-        "工作流已删除",
-    ))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(json!({"id": id, "deleted": true}), "工作流已删除")
 }
 
 /// GET /workflows/{id}/transitions
 pub async fn list_workflow_transitions(
     State(_pool): State<PgPool>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let wf = build_static_workflow(id);
-    Json(ApiResponse::success(
-        wf["transitions"].clone(),
-        "工作流流转",
-    ))
+    ApiResponse::success(wf["transitions"].clone(), "工作流流转")
 }
 
 /// POST /workflows/{id}/transitions —— 追加流转不落库，回显契约结构（待上游支持）
@@ -370,12 +355,12 @@ pub async fn add_workflow_transition(
     State(_pool): State<PgPool>,
     Path(id): Path<Uuid>,
     mut body: Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Some(obj) = body.as_object_mut() {
         obj.insert("id".into(), json!(Uuid::new_v4().to_string()));
         obj.insert("workflow_id".into(), json!(id.to_string()));
     }
-    Json(ApiResponse::success(body.0, "流转已添加"))
+    ApiResponse::success(body.0, "流转已添加")
 }
 
 // ==================== 状态流转 ====================
@@ -403,7 +388,7 @@ pub async fn get_ticket_transitions(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -420,9 +405,9 @@ pub async fn get_ticket_transitions(
     let row = match row {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::not_found("工单不存在"));
+            return ApiResponse::not_found("工单不存在");
         }
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
     let current: String = row.get("status");
     let mut targets: Vec<String> = Vec::new();
@@ -431,10 +416,10 @@ pub async fn get_ticket_transitions(
             targets.push(to.to_string());
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         json!({"current": current, "available_transitions": targets}),
         "可执行流转",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -455,7 +440,7 @@ pub async fn apply_transition(
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<TransitionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let user_id = user_of(&claims);
 
@@ -468,15 +453,12 @@ pub async fn apply_transition(
     .await
     {
         Ok(Some(s)) => s,
-        Ok(None) => return Json(ApiResponse::not_found("工单不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("工单不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
 
     if !is_valid_ticket_transition(&current, &req.to_status) {
-        return Json(ApiResponse::bad_request(&format!(
-            "非法流转: {} -> {}",
-            current, req.to_status
-        )));
+        return ApiResponse::bad_request(&format!("非法流转: {} -> {}", current, req.to_status));
     }
 
     let now = chrono::Utc::now();
@@ -493,7 +475,7 @@ pub async fn apply_transition(
 
     let mut txn = match pool.begin().await {
         Ok(t) => t,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("事务失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("事务失败", e)),
     };
 
     if let Err(e) = sqlx::query(
@@ -509,7 +491,7 @@ pub async fn apply_transition(
     .execute(&mut *txn)
     .await
     {
-        return Json(ApiResponse::from(TopemsError::internal("更新失败", e)));
+        return ApiResponse::from(TopemsError::internal("更新失败", e));
     }
 
     if let Err(e) = sqlx::query(
@@ -525,7 +507,7 @@ pub async fn apply_transition(
     .execute(&mut *txn)
     .await
     {
-        return Json(ApiResponse::from(TopemsError::internal("活动记录失败", e)));
+        return ApiResponse::from(TopemsError::internal("活动记录失败", e));
     }
 
     if let Some(comment) = &req.comment {
@@ -541,19 +523,19 @@ pub async fn apply_transition(
             .execute(&mut *txn)
             .await
             {
-                return Json(ApiResponse::from(TopemsError::internal("备注失败", e)));
+                return ApiResponse::from(TopemsError::internal("备注失败", e));
             }
         }
     }
 
     if let Err(e) = txn.commit().await {
-        return Json(ApiResponse::from(TopemsError::internal("提交失败", e)));
+        return ApiResponse::from(TopemsError::internal("提交失败", e));
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         json!({"id": id, "from": current, "to": req.to_status}),
         "流转成功",
-    ))
+    )
 }
 
 // ==================== 标签 ====================
@@ -580,7 +562,7 @@ pub async fn get_ticket_tags(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -595,13 +577,10 @@ pub async fn get_ticket_tags(
     .await
     {
         Ok(Some(t)) => t,
-        Ok(None) => return Json(ApiResponse::not_found("工单不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("工单不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
-    Json(ApiResponse::success(
-        json!({"tags": tags.unwrap_or_default()}),
-        "工单标签",
-    ))
+    ApiResponse::success(json!({"tags": tags.unwrap_or_default()}), "工单标签")
 }
 
 async fn add_ticket_tag(
@@ -609,11 +588,11 @@ async fn add_ticket_tag(
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<TagRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let tag = req.tag.trim().to_string();
     if tag.is_empty() {
-        return Json(ApiResponse::bad_request("标签不能为空"));
+        return ApiResponse::bad_request("标签不能为空");
     }
     let current: Option<Vec<String>> = match sqlx::query_scalar(
         "SELECT tags FROM ticket.core_tickets WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
@@ -624,8 +603,8 @@ async fn add_ticket_tag(
     .await
     {
         Ok(Some(t)) => t,
-        Ok(None) => return Json(ApiResponse::not_found("工单不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("工单不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
     let mut tags = current.unwrap_or_default();
     if !tags.iter().any(|t| t == &tag) {
@@ -640,9 +619,9 @@ async fn add_ticket_tag(
     .execute(&pool)
     .await
     {
-        return Json(ApiResponse::from(TopemsError::internal("更新失败", e)));
+        return ApiResponse::from(TopemsError::internal("更新失败", e));
     }
-    Json(ApiResponse::success(json!({"tags": tags}), "标签已添加"))
+    ApiResponse::success(json!({"tags": tags}), "标签已添加")
 }
 
 #[utoipa::path(
@@ -663,7 +642,7 @@ pub async fn remove_ticket_tag(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path((id, tag)): Path<(Uuid, String)>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let current: Option<Vec<String>> = match sqlx::query_scalar(
         "SELECT tags FROM ticket.core_tickets WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
@@ -674,8 +653,8 @@ pub async fn remove_ticket_tag(
     .await
     {
         Ok(Some(t)) => t,
-        Ok(None) => return Json(ApiResponse::not_found("工单不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("工单不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
     let tags: Vec<String> = current
         .unwrap_or_default()
@@ -691,9 +670,9 @@ pub async fn remove_ticket_tag(
     .execute(&pool)
     .await
     {
-        return Json(ApiResponse::from(TopemsError::internal("更新失败", e)));
+        return ApiResponse::from(TopemsError::internal("更新失败", e));
     }
-    Json(ApiResponse::success(json!({"tags": tags}), "标签已移除"))
+    ApiResponse::success(json!({"tags": tags}), "标签已移除")
 }
 
 #[utoipa::path(
@@ -709,7 +688,7 @@ pub async fn remove_ticket_tag(
 pub async fn list_tag_directory(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -725,7 +704,7 @@ pub async fn list_tag_directory(
     .await;
     let rows = match rows {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
     let items: Vec<serde_json::Value> = rows
         .iter()
@@ -736,15 +715,12 @@ pub async fn list_tag_directory(
             })
         })
         .collect();
-    Json(ApiResponse::success(json!({"tags": items}), "标签目录"))
+    ApiResponse::success(json!({"tags": items}), "标签目录")
 }
 
 // 标签目录为聚合派生，无独立存储；写操作返回成功占位（幂等无状态）
-async fn create_tag_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        json!({"ok": true}),
-        "标签目录为隐式聚合，无需创建",
-    ))
+async fn create_tag_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(json!({"ok": true}), "标签目录为隐式聚合，无需创建")
 }
 
 #[utoipa::path(
@@ -764,7 +740,7 @@ pub async fn get_tag_stub(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path(tag): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -780,26 +756,17 @@ pub async fn get_tag_stub(
     .await
     {
         Ok(c) => c,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
-    Json(ApiResponse::success(
-        json!({"name": tag, "count": count}),
-        "标签",
-    ))
+    ApiResponse::success(json!({"name": tag, "count": count}), "标签")
 }
 
-async fn update_tag_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        json!({"ok": true}),
-        "标签目录为隐式聚合",
-    ))
+async fn update_tag_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(json!({"ok": true}), "标签目录为隐式聚合")
 }
 
-async fn delete_tag_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        json!({"ok": true}),
-        "标签为工单内联属性，无全局删除语义",
-    ))
+async fn delete_tag_stub() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(json!({"ok": true}), "标签为工单内联属性，无全局删除语义")
 }
 
 // ==================== 批量操作 ====================
@@ -839,11 +806,11 @@ pub async fn batch_update_tickets(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let ids = ids_param(&req);
     if ids.is_empty() {
-        return Json(ApiResponse::bad_request("ids 不能为空"));
+        return ApiResponse::bad_request("ids 不能为空");
     }
     let mut set = "updated_at = now()".to_string();
     if req.status.is_some() {
@@ -864,12 +831,9 @@ pub async fn batch_update_tickets(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("批量更新失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("批量更新失败", e)),
     };
-    Json(ApiResponse::success(
-        json!({"updated": affected}),
-        "批量更新完成",
-    ))
+    ApiResponse::success(json!({"updated": affected}), "批量更新完成")
 }
 
 #[utoipa::path(
@@ -886,12 +850,12 @@ pub async fn batch_assign_tickets(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let ids = ids_param(&req);
     let assignee = match req.assignee_id {
         Some(a) => a,
-        None => return Json(ApiResponse::bad_request("assignee_id 必填")),
+        None => return ApiResponse::bad_request("assignee_id 必填"),
     };
     let affected = match sqlx::query(
         "UPDATE ticket.core_tickets SET assignee_id = $1, updated_at = now() \
@@ -904,12 +868,9 @@ pub async fn batch_assign_tickets(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("批量指派失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("批量指派失败", e)),
     };
-    Json(ApiResponse::success(
-        json!({"updated": affected}),
-        "批量指派完成",
-    ))
+    ApiResponse::success(json!({"updated": affected}), "批量指派完成")
 }
 
 #[utoipa::path(
@@ -926,7 +887,7 @@ pub async fn batch_close_tickets(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let ids = ids_param(&req);
     let affected = match sqlx::query(
@@ -939,12 +900,9 @@ pub async fn batch_close_tickets(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("批量关闭失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("批量关闭失败", e)),
     };
-    Json(ApiResponse::success(
-        json!({"closed": affected}),
-        "批量关闭完成",
-    ))
+    ApiResponse::success(json!({"closed": affected}), "批量关闭完成")
 }
 
 #[utoipa::path(
@@ -961,7 +919,7 @@ pub async fn batch_delete_tickets(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let ids = ids_param(&req);
     let affected = match sqlx::query(
@@ -974,12 +932,9 @@ pub async fn batch_delete_tickets(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("批量删除失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("批量删除失败", e)),
     };
-    Json(ApiResponse::success(
-        json!({"deleted": affected}),
-        "批量删除完成",
-    ))
+    ApiResponse::success(json!({"deleted": affected}), "批量删除完成")
 }
 
 #[utoipa::path(
@@ -996,7 +951,7 @@ pub async fn batch_escalate_tickets(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let ids = ids_param(&req);
     let affected = match sqlx::query(
@@ -1009,12 +964,9 @@ pub async fn batch_escalate_tickets(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("批量升级失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("批量升级失败", e)),
     };
-    Json(ApiResponse::success(
-        json!({"escalated": affected}),
-        "批量升级完成",
-    ))
+    ApiResponse::success(json!({"escalated": affected}), "批量升级完成")
 }
 
 // ==================== 附件 ====================
@@ -1062,7 +1014,7 @@ pub async fn list_attachments(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1079,7 +1031,7 @@ pub async fn list_attachments(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
     let items: Vec<serde_json::Value> = rows
         .iter()
@@ -1095,10 +1047,7 @@ pub async fn list_attachments(
             })
         })
         .collect();
-    Json(ApiResponse::success(
-        json!({"items": items, "total": items.len()}),
-        "附件列表",
-    ))
+    ApiResponse::success(json!({"items": items, "total": items.len()}), "附件列表")
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
@@ -1107,11 +1056,11 @@ async fn upload_attachment(
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UploadAttachmentRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let user_id = user_of(&claims);
     if req.file_name.trim().is_empty() {
-        return Json(ApiResponse::bad_request("file_name 必填"));
+        return ApiResponse::bad_request("file_name 必填");
     }
     let data = req
         .file_data
@@ -1135,13 +1084,13 @@ async fn upload_attachment(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("上传失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("上传失败", e)),
     };
     let attachment_id: Uuid = row.get("id");
-    Json(ApiResponse::success(
+    ApiResponse::success(
         json!({"id": attachment_id, "file_name": req.file_name, "file_size": data.len()}),
         "上传成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1162,7 +1111,7 @@ pub async fn get_attachment(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1180,10 +1129,10 @@ pub async fn get_attachment(
     .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("附件不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(None) => return ApiResponse::not_found("附件不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
-    Json(ApiResponse::success(
+    ApiResponse::success(
         json!({
             "id": row.get::<Uuid, _>("id"),
             "file_name": row.get::<String, _>("file_name"),
@@ -1193,7 +1142,7 @@ pub async fn get_attachment(
             "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
         }),
         "附件信息",
-    ))
+    )
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
@@ -1202,7 +1151,7 @@ async fn update_attachment(
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UploadAttachmentRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let data = req
         .file_data
@@ -1226,22 +1175,19 @@ async fn update_attachment(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("更新失败", e)),
     };
     if affected == 0 {
-        return Json(ApiResponse::not_found("附件不存在"));
+        return ApiResponse::not_found("附件不存在");
     }
-    Json(ApiResponse::success(
-        json!({"id": attachment_id}),
-        "附件已更新",
-    ))
+    ApiResponse::success(json!({"id": attachment_id}), "附件已更新")
 }
 
 async fn delete_attachment(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let affected = match sqlx::query(
         "UPDATE ticket.ticket_attachments SET deleted_at = now(), updated_at = now() \
@@ -1254,15 +1200,12 @@ async fn delete_attachment(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("删除失败", e)),
     };
     if affected == 0 {
-        return Json(ApiResponse::not_found("附件不存在"));
+        return ApiResponse::not_found("附件不存在");
     }
-    Json(ApiResponse::success(
-        json!({"id": attachment_id}),
-        "附件已删除",
-    ))
+    ApiResponse::success(json!({"id": attachment_id}), "附件已删除")
 }
 
 #[utoipa::path(
@@ -1284,13 +1227,13 @@ pub async fn batch_upload_attachments(
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<BatchUploadRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let user_id = user_of(&claims);
     let mut created = 0usize;
     let mut txn = match pool.begin().await {
         Ok(t) => t,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("事务失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("事务失败", e)),
     };
     for item in &req.attachments {
         let data = item
@@ -1314,17 +1257,14 @@ pub async fn batch_upload_attachments(
         .execute(&mut *txn)
         .await
         {
-            return Json(ApiResponse::from(TopemsError::internal("批量上传失败", e)));
+            return ApiResponse::from(TopemsError::internal("批量上传失败", e));
         }
         created += 1;
     }
     if let Err(e) = txn.commit().await {
-        return Json(ApiResponse::from(TopemsError::internal("提交失败", e)));
+        return ApiResponse::from(TopemsError::internal("提交失败", e));
     }
-    Json(ApiResponse::success(
-        json!({"created": created}),
-        "批量上传完成",
-    ))
+    ApiResponse::success(json!({"created": created}), "批量上传完成")
 }
 
 #[utoipa::path(
@@ -1345,10 +1285,10 @@ pub async fn batch_delete_attachments(
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<BatchDeleteAttachmentsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     if req.ids.is_empty() {
-        return Json(ApiResponse::bad_request("ids 不能为空"));
+        return ApiResponse::bad_request("ids 不能为空");
     }
     let affected = match sqlx::query(
         "UPDATE ticket.ticket_attachments SET deleted_at = now(), updated_at = now() \
@@ -1361,12 +1301,9 @@ pub async fn batch_delete_attachments(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("批量删除失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("批量删除失败", e)),
     };
-    Json(ApiResponse::success(
-        json!({"deleted": affected}),
-        "批量删除完成",
-    ))
+    ApiResponse::success(json!({"deleted": affected}), "批量删除完成")
 }
 
 #[utoipa::path(
@@ -1386,7 +1323,7 @@ pub async fn get_attachment_stats(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1403,15 +1340,15 @@ pub async fn get_attachment_stats(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
-    Json(ApiResponse::success(
+    ApiResponse::success(
         json!({
             "total": row.get::<i64, _>("total"),
             "total_bytes": row.get::<i64, _>("total_bytes"),
         }),
         "附件统计",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1432,7 +1369,7 @@ pub async fn get_attachments_by_type(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path((id, file_type)): Path<(Uuid, String)>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1451,7 +1388,7 @@ pub async fn get_attachments_by_type(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
     };
     let items: Vec<serde_json::Value> = rows
         .iter()
@@ -1465,10 +1402,7 @@ pub async fn get_attachments_by_type(
             })
         })
         .collect();
-    Json(ApiResponse::success(
-        json!({"items": items, "total": items.len()}),
-        "类型附件",
-    ))
+    ApiResponse::success(json!({"items": items, "total": items.len()}), "类型附件")
 }
 
 // 下载走 bytea 返回（供前端 Blob 消费）

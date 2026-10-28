@@ -126,7 +126,7 @@ pub async fn list_documents(
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListDocumentsQuery>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -181,7 +181,7 @@ pub async fn list_documents(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "documents": documents,
                     "total": total,
@@ -189,11 +189,11 @@ pub async fn list_documents(
                     "page_size": page_size
                 }),
                 "获取文档列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取文档列表失败: {}", e);
-            Json(ApiResponse::server_error("获取文档列表失败"))
+            ApiResponse::server_error("获取文档列表失败")
         }
     }
 }
@@ -210,7 +210,7 @@ pub async fn search_documents(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(query): Json<DocumentSearchRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -276,7 +276,7 @@ pub async fn search_documents(
             .await
             .unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "documents": documents,
                     "total": count_result,
@@ -284,11 +284,11 @@ pub async fn search_documents(
                     "page_size": page_size
                 }),
                 "搜索文档成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("搜索文档失败: {}", e);
-            Json(ApiResponse::server_error("搜索文档失败"))
+            ApiResponse::server_error("搜索文档失败")
         }
     }
 }
@@ -306,7 +306,7 @@ pub async fn create_document(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateDocumentRequest>,
-) -> Json<ApiResponse<Document>> {
+) -> ApiResponse<Document> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -319,10 +319,10 @@ pub async fn create_document(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.document_no.is_empty() {
-        return Json(ApiResponse::bad_request("文档编号不能为空"));
+        return ApiResponse::bad_request("文档编号不能为空");
     }
     if req.name.is_empty() {
-        return Json(ApiResponse::bad_request("文档名称不能为空"));
+        return ApiResponse::bad_request("文档名称不能为空");
     }
 
     let id = Uuid::new_v4();
@@ -357,13 +357,13 @@ pub async fn create_document(
     .await;
 
     match result {
-        Ok(document) => Json(ApiResponse::success(document, "创建文档成功")),
+        Ok(document) => ApiResponse::success(document, "创建文档成功"),
         Err(e) => {
             tracing::error!("创建文档失败: {}", e);
             if e.to_string().contains("unique constraint") {
-                Json(ApiResponse::conflict("文档编号已存在"))
+                ApiResponse::conflict("文档编号已存在")
             } else {
-                Json(ApiResponse::server_error("创建文档失败"))
+                ApiResponse::server_error("创建文档失败")
             }
         }
     }
@@ -385,7 +385,7 @@ pub async fn get_document(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<Document>> {
+) -> ApiResponse<Document> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -411,11 +411,11 @@ pub async fn get_document(
     .await;
 
     match result {
-        Ok(Some(document)) => Json(ApiResponse::success(document, "获取文档成功")),
-        Ok(None) => Json(ApiResponse::not_found("文档不存在")),
+        Ok(Some(document)) => ApiResponse::success(document, "获取文档成功"),
+        Ok(None) => ApiResponse::not_found("文档不存在"),
         Err(e) => {
             tracing::error!("获取文档失败: {}", e);
-            Json(ApiResponse::server_error("获取文档失败"))
+            ApiResponse::server_error("获取文档失败")
         }
     }
 }
@@ -438,7 +438,7 @@ pub async fn update_document(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateDocumentRequest>,
-) -> Json<ApiResponse<Document>> {
+) -> ApiResponse<Document> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -464,10 +464,10 @@ pub async fn update_document(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => return Json(ApiResponse::not_found("文档不存在")),
+        Ok(None) => return ApiResponse::not_found("文档不存在"),
         Err(e) => {
             tracing::error!("查询文档失败: {}", e);
-            return Json(ApiResponse::server_error("查询文档失败"));
+            return ApiResponse::server_error("查询文档失败");
         }
     };
 
@@ -513,13 +513,13 @@ pub async fn update_document(
     .await;
 
     match result {
-        Ok(document) => Json(ApiResponse::success(document, "更新文档成功")),
+        Ok(document) => ApiResponse::success(document, "更新文档成功"),
         Err(e) => {
             tracing::error!("更新文档失败: {}", e);
             if e.to_string().contains("unique constraint") {
-                Json(ApiResponse::conflict("文档编号已存在"))
+                ApiResponse::conflict("文档编号已存在")
             } else {
-                Json(ApiResponse::server_error("更新文档失败"))
+                ApiResponse::server_error("更新文档失败")
             }
         }
     }
@@ -539,7 +539,7 @@ pub async fn update_document_status(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateDocumentStatusRequest>,
-) -> Json<ApiResponse<Document>> {
+) -> ApiResponse<Document> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -551,7 +551,7 @@ pub async fn update_document_status(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     if req.status.trim().is_empty() {
-        return Json(ApiResponse::bad_request("文档状态不能为空"));
+        return ApiResponse::bad_request("文档状态不能为空");
     }
 
     let result = sqlx::query_as::<_, Document>(
@@ -570,11 +570,11 @@ pub async fn update_document_status(
     .await;
 
     match result {
-        Ok(Some(document)) => Json(ApiResponse::success(document, "更新文档状态成功")),
-        Ok(None) => Json(ApiResponse::not_found("文档不存在")),
+        Ok(Some(document)) => ApiResponse::success(document, "更新文档状态成功"),
+        Ok(None) => ApiResponse::not_found("文档不存在"),
         Err(e) => {
             tracing::error!("更新文档状态失败: {}", e);
-            Json(ApiResponse::server_error("更新文档状态失败"))
+            ApiResponse::server_error("更新文档状态失败")
         }
     }
 }
@@ -595,7 +595,7 @@ pub async fn delete_document(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -615,11 +615,11 @@ pub async fn delete_document(
             .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "删除文档成功")),
-        Ok(_) => Json(ApiResponse::not_found("文档不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "删除文档成功"),
+        Ok(_) => ApiResponse::not_found("文档不存在"),
         Err(e) => {
             tracing::error!("删除文档失败: {}", e);
-            Json(ApiResponse::server_error("删除文档失败"))
+            ApiResponse::server_error("删除文档失败")
         }
     }
 }
@@ -648,7 +648,7 @@ pub async fn start_document_approval(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<StartDocumentApprovalRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -670,15 +670,15 @@ pub async fn start_document_approval(
 
     let document = match document_result {
         Ok(Some(d)) => d,
-        Ok(None) => return Json(ApiResponse::not_found("文档不存在")),
+        Ok(None) => return ApiResponse::not_found("文档不存在"),
         Err(e) => {
             tracing::error!("查询文档失败: {}", e);
-            return Json(ApiResponse::server_error("查询文档失败"));
+            return ApiResponse::server_error("查询文档失败");
         }
     };
 
     if document.status != "active" {
-        return Json(ApiResponse::bad_request("文档状态不正确，无法发起审批"));
+        return ApiResponse::bad_request("文档状态不正确，无法发起审批");
     }
 
     let workflow_result = sqlx::query(
@@ -694,10 +694,10 @@ pub async fn start_document_approval(
 
     let workflow = match workflow_result {
         Ok(Some(w)) => w,
-        Ok(None) => return Json(ApiResponse::not_found("工作流不存在或未激活")),
+        Ok(None) => return ApiResponse::not_found("工作流不存在或未激活"),
         Err(e) => {
             tracing::error!("查询工作流失败: {}", e);
-            return Json(ApiResponse::server_error("查询工作流失败"));
+            return ApiResponse::server_error("查询工作流失败");
         }
     };
 
@@ -767,7 +767,7 @@ pub async fn start_document_approval(
             .await
             .ok();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "instance_id": row.get::<Uuid, _>("id"),
                     "workflow_id": row.get::<Uuid, _>("workflow_id"),
@@ -779,11 +779,11 @@ pub async fn start_document_approval(
                     "document_name": document.name
                 }),
                 "文档审批流程已启动",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("启动文档审批失败: {}", e);
-            Json(ApiResponse::server_error("启动文档审批失败"))
+            ApiResponse::server_error("启动文档审批失败")
         }
     }
 }
@@ -804,7 +804,7 @@ pub async fn get_document_approval_history(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -850,18 +850,18 @@ pub async fn get_document_approval_history(
                 })
                 .collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "document_id": id,
                     "approval_history": history,
                     "total": history.len()
                 }),
                 "获取文档审批历史成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取文档审批历史失败: {}", e);
-            Json(ApiResponse::server_error("获取文档审批历史失败"))
+            ApiResponse::server_error("获取文档审批历史失败")
         }
     }
 }
@@ -877,7 +877,7 @@ pub async fn list_pending_documents(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -927,17 +927,17 @@ pub async fn list_pending_documents(
                 })
                 .collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "documents": documents,
                     "total": documents.len()
                 }),
                 "获取待审批文档列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取待审批文档列表失败: {}", e);
-            Json(ApiResponse::server_error("获取待审批文档列表失败"))
+            ApiResponse::server_error("获取待审批文档列表失败")
         }
     }
 }

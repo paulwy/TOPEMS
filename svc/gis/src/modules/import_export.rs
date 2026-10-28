@@ -30,7 +30,7 @@ pub struct ImportRequest {
 pub async fn import_data(
     State(pool): State<PgPool>,
     Json(payload): Json<ImportRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut results: Vec<String> = Vec::new();
     let mut errors: Vec<String> = Vec::new();
 
@@ -90,11 +90,11 @@ pub async fn import_data(
             }
         }
         _ => {
-            return Json(ApiResponse::bad_request("不支持的数据类型"));
+            return ApiResponse::bad_request("不支持的数据类型");
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "success_count": results.len(),
             "error_count": errors.len(),
@@ -102,7 +102,7 @@ pub async fn import_data(
             "errors": errors
         }),
         "导入完成",
-    ))
+    )
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -229,7 +229,7 @@ async fn insert_warehouse_location(
 pub async fn export_geojson(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -328,7 +328,7 @@ pub async fn export_geojson(
         "features": features
     });
 
-    Json(ApiResponse::success(geojson, "导出GeoJSON成功"))
+    ApiResponse::success(geojson, "导出GeoJSON成功")
 }
 
 pub fn create_routes() -> Router<PgPool> {

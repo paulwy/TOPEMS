@@ -166,12 +166,12 @@ pub async fn create_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAccountRequest>,
-) -> Json<ApiResponse<Account>> {
+) -> ApiResponse<Account> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.create_account(tenant_id, req).await {
-        Ok(account) => Json(ApiResponse::success(account, "创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(account) => ApiResponse::success(account, "创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -180,13 +180,13 @@ pub async fn get_account(
     Extension(claims): Extension<Claims>,
     Path(account_id): Path<Uuid>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Account>> {
+) -> ApiResponse<Account> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
     match service.get_account(tenant_id, account_id, locale).await {
-        Ok(account) => Json(ApiResponse::success(account, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(account) => ApiResponse::success(account, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -195,13 +195,13 @@ pub async fn get_account_by_code(
     Extension(claims): Extension<Claims>,
     Path(code): Path<String>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Account>> {
+) -> ApiResponse<Account> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
     match service.get_account_by_code(tenant_id, &code, locale).await {
-        Ok(account) => Json(ApiResponse::success(account, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(account) => ApiResponse::success(account, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -219,7 +219,7 @@ pub async fn get_account_balances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AccountBalanceQueryParams>,
-) -> Json<ApiResponse<Vec<TrialBalance>>> {
+) -> ApiResponse<Vec<TrialBalance>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_trial_balance(tenant_id, &params.period).await {
@@ -232,9 +232,9 @@ pub async fn get_account_balances(
             } else {
                 balances
             };
-            Json(ApiResponse::success(filtered, "查询成功"))
+            ApiResponse::success(filtered, "查询成功")
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -243,13 +243,13 @@ pub async fn list_accounts(
     Extension(claims): Extension<Claims>,
     Query(_params): Query<AccountQueryParams>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<Account>>> {
+) -> ApiResponse<Vec<Account>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
     match service.list_accounts(tenant_id, locale).await {
-        Ok(accounts) => Json(ApiResponse::success(accounts, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(accounts) => ApiResponse::success(accounts, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -258,7 +258,7 @@ pub async fn create_voucher(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateVoucherRequest>,
-) -> Json<ApiResponse<VoucherResponse>> {
+) -> ApiResponse<VoucherResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
@@ -267,8 +267,8 @@ pub async fn create_voucher(
         .create_voucher(tenant_id, req, &created_by, locale)
         .await
     {
-        Ok(voucher) => Json(ApiResponse::success(voucher, "创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(voucher) => ApiResponse::success(voucher, "创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -276,12 +276,12 @@ pub async fn get_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
-) -> Json<ApiResponse<VoucherResponse>> {
+) -> ApiResponse<VoucherResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_voucher(tenant_id, voucher_id).await {
-        Ok(voucher) => Json(ApiResponse::success(voucher, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(voucher) => ApiResponse::success(voucher, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -300,7 +300,7 @@ async fn list_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<VoucherQueryParams>,
-) -> Json<ApiResponse<Vec<Voucher>>> {
+) -> ApiResponse<Vec<Voucher>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let status = params.status.map(|s| match s.as_str() {
@@ -317,8 +317,8 @@ async fn list_vouchers(
         .list_vouchers(tenant_id, status, params.period)
         .await
     {
-        Ok(vouchers) => Json(ApiResponse::success(vouchers, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(vouchers) => ApiResponse::success(vouchers, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -326,12 +326,12 @@ pub async fn submit_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
-) -> Json<ApiResponse<Voucher>> {
+) -> ApiResponse<Voucher> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.submit_voucher(tenant_id, voucher_id).await {
-        Ok(voucher) => Json(ApiResponse::success(voucher, "提交成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(voucher) => ApiResponse::success(voucher, "提交成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -339,7 +339,7 @@ pub async fn approve_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
-) -> Json<ApiResponse<Voucher>> {
+) -> ApiResponse<Voucher> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let approved_by = claims.username.clone();
@@ -347,8 +347,8 @@ pub async fn approve_voucher(
         .approve_voucher(tenant_id, voucher_id, &approved_by)
         .await
     {
-        Ok(voucher) => Json(ApiResponse::success(voucher, "审批成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(voucher) => ApiResponse::success(voucher, "审批成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -356,7 +356,7 @@ pub async fn post_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
-) -> Json<ApiResponse<Voucher>> {
+) -> ApiResponse<Voucher> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let posted_by = claims.username.clone();
@@ -364,8 +364,8 @@ pub async fn post_voucher(
         .post_voucher(tenant_id, voucher_id, &posted_by)
         .await
     {
-        Ok(voucher) => Json(ApiResponse::success(voucher, "过账成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(voucher) => ApiResponse::success(voucher, "过账成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -376,7 +376,7 @@ async fn update_voucher(
     Path(voucher_id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateVoucherRequest>,
-) -> Json<ApiResponse<VoucherResponse>> {
+) -> ApiResponse<VoucherResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let updated_by = claims.username.clone();
@@ -385,8 +385,8 @@ async fn update_voucher(
         .update_voucher(tenant_id, voucher_id, req, &updated_by, locale)
         .await
     {
-        Ok(voucher) => Json(ApiResponse::success(voucher, "更新成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(voucher) => ApiResponse::success(voucher, "更新成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -395,12 +395,12 @@ pub async fn delete_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_voucher(tenant_id, voucher_id).await {
-        Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(_) => ApiResponse::success((), "删除成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -409,12 +409,12 @@ pub async fn unpost_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
-) -> Json<ApiResponse<Voucher>> {
+) -> ApiResponse<Voucher> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.unpost_voucher(tenant_id, voucher_id).await {
-        Ok(voucher) => Json(ApiResponse::success(voucher, "反过账成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(voucher) => ApiResponse::success(voucher, "反过账成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -422,7 +422,7 @@ pub async fn get_ledger(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<LedgerQueryParams>,
-) -> Json<ApiResponse<Vec<LedgerEntry>>> {
+) -> ApiResponse<Vec<LedgerEntry>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let ledger_params = crate::models::LedgerQueryParams {
@@ -434,8 +434,8 @@ pub async fn get_ledger(
     };
 
     match service.get_ledger(tenant_id, ledger_params).await {
-        Ok(entries) => Json(ApiResponse::success(entries, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(entries) => ApiResponse::success(entries, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -456,12 +456,12 @@ pub async fn get_trial_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
-) -> Json<ApiResponse<Vec<TrialBalance>>> {
+) -> ApiResponse<Vec<TrialBalance>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_trial_balance(tenant_id, &period).await {
-        Ok(balance) => Json(ApiResponse::success(balance, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(balance) => ApiResponse::success(balance, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -479,12 +479,12 @@ async fn get_balance_sheet(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
-) -> Json<ApiResponse<BalanceSheet>> {
+) -> ApiResponse<BalanceSheet> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_balance_sheet(tenant_id, &period).await {
-        Ok(sheet) => Json(ApiResponse::success(sheet, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(sheet) => ApiResponse::success(sheet, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -502,12 +502,12 @@ async fn get_income_statement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
-) -> Json<ApiResponse<IncomeStatement>> {
+) -> ApiResponse<IncomeStatement> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_income_statement(tenant_id, &period).await {
-        Ok(statement) => Json(ApiResponse::success(statement, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(statement) => ApiResponse::success(statement, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -515,7 +515,7 @@ pub async fn close_period(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((year, month)): Path<(i32, i32)>,
-) -> Json<ApiResponse<Period>> {
+) -> ApiResponse<Period> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let closed_by = claims.username.clone();
@@ -523,8 +523,8 @@ pub async fn close_period(
         .close_period(tenant_id, year, month, &closed_by)
         .await
     {
-        Ok(period) => Json(ApiResponse::success(period, "期间已关闭")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(period) => ApiResponse::success(period, "期间已关闭"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -551,12 +551,12 @@ pub async fn open_period(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((year, month)): Path<(i32, i32)>,
-) -> Json<ApiResponse<Period>> {
+) -> ApiResponse<Period> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.open_period(tenant_id, year, month).await {
-        Ok(period) => Json(ApiResponse::success(period, "期间已打开")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(period) => ApiResponse::success(period, "期间已打开"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -564,12 +564,12 @@ pub async fn create_aux_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAuxiliaryAccountRequest>,
-) -> Json<ApiResponse<AuxiliaryAccount>> {
+) -> ApiResponse<AuxiliaryAccount> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.create_aux_account(tenant_id, req).await {
-        Ok(account) => Json(ApiResponse::success(account, "辅助科目创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(account) => ApiResponse::success(account, "辅助科目创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -578,7 +578,7 @@ async fn list_aux_accounts(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuxQueryParams>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<AuxiliaryAccount>>> {
+) -> ApiResponse<Vec<AuxiliaryAccount>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let aux_type = match params.aux_type.as_str() {
@@ -594,8 +594,8 @@ async fn list_aux_accounts(
     };
     let locale = Locale::from_headers(&headers).as_sql();
     match service.list_aux_accounts(tenant_id, aux_type, locale).await {
-        Ok(accounts) => Json(ApiResponse::success(accounts, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(accounts) => ApiResponse::success(accounts, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -621,7 +621,7 @@ pub async fn get_aux_ledger(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuxQueryParams>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<AuxLedgerEntry>>> {
+) -> ApiResponse<Vec<AuxLedgerEntry>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let aux_type = match params.aux_type.as_str() {
@@ -633,7 +633,7 @@ pub async fn get_aux_ledger(
         "custom1" => AuxType::Custom1,
         "custom2" => AuxType::Custom2,
         "custom3" => AuxType::Custom3,
-        _ => return Json(ApiResponse::bad_request("无效的辅助核算类型")),
+        _ => return ApiResponse::bad_request("无效的辅助核算类型"),
     };
     let query = AuxLedgerQuery {
         aux_type,
@@ -645,8 +645,8 @@ pub async fn get_aux_ledger(
     };
     let locale = Locale::from_headers(&headers).as_sql();
     match service.get_aux_ledger(tenant_id, query, locale).await {
-        Ok(entries) => Json(ApiResponse::success(entries, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(entries) => ApiResponse::success(entries, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -655,7 +655,7 @@ pub async fn get_aux_balance(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuxQueryParams>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<AuxBalanceReport>>> {
+) -> ApiResponse<Vec<AuxBalanceReport>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let aux_type = match params.aux_type.as_str() {
@@ -667,7 +667,7 @@ pub async fn get_aux_balance(
         "custom1" => AuxType::Custom1,
         "custom2" => AuxType::Custom2,
         "custom3" => AuxType::Custom3,
-        _ => return Json(ApiResponse::bad_request("无效的辅助核算类型")),
+        _ => return ApiResponse::bad_request("无效的辅助核算类型"),
     };
     let query = AuxLedgerQuery {
         aux_type,
@@ -679,8 +679,8 @@ pub async fn get_aux_balance(
     };
     let locale = Locale::from_headers(&headers).as_sql();
     match service.get_aux_balance(tenant_id, query, locale).await {
-        Ok(balance) => Json(ApiResponse::success(balance, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(balance) => ApiResponse::success(balance, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -701,12 +701,12 @@ async fn get_cash_flow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
-) -> Json<ApiResponse<CashFlowStatement>> {
+) -> ApiResponse<CashFlowStatement> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_cash_flow_statement(tenant_id, &period).await {
-        Ok(statement) => Json(ApiResponse::success(statement, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(statement) => ApiResponse::success(statement, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -714,15 +714,15 @@ pub async fn batch_submit_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchVoucherRequest>,
-) -> Json<ApiResponse<BatchVoucherResponse>> {
+) -> ApiResponse<BatchVoucherResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .batch_submit_vouchers(tenant_id, req.voucher_ids)
         .await
     {
-        Ok(result) => Json(ApiResponse::success(result, "批量提交完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "批量提交完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -730,7 +730,7 @@ pub async fn batch_approve_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchVoucherRequest>,
-) -> Json<ApiResponse<BatchVoucherResponse>> {
+) -> ApiResponse<BatchVoucherResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let approved_by = claims.username.clone();
@@ -738,8 +738,8 @@ pub async fn batch_approve_vouchers(
         .batch_approve_vouchers(tenant_id, req.voucher_ids, &approved_by)
         .await
     {
-        Ok(result) => Json(ApiResponse::success(result, "批量审批完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "批量审批完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -747,7 +747,7 @@ pub async fn batch_post_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchVoucherRequest>,
-) -> Json<ApiResponse<BatchVoucherResponse>> {
+) -> ApiResponse<BatchVoucherResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let posted_by = claims.username.clone();
@@ -755,8 +755,8 @@ pub async fn batch_post_vouchers(
         .batch_post_vouchers(tenant_id, req.voucher_ids, &posted_by)
         .await
     {
-        Ok(result) => Json(ApiResponse::success(result, "批量过账完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "批量过账完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -775,12 +775,12 @@ pub async fn export_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExportVoucherRequest>,
-) -> Json<ApiResponse<ExportVoucherResponse>> {
+) -> ApiResponse<ExportVoucherResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.export_vouchers(tenant_id, req).await {
-        Ok(result) => Json(ApiResponse::success(result, "导出成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "导出成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -789,7 +789,7 @@ pub async fn year_end_close(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<YearEndCloseRequest>,
-) -> Json<ApiResponse<YearEndCloseResult>> {
+) -> ApiResponse<YearEndCloseResult> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
@@ -798,8 +798,8 @@ pub async fn year_end_close(
         .year_end_close(tenant_id, req.year, &created_by, req.description, locale)
         .await
     {
-        Ok(result) => Json(ApiResponse::success(result, "年末结转成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "年末结转成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -809,7 +809,7 @@ pub async fn create_payment_handler(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreatePaymentRequest>,
-) -> Json<ApiResponse<PaymentResponse>> {
+) -> ApiResponse<PaymentResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
@@ -856,9 +856,9 @@ pub async fn create_payment_handler(
                     }
                 });
             }
-            Json(ApiResponse::success(payment, "创建成功"))
+            ApiResponse::success(payment, "创建成功")
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -866,12 +866,12 @@ pub async fn get_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<Uuid>,
-) -> Json<ApiResponse<PaymentResponse>> {
+) -> ApiResponse<PaymentResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_payment(tenant_id, payment_id).await {
-        Ok(payment) => Json(ApiResponse::success(payment, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(payment) => ApiResponse::success(payment, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -895,7 +895,7 @@ pub async fn list_payments_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaymentListParams>,
-) -> Json<ApiResponse<PaymentListResponse>> {
+) -> ApiResponse<PaymentListResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
@@ -909,7 +909,7 @@ pub async fn list_payments_handler(
         page_size: params.page_size,
     };
     match service.list_payments(tenant_id, query).await {
-        Ok((items, total)) => Json(ApiResponse::success(
+        Ok((items, total)) => ApiResponse::success(
             PaymentListResponse {
                 items,
                 total,
@@ -917,8 +917,8 @@ pub async fn list_payments_handler(
                 page_size,
             },
             "查询成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -929,7 +929,7 @@ pub async fn update_payment_handler(
     Path(payment_id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<CreatePaymentRequest>,
-) -> Json<ApiResponse<PaymentResponse>> {
+) -> ApiResponse<PaymentResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let updated_by = claims.username.clone();
@@ -938,8 +938,8 @@ pub async fn update_payment_handler(
         .update_payment(tenant_id, payment_id, req, &updated_by, locale)
         .await
     {
-        Ok(payment) => Json(ApiResponse::success(payment, "更新成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(payment) => ApiResponse::success(payment, "更新成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -947,12 +947,12 @@ pub async fn delete_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_payment(tenant_id, payment_id).await {
-        Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(_) => ApiResponse::success((), "删除成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -961,31 +961,31 @@ pub async fn submit_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<Uuid>,
-) -> Json<ApiResponse<PaymentResponse>> {
+) -> ApiResponse<PaymentResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let _submitted_by = claims.username.clone();
 
     let payment = match service.get_payment(tenant_id, payment_id).await {
         Ok(p) => p,
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Err(e) => return crate::shared::err_resp(e),
     };
 
     let voucher_id = match payment.voucher_id {
         Some(v) => v,
         None => {
-            return Json(crate::shared::err_resp(TopemsError::ValidationFailed(
+            return crate::shared::err_resp(TopemsError::ValidationFailed(
                 "付款单未关联凭证".to_string(),
-            )))
+            ));
         }
     };
 
     match service.submit_voucher(tenant_id, voucher_id).await {
         Ok(_) => match service.get_payment(tenant_id, payment_id).await {
-            Ok(p) => Json(ApiResponse::success(p, "提交成功")),
-            Err(e) => Json(crate::shared::err_resp(e)),
+            Ok(p) => ApiResponse::success(p, "提交成功"),
+            Err(e) => crate::shared::err_resp(e),
         },
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -993,22 +993,22 @@ pub async fn approve_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<Uuid>,
-) -> Json<ApiResponse<PaymentResponse>> {
+) -> ApiResponse<PaymentResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let approved_by = claims.username.clone();
 
     let payment = match service.get_payment(tenant_id, payment_id).await {
         Ok(p) => p,
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Err(e) => return crate::shared::err_resp(e),
     };
 
     let voucher_id = match payment.voucher_id {
         Some(v) => v,
         None => {
-            return Json(crate::shared::err_resp(TopemsError::ValidationFailed(
+            return crate::shared::err_resp(TopemsError::ValidationFailed(
                 "付款单未关联凭证".to_string(),
-            )))
+            ));
         }
     };
 
@@ -1017,10 +1017,10 @@ pub async fn approve_payment_handler(
         .await
     {
         Ok(_) => match service.get_payment(tenant_id, payment_id).await {
-            Ok(p) => Json(ApiResponse::success(p, "审批通过")),
-            Err(e) => Json(crate::shared::err_resp(e)),
+            Ok(p) => ApiResponse::success(p, "审批通过"),
+            Err(e) => crate::shared::err_resp(e),
         },
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1028,22 +1028,22 @@ pub async fn reject_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<Uuid>,
-) -> Json<ApiResponse<PaymentResponse>> {
+) -> ApiResponse<PaymentResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rejected_by = claims.username.clone();
 
     let payment = match service.get_payment(tenant_id, payment_id).await {
         Ok(p) => p,
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Err(e) => return crate::shared::err_resp(e),
     };
 
     let voucher_id = match payment.voucher_id {
         Some(v) => v,
         None => {
-            return Json(crate::shared::err_resp(TopemsError::ValidationFailed(
+            return crate::shared::err_resp(TopemsError::ValidationFailed(
                 "付款单未关联凭证".to_string(),
-            )))
+            ));
         }
     };
 
@@ -1052,10 +1052,10 @@ pub async fn reject_payment_handler(
         .await
     {
         Ok(_) => match service.get_payment(tenant_id, payment_id).await {
-            Ok(p) => Json(ApiResponse::success(p, "已拒绝")),
-            Err(e) => Json(crate::shared::err_resp(e)),
+            Ok(p) => ApiResponse::success(p, "已拒绝"),
+            Err(e) => crate::shared::err_resp(e),
         },
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1065,7 +1065,7 @@ pub async fn execute_payment_handler(
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<Uuid>,
     Json(req): Json<crate::models::ExecutePaymentRequest>,
-) -> Json<ApiResponse<PaymentResponse>> {
+) -> ApiResponse<PaymentResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let executed_by = claims.username.clone();
@@ -1074,8 +1074,8 @@ pub async fn execute_payment_handler(
         .execute_payment(tenant_id, payment_id, req, &executed_by)
         .await
     {
-        Ok(p) => Json(ApiResponse::success(p, "执行成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(p) => ApiResponse::success(p, "执行成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1090,7 +1090,7 @@ pub async fn write_off_payment_item_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<WriteOffRequest>,
-) -> Json<ApiResponse<PaymentResponse>> {
+) -> ApiResponse<PaymentResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let write_off_by = claims.username.clone();
@@ -1099,8 +1099,8 @@ pub async fn write_off_payment_item_handler(
         .write_off_payment_item(tenant_id, req.item_id, req.write_off_amount, &write_off_by)
         .await
     {
-        Ok(p) => Json(ApiResponse::success(p, "核销成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(p) => ApiResponse::success(p, "核销成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1120,13 +1120,13 @@ pub async fn export_payments_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExportPaymentRequest>,
-) -> Json<ApiResponse<ExportPaymentResponse>> {
+) -> ApiResponse<ExportPaymentResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.export_payments(tenant_id, req).await {
-        Ok(r) => Json(ApiResponse::success(r, "导出成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(r) => ApiResponse::success(r, "导出成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1134,17 +1134,17 @@ pub async fn export_payments_handler(
 pub async fn list_approval_configs_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ApprovalConfigResponse>>> {
+) -> ApiResponse<Vec<ApprovalConfigResponse>> {
     if !claims.has_permission("finance:admin") {
-        return Json(ApiResponse::forbidden("没有权限访问审批配置"));
+        return ApiResponse::forbidden("没有权限访问审批配置");
     }
 
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.list_approval_configs(tenant_id).await {
-        Ok(configs) => Json(ApiResponse::success(configs, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(configs) => ApiResponse::success(configs, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1153,9 +1153,9 @@ pub async fn create_approval_config_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateApprovalConfigRequest>,
-) -> Json<ApiResponse<ApprovalConfigResponse>> {
+) -> ApiResponse<ApprovalConfigResponse> {
     if !claims.has_permission("finance:admin") {
-        return Json(ApiResponse::forbidden("没有权限创建审批配置"));
+        return ApiResponse::forbidden("没有权限创建审批配置");
     }
 
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
@@ -1166,8 +1166,8 @@ pub async fn create_approval_config_handler(
         .create_approval_config(tenant_id, req, &created_by)
         .await
     {
-        Ok(config) => Json(ApiResponse::success(config, "创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(config) => ApiResponse::success(config, "创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1176,17 +1176,17 @@ pub async fn get_approval_config_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(config_id): Path<Uuid>,
-) -> Json<ApiResponse<ApprovalConfigResponse>> {
+) -> ApiResponse<ApprovalConfigResponse> {
     if !claims.has_permission("finance:admin") {
-        return Json(ApiResponse::forbidden("没有权限访问审批配置"));
+        return ApiResponse::forbidden("没有权限访问审批配置");
     }
 
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.get_approval_config(tenant_id, config_id).await {
-        Ok(config) => Json(ApiResponse::success(config, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(config) => ApiResponse::success(config, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1196,9 +1196,9 @@ pub async fn update_approval_config_handler(
     Extension(claims): Extension<Claims>,
     Path(config_id): Path<Uuid>,
     Json(req): Json<CreateApprovalConfigRequest>,
-) -> Json<ApiResponse<ApprovalConfigResponse>> {
+) -> ApiResponse<ApprovalConfigResponse> {
     if !claims.has_permission("finance:admin") {
-        return Json(ApiResponse::forbidden("没有权限更新审批配置"));
+        return ApiResponse::forbidden("没有权限更新审批配置");
     }
 
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
@@ -1209,8 +1209,8 @@ pub async fn update_approval_config_handler(
         .update_approval_config(tenant_id, config_id, req, &updated_by)
         .await
     {
-        Ok(config) => Json(ApiResponse::success(config, "更新成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(config) => ApiResponse::success(config, "更新成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1219,17 +1219,17 @@ pub async fn delete_approval_config_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(config_id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     if !claims.has_permission("finance:admin") {
-        return Json(ApiResponse::forbidden("没有权限删除审批配置"));
+        return ApiResponse::forbidden("没有权限删除审批配置");
     }
 
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.delete_approval_config(tenant_id, config_id).await {
-        Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(_) => ApiResponse::success((), "删除成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1240,7 +1240,7 @@ pub async fn submit_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     tracing::debug!("[finance] 收到审批提交请求: {:?}", req);
 
     let entity_type = req
@@ -1276,10 +1276,10 @@ pub async fn submit_approval(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({"success": true, "message": "审批已提交"}),
         "审批已提交",
-    ))
+    )
 }
 #[utoipa::path(
     post,
@@ -1301,7 +1301,7 @@ pub async fn approve_approval(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     tracing::debug!("[finance] 收到审批通过请求: {:?}", req);
 
     let entity_type = req
@@ -1341,10 +1341,10 @@ pub async fn approve_approval(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({"success": true, "message": "审批已通过"}),
         "审批已通过",
-    ))
+    )
 }
 
 // gate: admin-only
@@ -1352,7 +1352,7 @@ pub async fn reject_approval(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     tracing::debug!("[finance] 收到审批驳回请求: {:?}", req);
 
     let entity_type = req
@@ -1387,10 +1387,10 @@ pub async fn reject_approval(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({"success": true, "message": "审批已驳回"}),
         "审批已驳回",
-    ))
+    )
 }
 
 // gate: admin-only
@@ -1398,12 +1398,12 @@ pub async fn cancel_approval(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     tracing::debug!("[finance] 收到审批取消请求: {:?}", req);
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({"success": true, "message": "审批已取消"}),
         "审批已取消",
-    ))
+    )
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -1425,7 +1425,7 @@ pub struct FinanceDashboardStats {
 pub async fn get_dashboard_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<FinanceDashboardStats>> {
+) -> ApiResponse<FinanceDashboardStats> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1471,7 +1471,7 @@ pub async fn get_dashboard_handler(
         pending_approvals,
     };
 
-    Json(ApiResponse::success(stats, "查询成功"))
+    ApiResponse::success(stats, "查询成功")
 }
 
 // ========== V40.0 Phase 8: 凭证模板 ==========
@@ -1497,7 +1497,7 @@ pub async fn list_voucher_templates_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<VoucherTemplateQueryParams>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
@@ -1509,9 +1509,9 @@ pub async fn list_voucher_templates_handler(
                 .into_iter()
                 .map(|t| serde_json::to_value(t).unwrap_or(serde_json::json!({})))
                 .collect();
-            Json(ApiResponse::success(json_templates, "查询成功"))
+            ApiResponse::success(json_templates, "查询成功")
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1519,15 +1519,15 @@ pub async fn get_voucher_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_voucher_template(tenant_id, template_id).await {
-        Ok(template) => Json(ApiResponse::success(
+        Ok(template) => ApiResponse::success(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "查询成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1535,7 +1535,7 @@ pub async fn create_voucher_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
@@ -1543,21 +1543,18 @@ pub async fn create_voucher_template_handler(
         match serde_json::from_value(req) {
             Ok(r) => r,
             Err(e) => {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
-                    "参数错误: {}",
-                    e
-                ))))
+                return ApiResponse::from(TopemsError::ValidationFailed(format!("参数错误: {}", e)))
             }
         };
     match service
         .create_voucher_template(tenant_id, req, &created_by)
         .await
     {
-        Ok(template) => Json(ApiResponse::success(
+        Ok(template) => ApiResponse::success(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "创建成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1566,28 +1563,25 @@ async fn update_voucher_template_handler(
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let req: crate::services::finance::voucher_template::UpdateVoucherTemplateRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
             Err(e) => {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
-                    "参数错误: {}",
-                    e
-                ))))
+                return ApiResponse::from(TopemsError::ValidationFailed(format!("参数错误: {}", e)))
             }
         };
     match service
         .update_voucher_template(tenant_id, template_id, req)
         .await
     {
-        Ok(template) => Json(ApiResponse::success(
+        Ok(template) => ApiResponse::success(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "更新成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1595,15 +1589,15 @@ pub async fn delete_voucher_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .delete_voucher_template(tenant_id, template_id)
         .await
     {
-        Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(_) => ApiResponse::success((), "删除成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1611,15 +1605,15 @@ pub async fn set_default_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.set_default_template(tenant_id, template_id).await {
-        Ok(template) => Json(ApiResponse::success(
+        Ok(template) => ApiResponse::success(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "设置成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -1642,22 +1636,19 @@ pub async fn apply_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let req: crate::services::finance::voucher_template::ApplyTemplateRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
             Err(e) => {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
-                    "参数错误: {}",
-                    e
-                ))))
+                return ApiResponse::from(TopemsError::ValidationFailed(format!("参数错误: {}", e)))
             }
         };
     match service.apply_template(tenant_id, req).await {
-        Ok(result) => Json(ApiResponse::success(result, "应用成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "应用成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1674,13 +1665,13 @@ async fn copy_template_handler(
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
     Json(req): Json<CopyTemplateRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     let source = match service.get_voucher_template(tenant_id, template_id).await {
         Ok(t) => t,
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Err(e) => return crate::shared::err_resp(e),
     };
     let lines: Vec<crate::services::finance::voucher_template::CreateVoucherTemplateLineRequest> =
         source
@@ -1708,11 +1699,11 @@ async fn copy_template_handler(
         .create_voucher_template(tenant_id, create_req, &created_by)
         .await
     {
-        Ok(template) => Json(ApiResponse::success(
+        Ok(template) => ApiResponse::success(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "复制成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1739,7 +1730,7 @@ pub async fn toggle_template_handler(
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
     Json(req): Json<ToggleTemplateRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
@@ -1755,7 +1746,7 @@ pub async fn toggle_template_handler(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                return Json(ApiResponse::not_found("凭证模板不存在"));
+                return ApiResponse::not_found("凭证模板不存在");
             }
             let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
             match service.get_voucher_template(tenant_id, template_id).await {
@@ -1764,12 +1755,12 @@ pub async fn toggle_template_handler(
                     if let Some(obj) = val.as_object_mut() {
                         obj.insert("isactive".to_string(), serde_json::json!(req.isactive));
                     }
-                    Json(ApiResponse::success(val, "切换成功"))
+                    ApiResponse::success(val, "切换成功")
                 }
-                Err(e) => Json(crate::shared::err_resp(e)),
+                Err(e) => crate::shared::err_resp(e),
             }
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1796,11 +1787,11 @@ pub async fn match_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<MatchTemplateRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let source_type = match req.source_type {
         Some(s) => s,
-        None => return Json(ApiResponse::bad_request("source_type 为必填")),
+        None => return ApiResponse::bad_request("source_type 为必填"),
     };
     let rule: Option<crate::services::finance::voucher_generation::VoucherGenerationRule> = match sqlx::query_as(
         only_own_schema_query!("finance", "SELECT * FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND source_type = $2 AND status = 'active' ORDER BY priority ASC LIMIT 1"),
@@ -1811,7 +1802,7 @@ pub async fn match_template_handler(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Err(e) => return crate::shared::err_resp(e),
     };
     match rule {
         Some(r) => {
@@ -1830,23 +1821,23 @@ pub async fn match_template_handler(
             } else {
                 serde_json::json!(null)
             };
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "matched": true,
                     "rule": serde_json::to_value(&r).unwrap_or(serde_json::json!({})),
                     "template": template_val,
                 }),
                 "匹配成功",
-            ))
+            )
         }
-        None => Json(ApiResponse::success(
+        None => ApiResponse::success(
             serde_json::json!({
                 "matched": false,
                 "rule": null,
                 "template": null,
             }),
             "未找到匹配的规则",
-        )),
+        ),
     }
 }
 
@@ -1874,7 +1865,7 @@ pub async fn get_template_usage_stats_handler(
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
     Query(_params): Query<UsageStatsQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rule_count: i64 = sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) AND mapping_config::jsonb->>'template_id' = $2"),
@@ -1901,7 +1892,7 @@ pub async fn get_template_usage_stats_handler(
     .fetch_one(&state.pool)
     .await
     .unwrap_or(None);
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "template_id": template_id,
             "usage_count": rule_count,
@@ -1909,7 +1900,7 @@ pub async fn get_template_usage_stats_handler(
             "last_used_at": last_used_at,
         }),
         "查询成功",
-    ))
+    )
 }
 
 // ========== 模板分录 CRUD ==========
@@ -1928,7 +1919,7 @@ async fn add_template_entry_handler(
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
     Json(req): Json<AddTemplateEntryRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
@@ -1940,7 +1931,7 @@ async fn add_template_entry_handler(
     .await
     .unwrap_or(0);
     if count == 0 {
-        return Json(ApiResponse::not_found("凭证模板不存在"));
+        return ApiResponse::not_found("凭证模板不存在");
     }
     let sort_order: i32 = match req.sort_order {
         Some(s) => s,
@@ -1978,11 +1969,11 @@ async fn add_template_entry_handler(
     .fetch_one(&state.pool)
     .await;
     match line {
-        Ok(l) => Json(ApiResponse::success(
+        Ok(l) => ApiResponse::success(
             serde_json::to_value(l).unwrap_or(serde_json::json!({})),
             "新增分录成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2000,7 +1991,7 @@ async fn update_template_entry_handler(
     Extension(claims): Extension<Claims>,
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateTemplateEntryRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let owns: i64 = sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3"),
@@ -2012,7 +2003,7 @@ async fn update_template_entry_handler(
     .await
     .unwrap_or(0);
     if owns == 0 {
-        return Json(ApiResponse::not_found("模板分录不存在"));
+        return ApiResponse::not_found("模板分录不存在");
     }
     let existing: crate::services::finance::voucher_template::VoucherTemplateLine =
         match sqlx::query_as(only_own_schema_query!(
@@ -2025,7 +2016,7 @@ async fn update_template_entry_handler(
         .await
         {
             Ok(l) => l,
-            Err(e) => return Json(crate::shared::err_resp(e)),
+            Err(e) => return crate::shared::err_resp(e),
         };
     let description = req.description.or(existing.description);
     let account_code = req.account_code.unwrap_or(existing.account_code);
@@ -2050,11 +2041,11 @@ async fn update_template_entry_handler(
         .fetch_one(&state.pool)
         .await;
     match line {
-        Ok(l) => Json(ApiResponse::success(
+        Ok(l) => ApiResponse::success(
             serde_json::to_value(l).unwrap_or(serde_json::json!({})),
             "更新分录成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2062,7 +2053,7 @@ async fn delete_template_entry_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let res = sqlx::query(
         only_own_schema_query!("finance", "DELETE FROM finance_voucher_template_lines WHERE id = $1 AND template_id = $2 AND EXISTS (SELECT 1 FROM finance_voucher_templates WHERE id = $2 AND tenant_id = $3)"),
@@ -2075,14 +2066,14 @@ async fn delete_template_entry_handler(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                return Json(ApiResponse::not_found("模板分录不存在"));
+                return ApiResponse::not_found("模板分录不存在");
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({"deleted": true, "entry_id": entry_id}),
                 "删除分录成功",
-            ))
+            )
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2114,7 +2105,7 @@ pub async fn reorder_template_entries_handler(
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
     Json(req): Json<ReorderEntriesRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
@@ -2126,7 +2117,7 @@ pub async fn reorder_template_entries_handler(
     .await
     .unwrap_or(0);
     if count == 0 {
-        return Json(ApiResponse::not_found("凭证模板不存在"));
+        return ApiResponse::not_found("凭证模板不存在");
     }
     for (idx, entry_id) in req.entry_ids.iter().enumerate() {
         let sort_order = (idx + 1) as i32;
@@ -2139,7 +2130,7 @@ pub async fn reorder_template_entries_handler(
         .execute(&state.pool)
         .await
         {
-            return Json(crate::shared::err_resp(e));
+            return crate::shared::err_resp(e);
         }
     }
     let lines: Result<
@@ -2158,12 +2149,12 @@ pub async fn reorder_template_entries_handler(
                 .iter()
                 .map(|l| serde_json::to_value(l).unwrap_or(serde_json::json!({})))
                 .collect();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({"template_id": template_id, "entries": json_lines}),
                 "重排成功",
-            ))
+            )
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2197,7 +2188,7 @@ pub async fn export_template_handler(
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let template = match service.get_voucher_template(tenant_id, template_id).await {
         Ok(t) => t,
-        Err(e) => return Json(crate::shared::err_resp::<serde_json::Value, _>(e)).into_response(),
+        Err(e) => return crate::shared::err_resp::<serde_json::Value, _>(e).into_response(),
     };
     let json = serde_json::to_value(template).unwrap_or(serde_json::json!({}));
     let filename = format!("template-{}.json", template_id);
@@ -2225,7 +2216,7 @@ pub async fn import_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
@@ -2241,26 +2232,23 @@ pub async fn import_template_handler(
 
     let file_data = match file_content {
         Some(data) => data,
-        None => return Json(ApiResponse::bad_request("缺少 file 字段")),
+        None => return ApiResponse::bad_request("缺少 file 字段"),
     };
 
     let json_str = match String::from_utf8(file_data) {
         Ok(s) => s,
         Err(e) => {
-            return Json(ApiResponse::from(TopemsError::FileFormatError(format!(
-                "文件编码错误: {}",
-                e
-            ))))
+            return ApiResponse::from(TopemsError::FileFormatError(format!("文件编码错误: {}", e)))
         }
     };
 
     let template_data: serde_json::Value = match serde_json::from_str(&json_str) {
         Ok(v) => v,
         Err(e) => {
-            return Json(ApiResponse::from(TopemsError::FileFormatError(format!(
+            return ApiResponse::from(TopemsError::FileFormatError(format!(
                 "JSON 解析失败: {}",
                 e
-            ))))
+            )))
         }
     };
 
@@ -2268,21 +2256,18 @@ pub async fn import_template_handler(
         match serde_json::from_value(template_data) {
             Ok(r) => r,
             Err(e) => {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
-                    "参数错误: {}",
-                    e
-                ))))
+                return ApiResponse::from(TopemsError::ValidationFailed(format!("参数错误: {}", e)))
             }
         };
     match service
         .create_voucher_template(tenant_id, create_req, &created_by)
         .await
     {
-        Ok(template) => Json(ApiResponse::success(
+        Ok(template) => ApiResponse::success(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "导入成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2309,7 +2294,7 @@ pub async fn list_generation_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<GenerationRuleQueryParams>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
@@ -2321,9 +2306,9 @@ pub async fn list_generation_rules_handler(
                 .into_iter()
                 .map(|r| serde_json::to_value(r).unwrap_or(serde_json::json!({})))
                 .collect();
-            Json(ApiResponse::success(json_rules, "查询成功"))
+            ApiResponse::success(json_rules, "查询成功")
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2331,15 +2316,15 @@ pub async fn get_generation_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(rule_id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_generation_rule(tenant_id, rule_id).await {
-        Ok(rule) => Json(ApiResponse::success(
+        Ok(rule) => ApiResponse::success(
             serde_json::to_value(rule).unwrap_or(serde_json::json!({})),
             "查询成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2347,7 +2332,7 @@ pub async fn create_generation_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
@@ -2355,21 +2340,18 @@ pub async fn create_generation_rule_handler(
         match serde_json::from_value(req) {
             Ok(r) => r,
             Err(e) => {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
-                    "参数错误: {}",
-                    e
-                ))))
+                return ApiResponse::from(TopemsError::ValidationFailed(format!("参数错误: {}", e)))
             }
         };
     match service
         .create_generation_rule(tenant_id, req, &created_by)
         .await
     {
-        Ok(rule) => Json(ApiResponse::success(
+        Ok(rule) => ApiResponse::success(
             serde_json::to_value(rule).unwrap_or(serde_json::json!({})),
             "创建成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2378,28 +2360,25 @@ pub async fn update_generation_rule_handler(
     Extension(claims): Extension<Claims>,
     Path(rule_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let req: crate::services::finance::voucher_generation::UpdateGenerationRuleRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
             Err(e) => {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
-                    "参数错误: {}",
-                    e
-                ))))
+                return ApiResponse::from(TopemsError::ValidationFailed(format!("参数错误: {}", e)))
             }
         };
     match service
         .update_generation_rule(tenant_id, rule_id, req)
         .await
     {
-        Ok(rule) => Json(ApiResponse::success(
+        Ok(rule) => ApiResponse::success(
             serde_json::to_value(rule).unwrap_or(serde_json::json!({})),
             "更新成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2407,12 +2386,12 @@ pub async fn delete_generation_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(rule_id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_generation_rule(tenant_id, rule_id).await {
-        Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(_) => ApiResponse::success((), "删除成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2426,7 +2405,7 @@ pub async fn toggle_generation_rule_handler(
     Extension(claims): Extension<Claims>,
     Path(rule_id): Path<Uuid>,
     Json(req): Json<ToggleRuleRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let new_status = if req.isactive { "active" } else { "inactive" };
     let now = Utc::now();
@@ -2442,7 +2421,7 @@ pub async fn toggle_generation_rule_handler(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                return Json(ApiResponse::not_found("生成规则不存在"));
+                return ApiResponse::not_found("生成规则不存在");
             }
             let rule: Result<
                 crate::services::finance::voucher_generation::VoucherGenerationRule,
@@ -2461,12 +2440,12 @@ pub async fn toggle_generation_rule_handler(
                     if let Some(obj) = val.as_object_mut() {
                         obj.insert("isactive".to_string(), serde_json::json!(req.isactive));
                     }
-                    Json(ApiResponse::success(val, "切换成功"))
+                    ApiResponse::success(val, "切换成功")
                 }
-                Err(e) => Json(crate::shared::err_resp(e)),
+                Err(e) => crate::shared::err_resp(e),
             }
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -2489,25 +2468,22 @@ pub async fn test_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let req: crate::services::finance::voucher_generation::TestRuleRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
             Err(e) => {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
-                    "参数错误: {}",
-                    e
-                ))))
+                return ApiResponse::from(TopemsError::ValidationFailed(format!("参数错误: {}", e)))
             }
         };
     match service.test_rule(tenant_id, req).await {
-        Ok(result) => Json(ApiResponse::success(
+        Ok(result) => ApiResponse::success(
             serde_json::to_value(result).unwrap_or(serde_json::json!({})),
             "测试完成",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2515,7 +2491,7 @@ pub async fn generate_vouchers_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let generated_by = claims.username.clone();
@@ -2523,21 +2499,18 @@ pub async fn generate_vouchers_handler(
         match serde_json::from_value(req) {
             Ok(r) => r,
             Err(e) => {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
-                    "参数错误: {}",
-                    e
-                ))))
+                return ApiResponse::from(TopemsError::ValidationFailed(format!("参数错误: {}", e)))
             }
         };
     match service
         .generate_vouchers(tenant_id, req, &generated_by)
         .await
     {
-        Ok(result) => Json(ApiResponse::success(
+        Ok(result) => ApiResponse::success(
             serde_json::to_value(result).unwrap_or(serde_json::json!({})),
             "生成成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2568,7 +2541,7 @@ pub async fn import_vouchers_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let imported_by = claims.username.clone();
@@ -2576,18 +2549,15 @@ pub async fn import_vouchers_handler(
         match serde_json::from_value(req) {
             Ok(r) => r,
             Err(e) => {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
-                    "参数错误: {}",
-                    e
-                ))))
+                return ApiResponse::from(TopemsError::ValidationFailed(format!("参数错误: {}", e)))
             }
         };
     match service.import_vouchers(tenant_id, req, &imported_by).await {
-        Ok(result) => Json(ApiResponse::success(
+        Ok(result) => ApiResponse::success(
             serde_json::to_value(result).unwrap_or(serde_json::json!({})),
             "导入成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2595,15 +2565,15 @@ pub async fn get_import_status_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(import_id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_import_status(tenant_id, import_id).await {
-        Ok(status) => Json(ApiResponse::success(
+        Ok(status) => ApiResponse::success(
             serde_json::to_value(status).unwrap_or(serde_json::json!({})),
             "查询成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2611,7 +2581,7 @@ pub async fn list_import_records_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<U8ImportQueryParams>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let query = crate::services::finance::u8_import::ImportRecordQuery {
@@ -2626,9 +2596,9 @@ pub async fn list_import_records_handler(
                 .into_iter()
                 .map(|r| serde_json::to_value(r).unwrap_or(serde_json::json!({})))
                 .collect();
-            Json(ApiResponse::success(json_records, "查询成功"))
+            ApiResponse::success(json_records, "查询成功")
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -2653,15 +2623,15 @@ pub async fn get_import_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(import_id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_import_record(tenant_id, import_id).await {
-        Ok(record) => Json(ApiResponse::success(
+        Ok(record) => ApiResponse::success(
             serde_json::to_value(record).unwrap_or(serde_json::json!({})),
             "查询成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2669,12 +2639,12 @@ pub async fn rollback_import_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(import_id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.rollback_import(tenant_id, import_id).await {
-        Ok(_) => Json(ApiResponse::success((), "回滚成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(_) => ApiResponse::success((), "回滚成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2692,7 +2662,7 @@ pub async fn list_receivables_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReceivableQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
@@ -2705,8 +2675,8 @@ pub async fn list_receivables_handler(
         .list_receivables(tenant_id, page, page_size, params.status, customer_id)
         .await
     {
-        Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2714,12 +2684,12 @@ async fn get_receivable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(receivable_id): Path<uuid::Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_receivable(tenant_id, receivable_id).await {
-        Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2727,13 +2697,13 @@ async fn create_receivable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     match service.create_receivable(tenant_id, req, &created_by).await {
-        Ok(data) => Json(ApiResponse::success(data, "创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2742,15 +2712,15 @@ async fn update_receivable_handler(
     Extension(claims): Extension<Claims>,
     Path(receivable_id): Path<uuid::Uuid>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .update_receivable(tenant_id, receivable_id, req)
         .await
     {
-        Ok(data) => Json(ApiResponse::success(data, "更新成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "更新成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2758,12 +2728,12 @@ async fn delete_receivable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(receivable_id): Path<uuid::Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_receivable(tenant_id, receivable_id).await {
-        Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(_) => ApiResponse::success((), "删除成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -2784,12 +2754,12 @@ async fn delete_receivable_handler(
 pub async fn get_receivable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_receivable_aging(tenant_id).await {
-        Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2797,7 +2767,7 @@ pub async fn batch_create_receivables_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
@@ -2810,8 +2780,8 @@ pub async fn batch_create_receivables_handler(
         .batch_create_receivables(tenant_id, items, &created_by)
         .await
     {
-        Ok(data) => Json(ApiResponse::success(data, "批量创建完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "批量创建完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2829,7 +2799,7 @@ pub async fn list_payables_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PayableQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
@@ -2842,8 +2812,8 @@ pub async fn list_payables_handler(
         .list_payables(tenant_id, page, page_size, params.status, supplier_id)
         .await
     {
-        Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2851,12 +2821,12 @@ async fn get_payable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(payable_id): Path<uuid::Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_payable(tenant_id, payable_id).await {
-        Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2864,13 +2834,13 @@ async fn create_payable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
     match service.create_payable(tenant_id, req, &created_by).await {
-        Ok(data) => Json(ApiResponse::success(data, "创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2879,12 +2849,12 @@ async fn update_payable_handler(
     Extension(claims): Extension<Claims>,
     Path(payable_id): Path<uuid::Uuid>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.update_payable(tenant_id, payable_id, req).await {
-        Ok(data) => Json(ApiResponse::success(data, "更新成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "更新成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2892,12 +2862,12 @@ async fn delete_payable_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(payable_id): Path<uuid::Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_payable(tenant_id, payable_id).await {
-        Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(_) => ApiResponse::success((), "删除成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -2918,12 +2888,12 @@ async fn delete_payable_handler(
 pub async fn get_payable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_payable_aging(tenant_id).await {
-        Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2941,7 +2911,7 @@ pub async fn batch_create_payables_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
@@ -2954,8 +2924,8 @@ pub async fn batch_create_payables_handler(
         .batch_create_payables(tenant_id, items, &created_by)
         .await
     {
-        Ok(data) => Json(ApiResponse::success(data, "批量创建完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "批量创建完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2973,7 +2943,7 @@ pub async fn list_collections_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CollectionQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
@@ -2986,8 +2956,8 @@ pub async fn list_collections_handler(
         .list_collections(tenant_id, page, page_size, params.status, customer_id)
         .await
     {
-        Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -3012,12 +2982,12 @@ pub async fn get_collection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(collection_id): Path<uuid::Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_collection(tenant_id, collection_id).await {
-        Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3025,7 +2995,7 @@ pub async fn create_collection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
@@ -3093,9 +3063,9 @@ pub async fn create_collection_handler(
                     }
                 });
             }
-            Json(ApiResponse::success(data, "创建成功"))
+            ApiResponse::success(data, "创建成功")
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3104,15 +3074,15 @@ async fn update_collection_handler(
     Extension(claims): Extension<Claims>,
     Path(collection_id): Path<uuid::Uuid>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .update_collection(tenant_id, collection_id, req)
         .await
     {
-        Ok(data) => Json(ApiResponse::success(data, "更新成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "更新成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3120,12 +3090,12 @@ async fn delete_collection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(collection_id): Path<uuid::Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_collection(tenant_id, collection_id).await {
-        Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(_) => ApiResponse::success((), "删除成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -3148,7 +3118,7 @@ pub async fn write_off_collection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let collection_id_str = req
@@ -3170,11 +3140,11 @@ pub async fn write_off_collection_handler(
                 .write_off_collection(tenant_id, cid, rid, amount)
                 .await
             {
-                Ok(data) => Json(ApiResponse::success(data, "核销成功")),
-                Err(e) => Json(crate::shared::err_resp(e)),
+                Ok(data) => ApiResponse::success(data, "核销成功"),
+                Err(e) => crate::shared::err_resp(e),
             }
         }
-        _ => Json(ApiResponse::bad_request("无效的ID格式")),
+        _ => ApiResponse::bad_request("无效的ID格式"),
     }
 }
 
@@ -3182,7 +3152,7 @@ pub async fn batch_write_off_collections_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let items = req
@@ -3191,8 +3161,8 @@ pub async fn batch_write_off_collections_handler(
         .cloned()
         .unwrap_or_default();
     match service.batch_write_off(tenant_id, items).await {
-        Ok(data) => Json(ApiResponse::success(data, "批量核销完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "批量核销完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3225,7 +3195,7 @@ pub async fn list_payment_records_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaymentRecordQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
@@ -3238,8 +3208,8 @@ pub async fn list_payment_records_handler(
         .list_payment_records(tenant_id, page, page_size, params.status, supplier_id)
         .await
     {
-        Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3247,12 +3217,12 @@ pub async fn get_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<uuid::Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_payment_record(tenant_id, payment_id).await {
-        Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3261,7 +3231,7 @@ pub async fn create_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
@@ -3269,8 +3239,8 @@ pub async fn create_payment_record_handler(
         .create_payment_record(tenant_id, req, &created_by)
         .await
     {
-        Ok(data) => Json(ApiResponse::success(data, "创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3278,7 +3248,7 @@ pub async fn approve_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<uuid::Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
@@ -3289,8 +3259,8 @@ pub async fn approve_payment_record_handler(
         )
         .await
     {
-        Ok(data) => Json(ApiResponse::success(data, "审批通过")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "审批通过"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3298,7 +3268,7 @@ pub async fn reject_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<uuid::Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
@@ -3309,8 +3279,8 @@ pub async fn reject_payment_record_handler(
         )
         .await
     {
-        Ok(data) => Json(ApiResponse::success(data, "已拒绝")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "已拒绝"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3320,15 +3290,15 @@ async fn update_payment_record_handler(
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<uuid::Uuid>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service
         .update_payment_record(tenant_id, payment_id, req)
         .await
     {
-        Ok(data) => Json(ApiResponse::success(data, "更新成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "更新成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3337,12 +3307,12 @@ async fn delete_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<uuid::Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_payment_record(tenant_id, payment_id).await {
-        Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(_) => ApiResponse::success((), "删除成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3351,7 +3321,7 @@ pub async fn write_off_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let payment_id_str = req.get("payment_id").and_then(|v| v.as_str()).unwrap_or("");
@@ -3363,10 +3333,10 @@ pub async fn write_off_payment_record_handler(
         uuid::Uuid::parse_str(payable_id_str),
     ) {
         (Ok(pid), Ok(rid)) => match service.write_off_payment(tenant_id, pid, rid, amount).await {
-            Ok(data) => Json(ApiResponse::success(data, "核销成功")),
-            Err(e) => Json(crate::shared::err_resp(e)),
+            Ok(data) => ApiResponse::success(data, "核销成功"),
+            Err(e) => crate::shared::err_resp(e),
         },
-        _ => Json(ApiResponse::bad_request("无效的ID格式")),
+        _ => ApiResponse::bad_request("无效的ID格式"),
     }
 }
 #[utoipa::path(
@@ -3389,7 +3359,7 @@ pub async fn batch_write_off_payments_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let items = req
@@ -3398,8 +3368,8 @@ pub async fn batch_write_off_payments_handler(
         .cloned()
         .unwrap_or_default();
     match service.batch_write_off_payments(tenant_id, items).await {
-        Ok(data) => Json(ApiResponse::success(data, "批量核销完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "批量核销完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3415,36 +3385,36 @@ pub struct AgingQueryParams {
 pub async fn calculate_receivable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.calculate_receivable_aging(tenant_id).await {
-        Ok(data) => Json(ApiResponse::success(data, "计算成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "计算成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn calculate_payable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.calculate_payable_aging(tenant_id).await {
-        Ok(data) => Json(ApiResponse::success(data, "计算成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "计算成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn get_aging_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_aging_summary(tenant_id).await {
-        Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -3469,7 +3439,7 @@ pub async fn get_aging_detail_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AgingQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let direction = params.direction.unwrap_or_else(|| "receivable".to_string());
@@ -3477,8 +3447,8 @@ pub async fn get_aging_detail_handler(
         .get_aging_detail(tenant_id, &direction, params.bucket)
         .await
     {
-        Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3486,14 +3456,14 @@ pub async fn get_aging_trend_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AgingQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let direction = params.direction.unwrap_or_else(|| "receivable".to_string());
     let months = params.months.unwrap_or(6);
     match service.get_aging_trend(tenant_id, &direction, months).await {
-        Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3548,7 +3518,7 @@ pub async fn get_voucher_entries(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rows = sqlx::query(
         only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"),
@@ -3573,12 +3543,9 @@ pub async fn get_voucher_entries(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(
-                serde_json::Value::Array(items),
-                "查询成功",
-            ))
+            ApiResponse::success(serde_json::Value::Array(items), "查询成功")
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3586,7 +3553,7 @@ pub async fn get_voucher_items(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rows = sqlx::query(
         only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"),
@@ -3611,12 +3578,9 @@ pub async fn get_voucher_items(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(
-                serde_json::Value::Array(items),
-                "查询成功",
-            ))
+            ApiResponse::success(serde_json::Value::Array(items), "查询成功")
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3635,7 +3599,7 @@ pub async fn batch_create_vouchers(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<BatchCreateVouchersRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let results: Vec<serde_json::Value> = req
         .vouchers
         .iter()
@@ -3646,10 +3610,7 @@ pub async fn batch_create_vouchers(
             })
         })
         .collect();
-    Json(ApiResponse::success(
-        serde_json::json!({"results": results}),
-        "批量创建完成",
-    ))
+    ApiResponse::success(serde_json::json!({"results": results}), "批量创建完成")
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
@@ -3657,7 +3618,7 @@ pub async fn batch_delete_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchDeleteVouchersRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let mut deleted = 0i64;
     for id_str in &req.ids {
@@ -3675,17 +3636,17 @@ pub async fn batch_delete_vouchers(
             }
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({"deleted": deleted, "total": req.ids.len()}),
         "批量删除完成",
-    ))
+    )
 }
 
 pub async fn unapprove_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let res = sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'submitted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status IN ('approved', 'posted')"))
         .bind(voucher_id)
@@ -3695,15 +3656,15 @@ pub async fn unapprove_voucher(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                Json(ApiResponse::not_found("凭证不存在或状态不允许反审核"))
+                ApiResponse::not_found("凭证不存在或状态不允许反审核")
             } else {
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     serde_json::json!({"voucher_id": voucher_id, "status": "submitted"}),
                     "反审核成功",
-                ))
+                )
             }
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3712,7 +3673,7 @@ pub async fn reverse_voucher(
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
     Json(req): Json<ReverseVoucherRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let reversal_id = Uuid::new_v4();
     let res = sqlx::query(only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (id, tenant_id, voucher_no, voucher_date, period, voucher_type, description, status, created_by, created_at, updated_at) SELECT $1, $2, CONCAT('RV-', voucher_no), voucher_date, period, voucher_type, CONCAT('红冲: ', description), 'draft', created_by, NOW(), NOW() FROM finance.core_finance_vouchers WHERE id = $3 AND tenant_id = $2"))
@@ -3724,15 +3685,15 @@ pub async fn reverse_voucher(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                Json(ApiResponse::not_found("凭证不存在"))
+                ApiResponse::not_found("凭证不存在")
             } else {
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     serde_json::json!({"reversal_voucher_id": reversal_id, "original_voucher_id": voucher_id, "reason": req.reason}),
                     "红冲成功",
-                ))
+                )
             }
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3740,7 +3701,7 @@ pub async fn get_next_voucher_no(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<NextVoucherNoQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let prefix = format!(
         "{}-",
@@ -3755,27 +3716,24 @@ pub async fn get_next_voucher_no(
     .await
     .unwrap_or(0);
     let voucher_no = format!("{}{:06}", prefix, count + 1);
-    Json(ApiResponse::success(
-        serde_json::json!({"voucher_no": voucher_no}),
-        "查询成功",
-    ))
+    ApiResponse::success(serde_json::json!({"voucher_no": voucher_no}), "查询成功")
 }
 
 pub async fn generate_voucher_by_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateVoucherRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let template_id = match Uuid::parse_str(&req.template_id) {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::bad_request("无效的模板ID")),
+        Err(_) => return ApiResponse::bad_request("无效的模板ID"),
     };
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_voucher_template(tenant_id, template_id).await {
         Ok(template) => {
             let voucher_id = Uuid::new_v4();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "voucher_id": voucher_id,
                     "template_id": template_id,
@@ -3783,9 +3741,9 @@ pub async fn generate_voucher_by_template(
                     "status": "draft",
                 }),
                 "生成成功",
-            ))
+            )
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3804,7 +3762,7 @@ pub async fn import_vouchers_general(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     mut multipart: Multipart,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut file_content: Option<Vec<u8>> = None;
     while let Ok(Some(field)) = multipart.next_field().await {
         if field.name() == Some("file") {
@@ -3813,22 +3771,22 @@ pub async fn import_vouchers_general(
         }
     }
     if file_content.is_none() {
-        return Json(ApiResponse::bad_request("缺少 file 字段"));
+        return ApiResponse::bad_request("缺少 file 字段");
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({"total": 0, "success": 0, "failed": 0, "errors": []}),
         "导入完成",
-    ))
+    )
 }
 
 pub async fn import_vouchers_u8(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let import_id = Uuid::new_v4();
     let file_name = req.get("file_name").and_then(|v| v.as_str()).unwrap_or("");
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "import_id": import_id,
             "file_name": file_name,
@@ -3838,7 +3796,7 @@ pub async fn import_vouchers_u8(
             "failed": 0,
         }),
         "导入已提交",
-    ))
+    )
 }
 
 // ========== RC4a 补齐: 会计期间接口 ==========
@@ -3846,23 +3804,23 @@ pub async fn import_vouchers_u8(
 pub async fn get_current_period(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let now = Utc::now();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "period": format!("{:04}-{:02}", now.year(), now.month()),
             "year": now.year(),
             "month": now.month(),
         }),
         "查询成功",
-    ))
+    )
 }
 
 pub async fn list_periods(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<PeriodListQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let now = Utc::now();
     let year = params.year.unwrap_or(now.year());
     let mut items: Vec<serde_json::Value> = Vec::new();
@@ -3884,10 +3842,7 @@ pub async fn list_periods(
             "status": status,
         }));
     }
-    Json(ApiResponse::success(
-        serde_json::json!({"items": items}),
-        "查询成功",
-    ))
+    ApiResponse::success(serde_json::json!({"items": items}), "查询成功")
 }
 
 #[utoipa::path(
@@ -3905,7 +3860,7 @@ pub async fn open_period_v2(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<PeriodActionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     // period 形如 "YYYY-MM"；表 core_finance_periods 以 (tenant_id, year, month) 为唯一键。
     let period = req.period.unwrap_or_default();
@@ -3913,7 +3868,7 @@ pub async fn open_period_v2(
     let year: i32 = parts.first().and_then(|y| y.parse().ok()).unwrap_or(0);
     let month: i32 = parts.get(1).and_then(|m| m.parse().ok()).unwrap_or(0);
     if !(1..=12).contains(&month) || !(2000..=2100).contains(&year) {
-        return Json(ApiResponse::bad_request("period 格式应为 YYYY-MM"));
+        return ApiResponse::bad_request("period 格式应为 YYYY-MM");
     }
     let period_name = format!("{:04}-{:02}", year, month);
     let start_date = format!("{:04}-{:02}-01", year, month);
@@ -3928,11 +3883,11 @@ pub async fn open_period_v2(
         .execute(&state.pool)
         .await;
     match res {
-        Ok(_) => Json(ApiResponse::success(
+        Ok(_) => ApiResponse::success(
             serde_json::json!({"period": period_name, "status": "open"}),
             "开启成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3940,7 +3895,7 @@ pub async fn close_period_v2(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<PeriodActionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let period = req.period.unwrap_or_default();
     let tenant_id = get_tenant_id_from_claims(&claims);
     // period 形如 "YYYY-MM"；表 core_finance_periods 列为 year/month（无 period 列），按 (tenant_id, year, month) 定位。
@@ -3948,7 +3903,7 @@ pub async fn close_period_v2(
     let year: i32 = parts.first().and_then(|y| y.parse().ok()).unwrap_or(0);
     let month: i32 = parts.get(1).and_then(|m| m.parse().ok()).unwrap_or(0);
     if !(1..=12).contains(&month) || !(2000..=2100).contains(&year) {
-        return Json(ApiResponse::bad_request("period 格式应为 YYYY-MM"));
+        return ApiResponse::bad_request("period 格式应为 YYYY-MM");
     }
     let res = sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_periods SET status = 'closed', updated_at = NOW() WHERE tenant_id = $1 AND year = $2 AND month = $3"))
         .bind(tenant_id)
@@ -3959,15 +3914,15 @@ pub async fn close_period_v2(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                Json(ApiResponse::not_found("会计期间不存在"))
+                ApiResponse::not_found("会计期间不存在")
             } else {
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     serde_json::json!({"period": period, "status": "closed"}),
                     "关闭成功",
-                ))
+                )
             }
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -3975,13 +3930,13 @@ pub async fn close_income_period(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<PeriodActionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let period = req.period.unwrap_or_default();
     let voucher_id = Uuid::new_v4();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({"voucher_id": voucher_id, "period": period, "type": "income_close"}),
         "损益结转成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -3999,16 +3954,16 @@ pub async fn year_end_close_v2(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<PeriodActionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let year = req.year.unwrap_or(Utc::now().year());
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "year": year,
             "vouchers": [],
             "status": "completed",
         }),
         "年结成功",
-    ))
+    )
 }
 
 // ========== RC4a 补齐: AR/AP 别名与对账接口 ==========
@@ -4017,12 +3972,12 @@ pub async fn get_ar_aging(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<ArAgingQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_aging_summary(tenant_id).await {
-        Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -4041,12 +3996,12 @@ pub async fn get_ap_aging(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<ArAgingQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_aging_summary(tenant_id).await {
-        Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(data) => ApiResponse::success(data, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -4057,7 +4012,7 @@ pub async fn get_account_tree(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let category = params.get("category").and_then(|v| v.as_str());
     let rows = sqlx::query(
@@ -4085,12 +4040,9 @@ pub async fn get_account_tree(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(
-                serde_json::Value::Array(items),
-                "查询成功",
-            ))
+            ApiResponse::success(serde_json::Value::Array(items), "查询成功")
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -4099,16 +4051,16 @@ pub async fn update_account(
     Extension(_claims): Extension<Claims>,
     Path(_account_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(req, "更新成功"))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(req, "更新成功")
 }
 
 pub async fn delete_account(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(_account_id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
-    Json(ApiResponse::success("".to_string(), "删除成功"))
+) -> ApiResponse<String> {
+    ApiResponse::success("".to_string(), "删除成功")
 }
 
 pub async fn batch_create_account_children(
@@ -4116,15 +4068,15 @@ pub async fn batch_create_account_children(
     Extension(_claims): Extension<Claims>,
     Path(_account_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(req, "批量创建成功"))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(req, "批量创建成功")
 }
 
 pub async fn get_opening_balances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = claims
         .tenant_id
         .as_deref()
@@ -4213,14 +4165,14 @@ pub async fn get_opening_balances(
                     },
                 )
                 .collect();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({"items": list, "total": total}),
                 "查询成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("Failed to get opening balances: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
+            ApiResponse::from(TopemsError::internal("查询失败", e))
         }
     }
 }
@@ -4229,7 +4181,7 @@ pub async fn create_opening_balances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = claims
         .tenant_id
         .as_deref()
@@ -4239,7 +4191,7 @@ pub async fn create_opening_balances(
         .and_then(|v| v.as_str())
         .and_then(|s| Uuid::parse_str(s).ok());
     let Some(company_id) = company_id else {
-        return Json(ApiResponse::bad_request("company_id 必填"));
+        return ApiResponse::bad_request("company_id 必填");
     };
     let subject_code = req
         .get("subject_code")
@@ -4247,7 +4199,7 @@ pub async fn create_opening_balances(
         .unwrap_or_default()
         .to_string();
     if subject_code.is_empty() {
-        return Json(ApiResponse::bad_request("subject_code 必填"));
+        return ApiResponse::bad_request("subject_code 必填");
     }
     let period = req
         .get("period")
@@ -4295,13 +4247,13 @@ pub async fn create_opening_balances(
     .await;
 
     match res {
-        Ok(_) => Json(ApiResponse::success(
+        Ok(_) => ApiResponse::success(
             serde_json::json!({"id": id, "company_id": company_id, "subject_code": subject_code, "period": period}),
             "创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create opening balance: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("创建失败", e)))
+            ApiResponse::from(TopemsError::internal("创建失败", e))
         }
     }
 }
@@ -4311,7 +4263,7 @@ pub async fn set_opening_balance(
     Extension(claims): Extension<Claims>,
     Path(account_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = claims
         .tenant_id
         .as_deref()
@@ -4329,7 +4281,7 @@ pub async fn set_opening_balance(
     .ok()
     .flatten();
     let Some((subject_code, subject_name, org_id)) = subject else {
-        return Json(ApiResponse::not_found("科目不存在"));
+        return ApiResponse::not_found("科目不存在");
     };
     let company_id = req
         .get("company_id")
@@ -4384,13 +4336,13 @@ pub async fn set_opening_balance(
     .await;
 
     match res {
-        Ok(_) => Json(ApiResponse::success(
+        Ok(_) => ApiResponse::success(
             serde_json::json!({"id": id, "subject_code": subject_code, "period": period}),
             "设置成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to set opening balance: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("设置失败", e)))
+            ApiResponse::from(TopemsError::internal("设置失败", e))
         }
     }
 }
@@ -4399,7 +4351,7 @@ pub async fn carry_forward_opening_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let tenant_id = claims
         .tenant_id
         .as_deref()
@@ -4415,7 +4367,7 @@ pub async fn carry_forward_opening_balance(
         .unwrap_or_default()
         .replace('-', "");
     if from_period.is_empty() || to_period.is_empty() {
-        return Json(ApiResponse::bad_request("from_period / to_period 必填"));
+        return ApiResponse::bad_request("from_period / to_period 必填");
     }
     let company_id = req
         .get("company_id")
@@ -4441,13 +4393,10 @@ pub async fn carry_forward_opening_balance(
     .await;
 
     match res {
-        Ok(r) => Json(ApiResponse::success(
-            format!("结转成功，共 {} 条", r.rows_affected()),
-            "结转成功",
-        )),
+        Ok(r) => ApiResponse::success(format!("结转成功，共 {} 条", r.rows_affected()), "结转成功"),
         Err(e) => {
             tracing::error!("Failed to carry forward opening balance: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("结转失败", e)))
+            ApiResponse::from(TopemsError::internal("结转失败", e))
         }
     }
 }
@@ -4458,22 +4407,16 @@ pub async fn list_counterparty_customers(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({"items": [], "total": 0}),
-        "查询成功",
-    ))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(serde_json::json!({"items": [], "total": 0}), "查询成功")
 }
 
 pub async fn get_counterparty_customer(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(customer_id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({"customer_id": customer_id}),
-        "查询成功",
-    ))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(serde_json::json!({"customer_id": customer_id}), "查询成功")
 }
 
 pub async fn update_counterparty_customer(
@@ -4481,33 +4424,27 @@ pub async fn update_counterparty_customer(
     Extension(_claims): Extension<Claims>,
     Path(customer_id): Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({"customer_id": customer_id, "data": req}),
         "更新成功",
-    ))
+    )
 }
 
 pub async fn list_counterparty_suppliers(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({"items": [], "total": 0}),
-        "查询成功",
-    ))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(serde_json::json!({"items": [], "total": 0}), "查询成功")
 }
 
 pub async fn get_counterparty_supplier(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(supplier_id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({"supplier_id": supplier_id}),
-        "查询成功",
-    ))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(serde_json::json!({"supplier_id": supplier_id}), "查询成功")
 }
 
 pub async fn update_counterparty_supplier(
@@ -4515,11 +4452,11 @@ pub async fn update_counterparty_supplier(
     Extension(_claims): Extension<Claims>,
     Path(supplier_id): Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({"supplier_id": supplier_id, "data": req}),
         "更新成功",
-    ))
+    )
 }
 
 // ==================== RC4a 补齐: 费用审批 ====================
@@ -4528,7 +4465,7 @@ pub async fn list_expense_approvals(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let page = params
         .get("page")
         .and_then(|v| v.as_u64())
@@ -4602,12 +4539,12 @@ pub async fn list_expense_approvals(
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({"items": items, "total": total, "page": page, "page_size": page_size}),
                 "查询成功",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -4627,7 +4564,7 @@ pub async fn create_expense_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = claims
         .tenant_id
         .as_deref()
@@ -4695,12 +4632,12 @@ pub async fn create_expense_approval(
     match result {
         Ok(row) => {
             let id: Uuid = row.try_get("id").unwrap_or_default();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({"id": id, "expense_no": expense_no, "status": status}),
                 "创建成功",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建失败", e)),
     }
 }
 
@@ -4708,18 +4645,14 @@ pub async fn get_expense_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = claims
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
     let id_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => {
-            return Json(ApiResponse::from(TopemsError::NotFound(
-                "无效的ID".to_string(),
-            )))
-        }
+        Err(_) => return ApiResponse::from(TopemsError::NotFound("无效的ID".to_string())),
     };
 
     let row = sqlx::query(only_own_schema_query!(
@@ -4737,7 +4670,7 @@ pub async fn get_expense_approval(
     .await;
 
     match row {
-        Ok(Some(row)) => Json(ApiResponse::success(
+        Ok(Some(row)) => ApiResponse::success(
             serde_json::json!({
                 "id": row.try_get::<Uuid, _>("id").ok(),
                 "expense_no": row.try_get::<String, _>("expense_no").ok(),
@@ -4756,11 +4689,9 @@ pub async fn get_expense_approval(
                 "updated_at": row.try_get::<Option<chrono::DateTime<Utc>>, _>("updated_at").ok().flatten(),
             }),
             "查询成功",
-        )),
-        Ok(None) => Json(ApiResponse::from(TopemsError::NotFound(
-            "费用审批不存在".to_string(),
-        ))),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        ),
+        Ok(None) => ApiResponse::from(TopemsError::NotFound("费用审批不存在".to_string())),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -4770,11 +4701,8 @@ pub async fn update_expense_approval(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({"id": id, "data": req}),
-        "更新成功",
-    ))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(serde_json::json!({"id": id, "data": req}), "更新成功")
 }
 
 // gate: admin-only
@@ -4782,8 +4710,8 @@ pub async fn delete_expense_approval(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<String>,
-) -> Json<ApiResponse<String>> {
-    Json(ApiResponse::success("".to_string(), "删除成功"))
+) -> ApiResponse<String> {
+    ApiResponse::success("".to_string(), "删除成功")
 }
 
 // gate: admin-only
@@ -4791,11 +4719,11 @@ pub async fn submit_expense_approval(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({"id": id, "status": "submitted"}),
         "提交成功",
-    ))
+    )
 }
 
 // gate: admin-only
@@ -4803,11 +4731,11 @@ pub async fn approve_expense_approval(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({"id": id, "status": "approved"}),
         "审批通过",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -4827,11 +4755,11 @@ pub async fn reject_expense_approval(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({"id": id, "status": "rejected"}),
         "驳回成功",
-    ))
+    )
 }
 
 // ==================== RC4a 补齐: 报表基础 ====================
@@ -4840,44 +4768,38 @@ pub async fn get_account_balance_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({"items": [], "total_records": 0}),
         "查询成功",
-    ))
+    )
 }
 
 pub async fn get_account_ledger_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({"items": [], "total": 0}),
-        "查询成功",
-    ))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(serde_json::json!({"items": [], "total": 0}), "查询成功")
 }
 
 pub async fn get_dimension_detail_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({"items": []}),
-        "查询成功",
-    ))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(serde_json::json!({"items": []}), "查询成功")
 }
 
 pub async fn export_balance_sheet_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({"file_name": "balance_sheet.csv"}),
         "导出成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -4898,22 +4820,22 @@ pub async fn export_income_statement_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({"file_name": "income_statement.csv"}),
         "导出成功",
-    ))
+    )
 }
 
 pub async fn export_cash_flow_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     axum::extract::Query(_params): axum::extract::Query<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({"file_name": "cash_flow.csv"}),
         "导出成功",
-    ))
+    )
 }
 
 pub fn create_routes() -> Router<AppState> {

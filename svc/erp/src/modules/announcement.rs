@@ -59,7 +59,7 @@ pub async fn list_announcements(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<Announcement>>> {
+) -> ApiResponse<PaginatedResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -122,16 +122,14 @@ pub async fn list_announcements(
             .fetch_one(&mut **txn)
             .await;
             let total = count_result.unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(announcements, total, page, page_size),
                 "获取公告列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取公告列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取公告列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取公告列表失败".to_string()))
         }
     }
 }
@@ -153,21 +151,17 @@ pub async fn create_announcement(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateAnnouncementRequest>,
-) -> Json<ApiResponse<Announcement>> {
+) -> ApiResponse<Announcement> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("公告标题", &req.title) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            e.to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
     }
     if let Err(e) = validate_required_field("作者", &req.author) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            e.to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
     }
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -202,16 +196,14 @@ pub async fn create_announcement(
     .await;
     let (response, status, error_msg) = match &result {
         Ok(announcement) => (
-            Json(ApiResponse::success(announcement.clone(), "公告创建成功")),
+            ApiResponse::success(announcement.clone(), "公告创建成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("创建公告失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "公告创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("公告创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -223,9 +215,7 @@ pub async fn create_announcement(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "公告创建失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("公告创建失败".to_string()));
             }
         }
     }
@@ -274,7 +264,7 @@ pub async fn get_announcement(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Announcement>> {
+) -> ApiResponse<Announcement> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -304,15 +294,11 @@ pub async fn get_announcement(
     .fetch_optional(&mut **txn)
     .await;
     match result {
-        Ok(Some(announcement)) => Json(ApiResponse::success(announcement, "获取公告成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "公告不存在".to_string(),
-        ))),
+        Ok(Some(announcement)) => ApiResponse::success(announcement, "获取公告成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("公告不存在".to_string())),
         Err(e) => {
             tracing::error!("获取公告失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取公告失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取公告失败".to_string()))
         }
     }
 }
@@ -338,7 +324,7 @@ pub async fn update_announcement(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateAnnouncementRequest>,
-) -> Json<ApiResponse<Announcement>> {
+) -> ApiResponse<Announcement> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -361,16 +347,9 @@ pub async fn update_announcement(
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "公告不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("公告不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询公告失败: {}",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询公告失败: {}", e)),
     };
     let request_data = serde_json::to_value(&req).ok();
     let title = req.title.unwrap_or(existing.title);
@@ -409,16 +388,14 @@ pub async fn update_announcement(
     .await;
     let (response, status_str, error_msg) = match &result {
         Ok(announcement) => (
-            Json(ApiResponse::success(announcement.clone(), "公告更新成功")),
+            ApiResponse::success(announcement.clone(), "公告更新成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("更新公告失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "公告更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("公告更新失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -429,9 +406,7 @@ pub async fn update_announcement(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "公告更新失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("公告更新失败".to_string()));
             }
         }
     }
@@ -480,7 +455,7 @@ pub async fn delete_announcement(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -507,28 +482,24 @@ pub async fn delete_announcement(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success("".to_string(), "公告删除成功")),
+                ApiResponse::success("".to_string(), "公告删除成功"),
                 "success".to_string(),
                 None,
             )
         }
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "公告不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("公告不存在".to_string())),
             "error".to_string(),
             Some("公告不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除公告失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "公告删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("公告删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -579,7 +550,7 @@ pub async fn publish_announcement(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Announcement>> {
+) -> ApiResponse<Announcement> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -611,23 +582,21 @@ pub async fn publish_announcement(
     .await;
     let (response, status_str, error_msg) = match &result {
         Ok(Some(announcement)) => (
-            Json(ApiResponse::success(announcement.clone(), "公告发布成功")),
+            ApiResponse::success(announcement.clone(), "公告发布成功"),
             "success".to_string(),
             None,
         ),
         Ok(None) => (
-            Json(ApiResponse::from(TopemsError::ValidationFailed(
+            ApiResponse::from(TopemsError::ValidationFailed(
                 "公告不是草稿状态，无法发布".to_string(),
-            ))),
+            )),
             "error".to_string(),
             Some("公告不是草稿状态".to_string()),
         ),
         Err(e) => {
             tracing::error!("发布公告失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "公告发布失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("公告发布失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -638,9 +607,7 @@ pub async fn publish_announcement(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "公告发布失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("公告发布失败".to_string()));
             }
         }
     }
@@ -689,7 +656,7 @@ pub async fn unpublish_announcement(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Announcement>> {
+) -> ApiResponse<Announcement> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -720,23 +687,21 @@ pub async fn unpublish_announcement(
     .await;
     let (response, status_str, error_msg) = match &result {
         Ok(Some(announcement)) => (
-            Json(ApiResponse::success(announcement.clone(), "公告已取消发布")),
+            ApiResponse::success(announcement.clone(), "公告已取消发布"),
             "success".to_string(),
             None,
         ),
         Ok(None) => (
-            Json(ApiResponse::from(TopemsError::ValidationFailed(
+            ApiResponse::from(TopemsError::ValidationFailed(
                 "公告不是已发布状态，无法取消发布".to_string(),
-            ))),
+            )),
             "error".to_string(),
             Some("公告不是已发布状态".to_string()),
         ),
         Err(e) => {
             tracing::error!("取消发布公告失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "取消发布公告失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("取消发布公告失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -747,9 +712,7 @@ pub async fn unpublish_announcement(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "公告撤回失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("公告撤回失败".to_string()));
             }
         }
     }

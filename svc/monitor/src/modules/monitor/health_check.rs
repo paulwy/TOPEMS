@@ -1,4 +1,4 @@
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Router};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -85,9 +85,7 @@ pub fn create_routes() -> Router<AppState> {
         (status = 200, description = "OK"),
     ),
 )]
-pub async fn get_service_health(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<ServiceHealth>>> {
+pub async fn get_service_health(State(state): State<AppState>) -> ApiResponse<Vec<ServiceHealth>> {
     // 真实探活：HTTP 请求 BFF 统一健康入口 /api/server/health，取模块注册列表 + 实测延迟。
     // 模块化单体下 16 服务 = 进程内模块（无独立端口），网关级探活是唯一真实度量面。
     let start = std::time::Instant::now();
@@ -97,7 +95,7 @@ pub async fn get_service_health(
     {
         Ok(c) => c,
         Err(_) => {
-            return Json(ApiResponse::success(
+            return ApiResponse::success(
                 vec![ServiceHealth {
                     id: stable_service_id("bff-gateway"),
                     service_name: "bff-gateway".to_string(),
@@ -107,7 +105,7 @@ pub async fn get_service_health(
                     last_check: chrono::Utc::now(),
                 }],
                 "HTTP 客户端构建失败：服务状态不可用",
-            ));
+            );
         }
     };
 
@@ -129,7 +127,7 @@ pub async fn get_service_health(
                 .unwrap_or_default();
 
             if names.is_empty() {
-                return Json(ApiResponse::success(
+                return ApiResponse::success(
                     vec![ServiceHealth {
                         id: stable_service_id("bff-gateway"),
                         service_name: "bff-gateway".to_string(),
@@ -139,7 +137,7 @@ pub async fn get_service_health(
                         last_check: chrono::Utc::now(),
                     }],
                     "BFF 可达但未返回模块清单",
-                ));
+                );
             }
 
             let uptime = state.start_time.elapsed();
@@ -162,12 +160,9 @@ pub async fn get_service_health(
                 })
                 .collect();
 
-            Json(ApiResponse::success(
-                services,
-                "获取服务健康状态成功（真实探活）",
-            ))
+            ApiResponse::success(services, "获取服务健康状态成功（真实探活）")
         }
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             vec![ServiceHealth {
                 id: stable_service_id("bff-gateway"),
                 service_name: "bff-gateway".to_string(),
@@ -177,8 +172,8 @@ pub async fn get_service_health(
                 last_check: chrono::Utc::now(),
             }],
             &format!("BFF 探活失败（HTTP {}）：服务状态不可用", r.status()),
-        )),
-        Err(e) => Json(ApiResponse::success(
+        ),
+        Err(e) => ApiResponse::success(
             vec![ServiceHealth {
                 id: stable_service_id("bff-gateway"),
                 service_name: "bff-gateway".to_string(),
@@ -188,7 +183,7 @@ pub async fn get_service_health(
                 last_check: chrono::Utc::now(),
             }],
             &format!("BFF 探活失败（{}）：服务状态不可用", e),
-        )),
+        ),
     }
 }
 
@@ -334,7 +329,7 @@ pub struct InfrastructureHealth {
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn get_infrastructure_health(
     State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<InfrastructureHealth>>> {
+) -> ApiResponse<Vec<InfrastructureHealth>> {
     // 数据库探活（真实执行 SELECT 1）
     let db_start = std::time::Instant::now();
     let db_ok = sqlx::query_scalar::<_, i32>("SELECT 1")
@@ -382,5 +377,5 @@ pub async fn get_infrastructure_health(
         },
     ];
 
-    Json(ApiResponse::success(items, "获取基础架构健康状态成功"))
+    ApiResponse::success(items, "获取基础架构健康状态成功")
 }

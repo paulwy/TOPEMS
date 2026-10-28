@@ -122,13 +122,12 @@ impl FromRef<ApiState> for PgPool {
 /// 这些多探路径注册空数据兜底，避免误报裸 404（待上游支持）。
 fn smoke_false_positive_stub_routes() -> Router<ApiState> {
     use axum::routing::get;
-    use axum::Json;
     use topems_shared_core::response::ApiResponse;
-    async fn stub() -> Json<ApiResponse<serde_json::Value>> {
-        Json(ApiResponse::success(
+    async fn stub() -> ApiResponse<serde_json::Value> {
+        ApiResponse::success(
             serde_json::json!({ "items": [], "total": 0 }),
             "该功能待上游支持",
-        ))
+        )
     }
     Router::new()
         .route("/system/dict-types/{id}/items/{item_id}", get(stub))

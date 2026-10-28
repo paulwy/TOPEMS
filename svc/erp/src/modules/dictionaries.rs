@@ -70,7 +70,7 @@ async fn list_dictionaries(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<DictionaryQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -115,7 +115,7 @@ async fn list_dictionaries(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[erp] dictionaries 计数失败: {}", e);
-            return Json(ApiResponse::server_error("查询字典失败"));
+            return ApiResponse::server_error("查询字典失败");
         }
     };
     let fetch_sql = format!(
@@ -131,7 +131,7 @@ async fn list_dictionaries(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[erp] dictionaries 查询失败: {}", e);
-            return Json(ApiResponse::server_error("查询字典失败"));
+            return ApiResponse::server_error("查询字典失败");
         }
     };
     let items: Vec<DictionaryResponse> = rows
@@ -146,17 +146,17 @@ async fn list_dictionaries(
             description: r.get("description"),
         })
         .collect();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "查询成功",
-    ))
+    )
 }
 
 async fn get_dictionary(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -173,7 +173,7 @@ async fn get_dictionary(
     }
     let row = q.fetch_optional(&state.db).await;
     match row {
-        Ok(Some(r)) => Json(ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             serde_json::json!({
                 "id": r.get::<Uuid, _>("id"),
                 "code": r.get::<String, _>("code"),
@@ -184,11 +184,11 @@ async fn get_dictionary(
                 "description": r.get::<Option<String>, _>("description"),
             }),
             "查询成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("字典不存在")),
+        ),
+        Ok(None) => ApiResponse::not_found("字典不存在"),
         Err(e) => {
             tracing::error!("[erp] dictionary 查询失败: {}", e);
-            Json(ApiResponse::server_error("查询字典失败"))
+            ApiResponse::server_error("查询字典失败")
         }
     }
 }
@@ -197,7 +197,7 @@ async fn create_dictionary(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDictionaryRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let result = sqlx::query(
         "INSERT INTO erp_dictionaries (tenant_id, code, name, category, items, status, description) \
@@ -215,18 +215,15 @@ async fn create_dictionary(
     match result {
         Ok(Some(r)) => {
             let id: Uuid = r.get("id");
-            Json(ApiResponse::success(
-                serde_json::json!({ "id": id }),
-                "字典创建成功",
-            ))
+            ApiResponse::success(serde_json::json!({ "id": id }), "字典创建成功")
         }
-        Ok(None) => Json(ApiResponse::server_error("字典创建失败")),
+        Ok(None) => ApiResponse::server_error("字典创建失败"),
         Err(e) => {
             tracing::error!("[erp] dictionary 创建失败: {}", e);
             if e.to_string().contains("duplicate") {
-                return Json(ApiResponse::conflict("字典编码已存在"));
+                return ApiResponse::conflict("字典编码已存在");
             }
-            Json(ApiResponse::server_error("字典创建失败"))
+            ApiResponse::server_error("字典创建失败")
         }
     }
 }
@@ -236,7 +233,7 @@ async fn update_dictionary(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDictionaryRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -273,14 +270,11 @@ async fn update_dictionary(
         }
     };
     match result {
-        Ok(Some(_)) => Json(ApiResponse::success(
-            serde_json::json!({ "id": id }),
-            "字典更新成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("字典不存在")),
+        Ok(Some(_)) => ApiResponse::success(serde_json::json!({ "id": id }), "字典更新成功"),
+        Ok(None) => ApiResponse::not_found("字典不存在"),
         Err(e) => {
             tracing::error!("[erp] dictionary 更新失败: {}", e);
-            Json(ApiResponse::server_error("字典更新失败"))
+            ApiResponse::server_error("字典更新失败")
         }
     }
 }
@@ -289,7 +283,7 @@ async fn delete_dictionary(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -310,13 +304,11 @@ async fn delete_dictionary(
             .await
     };
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("".to_string(), "字典删除成功"))
-        }
-        Ok(_) => Json(ApiResponse::not_found("字典不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "字典删除成功"),
+        Ok(_) => ApiResponse::not_found("字典不存在"),
         Err(e) => {
             tracing::error!("[erp] dictionary 删除失败: {}", e);
-            Json(ApiResponse::server_error("字典删除失败"))
+            ApiResponse::server_error("字典删除失败")
         }
     }
 }

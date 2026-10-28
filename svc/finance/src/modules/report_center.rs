@@ -808,7 +808,7 @@ pub async fn get_enhanced_balance_sheet_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
-) -> Json<ApiResponse<BalanceSheetEnhanced>> {
+) -> ApiResponse<BalanceSheetEnhanced> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
@@ -826,14 +826,14 @@ pub async fn get_enhanced_balance_sheet_handler(
     };
 
     let report = generate_balance_sheet(&period, &current, previous.as_ref(), last_year.as_ref());
-    Json(ApiResponse::success(report, "查询成功"))
+    ApiResponse::success(report, "查询成功")
 }
 
 pub async fn get_enhanced_income_statement_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
-) -> Json<ApiResponse<IncomeStatementEnhanced>> {
+) -> ApiResponse<IncomeStatementEnhanced> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
@@ -847,7 +847,7 @@ pub async fn get_enhanced_income_statement_handler(
     };
 
     let report = generate_income_statement(&period, &current, previous.as_ref());
-    Json(ApiResponse::success(report, "查询成功"))
+    ApiResponse::success(report, "查询成功")
 }
 
 /// 现金流量表增强版：无真实现金流活动分类数据源，诚实返回 501。
@@ -865,7 +865,7 @@ pub async fn get_financial_analysis_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
-) -> Json<ApiResponse<FinancialAnalysisReport>> {
+) -> ApiResponse<FinancialAnalysisReport> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
@@ -900,7 +900,7 @@ pub async fn get_financial_analysis_handler(
     let income = generate_income_statement(&period, &income_cur, None);
     let ratios = calculate_financial_ratios(&balance, &income, income_ly.as_ref());
     let report = generate_analysis_report(&period, &ratios);
-    Json(ApiResponse::success(report, "查询成功"))
+    ApiResponse::success(report, "查询成功")
 }
 
 #[utoipa::path(

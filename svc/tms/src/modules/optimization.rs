@@ -238,16 +238,14 @@ pub async fn plan_assignment(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<AssignmentPlanRequest>,
-) -> Json<ApiResponse<AssignmentResult>> {
+) -> ApiResponse<AssignmentResult> {
     let mut guard = txn_arc.lock().await;
     let Some(_txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let result = assign_orders_to_drivers(&req.drivers, &req.orders);
-    Json(ApiResponse::success(result, "订单分配完成"))
+    ApiResponse::success(result, "订单分配完成")
 }
 
 #[utoipa::path(
@@ -263,33 +261,28 @@ pub async fn optimize_route_handler(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<RouteOptimizeRequest>,
-) -> Json<ApiResponse<RouteOptimizeResponse>> {
+) -> ApiResponse<RouteOptimizeResponse> {
     let mut guard = txn_arc.lock().await;
     let Some(_txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     if req.distances.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "距离矩阵不能为空".to_string(),
-        )));
+        ));
     }
     let n = req.distances.len();
     for row in &req.distances {
         if row.len() != n {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "距离矩阵必须为方阵".to_string(),
-            )));
+            ));
         }
     }
     let visit_order = optimize_route(&req.distances);
     let stops = visit_order.len();
-    Json(ApiResponse::success(
-        RouteOptimizeResponse { visit_order, stops },
-        "路径优化完成",
-    ))
+    ApiResponse::success(RouteOptimizeResponse { visit_order, stops }, "路径优化完成")
 }
 
 #[utoipa::path(
@@ -305,13 +298,11 @@ pub async fn freight_quote_handler(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<FreightQuoteRequest>,
-) -> Json<ApiResponse<FreightQuote>> {
+) -> ApiResponse<FreightQuote> {
     let mut guard = txn_arc.lock().await;
     let Some(_txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     if req.distance_km < 0.0
         || req.weight_kg < 0.0
@@ -319,9 +310,9 @@ pub async fn freight_quote_handler(
         || req.rate_per_kg < 0.0
         || req.min_charge < 0.0
     {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "运费参数不能为负".to_string(),
-        )));
+        ));
     }
     let quote = calculate_freight(
         req.distance_km,
@@ -330,7 +321,7 @@ pub async fn freight_quote_handler(
         req.rate_per_kg,
         req.min_charge,
     );
-    Json(ApiResponse::success(quote, "运费报价完成"))
+    ApiResponse::success(quote, "运费报价完成")
 }
 
 pub fn create_routes<S>() -> Router<S>

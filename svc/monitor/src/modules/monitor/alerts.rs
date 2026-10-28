@@ -321,7 +321,7 @@ pub async fn list_alerts(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -419,7 +419,7 @@ pub async fn list_alerts(
         .take(page_size as usize)
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "items": paginated,
             "total": total,
@@ -427,7 +427,7 @@ pub async fn list_alerts(
             "page_size": page_size
         }),
         "获取告警列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -447,7 +447,7 @@ pub async fn get_alert(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Alert>> {
+) -> ApiResponse<Alert> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let alert = Alert {
         id,
@@ -462,7 +462,7 @@ pub async fn get_alert(
         acknowledged_by: None,
     };
 
-    Json(ApiResponse::success(alert, "获取告警详情成功"))
+    ApiResponse::success(alert, "获取告警详情成功")
 }
 
 #[utoipa::path(
@@ -484,7 +484,7 @@ pub async fn update_alert(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<Alert>> {
+) -> ApiResponse<Alert> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let status = req
         .get("status")
@@ -512,7 +512,7 @@ pub async fn update_alert(
         },
     };
 
-    Json(ApiResponse::success(alert, "告警状态更新成功"))
+    ApiResponse::success(alert, "告警状态更新成功")
 }
 
 // Alert Statistics
@@ -528,7 +528,7 @@ pub async fn update_alert(
 pub async fn get_alert_statistics(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<AlertStatistics>> {
+) -> ApiResponse<AlertStatistics> {
     let stats = AlertStatistics {
         total_alerts: 156,
         active_alerts: 23,
@@ -561,7 +561,7 @@ pub async fn get_alert_statistics(
         ],
     };
 
-    Json(ApiResponse::success(stats, "获取告警统计成功"))
+    ApiResponse::success(stats, "获取告警统计成功")
 }
 
 // Batch acknowledge alerts
@@ -579,7 +579,7 @@ pub async fn acknowledge_alerts(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let alert_ids: Vec<String> = req
         .get("alert_ids")
         .and_then(|v| v.as_array())
@@ -590,13 +590,13 @@ pub async fn acknowledge_alerts(
         })
         .unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "acknowledged_count": alert_ids.len(),
             "alert_ids": alert_ids
         }),
         "告警确认成功",
-    ))
+    )
 }
 
 // Batch resolve alerts
@@ -614,7 +614,7 @@ pub async fn resolve_alerts(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let alert_ids: Vec<String> = req
         .get("alert_ids")
         .and_then(|v| v.as_array())
@@ -625,13 +625,13 @@ pub async fn resolve_alerts(
         })
         .unwrap_or_default();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "resolved_count": alert_ids.len(),
             "alert_ids": alert_ids
         }),
         "告警已解决",
-    ))
+    )
 }
 
 // Single alert acknowledge（前端 acknowledgeAlert(id) → POST /alerts/{id}/acknowledge）
@@ -649,9 +649,9 @@ pub async fn acknowledge_alert(
     Extension(_claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let note = req.get("note").and_then(|v| v.as_str()).unwrap_or("");
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "alert_id": id,
             "status": "acknowledged",
@@ -659,7 +659,7 @@ pub async fn acknowledge_alert(
             "note": note
         }),
         "告警已确认",
-    ))
+    )
 }
 
 // Single alert resolve（前端 resolveAlert(id) → POST /alerts/{id}/resolve）
@@ -677,9 +677,9 @@ pub async fn resolve_alert(
     Extension(_claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let reason = req.get("reason").and_then(|v| v.as_str()).unwrap_or("");
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "alert_id": id,
             "status": "resolved",
@@ -687,7 +687,7 @@ pub async fn resolve_alert(
             "reason": reason
         }),
         "告警已解决",
-    ))
+    )
 }
 
 // Single alert escalate（前端 escalateAlert(id) → POST /alerts/{id}/escalate）
@@ -705,7 +705,7 @@ pub async fn escalate_alert(
     Extension(_claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let reason = req.get("reason").and_then(|v| v.as_str()).unwrap_or("");
     let target_users = req
         .get("target_users")
@@ -716,7 +716,7 @@ pub async fn escalate_alert(
                 .collect::<Vec<_>>()
         })
         .unwrap_or_default();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "alert_id": id,
             "status": "escalated",
@@ -725,7 +725,7 @@ pub async fn escalate_alert(
             "target_users": target_users
         }),
         "告警已升级",
-    ))
+    )
 }
 
 // Single alert dismiss（前端 dismissAlert(id) → POST /alerts/{id}/dismiss）
@@ -743,9 +743,9 @@ pub async fn dismiss_alert(
     Extension(_claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let reason = req.get("reason").and_then(|v| v.as_str()).unwrap_or("");
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "alert_id": id,
             "status": "dismissed",
@@ -753,7 +753,7 @@ pub async fn dismiss_alert(
             "reason": reason
         }),
         "告警已忽略",
-    ))
+    )
 }
 
 // Alert Rules API
@@ -769,7 +769,7 @@ pub async fn dismiss_alert(
 pub async fn list_rules(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<AlertRule>>> {
+) -> ApiResponse<Vec<AlertRule>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rules = vec![
         AlertRule {
@@ -847,7 +847,7 @@ pub async fn list_rules(
         },
     ];
 
-    Json(ApiResponse::success(rules, "获取规则列表成功"))
+    ApiResponse::success(rules, "获取规则列表成功")
 }
 
 #[utoipa::path(
@@ -864,7 +864,7 @@ pub async fn create_rule(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AlertRuleRequest>,
-) -> Json<ApiResponse<AlertRule>> {
+) -> ApiResponse<AlertRule> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rule = AlertRule {
         id: Uuid::new_v4(),
@@ -880,7 +880,7 @@ pub async fn create_rule(
         updated_at: chrono::Utc::now(),
     };
 
-    Json(ApiResponse::success(rule, "规则创建成功"))
+    ApiResponse::success(rule, "规则创建成功")
 }
 
 #[utoipa::path(
@@ -900,7 +900,7 @@ pub async fn get_rule(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<AlertRule>> {
+) -> ApiResponse<AlertRule> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rule = AlertRule {
         id,
@@ -925,7 +925,7 @@ pub async fn get_rule(
         updated_at: chrono::Utc::now(),
     };
 
-    Json(ApiResponse::success(rule, "获取规则详情成功"))
+    ApiResponse::success(rule, "获取规则详情成功")
 }
 
 #[utoipa::path(
@@ -947,7 +947,7 @@ pub async fn update_rule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<AlertRuleRequest>,
-) -> Json<ApiResponse<AlertRule>> {
+) -> ApiResponse<AlertRule> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rule = AlertRule {
         id,
@@ -963,7 +963,7 @@ pub async fn update_rule(
         updated_at: chrono::Utc::now(),
     };
 
-    Json(ApiResponse::success(rule, "规则更新成功"))
+    ApiResponse::success(rule, "规则更新成功")
 }
 
 #[utoipa::path(
@@ -983,11 +983,8 @@ pub async fn delete_rule(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({ "id": id.to_string() }),
-        "规则删除成功",
-    ))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(serde_json::json!({ "id": id.to_string() }), "规则删除成功")
 }
 
 #[utoipa::path(
@@ -1007,7 +1004,7 @@ pub async fn enable_rule(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<AlertRule>> {
+) -> ApiResponse<AlertRule> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rule = AlertRule {
         id,
@@ -1028,7 +1025,7 @@ pub async fn enable_rule(
         updated_at: chrono::Utc::now(),
     };
 
-    Json(ApiResponse::success(rule, "规则已启用"))
+    ApiResponse::success(rule, "规则已启用")
 }
 
 #[utoipa::path(
@@ -1048,7 +1045,7 @@ pub async fn disable_rule(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<AlertRule>> {
+) -> ApiResponse<AlertRule> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rule = AlertRule {
         id,
@@ -1069,7 +1066,7 @@ pub async fn disable_rule(
         updated_at: chrono::Utc::now(),
     };
 
-    Json(ApiResponse::success(rule, "规则已禁用"))
+    ApiResponse::success(rule, "规则已禁用")
 }
 
 // Advanced Alert Rule Handlers
@@ -1091,7 +1088,7 @@ pub async fn get_alert_history(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<AlertHistory>>> {
+) -> ApiResponse<Vec<AlertHistory>> {
     let history = vec![
         AlertHistory {
             id: "1".to_string(),
@@ -1111,7 +1108,7 @@ pub async fn get_alert_history(
         },
     ];
 
-    Json(ApiResponse::success(history, "获取告警历史成功"))
+    ApiResponse::success(history, "获取告警历史成功")
 }
 
 #[utoipa::path(
@@ -1131,7 +1128,7 @@ pub async fn get_alert_timeline(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<AlertTimeline>> {
+) -> ApiResponse<AlertTimeline> {
     let timeline = AlertTimeline {
         alert_id: id.to_string(),
         events: vec![
@@ -1156,7 +1153,7 @@ pub async fn get_alert_timeline(
         ],
     };
 
-    Json(ApiResponse::success(timeline, "获取告警时间线成功"))
+    ApiResponse::success(timeline, "获取告警时间线成功")
 }
 
 #[utoipa::path(
@@ -1176,7 +1173,7 @@ pub async fn get_scheduled_trigger(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<Uuid>,
-) -> Json<ApiResponse<ScheduledTrigger>> {
+) -> ApiResponse<ScheduledTrigger> {
     let trigger = ScheduledTrigger {
         enabled: true,
         cron_expression: Some("0 */5 * * * *".to_string()),
@@ -1185,7 +1182,7 @@ pub async fn get_scheduled_trigger(
         window_end: Some("18:00".to_string()),
     };
 
-    Json(ApiResponse::success(trigger, "获取定时触发配置成功"))
+    ApiResponse::success(trigger, "获取定时触发配置成功")
 }
 
 #[utoipa::path(
@@ -1207,8 +1204,8 @@ pub async fn update_scheduled_trigger(
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<Uuid>,
     Json(req): Json<ScheduledTrigger>,
-) -> Json<ApiResponse<ScheduledTrigger>> {
-    Json(ApiResponse::success(req, "定时触发配置已更新"))
+) -> ApiResponse<ScheduledTrigger> {
+    ApiResponse::success(req, "定时触发配置已更新")
 }
 
 #[utoipa::path(
@@ -1228,7 +1225,7 @@ pub async fn get_escalation(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<Uuid>,
-) -> Json<ApiResponse<AlertEscalation>> {
+) -> ApiResponse<AlertEscalation> {
     let escalation = AlertEscalation {
         enabled: true,
         levels: vec![
@@ -1271,7 +1268,7 @@ pub async fn get_escalation(
         ],
     };
 
-    Json(ApiResponse::success(escalation, "获取告警升级配置成功"))
+    ApiResponse::success(escalation, "获取告警升级配置成功")
 }
 
 #[utoipa::path(
@@ -1293,8 +1290,8 @@ pub async fn update_escalation(
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<Uuid>,
     Json(req): Json<AlertEscalation>,
-) -> Json<ApiResponse<AlertEscalation>> {
-    Json(ApiResponse::success(req, "告警升级配置已更新"))
+) -> ApiResponse<AlertEscalation> {
+    ApiResponse::success(req, "告警升级配置已更新")
 }
 
 #[utoipa::path(
@@ -1314,7 +1311,7 @@ pub async fn get_routing(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<Uuid>,
-) -> Json<ApiResponse<AlertRouting>> {
+) -> ApiResponse<AlertRouting> {
     let routing = AlertRouting {
         rules: vec![
             RoutingRule {
@@ -1344,7 +1341,7 @@ pub async fn get_routing(
         ],
     };
 
-    Json(ApiResponse::success(routing, "获取告警路由配置成功"))
+    ApiResponse::success(routing, "获取告警路由配置成功")
 }
 
 #[utoipa::path(
@@ -1366,8 +1363,8 @@ pub async fn update_routing(
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<Uuid>,
     Json(req): Json<AlertRouting>,
-) -> Json<ApiResponse<AlertRouting>> {
-    Json(ApiResponse::success(req, "告警路由配置已更新"))
+) -> ApiResponse<AlertRouting> {
+    ApiResponse::success(req, "告警路由配置已更新")
 }
 
 // Template Management
@@ -1383,7 +1380,7 @@ pub async fn update_routing(
 pub async fn list_templates(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<AlertTemplate>>> {
+) -> ApiResponse<Vec<AlertTemplate>> {
     let templates = vec![
         AlertTemplate {
             id: "1".to_string(),
@@ -1403,7 +1400,7 @@ pub async fn list_templates(
         },
     ];
 
-    Json(ApiResponse::success(templates, "获取告警模板列表成功"))
+    ApiResponse::success(templates, "获取告警模板列表成功")
 }
 
 #[utoipa::path(
@@ -1420,8 +1417,8 @@ pub async fn create_template(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<AlertTemplate>,
-) -> Json<ApiResponse<AlertTemplate>> {
-    Json(ApiResponse::success(req, "告警模板创建成功"))
+) -> ApiResponse<AlertTemplate> {
+    ApiResponse::success(req, "告警模板创建成功")
 }
 
 #[utoipa::path(
@@ -1441,7 +1438,7 @@ pub async fn get_template(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<AlertTemplate>> {
+) -> ApiResponse<AlertTemplate> {
     let template = AlertTemplate {
         id,
         name: "邮件告警模板".to_string(),
@@ -1451,7 +1448,7 @@ pub async fn get_template(
         variables: vec!["severity".to_string(), "service_name".to_string(), "title".to_string(), "message".to_string(), "timestamp".to_string()],
     };
 
-    Json(ApiResponse::success(template, "获取告警模板成功"))
+    ApiResponse::success(template, "获取告警模板成功")
 }
 
 #[utoipa::path(
@@ -1473,8 +1470,8 @@ pub async fn update_template(
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<String>,
     Json(req): Json<AlertTemplate>,
-) -> Json<ApiResponse<AlertTemplate>> {
-    Json(ApiResponse::success(req, "告警模板更新成功"))
+) -> ApiResponse<AlertTemplate> {
+    ApiResponse::success(req, "告警模板更新成功")
 }
 
 #[utoipa::path(
@@ -1494,11 +1491,8 @@ pub async fn delete_template(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({"id": id}),
-        "告警模板删除成功",
-    ))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(serde_json::json!({"id": id}), "告警模板删除成功")
 }
 
 // Suppression Rules
@@ -1514,7 +1508,7 @@ pub async fn delete_template(
 pub async fn list_suppression_rules(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<SuppressionRule>>> {
+) -> ApiResponse<Vec<SuppressionRule>> {
     let rules = vec![SuppressionRule {
         id: "1".to_string(),
         name: "计划内维护窗口".to_string(),
@@ -1528,7 +1522,7 @@ pub async fn list_suppression_rules(
         enabled: true,
     }];
 
-    Json(ApiResponse::success(rules, "获取抑制规则列表成功"))
+    ApiResponse::success(rules, "获取抑制规则列表成功")
 }
 
 #[utoipa::path(
@@ -1545,8 +1539,8 @@ pub async fn create_suppression_rule(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<SuppressionRule>,
-) -> Json<ApiResponse<SuppressionRule>> {
-    Json(ApiResponse::success(req, "抑制规则创建成功"))
+) -> ApiResponse<SuppressionRule> {
+    ApiResponse::success(req, "抑制规则创建成功")
 }
 
 #[utoipa::path(
@@ -1566,7 +1560,7 @@ pub async fn get_suppression_rule(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<SuppressionRule>> {
+) -> ApiResponse<SuppressionRule> {
     let rule = SuppressionRule {
         id,
         name: "计划内维护窗口".to_string(),
@@ -1580,7 +1574,7 @@ pub async fn get_suppression_rule(
         enabled: true,
     };
 
-    Json(ApiResponse::success(rule, "获取抑制规则成功"))
+    ApiResponse::success(rule, "获取抑制规则成功")
 }
 
 #[utoipa::path(
@@ -1602,8 +1596,8 @@ pub async fn update_suppression_rule(
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<String>,
     Json(req): Json<SuppressionRule>,
-) -> Json<ApiResponse<SuppressionRule>> {
-    Json(ApiResponse::success(req, "抑制规则更新成功"))
+) -> ApiResponse<SuppressionRule> {
+    ApiResponse::success(req, "抑制规则更新成功")
 }
 
 #[utoipa::path(
@@ -1623,11 +1617,8 @@ pub async fn delete_suppression_rule(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({"id": id}),
-        "抑制规则删除成功",
-    ))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(serde_json::json!({"id": id}), "抑制规则删除成功")
 }
 
 // Advanced Rule Handler
@@ -1648,7 +1639,7 @@ pub async fn get_advanced_rule(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let advanced = serde_json::json!({
         "basic": {
             "id": id.to_string(),
@@ -1683,7 +1674,7 @@ pub async fn get_advanced_rule(
         }
     });
 
-    Json(ApiResponse::success(advanced, "获取高级规则配置成功"))
+    ApiResponse::success(advanced, "获取高级规则配置成功")
 }
 
 #[utoipa::path(
@@ -1705,8 +1696,8 @@ pub async fn update_advanced_rule(
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(req, "高级规则配置已更新"))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(req, "高级规则配置已更新")
 }
 
 #[cfg(test)]

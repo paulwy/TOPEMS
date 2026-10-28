@@ -23,7 +23,7 @@ use crate::models::{AppState, CreateErpMappingRequest, ErpMapping, UpdateErpMapp
 pub async fn list_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ErpMapping>>> {
+) -> ApiResponse<Vec<ErpMapping>> {
     let tid: Option<&str> = if claims.is_superuser {
         None
     } else {
@@ -39,10 +39,10 @@ pub async fn list_mappings(
     .fetch_all(&state.pool)
     .await
     {
-        Ok(rows) => Json(ApiResponse::success(rows, "映射列表获取成功")),
+        Ok(rows) => ApiResponse::success(rows, "映射列表获取成功"),
         Err(e) => {
             tracing::error!("list_mappings error: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
+            ApiResponse::from(TopemsError::internal("查询失败", e))
         }
     }
 }
@@ -64,7 +64,7 @@ pub async fn get_mapping(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ErpMapping>> {
+) -> ApiResponse<ErpMapping> {
     let tid: Option<&str> = if claims.is_superuser {
         None
     } else {
@@ -81,9 +81,9 @@ pub async fn get_mapping(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(m)) => Json(ApiResponse::success(m, "获取成功")),
-        Ok(None) => Json(ApiResponse::not_found("映射不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(Some(m)) => ApiResponse::success(m, "获取成功"),
+        Ok(None) => ApiResponse::not_found("映射不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -100,7 +100,7 @@ pub async fn get_mapping(
 pub async fn create_mapping(
     State(state): State<AppState>,
     Json(req): Json<CreateErpMappingRequest>,
-) -> Json<ApiResponse<ErpMapping>> {
+) -> ApiResponse<ErpMapping> {
     let tid = "default".to_string();
     let id = Uuid::new_v4();
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
@@ -129,8 +129,8 @@ pub async fn create_mapping(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(m) => Json(ApiResponse::success(m, "创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
+        Ok(m) => ApiResponse::success(m, "创建成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建失败", e)),
     }
 }
 
@@ -151,7 +151,7 @@ pub async fn update_mapping(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateErpMappingRequest>,
-) -> Json<ApiResponse<ErpMapping>> {
+) -> ApiResponse<ErpMapping> {
     let tid = "default".to_string();
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
@@ -187,9 +187,9 @@ pub async fn update_mapping(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(m)) => Json(ApiResponse::success(m, "更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("映射不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+        Ok(Some(m)) => ApiResponse::success(m, "更新成功"),
+        Ok(None) => ApiResponse::not_found("映射不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
 }
 
@@ -209,7 +209,7 @@ pub async fn update_mapping(
 pub async fn delete_mapping(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tid = "default".to_string();
     match sqlx::query(only_own_schema_query!(
         "integration",
@@ -220,8 +220,8 @@ pub async fn delete_mapping(
     .execute(&state.pool)
     .await
     {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("映射不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
+        Ok(_) => ApiResponse::not_found("映射不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
     }
 }

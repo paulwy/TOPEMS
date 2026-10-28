@@ -130,9 +130,9 @@ pub async fn batch_upload_positions(
     State(pool): State<PgPool>,
     TenantRequest { ctx }: TenantRequest,
     Json(payload): Json<BatchPositionUpload>,
-) -> Json<ApiResponse<usize>> {
+) -> ApiResponse<usize> {
     if payload.positions.is_empty() {
-        return Json(ApiResponse::success(0, "没有需要同步的位置数据"));
+        return ApiResponse::success(0, "没有需要同步的位置数据");
     }
 
     let positions = payload.positions;
@@ -161,12 +161,9 @@ pub async fn batch_upload_positions(
     match query.execute(&pool).await {
         Ok(result) => {
             let synced_count = result.rows_affected() as usize;
-            Json(ApiResponse::success(
-                synced_count,
-                &format!("成功同步 {} 个位置", synced_count),
-            ))
+            ApiResponse::success(synced_count, &format!("成功同步 {} 个位置", synced_count))
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("位置同步失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("位置同步失败", e)),
     }
 }
 
@@ -177,16 +174,16 @@ pub async fn batch_upload_evidence(
     State(pool): State<PgPool>,
     TenantRequest { ctx }: TenantRequest,
     Json(payload): Json<BatchEvidenceUpload>,
-) -> Json<ApiResponse<SyncResponse>> {
+) -> ApiResponse<SyncResponse> {
     if payload.evidence_list.is_empty() {
-        return Json(ApiResponse::success(
+        return ApiResponse::success(
             SyncResponse {
                 synced_evidence: vec![],
                 synced_positions: 0,
                 errors: vec![],
             },
             "没有需要同步的取证数据",
-        ));
+        );
     }
 
     let mut results = Vec::new();
@@ -248,13 +245,13 @@ pub async fn batch_upload_evidence(
         synced_positions: success_count,
         errors,
     };
-    Json(ApiResponse::success(
+    ApiResponse::success(
         response,
         &format!(
             "取证同步完成: {} 成功, {} 失败",
             success_count, failure_count
         ),
-    ))
+    )
 }
 
 // ==================== 离线数据下载 ====================
@@ -265,7 +262,7 @@ pub async fn download_offline_data(
     TenantRequest { ctx }: TenantRequest,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<OfflineDataRequest>,
-) -> Json<ApiResponse<OfflineDataResponse>> {
+) -> ApiResponse<OfflineDataResponse> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -287,7 +284,7 @@ pub async fn download_offline_data(
         {
             Ok(data) => devices = data,
             Err(e) => {
-                return Json(ApiResponse::from(TopemsError::internal("下载设备数据失败", e)))
+                return ApiResponse::from(TopemsError::internal("下载设备数据失败", e))
             }
         }
     }
@@ -314,12 +311,7 @@ pub async fn download_offline_data(
 
         match q.fetch_all(&pool).await {
             Ok(data) => tracks = data,
-            Err(e) => {
-                return Json(ApiResponse::from(TopemsError::internal(
-                    "下载轨迹数据失败",
-                    e,
-                )))
-            }
+            Err(e) => return ApiResponse::from(TopemsError::internal("下载轨迹数据失败", e)),
         }
 
         // 下载轨迹位置点
@@ -334,7 +326,7 @@ pub async fn download_offline_data(
             {
                 Ok(data) => track_positions = data,
                 Err(e) => {
-                    return Json(ApiResponse::from(TopemsError::internal("下载轨迹位置数据失败", e)))
+                    return ApiResponse::from(TopemsError::internal("下载轨迹位置数据失败", e))
                 }
             }
         }
@@ -350,11 +342,11 @@ pub async fn download_offline_data(
         .await
         {
             Ok(data) => evidence = data,
-            Err(e) => return Json(ApiResponse::from(TopemsError::internal("下载取证数据失败", e))),
+            Err(e) => return ApiResponse::from(TopemsError::internal("下载取证数据失败", e)),
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         OfflineDataResponse {
             devices,
             tracks,
@@ -363,7 +355,7 @@ pub async fn download_offline_data(
             synced_at: Utc::now(),
         },
         "离线数据下载成功",
-    ))
+    )
 }
 
 // ==================== 同步状态查询 ====================
@@ -379,7 +371,7 @@ pub async fn get_sync_status(
     State(pool): State<PgPool>,
     TenantRequest { ctx }: TenantRequest,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<SyncStatusResponse>> {
+) -> ApiResponse<SyncStatusResponse> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -402,11 +394,11 @@ pub async fn get_sync_status(
         Err(_) => 0,
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         SyncStatusResponse {
             server_time: Utc::now(),
             pending_count,
         },
         "获取同步状态成功",
-    ))
+    )
 }

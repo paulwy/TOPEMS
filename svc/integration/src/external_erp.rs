@@ -390,7 +390,7 @@ pub struct SyncStatistics {
 pub async fn list_connections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ErpConnectionResponse>>> {
+) -> ApiResponse<Vec<ErpConnectionResponse>> {
     let tid: Option<&str> = if claims.is_superuser {
         None
     } else {
@@ -406,13 +406,13 @@ pub async fn list_connections(
     .fetch_all(&state.pool)
     .await
     {
-        Ok(rows) => Json(ApiResponse::success(
+        Ok(rows) => ApiResponse::success(
             rows.into_iter().map(ErpConnectionResponse::from).collect::<Vec<_>>(),
             "连接列表获取成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("external_erp list_connections: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
+            ApiResponse::from(TopemsError::internal("查询失败", e))
         }
     }
 }
@@ -432,7 +432,7 @@ pub async fn create_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<ErpConnectionResponse>> {
+) -> ApiResponse<ErpConnectionResponse> {
     let id = Uuid::new_v4();
     let name = body
         .get("name")
@@ -500,8 +500,8 @@ pub async fn create_connection(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(conn) => Json(ApiResponse::success(conn.into(), "创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
+        Ok(conn) => ApiResponse::success(conn.into(), "创建成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建失败", e)),
     }
 }
 
@@ -582,7 +582,7 @@ pub(crate) async fn probe_http_url(api_url: &str, timeout_ms: u64) -> ProbeResul
 async fn test_connection(
     State(_state): State<AppState>,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let api_url = body
         .get("api_url")
         .and_then(|v| v.as_str())
@@ -592,10 +592,10 @@ async fn test_connection(
 
     // URL 格式校验
     if !api_url.starts_with("http://") && !api_url.starts_with("https://") {
-        return Json(ApiResponse::success(
+        return ApiResponse::success(
             serde_json::json!({"success": false, "response_time_ms": 0, "error_message": "URL 必须以 http:// 或 https:// 开头"}),
             "测试完成",
-        ));
+        );
     }
 
     // 真实 HTTP 探测（带超时）：与 /erp/connections/test 复用同一实现
@@ -608,14 +608,14 @@ async fn test_connection(
     if let Some(code) = probe.http_status {
         body["http_status"] = serde_json::Value::from(code);
     }
-    Json(ApiResponse::success(body, "测试完成"))
+    ApiResponse::success(body, "测试完成")
 }
 
 async fn get_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<ErpConnectionResponse>> {
+) -> ApiResponse<ErpConnectionResponse> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let tid: Option<&str> = if claims.is_superuser {
         None
@@ -633,9 +633,9 @@ async fn get_connection(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(conn)) => Json(ApiResponse::success(conn.into(), "获取成功")),
-        Ok(None) => Json(ApiResponse::not_found("连接不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(Some(conn)) => ApiResponse::success(conn.into(), "获取成功"),
+        Ok(None) => ApiResponse::not_found("连接不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -657,7 +657,7 @@ pub async fn update_connection(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<ErpConnectionResponse>> {
+) -> ApiResponse<ErpConnectionResponse> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let name = body
         .get("name")
@@ -695,9 +695,9 @@ pub async fn update_connection(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(conn)) => Json(ApiResponse::success(conn.into(), "更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("连接不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+        Ok(Some(conn)) => ApiResponse::success(conn.into(), "更新成功"),
+        Ok(None) => ApiResponse::not_found("连接不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
 }
 
@@ -718,7 +718,7 @@ pub async fn delete_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     match sqlx::query(only_own_schema_query!(
         "integration",
@@ -729,9 +729,9 @@ pub async fn delete_connection(
     .execute(&state.pool)
     .await
     {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("连接不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
+        Ok(_) => ApiResponse::not_found("连接不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
     }
 }
 
@@ -741,7 +741,7 @@ pub async fn list_entity_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((id, entity)): Path<(String, String)>,
-) -> Json<ApiResponse<Vec<ErpMapping>>> {
+) -> ApiResponse<Vec<ErpMapping>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let tid: Option<&str> = if claims.is_superuser {
         None
@@ -761,8 +761,8 @@ pub async fn list_entity_mappings(
     .fetch_all(&state.pool)
     .await
     {
-        Ok(rows) => Json(ApiResponse::success(rows, "映射列表获取成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(rows) => ApiResponse::success(rows, "映射列表获取成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -771,7 +771,7 @@ async fn create_entity_mapping(
     Extension(claims): Extension<Claims>,
     Path((id, entity)): Path<(String, String)>,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<ErpMapping>> {
+) -> ApiResponse<ErpMapping> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let mapping_id = Uuid::new_v4();
     let local_code = body
@@ -818,8 +818,8 @@ async fn create_entity_mapping(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(m) => Json(ApiResponse::success(m, "创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
+        Ok(m) => ApiResponse::success(m, "创建成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建失败", e)),
     }
 }
 
@@ -828,7 +828,7 @@ pub async fn batch_entity_mappings(
     Extension(claims): Extension<Claims>,
     Path((id, entity)): Path<(String, String)>,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let items = body
         .get("items")
@@ -888,10 +888,10 @@ pub async fn batch_entity_mappings(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({"processed": processed, "failed": failed, "total": items.len()}),
         "批量处理完成",
-    ))
+    )
 }
 
 // ===== connections/{id}/preview/{entity} =====
@@ -900,7 +900,7 @@ pub async fn preview_entity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((id, entity)): Path<(String, String)>,
-) -> Json<ApiResponse<Vec<ErpMapping>>> {
+) -> ApiResponse<Vec<ErpMapping>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let tid: Option<&str> = if claims.is_superuser {
         None
@@ -921,8 +921,8 @@ pub async fn preview_entity(
     .fetch_all(&state.pool)
     .await
     {
-        Ok(rows) => Json(ApiResponse::success(rows, "预览数据获取成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(rows) => ApiResponse::success(rows, "预览数据获取成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -1132,7 +1132,7 @@ pub async fn sync_entity(
     Extension(claims): Extension<Claims>,
     Path(entity): Path<String>,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let task_id = Uuid::new_v4();
     let connection_id = body
         .get("connection_id")
@@ -1164,10 +1164,7 @@ pub async fn sync_entity(
     .await
     {
         tracing::error!("sync_entity insert log: {}", e);
-        return Json(ApiResponse::from(TopemsError::internal(
-            "创建同步任务失败",
-            e,
-        )));
+        return ApiResponse::from(TopemsError::internal("创建同步任务失败", e));
     }
 
     // 验证连接
@@ -1184,7 +1181,7 @@ pub async fn sync_entity(
                 Some("缺少 connection_id"),
             )
             .await;
-            return Json(ApiResponse::bad_request("缺少 connection_id"));
+            return ApiResponse::bad_request("缺少 connection_id");
         }
     };
 
@@ -1202,13 +1199,13 @@ pub async fn sync_entity(
                 Some("连接不存在或已删除"),
             )
             .await;
-            return Json(ApiResponse::not_found("ERP 连接不存在"));
+            return ApiResponse::not_found("ERP 连接不存在");
         }
     };
 
     if !connection.isactive {
         update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some("连接已禁用")).await;
-        return Json(ApiResponse::bad_request("ERP 连接已禁用"));
+        return ApiResponse::bad_request("ERP 连接已禁用");
     }
 
     // 执行真实同步
@@ -1332,7 +1329,7 @@ pub async fn sync_entity(
     .await;
 
     match sync_result {
-        Ok((total, success, failed)) => Json(ApiResponse::success(
+        Ok((total, success, failed)) => ApiResponse::success(
             serde_json::json!({
                 "task_id": task_id.to_string(),
                 "entity": entity,
@@ -1344,8 +1341,8 @@ pub async fn sync_entity(
                 "message": "同步完成"
             }),
             "同步完成",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("同步失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("同步失败", e)),
     }
 }
 
@@ -1354,7 +1351,7 @@ pub async fn sync_entity(
 pub async fn sync_logs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ExternalErpSyncLog>>> {
+) -> ApiResponse<Vec<ExternalErpSyncLog>> {
     let tid: Option<&str> = if claims.is_superuser {
         None
     } else {
@@ -1371,8 +1368,8 @@ pub async fn sync_logs(
     .fetch_all(&state.pool)
     .await
     {
-        Ok(rows) => Json(ApiResponse::success(rows, "同步日志获取成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(rows) => ApiResponse::success(rows, "同步日志获取成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -1381,7 +1378,7 @@ pub async fn sync_logs(
 pub async fn sync_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<SyncStatistics>> {
+) -> ApiResponse<SyncStatistics> {
     let tid: Option<&str> = if claims.is_superuser {
         None
     } else {
@@ -1440,7 +1437,7 @@ pub async fn sync_statistics(
         by_entity.insert(entity, serde_json::json!(count));
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         SyncStatistics {
             total_syncs: total.map(|t| t.0).unwrap_or(0),
             successful: successful.map(|t| t.0).unwrap_or(0),
@@ -1449,7 +1446,7 @@ pub async fn sync_statistics(
             by_entity: serde_json::Value::Object(by_entity),
         },
         "统计获取成功",
-    ))
+    )
 }
 
 // ===== export =====
@@ -1457,7 +1454,7 @@ pub async fn sync_statistics(
 pub async fn export_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tid: Option<&str> = if claims.is_superuser {
         None
     } else {
@@ -1473,22 +1470,22 @@ pub async fn export_mappings(
     .fetch_all(&state.pool)
     .await
     {
-        Ok(rows) => Json(ApiResponse::success(
+        Ok(rows) => ApiResponse::success(
             serde_json::json!({
                 "format": "json",
                 "count": rows.len(),
                 "data": rows
             }),
             "导出完成",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("导出失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("导出失败", e)),
     }
 }
 
 pub async fn export_sync_logs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tid: Option<&str> = if claims.is_superuser {
         None
     } else {
@@ -1505,15 +1502,15 @@ pub async fn export_sync_logs(
     .fetch_all(&state.pool)
     .await
     {
-        Ok(rows) => Json(ApiResponse::success(
+        Ok(rows) => ApiResponse::success(
             serde_json::json!({
                 "format": "json",
                 "count": rows.len(),
                 "data": rows
             }),
             "导出完成",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("导出失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("导出失败", e)),
     }
 }
 
@@ -1524,7 +1521,7 @@ pub async fn toggle_connection(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<ErpConnectionResponse>> {
+) -> ApiResponse<ErpConnectionResponse> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let enabled = body
         .get("enabled")
@@ -1544,9 +1541,9 @@ pub async fn toggle_connection(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(conn)) => Json(ApiResponse::success(conn.into(), "切换成功")),
-        Ok(None) => Json(ApiResponse::not_found("连接不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("切换失败", e))),
+        Ok(Some(conn)) => ApiResponse::success(conn.into(), "切换成功"),
+        Ok(None) => ApiResponse::not_found("连接不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("切换失败", e)),
     }
 }
 
@@ -1556,15 +1553,15 @@ pub async fn sync_connection_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     // 待上游支持：此处仅回显连接当前状态，真实 ERP 连通性探测后续接入
     match get_connection_by_id(&state.pool, uuid, claims.tenant_id.as_deref()).await {
-        Some(c) => Json(ApiResponse::success(
+        Some(c) => ApiResponse::success(
             serde_json::json!({"status": c.status, "isactive": c.isactive, "last_sync_at": c.last_sync_at}),
             "连接状态已刷新",
-        )),
-        None => Json(ApiResponse::not_found("连接不存在")),
+        ),
+        None => ApiResponse::not_found("连接不存在"),
     }
 }
 
@@ -1574,7 +1571,7 @@ pub async fn list_company_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Vec<ErpMapping>>> {
+) -> ApiResponse<Vec<ErpMapping>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let tid: Option<&str> = if claims.is_superuser {
         None
@@ -1593,8 +1590,8 @@ pub async fn list_company_mappings(
     .fetch_all(&state.pool)
     .await
     {
-        Ok(rows) => Json(ApiResponse::success(rows, "公司映射列表获取成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(rows) => ApiResponse::success(rows, "公司映射列表获取成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -1603,7 +1600,7 @@ pub async fn create_company_mapping(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<ErpMapping>> {
+) -> ApiResponse<ErpMapping> {
     let conn_uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let mapping_id = Uuid::new_v4();
     let local_code = body
@@ -1648,8 +1645,8 @@ pub async fn create_company_mapping(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(m) => Json(ApiResponse::success(m, "创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
+        Ok(m) => ApiResponse::success(m, "创建成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建失败", e)),
     }
 }
 
@@ -1657,7 +1654,7 @@ pub async fn update_company_mapping(
     State(state): State<AppState>,
     Path((id, mapping_id)): Path<(String, String)>,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<ErpMapping>> {
+) -> ApiResponse<ErpMapping> {
     let conn_uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
     let local_code = body.get("local_code").and_then(|v| v.as_str());
@@ -1686,16 +1683,16 @@ pub async fn update_company_mapping(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(m)) => Json(ApiResponse::success(m, "更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("映射不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+        Ok(Some(m)) => ApiResponse::success(m, "更新成功"),
+        Ok(None) => ApiResponse::not_found("映射不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
 }
 
 pub async fn delete_company_mapping(
     State(state): State<AppState>,
     Path((id, mapping_id)): Path<(String, String)>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let conn_uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
     match sqlx::query(only_own_schema_query!(
@@ -1707,9 +1704,9 @@ pub async fn delete_company_mapping(
     .execute(&state.pool)
     .await
     {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("映射不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
+        Ok(_) => ApiResponse::not_found("映射不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
     }
 }
 
@@ -1719,7 +1716,7 @@ pub async fn update_entity_mapping(
     State(state): State<AppState>,
     Path((conn_id, entity, mapping_id)): Path<(String, String, String)>,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<ErpMapping>> {
+) -> ApiResponse<ErpMapping> {
     let conn_uuid = Uuid::parse_str(&conn_id).unwrap_or(Uuid::nil());
     let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
     let local_code = body.get("local_code").and_then(|v| v.as_str());
@@ -1749,16 +1746,16 @@ pub async fn update_entity_mapping(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(m)) => Json(ApiResponse::success(m, "更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("映射不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+        Ok(Some(m)) => ApiResponse::success(m, "更新成功"),
+        Ok(None) => ApiResponse::not_found("映射不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
 }
 
 pub async fn delete_entity_mapping(
     State(state): State<AppState>,
     Path((conn_id, entity, mapping_id)): Path<(String, String, String)>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let conn_uuid = Uuid::parse_str(&conn_id).unwrap_or(Uuid::nil());
     let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
     match sqlx::query(only_own_schema_query!(
@@ -1771,18 +1768,18 @@ pub async fn delete_entity_mapping(
     .execute(&state.pool)
     .await
     {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("映射不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
+        Ok(_) => ApiResponse::not_found("映射不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
     }
 }
 
 /// 自动匹配映射（待上游支持：依赖主数据服务，当前返回空匹配）
-pub async fn auto_match_mappings() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+pub async fn auto_match_mappings() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({"matched": 0, "total": 0}),
         "自动匹配完成",
-    ))
+    )
 }
 
 // ===== sync/{log_id}/cancel =====
@@ -1791,7 +1788,7 @@ pub async fn auto_match_mappings() -> Json<ApiResponse<serde_json::Value>> {
 pub async fn cancel_sync(
     State(state): State<AppState>,
     Path(log_id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let uuid = Uuid::parse_str(&log_id).unwrap_or(Uuid::nil());
     let exists: Option<(Uuid,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
@@ -1802,11 +1799,8 @@ pub async fn cancel_sync(
     .await
     .unwrap_or(None);
     match exists {
-        Some(_) => Json(ApiResponse::success(
-            serde_json::json!({"status": "cancelled"}),
-            "同步已取消",
-        )),
-        None => Json(ApiResponse::not_found("同步日志不存在")),
+        Some(_) => ApiResponse::success(serde_json::json!({"status": "cancelled"}), "同步已取消"),
+        None => ApiResponse::not_found("同步日志不存在"),
     }
 }
 
@@ -1815,7 +1809,7 @@ pub async fn cancel_sync(
 pub async fn get_sync_log(
     State(state): State<AppState>,
     Path(log_id): Path<String>,
-) -> Json<ApiResponse<ExternalErpSyncLog>> {
+) -> ApiResponse<ExternalErpSyncLog> {
     let uuid = Uuid::parse_str(&log_id).unwrap_or(Uuid::nil());
     match sqlx::query_as::<_, ExternalErpSyncLog>(only_own_schema_query!(
         "integration",
@@ -1828,9 +1822,9 @@ pub async fn get_sync_log(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(log)) => Json(ApiResponse::success(log, "获取成功")),
-        Ok(None) => Json(ApiResponse::not_found("同步日志不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(Some(log)) => ApiResponse::success(log, "获取成功"),
+        Ok(None) => ApiResponse::not_found("同步日志不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -1839,7 +1833,7 @@ pub async fn get_sync_log(
 pub async fn connection_sync_statistics(
     State(state): State<AppState>,
     Path(conn_id): Path<String>,
-) -> Json<ApiResponse<SyncStatistics>> {
+) -> ApiResponse<SyncStatistics> {
     let uuid = Uuid::parse_str(&conn_id).unwrap_or(Uuid::nil());
     let total: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
@@ -1874,7 +1868,7 @@ pub async fn connection_sync_statistics(
         .fetch_optional(&state.pool)
         .await
         .unwrap_or(None);
-    Json(ApiResponse::success(
+    ApiResponse::success(
         SyncStatistics {
             total_syncs: total.map(|t| t.0).unwrap_or(0),
             successful: successful.map(|t| t.0).unwrap_or(0),
@@ -1883,16 +1877,16 @@ pub async fn connection_sync_statistics(
             by_entity: serde_json::Value::Object(serde_json::Map::new()),
         },
         "统计获取成功",
-    ))
+    )
 }
 
 // ===== /health =====
 
-pub async fn integration_health() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+pub async fn integration_health() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({"status": "up", "service": "integration"}),
         "integration healthy",
-    ))
+    )
 }
 
 /// 构建 external-erp 路由（挂载到 /external-erp 前缀）

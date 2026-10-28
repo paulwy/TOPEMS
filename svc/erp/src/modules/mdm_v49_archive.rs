@@ -27,7 +27,7 @@ use super::mdm_v49_types::*;
 pub async fn list_archive_policies(
     State(_state): State<ApiState>,
     Query(params): Query<ArchivePolicyQuery>,
-) -> Json<ApiResponse<PaginatedResponse<ArchivePolicy>>> {
+) -> ApiResponse<PaginatedResponse<ArchivePolicy>> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let policies = store.archive_policies.lock().await;
@@ -67,7 +67,7 @@ pub async fn list_archive_policies(
         .take(page_size as usize)
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -76,7 +76,7 @@ pub async fn list_archive_policies(
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "归档策略列表",
-    ))
+    )
 }
 
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
@@ -101,7 +101,7 @@ pub struct ArchivePolicyQuery {
 pub async fn create_archive_policy(
     State(_state): State<ApiState>,
     Json(req): Json<ArchivePolicyRequest>,
-) -> Json<ApiResponse<ArchivePolicy>> {
+) -> ApiResponse<ArchivePolicy> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let mut policies = store.archive_policies.lock().await;
@@ -135,7 +135,7 @@ pub async fn create_archive_policy(
     };
 
     policies.push(policy.clone());
-    Json(ApiResponse::success(policy, "归档策略已创建"))
+    ApiResponse::success(policy, "归档策略已创建")
 }
 
 #[utoipa::path(
@@ -151,13 +151,13 @@ pub async fn create_archive_policy(
 pub async fn get_archive_policy(
     State(_state): State<ApiState>,
     Path(policy_id): Path<String>,
-) -> Json<ApiResponse<ArchivePolicy>> {
+) -> ApiResponse<ArchivePolicy> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let policies = store.archive_policies.lock().await;
     match policies.iter().find(|p| p.id == policy_id) {
-        Some(p) => Json(ApiResponse::success(p.clone(), "归档策略")),
-        None => Json(ApiResponse::not_found("未找到归档策略")),
+        Some(p) => ApiResponse::success(p.clone(), "归档策略"),
+        None => ApiResponse::not_found("未找到归档策略"),
     }
 }
 
@@ -175,12 +175,12 @@ pub async fn update_archive_policy(
     State(_state): State<ApiState>,
     Path(policy_id): Path<String>,
     Json(req): Json<ArchivePolicyRequest>,
-) -> Json<ApiResponse<ArchivePolicy>> {
+) -> ApiResponse<ArchivePolicy> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let mut policies = store.archive_policies.lock().await;
     let Some(policy) = policies.iter_mut().find(|p| p.id == policy_id) else {
-        return Json(ApiResponse::not_found("未找到归档策略"));
+        return ApiResponse::not_found("未找到归档策略");
     };
 
     policy.policy_name = req.policy_name;
@@ -210,7 +210,7 @@ pub async fn update_archive_policy(
     }
     policy.updated_at = chrono::Utc::now().to_rfc3339();
 
-    Json(ApiResponse::success(policy.clone(), "归档策略已更新"))
+    ApiResponse::success(policy.clone(), "归档策略已更新")
 }
 
 #[utoipa::path(
@@ -226,16 +226,16 @@ pub async fn update_archive_policy(
 pub async fn delete_archive_policy(
     State(_state): State<ApiState>,
     Path(policy_id): Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let mut policies = store.archive_policies.lock().await;
     let before = policies.len();
     policies.retain(|p| p.id != policy_id);
     if policies.len() == before {
-        return Json(ApiResponse::not_found("未找到归档策略"));
+        return ApiResponse::not_found("未找到归档策略");
     }
-    Json(ApiResponse::success((), "归档策略已删除"))
+    ApiResponse::success((), "归档策略已删除")
 }
 
 // ==================== 处理器：归档执行 ====================
@@ -254,7 +254,7 @@ pub async fn delete_archive_policy(
 pub async fn run_archive(
     State(_state): State<ApiState>,
     Json(req): Json<ArchiveRunRequest>,
-) -> Json<ApiResponse<Vec<ArchiveRecord>>> {
+) -> ApiResponse<Vec<ArchiveRecord>> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let matched: Vec<ArchivePolicy> = {
@@ -363,14 +363,14 @@ pub async fn run_archive(
         records.extend(new_records.clone());
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         new_records,
         if dry_run {
             "归档预演完成（dry run）"
         } else {
             "归档执行完成"
         },
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -392,7 +392,7 @@ pub async fn run_archive(
 pub async fn list_archive_records(
     State(_state): State<ApiState>,
     Query(params): Query<ArchiveRecordQuery>,
-) -> Json<ApiResponse<PaginatedResponse<ArchiveRecord>>> {
+) -> ApiResponse<PaginatedResponse<ArchiveRecord>> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let records = store.archive_records.lock().await;
@@ -446,7 +446,7 @@ pub async fn list_archive_records(
         .take(page_size as usize)
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -455,7 +455,7 @@ pub async fn list_archive_records(
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "归档记录列表",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -471,13 +471,13 @@ pub async fn list_archive_records(
 pub async fn get_archive_record(
     State(_state): State<ApiState>,
     Path(record_id): Path<String>,
-) -> Json<ApiResponse<ArchiveRecord>> {
+) -> ApiResponse<ArchiveRecord> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let records = store.archive_records.lock().await;
     match records.iter().find(|r| r.id == record_id) {
-        Some(r) => Json(ApiResponse::success(r.clone(), "归档记录")),
-        None => Json(ApiResponse::not_found("未找到归档记录")),
+        Some(r) => ApiResponse::success(r.clone(), "归档记录"),
+        None => ApiResponse::not_found("未找到归档记录"),
     }
 }
 
@@ -495,18 +495,18 @@ pub async fn restore_archive_record(
     State(_state): State<ApiState>,
     Path(record_id): Path<String>,
     Json(req): Json<ArchiveRestoreRequest>,
-) -> Json<ApiResponse<ArchiveRecord>> {
+) -> ApiResponse<ArchiveRecord> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
 
     let (restored_record_id, master_data_id, entity_type) = {
         let mut records = store.archive_records.lock().await;
         let Some(record) = records.iter_mut().find(|r| r.id == record_id) else {
-            return Json(ApiResponse::not_found("未找到归档记录"));
+            return ApiResponse::not_found("未找到归档记录");
         };
 
         if record.status != "archived" {
-            return Json(ApiResponse::bad_request("记录状态不支持恢复"));
+            return ApiResponse::bad_request("记录状态不支持恢复");
         }
 
         record.restore_count += 1;
@@ -543,7 +543,7 @@ pub async fn restore_archive_record(
     let records = store.archive_records.lock().await;
     let r = records.iter().find(|x| x.id == restored_record_id).cloned();
     match r {
-        Some(rec) => Json(ApiResponse::success(rec, "已恢复归档记录")),
-        None => Json(ApiResponse::server_error("恢复失败")),
+        Some(rec) => ApiResponse::success(rec, "已恢复归档记录"),
+        None => ApiResponse::server_error("恢复失败"),
     }
 }

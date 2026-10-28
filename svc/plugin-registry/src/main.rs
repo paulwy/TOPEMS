@@ -4,7 +4,7 @@ use std::time::Instant;
 use axum::{
     extract::State,
     routing::{get, post},
-    Json, Router,
+    Router,
 };
 
 use topems_shared_bootstrap::{
@@ -123,7 +123,7 @@ async fn health(State(state): State<AppState>) -> ServiceHealth {
     simple_health_check(&config).await
 }
 
-async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn detailed_health(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     use topems_shared_bootstrap::build_detailed_health_response;
     let modules = serde_json::json!({
         "handlers/tenant_plugins": "active",
@@ -147,5 +147,5 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
         extra,
     )
     .await;
-    Json(ApiResponse::success(resp, "Detailed health check"))
+    ApiResponse::success(resp, "Detailed health check")
 }

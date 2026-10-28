@@ -25,16 +25,16 @@ pub async fn list_elimination_rules(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<EliminationRule>>> {
+) -> ApiResponse<PaginatedResponse<EliminationRule>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if params.scope_id.is_none() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "scope_id为必填参数".to_string(),
-        )));
+        ));
     }
 
     let scope_id = params.scope_id.unwrap_or_default();
@@ -77,16 +77,14 @@ pub async fn list_elimination_rules(
             .await;
 
             let total = count_result.unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(rules, total, page, page_size),
                 "获取抵消规则列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取抵消规则列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取抵消规则列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取抵消规则列表失败".to_string()))
         }
     }
 }
@@ -105,7 +103,7 @@ pub async fn get_elimination_rule(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<EliminationRule>> {
+) -> ApiResponse<EliminationRule> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -118,15 +116,11 @@ pub async fn get_elimination_rule(
     .fetch_optional(&mut **txn)
     .await
     {
-        Ok(Some(rule)) => Json(ApiResponse::success(rule, "获取抵消规则成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "抵消规则不存在".to_string(),
-        ))),
+        Ok(Some(rule)) => ApiResponse::success(rule, "获取抵消规则成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("抵消规则不存在".to_string())),
         Err(e) => {
             tracing::error!("获取抵消规则失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取抵消规则失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取抵消规则失败".to_string()))
         }
     }
 }
@@ -145,7 +139,7 @@ pub async fn create_elimination_rule(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateEliminationRuleRequest>,
-) -> Json<ApiResponse<EliminationRule>> {
+) -> ApiResponse<EliminationRule> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -189,16 +183,14 @@ pub async fn create_elimination_rule(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(rule, "创建抵消规则成功"))
+            ApiResponse::success(rule, "创建抵消规则成功")
         }
         Err(e) => {
             tracing::error!("创建抵消规则失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建抵消规则失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建抵消规则失败".to_string()))
         }
     }
 }
@@ -219,7 +211,7 @@ pub async fn update_elimination_rule(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateEliminationRuleRequest>,
-) -> Json<ApiResponse<EliminationRule>> {
+) -> ApiResponse<EliminationRule> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -275,19 +267,15 @@ pub async fn update_elimination_rule(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(rule, "更新抵消规则成功"))
+            ApiResponse::success(rule, "更新抵消规则成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "抵消规则不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("抵消规则不存在".to_string())),
         Err(e) => {
             tracing::error!("更新抵消规则失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新抵消规则失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新抵消规则失败".to_string()))
         }
     }
 }
@@ -307,7 +295,7 @@ pub async fn delete_elimination_rule(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -320,9 +308,9 @@ pub async fn delete_elimination_rule(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                ApiResponse::from(TopemsError::ResourceNotFound(
                     "抵消规则不存在".to_string(),
-                )))
+                ))
             } else {
                 log_audit(
                     &state.db,
@@ -335,17 +323,17 @@ pub async fn delete_elimination_rule(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("事务提交失败: {}", e);
-                        return Json(ApiResponse::server_error("事务提交失败"));
+                        return ApiResponse::server_error("事务提交失败");
                     }
                 }
-                Json(ApiResponse::success((), "删除抵消规则成功"))
+                ApiResponse::success((), "删除抵消规则成功")
             }
         }
         Err(e) => {
             tracing::error!("删除抵消规则失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
+            ApiResponse::from(TopemsError::Internal(
                 "删除抵消规则失败".to_string(),
-            )))
+            ))
         }
     }
 }
@@ -366,7 +354,7 @@ pub async fn export_elimination_worksheet(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -382,7 +370,7 @@ pub async fn export_elimination_worksheet(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("导出抵消工作底稿-查询规则失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("导出抵消工作底稿失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("导出抵消工作底稿失败".to_string()));
         }
     };
 
@@ -395,9 +383,7 @@ pub async fn export_elimination_worksheet(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("导出抵消工作底稿-查询交易失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "导出抵消工作底稿失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("导出抵消工作底稿失败".to_string()));
         }
     };
 
@@ -407,5 +393,5 @@ pub async fn export_elimination_worksheet(
         "internal_transactions": transactions,
     });
 
-    Json(ApiResponse::success(worksheet, "导出抵消工作底稿成功"))
+    ApiResponse::success(worksheet, "导出抵消工作底稿成功")
 }

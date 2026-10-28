@@ -502,12 +502,12 @@ pub async fn matching_find_matches(
     State(state): State<ApiState>,
     Path(source_id): Path<String>,
     Json(req): Json<FindMatchesRequest>,
-) -> Json<ApiResponse<Vec<MatchResult>>> {
+) -> ApiResponse<Vec<MatchResult>> {
     let _ = &state;
     let profiles = build_entity_profiles();
     let source = match profiles.iter().find(|p| p.id == source_id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到源实体")),
+        None => return ApiResponse::not_found("未找到源实体"),
     };
     let threshold = req.threshold.unwrap_or(70.0) / 100.0;
     let limit = req.limit.unwrap_or(20);
@@ -554,10 +554,7 @@ pub async fn matching_find_matches(
             .unwrap_or(std::cmp::Ordering::Equal)
     });
     results.truncate(limit);
-    Json(ApiResponse::success(
-        results.clone(),
-        &format!("找到 {} 条匹配", results.len()),
-    ))
+    ApiResponse::success(results.clone(), &format!("找到 {} 条匹配", results.len()))
 }
 
 /// GET /matching/duplicates — 重复实体列表
@@ -581,7 +578,7 @@ pub async fn matching_find_matches(
 pub async fn matching_find_duplicates(
     State(state): State<ApiState>,
     Query(params): Query<FindDuplicatesQuery>,
-) -> Json<ApiResponse<PaginatedResponse<MatchResult>>> {
+) -> ApiResponse<PaginatedResponse<MatchResult>> {
     let _ = &state;
     let profiles = build_entity_profiles();
     let min_conf = params.min_confidence.unwrap_or(70.0) / 100.0;
@@ -638,10 +635,10 @@ pub async fn matching_find_duplicates(
         .take(page_size as usize)
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "重复实体列表",
-    ))
+    )
 }
 
 /// GET /matching/duplicate-groups — 重复组列表
@@ -655,7 +652,7 @@ pub async fn matching_find_duplicates(
 pub async fn matching_get_duplicate_groups(
     State(state): State<ApiState>,
     Query(params): Query<DuplicateGroupsQuery>,
-) -> Json<ApiResponse<Vec<DuplicateGroup>>> {
+) -> ApiResponse<Vec<DuplicateGroup>> {
     let _ = &state;
     ensure_smart_matcher_initialized().await;
     let groups = get_smart_matcher_store().duplicate_groups.lock().await;
@@ -670,7 +667,7 @@ pub async fn matching_get_duplicate_groups(
         })
         .cloned()
         .collect();
-    Json(ApiResponse::success(filtered, "重复组列表"))
+    ApiResponse::success(filtered, "重复组列表")
 }
 
 /// POST /matching/suggest-merge — 合并建议
@@ -684,23 +681,23 @@ pub async fn matching_get_duplicate_groups(
 pub async fn matching_suggest_merge(
     State(state): State<ApiState>,
     Json(req): Json<SuggestMergeRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let _ = &state;
     ensure_smart_matcher_initialized().await;
     let groups = get_smart_matcher_store().duplicate_groups.lock().await;
     let group = match groups.iter().find(|g| g.group_id == req.group_id) {
         Some(g) => g,
-        None => return Json(ApiResponse::not_found("未找到重复组")),
+        None => return ApiResponse::not_found("未找到重复组"),
     };
     let primary = req
         .primary_entity_id
         .clone()
         .unwrap_or_else(|| group.primary_entity_id.clone());
     if !group.entities.contains(&primary) {
-        return Json(ApiResponse::bad_request("主实体不在重复组中"));
+        return ApiResponse::bad_request("主实体不在重复组中");
     }
     let others: Vec<&String> = group.entities.iter().filter(|e| **e != primary).collect();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "group_id": group.group_id,
             "domain": group.domain,
@@ -717,7 +714,7 @@ pub async fn matching_suggest_merge(
             "estimated_fields_to_resolve": others.len() * 5,
         }),
         "合并建议生成完成",
-    ))
+    )
 }
 
 #[cfg(test)]

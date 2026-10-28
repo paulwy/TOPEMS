@@ -567,7 +567,7 @@ pub struct LineageTraceQueryParams {
 pub async fn trace_lineage_handler(
     State(state): State<ApiState>,
     Query(params): Query<LineageTraceQueryParams>,
-) -> Json<ApiResponse<LineageTraceResult>> {
+) -> ApiResponse<LineageTraceResult> {
     let _ = &state;
     let direction = match params.direction.as_deref() {
         Some("upstream") => LineageDirection::Upstream,
@@ -583,7 +583,7 @@ pub async fn trace_lineage_handler(
     })
     .await;
 
-    Json(ApiResponse::success(result, "血缘溯源完成"))
+    ApiResponse::success(result, "血缘溯源完成")
 }
 
 /// GET /lineage/trace/{id}/upstream — 溯源上游数据来源
@@ -601,11 +601,11 @@ pub async fn trace_upstream_handler(
     State(state): State<ApiState>,
     Path(id): Path<String>,
     Query(params): Query<LineageTraceQueryParams>,
-) -> Json<ApiResponse<LineageTraceResult>> {
+) -> ApiResponse<LineageTraceResult> {
     let _ = &state;
     let _ = &params;
     let result = trace_upstream(&id, params.depth).await;
-    Json(ApiResponse::success(result, "上游溯源完成"))
+    ApiResponse::success(result, "上游溯源完成")
 }
 
 /// GET /lineage/trace/{id}/downstream — 溯源下游影响范围
@@ -623,11 +623,11 @@ pub async fn trace_downstream_handler(
     State(state): State<ApiState>,
     Path(id): Path<String>,
     Query(params): Query<LineageTraceQueryParams>,
-) -> Json<ApiResponse<LineageTraceResult>> {
+) -> ApiResponse<LineageTraceResult> {
     let _ = &state;
     let _ = &params;
     let result = trace_downstream(&id, params.depth).await;
-    Json(ApiResponse::success(result, "下游溯源完成"))
+    ApiResponse::success(result, "下游溯源完成")
 }
 
 /// GET /lineage/origin/{id} — 查找数据最初来源
@@ -642,11 +642,11 @@ pub async fn trace_downstream_handler(
 pub async fn find_data_origin_handler(
     State(state): State<ApiState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<LineageGraphNode>> {
+) -> ApiResponse<LineageGraphNode> {
     let _ = &state;
     match find_data_origin(&id).await {
-        Some(node) => Json(ApiResponse::success(node, "数据来源查找成功")),
-        None => Json(ApiResponse::not_found("未找到数据来源")),
+        Some(node) => ApiResponse::success(node, "数据来源查找成功"),
+        None => ApiResponse::not_found("未找到数据来源"),
     }
 }
 
@@ -857,10 +857,10 @@ fn generate_impact_report(result: &ImpactAnalysisResult) -> String {
 pub async fn analyze_impact_handler(
     State(state): State<ApiState>,
     Json(req): Json<ImpactAnalysisRequest>,
-) -> Json<ApiResponse<ImpactAnalysisResult>> {
+) -> ApiResponse<ImpactAnalysisResult> {
     let _ = &state;
     let result = analyze_impact(&req).await;
-    Json(ApiResponse::success(result, "影响分析完成"))
+    ApiResponse::success(result, "影响分析完成")
 }
 
 /// GET /impact/report/{entity_id} — 获取影响分析报告
@@ -875,14 +875,14 @@ pub async fn analyze_impact_handler(
 pub async fn get_impact_report_handler(
     State(state): State<ApiState>,
     Path(entity_id): Path<String>,
-) -> Json<ApiResponse<ImpactAnalysisResult>> {
+) -> ApiResponse<ImpactAnalysisResult> {
     let _ = &state;
     let store = get_lineage_trace_store();
     let reports = store.impact_reports.lock().await;
 
     match reports.get(&entity_id) {
-        Some(report) => Json(ApiResponse::success(report.clone(), "影响报告获取成功")),
-        None => Json(ApiResponse::not_found("未找到影响分析报告")),
+        Some(report) => ApiResponse::success(report.clone(), "影响报告获取成功"),
+        None => ApiResponse::not_found("未找到影响分析报告"),
     }
 }
 
@@ -1235,7 +1235,7 @@ pub struct LineageGraphQueryParams {
 pub async fn get_lineage_graph_handler(
     State(state): State<ApiState>,
     Query(params): Query<LineageGraphQueryParams>,
-) -> Json<ApiResponse<DataLineageGraph>> {
+) -> ApiResponse<DataLineageGraph> {
     let _ = &state;
     let graph = filter_graph(
         params.domain.as_deref(),
@@ -1243,7 +1243,7 @@ pub async fn get_lineage_graph_handler(
         params.relationship.as_deref(),
     )
     .await;
-    Json(ApiResponse::success(graph, "血缘图谱获取成功"))
+    ApiResponse::success(graph, "血缘图谱获取成功")
 }
 
 /// GET /lineage/graph/stats — 获取图谱统计
@@ -1257,10 +1257,10 @@ pub async fn get_lineage_graph_handler(
 )]
 pub async fn get_graph_stats_handler(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<LineageGraphStats>> {
+) -> ApiResponse<LineageGraphStats> {
     let _ = &state;
     let stats = get_lineage_graph_stats().await;
-    Json(ApiResponse::success(stats, "图谱统计获取成功"))
+    ApiResponse::success(stats, "图谱统计获取成功")
 }
 
 /// GET /lineage/critical-paths — 查找关键路径
@@ -1274,10 +1274,10 @@ pub async fn get_graph_stats_handler(
 )]
 pub async fn get_critical_paths_handler(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<Vec<String>>>> {
+) -> ApiResponse<Vec<Vec<String>>> {
     let _ = &state;
     let paths = find_critical_paths().await;
-    Json(ApiResponse::success(paths, "关键路径查找完成"))
+    ApiResponse::success(paths, "关键路径查找完成")
 }
 
 /// GET /lineage/circular-deps — 检测循环依赖
@@ -1291,8 +1291,8 @@ pub async fn get_critical_paths_handler(
 )]
 pub async fn detect_circular_deps_handler(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<Vec<String>>>> {
+) -> ApiResponse<Vec<Vec<String>>> {
     let _ = &state;
     let cycles = detect_circular_dependencies().await;
-    Json(ApiResponse::success(cycles, "循环依赖检测完成"))
+    ApiResponse::success(cycles, "循环依赖检测完成")
 }

@@ -101,14 +101,14 @@ pub async fn list_materials(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<Material>>> {
+) -> ApiResponse<PaginatedResponse<Material>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
 
     let page = params.page_or_default();
@@ -157,9 +157,7 @@ pub async fn list_materials(
         Ok(m) => m,
         Err(e) => {
             tracing::error!("查询物料失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询物料失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询物料失败".to_string()));
         }
     };
 
@@ -175,14 +173,14 @@ pub async fn list_materials(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("查询物料总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询物料总数失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询物料总数失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(materials, total, page, page_size),
         "获取物料列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -200,14 +198,14 @@ pub async fn get_material(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Material>> {
+) -> ApiResponse<Material> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query_as::<_, Material>(
@@ -218,15 +216,11 @@ pub async fn get_material(
     .await;
 
     match result {
-        Ok(Some(material)) => Json(ApiResponse::success(material, "获取物料成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "物料不存在".to_string(),
-        ))),
+        Ok(Some(material)) => ApiResponse::success(material, "获取物料成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("物料不存在".to_string())),
         Err(e) => {
             tracing::error!("查询物料失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询物料失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询物料失败".to_string()))
         }
     }
 }
@@ -250,20 +244,20 @@ pub async fn create_material(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<CreateMaterialRequest>,
-) -> Json<ApiResponse<Material>> {
+) -> ApiResponse<Material> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     // 超管落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400，禁止落全零
     let tenant_id = match resolve_create_tenant(&claims) {
         Ok(t) => t,
-        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
     let result = sqlx::query_as::<_, Material>(
@@ -291,20 +285,16 @@ pub async fn create_material(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(material, "创建物料成功"))
+            ApiResponse::success(material, "创建物料成功")
         }
 
-        Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
-            "创建物料失败".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::Internal("创建物料失败".to_string())),
         Err(e) => {
             tracing::error!("创建物料失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建物料失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建物料失败".to_string()))
         }
     }
 }
@@ -326,14 +316,14 @@ pub async fn update_material(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<UpdateMaterialRequest>,
-) -> Json<ApiResponse<Material>> {
+) -> ApiResponse<Material> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query_as::<_, Material>(
@@ -360,20 +350,16 @@ pub async fn update_material(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(material, "更新物料成功"))
+            ApiResponse::success(material, "更新物料成功")
         }
 
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "物料不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("物料不存在".to_string())),
         Err(e) => {
             tracing::error!("更新物料失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新物料失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新物料失败".to_string()))
         }
     }
 }
@@ -393,14 +379,14 @@ pub async fn delete_material(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -416,19 +402,15 @@ pub async fn delete_material(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success("删除成功".to_string(), "删除物料成功"))
+            ApiResponse::success("删除成功".to_string(), "删除物料成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "物料不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("物料不存在".to_string())),
         Err(e) => {
             tracing::error!("删除物料失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除物料失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除物料失败".to_string()))
         }
     }
 }
@@ -457,20 +439,20 @@ pub async fn import_materials(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<Vec<CreateMaterialRequest>>,
-) -> Json<ApiResponse<MaterialImportResult>> {
+) -> ApiResponse<MaterialImportResult> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     // 超管落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400，禁止落全零
     let tenant_id = match resolve_create_tenant(&claims) {
         Ok(t) => t,
-        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
     let mut succeeded = 0i64;
@@ -514,11 +496,8 @@ pub async fn import_materials(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
-    Json(ApiResponse::success(
-        MaterialImportResult { succeeded, failed },
-        "物料导入完成",
-    ))
+    ApiResponse::success(MaterialImportResult { succeeded, failed }, "物料导入完成")
 }

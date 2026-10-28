@@ -82,7 +82,7 @@ pub async fn list_batches(
     Extension(claims): Extension<Claims>,
     Query(query): Query<BatchQuery>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -141,7 +141,7 @@ pub async fn list_batches(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "batches": batches,
                     "total": total,
@@ -149,11 +149,11 @@ pub async fn list_batches(
                     "page_size": page_size
                 }),
                 "获取批次列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取批次列表失败: {}", e);
-            Json(ApiResponse::server_error("获取批次列表失败"))
+            ApiResponse::server_error("获取批次列表失败")
         }
     }
 }
@@ -171,7 +171,7 @@ pub async fn create_batch(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateBatchRequest>,
-) -> Json<ApiResponse<ProductionBatch>> {
+) -> ApiResponse<ProductionBatch> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -184,7 +184,7 @@ pub async fn create_batch(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.batch_no.is_empty() {
-        return Json(ApiResponse::bad_request("批次编号不能为空"));
+        return ApiResponse::bad_request("批次编号不能为空");
     }
 
     let status = req.status.unwrap_or_else(|| "pending".to_string());
@@ -213,10 +213,10 @@ pub async fn create_batch(
     .await;
 
     match result {
-        Ok(batch) => Json(ApiResponse::success(batch, "批次创建成功")),
+        Ok(batch) => ApiResponse::success(batch, "批次创建成功"),
         Err(e) => {
             tracing::error!("创建批次失败: {}", e);
-            Json(ApiResponse::server_error("创建批次失败"))
+            ApiResponse::server_error("创建批次失败")
         }
     }
 }
@@ -237,7 +237,7 @@ pub async fn get_batch(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<ProductionBatch>> {
+) -> ApiResponse<ProductionBatch> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -263,11 +263,11 @@ pub async fn get_batch(
     .await;
 
     match result {
-        Ok(Some(batch)) => Json(ApiResponse::success(batch, "获取批次成功")),
-        Ok(None) => Json(ApiResponse::not_found("批次不存在")),
+        Ok(Some(batch)) => ApiResponse::success(batch, "获取批次成功"),
+        Ok(None) => ApiResponse::not_found("批次不存在"),
         Err(e) => {
             tracing::error!("获取批次失败: {}", e);
-            Json(ApiResponse::server_error("获取批次失败"))
+            ApiResponse::server_error("获取批次失败")
         }
     }
 }
@@ -290,7 +290,7 @@ pub async fn update_batch(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateBatchRequest>,
-) -> Json<ApiResponse<ProductionBatch>> {
+) -> ApiResponse<ProductionBatch> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -337,11 +337,11 @@ pub async fn update_batch(
     .await;
 
     match result {
-        Ok(Some(batch)) => Json(ApiResponse::success(batch, "批次更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("批次不存在")),
+        Ok(Some(batch)) => ApiResponse::success(batch, "批次更新成功"),
+        Ok(None) => ApiResponse::not_found("批次不存在"),
         Err(e) => {
             tracing::error!("更新批次失败: {}", e);
-            Json(ApiResponse::server_error("更新批次失败"))
+            ApiResponse::server_error("更新批次失败")
         }
     }
 }
@@ -362,7 +362,7 @@ pub async fn delete_batch(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -383,11 +383,11 @@ pub async fn delete_batch(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "批次删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("批次不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "批次删除成功"),
+        Ok(_) => ApiResponse::not_found("批次不存在"),
         Err(e) => {
             tracing::error!("删除批次失败: {}", e);
-            Json(ApiResponse::server_error("删除批次失败"))
+            ApiResponse::server_error("删除批次失败")
         }
     }
 }

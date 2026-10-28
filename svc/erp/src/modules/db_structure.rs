@@ -93,7 +93,7 @@ pub async fn list_tables(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<TableInfo>>> {
+) -> ApiResponse<Vec<TableInfo>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -116,12 +116,10 @@ pub async fn list_tables(
     .fetch_all(&mut **txn)
     .await;
     match result {
-        Ok(tables) => Json(ApiResponse::success(tables, "获取表列表成功")),
+        Ok(tables) => ApiResponse::success(tables, "获取表列表成功"),
         Err(e) => {
             tracing::error!("获取表列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取表列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取表列表失败".to_string()))
         }
     }
 }
@@ -139,7 +137,7 @@ pub async fn get_table_detail(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<TableDetail>> {
+) -> ApiResponse<TableDetail> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -169,15 +167,11 @@ pub async fn get_table_detail(
         Ok(cols) => cols,
         Err(e) => {
             tracing::error!("获取表结构失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "获取表结构失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("获取表结构失败".to_string()));
         }
     };
     if columns.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "表不存在".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ResourceNotFound("表不存在".to_string()));
     }
     let row_count = sqlx::query_scalar(
         only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1"#),
@@ -192,7 +186,7 @@ pub async fn get_table_detail(
         columns,
         row_count,
     };
-    Json(ApiResponse::success(detail, "获取表详情成功"))
+    ApiResponse::success(detail, "获取表详情成功")
 }
 #[utoipa::path(
     get,
@@ -210,7 +204,7 @@ pub async fn preview_add_column(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<crate::models::AddColumnRequest>,
-) -> Json<ApiResponse<SqlPreview>> {
+) -> ApiResponse<SqlPreview> {
     let mut guard = txn_arc.lock().await;
     let _txn = match guard.as_mut() {
         Some(_txn) => _txn,
@@ -228,13 +222,13 @@ pub async fn preview_add_column(
         Some(w) => format!("{} {}", w, MIGRATION_CHAIN_NOTICE),
         None => MIGRATION_CHAIN_NOTICE.to_string(),
     };
-    Json(ApiResponse::success(
+    ApiResponse::success(
         SqlPreview {
             sql,
             warning: Some(warning),
         },
         "SQL预览生成成功",
-    ))
+    )
 }
 fn build_data_type(
     base_type: &str,
@@ -271,9 +265,9 @@ fn build_data_type(
 )]
 pub async fn execute_add_column(
     Json(req): Json<crate::models::AddColumnRequest>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let sql = build_add_column_suggestion(&req.table_name, &req.column);
-    Json(ApiResponse::success(sql, MIGRATION_CHAIN_NOTICE))
+    ApiResponse::success(sql, MIGRATION_CHAIN_NOTICE)
 }
 #[utoipa::path(
     put,
@@ -288,7 +282,7 @@ pub async fn execute_add_column(
 pub async fn execute_modify_column(
     Path((table_name, column_name)): Path<(String, String)>,
     Json(req): Json<crate::models::ModifyColumnRequest>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let column = &req.column;
     let data_type = build_data_type(
         &column.data_type,
@@ -312,7 +306,7 @@ pub async fn execute_modify_column(
         "ALTER TABLE {} ALTER COLUMN {} TYPE {}, ALTER COLUMN {} {}, ALTER COLUMN {} {}",
         table, col, data_type, col, default_clause, col, null_clause
     );
-    Json(ApiResponse::success(sql, MIGRATION_CHAIN_NOTICE))
+    ApiResponse::success(sql, MIGRATION_CHAIN_NOTICE)
 }
 #[utoipa::path(
     delete,
@@ -326,13 +320,13 @@ pub async fn execute_modify_column(
 )]
 pub async fn execute_drop_column(
     Path((table_name, column_name)): Path<(String, String)>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let sql = format!(
         "ALTER TABLE {} DROP COLUMN IF EXISTS {}",
         escape_sql_identifier(&table_name),
         escape_sql_identifier(&column_name)
     );
-    Json(ApiResponse::success(sql, MIGRATION_CHAIN_NOTICE))
+    ApiResponse::success(sql, MIGRATION_CHAIN_NOTICE)
 }
 #[utoipa::path(
     get,
@@ -347,7 +341,7 @@ pub async fn list_db_changes(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<DbChange>>> {
+) -> ApiResponse<PaginatedResponse<DbChange>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -384,16 +378,14 @@ pub async fn list_db_changes(
             .fetch_one(&mut **txn)
             .await;
             let total = count_result.unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(changes, total, page, page_size),
                 "获取数据库变更历史成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取数据库变更历史失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取数据库变更历史失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取数据库变更历史失败".to_string()))
         }
     }
 }

@@ -1282,13 +1282,13 @@ pub async fn predict_cash_flow_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<PredictCashFlowRequest>,
-) -> Json<ApiResponse<PredictionResult>> {
+) -> ApiResponse<PredictionResult> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match CashFlowPredictor::predict(&pool, tenant_id, req).await {
-        Ok(result) => Json(ApiResponse::success(result, "预测完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "预测完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1296,7 +1296,7 @@ pub async fn get_predictions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PredictionsQueryParams>,
-) -> Json<ApiResponse<Vec<CashFlowPrediction>>> {
+) -> ApiResponse<Vec<CashFlowPrediction>> {
     let pool = state.pool.clone();
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
@@ -1312,8 +1312,8 @@ pub async fn get_predictions_handler(
     )
     .await
     {
-        Ok((items, _total)) => Json(ApiResponse::success(items, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok((items, _total)) => ApiResponse::success(items, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1321,7 +1321,7 @@ pub async fn retrain_model_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<PredictionModelRecord>> {
+) -> ApiResponse<PredictionModelRecord> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
@@ -1332,8 +1332,8 @@ pub async fn retrain_model_handler(
     let model = PredictionModel::from_str(model_str);
 
     match CashFlowPredictor::retrain_model(&pool, tenant_id, model).await {
-        Ok(record) => Json(ApiResponse::success(record, "模型重训练完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(record) => ApiResponse::success(record, "模型重训练完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -1355,7 +1355,7 @@ pub async fn get_accuracy_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
-) -> Json<ApiResponse<Vec<PredictionAccuracy>>> {
+) -> ApiResponse<Vec<PredictionAccuracy>> {
     let pool = state.pool.clone();
     let _tenant_id = get_tenant_id_from_claims(&claims);
 
@@ -1365,8 +1365,8 @@ pub async fn get_accuracy_handler(
         .map(String::from);
 
     match CashFlowPredictor::get_accuracy(&pool, model_type).await {
-        Ok(accuracies) => Json(ApiResponse::success(accuracies, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(accuracies) => ApiResponse::success(accuracies, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1376,13 +1376,13 @@ pub async fn analyze_budget_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeBudgetRequest>,
-) -> Json<ApiResponse<VarianceAnalysisResult>> {
+) -> ApiResponse<VarianceAnalysisResult> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match BudgetAnalyzer::analyze(&pool, tenant_id, req).await {
-        Ok(result) => Json(ApiResponse::success(result, "分析完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "分析完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1390,7 +1390,7 @@ pub async fn get_variance_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<VarianceQueryParams>,
-) -> Json<ApiResponse<Vec<BudgetVariance>>> {
+) -> ApiResponse<Vec<BudgetVariance>> {
     let pool = state.pool.clone();
     let _tenant_id = get_tenant_id_from_claims(&claims);
 
@@ -1402,8 +1402,8 @@ pub async fn get_variance_handler(
     )
     .await
     {
-        Ok(variances) => Json(ApiResponse::success(variances, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(variances) => ApiResponse::success(variances, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -1428,13 +1428,13 @@ pub async fn get_variance_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<VarianceQueryParams>,
-) -> Json<ApiResponse<VarianceAnalysisResult>> {
+) -> ApiResponse<VarianceAnalysisResult> {
     let pool = state.pool.clone();
     let _tenant_id = get_tenant_id_from_claims(&claims);
 
     match BudgetAnalyzer::get_report(&pool, params.entity_id, params.period).await {
-        Ok(result) => Json(ApiResponse::success(result, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1442,7 +1442,7 @@ pub async fn detect_anomalies_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<Vec<AnomalyDetection>>> {
+) -> ApiResponse<Vec<AnomalyDetection>> {
     let pool = state.pool.clone();
     let _tenant_id = get_tenant_id_from_claims(&claims);
 
@@ -1453,8 +1453,8 @@ pub async fn detect_anomalies_handler(
     let period = req.get("period").and_then(|v| v.as_str()).map(String::from);
 
     match BudgetAnalyzer::detect_anomalies(&pool, entity_id, period).await {
-        Ok(anomalies) => Json(ApiResponse::success(anomalies, "异常检测完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(anomalies) => ApiResponse::success(anomalies, "异常检测完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1462,7 +1462,7 @@ pub async fn get_variance_trends_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
-) -> Json<ApiResponse<VarianceTrendAnalysis>> {
+) -> ApiResponse<VarianceTrendAnalysis> {
     let pool = state.pool.clone();
     let _tenant_id = get_tenant_id_from_claims(&claims);
 
@@ -1472,8 +1472,8 @@ pub async fn get_variance_trends_handler(
         .map(String::from);
 
     match BudgetAnalyzer::get_trends(&pool, entity_id).await {
-        Ok(trends) => Json(ApiResponse::success(trends, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(trends) => ApiResponse::success(trends, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 

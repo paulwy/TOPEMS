@@ -6,7 +6,7 @@
 use axum::{
     extract::{Path, State},
     routing::{delete, get, post, put},
-    Json, Router,
+    Router,
 };
 
 use topems_shared_auth::middleware::require_permission;
@@ -649,9 +649,7 @@ pub fn create_protected_routes(app_state: AppState) -> Router {
     operation_id = "detailed_health",
     responses((status = 200, description = "OK")),
 )]
-pub async fn detailed_health(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn detailed_health(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     use topems_shared_bootstrap::build_detailed_health_response;
     let modules = serde_json::json!({ "bi": "active", "report": "active" });
     let resp = build_detailed_health_response(
@@ -662,7 +660,7 @@ pub async fn detailed_health(
         serde_json::json!({}),
     )
     .await;
-    Json(ApiResponse::success(resp, "Detailed health check"))
+    ApiResponse::success(resp, "Detailed health check")
 }
 
 // ==================== Reports Center Handlers ====================
@@ -756,9 +754,7 @@ fn activity_display_name(action: &str) -> String {
     responses((status = 200, description = "Reports center dashboard statistics"))
 )]
 #[allow(clippy::as_conversions)]
-pub async fn reports_center_stats(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn reports_center_stats(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     // Dashboard summary stats — live counts from the real IAM/BI tables via the
     // service search_path (bi, public): core_users / core_roles / core_permissions
     // (public schema). The previously referenced iam_* / org_* tables do not exist
@@ -926,7 +922,7 @@ pub async fn reports_center_stats(
         "activityTypes": activity_types,
     });
 
-    Json(ApiResponse::success(stats, "Reports center stats loaded"))
+    ApiResponse::success(stats, "Reports center stats loaded")
 }
 
 #[utoipa::path(
@@ -940,13 +936,13 @@ pub async fn reports_center_stats(
 )]
 pub async fn reports_center_export(
     Path(report_type): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // 无真实导出引擎：不存在文件生成/落盘与下载通道。此前返回写死的 row_count
     // (156/87/621) 与 placeholder download_url 属假导出，已下线，诚实返回 501。
-    Json(ApiResponse::not_implemented(
+    ApiResponse::not_implemented(
         &format!(
             "报表中心导出（{}）尚未实现真实文件生成与落盘下载，已停止返回伪造的 row_count 与 placeholder download_url；待导出引擎接入后再启用。",
             report_type
         ),
-    ))
+    )
 }

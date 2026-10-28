@@ -24,7 +24,7 @@ pub async fn list_company_relations(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<CompanyRelation>>> {
+) -> ApiResponse<Vec<CompanyRelation>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -45,12 +45,10 @@ pub async fn list_company_relations(
     .await;
 
     match result {
-        Ok(relations) => Json(ApiResponse::success(relations, "获取公司关系列表成功")),
+        Ok(relations) => ApiResponse::success(relations, "获取公司关系列表成功"),
         Err(e) => {
             tracing::error!("获取公司关系列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取公司关系列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取公司关系列表失败".to_string()))
         }
     }
 }
@@ -67,7 +65,7 @@ pub async fn get_company_tree(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<CompanyTreeNode>>> {
+) -> ApiResponse<Vec<CompanyTreeNode>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -104,7 +102,7 @@ pub async fn get_company_tree(
     }
 
     let tree = build_tree(&relations, None, 0);
-    Json(ApiResponse::success(tree, "获取公司架构树成功"))
+    ApiResponse::success(tree, "获取公司架构树成功")
 }
 
 #[utoipa::path(
@@ -121,7 +119,7 @@ pub async fn create_company_relation(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateCompanyRelationRequest>,
-) -> Json<ApiResponse<CompanyRelation>> {
+) -> ApiResponse<CompanyRelation> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -158,16 +156,14 @@ pub async fn create_company_relation(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(relation, "创建公司关系成功"))
+            ApiResponse::success(relation, "创建公司关系成功")
         }
         Err(e) => {
             tracing::error!("创建公司关系失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建公司关系失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建公司关系失败".to_string()))
         }
     }
 }
@@ -188,7 +184,7 @@ pub async fn update_company_relation(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateCompanyRelationRequest>,
-) -> Json<ApiResponse<CompanyRelation>> {
+) -> ApiResponse<CompanyRelation> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -231,19 +227,15 @@ pub async fn update_company_relation(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(relation, "更新公司关系成功"))
+            ApiResponse::success(relation, "更新公司关系成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "公司关系不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("公司关系不存在".to_string())),
         Err(e) => {
             tracing::error!("更新公司关系失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新公司关系失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新公司关系失败".to_string()))
         }
     }
 }
@@ -263,7 +255,7 @@ pub async fn delete_company_relation(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -276,9 +268,9 @@ pub async fn delete_company_relation(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                ApiResponse::from(TopemsError::ResourceNotFound(
                     "公司关系不存在".to_string(),
-                )))
+                ))
             } else {
                 log_audit(
                     &state.db,
@@ -291,17 +283,17 @@ pub async fn delete_company_relation(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("事务提交失败: {}", e);
-                        return Json(ApiResponse::server_error("事务提交失败"));
+                        return ApiResponse::server_error("事务提交失败");
                     }
                 }
-                Json(ApiResponse::success((), "删除公司关系成功"))
+                ApiResponse::success((), "删除公司关系成功")
             }
         }
         Err(e) => {
             tracing::error!("删除公司关系失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
+            ApiResponse::from(TopemsError::Internal(
                 "删除公司关系失败".to_string(),
-            )))
+            ))
         }
     }
 }
@@ -321,13 +313,13 @@ pub async fn get_company_financial_data(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<CompanyFinancialData>> {
+) -> ApiResponse<CompanyFinancialData> {
     let mut guard = txn_arc.lock().await;
     let _txn = match guard.as_mut() {
         Some(_txn) => _txn,
         None => unreachable!("rls txn missing"),
     };
-    Json(ApiResponse::success(
+    ApiResponse::success(
         CompanyFinancialData {
             company_id,
             company_name: "公司".to_string(),
@@ -355,5 +347,5 @@ pub async fn get_company_financial_data(
             net_cash_flow: 10000.0,
         },
         "获取公司财务数据成功",
-    ))
+    )
 }

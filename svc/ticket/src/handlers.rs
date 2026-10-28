@@ -630,7 +630,7 @@ pub async fn create_ticket_handler(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateTicketRequest>,
-) -> Json<ApiResponse<Ticket>> {
+) -> ApiResponse<Ticket> {
     let service = TicketService::new(pool);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
@@ -641,8 +641,8 @@ pub async fn create_ticket_handler(
         .create_ticket(tenant_id, reporter_id, req, locale)
         .await
     {
-        Ok(ticket) => Json(ApiResponse::success(ticket, "工单创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建工单失败", e))),
+        Ok(ticket) => ApiResponse::success(ticket, "工单创建成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建工单失败", e)),
     }
 }
 
@@ -650,14 +650,14 @@ pub async fn list_tickets_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<TicketQuery>,
-) -> Json<ApiResponse<TicketListResponse>> {
+) -> ApiResponse<TicketListResponse> {
     let service = TicketService::new(pool);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
     match service.list_tickets(tenant_id, query).await {
-        Ok(list) => Json(ApiResponse::success(list, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询工单失败", e))),
+        Ok(list) => ApiResponse::success(list, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询工单失败", e)),
     }
 }
 
@@ -665,17 +665,17 @@ pub async fn get_ticket_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Ticket>> {
+) -> ApiResponse<Ticket> {
     let service = TicketService::new(pool);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
     match service.get_ticket(tenant_id, id).await {
-        Ok(ticket) => Json(ApiResponse::success(ticket, "查询成功")),
-        Err(e) => Json(ApiResponse::from({
+        Ok(ticket) => ApiResponse::success(ticket, "查询成功"),
+        Err(e) => ApiResponse::from({
             tracing::warn!("工单不存在: {}", e);
             TopemsError::ResourceNotFound("工单不存在".to_string())
-        })),
+        }),
     }
 }
 
@@ -684,19 +684,19 @@ pub async fn update_ticket_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTicketRequest>,
-) -> Json<ApiResponse<Ticket>> {
+) -> ApiResponse<Ticket> {
     let service = TicketService::new(pool);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     match service.update_ticket(tenant_id, id, user_id, req).await {
-        Ok(ticket) => Json(ApiResponse::success(ticket, "工单更新成功")),
+        Ok(ticket) => ApiResponse::success(ticket, "工单更新成功"),
         // 状态机白名单拒绝（非法状态值/非法转移）→ 400
-        Err(TopemsError::ValidationFailed(msg)) => Json(ApiResponse::bad_request(&msg)),
+        Err(TopemsError::ValidationFailed(msg)) => ApiResponse::bad_request(&msg),
         // 假 UUID 探测：get_ticket 走 fetch_one RowNotFound → 记录不存在 → 404
-        Err(TopemsError::DatabaseRecordNotFound(_)) => Json(ApiResponse::not_found("工单不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新工单失败", e))),
+        Err(TopemsError::DatabaseRecordNotFound(_)) => ApiResponse::not_found("工单不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新工单失败", e)),
     }
 }
 
@@ -704,19 +704,16 @@ pub async fn delete_ticket_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = TicketService::new(pool);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     match service.delete_ticket(tenant_id, id, user_id).await {
-        Ok(true) => Json(ApiResponse::success(
-            json!({"cancelled": true}),
-            "工单已取消",
-        )),
-        Ok(false) => Json(ApiResponse::not_found("工单不存在或已关闭")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("取消工单失败", e))),
+        Ok(true) => ApiResponse::success(json!({"cancelled": true}), "工单已取消"),
+        Ok(false) => ApiResponse::not_found("工单不存在或已关闭"),
+        Err(e) => ApiResponse::from(TopemsError::internal("取消工单失败", e)),
     }
 }
 
@@ -725,13 +722,13 @@ pub async fn add_comment_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<AddCommentRequest>,
-) -> Json<ApiResponse<TicketComment>> {
+) -> ApiResponse<TicketComment> {
     let service = TicketService::new(pool);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::unauthorized("Invalid user id")),
+        Err(_) => return ApiResponse::unauthorized("Invalid user id"),
     };
     let user_name = Some(claims.username.clone());
 
@@ -739,8 +736,8 @@ pub async fn add_comment_handler(
         .add_comment(tenant_id, id, user_id, user_name, req)
         .await
     {
-        Ok(comment) => Json(ApiResponse::success(comment, "评论已添加")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("添加评论失败", e))),
+        Ok(comment) => ApiResponse::success(comment, "评论已添加"),
+        Err(e) => ApiResponse::from(TopemsError::internal("添加评论失败", e)),
     }
 }
 
@@ -748,14 +745,14 @@ pub async fn list_comments_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<TicketComment>>> {
+) -> ApiResponse<Vec<TicketComment>> {
     let service = TicketService::new(pool);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
     match service.list_comments(tenant_id, id).await {
-        Ok(list) => Json(ApiResponse::success(list, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询评论失败", e))),
+        Ok(list) => ApiResponse::success(list, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询评论失败", e)),
     }
 }
 
@@ -763,28 +760,28 @@ pub async fn list_activities_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<TicketActivity>>> {
+) -> ApiResponse<Vec<TicketActivity>> {
     let service = TicketService::new(pool);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
     match service.list_activities(tenant_id, id).await {
-        Ok(list) => Json(ApiResponse::success(list, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询活动失败", e))),
+        Ok(list) => ApiResponse::success(list, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询活动失败", e)),
     }
 }
 
 pub async fn get_stats_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<TicketStats>> {
+) -> ApiResponse<TicketStats> {
     let service = TicketService::new(pool);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
     match service.get_stats(tenant_id).await {
-        Ok(stats) => Json(ApiResponse::success(stats, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询统计失败", e))),
+        Ok(stats) => ApiResponse::success(stats, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询统计失败", e)),
     }
 }
 
@@ -794,7 +791,7 @@ pub async fn get_ticket_sla_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<TicketSlaInfo>> {
+) -> ApiResponse<TicketSlaInfo> {
     let ticket_service = TicketService::new(pool.clone());
     let sla_service = TicketSlaService::new(pool);
     let tenant_id =
@@ -803,16 +800,16 @@ pub async fn get_ticket_sla_handler(
     let ticket = match ticket_service.get_ticket(tenant_id, id).await {
         Ok(t) => t,
         Err(e) => {
-            return Json(ApiResponse::from({
+            return ApiResponse::from({
                 tracing::warn!("工单不存在: {}", e);
                 TopemsError::ResourceNotFound("工单不存在".to_string())
-            }))
+            })
         }
     };
 
     match sla_service.calculate_sla(&ticket).await {
-        Ok(sla) => Json(ApiResponse::success(sla, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("计算SLA失败", e))),
+        Ok(sla) => ApiResponse::success(sla, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("计算SLA失败", e)),
     }
 }
 
@@ -820,7 +817,7 @@ pub async fn trigger_sla_escalation_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<SlaEscalationEvent>>> {
+) -> ApiResponse<Vec<SlaEscalationEvent>> {
     let ticket_service = TicketService::new(pool.clone());
     let sla_service = TicketSlaService::new(pool);
     let tenant_id =
@@ -829,26 +826,23 @@ pub async fn trigger_sla_escalation_handler(
     let ticket = match ticket_service.get_ticket(tenant_id, id).await {
         Ok(t) => t,
         Err(e) => {
-            return Json(ApiResponse::from({
+            return ApiResponse::from({
                 tracing::warn!("工单不存在: {}", e);
                 TopemsError::ResourceNotFound("工单不存在".to_string())
-            }))
+            })
         }
     };
 
     match sla_service.check_and_escalate(&ticket).await {
-        Ok(events) => Json(ApiResponse::success(events, "SLA 升级检查完成")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "SLA 升级检查失败",
-            e,
-        ))),
+        Ok(events) => ApiResponse::success(events, "SLA 升级检查完成"),
+        Err(e) => ApiResponse::from(TopemsError::internal("SLA 升级检查失败", e)),
     }
 }
 
 pub async fn get_sla_stats_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<TicketSlaStats>> {
+) -> ApiResponse<TicketSlaStats> {
     let service = TicketSlaService::new(pool);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -860,11 +854,8 @@ pub async fn get_sla_stats_handler(
     };
 
     match service.get_sla_stats(opt_tenant_id).await {
-        Ok(stats) => Json(ApiResponse::success(stats, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "查询SLA统计失败",
-            e,
-        ))),
+        Ok(stats) => ApiResponse::success(stats, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询SLA统计失败", e)),
     }
 }
 
@@ -884,18 +875,15 @@ pub async fn create_sla_policy_handler(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateSlaPolicyRequest>,
-) -> Json<ApiResponse<TicketSlaPolicy>> {
+) -> ApiResponse<TicketSlaPolicy> {
     let service = TicketSlaService::new(pool);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let locale = Locale::from_headers(&headers).as_sql();
 
     match service.create_policy(tenant_id, req, locale).await {
-        Ok(policy) => Json(ApiResponse::success(policy, "SLA策略创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "创建SLA策略失败",
-            e,
-        ))),
+        Ok(policy) => ApiResponse::success(policy, "SLA策略创建成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建SLA策略失败", e)),
     }
 }
 
@@ -913,7 +901,7 @@ pub async fn list_sla_policies_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<TicketSlaPolicy>>> {
+) -> ApiResponse<Vec<TicketSlaPolicy>> {
     let service = TicketSlaService::new(pool);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -926,11 +914,8 @@ pub async fn list_sla_policies_handler(
     let locale = Locale::from_headers(&headers).as_sql();
 
     match service.list_policies(opt_tenant_id, locale).await {
-        Ok(policies) => Json(ApiResponse::success(policies, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "查询SLA策略失败",
-            e,
-        ))),
+        Ok(policies) => ApiResponse::success(policies, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询SLA策略失败", e)),
     }
 }
 
@@ -949,7 +934,7 @@ pub async fn get_sla_policy_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-) -> Json<ApiResponse<TicketSlaPolicy>> {
+) -> ApiResponse<TicketSlaPolicy> {
     let service = TicketSlaService::new(pool);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -962,11 +947,11 @@ pub async fn get_sla_policy_handler(
     let locale = Locale::from_headers(&headers).as_sql();
 
     match service.get_policy(opt_tenant_id, id, locale).await {
-        Ok(policy) => Json(ApiResponse::success(policy, "查询成功")),
-        Err(e) => Json(ApiResponse::from({
+        Ok(policy) => ApiResponse::success(policy, "查询成功"),
+        Err(e) => ApiResponse::from({
             tracing::warn!("SLA策略不存在: {}", e);
             TopemsError::ResourceNotFound("SLA策略不存在".to_string())
-        })),
+        }),
     }
 }
 
@@ -986,20 +971,17 @@ pub async fn update_sla_policy_handler(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateSlaPolicyRequest>,
-) -> Json<ApiResponse<TicketSlaPolicy>> {
+) -> ApiResponse<TicketSlaPolicy> {
     let service = TicketSlaService::new(pool);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let locale = Locale::from_headers(&headers).as_sql();
 
     match service.update_policy(tenant_id, id, req, locale).await {
-        Ok(policy) => Json(ApiResponse::success(policy, "SLA策略更新成功")),
+        Ok(policy) => ApiResponse::success(policy, "SLA策略更新成功"),
         // 假 UUID 探测：结尾 get_policy 走 fetch_one RowNotFound → 内层 404（HTTP200）
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("SLA策略不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "更新SLA策略失败",
-            e,
-        ))),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("SLA策略不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新SLA策略失败", e)),
     }
 }
 
@@ -1017,21 +999,15 @@ pub async fn delete_sla_policy_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let service = TicketSlaService::new(pool);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
     match service.delete_policy(tenant_id, id).await {
-        Ok(true) => Json(ApiResponse::success(
-            json!({"deleted": true}),
-            "SLA策略已删除",
-        )),
-        Ok(false) => Json(ApiResponse::not_found("SLA策略不存在或为默认策略不可删除")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "删除SLA策略失败",
-            e,
-        ))),
+        Ok(true) => ApiResponse::success(json!({"deleted": true}), "SLA策略已删除"),
+        Ok(false) => ApiResponse::not_found("SLA策略不存在或为默认策略不可删除"),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除SLA策略失败", e)),
     }
 }
 
@@ -1239,7 +1215,7 @@ pub async fn create_automation_rule_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAutomationRuleRequest>,
-) -> Json<ApiResponse<AutomationRule>> {
+) -> ApiResponse<AutomationRule> {
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let id = Uuid::new_v4();
@@ -1266,11 +1242,8 @@ pub async fn create_automation_rule_handler(
     .fetch_one(&pool)
     .await;
     match result {
-        Ok(rule) => Json(ApiResponse::success(rule, "自动化规则创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "创建自动化规则失败",
-            e,
-        ))),
+        Ok(rule) => ApiResponse::success(rule, "自动化规则创建成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建自动化规则失败", e)),
     }
 }
 
@@ -1288,7 +1261,7 @@ pub async fn list_automation_rules_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<AutomationRule>>> {
+) -> ApiResponse<Vec<AutomationRule>> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1307,8 +1280,8 @@ pub async fn list_automation_rules_handler(
     .fetch_all(&pool)
     .await
     {
-        Ok(rules) => Json(ApiResponse::success(rules, "自动化规则列表获取成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("获取自动化规则列表失败", e))),
+        Ok(rules) => ApiResponse::success(rules, "自动化规则列表获取成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("获取自动化规则列表失败", e)),
     }
 }
 
@@ -1330,7 +1303,7 @@ pub async fn get_automation_rule_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-) -> Json<ApiResponse<AutomationRule>> {
+) -> ApiResponse<AutomationRule> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1350,9 +1323,9 @@ pub async fn get_automation_rule_handler(
     .fetch_optional(&pool)
     .await
     {
-        Ok(Some(rule)) => Json(ApiResponse::success(rule, "自动化规则获取成功")),
-        Ok(None) => Json(ApiResponse::not_found("自动化规则不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("获取自动化规则失败", e))),
+        Ok(Some(rule)) => ApiResponse::success(rule, "自动化规则获取成功"),
+        Ok(None) => ApiResponse::not_found("自动化规则不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("获取自动化规则失败", e)),
     }
 }
 
@@ -1375,7 +1348,7 @@ pub async fn update_automation_rule_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAutomationRuleRequest>,
-) -> Json<ApiResponse<AutomationRule>> {
+) -> ApiResponse<AutomationRule> {
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let now = Utc::now();
@@ -1407,12 +1380,9 @@ pub async fn update_automation_rule_handler(
     .fetch_optional(&pool)
     .await;
     match result {
-        Ok(Some(rule)) => Json(ApiResponse::success(rule, "自动化规则更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("自动化规则不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "更新自动化规则失败",
-            e,
-        ))),
+        Ok(Some(rule)) => ApiResponse::success(rule, "自动化规则更新成功"),
+        Ok(None) => ApiResponse::not_found("自动化规则不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新自动化规则失败", e)),
     }
 }
 
@@ -1433,7 +1403,7 @@ pub async fn delete_automation_rule_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     match sqlx::query("DELETE FROM ticket.ticket_automation_rules WHERE id = $1 AND tenant_id = $2")
@@ -1442,15 +1412,11 @@ pub async fn delete_automation_rule_handler(
         .execute(&pool)
         .await
     {
-        Ok(res) if res.rows_affected() > 0 => Json(ApiResponse::success(
-            json!({"deleted": true}),
-            "自动化规则已删除",
-        )),
-        Ok(_) => Json(ApiResponse::not_found("自动化规则不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "删除自动化规则失败",
-            e,
-        ))),
+        Ok(res) if res.rows_affected() > 0 => {
+            ApiResponse::success(json!({"deleted": true}), "自动化规则已删除")
+        }
+        Ok(_) => ApiResponse::not_found("自动化规则不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除自动化规则失败", e)),
     }
 }
 
@@ -1471,7 +1437,7 @@ pub async fn create_knowledge_article_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateKnowledgeArticleRequest>,
-) -> Json<ApiResponse<KnowledgeArticle>> {
+) -> ApiResponse<KnowledgeArticle> {
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let id = Uuid::new_v4();
@@ -1493,11 +1459,8 @@ pub async fn create_knowledge_article_handler(
     .fetch_one(&pool)
     .await;
     match result {
-        Ok(article) => Json(ApiResponse::success(article, "知识文章创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "创建知识文章失败",
-            e,
-        ))),
+        Ok(article) => ApiResponse::success(article, "知识文章创建成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建知识文章失败", e)),
     }
 }
 
@@ -1515,7 +1478,7 @@ pub async fn list_knowledge_articles_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
-) -> Json<ApiResponse<Vec<KnowledgeArticle>>> {
+) -> ApiResponse<Vec<KnowledgeArticle>> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1537,11 +1500,11 @@ pub async fn list_knowledge_articles_handler(
     {
         Ok(a) => a,
         Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal("获取知识文章列表失败", e)))
+            return ApiResponse::from(TopemsError::internal("获取知识文章列表失败", e))
         }
     };
     if q.trim().is_empty() {
-        return Json(ApiResponse::success(articles, "知识文章列表获取成功"));
+        return ApiResponse::success(articles, "知识文章列表获取成功");
     }
     let refs: Vec<KnowledgeArticleRef> = articles
         .iter()
@@ -1556,7 +1519,7 @@ pub async fn list_knowledge_articles_handler(
         .into_iter()
         .map(|(idx, _)| articles[idx].clone())
         .collect();
-    Json(ApiResponse::success(sorted, "知识文章推荐结果"))
+    ApiResponse::success(sorted, "知识文章推荐结果")
 }
 
 #[utoipa::path(
@@ -1576,7 +1539,7 @@ pub async fn get_knowledge_article_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<KnowledgeArticle>> {
+) -> ApiResponse<KnowledgeArticle> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1596,9 +1559,9 @@ pub async fn get_knowledge_article_handler(
     .fetch_optional(&pool)
     .await
     {
-        Ok(Some(a)) => Json(ApiResponse::success(a, "知识文章获取成功")),
-        Ok(None) => Json(ApiResponse::not_found("知识文章不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("获取知识文章失败", e))),
+        Ok(Some(a)) => ApiResponse::success(a, "知识文章获取成功"),
+        Ok(None) => ApiResponse::not_found("知识文章不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("获取知识文章失败", e)),
     }
 }
 
@@ -1621,7 +1584,7 @@ pub async fn update_knowledge_article_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateKnowledgeArticleRequest>,
-) -> Json<ApiResponse<KnowledgeArticle>> {
+) -> ApiResponse<KnowledgeArticle> {
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let now = Utc::now();
@@ -1645,12 +1608,9 @@ pub async fn update_knowledge_article_handler(
     .fetch_optional(&pool)
     .await;
     match result {
-        Ok(Some(a)) => Json(ApiResponse::success(a, "知识文章更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("知识文章不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "更新知识文章失败",
-            e,
-        ))),
+        Ok(Some(a)) => ApiResponse::success(a, "知识文章更新成功"),
+        Ok(None) => ApiResponse::not_found("知识文章不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新知识文章失败", e)),
     }
 }
 
@@ -1671,7 +1631,7 @@ pub async fn delete_knowledge_article_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     match sqlx::query(
@@ -1682,15 +1642,11 @@ pub async fn delete_knowledge_article_handler(
     .execute(&pool)
     .await
     {
-        Ok(res) if res.rows_affected() > 0 => Json(ApiResponse::success(
-            json!({"deleted": true}),
-            "知识文章已删除",
-        )),
-        Ok(_) => Json(ApiResponse::not_found("知识文章不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "删除知识文章失败",
-            e,
-        ))),
+        Ok(res) if res.rows_affected() > 0 => {
+            ApiResponse::success(json!({"deleted": true}), "知识文章已删除")
+        }
+        Ok(_) => ApiResponse::not_found("知识文章不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除知识文章失败", e)),
     }
 }
 
@@ -1712,7 +1668,7 @@ pub async fn update_comment_handler(
     Extension(claims): Extension<Claims>,
     Path((ticket_id, comment_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateCommentRequest>,
-) -> Json<ApiResponse<TicketComment>> {
+) -> ApiResponse<TicketComment> {
     let tenant_id = tenant_id_of(&claims);
     match sqlx::query(
         "UPDATE ticket.core_ticket_comments SET content = COALESCE($1, content), \
@@ -1728,8 +1684,8 @@ pub async fn update_comment_handler(
     .await
     {
         Ok(res) if res.rows_affected() > 0 => {}
-        Ok(_) => return Json(ApiResponse::not_found("评论不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("更新评论失败", e))),
+        Ok(_) => return ApiResponse::not_found("评论不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("更新评论失败", e)),
     }
     match sqlx::query_as::<_, TicketComment>(
         "SELECT id, ticket_id, tenant_id, user_id, user_name, content, is_internal, created_at \
@@ -1739,8 +1695,8 @@ pub async fn update_comment_handler(
     .fetch_one(&pool)
     .await
     {
-        Ok(comment) => Json(ApiResponse::success(comment, "评论已更新")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询评论失败", e))),
+        Ok(comment) => ApiResponse::success(comment, "评论已更新"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询评论失败", e)),
     }
 }
 
@@ -1749,7 +1705,7 @@ pub async fn delete_comment_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path((ticket_id, comment_id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_id_of(&claims);
     match sqlx::query(
         "DELETE FROM ticket.core_ticket_comments \
@@ -1762,10 +1718,10 @@ pub async fn delete_comment_handler(
     .await
     {
         Ok(res) if res.rows_affected() > 0 => {
-            Json(ApiResponse::success(json!({"deleted": true}), "评论已删除"))
+            ApiResponse::success(json!({"deleted": true}), "评论已删除")
         }
-        Ok(_) => Json(ApiResponse::not_found("评论不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除评论失败", e))),
+        Ok(_) => ApiResponse::not_found("评论不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除评论失败", e)),
     }
 }
 
@@ -1774,7 +1730,7 @@ pub async fn get_activity_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path((ticket_id, activity_id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<TicketActivity>> {
+) -> ApiResponse<TicketActivity> {
     let tenant_id = tenant_id_of(&claims);
     match sqlx::query_as::<_, TicketActivity>(
         "SELECT id, ticket_id, tenant_id, user_id, action, from_value, to_value, created_at \
@@ -1787,9 +1743,9 @@ pub async fn get_activity_handler(
     .fetch_optional(&pool)
     .await
     {
-        Ok(Some(activity)) => Json(ApiResponse::success(activity, "查询成功")),
-        Ok(None) => Json(ApiResponse::not_found("活动不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询活动失败", e))),
+        Ok(Some(activity)) => ApiResponse::success(activity, "查询成功"),
+        Ok(None) => ApiResponse::not_found("活动不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询活动失败", e)),
     }
 }
 
@@ -1798,12 +1754,12 @@ pub async fn list_activities_timeline_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(ticket_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<TicketActivity>>> {
+) -> ApiResponse<Vec<TicketActivity>> {
     let service = TicketService::new(pool);
     let tenant_id = tenant_id_of(&claims);
     match service.list_activities(tenant_id, ticket_id).await {
-        Ok(list) => Json(ApiResponse::success(list, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询活动失败", e))),
+        Ok(list) => ApiResponse::success(list, "查询成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询活动失败", e)),
     }
 }
 
@@ -1815,16 +1771,13 @@ pub async fn assign_ticket_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<Ticket>> {
+) -> ApiResponse<Ticket> {
     let service = TicketService::new(pool.clone());
     let tenant_id = tenant_id_of(&claims);
     if let Err(e) = service.get_ticket(tenant_id, id).await {
         return match e {
-            sqlx::Error::RowNotFound => Json(ApiResponse::not_found("工单不存在")),
-            other => Json(ApiResponse::from(TopemsError::internal(
-                "查询工单失败",
-                other,
-            ))),
+            sqlx::Error::RowNotFound => ApiResponse::not_found("工单不存在"),
+            other => ApiResponse::from(TopemsError::internal("查询工单失败", other)),
         };
     }
     let assignee_id = body
@@ -1843,12 +1796,12 @@ pub async fn assign_ticket_handler(
         .execute(&pool)
         .await
         {
-            return Json(ApiResponse::from(TopemsError::internal("指派工单失败", e)));
+            return ApiResponse::from(TopemsError::internal("指派工单失败", e));
         }
     }
     match service.get_ticket(tenant_id, id).await {
-        Ok(t) => Json(ApiResponse::success(t, "工单已指派")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询工单失败", e))),
+        Ok(t) => ApiResponse::success(t, "工单已指派"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询工单失败", e)),
     }
 }
 
@@ -1858,16 +1811,13 @@ pub async fn resolve_ticket_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(_body): Json<serde_json::Value>,
-) -> Json<ApiResponse<Ticket>> {
+) -> ApiResponse<Ticket> {
     let service = TicketService::new(pool.clone());
     let tenant_id = tenant_id_of(&claims);
     if let Err(e) = service.get_ticket(tenant_id, id).await {
         return match e {
-            sqlx::Error::RowNotFound => Json(ApiResponse::not_found("工单不存在")),
-            other => Json(ApiResponse::from(TopemsError::internal(
-                "查询工单失败",
-                other,
-            ))),
+            sqlx::Error::RowNotFound => ApiResponse::not_found("工单不存在"),
+            other => ApiResponse::from(TopemsError::internal("查询工单失败", other)),
         };
     }
     let now = Utc::now();
@@ -1882,11 +1832,11 @@ pub async fn resolve_ticket_handler(
     .execute(&pool)
     .await
     {
-        return Json(ApiResponse::from(TopemsError::internal("解决工单失败", e)));
+        return ApiResponse::from(TopemsError::internal("解决工单失败", e));
     }
     match service.get_ticket(tenant_id, id).await {
-        Ok(t) => Json(ApiResponse::success(t, "工单已解决")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询工单失败", e))),
+        Ok(t) => ApiResponse::success(t, "工单已解决"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询工单失败", e)),
     }
 }
 
@@ -1896,16 +1846,13 @@ pub async fn close_ticket_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(_body): Json<serde_json::Value>,
-) -> Json<ApiResponse<Ticket>> {
+) -> ApiResponse<Ticket> {
     let service = TicketService::new(pool.clone());
     let tenant_id = tenant_id_of(&claims);
     if let Err(e) = service.get_ticket(tenant_id, id).await {
         return match e {
-            sqlx::Error::RowNotFound => Json(ApiResponse::not_found("工单不存在")),
-            other => Json(ApiResponse::from(TopemsError::internal(
-                "查询工单失败",
-                other,
-            ))),
+            sqlx::Error::RowNotFound => ApiResponse::not_found("工单不存在"),
+            other => ApiResponse::from(TopemsError::internal("查询工单失败", other)),
         };
     }
     let now = Utc::now();
@@ -1920,11 +1867,11 @@ pub async fn close_ticket_handler(
     .execute(&pool)
     .await
     {
-        return Json(ApiResponse::from(TopemsError::internal("关闭工单失败", e)));
+        return ApiResponse::from(TopemsError::internal("关闭工单失败", e));
     }
     match service.get_ticket(tenant_id, id).await {
-        Ok(t) => Json(ApiResponse::success(t, "工单已关闭")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询工单失败", e))),
+        Ok(t) => ApiResponse::success(t, "工单已关闭"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询工单失败", e)),
     }
 }
 
@@ -1935,25 +1882,19 @@ pub async fn list_sla_escalations_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<SlaEscalationEvent>>> {
+) -> ApiResponse<Vec<SlaEscalationEvent>> {
     let ticket_service = TicketService::new(pool.clone());
     let sla_service = TicketSlaService::new(pool);
     let tenant_id = tenant_id_of(&claims);
     if let Err(e) = ticket_service.get_ticket(tenant_id, id).await {
         return match e {
-            sqlx::Error::RowNotFound => Json(ApiResponse::not_found("工单不存在")),
-            other => Json(ApiResponse::from(TopemsError::internal(
-                "查询工单失败",
-                other,
-            ))),
+            sqlx::Error::RowNotFound => ApiResponse::not_found("工单不存在"),
+            other => ApiResponse::from(TopemsError::internal("查询工单失败", other)),
         };
     }
     match sla_service.get_escalation_history(tenant_id, id).await {
-        Ok(events) => Json(ApiResponse::success(events, "SLA升级历史")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "查询SLA升级失败",
-            e,
-        ))),
+        Ok(events) => ApiResponse::success(events, "SLA升级历史"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询SLA升级失败", e)),
     }
 }
 
@@ -1962,18 +1903,18 @@ pub async fn calculate_ticket_sla_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<TicketSlaInfo>> {
+) -> ApiResponse<TicketSlaInfo> {
     let ticket_service = TicketService::new(pool.clone());
     let sla_service = TicketSlaService::new(pool);
     let tenant_id = tenant_id_of(&claims);
     let ticket = match ticket_service.get_ticket(tenant_id, id).await {
         Ok(t) => t,
-        Err(sqlx::Error::RowNotFound) => return Json(ApiResponse::not_found("工单不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询工单失败", e))),
+        Err(sqlx::Error::RowNotFound) => return ApiResponse::not_found("工单不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询工单失败", e)),
     };
     match sla_service.calculate_sla(&ticket).await {
-        Ok(info) => Json(ApiResponse::success(info, "SLA计算完成")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("计算SLA失败", e))),
+        Ok(info) => ApiResponse::success(info, "SLA计算完成"),
+        Err(e) => ApiResponse::from(TopemsError::internal("计算SLA失败", e)),
     }
 }
 
@@ -1983,7 +1924,7 @@ pub async fn calculate_ticket_sla_handler(
 pub async fn dashboard_summary_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let opt_tenant: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1998,12 +1939,7 @@ pub async fn dashboard_summary_handler(
     .await
     {
         Ok(rows) => rows,
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询看板汇总失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询看板汇总失败", e)),
     };
     let mut open = 0i64;
     let mut in_progress = 0i64;
@@ -2024,7 +1960,7 @@ pub async fn dashboard_summary_handler(
             _ => {}
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         json!({
             "total": total, "open": open, "in_progress": in_progress, "pending": pending,
             "resolved_today": resolved, "closed_today": closed, "sla_breached": 0,
@@ -2032,30 +1968,30 @@ pub async fn dashboard_summary_handler(
             "new_this_week": 0, "resolved_this_week": resolved,
         }),
         "看板汇总",
-    ))
+    )
 }
 
 /// GET /tickets/dashboard/trend —— 趋势序列（待 analytics 聚合：P2-8 degraded 占位）
 ///
 /// 诚实降级：data.items 为空数组（无虚构数据），同时显式返回
 /// `degraded: true` 与 `degraded_reason`，前端可据此展示「待 analytics 聚合」提示。
-pub async fn dashboard_trend_handler() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+pub async fn dashboard_trend_handler() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         json!({
             "items": [],
             "degraded": true,
             "degraded_reason": "待 analytics 聚合：趋势序列尚未接入，当前为空数据占位",
         }),
         "趋势（degraded：待 analytics 聚合）",
-    ))
+    )
 }
 
 /// GET /tickets/dashboard/sla-overview —— SLA 概览（待 analytics 聚合：P2-8 degraded 占位）
 ///
 /// 诚实降级：各统计字段保持零值（不虚构 SLA 数据），新增可选 `degraded` /
 /// `degraded_reason` 字段向后兼容（前端忽略未知字段即可）。
-pub async fn dashboard_sla_overview_handler() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+pub async fn dashboard_sla_overview_handler() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         json!({
             "total": 0, "on_time": 0, "breached": 0, "breach_rate": 0.0,
             "avg_resolution_minutes": 0, "avg_response_minutes": 0,
@@ -2063,29 +1999,29 @@ pub async fn dashboard_sla_overview_handler() -> Json<ApiResponse<serde_json::Va
             "degraded_reason": "待 analytics 聚合：SLA 统计尚未接入，当前为零值占位",
         }),
         "SLA概览（degraded：待 analytics 聚合）",
-    ))
+    )
 }
 
 /// GET /tickets/dashboard/assignee-load —— 处理人负载（待 analytics 聚合：P2-8 degraded 占位）
 ///
 /// 诚实降级：data.items 为空数组（无虚构负载数据），同时显式返回
 /// `degraded: true` 与 `degraded_reason`，前端可据此展示「待 analytics 聚合」提示。
-pub async fn dashboard_assignee_load_handler() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+pub async fn dashboard_assignee_load_handler() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         json!({
             "items": [],
             "degraded": true,
             "degraded_reason": "待 analytics 聚合：处理人负载尚未接入，当前为空数据占位",
         }),
         "处理人负载（degraded：待 analytics 聚合）",
-    ))
+    )
 }
 
 /// GET /tickets/dashboard/my —— 我的工单概览（实时聚合 core_tickets）
 pub async fn dashboard_my_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_id_of(&claims);
     let me = Uuid::parse_str(&claims.sub).unwrap_or(Uuid::nil());
     let rows = match sqlx::query(
@@ -2098,12 +2034,7 @@ pub async fn dashboard_my_handler(
     .await
     {
         Ok(rows) => rows,
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询我的看板失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询我的看板失败", e)),
     };
     let mut open = 0i64;
     let mut in_progress = 0i64;
@@ -2116,13 +2047,13 @@ pub async fn dashboard_my_handler(
             _ => {}
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         json!({
             "my_open": open, "my_in_progress": in_progress, "my_overdue": 0,
             "my_recent": { "items": [], "total": 0, "page": 1, "page_size": 20 },
         }),
         "我的看板",
-    ))
+    )
 }
 
 // ==================== Routes ====================

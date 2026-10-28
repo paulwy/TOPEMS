@@ -682,10 +682,10 @@ async fn get_metadata_stats() -> MetadataStats {
 pub async fn create_schema_handler(
     State(state): State<ApiState>,
     Json(req): Json<SchemaRequest>,
-) -> Json<ApiResponse<MetadataSchema>> {
+) -> ApiResponse<MetadataSchema> {
     let _ = &state;
     let schema = create_schema(&req).await;
-    Json(ApiResponse::success(schema, "Schema 创建成功"))
+    ApiResponse::success(schema, "Schema 创建成功")
 }
 
 /// GET /metadata/schemas — 列出 Schema
@@ -702,10 +702,10 @@ pub async fn create_schema_handler(
 pub async fn list_schemas_handler(
     State(state): State<ApiState>,
     Query(params): Query<SchemaListQuery>,
-) -> Json<ApiResponse<Vec<MetadataSchema>>> {
+) -> ApiResponse<Vec<MetadataSchema>> {
     let _ = &state;
     let schemas = list_schemas(params.domain.as_deref()).await;
-    Json(ApiResponse::success(schemas, "Schema 列表获取成功"))
+    ApiResponse::success(schemas, "Schema 列表获取成功")
 }
 
 /// GET /metadata/schemas/{schema_id} — 获取 Schema
@@ -720,11 +720,11 @@ pub async fn list_schemas_handler(
 pub async fn get_schema_handler(
     State(state): State<ApiState>,
     Path(schema_id): Path<String>,
-) -> Json<ApiResponse<MetadataSchema>> {
+) -> ApiResponse<MetadataSchema> {
     let _ = &state;
     match get_schema(&schema_id).await {
-        Some(schema) => Json(ApiResponse::success(schema, "Schema 获取成功")),
-        None => Json(ApiResponse::not_found("未找到 Schema")),
+        Some(schema) => ApiResponse::success(schema, "Schema 获取成功"),
+        None => ApiResponse::not_found("未找到 Schema"),
     }
 }
 
@@ -741,14 +741,11 @@ pub async fn update_schema_handler(
     State(state): State<ApiState>,
     Path(schema_id): Path<String>,
     Json(req): Json<SchemaRequest>,
-) -> Json<ApiResponse<MetadataSchema>> {
+) -> ApiResponse<MetadataSchema> {
     let _ = &state;
     match update_schema(&schema_id, &req).await {
-        Some(schema) => Json(ApiResponse::success(
-            schema,
-            "Schema 更新成功（已生成新版本）",
-        )),
-        None => Json(ApiResponse::not_found("未找到 Schema")),
+        Some(schema) => ApiResponse::success(schema, "Schema 更新成功（已生成新版本）"),
+        None => ApiResponse::not_found("未找到 Schema"),
     }
 }
 
@@ -764,11 +761,11 @@ pub async fn update_schema_handler(
 pub async fn validate_record_handler(
     State(state): State<ApiState>,
     Json(req): Json<RecordUpsertRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let _ = &state;
     let errors = validate_record(&req).await;
     let valid = errors.is_empty();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "valid": valid,
             "errors": errors,
@@ -779,7 +776,7 @@ pub async fn validate_record_handler(
         } else {
             "记录校验未通过"
         },
-    ))
+    )
 }
 
 /// POST /metadata/records — 创建/更新元数据记录
@@ -794,13 +791,13 @@ pub async fn validate_record_handler(
 pub async fn upsert_record_handler(
     State(state): State<ApiState>,
     Json(req): Json<RecordUpsertRequest>,
-) -> Json<ApiResponse<MetadataRecord>> {
+) -> ApiResponse<MetadataRecord> {
     let _ = &state;
     match upsert_record(&req).await {
-        Ok(record) => Json(ApiResponse::success(record, "元数据记录保存成功")),
+        Ok(record) => ApiResponse::success(record, "元数据记录保存成功"),
         Err(errors) => {
             let resp: ApiResponse<MetadataRecord> = ApiResponse::bad_request(&errors.join("; "));
-            Json(resp)
+            resp
         }
     }
 }
@@ -819,10 +816,10 @@ pub async fn upsert_record_handler(
 pub async fn query_records_handler(
     State(state): State<ApiState>,
     Query(params): Query<RecordQuery>,
-) -> Json<ApiResponse<Vec<MetadataRecord>>> {
+) -> ApiResponse<Vec<MetadataRecord>> {
     let _ = &state;
     let records = query_records(&params).await;
-    Json(ApiResponse::success(records, "元数据记录查询成功"))
+    ApiResponse::success(records, "元数据记录查询成功")
 }
 
 /// GET /metadata/records/{record_id} — 获取记录
@@ -837,11 +834,11 @@ pub async fn query_records_handler(
 pub async fn get_record_handler(
     State(state): State<ApiState>,
     Path(record_id): Path<String>,
-) -> Json<ApiResponse<MetadataRecord>> {
+) -> ApiResponse<MetadataRecord> {
     let _ = &state;
     match get_record(&record_id).await {
-        Some(record) => Json(ApiResponse::success(record, "元数据记录获取成功")),
-        None => Json(ApiResponse::not_found("未找到元数据记录")),
+        Some(record) => ApiResponse::success(record, "元数据记录获取成功"),
+        None => ApiResponse::not_found("未找到元数据记录"),
     }
 }
 
@@ -857,10 +854,10 @@ pub async fn get_record_handler(
 pub async fn create_relation_handler(
     State(state): State<ApiState>,
     Json(req): Json<RelationRequest>,
-) -> Json<ApiResponse<MetadataRelation>> {
+) -> ApiResponse<MetadataRelation> {
     let _ = &state;
     let relation = create_relation(&req).await;
-    Json(ApiResponse::success(relation, "关联关系创建成功"))
+    ApiResponse::success(relation, "关联关系创建成功")
 }
 
 /// GET /metadata/relations — 获取关联关系
@@ -877,10 +874,10 @@ pub async fn create_relation_handler(
 pub async fn get_relations_handler(
     State(state): State<ApiState>,
     Query(params): Query<RelationQuery>,
-) -> Json<ApiResponse<Vec<MetadataRelation>>> {
+) -> ApiResponse<Vec<MetadataRelation>> {
     let _ = &state;
     let relations = get_relations(&params).await;
-    Json(ApiResponse::success(relations, "关联关系获取成功"))
+    ApiResponse::success(relations, "关联关系获取成功")
 }
 
 /// GET /metadata/stats — 获取元数据统计
@@ -894,8 +891,8 @@ pub async fn get_relations_handler(
 )]
 pub async fn get_metadata_stats_handler(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<MetadataStats>> {
+) -> ApiResponse<MetadataStats> {
     let _ = &state;
     let stats = get_metadata_stats().await;
-    Json(ApiResponse::success(stats, "元数据统计获取成功"))
+    ApiResponse::success(stats, "元数据统计获取成功")
 }

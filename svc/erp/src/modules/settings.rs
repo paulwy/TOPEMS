@@ -84,7 +84,7 @@ pub struct BatchUpdateRequest {
 pub async fn list_settings(
     State(pool): State<PgPool>,
     Query(params): Query<ListSettingsQuery>,
-) -> Json<ApiResponse<Vec<SystemSetting>>> {
+) -> ApiResponse<Vec<SystemSetting>> {
     let category = params.category.clone();
     let search = params.search.clone().unwrap_or_default();
 
@@ -100,7 +100,7 @@ pub async fn list_settings(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(items, "查询成功"))
+    ApiResponse::success(items, "查询成功")
 }
 #[utoipa::path(
     get,
@@ -118,7 +118,7 @@ pub async fn list_settings(
 pub async fn get_setting(
     State(pool): State<PgPool>,
     Path(key): Path<String>,
-) -> Json<ApiResponse<SystemSetting>> {
+) -> ApiResponse<SystemSetting> {
     let setting: Result<SystemSetting, _> =
         sqlx::query_as("SELECT * FROM system_settings WHERE key = $1")
             .bind(&key)
@@ -126,17 +126,13 @@ pub async fn get_setting(
             .await;
 
     match setting {
-        Ok(v) => Json(ApiResponse::success(v, "查询成功")),
+        Ok(v) => ApiResponse::success(v, "查询成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "设置项不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("设置项不存在".to_string()))
             } else {
                 tracing::error!("查询设置项失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "查询设置项失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("查询设置项失败".to_string()))
             }
         }
     }
@@ -145,7 +141,7 @@ pub async fn get_setting(
 pub async fn create_setting(
     State(pool): State<PgPool>,
     Json(payload): Json<CreateSettingRequest>,
-) -> Json<ApiResponse<SystemSetting>> {
+) -> ApiResponse<SystemSetting> {
     let setting: Result<SystemSetting, _> = sqlx::query_as(
         r#"INSERT INTO system_settings (key, value, description, category)
            VALUES ($1, $2, $3, $4)
@@ -159,12 +155,10 @@ pub async fn create_setting(
     .await;
 
     match setting {
-        Ok(v) => Json(ApiResponse::success(v, "创建成功")),
+        Ok(v) => ApiResponse::success(v, "创建成功"),
         Err(e) => {
             tracing::error!("创建设置项失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建设置项失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建设置项失败".to_string()))
         }
     }
 }
@@ -173,7 +167,7 @@ pub async fn update_setting(
     State(pool): State<PgPool>,
     Path(key): Path<String>,
     Json(payload): Json<UpdateSettingRequest>,
-) -> Json<ApiResponse<SystemSetting>> {
+) -> ApiResponse<SystemSetting> {
     let setting: Result<SystemSetting, _> = sqlx::query_as(
         r#"UPDATE system_settings SET
               value = COALESCE($2, value),
@@ -190,17 +184,13 @@ pub async fn update_setting(
     .await;
 
     match setting {
-        Ok(v) => Json(ApiResponse::success(v, "更新成功")),
+        Ok(v) => ApiResponse::success(v, "更新成功"),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "设置项不存在".to_string(),
-                )))
+                ApiResponse::from(TopemsError::ResourceNotFound("设置项不存在".to_string()))
             } else {
                 tracing::error!("更新设置项失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "更新设置项失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("更新设置项失败".to_string()))
             }
         }
     }
@@ -209,24 +199,18 @@ pub async fn update_setting(
 pub async fn delete_setting(
     State(pool): State<PgPool>,
     Path(key): Path<String>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let result = sqlx::query("DELETE FROM system_settings WHERE key = $1")
         .bind(&key)
         .execute(&pool)
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("删除成功".to_string(), "删除成功"))
-        }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "设置项不存在".to_string(),
-        ))),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("删除成功".to_string(), "删除成功"),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("设置项不存在".to_string())),
         Err(e) => {
             tracing::error!("删除设置项失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除设置项失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除设置项失败".to_string()))
         }
     }
 }
@@ -243,13 +227,13 @@ pub async fn delete_setting(
 pub async fn batch_update_settings(
     State(pool): State<PgPool>,
     Json(payload): Json<BatchUpdateRequest>,
-) -> Json<ApiResponse<Vec<SystemSetting>>> {
+) -> ApiResponse<Vec<SystemSetting>> {
     let settings_map = match payload.settings.as_object() {
         Some(m) => m,
         None => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "settings 必须为对象".to_string(),
-            )))
+            ))
         }
     };
 
@@ -278,5 +262,5 @@ pub async fn batch_update_settings(
         }
     }
 
-    Json(ApiResponse::success(updated, "批量更新成功"))
+    ApiResponse::success(updated, "批量更新成功")
 }

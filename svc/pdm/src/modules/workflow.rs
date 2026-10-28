@@ -104,7 +104,7 @@ pub async fn list_workflows(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -131,16 +131,16 @@ pub async fn list_workflows(
     .await;
 
     match result {
-        Ok(workflows) => Json(ApiResponse::success(
+        Ok(workflows) => ApiResponse::success(
             serde_json::json!({
                 "workflows": workflows,
                 "total": workflows.len()
             }),
             "获取工作流列表成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("获取工作流列表失败: {}", e);
-            Json(ApiResponse::server_error("获取工作流列表失败"))
+            ApiResponse::server_error("获取工作流列表失败")
         }
     }
 }
@@ -158,7 +158,7 @@ pub async fn create_workflow(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateWorkflowRequest>,
-) -> Json<ApiResponse<WorkflowDefinition>> {
+) -> ApiResponse<WorkflowDefinition> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -171,7 +171,7 @@ pub async fn create_workflow(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.name.is_empty() {
-        return Json(ApiResponse::bad_request("工作流名称不能为空"));
+        return ApiResponse::bad_request("工作流名称不能为空");
     }
 
     let id = Uuid::new_v4();
@@ -180,7 +180,7 @@ pub async fn create_workflow(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("序列化工作流步骤失败: {}", e);
-            return Json(ApiResponse::server_error("工作流步骤数据格式错误"));
+            return ApiResponse::server_error("工作流步骤数据格式错误");
         }
     };
 
@@ -209,10 +209,10 @@ pub async fn create_workflow(
     .await;
 
     match result {
-        Ok(workflow) => Json(ApiResponse::success(workflow, "工作流创建成功")),
+        Ok(workflow) => ApiResponse::success(workflow, "工作流创建成功"),
         Err(e) => {
             tracing::error!("创建工作流失败: {}", e);
-            Json(ApiResponse::server_error("创建工作流失败"))
+            ApiResponse::server_error("创建工作流失败")
         }
     }
 }
@@ -233,7 +233,7 @@ pub async fn get_workflow(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<WorkflowDefinition>> {
+) -> ApiResponse<WorkflowDefinition> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -259,11 +259,11 @@ pub async fn get_workflow(
     .await;
 
     match result {
-        Ok(Some(workflow)) => Json(ApiResponse::success(workflow, "获取工作流成功")),
-        Ok(None) => Json(ApiResponse::not_found("工作流不存在")),
+        Ok(Some(workflow)) => ApiResponse::success(workflow, "获取工作流成功"),
+        Ok(None) => ApiResponse::not_found("工作流不存在"),
         Err(e) => {
             tracing::error!("获取工作流失败: {}", e);
-            Json(ApiResponse::server_error("获取工作流失败"))
+            ApiResponse::server_error("获取工作流失败")
         }
     }
 }
@@ -286,7 +286,7 @@ pub async fn update_workflow(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<WorkflowDefinition>> {
+) -> ApiResponse<WorkflowDefinition> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -324,11 +324,11 @@ pub async fn update_workflow(
     .await;
 
     match result {
-        Ok(Some(workflow)) => Json(ApiResponse::success(workflow, "工作流更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("工作流不存在")),
+        Ok(Some(workflow)) => ApiResponse::success(workflow, "工作流更新成功"),
+        Ok(None) => ApiResponse::not_found("工作流不存在"),
         Err(e) => {
             tracing::error!("更新工作流失败: {}", e);
-            Json(ApiResponse::server_error("更新工作流失败"))
+            ApiResponse::server_error("更新工作流失败")
         }
     }
 }
@@ -349,7 +349,7 @@ pub async fn delete_workflow(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -369,11 +369,11 @@ pub async fn delete_workflow(
             .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "工作流删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("工作流不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "工作流删除成功"),
+        Ok(_) => ApiResponse::not_found("工作流不存在"),
         Err(e) => {
             tracing::error!("删除工作流失败: {}", e);
-            Json(ApiResponse::server_error("删除工作流失败"))
+            ApiResponse::server_error("删除工作流失败")
         }
     }
 }
@@ -391,7 +391,7 @@ pub async fn start_workflow(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<StartWorkflowRequest>,
-) -> Json<ApiResponse<WorkflowInstance>> {
+) -> ApiResponse<WorkflowInstance> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -413,10 +413,10 @@ pub async fn start_workflow(
 
     let workflow = match workflow_result {
         Ok(Some(w)) => w,
-        Ok(None) => return Json(ApiResponse::not_found("工作流不存在或未激活")),
+        Ok(None) => return ApiResponse::not_found("工作流不存在或未激活"),
         Err(e) => {
             tracing::error!("查询工作流失败: {}", e);
-            return Json(ApiResponse::server_error("查询工作流失败"));
+            return ApiResponse::server_error("查询工作流失败");
         }
     };
 
@@ -482,10 +482,10 @@ pub async fn start_workflow(
     .await;
 
     match result {
-        Ok(instance) => Json(ApiResponse::success(instance, "工作流已启动")),
+        Ok(instance) => ApiResponse::success(instance, "工作流已启动"),
         Err(e) => {
             tracing::error!("启动工作流失败: {}", e);
-            Json(ApiResponse::server_error("启动工作流失败"))
+            ApiResponse::server_error("启动工作流失败")
         }
     }
 }
@@ -501,7 +501,7 @@ pub async fn list_workflow_instances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -528,16 +528,16 @@ pub async fn list_workflow_instances(
     .await;
 
     match result {
-        Ok(instances) => Json(ApiResponse::success(
+        Ok(instances) => ApiResponse::success(
             serde_json::json!({
                 "instances": instances,
                 "total": instances.len()
             }),
             "获取工作流实例列表成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("获取工作流实例列表失败: {}", e);
-            Json(ApiResponse::server_error("获取工作流实例列表失败"))
+            ApiResponse::server_error("获取工作流实例列表失败")
         }
     }
 }
@@ -558,7 +558,7 @@ pub async fn get_workflow_instance(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<WorkflowInstance>> {
+) -> ApiResponse<WorkflowInstance> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -585,11 +585,11 @@ pub async fn get_workflow_instance(
     .await;
 
     match result {
-        Ok(Some(instance)) => Json(ApiResponse::success(instance, "获取工作流实例成功")),
-        Ok(None) => Json(ApiResponse::not_found("工作流实例不存在")),
+        Ok(Some(instance)) => ApiResponse::success(instance, "获取工作流实例成功"),
+        Ok(None) => ApiResponse::not_found("工作流实例不存在"),
         Err(e) => {
             tracing::error!("获取工作流实例失败: {}", e);
-            Json(ApiResponse::server_error("获取工作流实例失败"))
+            ApiResponse::server_error("获取工作流实例失败")
         }
     }
 }
@@ -612,7 +612,7 @@ pub async fn advance_workflow(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<WorkflowInstance>> {
+) -> ApiResponse<WorkflowInstance> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -640,15 +640,15 @@ pub async fn advance_workflow(
 
     let instance = match instance_result {
         Ok(Some(i)) => i,
-        Ok(None) => return Json(ApiResponse::not_found("工作流实例不存在")),
+        Ok(None) => return ApiResponse::not_found("工作流实例不存在"),
         Err(e) => {
             tracing::error!("查询工作流实例失败: {}", e);
-            return Json(ApiResponse::server_error("查询工作流实例失败"));
+            return ApiResponse::server_error("查询工作流实例失败");
         }
     };
 
     if instance.status != "running" {
-        return Json(ApiResponse::bad_request("工作流状态不正确"));
+        return ApiResponse::bad_request("工作流状态不正确");
     }
 
     let workflow_result = sqlx::query_as::<_, WorkflowDefinition>(
@@ -661,10 +661,10 @@ pub async fn advance_workflow(
 
     let workflow = match workflow_result {
         Ok(Some(w)) => w,
-        Ok(None) => return Json(ApiResponse::not_found("工作流定义不存在")),
+        Ok(None) => return ApiResponse::not_found("工作流定义不存在"),
         Err(e) => {
             tracing::error!("查询工作流定义失败: {}", e);
-            return Json(ApiResponse::server_error("查询工作流定义失败"));
+            return ApiResponse::server_error("查询工作流定义失败");
         }
     };
 
@@ -747,10 +747,10 @@ pub async fn advance_workflow(
     .await;
 
     match result {
-        Ok(instance) => Json(ApiResponse::success(instance, "工作流已推进")),
+        Ok(instance) => ApiResponse::success(instance, "工作流已推进"),
         Err(e) => {
             tracing::error!("推进工作流失败: {}", e);
-            Json(ApiResponse::server_error("推进工作流失败"))
+            ApiResponse::server_error("推进工作流失败")
         }
     }
 }

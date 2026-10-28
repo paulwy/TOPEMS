@@ -68,7 +68,7 @@ pub async fn list_production_orders(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ListProductionOrdersResponse>> {
+) -> ApiResponse<ListProductionOrdersResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -123,16 +123,14 @@ pub async fn list_production_orders(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 ListProductionOrdersResponse { orders, total },
                 "获取生产订单列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取生产订单列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取生产订单列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取生产订单列表失败".to_string()))
         }
     }
 }
@@ -154,7 +152,7 @@ pub async fn create_production_order(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateProductionOrderRequest>,
-) -> Json<ApiResponse<ProductionOrder>> {
+) -> ApiResponse<ProductionOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -216,16 +214,14 @@ pub async fn create_production_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(order, "生产订单创建成功"))
+            ApiResponse::success(order, "生产订单创建成功")
         }
         Err(e) => {
             tracing::error!("创建生产订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建生产订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建生产订单失败".to_string()))
         }
     }
 }
@@ -247,7 +243,7 @@ pub async fn get_production_order(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ProductionOrder>> {
+) -> ApiResponse<ProductionOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -271,15 +267,11 @@ pub async fn get_production_order(
     .await;
 
     match result {
-        Ok(Some(order)) => Json(ApiResponse::success(order, "获取生产订单成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "生产订单不存在".to_string(),
-        ))),
+        Ok(Some(order)) => ApiResponse::success(order, "获取生产订单成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("生产订单不存在".to_string())),
         Err(e) => {
             tracing::error!("获取生产订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取生产订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取生产订单失败".to_string()))
         }
     }
 }
@@ -302,7 +294,7 @@ pub async fn update_production_order(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateProductionOrderRequest>,
-) -> Json<ApiResponse<ProductionOrder>> {
+) -> ApiResponse<ProductionOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -350,20 +342,18 @@ pub async fn update_production_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(order, "生产订单更新成功"))
+            ApiResponse::success(order, "生产订单更新成功")
         }
 
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
             "生产订单不存在或状态不允许修改".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("更新生产订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新生产订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新生产订单失败".to_string()))
         }
     }
 }
@@ -385,7 +375,7 @@ pub async fn delete_production_order(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -408,21 +398,19 @@ pub async fn delete_production_order(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("事务提交失败: {}", e);
-                        return Json(ApiResponse::server_error("事务提交失败"));
+                        return ApiResponse::server_error("事务提交失败");
                     }
                 }
-                Json(ApiResponse::success("".to_string(), "生产订单删除成功"))
+                ApiResponse::success("".to_string(), "生产订单删除成功")
             } else {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                ApiResponse::from(TopemsError::ResourceNotFound(
                     "生产订单不存在或状态不允许删除".to_string(),
-                )))
+                ))
             }
         }
         Err(e) => {
             tracing::error!("删除生产订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除生产订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除生产订单失败".to_string()))
         }
     }
 }
@@ -445,7 +433,7 @@ pub async fn update_production_progress(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateProductionProgressRequest>,
-) -> Json<ApiResponse<ProductionOrder>> {
+) -> ApiResponse<ProductionOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -483,20 +471,16 @@ pub async fn update_production_progress(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(order, "生产进度更新成功"))
+            ApiResponse::success(order, "生产进度更新成功")
         }
 
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "生产订单不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("生产订单不存在".to_string())),
         Err(e) => {
             tracing::error!("更新生产进度失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新生产进度失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新生产进度失败".to_string()))
         }
     }
 }
@@ -524,7 +508,7 @@ pub async fn update_production_status(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateStatusRequest>,
-) -> Json<ApiResponse<ProductionOrder>> {
+) -> ApiResponse<ProductionOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -604,19 +588,15 @@ pub async fn update_production_status(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(order, "生产订单状态更新成功"))
+            ApiResponse::success(order, "生产订单状态更新成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "生产订单不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("生产订单不存在".to_string())),
         Err(e) => {
             tracing::error!("更新生产订单状态失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新生产订单状态失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新生产订单状态失败".to_string()))
         }
     }
 }
@@ -648,7 +628,7 @@ pub async fn receive_mes_progress(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<MesProgressUpdate>,
-) -> Json<ApiResponse<ProductionOrder>> {
+) -> ApiResponse<ProductionOrder> {
     let mut guard = txn_arc.lock().await;
     let _txn = match guard.as_mut() {
         Some(_txn) => _txn,
@@ -659,9 +639,7 @@ pub async fn receive_mes_progress(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("begin tx failed in receive_mes_progress: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "更新生产进度失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("更新生产进度失败".to_string()));
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -670,9 +648,7 @@ pub async fn receive_mes_progress(
         .await
     {
         tracing::error!("set nil RLS context failed in receive_mes_progress: {}", e);
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "更新生产进度失败".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("更新生产进度失败".to_string()));
     }
 
     let order_id = match req.erp_order_id {
@@ -688,15 +664,15 @@ pub async fn receive_mes_progress(
             match result {
                 Ok(Some(Some(id))) => id,
                 Ok(Some(None)) | Ok(None) => {
-                    return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    return ApiResponse::from(TopemsError::ResourceNotFound(
                         "未找到对应的ERP生产订单".to_string(),
-                    )));
+                    ));
                 }
                 Err(e) => {
                     tracing::error!("查询ERP订单ID失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
+                    return ApiResponse::from(TopemsError::Internal(
                         "查询ERP生产订单失败".to_string(),
-                    )));
+                    ));
                 }
             }
         }
@@ -735,25 +711,19 @@ pub async fn receive_mes_progress(
         Ok(Some(order)) => {
             if let Err(e) = tx.commit().await {
                 tracing::error!("commit tx failed in receive_mes_progress: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "更新生产进度失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("更新生产进度失败".to_string()));
             }
 
             tracing::debug!(
                 "[ERP] Received MES progress update for order: {}",
                 order.order_no
             );
-            Json(ApiResponse::success(order, "MES生产进度同步成功"))
+            ApiResponse::success(order, "MES生产进度同步成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "生产订单不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("生产订单不存在".to_string())),
         Err(e) => {
             tracing::error!("同步MES生产进度失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "同步MES生产进度失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("同步MES生产进度失败".to_string()))
         }
     }
 }

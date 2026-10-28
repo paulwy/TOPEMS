@@ -88,14 +88,14 @@ pub async fn create_session_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReconciliationSessionRequest>,
-) -> Json<ApiResponse<ReconciliationSession>> {
+) -> ApiResponse<ReconciliationSession> {
     let service = ReconciliationService::new(state.pool.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
 
     match service.create_session(tenant_id, req, &created_by).await {
-        Ok(session) => Json(ApiResponse::success(session, "对账会话创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(session) => ApiResponse::success(session, "对账会话创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -103,13 +103,13 @@ pub async fn get_session_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
-) -> Json<ApiResponse<ReconciliationSession>> {
+) -> ApiResponse<ReconciliationSession> {
     let service = ReconciliationService::new(state.pool.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.get_session(tenant_id, session_id).await {
-        Ok(session) => Json(ApiResponse::success(session, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(session) => ApiResponse::success(session, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -117,7 +117,7 @@ pub async fn list_sessions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReconciliationSessionListQuery>,
-) -> Json<ApiResponse<ReconciliationSessionListResponse>> {
+) -> ApiResponse<ReconciliationSessionListResponse> {
     let service = ReconciliationService::new(state.pool.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1);
@@ -127,7 +127,7 @@ pub async fn list_sessions_handler(
         .list_sessions(tenant_id, params.reco_type, params.status, page, page_size)
         .await
     {
-        Ok((items, total)) => Json(ApiResponse::success(
+        Ok((items, total)) => ApiResponse::success(
             ReconciliationSessionListResponse {
                 items,
                 total,
@@ -135,8 +135,8 @@ pub async fn list_sessions_handler(
                 page_size,
             },
             "查询成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        ),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -163,14 +163,14 @@ pub async fn import_items_handler(
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
     Json(mut req): Json<ImportReconciliationItemsRequest>,
-) -> Json<ApiResponse<i32>> {
+) -> ApiResponse<i32> {
     let service = ReconciliationService::new(state.pool.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     req.session_id = session_id;
 
     match service.import_items(tenant_id, req).await {
-        Ok(count) => Json(ApiResponse::success(count, "导入成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(count) => ApiResponse::success(count, "导入成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -178,13 +178,13 @@ pub async fn auto_match_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
-) -> Json<ApiResponse<MatchResult>> {
+) -> ApiResponse<MatchResult> {
     let service = ReconciliationService::new(state.pool.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.auto_match(tenant_id, session_id).await {
-        Ok(result) => Json(ApiResponse::success(result, "自动匹配完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "自动匹配完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -192,13 +192,13 @@ pub async fn complete_session_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
-) -> Json<ApiResponse<ReconciliationSession>> {
+) -> ApiResponse<ReconciliationSession> {
     let service = ReconciliationService::new(state.pool.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.complete_session(tenant_id, session_id).await {
-        Ok(session) => Json(ApiResponse::success(session, "对账会话已完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(session) => ApiResponse::success(session, "对账会话已完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -225,7 +225,7 @@ pub async fn get_items_handler(
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
     Query(params): Query<ItemsQueryParams>,
-) -> Json<ApiResponse<Vec<ReconciliationItem>>> {
+) -> ApiResponse<Vec<ReconciliationItem>> {
     let service = ReconciliationService::new(state.pool.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
@@ -246,8 +246,8 @@ pub async fn get_items_handler(
         .get_items(tenant_id, session_id, source_type, match_status)
         .await
     {
-        Ok(items) => Json(ApiResponse::success(items, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(items) => ApiResponse::success(items, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -255,13 +255,13 @@ pub async fn get_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
-) -> Json<ApiResponse<ReconciliationSummary>> {
+) -> ApiResponse<ReconciliationSummary> {
     let service = ReconciliationService::new(state.pool.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.get_summary(tenant_id, session_id).await {
-        Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(summary) => ApiResponse::success(summary, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -287,7 +287,7 @@ pub async fn update_diff_handler(
     Extension(claims): Extension<Claims>,
     Path(item_id): Path<Uuid>,
     Json(req): Json<UpdateDiffRequest>,
-) -> Json<ApiResponse<ReconciliationItem>> {
+) -> ApiResponse<ReconciliationItem> {
     let service = ReconciliationService::new(state.pool.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
@@ -295,8 +295,8 @@ pub async fn update_diff_handler(
         .update_diff(tenant_id, item_id, req.diff_reason, req.notes)
         .await
     {
-        Ok(item) => Json(ApiResponse::success(item, "差异标记成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(item) => ApiResponse::success(item, "差异标记成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -316,7 +316,7 @@ pub async fn get_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
-) -> Json<ApiResponse<ReconciliationReport>> {
+) -> ApiResponse<ReconciliationReport> {
     let service = ReconciliationService::new(state.pool.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
@@ -326,9 +326,9 @@ pub async fn get_report_handler(
             if report.diff_items > 0 {
                 let _ = create_ticket_for_reconciliation(&report, &claims).await;
             }
-            Json(ApiResponse::success(report, "对账报告生成成功"))
+            ApiResponse::success(report, "对账报告生成成功")
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -437,13 +437,13 @@ pub async fn batch_update_diff_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchDiffRequest>,
-) -> Json<ApiResponse<BatchDiffResponse>> {
+) -> ApiResponse<BatchDiffResponse> {
     let service = ReconciliationService::new(state.pool.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.batch_update_diff(tenant_id, req).await {
-        Ok(resp) => Json(ApiResponse::success(resp, "批量差异处理完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(resp) => ApiResponse::success(resp, "批量差异处理完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -451,13 +451,13 @@ pub async fn get_diff_statistics_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
-) -> Json<ApiResponse<DiffStatistics>> {
+) -> ApiResponse<DiffStatistics> {
     let service = ReconciliationService::new(state.pool.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match service.get_diff_statistics(tenant_id, session_id).await {
-        Ok(stats) => Json(ApiResponse::success(stats, "差异统计查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(stats) => ApiResponse::success(stats, "差异统计查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -465,7 +465,7 @@ pub async fn get_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AgingQueryParams>,
-) -> Json<ApiResponse<AgingReport>> {
+) -> ApiResponse<AgingReport> {
     let service = ReconciliationService::new(state.pool.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
@@ -481,8 +481,8 @@ pub async fn get_aging_handler(
     };
 
     match service.get_aging(tenant_id, as_of_date, &direction).await {
-        Ok(report) => Json(ApiResponse::success(report, "账龄分析查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(report) => ApiResponse::success(report, "账龄分析查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 

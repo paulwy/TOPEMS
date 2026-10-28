@@ -24,7 +24,7 @@ pub struct CreateFactoryMap {
 pub async fn list_factory_maps(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -36,17 +36,14 @@ pub async fn list_factory_maps(
     let service = TenantService::new(pool, tenant_opt);
 
     match service.list_factory_maps().await {
-        Ok(maps) => Json(ApiResponse::success(
+        Ok(maps) => ApiResponse::success(
             serde_json::json!({
                 "factory_maps": maps,
                 "total": maps.len()
             }),
             "获取厂区地图列表成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库查询失败",
-            e,
-        ))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 
@@ -54,9 +51,9 @@ pub async fn create_factory_map(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateFactoryMap>,
-) -> Json<ApiResponse<FactoryMap>> {
+) -> ApiResponse<FactoryMap> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::FactoryMapWrite).await {
-        return e;
+        return e.0;
     }
 
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
@@ -82,11 +79,8 @@ pub async fn create_factory_map(
         )
         .await
     {
-        Ok(map) => Json(ApiResponse::success(map, "创建厂区地图成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库插入失败",
-            e,
-        ))),
+        Ok(map) => ApiResponse::success(map, "创建厂区地图成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库插入失败", e)),
     }
 }
 
@@ -94,7 +88,7 @@ pub async fn get_factory_map(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<FactoryMap>> {
+) -> ApiResponse<FactoryMap> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -106,12 +100,9 @@ pub async fn get_factory_map(
     let service = TenantService::new(pool, tenant_opt);
 
     match service.get_factory_map(id).await {
-        Ok(Some(map)) => Json(ApiResponse::success(map, "获取厂区地图成功")),
-        Ok(None) => Json(ApiResponse::not_found("厂区地图未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库查询失败",
-            e,
-        ))),
+        Ok(Some(map)) => ApiResponse::success(map, "获取厂区地图成功"),
+        Ok(None) => ApiResponse::not_found("厂区地图未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 
@@ -130,9 +121,9 @@ pub async fn update_factory_map(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateFactoryMap>,
-) -> Json<ApiResponse<FactoryMap>> {
+) -> ApiResponse<FactoryMap> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::FactoryMapWrite).await {
-        return e;
+        return e.0;
     }
 
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
@@ -157,12 +148,9 @@ pub async fn update_factory_map(
         )
         .await
     {
-        Ok(Some(map)) => Json(ApiResponse::success(map, "更新厂区地图成功")),
-        Ok(None) => Json(ApiResponse::not_found("厂区地图未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库更新失败",
-            e,
-        ))),
+        Ok(Some(map)) => ApiResponse::success(map, "更新厂区地图成功"),
+        Ok(None) => ApiResponse::not_found("厂区地图未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库更新失败", e)),
     }
 }
 
@@ -170,9 +158,9 @@ pub async fn delete_factory_map(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::FactoryMapWrite).await {
-        return e;
+        return e.0;
     }
 
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
@@ -186,11 +174,8 @@ pub async fn delete_factory_map(
     let service = TenantService::new(pool, tenant_opt);
 
     match service.delete_factory_map(id).await {
-        Ok(true) => Json(ApiResponse::success("".to_string(), "删除厂区地图成功")),
-        Ok(false) => Json(ApiResponse::not_found("厂区地图未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库删除失败",
-            e,
-        ))),
+        Ok(true) => ApiResponse::success("".to_string(), "删除厂区地图成功"),
+        Ok(false) => ApiResponse::not_found("厂区地图未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库删除失败", e)),
     }
 }

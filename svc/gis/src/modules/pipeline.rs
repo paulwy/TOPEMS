@@ -35,7 +35,7 @@ pub async fn list_pipelines(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -67,7 +67,7 @@ pub async fn list_pipelines(
                 .await
                 .map(|row| row.get::<i64, _>(0))
                 .unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "pipelines": pipelines,
                     "total": total,
@@ -75,9 +75,9 @@ pub async fn list_pipelines(
                     "page_size": page_size
                 }),
                 "获取管道列表成功",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 
@@ -95,9 +95,9 @@ pub async fn create_pipeline(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreatePipeline>,
-) -> Json<ApiResponse<Pipeline>> {
+) -> ApiResponse<Pipeline> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::PipelineWrite).await {
-        return e;
+        return e.0;
     }
     let status = payload.status.unwrap_or_else(|| "active".to_string());
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
@@ -119,11 +119,8 @@ pub async fn create_pipeline(
     .fetch_one(&pool)
     .await
     {
-        Ok(pipeline) => Json(ApiResponse::success(pipeline, "创建管道成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库插入失败",
-            e,
-        ))),
+        Ok(pipeline) => ApiResponse::success(pipeline, "创建管道成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库插入失败", e)),
     }
 }
 
@@ -144,7 +141,7 @@ pub async fn get_pipeline(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Pipeline>> {
+) -> ApiResponse<Pipeline> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -161,9 +158,9 @@ pub async fn get_pipeline(
     .fetch_one(&pool)
     .await
     {
-        Ok(pipeline) => Json(ApiResponse::success(pipeline, "获取管道成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("管道未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
+        Ok(pipeline) => ApiResponse::success(pipeline, "获取管道成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("管道未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 
@@ -185,9 +182,9 @@ pub async fn update_pipeline(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<CreatePipeline>,
-) -> Json<ApiResponse<Pipeline>> {
+) -> ApiResponse<Pipeline> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::PipelineWrite).await {
-        return e;
+        return e.0;
     }
     let status = payload.status.unwrap_or_else(|| "active".to_string());
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -217,9 +214,9 @@ pub async fn update_pipeline(
     .fetch_one(&pool)
     .await
     {
-        Ok(pipeline) => Json(ApiResponse::success(pipeline, "更新管道成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("管道未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库更新失败", e))),
+        Ok(pipeline) => ApiResponse::success(pipeline, "更新管道成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("管道未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库更新失败", e)),
     }
 }
 
@@ -240,9 +237,9 @@ pub async fn delete_pipeline(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::PipelineWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
 
@@ -257,15 +254,12 @@ pub async fn delete_pipeline(
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
-                Json(ApiResponse::success(true, "删除管道成功"))
+                ApiResponse::success(true, "删除管道成功")
             } else {
-                Json(ApiResponse::not_found("管道未找到"))
+                ApiResponse::not_found("管道未找到")
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库删除失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库删除失败", e)),
     }
 }
 
@@ -286,7 +280,7 @@ pub async fn list_pipelines_by_map(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(map_id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -303,14 +297,14 @@ pub async fn list_pipelines_by_map(
     .fetch_all(&pool)
     .await
     {
-        Ok(pipelines) => Json(ApiResponse::success(
+        Ok(pipelines) => ApiResponse::success(
             serde_json::json!({
                 "pipelines": pipelines,
                 "total": pipelines.len()
             }),
             "获取管道列表成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 

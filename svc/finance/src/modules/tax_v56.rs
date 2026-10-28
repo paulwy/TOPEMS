@@ -1547,12 +1547,12 @@ pub async fn generate_tax_form_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateTaxFormRequest>,
-) -> Json<ApiResponse<TaxFormWithLines>> {
+) -> ApiResponse<TaxFormWithLines> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoTaxFiler::generate_tax_form(&pool, tenant_id, req).await {
-        Ok(form) => Json(ApiResponse::success(form, "税务表单生成成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(form) => ApiResponse::success(form, "税务表单生成成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1560,7 +1560,7 @@ pub async fn get_tax_forms_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TaxFormsQueryParams>,
-) -> Json<ApiResponse<Vec<TaxForm>>> {
+) -> ApiResponse<Vec<TaxForm>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1568,8 +1568,8 @@ pub async fn get_tax_forms_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match AutoTaxFiler::get_forms(&pool, tenant_id, params.form_type, params.status).await {
-        Ok(forms) => Json(ApiResponse::success(forms, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(forms) => ApiResponse::success(forms, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1577,7 +1577,7 @@ pub async fn get_tax_form_by_id_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<TaxFormWithLines>> {
+) -> ApiResponse<TaxFormWithLines> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1585,8 +1585,8 @@ pub async fn get_tax_form_by_id_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match AutoTaxFiler::get_form_by_id(&pool, tenant_id, id).await {
-        Ok(form) => Json(ApiResponse::success(form, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(form) => ApiResponse::success(form, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1594,12 +1594,12 @@ pub async fn submit_tax_form_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<TaxFormWithLines>> {
+) -> ApiResponse<TaxFormWithLines> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoTaxFiler::submit_form(&pool, tenant_id, id).await {
-        Ok(form) => Json(ApiResponse::success(form, "提交成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(form) => ApiResponse::success(form, "提交成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1608,12 +1608,12 @@ pub async fn amend_tax_form_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<AmendTaxFormRequest>,
-) -> Json<ApiResponse<TaxFormWithLines>> {
+) -> ApiResponse<TaxFormWithLines> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoTaxFiler::amend_form(&pool, tenant_id, id, req).await {
-        Ok(form) => Json(ApiResponse::success(form, "修改成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(form) => ApiResponse::success(form, "修改成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1621,7 +1621,7 @@ pub async fn get_tax_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TaxSummaryQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1629,20 +1629,20 @@ pub async fn get_tax_summary_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match AutoTaxFiler::get_tax_summary(&pool, tenant_id, params.year).await {
-        Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(summary) => ApiResponse::success(summary, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn get_tax_schedule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoTaxFiler::get_filing_schedule(&pool, tenant_id).await {
-        Ok(schedule) => Json(ApiResponse::success(schedule, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(schedule) => ApiResponse::success(schedule, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1658,7 +1658,7 @@ pub async fn calculate_tax_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CalculateTaxRequest>,
-) -> Json<ApiResponse<TaxResult>> {
+) -> ApiResponse<TaxResult> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     let tax_type = req.tax_type.unwrap_or_else(|| "vat".to_string());
@@ -1667,24 +1667,24 @@ pub async fn calculate_tax_handler(
             match TaxRateCalculator::calculate_vat(&pool, tenant_id, req.amount, req.jurisdiction)
                 .await
             {
-                Ok(result) => Json(ApiResponse::success(result, "计算成功")),
-                Err(e) => Json(crate::shared::err_resp(e)),
+                Ok(result) => ApiResponse::success(result, "计算成功"),
+                Err(e) => crate::shared::err_resp(e),
             }
         }
         "cit" => {
             match TaxRateCalculator::calculate_cit(&pool, tenant_id, req.amount, req.jurisdiction)
                 .await
             {
-                Ok(result) => Json(ApiResponse::success(result, "计算成功")),
-                Err(e) => Json(crate::shared::err_resp(e)),
+                Ok(result) => ApiResponse::success(result, "计算成功"),
+                Err(e) => crate::shared::err_resp(e),
             }
         }
         "pit" => {
             match TaxRateCalculator::calculate_pit(&pool, tenant_id, req.amount, req.jurisdiction)
                 .await
             {
-                Ok(result) => Json(ApiResponse::success(result, "计算成功")),
-                Err(e) => Json(crate::shared::err_resp(e)),
+                Ok(result) => ApiResponse::success(result, "计算成功"),
+                Err(e) => crate::shared::err_resp(e),
             }
         }
         "withholding" => {
@@ -1696,11 +1696,11 @@ pub async fn calculate_tax_handler(
             )
             .await
             {
-                Ok(result) => Json(ApiResponse::success(result, "计算成功")),
-                Err(e) => Json(crate::shared::err_resp(e)),
+                Ok(result) => ApiResponse::success(result, "计算成功"),
+                Err(e) => crate::shared::err_resp(e),
             }
         }
-        _ => Json(ApiResponse::bad_request("不支持的税种类型")),
+        _ => ApiResponse::bad_request("不支持的税种类型"),
     }
 }
 
@@ -1708,7 +1708,7 @@ pub async fn get_rate_schedule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<RateScheduleQueryParams>,
-) -> Json<ApiResponse<Vec<TaxRate>>> {
+) -> ApiResponse<Vec<TaxRate>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1723,8 +1723,8 @@ pub async fn get_rate_schedule_handler(
     )
     .await
     {
-        Ok(rates) => Json(ApiResponse::success(rates, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(rates) => ApiResponse::success(rates, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1732,7 +1732,7 @@ pub async fn lookup_rate_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<LookupRateParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1749,11 +1749,8 @@ pub async fn lookup_rate_handler(
     )
     .await
     {
-        Ok(rate) => Json(ApiResponse::success(
-            serde_json::json!({ "rate": rate }),
-            "查询成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(rate) => ApiResponse::success(serde_json::json!({ "rate": rate }), "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1761,7 +1758,7 @@ pub async fn get_tax_breakdown_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<BreakdownParams>,
-) -> Json<ApiResponse<Vec<TaxBreakdown>>> {
+) -> ApiResponse<Vec<TaxBreakdown>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1777,8 +1774,8 @@ pub async fn get_tax_breakdown_handler(
     )
     .await
     {
-        Ok(breakdown) => Json(ApiResponse::success(breakdown, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(breakdown) => ApiResponse::success(breakdown, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1786,11 +1783,11 @@ pub async fn validate_rate_handler(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<ValidateRateParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let pool = state.pool.clone();
     match TaxRateCalculator::validate_rate(&pool, params.rate, params.tax_type).await {
-        Ok(result) => Json(ApiResponse::success(result, "验证完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "验证完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1815,12 +1812,12 @@ pub async fn create_plan_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePlanRequest>,
-) -> Json<ApiResponse<TaxPlan>> {
+) -> ApiResponse<TaxPlan> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match TaxPlanner::create_plan(&pool, tenant_id, req).await {
-        Ok(plan) => Json(ApiResponse::success(plan, "创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(plan) => ApiResponse::success(plan, "创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1828,12 +1825,12 @@ pub async fn analyze_scenario_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeScenarioRequest>,
-) -> Json<ApiResponse<ScenarioAnalysis>> {
+) -> ApiResponse<ScenarioAnalysis> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match TaxPlanner::analyze_scenario(&pool, tenant_id, req).await {
-        Ok(analysis) => Json(ApiResponse::success(analysis, "分析完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(analysis) => ApiResponse::success(analysis, "分析完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1841,7 +1838,7 @@ pub async fn get_suggestions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SuggestionsQueryParams>,
-) -> Json<ApiResponse<Vec<TaxSuggestion>>> {
+) -> ApiResponse<Vec<TaxSuggestion>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1850,11 +1847,11 @@ pub async fn get_suggestions_handler(
     };
     let plan_id = match params.plan_id {
         Some(id) => id,
-        None => return Json(ApiResponse::bad_request("plan_id 参数必填")),
+        None => return ApiResponse::bad_request("plan_id 参数必填"),
     };
     match TaxPlanner::get_suggestions(&pool, tenant_id, plan_id).await {
-        Ok(suggestions) => Json(ApiResponse::success(suggestions, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(suggestions) => ApiResponse::success(suggestions, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1862,12 +1859,12 @@ async fn compare_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CompareScenarioRequest>,
-) -> Json<ApiResponse<Vec<ScenarioAnalysis>>> {
+) -> ApiResponse<Vec<ScenarioAnalysis>> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match TaxPlanner::compare_scenarios(&pool, tenant_id, req.scenarios).await {
-        Ok(results) => Json(ApiResponse::success(results, "对比完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(results) => ApiResponse::success(results, "对比完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1875,7 +1872,7 @@ pub async fn list_plans_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PlansQueryParams>,
-) -> Json<ApiResponse<Vec<TaxPlan>>> {
+) -> ApiResponse<Vec<TaxPlan>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1883,8 +1880,8 @@ pub async fn list_plans_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match TaxPlanner::list_plans(&pool, tenant_id, params.status).await {
-        Ok(plans) => Json(ApiResponse::success(plans, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(plans) => ApiResponse::success(plans, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1892,12 +1889,12 @@ pub async fn approve_plan_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<TaxPlan>> {
+) -> ApiResponse<TaxPlan> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match TaxPlanner::approve_plan(&pool, tenant_id, id).await {
-        Ok(plan) => Json(ApiResponse::success(plan, "审批成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(plan) => ApiResponse::success(plan, "审批成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1905,7 +1902,7 @@ pub async fn get_compliance_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ComplianceQueryParams>,
-) -> Json<ApiResponse<ComplianceCheckResult>> {
+) -> ApiResponse<ComplianceCheckResult> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1913,8 +1910,8 @@ pub async fn get_compliance_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match TaxPlanner::get_compliance_check(&pool, tenant_id, params.entity).await {
-        Ok(result) => Json(ApiResponse::success(result, "合规检查完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "合规检查完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 

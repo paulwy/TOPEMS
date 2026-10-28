@@ -1,7 +1,7 @@
 use axum::{
     extract::{Multipart, State},
     routing::{get, post},
-    Extension, Json, Router,
+    Extension, Router,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -52,7 +52,7 @@ pub async fn get_dashboard(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -143,10 +143,10 @@ pub async fn get_dashboard(
     };
 
     match serde_json::to_value(stats) {
-        Ok(value) => Json(ApiResponse::success(value, "获取 PDM 仪表盘成功")),
+        Ok(value) => ApiResponse::success(value, "获取 PDM 仪表盘成功"),
         Err(e) => {
             tracing::error!("序列化 PDM 仪表盘失败: {}", e);
-            Json(ApiResponse::server_error("获取 PDM 仪表盘失败"))
+            ApiResponse::server_error("获取 PDM 仪表盘失败")
         }
     }
 }
@@ -176,11 +176,8 @@ async fn fetch_named_counts(
     tag = "pdm",
     responses((status = 200, description = "OK")),
 )]
-pub async fn api_health() -> Json<ApiResponse<String>> {
-    Json(ApiResponse::success(
-        "healthy".to_string(),
-        "PDM service is healthy",
-    ))
+pub async fn api_health() -> ApiResponse<String> {
+    ApiResponse::success("healthy".to_string(), "PDM service is healthy")
 }
 
 #[utoipa::path(
@@ -194,7 +191,7 @@ pub async fn import_data(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     mut multipart: Multipart,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut import_type: Option<String> = None;
     let mut file_name: Option<String> = None;
     let mut file_size: usize = 0;
@@ -214,7 +211,7 @@ pub async fn import_data(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "type": import_type.unwrap_or_else(|| "unknown".to_string()),
             "file_name": file_name,
@@ -223,7 +220,7 @@ pub async fn import_data(
             "status": "accepted"
         }),
         "PDM 数据导入请求已接收",
-    ))
+    )
 }
 
 #[cfg(test)]

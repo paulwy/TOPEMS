@@ -345,7 +345,7 @@ fn get_quality_loop_store() -> Arc<QualityLoopStore> {
 pub async fn create_quality_ticket(
     State(state): State<ApiState>,
     Json(req): Json<CreateQualityTicketRequest>,
-) -> Json<ApiResponse<QualityTicket>> {
+) -> ApiResponse<QualityTicket> {
     let _ = &state;
     let now = chrono::Utc::now();
     let ticket_id = uuid::Uuid::new_v4().to_string();
@@ -393,7 +393,7 @@ pub async fn create_quality_ticket(
     let mut tickets = store.tickets.lock().await;
     tickets.push(ticket.clone());
 
-    Json(ApiResponse::success(ticket, "质量工单创建成功"))
+    ApiResponse::success(ticket, "质量工单创建成功")
 }
 
 /// V42.0 AC-14: 列出质量工单（支持状态/严重级别/实体类型筛选）
@@ -413,7 +413,7 @@ pub async fn create_quality_ticket(
 pub async fn list_quality_tickets(
     Query(params): Query<ListQualityTicketsQuery>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let _ = &state;
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -452,7 +452,7 @@ pub async fn list_quality_tickets(
         .cloned()
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "items": items,
             "total": total,
@@ -461,7 +461,7 @@ pub async fn list_quality_tickets(
             "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
         }),
         "质量工单列表",
-    ))
+    )
 }
 
 /// V42.0 AC-14: 获取质量工单详情
@@ -476,14 +476,14 @@ pub async fn list_quality_tickets(
 pub async fn get_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<QualityTicket>> {
+) -> ApiResponse<QualityTicket> {
     let _ = &state;
     let store = get_quality_loop_store();
     let tickets = store.tickets.lock().await;
 
     match tickets.iter().find(|t| t.id == id) {
-        Some(ticket) => Json(ApiResponse::success(ticket.clone(), "质量工单详情")),
-        None => Json(ApiResponse::not_found("未找到质量工单")),
+        Some(ticket) => ApiResponse::success(ticket.clone(), "质量工单详情"),
+        None => ApiResponse::not_found("未找到质量工单"),
     }
 }
 
@@ -499,14 +499,14 @@ pub async fn get_quality_ticket(
 pub async fn get_quality_ticket_history(
     Path(id): Path<String>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<TicketHistoryEntry>>> {
+) -> ApiResponse<Vec<TicketHistoryEntry>> {
     let _ = &state;
     let store = get_quality_loop_store();
     let tickets = store.tickets.lock().await;
 
     match tickets.iter().find(|t| t.id == id) {
-        Some(ticket) => Json(ApiResponse::success(ticket.history.clone(), "工单历史记录")),
-        None => Json(ApiResponse::not_found("未找到质量工单")),
+        Some(ticket) => ApiResponse::success(ticket.history.clone(), "工单历史记录"),
+        None => ApiResponse::not_found("未找到质量工单"),
     }
 }
 
@@ -524,14 +524,14 @@ pub async fn assign_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
     Json(req): Json<AssignTicketRequest>,
-) -> Json<ApiResponse<QualityTicket>> {
+) -> ApiResponse<QualityTicket> {
     let _ = &state;
     let store = get_quality_loop_store();
     let mut tickets = store.tickets.lock().await;
 
     let pos = match tickets.iter().position(|t| t.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到质量工单")),
+        None => return ApiResponse::not_found("未找到质量工单"),
     };
 
     let now = chrono::Utc::now();
@@ -546,7 +546,7 @@ pub async fn assign_quality_ticket(
         timestamp: now,
     });
 
-    Json(ApiResponse::success(tickets[pos].clone(), "工单已分配"))
+    ApiResponse::success(tickets[pos].clone(), "工单已分配")
 }
 
 /// V42.0 AC-14: 开始处理质量工单
@@ -563,20 +563,20 @@ pub async fn start_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
     Json(req): Json<AssignTicketRequest>,
-) -> Json<ApiResponse<QualityTicket>> {
+) -> ApiResponse<QualityTicket> {
     let _ = &state;
     let store = get_quality_loop_store();
     let mut tickets = store.tickets.lock().await;
 
     let pos = match tickets.iter().position(|t| t.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到质量工单")),
+        None => return ApiResponse::not_found("未找到质量工单"),
     };
 
     if tickets[pos].status != QualityTicketStatus::Open
         && tickets[pos].status != QualityTicketStatus::Assigned
     {
-        return Json(ApiResponse::bad_request("当前状态不可开始处理"));
+        return ApiResponse::bad_request("当前状态不可开始处理");
     }
 
     let now = chrono::Utc::now();
@@ -593,7 +593,7 @@ pub async fn start_quality_ticket(
         timestamp: now,
     });
 
-    Json(ApiResponse::success(tickets[pos].clone(), "工单处理已开始"))
+    ApiResponse::success(tickets[pos].clone(), "工单处理已开始")
 }
 
 /// V42.0 AC-14: 提交修复方案
@@ -610,18 +610,18 @@ pub async fn submit_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
     Json(req): Json<SubmitTicketRequest>,
-) -> Json<ApiResponse<QualityTicket>> {
+) -> ApiResponse<QualityTicket> {
     let _ = &state;
     let store = get_quality_loop_store();
     let mut tickets = store.tickets.lock().await;
 
     let pos = match tickets.iter().position(|t| t.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到质量工单")),
+        None => return ApiResponse::not_found("未找到质量工单"),
     };
 
     if tickets[pos].status != QualityTicketStatus::InProgress {
-        return Json(ApiResponse::bad_request("只有处理中的工单才能提交修复"));
+        return ApiResponse::bad_request("只有处理中的工单才能提交修复");
     }
 
     let now = chrono::Utc::now();
@@ -636,10 +636,7 @@ pub async fn submit_quality_ticket(
         timestamp: now,
     });
 
-    Json(ApiResponse::success(
-        tickets[pos].clone(),
-        "修复方案已提交，等待审核",
-    ))
+    ApiResponse::success(tickets[pos].clone(), "修复方案已提交，等待审核")
 }
 
 /// V42.0 AC-14: 验证修复结果
@@ -656,20 +653,20 @@ pub async fn verify_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
     Json(req): Json<VerifyTicketRequest>,
-) -> Json<ApiResponse<QualityTicket>> {
+) -> ApiResponse<QualityTicket> {
     let _ = &state;
     let store = get_quality_loop_store();
     let mut tickets = store.tickets.lock().await;
 
     let pos = match tickets.iter().position(|t| t.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到质量工单")),
+        None => return ApiResponse::not_found("未找到质量工单"),
     };
 
     if tickets[pos].status != QualityTicketStatus::PendingReview
         && tickets[pos].status != QualityTicketStatus::Resolved
     {
-        return Json(ApiResponse::bad_request("只有待审核或已解决的工单才能验证"));
+        return ApiResponse::bad_request("只有待审核或已解决的工单才能验证");
     }
 
     let now = chrono::Utc::now();
@@ -684,10 +681,7 @@ pub async fn verify_quality_ticket(
         timestamp: now,
     });
 
-    Json(ApiResponse::success(
-        tickets[pos].clone(),
-        "修复结果已验证通过",
-    ))
+    ApiResponse::success(tickets[pos].clone(), "修复结果已验证通过")
 }
 
 /// V42.0 AC-14: 关闭质量工单
@@ -704,20 +698,20 @@ pub async fn close_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
     Json(req): Json<CloseTicketRequest>,
-) -> Json<ApiResponse<QualityTicket>> {
+) -> ApiResponse<QualityTicket> {
     let _ = &state;
     let store = get_quality_loop_store();
     let mut tickets = store.tickets.lock().await;
 
     let pos = match tickets.iter().position(|t| t.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到质量工单")),
+        None => return ApiResponse::not_found("未找到质量工单"),
     };
 
     if tickets[pos].status != QualityTicketStatus::Verified
         && tickets[pos].status != QualityTicketStatus::Resolved
     {
-        return Json(ApiResponse::bad_request("只有已验证或已解决的工单才能关闭"));
+        return ApiResponse::bad_request("只有已验证或已解决的工单才能关闭");
     }
 
     let now = chrono::Utc::now();
@@ -730,7 +724,7 @@ pub async fn close_quality_ticket(
         timestamp: now,
     });
 
-    Json(ApiResponse::success(tickets[pos].clone(), "工单已关闭"))
+    ApiResponse::success(tickets[pos].clone(), "工单已关闭")
 }
 
 /// V42.0 AC-14: 驳回质量工单
@@ -747,18 +741,18 @@ pub async fn reject_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
     Json(req): Json<RejectTicketRequest>,
-) -> Json<ApiResponse<QualityTicket>> {
+) -> ApiResponse<QualityTicket> {
     let _ = &state;
     let store = get_quality_loop_store();
     let mut tickets = store.tickets.lock().await;
 
     let pos = match tickets.iter().position(|t| t.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到质量工单")),
+        None => return ApiResponse::not_found("未找到质量工单"),
     };
 
     if tickets[pos].status != QualityTicketStatus::PendingReview {
-        return Json(ApiResponse::bad_request("只有待审核的工单才能驳回"));
+        return ApiResponse::bad_request("只有待审核的工单才能驳回");
     }
 
     let now = chrono::Utc::now();
@@ -771,7 +765,7 @@ pub async fn reject_quality_ticket(
         timestamp: now,
     });
 
-    Json(ApiResponse::success(tickets[pos].clone(), "工单已驳回"))
+    ApiResponse::success(tickets[pos].clone(), "工单已驳回")
 }
 
 /// V42.0 AC-14: 升级质量工单（按升级路径逐级升级）
@@ -788,7 +782,7 @@ pub async fn escalate_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
     Json(req): Json<EscalateTicketRequest>,
-) -> Json<ApiResponse<QualityTicket>> {
+) -> ApiResponse<QualityTicket> {
     let _ = &state;
     let store = get_quality_loop_store();
 
@@ -797,7 +791,7 @@ pub async fn escalate_ticket(
         let tickets = store.tickets.lock().await;
         let ticket = match tickets.iter().find(|t| t.id == id) {
             Some(t) => t,
-            None => return Json(ApiResponse::not_found("未找到质量工单")),
+            None => return ApiResponse::not_found("未找到质量工单"),
         };
         (
             ticket.entity_type.clone(),
@@ -819,7 +813,7 @@ pub async fn escalate_ticket(
     };
 
     if escalation_path.is_empty() {
-        return Json(ApiResponse::bad_request("未配置升级路径，无法升级"));
+        return ApiResponse::bad_request("未配置升级路径，无法升级");
     }
 
     // Step 3: 确定当前在升级路径中的位置，升级到下一级
@@ -829,7 +823,7 @@ pub async fn escalate_ticket(
         .unwrap_or(0);
 
     if current_idx + 1 >= escalation_path.len() {
-        return Json(ApiResponse::bad_request("已达到最高升级级别，无法继续升级"));
+        return ApiResponse::bad_request("已达到最高升级级别，无法继续升级");
     }
 
     let next_assignee = escalation_path[current_idx + 1].clone();
@@ -838,7 +832,7 @@ pub async fn escalate_ticket(
     let mut tickets = store.tickets.lock().await;
     let pos = match tickets.iter().position(|t| t.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到质量工单")),
+        None => return ApiResponse::not_found("未找到质量工单"),
     };
 
     let now = chrono::Utc::now();
@@ -861,7 +855,7 @@ pub async fn escalate_ticket(
         timestamp: now,
     });
 
-    Json(ApiResponse::success(tickets[pos].clone(), "工单已升级"))
+    ApiResponse::success(tickets[pos].clone(), "工单已升级")
 }
 
 // ==================== 自动修复工作流 Handlers ====================
@@ -877,7 +871,7 @@ pub async fn escalate_ticket(
 pub async fn create_repair_workflow(
     State(state): State<ApiState>,
     Json(req): Json<CreateRepairWorkflowRequest>,
-) -> Json<ApiResponse<RepairWorkflow>> {
+) -> ApiResponse<RepairWorkflow> {
     let _ = &state;
 
     // 检查关联工单是否存在
@@ -885,7 +879,7 @@ pub async fn create_repair_workflow(
         let store = get_quality_loop_store();
         let tickets = store.tickets.lock().await;
         if !tickets.iter().any(|t| t.id == req.ticket_id) {
-            return Json(ApiResponse::not_found("关联的质量工单不存在"));
+            return ApiResponse::not_found("关联的质量工单不存在");
         }
     }
 
@@ -940,14 +934,14 @@ pub async fn create_repair_workflow(
             wf.status = "failed".to_string();
         }
         if let Some(wf) = workflows.iter().find(|w| w.id == workflow.id) {
-            return Json(ApiResponse::success(
+            return ApiResponse::success(
                 wf.clone(),
                 "修复工作流创建成功（自动修复未启用：无持久化数据源，501 degraded）",
-            ));
+            );
         }
     }
 
-    Json(ApiResponse::success(workflow, "修复工作流创建成功"))
+    ApiResponse::success(workflow, "修复工作流创建成功")
 }
 
 /// V42.0 AC-14: 执行修复工作流
@@ -962,7 +956,7 @@ pub async fn create_repair_workflow(
 pub async fn execute_repair_workflow(
     Path(id): Path<String>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<RepairWorkflow>> {
+) -> ApiResponse<RepairWorkflow> {
     let _ = &state;
 
     // 前置检查
@@ -971,15 +965,15 @@ pub async fn execute_repair_workflow(
         let workflows = store.repair_workflows.lock().await;
         let wf = match workflows.iter().find(|w| w.id == id) {
             Some(w) => w,
-            None => return Json(ApiResponse::not_found("未找到修复工作流")),
+            None => return ApiResponse::not_found("未找到修复工作流"),
         };
 
         if wf.requires_approval && wf.approved_by.is_none() {
-            return Json(ApiResponse::bad_request("该工作流需要审批后才能执行"));
+            return ApiResponse::bad_request("该工作流需要审批后才能执行");
         }
 
         if wf.status == "completed" || wf.status == "executing" {
-            return Json(ApiResponse::bad_request("工作流已执行或正在执行中"));
+            return ApiResponse::bad_request("工作流已执行或正在执行中");
         }
     }
 
@@ -992,11 +986,11 @@ pub async fn execute_repair_workflow(
         if let Some(wf) = workflows.get_mut(pos) {
             wf.status = "failed".to_string();
         }
-        Json(ApiResponse::not_implemented(
+        ApiResponse::not_implemented(
             "自动修复暂不可用：质量修复工作流尚未接入真实数据表，请联系管理员手动处理",
-        ))
+        )
     } else {
-        Json(ApiResponse::not_found("未找到修复工作流"))
+        ApiResponse::not_found("未找到修复工作流")
     }
 }
 
@@ -1016,18 +1010,18 @@ pub async fn execute_repair_workflow(
 pub async fn execute_repair_step(
     Path((workflow_id, step_index)): Path<(String, usize)>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<RepairStep>> {
+) -> ApiResponse<RepairStep> {
     let _ = &state;
     let store = get_quality_loop_store();
     let mut workflows = store.repair_workflows.lock().await;
 
     let pos = match workflows.iter().position(|w| w.id == workflow_id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到修复工作流")),
+        None => return ApiResponse::not_found("未找到修复工作流"),
     };
 
     if step_index >= workflows[pos].steps.len() {
-        return Json(ApiResponse::bad_request("步骤索引超出范围"));
+        return ApiResponse::bad_request("步骤索引超出范围");
     }
 
     let step = &mut workflows[pos].steps[step_index];
@@ -1036,9 +1030,9 @@ pub async fn execute_repair_step(
     step.error_message =
         Some("单步修复未启用：无持久化数据源，修复引擎暂不可用（501 degraded）".to_string());
 
-    Json(ApiResponse::not_implemented(
+    ApiResponse::not_implemented(
         "单步修复暂不可用：质量修复尚未接入真实数据表，请联系管理员手动处理",
-    ))
+    )
 }
 
 /// V42.0 AC-14: 审批修复工作流
@@ -1055,28 +1049,25 @@ pub async fn approve_repair_workflow(
     Path(id): Path<String>,
     State(state): State<ApiState>,
     Json(req): Json<ApproveRepairRequest>,
-) -> Json<ApiResponse<RepairWorkflow>> {
+) -> ApiResponse<RepairWorkflow> {
     let _ = &state;
     let store = get_quality_loop_store();
     let mut workflows = store.repair_workflows.lock().await;
 
     let pos = match workflows.iter().position(|w| w.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到修复工作流")),
+        None => return ApiResponse::not_found("未找到修复工作流"),
     };
 
     if workflows[pos].approved_by.is_some() {
-        return Json(ApiResponse::bad_request("该工作流已被审批"));
+        return ApiResponse::bad_request("该工作流已被审批");
     }
 
     let now = chrono::Utc::now();
     workflows[pos].approved_by = Some(req.approved_by);
     workflows[pos].approved_at = Some(now);
 
-    Json(ApiResponse::success(
-        workflows[pos].clone(),
-        "修复工作流已审批通过",
-    ))
+    ApiResponse::success(workflows[pos].clone(), "修复工作流已审批通过")
 }
 
 /// V42.0 AC-14: 获取修复工作流详情
@@ -1091,14 +1082,14 @@ pub async fn approve_repair_workflow(
 pub async fn get_repair_workflow(
     Path(id): Path<String>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<RepairWorkflow>> {
+) -> ApiResponse<RepairWorkflow> {
     let _ = &state;
     let store = get_quality_loop_store();
     let workflows = store.repair_workflows.lock().await;
 
     match workflows.iter().find(|w| w.id == id) {
-        Some(wf) => Json(ApiResponse::success(wf.clone(), "修复工作流详情")),
-        None => Json(ApiResponse::not_found("未找到修复工作流")),
+        Some(wf) => ApiResponse::success(wf.clone(), "修复工作流详情"),
+        None => ApiResponse::not_found("未找到修复工作流"),
     }
 }
 
@@ -1119,7 +1110,7 @@ pub async fn get_repair_workflow(
 pub async fn list_repair_workflows(
     Query(params): Query<ListQualityTicketsQuery>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let _ = &state;
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -1148,7 +1139,7 @@ pub async fn list_repair_workflows(
         .cloned()
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "items": items,
             "total": total,
@@ -1157,7 +1148,7 @@ pub async fn list_repair_workflows(
             "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
         }),
         "修复工作流列表",
-    ))
+    )
 }
 
 /// V42.0 AC-14: 验证修复结果（重新运行质量规则）
@@ -1173,18 +1164,18 @@ pub async fn list_repair_workflows(
 pub async fn verify_repair(
     Path(id): Path<String>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<RepairWorkflow>> {
+) -> ApiResponse<RepairWorkflow> {
     let _ = &state;
     let store = get_quality_loop_store();
     let mut workflows = store.repair_workflows.lock().await;
 
     let pos = match workflows.iter().position(|w| w.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到修复工作流")),
+        None => return ApiResponse::not_found("未找到修复工作流"),
     };
 
     if workflows[pos].status != "completed" {
-        return Json(ApiResponse::bad_request("只有已完成的工作流才能验证"));
+        return ApiResponse::bad_request("只有已完成的工作流才能验证");
     }
 
     // 模拟重新运行质量规则验证（占位实现）
@@ -1203,7 +1194,7 @@ pub async fn verify_repair(
         };
     }
 
-    Json(ApiResponse::success(workflows[pos].clone(), "修复验证完成"))
+    ApiResponse::success(workflows[pos].clone(), "修复验证完成")
 }
 
 // ==================== 数据所有权管理 Handlers ====================
@@ -1219,7 +1210,7 @@ pub async fn verify_repair(
 pub async fn create_data_domain(
     State(state): State<ApiState>,
     Json(req): Json<CreateDataDomainRequest>,
-) -> Json<ApiResponse<DataDomain>> {
+) -> ApiResponse<DataDomain> {
     let _ = &state;
     let now = chrono::Utc::now();
     let domain_id = uuid::Uuid::new_v4().to_string();
@@ -1240,7 +1231,7 @@ pub async fn create_data_domain(
     let mut domains = store.data_domains.lock().await;
     domains.push(domain.clone());
 
-    Json(ApiResponse::success(domain, "数据域创建成功"))
+    ApiResponse::success(domain, "数据域创建成功")
 }
 
 /// V42.0 AC-14: 列出数据域
@@ -1251,13 +1242,11 @@ pub async fn create_data_domain(
     tag = "Master Data",
     responses((status = 200, description = "获取数据域列表成功", body = ApiResponse<serde_json::Value>))
 )]
-pub async fn list_data_domains(
-    State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<DataDomain>>> {
+pub async fn list_data_domains(State(state): State<ApiState>) -> ApiResponse<Vec<DataDomain>> {
     let _ = &state;
     let store = get_quality_loop_store();
     let domains = store.data_domains.lock().await;
-    Json(ApiResponse::success(domains.clone(), "数据域列表"))
+    ApiResponse::success(domains.clone(), "数据域列表")
 }
 
 /// V42.0 AC-14: 获取数据域详情
@@ -1272,14 +1261,14 @@ pub async fn list_data_domains(
 pub async fn get_data_domain(
     Path(id): Path<String>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<DataDomain>> {
+) -> ApiResponse<DataDomain> {
     let _ = &state;
     let store = get_quality_loop_store();
     let domains = store.data_domains.lock().await;
 
     match domains.iter().find(|d| d.id == id) {
-        Some(domain) => Json(ApiResponse::success(domain.clone(), "数据域详情")),
-        None => Json(ApiResponse::not_found("未找到数据域")),
+        Some(domain) => ApiResponse::success(domain.clone(), "数据域详情"),
+        None => ApiResponse::not_found("未找到数据域"),
     }
 }
 
@@ -1297,14 +1286,14 @@ pub async fn update_data_domain(
     Path(id): Path<String>,
     State(state): State<ApiState>,
     Json(req): Json<UpdateDataDomainRequest>,
-) -> Json<ApiResponse<DataDomain>> {
+) -> ApiResponse<DataDomain> {
     let _ = &state;
     let store = get_quality_loop_store();
     let mut domains = store.data_domains.lock().await;
 
     let pos = match domains.iter().position(|d| d.id == id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到数据域")),
+        None => return ApiResponse::not_found("未找到数据域"),
     };
 
     if let Some(name) = req.name {
@@ -1329,7 +1318,7 @@ pub async fn update_data_domain(
         domains[pos].sla_hours = sla_hours;
     }
 
-    Json(ApiResponse::success(domains[pos].clone(), "数据域更新成功"))
+    ApiResponse::success(domains[pos].clone(), "数据域更新成功")
 }
 
 /// V42.0 AC-14: 获取责任矩阵（RACI）
@@ -1344,14 +1333,14 @@ pub async fn update_data_domain(
 pub async fn get_ownership_matrix(
     Path(entity_type): Path<String>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<DataOwnershipMatrix>> {
+) -> ApiResponse<DataOwnershipMatrix> {
     let _ = &state;
     let store = get_quality_loop_store();
     let matrices = store.ownership_matrices.lock().await;
 
     match matrices.get(&entity_type) {
-        Some(matrix) => Json(ApiResponse::success(matrix.clone(), "责任矩阵")),
-        None => Json(ApiResponse::not_found("未找到该实体的责任矩阵")),
+        Some(matrix) => ApiResponse::success(matrix.clone(), "责任矩阵"),
+        None => ApiResponse::not_found("未找到该实体的责任矩阵"),
     }
 }
 
@@ -1368,7 +1357,7 @@ pub async fn set_ownership_matrix(
     Path(entity_type): Path<String>,
     State(state): State<ApiState>,
     Json(req): Json<SetOwnershipMatrixRequest>,
-) -> Json<ApiResponse<DataOwnershipMatrix>> {
+) -> ApiResponse<DataOwnershipMatrix> {
     let _ = &state;
     let store = get_quality_loop_store();
     let mut matrices = store.ownership_matrices.lock().await;
@@ -1386,7 +1375,7 @@ pub async fn set_ownership_matrix(
 
     matrices.insert(entity_type, matrix.clone());
 
-    Json(ApiResponse::success(matrix, "责任矩阵设置成功"))
+    ApiResponse::success(matrix, "责任矩阵设置成功")
 }
 
 /// V42.0 AC-14: 获取实体所有者信息
@@ -1401,7 +1390,7 @@ pub async fn set_ownership_matrix(
 pub async fn get_entity_owner(
     Path(entity_type): Path<String>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let _ = &state;
     let store = get_quality_loop_store();
 
@@ -1420,7 +1409,7 @@ pub async fn get_entity_owner(
                     .cloned()
             };
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "entity_type": matrix.entity_type,
                     "data_owner": matrix.data_owner,
@@ -1431,9 +1420,9 @@ pub async fn get_entity_owner(
                     "escalation_path": matrix.escalation_path,
                 }),
                 "实体所有者信息",
-            ))
+            )
         }
-        None => Json(ApiResponse::not_found("未找到该实体的所有权配置")),
+        None => ApiResponse::not_found("未找到该实体的所有权配置"),
     }
 }
 
@@ -1450,7 +1439,7 @@ pub async fn get_entity_owner(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_quality_loop_stats(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<QualityLoopStats>> {
+) -> ApiResponse<QualityLoopStats> {
     let _ = &state;
     let store = get_quality_loop_store();
 
@@ -1553,7 +1542,7 @@ pub async fn get_quality_loop_stats(
         *tickets_by_domain.entry(t.entity_type.clone()).or_insert(0) += 1;
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         QualityLoopStats {
             total_tickets,
             open_tickets,
@@ -1570,7 +1559,7 @@ pub async fn get_quality_loop_stats(
             tickets_by_domain,
         },
         "质量闭环统计数据",
-    ))
+    )
 }
 
 #[cfg(test)]

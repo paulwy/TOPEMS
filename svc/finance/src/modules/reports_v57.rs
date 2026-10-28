@@ -1312,19 +1312,19 @@ pub async fn create_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTemplateRequest>,
-) -> Json<ApiResponse<ReportTemplate>> {
+) -> ApiResponse<ReportTemplate> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutomatedReportEngine::create_template(&pool, tenant_id, req).await {
-        Ok(template) => Json(ApiResponse::success(template, "模板创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(template) => ApiResponse::success(template, "模板创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn get_templates_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ReportTemplate>>> {
+) -> ApiResponse<Vec<ReportTemplate>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1332,8 +1332,8 @@ pub async fn get_templates_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match AutomatedReportEngine::get_templates(&pool, tenant_id).await {
-        Ok(templates) => Json(ApiResponse::success(templates, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(templates) => ApiResponse::success(templates, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1343,12 +1343,12 @@ pub async fn generate_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateReportRequest>,
-) -> Json<ApiResponse<GeneratedReport>> {
+) -> ApiResponse<GeneratedReport> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutomatedReportEngine::generate_report(&pool, tenant_id, req).await {
-        Ok(report) => Json(ApiResponse::success(report, "报表生成成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(report) => ApiResponse::success(report, "报表生成成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1356,7 +1356,7 @@ pub async fn list_reports_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportListQueryParams>,
-) -> Json<ApiResponse<Vec<GeneratedReport>>> {
+) -> ApiResponse<Vec<GeneratedReport>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1364,8 +1364,8 @@ pub async fn list_reports_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match AutomatedReportEngine::list_reports(&pool, tenant_id, params.status).await {
-        Ok(reports) => Json(ApiResponse::success(reports, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(reports) => ApiResponse::success(reports, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1373,7 +1373,7 @@ async fn get_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<GeneratedReport>> {
+) -> ApiResponse<GeneratedReport> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1381,8 +1381,8 @@ async fn get_report_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match AutomatedReportEngine::get_report(&pool, tenant_id, id).await {
-        Ok(report) => Json(ApiResponse::success(report, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(report) => ApiResponse::success(report, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1390,7 +1390,7 @@ pub async fn download_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<GeneratedReport>> {
+) -> ApiResponse<GeneratedReport> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1398,8 +1398,8 @@ pub async fn download_report_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match AutomatedReportEngine::download_report(&pool, tenant_id, id).await {
-        Ok(report) => Json(ApiResponse::success(report, "下载成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(report) => ApiResponse::success(report, "下载成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1407,12 +1407,12 @@ pub async fn delete_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutomatedReportEngine::delete_report(&pool, tenant_id, id).await {
-        Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(_) => ApiResponse::success((), "删除成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1420,12 +1420,12 @@ pub async fn schedule_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ScheduleReportRequest>,
-) -> Json<ApiResponse<ReportTemplate>> {
+) -> ApiResponse<ReportTemplate> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutomatedReportEngine::schedule_report(&pool, tenant_id, req).await {
-        Ok(template) => Json(ApiResponse::success(template, "调度设置成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(template) => ApiResponse::success(template, "调度设置成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1440,12 +1440,12 @@ pub async fn analyze_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeRequest>,
-) -> Json<ApiResponse<AnalysisResult>> {
+) -> ApiResponse<AnalysisResult> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::analyze(&pool, tenant_id, req).await {
-        Ok(result) => Json(ApiResponse::success(result, "分析完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "分析完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1453,12 +1453,12 @@ pub async fn pivot_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<PivotRequest>,
-) -> Json<ApiResponse<AnalysisResult>> {
+) -> ApiResponse<AnalysisResult> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::pivot(&pool, tenant_id, req).await {
-        Ok(result) => Json(ApiResponse::success(result, "Pivot 完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "Pivot 完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1466,12 +1466,12 @@ pub async fn drill_down_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<DrillDownRequest>,
-) -> Json<ApiResponse<AnalysisResult>> {
+) -> ApiResponse<AnalysisResult> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::drill_down(&pool, tenant_id, req).await {
-        Ok(result) => Json(ApiResponse::success(result, "Drill-down 完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "Drill-down 完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1479,12 +1479,12 @@ pub async fn roll_up_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RollUpRequest>,
-) -> Json<ApiResponse<AnalysisResult>> {
+) -> ApiResponse<AnalysisResult> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::roll_up(&pool, tenant_id, req).await {
-        Ok(result) => Json(ApiResponse::success(result, "Roll-up 完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "Roll-up 完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1492,12 +1492,12 @@ pub async fn slice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SliceRequest>,
-) -> Json<ApiResponse<AnalysisResult>> {
+) -> ApiResponse<AnalysisResult> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::slice(&pool, tenant_id, req).await {
-        Ok(result) => Json(ApiResponse::success(result, "Slice 完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "Slice 完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1505,19 +1505,19 @@ pub async fn dice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<DiceRequest>,
-) -> Json<ApiResponse<AnalysisResult>> {
+) -> ApiResponse<AnalysisResult> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::dice(&pool, tenant_id, req).await {
-        Ok(result) => Json(ApiResponse::success(result, "Dice 完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "Dice 完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn get_analysis_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<AnalysisResult>>> {
+) -> ApiResponse<Vec<AnalysisResult>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1525,8 +1525,8 @@ pub async fn get_analysis_history_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match MultiDimensionalAnalyzer::get_analysis_history(&pool, tenant_id).await {
-        Ok(results) => Json(ApiResponse::success(results, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(results) => ApiResponse::success(results, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1546,12 +1546,12 @@ pub async fn generate_forecast_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateForecastRequest>,
-) -> Json<ApiResponse<Insight>> {
+) -> ApiResponse<Insight> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match PredictiveInsightEngine::generate_forecast(&pool, tenant_id, req).await {
-        Ok(insight) => Json(ApiResponse::success(insight, "预测生成成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(insight) => ApiResponse::success(insight, "预测生成成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1559,12 +1559,12 @@ async fn detect_anomalies_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<DetectAnomaliesRequest>,
-) -> Json<ApiResponse<Insight>> {
+) -> ApiResponse<Insight> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match PredictiveInsightEngine::detect_anomalies(&pool, tenant_id, req).await {
-        Ok(insight) => Json(ApiResponse::success(insight, "异常检测完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(insight) => ApiResponse::success(insight, "异常检测完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1572,7 +1572,7 @@ pub async fn get_insights_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InsightsQueryParams>,
-) -> Json<ApiResponse<Vec<Insight>>> {
+) -> ApiResponse<Vec<Insight>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1580,8 +1580,8 @@ pub async fn get_insights_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match PredictiveInsightEngine::get_insights(&pool, tenant_id, params.insight_type).await {
-        Ok(insights) => Json(ApiResponse::success(insights, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(insights) => ApiResponse::success(insights, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1589,19 +1589,19 @@ pub async fn train_model_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<TrainModelRequest>,
-) -> Json<ApiResponse<ForecastModel>> {
+) -> ApiResponse<ForecastModel> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match PredictiveInsightEngine::train_model(&pool, tenant_id, req).await {
-        Ok(model) => Json(ApiResponse::success(model, "模型训练成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(model) => ApiResponse::success(model, "模型训练成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn list_models_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ForecastModel>>> {
+) -> ApiResponse<Vec<ForecastModel>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1609,8 +1609,8 @@ pub async fn list_models_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match PredictiveInsightEngine::list_models(&pool, tenant_id).await {
-        Ok(models) => Json(ApiResponse::success(models, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(models) => ApiResponse::success(models, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1618,12 +1618,12 @@ pub async fn get_trend_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TrendQueryParams>,
-) -> Json<ApiResponse<Insight>> {
+) -> ApiResponse<Insight> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match PredictiveInsightEngine::get_trend_analysis(&pool, tenant_id, params.metric).await {
-        Ok(insight) => Json(ApiResponse::success(insight, "趋势分析完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(insight) => ApiResponse::success(insight, "趋势分析完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 

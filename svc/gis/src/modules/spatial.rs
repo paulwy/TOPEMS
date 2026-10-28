@@ -73,9 +73,9 @@ pub async fn buffer_analysis(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<BufferRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
-        return e;
+        return e.0;
     }
 
     let start_time = Utc::now();
@@ -105,17 +105,14 @@ pub async fn buffer_analysis(
     .await;
 
     match analysis {
-        Ok(_) => Json(ApiResponse::success(
+        Ok(_) => ApiResponse::success(
             serde_json::json!({
                 "result": result,
                 "execution_time_ms": execution_time
             }),
             "缓冲区分析完成",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "保存分析结果失败",
-            e,
-        ))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("保存分析结果失败", e)),
     }
 }
 
@@ -167,9 +164,9 @@ pub async fn intersect_analysis(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<IntersectRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
-        return e;
+        return e.0;
     }
 
     let start_time = Utc::now();
@@ -196,13 +193,13 @@ pub async fn intersect_analysis(
     .fetch_one(&pool)
     .await;
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "intersects": intersects,
             "execution_time_ms": execution_time
         }),
         "相交分析完成",
-    ))
+    )
 }
 
 fn check_intersection(geom1: &serde_json::Value, geom2: &serde_json::Value) -> bool {
@@ -238,9 +235,9 @@ pub async fn union_analysis(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<UnionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
-        return e;
+        return e.0;
     }
 
     let start_time = Utc::now();
@@ -282,13 +279,13 @@ pub async fn union_analysis(
     .fetch_one(&pool)
     .await;
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "result": result,
             "execution_time_ms": execution_time
         }),
         "合并分析完成",
-    ))
+    )
 }
 
 /// 差异分析
@@ -296,19 +293,19 @@ pub async fn difference_analysis(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<DifferenceRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
-        return e;
+        return e.0;
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "geometry1": payload.geometry1,
             "geometry2": payload.geometry2,
             "difference": "差异分析结果（简化实现）"
         }),
         "差异分析完成",
-    ))
+    )
 }
 
 /// 包含分析
@@ -316,19 +313,19 @@ pub async fn within_analysis(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<WithinRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
-        return e;
+        return e.0;
     }
 
     let within = check_within(&payload.geometry, &payload.container);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "within": within
         }),
         "包含分析完成",
-    ))
+    )
 }
 
 fn check_within(geom: &serde_json::Value, container: &serde_json::Value) -> bool {
@@ -388,22 +385,22 @@ pub async fn distance_calculation(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<DistanceRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
-        return e;
+        return e.0;
     }
 
     let distance = calculate_distance(&payload.geometry1, &payload.geometry2);
 
     let unit = payload.unit.unwrap_or_else(|| "meters".to_string());
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "distance": distance,
             "unit": unit
         }),
         "距离计算完成",
-    ))
+    )
 }
 
 fn calculate_distance(geom1: &serde_json::Value, geom2: &serde_json::Value) -> f64 {
@@ -441,9 +438,9 @@ pub async fn nearest_query(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<NearestRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
-        return e;
+        return e.0;
     }
 
     // Query features from geodata
@@ -481,15 +478,15 @@ pub async fn nearest_query(
                 })
                 .collect::<Vec<_>>();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "nearest": nearest,
                     "total": nearest.len()
                 }),
                 "最近邻查询完成",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -498,22 +495,22 @@ pub async fn cluster_analysis(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<ClusterRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
-        return e;
+        return e.0;
     }
 
     // Simplified clustering - just group points into clusters
     let clusters = simple_cluster(&payload.points, &payload.algorithm);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "clusters": clusters,
             "algorithm": payload.algorithm,
             "total_clusters": clusters.len()
         }),
         "聚类分析完成",
-    ))
+    )
 }
 
 fn simple_cluster(points: &[serde_json::Value], algorithm: &str) -> Vec<Vec<serde_json::Value>> {

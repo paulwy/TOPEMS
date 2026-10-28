@@ -58,7 +58,7 @@ pub async fn list_rooms(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<MeetingRoom>>> {
+) -> ApiResponse<PaginatedResponse<MeetingRoom>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -106,16 +106,14 @@ pub async fn list_rooms(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(rooms, total, page, page_size),
                 "获取会议室列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取会议室列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取会议室列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取会议室列表失败".to_string()))
         }
     }
 }
@@ -138,16 +136,14 @@ pub async fn create_room(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMeetingRoomRequest>,
-) -> Json<ApiResponse<MeetingRoom>> {
+) -> ApiResponse<MeetingRoom> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("会议室名称", &req.name) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            e.to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
     }
 
     let id = Uuid::new_v4();
@@ -172,16 +168,14 @@ pub async fn create_room(
 
     let (response, status, error_msg) = match &result {
         Ok(room) => (
-            Json(ApiResponse::success(room.clone(), "会议室创建成功")),
+            ApiResponse::success(room.clone(), "会议室创建成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("创建会议室失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "会议室创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("会议室创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -191,9 +185,7 @@ pub async fn create_room(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -246,7 +238,7 @@ pub async fn get_room(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<MeetingRoom>> {
+) -> ApiResponse<MeetingRoom> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -264,15 +256,11 @@ pub async fn get_room(
     .await;
 
     match result {
-        Ok(Some(room)) => Json(ApiResponse::success(room, "获取会议室成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "会议室不存在".to_string(),
-        ))),
+        Ok(Some(room)) => ApiResponse::success(room, "获取会议室成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("会议室不存在".to_string())),
         Err(e) => {
             tracing::error!("获取会议室失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取会议室失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取会议室失败".to_string()))
         }
     }
 }
@@ -300,7 +288,7 @@ pub async fn update_room(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateMeetingRoomRequest>,
-) -> Json<ApiResponse<MeetingRoom>> {
+) -> ApiResponse<MeetingRoom> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -316,16 +304,9 @@ pub async fn update_room(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "会议室不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("会议室不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询会议室失败: {}",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询会议室失败: {}", e)),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -358,16 +339,14 @@ pub async fn update_room(
 
     let (response, status_str, error_msg) = match &result {
         Ok(room) => (
-            Json(ApiResponse::success(room.clone(), "会议室更新成功")),
+            ApiResponse::success(room.clone(), "会议室更新成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("更新会议室失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "会议室更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("会议室更新失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -377,9 +356,7 @@ pub async fn update_room(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -433,7 +410,7 @@ pub async fn delete_room(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -449,23 +426,19 @@ pub async fn delete_room(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "会议室删除成功")),
+            ApiResponse::success("".to_string(), "会议室删除成功"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "会议室不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("会议室不存在".to_string())),
             "error".to_string(),
             Some("会议室不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除会议室失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "会议室删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("会议室删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -475,9 +448,7 @@ pub async fn delete_room(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -525,7 +496,7 @@ pub async fn list_bookings(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<MeetingBooking>>> {
+) -> ApiResponse<PaginatedResponse<MeetingBooking>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -571,16 +542,14 @@ pub async fn list_bookings(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(bookings, total, page, page_size),
                 "获取会议预约列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取会议预约列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取会议预约列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取会议预约列表失败".to_string()))
         }
     }
 }
@@ -603,16 +572,14 @@ pub async fn create_booking(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMeetingBookingRequest>,
-) -> Json<ApiResponse<MeetingBooking>> {
+) -> ApiResponse<MeetingBooking> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("会议标题", &req.title) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            e.to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
     }
 
     let room_result = sqlx::query_as::<_, MeetingRoom>(
@@ -625,16 +592,11 @@ pub async fn create_booking(
     let room = match room_result {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "会议室不可用或不存在".to_string(),
-            )))
+            ))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询会议室失败: {}",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询会议室失败: {}", e)),
     };
 
     let overlapping = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -653,9 +615,9 @@ pub async fn create_booking(
 
     if let Ok(count) = overlapping {
         if count > 0 {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "该时间段已有会议预约".to_string(),
-            )));
+            ));
         }
     }
 
@@ -683,16 +645,14 @@ pub async fn create_booking(
 
     let (response, status, error_msg) = match &result {
         Ok(booking) => (
-            Json(ApiResponse::success(booking.clone(), "会议预约创建成功")),
+            ApiResponse::success(booking.clone(), "会议预约创建成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("创建会议预约失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "会议预约创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("会议预约创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -702,9 +662,7 @@ pub async fn create_booking(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -756,7 +714,7 @@ pub async fn get_booking(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<MeetingBooking>> {
+) -> ApiResponse<MeetingBooking> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -773,15 +731,11 @@ pub async fn get_booking(
     .await;
 
     match result {
-        Ok(Some(booking)) => Json(ApiResponse::success(booking, "获取会议预约成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "会议预约不存在".to_string(),
-        ))),
+        Ok(Some(booking)) => ApiResponse::success(booking, "获取会议预约成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("会议预约不存在".to_string())),
         Err(e) => {
             tracing::error!("获取会议预约失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取会议预约失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取会议预约失败".to_string()))
         }
     }
 }
@@ -808,7 +762,7 @@ pub async fn update_booking(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateMeetingBookingRequest>,
-) -> Json<ApiResponse<MeetingBooking>> {
+) -> ApiResponse<MeetingBooking> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -824,16 +778,9 @@ pub async fn update_booking(
     let existing = match existing {
         Ok(Some(b)) => b,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "会议预约不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("会议预约不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询会议预约失败: {}",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询会议预约失败: {}", e)),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -865,16 +812,14 @@ pub async fn update_booking(
 
     let (response, status_str, error_msg) = match &result {
         Ok(booking) => (
-            Json(ApiResponse::success(booking.clone(), "会议预约更新成功")),
+            ApiResponse::success(booking.clone(), "会议预约更新成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("更新会议预约失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "会议预约更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("会议预约更新失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -884,9 +829,7 @@ pub async fn update_booking(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -939,7 +882,7 @@ pub async fn delete_booking(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -955,23 +898,19 @@ pub async fn delete_booking(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "会议预约删除成功")),
+            ApiResponse::success("".to_string(), "会议预约删除成功"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "会议预约不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("会议预约不存在".to_string())),
             "error".to_string(),
             Some("会议预约不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除会议预约失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "会议预约删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("会议预约删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -981,9 +920,7 @@ pub async fn delete_booking(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -1034,7 +971,7 @@ pub async fn get_room_bookings(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<MeetingBooking>>> {
+) -> ApiResponse<Vec<MeetingBooking>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -1051,12 +988,10 @@ pub async fn get_room_bookings(
     .await;
 
     match result {
-        Ok(bookings) => Json(ApiResponse::success(bookings, "获取会议室预约列表成功")),
+        Ok(bookings) => ApiResponse::success(bookings, "获取会议室预约列表成功"),
         Err(e) => {
             tracing::error!("获取会议室预约列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取会议室预约列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取会议室预约列表失败".to_string()))
         }
     }
 }

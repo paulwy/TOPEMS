@@ -1,4 +1,4 @@
-use axum::{extract::State, Json};
+use axum::extract::State;
 use std::collections::HashMap;
 use topems_shared_core::response::ApiResponse;
 
@@ -18,9 +18,7 @@ use super::mdm_v49_types::*;
     ),
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn get_lifecycle_stats(
-    State(_state): State<ApiState>,
-) -> Json<ApiResponse<LifecycleStats>> {
+pub async fn get_lifecycle_stats(State(_state): State<ApiState>) -> ApiResponse<LifecycleStats> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let entities = store.entities.lock().await;
@@ -53,7 +51,7 @@ pub async fn get_lifecycle_stats(
     let transition_this_period = events.len() as i64;
     let total_entities = entities.len() as i64;
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         LifecycleStats {
             by_stage,
             total_entities,
@@ -64,7 +62,7 @@ pub async fn get_lifecycle_stats(
             destroyed_count,
         },
         "生命周期统计",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -78,7 +76,7 @@ pub async fn get_lifecycle_stats(
     ),
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn get_archive_stats(State(_state): State<ApiState>) -> Json<ApiResponse<ArchiveStats>> {
+pub async fn get_archive_stats(State(_state): State<ApiState>) -> ApiResponse<ArchiveStats> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let records = store.archive_records.lock().await;
@@ -125,7 +123,7 @@ pub async fn get_archive_stats(State(_state): State<ApiState>) -> Json<ApiRespon
 
     let by_domain: Vec<(String, i64)> = by_domain.into_iter().collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ArchiveStats {
             total_records: records.len() as i64,
             total_size_bytes: total_size,
@@ -135,7 +133,7 @@ pub async fn get_archive_stats(State(_state): State<ApiState>) -> Json<ApiRespon
             pending_retention_expiry,
         },
         "归档统计",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -151,7 +149,7 @@ pub async fn get_archive_stats(State(_state): State<ApiState>) -> Json<ApiRespon
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_retirement_stats(
     State(_state): State<ApiState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let plans = store.retirement_plans.lock().await;
@@ -179,7 +177,7 @@ pub async fn get_retirement_stats(
         .checked_div(plans.len().max(1) as i64)
         .unwrap_or(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "total_plans": total,
             "completed": completed,
@@ -188,7 +186,7 @@ pub async fn get_retirement_stats(
             "avg_rollback_window_days": avg_rollback_window,
         }),
         "退役管理统计",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -201,7 +199,7 @@ pub async fn get_retirement_stats(
         (status = 200, description = "操作成功"),
     ),
 )]
-pub async fn run_sla_check(State(_state): State<ApiState>) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn run_sla_check(State(_state): State<ApiState>) -> ApiResponse<serde_json::Value> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let mut entities = store.entities.lock().await;
@@ -225,14 +223,14 @@ pub async fn run_sla_check(State(_state): State<ApiState>) -> Json<ApiResponse<s
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "checked_at": now.to_rfc3339(),
             "breached_count": breached.len(),
             "breached": breached,
         }),
         "SLA 检查完成",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -247,10 +245,10 @@ pub async fn run_sla_check(State(_state): State<ApiState>) -> Json<ApiResponse<s
 )]
 pub async fn get_lifecycle_dashboard(
     State(_state): State<ApiState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     ensure_initialized().await;
     let _ = get_lifecycle_store();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "version": "v49",
             "modules": ["lifecycle", "retirement", "archive"],
@@ -265,5 +263,5 @@ pub async fn get_lifecycle_dashboard(
             ],
         }),
         "V49 MDM 生命周期管理仪表盘",
-    ))
+    )
 }

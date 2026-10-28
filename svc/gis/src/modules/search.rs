@@ -1,7 +1,7 @@
 use crate::models::{BusinessLocation, DeviceLocation, Pipeline, WarehouseLocation};
 use axum::{
     extract::{Extension, Query, State},
-    Json, Router,
+    Router,
 };
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
@@ -22,7 +22,7 @@ pub async fn search_locations(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -126,14 +126,14 @@ pub async fn search_locations(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "results": results,
             "total": results.len(),
             "query": query
         }),
         "搜索完成",
-    ))
+    )
 }
 
 pub fn create_routes() -> Router<PgPool> {

@@ -17,9 +17,7 @@ use crate::models::{AppState, CreateWmsScmSyncRequest, WmsScmSync};
         (status = 200, description = "OK"),
     ),
 )]
-pub async fn list_wms_scm_sync(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<WmsScmSync>>> {
+pub async fn list_wms_scm_sync(State(state): State<AppState>) -> ApiResponse<Vec<WmsScmSync>> {
     match sqlx::query_as::<_, WmsScmSync>(only_own_schema_query!(
         "integration",
         "SELECT id, wms_inventory_id, scm_supply_id, item_name, quantity, unit,
@@ -29,16 +27,10 @@ pub async fn list_wms_scm_sync(
     .fetch_all(&state.pool)
     .await
     {
-        Ok(syncs) => Json(ApiResponse::success(
-            syncs,
-            "WMS↔SCM syncs retrieved successfully",
-        )),
+        Ok(syncs) => ApiResponse::success(syncs, "WMS↔SCM syncs retrieved successfully"),
         Err(e) => {
             tracing::error!("Failed to fetch WMS↔SCM syncs: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "Failed to fetch WMS↔SCM syncs",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("Failed to fetch WMS↔SCM syncs", e))
         }
     }
 }
@@ -56,7 +48,7 @@ pub async fn list_wms_scm_sync(
 pub async fn create_wms_scm_sync(
     State(state): State<AppState>,
     Json(req): Json<CreateWmsScmSyncRequest>,
-) -> Json<ApiResponse<WmsScmSync>> {
+) -> ApiResponse<WmsScmSync> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -64,9 +56,9 @@ pub async fn create_wms_scm_sync(
         Ok(u) => u,
         Err(e) => {
             tracing::warn!("Invalid WMS inventory ID: {}", e);
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "Invalid WMS inventory ID".to_string(),
-            )));
+            ));
         }
     };
 
@@ -92,16 +84,10 @@ pub async fn create_wms_scm_sync(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(sync) => Json(ApiResponse::success(
-            sync,
-            "WMS↔SCM sync created successfully",
-        )),
+        Ok(sync) => ApiResponse::success(sync, "WMS↔SCM sync created successfully"),
         Err(e) => {
             tracing::error!("Failed to create WMS↔SCM sync: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "Failed to create WMS↔SCM sync",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("Failed to create WMS↔SCM sync", e))
         }
     }
 }
@@ -122,7 +108,7 @@ pub async fn create_wms_scm_sync(
 pub async fn get_wms_scm_sync(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WmsScmSync>> {
+) -> ApiResponse<WmsScmSync> {
     match sqlx::query_as::<_, WmsScmSync>(only_own_schema_query!(
         "integration",
         "SELECT id, wms_inventory_id, scm_supply_id, item_name, quantity, unit,
@@ -133,14 +119,11 @@ pub async fn get_wms_scm_sync(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(sync) => Json(ApiResponse::success(sync, "WMS↔SCM sync found")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("Sync not found")),
+        Ok(sync) => ApiResponse::success(sync, "WMS↔SCM sync found"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("Sync not found"),
         Err(e) => {
             tracing::error!("Failed to fetch sync: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "Failed to fetch sync",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("Failed to fetch sync", e))
         }
     }
 }
@@ -161,7 +144,7 @@ pub async fn get_wms_scm_sync(
 pub async fn sync_wms_scm(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<WmsScmSync>> {
+) -> ApiResponse<WmsScmSync> {
     let now = Utc::now();
     let scm_supply_id = Uuid::new_v4();
 
@@ -184,18 +167,15 @@ pub async fn sync_wms_scm(
     .await
     {
         Ok(Some(s)) => s,
-        Ok(None) => return Json(ApiResponse::not_found("Sync not found")),
+        Ok(None) => return ApiResponse::not_found("Sync not found"),
         Err(e) => {
             tracing::error!("Failed to update sync: {}", e);
-            return Json(ApiResponse::from(TopemsError::internal(
+            return ApiResponse::from(TopemsError::internal(
                 "Failed to update sync",
                 e,
-            )));
+            ));
         }
     };
 
-    Json(ApiResponse::success(
-        updated_sync,
-        "WMS↔SCM sync completed successfully",
-    ))
+    ApiResponse::success(updated_sync, "WMS↔SCM sync completed successfully")
 }

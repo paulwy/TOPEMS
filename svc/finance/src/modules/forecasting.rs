@@ -1008,7 +1008,7 @@ pub async fn get_cash_flow_forecast_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
-) -> Json<ApiResponse<CashFlowForecast>> {
+) -> ApiResponse<CashFlowForecast> {
     let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let forecast = CashFlowForecaster::forecast_cash_flow(
@@ -1016,39 +1016,39 @@ pub async fn get_cash_flow_forecast_handler(
         ForecastPeriod::Monthly,
         ForecastScenario::Base,
     );
-    Json(ApiResponse::success(forecast, "查询成功"))
+    ApiResponse::success(forecast, "查询成功")
 }
 
 pub async fn get_forecast_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
-) -> Json<ApiResponse<ScenarioForecasts>> {
+) -> ApiResponse<ScenarioForecasts> {
     let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let scenarios = CashFlowForecaster::generate_scenarios(&period, ForecastPeriod::Monthly);
-    Json(ApiResponse::success(scenarios, "查询成功"))
+    ApiResponse::success(scenarios, "查询成功")
 }
 
 pub async fn get_forecast_accuracy_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<ForecastAccuracy>> {
+) -> ApiResponse<ForecastAccuracy> {
     let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let accuracy = CashFlowForecaster::get_forecast_accuracy("current");
-    Json(ApiResponse::success(accuracy, "查询成功"))
+    ApiResponse::success(accuracy, "查询成功")
 }
 
 pub async fn get_budget_variance_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
-) -> Json<ApiResponse<BudgetVarianceReport>> {
+) -> ApiResponse<BudgetVarianceReport> {
     let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let report = BudgetVarianceAnalyzer::analyze_budget_variance(&period);
-    Json(ApiResponse::success(report, "查询成功"))
+    ApiResponse::success(report, "查询成功")
 }
 #[utoipa::path(
     get,
@@ -1072,52 +1072,52 @@ pub async fn get_variance_trend_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
-) -> Json<ApiResponse<VarianceTrendAnalysis>> {
+) -> ApiResponse<VarianceTrendAnalysis> {
     let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let trend = BudgetVarianceAnalyzer::calculate_variance_trend(&period);
-    Json(ApiResponse::success(trend, "查询成功"))
+    ApiResponse::success(trend, "查询成功")
 }
 
 pub async fn get_significant_variances_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<BudgetVarianceItem>>> {
+) -> ApiResponse<Vec<BudgetVarianceItem>> {
     let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let items = BudgetVarianceAnalyzer::identify_significant_variances("current");
-    Json(ApiResponse::success(items, "查询成功"))
+    ApiResponse::success(items, "查询成功")
 }
 
 async fn get_active_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<SmartAlert>>> {
+) -> ApiResponse<Vec<SmartAlert>> {
     let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let alerts = SmartAlertSystem::get_active_alerts();
-    Json(ApiResponse::success(alerts, "查询成功"))
+    ApiResponse::success(alerts, "查询成功")
 }
 
 pub async fn get_alert_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<AlertSummary>> {
+) -> ApiResponse<AlertSummary> {
     let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let summary = SmartAlertSystem::get_alert_summary();
-    Json(ApiResponse::success(summary, "查询成功"))
+    ApiResponse::success(summary, "查询成功")
 }
 
 async fn create_alert_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAlertRuleRequest>,
-) -> Json<ApiResponse<AlertRule>> {
+) -> ApiResponse<AlertRule> {
     let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let rule = SmartAlertSystem::create_alert_rule(req);
-    Json(ApiResponse::success(rule, "创建成功"))
+    ApiResponse::success(rule, "创建成功")
 }
 #[utoipa::path(
     put,
@@ -1142,7 +1142,7 @@ pub async fn update_alert_rule_handler(
     Extension(claims): Extension<Claims>,
     Path(rule_id): Path<Uuid>,
     Json(req): Json<UpdateAlertRuleRequest>,
-) -> Json<ApiResponse<AlertRule>> {
+) -> ApiResponse<AlertRule> {
     let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let existing = AlertRule {
@@ -1156,29 +1156,29 @@ pub async fn update_alert_rule_handler(
         enabled: true,
     };
     let rule = SmartAlertSystem::update_alert_rule(existing, req);
-    Json(ApiResponse::success(rule, "更新成功"))
+    ApiResponse::success(rule, "更新成功")
 }
 
 async fn acknowledge_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(alert_id): Path<Uuid>,
-) -> Json<ApiResponse<SmartAlert>> {
+) -> ApiResponse<SmartAlert> {
     let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let alert = SmartAlertSystem::acknowledge_alert(alert_id);
-    Json(ApiResponse::success(alert, "告警已确认"))
+    ApiResponse::success(alert, "告警已确认")
 }
 
 async fn resolve_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(alert_id): Path<Uuid>,
-) -> Json<ApiResponse<SmartAlert>> {
+) -> ApiResponse<SmartAlert> {
     let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let alert = SmartAlertSystem::resolve_alert(alert_id);
-    Json(ApiResponse::success(alert, "告警已解决"))
+    ApiResponse::success(alert, "告警已解决")
 }
 
 pub fn create_routes() -> Router<AppState> {

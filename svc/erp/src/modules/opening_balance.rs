@@ -95,7 +95,7 @@ pub async fn list_opening_balances(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<OpeningBalance>>> {
+) -> ApiResponse<PaginatedResponse<OpeningBalance>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -155,16 +155,14 @@ pub async fn list_opening_balances(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(balances, total, page, page_size),
                 "获取期初余额列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取期初余额列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取期初余额列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取期初余额列表失败".to_string()))
         }
     }
 }
@@ -184,7 +182,7 @@ pub async fn create_opening_balance(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateOpeningBalanceRequest>,
-) -> Json<ApiResponse<OpeningBalance>> {
+) -> ApiResponse<OpeningBalance> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -227,16 +225,14 @@ pub async fn create_opening_balance(
 
     let (response, status_str, error_msg) = match &result {
         Ok(balance) => (
-            Json(ApiResponse::success(balance.clone(), "期初余额创建成功")),
+            ApiResponse::success(balance.clone(), "期初余额创建成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("创建期初余额失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "期初余额创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("期初余额创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -246,9 +242,7 @@ pub async fn create_opening_balance(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -296,7 +290,7 @@ pub async fn get_opening_balance(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<OpeningBalance>> {
+) -> ApiResponse<OpeningBalance> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -313,15 +307,11 @@ pub async fn get_opening_balance(
     .await;
 
     match result {
-        Ok(Some(balance)) => Json(ApiResponse::success(balance, "获取期初余额成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "期初余额不存在".to_string(),
-        ))),
+        Ok(Some(balance)) => ApiResponse::success(balance, "获取期初余额成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("期初余额不存在".to_string())),
         Err(e) => {
             tracing::error!("获取期初余额失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取期初余额失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取期初余额失败".to_string()))
         }
     }
 }
@@ -343,7 +333,7 @@ pub async fn update_opening_balance(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateOpeningBalanceRequest>,
-) -> Json<ApiResponse<OpeningBalance>> {
+) -> ApiResponse<OpeningBalance> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -359,16 +349,9 @@ pub async fn update_opening_balance(
     let existing = match existing {
         Ok(Some(b)) => b,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "期初余额不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("期初余额不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询期初余额失败: {}",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询期初余额失败: {}", e)),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -393,16 +376,14 @@ pub async fn update_opening_balance(
 
     let (response, status_str, error_msg) = match &result {
         Ok(balance) => (
-            Json(ApiResponse::success(balance.clone(), "期初余额更新成功")),
+            ApiResponse::success(balance.clone(), "期初余额更新成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("更新期初余额失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "期初余额更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("期初余额更新失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -412,9 +393,7 @@ pub async fn update_opening_balance(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -463,7 +442,7 @@ pub async fn delete_opening_balance(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -479,23 +458,19 @@ pub async fn delete_opening_balance(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "期初余额删除成功")),
+            ApiResponse::success("".to_string(), "期初余额删除成功"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "期初余额不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("期初余额不存在".to_string())),
             "error".to_string(),
             Some("期初余额不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除期初余额失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "期初余额删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("期初余额删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -505,9 +480,7 @@ pub async fn delete_opening_balance(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -555,7 +528,7 @@ pub async fn import_opening_balances(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<Vec<CreateOpeningBalanceRequest>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -646,12 +619,10 @@ pub async fn import_opening_balances(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
-    Json(ApiResponse::success(result, "期初余额批量导入完成"))
+    ApiResponse::success(result, "期初余额批量导入完成")
 }
 
 #[utoipa::path(
@@ -669,7 +640,7 @@ pub async fn carry_forward_opening_balance(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CarryForwardRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -696,19 +667,17 @@ pub async fn carry_forward_opening_balance(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) => (
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "rows_affected": r.rows_affected() }),
                 "期初余额结转完成",
-            )),
+            ),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("结转期初余额失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "期初余额结转失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("期初余额结转失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -718,9 +687,7 @@ pub async fn carry_forward_opening_balance(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }

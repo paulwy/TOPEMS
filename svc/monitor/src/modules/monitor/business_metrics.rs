@@ -682,7 +682,7 @@ pub async fn list_business_metrics(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<BusinessMetricQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let metrics = seed_business_metrics(tenant_id);
 
@@ -723,13 +723,13 @@ pub async fn list_business_metrics(
         .collect();
 
     let total = filtered.len() as i64;
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "items": filtered,
             "total": total,
         }),
         "获取业务指标列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -749,7 +749,7 @@ pub async fn get_business_metric(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
-) -> Json<ApiResponse<BusinessMetric>> {
+) -> ApiResponse<BusinessMetric> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let metric = BusinessMetric {
         id,
@@ -768,7 +768,7 @@ pub async fn get_business_metric(
         last_updated: Utc::now(),
     };
 
-    Json(ApiResponse::success(metric, "获取业务指标详情成功"))
+    ApiResponse::success(metric, "获取业务指标详情成功")
 }
 
 #[utoipa::path(
@@ -785,7 +785,7 @@ pub async fn create_business_metric(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BusinessMetricRequest>,
-) -> Json<ApiResponse<BusinessMetric>> {
+) -> ApiResponse<BusinessMetric> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let metric = BusinessMetric {
         id: Uuid::new_v4(),
@@ -804,7 +804,7 @@ pub async fn create_business_metric(
         last_updated: Utc::now(),
     };
 
-    Json(ApiResponse::success(metric, "业务指标创建成功"))
+    ApiResponse::success(metric, "业务指标创建成功")
 }
 
 #[utoipa::path(
@@ -826,7 +826,7 @@ pub async fn update_business_metric(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Json(req): Json<BusinessMetricRequest>,
-) -> Json<ApiResponse<BusinessMetric>> {
+) -> ApiResponse<BusinessMetric> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let metric = BusinessMetric {
         id,
@@ -845,7 +845,7 @@ pub async fn update_business_metric(
         last_updated: Utc::now(),
     };
 
-    Json(ApiResponse::success(metric, "业务指标更新成功"))
+    ApiResponse::success(metric, "业务指标更新成功")
 }
 
 #[utoipa::path(
@@ -865,11 +865,11 @@ pub async fn delete_business_metric(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({ "id": id.to_string() }),
         "业务指标删除成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -885,7 +885,7 @@ pub async fn delete_business_metric(
 pub async fn get_business_metric_summary(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<BusinessMetricSummary>> {
+) -> ApiResponse<BusinessMetricSummary> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let metrics = seed_business_metrics(tenant_id);
     update_business_metric_gauges(tenant_id, &metrics);
@@ -944,7 +944,7 @@ pub async fn get_business_metric_summary(
         top_metrics,
     };
 
-    Json(ApiResponse::success(summary, "获取业务指标摘要成功"))
+    ApiResponse::success(summary, "获取业务指标摘要成功")
 }
 
 #[utoipa::path(
@@ -961,7 +961,7 @@ pub async fn get_business_metric_trend(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(query): Query<TrendQuery>,
-) -> Json<ApiResponse<Vec<BusinessMetricTrend>>> {
+) -> ApiResponse<Vec<BusinessMetricTrend>> {
     let period = query.period.unwrap_or_else(|| "7d".to_string());
     let hours = match period.as_str() {
         "1h" => 1,
@@ -990,7 +990,7 @@ pub async fn get_business_metric_trend(
         });
     }
 
-    Json(ApiResponse::success(trends, "获取业务指标趋势成功"))
+    ApiResponse::success(trends, "获取业务指标趋势成功")
 }
 
 #[utoipa::path(
@@ -1006,7 +1006,7 @@ pub async fn get_kpi_dashboard(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(query): Query<KpiRequest>,
-) -> Json<ApiResponse<Vec<BusinessMetricKpi>>> {
+) -> ApiResponse<Vec<BusinessMetricKpi>> {
     let period = query.period.unwrap_or_else(|| "monthly".to_string());
     let kpis = vec![
         BusinessMetricKpi {
@@ -1069,7 +1069,7 @@ pub async fn get_kpi_dashboard(
         kpis
     };
 
-    Json(ApiResponse::success(filtered, "获取KPI看板成功"))
+    ApiResponse::success(filtered, "获取KPI看板成功")
 }
 
 // ==================== /reports/performance ====================
@@ -1110,7 +1110,7 @@ pub async fn get_performance_report(
         p95_response_time_ms: 0.0,
         uptime_percent: 100.0,
     };
-    Json(ApiResponse::success(report, "性能报告获取成功"))
+    ApiResponse::success(report, "性能报告获取成功")
 }
 
 // ==================== 路由注册 ====================

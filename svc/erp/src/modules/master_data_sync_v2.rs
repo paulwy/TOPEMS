@@ -243,7 +243,7 @@ impl SyncEngineV2Store {
 pub async fn create_sync_job_v2(
     State(state): State<ApiState>,
     Json(req): Json<CreateSyncJobV2Request>,
-) -> Json<ApiResponse<SyncJobV2>> {
+) -> ApiResponse<SyncJobV2> {
     let _ = &state;
     let mut store = SYNC_ENGINE_V2_STORE.lock().await;
 
@@ -298,7 +298,7 @@ pub async fn create_sync_job_v2(
     stats.total_jobs += 1;
     stats.pending += 1;
 
-    Json(ApiResponse::success(job, "同步任务创建成功（V2）"))
+    ApiResponse::success(job, "同步任务创建成功（V2）")
 }
 
 #[utoipa::path(
@@ -317,7 +317,7 @@ pub async fn create_sync_job_v2(
 pub async fn list_sync_jobs_v2(
     State(state): State<ApiState>,
     Query(params): Query<ListSyncJobsV2Params>,
-) -> Json<ApiResponse<PaginatedResponse<SyncJobV2>>> {
+) -> ApiResponse<PaginatedResponse<SyncJobV2>> {
     let _ = &state;
     let store = SYNC_ENGINE_V2_STORE.lock().await;
 
@@ -373,10 +373,10 @@ pub async fn list_sync_jobs_v2(
         .take(page_size as usize)
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "同步任务列表（V2）",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -390,13 +390,13 @@ pub async fn list_sync_jobs_v2(
 pub async fn get_sync_job_v2(
     State(state): State<ApiState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<SyncJobV2>> {
+) -> ApiResponse<SyncJobV2> {
     let _ = &state;
     let store = SYNC_ENGINE_V2_STORE.lock().await;
 
     match store.jobs.get(&id) {
-        Some(job) => Json(ApiResponse::success(job.clone(), "同步任务详情（V2）")),
-        None => Json(ApiResponse::not_found("未找到同步任务")),
+        Some(job) => ApiResponse::success(job.clone(), "同步任务详情（V2）"),
+        None => ApiResponse::not_found("未找到同步任务"),
     }
 }
 
@@ -411,13 +411,13 @@ pub async fn get_sync_job_v2(
 pub async fn retry_dead_letter_v2(
     State(state): State<ApiState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<SyncJobV2>> {
+) -> ApiResponse<SyncJobV2> {
     let _ = &state;
     let mut store = SYNC_ENGINE_V2_STORE.lock().await;
 
     let dead_letter = match store.dead_letters.remove(&id) {
         Some(dl) => dl,
-        None => return Json(ApiResponse::not_found("未找到死信记录")),
+        None => return ApiResponse::not_found("未找到死信记录"),
     };
 
     let now = chrono::Utc::now();
@@ -435,7 +435,7 @@ pub async fn retry_dead_letter_v2(
             (job.clone(), job.clone())
         }
         None => {
-            return Json(ApiResponse::not_found("关联的同步任务不存在"));
+            return ApiResponse::not_found("关联的同步任务不存在");
         }
     };
 
@@ -445,7 +445,7 @@ pub async fn retry_dead_letter_v2(
         SyncJobPriority::Low => store.priority_queue.low.push(requeued),
     }
 
-    Json(ApiResponse::success(updated_job, "死信已重试（V2）"))
+    ApiResponse::success(updated_job, "死信已重试（V2）")
 }
 
 #[utoipa::path(
@@ -458,7 +458,7 @@ pub async fn retry_dead_letter_v2(
 pub async fn batch_retry_dead_letters(
     State(state): State<ApiState>,
     Json(req): Json<BatchRetryDeadLettersRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let _ = &state;
     let mut store = SYNC_ENGINE_V2_STORE.lock().await;
 
@@ -491,14 +491,14 @@ pub async fn batch_retry_dead_letters(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "retried_count": retried,
             "requested_count": req.ids.len(),
             "category": req.category,
         }),
         "批量重试完成",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -509,9 +509,7 @@ pub async fn batch_retry_dead_letters(
     responses((status = 200, description = "获取 V2 同步引擎统计成功", body = ApiResponse<serde_json::Value>))
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn sync_engine_stats_v2(
-    State(state): State<ApiState>,
-) -> Json<ApiResponse<SyncEngineStatsV2>> {
+pub async fn sync_engine_stats_v2(State(state): State<ApiState>) -> ApiResponse<SyncEngineStatsV2> {
     let _ = &state;
     let store = SYNC_ENGINE_V2_STORE.lock().await;
 
@@ -543,7 +541,7 @@ pub async fn sync_engine_stats_v2(
         queue_size,
     };
 
-    Json(ApiResponse::success(stats, "同步引擎统计（V2）"))
+    ApiResponse::success(stats, "同步引擎统计（V2）")
 }
 
 #[cfg(test)]

@@ -1399,12 +1399,12 @@ pub async fn analyze_transaction_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeTransactionRequest>,
-) -> Json<ApiResponse<FraudDecision>> {
+) -> ApiResponse<FraudDecision> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AntiFraudEngine::analyze_transaction(&pool, tenant_id, req).await {
-        Ok(decision) => Json(ApiResponse::success(decision, "分析完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(decision) => ApiResponse::success(decision, "分析完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1412,7 +1412,7 @@ pub async fn get_fraud_decision_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<FraudDecision>> {
+) -> ApiResponse<FraudDecision> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1420,8 +1420,8 @@ pub async fn get_fraud_decision_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match AntiFraudEngine::get_fraud_decision(&pool, tenant_id, id).await {
-        Ok(decision) => Json(ApiResponse::success(decision, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(decision) => ApiResponse::success(decision, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1434,7 +1434,7 @@ pub async fn get_signals_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SignalQueryParams>,
-) -> Json<ApiResponse<Vec<FraudSignal>>> {
+) -> ApiResponse<Vec<FraudSignal>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1442,8 +1442,8 @@ pub async fn get_signals_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match AntiFraudEngine::get_signals(&pool, tenant_id, params.signal_type).await {
-        Ok(signals) => Json(ApiResponse::success(signals, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(signals) => ApiResponse::success(signals, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1451,12 +1451,12 @@ pub async fn create_device_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDeviceRequest>,
-) -> Json<ApiResponse<DeviceProfile>> {
+) -> ApiResponse<DeviceProfile> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AntiFraudEngine::update_device_profile(&pool, tenant_id, req).await {
-        Ok(profile) => Json(ApiResponse::success(profile, "设备画像创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(profile) => ApiResponse::success(profile, "设备画像创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1464,7 +1464,7 @@ pub async fn get_device_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<DeviceProfile>> {
+) -> ApiResponse<DeviceProfile> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1480,15 +1480,15 @@ pub async fn get_device_handler(
     .await;
 
     match result {
-        Ok(profile) => Json(ApiResponse::success(profile, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(profile) => ApiResponse::success(profile, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn list_blocked_devices_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<DeviceProfile>>> {
+) -> ApiResponse<Vec<DeviceProfile>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1496,8 +1496,8 @@ pub async fn list_blocked_devices_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match AntiFraudEngine::list_blocked_devices(&pool, tenant_id).await {
-        Ok(devices) => Json(ApiResponse::success(devices, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(devices) => ApiResponse::success(devices, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1505,19 +1505,19 @@ pub async fn add_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AddRuleRequest>,
-) -> Json<ApiResponse<FraudRule>> {
+) -> ApiResponse<FraudRule> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AntiFraudEngine::add_rule(&pool, tenant_id, req).await {
-        Ok(rule) => Json(ApiResponse::success(rule, "规则添加成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(rule) => ApiResponse::success(rule, "规则添加成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn get_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<FraudRule>>> {
+) -> ApiResponse<Vec<FraudRule>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1525,8 +1525,8 @@ pub async fn get_rules_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match AntiFraudEngine::get_rules(&pool, tenant_id).await {
-        Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(rules) => ApiResponse::success(rules, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1536,12 +1536,12 @@ pub async fn calculate_score_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CalculateScoreRequest>,
-) -> Json<ApiResponse<CreditProfile>> {
+) -> ApiResponse<CreditProfile> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::calculate_score(&pool, tenant_id, req).await {
-        Ok(profile) => Json(ApiResponse::success(profile, "评分完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(profile) => ApiResponse::success(profile, "评分完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1549,19 +1549,19 @@ pub async fn get_credit_profile_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<CreditProfile>> {
+) -> ApiResponse<CreditProfile> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::get_credit_profile(&pool, tenant_id, id).await {
-        Ok(profile) => Json(ApiResponse::success(profile, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(profile) => ApiResponse::success(profile, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn get_scoring_models_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ScoringModel>>> {
+) -> ApiResponse<Vec<ScoringModel>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1569,8 +1569,8 @@ pub async fn get_scoring_models_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match CreditScoringEngine::get_scoring_models(&pool, tenant_id).await {
-        Ok(models) => Json(ApiResponse::success(models, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(models) => ApiResponse::success(models, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1578,12 +1578,12 @@ pub async fn create_model_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateModelRequest>,
-) -> Json<ApiResponse<ScoringModel>> {
+) -> ApiResponse<ScoringModel> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::create_model(&pool, tenant_id, req).await {
-        Ok(model) => Json(ApiResponse::success(model, "模型创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(model) => ApiResponse::success(model, "模型创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1592,12 +1592,12 @@ pub async fn update_model_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateModelRequest>,
-) -> Json<ApiResponse<ScoringModel>> {
+) -> ApiResponse<ScoringModel> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::update_model(&pool, tenant_id, id, req).await {
-        Ok(model) => Json(ApiResponse::success(model, "模型更新成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(model) => ApiResponse::success(model, "模型更新成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1610,12 +1610,12 @@ pub async fn get_score_factors_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<FactorQueryParams>,
-) -> Json<ApiResponse<Vec<ScoreFactor>>> {
+) -> ApiResponse<Vec<ScoreFactor>> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::get_score_factors(&pool, tenant_id, params.entity_id).await {
-        Ok(factors) => Json(ApiResponse::success(factors, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(factors) => ApiResponse::success(factors, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1623,7 +1623,7 @@ pub async fn get_model_comparison_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CompareModelsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1631,8 +1631,8 @@ pub async fn get_model_comparison_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match CreditScoringEngine::get_model_comparison(&pool, tenant_id, params.model_ids).await {
-        Ok(result) => Json(ApiResponse::success(result, "对比完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "对比完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1640,12 +1640,12 @@ pub async fn bulk_score_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BulkScoreRequest>,
-) -> Json<ApiResponse<Vec<CreditProfile>>> {
+) -> ApiResponse<Vec<CreditProfile>> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::bulk_score(&pool, tenant_id, req).await {
-        Ok(profiles) => Json(ApiResponse::success(profiles, "批量评分完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(profiles) => ApiResponse::success(profiles, "批量评分完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1655,12 +1655,12 @@ pub async fn create_scenario_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateScenarioRequest>,
-) -> Json<ApiResponse<StressScenario>> {
+) -> ApiResponse<StressScenario> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match StressTestEngine::create_scenario(&pool, tenant_id, req).await {
-        Ok(scenario) => Json(ApiResponse::success(scenario, "场景创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(scenario) => ApiResponse::success(scenario, "场景创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1668,12 +1668,12 @@ pub async fn run_stress_test_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RunStressTestRequest>,
-) -> Json<ApiResponse<StressResult>> {
+) -> ApiResponse<StressResult> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match StressTestEngine::run_stress_test(&pool, tenant_id, req).await {
-        Ok(result) => Json(ApiResponse::success(result, "压力测试完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "压力测试完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1681,7 +1681,7 @@ pub async fn get_test_result_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<StressResult>> {
+) -> ApiResponse<StressResult> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1689,15 +1689,15 @@ pub async fn get_test_result_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match StressTestEngine::get_test_result(&pool, tenant_id, id).await {
-        Ok(result) => Json(ApiResponse::success(result, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn list_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<StressScenario>>> {
+) -> ApiResponse<Vec<StressScenario>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1705,8 +1705,8 @@ pub async fn list_scenarios_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match StressTestEngine::list_scenarios(&pool, tenant_id).await {
-        Ok(scenarios) => Json(ApiResponse::success(scenarios, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(scenarios) => ApiResponse::success(scenarios, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -1729,12 +1729,12 @@ pub async fn compare_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CompareScenariosRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match StressTestEngine::compare_scenarios(&pool, tenant_id, req.scenario_ids).await {
-        Ok(result) => Json(ApiResponse::success(result, "对比完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "对比完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1747,7 +1747,7 @@ pub async fn get_scenario_parameters_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<GetParamsQueryParams>,
-) -> Json<ApiResponse<Vec<ScenarioParameter>>> {
+) -> ApiResponse<Vec<ScenarioParameter>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1755,15 +1755,15 @@ pub async fn get_scenario_parameters_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match StressTestEngine::get_scenario_parameters(&pool, tenant_id, params.scenario_id).await {
-        Ok(params) => Json(ApiResponse::success(params, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(params) => ApiResponse::success(params, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn get_test_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1771,8 +1771,8 @@ pub async fn get_test_summary_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match StressTestEngine::get_test_summary(&pool, tenant_id).await {
-        Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(summary) => ApiResponse::success(summary, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 

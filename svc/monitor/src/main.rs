@@ -2,7 +2,7 @@ use crate::shared::AppState;
 use std::sync::Arc;
 use std::time::Instant;
 
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Router};
 
 use crate::modules::monitor::monitor_plugin;
 use topems_shared_auth::middleware::require_permission;
@@ -110,7 +110,7 @@ async fn health(State(state): State<AppState>) -> ServiceHealth {
     simple_health_check(&config).await
 }
 
-async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn detailed_health(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     use topems_shared_bootstrap::build_detailed_health_response;
     let modules = serde_json::json!({
         "metrics": "active",
@@ -132,5 +132,5 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
         extra,
     )
     .await;
-    Json(ApiResponse::success(resp, "Detailed health check"))
+    ApiResponse::success(resp, "Detailed health check")
 }

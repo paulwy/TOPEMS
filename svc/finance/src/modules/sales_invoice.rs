@@ -281,7 +281,7 @@ pub async fn list_sales_invoices(
     State(state): State<AppState>,
     Query(params): Query<InvoiceListQuery>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Paginated<SalesInvoiceOut>>> {
+) -> ApiResponse<Paginated<SalesInvoiceOut>> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -312,8 +312,9 @@ pub async fn list_sales_invoices(
     {
         Ok(r) => r.get(0),
         Err(e) => {
-            return Json(ApiResponse::<Paginated<SalesInvoiceOut>>::from(
-                TopemsError::internal("获取销售发票列表失败", e),
+            return ApiResponse::<Paginated<SalesInvoiceOut>>::from(TopemsError::internal(
+                "获取销售发票列表失败",
+                e,
             ))
         }
     };
@@ -357,10 +358,10 @@ pub async fn list_sales_invoices(
                 red_flush_of: r.get("red_flush_of"),
             })
             .collect(),
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Err(e) => return crate::shared::err_resp(e),
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         Paginated {
             total_pages: if page_size > 0 {
                 (total + page_size - 1) / page_size
@@ -379,7 +380,7 @@ pub async fn list_sales_invoices(
             page,
         },
         "Success",
-    ))
+    )
 }
 
 /// GET /sales-invoices/{id}
@@ -400,16 +401,16 @@ pub async fn get_sales_invoice(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<SalesInvoiceOut>> {
+) -> ApiResponse<SalesInvoiceOut> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
     match fetch_invoice(&state.pool, tenant_id, id).await {
-        Ok(Some(inv)) => Json(ApiResponse::success(inv, "Success")),
-        Ok(None) => Json(ApiResponse::<SalesInvoiceOut>::not_found("发票不存在")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
+        Ok(None) => ApiResponse::<SalesInvoiceOut>::not_found("发票不存在"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -533,7 +534,7 @@ pub async fn delete_sales_invoice(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     match sqlx::query(
         "DELETE FROM finance.sales_invoices WHERE id = $1 AND tenant_id = $2 AND status = 'draft'",
@@ -543,9 +544,9 @@ pub async fn delete_sales_invoice(
     .execute(&state.pool)
     .await
     {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(id.to_string(), "Success")),
-        Ok(_) => Json(ApiResponse::<String>::conflict("仅草稿可删除或发票不存在")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(id.to_string(), "Success"),
+        Ok(_) => ApiResponse::<String>::conflict("仅草稿可删除或发票不存在"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -567,7 +568,7 @@ pub async fn issue_sales_invoice(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<SalesInvoiceOut>> {
+) -> ApiResponse<SalesInvoiceOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     match sqlx::query(
         "UPDATE finance.sales_invoices SET status = 'issued', issued_at = NOW(), updated_at = NOW()
@@ -582,14 +583,12 @@ pub async fn issue_sales_invoice(
         Ok(Some(row)) => {
             let id: Uuid = row.get("id");
             match fetch_invoice(&state.pool, Some(tenant_id), id).await {
-                Ok(Some(inv)) => Json(ApiResponse::success(inv, "Success")),
-                _ => Json(ApiResponse::<SalesInvoiceOut>::server_error(
-                    "开具后读取失败",
-                )),
+                Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
+                _ => ApiResponse::<SalesInvoiceOut>::server_error("开具后读取失败"),
             }
         }
-        Ok(None) => Json(ApiResponse::<SalesInvoiceOut>::conflict("仅草稿可开具")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(None) => ApiResponse::<SalesInvoiceOut>::conflict("仅草稿可开具"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -612,7 +611,7 @@ pub async fn cancel_sales_invoice(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CancelPayload>,
-) -> Json<ApiResponse<SalesInvoiceOut>> {
+) -> ApiResponse<SalesInvoiceOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     match sqlx::query(
         "UPDATE finance.sales_invoices SET status = 'cancelled', cancel_reason = $3,
@@ -629,14 +628,12 @@ pub async fn cancel_sales_invoice(
         Ok(Some(row)) => {
             let id: Uuid = row.get("id");
             match fetch_invoice(&state.pool, Some(tenant_id), id).await {
-                Ok(Some(inv)) => Json(ApiResponse::success(inv, "Success")),
-                _ => Json(ApiResponse::<SalesInvoiceOut>::server_error(
-                    "取消后读取失败",
-                )),
+                Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
+                _ => ApiResponse::<SalesInvoiceOut>::server_error("取消后读取失败"),
             }
         }
-        Ok(None) => Json(ApiResponse::<SalesInvoiceOut>::conflict("该状态不可取消")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(None) => ApiResponse::<SalesInvoiceOut>::conflict("该状态不可取消"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -659,18 +656,16 @@ pub async fn red_flush_sales_invoice(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<RedFlushPayload>,
-) -> Json<ApiResponse<SalesInvoiceOut>> {
+) -> ApiResponse<SalesInvoiceOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let now = today();
 
     let original = match fetch_invoice(&state.pool, Some(tenant_id), id).await {
         Ok(Some(inv)) => inv,
-        _ => return Json(ApiResponse::<SalesInvoiceOut>::not_found("发票不存在")),
+        _ => return ApiResponse::<SalesInvoiceOut>::not_found("发票不存在"),
     };
     if original.status != "issued" {
-        return Json(ApiResponse::<SalesInvoiceOut>::conflict(
-            "仅已开具发票可红冲",
-        ));
+        return ApiResponse::<SalesInvoiceOut>::conflict("仅已开具发票可红冲");
     }
 
     // 取消原票
@@ -685,7 +680,7 @@ pub async fn red_flush_sales_invoice(
     .execute(&state.pool)
     .await
     {
-        return Json(crate::shared::err_resp(e));
+        return crate::shared::err_resp(e);
     }
 
     // 生成负数发票（金额取负）
@@ -715,13 +710,11 @@ pub async fn red_flush_sales_invoice(
         Ok(row) => {
             let red_id: Uuid = row.get("id");
             match fetch_invoice(&state.pool, Some(tenant_id), red_id).await {
-                Ok(Some(inv)) => Json(ApiResponse::success(inv, "Success")),
-                _ => Json(ApiResponse::<SalesInvoiceOut>::server_error(
-                    "红冲后读取失败",
-                )),
+                Ok(Some(inv)) => ApiResponse::success(inv, "Success"),
+                _ => ApiResponse::<SalesInvoiceOut>::server_error("红冲后读取失败"),
             }
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -780,7 +773,7 @@ pub async fn list_collections(
     State(state): State<AppState>,
     Query(params): Query<CollectionListQuery>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Paginated<CollectionOut>>> {
+) -> ApiResponse<Paginated<CollectionOut>> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -809,8 +802,9 @@ pub async fn list_collections(
     {
         Ok(r) => r.get(0),
         Err(e) => {
-            return Json(ApiResponse::<Paginated<CollectionOut>>::from(
-                TopemsError::internal("获取回款列表失败", e),
+            return ApiResponse::<Paginated<CollectionOut>>::from(TopemsError::internal(
+                "获取回款列表失败",
+                e,
             ))
         }
     };
@@ -855,10 +849,10 @@ pub async fn list_collections(
                 confirmed_at: r.get("confirmed_at"),
             })
             .collect(),
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Err(e) => return crate::shared::err_resp(e),
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         Paginated {
             total_pages: if page_size > 0 {
                 (total + page_size - 1) / page_size
@@ -877,7 +871,7 @@ pub async fn list_collections(
             page,
         },
         "Success",
-    ))
+    )
 }
 
 /// GET /sales-collections/{id}
@@ -898,16 +892,16 @@ pub async fn get_collection(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<CollectionOut>> {
+) -> ApiResponse<CollectionOut> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(get_tenant_id_from_claims(&claims))
     };
     match fetch_collection(&state.pool, tenant_id, id).await {
-        Ok(Some(c)) => Json(ApiResponse::success(c, "Success")),
-        Ok(None) => Json(ApiResponse::<CollectionOut>::not_found("回款记录不存在")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(Some(c)) => ApiResponse::success(c, "Success"),
+        Ok(None) => ApiResponse::<CollectionOut>::not_found("回款记录不存在"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -916,7 +910,7 @@ pub async fn create_collection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CollectionCreatePayload>,
-) -> Json<ApiResponse<CollectionOut>> {
+) -> ApiResponse<CollectionOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let number = if payload.collection_number.is_empty() {
         format!(
@@ -967,11 +961,11 @@ pub async fn create_collection(
         Ok(row) => {
             let id: Uuid = row.get("id");
             match fetch_collection(&state.pool, Some(tenant_id), id).await {
-                Ok(Some(c)) => Json(ApiResponse::success(c, "Created")),
-                _ => Json(ApiResponse::<CollectionOut>::server_error("创建后读取失败")),
+                Ok(Some(c)) => ApiResponse::success(c, "Created"),
+                _ => ApiResponse::<CollectionOut>::server_error("创建后读取失败"),
             }
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -993,7 +987,7 @@ pub async fn confirm_collection(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<CollectionOut>> {
+) -> ApiResponse<CollectionOut> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let pool = &state.pool;
 
@@ -1002,7 +996,7 @@ pub async fn confirm_collection(
     // 回写发票前校验确认额不得超过应收余额（超收封顶）。
     let mut tx = match pool.begin().await {
         Ok(t) => t,
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Err(e) => return crate::shared::err_resp(e),
     };
 
     let rec = match sqlx::query(
@@ -1018,16 +1012,14 @@ pub async fn confirm_collection(
     .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::<CollectionOut>::not_found("回款记录不存在")),
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Ok(None) => return ApiResponse::<CollectionOut>::not_found("回款记录不存在"),
+        Err(e) => return crate::shared::err_resp(e),
     };
     let amount: Decimal = rec.get("amount");
     let status: String = rec.get("status");
     let invoice_id: Option<Uuid> = rec.get("invoice_id");
     if status == "confirmed" {
-        return Json(ApiResponse::<CollectionOut>::conflict(
-            "回款记录已确认，请勿重复确认",
-        ));
+        return ApiResponse::<CollectionOut>::conflict("回款记录已确认，请勿重复确认");
     }
 
     // 原子谓词：AND status != 'confirmed' AND deleted_at IS NULL。
@@ -1043,12 +1035,10 @@ pub async fn confirm_collection(
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Err(e) => return crate::shared::err_resp(e),
     };
     if affected == 0 {
-        return Json(ApiResponse::<CollectionOut>::conflict(
-            "回款记录已被其他请求确认，请勿重复确认",
-        ));
+        return ApiResponse::<CollectionOut>::conflict("回款记录已被其他请求确认，请勿重复确认");
     }
 
     // 回写发票：FOR UPDATE 锁定发票，超收封顶——确认额不得超过应收余额（total - paid）。
@@ -1063,17 +1053,17 @@ pub async fn confirm_collection(
         .await
         {
             Ok(Some(r)) => r,
-            Ok(None) => return Json(ApiResponse::<CollectionOut>::not_found("关联发票不存在")),
-            Err(e) => return Json(crate::shared::err_resp(e)),
+            Ok(None) => return ApiResponse::<CollectionOut>::not_found("关联发票不存在"),
+            Err(e) => return crate::shared::err_resp(e),
         };
         let total: Decimal = inv.get("total_amount");
         let paid: Decimal = inv.get("paid_amount");
         let balance = total - paid;
         if amount > balance {
-            return Json(ApiResponse::<CollectionOut>::bad_request(&format!(
+            return ApiResponse::<CollectionOut>::bad_request(&format!(
                 "确认金额 {} 超过应收余额 {}，拒绝超收",
                 amount, balance
-            )));
+            ));
         }
         if let Err(e) = sqlx::query(
             "UPDATE finance.sales_invoices
@@ -1088,17 +1078,17 @@ pub async fn confirm_collection(
         .execute(&mut *tx)
         .await
         {
-            return Json(crate::shared::err_resp(e));
+            return crate::shared::err_resp(e);
         }
     }
 
     if let Err(e) = tx.commit().await {
-        return Json(crate::shared::err_resp(e));
+        return crate::shared::err_resp(e);
     }
 
     match fetch_collection(pool, Some(tenant_id), id).await {
-        Ok(Some(c)) => Json(ApiResponse::success(c, "Success")),
-        _ => Json(ApiResponse::<CollectionOut>::server_error("确认后读取失败")),
+        Ok(Some(c)) => ApiResponse::success(c, "Success"),
+        _ => ApiResponse::<CollectionOut>::server_error("确认后读取失败"),
     }
 }
 
@@ -1117,7 +1107,7 @@ pub async fn batch_confirm_collections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<BatchConfirmPayload>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let mut success = 0i64;
     let mut failed = 0i64;
@@ -1127,7 +1117,7 @@ pub async fn batch_confirm_collections(
     // 同一张发票多笔回款在同一事务内逐笔累加，自身写入对自身可见；任一笔 DB 错误整体回滚。
     let mut tx = match state.pool.begin().await {
         Ok(t) => t,
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Err(e) => return crate::shared::err_resp(e),
     };
 
     for rid in payload.record_ids {
@@ -1142,7 +1132,7 @@ pub async fn batch_confirm_collections(
         .await
         {
             Ok(r) => r,
-            Err(e) => return Json(crate::shared::err_resp(e)),
+            Err(e) => return crate::shared::err_resp(e),
         };
 
         let row = match rec {
@@ -1177,7 +1167,7 @@ pub async fn batch_confirm_collections(
                     failed += 1;
                     continue;
                 }
-                Err(e) => return Json(crate::shared::err_resp(e)),
+                Err(e) => return crate::shared::err_resp(e),
             };
             let total: Decimal = inv.get("total_amount");
             let paid: Decimal = inv.get("paid_amount");
@@ -1198,7 +1188,7 @@ pub async fn batch_confirm_collections(
         .await
         {
             Ok(r) => r.rows_affected(),
-            Err(e) => return Json(crate::shared::err_resp(e)),
+            Err(e) => return crate::shared::err_resp(e),
         };
         if affected == 0 {
             // 并发下已被其他事务确认
@@ -1221,20 +1211,20 @@ pub async fn batch_confirm_collections(
             .execute(&mut *tx)
             .await
             {
-                return Json(crate::shared::err_resp(e));
+                return crate::shared::err_resp(e);
             }
         }
         success += 1;
     }
 
     if let Err(e) = tx.commit().await {
-        return Json(crate::shared::err_resp(e));
+        return crate::shared::err_resp(e);
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "success": success, "failed": failed }),
         "Success",
-    ))
+    )
 }
 
 // ========== 应收报表 ==========
@@ -1262,7 +1252,7 @@ fn aging_bucket(days: i64) -> &'static str {
 pub async fn get_receivable_aging(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<AgingBucket>>> {
+) -> ApiResponse<Vec<AgingBucket>> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1279,7 +1269,7 @@ pub async fn get_receivable_aging(
     .await
     {
         Ok(rows) => rows,
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Err(e) => return crate::shared::err_resp(e),
     };
 
     use std::collections::HashMap;
@@ -1306,7 +1296,7 @@ pub async fn get_receivable_aging(
         })
         .collect();
 
-    Json(ApiResponse::success(items, "Success"))
+    ApiResponse::success(items, "Success")
 }
 
 /// GET /reports/receivable-summary
@@ -1323,7 +1313,7 @@ pub async fn get_receivable_aging(
 pub async fn get_receivable_summary(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<ReceivableSummary>> {
+) -> ApiResponse<ReceivableSummary> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1341,7 +1331,7 @@ pub async fn get_receivable_summary(
     .await
     {
         Ok(rows) => rows,
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Err(e) => return crate::shared::err_resp(e),
     };
 
     let mut total_receivable = 0.0;
@@ -1360,7 +1350,7 @@ pub async fn get_receivable_summary(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ReceivableSummary {
             total_receivable: (total_receivable * 100.0).round() / 100.0,
             total_paid: (total_paid * 100.0).round() / 100.0,
@@ -1369,7 +1359,7 @@ pub async fn get_receivable_summary(
             overdue_amount: (overdue_amount * 100.0).round() / 100.0,
         },
         "Success",
-    ))
+    )
 }
 
 /// GET /reports/overdue-receivables
@@ -1386,7 +1376,7 @@ pub async fn get_receivable_summary(
 pub async fn get_overdue_receivables(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<OverdueItem>>> {
+) -> ApiResponse<Vec<OverdueItem>> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1405,7 +1395,7 @@ pub async fn get_overdue_receivables(
     .await
     {
         Ok(rows) => rows,
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Err(e) => return crate::shared::err_resp(e),
     };
 
     let mut items = Vec::new();
@@ -1434,7 +1424,7 @@ pub async fn get_overdue_receivables(
     }
     items.sort_by(|a, b| b.overdue_days.cmp(&a.overdue_days));
 
-    Json(ApiResponse::success(items, "Success"))
+    ApiResponse::success(items, "Success")
 }
 
 // ========== 导出（CSV 文本返回，供前端下载）==========
@@ -1461,7 +1451,7 @@ fn csv_escape(v: &str) -> String {
 pub async fn export_sales_invoices(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1478,7 +1468,7 @@ pub async fn export_sales_invoices(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Err(e) => return crate::shared::err_resp(e),
     };
 
     let mut csv = String::from("发票号,客户,开票日期,总额,已收,状态\n");
@@ -1493,7 +1483,7 @@ pub async fn export_sales_invoices(
             r.get::<String, _>("status"),
         ));
     }
-    Json(ApiResponse::success(csv, "Success"))
+    ApiResponse::success(csv, "Success")
 }
 
 /// GET /sales-collections/export
@@ -1510,7 +1500,7 @@ pub async fn export_sales_invoices(
 pub async fn export_collections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1528,7 +1518,7 @@ pub async fn export_collections(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Err(e) => return crate::shared::err_resp(e),
     };
 
     let mut csv = String::from("回款单号,客户,回款日期,金额,支付方式,状态\n");
@@ -1543,7 +1533,7 @@ pub async fn export_collections(
             csv_escape(&r.get::<String, _>("st")),
         ));
     }
-    Json(ApiResponse::success(csv, "Success"))
+    ApiResponse::success(csv, "Success")
 }
 
 /// GET /reports/receivable-aging/export
@@ -1560,7 +1550,7 @@ pub async fn export_collections(
 pub async fn export_receivable_aging(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1578,7 +1568,7 @@ pub async fn export_receivable_aging(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(crate::shared::err_resp(e)),
+        Err(e) => return crate::shared::err_resp(e),
     };
 
     let now = today();
@@ -1600,7 +1590,7 @@ pub async fn export_receivable_aging(
             bucket,
         ));
     }
-    Json(ApiResponse::success(csv, "Success"))
+    ApiResponse::success(csv, "Success")
 }
 
 // ========== 路由 ==========

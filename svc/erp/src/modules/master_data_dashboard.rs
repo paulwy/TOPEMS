@@ -598,11 +598,11 @@ async fn get_dashboard_stats() -> DashboardStats {
 pub async fn get_dashboard_handler(
     State(state): State<ApiState>,
     Path(dashboard_id): Path<String>,
-) -> Json<ApiResponse<DashboardLayout>> {
+) -> ApiResponse<DashboardLayout> {
     let _ = &state;
     match get_dashboard(&dashboard_id).await {
-        Some(dashboard) => Json(ApiResponse::success(dashboard, "仪表盘获取成功")),
-        None => Json(ApiResponse::not_found("未找到仪表盘")),
+        Some(dashboard) => ApiResponse::success(dashboard, "仪表盘获取成功"),
+        None => ApiResponse::not_found("未找到仪表盘"),
     }
 }
 
@@ -618,10 +618,10 @@ pub async fn get_dashboard_handler(
 pub async fn create_dashboard_handler(
     State(state): State<ApiState>,
     Json(req): Json<DashboardRequest>,
-) -> Json<ApiResponse<DashboardLayout>> {
+) -> ApiResponse<DashboardLayout> {
     let _ = &state;
     let dashboard = create_dashboard(&req).await;
-    Json(ApiResponse::success(dashboard, "仪表盘创建成功"))
+    ApiResponse::success(dashboard, "仪表盘创建成功")
 }
 
 /// PUT /dashboard/{dashboard_id} — 更新仪表盘
@@ -637,11 +637,11 @@ pub async fn update_dashboard_handler(
     State(state): State<ApiState>,
     Path(dashboard_id): Path<String>,
     Json(req): Json<DashboardRequest>,
-) -> Json<ApiResponse<DashboardLayout>> {
+) -> ApiResponse<DashboardLayout> {
     let _ = &state;
     match update_dashboard(&dashboard_id, &req).await {
-        Some(dashboard) => Json(ApiResponse::success(dashboard, "仪表盘更新成功")),
-        None => Json(ApiResponse::not_found("未找到仪表盘")),
+        Some(dashboard) => ApiResponse::success(dashboard, "仪表盘更新成功"),
+        None => ApiResponse::not_found("未找到仪表盘"),
     }
 }
 
@@ -657,15 +657,15 @@ pub async fn update_dashboard_handler(
 pub async fn delete_dashboard_handler(
     State(state): State<ApiState>,
     Path(dashboard_id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let _ = &state;
     if delete_dashboard(&dashboard_id).await {
-        Json(ApiResponse::success(
+        ApiResponse::success(
             serde_json::json!({ "dashboard_id": dashboard_id, "deleted": true }),
             "仪表盘删除成功",
-        ))
+        )
     } else {
-        Json(ApiResponse::not_found("未找到仪表盘"))
+        ApiResponse::not_found("未找到仪表盘")
     }
 }
 
@@ -681,11 +681,11 @@ pub async fn delete_dashboard_handler(
 pub async fn get_dashboard_data_handler(
     State(state): State<ApiState>,
     Path(dashboard_id): Path<String>,
-) -> Json<ApiResponse<DashboardData>> {
+) -> ApiResponse<DashboardData> {
     let _ = &state;
     match get_dashboard_data(&dashboard_id).await {
-        Some(data) => Json(ApiResponse::success(data, "仪表盘数据获取成功")),
-        None => Json(ApiResponse::not_found("未找到仪表盘")),
+        Some(data) => ApiResponse::success(data, "仪表盘数据获取成功"),
+        None => ApiResponse::not_found("未找到仪表盘"),
     }
 }
 
@@ -698,12 +698,10 @@ pub async fn get_dashboard_data_handler(
     operation_id = "get_kpi_summary_handler",
     responses((status = 200, description = "OK")),
 )]
-pub async fn get_kpi_summary_handler(
-    State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<KpiMetric>>> {
+pub async fn get_kpi_summary_handler(State(state): State<ApiState>) -> ApiResponse<Vec<KpiMetric>> {
     let _ = &state;
     let kpis = get_kpi_summary().await;
-    Json(ApiResponse::success(kpis, "KPI 摘要获取成功"))
+    ApiResponse::success(kpis, "KPI 摘要获取成功")
 }
 
 /// POST /dashboard/{dashboard_id}/refresh — 刷新仪表盘
@@ -718,11 +716,11 @@ pub async fn get_kpi_summary_handler(
 pub async fn refresh_dashboard_handler(
     State(state): State<ApiState>,
     Path(dashboard_id): Path<String>,
-) -> Json<ApiResponse<DashboardData>> {
+) -> ApiResponse<DashboardData> {
     let _ = &state;
     match refresh_dashboard(&dashboard_id).await {
-        Some(data) => Json(ApiResponse::success(data, "仪表盘刷新成功")),
-        None => Json(ApiResponse::not_found("未找到仪表盘")),
+        Some(data) => ApiResponse::success(data, "仪表盘刷新成功"),
+        None => ApiResponse::not_found("未找到仪表盘"),
     }
 }
 
@@ -737,8 +735,8 @@ pub async fn refresh_dashboard_handler(
 )]
 pub async fn get_dashboard_stats_handler(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<DashboardStats>> {
+) -> ApiResponse<DashboardStats> {
     let _ = &state;
     let stats = get_dashboard_stats().await;
-    Json(ApiResponse::success(stats, "仪表盘统计获取成功"))
+    ApiResponse::success(stats, "仪表盘统计获取成功")
 }

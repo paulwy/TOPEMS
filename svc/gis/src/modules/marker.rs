@@ -39,7 +39,7 @@ pub struct CreateMapMarker {
 pub async fn list_map_markers(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -53,14 +53,14 @@ pub async fn list_map_markers(
         .fetch_all(&pool)
         .await
     {
-        Ok(markers) => Json(ApiResponse::success(
+        Ok(markers) => ApiResponse::success(
             serde_json::json!({
                 "map_markers": markers,
                 "total": markers.len()
             }),
             "获取地图标记列表成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 
@@ -77,9 +77,9 @@ pub async fn create_map_marker(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateMapMarker>,
-) -> Json<ApiResponse<MapMarker>> {
+) -> ApiResponse<MapMarker> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::MapMarkerWrite).await {
-        return e;
+        return e.0;
     }
     let visible = payload.visible.unwrap_or(true);
     let z_index = payload.z_index.unwrap_or(100);
@@ -107,8 +107,8 @@ pub async fn create_map_marker(
     .fetch_one(&pool)
     .await
     {
-        Ok(marker) => Json(ApiResponse::success(marker, "创建地图标记成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库插入失败", e))),
+        Ok(marker) => ApiResponse::success(marker, "创建地图标记成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库插入失败", e)),
     }
 }
 
@@ -125,7 +125,7 @@ pub async fn get_map_marker(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<MapMarker>> {
+) -> ApiResponse<MapMarker> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -140,9 +140,9 @@ pub async fn get_map_marker(
         .fetch_one(&pool)
         .await
     {
-        Ok(marker) => Json(ApiResponse::success(marker, "获取地图标记成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("地图标记未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
+        Ok(marker) => ApiResponse::success(marker, "获取地图标记成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("地图标记未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 
@@ -164,9 +164,9 @@ pub async fn update_map_marker(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<CreateMapMarker>,
-) -> Json<ApiResponse<MapMarker>> {
+) -> ApiResponse<MapMarker> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::MapMarkerWrite).await {
-        return e;
+        return e.0;
     }
     let visible = payload.visible.unwrap_or(true);
     let z_index = payload.z_index.unwrap_or(100);
@@ -194,9 +194,9 @@ pub async fn update_map_marker(
     .fetch_one(&pool)
     .await
     {
-        Ok(marker) => Json(ApiResponse::success(marker, "更新地图标记成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("地图标记未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库更新失败", e))),
+        Ok(marker) => ApiResponse::success(marker, "更新地图标记成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("地图标记未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库更新失败", e)),
     }
 }
 
@@ -217,9 +217,9 @@ pub async fn delete_map_marker(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::MapMarkerWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
 
@@ -234,15 +234,12 @@ pub async fn delete_map_marker(
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
-                Json(ApiResponse::success(true, "删除地图标记成功"))
+                ApiResponse::success(true, "删除地图标记成功")
             } else {
-                Json(ApiResponse::not_found("地图标记未找到"))
+                ApiResponse::not_found("地图标记未找到")
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库删除失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库删除失败", e)),
     }
 }
 

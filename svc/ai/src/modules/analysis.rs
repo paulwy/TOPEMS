@@ -77,7 +77,7 @@ pub async fn sentiment(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<SentimentAnalysisRequest>,
-) -> Json<ApiResponse<SentimentAnalysisResponse>> {
+) -> ApiResponse<SentimentAnalysisResponse> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"text_length": req.text.len()}));
@@ -101,7 +101,7 @@ pub async fn sentiment(
             {
                 tracing::warn!("ai audit failed: {e}");
             }
-            Json(ApiResponse::success(response, "Success"))
+            ApiResponse::success(response, "Success")
         }
         Err(e) => {
             let err_msg = e.to_string();
@@ -119,9 +119,7 @@ pub async fn sentiment(
             {
                 tracing::warn!("ai audit failed: {audit_err}");
             }
-            Json(ApiResponse::<SentimentAnalysisResponse>::from(
-                TopemsError::internal("情感分析失败", e),
-            ))
+            ApiResponse::<SentimentAnalysisResponse>::from(TopemsError::internal("情感分析失败", e))
         }
     }
 }
@@ -132,7 +130,7 @@ pub async fn classify(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<ClassifyTextRequest>,
-) -> Json<ApiResponse<ClassifyTextResponse>> {
+) -> ApiResponse<ClassifyTextResponse> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"categories": req.categories}));
@@ -156,7 +154,7 @@ pub async fn classify(
             {
                 tracing::warn!("ai audit failed: {e}");
             }
-            Json(ApiResponse::success(response, "Success"))
+            ApiResponse::success(response, "Success")
         }
         Err(e) => {
             let err_msg = e.to_string();
@@ -174,9 +172,7 @@ pub async fn classify(
             {
                 tracing::warn!("ai audit failed: {audit_err}");
             }
-            Json(ApiResponse::<ClassifyTextResponse>::from(
-                TopemsError::internal("内容分类失败", e),
-            ))
+            ApiResponse::<ClassifyTextResponse>::from(TopemsError::internal("内容分类失败", e))
         }
     }
 }
@@ -186,17 +182,17 @@ pub async fn extract_entities(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExtractEntitiesRequest>,
-) -> Json<ApiResponse<ExtractEntitiesResponse>> {
+) -> ApiResponse<ExtractEntitiesResponse> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     match state
         .analysis_service
         .extract_entities(&req.text, req.entity_types.as_deref(), tenant_id)
         .await
     {
-        Ok(response) => Json(ApiResponse::success(response, "Success")),
-        Err(e) => Json(ApiResponse::<ExtractEntitiesResponse>::from(
-            TopemsError::internal("实体抽取失败", e),
-        )),
+        Ok(response) => ApiResponse::success(response, "Success"),
+        Err(e) => {
+            ApiResponse::<ExtractEntitiesResponse>::from(TopemsError::internal("实体抽取失败", e))
+        }
     }
 }
 
@@ -215,17 +211,17 @@ pub async fn extract_keywords(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExtractKeywordsRequest>,
-) -> Json<ApiResponse<ExtractKeywordsResponse>> {
+) -> ApiResponse<ExtractKeywordsResponse> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     match state
         .analysis_service
         .extract_keywords(&req.text, req.max_keywords, tenant_id)
         .await
     {
-        Ok(response) => Json(ApiResponse::success(response, "Success")),
-        Err(e) => Json(ApiResponse::<ExtractKeywordsResponse>::from(
-            TopemsError::internal("关键词抽取失败", e),
-        )),
+        Ok(response) => ApiResponse::success(response, "Success"),
+        Err(e) => {
+            ApiResponse::<ExtractKeywordsResponse>::from(TopemsError::internal("关键词抽取失败", e))
+        }
     }
 }
 
@@ -239,7 +235,7 @@ pub async fn history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalysisHistoryRequest>,
-) -> Json<ApiResponse<AnalysisHistoryResponse>> {
+) -> ApiResponse<AnalysisHistoryResponse> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let limit = req.limit.unwrap_or(50);
     match state
@@ -249,13 +245,11 @@ pub async fn history(
     {
         Ok(history) => {
             let total = history.len() as i32;
-            Json(ApiResponse::success(
-                AnalysisHistoryResponse { history, total },
-                "Success",
-            ))
+            ApiResponse::success(AnalysisHistoryResponse { history, total }, "Success")
         }
-        Err(e) => Json(ApiResponse::<AnalysisHistoryResponse>::from(
-            TopemsError::internal("获取分析历史失败", e),
+        Err(e) => ApiResponse::<AnalysisHistoryResponse>::from(TopemsError::internal(
+            "获取分析历史失败",
+            e,
         )),
     }
 }

@@ -79,7 +79,7 @@ pub async fn list_processes(
     Extension(claims): Extension<Claims>,
     Query(query): Query<ProcessQuery>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -137,7 +137,7 @@ pub async fn list_processes(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "processes": processes,
                     "total": total,
@@ -145,11 +145,11 @@ pub async fn list_processes(
                     "page_size": page_size
                 }),
                 "获取工序列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取工序列表失败: {}", e);
-            Json(ApiResponse::server_error("获取工序列表失败"))
+            ApiResponse::server_error("获取工序列表失败")
         }
     }
 }
@@ -167,7 +167,7 @@ pub async fn create_process(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateProcessRequest>,
-) -> Json<ApiResponse<ProductionProcess>> {
+) -> ApiResponse<ProductionProcess> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -180,10 +180,10 @@ pub async fn create_process(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.process_no.is_empty() {
-        return Json(ApiResponse::bad_request("工序编号不能为空"));
+        return ApiResponse::bad_request("工序编号不能为空");
     }
     if req.name.is_empty() {
-        return Json(ApiResponse::bad_request("工序名称不能为空"));
+        return ApiResponse::bad_request("工序名称不能为空");
     }
 
     let status = req.status.unwrap_or_else(|| "active".to_string());
@@ -207,10 +207,10 @@ pub async fn create_process(
     .await;
 
     match result {
-        Ok(process) => Json(ApiResponse::success(process, "工序创建成功")),
+        Ok(process) => ApiResponse::success(process, "工序创建成功"),
         Err(e) => {
             tracing::error!("创建工序失败: {}", e);
-            Json(ApiResponse::server_error("创建工序失败"))
+            ApiResponse::server_error("创建工序失败")
         }
     }
 }
@@ -231,7 +231,7 @@ pub async fn get_process(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<ProductionProcess>> {
+) -> ApiResponse<ProductionProcess> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -260,11 +260,11 @@ pub async fn get_process(
     .await;
 
     match result {
-        Ok(Some(process)) => Json(ApiResponse::success(process, "获取工序成功")),
-        Ok(None) => Json(ApiResponse::not_found("工序不存在")),
+        Ok(Some(process)) => ApiResponse::success(process, "获取工序成功"),
+        Ok(None) => ApiResponse::not_found("工序不存在"),
         Err(e) => {
             tracing::error!("获取工序失败: {}", e);
-            Json(ApiResponse::server_error("获取工序失败"))
+            ApiResponse::server_error("获取工序失败")
         }
     }
 }
@@ -287,7 +287,7 @@ pub async fn update_process(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProcessRequest>,
-) -> Json<ApiResponse<ProductionProcess>> {
+) -> ApiResponse<ProductionProcess> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -329,11 +329,11 @@ pub async fn update_process(
     .await;
 
     match result {
-        Ok(Some(process)) => Json(ApiResponse::success(process, "工序更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("工序不存在")),
+        Ok(Some(process)) => ApiResponse::success(process, "工序更新成功"),
+        Ok(None) => ApiResponse::not_found("工序不存在"),
         Err(e) => {
             tracing::error!("更新工序失败: {}", e);
-            Json(ApiResponse::server_error("更新工序失败"))
+            ApiResponse::server_error("更新工序失败")
         }
     }
 }
@@ -354,7 +354,7 @@ pub async fn delete_process(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -375,11 +375,11 @@ pub async fn delete_process(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "工序删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("工序不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "工序删除成功"),
+        Ok(_) => ApiResponse::not_found("工序不存在"),
         Err(e) => {
             tracing::error!("删除工序失败: {}", e);
-            Json(ApiResponse::server_error("删除工序失败"))
+            ApiResponse::server_error("删除工序失败")
         }
     }
 }

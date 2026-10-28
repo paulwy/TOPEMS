@@ -98,7 +98,7 @@ pub async fn list_materials(
     Extension(claims): Extension<Claims>,
     Query(query): Query<MaterialQuery>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -135,7 +135,7 @@ pub async fn list_materials(
             cache_key = %cache_key,
             "物料列表缓存命中"
         );
-        return Json(ApiResponse::success(cached, "获取物料列表成功"));
+        return ApiResponse::success(cached, "获取物料列表成功");
     }
 
     // 缓存未命中，记录指标
@@ -203,11 +203,11 @@ pub async fn list_materials(
                 "物料列表缓存写入"
             );
 
-            Json(ApiResponse::success(response_data, "获取物料列表成功"))
+            ApiResponse::success(response_data, "获取物料列表成功")
         }
         Err(e) => {
             tracing::error!("获取物料列表失败: {}", e);
-            Json(ApiResponse::server_error("获取物料列表失败"))
+            ApiResponse::server_error("获取物料列表失败")
         }
     }
 }
@@ -225,20 +225,20 @@ pub async fn create_material(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateMaterialRequest>,
-) -> Json<ApiResponse<Material>> {
+) -> ApiResponse<Material> {
     // 超管落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400，禁止落全零
     let tenant_opt = match resolve_create_tenant(&claims) {
         Ok(t) => t,
-        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
     // MDM 事件载荷需要 Uuid 类型，公共行（超管）沿用 nil 仅用于事件，不落库
     let tenant_id = tenant_opt.unwrap_or(uuid::Uuid::nil());
 
     if req.material_no.is_empty() {
-        return Json(ApiResponse::bad_request("物料编号不能为空"));
+        return ApiResponse::bad_request("物料编号不能为空");
     }
     if req.name.is_empty() {
-        return Json(ApiResponse::bad_request("物料名称不能为空"));
+        return ApiResponse::bad_request("物料名称不能为空");
     }
 
     let status = req.status.unwrap_or_else(|| "active".to_string());
@@ -344,11 +344,11 @@ pub async fn create_material(
                 });
             }
 
-            Json(ApiResponse::success(material, "物料创建成功"))
+            ApiResponse::success(material, "物料创建成功")
         }
         Err(e) => {
             tracing::error!("创建物料失败: {}", e);
-            Json(ApiResponse::server_error("创建物料失败"))
+            ApiResponse::server_error("创建物料失败")
         }
     }
 }
@@ -369,7 +369,7 @@ pub async fn get_material(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<Material>> {
+) -> ApiResponse<Material> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -398,11 +398,11 @@ pub async fn get_material(
     .await;
 
     match result {
-        Ok(Some(material)) => Json(ApiResponse::success(material, "获取物料成功")),
-        Ok(None) => Json(ApiResponse::not_found("物料不存在")),
+        Ok(Some(material)) => ApiResponse::success(material, "获取物料成功"),
+        Ok(None) => ApiResponse::not_found("物料不存在"),
         Err(e) => {
             tracing::error!("获取物料失败: {}", e);
-            Json(ApiResponse::server_error("获取物料失败"))
+            ApiResponse::server_error("获取物料失败")
         }
     }
 }
@@ -425,7 +425,7 @@ pub async fn update_material(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateMaterialRequest>,
-) -> Json<ApiResponse<Material>> {
+) -> ApiResponse<Material> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -450,10 +450,10 @@ pub async fn update_material(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => return Json(ApiResponse::not_found("物料不存在")),
+        Ok(None) => return ApiResponse::not_found("物料不存在"),
         Err(e) => {
             tracing::error!("查询物料失败: {}", e);
-            return Json(ApiResponse::server_error("查询物料失败"));
+            return ApiResponse::server_error("查询物料失败");
         }
     };
 
@@ -531,11 +531,11 @@ pub async fn update_material(
                 });
             }
 
-            Json(ApiResponse::success(material, "物料更新成功"))
+            ApiResponse::success(material, "物料更新成功")
         }
         Err(e) => {
             tracing::error!("更新物料失败: {}", e);
-            Json(ApiResponse::server_error("更新物料失败"))
+            ApiResponse::server_error("更新物料失败")
         }
     }
 }
@@ -556,7 +556,7 @@ pub async fn delete_material(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -617,12 +617,12 @@ pub async fn delete_material(
                 });
             }
 
-            Json(ApiResponse::success(true, "物料删除成功"))
+            ApiResponse::success(true, "物料删除成功")
         }
-        Ok(_) => Json(ApiResponse::not_found("物料不存在")),
+        Ok(_) => ApiResponse::not_found("物料不存在"),
         Err(e) => {
             tracing::error!("删除物料失败: {}", e);
-            Json(ApiResponse::server_error("删除物料失败"))
+            ApiResponse::server_error("删除物料失败")
         }
     }
 }

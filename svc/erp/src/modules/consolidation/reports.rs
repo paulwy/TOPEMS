@@ -25,7 +25,7 @@ pub async fn list_reports(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<ConsolidationReport>>> {
+) -> ApiResponse<PaginatedResponse<ConsolidationReport>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -76,16 +76,14 @@ pub async fn list_reports(
             .await;
 
             let total = count_result.unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(reports, total, page, page_size),
                 "获取合并报表列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取合并报表列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取合并报表列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取合并报表列表失败".to_string()))
         }
     }
 }
@@ -104,7 +102,7 @@ pub async fn get_report(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ConsolidationReport>> {
+) -> ApiResponse<ConsolidationReport> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -122,15 +120,11 @@ pub async fn get_report(
     .fetch_optional(&mut **txn)
     .await
     {
-        Ok(Some(report)) => Json(ApiResponse::success(report, "获取合并报表成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "合并报表不存在".to_string(),
-        ))),
+        Ok(Some(report)) => ApiResponse::success(report, "获取合并报表成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("合并报表不存在".to_string())),
         Err(e) => {
             tracing::error!("获取合并报表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取合并报表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取合并报表失败".to_string()))
         }
     }
 }
@@ -152,7 +146,7 @@ pub async fn generate_report(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<GenerateConsolidationReportRequest>,
-) -> Json<ApiResponse<ConsolidationReport>> {
+) -> ApiResponse<ConsolidationReport> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -201,9 +195,7 @@ pub async fn generate_report(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("生成合并报表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "生成合并报表失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("生成合并报表失败".to_string()));
         }
     };
 
@@ -251,16 +243,14 @@ pub async fn generate_report(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(report, "生成合并报表成功"))
+            ApiResponse::success(report, "生成合并报表成功")
         }
         Err(e) => {
             tracing::error!("更新合并报表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新合并报表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新合并报表失败".to_string()))
         }
     }
 }
@@ -279,7 +269,7 @@ pub async fn get_report_lines(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<ConsolidationReportLine>>> {
+) -> ApiResponse<Vec<ConsolidationReportLine>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -292,12 +282,10 @@ pub async fn get_report_lines(
     .fetch_all(&mut **txn)
     .await
     {
-        Ok(lines) => Json(ApiResponse::success(lines, "获取合并报表行项目成功")),
+        Ok(lines) => ApiResponse::success(lines, "获取合并报表行项目成功"),
         Err(e) => {
             tracing::error!("获取合并报表行项目失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取合并报表行项目失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取合并报表行项目失败".to_string()))
         }
     }
 }
@@ -318,7 +306,7 @@ pub async fn export_report(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -338,15 +326,11 @@ pub async fn export_report(
     {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "合并报表不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("合并报表不存在".to_string()))
         }
         Err(e) => {
             tracing::error!("导出合并报表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "导出合并报表失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("导出合并报表失败".to_string()));
         }
     };
 
@@ -360,9 +344,7 @@ pub async fn export_report(
         Ok(l) => l,
         Err(e) => {
             tracing::error!("导出合并报表行项目失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "导出合并报表行项目失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("导出合并报表行项目失败".to_string()));
         }
     };
 
@@ -371,7 +353,7 @@ pub async fn export_report(
         "lines": lines,
     });
 
-    Json(ApiResponse::success(export_data, "导出合并报表成功"))
+    ApiResponse::success(export_data, "导出合并报表成功")
 }
 
 #[utoipa::path(
@@ -391,7 +373,7 @@ pub async fn submit_report(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ConsolidationReport>> {
+) -> ApiResponse<ConsolidationReport> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -414,11 +396,9 @@ pub async fn submit_report(
     let report = match report_result {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "合并报表不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("合并报表不存在".to_string()))
         }
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败: {}", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败: {}", e)),
     };
 
     if let Err(e) = call_finance_core_approval(
@@ -463,16 +443,14 @@ pub async fn submit_report(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(report, "提交审批成功"))
+            ApiResponse::success(report, "提交审批成功")
         }
         Err(e) => {
             tracing::error!("提交审批失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "提交审批失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("提交审批失败".to_string()))
         }
     }
 }
@@ -492,7 +470,7 @@ pub async fn approve_report(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ConsolidationReport>> {
+) -> ApiResponse<ConsolidationReport> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -515,11 +493,9 @@ pub async fn approve_report(
     let report = match report_result {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "合并报表不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("合并报表不存在".to_string()))
         }
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败: {}", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败: {}", e)),
     };
 
     if let Err(e) = call_finance_core_approval(
@@ -564,16 +540,14 @@ pub async fn approve_report(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(report, "审批合并报表成功"))
+            ApiResponse::success(report, "审批合并报表成功")
         }
         Err(e) => {
             tracing::error!("审批合并报表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "审批合并报表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("审批合并报表失败".to_string()))
         }
     }
 }
@@ -593,7 +567,7 @@ pub async fn publish_report(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ConsolidationReport>> {
+) -> ApiResponse<ConsolidationReport> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -626,19 +600,15 @@ pub async fn publish_report(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(report, "发布合并报表成功"))
+            ApiResponse::success(report, "发布合并报表成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "合并报表不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("合并报表不存在".to_string())),
         Err(e) => {
             tracing::error!("发布合并报表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "发布合并报表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("发布合并报表失败".to_string()))
         }
     }
 }
@@ -658,7 +628,7 @@ pub async fn delete_report(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -673,9 +643,9 @@ pub async fn delete_report(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                ApiResponse::from(TopemsError::ResourceNotFound(
                     "合并报表不存在".to_string(),
-                )))
+                ))
             } else {
                 log_audit(
                     &state.db,
@@ -688,17 +658,17 @@ pub async fn delete_report(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("事务提交失败: {}", e);
-                        return Json(ApiResponse::server_error("事务提交失败"));
+                        return ApiResponse::server_error("事务提交失败");
                     }
                 }
-                Json(ApiResponse::success((), "删除合并报表成功"))
+                ApiResponse::success((), "删除合并报表成功")
             }
         }
         Err(e) => {
             tracing::error!("删除合并报表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
+            ApiResponse::from(TopemsError::Internal(
                 "删除合并报表失败".to_string(),
-            )))
+            ))
         }
     }
 }

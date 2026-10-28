@@ -107,12 +107,9 @@ pub struct ProcessEventsRequest {
     operation_id = "list_published_events",
 )]
 
-pub async fn list_published_events() -> Json<ApiResponse<Vec<PublishedEvent>>> {
+pub async fn list_published_events() -> ApiResponse<Vec<PublishedEvent>> {
     let pipeline = get_event_pipeline();
-    Json(ApiResponse::success(
-        pipeline.get_published_events(),
-        "查询成功",
-    ))
+    ApiResponse::success(pipeline.get_published_events(), "查询成功")
 }
 
 #[utoipa::path(
@@ -128,19 +125,14 @@ pub async fn list_published_events() -> Json<ApiResponse<Vec<PublishedEvent>>> {
     operation_id = "list_event_handlers",
 )]
 /// 事件管道诊断自省：返回当前已注册的处理器名列表（内存管道，非 DB 存储）
-pub async fn list_handlers() -> Json<ApiResponse<HandlersResponse>> {
+pub async fn list_handlers() -> ApiResponse<HandlersResponse> {
     let pipeline = get_event_pipeline();
     let handlers = pipeline.get_router().list_handlers();
     let count = handlers.len();
-    Json(ApiResponse::success(
-        HandlersResponse { handlers, count },
-        "查询成功",
-    ))
+    ApiResponse::success(HandlersResponse { handlers, count }, "查询成功")
 }
 
-pub async fn route_event(
-    Json(req): Json<RouteEventRequest>,
-) -> Json<ApiResponse<RouteEventResponse>> {
+pub async fn route_event(Json(req): Json<RouteEventRequest>) -> ApiResponse<RouteEventResponse> {
     let pipeline = get_event_pipeline();
     let results = pipeline
         .get_router()
@@ -148,31 +140,26 @@ pub async fn route_event(
         .await;
     let handlers_invoked = results.len();
     let results_dto: Vec<RouteResultDto> = results.into_iter().map(RouteResultDto::from).collect();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         RouteEventResponse {
             results: results_dto,
             handlers_invoked,
         },
         "路由完成",
-    ))
+    )
 }
 
-pub async fn process_events(
-    Json(req): Json<ProcessEventsRequest>,
-) -> Json<ApiResponse<PipelineResult>> {
+pub async fn process_events(Json(req): Json<ProcessEventsRequest>) -> ApiResponse<PipelineResult> {
     let pipeline = get_event_pipeline();
     let result = pipeline.process_events(&req.events).await;
-    Json(ApiResponse::success(result, "处理完成"))
+    ApiResponse::success(result, "处理完成")
 }
 
-pub async fn list_sagas() -> Json<ApiResponse<SagasListResponse>> {
+pub async fn list_sagas() -> ApiResponse<SagasListResponse> {
     let pipeline = get_event_pipeline();
     let items = pipeline.get_saga_coordinator().list_sagas(None).await;
     let total = items.len();
-    Json(ApiResponse::success(
-        SagasListResponse { items, total },
-        "查询成功",
-    ))
+    ApiResponse::success(SagasListResponse { items, total }, "查询成功")
 }
 #[utoipa::path(
     get,
@@ -192,15 +179,15 @@ pub async fn list_sagas() -> Json<ApiResponse<SagasListResponse>> {
     operation_id = "get_saga",
 )]
 
-pub async fn get_saga(Path(saga_id): Path<String>) -> Json<ApiResponse<SagaInstance>> {
+pub async fn get_saga(Path(saga_id): Path<String>) -> ApiResponse<SagaInstance> {
     let pipeline = get_event_pipeline();
     match pipeline.get_saga_coordinator().get_saga(&saga_id).await {
-        Some(instance) => Json(ApiResponse::success(instance, "查询成功")),
-        None => Json(ApiResponse::not_found(&format!("Saga {} 未找到", saga_id))),
+        Some(instance) => ApiResponse::success(instance, "查询成功"),
+        None => ApiResponse::not_found(&format!("Saga {} 未找到", saga_id)),
     }
 }
 
-pub async fn start_saga(Json(req): Json<StartSagaRequest>) -> Json<ApiResponse<StartSagaResponse>> {
+pub async fn start_saga(Json(req): Json<StartSagaRequest>) -> ApiResponse<StartSagaResponse> {
     let pipeline = get_event_pipeline();
     match pipeline
         .get_saga_coordinator()
@@ -216,44 +203,27 @@ pub async fn start_saga(Json(req): Json<StartSagaRequest>) -> Json<ApiResponse<S
                 .await
                 .map(|i| i.status)
                 .unwrap_or(SagaStatus::Running);
-            Json(ApiResponse::success(
-                StartSagaResponse { saga_id, status },
-                "Saga 已启动并执行",
-            ))
+            ApiResponse::success(StartSagaResponse { saga_id, status }, "Saga 已启动并执行")
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "启动 Saga 失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("启动 Saga 失败", e)),
     }
 }
 
-pub async fn compensate_saga(
-    Path(saga_id): Path<String>,
-) -> Json<ApiResponse<CompensateSagaResponse>> {
+pub async fn compensate_saga(Path(saga_id): Path<String>) -> ApiResponse<CompensateSagaResponse> {
     let pipeline = get_event_pipeline();
     match pipeline
         .get_saga_coordinator()
         .compensate_saga(&saga_id)
         .await
     {
-        Ok(status) => Json(ApiResponse::success(
-            CompensateSagaResponse { saga_id, status },
-            "补偿完成",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "补偿 Saga 失败",
-            e,
-        ))),
+        Ok(status) => ApiResponse::success(CompensateSagaResponse { saga_id, status }, "补偿完成"),
+        Err(e) => ApiResponse::from(TopemsError::internal("补偿 Saga 失败", e)),
     }
 }
 
-pub async fn saga_stats() -> Json<ApiResponse<SagaStats>> {
+pub async fn saga_stats() -> ApiResponse<SagaStats> {
     let pipeline = get_event_pipeline();
-    Json(ApiResponse::success(
-        pipeline.get_saga_coordinator().get_stats(),
-        "查询成功",
-    ))
+    ApiResponse::success(pipeline.get_saga_coordinator().get_stats(), "查询成功")
 }
 #[utoipa::path(
     get,
@@ -270,8 +240,8 @@ pub async fn saga_stats() -> Json<ApiResponse<SagaStats>> {
     operation_id = "pipeline_stats",
 )]
 
-pub async fn pipeline_stats() -> Json<ApiResponse<PipelineStats>> {
-    Json(ApiResponse::success(get_pipeline_stats(), "查询成功"))
+pub async fn pipeline_stats() -> ApiResponse<PipelineStats> {
+    ApiResponse::success(get_pipeline_stats(), "查询成功")
 }
 
 // =============================================================================

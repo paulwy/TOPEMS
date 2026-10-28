@@ -206,10 +206,10 @@ impl ValidationError {
     }
 
     /// 转为 handler 层统一错误响应（ApiResponse::error，同时设置 code 与人类可读消息）
-    pub fn into_api_response<T>(self) -> Json<ApiResponse<T>> {
+    pub fn into_api_response<T>(self) -> ApiResponse<T> {
         let code = self.http_status_code();
         let msg = self.to_string();
-        Json(ApiResponse::error(code, &msg))
+        ApiResponse::error(code, &msg)
     }
 }
 
@@ -1976,7 +1976,7 @@ pub async fn reconcile_batch_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ReconcileBatchRequest>,
-) -> Json<ApiResponse<Vec<ReconciliationResult>>> {
+) -> ApiResponse<Vec<ReconciliationResult>> {
     // [V232-P0.1 NEW] Step 1: pure-fn pre-validate (只读 pool，不开启事务) · Equiv-refactor discipline
     let validated = match validate_reverse_settlement_prepare(&req, &state.pool).await {
         Ok(v) => v,
@@ -2003,9 +2003,9 @@ pub async fn reconcile_batch_handler(
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::reconcile_batch(&pool, tenant_id, req).await {
-        Ok(results) => Json(ApiResponse::success(results, "批量对账完成")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::bad_request(&msg.to_string())),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(results) => ApiResponse::success(results, "批量对账完成"),
+        Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2013,7 +2013,7 @@ pub async fn reconcile_single_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ReconcileSingleRequest>,
-) -> Json<ApiResponse<ReconciliationResult>> {
+) -> ApiResponse<ReconciliationResult> {
     let now = Utc::now();
     if let Err(ve) = req.prevalidate(now, Some(180), true) {
         return ve.into_api_response();
@@ -2021,9 +2021,9 @@ pub async fn reconcile_single_handler(
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::reconcile_single(&pool, tenant_id, req).await {
-        Ok(result) => Json(ApiResponse::success(result, "对账完成")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::bad_request(&msg.to_string())),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "对账完成"),
+        Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2031,7 +2031,7 @@ pub async fn get_recon_results_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReconResultQueryParams>,
-) -> Json<ApiResponse<Vec<ReconciliationResult>>> {
+) -> ApiResponse<Vec<ReconciliationResult>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -2039,8 +2039,8 @@ pub async fn get_recon_results_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match AutoReconciler::get_results(&pool, tenant_id, params.status).await {
-        Ok(results) => Json(ApiResponse::success(results, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(results) => ApiResponse::success(results, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2048,19 +2048,19 @@ pub async fn create_recon_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRuleRequest>,
-) -> Json<ApiResponse<ReconciliationRule>> {
+) -> ApiResponse<ReconciliationRule> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::create_rule(&pool, tenant_id, req).await {
-        Ok(rule) => Json(ApiResponse::success(rule, "创建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(rule) => ApiResponse::success(rule, "创建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn list_recon_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ReconciliationRule>>> {
+) -> ApiResponse<Vec<ReconciliationRule>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -2068,8 +2068,8 @@ pub async fn list_recon_rules_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match AutoReconciler::list_rules(&pool, tenant_id).await {
-        Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(rules) => ApiResponse::success(rules, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2077,12 +2077,12 @@ pub async fn approve_match_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ReconciliationResult>> {
+) -> ApiResponse<ReconciliationResult> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::approve_match(&pool, tenant_id, id).await {
-        Ok(result) => Json(ApiResponse::success(result, "审批通过")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "审批通过"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2090,12 +2090,12 @@ pub async fn dispute_match_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ReconciliationResult>> {
+) -> ApiResponse<ReconciliationResult> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::dispute_match(&pool, tenant_id, id).await {
-        Ok(result) => Json(ApiResponse::success(result, "已标记争议")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "已标记争议"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2115,7 +2115,7 @@ pub async fn recognize_invoice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RecognizeInvoiceRequest>,
-) -> Json<ApiResponse<RecognizedInvoice>> {
+) -> ApiResponse<RecognizedInvoice> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     // OCR 识别层不强制校验未来日期（允许识别后走审批流修正），只在 prevalidate_recognize 之前先兜底：
@@ -2131,8 +2131,8 @@ pub async fn recognize_invoice_handler(
         }
     }
     match InvoiceRecognizer::recognize_invoice(&pool, tenant_id, req).await {
-        Ok(invoice) => Json(ApiResponse::success(invoice, "识别完成")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(invoice) => ApiResponse::success(invoice, "识别完成"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2140,7 +2140,7 @@ pub async fn get_invoice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<InvoiceWithItems>> {
+) -> ApiResponse<InvoiceWithItems> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -2148,8 +2148,8 @@ pub async fn get_invoice_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match InvoiceRecognizer::get_invoice(&pool, tenant_id, id).await {
-        Ok(invoice) => Json(ApiResponse::success(invoice, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(invoice) => ApiResponse::success(invoice, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2157,7 +2157,7 @@ pub async fn list_invoices_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InvoiceListQueryParams>,
-) -> Json<ApiResponse<Vec<Invoice>>> {
+) -> ApiResponse<Vec<Invoice>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -2165,8 +2165,8 @@ pub async fn list_invoices_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match InvoiceRecognizer::list_invoices(&pool, tenant_id, params.status).await {
-        Ok(invoices) => Json(ApiResponse::success(invoices, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(invoices) => ApiResponse::success(invoices, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2174,18 +2174,18 @@ pub async fn validate_invoice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Invoice>> {
+) -> ApiResponse<Invoice> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     // 在 validate_invoice 内部调用 prevalidate_recognize；为使语义化错误向上透出，这里把 sqlx::Error::Decode
     // 还原为 ValidationError，并通过 handler 返回精确 HTTP code（400/409）。
     match InvoiceRecognizer::validate_invoice(&pool, tenant_id, id).await {
-        Ok(invoice) => Json(ApiResponse::success(invoice, "验证通过")),
+        Ok(invoice) => ApiResponse::success(invoice, "验证通过"),
         Err(sqlx::Error::Decode(msg)) => {
             // 保守：无法从 Box<dyn Error> 直接下钻时，以 400 抛出完整消息（已包含 ValidationError Display）
-            Json(ApiResponse::bad_request(&msg.to_string()))
+            ApiResponse::bad_request(&msg.to_string())
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2193,15 +2193,15 @@ pub async fn post_invoice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Invoice>> {
+) -> ApiResponse<Invoice> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     // 默认 strict：不允许未来日期发票直接过账（allow_future_date=false）；
     // 若识别层已批准未来日期，可在后续审批流里单独覆盖 allow_future_date=true 分支。
     match InvoiceRecognizer::post_invoice(&pool, tenant_id, id).await {
-        Ok(invoice) => Json(ApiResponse::success(invoice, "过账成功")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::bad_request(&msg.to_string())),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(invoice) => ApiResponse::success(invoice, "过账成功"),
+        Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2210,14 +2210,14 @@ pub async fn match_invoice_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<MatchInvoiceRequest>,
-) -> Json<ApiResponse<Invoice>> {
+) -> ApiResponse<Invoice> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match InvoiceRecognizer::match_invoice_to_purchase(&pool, tenant_id, id, req.purchase_order_id)
         .await
     {
-        Ok(invoice) => Json(ApiResponse::success(invoice, "匹配成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(invoice) => ApiResponse::success(invoice, "匹配成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2251,7 +2251,7 @@ pub async fn initiate_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<InitiatePaymentRequest>,
-) -> Json<ApiResponse<PaymentInitiationResult>> {
+) -> ApiResponse<PaymentInitiationResult> {
     // [V232-P0.1 NEW] Step 1: pure-fn pre-validate (只读 pool，不开启事务) · Equiv-refactor discipline
     let validated = match validate_settlement_prepare(&req, &state.pool).await {
         Ok(v) => v,
@@ -2269,9 +2269,9 @@ pub async fn initiate_payment_handler(
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     match ElectronicPaymentProcessor::initiate_payment(&pool, tenant_id, req).await {
-        Ok(result) => Json(ApiResponse::success(result, "支付发起成功")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::bad_request(&msg.to_string())),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "支付发起成功"),
+        Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2279,7 +2279,7 @@ pub async fn get_payment_status_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<PaymentResult>> {
+) -> ApiResponse<PaymentResult> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -2287,8 +2287,8 @@ pub async fn get_payment_status_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match ElectronicPaymentProcessor::get_payment_status(&pool, tenant_id, id).await {
-        Ok(result) => Json(ApiResponse::success(result, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2296,14 +2296,14 @@ pub async fn reverse_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<PaymentResult>> {
+) -> ApiResponse<PaymentResult> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     // PaymentResult 状态纯函数校验：仅 Completed 允许冲正；否则在 handler 层以 400 返回精确语义错误。
     match ElectronicPaymentProcessor::reverse_payment(&pool, tenant_id, id).await {
-        Ok(result) => Json(ApiResponse::success(result, "冲正成功")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::bad_request(&msg.to_string())),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "冲正成功"),
+        Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2311,7 +2311,7 @@ pub async fn list_payments_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaymentListQueryParams>,
-) -> Json<ApiResponse<Vec<PaymentRequest>>> {
+) -> ApiResponse<Vec<PaymentRequest>> {
     let pool = state.pool.clone();
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -2319,8 +2319,8 @@ pub async fn list_payments_handler(
         Some(get_tenant_id_from_claims(&claims))
     };
     match ElectronicPaymentProcessor::list_payments(&pool, tenant_id, params.status).await {
-        Ok(payments) => Json(ApiResponse::success(payments, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(payments) => ApiResponse::success(payments, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -2329,7 +2329,7 @@ pub async fn schedule_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SchedulePaymentRequest>,
-) -> Json<ApiResponse<PaymentRequest>> {
+) -> ApiResponse<PaymentRequest> {
     // [V232-P0.1 NEW] Step 1: pure-fn pre-validate (只读 pool，不开启事务) · Equiv-refactor discipline
     let validated = match validate_unsettlement_prepare(&req, &state.pool).await {
         Ok(v) => v,
@@ -2361,16 +2361,16 @@ pub async fn schedule_payment_handler(
     match ElectronicPaymentProcessor::schedule_payment(&pool, tenant_id, init_req, req.scheduled_at)
         .await
     {
-        Ok(request) => Json(ApiResponse::success(request, "调度成功")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::bad_request(&msg.to_string())),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(request) => ApiResponse::success(request, "调度成功"),
+        Err(sqlx::Error::Decode(msg)) => ApiResponse::bad_request(&msg.to_string()),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn get_supported_methods_handler(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let methods = ElectronicPaymentProcessor::get_supported_methods();
     let result: Vec<serde_json::Value> = methods
         .iter()
@@ -2381,7 +2381,7 @@ pub async fn get_supported_methods_handler(
             })
         })
         .collect();
-    Json(ApiResponse::success(result, "查询成功"))
+    ApiResponse::success(result, "查询成功")
 }
 
 // ==================== 路由注册 ====================

@@ -54,14 +54,14 @@ pub async fn list_purchase_orders(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<PurchaseOrder>>> {
+) -> ApiResponse<PaginatedResponse<PurchaseOrder>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -103,9 +103,7 @@ pub async fn list_purchase_orders(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("查询采购订单失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询采购订单失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询采购订单失败".to_string()));
         }
     };
 
@@ -120,14 +118,14 @@ pub async fn list_purchase_orders(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("查询采购订单总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询采购订单总数失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询采购订单总数失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(purchase_orders, total, page, page_size),
         "获取采购订单列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -150,14 +148,14 @@ pub async fn get_purchase_order(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
 
     let purchase_order = match sqlx::query_as::<_, PurchaseOrder>(
@@ -170,11 +168,11 @@ pub async fn get_purchase_order(
         Ok(o) => o,
         Err(e) => {
             tracing::error!("查询采购订单失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound("采购订单不存在".to_string())));
+            return ApiResponse::from(TopemsError::ResourceNotFound("采购订单不存在".to_string()));
         }
     };
 
-    Json(ApiResponse::success(purchase_order, "获取采购订单成功"))
+    ApiResponse::success(purchase_order, "获取采购订单成功")
 }
 
 #[utoipa::path(
@@ -194,14 +192,14 @@ pub async fn create_purchase_order(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreatePurchaseOrderRequest>,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     let supplier_name = match sqlx::query_scalar::<_, Option<String>>(only_own_schema_query!(
@@ -253,18 +251,14 @@ pub async fn create_purchase_order(
         Ok(o) => o,
         Err(e) => {
             tracing::error!("创建采购订单失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "创建采购订单失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("创建采购订单失败".to_string()));
         }
     };
 
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
     // D6：commit 成功后发布 PurchaseOrderCreated；失败入重试队列。
@@ -315,7 +309,7 @@ pub async fn create_purchase_order(
         purchase_order.id,
     )
     .await;
-    Json(ApiResponse::success(purchase_order, "创建采购订单成功"))
+    ApiResponse::success(purchase_order, "创建采购订单成功")
 }
 
 #[utoipa::path(
@@ -340,14 +334,14 @@ pub async fn update_purchase_order(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdatePurchaseOrderRequest>,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
@@ -370,24 +364,18 @@ pub async fn update_purchase_order(
     let purchase_order = match result {
         Ok(Some(o)) => o,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "采购订单不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("采购订单不存在".to_string()))
         }
         Err(e) => {
             tracing::error!("更新采购订单失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "更新采购订单失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("更新采购订单失败".to_string()));
         }
     };
 
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
     crate::modules::searchable_projection::emit_after_commit(
@@ -397,7 +385,7 @@ pub async fn update_purchase_order(
         purchase_order.id,
     )
     .await;
-    Json(ApiResponse::success(purchase_order, "更新采购订单成功"))
+    ApiResponse::success(purchase_order, "更新采购订单成功")
 }
 
 #[utoipa::path(
@@ -420,14 +408,14 @@ pub async fn delete_purchase_order(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -443,9 +431,7 @@ pub async fn delete_purchase_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
@@ -455,13 +441,11 @@ pub async fn delete_purchase_order(
                 id,
             )
             .await;
-            Json(ApiResponse::success("".to_string(), "删除采购订单成功"))
+            ApiResponse::success("".to_string(), "删除采购订单成功")
         }
         Err(e) => {
             tracing::error!("删除采购订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除采购订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除采购订单失败".to_string()))
         }
     }
 }
@@ -486,14 +470,14 @@ pub async fn approve_purchase_order(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
@@ -519,9 +503,7 @@ pub async fn approve_purchase_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
@@ -565,16 +547,14 @@ pub async fn approve_purchase_order(
                     }
                 }
             }
-            Json(ApiResponse::success(order, "采购订单审批成功"))
+            ApiResponse::success(order, "采购订单审批成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
             "采购订单不存在或状态不是待审批".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("审批采购订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "审批采购订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("审批采购订单失败".to_string()))
         }
     }
 }
@@ -599,14 +579,14 @@ pub async fn cancel_purchase_order(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
@@ -625,9 +605,7 @@ pub async fn cancel_purchase_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
@@ -637,16 +615,14 @@ pub async fn cancel_purchase_order(
                 r.id,
             )
             .await;
-            Json(ApiResponse::success(r, "采购订单已取消"))
+            ApiResponse::success(r, "采购订单已取消")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
             "采购订单不存在或状态不可取消".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("取消采购订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "取消采购订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("取消采购订单失败".to_string()))
         }
     }
 }

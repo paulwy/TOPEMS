@@ -3,7 +3,7 @@
 use crate::modules::ApiState;
 use axum::extract::Path;
 use axum::extract::Query;
-use axum::{extract::State, Json, Router};
+use axum::{extract::State, Router};
 use serde::Deserialize;
 use serde::Serialize;
 use topems_shared_core::response::PaginatedResponse;
@@ -274,7 +274,7 @@ pub async fn fetch_entries_by_type(
 pub async fn get_contacts(
     State(state): State<ApiState>,
     Query(params): Query<AddressbookQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<AddressbookEntry>>> {
+) -> ApiResponse<PaginatedResponse<AddressbookEntry>> {
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
 
@@ -308,10 +308,10 @@ pub async fn get_contacts(
         Vec::new()
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(paginated_items, total, page as i64, page_size as i64),
         "获取联系人列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -330,13 +330,13 @@ pub async fn get_contact_detail(
     State(state): State<ApiState>,
     Path(id): Path<String>,
     Query(params): Query<ContactDetailParams>,
-) -> Json<ApiResponse<AddressbookDetail>> {
+) -> ApiResponse<AddressbookDetail> {
     match Uuid::parse_str(&id) {
         Ok(uuid) => match params.contact_type.as_str() {
             "EMPLOYEE" => match state.hrm_client.get_employee(uuid).await {
                 Ok(employee) => {
                     let entry: AddressbookEntry = employee.into();
-                    Json(ApiResponse::success(
+                    ApiResponse::success(
                         AddressbookDetail {
                             id: entry.id,
                             contact_type: entry.contact_type,
@@ -354,18 +354,15 @@ pub async fn get_contact_detail(
                             hire_date: None,
                         },
                         "获取联系人详情成功",
-                    ))
+                    )
                 }
-                Err(e) => Json(ApiResponse::from(TopemsError::internal(
-                    "获取员工信息失败",
-                    e,
-                ))),
+                Err(e) => ApiResponse::from(TopemsError::internal("获取员工信息失败", e)),
             },
             "DEPARTMENT" => match state.hrm_client.list_departments().await {
                 Ok(departments) => {
                     if let Some(dept) = departments.into_iter().find(|d| d.id == uuid) {
                         let entry: AddressbookEntry = dept.into();
-                        Json(ApiResponse::success(
+                        ApiResponse::success(
                             AddressbookDetail {
                                 id: entry.id,
                                 contact_type: entry.contact_type,
@@ -383,21 +380,18 @@ pub async fn get_contact_detail(
                                 hire_date: None,
                             },
                             "获取联系人详情成功",
-                        ))
+                        )
                     } else {
-                        Json(ApiResponse::not_found("部门不存在"))
+                        ApiResponse::not_found("部门不存在")
                     }
                 }
-                Err(e) => Json(ApiResponse::from(TopemsError::internal(
-                    "获取部门信息失败",
-                    e,
-                ))),
+                Err(e) => ApiResponse::from(TopemsError::internal("获取部门信息失败", e)),
             },
             "COMPANY" => match state.hrm_client.list_companies().await {
                 Ok(companies) => {
                     if let Some(company) = companies.into_iter().find(|c| c.id == uuid) {
                         let entry: AddressbookEntry = company.into();
-                        Json(ApiResponse::success(
+                        ApiResponse::success(
                             AddressbookDetail {
                                 id: entry.id,
                                 contact_type: entry.contact_type,
@@ -415,19 +409,16 @@ pub async fn get_contact_detail(
                                 hire_date: None,
                             },
                             "获取联系人详情成功",
-                        ))
+                        )
                     } else {
-                        Json(ApiResponse::not_found("公司不存在"))
+                        ApiResponse::not_found("公司不存在")
                     }
                 }
-                Err(e) => Json(ApiResponse::from(TopemsError::internal(
-                    "获取公司信息失败",
-                    e,
-                ))),
+                Err(e) => ApiResponse::from(TopemsError::internal("获取公司信息失败", e)),
             },
-            _ => Json(ApiResponse::bad_request("无效的联系人类型")),
+            _ => ApiResponse::bad_request("无效的联系人类型"),
         },
-        Err(_) => Json(ApiResponse::bad_request("无效的联系人ID格式")),
+        Err(_) => ApiResponse::bad_request("无效的联系人ID格式"),
     }
 }
 
@@ -449,7 +440,7 @@ pub struct ContactDetailParams {
 pub async fn search_contacts(
     State(state): State<ApiState>,
     Query(params): Query<AddressbookSearchParams>,
-) -> Json<ApiResponse<Vec<AddressbookEntry>>> {
+) -> ApiResponse<Vec<AddressbookEntry>> {
     let limit = params.limit.unwrap_or(10);
 
     let mut all_entries = fetch_entries_by_type(&state, params.contact_type.as_deref()).await;
@@ -471,7 +462,7 @@ pub async fn search_contacts(
 
     let limited_entries = all_entries.into_iter().take(limit as usize).collect();
 
-    Json(ApiResponse::success(limited_entries, "搜索成功"))
+    ApiResponse::success(limited_entries, "搜索成功")
 }
 
 #[utoipa::path(
@@ -485,19 +476,16 @@ pub async fn search_contacts(
 )]
 pub async fn get_department_tree(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<HrmDepartmentNode>>> {
+) -> ApiResponse<Vec<HrmDepartmentNode>> {
     match state.hrm_client.list_departments().await {
         Ok(departments) => {
             let tree = build_department_tree(departments);
-            Json(ApiResponse::success(tree, "获取部门树成功"))
+            ApiResponse::success(tree, "获取部门树成功")
         }
         Err(e) => {
             tracing::warn!("获取部门列表失败: {}", e);
             // 返回空部门树而不是错误，避免前端显示"加载失败"
-            Json(ApiResponse::success(
-                Vec::<HrmDepartmentNode>::new(),
-                "获取部门树成功",
-            ))
+            ApiResponse::success(Vec::<HrmDepartmentNode>::new(), "获取部门树成功")
         }
     }
 }
@@ -514,7 +502,7 @@ pub async fn get_department_tree(
 pub async fn export_contacts(
     State(state): State<ApiState>,
     Query(params): Query<ExportParams>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let all_entries = fetch_entries_by_type(&state, params.contact_type.as_deref()).await;
 
     let content = if params.format == "csv" {
@@ -544,7 +532,7 @@ pub async fn export_contacts(
         serde_json::to_string(&all_entries).unwrap_or_default()
     };
 
-    Json(ApiResponse::success(content, "导出成功"))
+    ApiResponse::success(content, "导出成功")
 }
 
 fn escape_csv(s: &str) -> String {
@@ -557,11 +545,11 @@ fn escape_csv(s: &str) -> String {
 
 /// 轻量兜底 handler：通讯录子资源（收藏/分组/标签/导入导出任务/批量/去重合并等）
 /// 前端契约已定义但后端尚无对应表与实现，统一返回空成功信封，避免裸 404（待上游支持）。
-async fn stub_pending_upstream() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+async fn stub_pending_upstream() -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({ "items": [], "total": 0 }),
         "该功能待上游支持",
-    ))
+    )
 }
 
 /// 上述待上游支持端点的路由组（死代码端点轻量兜底）。

@@ -874,10 +874,10 @@ async fn get_compliance_audit_stats() -> ComplianceAuditStats {
 pub async fn list_compliance_rules_handler(
     State(state): State<ApiState>,
     Query(params): Query<ComplianceRuleQuery>,
-) -> Json<ApiResponse<Vec<ComplianceRule>>> {
+) -> ApiResponse<Vec<ComplianceRule>> {
     let _ = &state;
     let rules = list_compliance_rules(params.framework.as_deref()).await;
-    Json(ApiResponse::success(rules, "合规规则列表获取成功"))
+    ApiResponse::success(rules, "合规规则列表获取成功")
 }
 
 /// POST /audit/rules — 创建合规规则
@@ -892,10 +892,10 @@ pub async fn list_compliance_rules_handler(
 pub async fn create_compliance_rule_handler(
     State(state): State<ApiState>,
     Json(req): Json<ComplianceRuleRequest>,
-) -> Json<ApiResponse<ComplianceRule>> {
+) -> ApiResponse<ComplianceRule> {
     let _ = &state;
     let rule = create_compliance_rule(&req).await;
-    Json(ApiResponse::success(rule, "合规规则创建成功"))
+    ApiResponse::success(rule, "合规规则创建成功")
 }
 
 /// POST /audit/check — 执行合规检查
@@ -910,10 +910,10 @@ pub async fn create_compliance_rule_handler(
 pub async fn run_compliance_check_handler(
     State(state): State<ApiState>,
     Json(req): Json<ComplianceCheckRequest>,
-) -> Json<ApiResponse<Vec<AuditFinding>>> {
+) -> ApiResponse<Vec<AuditFinding>> {
     let _ = &state;
     let findings = run_compliance_check(&req).await;
-    Json(ApiResponse::success(findings, "合规检查执行完成"))
+    ApiResponse::success(findings, "合规检查执行完成")
 }
 
 /// GET /audit/findings — 获取审计发现
@@ -930,10 +930,10 @@ pub async fn run_compliance_check_handler(
 pub async fn get_audit_findings_handler(
     State(state): State<ApiState>,
     Query(params): Query<AuditFindingQuery>,
-) -> Json<ApiResponse<Vec<AuditFinding>>> {
+) -> ApiResponse<Vec<AuditFinding>> {
     let _ = &state;
     let findings = get_audit_findings(&params).await;
-    Json(ApiResponse::success(findings, "审计发现列表获取成功"))
+    ApiResponse::success(findings, "审计发现列表获取成功")
 }
 
 /// POST /audit/findings/{finding_id}/resolve — 解决审计发现
@@ -949,11 +949,11 @@ pub async fn resolve_finding_handler(
     State(state): State<ApiState>,
     Path(finding_id): Path<String>,
     Json(req): Json<ResolveFindingRequest>,
-) -> Json<ApiResponse<AuditFinding>> {
+) -> ApiResponse<AuditFinding> {
     let _ = &state;
     match resolve_finding(&finding_id, &req).await {
-        Some(finding) => Json(ApiResponse::success(finding, "审计发现已更新")),
-        None => Json(ApiResponse::not_found("未找到审计发现")),
+        Some(finding) => ApiResponse::success(finding, "审计发现已更新"),
+        None => ApiResponse::not_found("未找到审计发现"),
     }
 }
 
@@ -971,10 +971,10 @@ pub async fn resolve_finding_handler(
 pub async fn generate_audit_report_handler(
     State(state): State<ApiState>,
     Query(params): Query<ComplianceRuleQuery>,
-) -> Json<ApiResponse<ComplianceAuditReport>> {
+) -> ApiResponse<ComplianceAuditReport> {
     let _ = &state;
     let report = generate_audit_report(params.framework.as_deref()).await;
-    Json(ApiResponse::success(report, "审计报告生成成功"))
+    ApiResponse::success(report, "审计报告生成成功")
 }
 
 /// GET /audit/scorecard — 获取审计评分卡
@@ -991,10 +991,10 @@ pub async fn generate_audit_report_handler(
 pub async fn get_audit_scorecard_handler(
     State(state): State<ApiState>,
     Query(params): Query<ComplianceRuleQuery>,
-) -> Json<ApiResponse<AuditScorecard>> {
+) -> ApiResponse<AuditScorecard> {
     let _ = &state;
     let scorecard = get_audit_scorecard(params.framework.as_deref()).await;
-    Json(ApiResponse::success(scorecard, "审计评分卡获取成功"))
+    ApiResponse::success(scorecard, "审计评分卡获取成功")
 }
 
 /// GET /audit/stats — 获取合规审计统计
@@ -1008,8 +1008,8 @@ pub async fn get_audit_scorecard_handler(
 )]
 pub async fn get_compliance_audit_stats_handler(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<ComplianceAuditStats>> {
+) -> ApiResponse<ComplianceAuditStats> {
     let _ = &state;
     let stats = get_compliance_audit_stats().await;
-    Json(ApiResponse::success(stats, "合规审计统计获取成功"))
+    ApiResponse::success(stats, "合规审计统计获取成功")
 }

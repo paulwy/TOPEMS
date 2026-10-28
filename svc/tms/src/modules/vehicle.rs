@@ -88,7 +88,7 @@ pub async fn list_vehicles(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -124,7 +124,7 @@ pub async fn list_vehicles(
             cache_key = %cache_key,
             "车辆列表缓存命中"
         );
-        return Json(ApiResponse::success(cached, "获取车辆列表成功"));
+        return ApiResponse::success(cached, "获取车辆列表成功");
     }
 
     // 缓存未命中，记录指标
@@ -133,9 +133,7 @@ pub async fn list_vehicles(
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let result = sqlx::query_as::<_, Vehicle>(
         r#"
@@ -196,13 +194,11 @@ pub async fn list_vehicles(
                 "车辆列表缓存写入"
             );
 
-            Json(ApiResponse::success(response_data, "获取车辆列表成功"))
+            ApiResponse::success(response_data, "获取车辆列表成功")
         }
         Err(e) => {
             tracing::error!("获取车辆列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取车辆列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取车辆列表失败".to_string()))
         }
     }
 }
@@ -225,13 +221,11 @@ pub async fn create_vehicle(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateVehicleRequest>,
-) -> Json<ApiResponse<Vehicle>> {
+) -> ApiResponse<Vehicle> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -262,7 +256,7 @@ pub async fn create_vehicle(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
 
@@ -286,13 +280,11 @@ pub async fn create_vehicle(
                 });
             }
 
-            Json(ApiResponse::success(vehicle, "车辆创建成功"))
+            ApiResponse::success(vehicle, "车辆创建成功")
         }
         Err(e) => {
             tracing::error!("创建车辆失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "车辆创建失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("车辆创建失败".to_string()))
         }
     }
 }
@@ -317,13 +309,11 @@ pub async fn get_vehicle(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vehicle>> {
+) -> ApiResponse<Vehicle> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -343,15 +333,11 @@ pub async fn get_vehicle(
     .await;
 
     match result {
-        Ok(Some(vehicle)) => Json(ApiResponse::success(vehicle, "获取车辆成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "车辆不存在".to_string(),
-        ))),
+        Ok(Some(vehicle)) => ApiResponse::success(vehicle, "获取车辆成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("车辆不存在".to_string())),
         Err(e) => {
             tracing::error!("获取车辆失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取车辆失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取车辆失败".to_string()))
         }
     }
 }
@@ -378,13 +364,11 @@ pub async fn update_vehicle(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateVehicleRequest>,
-) -> Json<ApiResponse<Vehicle>> {
+) -> ApiResponse<Vehicle> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
@@ -421,7 +405,7 @@ pub async fn update_vehicle(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             } // 失效列表缓存（更新后列表数据可能变化）
             state.dict_cache.clear_l1();
@@ -443,16 +427,12 @@ pub async fn update_vehicle(
                 });
             }
 
-            Json(ApiResponse::success(vehicle, "车辆更新成功"))
+            ApiResponse::success(vehicle, "车辆更新成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "车辆不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("车辆不存在".to_string())),
         Err(e) => {
             tracing::error!("更新车辆失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新车辆失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新车辆失败".to_string()))
         }
     }
 }
@@ -477,13 +457,11 @@ pub async fn delete_vehicle(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
@@ -499,7 +477,7 @@ pub async fn delete_vehicle(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             } // 失效列表缓存（删除后列表数据可能变化）
             state.dict_cache.clear_l1();
@@ -521,16 +499,12 @@ pub async fn delete_vehicle(
                 });
             }
 
-            Json(ApiResponse::success("".to_string(), "车辆删除成功"))
+            ApiResponse::success("".to_string(), "车辆删除成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "车辆不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("车辆不存在".to_string())),
         Err(e) => {
             tracing::error!("删除车辆失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "车辆删除失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("车辆删除失败".to_string()))
         }
     }
 }
@@ -567,13 +541,11 @@ pub async fn submit_inspection(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<Vehicle>> {
+) -> ApiResponse<Vehicle> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
@@ -589,9 +561,9 @@ pub async fn submit_inspection(
     match current {
         Ok(Some(status)) => {
             if vehicle_can_transition(&status, "maintenance").is_err() {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                return ApiResponse::from(TopemsError::ValidationFailed(
                     "当前状态不允许提交检修".to_string(),
-                )));
+                ));
             }
             let result = sqlx::query_as::<_, Vehicle>(
                 r#"
@@ -612,7 +584,7 @@ pub async fn submit_inspection(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::server_error("事务提交失败"));
+                            return ApiResponse::server_error("事务提交失败");
                         }
                     }
                     tracing::info!(
@@ -621,27 +593,21 @@ pub async fn submit_inspection(
                         status,
                         req.operator
                     );
-                    Json(ApiResponse::success(vehicle, "车辆已提交检修"))
+                    ApiResponse::success(vehicle, "车辆已提交检修")
                 }
-                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "车辆不存在".to_string(),
-                ))),
+                Ok(None) => {
+                    ApiResponse::from(TopemsError::ResourceNotFound("车辆不存在".to_string()))
+                }
                 Err(e) => {
                     tracing::error!("提交检修失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::Internal(
-                        "提交检修失败".to_string(),
-                    )))
+                    ApiResponse::from(TopemsError::Internal("提交检修失败".to_string()))
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "车辆不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("车辆不存在".to_string())),
         Err(e) => {
             tracing::error!("查询车辆状态失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询车辆状态失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询车辆状态失败".to_string()))
         }
     }
 }
@@ -669,13 +635,11 @@ pub async fn approve_vehicle(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<Vehicle>> {
+) -> ApiResponse<Vehicle> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
@@ -695,15 +659,15 @@ pub async fn approve_vehicle(
             } else if status == "inactive" {
                 "retired"
             } else {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                return ApiResponse::from(TopemsError::ValidationFailed(
                     "当前状态不允许审批".to_string(),
-                )));
+                ));
             };
 
             if vehicle_can_transition(&status, target).is_err() {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                return ApiResponse::from(TopemsError::ValidationFailed(
                     "当前状态不允许执行该审批操作".to_string(),
-                )));
+                ));
             }
             let requires_approval = vehicle_requires_approval(&status, target);
 
@@ -727,7 +691,7 @@ pub async fn approve_vehicle(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::server_error("事务提交失败"));
+                            return ApiResponse::server_error("事务提交失败");
                         }
                     }
                     tracing::info!(
@@ -738,27 +702,21 @@ pub async fn approve_vehicle(
                         req.operator,
                         requires_approval
                     );
-                    Json(ApiResponse::success(vehicle, "车辆审批通过"))
+                    ApiResponse::success(vehicle, "车辆审批通过")
                 }
-                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "车辆不存在".to_string(),
-                ))),
+                Ok(None) => {
+                    ApiResponse::from(TopemsError::ResourceNotFound("车辆不存在".to_string()))
+                }
                 Err(e) => {
                     tracing::error!("审批失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::Internal(
-                        "审批失败".to_string(),
-                    )))
+                    ApiResponse::from(TopemsError::Internal("审批失败".to_string()))
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "车辆不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("车辆不存在".to_string())),
         Err(e) => {
             tracing::error!("查询车辆状态失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询车辆状态失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询车辆状态失败".to_string()))
         }
     }
 }
@@ -786,13 +744,11 @@ pub async fn reject_vehicle(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<Vehicle>> {
+) -> ApiResponse<Vehicle> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
@@ -808,9 +764,9 @@ pub async fn reject_vehicle(
     match current {
         Ok(Some(status)) => {
             if vehicle_can_transition(&status, "active").is_err() {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                return ApiResponse::from(TopemsError::ValidationFailed(
                     "当前状态不允许驳回".to_string(),
-                )));
+                ));
             }
             let result = sqlx::query_as::<_, Vehicle>(
                 r#"
@@ -831,7 +787,7 @@ pub async fn reject_vehicle(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::server_error("事务提交失败"));
+                            return ApiResponse::server_error("事务提交失败");
                         }
                     }
                     tracing::info!(
@@ -840,27 +796,21 @@ pub async fn reject_vehicle(
                         status,
                         req.operator
                     );
-                    Json(ApiResponse::success(vehicle, "车辆检修已驳回"))
+                    ApiResponse::success(vehicle, "车辆检修已驳回")
                 }
-                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "车辆不存在".to_string(),
-                ))),
+                Ok(None) => {
+                    ApiResponse::from(TopemsError::ResourceNotFound("车辆不存在".to_string()))
+                }
                 Err(e) => {
                     tracing::error!("驳回失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::Internal(
-                        "驳回失败".to_string(),
-                    )))
+                    ApiResponse::from(TopemsError::Internal("驳回失败".to_string()))
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "车辆不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("车辆不存在".to_string())),
         Err(e) => {
             tracing::error!("查询车辆状态失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询车辆状态失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询车辆状态失败".to_string()))
         }
     }
 }

@@ -254,7 +254,7 @@ pub async fn list_dict_types(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<DictType>>> {
+) -> ApiResponse<PaginatedResponse<DictType>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -287,10 +287,10 @@ pub async fn list_dict_types(
                     .into_iter()
                     .take(page_size as usize)
                     .collect();
-                return Json(ApiResponse::success(
+                return ApiResponse::success(
                     PaginatedResponse::new(dict_types, total, page, page_size),
                     "获取字典类型列表成功(缓存)",
-                ));
+                );
             }
         }
     }
@@ -344,16 +344,14 @@ pub async fn list_dict_types(
                 }
             }
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(dict_types, total, page, page_size),
                 "获取字典类型列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取字典类型列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取字典类型列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取字典类型列表失败".to_string()))
         }
     }
 }
@@ -374,22 +372,18 @@ pub async fn create_dict_type(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateDictTypeRequest>,
-) -> Json<ApiResponse<DictType>> {
+) -> ApiResponse<DictType> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("字典类型编码", &req.code) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            e.to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
     }
 
     if let Err(e) = validate_required_field("字典类型名称", &req.name) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            e.to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
     }
 
     let id = Uuid::new_v4();
@@ -417,9 +411,7 @@ pub async fn create_dict_type(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             // 失效字典类型缓存：super 全量视图 + 当前租户视图
@@ -446,7 +438,7 @@ pub async fn create_dict_type(
             }
 
             (
-                Json(ApiResponse::success(dict_type.clone(), "字典类型创建成功")),
+                ApiResponse::success(dict_type.clone(), "字典类型创建成功"),
                 "success".to_string(),
                 None,
             )
@@ -454,9 +446,7 @@ pub async fn create_dict_type(
         Err(e) => {
             tracing::error!("创建字典类型失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "字典类型创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("字典类型创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -506,7 +496,7 @@ pub async fn get_dict_type(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<DictType>> {
+) -> ApiResponse<DictType> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -524,15 +514,11 @@ pub async fn get_dict_type(
     .await;
 
     match result {
-        Ok(Some(dict_type)) => Json(ApiResponse::success(dict_type, "获取字典类型成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "字典类型不存在".to_string(),
-        ))),
+        Ok(Some(dict_type)) => ApiResponse::success(dict_type, "获取字典类型成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("字典类型不存在".to_string())),
         Err(e) => {
             tracing::error!("获取字典类型失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取字典类型失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取字典类型失败".to_string()))
         }
     }
 }
@@ -554,7 +540,7 @@ pub async fn update_dict_type(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateDictTypeRequest>,
-) -> Json<ApiResponse<DictType>> {
+) -> ApiResponse<DictType> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -570,16 +556,9 @@ pub async fn update_dict_type(
     let existing = match existing {
         Ok(Some(d)) => d,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "字典类型不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("字典类型不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询字典类型失败: {}",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询字典类型失败: {}", e)),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -613,9 +592,7 @@ pub async fn update_dict_type(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             // 失效字典类型缓存：super 全量视图 + 当前租户视图
@@ -642,7 +619,7 @@ pub async fn update_dict_type(
             }
 
             (
-                Json(ApiResponse::success(dict_type.clone(), "字典类型更新成功")),
+                ApiResponse::success(dict_type.clone(), "字典类型更新成功"),
                 "success".to_string(),
                 None,
             )
@@ -650,9 +627,7 @@ pub async fn update_dict_type(
         Err(e) => {
             tracing::error!("更新字典类型失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "字典类型更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("字典类型更新失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -703,7 +678,7 @@ pub async fn delete_dict_type(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -754,24 +729,20 @@ pub async fn delete_dict_type(
             }
 
             (
-                Json(ApiResponse::success("".to_string(), "字典类型删除成功")),
+                ApiResponse::success("".to_string(), "字典类型删除成功"),
                 "success".to_string(),
                 None,
             )
         }
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "字典类型不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("字典类型不存在".to_string())),
             "error".to_string(),
             Some("字典类型不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除字典类型失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "字典类型删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("字典类型删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -781,9 +752,7 @@ pub async fn delete_dict_type(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -833,7 +802,7 @@ pub async fn list_dict_items(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<DictItem>>> {
+) -> ApiResponse<PaginatedResponse<DictItem>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -879,16 +848,14 @@ pub async fn list_dict_items(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "获取字典项列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取字典项列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取字典项列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取字典项列表失败".to_string()))
         }
     }
 }
@@ -909,7 +876,7 @@ pub async fn create_dict_item(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDictItemRequest>,
-) -> Json<ApiResponse<DictItem>> {
+) -> ApiResponse<DictItem> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -941,16 +908,14 @@ pub async fn create_dict_item(
 
     let (response, status, error_msg) = match &result {
         Ok(item) => (
-            Json(ApiResponse::success(item.clone(), "字典项创建成功")),
+            ApiResponse::success(item.clone(), "字典项创建成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("创建字典项失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "字典项创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("字典项创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -960,9 +925,7 @@ pub async fn create_dict_item(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -1010,7 +973,7 @@ pub async fn get_dict_item(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<DictItem>> {
+) -> ApiResponse<DictItem> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -1027,15 +990,11 @@ pub async fn get_dict_item(
     .await;
 
     match result {
-        Ok(Some(item)) => Json(ApiResponse::success(item, "获取字典项成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "字典项不存在".to_string(),
-        ))),
+        Ok(Some(item)) => ApiResponse::success(item, "获取字典项成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("字典项不存在".to_string())),
         Err(e) => {
             tracing::error!("获取字典项失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取字典项失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取字典项失败".to_string()))
         }
     }
 }
@@ -1057,7 +1016,7 @@ pub async fn update_dict_item(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateDictItemRequest>,
-) -> Json<ApiResponse<DictItem>> {
+) -> ApiResponse<DictItem> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -1073,16 +1032,9 @@ pub async fn update_dict_item(
     let existing = match existing {
         Ok(Some(d)) => d,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "字典项不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("字典项不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询字典项失败: {}",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询字典项失败: {}", e)),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -1118,16 +1070,14 @@ pub async fn update_dict_item(
 
     let (response, status_str, error_msg) = match &result {
         Ok(item) => (
-            Json(ApiResponse::success(item.clone(), "字典项更新成功")),
+            ApiResponse::success(item.clone(), "字典项更新成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("更新字典项失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "字典项更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("字典项更新失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -1137,9 +1087,7 @@ pub async fn update_dict_item(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -1188,7 +1136,7 @@ pub async fn delete_dict_item(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -1204,23 +1152,19 @@ pub async fn delete_dict_item(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "字典项删除成功")),
+            ApiResponse::success("".to_string(), "字典项删除成功"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "字典项不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("字典项不存在".to_string())),
             "error".to_string(),
             Some("字典项不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除字典项失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "字典项删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("字典项删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -1230,9 +1174,7 @@ pub async fn delete_dict_item(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -1281,7 +1223,7 @@ pub async fn batch_create_dict_items(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchCreateDictItemRequest>,
-) -> Json<ApiResponse<Vec<DictItem>>> {
+) -> ApiResponse<Vec<DictItem>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -1318,10 +1260,7 @@ pub async fn batch_create_dict_items(
             Ok(item) => created_items.push(item),
             Err(e) => {
                 tracing::error!("批量创建字典项失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::internal(
-                    "批量创建字典项失败: {}",
-                    e,
-                )));
+                return ApiResponse::from(TopemsError::internal("批量创建字典项失败: {}", e));
             }
         }
     }
@@ -1352,15 +1291,10 @@ pub async fn batch_create_dict_items(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
-    Json(ApiResponse::success(
-        created_items,
-        &format!("成功创建 {} 个字典项", count),
-    ))
+    ApiResponse::success(created_items, &format!("成功创建 {} 个字典项", count))
 }
 
 #[utoipa::path(

@@ -1,6 +1,6 @@
 use axum::{
     extract::{Extension, State},
-    Json, Router,
+    Router,
 };
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
@@ -105,7 +105,7 @@ pub async fn get_dashboard(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ErpDashboardStats>> {
+) -> ApiResponse<ErpDashboardStats> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -157,7 +157,7 @@ pub async fn get_dashboard(
         pending_vouchers,
     };
 
-    Json(ApiResponse::success(stats, "查询成功"))
+    ApiResponse::success(stats, "查询成功")
 }
 
 pub fn create_routes() -> Router<ApiState> {

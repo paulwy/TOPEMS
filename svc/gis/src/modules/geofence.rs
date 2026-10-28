@@ -92,7 +92,7 @@ pub async fn list_geofences(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<GeofenceQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut sql = String::from("SELECT * FROM gis.geofences WHERE 1=1");
 
     if let Some(ref _chat_id) = params.chat_id {
@@ -126,17 +126,14 @@ pub async fn list_geofences(
     let result = query.fetch_all(&pool).await;
 
     match result {
-        Ok(geofences) => Json(ApiResponse::success(
+        Ok(geofences) => ApiResponse::success(
             serde_json::json!({
                 "items": geofences,
                 "total": geofences.len()
             }),
             "获取地理围栏列表成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库查询失败",
-            e,
-        ))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 
@@ -144,7 +141,7 @@ pub async fn get_geofence(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Geofence>> {
+) -> ApiResponse<Geofence> {
     let scope = tenant_scope(&claims)
         .map(|s| format!(" AND {s}"))
         .unwrap_or_default();
@@ -154,12 +151,9 @@ pub async fn get_geofence(
         .fetch_one(&pool)
         .await
     {
-        Ok(geofence) => Json(ApiResponse::success(geofence, "获取地理围栏成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("地理围栏未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库查询失败",
-            e,
-        ))),
+        Ok(geofence) => ApiResponse::success(geofence, "获取地理围栏成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("地理围栏未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 
@@ -167,7 +161,7 @@ pub async fn create_geofence(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateGeofenceRequest>,
-) -> Json<ApiResponse<Geofence>> {
+) -> ApiResponse<Geofence> {
     let event_types = serde_json::json!(payload
         .event_types
         .unwrap_or_else(|| vec!["enter".to_string()]));
@@ -208,11 +202,8 @@ pub async fn create_geofence(
     .fetch_one(&pool)
     .await
     {
-        Ok(geofence) => Json(ApiResponse::success(geofence, "创建地理围栏成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库插入失败",
-            e,
-        ))),
+        Ok(geofence) => ApiResponse::success(geofence, "创建地理围栏成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库插入失败", e)),
     }
 }
 
@@ -221,7 +212,7 @@ pub async fn update_geofence(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateGeofenceRequest>,
-) -> Json<ApiResponse<Geofence>> {
+) -> ApiResponse<Geofence> {
     let scope = tenant_scope(&claims)
         .map(|s| format!(" AND {s}"))
         .unwrap_or_default();
@@ -233,13 +224,10 @@ pub async fn update_geofence(
     {
         Ok(g) => g,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::not_found("地理围栏未找到"));
+            return ApiResponse::not_found("地理围栏未找到");
         }
         Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "数据库查询失败",
-                e,
-            )));
+            return ApiResponse::from(TopemsError::internal("数据库查询失败", e));
         }
     };
 
@@ -294,11 +282,8 @@ pub async fn update_geofence(
         .fetch_one(&pool)
         .await
     {
-        Ok(geofence) => Json(ApiResponse::success(geofence, "更新地理围栏成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库更新失败",
-            e,
-        ))),
+        Ok(geofence) => ApiResponse::success(geofence, "更新地理围栏成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库更新失败", e)),
     }
 }
 
@@ -306,7 +291,7 @@ pub async fn delete_geofence(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let scope = tenant_scope(&claims)
         .map(|s| format!(" AND {s}"))
         .unwrap_or_default();
@@ -318,14 +303,11 @@ pub async fn delete_geofence(
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
-                Json(ApiResponse::success(true, "删除地理围栏成功"))
+                ApiResponse::success(true, "删除地理围栏成功")
             } else {
-                Json(ApiResponse::not_found("地理围栏未找到"))
+                ApiResponse::not_found("地理围栏未找到")
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库删除失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库删除失败", e)),
     }
 }

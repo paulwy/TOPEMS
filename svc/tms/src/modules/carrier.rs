@@ -91,7 +91,7 @@ pub async fn list_carriers(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -130,7 +130,7 @@ pub async fn list_carriers(
             cache_key = %cache_key,
             "承运商列表缓存命中"
         );
-        return Json(ApiResponse::success(cached, "获取承运商列表成功"));
+        return ApiResponse::success(cached, "获取承运商列表成功");
     }
 
     // 缓存未命中，记录指标
@@ -139,9 +139,7 @@ pub async fn list_carriers(
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let result = sqlx::query_as::<_, Carrier>(
         r#"
@@ -203,13 +201,11 @@ pub async fn list_carriers(
                 "承运商列表缓存写入"
             );
 
-            Json(ApiResponse::success(response_data, "获取承运商列表成功"))
+            ApiResponse::success(response_data, "获取承运商列表成功")
         }
         Err(e) => {
             tracing::error!("获取承运商列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取承运商列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取承运商列表失败".to_string()))
         }
     }
 }
@@ -232,13 +228,11 @@ pub async fn create_carrier(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateCarrierRequest>,
-) -> Json<ApiResponse<Carrier>> {
+) -> ApiResponse<Carrier> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -270,7 +264,7 @@ pub async fn create_carrier(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
 
@@ -294,13 +288,11 @@ pub async fn create_carrier(
                 });
             }
 
-            Json(ApiResponse::success(carrier, "承运商创建成功"))
+            ApiResponse::success(carrier, "承运商创建成功")
         }
         Err(e) => {
             tracing::error!("创建承运商失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "承运商创建失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("承运商创建失败".to_string()))
         }
     }
 }
@@ -325,13 +317,11 @@ pub async fn get_carrier(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Carrier>> {
+) -> ApiResponse<Carrier> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -352,15 +342,11 @@ pub async fn get_carrier(
     .await;
 
     match result {
-        Ok(Some(carrier)) => Json(ApiResponse::success(carrier, "获取承运商成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "承运商不存在".to_string(),
-        ))),
+        Ok(Some(carrier)) => ApiResponse::success(carrier, "获取承运商成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("承运商不存在".to_string())),
         Err(e) => {
             tracing::error!("获取承运商失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取承运商失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取承运商失败".to_string()))
         }
     }
 }
@@ -387,13 +373,11 @@ pub async fn update_carrier(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateCarrierRequest>,
-) -> Json<ApiResponse<Carrier>> {
+) -> ApiResponse<Carrier> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
@@ -431,7 +415,7 @@ pub async fn update_carrier(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             } // 失效列表缓存（更新后列表数据可能变化）
             state.dict_cache.clear_l1();
@@ -453,16 +437,12 @@ pub async fn update_carrier(
                 });
             }
 
-            Json(ApiResponse::success(carrier, "承运商更新成功"))
+            ApiResponse::success(carrier, "承运商更新成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "承运商不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("承运商不存在".to_string())),
         Err(e) => {
             tracing::error!("更新承运商失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新承运商失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新承运商失败".to_string()))
         }
     }
 }
@@ -487,13 +467,11 @@ pub async fn delete_carrier(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
@@ -508,7 +486,7 @@ pub async fn delete_carrier(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             // 失效列表缓存（删除后列表数据可能变化）
@@ -531,16 +509,12 @@ pub async fn delete_carrier(
                 });
             }
 
-            Json(ApiResponse::success("".to_string(), "承运商删除成功"))
+            ApiResponse::success("".to_string(), "承运商删除成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "承运商不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("承运商不存在".to_string())),
         Err(e) => {
             tracing::error!("删除承运商失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "承运商删除失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("承运商删除失败".to_string()))
         }
     }
 }
@@ -588,13 +562,11 @@ pub async fn submit_qualification(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<Carrier>> {
+) -> ApiResponse<Carrier> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
@@ -616,16 +588,12 @@ pub async fn submit_qualification(
                 carrier.status,
                 req.operator
             );
-            Json(ApiResponse::success(carrier, "承运商已提交资质审核"))
+            ApiResponse::success(carrier, "承运商已提交资质审核")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "承运商不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("承运商不存在".to_string())),
         Err(e) => {
             tracing::error!("提交资质审核失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "提交资质审核失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("提交资质审核失败".to_string()))
         }
     }
 }
@@ -653,13 +621,11 @@ pub async fn approve_carrier(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<Carrier>> {
+) -> ApiResponse<Carrier> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
@@ -675,9 +641,9 @@ pub async fn approve_carrier(
     match current {
         Ok(Some(status)) => {
             if carrier_can_transition(&status, "active").is_err() {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                return ApiResponse::from(TopemsError::ValidationFailed(
                     "当前状态不允许审批通过".to_string(),
-                )));
+                ));
             }
             let requires_approval = carrier_requires_approval(&status, "active");
             let result = sqlx::query_as::<_, Carrier>(&format!(
@@ -698,7 +664,7 @@ pub async fn approve_carrier(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::server_error("事务提交失败"));
+                            return ApiResponse::server_error("事务提交失败");
                         }
                     }
                     tracing::info!(
@@ -708,27 +674,21 @@ pub async fn approve_carrier(
                         req.operator,
                         requires_approval
                     );
-                    Json(ApiResponse::success(carrier, "承运商审批通过"))
+                    ApiResponse::success(carrier, "承运商审批通过")
                 }
-                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "承运商不存在".to_string(),
-                ))),
+                Ok(None) => {
+                    ApiResponse::from(TopemsError::ResourceNotFound("承运商不存在".to_string()))
+                }
                 Err(e) => {
                     tracing::error!("审批失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::Internal(
-                        "审批失败".to_string(),
-                    )))
+                    ApiResponse::from(TopemsError::Internal("审批失败".to_string()))
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "承运商不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("承运商不存在".to_string())),
         Err(e) => {
             tracing::error!("查询承运商状态失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询承运商状态失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询承运商状态失败".to_string()))
         }
     }
 }
@@ -756,13 +716,11 @@ pub async fn reject_carrier(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<Carrier>> {
+) -> ApiResponse<Carrier> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
@@ -778,9 +736,9 @@ pub async fn reject_carrier(
     match current {
         Ok(Some(status)) => {
             if carrier_can_transition(&status, "rejected").is_err() {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                return ApiResponse::from(TopemsError::ValidationFailed(
                     "当前状态不允许驳回".to_string(),
-                )));
+                ));
             }
             let result = sqlx::query_as::<_, Carrier>(&format!(
                 r#"UPDATE tms.tms_carriers SET status = 'rejected', updated_at = $2
@@ -800,7 +758,7 @@ pub async fn reject_carrier(
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
 
-                            return Json(ApiResponse::server_error("事务提交失败"));
+                            return ApiResponse::server_error("事务提交失败");
                         }
                     }
                     tracing::info!(
@@ -809,27 +767,21 @@ pub async fn reject_carrier(
                         status,
                         req.operator
                     );
-                    Json(ApiResponse::success(carrier, "承运商已驳回"))
+                    ApiResponse::success(carrier, "承运商已驳回")
                 }
-                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                    "承运商不存在".to_string(),
-                ))),
+                Ok(None) => {
+                    ApiResponse::from(TopemsError::ResourceNotFound("承运商不存在".to_string()))
+                }
                 Err(e) => {
                     tracing::error!("驳回失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::Internal(
-                        "驳回失败".to_string(),
-                    )))
+                    ApiResponse::from(TopemsError::Internal("驳回失败".to_string()))
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "承运商不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("承运商不存在".to_string())),
         Err(e) => {
             tracing::error!("查询承运商状态失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询承运商状态失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询承运商状态失败".to_string()))
         }
     }
 }

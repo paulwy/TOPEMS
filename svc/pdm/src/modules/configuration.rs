@@ -79,7 +79,7 @@ pub async fn list_configurations(
     Extension(claims): Extension<Claims>,
     Query(query): Query<ConfigurationQuery>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -138,7 +138,7 @@ pub async fn list_configurations(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "configurations": configurations,
                     "total": total,
@@ -146,11 +146,11 @@ pub async fn list_configurations(
                     "page_size": page_size
                 }),
                 "获取配置列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取配置列表失败: {}", e);
-            Json(ApiResponse::server_error("获取配置列表失败"))
+            ApiResponse::server_error("获取配置列表失败")
         }
     }
 }
@@ -168,7 +168,7 @@ pub async fn create_configuration(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateConfigurationRequest>,
-) -> Json<ApiResponse<Configuration>> {
+) -> ApiResponse<Configuration> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -181,10 +181,10 @@ pub async fn create_configuration(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.config_no.is_empty() {
-        return Json(ApiResponse::bad_request("配置编号不能为空"));
+        return ApiResponse::bad_request("配置编号不能为空");
     }
     if req.name.is_empty() {
-        return Json(ApiResponse::bad_request("配置名称不能为空"));
+        return ApiResponse::bad_request("配置名称不能为空");
     }
 
     let id = Uuid::new_v4();
@@ -193,7 +193,7 @@ pub async fn create_configuration(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("序列化配置项失败: {}", e);
-            return Json(ApiResponse::server_error("配置项数据格式错误"));
+            return ApiResponse::server_error("配置项数据格式错误");
         }
     };
 
@@ -222,10 +222,10 @@ pub async fn create_configuration(
     .await;
 
     match result {
-        Ok(configuration) => Json(ApiResponse::success(configuration, "配置创建成功")),
+        Ok(configuration) => ApiResponse::success(configuration, "配置创建成功"),
         Err(e) => {
             tracing::error!("创建配置失败: {}", e);
-            Json(ApiResponse::server_error("创建配置失败"))
+            ApiResponse::server_error("创建配置失败")
         }
     }
 }
@@ -246,7 +246,7 @@ pub async fn get_configuration(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<Configuration>> {
+) -> ApiResponse<Configuration> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -272,11 +272,11 @@ pub async fn get_configuration(
     .await;
 
     match result {
-        Ok(Some(configuration)) => Json(ApiResponse::success(configuration, "获取配置成功")),
-        Ok(None) => Json(ApiResponse::not_found("配置不存在")),
+        Ok(Some(configuration)) => ApiResponse::success(configuration, "获取配置成功"),
+        Ok(None) => ApiResponse::not_found("配置不存在"),
         Err(e) => {
             tracing::error!("获取配置失败: {}", e);
-            Json(ApiResponse::server_error("获取配置失败"))
+            ApiResponse::server_error("获取配置失败")
         }
     }
 }
@@ -299,7 +299,7 @@ pub async fn update_configuration(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateConfigurationRequest>,
-) -> Json<ApiResponse<Configuration>> {
+) -> ApiResponse<Configuration> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -345,11 +345,11 @@ pub async fn update_configuration(
     .await;
 
     match result {
-        Ok(Some(configuration)) => Json(ApiResponse::success(configuration, "配置更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("配置不存在")),
+        Ok(Some(configuration)) => ApiResponse::success(configuration, "配置更新成功"),
+        Ok(None) => ApiResponse::not_found("配置不存在"),
         Err(e) => {
             tracing::error!("更新配置失败: {}", e);
-            Json(ApiResponse::server_error("更新配置失败"))
+            ApiResponse::server_error("更新配置失败")
         }
     }
 }
@@ -370,7 +370,7 @@ pub async fn delete_configuration(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -391,11 +391,11 @@ pub async fn delete_configuration(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "配置删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("配置不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "配置删除成功"),
+        Ok(_) => ApiResponse::not_found("配置不存在"),
         Err(e) => {
             tracing::error!("删除配置失败: {}", e);
-            Json(ApiResponse::server_error("删除配置失败"))
+            ApiResponse::server_error("删除配置失败")
         }
     }
 }

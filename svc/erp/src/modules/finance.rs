@@ -65,7 +65,7 @@ pub async fn create_voucher(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateVoucherRequest>,
-) -> Json<ApiResponse<CreateVoucherResponse>> {
+) -> ApiResponse<CreateVoucherResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -129,10 +129,7 @@ pub async fn create_voucher(
 
                 if let Err(e) = entry_result {
                     tracing::error!("[erp] 凭证明细插入失败，回滚凭证: {}", e);
-                    return Json(ApiResponse::from(TopemsError::internal(
-                        "创建凭证明细失败",
-                        e,
-                    )));
+                    return ApiResponse::from(TopemsError::internal("创建凭证明细失败", e));
                 }
             }
 
@@ -146,22 +143,19 @@ pub async fn create_voucher(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 CreateVoucherResponse {
                     success: true,
                     voucher_id,
                     voucher_number: req.voucher_number.clone(),
                 },
                 "财务凭证创建成功",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "创建财务凭证失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建财务凭证失败", e)),
     }
 }
 

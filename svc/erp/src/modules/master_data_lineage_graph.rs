@@ -4,7 +4,6 @@
 //! 从 master_data_refs.rs 拆分。
 
 use axum::extract::{Extension, Path, Query, State};
-use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
@@ -60,7 +59,7 @@ pub async fn get_lineage_graph(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<LineageGraph>> {
+) -> ApiResponse<LineageGraph> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -105,10 +104,7 @@ pub async fn get_lineage_graph(
         build_full_lineage_graph(&mut *db, &mut nodes, &mut edges, &mut node_ids, add_node).await;
     }
 
-    Json(ApiResponse::success(
-        LineageGraph { nodes, edges },
-        "血缘关系图",
-    ))
+    ApiResponse::success(LineageGraph { nodes, edges }, "血缘关系图")
 }
 
 async fn build_lineage_for_master_data(
@@ -336,7 +332,7 @@ pub async fn get_lineage_upstream(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<LineageGraph>> {
+) -> ApiResponse<LineageGraph> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -405,10 +401,7 @@ pub async fn get_lineage_upstream(
         });
     }
 
-    Json(ApiResponse::success(
-        LineageGraph { nodes, edges },
-        "上游血缘关系",
-    ))
+    ApiResponse::success(LineageGraph { nodes, edges }, "上游血缘关系")
 }
 
 /// V40.0 AC-12: 获取下游血缘
@@ -426,7 +419,7 @@ pub async fn get_lineage_downstream(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<LineageGraph>> {
+) -> ApiResponse<LineageGraph> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -517,10 +510,7 @@ pub async fn get_lineage_downstream(
         }
     }
 
-    Json(ApiResponse::success(
-        LineageGraph { nodes, edges },
-        "下游血缘关系",
-    ))
+    ApiResponse::success(LineageGraph { nodes, edges }, "下游血缘关系")
 }
 
 #[cfg(test)]

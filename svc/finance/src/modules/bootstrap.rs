@@ -40,7 +40,7 @@ pub async fn bootstrap_defaults(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BootstrapRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // 目标租户：请求显式指定优先，否则取会话租户
     let target = match req.tenant_id {
         Some(t) if !t.trim().is_empty() => Some(t),
@@ -52,7 +52,7 @@ pub async fn bootstrap_defaults(
         Some(tid) => {
             let uuid = match uuid::Uuid::parse_str(&tid) {
                 Ok(u) => u,
-                Err(_) => return Json(ApiResponse::bad_request("tenant_id 格式无效")),
+                Err(_) => return ApiResponse::bad_request("tenant_id 格式无效"),
             };
             match sqlx::query_scalar("SELECT finance.bootstrap_defaults($1)")
                 .bind(uuid)
@@ -60,7 +60,7 @@ pub async fn bootstrap_defaults(
                 .await
             {
                 Ok(n) => n,
-                Err(e) => return Json(err_resp(e)),
+                Err(e) => return err_resp(e),
             }
         }
         None => {
@@ -70,16 +70,16 @@ pub async fn bootstrap_defaults(
                 .await
             {
                 Ok(n) => n,
-                Err(e) => return Json(err_resp(e)),
+                Err(e) => return err_resp(e),
             }
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         json!({
             "backfilled_tenants": backfilled,
             "target": target_label,
         }),
         "补播成功（幂等，缺失才插）",
-    ))
+    )
 }

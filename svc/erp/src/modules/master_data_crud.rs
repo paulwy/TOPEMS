@@ -1,6 +1,6 @@
 // ==================== 核心 CRUD 类型定义 ====================
 
-use axum::extract::{Extension, Json, Path, Query, State};
+use axum::extract::{Extension, Path, Query, State};
 use serde::Deserialize;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use topems_shared_boundary::only_own_schema_query;
@@ -178,7 +178,7 @@ pub async fn list_master_data_refs(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<MasterDataRef>>> {
+) -> ApiResponse<PaginatedResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -236,17 +236,17 @@ pub async fn list_master_data_refs(
         Ok(data) => {
             let total = data.len() as i64;
             let items: Vec<MasterDataRef> = data.into_iter().map(Into::into).collect();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "本地主数据引用列表",
-            ))
+            )
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询本地主数据引用失败: {}", e);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(vec![], 0, page, page_size),
                 "本地主数据引用列表（空）",
-            ))
+            )
         }
     }
 }
@@ -267,7 +267,7 @@ pub async fn get_master_data_ref(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<MasterDataRef>> {
+) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -295,11 +295,11 @@ pub async fn get_master_data_ref(
     .fetch_optional(&mut **txn)
     .await
     {
-        Ok(Some(row)) => Json(ApiResponse::success(row.into(), "本地主数据引用")),
-        Ok(None) => Json(ApiResponse::not_found("未找到主数据引用")),
+        Ok(Some(row)) => ApiResponse::success(row.into(), "本地主数据引用"),
+        Ok(None) => ApiResponse::not_found("未找到主数据引用"),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据引用失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
+            ApiResponse::from(TopemsError::internal("查询失败", e))
         }
     }
 }
@@ -320,7 +320,7 @@ pub async fn get_master_data_ref_by_code(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<MasterDataRef>> {
+) -> ApiResponse<MasterDataRef> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -349,11 +349,11 @@ pub async fn get_master_data_ref_by_code(
     .fetch_optional(&mut **txn)
     .await
     {
-        Ok(Some(row)) => Json(ApiResponse::success(row.into(), "本地主数据引用")),
-        Ok(None) => Json(ApiResponse::not_found("未找到主数据引用")),
+        Ok(Some(row)) => ApiResponse::success(row.into(), "本地主数据引用"),
+        Ok(None) => ApiResponse::not_found("未找到主数据引用"),
         Err(e) => {
             tracing::warn!("[erp-mdm] 按编码查询主数据引用失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
+            ApiResponse::from(TopemsError::internal("查询失败", e))
         }
     }
 }

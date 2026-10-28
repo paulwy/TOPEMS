@@ -357,7 +357,7 @@ pub async fn list_formulas(
     Extension(claims): Extension<Claims>,
     Query(query): Query<FormulaQuery>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -420,7 +420,7 @@ pub async fn list_formulas(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "formulas": formulas,
                     "total": total,
@@ -428,11 +428,11 @@ pub async fn list_formulas(
                     "page_size": page_size
                 }),
                 "获取配方列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取配方列表失败: {}", e);
-            Json(ApiResponse::server_error("获取配方列表失败"))
+            ApiResponse::server_error("获取配方列表失败")
         }
     }
 }
@@ -450,7 +450,7 @@ pub async fn create_formula(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateFormulaRequest>,
-) -> Json<ApiResponse<ProductionFormula>> {
+) -> ApiResponse<ProductionFormula> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -463,10 +463,10 @@ pub async fn create_formula(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.formula_no.is_empty() {
-        return Json(ApiResponse::bad_request("配方编号不能为空"));
+        return ApiResponse::bad_request("配方编号不能为空");
     }
     if req.name.is_empty() {
-        return Json(ApiResponse::bad_request("配方名称不能为空"));
+        return ApiResponse::bad_request("配方名称不能为空");
     }
 
     let status = req.status.unwrap_or_else(|| "active".to_string());
@@ -492,10 +492,10 @@ pub async fn create_formula(
     .await;
 
     match result {
-        Ok(formula) => Json(ApiResponse::success(formula, "配方创建成功")),
+        Ok(formula) => ApiResponse::success(formula, "配方创建成功"),
         Err(e) => {
             tracing::error!("创建配方失败: {}", e);
-            Json(ApiResponse::server_error("创建配方失败"))
+            ApiResponse::server_error("创建配方失败")
         }
     }
 }
@@ -516,7 +516,7 @@ pub async fn get_formula(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<ProductionFormula>> {
+) -> ApiResponse<ProductionFormula> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -546,11 +546,11 @@ pub async fn get_formula(
     .await;
 
     match result {
-        Ok(Some(formula)) => Json(ApiResponse::success(formula, "获取配方成功")),
-        Ok(None) => Json(ApiResponse::not_found("配方不存在")),
+        Ok(Some(formula)) => ApiResponse::success(formula, "获取配方成功"),
+        Ok(None) => ApiResponse::not_found("配方不存在"),
         Err(e) => {
             tracing::error!("获取配方失败: {}", e);
-            Json(ApiResponse::server_error("获取配方失败"))
+            ApiResponse::server_error("获取配方失败")
         }
     }
 }
@@ -573,7 +573,7 @@ pub async fn update_formula(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateFormulaRequest>,
-) -> Json<ApiResponse<ProductionFormula>> {
+) -> ApiResponse<ProductionFormula> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -614,11 +614,11 @@ pub async fn update_formula(
     .await;
 
     match result {
-        Ok(Some(formula)) => Json(ApiResponse::success(formula, "配方更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("配方不存在")),
+        Ok(Some(formula)) => ApiResponse::success(formula, "配方更新成功"),
+        Ok(None) => ApiResponse::not_found("配方不存在"),
         Err(e) => {
             tracing::error!("更新配方失败: {}", e);
-            Json(ApiResponse::server_error("更新配方失败"))
+            ApiResponse::server_error("更新配方失败")
         }
     }
 }
@@ -639,7 +639,7 @@ pub async fn delete_formula(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -660,11 +660,11 @@ pub async fn delete_formula(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "配方删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("配方不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "配方删除成功"),
+        Ok(_) => ApiResponse::not_found("配方不存在"),
         Err(e) => {
             tracing::error!("删除配方失败: {}", e);
-            Json(ApiResponse::server_error("删除配方失败"))
+            ApiResponse::server_error("删除配方失败")
         }
     }
 }

@@ -57,7 +57,7 @@ pub async fn list_expenses(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
-) -> Json<ApiResponse<PaginatedResponse<Value>>> {
+) -> ApiResponse<PaginatedResponse<Value>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -104,14 +104,14 @@ pub async fn list_expenses(
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "获取费用报销列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取费用报销列表失败: {}", e);
-            Json(ApiResponse::server_error("获取费用报销列表失败"))
+            ApiResponse::server_error("获取费用报销列表失败")
         }
     }
 }
@@ -121,10 +121,10 @@ pub async fn create_expense(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<Value>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let tenant_id = match resolve_create_tenant(&claims) {
         Ok(t) => t,
-        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
     let id = Uuid::new_v4();
@@ -134,7 +134,7 @@ pub async fn create_expense(
         .and_then(|v| v.as_str())
         .unwrap_or("");
     if expense_number.is_empty() {
-        return Json(ApiResponse::bad_request("报销编号不能为空"));
+        return ApiResponse::bad_request("报销编号不能为空");
     }
 
     // applicant_name 为 DB NOT NULL 列，缺失时须在入口返回 400，
@@ -145,7 +145,7 @@ pub async fn create_expense(
         .map(str::trim)
         .filter(|s| !s.is_empty());
     let Some(applicant_name) = applicant_name else {
-        return Json(ApiResponse::bad_request("申请人不能为空"));
+        return ApiResponse::bad_request("申请人不能为空");
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -191,13 +191,10 @@ pub async fn create_expense(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
-            row_to_expense_json(&row),
-            "费用报销创建成功",
-        )),
+        Ok(row) => ApiResponse::success(row_to_expense_json(&row), "费用报销创建成功"),
         Err(e) => {
             tracing::error!("创建费用报销失败: {}", e);
-            Json(ApiResponse::server_error("费用报销创建失败"))
+            ApiResponse::server_error("费用报销创建失败")
         }
     }
 }
@@ -218,7 +215,7 @@ pub async fn get_expense(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, expense_number, applicant_name, department_id, expense_type, amount,
@@ -237,14 +234,11 @@ pub async fn get_expense(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(
-            row_to_expense_json(&row),
-            "获取费用报销成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("费用报销不存在")),
+        Ok(Some(row)) => ApiResponse::success(row_to_expense_json(&row), "获取费用报销成功"),
+        Ok(None) => ApiResponse::not_found("费用报销不存在"),
         Err(e) => {
             tracing::error!("获取费用报销失败: {}", e);
-            Json(ApiResponse::server_error("获取费用报销失败"))
+            ApiResponse::server_error("获取费用报销失败")
         }
     }
 }
@@ -255,7 +249,7 @@ pub async fn update_expense(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<Value>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let now = Utc::now();
     let result = sqlx::query(only_own_schema_query!(
         "finance",
@@ -326,11 +320,8 @@ pub async fn update_expense(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
-            row_to_expense_json(&row),
-            "费用报销更新成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(row) => ApiResponse::success(row_to_expense_json(&row), "费用报销更新成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -349,7 +340,7 @@ pub async fn delete_expense(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE expenses SET deleted_at = NOW() WHERE id = $1"
@@ -358,13 +349,11 @@ pub async fn delete_expense(
     .execute(&state.pool)
     .await;
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("".to_string(), "费用报销删除成功"))
-        }
-        Ok(_) => Json(ApiResponse::not_found("费用报销不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "费用报销删除成功"),
+        Ok(_) => ApiResponse::not_found("费用报销不存在"),
         Err(e) => {
             tracing::error!("删除费用报销失败: {}", e);
-            Json(ApiResponse::server_error("费用报销删除失败"))
+            ApiResponse::server_error("费用报销删除失败")
         }
     }
 }
@@ -391,7 +380,7 @@ pub async fn list_budgets(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
-) -> Json<ApiResponse<PaginatedResponse<Value>>> {
+) -> ApiResponse<PaginatedResponse<Value>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -426,14 +415,14 @@ pub async fn list_budgets(
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "获取预算列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取预算列表失败: {}", e);
-            Json(ApiResponse::server_error("获取预算列表失败"))
+            ApiResponse::server_error("获取预算列表失败")
         }
     }
 }
@@ -470,10 +459,10 @@ pub async fn create_budget(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<Value>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let tenant_id = match resolve_create_tenant(&claims) {
         Ok(t) => t,
-        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
     let id = Uuid::new_v4();
@@ -534,13 +523,10 @@ pub async fn create_budget(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
-            row_to_budget_json(&row),
-            "预算创建成功",
-        )),
+        Ok(row) => ApiResponse::success(row_to_budget_json(&row), "预算创建成功"),
         Err(e) => {
             tracing::error!("创建预算失败: {}", e);
-            Json(ApiResponse::server_error("预算创建失败"))
+            ApiResponse::server_error("预算创建失败")
         }
     }
 }
@@ -561,7 +547,7 @@ pub async fn get_budget(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, tenant_id, department_id, budget_type, fiscal_year,
@@ -574,14 +560,11 @@ pub async fn get_budget(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(
-            row_to_budget_json(&row),
-            "获取预算成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("预算不存在")),
+        Ok(Some(row)) => ApiResponse::success(row_to_budget_json(&row), "获取预算成功"),
+        Ok(None) => ApiResponse::not_found("预算不存在"),
         Err(e) => {
             tracing::error!("获取预算失败: {}", e);
-            Json(ApiResponse::server_error("获取预算失败"))
+            ApiResponse::server_error("获取预算失败")
         }
     }
 }
@@ -591,7 +574,7 @@ pub async fn update_budget(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<Value>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let now = Utc::now();
     let total_budget: rust_decimal::Decimal = req
         .get("total_budget")
@@ -647,11 +630,8 @@ pub async fn update_budget(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
-            row_to_budget_json(&row),
-            "预算更新成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(row) => ApiResponse::success(row_to_budget_json(&row), "预算更新成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -670,7 +650,7 @@ pub async fn delete_budget(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let now = Utc::now();
     let result = sqlx::query(only_own_schema_query!(
         "finance",
@@ -681,13 +661,11 @@ pub async fn delete_budget(
     .execute(&state.pool)
     .await;
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("".to_string(), "预算删除成功"))
-        }
-        Ok(_) => Json(ApiResponse::not_found("预算不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "预算删除成功"),
+        Ok(_) => ApiResponse::not_found("预算不存在"),
         Err(e) => {
             tracing::error!("删除预算失败: {}", e);
-            Json(ApiResponse::server_error("预算删除失败"))
+            ApiResponse::server_error("预算删除失败")
         }
     }
 }
@@ -714,7 +692,7 @@ pub async fn list_receivables(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
-) -> Json<ApiResponse<PaginatedResponse<Value>>> {
+) -> ApiResponse<PaginatedResponse<Value>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -760,14 +738,14 @@ pub async fn list_receivables(
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "获取应收列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取应收列表失败: {}", e);
-            Json(ApiResponse::server_error("获取应收列表失败"))
+            ApiResponse::server_error("获取应收列表失败")
         }
     }
 }
@@ -776,10 +754,10 @@ pub async fn create_receivable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<Value>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let tenant_id = match resolve_create_tenant(&claims) {
         Ok(t) => t,
-        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
 
     let id = Uuid::new_v4();
@@ -789,7 +767,7 @@ pub async fn create_receivable(
         .and_then(|v| v.as_str())
         .unwrap_or("");
     if invoice_number.is_empty() {
-        return Json(ApiResponse::bad_request("发票编号不能为空"));
+        return ApiResponse::bad_request("发票编号不能为空");
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -838,13 +816,10 @@ pub async fn create_receivable(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
-            row_to_receivable_json(&row),
-            "应收创建成功",
-        )),
+        Ok(row) => ApiResponse::success(row_to_receivable_json(&row), "应收创建成功"),
         Err(e) => {
             tracing::error!("创建应收失败: {}", e);
-            Json(ApiResponse::server_error("创建应收失败"))
+            ApiResponse::server_error("创建应收失败")
         }
     }
 }
@@ -865,7 +840,7 @@ pub async fn get_receivable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, invoice_number, customer_name, project_id, contract_id, project_name,
@@ -884,14 +859,11 @@ pub async fn get_receivable(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(
-            row_to_receivable_json(&row),
-            "获取应收成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("应收不存在")),
+        Ok(Some(row)) => ApiResponse::success(row_to_receivable_json(&row), "获取应收成功"),
+        Ok(None) => ApiResponse::not_found("应收不存在"),
         Err(e) => {
             tracing::error!("获取应收失败: {}", e);
-            Json(ApiResponse::server_error("获取应收失败"))
+            ApiResponse::server_error("获取应收失败")
         }
     }
 }
@@ -901,7 +873,7 @@ pub async fn update_receivable(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<Value>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let now = Utc::now();
     let result = sqlx::query(only_own_schema_query!(
         "finance",
@@ -944,11 +916,8 @@ pub async fn update_receivable(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
-            row_to_receivable_json(&row),
-            "应收更新成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(row) => ApiResponse::success(row_to_receivable_json(&row), "应收更新成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -968,7 +937,7 @@ pub async fn delete_receivable(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE receivables SET deleted_at = NOW() WHERE id = $1"
@@ -977,13 +946,11 @@ pub async fn delete_receivable(
     .execute(&state.pool)
     .await;
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("".to_string(), "应收删除成功"))
-        }
-        Ok(_) => Json(ApiResponse::not_found("应收不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "应收删除成功"),
+        Ok(_) => ApiResponse::not_found("应收不存在"),
         Err(e) => {
             tracing::error!("删除应收失败: {}", e);
-            Json(ApiResponse::server_error("删除应收失败"))
+            ApiResponse::server_error("删除应收失败")
         }
     }
 }
@@ -1010,7 +977,7 @@ pub async fn list_payables(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
-) -> Json<ApiResponse<PaginatedResponse<Value>>> {
+) -> ApiResponse<PaginatedResponse<Value>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1056,14 +1023,14 @@ pub async fn list_payables(
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "获取应付列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取应付列表失败: {}", e);
-            Json(ApiResponse::server_error("获取应付列表失败"))
+            ApiResponse::server_error("获取应付列表失败")
         }
     }
 }
@@ -1072,7 +1039,7 @@ pub async fn create_payable(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<Value>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let id = Uuid::new_v4();
     let now = Utc::now();
     let invoice_number = req
@@ -1080,7 +1047,7 @@ pub async fn create_payable(
         .and_then(|v| v.as_str())
         .unwrap_or("");
     if invoice_number.is_empty() {
-        return Json(ApiResponse::bad_request("发票编号不能为空"));
+        return ApiResponse::bad_request("发票编号不能为空");
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -1128,13 +1095,10 @@ pub async fn create_payable(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
-            row_to_payable_json(&row),
-            "应付创建成功",
-        )),
+        Ok(row) => ApiResponse::success(row_to_payable_json(&row), "应付创建成功"),
         Err(e) => {
             tracing::error!("创建应付失败: {}", e);
-            Json(ApiResponse::server_error("创建应付失败"))
+            ApiResponse::server_error("创建应付失败")
         }
     }
 }
@@ -1155,7 +1119,7 @@ pub async fn get_payable(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         r#"SELECT id, invoice_number, supplier_name, project_id, contract_id, category,
@@ -1174,14 +1138,11 @@ pub async fn get_payable(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(
-            row_to_payable_json(&row),
-            "获取应付成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("应付不存在")),
+        Ok(Some(row)) => ApiResponse::success(row_to_payable_json(&row), "获取应付成功"),
+        Ok(None) => ApiResponse::not_found("应付不存在"),
         Err(e) => {
             tracing::error!("获取应付失败: {}", e);
-            Json(ApiResponse::server_error("获取应付失败"))
+            ApiResponse::server_error("获取应付失败")
         }
     }
 }
@@ -1191,7 +1152,7 @@ pub async fn update_payable(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<Value>,
-) -> Json<ApiResponse<Value>> {
+) -> ApiResponse<Value> {
     let now = Utc::now();
     let result = sqlx::query(only_own_schema_query!(
         "finance",
@@ -1234,11 +1195,8 @@ pub async fn update_payable(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
-            row_to_payable_json(&row),
-            "应付更新成功",
-        )),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(row) => ApiResponse::success(row_to_payable_json(&row), "应付更新成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -1258,7 +1216,7 @@ pub async fn delete_payable(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE payables SET deleted_at = NOW() WHERE id = $1"
@@ -1267,13 +1225,11 @@ pub async fn delete_payable(
     .execute(&state.pool)
     .await;
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("".to_string(), "应付删除成功"))
-        }
-        Ok(_) => Json(ApiResponse::not_found("应付不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "应付删除成功"),
+        Ok(_) => ApiResponse::not_found("应付不存在"),
         Err(e) => {
             tracing::error!("删除应付失败: {}", e);
-            Json(ApiResponse::server_error("删除应付失败"))
+            ApiResponse::server_error("删除应付失败")
         }
     }
 }

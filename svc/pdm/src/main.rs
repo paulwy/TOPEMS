@@ -8,7 +8,7 @@ mod modules;
 mod services;
 mod shared;
 
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Router};
 use utoipa::OpenApi;
 
 use topems_shared_auth::middleware::require_permission;
@@ -224,7 +224,7 @@ async fn health(State(state): State<AppState>) -> ServiceHealth {
     simple_health_check(&state.health_config).await
 }
 
-async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn detailed_health(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     use topems_shared_bootstrap::build_detailed_health_response;
     let modules = serde_json::json!({ "pdm": "active" });
     let resp = build_detailed_health_response(
@@ -235,5 +235,5 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
         serde_json::json!({}),
     )
     .await;
-    Json(ApiResponse::success(resp, "Detailed health check"))
+    ApiResponse::success(resp, "Detailed health check")
 }

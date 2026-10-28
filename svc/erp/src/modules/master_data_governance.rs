@@ -4,7 +4,6 @@
 //! 从 master_data_refs.rs 拆分。
 
 use axum::extract::{Extension, State};
-use axum::Json;
 use serde::Serialize;
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
@@ -50,7 +49,7 @@ pub async fn get_governance_dashboard(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<GovernanceDashboardStats>> {
+) -> ApiResponse<GovernanceDashboardStats> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -191,7 +190,7 @@ pub async fn get_governance_dashboard(
         (synced_set.len() as f64) / (all_services.len() as f64) * 100.0
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         GovernanceDashboardStats {
             total_domains: total_domains as u64,
             total_records: total_records as u64,
@@ -210,7 +209,7 @@ pub async fn get_governance_dashboard(
             sync_coverage,
         },
         "治理仪表盘统计数据",
-    ))
+    )
 }
 
 #[cfg(test)]

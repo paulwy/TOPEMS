@@ -68,7 +68,7 @@ pub struct PaginatedEventsResponse {
 
 pub async fn handle_create_voucher(
     Json(req): Json<CreateVoucherCommand>,
-) -> Json<ApiResponse<CommandResult>> {
+) -> ApiResponse<CommandResult> {
     let context = get_cqrs_context();
     let metadata = Some(EventMetadata {
         user_id: None,
@@ -80,15 +80,15 @@ pub async fn handle_create_voucher(
         .handle_create_voucher(req, metadata)
         .await
     {
-        Ok(result) => Json(ApiResponse::success(result, "创建凭证成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "创建凭证成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn handle_post_voucher(
     Path(id): Path<String>,
     Json(req): Json<PostVoucherCommand>,
-) -> Json<ApiResponse<CommandResult>> {
+) -> ApiResponse<CommandResult> {
     let context = get_cqrs_context();
     let metadata = Some(EventMetadata {
         user_id: None,
@@ -100,15 +100,15 @@ pub async fn handle_post_voucher(
         .handle_post_voucher(&id, req, metadata)
         .await
     {
-        Ok(result) => Json(ApiResponse::success(result, "过账成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "过账成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn handle_reverse_voucher(
     Path(id): Path<String>,
     Json(req): Json<ReverseVoucherCommand>,
-) -> Json<ApiResponse<CommandResult>> {
+) -> ApiResponse<CommandResult> {
     let context = get_cqrs_context();
     let metadata = Some(EventMetadata {
         user_id: None,
@@ -120,8 +120,8 @@ pub async fn handle_reverse_voucher(
         .handle_reverse_voucher(&id, req, metadata)
         .await
     {
-        Ok(result) => Json(ApiResponse::success(result, "冲销成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(result) => ApiResponse::success(result, "冲销成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -144,7 +144,7 @@ pub async fn handle_reverse_voucher(
 
 pub async fn list_voucher_summary(
     Query(params): Query<VoucherSummaryQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<VoucherSummaryView>>> {
+) -> ApiResponse<PaginatedResponse<VoucherSummaryView>> {
     let context = get_cqrs_context();
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
@@ -156,25 +156,25 @@ pub async fn list_voucher_summary(
     {
         Ok((items, total)) => {
             let paginated = PaginatedResponse::new(items, total, page, page_size);
-            Json(ApiResponse::success(paginated, "查询成功"))
+            ApiResponse::success(paginated, "查询成功")
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn get_voucher_summary_by_id(
     Path(id): Path<String>,
-) -> Json<ApiResponse<Option<VoucherSummaryView>>> {
+) -> ApiResponse<Option<VoucherSummaryView>> {
     let context = get_cqrs_context();
     match context.voucher_summary_view.get_by_id(&id).await {
-        Ok(item) => Json(ApiResponse::success(item, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(item) => ApiResponse::success(item, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
 pub async fn list_receivable_aging(
     Query(params): Query<ReceivableAgingQueryParams>,
-) -> Json<ApiResponse<PaginatedResponse<ReceivableAgingView>>> {
+) -> ApiResponse<PaginatedResponse<ReceivableAgingView>> {
     let context = get_cqrs_context();
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
@@ -186,9 +186,9 @@ pub async fn list_receivable_aging(
     {
         Ok((items, total)) => {
             let paginated = PaginatedResponse::new(items, total, page, page_size);
-            Json(ApiResponse::success(paginated, "查询成功"))
+            ApiResponse::success(paginated, "查询成功")
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 #[utoipa::path(
@@ -209,27 +209,27 @@ pub async fn list_receivable_aging(
     operation_id = "get_events",
 )]
 
-pub async fn get_events(Path(aggregate_id): Path<String>) -> Json<ApiResponse<Vec<EventRecord>>> {
+pub async fn get_events(Path(aggregate_id): Path<String>) -> ApiResponse<Vec<EventRecord>> {
     let context = get_cqrs_context();
     match context
         .event_store
         .read_events(&aggregate_id, 0, None)
         .await
     {
-        Ok(events) => Json(ApiResponse::success(events, "查询成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(events) => ApiResponse::success(events, "查询成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
-pub async fn rebuild_views() -> Json<ApiResponse<()>> {
+pub async fn rebuild_views() -> ApiResponse<()> {
     let context = get_cqrs_context();
     match context.projector.rebuild_all().await {
-        Ok(()) => Json(ApiResponse::success((), "重建成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(()) => ApiResponse::success((), "重建成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
-pub async fn get_stats() -> Json<ApiResponse<CqrsStatsResponse>> {
+pub async fn get_stats() -> ApiResponse<CqrsStatsResponse> {
     let context = get_cqrs_context();
     let view_names: Vec<String> = context
         .projector
@@ -260,7 +260,7 @@ pub async fn get_stats() -> Json<ApiResponse<CqrsStatsResponse>> {
         snapshot_count,
     };
 
-    Json(ApiResponse::success(stats, "查询成功"))
+    ApiResponse::success(stats, "查询成功")
 }
 #[utoipa::path(
     get,
@@ -279,19 +279,19 @@ pub async fn get_stats() -> Json<ApiResponse<CqrsStatsResponse>> {
 
 pub async fn get_projection_progress(
     State(_pool): State<PgPool>,
-) -> Json<ApiResponse<Vec<ProjectionProgress>>> {
+) -> ApiResponse<Vec<ProjectionProgress>> {
     match get_pg_cqrs_context() {
         Some(ctx) => match ctx.async_projector.get_progress().await {
-            Ok(progress) => Json(ApiResponse::success(progress, "查询成功")),
-            Err(e) => Json(crate::shared::err_resp(e)),
+            Ok(progress) => ApiResponse::success(progress, "查询成功"),
+            Err(e) => crate::shared::err_resp(e),
         },
-        None => Json(ApiResponse::server_error("PgCqrsContext 未初始化")),
+        None => ApiResponse::server_error("PgCqrsContext 未初始化"),
     }
 }
 
 pub async fn list_events_paginated(
     Query(params): Query<EventsQueryParams>,
-) -> Json<ApiResponse<PaginatedEventsResponse>> {
+) -> ApiResponse<PaginatedEventsResponse> {
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     let aggregate_type = params
@@ -311,21 +311,21 @@ pub async fn list_events_paginated(
                     page,
                     page_size,
                 };
-                Json(ApiResponse::success(response, "查询成功"))
+                ApiResponse::success(response, "查询成功")
             }
-            Err(e) => Json(crate::shared::err_resp(e)),
+            Err(e) => crate::shared::err_resp(e),
         },
-        None => Json(ApiResponse::server_error("PgCqrsContext 未初始化")),
+        None => ApiResponse::server_error("PgCqrsContext 未初始化"),
     }
 }
 
-pub async fn replay_view(Path(view_name): Path<String>) -> Json<ApiResponse<()>> {
+pub async fn replay_view(Path(view_name): Path<String>) -> ApiResponse<()> {
     match get_pg_cqrs_context() {
         Some(ctx) => match ctx.async_projector.replay_view(&view_name).await {
-            Ok(()) => Json(ApiResponse::success((), "重放成功")),
-            Err(e) => Json(crate::shared::err_resp(e)),
+            Ok(()) => ApiResponse::success((), "重放成功"),
+            Err(e) => crate::shared::err_resp(e),
         },
-        None => Json(ApiResponse::server_error("PgCqrsContext 未初始化")),
+        None => ApiResponse::server_error("PgCqrsContext 未初始化"),
     }
 }
 

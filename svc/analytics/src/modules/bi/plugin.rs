@@ -1,4 +1,4 @@
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Router};
 use serde::{Deserialize, Serialize};
 
 use crate::shared::AppState;
@@ -39,7 +39,7 @@ pub struct PermissionDef {
     operation_id = "get_plugin_info",
     responses((status = 200, description = "OK")),
 )]
-pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
     let runtime_url = get_runtime_url();
     let info = PluginInfo {
         code: "bi".to_string(),
@@ -118,7 +118,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         ])),
         category: Some("crm".to_string()),
     };
-    Json(ApiResponse::success(info, "Plugin info"))
+    ApiResponse::success(info, "Plugin info")
 }
 
 /// 插件健康检查
@@ -130,13 +130,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     operation_id = "plugin_health_check",
     responses((status = 200, description = "OK")),
 )]
-pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<()>> {
+pub async fn plugin_health_check(State(state): State<AppState>) -> ApiResponse<()> {
     match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
-        Ok(_) => Json(ApiResponse::success((), "Healthy")),
-        Err(e) => Json(ApiResponse::from({
+        Ok(_) => ApiResponse::success((), "Healthy"),
+        Err(e) => ApiResponse::from({
             tracing::warn!("Database error: {}", e);
             TopemsError::ServiceUnavailable("Database error".to_string())
-        })),
+        }),
     }
 }
 

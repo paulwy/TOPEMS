@@ -25,7 +25,7 @@ pub async fn list_scope_companies(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<ConsolidationScopeCompany>>> {
+) -> ApiResponse<Vec<ConsolidationScopeCompany>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -42,12 +42,12 @@ pub async fn list_scope_companies(
     .fetch_all(&mut **txn)
     .await
     {
-        Ok(companies) => Json(ApiResponse::success(companies, "获取合并范围公司列表成功")),
+        Ok(companies) => ApiResponse::success(companies, "获取合并范围公司列表成功"),
         Err(e) => {
             tracing::error!("获取合并范围公司列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
+            ApiResponse::from(TopemsError::Internal(
                 "获取合并范围公司列表失败".to_string(),
-            )))
+            ))
         }
     }
 }
@@ -66,7 +66,7 @@ pub async fn add_scope_company(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<AddScopeCompanyRequest>,
-) -> Json<ApiResponse<ConsolidationScopeCompany>> {
+) -> ApiResponse<ConsolidationScopeCompany> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -106,16 +106,14 @@ pub async fn add_scope_company(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(company, "添加公司到合并范围成功"))
+            ApiResponse::success(company, "添加公司到合并范围成功")
         }
         Err(e) => {
             tracing::error!("添加公司到合并范围失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "添加公司到合并范围失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("添加公司到合并范围失败".to_string()))
         }
     }
 }
@@ -136,7 +134,7 @@ pub async fn update_scope_company(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateScopeCompanyRequest>,
-) -> Json<ApiResponse<ConsolidationScopeCompany>> {
+) -> ApiResponse<ConsolidationScopeCompany> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -180,19 +178,17 @@ pub async fn update_scope_company(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(company, "更新合并范围公司成功"))
+            ApiResponse::success(company, "更新合并范围公司成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
             "合并范围公司不存在".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("更新合并范围公司失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新合并范围公司失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新合并范围公司失败".to_string()))
         }
     }
 }
@@ -212,7 +208,7 @@ pub async fn remove_scope_company(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -227,9 +223,9 @@ pub async fn remove_scope_company(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                ApiResponse::from(TopemsError::ResourceNotFound(
                     "合并范围公司不存在".to_string(),
-                )))
+                ))
             } else {
                 log_audit(
                     &state.db,
@@ -242,17 +238,17 @@ pub async fn remove_scope_company(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("事务提交失败: {}", e);
-                        return Json(ApiResponse::server_error("事务提交失败"));
+                        return ApiResponse::server_error("事务提交失败");
                     }
                 }
-                Json(ApiResponse::success((), "从合并范围移除公司成功"))
+                ApiResponse::success((), "从合并范围移除公司成功")
             }
         }
         Err(e) => {
             tracing::error!("从合并范围移除公司失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
+            ApiResponse::from(TopemsError::Internal(
                 "从合并范围移除公司失败".to_string(),
-            )))
+            ))
         }
     }
 }

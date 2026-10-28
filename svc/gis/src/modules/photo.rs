@@ -35,7 +35,7 @@ pub struct CreateLocationPhoto {
 pub async fn list_location_photos(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -51,14 +51,14 @@ pub async fn list_location_photos(
     .fetch_all(&pool)
     .await
     {
-        Ok(photos) => Json(ApiResponse::success(
+        Ok(photos) => ApiResponse::success(
             serde_json::json!({
                 "location_photos": photos,
                 "total": photos.len()
             }),
             "获取位置照片列表成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 
@@ -79,7 +79,7 @@ pub async fn get_location_photo(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<LocationPhoto>> {
+) -> ApiResponse<LocationPhoto> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -94,9 +94,9 @@ pub async fn get_location_photo(
         .fetch_one(&pool)
         .await
     {
-        Ok(photo) => Json(ApiResponse::success(photo, "获取位置照片成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("位置照片未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
+        Ok(photo) => ApiResponse::success(photo, "获取位置照片成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("位置照片未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 
@@ -114,9 +114,9 @@ pub async fn create_location_photo(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateLocationPhoto>,
-) -> Json<ApiResponse<LocationPhoto>> {
+) -> ApiResponse<LocationPhoto> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::LocationPhotoWrite).await {
-        return e;
+        return e.0;
     }
     let taken_at = payload.taken_at.unwrap_or_else(Utc::now);
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
@@ -160,8 +160,8 @@ pub async fn create_location_photo(
     .fetch_one(&pool)
     .await
     {
-        Ok(photo) => Json(ApiResponse::success(photo, "创建位置照片成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库插入失败", e))),
+        Ok(photo) => ApiResponse::success(photo, "创建位置照片成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库插入失败", e)),
     }
 }
 
@@ -182,9 +182,9 @@ pub async fn delete_location_photo(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::LocationPhotoWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
 
@@ -199,15 +199,12 @@ pub async fn delete_location_photo(
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
-                Json(ApiResponse::success(true, "删除位置照片成功"))
+                ApiResponse::success(true, "删除位置照片成功")
             } else {
-                Json(ApiResponse::not_found("位置照片未找到"))
+                ApiResponse::not_found("位置照片未找到")
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库删除失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库删除失败", e)),
     }
 }
 
@@ -228,7 +225,7 @@ pub async fn list_location_photos_by_map(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(map_id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -245,14 +242,14 @@ pub async fn list_location_photos_by_map(
     .fetch_all(&pool)
     .await
     {
-        Ok(photos) => Json(ApiResponse::success(
+        Ok(photos) => ApiResponse::success(
             serde_json::json!({
                 "location_photos": photos,
                 "total": photos.len()
             }),
             "获取位置照片列表成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 

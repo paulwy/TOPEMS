@@ -108,7 +108,7 @@ pub async fn detect_conflicts(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<DetectConflictsRequest>,
-) -> Json<ApiResponse<ConflictDetectionResult>> {
+) -> ApiResponse<ConflictDetectionResult> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -141,7 +141,7 @@ pub async fn detect_conflicts(
                 .unwrap_or_else(|_| chrono::Utc::now()),
         ),
         _ => {
-            return Json(ApiResponse::not_found("未找到本地主数据引用，无法检测冲突"));
+            return ApiResponse::not_found("未找到本地主数据引用，无法检测冲突");
         }
     };
 
@@ -322,11 +322,11 @@ pub async fn detect_conflicts(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
     let conflicts_detected = conflicts.len();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ConflictDetectionResult {
             master_data_id: req.master_data_id,
             conflicts_detected,
@@ -338,7 +338,7 @@ pub async fn detect_conflicts(
             "检测到 {} 个冲突，自动解决 {} 个，待审查 {} 个",
             conflicts_detected, auto_resolved, manual_review_required
         ),
-    ))
+    )
 }
 
 /// V37.0 AC-9: 列出冲突记录
@@ -358,7 +358,7 @@ pub async fn list_conflicts(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Query(params): Query<ConflictQuery>,
-) -> Json<ApiResponse<PaginatedResponse<MasterDataConflict>>> {
+) -> ApiResponse<PaginatedResponse<MasterDataConflict>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -470,17 +470,17 @@ pub async fn list_conflicts(
                 })
                 .collect();
             let total = items.len() as i64;
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "冲突记录列表",
-            ))
+            )
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询冲突记录失败: {}", e);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(vec![], 0, page, page_size),
                 "冲突记录列表（空）",
-            ))
+            )
         }
     }
 }
@@ -500,7 +500,7 @@ pub async fn get_conflict(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<MasterDataConflict>> {
+) -> ApiResponse<MasterDataConflict> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -508,7 +508,7 @@ pub async fn get_conflict(
     };
     let cid = match uuid::Uuid::parse_str(&conflict_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的冲突 ID")),
+        Err(_) => return ApiResponse::bad_request("无效的冲突 ID"),
     };
 
     let row = sqlx::query(only_own_schema_query!(
@@ -523,7 +523,7 @@ pub async fn get_conflict(
     .await;
 
     match row {
-        Ok(Some(r)) => Json(ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             MasterDataConflict {
                 id: r
                     .try_get::<uuid::Uuid, _>("id")
@@ -558,11 +558,11 @@ pub async fn get_conflict(
                 resolved_by: r.try_get::<Option<String>, _>("resolved_by").ok().flatten(),
             },
             "冲突详情",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("未找到冲突记录")),
+        ),
+        Ok(None) => ApiResponse::not_found("未找到冲突记录"),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询冲突详情失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("查询冲突失败", e)))
+            ApiResponse::from(TopemsError::internal("查询冲突失败", e))
         }
     }
 }
@@ -585,7 +585,7 @@ pub async fn resolve_conflict(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ResolveConflictRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -593,7 +593,7 @@ pub async fn resolve_conflict(
     };
     let cid = match uuid::Uuid::parse_str(&conflict_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的冲突 ID")),
+        Err(_) => return ApiResponse::bad_request("无效的冲突 ID"),
     };
     let now = chrono::Utc::now();
 
@@ -611,7 +611,7 @@ pub async fn resolve_conflict(
             r.try_get::<String, _>("master_data_id").unwrap_or_default(),
             r.try_get::<String, _>("field_name").unwrap_or_default(),
         ),
-        _ => return Json(ApiResponse::not_found("未找到冲突记录")),
+        _ => return ApiResponse::not_found("未找到冲突记录"),
     };
 
     // 2. 更新冲突记录状态
@@ -630,7 +630,7 @@ pub async fn resolve_conflict(
 
     if let Err(e) = result {
         tracing::warn!("[erp-mdm] 解决冲突失败: {}", e);
-        return Json(ApiResponse::from(TopemsError::internal("解决冲突失败", e)));
+        return ApiResponse::from(TopemsError::internal("解决冲突失败", e));
     }
 
     // 3. 应用解决值到本地主数据引用
@@ -639,10 +639,10 @@ pub async fn resolve_conflict(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "conflict_id": conflict_id,
             "master_data_id": master_data_id,
@@ -652,7 +652,7 @@ pub async fn resolve_conflict(
             "resolved_by": req.resolved_by,
         }),
         "冲突已手动解决",
-    ))
+    )
 }
 
 /// V37.0 AC-9: 自动合并冲突
@@ -673,7 +673,7 @@ pub async fn auto_merge_conflict(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<AutoMergeRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -681,7 +681,7 @@ pub async fn auto_merge_conflict(
     };
     let cid = match uuid::Uuid::parse_str(&conflict_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的冲突 ID")),
+        Err(_) => return ApiResponse::bad_request("无效的冲突 ID"),
     };
     let strategy = req.strategy.unwrap_or_default();
     let now = chrono::Utc::now();
@@ -705,7 +705,7 @@ pub async fn auto_merge_conflict(
                 .unwrap_or_default(),
             r.try_get::<String, _>("remote_service").unwrap_or_default(),
         ),
-        _ => return Json(ApiResponse::not_found("未找到待合并的冲突记录")),
+        _ => return ApiResponse::not_found("未找到待合并的冲突记录"),
     };
 
     // 2. 根据策略选择解决值
@@ -725,7 +725,7 @@ pub async fn auto_merge_conflict(
             }
         }
         MergeStrategy::ManualReview => {
-            return Json(ApiResponse::bad_request("策略为手动审查，不自动合并"));
+            return ApiResponse::bad_request("策略为手动审查，不自动合并");
         }
     };
 
@@ -747,7 +747,7 @@ pub async fn auto_merge_conflict(
 
     if let Err(e) = result {
         tracing::warn!("[erp-mdm] 自动合并失败: {}", e);
-        return Json(ApiResponse::from(TopemsError::internal("自动合并失败", e)));
+        return ApiResponse::from(TopemsError::internal("自动合并失败", e));
     }
 
     // 4. 应用解决值
@@ -756,10 +756,10 @@ pub async fn auto_merge_conflict(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "conflict_id": conflict_id,
             "master_data_id": master_data_id,
@@ -769,7 +769,7 @@ pub async fn auto_merge_conflict(
             "auto_merged_at": now.to_rfc3339(),
         }),
         "冲突已自动合并",
-    ))
+    )
 }
 
 /// 将解决值应用到本地主数据引用表

@@ -42,7 +42,7 @@ fn tenant_for_write(claims: &Claims) -> Uuid {
 pub async fn list_connections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ErpConnectionResponse>>> {
+) -> ApiResponse<Vec<ErpConnectionResponse>> {
     let tid = tenant_filter(&claims);
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
@@ -55,15 +55,15 @@ pub async fn list_connections(
     .fetch_all(&state.pool)
     .await
     {
-        Ok(rows) => Json(ApiResponse::success(
+        Ok(rows) => ApiResponse::success(
             rows.into_iter()
                 .map(ErpConnectionResponse::from)
                 .collect::<Vec<_>>(),
             "连接列表获取成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("list_connections error: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
+            ApiResponse::from(TopemsError::internal("查询失败", e))
         }
     }
 }
@@ -81,7 +81,7 @@ pub async fn get_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ErpConnectionResponse>> {
+) -> ApiResponse<ErpConnectionResponse> {
     let tid = tenant_filter(&claims);
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
@@ -95,9 +95,9 @@ pub async fn get_connection(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(conn)) => Json(ApiResponse::success(conn.into(), "获取成功")),
-        Ok(None) => Json(ApiResponse::not_found("连接不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(Some(conn)) => ApiResponse::success(conn.into(), "获取成功"),
+        Ok(None) => ApiResponse::not_found("连接不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -114,7 +114,7 @@ pub async fn create_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateErpConnectionRequest>,
-) -> Json<ApiResponse<ErpConnectionResponse>> {
+) -> ApiResponse<ErpConnectionResponse> {
     let tid = tenant_for_write(&claims);
     let id = Uuid::new_v4();
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
@@ -144,8 +144,8 @@ pub async fn create_connection(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(conn) => Json(ApiResponse::success(conn.into(), "创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
+        Ok(conn) => ApiResponse::success(conn.into(), "创建成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建失败", e)),
     }
 }
 
@@ -163,7 +163,7 @@ pub async fn update_connection(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateErpConnectionRequest>,
-) -> Json<ApiResponse<ErpConnectionResponse>> {
+) -> ApiResponse<ErpConnectionResponse> {
     let tid = tenant_filter(&claims);
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
@@ -199,9 +199,9 @@ pub async fn update_connection(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(conn)) => Json(ApiResponse::success(conn.into(), "更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("连接不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+        Ok(Some(conn)) => ApiResponse::success(conn.into(), "更新成功"),
+        Ok(None) => ApiResponse::not_found("连接不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
 }
 
@@ -218,7 +218,7 @@ pub async fn delete_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tid = tenant_filter(&claims);
     match sqlx::query(only_own_schema_query!(
         "integration",
@@ -229,9 +229,9 @@ pub async fn delete_connection(
     .execute(&state.pool)
     .await
     {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("连接不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
+        Ok(_) => ApiResponse::not_found("连接不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
     }
 }
 
@@ -247,17 +247,17 @@ pub async fn delete_connection(
 pub async fn test_connection(
     State(_state): State<AppState>,
     Json(req): Json<TestConnectionRequest>,
-) -> Json<ApiResponse<TestConnectionResponse>> {
+) -> ApiResponse<TestConnectionResponse> {
     // URL 格式校验：非 http/https 直接判失败，不发起请求
     if !req.api_url.starts_with("http://") && !req.api_url.starts_with("https://") {
-        return Json(ApiResponse::success(
+        return ApiResponse::success(
             TestConnectionResponse {
                 success: false,
                 response_time_ms: 0,
                 error_message: Some("URL 必须以 http:// 或 https:// 开头".to_string()),
             },
             "测试完成",
-        ));
+        );
     }
 
     // 真实 HTTP 探测（带超时）：复用 external_erp::probe_http_url，
@@ -266,12 +266,12 @@ pub async fn test_connection(
     // 注：SSRF 地址白名单/内网封锁属 P2-2，待产品决策，本处暂不做。
     let timeout_ms = req.timeout.unwrap_or(5000);
     let probe = crate::external_erp::probe_http_url(&req.api_url, timeout_ms).await;
-    Json(ApiResponse::success(
+    ApiResponse::success(
         TestConnectionResponse {
             success: probe.success,
             response_time_ms: probe.response_time_ms,
             error_message: probe.error_message,
         },
         "测试完成",
-    ))
+    )
 }

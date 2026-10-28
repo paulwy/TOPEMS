@@ -488,10 +488,10 @@ async fn generate_improvement_plan() -> ImprovementPlan {
 )]
 pub async fn assess_maturity_handler(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<MaturityAssessment>> {
+) -> ApiResponse<MaturityAssessment> {
     let _ = &state;
     let assessment = assess_maturity().await;
-    Json(ApiResponse::success(assessment, "成熟度评估完成"))
+    ApiResponse::success(assessment, "成熟度评估完成")
 }
 
 /// GET /maturity/history — 获取历史评估记录
@@ -505,10 +505,10 @@ pub async fn assess_maturity_handler(
 )]
 pub async fn get_maturity_history_handler(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<MaturityAssessment>>> {
+) -> ApiResponse<Vec<MaturityAssessment>> {
     let _ = &state;
     let history = get_maturity_history().await;
-    Json(ApiResponse::success(history, "历史评估记录获取成功"))
+    ApiResponse::success(history, "历史评估记录获取成功")
 }
 
 /// POST /maturity/compare — 对比两次评估结果
@@ -523,11 +523,11 @@ pub async fn get_maturity_history_handler(
 pub async fn compare_assessments_handler(
     State(state): State<ApiState>,
     Json(req): Json<CompareAssessmentsRequest>,
-) -> Json<ApiResponse<AssessmentComparison>> {
+) -> ApiResponse<AssessmentComparison> {
     let _ = &state;
     match compare_assessments(&req.baseline_id, &req.current_id).await {
-        Some(comparison) => Json(ApiResponse::success(comparison, "评估对比完成")),
-        None => Json(ApiResponse::not_found("未找到指定的评估记录")),
+        Some(comparison) => ApiResponse::success(comparison, "评估对比完成"),
+        None => ApiResponse::not_found("未找到指定的评估记录"),
     }
 }
 
@@ -542,8 +542,8 @@ pub async fn compare_assessments_handler(
 )]
 pub async fn get_improvement_plan_handler(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<ImprovementPlan>> {
+) -> ApiResponse<ImprovementPlan> {
     let _ = &state;
     let plan = generate_improvement_plan().await;
-    Json(ApiResponse::success(plan, "改进计划生成成功"))
+    ApiResponse::success(plan, "改进计划生成成功")
 }

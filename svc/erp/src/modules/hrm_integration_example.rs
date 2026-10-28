@@ -5,7 +5,7 @@
 //! 这是架构改进计划的最佳实践示例
 
 use crate::modules::ApiState;
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Router};
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_service_client::service_client::api::hrm_api::{
     HrmCompany, HrmDepartment, HrmEmployee,
@@ -32,13 +32,10 @@ pub fn create_routes() -> Router<ApiState> {
 )]
 pub async fn list_employees_from_hrm(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<HrmEmployee>>> {
+) -> ApiResponse<Vec<HrmEmployee>> {
     match state.hrm_client.list_employees().await {
-        Ok(employees) => Json(ApiResponse::success(employees, "从HRM服务获取员工列表成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "从HRM服务获取员工列表失败",
-            e,
-        ))),
+        Ok(employees) => ApiResponse::success(employees, "从HRM服务获取员工列表成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("从HRM服务获取员工列表失败", e)),
     }
 }
 
@@ -56,17 +53,14 @@ pub async fn list_employees_from_hrm(
 pub async fn get_employee_from_hrm(
     axum::extract::Path(id): axum::extract::Path<String>,
     State(state): State<ApiState>,
-) -> Json<ApiResponse<HrmEmployee>> {
+) -> ApiResponse<HrmEmployee> {
     use uuid::Uuid;
     match Uuid::parse_str(&id) {
         Ok(uuid) => match state.hrm_client.get_employee(uuid).await {
-            Ok(employee) => Json(ApiResponse::success(employee, "从HRM服务获取员工成功")),
-            Err(e) => Json(ApiResponse::from(TopemsError::internal(
-                "从HRM服务获取员工失败",
-                e,
-            ))),
+            Ok(employee) => ApiResponse::success(employee, "从HRM服务获取员工成功"),
+            Err(e) => ApiResponse::from(TopemsError::internal("从HRM服务获取员工失败", e)),
         },
-        Err(_) => Json(ApiResponse::bad_request("无效的员工ID格式")),
+        Err(_) => ApiResponse::bad_request("无效的员工ID格式"),
     }
 }
 
@@ -83,16 +77,10 @@ pub async fn get_employee_from_hrm(
 )]
 pub async fn list_departments_from_hrm(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<HrmDepartment>>> {
+) -> ApiResponse<Vec<HrmDepartment>> {
     match state.hrm_client.list_departments().await {
-        Ok(departments) => Json(ApiResponse::success(
-            departments,
-            "从HRM服务获取部门列表成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "从HRM服务获取部门列表失败",
-            e,
-        ))),
+        Ok(departments) => ApiResponse::success(departments, "从HRM服务获取部门列表成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("从HRM服务获取部门列表失败", e)),
     }
 }
 
@@ -109,12 +97,9 @@ pub async fn list_departments_from_hrm(
 )]
 pub async fn list_companies_from_hrm(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<Vec<HrmCompany>>> {
+) -> ApiResponse<Vec<HrmCompany>> {
     match state.hrm_client.list_companies().await {
-        Ok(companies) => Json(ApiResponse::success(companies, "从HRM服务获取公司列表成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "从HRM服务获取公司列表失败",
-            e,
-        ))),
+        Ok(companies) => ApiResponse::success(companies, "从HRM服务获取公司列表成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("从HRM服务获取公司列表失败", e)),
     }
 }

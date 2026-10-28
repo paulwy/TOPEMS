@@ -61,7 +61,7 @@ pub async fn record_audit_event(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<RecordAuditRequest>,
-) -> Json<ApiResponse<MasterDataAuditEvent>> {
+) -> ApiResponse<MasterDataAuditEvent> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -96,10 +96,10 @@ pub async fn record_audit_event(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 MasterDataAuditEvent {
                     id: id.to_string(),
                     master_data_id: req.master_data_id,
@@ -113,14 +113,11 @@ pub async fn record_audit_event(
                     created_at: now.to_rfc3339(),
                 },
                 "审计事件记录成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 记录审计事件失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "记录审计事件失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("记录审计事件失败", e))
         }
     }
 }
@@ -143,7 +140,7 @@ pub async fn get_audit_trail(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<MasterDataAuditEvent>>> {
+) -> ApiResponse<PaginatedResponse<MasterDataAuditEvent>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -198,17 +195,17 @@ pub async fn get_audit_trail(
                 })
                 .collect();
             let total = items.len() as i64;
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
                 "审计追踪列表",
-            ))
+            )
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询审计追踪失败: {}", e);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(vec![], 0, page, page_size),
                 "审计追踪列表（空）",
-            ))
+            )
         }
     }
 }

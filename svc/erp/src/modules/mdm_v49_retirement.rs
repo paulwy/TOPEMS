@@ -19,7 +19,7 @@ use super::mdm_v49_types::*;
 pub async fn create_retirement_plan(
     State(_state): State<ApiState>,
     Json(req): Json<RetirementPlanRequest>,
-) -> Json<ApiResponse<RetirementPlan>> {
+) -> ApiResponse<RetirementPlan> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let mut plans = store.retirement_plans.lock().await;
@@ -62,7 +62,7 @@ pub async fn create_retirement_plan(
     };
 
     plans.push(plan.clone());
-    Json(ApiResponse::success(plan, "退役计划已创建"))
+    ApiResponse::success(plan, "退役计划已创建")
 }
 
 #[utoipa::path(
@@ -84,7 +84,7 @@ pub async fn create_retirement_plan(
 pub async fn list_retirement_plans(
     State(_state): State<ApiState>,
     Query(params): Query<RetirementPlanQuery>,
-) -> Json<ApiResponse<PaginatedResponse<RetirementPlan>>> {
+) -> ApiResponse<PaginatedResponse<RetirementPlan>> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let plans = store.retirement_plans.lock().await;
@@ -126,7 +126,7 @@ pub async fn list_retirement_plans(
         .take(page_size as usize)
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -135,7 +135,7 @@ pub async fn list_retirement_plans(
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "退役计划列表",
-    ))
+    )
 }
 
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
@@ -173,13 +173,13 @@ impl RetirementStatus {
 pub async fn get_retirement_plan(
     State(_state): State<ApiState>,
     Path(plan_id): Path<String>,
-) -> Json<ApiResponse<RetirementPlan>> {
+) -> ApiResponse<RetirementPlan> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let plans = store.retirement_plans.lock().await;
     match plans.iter().find(|p| p.id == plan_id) {
-        Some(p) => Json(ApiResponse::success(p.clone(), "退役计划")),
-        None => Json(ApiResponse::not_found("未找到退役计划")),
+        Some(p) => ApiResponse::success(p.clone(), "退役计划"),
+        None => ApiResponse::not_found("未找到退役计划"),
     }
 }
 
@@ -195,12 +195,12 @@ pub async fn get_retirement_plan(
 pub async fn assess_impact(
     State(_state): State<ApiState>,
     Path(plan_id): Path<String>,
-) -> Json<ApiResponse<RetirementPlan>> {
+) -> ApiResponse<RetirementPlan> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let mut plans = store.retirement_plans.lock().await;
     let Some(plan) = plans.iter_mut().find(|p| p.id == plan_id) else {
-        return Json(ApiResponse::not_found("未找到退役计划"));
+        return ApiResponse::not_found("未找到退役计划");
     };
 
     // 简化版影响评估：基于实体类型模拟下游依赖
@@ -242,7 +242,7 @@ pub async fn assess_impact(
     };
     plan.status = RetirementStatus::ImpactAssessed;
 
-    Json(ApiResponse::success(plan.clone(), "影响评估已完成"))
+    ApiResponse::success(plan.clone(), "影响评估已完成")
 }
 
 #[utoipa::path(
@@ -256,21 +256,21 @@ pub async fn assess_impact(
 pub async fn notify_stakeholders(
     State(_state): State<ApiState>,
     Path(plan_id): Path<String>,
-) -> Json<ApiResponse<RetirementPlan>> {
+) -> ApiResponse<RetirementPlan> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let mut plans = store.retirement_plans.lock().await;
     let Some(plan) = plans.iter_mut().find(|p| p.id == plan_id) else {
-        return Json(ApiResponse::not_found("未找到退役计划"));
+        return ApiResponse::not_found("未找到退役计划");
     };
 
     plan.notify_status = "sent".to_string();
     plan.status = RetirementStatus::StakeholderNotified;
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         plan.clone(),
         &format!("已通过 {:?} 通知相关方", plan.notify_channels),
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -285,19 +285,19 @@ pub async fn confirm_retirement_plan(
     State(_state): State<ApiState>,
     Path(plan_id): Path<String>,
     Json(req): Json<RetirementConfirmRequest>,
-) -> Json<ApiResponse<RetirementPlan>> {
+) -> ApiResponse<RetirementPlan> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let mut plans = store.retirement_plans.lock().await;
     let Some(plan) = plans.iter_mut().find(|p| p.id == plan_id) else {
-        return Json(ApiResponse::not_found("未找到退役计划"));
+        return ApiResponse::not_found("未找到退役计划");
     };
 
     plan.confirmed_by = Some(req.confirmed_by);
     plan.confirmed_at = Some(chrono::Utc::now().to_rfc3339());
     plan.status = RetirementStatus::Confirmed;
 
-    Json(ApiResponse::success(plan.clone(), "退役计划已确认"))
+    ApiResponse::success(plan.clone(), "退役计划已确认")
 }
 
 #[utoipa::path(
@@ -315,14 +315,14 @@ pub async fn execute_retirement_plan(
     State(_state): State<ApiState>,
     Path(plan_id): Path<String>,
     Json(req): Json<RetirementExecuteRequest>,
-) -> Json<ApiResponse<RetirementPlan>> {
+) -> ApiResponse<RetirementPlan> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
 
     let (master_data_id, planned_rollback_window) = {
         let mut plans = store.retirement_plans.lock().await;
         let Some(plan) = plans.iter_mut().find(|p| p.id == plan_id) else {
-            return Json(ApiResponse::not_found("未找到退役计划"));
+            return ApiResponse::not_found("未找到退役计划");
         };
 
         plan.status = RetirementStatus::Completed;
@@ -347,8 +347,8 @@ pub async fn execute_retirement_plan(
     let p = plans.iter().find(|x| x.id == plan_id).cloned();
     let _ = planned_rollback_window;
     match p {
-        Some(plan) => Json(ApiResponse::success(plan, "退役已执行")),
-        None => Json(ApiResponse::server_error("执行失败")),
+        Some(plan) => ApiResponse::success(plan, "退役已执行"),
+        None => ApiResponse::server_error("执行失败"),
     }
 }
 
@@ -366,21 +366,21 @@ pub async fn rollback_retirement_plan(
     State(_state): State<ApiState>,
     Path(plan_id): Path<String>,
     Json(req): Json<RetirementRollbackRequest>,
-) -> Json<ApiResponse<RetirementPlan>> {
+) -> ApiResponse<RetirementPlan> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
 
     let master_data_id = {
         let mut plans = store.retirement_plans.lock().await;
         let Some(plan) = plans.iter_mut().find(|p| p.id == plan_id) else {
-            return Json(ApiResponse::not_found("未找到退役计划"));
+            return ApiResponse::not_found("未找到退役计划");
         };
 
         if !matches!(
             plan.status,
             RetirementStatus::Completed | RetirementStatus::Executing
         ) {
-            return Json(ApiResponse::bad_request("当前状态不支持回滚"));
+            return ApiResponse::bad_request("当前状态不支持回滚");
         }
 
         plan.status = RetirementStatus::RolledBack;
@@ -399,8 +399,8 @@ pub async fn rollback_retirement_plan(
     let plans = store.retirement_plans.lock().await;
     let p = plans.iter().find(|x| x.id == plan_id).cloned();
     match p {
-        Some(plan) => Json(ApiResponse::success(plan, "已回滚")),
-        None => Json(ApiResponse::server_error("回滚失败")),
+        Some(plan) => ApiResponse::success(plan, "已回滚"),
+        None => ApiResponse::server_error("回滚失败"),
     }
 }
 
@@ -417,18 +417,18 @@ pub async fn rollback_retirement_plan(
 pub async fn cancel_retirement_plan(
     State(_state): State<ApiState>,
     Path(plan_id): Path<String>,
-) -> Json<ApiResponse<RetirementPlan>> {
+) -> ApiResponse<RetirementPlan> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let mut plans = store.retirement_plans.lock().await;
     let Some(plan) = plans.iter_mut().find(|p| p.id == plan_id) else {
-        return Json(ApiResponse::not_found("未找到退役计划"));
+        return ApiResponse::not_found("未找到退役计划");
     };
 
     if matches!(plan.status, RetirementStatus::Completed) {
-        return Json(ApiResponse::bad_request("已执行的退役计划不可取消"));
+        return ApiResponse::bad_request("已执行的退役计划不可取消");
     }
 
     plan.status = RetirementStatus::Cancelled;
-    Json(ApiResponse::success(plan.clone(), "退役计划已取消"))
+    ApiResponse::success(plan.clone(), "退役计划已取消")
 }

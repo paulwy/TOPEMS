@@ -751,10 +751,10 @@ async fn get_report_automation_stats() -> ReportAutomationStats {
 pub async fn list_report_templates_handler(
     State(state): State<ApiState>,
     Query(params): Query<ReportListQuery>,
-) -> Json<ApiResponse<Vec<ReportTemplate>>> {
+) -> ApiResponse<Vec<ReportTemplate>> {
     let _ = &state;
     let templates = list_report_templates(params.report_type.as_deref()).await;
-    Json(ApiResponse::success(templates, "报告模板列表获取成功"))
+    ApiResponse::success(templates, "报告模板列表获取成功")
 }
 
 /// POST /reports/templates — 创建报告模板
@@ -769,10 +769,10 @@ pub async fn list_report_templates_handler(
 pub async fn create_report_template_handler(
     State(state): State<ApiState>,
     Json(req): Json<ReportTemplateRequest>,
-) -> Json<ApiResponse<ReportTemplate>> {
+) -> ApiResponse<ReportTemplate> {
     let _ = &state;
     let template = create_report_template(&req).await;
-    Json(ApiResponse::success(template, "报告模板创建成功"))
+    ApiResponse::success(template, "报告模板创建成功")
 }
 
 /// GET /reports/templates/{template_id} — 获取报告模板
@@ -787,11 +787,11 @@ pub async fn create_report_template_handler(
 pub async fn get_report_template_handler(
     State(state): State<ApiState>,
     Path(template_id): Path<String>,
-) -> Json<ApiResponse<ReportTemplate>> {
+) -> ApiResponse<ReportTemplate> {
     let _ = &state;
     match get_report_template(&template_id).await {
-        Some(template) => Json(ApiResponse::success(template, "报告模板获取成功")),
-        None => Json(ApiResponse::not_found("未找到报告模板")),
+        Some(template) => ApiResponse::success(template, "报告模板获取成功"),
+        None => ApiResponse::not_found("未找到报告模板"),
     }
 }
 
@@ -807,11 +807,11 @@ pub async fn get_report_template_handler(
 pub async fn generate_report_handler(
     State(state): State<ApiState>,
     Json(req): Json<GenerateReportRequest>,
-) -> Json<ApiResponse<GeneratedReport>> {
+) -> ApiResponse<GeneratedReport> {
     let _ = &state;
     match generate_report(&req).await {
-        Some(report) => Json(ApiResponse::success(report, "报告生成成功")),
-        None => Json(ApiResponse::not_found("未找到报告模板")),
+        Some(report) => ApiResponse::success(report, "报告生成成功"),
+        None => ApiResponse::not_found("未找到报告模板"),
     }
 }
 
@@ -829,11 +829,11 @@ pub async fn generate_report_handler(
 pub async fn list_generated_reports_handler(
     State(state): State<ApiState>,
     Query(params): Query<GeneratedReportQuery>,
-) -> Json<ApiResponse<Vec<GeneratedReport>>> {
+) -> ApiResponse<Vec<GeneratedReport>> {
     let _ = &state;
     let reports =
         list_generated_reports(params.template_id.as_deref(), params.status.as_deref()).await;
-    Json(ApiResponse::success(reports, "已生成报告列表获取成功"))
+    ApiResponse::success(reports, "已生成报告列表获取成功")
 }
 
 /// GET /reports/generated/{report_id} — 获取已生成报告
@@ -848,11 +848,11 @@ pub async fn list_generated_reports_handler(
 pub async fn get_generated_report_handler(
     State(state): State<ApiState>,
     Path(report_id): Path<String>,
-) -> Json<ApiResponse<GeneratedReport>> {
+) -> ApiResponse<GeneratedReport> {
     let _ = &state;
     match get_generated_report(&report_id).await {
-        Some(report) => Json(ApiResponse::success(report, "已生成报告获取成功")),
-        None => Json(ApiResponse::not_found("未找到报告")),
+        Some(report) => ApiResponse::success(report, "已生成报告获取成功"),
+        None => ApiResponse::not_found("未找到报告"),
     }
 }
 
@@ -868,11 +868,11 @@ pub async fn get_generated_report_handler(
 pub async fn schedule_report_handler(
     State(state): State<ApiState>,
     Json(req): Json<ScheduleReportRequest>,
-) -> Json<ApiResponse<ReportTemplate>> {
+) -> ApiResponse<ReportTemplate> {
     let _ = &state;
     match schedule_report(&req).await {
-        Some(template) => Json(ApiResponse::success(template, "报告调度成功")),
-        None => Json(ApiResponse::not_found("未找到报告模板")),
+        Some(template) => ApiResponse::success(template, "报告调度成功"),
+        None => ApiResponse::not_found("未找到报告模板"),
     }
 }
 
@@ -888,11 +888,11 @@ pub async fn schedule_report_handler(
 pub async fn get_report_schedule_handler(
     State(state): State<ApiState>,
     Path(template_id): Path<String>,
-) -> Json<ApiResponse<ReportSchedule>> {
+) -> ApiResponse<ReportSchedule> {
     let _ = &state;
     match get_report_schedule(&template_id).await {
-        Some(schedule) => Json(ApiResponse::success(schedule, "报告调度计划获取成功")),
-        None => Json(ApiResponse::not_found("未找到报告调度计划")),
+        Some(schedule) => ApiResponse::success(schedule, "报告调度计划获取成功"),
+        None => ApiResponse::not_found("未找到报告调度计划"),
     }
 }
 
@@ -907,8 +907,8 @@ pub async fn get_report_schedule_handler(
 )]
 pub async fn get_report_automation_stats_handler(
     State(state): State<ApiState>,
-) -> Json<ApiResponse<ReportAutomationStats>> {
+) -> ApiResponse<ReportAutomationStats> {
     let _ = &state;
     let stats = get_report_automation_stats().await;
-    Json(ApiResponse::success(stats, "报告自动化统计获取成功"))
+    ApiResponse::success(stats, "报告自动化统计获取成功")
 }

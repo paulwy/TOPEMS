@@ -64,10 +64,10 @@ pub struct UpdateAssetCategoryRequest {
     pub status: Option<String>,
 }
 
-fn internal_error(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
+fn internal_error(msg: &str) -> (StatusCode, ApiResponse<serde_json::Value>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiResponse::server_error(msg)),
+        ApiResponse::server_error(msg),
     )
 }
 
@@ -100,8 +100,7 @@ pub async fn list_asset_categories(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -161,10 +160,10 @@ pub async fn list_asset_categories(
 
     let items: Vec<serde_json::Value> = rows.iter().map(row_to_json).collect();
 
-    Ok(Json(ApiResponse::success(
+    Ok(ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "获取资产分类列表成功",
-    )))
+    ))
 }
 #[utoipa::path(
     get,
@@ -186,8 +185,7 @@ pub async fn get_asset_category(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -206,7 +204,7 @@ pub async fn get_asset_category(
     {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Ok(Json(ApiResponse::not_found("资产分类不存在")));
+            return Ok(ApiResponse::not_found("资产分类不存在"));
         }
         Err(e) => {
             tracing::error!("查询资产分类失败: {}", e);
@@ -214,10 +212,7 @@ pub async fn get_asset_category(
         }
     };
 
-    Ok(Json(ApiResponse::success(
-        row_to_json(&row),
-        "获取资产分类成功",
-    )))
+    Ok(ApiResponse::success(row_to_json(&row), "获取资产分类成功"))
 }
 
 pub async fn create_asset_category(
@@ -227,8 +222,7 @@ pub async fn create_asset_category(
     >,
     headers: HeaderMap,
     Json(req): Json<CreateAssetCategoryRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -263,13 +257,10 @@ pub async fn create_asset_category(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Ok(Json(ApiResponse::server_error("事务提交失败")));
+            return Ok(ApiResponse::server_error("事务提交失败"));
         }
     }
-    Ok(Json(ApiResponse::success(
-        row_to_json(&row),
-        "创建资产分类成功",
-    )))
+    Ok(ApiResponse::success(row_to_json(&row), "创建资产分类成功"))
 }
 
 pub async fn update_asset_category(
@@ -280,8 +271,7 @@ pub async fn update_asset_category(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateAssetCategoryRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -314,7 +304,7 @@ pub async fn update_asset_category(
     {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Ok(Json(ApiResponse::not_found("资产分类不存在")));
+            return Ok(ApiResponse::not_found("资产分类不存在"));
         }
         Err(e) => {
             tracing::error!("更新资产分类失败: {}", e);
@@ -325,13 +315,10 @@ pub async fn update_asset_category(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Ok(Json(ApiResponse::server_error("事务提交失败")));
+            return Ok(ApiResponse::server_error("事务提交失败"));
         }
     }
-    Ok(Json(ApiResponse::success(
-        row_to_json(&row),
-        "更新资产分类成功",
-    )))
+    Ok(ApiResponse::success(row_to_json(&row), "更新资产分类成功"))
 }
 
 pub async fn delete_asset_category(
@@ -340,8 +327,7 @@ pub async fn delete_asset_category(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -358,21 +344,21 @@ pub async fn delete_asset_category(
     match result {
         Ok(res) => {
             if res.rows_affected() == 0 {
-                return Ok(Json(ApiResponse::not_found("资产分类不存在")));
+                return Ok(ApiResponse::not_found("资产分类不存在"));
             }
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
                     return Err((
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::server_error("事务提交失败")),
+                        ApiResponse::server_error("事务提交失败"),
                     ));
                 }
             }
-            Ok(Json(ApiResponse::success(
+            Ok(ApiResponse::success(
                 serde_json::json!({ "deleted": true, "id": id.to_string() }),
                 "删除资产分类成功",
-            )))
+            ))
         }
         Err(e) => {
             tracing::error!("删除资产分类失败: {}", e);

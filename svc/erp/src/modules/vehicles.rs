@@ -64,7 +64,7 @@ pub async fn list_vehicles(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<Vehicle>>> {
+) -> ApiResponse<PaginatedResponse<Vehicle>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -115,16 +115,14 @@ pub async fn list_vehicles(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(vehicles, total, page, page_size),
                 "获取车辆列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取车辆列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取车辆列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取车辆列表失败".to_string()))
         }
     }
 }
@@ -147,16 +145,14 @@ pub async fn create_vehicle(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateVehicleRequest>,
-) -> Json<ApiResponse<Vehicle>> {
+) -> ApiResponse<Vehicle> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("车牌号", &req.plate_number) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            e.to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
     }
 
     let id = Uuid::new_v4();
@@ -184,16 +180,14 @@ pub async fn create_vehicle(
 
     let (response, status, error_msg) = match &result {
         Ok(vehicle) => (
-            Json(ApiResponse::success(vehicle.clone(), "车辆创建成功")),
+            ApiResponse::success(vehicle.clone(), "车辆创建成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("创建车辆失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "车辆创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("车辆创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -203,9 +197,7 @@ pub async fn create_vehicle(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -257,7 +249,7 @@ pub async fn get_vehicle(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vehicle>> {
+) -> ApiResponse<Vehicle> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -274,15 +266,11 @@ pub async fn get_vehicle(
     .await;
 
     match result {
-        Ok(Some(vehicle)) => Json(ApiResponse::success(vehicle, "获取车辆成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "车辆不存在".to_string(),
-        ))),
+        Ok(Some(vehicle)) => ApiResponse::success(vehicle, "获取车辆成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("车辆不存在".to_string())),
         Err(e) => {
             tracing::error!("获取车辆失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取车辆失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取车辆失败".to_string()))
         }
     }
 }
@@ -309,7 +297,7 @@ pub async fn update_vehicle(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateVehicleRequest>,
-) -> Json<ApiResponse<Vehicle>> {
+) -> ApiResponse<Vehicle> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -325,16 +313,9 @@ pub async fn update_vehicle(
     let existing = match existing {
         Ok(Some(v)) => v,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "车辆不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("车辆不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询车辆失败: {}",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询车辆失败: {}", e)),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -374,16 +355,14 @@ pub async fn update_vehicle(
 
     let (response, status_str, error_msg) = match &result {
         Ok(vehicle) => (
-            Json(ApiResponse::success(vehicle.clone(), "车辆更新成功")),
+            ApiResponse::success(vehicle.clone(), "车辆更新成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("更新车辆失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "车辆更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("车辆更新失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -393,9 +372,7 @@ pub async fn update_vehicle(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -448,7 +425,7 @@ pub async fn delete_vehicle(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -464,23 +441,19 @@ pub async fn delete_vehicle(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "车辆删除成功")),
+            ApiResponse::success("".to_string(), "车辆删除成功"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "车辆不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("车辆不存在".to_string())),
             "error".to_string(),
             Some("车辆不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除车辆失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "车辆删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("车辆删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -490,9 +463,7 @@ pub async fn delete_vehicle(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -540,7 +511,7 @@ pub async fn list_vehicle_requests(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<VehicleApplication>>> {
+) -> ApiResponse<PaginatedResponse<VehicleApplication>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -587,16 +558,14 @@ pub async fn list_vehicle_requests(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(requests, total, page, page_size),
                 "获取车辆申请列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取车辆申请列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取车辆申请列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取车辆申请列表失败".to_string()))
         }
     }
 }
@@ -619,16 +588,14 @@ pub async fn create_vehicle_request(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateVehicleRequestRequest>,
-) -> Json<ApiResponse<VehicleApplication>> {
+) -> ApiResponse<VehicleApplication> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("申请人", &req.requester) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            e.to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
     }
 
     let vehicle_result = sqlx::query_as::<_, Vehicle>(
@@ -641,16 +608,11 @@ pub async fn create_vehicle_request(
     let vehicle = match vehicle_result {
         Ok(Some(v)) => v,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "车辆不可用或不存在".to_string(),
-            )))
+            ))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询车辆失败: {}",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询车辆失败: {}", e)),
     };
 
     let overlapping = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -669,9 +631,9 @@ pub async fn create_vehicle_request(
 
     if let Ok(count) = overlapping {
         if count > 0 {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "该时间段车辆已被申请".to_string(),
-            )));
+            ));
         }
     }
 
@@ -700,16 +662,14 @@ pub async fn create_vehicle_request(
 
     let (response, status, error_msg) = match &result {
         Ok(request) => (
-            Json(ApiResponse::success(request.clone(), "车辆申请创建成功")),
+            ApiResponse::success(request.clone(), "车辆申请创建成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("创建车辆申请失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "车辆申请创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("车辆申请创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -719,9 +679,7 @@ pub async fn create_vehicle_request(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -773,7 +731,7 @@ pub async fn get_vehicle_request(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<VehicleApplication>> {
+) -> ApiResponse<VehicleApplication> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -790,15 +748,11 @@ pub async fn get_vehicle_request(
     .await;
 
     match result {
-        Ok(Some(request)) => Json(ApiResponse::success(request, "获取车辆申请成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "车辆申请不存在".to_string(),
-        ))),
+        Ok(Some(request)) => ApiResponse::success(request, "获取车辆申请成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("车辆申请不存在".to_string())),
         Err(e) => {
             tracing::error!("获取车辆申请失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取车辆申请失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取车辆申请失败".to_string()))
         }
     }
 }
@@ -825,7 +779,7 @@ pub async fn update_vehicle_request(
     >,
     Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateVehicleRequestRequest>,
-) -> Json<ApiResponse<VehicleApplication>> {
+) -> ApiResponse<VehicleApplication> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -841,16 +795,9 @@ pub async fn update_vehicle_request(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "车辆申请不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("车辆申请不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询车辆申请失败: {}",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询车辆申请失败: {}", e)),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -880,16 +827,14 @@ pub async fn update_vehicle_request(
 
     let (response, status_str, error_msg) = match &result {
         Ok(request) => (
-            Json(ApiResponse::success(request.clone(), "车辆申请更新成功")),
+            ApiResponse::success(request.clone(), "车辆申请更新成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("更新车辆申请失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "车辆申请更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("车辆申请更新失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -899,9 +844,7 @@ pub async fn update_vehicle_request(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -954,7 +897,7 @@ pub async fn delete_vehicle_request(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -970,23 +913,19 @@ pub async fn delete_vehicle_request(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "车辆申请删除成功")),
+            ApiResponse::success("".to_string(), "车辆申请删除成功"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "车辆申请不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("车辆申请不存在".to_string())),
             "error".to_string(),
             Some("车辆申请不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除车辆申请失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "车辆申请删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("车辆申请删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -996,9 +935,7 @@ pub async fn delete_vehicle_request(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -1049,7 +986,7 @@ pub async fn get_vehicle_requests(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<VehicleApplication>>> {
+) -> ApiResponse<Vec<VehicleApplication>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -1066,12 +1003,10 @@ pub async fn get_vehicle_requests(
     .await;
 
     match result {
-        Ok(requests) => Json(ApiResponse::success(requests, "获取车辆申请列表成功")),
+        Ok(requests) => ApiResponse::success(requests, "获取车辆申请列表成功"),
         Err(e) => {
             tracing::error!("获取车辆申请列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取车辆申请列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取车辆申请列表失败".to_string()))
         }
     }
 }

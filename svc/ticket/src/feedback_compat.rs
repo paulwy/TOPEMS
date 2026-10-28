@@ -129,7 +129,7 @@ pub async fn create_feedback(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateFeedbackRequest>,
-) -> Json<ApiResponse<FeedbackCompat>> {
+) -> ApiResponse<FeedbackCompat> {
     let ticket_no = generate_ticket_number("FB", Utc::now().timestamp_millis() as u64);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
@@ -156,10 +156,10 @@ pub async fn create_feedback(
     .await;
 
     match result {
-        Ok(ticket) => Json(ApiResponse::success(ticket.into(), "创建反馈成功")),
+        Ok(ticket) => ApiResponse::success(ticket.into(), "创建反馈成功"),
         Err(e) => {
             tracing::error!("Failed to create feedback via ticket: {}", e);
-            Json(ApiResponse::server_error("创建反馈失败"))
+            ApiResponse::server_error("创建反馈失败")
         }
     }
 }
@@ -181,7 +181,7 @@ pub async fn create_feedback(
 pub async fn get_feedback(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<FeedbackCompat>> {
+) -> ApiResponse<FeedbackCompat> {
     let result = sqlx::query_as::<_, Ticket>(
         r#"SELECT id, ticket_no, tenant_id, title, description, ticket_type, severity, status, source_service, source_business_id, assignee_id, reporter_id, sla_due_at, resolved_at, closed_at, created_at, updated_at, tags, metadata
            FROM ticket.core_tickets WHERE id = $1 AND ticket_type = 'customer_feedback'"#,
@@ -191,11 +191,11 @@ pub async fn get_feedback(
     .await;
 
     match result {
-        Ok(Some(ticket)) => Json(ApiResponse::success(ticket.into(), "获取反馈成功")),
-        Ok(None) => Json(ApiResponse::not_found("反馈不存在")),
+        Ok(Some(ticket)) => ApiResponse::success(ticket.into(), "获取反馈成功"),
+        Ok(None) => ApiResponse::not_found("反馈不存在"),
         Err(e) => {
             tracing::error!("Failed to get feedback: {}", e);
-            Json(ApiResponse::server_error("获取反馈失败"))
+            ApiResponse::server_error("获取反馈失败")
         }
     }
 }
@@ -205,7 +205,7 @@ pub async fn list_feedbacks(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListFeedbackParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     let offset = (page - 1) * page_size;
@@ -266,7 +266,7 @@ pub async fn list_feedbacks(
             let total = count_sqlx.fetch_one(&pool).await.unwrap_or(0);
             let feedbacks: Vec<FeedbackCompat> = tickets.into_iter().map(Into::into).collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": feedbacks,
                     "total": total,
@@ -274,11 +274,11 @@ pub async fn list_feedbacks(
                     "page_size": page_size
                 }),
                 "获取反馈列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("Failed to list feedbacks: {}", e);
-            Json(ApiResponse::server_error("获取反馈列表失败"))
+            ApiResponse::server_error("获取反馈列表失败")
         }
     }
 }
@@ -289,9 +289,9 @@ pub async fn response_feedback(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<ResponseFeedbackRequest>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     if !claims.is_superuser {
-        return Json(ApiResponse::forbidden("无权限回复反馈"));
+        return ApiResponse::forbidden("无权限回复反馈");
     }
 
     let result = sqlx::query(
@@ -312,10 +312,10 @@ pub async fn response_feedback(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "回复反馈成功")),
+        Ok(_) => ApiResponse::success(true, "回复反馈成功"),
         Err(e) => {
             tracing::error!("Failed to response feedback: {}", e);
-            Json(ApiResponse::server_error("回复反馈失败"))
+            ApiResponse::server_error("回复反馈失败")
         }
     }
 }
@@ -325,7 +325,7 @@ pub async fn delete_feedback(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let ticket = sqlx::query_as::<_, Ticket>(
         r#"SELECT id, ticket_no, tenant_id, title, description, ticket_type, severity, status, source_service, source_business_id, assignee_id, reporter_id, sla_due_at, resolved_at, closed_at, created_at, updated_at, tags, metadata
            FROM ticket.core_tickets WHERE id = $1 AND ticket_type = 'customer_feedback'"#,
@@ -338,7 +338,7 @@ pub async fn delete_feedback(
         Ok(Some(t)) => {
             let reporter_str = t.reporter_id.map(|u| u.to_string()).unwrap_or_default();
             if reporter_str != claims.sub && !claims.is_superuser {
-                return Json(ApiResponse::forbidden("无权限删除反馈"));
+                return ApiResponse::forbidden("无权限删除反馈");
             }
 
             let result = sqlx::query(
@@ -350,17 +350,17 @@ pub async fn delete_feedback(
             .await;
 
             match result {
-                Ok(_) => Json(ApiResponse::success(true, "删除反馈成功")),
+                Ok(_) => ApiResponse::success(true, "删除反馈成功"),
                 Err(e) => {
                     tracing::error!("Failed to delete feedback: {}", e);
-                    Json(ApiResponse::server_error("删除反馈失败"))
+                    ApiResponse::server_error("删除反馈失败")
                 }
             }
         }
-        Ok(None) => Json(ApiResponse::not_found("反馈不存在")),
+        Ok(None) => ApiResponse::not_found("反馈不存在"),
         Err(e) => {
             tracing::error!("Failed to delete feedback: {}", e);
-            Json(ApiResponse::server_error("删除反馈失败"))
+            ApiResponse::server_error("删除反馈失败")
         }
     }
 }

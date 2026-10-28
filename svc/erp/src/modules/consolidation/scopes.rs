@@ -28,14 +28,14 @@ pub async fn list_scopes(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<ConsolidationScope>>> {
+) -> ApiResponse<PaginatedResponse<ConsolidationScope>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
 
     let page = params.base.page_or_default();
@@ -73,16 +73,14 @@ pub async fn list_scopes(
             .await;
 
             let total = count_result.unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(scopes, total, page, page_size),
                 "获取合并范围列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取合并范围列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取合并范围列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取合并范围列表失败".to_string()))
         }
     }
 }
@@ -101,7 +99,7 @@ pub async fn get_scope(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ConsolidationScope>> {
+) -> ApiResponse<ConsolidationScope> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -114,15 +112,11 @@ pub async fn get_scope(
     .fetch_optional(&mut **txn)
     .await
     {
-        Ok(Some(scope)) => Json(ApiResponse::success(scope, "获取合并范围成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "合并范围不存在".to_string(),
-        ))),
+        Ok(Some(scope)) => ApiResponse::success(scope, "获取合并范围成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("合并范围不存在".to_string())),
         Err(e) => {
             tracing::error!("获取合并范围失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取合并范围失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取合并范围失败".to_string()))
         }
     }
 }
@@ -141,7 +135,7 @@ pub async fn create_scope(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateConsolidationScopeRequest>,
-) -> Json<ApiResponse<ConsolidationScope>> {
+) -> ApiResponse<ConsolidationScope> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -176,16 +170,14 @@ pub async fn create_scope(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(scope, "创建合并范围成功"))
+            ApiResponse::success(scope, "创建合并范围成功")
         }
         Err(e) => {
             tracing::error!("创建合并范围失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建合并范围失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建合并范围失败".to_string()))
         }
     }
 }
@@ -206,7 +198,7 @@ pub async fn update_scope(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateConsolidationScopeRequest>,
-) -> Json<ApiResponse<ConsolidationScope>> {
+) -> ApiResponse<ConsolidationScope> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -245,19 +237,15 @@ pub async fn update_scope(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(scope, "更新合并范围成功"))
+            ApiResponse::success(scope, "更新合并范围成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "合并范围不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("合并范围不存在".to_string())),
         Err(e) => {
             tracing::error!("更新合并范围失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新合并范围失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新合并范围失败".to_string()))
         }
     }
 }
@@ -277,7 +265,7 @@ pub async fn delete_scope(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -290,9 +278,9 @@ pub async fn delete_scope(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                ApiResponse::from(TopemsError::ResourceNotFound(
                     "合并范围不存在".to_string(),
-                )))
+                ))
             } else {
                 log_audit(
                     &state.db,
@@ -305,17 +293,17 @@ pub async fn delete_scope(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("事务提交失败: {}", e);
-                        return Json(ApiResponse::server_error("事务提交失败"));
+                        return ApiResponse::server_error("事务提交失败");
                     }
                 }
-                Json(ApiResponse::success((), "删除合并范围成功"))
+                ApiResponse::success((), "删除合并范围成功")
             }
         }
         Err(e) => {
             tracing::error!("删除合并范围失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
+            ApiResponse::from(TopemsError::Internal(
                 "删除合并范围失败".to_string(),
-            )))
+            ))
         }
     }
 }

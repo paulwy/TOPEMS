@@ -73,9 +73,9 @@ pub async fn create_location(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateLocation>,
-) -> Json<ApiResponse<Location>> {
+) -> ApiResponse<Location> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
-        return e;
+        return e.0;
     }
 
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
@@ -97,8 +97,8 @@ pub async fn create_location(
     .fetch_one(&pool)
     .await
     {
-        Ok(location) => Json(ApiResponse::success(location, "创建位置成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建位置失败", e))),
+        Ok(location) => ApiResponse::success(location, "创建位置成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建位置失败", e)),
     }
 }
 
@@ -116,7 +116,7 @@ pub async fn create_location(
 pub async fn list_locations(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -132,14 +132,14 @@ pub async fn list_locations(
     .fetch_all(&pool)
     .await
     {
-        Ok(locations) => Json(ApiResponse::success(
+        Ok(locations) => ApiResponse::success(
             serde_json::json!({
                 "locations": locations,
                 "total": locations.len()
             }),
             "获取位置列表成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -162,7 +162,7 @@ pub async fn get_location(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Location>> {
+) -> ApiResponse<Location> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -179,9 +179,9 @@ pub async fn get_location(
     .fetch_one(&pool)
     .await
     {
-        Ok(location) => Json(ApiResponse::success(location, "获取位置成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("位置未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(location) => ApiResponse::success(location, "获取位置成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("位置未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -191,9 +191,9 @@ pub async fn update_location(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateLocation>,
-) -> Json<ApiResponse<Location>> {
+) -> ApiResponse<Location> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
-        return e;
+        return e.0;
     }
 
     match sqlx::query_as::<_, Location>(only_own_schema_query!(
@@ -217,9 +217,9 @@ pub async fn update_location(
     .fetch_one(&pool)
     .await
     {
-        Ok(location) => Json(ApiResponse::success(location, "更新位置成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("位置未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+        Ok(location) => ApiResponse::success(location, "更新位置成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("位置未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
 }
 
@@ -228,9 +228,9 @@ pub async fn delete_location(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
 
@@ -245,12 +245,12 @@ pub async fn delete_location(
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
-                Json(ApiResponse::success(true, "删除位置成功"))
+                ApiResponse::success(true, "删除位置成功")
             } else {
-                Json(ApiResponse::not_found("位置未找到"))
+                ApiResponse::not_found("位置未找到")
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
     }
 }
 
@@ -258,7 +258,7 @@ pub async fn delete_location(
 pub async fn search_locations(
     State(pool): State<PgPool>,
     Json(payload): Json<SearchLocation>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let search_pattern = format!("%{}%", payload.query);
 
     let query = if payload.location_type.is_some() {
@@ -279,15 +279,15 @@ pub async fn search_locations(
             .fetch_all(&pool)
             .await
     } {
-        Ok(locations) => Json(ApiResponse::success(
+        Ok(locations) => ApiResponse::success(
             serde_json::json!({
                 "locations": locations,
                 "total": locations.len(),
                 "query": payload.query
             }),
             "搜索完成",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("搜索失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("搜索失败", e)),
     }
 }
 
@@ -296,7 +296,7 @@ pub async fn search_locations(
 pub async fn nearby_locations(
     State(pool): State<PgPool>,
     Json(payload): Json<NearbyRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // Get all locations and filter by distance
     match sqlx::query_as::<_, Location>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND status = 'active'"),
@@ -334,16 +334,16 @@ pub async fn nearby_locations(
                 nearby_sorted = nearby_sorted.into_iter().take(limit as usize).collect();
             }
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "nearby": nearby_sorted,
                     "total": nearby_sorted.len(),
                     "radius": payload.radius
                 }),
                 "附近位置查询完成",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -381,7 +381,7 @@ fn extract_coords(position: &serde_json::Value) -> (f64, f64) {
 pub async fn plan_route(
     State(_pool): State<PgPool>,
     Json(payload): Json<RouteRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // Simplified route planning - just return a straight line
     let (start_x, start_y) = extract_coords(&payload.start);
     let (end_x, end_y) = extract_coords(&payload.end);
@@ -407,7 +407,7 @@ pub async fn plan_route(
         "coordinates": route_coords
     });
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "route": route_geometry,
             "total_distance": total_distance,
@@ -415,7 +415,7 @@ pub async fn plan_route(
             "waypoints_count": waypoints.len()
         }),
         "路径规划完成",
-    ))
+    )
 }
 
 fn calculate_route_distance(coords: &[Vec<f64>]) -> f64 {

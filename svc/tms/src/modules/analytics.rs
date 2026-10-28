@@ -6,7 +6,7 @@ use axum::{
     extract::{Extension, FromRef, State},
     http::HeaderMap,
     routing::get,
-    Json, Router,
+    Router,
 };
 use serde::{Deserialize, Serialize};
 
@@ -110,7 +110,7 @@ pub struct FreightCostTrendItem {
 pub async fn get_shipment_trend(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ShipmentTrendItem>>> {
+) -> ApiResponse<Vec<ShipmentTrendItem>> {
     tracing::info!("获取TMS运输趋势数据");
 
     let rows: Vec<(Option<String>, Option<i64>)> = sqlx::query_as(
@@ -140,7 +140,7 @@ pub async fn get_shipment_trend(
         })
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 /// 获取车辆运单排名
@@ -157,7 +157,7 @@ pub async fn get_shipment_trend(
 pub async fn get_vehicle_ranking(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<VehicleRankingItem>>> {
+) -> ApiResponse<Vec<VehicleRankingItem>> {
     tracing::info!("获取TMS车辆运单排名");
 
     let rows: Vec<(Option<String>, Option<String>, Option<i64>)> = sqlx::query_as(
@@ -184,7 +184,7 @@ pub async fn get_vehicle_ranking(
         )
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 /// 获取运单状态分布
@@ -202,7 +202,7 @@ pub async fn get_vehicle_ranking(
 pub async fn get_status_distribution(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<StatusDistributionItem>>> {
+) -> ApiResponse<Vec<StatusDistributionItem>> {
     tracing::info!("获取TMS运单状态分布");
 
     let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM tms.tms_shipments")
@@ -237,7 +237,7 @@ pub async fn get_status_distribution(
         })
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 /// 获取承运商绩效
@@ -255,7 +255,7 @@ pub async fn get_status_distribution(
 pub async fn get_carrier_performance(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<CarrierPerformanceItem>>> {
+) -> ApiResponse<Vec<CarrierPerformanceItem>> {
     tracing::info!("获取TMS承运商绩效数据");
 
     let rows: Vec<(
@@ -303,7 +303,7 @@ pub async fn get_carrier_performance(
         )
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 /// 获取路线效率
@@ -321,7 +321,7 @@ pub async fn get_route_efficiency(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<RouteEfficiencyItem>>> {
+) -> ApiResponse<Vec<RouteEfficiencyItem>> {
     tracing::info!("获取TMS路线效率数据");
 
     let locale = Locale::from_headers(&headers).as_sql();
@@ -374,7 +374,7 @@ pub async fn get_route_efficiency(
         )
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 /// 获取司机绩效
@@ -392,7 +392,7 @@ pub async fn get_route_efficiency(
 pub async fn get_driver_performance(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<DriverPerformanceItem>>> {
+) -> ApiResponse<Vec<DriverPerformanceItem>> {
     tracing::info!("获取TMS司机绩效数据");
 
     let rows: Vec<(
@@ -440,7 +440,7 @@ pub async fn get_driver_performance(
         )
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 /// 获取运单趋势增强版（最近12个月，按状态分组）
@@ -457,7 +457,7 @@ pub async fn get_driver_performance(
 pub async fn get_shipment_trend_enhanced(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ShipmentTrendEnhancedItem>>> {
+) -> ApiResponse<Vec<ShipmentTrendEnhancedItem>> {
     tracing::info!("获取TMS运单趋势增强数据");
 
     let rows: Vec<(
@@ -514,7 +514,7 @@ pub async fn get_shipment_trend_enhanced(
         )
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 /// 获取车辆利用率
@@ -532,7 +532,7 @@ pub async fn get_shipment_trend_enhanced(
 pub async fn get_vehicle_utilization(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<VehicleUtilizationItem>>> {
+) -> ApiResponse<Vec<VehicleUtilizationItem>> {
     tracing::info!("获取TMS车辆利用率数据");
 
     // 先获取总运单数
@@ -575,7 +575,7 @@ pub async fn get_vehicle_utilization(
         })
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 /// 获取运费成本趋势
@@ -593,7 +593,7 @@ pub async fn get_vehicle_utilization(
 pub async fn get_freight_cost_trend(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<FreightCostTrendItem>>> {
+) -> ApiResponse<Vec<FreightCostTrendItem>> {
     tracing::info!("获取TMS运费成本趋势数据");
 
     let rows: Vec<(Option<String>, Option<f64>, Option<i64>)> = sqlx::query_as(
@@ -642,7 +642,7 @@ pub async fn get_freight_cost_trend(
         })
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 // ===== 路由注册 =====

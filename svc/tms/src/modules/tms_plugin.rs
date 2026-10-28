@@ -1,7 +1,4 @@
-use axum::{
-    extract::{Extension, State},
-    Json,
-};
+use axum::extract::{Extension, State};
 use serde::{Deserialize, Serialize};
 
 use crate::shared::AppState;
@@ -36,7 +33,7 @@ fn get_runtime_url() -> String {
 }
 
 /// 获取插件信息
-pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
     let runtime_url = get_runtime_url();
     let info = PluginInfo {
         code: "tms".to_string(),
@@ -124,7 +121,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         ])),
         category: Some("logistics".to_string()),
     };
-    Json(ApiResponse::success(info, "Plugin info"))
+    ApiResponse::success(info, "Plugin info")
 }
 
 /// 插件健康检查
@@ -133,20 +130,18 @@ pub async fn plugin_health_check(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "数据库事务不可用".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
     match sqlx::query("SELECT 1").fetch_one(&mut **txn).await {
-        Ok(_) => Json(ApiResponse::success((), "Healthy")),
-        Err(e) => Json(ApiResponse::from({
+        Ok(_) => ApiResponse::success((), "Healthy"),
+        Err(e) => ApiResponse::from({
             tracing::warn!("Database error: {}", e);
             TopemsError::ServiceUnavailable("Database error".to_string())
-        })),
+        }),
     }
 }
 

@@ -4,7 +4,6 @@
 //! 从 master_data_refs.rs 拆分。
 
 use axum::extract::{Extension, Query, State};
-use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
@@ -56,7 +55,7 @@ pub async fn get_quality_trend(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<QualityTrend>> {
+) -> ApiResponse<QualityTrend> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -166,14 +165,14 @@ pub async fn get_quality_trend(
         "stable"
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         QualityTrend {
             period: period.to_string(),
             points,
             trend_direction: trend_direction.to_string(),
         },
         "质量趋势数据",
-    ))
+    )
 }
 
 #[cfg(test)]

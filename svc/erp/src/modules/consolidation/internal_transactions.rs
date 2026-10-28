@@ -25,7 +25,7 @@ pub async fn list_internal_transactions(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<InternalTransaction>>> {
+) -> ApiResponse<PaginatedResponse<InternalTransaction>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -66,16 +66,14 @@ pub async fn list_internal_transactions(
             .await;
 
             let total = count_result.unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(transactions, total, page, page_size),
                 "获取内部交易列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取内部交易列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取内部交易列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取内部交易列表失败".to_string()))
         }
     }
 }
@@ -94,7 +92,7 @@ pub async fn get_internal_transaction(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<InternalTransaction>> {
+) -> ApiResponse<InternalTransaction> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -107,15 +105,11 @@ pub async fn get_internal_transaction(
     .fetch_optional(&mut **txn)
     .await
     {
-        Ok(Some(transaction)) => Json(ApiResponse::success(transaction, "获取内部交易详情成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "内部交易不存在".to_string(),
-        ))),
+        Ok(Some(transaction)) => ApiResponse::success(transaction, "获取内部交易详情成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("内部交易不存在".to_string())),
         Err(e) => {
             tracing::error!("获取内部交易详情失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取内部交易详情失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取内部交易详情失败".to_string()))
         }
     }
 }
@@ -135,7 +129,7 @@ pub async fn execute_elimination(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ExecuteEliminationRequest>,
-) -> Json<ApiResponse<EliminationResult>> {
+) -> ApiResponse<EliminationResult> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -222,15 +216,15 @@ pub async fn execute_elimination(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         EliminationResult {
             eliminated_count,
             total_eliminated,
             results,
         },
         "执行抵消成功",
-    ))
+    )
 }

@@ -320,7 +320,7 @@ fn collect_realtime_snapshot(state: &AppState) -> MetricSnapshot {
 pub async fn list_thresholds(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> axum::Json<ApiResponse<Vec<AlertThreshold>>> {
+) -> ApiResponse<Vec<AlertThreshold>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match sqlx::query(&format!(
@@ -337,12 +337,9 @@ pub async fn list_thresholds(
         Ok(rows) => {
             let thresholds: Vec<AlertThreshold> =
                 rows.iter().filter_map(row_to_threshold).collect();
-            axum::Json(ApiResponse::success(thresholds, "获取阈值列表成功"))
+            ApiResponse::success(thresholds, "获取阈值列表成功")
         }
-        Err(e) => axum::Json(ApiResponse::from(TopemsError::internal(
-            "查询阈值列表失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询阈值列表失败", e)),
     }
 }
 
@@ -361,7 +358,7 @@ pub async fn create_threshold(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     axum::Json(req): axum::Json<ThresholdRequest>,
-) -> axum::Json<ApiResponse<AlertThreshold>> {
+) -> ApiResponse<AlertThreshold> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match sqlx::query(&format!(
@@ -384,10 +381,10 @@ pub async fn create_threshold(
     .await
     {
         Ok(row) => match row_to_threshold(&row) {
-            Some(threshold) => axum::Json(ApiResponse::success(threshold, "阈值创建成功")),
-            None => axum::Json(ApiResponse::server_error("阈值行反序列化失败")),
+            Some(threshold) => ApiResponse::success(threshold, "阈值创建成功"),
+            None => ApiResponse::server_error("阈值行反序列化失败"),
         },
-        Err(e) => axum::Json(ApiResponse::from(TopemsError::internal("创建阈值失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建阈值失败", e)),
     }
 }
 
@@ -408,7 +405,7 @@ pub async fn get_threshold(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
-) -> axum::Json<ApiResponse<AlertThreshold>> {
+) -> ApiResponse<AlertThreshold> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match sqlx::query(&format!(
@@ -423,14 +420,11 @@ pub async fn get_threshold(
     .await
     {
         Ok(Some(row)) => match row_to_threshold(&row) {
-            Some(threshold) => axum::Json(ApiResponse::success(threshold, "获取阈值详情成功")),
-            None => axum::Json(ApiResponse::server_error("阈值行反序列化失败")),
+            Some(threshold) => ApiResponse::success(threshold, "获取阈值详情成功"),
+            None => ApiResponse::server_error("阈值行反序列化失败"),
         },
-        Ok(None) => axum::Json(ApiResponse::not_found("阈值不存在")),
-        Err(e) => axum::Json(ApiResponse::from(TopemsError::internal(
-            "获取阈值详情失败",
-            e,
-        ))),
+        Ok(None) => ApiResponse::not_found("阈值不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("获取阈值详情失败", e)),
     }
 }
 
@@ -453,7 +447,7 @@ pub async fn update_threshold(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     axum::Json(req): axum::Json<ThresholdRequest>,
-) -> axum::Json<ApiResponse<AlertThreshold>> {
+) -> ApiResponse<AlertThreshold> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     match sqlx::query(&format!(
@@ -480,11 +474,11 @@ pub async fn update_threshold(
     .await
     {
         Ok(Some(row)) => match row_to_threshold(&row) {
-            Some(threshold) => axum::Json(ApiResponse::success(threshold, "阈值更新成功")),
-            None => axum::Json(ApiResponse::server_error("阈值行反序列化失败")),
+            Some(threshold) => ApiResponse::success(threshold, "阈值更新成功"),
+            None => ApiResponse::server_error("阈值行反序列化失败"),
         },
-        Ok(None) => axum::Json(ApiResponse::not_found("阈值不存在")),
-        Err(e) => axum::Json(ApiResponse::from(TopemsError::internal("更新阈值失败", e))),
+        Ok(None) => ApiResponse::not_found("阈值不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新阈值失败", e)),
     }
 }
 
@@ -505,7 +499,7 @@ pub async fn delete_threshold(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
-) -> axum::Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     // 软删除：与 alerts 模块一致置 deleted_at，不物理删行
@@ -519,12 +513,11 @@ pub async fn delete_threshold(
     .execute(&state.pool)
     .await
     {
-        Ok(r) if r.rows_affected() > 0 => axum::Json(ApiResponse::success(
-            serde_json::json!({"id": id.to_string()}),
-            "阈值删除成功",
-        )),
-        Ok(_) => axum::Json(ApiResponse::not_found("阈值不存在")),
-        Err(e) => axum::Json(ApiResponse::from(TopemsError::internal("删除阈值失败", e))),
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"id": id.to_string()}), "阈值删除成功")
+        }
+        Ok(_) => ApiResponse::not_found("阈值不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除阈值失败", e)),
     }
 }
 
@@ -541,7 +534,7 @@ pub async fn delete_threshold(
 pub async fn evaluate_thresholds(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> axum::Json<ApiResponse<Vec<AlertEvaluationResult>>> {
+) -> ApiResponse<Vec<AlertEvaluationResult>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     // 1. 从库加载当前租户启用的阈值（不再使用空内存 Evaluator）
@@ -557,7 +550,7 @@ pub async fn evaluate_thresholds(
     .await
     {
         Ok(rows) => rows.iter().filter_map(row_to_threshold).collect(),
-        Err(e) => return axum::Json(ApiResponse::from(TopemsError::internal("查询阈值失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询阈值失败", e)),
     };
 
     // 2. 采集真实指标快照（CPU/内存/错误率/连接池均为真实采集，无硬编码值）
@@ -566,7 +559,7 @@ pub async fn evaluate_thresholds(
     // 3. 逐条阈值评估
     let results = evaluate_snapshot(&thresholds, &snapshot);
 
-    axum::Json(ApiResponse::success(results, "阈值评估完成"))
+    ApiResponse::success(results, "阈值评估完成")
 }
 
 #[utoipa::path(
@@ -581,9 +574,9 @@ pub async fn evaluate_thresholds(
 pub async fn get_metric_snapshot(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> axum::Json<ApiResponse<MetricSnapshot>> {
+) -> ApiResponse<MetricSnapshot> {
     let snapshot = collect_realtime_snapshot(&state);
-    axum::Json(ApiResponse::success(snapshot, "获取指标快照成功"))
+    ApiResponse::success(snapshot, "获取指标快照成功")
 }
 
 pub fn create_routes() -> Router<AppState> {

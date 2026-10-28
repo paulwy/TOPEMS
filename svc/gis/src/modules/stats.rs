@@ -1,6 +1,6 @@
 use axum::{
     extract::{Extension, State},
-    Json, Router,
+    Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
@@ -35,7 +35,7 @@ pub struct GisStatistics {
 pub async fn get_statistics(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<GisStatistics>> {
+) -> ApiResponse<GisStatistics> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -158,7 +158,7 @@ pub async fn get_statistics(
         active_pipelines,
     };
 
-    Json(ApiResponse::success(stats, "获取GIS统计数据成功"))
+    ApiResponse::success(stats, "获取GIS统计数据成功")
 }
 
 pub fn create_routes() -> Router<PgPool> {

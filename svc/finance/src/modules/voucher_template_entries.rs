@@ -50,7 +50,7 @@ pub async fn list_entries(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<VoucherTemplateLine>>> {
+) -> ApiResponse<Vec<VoucherTemplateLine>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let tenant_id_opt: Option<Uuid> = if claims.is_superuser {
@@ -68,9 +68,9 @@ pub async fn list_entries(
         .fetch_all(&state.pool)
             .await
             .unwrap_or_default();
-            Json(ApiResponse::success(lines, "查询成功"))
+            ApiResponse::success(lines, "查询成功")
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -78,7 +78,7 @@ pub async fn get_entry(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<VoucherTemplateLine>> {
+) -> ApiResponse<VoucherTemplateLine> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -94,8 +94,8 @@ pub async fn get_entry(
     .await
     .unwrap_or(None);
     match line {
-        Some(l) => Json(ApiResponse::success(l, "查询成功")),
-        None => Json(ApiResponse::not_found("模板分录不存在")),
+        Some(l) => ApiResponse::success(l, "查询成功"),
+        None => ApiResponse::not_found("模板分录不存在"),
     }
 }
 
@@ -104,7 +104,7 @@ pub async fn create_entry(
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
     Json(req): Json<AddTemplateEntryRequest>,
-) -> Json<ApiResponse<VoucherTemplateLine>> {
+) -> ApiResponse<VoucherTemplateLine> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
@@ -116,7 +116,7 @@ pub async fn create_entry(
     .await
     .unwrap_or(0);
     if count == 0 {
-        return Json(ApiResponse::not_found("凭证模板不存在"));
+        return ApiResponse::not_found("凭证模板不存在");
     }
     let sort_order: i32 = match req.sort_order {
         Some(s) => s,
@@ -151,8 +151,8 @@ pub async fn create_entry(
     .fetch_one(&state.pool)
     .await;
     match line {
-        Ok(l) => Json(ApiResponse::success(l, "新增分录成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(l) => ApiResponse::success(l, "新增分录成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -161,7 +161,7 @@ pub async fn update_entry(
     Extension(claims): Extension<Claims>,
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateTemplateEntryRequest>,
-) -> Json<ApiResponse<VoucherTemplateLine>> {
+) -> ApiResponse<VoucherTemplateLine> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let owns: i64 = sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE t.tenant_id = $1 AND l.template_id = $2 AND l.id = $3"),
@@ -173,7 +173,7 @@ pub async fn update_entry(
     .await
     .unwrap_or(0);
     if owns == 0 {
-        return Json(ApiResponse::not_found("模板分录不存在"));
+        return ApiResponse::not_found("模板分录不存在");
     }
     let existing: VoucherTemplateLine =
         match sqlx::query_as(only_own_schema_query!("finance", "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE id = $1"))
@@ -182,7 +182,7 @@ pub async fn update_entry(
             .await
         {
             Ok(l) => l,
-            Err(e) => return Json(crate::shared::err_resp(e)),
+            Err(e) => return crate::shared::err_resp(e),
         };
     let description = req.description.or(existing.description);
     let account_code = req.account_code.unwrap_or(existing.account_code);
@@ -205,8 +205,8 @@ pub async fn update_entry(
     .fetch_one(&state.pool)
     .await;
     match line {
-        Ok(l) => Json(ApiResponse::success(l, "更新分录成功")),
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Ok(l) => ApiResponse::success(l, "更新分录成功"),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -214,7 +214,7 @@ pub async fn delete_entry(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let res = sqlx::query(
         only_own_schema_query!("finance", "DELETE FROM finance_voucher_template_lines WHERE id = $1 AND template_id = $2 AND EXISTS (SELECT 1 FROM finance_voucher_templates WHERE id = $2 AND tenant_id = $3)"),
@@ -227,14 +227,14 @@ pub async fn delete_entry(
     match res {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                return Json(ApiResponse::not_found("模板分录不存在"));
+                return ApiResponse::not_found("模板分录不存在");
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({"deleted": true, "entry_id": entry_id}),
                 "删除分录成功",
-            ))
+            )
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -248,7 +248,7 @@ pub async fn reorder_entries(
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
     Json(req): Json<ReorderEntriesRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
@@ -260,7 +260,7 @@ pub async fn reorder_entries(
     .await
     .unwrap_or(0);
     if count == 0 {
-        return Json(ApiResponse::not_found("凭证模板不存在"));
+        return ApiResponse::not_found("凭证模板不存在");
     }
     for (idx, entry_id) in req.entry_ids.iter().enumerate() {
         let sort_order = (idx + 1) as i32;
@@ -273,7 +273,7 @@ pub async fn reorder_entries(
         .execute(&state.pool)
         .await
         {
-            return Json(crate::shared::err_resp(e));
+            return crate::shared::err_resp(e);
         }
     }
     let lines: Result<Vec<VoucherTemplateLine>, sqlx::Error> = sqlx::query_as(
@@ -289,12 +289,12 @@ pub async fn reorder_entries(
                 .iter()
                 .map(|l| serde_json::to_value(l).unwrap_or(serde_json::json!({})))
                 .collect();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({"template_id": template_id, "entries": json_lines}),
                 "重排成功",
-            ))
+            )
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 

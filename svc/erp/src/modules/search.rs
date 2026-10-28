@@ -1,7 +1,7 @@
 use axum::{
     extract::{Extension, Query, State},
     routing::*,
-    Json, Router,
+    Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
@@ -89,7 +89,7 @@ async fn global_search(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<SearchResult>>> {
+) -> ApiResponse<Vec<SearchResult>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -180,7 +180,7 @@ async fn global_search(
     results.sort_by(|a, b| a.title.cmp(&b.title));
     results.truncate(limit as usize);
 
-    Json(ApiResponse::success(results, "搜索成功"))
+    ApiResponse::success(results, "搜索成功")
 }
 
 pub fn create_routes() -> Router<ApiState> {

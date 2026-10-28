@@ -7,7 +7,7 @@
 use axum::{
     extract::{Extension, State},
     routing::get,
-    Json, Router,
+    Router,
 };
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -58,7 +58,7 @@ pub struct PluginHeartbeat {
     operation_id = "get_plugin_info",
     responses((status = 200, description = "OK")),
 )]
-pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
     let runtime_url =
         env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
 
@@ -202,7 +202,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         ])),
         category: Some("erp".to_string()),
     };
-    Json(ApiResponse::success(info, "Plugin info"))
+    ApiResponse::success(info, "Plugin info")
 }
 
 /// 插件健康检查
@@ -219,7 +219,7 @@ pub async fn plugin_health_check(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -231,12 +231,9 @@ pub async fn plugin_health_check(
         .is_ok();
 
     if db_healthy {
-        Json(ApiResponse::success(
-            "healthy".to_string(),
-            "Plugin is healthy",
-        ))
+        ApiResponse::success("healthy".to_string(), "Plugin is healthy")
     } else {
-        Json(ApiResponse::server_error("Database connection failed"))
+        ApiResponse::server_error("Database connection failed")
     }
 }
 
@@ -251,7 +248,7 @@ pub async fn plugin_health_check(
         (status = 200, description = "操作成功"),
     ),
 )]
-pub async fn register_to_core(State(_state): State<ApiState>) -> Json<ApiResponse<()>> {
+pub async fn register_to_core(State(_state): State<ApiState>) -> ApiResponse<()> {
     let core_url =
         std::env::var("CORE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
     let runtime_url =
@@ -286,24 +283,18 @@ pub async fn register_to_core(State(_state): State<ApiState>) -> Json<ApiRespons
         Ok(response) => {
             if response.status().is_success() {
                 tracing::info!("[ERP Plugin] Successfully registered to core");
-                Json(ApiResponse::success((), "Registered to core"))
+                ApiResponse::success((), "Registered to core")
             } else {
                 tracing::warn!(
                     "[ERP Plugin] Failed to register to core: {}",
                     response.status()
                 );
-                Json(ApiResponse::server_error(&format!(
-                    "Failed to register: {}",
-                    response.status()
-                )))
+                ApiResponse::server_error(&format!("Failed to register: {}", response.status()))
             }
         }
         Err(e) => {
             tracing::warn!("[ERP Plugin] Failed to register to core: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "Failed to connect to core",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("Failed to connect to core", e))
         }
     }
 }

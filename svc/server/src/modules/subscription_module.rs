@@ -72,7 +72,7 @@ const SUB_RETURN: &str =
 pub async fn get_current_subscription(
     State(state): State<SubscriptionState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<EffectiveSubscription>> {
+) -> ApiResponse<EffectiveSubscription> {
     let tenant_id = claims
         .tenant_id
         .as_deref()
@@ -92,7 +92,7 @@ pub async fn get_current_subscription(
             let status =
                 SubscriptionStatus::from_str(&s.status).unwrap_or(SubscriptionStatus::Expired);
             let effective = resolve_effective_tier(subscribed, status);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 EffectiveSubscription {
                     tenant_id,
                     subscribed_tier: s.tier.clone(),
@@ -101,9 +101,9 @@ pub async fn get_current_subscription(
                     expires_at: s.expires_at,
                 },
                 "当前订阅获取成功",
-            ))
+            )
         }
-        Ok(None) => Json(ApiResponse::success(
+        Ok(None) => ApiResponse::success(
             EffectiveSubscription {
                 tenant_id,
                 subscribed_tier: "free".to_string(),
@@ -112,8 +112,8 @@ pub async fn get_current_subscription(
                 expires_at: None,
             },
             "当前订阅获取成功（默认 free）",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("获取订阅失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("获取订阅失败", e)),
     }
 }
 
@@ -122,17 +122,13 @@ pub async fn upsert_subscription(
     State(state): State<SubscriptionState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SubscriptionRequest>,
-) -> Json<ApiResponse<Subscription>> {
+) -> ApiResponse<Subscription> {
     if Tier::from_str(&req.tier).is_none() {
-        return Json(ApiResponse::bad_request(
-            "无效 tier（应为 free/basic/advanced）",
-        ));
+        return ApiResponse::bad_request("无效 tier（应为 free/basic/advanced）");
     }
     let status = req.status.unwrap_or_else(|| "active".to_string());
     if SubscriptionStatus::from_str(&status).is_none() {
-        return Json(ApiResponse::bad_request(
-            "无效订阅状态（应为 active/trial/expired/canceled）",
-        ));
+        return ApiResponse::bad_request("无效订阅状态（应为 active/trial/expired/canceled）");
     }
     let tenant_id = claims
         .tenant_id
@@ -164,8 +160,8 @@ pub async fn upsert_subscription(
         .await;
 
     match result {
-        Ok(s) => Json(ApiResponse::success(s, "订阅已保存")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("保存订阅失败", e))),
+        Ok(s) => ApiResponse::success(s, "订阅已保存"),
+        Err(e) => ApiResponse::from(TopemsError::internal("保存订阅失败", e)),
     }
 }
 
@@ -174,7 +170,7 @@ pub async fn cancel_subscription(
     State(state): State<SubscriptionState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Subscription>> {
+) -> ApiResponse<Subscription> {
     let tenant_id = claims
         .tenant_id
         .as_deref()
@@ -193,9 +189,9 @@ pub async fn cancel_subscription(
         .await;
 
     match result {
-        Ok(Some(s)) => Json(ApiResponse::success(s, "订阅已取消")),
-        Ok(None) => Json(ApiResponse::not_found("订阅不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("取消订阅失败", e))),
+        Ok(Some(s)) => ApiResponse::success(s, "订阅已取消"),
+        Ok(None) => ApiResponse::not_found("订阅不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("取消订阅失败", e)),
     }
 }
 

@@ -4,7 +4,6 @@
 //! 从 master_data_refs.rs 拆分，保持独立模块。
 
 use axum::extract::{Extension, Path, State};
-use axum::Json;
 use serde::Serialize;
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
@@ -52,7 +51,7 @@ pub async fn get_data_lineage(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<DataLineageResponse>> {
+) -> ApiResponse<DataLineageResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -114,7 +113,7 @@ pub async fn get_data_lineage(
 
             let total = references.len() as i64;
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 DataLineageResponse {
                     master_data_id,
                     source_service,
@@ -125,15 +124,12 @@ pub async fn get_data_lineage(
                     total_references: total,
                 },
                 "数据血缘关系",
-            ))
+            )
         }
-        Ok(None) => Json(ApiResponse::not_found("未找到主数据引用")),
+        Ok(None) => ApiResponse::not_found("未找到主数据引用"),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询数据血缘失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "查询数据血缘失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("查询数据血缘失败", e))
         }
     }
 }

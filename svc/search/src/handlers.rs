@@ -1,7 +1,4 @@
-use axum::{
-    extract::{Extension, Query, State},
-    Json,
-};
+use axum::extract::{Extension, Query, State};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use topems_shared_auth::auth::Claims;
@@ -317,18 +314,18 @@ pub async fn search_handler(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Query(req): Query<SearchRequest>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<SearchResponse>> {
+) -> ApiResponse<SearchResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
 
     let keyword = normalize_query(&req.keyword);
     if keyword.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "搜索关键词不能为空".to_string(),
-        )));
+        ));
     }
 
     let search_type = detect_search_type(&req.keyword).to_string();
@@ -420,7 +417,7 @@ pub async fn search_handler(
         .await;
     });
 
-    Json(api_success(SearchResponse {
+    api_success(SearchResponse {
         items: results,
         total,
         page: current_page,
@@ -428,7 +425,7 @@ pub async fn search_handler(
         search_type,
         facets,
         suggestions,
-    }))
+    })
 }
 
 #[utoipa::path(
@@ -509,12 +506,12 @@ pub(crate) async fn suggest_terms(pool: &PgPool, q: Option<&str>, limit: i64) ->
 pub async fn suggestions_handler(
     State(pool): State<PgPool>,
     Query(params): Query<SuggestionsQuery>,
-) -> Json<ApiResponse<SuggestionsResponse>> {
+) -> ApiResponse<SuggestionsResponse> {
     let limit = params.limit.unwrap_or(10).clamp(1, 50);
 
     let suggestions = suggest_terms(&pool, params.q.as_deref(), limit).await;
 
-    Json(api_success(SuggestionsResponse { suggestions }))
+    api_success(SuggestionsResponse { suggestions })
 }
 
 // ==================== /search/recent（最近搜索，用户级） ====================
@@ -531,7 +528,7 @@ pub async fn suggestions_handler(
 pub async fn list_recent(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<String>>> {
+) -> ApiResponse<Vec<String>> {
     let user_id: Uuid = claims.sub.parse().unwrap_or_else(|_| Uuid::nil());
     let rows = sqlx::query_as::<_, (String,)>(
         "SELECT keyword FROM public.search_recent \
@@ -541,7 +538,7 @@ pub async fn list_recent(
     .fetch_all(&pool)
     .await
     .unwrap_or_default();
-    Json(api_success(rows.into_iter().map(|(k,)| k).collect()))
+    api_success(rows.into_iter().map(|(k,)| k).collect())
 }
 
 #[utoipa::path(
@@ -556,11 +553,11 @@ pub async fn list_recent(
 pub async fn clear_recent(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let user_id: Uuid = claims.sub.parse().unwrap_or_else(|_| Uuid::nil());
     let _ = sqlx::query("DELETE FROM public.search_recent WHERE user_id = $1")
         .bind(user_id)
         .execute(&pool)
         .await;
-    Json(api_success("cleared".to_string()))
+    api_success("cleared".to_string())
 }

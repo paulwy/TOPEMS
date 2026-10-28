@@ -113,14 +113,14 @@ pub async fn list_customers(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<Customer>>> {
+) -> ApiResponse<PaginatedResponse<Customer>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
 
     let page = params.page_or_default();
@@ -172,9 +172,7 @@ pub async fn list_customers(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("查询客户失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询客户失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询客户失败".to_string()));
         }
     };
 
@@ -190,14 +188,14 @@ pub async fn list_customers(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("查询客户总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询客户总数失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询客户总数失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(customers, total, page, page_size),
         "获取客户列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -221,14 +219,14 @@ pub async fn get_customer(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Customer>> {
+) -> ApiResponse<Customer> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query_as::<_, Customer>(
@@ -240,15 +238,11 @@ pub async fn get_customer(
     .await;
 
     match result {
-        Ok(Some(customer)) => Json(ApiResponse::success(customer, "获取客户成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "客户不存在".to_string(),
-        ))),
+        Ok(Some(customer)) => ApiResponse::success(customer, "获取客户成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("客户不存在".to_string())),
         Err(e) => {
             tracing::error!("查询客户失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询客户失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询客户失败".to_string()))
         }
     }
 }
@@ -271,14 +265,14 @@ pub async fn create_customer(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<CreateCustomerRequest>,
-) -> Json<ApiResponse<Customer>> {
+) -> ApiResponse<Customer> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query_as::<_, Customer>(
@@ -309,9 +303,7 @@ pub async fn create_customer(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
@@ -321,16 +313,12 @@ pub async fn create_customer(
                 customer.id,
             )
             .await;
-            Json(ApiResponse::success(customer, "创建客户成功"))
+            ApiResponse::success(customer, "创建客户成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
-            "创建客户失败".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::Internal("创建客户失败".to_string())),
         Err(e) => {
             tracing::error!("创建客户失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建客户失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建客户失败".to_string()))
         }
     }
 }
@@ -358,14 +346,14 @@ pub async fn update_customer(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<UpdateCustomerRequest>,
-) -> Json<ApiResponse<Customer>> {
+) -> ApiResponse<Customer> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -405,9 +393,7 @@ pub async fn update_customer(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
@@ -417,16 +403,12 @@ pub async fn update_customer(
                 customer.id,
             )
             .await;
-            Json(ApiResponse::success(customer, "更新客户成功"))
+            ApiResponse::success(customer, "更新客户成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "客户不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("客户不存在".to_string())),
         Err(e) => {
             tracing::error!("更新客户失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新客户失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新客户失败".to_string()))
         }
     }
 }
@@ -451,14 +433,14 @@ pub async fn delete_customer(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -483,7 +465,7 @@ pub async fn delete_customer(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
@@ -493,16 +475,12 @@ pub async fn delete_customer(
                 id,
             )
             .await;
-            Json(ApiResponse::success("删除成功".to_string(), "删除客户成功"))
+            ApiResponse::success("删除成功".to_string(), "删除客户成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "客户不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("客户不存在".to_string())),
         Err(e) => {
             tracing::error!("删除客户失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除客户失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除客户失败".to_string()))
         }
     }
 }
@@ -604,17 +582,17 @@ pub async fn batch_list_customers(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<BatchListRequest>,
-) -> Json<ApiResponse<Vec<Customer>>> {
+) -> ApiResponse<Vec<Customer>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
     if body.ids.is_empty() {
-        return Json(ApiResponse::success(vec![], "批量查询成功"));
+        return ApiResponse::success(vec![], "批量查询成功");
     }
     let uuids: Vec<Uuid> = body
         .ids
@@ -622,7 +600,7 @@ pub async fn batch_list_customers(
         .filter_map(|s| Uuid::parse_str(s).ok())
         .collect();
     if uuids.is_empty() {
-        return Json(ApiResponse::success(vec![], "批量查询成功"));
+        return ApiResponse::success(vec![], "批量查询成功");
     }
     let placeholders: Vec<String> = (1..=uuids.len()).map(|i| format!("${}", i)).collect();
     let locale_placeholder = format!("${}", uuids.len() + 1);
@@ -636,12 +614,10 @@ pub async fn batch_list_customers(
         query = query.bind(id);
     }
     match query.fetch_all(&mut **txn).await {
-        Ok(customers) => Json(ApiResponse::success(customers, "批量查询成功")),
+        Ok(customers) => ApiResponse::success(customers, "批量查询成功"),
         Err(e) => {
             tracing::error!("批量查询客户失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "批量查询客户失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("批量查询客户失败".to_string()))
         }
     }
 }
@@ -663,14 +639,14 @@ pub async fn batch_create_customers(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<BatchCreateRequest>,
-) -> Json<ApiResponse<Vec<Customer>>> {
+) -> ApiResponse<Vec<Customer>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     let mut created = Vec::new();
     for req in &body.customers {
@@ -693,9 +669,7 @@ pub async fn batch_create_customers(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
     for c in &created {
@@ -707,7 +681,7 @@ pub async fn batch_create_customers(
         )
         .await;
     }
-    Json(ApiResponse::success(created, "批量创建成功"))
+    ApiResponse::success(created, "批量创建成功")
 }
 
 async fn batch_update_customers(
@@ -718,14 +692,14 @@ async fn batch_update_customers(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<BatchUpdateRequest>,
-) -> Json<ApiResponse<Vec<Customer>>> {
+) -> ApiResponse<Vec<Customer>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -755,9 +729,7 @@ async fn batch_update_customers(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
     for c in &updated {
@@ -769,7 +741,7 @@ async fn batch_update_customers(
         )
         .await;
     }
-    Json(ApiResponse::success(updated, "批量更新成功"))
+    ApiResponse::success(updated, "批量更新成功")
 }
 
 async fn batch_delete_customers(
@@ -779,14 +751,14 @@ async fn batch_delete_customers(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<BatchDeleteRequest>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -797,7 +769,7 @@ async fn batch_delete_customers(
             .and_then(|s| Uuid::parse_str(s).ok())
     };
     if body.ids.is_empty() {
-        return Json(ApiResponse::success("".to_string(), "批量删除成功"));
+        return ApiResponse::success("".to_string(), "批量删除成功");
     }
     let placeholders: Vec<String> = (1..=body.ids.len()).map(|i| format!("${}", i)).collect();
     let filter_idx = body.ids.len() + 1;
@@ -815,9 +787,7 @@ async fn batch_delete_customers(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             for id in &body.ids {
@@ -829,16 +799,14 @@ async fn batch_delete_customers(
                 )
                 .await;
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 format!("已删除 {} 条客户记录", r.rows_affected()),
                 "批量删除成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("批量删除客户失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "批量删除客户失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("批量删除客户失败".to_string()))
         }
     }
 }
@@ -864,14 +832,14 @@ pub async fn change_customer_status(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<StatusUpdateRequest>,
-) -> Json<ApiResponse<Customer>> {
+) -> ApiResponse<Customer> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -898,16 +866,12 @@ pub async fn change_customer_status(
                 customer.id,
             )
             .await;
-            Json(ApiResponse::success(customer, "客户状态更新成功"))
+            ApiResponse::success(customer, "客户状态更新成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "客户不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("客户不存在".to_string())),
         Err(e) => {
             tracing::error!("更新客户状态失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新客户状态失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新客户状态失败".to_string()))
         }
     }
 }
@@ -929,14 +893,14 @@ pub async fn batch_change_status(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<BatchStatusRequest>,
-) -> Json<ApiResponse<Vec<Customer>>> {
+) -> ApiResponse<Vec<Customer>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -947,7 +911,7 @@ pub async fn batch_change_status(
             .and_then(|s| Uuid::parse_str(s).ok())
     };
     if body.ids.is_empty() {
-        return Json(ApiResponse::success(vec![], "批量状态更新成功"));
+        return ApiResponse::success(vec![], "批量状态更新成功");
     }
     let placeholders: Vec<String> = (2..=body.ids.len() + 1)
         .map(|i| format!("${}", i))
@@ -977,13 +941,11 @@ pub async fn batch_change_status(
                 )
                 .await;
             }
-            Json(ApiResponse::success(customers, "批量状态更新成功"))
+            ApiResponse::success(customers, "批量状态更新成功")
         }
         Err(e) => {
             tracing::error!("批量更新客户状态失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "批量更新客户状态失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("批量更新客户状态失败".to_string()))
         }
     }
 }
@@ -1005,14 +967,14 @@ pub async fn batch_change_category(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<BatchCategoryRequest>,
-) -> Json<ApiResponse<Vec<Customer>>> {
+) -> ApiResponse<Vec<Customer>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -1023,7 +985,7 @@ pub async fn batch_change_category(
             .and_then(|s| Uuid::parse_str(s).ok())
     };
     if body.ids.is_empty() {
-        return Json(ApiResponse::success(vec![], "批量分类更新成功"));
+        return ApiResponse::success(vec![], "批量分类更新成功");
     }
     let placeholders: Vec<String> = (3..=body.ids.len() + 2)
         .map(|i| format!("${}", i))
@@ -1044,13 +1006,11 @@ pub async fn batch_change_category(
             if let Some(t) = guard.take() {
                 let _ = t.commit().await;
             }
-            Json(ApiResponse::success(customers, "批量分类更新成功"))
+            ApiResponse::success(customers, "批量分类更新成功")
         }
         Err(e) => {
             tracing::error!("批量更新客户分类失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "批量更新客户分类失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("批量更新客户分类失败".to_string()))
         }
     }
 }
@@ -1070,14 +1030,14 @@ pub async fn get_customer_stats(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<CustomerStatsResponse>> {
+) -> ApiResponse<CustomerStatsResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
     let total: i64 = sqlx::query_scalar(only_own_schema_query!(
         "erp",
@@ -1108,7 +1068,7 @@ pub async fn get_customer_stats(
     .await
     .unwrap_or(0);
     let by_category: Vec<CategoryCount> = sqlx::query_as(only_own_schema_query!("erp", "SELECT customer_type AS category, COUNT(*) AS count FROM erp.customers WHERE deleted_at IS NULL GROUP BY customer_type ORDER BY count DESC")).fetch_all(&mut **txn).await.unwrap_or_default();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         CustomerStatsResponse {
             total,
             active,
@@ -1117,7 +1077,7 @@ pub async fn get_customer_stats(
             by_category,
         },
         "获取客户统计成功",
-    ))
+    )
 }
 #[utoipa::path(
     get,
@@ -1137,14 +1097,14 @@ pub async fn list_recent_customers(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<CustomerRecentResponse>> {
+) -> ApiResponse<CustomerRecentResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
     let limit = params.limit.unwrap_or(20).clamp(1, 100);
     let customers: Vec<Customer> = sqlx::query_as(only_own_schema_query!("erp", "SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, code AS customer_code, name AS customer_name, email AS contact_email, created_at, updated_at FROM erp.customers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT $1")).bind(limit).bind(Locale::from_headers(&headers).as_sql()).fetch_all(&mut **txn).await.unwrap_or_default();
@@ -1155,7 +1115,7 @@ pub async fn list_recent_customers(
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
-    Json(ApiResponse::success(
+    ApiResponse::success(
         CustomerRecentResponse {
             customers,
             total,
@@ -1163,7 +1123,7 @@ pub async fn list_recent_customers(
             page_size: limit,
         },
         "获取最近客户成功",
-    ))
+    )
 }
 
 #[cfg(test)]

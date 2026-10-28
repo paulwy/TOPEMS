@@ -112,7 +112,7 @@ pub fn create_routes() -> Router<AppState> {
 pub async fn list_datasets(
     State(state): State<AppState>,
     Query(params): Query<ListDatasetQuery>,
-) -> Json<ApiResponse<ListResponse<Dataset>>> {
+) -> ApiResponse<ListResponse<Dataset>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -139,14 +139,14 @@ pub async fn list_datasets(
             .await
             .unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 ListResponse::with_pagination(datasets, total, page, page_size),
                 "查询成功",
-            ))
+            )
         }
         Err(e) => {
             warn!("获取数据集列表失败: {}", e);
-            Json(ApiResponse::server_error("获取数据集列表失败"))
+            ApiResponse::server_error("获取数据集列表失败")
         }
     }
 }

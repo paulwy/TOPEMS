@@ -1,7 +1,7 @@
 // Report Service Plugin Interface
 
 use crate::shared::AppState;
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Router};
 use serde::{Deserialize, Serialize};
 
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -34,7 +34,7 @@ fn get_runtime_url() -> String {
     std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8060".to_string())
 }
 
-pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
     let runtime_url = get_runtime_url();
     let plugin_info = PluginInfo {
         code: "report".to_string(),
@@ -93,16 +93,16 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         category: Some("other".to_string()),
     };
 
-    Json(ApiResponse::success(plugin_info, "Report plugin info"))
+    ApiResponse::success(plugin_info, "Report plugin info")
 }
 
-pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<()>> {
+pub async fn plugin_health_check(State(state): State<AppState>) -> ApiResponse<()> {
     match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
-        Ok(_) => Json(ApiResponse::success((), "Healthy")),
-        Err(e) => Json(ApiResponse::from({
+        Ok(_) => ApiResponse::success((), "Healthy"),
+        Err(e) => ApiResponse::from({
             tracing::warn!("Database error: {}", e);
             TopemsError::ServiceUnavailable("Database error".to_string())
-        })),
+        }),
     }
 }
 

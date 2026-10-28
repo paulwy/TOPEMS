@@ -45,14 +45,14 @@ pub async fn list_inventory(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<Inventory>>> {
+) -> ApiResponse<PaginatedResponse<Inventory>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
 
     let (page, page_size, offset) = normalize_pagination(params.page, params.page_size);
@@ -95,9 +95,7 @@ pub async fn list_inventory(
         Ok(i) => i,
         Err(e) => {
             tracing::error!("查询库存失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询库存失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询库存失败".to_string()));
         }
     };
 
@@ -112,14 +110,14 @@ pub async fn list_inventory(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("查询库存总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询库存总数失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询库存总数失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(inventory, total, page, page_size),
         "获取库存列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -142,14 +140,14 @@ pub async fn get_inventory(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Inventory>> {
+) -> ApiResponse<Inventory> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query_as::<_, Inventory>(
@@ -160,15 +158,11 @@ pub async fn get_inventory(
     .await;
 
     match result {
-        Ok(Some(inventory)) => Json(ApiResponse::success(inventory, "获取库存成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "库存不存在".to_string(),
-        ))),
+        Ok(Some(inventory)) => ApiResponse::success(inventory, "获取库存成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("库存不存在".to_string())),
         Err(e) => {
             tracing::error!("查询库存失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询库存失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询库存失败".to_string()))
         }
     }
 }
@@ -190,20 +184,20 @@ pub async fn create_inventory(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<CreateInventoryRequest>,
-) -> Json<ApiResponse<Inventory>> {
+) -> ApiResponse<Inventory> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     if body.quantity < 0.0 {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "库存数量不能为负数".to_string(),
-        )));
+        ));
     }
 
     let material_result = sqlx::query_as::<_, (String, String, String)>(only_own_schema_query!(
@@ -246,20 +240,16 @@ pub async fn create_inventory(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(inventory, "创建库存成功"))
+            ApiResponse::success(inventory, "创建库存成功")
         }
 
-        Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
-            "创建库存失败".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::Internal("创建库存失败".to_string())),
         Err(e) => {
             tracing::error!("创建库存失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建库存失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建库存失败".to_string()))
         }
     }
 }
@@ -286,21 +276,21 @@ pub async fn update_inventory(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<UpdateInventoryRequest>,
-) -> Json<ApiResponse<Inventory>> {
+) -> ApiResponse<Inventory> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     if let Some(q) = body.quantity {
         if q < 0.0 {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "库存数量不能为负数".to_string(),
-            )));
+            ));
         }
     }
 
@@ -333,20 +323,16 @@ pub async fn update_inventory(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(inventory, "更新库存成功"))
+            ApiResponse::success(inventory, "更新库存成功")
         }
 
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "库存不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("库存不存在".to_string())),
         Err(e) => {
             tracing::error!("更新库存失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新库存失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新库存失败".to_string()))
         }
     }
 }
@@ -371,14 +357,14 @@ pub async fn delete_inventory(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -394,19 +380,15 @@ pub async fn delete_inventory(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success("删除成功".to_string(), "删除库存成功"))
+            ApiResponse::success("删除成功".to_string(), "删除库存成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "库存不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("库存不存在".to_string())),
         Err(e) => {
             tracing::error!("删除库存失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除库存失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除库存失败".to_string()))
         }
     }
 }
@@ -424,14 +406,14 @@ pub async fn get_low_stock(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<Inventory>>> {
+) -> ApiResponse<Vec<Inventory>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
-        return e;
+        return e.0;
     }
 
     let low_stock = match sqlx::query_as::<_, Inventory>(
@@ -443,9 +425,9 @@ pub async fn get_low_stock(
         Ok(l) => l,
         Err(e) => {
             tracing::error!("查询低库存失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询低库存失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询低库存失败".to_string()));
         }
     };
 
-    Json(ApiResponse::success(low_stock, "获取低库存列表成功"))
+    ApiResponse::success(low_stock, "获取低库存列表成功")
 }

@@ -194,14 +194,14 @@ pub struct UnifiedPoiResult {
 pub async fn send_location_message(
     State(pool): State<PgPool>,
     Json(payload): Json<SendLocationRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // 使用 parse_coordinates 校验坐标格式（必须为 {lat,lng}/{lat,lon}/全名键对象）
     let (lat, lon) = match parse_coordinates(&payload.coordinates) {
         Some(coords) => coords,
         None => {
-            return Json(ApiResponse::bad_request(
+            return ApiResponse::bad_request(
                 "坐标格式无效：需要包含 lat/lng 或 lat/lon 或 latitude/longitude 的对象",
-            ));
+            );
         }
     };
 
@@ -236,23 +236,20 @@ pub async fn send_location_message(
         Ok(msg) => msg,
         Err(e) => {
             tracing::error!("Failed to send location message: {}", e);
-            return Json(ApiResponse::from(TopemsError::internal(
-                "发送位置消息失败",
-                e,
-            )));
+            return ApiResponse::from(TopemsError::internal("发送位置消息失败", e));
         }
     };
 
     // 检查该位置是否触发当前会话的活跃地理围栏（enter 事件）
     let geofence_alerts = check_geofence_triggers(&pool, &payload.chat_id, lat, lon).await;
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "message": msg,
             "geofence_alerts": geofence_alerts,
         }),
         "发送位置消息成功",
-    ))
+    )
 }
 
 /// 查询会话的活跃围栏并判断 (lat, lon) 是否落入任一围栏
@@ -300,7 +297,7 @@ async fn check_geofence_triggers(
 pub async fn list_location_messages(
     State(pool): State<PgPool>,
     Path(chat_id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match sqlx::query_as::<_, LocationMessage>(only_own_schema_query!(
         "public",
         "SELECT * FROM core_location_messages WHERE chat_id = $1 ORDER BY created_at DESC LIMIT 50"
@@ -309,24 +306,21 @@ pub async fn list_location_messages(
     .fetch_all(&pool)
     .await
     {
-        Ok(messages) => Json(ApiResponse::success(
+        Ok(messages) => ApiResponse::success(
             serde_json::json!({
                 "items": messages,
                 "total": messages.len()
             }),
             "获取位置消息列表成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库查询失败",
-            e,
-        ))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 
 pub async fn create_geofence(
     State(pool): State<PgPool>,
     Json(payload): Json<CreateImGeofenceRequest>,
-) -> Json<ApiResponse<GeofenceSyncResult>> {
+) -> ApiResponse<GeofenceSyncResult> {
     let event_types = serde_json::json!(payload
         .event_types
         .unwrap_or_else(|| vec!["enter".to_string()]));
@@ -366,10 +360,7 @@ pub async fn create_geofence(
         Ok(g) => g,
         Err(e) => {
             tracing::error!("Failed to create geofence: {}", e);
-            return Json(ApiResponse::from(TopemsError::internal(
-                "创建地理围栏失败",
-                e,
-            )));
+            return ApiResponse::from(TopemsError::internal("创建地理围栏失败", e));
         }
     };
 
@@ -409,13 +400,13 @@ pub async fn create_geofence(
         }
     }
 
-    Json(ApiResponse::success(sync_result, "创建地理围栏成功"))
+    ApiResponse::success(sync_result, "创建地理围栏成功")
 }
 
 pub async fn get_geofence(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ImGeofence>> {
+) -> ApiResponse<ImGeofence> {
     match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
         "public",
         "SELECT * FROM core_geofences WHERE id = $1"
@@ -424,19 +415,16 @@ pub async fn get_geofence(
     .fetch_one(&pool)
     .await
     {
-        Ok(g) => Json(ApiResponse::success(g, "获取地理围栏成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("地理围栏未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库查询失败",
-            e,
-        ))),
+        Ok(g) => ApiResponse::success(g, "获取地理围栏成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("地理围栏未找到"),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 
 pub async fn list_geofences(
     State(pool): State<PgPool>,
     Query(params): Query<GeofenceQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut sql = String::from("SELECT * FROM core_geofences WHERE 1=1");
     let mut bind_chat_id: Option<Uuid> = None;
     let mut bind_status: Option<String> = None;
@@ -478,17 +466,14 @@ pub async fn list_geofences(
     let result = query.fetch_all(&pool).await;
 
     match result {
-        Ok(geofences) => Json(ApiResponse::success(
+        Ok(geofences) => ApiResponse::success(
             serde_json::json!({
                 "items": geofences,
                 "total": geofences.len()
             }),
             "获取地理围栏列表成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库查询失败",
-            e,
-        ))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
     }
 }
 
@@ -496,7 +481,7 @@ pub async fn update_geofence(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateImGeofenceRequest>,
-) -> Json<ApiResponse<GeofenceSyncResult>> {
+) -> ApiResponse<GeofenceSyncResult> {
     let current = match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
         "public",
         "SELECT * FROM core_geofences WHERE id = $1"
@@ -507,13 +492,10 @@ pub async fn update_geofence(
     {
         Ok(g) => g,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::not_found("地理围栏未找到"));
+            return ApiResponse::not_found("地理围栏未找到");
         }
         Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "数据库查询失败",
-                e,
-            )));
+            return ApiResponse::from(TopemsError::internal("数据库查询失败", e));
         }
     };
 
@@ -550,10 +532,7 @@ pub async fn update_geofence(
         Ok(g) => g,
         Err(e) => {
             tracing::error!("Failed to update geofence: {}", e);
-            return Json(ApiResponse::from(TopemsError::internal(
-                "数据库更新失败",
-                e,
-            )));
+            return ApiResponse::from(TopemsError::internal("数据库更新失败", e));
         }
     };
 
@@ -582,13 +561,13 @@ pub async fn update_geofence(
         }
     }
 
-    Json(ApiResponse::success(sync_result, "更新地理围栏成功"))
+    ApiResponse::success(sync_result, "更新地理围栏成功")
 }
 
 pub async fn delete_geofence(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     match sqlx::query(only_own_schema_query!(
         "public",
         "DELETE FROM core_geofences WHERE id = $1"
@@ -599,22 +578,19 @@ pub async fn delete_geofence(
     {
         Ok(result) => {
             if result.rows_affected() > 0 {
-                Json(ApiResponse::success(true, "删除地理围栏成功"))
+                ApiResponse::success(true, "删除地理围栏成功")
             } else {
-                Json(ApiResponse::not_found("地理围栏未找到"))
+                ApiResponse::not_found("地理围栏未找到")
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "数据库删除失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("数据库删除失败", e)),
     }
 }
 
 pub async fn unified_search_pois(
     State(_pool): State<PgPool>,
     Json(payload): Json<SearchPoiRequest>,
-) -> Json<ApiResponse<UnifiedPoiResult>> {
+) -> ApiResponse<UnifiedPoiResult> {
     let mut items: Vec<UnifiedPoiItem> = Vec::new();
     let mut gis_count: i32 = 0;
     let third_party_count: i32 = 0;
@@ -704,7 +680,7 @@ pub async fn unified_search_pois(
         providers_used: providers,
     };
 
-    Json(ApiResponse::success(result, "POI 搜索完成"))
+    ApiResponse::success(result, "POI 搜索完成")
 }
 
 async fn sync_geofence_to_gis_internal(geofence: &ImGeofence) -> Result<Option<Uuid>, TopemsError> {

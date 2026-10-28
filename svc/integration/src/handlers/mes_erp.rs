@@ -31,9 +31,7 @@ pub struct SyncMesToErpRequest {
         (status = 200, description = "OK"),
     ),
 )]
-pub async fn list_mes_erp_sync(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<MesErpSync>>> {
+pub async fn list_mes_erp_sync(State(state): State<AppState>) -> ApiResponse<Vec<MesErpSync>> {
     match sqlx::query_as::<_, MesErpSync>(only_own_schema_query!(
         "integration",
         "SELECT id, mes_order_id, erp_order_id, order_number, product_name, quantity,
@@ -43,16 +41,10 @@ pub async fn list_mes_erp_sync(
     .fetch_all(&state.pool)
     .await
     {
-        Ok(syncs) => Json(ApiResponse::success(
-            syncs,
-            "MES↔ERP syncs retrieved successfully",
-        )),
+        Ok(syncs) => ApiResponse::success(syncs, "MES↔ERP syncs retrieved successfully"),
         Err(e) => {
             tracing::error!("Failed to fetch MES↔ERP syncs: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "Failed to fetch MES↔ERP syncs",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("Failed to fetch MES↔ERP syncs", e))
         }
     }
 }
@@ -70,7 +62,7 @@ pub async fn list_mes_erp_sync(
 pub async fn create_mes_erp_sync(
     State(state): State<AppState>,
     Json(req): Json<CreateMesErpSyncRequest>,
-) -> Json<ApiResponse<MesErpSync>> {
+) -> ApiResponse<MesErpSync> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -78,9 +70,9 @@ pub async fn create_mes_erp_sync(
         Ok(u) => u,
         Err(e) => {
             tracing::warn!("Invalid MES order ID: {}", e);
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "Invalid MES order ID".to_string(),
-            )));
+            ));
         }
     };
 
@@ -106,16 +98,10 @@ pub async fn create_mes_erp_sync(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(sync) => Json(ApiResponse::success(
-            sync,
-            "MES↔ERP sync created successfully",
-        )),
+        Ok(sync) => ApiResponse::success(sync, "MES↔ERP sync created successfully"),
         Err(e) => {
             tracing::error!("Failed to create MES↔ERP sync: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "Failed to create MES↔ERP sync",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("Failed to create MES↔ERP sync", e))
         }
     }
 }
@@ -136,7 +122,7 @@ pub async fn create_mes_erp_sync(
 pub async fn get_mes_erp_sync(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<MesErpSync>> {
+) -> ApiResponse<MesErpSync> {
     match sqlx::query_as::<_, MesErpSync>(only_own_schema_query!(
         "integration",
         "SELECT id, mes_order_id, erp_order_id, order_number, product_name, quantity,
@@ -147,14 +133,11 @@ pub async fn get_mes_erp_sync(
     .fetch_one(&state.pool)
     .await
     {
-        Ok(sync) => Json(ApiResponse::success(sync, "MES↔ERP sync found")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("Sync not found")),
+        Ok(sync) => ApiResponse::success(sync, "MES↔ERP sync found"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("Sync not found"),
         Err(e) => {
             tracing::error!("Failed to fetch sync: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "Failed to fetch sync",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("Failed to fetch sync", e))
         }
     }
 }
@@ -175,7 +158,7 @@ pub async fn get_mes_erp_sync(
 pub async fn sync_mes_erp(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<MesErpSync>> {
+) -> ApiResponse<MesErpSync> {
     let now = Utc::now();
     let erp_order_id = Uuid::new_v4();
 
@@ -198,20 +181,14 @@ pub async fn sync_mes_erp(
     .await
     {
         Ok(Some(s)) => s,
-        Ok(None) => return Json(ApiResponse::not_found("Sync not found")),
+        Ok(None) => return ApiResponse::not_found("Sync not found"),
         Err(e) => {
             tracing::error!("Failed to update sync: {}", e);
-            return Json(ApiResponse::from(TopemsError::internal(
-                "Failed to update sync",
-                e,
-            )));
+            return ApiResponse::from(TopemsError::internal("Failed to update sync", e));
         }
     };
 
-    Json(ApiResponse::success(
-        updated_sync,
-        "MES↔ERP sync completed successfully",
-    ))
+    ApiResponse::success(updated_sync, "MES↔ERP sync completed successfully")
 }
 
 #[utoipa::path(
@@ -228,15 +205,15 @@ pub async fn sync_erp_order_to_mes(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<SyncErpToMesRequest>,
-) -> Json<ApiResponse<mes_erp_sync::SyncResult>> {
+) -> ApiResponse<mes_erp_sync::SyncResult> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let erp_order_id = match Uuid::parse_str(&req.erp_order_id) {
         Ok(id) => id,
         Err(e) => {
             tracing::warn!("Invalid ERP order ID: {}", e);
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "Invalid ERP order ID".to_string(),
-            )));
+            ));
         }
     };
 
@@ -245,13 +222,10 @@ pub async fn sync_erp_order_to_mes(
         .sync_erp_to_mes(tenant_id, erp_order_id)
         .await
     {
-        Ok(result) => Json(ApiResponse::success(result, "ERP→MES 同步成功")),
+        Ok(result) => ApiResponse::success(result, "ERP→MES 同步成功"),
         Err(e) => {
             tracing::error!("ERP→MES sync failed: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "ERP→MES 同步失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("ERP→MES 同步失败", e))
         }
     }
 }
@@ -270,15 +244,15 @@ pub async fn sync_mes_progress_to_erp(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     Json(req): Json<SyncMesToErpRequest>,
-) -> Json<ApiResponse<mes_erp_sync::SyncResult>> {
+) -> ApiResponse<mes_erp_sync::SyncResult> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let mes_order_id = match Uuid::parse_str(&req.mes_order_id) {
         Ok(id) => id,
         Err(e) => {
             tracing::warn!("Invalid MES order ID: {}", e);
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "Invalid MES order ID".to_string(),
-            )));
+            ));
         }
     };
 
@@ -287,13 +261,10 @@ pub async fn sync_mes_progress_to_erp(
         .sync_mes_progress_to_erp(tenant_id, mes_order_id)
         .await
     {
-        Ok(result) => Json(ApiResponse::success(result, "MES→ERP 进度同步成功")),
+        Ok(result) => ApiResponse::success(result, "MES→ERP 进度同步成功"),
         Err(e) => {
             tracing::error!("MES→ERP progress sync failed: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "MES→ERP 进度同步失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("MES→ERP 进度同步失败", e))
         }
     }
 }
@@ -314,15 +285,12 @@ pub async fn sync_mes_progress_to_erp(
 pub async fn retry_mes_erp_sync(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<mes_erp_sync::SyncResult>> {
+) -> ApiResponse<mes_erp_sync::SyncResult> {
     match state.mes_erp_sync_service.retry_failed_sync(id).await {
-        Ok(result) => Json(ApiResponse::success(result, "MES↔ERP 同步重试成功")),
+        Ok(result) => ApiResponse::success(result, "MES↔ERP 同步重试成功"),
         Err(e) => {
             tracing::error!("MES↔ERP sync retry failed: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "MES↔ERP 同步重试失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("MES↔ERP 同步重试失败", e))
         }
     }
 }
@@ -343,15 +311,12 @@ pub async fn retry_mes_erp_sync(
 pub async fn get_mes_erp_sync_logs(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<mes_erp_sync::SyncLog>>> {
+) -> ApiResponse<Vec<mes_erp_sync::SyncLog>> {
     match state.mes_erp_sync_service.get_sync_logs(id).await {
-        Ok(logs) => Json(ApiResponse::success(logs, "同步日志获取成功")),
+        Ok(logs) => ApiResponse::success(logs, "同步日志获取成功"),
         Err(e) => {
             tracing::error!("Failed to fetch sync logs: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "获取同步日志失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("获取同步日志失败", e))
         }
     }
 }
@@ -368,7 +333,7 @@ pub async fn get_mes_erp_sync_logs(
 pub async fn list_mes_erp_sync_records(
     State(state): State<AppState>,
     Query(query): Query<HashMap<String, String>>,
-) -> Json<ApiResponse<Vec<mes_erp_sync::MesErpSyncRecord>>> {
+) -> ApiResponse<Vec<mes_erp_sync::MesErpSyncRecord>> {
     let direction = query.get("direction").map(|s| s.as_str());
     let status = query.get("status").map(|s| s.as_str());
     let limit = query
@@ -385,13 +350,10 @@ pub async fn list_mes_erp_sync_records(
         .list_sync_records(direction, status, limit, offset)
         .await
     {
-        Ok(records) => Json(ApiResponse::success(records, "同步记录获取成功")),
+        Ok(records) => ApiResponse::success(records, "同步记录获取成功"),
         Err(e) => {
             tracing::error!("Failed to fetch sync records: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "获取同步记录失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("获取同步记录失败", e))
         }
     }
 }

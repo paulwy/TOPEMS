@@ -99,7 +99,7 @@ pub async fn list_change_notices(
     Extension(claims): Extension<Claims>,
     Query(query): Query<ChangeNoticeQuery>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -163,7 +163,7 @@ pub async fn list_change_notices(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "notices": notices,
                     "total": total,
@@ -171,11 +171,11 @@ pub async fn list_change_notices(
                     "page_size": page_size
                 }),
                 "获取变更通知列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取变更通知列表失败: {}", e);
-            Json(ApiResponse::server_error("获取变更通知列表失败"))
+            ApiResponse::server_error("获取变更通知列表失败")
         }
     }
 }
@@ -194,7 +194,7 @@ pub async fn create_change_notice(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateChangeNoticeRequest>,
-) -> Json<ApiResponse<ChangeNotice>> {
+) -> ApiResponse<ChangeNotice> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -207,7 +207,7 @@ pub async fn create_change_notice(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.title.is_empty() {
-        return Json(ApiResponse::bad_request("变更通知标题不能为空"));
+        return ApiResponse::bad_request("变更通知标题不能为空");
     }
 
     let id = Uuid::new_v4();
@@ -222,7 +222,7 @@ pub async fn create_change_notice(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("序列化受影响项失败: {}", e);
-            return Json(ApiResponse::server_error("受影响项数据格式错误"));
+            return ApiResponse::server_error("受影响项数据格式错误");
         }
     };
 
@@ -255,10 +255,10 @@ pub async fn create_change_notice(
     .await;
 
     match result {
-        Ok(notice) => Json(ApiResponse::success(notice, "变更通知创建成功")),
+        Ok(notice) => ApiResponse::success(notice, "变更通知创建成功"),
         Err(e) => {
             tracing::error!("创建变更通知失败: {}", e);
-            Json(ApiResponse::server_error("创建变更通知失败"))
+            ApiResponse::server_error("创建变更通知失败")
         }
     }
 }
@@ -279,7 +279,7 @@ pub async fn get_change_notice(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<ChangeNotice>> {
+) -> ApiResponse<ChangeNotice> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -306,11 +306,11 @@ pub async fn get_change_notice(
     .await;
 
     match result {
-        Ok(Some(notice)) => Json(ApiResponse::success(notice, "获取变更通知成功")),
-        Ok(None) => Json(ApiResponse::not_found("变更通知不存在")),
+        Ok(Some(notice)) => ApiResponse::success(notice, "获取变更通知成功"),
+        Ok(None) => ApiResponse::not_found("变更通知不存在"),
         Err(e) => {
             tracing::error!("获取变更通知失败: {}", e);
-            Json(ApiResponse::server_error("获取变更通知失败"))
+            ApiResponse::server_error("获取变更通知失败")
         }
     }
 }
@@ -333,7 +333,7 @@ pub async fn update_change_notice(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateChangeNoticeRequest>,
-) -> Json<ApiResponse<ChangeNotice>> {
+) -> ApiResponse<ChangeNotice> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -360,10 +360,10 @@ pub async fn update_change_notice(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => return Json(ApiResponse::not_found("变更通知不存在")),
+        Ok(None) => return ApiResponse::not_found("变更通知不存在"),
         Err(e) => {
             tracing::error!("查询变更通知失败: {}", e);
-            return Json(ApiResponse::server_error("查询变更通知失败"));
+            return ApiResponse::server_error("查询变更通知失败");
         }
     };
 
@@ -415,10 +415,10 @@ pub async fn update_change_notice(
     .await;
 
     match result {
-        Ok(notice) => Json(ApiResponse::success(notice, "变更通知更新成功")),
+        Ok(notice) => ApiResponse::success(notice, "变更通知更新成功"),
         Err(e) => {
             tracing::error!("更新变更通知失败: {}", e);
-            Json(ApiResponse::server_error("更新变更通知失败"))
+            ApiResponse::server_error("更新变更通知失败")
         }
     }
 }
@@ -440,7 +440,7 @@ pub async fn delete_change_notice(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -461,11 +461,11 @@ pub async fn delete_change_notice(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "变更通知删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("变更通知不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "变更通知删除成功"),
+        Ok(_) => ApiResponse::not_found("变更通知不存在"),
         Err(e) => {
             tracing::error!("删除变更通知失败: {}", e);
-            Json(ApiResponse::server_error("删除变更通知失败"))
+            ApiResponse::server_error("删除变更通知失败")
         }
     }
 }
@@ -487,7 +487,7 @@ pub async fn submit_change_notice(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<ChangeNotice>> {
+) -> ApiResponse<ChangeNotice> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -517,11 +517,11 @@ pub async fn submit_change_notice(
     .await;
 
     match result {
-        Ok(Some(notice)) => Json(ApiResponse::success(notice, "变更通知已提交审批")),
-        Ok(None) => Json(ApiResponse::bad_request("变更通知状态不正确，无法提交")),
+        Ok(Some(notice)) => ApiResponse::success(notice, "变更通知已提交审批"),
+        Ok(None) => ApiResponse::bad_request("变更通知状态不正确，无法提交"),
         Err(e) => {
             tracing::error!("提交变更通知失败: {}", e);
-            Json(ApiResponse::server_error("提交变更通知失败"))
+            ApiResponse::server_error("提交变更通知失败")
         }
     }
 }
@@ -544,7 +544,7 @@ pub async fn approve_change_notice(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<ChangeNotice>> {
+) -> ApiResponse<ChangeNotice> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -581,11 +581,11 @@ pub async fn approve_change_notice(
     .await;
 
     match result {
-        Ok(Some(notice)) => Json(ApiResponse::success(notice, "变更通知审批通过")),
-        Ok(None) => Json(ApiResponse::bad_request("变更通知状态不正确，无法审批")),
+        Ok(Some(notice)) => ApiResponse::success(notice, "变更通知审批通过"),
+        Ok(None) => ApiResponse::bad_request("变更通知状态不正确，无法审批"),
         Err(e) => {
             tracing::error!("审批变更通知失败: {}", e);
-            Json(ApiResponse::server_error("审批变更通知失败"))
+            ApiResponse::server_error("审批变更通知失败")
         }
     }
 }
@@ -608,7 +608,7 @@ pub async fn reject_change_notice(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<ChangeNotice>> {
+) -> ApiResponse<ChangeNotice> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -650,11 +650,11 @@ pub async fn reject_change_notice(
     .await;
 
     match result {
-        Ok(Some(notice)) => Json(ApiResponse::success(notice, "变更通知已驳回")),
-        Ok(None) => Json(ApiResponse::bad_request("变更通知状态不正确，无法驳回")),
+        Ok(Some(notice)) => ApiResponse::success(notice, "变更通知已驳回"),
+        Ok(None) => ApiResponse::bad_request("变更通知状态不正确，无法驳回"),
         Err(e) => {
             tracing::error!("驳回变更通知失败: {}", e);
-            Json(ApiResponse::server_error("驳回变更通知失败"))
+            ApiResponse::server_error("驳回变更通知失败")
         }
     }
 }

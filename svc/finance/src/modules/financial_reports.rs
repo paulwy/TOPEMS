@@ -103,7 +103,7 @@ pub async fn get_report_item_details(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ItemDetailsQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -111,7 +111,7 @@ pub async fn get_report_item_details(
     };
     let account_code = match params.account_code.as_deref() {
         Some(c) if !c.is_empty() => c,
-        _ => return Json(ApiResponse::bad_request("account_code 不能为空")),
+        _ => return ApiResponse::bad_request("account_code 不能为空"),
     };
     let rows = sqlx::query(only_own_schema_query!(
         "finance",
@@ -141,12 +141,9 @@ pub async fn get_report_item_details(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(
-                serde_json::Value::Array(items),
-                "查询成功",
-            ))
+            ApiResponse::success(serde_json::Value::Array(items), "查询成功")
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -164,7 +161,7 @@ pub async fn get_report_item_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ItemVouchersQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -172,7 +169,7 @@ pub async fn get_report_item_vouchers(
     };
     let account_code = match params.account_code.as_deref() {
         Some(c) if !c.is_empty() => c,
-        _ => return Json(ApiResponse::bad_request("account_code 不能为空")),
+        _ => return ApiResponse::bad_request("account_code 不能为空"),
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
@@ -231,7 +228,7 @@ pub async fn get_report_item_vouchers(
                 })
                 .collect();
             let total_pages = topems_shared_core::response::total_pages_of(total, page_size);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -240,9 +237,9 @@ pub async fn get_report_item_vouchers(
                     "total_pages": total_pages,
                 }),
                 "查询成功",
-            ))
+            )
         }
-        Err(e) => Json(crate::shared::err_resp(e)),
+        Err(e) => crate::shared::err_resp(e),
     }
 }
 
@@ -273,7 +270,7 @@ pub async fn get_report_comparison(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ComparisonQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -282,17 +279,17 @@ pub async fn get_report_comparison(
     let report_type = params.report_type.clone().unwrap_or_default();
     let period_from = match params.period_from.as_deref() {
         Some(p) if !p.is_empty() => p,
-        _ => return Json(ApiResponse::bad_request("period_from 不能为空")),
+        _ => return ApiResponse::bad_request("period_from 不能为空"),
     };
     let period_to = match params.period_to.as_deref() {
         Some(p) if !p.is_empty() => p,
-        _ => return Json(ApiResponse::bad_request("period_to 不能为空")),
+        _ => return ApiResponse::bad_request("period_to 不能为空"),
     };
     let (cur_d, cur_c, cur_net) = period_net_total(&state.pool, tenant_id, period_to).await;
     let (prev_d, prev_c, prev_net) = period_net_total(&state.pool, tenant_id, period_from).await;
     let net_change = cur_net - prev_net;
     let growth_rate = decimal_growth_rate(cur_net, prev_net);
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "report_type": report_type,
             "current": {
@@ -313,7 +310,7 @@ pub async fn get_report_comparison(
             },
         }),
         "查询成功",
-    ))
+    )
 }
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -330,7 +327,7 @@ pub async fn get_report_trend(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TrendQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -338,15 +335,11 @@ pub async fn get_report_trend(
     };
     let start = match params.period_from.as_deref().and_then(parse_period) {
         Some(p) => p,
-        None => {
-            return Json(ApiResponse::bad_request(
-                "period_from 格式无效，应为 YYYY-MM",
-            ))
-        }
+        None => return ApiResponse::bad_request("period_from 格式无效，应为 YYYY-MM"),
     };
     let end = match params.period_to.as_deref().and_then(parse_period) {
         Some(p) => p,
-        None => return Json(ApiResponse::bad_request("period_to 格式无效，应为 YYYY-MM")),
+        None => return ApiResponse::bad_request("period_to 格式无效，应为 YYYY-MM"),
     };
 
     let mut points: Vec<serde_json::Value> = Vec::new();
@@ -374,10 +367,7 @@ pub async fn get_report_trend(
         }
     }
 
-    Json(ApiResponse::success(
-        serde_json::Value::Array(points),
-        "查询成功",
-    ))
+    ApiResponse::success(serde_json::Value::Array(points), "查询成功")
 }
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -405,7 +395,7 @@ pub async fn get_report_year_over_year(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<YearOverYearQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -414,18 +404,18 @@ pub async fn get_report_year_over_year(
     let report_type = params.report_type.clone().unwrap_or_default();
     let current_period = match params.current_period.as_deref() {
         Some(p) if !p.is_empty() => p,
-        _ => return Json(ApiResponse::bad_request("current_period 不能为空")),
+        _ => return ApiResponse::bad_request("current_period 不能为空"),
     };
     let previous_year_period = match params.previous_year_period.as_deref() {
         Some(p) if !p.is_empty() => p,
-        _ => return Json(ApiResponse::bad_request("previous_year_period 不能为空")),
+        _ => return ApiResponse::bad_request("previous_year_period 不能为空"),
     };
     let (cur_d, cur_c, cur_net) = period_net_total(&state.pool, tenant_id, current_period).await;
     let (prev_d, prev_c, prev_net) =
         period_net_total(&state.pool, tenant_id, previous_year_period).await;
     let net_change = cur_net - prev_net;
     let growth_rate = decimal_growth_rate(cur_net, prev_net);
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "report_type": report_type,
             "current": {
@@ -446,7 +436,7 @@ pub async fn get_report_year_over_year(
             },
         }),
         "查询成功",
-    ))
+    )
 }
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -462,7 +452,7 @@ pub async fn get_report_period_over_period(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PeriodOverPeriodQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -471,18 +461,18 @@ pub async fn get_report_period_over_period(
     let report_type = params.report_type.clone().unwrap_or_default();
     let current_period = match params.current_period.as_deref() {
         Some(p) if !p.is_empty() => p,
-        _ => return Json(ApiResponse::bad_request("current_period 不能为空")),
+        _ => return ApiResponse::bad_request("current_period 不能为空"),
     };
     let previous_period = match params.previous_period.as_deref() {
         Some(p) if !p.is_empty() => p,
-        _ => return Json(ApiResponse::bad_request("previous_period 不能为空")),
+        _ => return ApiResponse::bad_request("previous_period 不能为空"),
     };
     let (cur_d, cur_c, cur_net) = period_net_total(&state.pool, tenant_id, current_period).await;
     let (prev_d, prev_c, prev_net) =
         period_net_total(&state.pool, tenant_id, previous_period).await;
     let net_change = cur_net - prev_net;
     let growth_rate = decimal_growth_rate(cur_net, prev_net);
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "report_type": report_type,
             "current": {
@@ -503,7 +493,7 @@ pub async fn get_report_period_over_period(
             },
         }),
         "查询成功",
-    ))
+    )
 }
 
 // ========== Phase 4: 多公司合并 ==========
@@ -523,7 +513,7 @@ pub async fn generate_consolidated_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let consolidation_id = req
         .get("consolidation_id")
         .and_then(|v| v.as_str())
@@ -533,14 +523,14 @@ pub async fn generate_consolidated_report(
     // （erp.consolidation_scopes / consolidation_scope_companies / elimination_rules /
     // consolidation_reports）。原实现返回硬编码 1000 万资产等虚构数字，属数值撒谎，
     // 现改为显式声明未接入，由调用方转 /api/erp/consolidation/* 取真值。
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "consolidation_id": consolidation_id,
             "success": false,
             "error": "合并报表尚未接入：数据源归 ERP 合并模块（/api/erp/consolidation/*）",
         }),
         "合并报表尚未接入",
-    ))
+    )
 }
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -555,9 +545,9 @@ pub async fn get_consolidated_report(
     Extension(_claims): Extension<Claims>,
     Path(consolidation_id): Path<String>,
     Query(_params): Query<ConsolidatedReportQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // 同 generate_consolidated_report：无真实数据源，不再返回虚构实体/抵消/合计金额
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "consolidation_id": consolidation_id,
             "entities": [],
@@ -566,7 +556,7 @@ pub async fn get_consolidated_report(
             "error": "合并报表尚未接入：数据源归 ERP 合并模块（/api/erp/consolidation/*）",
         }),
         "合并报表尚未接入",
-    ))
+    )
 }
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -593,13 +583,13 @@ pub async fn get_consolidation_entities(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<EntityListQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     // 合并实体真值在 erp.consolidation_scope_companies（当前 0 行），finance schema 无该表；
     // 原实现虚构 5 家公司（集团母公司/子公司A/B/联营C/合营D），属数值撒谎，改为空集 + 声明。
     let total: i64 = 0;
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "items": [],
             "total": total,
@@ -610,7 +600,7 @@ pub async fn get_consolidation_entities(
             "error": "合并实体尚未接入：数据源归 ERP 合并模块（/api/erp/consolidation/scopes/companies）",
         }),
         "合并实体尚未接入",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -628,15 +618,15 @@ pub async fn create_consolidation_entity(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // 原实现生成随机 UUID 并回显入参、声称「创建成功」，实际未落库（finance 无该表）
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "success": false,
             "error": "合并实体尚未接入：请在 ERP 合并模块维护（/api/erp/consolidation/scopes/companies）",
         }),
         "合并实体尚未接入",
-    ))
+    )
 }
 
 pub async fn update_consolidation_entity(
@@ -644,24 +634,24 @@ pub async fn update_consolidation_entity(
     Extension(_claims): Extension<Claims>,
     Path(entity_id): Path<String>,
     Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({
             "id": entity_id,
             "success": false,
             "error": "合并实体尚未接入：请在 ERP 合并模块维护（/api/erp/consolidation/scopes/companies）",
         }),
         "合并实体尚未接入",
-    ))
+    )
 }
 
 pub async fn delete_consolidation_entity(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(entity_id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // 原实现未删除任何数据却返回 deleted=true
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "id": entity_id,
             "deleted": false,
@@ -669,7 +659,7 @@ pub async fn delete_consolidation_entity(
             "error": "合并实体尚未接入：请在 ERP 合并模块维护（/api/erp/consolidation/scopes/companies）",
         }),
         "合并实体尚未接入",
-    ))
+    )
 }
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -696,13 +686,13 @@ pub async fn get_intercompany_elims(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<ElimListQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     // 抵消分录真值在 erp.elimination_rules / erp.consolidation_report_lines（当前 0 行）；
     // 原实现虚构两条分录（50 万/30 万），属数值撒谎，改为空集 + 声明。
     let total: i64 = 0;
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "items": [],
             "total": total,
@@ -713,22 +703,22 @@ pub async fn get_intercompany_elims(
             "error": "内部交易抵消尚未接入：数据源归 ERP 合并模块（/api/erp/consolidation/elimination-rules）",
         }),
         "内部交易抵消尚未接入",
-    ))
+    )
 }
 
 pub async fn add_intercompany_elimination(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // 原实现生成随机 UUID 回显入参并声称「创建成功」，实际未落库
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "success": false,
             "error": "内部交易抵消尚未接入：请在 ERP 合并模块维护（/api/erp/consolidation/elimination-rules）",
         }),
         "内部交易抵消尚未接入",
-    ))
+    )
 }
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -752,9 +742,9 @@ pub async fn export_consolidated_report(
     Extension(_claims): Extension<Claims>,
     Path(consolidation_id): Path<String>,
     Query(_params): Query<ConsolidatedExportQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // 原实现拼出一条并不存在的导出地址并声称「导出成功」（无文件、无存储），属虚构
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "consolidation_id": consolidation_id,
             "url": "",
@@ -762,7 +752,7 @@ pub async fn export_consolidated_report(
             "error": "合并报表导出尚未接入：数据源归 ERP 合并模块（/api/erp/consolidation/*）",
         }),
         "合并报表导出尚未接入",
-    ))
+    )
 }
 
 // ========== Phase 4: 批量导出 ==========
@@ -771,7 +761,7 @@ pub async fn batch_export_reports(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let report_type = req
         .get("report_type")
         .and_then(|v| v.as_str())
@@ -814,7 +804,7 @@ pub async fn batch_export_reports(
             }));
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "report_type": report_type,
             "format": format,
@@ -823,7 +813,7 @@ pub async fn batch_export_reports(
             "completed_at": Utc::now().to_rfc3339(),
         }),
         "批量导出成功",
-    ))
+    )
 }
 
 // ========== Phase 4: 报表订阅 ==========
@@ -852,7 +842,7 @@ pub async fn get_report_subscriptions(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<SubscriptionListQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let now = Utc::now().to_rfc3339();
@@ -908,7 +898,7 @@ pub async fn get_report_subscriptions(
         }));
     }
     let total = items.len() as i64;
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "items": items,
             "total": total,
@@ -917,7 +907,7 @@ pub async fn get_report_subscriptions(
             "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
         }),
         "查询成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -935,7 +925,7 @@ pub async fn create_report_subscription(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let id = Uuid::new_v4();
     let now = Utc::now().to_rfc3339();
     let org_ids: Vec<String> = req
@@ -960,7 +950,7 @@ pub async fn create_report_subscription(
         .get("recipients")
         .cloned()
         .unwrap_or(serde_json::json!([]));
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "id": id,
             "name": req.get("name").and_then(|v| v.as_str()).unwrap_or(""),
@@ -976,7 +966,7 @@ pub async fn create_report_subscription(
             "updated_at": now,
         }),
         "创建成功",
-    ))
+    )
 }
 
 pub async fn update_report_subscription(
@@ -984,7 +974,7 @@ pub async fn update_report_subscription(
     Extension(_claims): Extension<Claims>,
     Path(subscription_id): Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let now = Utc::now().to_rfc3339();
     let org_ids: Vec<String> = req
         .get("org_ids")
@@ -1008,7 +998,7 @@ pub async fn update_report_subscription(
         .get("recipients")
         .cloned()
         .unwrap_or(serde_json::json!([]));
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "id": subscription_id,
             "name": req.get("name").and_then(|v| v.as_str()).unwrap_or(""),
@@ -1022,36 +1012,36 @@ pub async fn update_report_subscription(
             "updated_at": now,
         }),
         "更新成功",
-    ))
+    )
 }
 
 pub async fn delete_report_subscription(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(subscription_id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({
             "id": subscription_id,
             "deleted": true,
         }),
         "删除成功",
-    ))
+    )
 }
 
 pub async fn send_report_now(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(subscription_id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({
             "subscription_id": subscription_id,
             "status": "sent",
             "sent_at": Utc::now().to_rfc3339(),
         }),
         "发送成功",
-    ))
+    )
 }
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -1066,7 +1056,7 @@ pub async fn get_subscription_history(
     Extension(_claims): Extension<Claims>,
     Path(subscription_id): Path<String>,
     Query(params): Query<SubscriptionHistoryQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let now = Utc::now().to_rfc3339();
@@ -1089,7 +1079,7 @@ pub async fn get_subscription_history(
         }),
     ];
     let total = items.len() as i64;
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "items": items,
             "total": total,
@@ -1098,7 +1088,7 @@ pub async fn get_subscription_history(
             "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
         }),
         "查询成功",
-    ))
+    )
 }
 
 // ========== Phase 1: 报表生成 + 历史查询 ==========
@@ -1285,7 +1275,7 @@ pub async fn generate_balance_sheet(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateReportRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let currency = req.currency_code.as_deref().unwrap_or("CNY");
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
@@ -1303,11 +1293,11 @@ pub async fn generate_balance_sheet(
             )
             .await
             {
-                Ok(report) => Json(ApiResponse::success(report, "生成资产负债表成功")),
-                Err(e) => Json(ApiResponse::from(TopemsError::internal("持久化失败", e))),
+                Ok(report) => ApiResponse::success(report, "生成资产负债表成功"),
+                Err(e) => ApiResponse::from(TopemsError::internal("持久化失败", e)),
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("生成失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("生成失败", e)),
     }
 }
 
@@ -1352,7 +1342,7 @@ pub async fn get_balance_sheet(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<GetReportQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let tenant_id_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -1369,24 +1359,21 @@ pub async fn get_balance_sheet(
     )
     .await
     {
-        Ok(Some(report)) => Json(ApiResponse::success(
+        Ok(Some(report)) => ApiResponse::success(
             enrich_balance_percentage(report.get("data").cloned().unwrap_or(report)),
             "查询成功",
-        )),
+        ),
         Ok(None) => {
             let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
             match service.get_balance_sheet(tenant_id, &params.period).await {
                 Ok(sheet) => {
                     let data = serde_json::to_value(&sheet).unwrap_or(serde_json::json!({}));
-                    Json(ApiResponse::success(
-                        enrich_balance_percentage(data),
-                        "查询成功(实时)",
-                    ))
+                    ApiResponse::success(enrich_balance_percentage(data), "查询成功(实时)")
                 }
-                Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+                Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -1405,7 +1392,7 @@ pub async fn get_balance_sheet_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<HistoryReportQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1425,11 +1412,11 @@ pub async fn get_balance_sheet_history(
     )
     .await
     {
-        Ok((items, total)) => Json(ApiResponse::success(
+        Ok((items, total)) => ApiResponse::success(
             serde_json::json!({"items": items, "total": total, "page": page, "page_size": page_size}),
             "查询成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -1437,7 +1424,7 @@ pub async fn generate_income_statement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateReportRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let currency = req.currency_code.as_deref().unwrap_or("CNY");
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
@@ -1455,11 +1442,11 @@ pub async fn generate_income_statement(
             )
             .await
             {
-                Ok(report) => Json(ApiResponse::success(report, "生成利润表成功")),
-                Err(e) => Json(ApiResponse::from(TopemsError::internal("持久化失败", e))),
+                Ok(report) => ApiResponse::success(report, "生成利润表成功"),
+                Err(e) => ApiResponse::from(TopemsError::internal("持久化失败", e)),
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("生成失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("生成失败", e)),
     }
 }
 
@@ -1467,7 +1454,7 @@ pub async fn get_income_statement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<GetReportQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let tenant_id_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -1484,10 +1471,9 @@ pub async fn get_income_statement(
     )
     .await
     {
-        Ok(Some(report)) => Json(ApiResponse::success(
-            report.get("data").cloned().unwrap_or(report),
-            "查询成功",
-        )),
+        Ok(Some(report)) => {
+            ApiResponse::success(report.get("data").cloned().unwrap_or(report), "查询成功")
+        }
         Ok(None) => {
             let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
             match service
@@ -1496,12 +1482,12 @@ pub async fn get_income_statement(
             {
                 Ok(stmt) => {
                     let data = serde_json::to_value(&stmt).unwrap_or(serde_json::json!({}));
-                    Json(ApiResponse::success(data, "查询成功(实时)"))
+                    ApiResponse::success(data, "查询成功(实时)")
                 }
-                Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+                Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -1520,7 +1506,7 @@ pub async fn get_income_statement_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<HistoryReportQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1540,11 +1526,11 @@ pub async fn get_income_statement_history(
     )
     .await
     {
-        Ok((items, total)) => Json(ApiResponse::success(
+        Ok((items, total)) => ApiResponse::success(
             serde_json::json!({"items": items, "total": total, "page": page, "page_size": page_size}),
             "查询成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -1552,7 +1538,7 @@ pub async fn generate_cash_flow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateReportRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let currency = req.currency_code.as_deref().unwrap_or("CNY");
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
@@ -1573,11 +1559,11 @@ pub async fn generate_cash_flow(
             )
             .await
             {
-                Ok(report) => Json(ApiResponse::success(report, "生成现金流量表成功")),
-                Err(e) => Json(ApiResponse::from(TopemsError::internal("持久化失败", e))),
+                Ok(report) => ApiResponse::success(report, "生成现金流量表成功"),
+                Err(e) => ApiResponse::from(TopemsError::internal("持久化失败", e)),
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("生成失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("生成失败", e)),
     }
 }
 
@@ -1596,7 +1582,7 @@ pub async fn get_cash_flow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<GetReportQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let tenant_id_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -1613,10 +1599,9 @@ pub async fn get_cash_flow(
     )
     .await
     {
-        Ok(Some(report)) => Json(ApiResponse::success(
-            report.get("data").cloned().unwrap_or(report),
-            "查询成功",
-        )),
+        Ok(Some(report)) => {
+            ApiResponse::success(report.get("data").cloned().unwrap_or(report), "查询成功")
+        }
         Ok(None) => {
             let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
             match service
@@ -1625,12 +1610,12 @@ pub async fn get_cash_flow(
             {
                 Ok(stmt) => {
                     let data = serde_json::to_value(&stmt).unwrap_or(serde_json::json!({}));
-                    Json(ApiResponse::success(data, "查询成功(实时)"))
+                    ApiResponse::success(data, "查询成功(实时)")
                 }
-                Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+                Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -1638,7 +1623,7 @@ pub async fn get_cash_flow_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<HistoryReportQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -1658,11 +1643,11 @@ pub async fn get_cash_flow_history(
     )
     .await
     {
-        Ok((items, total)) => Json(ApiResponse::success(
+        Ok((items, total)) => ApiResponse::success(
             serde_json::json!({"items": items, "total": total, "page": page, "page_size": page_size}),
             "查询成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -1693,10 +1678,10 @@ pub async fn submit_report_for_approval(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let report_id: Uuid = match req.report_id.parse() {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::bad_request("无效的报表ID")),
+        Err(_) => return ApiResponse::bad_request("无效的报表ID"),
     };
     match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'pending', status = 'pending', updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
@@ -1705,12 +1690,12 @@ pub async fn submit_report_for_approval(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::not_found("报表不存在"))
+                ApiResponse::not_found("报表不存在")
             } else {
-                Json(ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "pending"}), "提交审批成功"))
+                ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "pending"}), "提交审批成功")
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("提交失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("提交失败", e)),
     }
 }
 
@@ -1718,10 +1703,10 @@ pub async fn approve_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let report_id: Uuid = match req.report_id.parse() {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::bad_request("无效的报表ID")),
+        Err(_) => return ApiResponse::bad_request("无效的报表ID"),
     };
     match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'approved', status = 'approved', approval_comment = $2, approved_by = $3, approved_at = NOW(), updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
@@ -1732,12 +1717,12 @@ pub async fn approve_report(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::not_found("报表不存在"))
+                ApiResponse::not_found("报表不存在")
             } else {
-                Json(ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "approved"}), "审批成功"))
+                ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "approved"}), "审批成功")
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("审批失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("审批失败", e)),
     }
 }
 
@@ -1745,10 +1730,10 @@ pub async fn reject_report(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let report_id: Uuid = match req.report_id.parse() {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::bad_request("无效的报表ID")),
+        Err(_) => return ApiResponse::bad_request("无效的报表ID"),
     };
     match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'rejected', status = 'rejected', rejection_reason = $2, updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
@@ -1758,12 +1743,12 @@ pub async fn reject_report(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::not_found("报表不存在"))
+                ApiResponse::not_found("报表不存在")
             } else {
-                Json(ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "rejected"}), "驳回成功"))
+                ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "rejected"}), "驳回成功")
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("驳回失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("驳回失败", e)),
     }
 }
 
@@ -1784,10 +1769,10 @@ pub async fn lock_report(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let report_id: Uuid = match req.report_id.parse() {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::bad_request("无效的报表ID")),
+        Err(_) => return ApiResponse::bad_request("无效的报表ID"),
     };
     match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'locked', status = 'locked', updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
@@ -1796,12 +1781,12 @@ pub async fn lock_report(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::not_found("报表不存在"))
+                ApiResponse::not_found("报表不存在")
             } else {
-                Json(ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "locked"}), "锁定成功"))
+                ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "locked"}), "锁定成功")
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("锁定失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("锁定失败", e)),
     }
 }
 
@@ -1809,10 +1794,10 @@ pub async fn unlock_report(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let report_id: Uuid = match req.report_id.parse() {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::bad_request("无效的报表ID")),
+        Err(_) => return ApiResponse::bad_request("无效的报表ID"),
     };
     match sqlx::query(only_own_schema_query!("finance", "UPDATE financial_reports SET approval_status = 'approved', status = 'approved', updated_at = NOW() WHERE id = $1"))
         .bind(report_id)
@@ -1821,12 +1806,12 @@ pub async fn unlock_report(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(ApiResponse::not_found("报表不存在"))
+                ApiResponse::not_found("报表不存在")
             } else {
-                Json(ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "approved"}), "解锁成功"))
+                ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "approved"}), "解锁成功")
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("解锁失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("解锁失败", e)),
     }
 }
 
@@ -1855,7 +1840,7 @@ pub async fn export_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<ExportQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let report_type = params
         .report_type
         .unwrap_or_else(|| "balance_sheet".to_string());
@@ -1864,7 +1849,7 @@ pub async fn export_report(
     let org_id = params.org_id.unwrap_or_default();
     let currency_code = params.currency_code.unwrap_or_else(|| "CNY".to_string());
     let url = format!("/exports/{}_{}_{}.{}", report_type, org_id, period, format);
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "report_type": report_type,
             "org_id": org_id,
@@ -1877,7 +1862,7 @@ pub async fn export_report(
             "expires_at": Utc::now().to_rfc3339(),
         }),
         "导出成功",
-    ))
+    )
 }
 
 // ============================================================================
@@ -1897,7 +1882,7 @@ pub async fn export_report(
 pub async fn get_business_overview(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // 凭证表 period 存 YYYYMM，前端可能传 YYYY-MM，统一去符号按 YYYYMM 精确匹配
     let period_raw = params.get("period").cloned().unwrap_or_else(|| {
         let now = Utc::now();
@@ -1952,7 +1937,7 @@ pub async fn get_business_overview(
     }
     let net_profit = total_revenue - total_expenses;
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "period": period,
             "voucher_count": voucher_count,
@@ -1964,14 +1949,14 @@ pub async fn get_business_overview(
             "net_profit": net_profit,
         }),
         "查询成功",
-    ))
+    )
 }
 
 /// 项目汇总报表：按项目维度汇总凭证金额
 pub async fn get_project_summary(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
     let rows: Vec<(Option<Uuid>, Option<String>, Decimal, Decimal)> =
@@ -2003,14 +1988,14 @@ pub async fn get_project_summary(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "period": period,
             "projects": projects,
             "total": projects.len(),
         }),
         "查询成功",
-    ))
+    )
 }
 
 /// 月度趋势报表：最近 12 个月的凭证金额趋势
@@ -2024,9 +2009,7 @@ pub async fn get_project_summary(
     ),
     tag = "FinancialReports"
 )]
-pub async fn get_monthly_trend(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn get_monthly_trend(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     let rows: Vec<(String, Decimal, i64)> = sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT period,
@@ -2052,13 +2035,13 @@ pub async fn get_monthly_trend(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "trend": trend,
             "months": trend.len(),
         }),
         "查询成功",
-    ))
+    )
 }
 
 /// 部门汇总报表：按部门维度汇总凭证金额
@@ -2075,7 +2058,7 @@ pub async fn get_monthly_trend(
 pub async fn get_department_summary(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
     let rows: Vec<(Option<Uuid>, Decimal, Decimal)> = sqlx::query_as(only_own_schema_query!(
@@ -2106,14 +2089,14 @@ pub async fn get_department_summary(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "period": period,
             "departments": departments,
             "total": departments.len(),
         }),
         "查询成功",
-    ))
+    )
 }
 
 /// 账龄分析报表：应收/应付账款账龄分布
@@ -2128,7 +2111,7 @@ pub async fn get_department_summary(
 pub async fn get_aging_analysis(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let _period = params.get("period").cloned().unwrap_or_default();
 
     // 简化版账龄分析：按凭证日期距今天数分组
@@ -2164,20 +2147,20 @@ pub async fn get_aging_analysis(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "aging": aging,
             "total_buckets": aging.len(),
         }),
         "查询成功",
-    ))
+    )
 }
 
 /// 凭证统计报表：按状态/类型统计凭证数量和金额
 pub async fn get_voucher_statistics(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
     let rows: Vec<(String, i64, Decimal)> = sqlx::query_as(only_own_schema_query!(
@@ -2206,14 +2189,14 @@ pub async fn get_voucher_statistics(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "period": period,
             "statistics": stats,
             "total_vouchers": stats.iter().map(|s| s["count"].as_i64().unwrap_or(0)).sum::<i64>(),
         }),
         "查询成功",
-    ))
+    )
 }
 
 /// 现金流分析报表：按现金类科目汇总现金流
@@ -2227,7 +2210,7 @@ pub async fn get_voucher_statistics(
 pub async fn get_cash_flow_analysis(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
     // 金额聚合在 Decimal 域完成：DB 侧 SUM(numeric) 直接解码为 Decimal，
@@ -2265,7 +2248,7 @@ pub async fn get_cash_flow_analysis(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "period": period,
             "cash_flows": cash_flows,
@@ -2273,14 +2256,14 @@ pub async fn get_cash_flow_analysis(
             "total_outflow": total_outflow,
         }),
         "查询成功",
-    ))
+    )
 }
 
 /// 费用分析报表：按费用类科目汇总费用
 pub async fn get_expense_analysis(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
     let rows: Vec<(String, Option<String>, Decimal)> = sqlx::query_as(
@@ -2314,14 +2297,14 @@ pub async fn get_expense_analysis(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "period": period,
             "expenses": expenses,
             "total_expense": total_expense,
         }),
         "查询成功",
-    ))
+    )
 }
 
 /// 利润分析报表：收入、成本、费用、利润
@@ -2335,7 +2318,7 @@ pub async fn get_expense_analysis(
 pub async fn get_profit_analysis(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_default();
 
     let total_revenue: Decimal = sqlx::query_scalar(
@@ -2396,7 +2379,7 @@ pub async fn get_profit_analysis(
         0.0
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "period": period,
             "total_revenue": total_revenue,
@@ -2408,7 +2391,7 @@ pub async fn get_profit_analysis(
             "net_margin": net_margin,
         }),
         "查询成功",
-    ))
+    )
 }
 
 /// 财务概览报表：核心财务指标一览
@@ -2426,7 +2409,7 @@ pub async fn get_profit_analysis(
 pub async fn get_financial_overview(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let period = params.get("period").cloned().unwrap_or_else(|| {
         let now = Utc::now();
         now.format("%Y-%m").to_string()
@@ -2465,7 +2448,7 @@ pub async fn get_financial_overview(
     .await
     .unwrap_or(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "period": period,
             "voucher_count": voucher_count,
@@ -2476,7 +2459,7 @@ pub async fn get_financial_overview(
             "posting_rate": if voucher_count > 0 { posted_count as f64 / voucher_count as f64 } else { 0.0 },
         }),
         "查询成功",
-    ))
+    )
 }
 
 pub fn create_routes() -> Router<AppState> {

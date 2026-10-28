@@ -286,7 +286,7 @@ impl DomainEventPublisherExt for CompositeEventPublisher {
             Ok(())
         } else {
             Err(TopemsError::BusinessLogic(format!(
-                "CompositeEventPublisher (with metadata) encountered {} error(s): {}",
+                "CompositeEventPublisher (with metadata) => encountered {} error(s): {}",
                 errors.len(),
                 errors
                     .iter()

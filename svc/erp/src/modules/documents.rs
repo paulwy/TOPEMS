@@ -49,7 +49,7 @@ pub async fn list_documents(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<Document>>> {
+) -> ApiResponse<PaginatedResponse<Document>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -95,16 +95,14 @@ pub async fn list_documents(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(documents, total, page, page_size),
                 "文档列表获取成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取文档列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询文档失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询文档失败".to_string()))
         }
     }
 }
@@ -125,16 +123,14 @@ pub async fn create_document(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(payload): Json<CreateDocumentRequest>,
-) -> Json<ApiResponse<Document>> {
+) -> ApiResponse<Document> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("标题", &payload.title) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            e.to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
     }
 
     let doc_type = payload.doc_type.unwrap_or_else(|| "general".to_string());
@@ -159,17 +155,15 @@ pub async fn create_document(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(doc, "文档创建成功"))
+            ApiResponse::success(doc, "文档创建成功")
         }
 
         Err(e) => {
             tracing::error!("创建文档失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建文档失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建文档失败".to_string()))
         }
     }
 }
@@ -190,7 +184,7 @@ pub async fn get_document(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Document>> {
+) -> ApiResponse<Document> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -201,15 +195,11 @@ pub async fn get_document(
         .fetch_optional(&mut **txn)
         .await
     {
-        Ok(Some(doc)) => Json(ApiResponse::success(doc, "文档获取成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "文档不存在".to_string(),
-        ))),
+        Ok(Some(doc)) => ApiResponse::success(doc, "文档获取成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("文档不存在".to_string())),
         Err(e) => {
             tracing::error!("获取文档失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取文档失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取文档失败".to_string()))
         }
     }
 }
@@ -231,7 +221,7 @@ pub async fn update_document(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(payload): Json<UpdateDocumentRequest>,
-) -> Json<ApiResponse<Document>> {
+) -> ApiResponse<Document> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -244,15 +234,11 @@ pub async fn update_document(
     {
         Ok(Some(d)) => d,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "文档不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("文档不存在".to_string()))
         }
         Err(e) => {
             tracing::error!("查询文档失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "更新文档失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("更新文档失败".to_string()));
         }
     };
 
@@ -282,17 +268,15 @@ pub async fn update_document(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(doc, "文档更新成功"))
+            ApiResponse::success(doc, "文档更新成功")
         }
 
         Err(e) => {
             tracing::error!("更新文档失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新文档失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新文档失败".to_string()))
         }
     }
 }
@@ -313,7 +297,7 @@ pub async fn delete_document(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -328,19 +312,15 @@ pub async fn delete_document(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(id.to_string(), "文档删除成功"))
+            ApiResponse::success(id.to_string(), "文档删除成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "文档不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("文档不存在".to_string())),
         Err(e) => {
             tracing::error!("删除文档失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除文档失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除文档失败".to_string()))
         }
     }
 }

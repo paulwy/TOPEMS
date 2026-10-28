@@ -232,7 +232,7 @@ pub async fn list_metrics(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(q): Query<ListMetricsQuery>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let now = chrono::Utc::now().to_rfc3339();
     // 元数据兜底：仅返回指标定义（id/名称/类别/单位/阈值），不返回伪造的当前值。
     // 真实采集由 get_system_metrics / Prometheus 提供；value=null 表示暂无采样数据。
@@ -254,7 +254,7 @@ pub async fn list_metrics(
     if let Some(limit) = q.limit {
         items.truncate(usize::try_from(limit.max(0)).unwrap_or(usize::MAX));
     }
-    Json(ApiResponse::success(items, "获取指标列表成功"))
+    ApiResponse::success(items, "获取指标列表成功")
 }
 
 #[utoipa::path(
@@ -269,7 +269,7 @@ pub async fn list_metrics(
 pub async fn get_system_metrics(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<SystemMetricsResponse>> {
+) -> ApiResponse<SystemMetricsResponse> {
     let metrics = SystemMetricsResponse {
         service_name: "topems-monitor".to_string(),
         uptime: state.metrics.get_uptime(),
@@ -290,7 +290,7 @@ pub async fn get_system_metrics(
         active_connections: state.metrics.get_active_connections(),
     };
 
-    Json(ApiResponse::success(metrics, "获取系统指标成功"))
+    ApiResponse::success(metrics, "获取系统指标成功")
 }
 
 #[utoipa::path(
@@ -305,7 +305,7 @@ pub async fn get_system_metrics(
 pub async fn get_database_metrics(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<DatabaseMetricsResponse>> {
+) -> ApiResponse<DatabaseMetricsResponse> {
     let metrics = DatabaseMetricsResponse {
         service_name: "topems-monitor".to_string(),
         pool_size: state.pool.size(),
@@ -316,7 +316,7 @@ pub async fn get_database_metrics(
         connection_duration: 120.5,
     };
 
-    Json(ApiResponse::success(metrics, "获取数据库指标成功"))
+    ApiResponse::success(metrics, "获取数据库指标成功")
 }
 
 // ==================== /metrics/realtime ====================
@@ -436,7 +436,7 @@ pub(crate) fn get_memory_usage() -> (f64, f64, f64, f64) {
 pub async fn get_realtime_metrics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<RealtimeMetricsResponse>> {
+) -> ApiResponse<RealtimeMetricsResponse> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let now = chrono::Utc::now();
     let (load_1m, load_5m, load_15m) = get_load_averages();
@@ -483,7 +483,7 @@ pub async fn get_realtime_metrics(
         ),
         Err(_) => (0, 0, 0),
     };
-    Json(ApiResponse::success(
+    ApiResponse::success(
         RealtimeMetricsResponse {
             timestamp: now.to_rfc3339(),
             cpu: CpuRealtime {
@@ -521,7 +521,7 @@ pub async fn get_realtime_metrics(
             },
         },
         "获取实时指标成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -536,7 +536,7 @@ pub async fn get_realtime_metrics(
 pub async fn get_api_performance(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ApiPerformance>>> {
+) -> ApiResponse<Vec<ApiPerformance>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let performances = vec![
         ApiPerformance {
@@ -586,7 +586,7 @@ pub async fn get_api_performance(
         },
     ];
 
-    Json(ApiResponse::success(performances, "获取API性能指标成功"))
+    ApiResponse::success(performances, "获取API性能指标成功")
 }
 
 #[utoipa::path(
@@ -603,7 +603,7 @@ pub async fn get_performance_trend(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PerformanceQueryParams>,
-) -> Json<ApiResponse<Vec<PerformanceTrend>>> {
+) -> ApiResponse<Vec<PerformanceTrend>> {
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let period = params.period.unwrap_or("24h".to_string());
 
@@ -631,7 +631,7 @@ pub async fn get_performance_trend(
         });
     }
 
-    Json(ApiResponse::success(trends, "获取性能趋势成功"))
+    ApiResponse::success(trends, "获取性能趋势成功")
 }
 
 #[utoipa::path(
@@ -646,7 +646,7 @@ pub async fn get_performance_trend(
 pub async fn get_service_performance(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ServicePerformance>>> {
+) -> ApiResponse<Vec<ServicePerformance>> {
     let _tenant_id = get_tenant_id_from_claims(&claims);
 
     let services = vec![
@@ -718,7 +718,7 @@ pub async fn get_service_performance(
         },
     ];
 
-    Json(ApiResponse::success(services, "获取服务性能成功"))
+    ApiResponse::success(services, "获取服务性能成功")
 }
 
 #[utoipa::path(
@@ -734,7 +734,7 @@ pub async fn get_service_performance(
 pub async fn get_performance_summary(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<PerformanceSummary>> {
+) -> ApiResponse<PerformanceSummary> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     let now = chrono::Utc::now();
@@ -831,7 +831,7 @@ pub async fn get_performance_summary(
         trends,
     };
 
-    Json(ApiResponse::success(summary, "获取性能摘要成功"))
+    ApiResponse::success(summary, "获取性能摘要成功")
 }
 
 #[utoipa::path(
@@ -847,7 +847,7 @@ pub async fn get_slow_queries(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PerformanceQueryParams>,
-) -> Json<ApiResponse<Vec<SlowQuery>>> {
+) -> ApiResponse<Vec<SlowQuery>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let now = chrono::Utc::now();
 
@@ -924,7 +924,7 @@ pub async fn get_slow_queries(
         })
         .collect();
 
-    Json(ApiResponse::success(filtered, "获取慢查询列表成功"))
+    ApiResponse::success(filtered, "获取慢查询列表成功")
 }
 
 #[derive(Debug, Deserialize)]
@@ -948,7 +948,7 @@ pub async fn export_performance_data(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExportRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let format = req.format.to_lowercase();
 
@@ -983,7 +983,7 @@ pub async fn export_performance_data(
         }),
     };
 
-    Json(ApiResponse::success(export_data, "性能数据导出成功"))
+    ApiResponse::success(export_data, "性能数据导出成功")
 }
 
 #[cfg(test)]

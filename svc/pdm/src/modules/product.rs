@@ -69,7 +69,7 @@ pub async fn list_products(
     Extension(claims): Extension<Claims>,
     Query(query): Query<ProductQuery>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -127,7 +127,7 @@ pub async fn list_products(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "products": products,
                     "total": total,
@@ -135,11 +135,11 @@ pub async fn list_products(
                     "page_size": page_size
                 }),
                 "获取产品列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取产品列表失败: {}", e);
-            Json(ApiResponse::server_error("获取产品列表失败"))
+            ApiResponse::server_error("获取产品列表失败")
         }
     }
 }
@@ -157,7 +157,7 @@ pub async fn create_product(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<CreateProductRequest>,
-) -> Json<ApiResponse<Product>> {
+) -> ApiResponse<Product> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -170,10 +170,10 @@ pub async fn create_product(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.product_no.is_empty() {
-        return Json(ApiResponse::bad_request("产品编号不能为空"));
+        return ApiResponse::bad_request("产品编号不能为空");
     }
     if req.name.is_empty() {
-        return Json(ApiResponse::bad_request("产品名称不能为空"));
+        return ApiResponse::bad_request("产品名称不能为空");
     }
 
     let status = req.status.unwrap_or_else(|| "active".to_string());
@@ -195,10 +195,10 @@ pub async fn create_product(
     .await;
 
     match result {
-        Ok(product) => Json(ApiResponse::success(product, "产品创建成功")),
+        Ok(product) => ApiResponse::success(product, "产品创建成功"),
         Err(e) => {
             tracing::error!("创建产品失败: {}", e);
-            Json(ApiResponse::server_error("创建产品失败"))
+            ApiResponse::server_error("创建产品失败")
         }
     }
 }
@@ -219,7 +219,7 @@ pub async fn get_product(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<Product>> {
+) -> ApiResponse<Product> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -248,11 +248,11 @@ pub async fn get_product(
     .await;
 
     match result {
-        Ok(Some(product)) => Json(ApiResponse::success(product, "获取产品成功")),
-        Ok(None) => Json(ApiResponse::not_found("产品不存在")),
+        Ok(Some(product)) => ApiResponse::success(product, "获取产品成功"),
+        Ok(None) => ApiResponse::not_found("产品不存在"),
         Err(e) => {
             tracing::error!("获取产品失败: {}", e);
-            Json(ApiResponse::server_error("获取产品失败"))
+            ApiResponse::server_error("获取产品失败")
         }
     }
 }
@@ -275,7 +275,7 @@ pub async fn update_product(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProductRequest>,
-) -> Json<ApiResponse<Product>> {
+) -> ApiResponse<Product> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -313,11 +313,11 @@ pub async fn update_product(
     .await;
 
     match result {
-        Ok(Some(product)) => Json(ApiResponse::success(product, "产品更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("产品不存在")),
+        Ok(Some(product)) => ApiResponse::success(product, "产品更新成功"),
+        Ok(None) => ApiResponse::not_found("产品不存在"),
         Err(e) => {
             tracing::error!("更新产品失败: {}", e);
-            Json(ApiResponse::server_error("更新产品失败"))
+            ApiResponse::server_error("更新产品失败")
         }
     }
 }
@@ -338,7 +338,7 @@ pub async fn delete_product(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -358,11 +358,11 @@ pub async fn delete_product(
             .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "产品删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("产品不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "产品删除成功"),
+        Ok(_) => ApiResponse::not_found("产品不存在"),
         Err(e) => {
             tracing::error!("删除产品失败: {}", e);
-            Json(ApiResponse::server_error("删除产品失败"))
+            ApiResponse::server_error("删除产品失败")
         }
     }
 }

@@ -792,13 +792,13 @@ fn predict_quality_internal(
 pub async fn quality_ai_score_entity(
     State(state): State<ApiState>,
     Path(entity_id): Path<String>,
-) -> Json<ApiResponse<QualityAiScore>> {
+) -> ApiResponse<QualityAiScore> {
     let _ = &state;
     ensure_quality_ai_initialized().await;
     let profiles = build_entity_profiles();
     let profile = match profiles.iter().find(|p| p.id == entity_id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到实体")),
+        None => return ApiResponse::not_found("未找到实体"),
     };
     let score = score_entity_internal(profile);
     let store = get_quality_ai_store();
@@ -814,7 +814,7 @@ pub async fn quality_ai_score_entity(
     if entry.len() > 20 {
         entry.remove(0);
     }
-    Json(ApiResponse::success(score, "质量 AI 评分完成"))
+    ApiResponse::success(score, "质量 AI 评分完成")
 }
 
 /// POST /quality-ai/batch-score — 批量评分
@@ -828,7 +828,7 @@ pub async fn quality_ai_score_entity(
 pub async fn quality_ai_batch_score(
     State(state): State<ApiState>,
     Json(req): Json<BatchScoreRequest>,
-) -> Json<ApiResponse<Vec<QualityAiScore>>> {
+) -> ApiResponse<Vec<QualityAiScore>> {
     let _ = &state;
     ensure_quality_ai_initialized().await;
     let profiles = build_entity_profiles();
@@ -865,10 +865,7 @@ pub async fn quality_ai_batch_score(
         }
         scores.push(score);
     }
-    Json(ApiResponse::success(
-        scores,
-        &format!("批量评分完成（{} 条）", filtered.len()),
-    ))
+    ApiResponse::success(scores, &format!("批量评分完成（{} 条）", filtered.len()))
 }
 
 /// GET /quality-ai/anomalies — 异常列表
@@ -891,7 +888,7 @@ pub async fn quality_ai_batch_score(
 pub async fn quality_ai_get_anomalies(
     State(state): State<ApiState>,
     Query(params): Query<QualityAnomalyQuery>,
-) -> Json<ApiResponse<PaginatedResponse<QualityAnomaly>>> {
+) -> ApiResponse<PaginatedResponse<QualityAnomaly>> {
     let _ = &state;
     ensure_quality_ai_initialized().await;
     let profiles = build_entity_profiles();
@@ -937,10 +934,10 @@ pub async fn quality_ai_get_anomalies(
         .take(page_size as usize)
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "质量异常列表",
-    ))
+    )
 }
 
 /// POST /quality-ai/predict/{id} — 质量预测
@@ -956,18 +953,18 @@ pub async fn quality_ai_predict_quality(
     State(state): State<ApiState>,
     Path(entity_id): Path<String>,
     Query(_req): Query<PredictQualityRequest>,
-) -> Json<ApiResponse<QualityPrediction>> {
+) -> ApiResponse<QualityPrediction> {
     let _ = &state;
     ensure_quality_ai_initialized().await;
     let profiles = build_entity_profiles();
     let profile = match profiles.iter().find(|p| p.id == entity_id) {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("未找到实体")),
+        None => return ApiResponse::not_found("未找到实体"),
     };
     let history_store = get_quality_ai_store().quality_history.lock().await;
     let history = history_store.get(&entity_id).cloned().unwrap_or_default();
     let prediction = predict_quality_internal(&entity_id, &profile.domain, &history);
-    Json(ApiResponse::success(prediction, "质量预测完成"))
+    ApiResponse::success(prediction, "质量预测完成")
 }
 
 /// GET /quality-ai/stats — 质量 AI 统计
@@ -982,7 +979,7 @@ pub async fn quality_ai_predict_quality(
 pub async fn quality_ai_get_stats(
     State(state): State<ApiState>,
     Query(params): Query<QualityAiStatsQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let _ = &state;
     ensure_quality_ai_initialized().await;
     let profiles = build_entity_profiles();
@@ -1062,7 +1059,7 @@ pub async fn quality_ai_get_stats(
         m
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "total_entities": total,
             "avg_overall_score": (avg_overall * 10.0).round() / 10.0,
@@ -1078,7 +1075,7 @@ pub async fn quality_ai_get_stats(
             "by_severity": by_severity,
         }),
         "质量 AI 统计",
-    ))
+    )
 }
 
 #[cfg(test)]

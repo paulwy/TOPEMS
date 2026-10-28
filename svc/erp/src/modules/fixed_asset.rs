@@ -105,14 +105,14 @@ pub async fn list_fixed_assets(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<FixedAsset>>> {
+) -> ApiResponse<PaginatedResponse<FixedAsset>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetRead).await {
-        return e;
+        return e.0;
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -177,16 +177,14 @@ pub async fn list_fixed_assets(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(assets, total, page, page_size),
                 "获取固定资产列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取固定资产列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取固定资产列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取固定资产列表失败".to_string()))
         }
     }
 }
@@ -206,32 +204,30 @@ pub async fn create_fixed_asset(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateFixedAssetRequest>,
-) -> Json<ApiResponse<FixedAsset>> {
+) -> ApiResponse<FixedAsset> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetWrite).await {
-        return e;
+        return e.0;
     }
 
     if req.asset_code.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "资产编码不能为空".to_string(),
-        )));
+        ));
     }
 
     if req.asset_name.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "资产名称不能为空".to_string(),
-        )));
+        ));
     }
 
     if req.original_value <= 0.0 {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            "原值必须大于0".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed("原值必须大于0".to_string()));
     }
 
     let id = Uuid::new_v4();
@@ -275,16 +271,14 @@ pub async fn create_fixed_asset(
 
     let (response, status_str, error_msg) = match &result {
         Ok(asset) => (
-            Json(ApiResponse::success(asset.clone(), "固定资产创建成功")),
+            ApiResponse::success(asset.clone(), "固定资产创建成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("创建固定资产失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "固定资产创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("固定资产创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -294,9 +288,7 @@ pub async fn create_fixed_asset(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -345,14 +337,14 @@ pub async fn get_fixed_asset(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<FixedAsset>> {
+) -> ApiResponse<FixedAsset> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetRead).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query_as::<_, FixedAsset>(only_own_schema_query!(
@@ -370,15 +362,11 @@ pub async fn get_fixed_asset(
     .await;
 
     match result {
-        Ok(Some(asset)) => Json(ApiResponse::success(asset, "获取固定资产成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "固定资产不存在".to_string(),
-        ))),
+        Ok(Some(asset)) => ApiResponse::success(asset, "获取固定资产成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("固定资产不存在".to_string())),
         Err(e) => {
             tracing::error!("获取固定资产失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取固定资产失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取固定资产失败".to_string()))
         }
     }
 }
@@ -400,14 +388,14 @@ pub async fn update_fixed_asset(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateFixedAssetRequest>,
-) -> Json<ApiResponse<FixedAsset>> {
+) -> ApiResponse<FixedAsset> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetWrite).await {
-        return e;
+        return e.0;
     }
 
     let existing = sqlx::query_as::<_, FixedAsset>(only_own_schema_query!(
@@ -424,16 +412,9 @@ pub async fn update_fixed_asset(
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "固定资产不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("固定资产不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询固定资产失败: {}",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询固定资产失败: {}", e)),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -492,16 +473,14 @@ pub async fn update_fixed_asset(
 
     let (response, status_str, error_msg) = match &result {
         Ok(asset) => (
-            Json(ApiResponse::success(asset.clone(), "固定资产更新成功")),
+            ApiResponse::success(asset.clone(), "固定资产更新成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("更新固定资产失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "固定资产更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("固定资产更新失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -511,9 +490,7 @@ pub async fn update_fixed_asset(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -562,14 +539,14 @@ pub async fn delete_fixed_asset(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetWrite).await {
-        return e;
+        return e.0;
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -582,23 +559,19 @@ pub async fn delete_fixed_asset(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "固定资产删除成功")),
+            ApiResponse::success("".to_string(), "固定资产删除成功"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "固定资产不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("固定资产不存在".to_string())),
             "error".to_string(),
             Some("固定资产不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除固定资产失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "固定资产删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("固定资产删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -608,9 +581,7 @@ pub async fn delete_fixed_asset(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -724,7 +695,7 @@ pub async fn depreciate_assets(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<DepreciateRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -733,7 +704,7 @@ pub async fn depreciate_assets(
     if let Err(e) =
         check_permission(&state.db, &claims, &ModulePermission::FixedAssetDepreciate).await
     {
-        return e;
+        return e.0;
     }
 
     let mut depreciated_count = 0;
@@ -809,10 +780,7 @@ pub async fn depreciate_assets(
             }
         }
         Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询资产失败: {}",
-                e,
-            )));
+            return ApiResponse::from(TopemsError::internal("查询资产失败: {}", e));
         }
     }
 
@@ -854,12 +822,10 @@ pub async fn depreciate_assets(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
-    Json(ApiResponse::success(result, "固定资产折旧完成"))
+    ApiResponse::success(result, "固定资产折旧完成")
 }
 
 // ============ 单元测试 ============

@@ -1,4 +1,3 @@
-use axum::Json;
 use serde::{Deserialize, Serialize};
 
 use topems_shared_core::health::ServiceHealth;
@@ -114,12 +113,12 @@ pub fn get_plugin_info() -> PluginInfo {
     }
 }
 
-pub async fn plugin_health_check() -> Json<ApiResponse<ServiceHealth>> {
+pub async fn plugin_health_check() -> ApiResponse<ServiceHealth> {
     let health = ServiceHealth::healthy_with_message("topems-gis", "GIS 地理信息服务运行正常");
-    Json(ApiResponse::success(health, "插件健康检查"))
+    ApiResponse::success(health, "插件健康检查")
 }
 
-pub async fn get_info() -> Json<ApiResponse<PluginInfo>> {
+pub async fn get_info() -> ApiResponse<PluginInfo> {
     let info = get_plugin_info();
-    Json(ApiResponse::success(info, "获取插件信息成功"))
+    ApiResponse::success(info, "获取插件信息成功")
 }

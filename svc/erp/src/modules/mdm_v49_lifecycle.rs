@@ -26,7 +26,7 @@ use super::mdm_v49_types::*;
 pub async fn list_lifecycle_entities(
     State(_state): State<ApiState>,
     Query(params): Query<LifecycleEntityQuery>,
-) -> Json<ApiResponse<PaginatedResponse<LifecycleEntity>>> {
+) -> ApiResponse<PaginatedResponse<LifecycleEntity>> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let entities = store.entities.lock().await;
@@ -72,7 +72,7 @@ pub async fn list_lifecycle_entities(
         .take(page_size as usize)
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -81,7 +81,7 @@ pub async fn list_lifecycle_entities(
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "生命周期实体列表",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -95,13 +95,13 @@ pub async fn list_lifecycle_entities(
 pub async fn get_lifecycle_entity(
     State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
-) -> Json<ApiResponse<LifecycleEntity>> {
+) -> ApiResponse<LifecycleEntity> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let entities = store.entities.lock().await;
     match entities.get(&master_data_id) {
-        Some(e) => Json(ApiResponse::success(e.clone(), "生命周期实体")),
-        None => Json(ApiResponse::not_found("未找到生命周期实体")),
+        Some(e) => ApiResponse::success(e.clone(), "生命周期实体"),
+        None => ApiResponse::not_found("未找到生命周期实体"),
     }
 }
 
@@ -117,7 +117,7 @@ pub async fn get_lifecycle_entity(
 pub async fn create_lifecycle_entity(
     State(_state): State<ApiState>,
     Json(payload): Json<serde_json::Value>,
-) -> Json<ApiResponse<LifecycleEntity>> {
+) -> ApiResponse<LifecycleEntity> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let mut entities = store.entities.lock().await;
@@ -186,7 +186,7 @@ pub async fn create_lifecycle_entity(
         None,
     );
 
-    Json(ApiResponse::success(entity, "生命周期实体已创建"))
+    ApiResponse::success(entity, "生命周期实体已创建")
 }
 
 // gate: admin-only
@@ -202,13 +202,13 @@ pub async fn transition_lifecycle_stage(
     State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
     Json(req): Json<TransitionRequest>,
-) -> Json<ApiResponse<LifecycleEntity>> {
+) -> ApiResponse<LifecycleEntity> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let mut entities = store.entities.lock().await;
 
     let Some(entity) = entities.get_mut(&master_data_id) else {
-        return Json(ApiResponse::not_found("未找到生命周期实体"));
+        return ApiResponse::not_found("未找到生命周期实体");
     };
 
     let target = LifecycleStage::from_str(&req.target_stage);
@@ -216,11 +216,11 @@ pub async fn transition_lifecycle_stage(
         && target != LifecycleStage::Archived
         && target != LifecycleStage::Destroyed
     {
-        return Json(ApiResponse::bad_request(&format!(
+        return ApiResponse::bad_request(&format!(
             "stage transition not allowed: {} -> {}",
             entity.stage.as_str(),
             target.as_str()
-        )));
+        ));
     }
 
     let prev = entity.stage.clone();
@@ -242,7 +242,7 @@ pub async fn transition_lifecycle_stage(
         req.metadata,
     );
 
-    Json(ApiResponse::success(entity.clone(), "阶段已流转"))
+    ApiResponse::success(entity.clone(), "阶段已流转")
 }
 
 // gate: admin-only
@@ -258,18 +258,18 @@ pub async fn update_lifecycle_task(
     State(_state): State<ApiState>,
     Path((master_data_id, _task_id)): Path<(String, String)>,
     Json(req): Json<TaskUpdateRequest>,
-) -> Json<ApiResponse<LifecycleEntity>> {
+) -> ApiResponse<LifecycleEntity> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let mut entities = store.entities.lock().await;
 
     let Some(entity) = entities.get_mut(&master_data_id) else {
-        return Json(ApiResponse::not_found("未找到生命周期实体"));
+        return ApiResponse::not_found("未找到生命周期实体");
     };
 
     let task = match entity.tasks.iter_mut().find(|t| t.id == req.task_id) {
         Some(t) => t,
-        None => return Json(ApiResponse::not_found("未找到任务")),
+        None => return ApiResponse::not_found("未找到任务"),
     };
 
     if let Some(s) = &req.status {
@@ -296,7 +296,7 @@ pub async fn update_lifecycle_task(
         task.completed_at = Some(chrono::Utc::now().to_rfc3339());
     }
 
-    Json(ApiResponse::success(entity.clone(), "任务已更新"))
+    ApiResponse::success(entity.clone(), "任务已更新")
 }
 
 #[utoipa::path(
@@ -310,7 +310,7 @@ pub async fn update_lifecycle_task(
 pub async fn get_lifecycle_events(
     State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,
-) -> Json<ApiResponse<Vec<LifecycleEvent>>> {
+) -> ApiResponse<Vec<LifecycleEvent>> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
     let events = store.events.lock().unwrap_or_else(|e| e.into_inner());
@@ -319,5 +319,5 @@ pub async fn get_lifecycle_events(
         .filter(|e| e.master_data_id == master_data_id)
         .cloned()
         .collect();
-    Json(ApiResponse::success(items, "生命周期事件列表"))
+    ApiResponse::success(items, "生命周期事件列表")
 }
