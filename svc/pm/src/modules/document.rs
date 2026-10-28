@@ -63,11 +63,11 @@ pub fn create_routes(pool: PgPool) -> Router {
 async fn get_project_documents(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<ProjectDocument>>> {
+) -> ApiResponse<Vec<ProjectDocument>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let documents = sqlx::query_as::<_, ProjectDocument>(
         only_own_schema_query!("pm", "SELECT id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at FROM pm.project_documents WHERE project_id = $1 ORDER BY created_at DESC"),
@@ -77,10 +77,10 @@ async fn get_project_documents(
     .await;
 
     match documents {
-        Ok(d) => Json(ApiResponse::success(d, "获取文档列表成功")),
+        Ok(d) => ApiResponse::success(d, "获取文档列表成功"),
         Err(e) => {
             tracing::error!("获取文档失败: {}", e);
-            Json(ApiResponse::server_error("获取文档失败"))
+            ApiResponse::server_error("获取文档失败")
         }
     }
 }
@@ -101,11 +101,11 @@ async fn get_project_documents(
 async fn get_document(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ProjectDocument>> {
+) -> ApiResponse<ProjectDocument> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let document =
         sqlx::query_as::<_, ProjectDocument>(only_own_schema_query!("pm", "SELECT id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at FROM pm.project_documents WHERE id = $1"))
@@ -114,11 +114,11 @@ async fn get_document(
             .await;
 
     match document {
-        Ok(d) => Json(ApiResponse::success(d, "获取文档详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("文档不存在")),
+        Ok(d) => ApiResponse::success(d, "获取文档详情成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("文档不存在"),
         Err(e) => {
             tracing::error!("获取文档失败: {}", e);
-            Json(ApiResponse::server_error("获取文档失败"))
+            ApiResponse::server_error("获取文档失败")
         }
     }
 }
@@ -129,11 +129,11 @@ async fn create_document(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDocumentRequest>,
-) -> Json<ApiResponse<ProjectDocument>> {
+) -> ApiResponse<ProjectDocument> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -160,10 +160,10 @@ async fn create_document(
     .await;
 
     match document {
-        Ok(d) => Json(ApiResponse::success(d, "创建文档成功")),
+        Ok(d) => ApiResponse::success(d, "创建文档成功"),
         Err(e) => {
             tracing::error!("创建文档失败: {}", e);
-            Json(ApiResponse::server_error("创建文档失败"))
+            ApiResponse::server_error("创建文档失败")
         }
     }
 }
@@ -172,11 +172,11 @@ async fn update_document(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDocumentRequest>,
-) -> Json<ApiResponse<ProjectDocument>> {
+) -> ApiResponse<ProjectDocument> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let document = sqlx::query_as::<_, ProjectDocument>(only_own_schema_query!(
         "pm",
@@ -200,11 +200,11 @@ async fn update_document(
     .await;
 
     match document {
-        Ok(d) => Json(ApiResponse::success(d, "更新文档成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("文档不存在")),
+        Ok(d) => ApiResponse::success(d, "更新文档成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("文档不存在"),
         Err(e) => {
             tracing::error!("更新文档失败: {}", e);
-            Json(ApiResponse::server_error("更新文档失败"))
+            ApiResponse::server_error("更新文档失败")
         }
     }
 }
@@ -212,11 +212,11 @@ async fn update_document(
 async fn delete_document(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
@@ -227,11 +227,11 @@ async fn delete_document(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除文档成功")),
-        Ok(_) => Json(ApiResponse::not_found("文档不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除文档成功"),
+        Ok(_) => ApiResponse::not_found("文档不存在"),
         Err(e) => {
             tracing::error!("删除文档失败: {}", e);
-            Json(ApiResponse::server_error("删除文档失败"))
+            ApiResponse::server_error("删除文档失败")
         }
     }
 }
@@ -252,11 +252,11 @@ async fn delete_document(
 async fn get_document_versions(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<DocumentVersion>>> {
+) -> ApiResponse<Vec<DocumentVersion>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let versions = sqlx::query_as::<_, DocumentVersion>(
         only_own_schema_query!("pm", "SELECT id, document_id, version, file_path, file_hash, change_note, created_by, created_at FROM pm.document_versions WHERE document_id = $1 ORDER BY version DESC"),
@@ -266,10 +266,10 @@ async fn get_document_versions(
     .await;
 
     match versions {
-        Ok(v) => Json(ApiResponse::success(v, "获取版本列表成功")),
+        Ok(v) => ApiResponse::success(v, "获取版本列表成功"),
         Err(e) => {
             tracing::error!("获取版本失败: {}", e);
-            Json(ApiResponse::server_error("获取版本失败"))
+            ApiResponse::server_error("获取版本失败")
         }
     }
 }
@@ -280,11 +280,11 @@ async fn create_document_version(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDocumentVersionRequest>,
-) -> Json<ApiResponse<DocumentVersion>> {
+) -> ApiResponse<DocumentVersion> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let doc_result =
         sqlx::query_as::<_, ProjectDocument>(only_own_schema_query!("pm", "SELECT id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at FROM pm.project_documents WHERE id = $1"))
@@ -295,11 +295,11 @@ async fn create_document_version(
     let document = match doc_result {
         Ok(d) => d,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::not_found("文档不存在"));
+            return ApiResponse::not_found("文档不存在");
         }
         Err(e) => {
             tracing::error!("获取文档失败: {}", e);
-            return Json(ApiResponse::server_error("获取文档失败"));
+            return ApiResponse::server_error("获取文档失败");
         }
     };
 
@@ -336,10 +336,10 @@ async fn create_document_version(
     }
 
     match version {
-        Ok(v) => Json(ApiResponse::success(v, "创建版本成功")),
+        Ok(v) => ApiResponse::success(v, "创建版本成功"),
         Err(e) => {
             tracing::error!("创建版本失败: {}", e);
-            Json(ApiResponse::server_error("创建版本失败"))
+            ApiResponse::server_error("创建版本失败")
         }
     }
 }
@@ -360,11 +360,11 @@ async fn create_document_version(
 async fn get_project_folders(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<DocumentFolder>>> {
+) -> ApiResponse<Vec<DocumentFolder>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let folders = sqlx::query_as::<_, DocumentFolder>(
         only_own_schema_query!("pm", "SELECT id, project_id, folder_name, parent_id, description, created_by, created_at, updated_at FROM pm.document_folders WHERE project_id = $1 ORDER BY folder_name"),
@@ -374,10 +374,10 @@ async fn get_project_folders(
     .await;
 
     match folders {
-        Ok(f) => Json(ApiResponse::success(f, "获取文件夹列表成功")),
+        Ok(f) => ApiResponse::success(f, "获取文件夹列表成功"),
         Err(e) => {
             tracing::error!("获取文件夹失败: {}", e);
-            Json(ApiResponse::server_error("获取文件夹失败"))
+            ApiResponse::server_error("获取文件夹失败")
         }
     }
 }
@@ -398,11 +398,11 @@ async fn get_project_folders(
 async fn get_folder(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<DocumentFolder>> {
+) -> ApiResponse<DocumentFolder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let folder = sqlx::query_as::<_, DocumentFolder>(
         only_own_schema_query!("pm", "SELECT id, project_id, folder_name, parent_id, description, created_by, created_at, updated_at FROM pm.document_folders WHERE id = $1"),
@@ -412,11 +412,11 @@ async fn get_folder(
     .await;
 
     match folder {
-        Ok(f) => Json(ApiResponse::success(f, "获取文件夹详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("文件夹不存在")),
+        Ok(f) => ApiResponse::success(f, "获取文件夹详情成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("文件夹不存在"),
         Err(e) => {
             tracing::error!("获取文件夹失败: {}", e);
-            Json(ApiResponse::server_error("获取文件夹失败"))
+            ApiResponse::server_error("获取文件夹失败")
         }
     }
 }
@@ -427,11 +427,11 @@ async fn create_folder(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateFolderRequest>,
-) -> Json<ApiResponse<DocumentFolder>> {
+) -> ApiResponse<DocumentFolder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -453,10 +453,10 @@ async fn create_folder(
     .await;
 
     match folder {
-        Ok(f) => Json(ApiResponse::success(f, "创建文件夹成功")),
+        Ok(f) => ApiResponse::success(f, "创建文件夹成功"),
         Err(e) => {
             tracing::error!("创建文件夹失败: {}", e);
-            Json(ApiResponse::server_error("创建文件夹失败"))
+            ApiResponse::server_error("创建文件夹失败")
         }
     }
 }
@@ -465,11 +465,11 @@ async fn update_folder(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateFolderRequest>,
-) -> Json<ApiResponse<DocumentFolder>> {
+) -> ApiResponse<DocumentFolder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let folder = sqlx::query_as::<_, DocumentFolder>(only_own_schema_query!(
         "pm",
@@ -487,11 +487,11 @@ async fn update_folder(
     .await;
 
     match folder {
-        Ok(f) => Json(ApiResponse::success(f, "更新文件夹成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("文件夹不存在")),
+        Ok(f) => ApiResponse::success(f, "更新文件夹成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("文件夹不存在"),
         Err(e) => {
             tracing::error!("更新文件夹失败: {}", e);
-            Json(ApiResponse::server_error("更新文件夹失败"))
+            ApiResponse::server_error("更新文件夹失败")
         }
     }
 }
@@ -499,11 +499,11 @@ async fn update_folder(
 async fn delete_folder(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
@@ -514,11 +514,11 @@ async fn delete_folder(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除文件夹成功")),
-        Ok(_) => Json(ApiResponse::not_found("文件夹不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除文件夹成功"),
+        Ok(_) => ApiResponse::not_found("文件夹不存在"),
         Err(e) => {
             tracing::error!("删除文件夹失败: {}", e);
-            Json(ApiResponse::server_error("删除文件夹失败"))
+            ApiResponse::server_error("删除文件夹失败")
         }
     }
 }

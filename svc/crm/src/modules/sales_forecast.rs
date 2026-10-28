@@ -55,15 +55,15 @@ pub async fn list_sales_forecasts(
     Extension(claims): Extension<Claims>,
     Query(params): Query<SalesForecastQueryParams>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -120,7 +120,7 @@ pub async fn list_sales_forecasts(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": forecasts,
                     "total": total,
@@ -128,13 +128,11 @@ pub async fn list_sales_forecasts(
                     "page_size": page_size
                 }),
                 "获取销售预测列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取销售预测列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取销售预测列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取销售预测列表失败".to_string()))
         }
     }
 }
@@ -147,15 +145,15 @@ async fn get_sales_forecast(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<SalesForecast>> {
+) -> ApiResponse<SalesForecast> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -181,15 +179,11 @@ async fn get_sales_forecast(
     .await;
 
     match result {
-        Ok(Some(forecast)) => Json(ApiResponse::success(forecast, "获取销售预测成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "销售预测不存在".to_string(),
-        ))),
+        Ok(Some(forecast)) => ApiResponse::success(forecast, "获取销售预测成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("销售预测不存在".to_string())),
         Err(e) => {
             tracing::error!("获取销售预测失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取销售预测失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取销售预测失败".to_string()))
         }
     }
 }
@@ -202,21 +196,21 @@ async fn create_sales_forecast(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateSalesForecastRequest>,
-) -> Json<ApiResponse<SalesForecast>> {
+) -> ApiResponse<SalesForecast> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     if req.period_type.is_empty() || req.period.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "周期类型和周期不能为空".to_string(),
-        )));
+        ));
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -259,16 +253,14 @@ async fn create_sales_forecast(
 
     let (response, status_str, error_msg) = match &result {
         Ok(forecast) => (
-            Json(ApiResponse::success(forecast.clone(), "销售预测创建成功")),
+            ApiResponse::success(forecast.clone(), "销售预测创建成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("创建销售预测失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "销售预测创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("销售预测创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -278,9 +270,7 @@ async fn create_sales_forecast(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -331,21 +321,21 @@ pub async fn generate_forecast(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateSalesForecastRequest>,
-) -> Json<ApiResponse<SalesForecast>> {
+) -> ApiResponse<SalesForecast> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     if req.period_type.is_empty() || req.period.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "周期类型和周期不能为空".to_string(),
-        )));
+        ));
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -403,18 +393,14 @@ pub async fn generate_forecast(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
-            Json(ApiResponse::success(forecast, "销售预测生成成功"))
+            ApiResponse::success(forecast, "销售预测生成成功")
         }
         Err(e) => {
             tracing::error!("生成销售预测失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "销售预测生成失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("销售预测生成失败".to_string()))
         }
     }
 }
@@ -428,15 +414,15 @@ async fn update_sales_forecast(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<SalesForecast>> {
+) -> ApiResponse<SalesForecast> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -463,16 +449,9 @@ async fn update_sales_forecast(
     let existing = match existing {
         Ok(Some(c)) => c,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "销售预测不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("销售预测不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询销售预测失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询销售预测失败", e)),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -524,16 +503,14 @@ async fn update_sales_forecast(
 
     let (response, status_str, error_msg) = match &result {
         Ok(forecast) => (
-            Json(ApiResponse::success(forecast.clone(), "销售预测更新成功")),
+            ApiResponse::success(forecast.clone(), "销售预测更新成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("更新销售预测失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "销售预测更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("销售预测更新失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -543,9 +520,7 @@ async fn update_sales_forecast(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -585,15 +560,15 @@ async fn delete_sales_forecast(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -617,23 +592,19 @@ async fn delete_sales_forecast(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "销售预测删除成功")),
+            ApiResponse::success("".to_string(), "销售预测删除成功"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "销售预测不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("销售预测不存在".to_string())),
             "error".to_string(),
             Some("销售预测不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除销售预测失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "销售预测删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("销售预测删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -643,9 +614,7 @@ async fn delete_sales_forecast(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -702,15 +671,15 @@ pub async fn get_sales_trend(
     Extension(claims): Extension<Claims>,
     Query(params): Query<SalesTrendQuery>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let period_type = params.period_type.unwrap_or("month".to_string());
@@ -791,7 +760,7 @@ pub async fn get_sales_trend(
                 }));
             }
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "trend_data": trend_data,
                     "period_type": period_type,
@@ -799,13 +768,11 @@ pub async fn get_sales_trend(
                     "total_periods": comparison_data.len() + 1,
                 }),
                 "获取销售趋势数据成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取销售趋势数据失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取销售趋势数据失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取销售趋势数据失败".to_string()))
         }
     }
 }
@@ -835,15 +802,15 @@ pub async fn compare_sales_forecasts(
     Extension(claims): Extension<Claims>,
     Query(params): Query<CompareForecastQuery>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let periods = params.periods.unwrap_or_default();
@@ -860,9 +827,9 @@ pub async fn compare_sales_forecasts(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if periods.len() < 2 {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "至少需要对比两个周期".to_string(),
-        )));
+        ));
     }
 
     let result = sqlx::query(
@@ -952,7 +919,7 @@ pub async fn compare_sales_forecasts(
                 .sum::<f64>()
                 / forecasts.len() as f64;
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "base_period": base_period,
                     "comparisons": comparisons,
@@ -961,13 +928,11 @@ pub async fn compare_sales_forecasts(
                     "average_accuracy": avg_accuracy.round() / 100.0,
                 }),
                 "销售预测对比分析成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("销售预测对比分析失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "销售预测对比分析失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("销售预测对比分析失败".to_string()))
         }
     }
 }
@@ -991,15 +956,15 @@ pub async fn get_accuracy_report(
     Extension(claims): Extension<Claims>,
     Query(params): Query<SalesTrendQuery>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let period_type = params.period_type.unwrap_or("month".to_string());
@@ -1112,7 +1077,7 @@ pub async fn get_accuracy_report(
                 "insufficient_data".to_string()
             };
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "records": records,
                     "period_type": period_type,
@@ -1127,13 +1092,11 @@ pub async fn get_accuracy_report(
                     },
                 }),
                 "获取预测准确率报告成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取预测准确率报告失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取预测准确率报告失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取预测准确率报告失败".to_string()))
         }
     }
 }

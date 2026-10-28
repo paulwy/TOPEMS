@@ -34,7 +34,7 @@ pub async fn list_eightd_reports(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<EightDQuery>,
-) -> Json<ApiResponse<ListEightDReportsResponse>> {
+) -> ApiResponse<ListEightDReportsResponse> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
@@ -90,7 +90,7 @@ pub async fn list_eightd_reports(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count 8D reports: {}", e);
-            return Json(ApiResponse::server_error("获取8D报告列表失败"));
+            return ApiResponse::server_error("获取8D报告列表失败");
         }
     };
 
@@ -119,7 +119,7 @@ pub async fn list_eightd_reports(
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
     match fetch_query.fetch_all(&state.pool).await {
-        Ok(data) => Json(ApiResponse::success(
+        Ok(data) => ApiResponse::success(
             ListEightDReportsResponse {
                 reports: data,
                 total: total.unwrap_or(0),
@@ -127,10 +127,10 @@ pub async fn list_eightd_reports(
                 page_size,
             },
             "获取8D报告列表成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to fetch 8D reports: {}", e);
-            Json(ApiResponse::server_error("获取8D报告列表失败"))
+            ApiResponse::server_error("获取8D报告列表失败")
         }
     }
 }
@@ -150,7 +150,7 @@ pub async fn create_eightd_report(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateEightDRequest>,
-) -> Json<ApiResponse<EightDReport>> {
+) -> ApiResponse<EightDReport> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let report_no = format!(
         "8D-{}",
@@ -178,11 +178,11 @@ pub async fn create_eightd_report(
                 .execute(&state.pool)
                 .await;
             }
-            Json(ApiResponse::success(data, "8D报告创建成功"))
+            ApiResponse::success(data, "8D报告创建成功")
         }
         Err(e) => {
             tracing::error!("Failed to create 8D report: {}", e);
-            Json(ApiResponse::server_error("8D报告创建失败"))
+            ApiResponse::server_error("8D报告创建失败")
         }
     }
 }
@@ -205,7 +205,7 @@ pub async fn get_eightd_report(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<EightDReport>> {
+) -> ApiResponse<EightDReport> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -217,7 +217,7 @@ pub async fn get_eightd_report(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的8D报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
     let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"SELECT id::TEXT AS id, tenant_id::TEXT AS tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
@@ -225,12 +225,12 @@ pub async fn get_eightd_report(
     .await;
 
     match report {
-        Ok(data) => Json(ApiResponse::success(data, "获取8D报告成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "获取8D报告成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to fetch 8D report: {}", e);
-            Json(ApiResponse::server_error("获取8D报告失败"))
+            ApiResponse::server_error("获取8D报告失败")
         }
     }
 }
@@ -254,11 +254,11 @@ pub async fn update_eightd_report(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateEightDRequest>,
-) -> Json<ApiResponse<EightDReport>> {
+) -> ApiResponse<EightDReport> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的8D报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
     let due_dt = req
@@ -270,11 +270,11 @@ pub async fn update_eightd_report(
     .await;
 
     match report {
-        Ok(data) => Json(ApiResponse::success(data, "8D报告更新成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "8D报告更新成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update 8D report: {}", e);
-            Json(ApiResponse::server_error("8D报告更新失败"))
+            ApiResponse::server_error("8D报告更新失败")
         }
     }
 }
@@ -297,11 +297,11 @@ pub async fn delete_eightd_report(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的8D报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -314,10 +314,10 @@ pub async fn delete_eightd_report(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "8D报告删除成功")),
+        Ok(_) => ApiResponse::success(true, "8D报告删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete 8D report: {}", e);
-            Json(ApiResponse::server_error("8D报告删除失败"))
+            ApiResponse::server_error("8D报告删除失败")
         }
     }
 }
@@ -341,11 +341,11 @@ pub async fn update_d1_team(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDStepRequest>,
-) -> Json<ApiResponse<EightDReport>> {
+) -> ApiResponse<EightDReport> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的8D报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
     let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d1_team = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(id).bind(req.content).bind(tenant_id)
@@ -353,16 +353,16 @@ pub async fn update_d1_team(
     .await;
 
     match report {
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("8D报告不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("8D报告不存在"),
         Ok(data) => {
             let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'update', 'D1', '更新团队组建')"#)).bind(tenant_id).bind(id)
             .execute(&state.pool)
             .await;
-            Json(ApiResponse::success(data, "D1团队组建更新成功"))
+            ApiResponse::success(data, "D1团队组建更新成功")
         }
         Err(e) => {
             tracing::error!("Failed to update D1 team: {}", e);
-            Json(ApiResponse::server_error("D1团队组建更新失败"))
+            ApiResponse::server_error("D1团队组建更新失败")
         }
     }
 }
@@ -386,11 +386,11 @@ pub async fn submit_d3_containment(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDStepRequest>,
-) -> Json<ApiResponse<EightDReport>> {
+) -> ApiResponse<EightDReport> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的8D报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
     let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d3_containment_action = $2, d3_implemented_at = NOW(), status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(id).bind(req.content).bind(tenant_id)
@@ -402,12 +402,12 @@ pub async fn submit_d3_containment(
             let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D3', '提交临时遏制措施')"#)).bind(tenant_id).bind(id)
             .execute(&state.pool)
             .await;
-            Json(ApiResponse::success(data, "D3临时遏制措施提交成功"))
+            ApiResponse::success(data, "D3临时遏制措施提交成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to submit D3 containment: {}", e);
-            Json(ApiResponse::server_error("D3临时遏制措施提交失败"))
+            ApiResponse::server_error("D3临时遏制措施提交失败")
         }
     }
 }
@@ -431,11 +431,11 @@ pub async fn submit_d4_root_cause(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDStepRequest>,
-) -> Json<ApiResponse<EightDReport>> {
+) -> ApiResponse<EightDReport> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的8D报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
     let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d4_root_cause = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(id).bind(req.content).bind(tenant_id)
@@ -447,12 +447,12 @@ pub async fn submit_d4_root_cause(
             let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D4', '提交根本原因分析')"#)).bind(tenant_id).bind(id)
             .execute(&state.pool)
             .await;
-            Json(ApiResponse::success(data, "D4根本原因分析提交成功"))
+            ApiResponse::success(data, "D4根本原因分析提交成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to submit D4 root cause: {}", e);
-            Json(ApiResponse::server_error("D4根本原因分析提交失败"))
+            ApiResponse::server_error("D4根本原因分析提交失败")
         }
     }
 }
@@ -476,11 +476,11 @@ pub async fn submit_d5_permanent_action(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDStepRequest>,
-) -> Json<ApiResponse<EightDReport>> {
+) -> ApiResponse<EightDReport> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的8D报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
     let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d5_permanent_action = $2, status = 'in_progress', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(id).bind(req.content).bind(tenant_id)
@@ -492,12 +492,12 @@ pub async fn submit_d5_permanent_action(
             let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D5', '提交永久纠正措施')"#)).bind(tenant_id).bind(id)
             .execute(&state.pool)
             .await;
-            Json(ApiResponse::success(data, "D5永久纠正措施提交成功"))
+            ApiResponse::success(data, "D5永久纠正措施提交成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to submit D5 permanent action: {}", e);
-            Json(ApiResponse::server_error("D5永久纠正措施提交失败"))
+            ApiResponse::server_error("D5永久纠正措施提交失败")
         }
     }
 }
@@ -521,11 +521,11 @@ pub async fn verify_d6_effectiveness(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDStepRequest>,
-) -> Json<ApiResponse<EightDReport>> {
+) -> ApiResponse<EightDReport> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的8D报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
     let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d6_verification_result = $2, d6_verified_at = NOW(), status = 'verified', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(id).bind(req.content).bind(tenant_id)
@@ -537,12 +537,12 @@ pub async fn verify_d6_effectiveness(
             let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'verify', 'D6', '验证措施有效性')"#)).bind(tenant_id).bind(id)
             .execute(&state.pool)
             .await;
-            Json(ApiResponse::success(data, "D6效果验证成功"))
+            ApiResponse::success(data, "D6效果验证成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to verify D6 effectiveness: {}", e);
-            Json(ApiResponse::server_error("D6效果验证失败"))
+            ApiResponse::server_error("D6效果验证失败")
         }
     }
 }
@@ -566,11 +566,11 @@ pub async fn submit_d7_preventive(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDStepRequest>,
-) -> Json<ApiResponse<EightDReport>> {
+) -> ApiResponse<EightDReport> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的8D报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
     let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d7_preventive_action = $2, status = 'verified', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(id).bind(req.content).bind(tenant_id)
@@ -582,12 +582,12 @@ pub async fn submit_d7_preventive(
             let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'submit', 'D7', '提交预防再发生措施')"#)).bind(tenant_id).bind(id)
             .execute(&state.pool)
             .await;
-            Json(ApiResponse::success(data, "D7预防措施提交成功"))
+            ApiResponse::success(data, "D7预防措施提交成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to submit D7 preventive: {}", e);
-            Json(ApiResponse::server_error("D7预防措施提交失败"))
+            ApiResponse::server_error("D7预防措施提交失败")
         }
     }
 }
@@ -611,11 +611,11 @@ pub async fn close_eightd_report(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDStepRequest>,
-) -> Json<ApiResponse<EightDReport>> {
+) -> ApiResponse<EightDReport> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的8D报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
     let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"UPDATE qms.qa_eightd_reports SET d8_congratulations = $2, d8_closed_at = NOW(), status = 'closed', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#)).bind(id).bind(req.content).bind(tenant_id)
@@ -627,12 +627,12 @@ pub async fn close_eightd_report(
             let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'close', 'D8', '关闭8D报告')"#)).bind(tenant_id).bind(id)
             .execute(&state.pool)
             .await;
-            Json(ApiResponse::success(data, "8D报告已关闭"))
+            ApiResponse::success(data, "8D报告已关闭")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to close 8D report: {}", e);
-            Json(ApiResponse::server_error("8D报告关闭失败"))
+            ApiResponse::server_error("8D报告关闭失败")
         }
     }
 }
@@ -655,7 +655,7 @@ pub async fn get_eightd_audit_logs(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<EightDAuditLog>>> {
+) -> ApiResponse<Vec<EightDAuditLog>> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -667,7 +667,7 @@ pub async fn get_eightd_audit_logs(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的8D报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
     let logs = sqlx::query_as::<_, EightDAuditLog>(only_own_schema_query!("qms", r#"SELECT id::TEXT AS id, tenant_id::TEXT AS tenant_id, report_id::TEXT AS report_id, action, step, operator, comment, created_at FROM qms.qa_eightd_audit_logs WHERE report_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"#)).bind(id).bind(tenant_opt)
@@ -675,10 +675,10 @@ pub async fn get_eightd_audit_logs(
     .await;
 
     match logs {
-        Ok(data) => Json(ApiResponse::success(data, "获取8D审核日志成功")),
+        Ok(data) => ApiResponse::success(data, "获取8D审核日志成功"),
         Err(e) => {
             tracing::error!("Failed to fetch 8D audit logs: {}", e);
-            Json(ApiResponse::server_error("获取8D审核日志失败"))
+            ApiResponse::server_error("获取8D审核日志失败")
         }
     }
 }
@@ -710,7 +710,7 @@ pub async fn approve_eightd(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDApprovalRequest>,
-) -> Json<ApiResponse<EightDReport>> {
+) -> ApiResponse<EightDReport> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -722,7 +722,7 @@ pub async fn approve_eightd(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的8D报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
@@ -734,10 +734,10 @@ pub async fn approve_eightd(
             if eight_d_requires_approval(&current_status, STATUS_VERIFIED)
                 && !crate::shared::permission::has_qms_permission(&claims, "eightd.approve")
             {
-                return Json(ApiResponse::forbidden("无审批权限"));
+                return ApiResponse::forbidden("无审批权限");
             }
             if eight_d_can_transition(&current_status, STATUS_VERIFIED).is_err() {
-                return Json(ApiResponse::bad_request("当前状态不允许审批通过"));
+                return ApiResponse::bad_request("当前状态不允许审批通过");
             }
             let report = sqlx::query_as::<_, EightDReport>(
                 format!("UPDATE qms.qa_eightd_reports SET status = '{}', d6_verified_at = COALESCE(d6_verified_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_VERIFIED, EIGHTD_SELECT_COLS).as_str()
@@ -756,17 +756,17 @@ pub async fn approve_eightd(
                         req.comment.as_deref(),
                     )
                     .await;
-                    Json(ApiResponse::success(data, "审批通过"))
+                    ApiResponse::success(data, "审批通过")
                 }
                 Err(e) => {
                     tracing::error!("Failed to approve 8D: {}", e);
-                    Json(ApiResponse::server_error("审批失败"))
+                    ApiResponse::server_error("审批失败")
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find 8D report: {}", e);
-            Json(ApiResponse::not_found("8D报告不存在"))
+            ApiResponse::not_found("8D报告不存在")
         }
     }
 }
@@ -791,7 +791,7 @@ pub async fn close_eightd_approval(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDApprovalRequest>,
-) -> Json<ApiResponse<EightDReport>> {
+) -> ApiResponse<EightDReport> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -803,7 +803,7 @@ pub async fn close_eightd_approval(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的8D报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
@@ -815,10 +815,10 @@ pub async fn close_eightd_approval(
             if eight_d_requires_approval(&current_status, STATUS_CLOSED)
                 && !crate::shared::permission::has_qms_permission(&claims, "eightd.approve")
             {
-                return Json(ApiResponse::forbidden("无审批权限"));
+                return ApiResponse::forbidden("无审批权限");
             }
             if eight_d_can_transition(&current_status, STATUS_CLOSED).is_err() {
-                return Json(ApiResponse::bad_request("当前状态不允许关闭"));
+                return ApiResponse::bad_request("当前状态不允许关闭");
             }
             let report = sqlx::query_as::<_, EightDReport>(
                 format!("UPDATE qms.qa_eightd_reports SET status = '{}', d8_closed_at = COALESCE(d8_closed_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CLOSED, EIGHTD_SELECT_COLS).as_str()
@@ -837,17 +837,17 @@ pub async fn close_eightd_approval(
                         req.comment.as_deref(),
                     )
                     .await;
-                    Json(ApiResponse::success(data, "8D报告已关闭"))
+                    ApiResponse::success(data, "8D报告已关闭")
                 }
                 Err(e) => {
                     tracing::error!("Failed to close 8D: {}", e);
-                    Json(ApiResponse::server_error("关闭失败"))
+                    ApiResponse::server_error("关闭失败")
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find 8D report: {}", e);
-            Json(ApiResponse::not_found("8D报告不存在"))
+            ApiResponse::not_found("8D报告不存在")
         }
     }
 }
@@ -872,7 +872,7 @@ pub async fn cancel_eightd(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDApprovalRequest>,
-) -> Json<ApiResponse<EightDReport>> {
+) -> ApiResponse<EightDReport> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -884,7 +884,7 @@ pub async fn cancel_eightd(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的8D报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的8D报告ID"),
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
@@ -894,7 +894,7 @@ pub async fn cancel_eightd(
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
             if eight_d_can_transition(&current_status, STATUS_CANCELLED).is_err() {
-                return Json(ApiResponse::bad_request("当前状态不允许取消"));
+                return ApiResponse::bad_request("当前状态不允许取消");
             }
             let report = sqlx::query_as::<_, EightDReport>(
                 format!("UPDATE qms.qa_eightd_reports SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CANCELLED, EIGHTD_SELECT_COLS).as_str()
@@ -913,17 +913,17 @@ pub async fn cancel_eightd(
                         req.comment.as_deref(),
                     )
                     .await;
-                    Json(ApiResponse::success(data, "8D报告已取消"))
+                    ApiResponse::success(data, "8D报告已取消")
                 }
                 Err(e) => {
                     tracing::error!("Failed to cancel 8D: {}", e);
-                    Json(ApiResponse::server_error("取消失败"))
+                    ApiResponse::server_error("取消失败")
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find 8D report: {}", e);
-            Json(ApiResponse::not_found("8D报告不存在"))
+            ApiResponse::not_found("8D报告不存在")
         }
     }
 }

@@ -71,15 +71,15 @@ pub async fn list_contacts(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ContactPaginationParams>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContactRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -141,7 +141,7 @@ pub async fn list_contacts(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": contacts,
                     "total": total,
@@ -149,13 +149,11 @@ pub async fn list_contacts(
                     "page_size": page_size
                 }),
                 "获取联系人列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取联系人列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取联系人列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取联系人列表失败".to_string()))
         }
     }
 }
@@ -180,21 +178,21 @@ pub async fn create_contact(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateContactRequest>,
-) -> Json<ApiResponse<Contact>> {
+) -> ApiResponse<Contact> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     if req.first_name.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "联系人名字不能为空".to_string(),
-        )));
+        ));
     }
 
     let id = Uuid::new_v4();
@@ -239,11 +237,11 @@ pub async fn create_contact(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(contact.clone(), "联系人创建成功")),
+                ApiResponse::success(contact.clone(), "联系人创建成功"),
                 "success".to_string(),
                 None,
             )
@@ -251,9 +249,7 @@ pub async fn create_contact(
         Err(e) => {
             tracing::error!("创建联系人失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "联系人创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("联系人创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -309,15 +305,15 @@ pub async fn get_contact(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Contact>> {
+) -> ApiResponse<Contact> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContactRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -343,15 +339,11 @@ pub async fn get_contact(
     .await;
 
     match result {
-        Ok(Some(contact)) => Json(ApiResponse::success(contact, "获取联系人成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "联系人不存在".to_string(),
-        ))),
+        Ok(Some(contact)) => ApiResponse::success(contact, "获取联系人成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("联系人不存在".to_string())),
         Err(e) => {
             tracing::error!("获取联系人失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取联系人失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取联系人失败".to_string()))
         }
     }
 }
@@ -365,15 +357,15 @@ async fn update_contact(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateContactRequest>,
-) -> Json<ApiResponse<Contact>> {
+) -> ApiResponse<Contact> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -400,16 +392,9 @@ async fn update_contact(
     let existing = match existing {
         Ok(Some(c)) => c,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "联系人不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("联系人不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询联系人失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询联系人失败", e)),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -452,11 +437,11 @@ async fn update_contact(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(contact.clone(), "联系人更新成功")),
+                ApiResponse::success(contact.clone(), "联系人更新成功"),
                 "success".to_string(),
                 None,
             )
@@ -464,9 +449,7 @@ async fn update_contact(
         Err(e) => {
             tracing::error!("更新联系人失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "联系人更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("联系人更新失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -508,15 +491,15 @@ async fn delete_contact(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -540,31 +523,25 @@ async fn delete_contact(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "联系人删除成功")),
+            ApiResponse::success("".to_string(), "联系人删除成功"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "联系人不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("联系人不存在".to_string())),
             "error".to_string(),
             Some("联系人不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除联系人失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "联系人删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("联系人删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -616,21 +593,21 @@ pub async fn batch_delete_contacts(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<BatchDeleteRequest>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     if req.ids.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "请选择要删除的联系人".to_string(),
-        )));
+        ));
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -655,27 +632,23 @@ pub async fn batch_delete_contacts(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) => (
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 "".to_string(),
                 &format!("成功删除 {} 个联系人", r.rows_affected()),
-            )),
+            ),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("批量删除联系人失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "批量删除联系人失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("批量删除联系人失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -743,15 +716,15 @@ pub async fn start_contact_approval(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<StartContactApprovalRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -779,9 +752,7 @@ pub async fn start_contact_approval(
     let contact = match contact {
         Ok(c) => c,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "联系人不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("联系人不存在".to_string()))
         }
     };
     let old_approval_status = contact.approval_status.clone();
@@ -818,9 +789,7 @@ pub async fn start_contact_approval(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
 
@@ -855,14 +824,14 @@ pub async fn start_contact_approval(
         .await;
     });
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "contact_id": id,
             "workflow_id": req.workflow_id,
             "approval_status": "pending"
         }),
         "联系人审批流程已启动",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -887,15 +856,15 @@ pub async fn approve_contact(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<ContactApprovalActionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -923,9 +892,7 @@ pub async fn approve_contact(
     let contact = match contact {
         Ok(c) => c,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "联系人不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("联系人不存在".to_string()))
         }
     };
     let old_approval_status = contact.approval_status.clone();
@@ -941,9 +908,7 @@ pub async fn approve_contact(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
 
@@ -976,13 +941,13 @@ pub async fn approve_contact(
         .await;
     });
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "contact_id": id,
             "approval_status": "approved"
         }),
         "联系人审批通过",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1007,15 +972,15 @@ pub async fn reject_contact(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<ContactApprovalActionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ContactWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -1043,9 +1008,7 @@ pub async fn reject_contact(
     let contact = match contact {
         Ok(c) => c,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "联系人不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("联系人不存在".to_string()))
         }
     };
     let old_approval_status = contact.approval_status.clone();
@@ -1061,9 +1024,7 @@ pub async fn reject_contact(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
 
@@ -1099,13 +1060,13 @@ pub async fn reject_contact(
         .await;
     });
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "contact_id": id,
             "approval_status": "rejected"
         }),
         "联系人审批已驳回",
-    ))
+    )
 }
 
 #[cfg(test)]

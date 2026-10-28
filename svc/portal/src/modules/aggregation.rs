@@ -13,7 +13,6 @@
 use axum::{
     extract::{Extension, State},
     http::HeaderMap,
-    Json,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
@@ -116,7 +115,7 @@ pub async fn get_business_stats(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-) -> Json<ApiResponse<BusinessStatsAggregation>> {
+) -> ApiResponse<BusinessStatsAggregation> {
     let token = extract_bearer_token(&headers);
     let user_id = &claims.sub;
 
@@ -139,7 +138,7 @@ pub async fn get_business_stats(
         workflow: workflow_stats,
     };
 
-    Json(ApiResponse::success(result, "业务统计聚合成功"))
+    ApiResponse::success(result, "业务统计聚合成功")
 }
 
 /// 统一待办列表 API
@@ -157,7 +156,7 @@ pub async fn get_unified_todos(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-) -> Json<ApiResponse<UnifiedTodosAggregation>> {
+) -> ApiResponse<UnifiedTodosAggregation> {
     let token = extract_bearer_token(&headers);
     let user_id = &claims.sub;
 
@@ -187,14 +186,14 @@ pub async fn get_unified_todos(
     }
 
     let total = items.len();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         UnifiedTodosAggregation {
             total,
             by_source,
             items,
         },
         "统一待办聚合成功",
-    ))
+    )
 }
 
 #[allow(clippy::as_conversions)]

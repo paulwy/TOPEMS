@@ -78,11 +78,11 @@ pub fn create_routes(pool: PgPool) -> Router {
 async fn get_project_quality_checks(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<QualityCheck>>> {
+) -> ApiResponse<Vec<QualityCheck>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let checks = sqlx::query_as::<_, QualityCheck>(
         only_own_schema_query!("pm", "SELECT id, project_id, check_name, check_type, phase_id, milestone_id, issues, acceptance_standard, result, status, check_date, checker, result_details, nonconformities, corrective_actions, follow_up_date, created_at, updated_at FROM pm.quality_checks WHERE project_id = $1 ORDER BY created_at DESC"),
@@ -92,10 +92,10 @@ async fn get_project_quality_checks(
     .await;
 
     match checks {
-        Ok(c) => Json(ApiResponse::success(c, "获取质量检查列表成功")),
+        Ok(c) => ApiResponse::success(c, "获取质量检查列表成功"),
         Err(e) => {
             tracing::error!("获取质量检查失败: {}", e);
-            Json(ApiResponse::server_error("获取质量检查失败"))
+            ApiResponse::server_error("获取质量检查失败")
         }
     }
 }
@@ -116,11 +116,11 @@ async fn get_project_quality_checks(
 async fn get_quality_check(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<QualityCheck>> {
+) -> ApiResponse<QualityCheck> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let check =
         sqlx::query_as::<_, QualityCheck>(only_own_schema_query!("pm", "SELECT id, project_id, check_name, check_type, phase_id, milestone_id, issues, acceptance_standard, result, status, check_date, checker, result_details, nonconformities, corrective_actions, follow_up_date, created_at, updated_at FROM pm.quality_checks WHERE id = $1"))
@@ -129,11 +129,11 @@ async fn get_quality_check(
             .await;
 
     match check {
-        Ok(c) => Json(ApiResponse::success(c, "获取质量检查详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("质量检查不存在")),
+        Ok(c) => ApiResponse::success(c, "获取质量检查详情成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("质量检查不存在"),
         Err(e) => {
             tracing::error!("获取质量检查失败: {}", e);
-            Json(ApiResponse::server_error("获取质量检查失败"))
+            ApiResponse::server_error("获取质量检查失败")
         }
     }
 }
@@ -144,11 +144,11 @@ async fn create_quality_check(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateQualityCheckRequest>,
-) -> Json<ApiResponse<QualityCheck>> {
+) -> ApiResponse<QualityCheck> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -177,10 +177,10 @@ async fn create_quality_check(
     .await;
 
     match check {
-        Ok(c) => Json(ApiResponse::success(c, "创建质量检查成功")),
+        Ok(c) => ApiResponse::success(c, "创建质量检查成功"),
         Err(e) => {
             tracing::error!("创建质量检查失败: {}", e);
-            Json(ApiResponse::server_error("创建质量检查失败"))
+            ApiResponse::server_error("创建质量检查失败")
         }
     }
 }
@@ -189,11 +189,11 @@ async fn update_quality_check(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateQualityCheckRequest>,
-) -> Json<ApiResponse<QualityCheck>> {
+) -> ApiResponse<QualityCheck> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     // check_criteria->issues, checked_by->checker。
     let check = sqlx::query_as::<_, QualityCheck>(only_own_schema_query!(
@@ -230,11 +230,11 @@ async fn update_quality_check(
     .await;
 
     match check {
-        Ok(c) => Json(ApiResponse::success(c, "更新质量检查成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("质量检查不存在")),
+        Ok(c) => ApiResponse::success(c, "更新质量检查成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("质量检查不存在"),
         Err(e) => {
             tracing::error!("更新质量检查失败: {}", e);
-            Json(ApiResponse::server_error("更新质量检查失败"))
+            ApiResponse::server_error("更新质量检查失败")
         }
     }
 }
@@ -255,11 +255,11 @@ async fn update_quality_check(
 async fn get_project_defects(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<Defect>>> {
+) -> ApiResponse<Vec<Defect>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let defects = sqlx::query_as::<_, Defect>(
         only_own_schema_query!("pm", "SELECT id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_at, updated_at FROM pm.defects WHERE deleted_at IS NULL AND project_id = $1 ORDER BY severity DESC, priority DESC"),
@@ -269,10 +269,10 @@ async fn get_project_defects(
     .await;
 
     match defects {
-        Ok(d) => Json(ApiResponse::success(d, "获取缺陷列表成功")),
+        Ok(d) => ApiResponse::success(d, "获取缺陷列表成功"),
         Err(e) => {
             tracing::error!("获取缺陷失败: {}", e);
-            Json(ApiResponse::server_error("获取缺陷失败"))
+            ApiResponse::server_error("获取缺陷失败")
         }
     }
 }
@@ -293,11 +293,11 @@ async fn get_project_defects(
 async fn get_defect(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Defect>> {
+) -> ApiResponse<Defect> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let defect = sqlx::query_as::<_, Defect>(
         only_own_schema_query!("pm", "SELECT id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_at, updated_at FROM pm.defects WHERE deleted_at IS NULL AND id = $1"),
@@ -307,11 +307,11 @@ async fn get_defect(
     .await;
 
     match defect {
-        Ok(d) => Json(ApiResponse::success(d, "获取缺陷详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("缺陷不存在")),
+        Ok(d) => ApiResponse::success(d, "获取缺陷详情成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("缺陷不存在"),
         Err(e) => {
             tracing::error!("获取缺陷详情失败: {}", e);
-            Json(ApiResponse::server_error("获取缺陷失败"))
+            ApiResponse::server_error("获取缺陷失败")
         }
     }
 }
@@ -322,11 +322,11 @@ async fn create_defect(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDefectRequest>,
-) -> Json<ApiResponse<Defect>> {
+) -> ApiResponse<Defect> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -353,10 +353,10 @@ async fn create_defect(
     .await;
 
     match defect {
-        Ok(d) => Json(ApiResponse::success(d, "创建缺陷成功")),
+        Ok(d) => ApiResponse::success(d, "创建缺陷成功"),
         Err(e) => {
             tracing::error!("创建缺陷失败: {}", e);
-            Json(ApiResponse::server_error("创建缺陷失败"))
+            ApiResponse::server_error("创建缺陷失败")
         }
     }
 }
@@ -365,11 +365,11 @@ async fn update_defect(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDefectRequest>,
-) -> Json<ApiResponse<Defect>> {
+) -> ApiResponse<Defect> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let defect = sqlx::query_as::<_, Defect>(
         only_own_schema_query!("pm", "UPDATE pm.defects SET
@@ -399,11 +399,11 @@ async fn update_defect(
     .await;
 
     match defect {
-        Ok(d) => Json(ApiResponse::success(d, "更新缺陷成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("缺陷不存在")),
+        Ok(d) => ApiResponse::success(d, "更新缺陷成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("缺陷不存在"),
         Err(e) => {
             tracing::error!("更新缺陷失败: {}", e);
-            Json(ApiResponse::server_error("更新缺陷失败"))
+            ApiResponse::server_error("更新缺陷失败")
         }
     }
 }
@@ -411,11 +411,11 @@ async fn update_defect(
 async fn delete_defect(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
@@ -426,11 +426,11 @@ async fn delete_defect(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除缺陷成功")),
-        Ok(_) => Json(ApiResponse::not_found("缺陷不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除缺陷成功"),
+        Ok(_) => ApiResponse::not_found("缺陷不存在"),
         Err(e) => {
             tracing::error!("删除缺陷失败: {}", e);
-            Json(ApiResponse::server_error("删除缺陷失败"))
+            ApiResponse::server_error("删除缺陷失败")
         }
     }
 }

@@ -52,15 +52,15 @@ pub async fn list_contracts(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ContractQueryParams>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &CrmPermission::ContractRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -127,7 +127,7 @@ pub async fn list_contracts(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": contracts,
                     "total": total,
@@ -135,13 +135,11 @@ pub async fn list_contracts(
                     "page_size": page_size
                 }),
                 "获取合同列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取合同列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取合同列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取合同列表失败".to_string()))
         }
     }
 }
@@ -166,21 +164,21 @@ pub async fn create_contract(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateContractRequest>,
-) -> Json<ApiResponse<Contract>> {
+) -> ApiResponse<Contract> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &CrmPermission::ContractWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     if req.contract_no.trim().is_empty() || req.title.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "合同编号与标题不能为空".to_string(),
-        )));
+        ));
     }
 
     let id = Uuid::new_v4();
@@ -235,25 +233,21 @@ pub async fn create_contract(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "合同创建失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("合同创建失败".to_string()));
             }
         }
     }
 
     let (response, status_str, error_msg) = match &result {
         Ok(contract) => (
-            Json(ApiResponse::success(contract.clone(), "合同创建成功")),
+            ApiResponse::success(contract.clone(), "合同创建成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("创建合同失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "合同创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("合同创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -308,15 +302,15 @@ pub async fn get_contract(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Contract>> {
+) -> ApiResponse<Contract> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &CrmPermission::ContractRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -347,15 +341,11 @@ pub async fn get_contract(
     .await;
 
     match result {
-        Ok(Some(contract)) => Json(ApiResponse::success(contract, "获取合同成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "合同不存在".to_string(),
-        ))),
+        Ok(Some(contract)) => ApiResponse::success(contract, "获取合同成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("合同不存在".to_string())),
         Err(e) => {
             tracing::error!("获取合同失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取合同失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取合同失败".to_string()))
         }
     }
 }
@@ -382,15 +372,15 @@ pub async fn update_contract(
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
     Json(req): Json<UpdateContractRequest>,
-) -> Json<ApiResponse<Contract>> {
+) -> ApiResponse<Contract> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &CrmPermission::ContractWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -452,23 +442,17 @@ pub async fn update_contract(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "合同更新失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("合同更新失败".to_string()));
             }
         }
     }
 
     match result {
-        Ok(Some(contract)) => Json(ApiResponse::success(contract, "合同更新成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "合同不存在".to_string(),
-        ))),
+        Ok(Some(contract)) => ApiResponse::success(contract, "合同更新成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("合同不存在".to_string())),
         Err(e) => {
             tracing::error!("更新合同失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新合同失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新合同失败".to_string()))
         }
     }
 }
@@ -493,15 +477,15 @@ pub async fn delete_contract(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &CrmPermission::ContractWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -532,9 +516,7 @@ pub async fn delete_contract(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "删除合同失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("删除合同失败".to_string()));
             }
         }
     }
@@ -558,19 +540,12 @@ pub async fn delete_contract(
                 &headers,
             )
             .await;
-            Json(ApiResponse::success(
-                serde_json::json!({"deleted": true}),
-                "合同删除成功",
-            ))
+            ApiResponse::success(serde_json::json!({"deleted": true}), "合同删除成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "合同不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("合同不存在".to_string())),
         Err(e) => {
             tracing::error!("删除合同失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除合同失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除合同失败".to_string()))
         }
     }
 }

@@ -61,7 +61,7 @@ pub async fn list_inspection_tasks(
             tracing::error!("查询巡检任务失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<Value>::server_error("查询巡检任务失败")),
+                ApiResponse::<Value>::server_error("查询巡检任务失败"),
             );
         }
     };
@@ -82,7 +82,7 @@ pub async fn list_inspection_tasks(
         .collect();
     (
         StatusCode::OK,
-        Json(ApiResponse::success(json!(tasks), "巡检任务列表")),
+        ApiResponse::success(json!(tasks), "巡检任务列表"),
     )
 }
 
@@ -125,7 +125,7 @@ pub async fn get_usage_stats(
             json!({"modules": []})
         }
     };
-    (StatusCode::OK, Json(ApiResponse::success(v, "使用量统计")))
+    (StatusCode::OK, ApiResponse::success(v, "使用量统计"))
 }
 
 #[utoipa::path(
@@ -150,10 +150,7 @@ pub async fn get_user_settings(
         "theme": "light",
         "offlineSync": {"auto": true, "intervalMinutes": 15}
     });
-    (
-        StatusCode::OK,
-        Json(ApiResponse::success(settings, "用户设置")),
-    )
+    (StatusCode::OK, ApiResponse::success(settings, "用户设置"))
 }
 
 #[utoipa::path(
@@ -176,7 +173,7 @@ pub async fn get_push_config(
         tracing::error!("初始化 push_config 表失败: {}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<Value>::server_error("初始化失败")),
+            ApiResponse::<Value>::server_error("初始化失败"),
         );
     }
     let row = sqlx::query(r#"SELECT channel_config FROM mobile.push_config LIMIT 1"#)
@@ -193,7 +190,7 @@ pub async fn get_push_config(
             "quietHours": {"enabled": false, "start": "22:00", "end": "07:00"}
         }),
     };
-    (StatusCode::OK, Json(ApiResponse::success(v, "推送配置")))
+    (StatusCode::OK, ApiResponse::success(v, "推送配置"))
 }
 
 pub async fn update_push_config(
@@ -209,14 +206,14 @@ pub async fn update_push_config(
             Err(_) => {
                 return (
                     StatusCode::UNAUTHORIZED,
-                    Json(ApiResponse::<Value>::unauthorized("无效的用户ID")),
+                    ApiResponse::<Value>::unauthorized("无效的用户ID"),
                 );
             }
         },
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::<Value>::unauthorized("未授权")),
+                ApiResponse::<Value>::unauthorized("未授权"),
             );
         }
     };
@@ -224,7 +221,7 @@ pub async fn update_push_config(
         tracing::error!("初始化 push_config 表失败: {}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<Value>::server_error("初始化失败")),
+            ApiResponse::<Value>::server_error("初始化失败"),
         );
     }
     // 租户取自 token claims，去掉硬编码 '...0001' 字面量。
@@ -250,13 +247,13 @@ pub async fn update_push_config(
     {
         Ok(_) => (
             StatusCode::OK,
-            Json(ApiResponse::success(payload, "推送配置已保存")),
+            ApiResponse::success(payload, "推送配置已保存"),
         ),
         Err(e) => {
             tracing::error!("保存推送配置失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<Value>::server_error("保存推送配置失败")),
+                ApiResponse::<Value>::server_error("保存推送配置失败"),
             )
         }
     }
@@ -323,19 +320,19 @@ pub async fn update_push_template(
             });
             (
                 StatusCode::OK,
-                Json(ApiResponse::success(v, "模板已更新")),
+                ApiResponse::success(v, "模板已更新"),
             )
         }
         Ok(None) => (
             // 契约约定：业务层未找到一律 HTTP200 + 内层 code=404，避免被探测误判为路由缺失
             StatusCode::OK,
-            Json(ApiResponse::<Value>::not_found("模板不存在")),
+            ApiResponse::<Value>::not_found("模板不存在"),
         ),
         Err(e) => {
             tracing::error!("更新模板失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<Value>::server_error("更新模板失败")),
+                ApiResponse::<Value>::server_error("更新模板失败"),
             )
         }
     }

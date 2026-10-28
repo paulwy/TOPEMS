@@ -586,7 +586,7 @@ fn compute_diff(from: &serde_json::Value, to: &serde_json::Value) -> VersionDiff
 pub async fn create_snapshot(
     State(state): State<AppState>,
     Json(req): Json<CreateSnapshotRequest>,
-) -> Json<ApiResponse<VersionSnapshot>> {
+) -> ApiResponse<VersionSnapshot> {
     // K1：版本号基于真表现有快照推导（不再读内存 Store）。
     let rows = sqlx::query(&format!(
         "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
@@ -633,7 +633,7 @@ pub async fn create_snapshot(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("写入版本快照失败: {e}")));
+        return ApiResponse::server_error(&format!("写入版本快照失败: {e}"));
     }
 
     // 审计事件写真表（权威存储）。
@@ -655,10 +655,10 @@ pub async fn create_snapshot(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("写入审计事件失败: {e}")));
+        return ApiResponse::server_error(&format!("写入审计事件失败: {e}"));
     }
 
-    Json(ApiResponse::success(snapshot, "版本快照已创建"))
+    ApiResponse::success(snapshot, "版本快照已创建")
 }
 
 #[utoipa::path(
@@ -679,7 +679,7 @@ pub async fn get_version(
     State(state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
     Query(params): Query<VersionQuery>,
-) -> Json<ApiResponse<VersionSnapshot>> {
+) -> ApiResponse<VersionSnapshot> {
     // K1：真表读取。
     let row = if let Some(ref ver) = params.version {
         sqlx::query(&format!(
@@ -707,8 +707,8 @@ pub async fn get_version(
     };
 
     match row {
-        Some(r) => Json(ApiResponse::success(snapshot_from_row(&r), "版本快照详情")),
-        None => Json(ApiResponse::not_found("未找到版本快照")),
+        Some(r) => ApiResponse::success(snapshot_from_row(&r), "版本快照详情"),
+        None => ApiResponse::not_found("未找到版本快照"),
     }
 }
 
@@ -725,7 +725,7 @@ pub async fn get_version(
 pub async fn diff_versions(
     State(state): State<AppState>,
     Query(params): Query<VersionDiffQuery>,
-) -> Json<ApiResponse<VersionDiff>> {
+) -> ApiResponse<VersionDiff> {
     // K1：真表读取两个版本。
     let from_row = sqlx::query(&format!(
         "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
@@ -754,9 +754,9 @@ pub async fn diff_versions(
                 compute_diff(&snapshot_from_row(&from).data, &snapshot_from_row(&to).data);
             diff.from_version = params.from_version.clone();
             diff.to_version = params.to_version.clone();
-            Json(ApiResponse::success(diff, "版本差异"))
+            ApiResponse::success(diff, "版本差异")
         }
-        _ => Json(ApiResponse::not_found("未找到指定版本")),
+        _ => ApiResponse::not_found("未找到指定版本"),
     }
 }
 
@@ -773,7 +773,7 @@ pub async fn diff_versions(
 pub async fn restore_version(
     State(state): State<AppState>,
     Json(req): Json<RestoreVersionRequest>,
-) -> Json<ApiResponse<VersionSnapshot>> {
+) -> ApiResponse<VersionSnapshot> {
     // K1：目标版本从真表读取。
     let target_row = sqlx::query(&format!(
         "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
@@ -787,7 +787,7 @@ pub async fn restore_version(
     .unwrap_or(None);
 
     let Some(target) = target_row.map(|r| snapshot_from_row(&r)) else {
-        return Json(ApiResponse::not_found("未找到指定版本"));
+        return ApiResponse::not_found("未找到指定版本");
     };
 
     // 新版本号基于真表现有快照推导。
@@ -834,7 +834,7 @@ pub async fn restore_version(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("写回版本快照失败: {e}")));
+        return ApiResponse::server_error(&format!("写回版本快照失败: {e}"));
     }
 
     // 审计事件写真表（权威存储）。
@@ -856,10 +856,10 @@ pub async fn restore_version(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("写入审计事件失败: {e}")));
+        return ApiResponse::server_error(&format!("写入审计事件失败: {e}"));
     }
 
-    Json(ApiResponse::success(restored, "版本已恢复"))
+    ApiResponse::success(restored, "版本已恢复")
 }
 
 #[utoipa::path(
@@ -886,7 +886,7 @@ pub async fn list_history(
     State(state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
     Query(params): Query<VersionHistoryQuery>,
-) -> Json<ApiResponse<PaginatedResponse<VersionSnapshot>>> {
+) -> ApiResponse<PaginatedResponse<VersionSnapshot>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -916,7 +916,7 @@ pub async fn list_history(
     .await
     .unwrap_or(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -925,7 +925,7 @@ pub async fn list_history(
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "版本历史",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -941,7 +941,7 @@ pub async fn list_history(
 pub async fn create_branch(
     State(state): State<AppState>,
     Json(req): Json<CreateBranchRequest>,
-) -> Json<ApiResponse<VersionBranch>> {
+) -> ApiResponse<VersionBranch> {
     let branch_type = match req.branch_type.as_deref() {
         Some(t) => branch_type_from_str(t),
         None => BranchType::Feature,
@@ -976,10 +976,10 @@ pub async fn create_branch(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("创建分支失败: {e}")));
+        return ApiResponse::server_error(&format!("创建分支失败: {e}"));
     }
 
-    Json(ApiResponse::success(branch, "分支已创建"))
+    ApiResponse::success(branch, "分支已创建")
 }
 
 #[utoipa::path(
@@ -995,7 +995,7 @@ pub async fn create_branch(
 pub async fn merge_branch(
     State(state): State<AppState>,
     Json(req): Json<MergeBranchRequest>,
-) -> Json<ApiResponse<VersionBranch>> {
+) -> ApiResponse<VersionBranch> {
     let source_exists: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM master_data.mdm_version_branches WHERE name = $1")
             .bind(&req.source_branch)
@@ -1003,7 +1003,7 @@ pub async fn merge_branch(
             .await
             .unwrap_or(0);
     if source_exists == 0 {
-        return Json(ApiResponse::not_found("源分支不存在"));
+        return ApiResponse::not_found("源分支不存在");
     }
 
     let now = chrono::Utc::now().to_rfc3339();
@@ -1021,11 +1021,11 @@ pub async fn merge_branch(
     .unwrap_or(None);
 
     let Some(row) = row else {
-        return Json(ApiResponse::not_found("目标分支不存在"));
+        return ApiResponse::not_found("目标分支不存在");
     };
     let merged = version_branch_from_row(&row);
 
-    Json(ApiResponse::success(merged, "分支已合并"))
+    ApiResponse::success(merged, "分支已合并")
 }
 
 // ==================== 处理器：审计日志 ====================
@@ -1049,7 +1049,7 @@ pub async fn merge_branch(
 pub async fn query_audit_log(
     State(state): State<AppState>,
     Query(params): Query<AuditLogQuery>,
-) -> Json<ApiResponse<PaginatedResponse<AuditEvent>>> {
+) -> ApiResponse<PaginatedResponse<AuditEvent>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1093,7 +1093,7 @@ pub async fn query_audit_log(
     .await
     .unwrap_or(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -1102,7 +1102,7 @@ pub async fn query_audit_log(
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "审计日志",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1128,7 +1128,7 @@ pub async fn get_user_activity(
     State(state): State<AppState>,
     Path(user_id): Path<String>,
     Query(params): Query<UserActivityQuery>,
-) -> Json<ApiResponse<PaginatedResponse<AuditEvent>>> {
+) -> ApiResponse<PaginatedResponse<AuditEvent>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1157,7 +1157,7 @@ pub async fn get_user_activity(
     .await
     .unwrap_or(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -1166,7 +1166,7 @@ pub async fn get_user_activity(
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "用户活动记录",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1193,7 +1193,7 @@ pub async fn get_entity_history(
     State(state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
     Query(params): Query<EntityHistoryQuery>,
-) -> Json<ApiResponse<PaginatedResponse<AuditEvent>>> {
+) -> ApiResponse<PaginatedResponse<AuditEvent>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1224,7 +1224,7 @@ pub async fn get_entity_history(
     .await
     .unwrap_or(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -1233,7 +1233,7 @@ pub async fn get_entity_history(
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "实体操作历史",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1250,7 +1250,7 @@ pub async fn get_entity_history(
 pub async fn export_audit_log(
     State(state): State<AppState>,
     Json(req): Json<ExportAuditLogRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let rows = sqlx::query(&format!(
         "SELECT {AUDIT_EVENT_COLS} FROM master_data.mdm_audit_events
          WHERE entity_type = COALESCE($1, entity_type)
@@ -1279,10 +1279,10 @@ pub async fn export_audit_log(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("写入导出日志失败: {e}")));
+        return ApiResponse::server_error(&format!("写入导出日志失败: {e}"));
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "export_id": export_id,
             "record_count": record_count,
@@ -1291,7 +1291,7 @@ pub async fn export_audit_log(
             "data": filtered,
         }),
         "审计日志已导出",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1308,7 +1308,7 @@ pub async fn export_audit_log(
 pub async fn get_compliance_audit(
     State(state): State<AppState>,
     Query(params): Query<ComplianceAuditQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let rows = sqlx::query(&format!(
         "SELECT {AUDIT_EVENT_COLS} FROM master_data.mdm_audit_events ORDER BY timestamp DESC"
     ))
@@ -1358,7 +1358,7 @@ pub async fn get_compliance_audit(
         "generated_at": chrono::Utc::now().to_rfc3339(),
     });
 
-    Json(ApiResponse::success(report, "合规审计报告"))
+    ApiResponse::success(report, "合规审计报告")
 }
 
 // ==================== 处理器：数据权限矩阵 ====================
@@ -1376,7 +1376,7 @@ pub async fn get_compliance_audit(
 pub async fn grant_permission(
     State(state): State<AppState>,
     Json(req): Json<GrantPermissionRequest>,
-) -> Json<ApiResponse<DataPermission>> {
+) -> ApiResponse<DataPermission> {
     let perm = DataPermission {
         id: uuid::Uuid::new_v4().to_string(),
         role_id: req.role_id,
@@ -1401,10 +1401,10 @@ pub async fn grant_permission(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("授予权限失败: {e}")));
+        return ApiResponse::server_error(&format!("授予权限失败: {e}"));
     }
 
-    Json(ApiResponse::success(perm, "权限已授予"))
+    ApiResponse::success(perm, "权限已授予")
 }
 
 #[utoipa::path(
@@ -1423,7 +1423,7 @@ pub async fn grant_permission(
 pub async fn revoke_permission(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let result = sqlx::query("DELETE FROM master_data.mdm_data_permissions WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))")
         .bind(&id)
         .execute(&state.db)
@@ -1431,10 +1431,10 @@ pub async fn revoke_permission(
         .unwrap_or_default();
 
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("未找到权限"));
+        return ApiResponse::not_found("未找到权限");
     }
 
-    Json(ApiResponse::success_no_data("权限已撤销"))
+    ApiResponse::success_no_data("权限已撤销")
 }
 
 // gate: admin-only
@@ -1451,7 +1451,7 @@ pub async fn revoke_permission(
 pub async fn check_permission(
     State(state): State<AppState>,
     Query(params): Query<CheckPermissionQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let assignment_rows = sqlx::query(&format!(
         "SELECT {USER_ROLE_ASSIGNMENT_COLS} FROM master_data.mdm_user_role_assignments WHERE user_id = $1"
     ))
@@ -1506,7 +1506,7 @@ pub async fn check_permission(
             }
     });
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "user_id": params.user_id,
             "resource_type": params.resource_type,
@@ -1520,7 +1520,7 @@ pub async fn check_permission(
         } else {
             "权限不足"
         },
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1540,7 +1540,7 @@ pub async fn get_user_permissions(
     State(state): State<AppState>,
     Path(user_id): Path<String>,
     Query(params): Query<UserPermissionsQuery>,
-) -> Json<ApiResponse<Vec<DataPermission>>> {
+) -> ApiResponse<Vec<DataPermission>> {
     let assignment_rows = sqlx::query(&format!(
         "SELECT {USER_ROLE_ASSIGNMENT_COLS} FROM master_data.mdm_user_role_assignments WHERE user_id = $1"
     ))
@@ -1601,7 +1601,7 @@ pub async fn get_user_permissions(
 
     filtered.sort_by(|a, b| a.role_id.cmp(&b.role_id));
 
-    Json(ApiResponse::success(filtered, "用户权限列表"))
+    ApiResponse::success(filtered, "用户权限列表")
 }
 
 // gate: admin-only
@@ -1618,7 +1618,7 @@ pub async fn get_user_permissions(
 pub async fn get_resource_permissions(
     State(state): State<AppState>,
     Query(params): Query<ResourcePermissionsQuery>,
-) -> Json<ApiResponse<Vec<DataPermission>>> {
+) -> ApiResponse<Vec<DataPermission>> {
     let rows = sqlx::query(&format!(
         "SELECT {DATA_PERMISSION_COLS} FROM master_data.mdm_data_permissions
          WHERE resource_type = COALESCE($1, resource_type)
@@ -1632,7 +1632,7 @@ pub async fn get_resource_permissions(
     .unwrap_or_default();
     let filtered: Vec<DataPermission> = rows.iter().map(data_permission_from_row).collect();
 
-    Json(ApiResponse::success(filtered, "资源权限列表"))
+    ApiResponse::success(filtered, "资源权限列表")
 }
 
 #[utoipa::path(
@@ -1648,7 +1648,7 @@ pub async fn get_resource_permissions(
 pub async fn create_role(
     State(state): State<AppState>,
     Json(req): Json<CreateRoleRequest>,
-) -> Json<ApiResponse<PermissionRole>> {
+) -> ApiResponse<PermissionRole> {
     let now = chrono::Utc::now().to_rfc3339();
 
     let role = PermissionRole {
@@ -1671,10 +1671,10 @@ pub async fn create_role(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("创建角色失败: {e}")));
+        return ApiResponse::server_error(&format!("创建角色失败: {e}"));
     }
 
-    Json(ApiResponse::success(role, "角色已创建"))
+    ApiResponse::success(role, "角色已创建")
 }
 
 #[utoipa::path(
@@ -1690,7 +1690,7 @@ pub async fn create_role(
 pub async fn assign_role(
     State(state): State<AppState>,
     Json(req): Json<AssignRoleRequest>,
-) -> Json<ApiResponse<UserRoleAssignment>> {
+) -> ApiResponse<UserRoleAssignment> {
     let now = chrono::Utc::now().to_rfc3339();
 
     let assignment = UserRoleAssignment {
@@ -1711,10 +1711,10 @@ pub async fn assign_role(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("分配角色失败: {e}")));
+        return ApiResponse::server_error(&format!("分配角色失败: {e}"));
     }
 
-    Json(ApiResponse::success(assignment, "角色已分配"))
+    ApiResponse::success(assignment, "角色已分配")
 }
 
 #[utoipa::path(
@@ -1730,7 +1730,7 @@ pub async fn assign_role(
 pub async fn revoke_role(
     State(state): State<AppState>,
     Json(req): Json<RevokeRoleRequest>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let result = sqlx::query(
         "DELETE FROM master_data.mdm_user_role_assignments WHERE user_id = $1 AND role_id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
@@ -1741,10 +1741,10 @@ pub async fn revoke_role(
     .unwrap_or_default();
 
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("未找到角色分配记录"));
+        return ApiResponse::not_found("未找到角色分配记录");
     }
 
-    Json(ApiResponse::success_no_data("角色已撤销"))
+    ApiResponse::success_no_data("角色已撤销")
 }
 
 // ==================== K1：真表映射层（versioning_v54 分支/审计/权限/角色） ====================

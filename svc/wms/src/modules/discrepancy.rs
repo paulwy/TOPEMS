@@ -73,15 +73,15 @@ pub async fn list_discrepancies(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -164,7 +164,7 @@ pub async fn list_discrepancies(
                 }
             };
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "records": records,
                     "total": total,
@@ -173,13 +173,11 @@ pub async fn list_discrepancies(
                     "summary": summary
                 }),
                 "获取差异处理列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取差异处理列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取差异处理列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取差异处理列表失败".to_string()))
         }
     }
 }
@@ -199,15 +197,15 @@ pub async fn get_discrepancy(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<DiscrepancyRecord>> {
+) -> ApiResponse<DiscrepancyRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let result = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
@@ -226,15 +224,13 @@ pub async fn get_discrepancy(
     .await;
 
     match result {
-        Ok(Some(record)) => Json(ApiResponse::success(record, "获取差异处理详情成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(Some(record)) => ApiResponse::success(record, "获取差异处理详情成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
             "差异处理记录不存在".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("获取差异处理详情失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取差异处理详情失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取差异处理详情失败".to_string()))
         }
     }
 }
@@ -248,15 +244,15 @@ pub async fn create_discrepancy(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateDiscrepancyRequest>,
-) -> Json<ApiResponse<DiscrepancyRecord>> {
+) -> ApiResponse<DiscrepancyRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let request_data = serde_json::to_value(&req).ok();
@@ -281,16 +277,9 @@ pub async fn create_discrepancy(
     let stock_take_item = match stock_take_item {
         Ok(Some(item)) => item,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "盘点明细不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("盘点明细不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询盘点明细失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询盘点明细失败", e)),
     };
 
     let discrepancy_type = if req.adjustment_quantity > 0.0 {
@@ -348,16 +337,14 @@ pub async fn create_discrepancy(
 
     let (response, status, error_msg) = match &result {
         Ok(record) => (
-            Json(ApiResponse::success(record.clone(), "差异处理记录创建成功")),
+            ApiResponse::success(record.clone(), "差异处理记录创建成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("创建差异处理记录失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "差异处理记录创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("差异处理记录创建失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -390,7 +377,7 @@ pub async fn create_discrepancy(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -421,26 +408,22 @@ pub async fn approve_discrepancy(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApproveDiscrepancyRequest>,
-) -> Json<ApiResponse<DiscrepancyRecord>> {
+) -> ApiResponse<DiscrepancyRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let now = Utc::now();
     let approval_status = match req.action.as_str() {
         "approve" => "approved",
         "reject" => "rejected",
-        _ => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的操作类型".to_string(),
-            )))
-        }
+        _ => return ApiResponse::from(TopemsError::ValidationFailed("无效的操作类型".to_string())),
     };
 
     let result = sqlx::query_as::<_, DiscrepancyRecord>(
@@ -465,7 +448,7 @@ pub async fn approve_discrepancy(
 
     let (response, status, error_msg) = match &result {
         Ok(Some(record)) => (
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 record.clone(),
                 &format!(
                     "差异处理{}成功",
@@ -475,23 +458,21 @@ pub async fn approve_discrepancy(
                         "审批拒绝"
                     }
                 ),
-            )),
+            ),
             "success",
             None,
         ),
         Ok(None) => (
-            Json(ApiResponse::from(TopemsError::ValidationFailed(
+            ApiResponse::from(TopemsError::ValidationFailed(
                 "差异处理记录不存在或已处理".to_string(),
-            ))),
+            )),
             "error",
             Some("记录不存在或已处理".to_string()),
         ),
         Err(e) => {
             tracing::error!("审批差异处理失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "审批差异处理失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("审批差异处理失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -524,7 +505,7 @@ pub async fn approve_discrepancy(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -554,15 +535,15 @@ pub async fn adjust_inventory(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let now = Utc::now();
@@ -596,16 +577,11 @@ pub async fn adjust_inventory(
     let record = match record {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "差异处理记录不存在或未审批".to_string(),
-            )))
+            ))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询差异处理记录失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询差异处理记录失败", e)),
     };
 
     // 执行库存调整
@@ -632,9 +608,7 @@ pub async fn adjust_inventory(
     .await;
 
     if adjust_result.is_err() {
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "库存调整失败".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("库存调整失败".to_string()));
     }
 
     // 更新差异处理记录状态
@@ -660,7 +634,7 @@ pub async fn adjust_inventory(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             log_audit_event(
@@ -679,19 +653,17 @@ pub async fn adjust_inventory(
             )
             .await;
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "id": record.id,
                     "adjustment_completed": true
                 }),
                 "库存调整完成",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("更新差异处理状态失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "库存调整失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("库存调整失败".to_string()))
         }
     }
 }
@@ -718,15 +690,15 @@ pub async fn process_stock_take_discrepancies(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let now = Utc::now();
@@ -757,12 +729,7 @@ pub async fn process_stock_take_discrepancies(
 
     let items = match items {
         Ok(items) => items,
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询盘点明细失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询盘点明细失败", e)),
     };
 
     let mut created_count = 0;
@@ -833,16 +800,16 @@ pub async fn process_stock_take_discrepancies(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "created_count": created_count,
             "results": results
         }),
         &format!("成功生成 {} 个差异处理记录", created_count),
-    ))
+    )
 }
 
 #[cfg(test)]

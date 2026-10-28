@@ -69,10 +69,9 @@ async fn list_empty_returns_zero(pool: sqlx::PgPool) {
     )
     .await;
     let body: Value = resp
-        .0
         .data
         .clone()
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert_eq!(body["total"], 0);
 }
 
@@ -101,10 +100,9 @@ async fn list_returns_inserted_row(pool: sqlx::PgPool) {
     )
     .await;
     let body: Value = resp
-        .0
         .data
         .clone()
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert_eq!(body["total"], 1);
     assert_eq!(body["orders"][0]["order_number"], "SO-20261007-001");
 }
@@ -139,10 +137,9 @@ async fn list_filters_by_status(pool: sqlx::PgPool) {
     )
     .await;
     let body: Value = resp
-        .0
         .data
         .clone()
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert_eq!(body["total"], 1);
     assert_eq!(body["orders"][0]["status"], "shipped");
 }

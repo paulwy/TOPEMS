@@ -32,12 +32,7 @@ macro_rules! db_exec {
     ($e:expr) => {
         match $e {
             Ok(v) => v,
-            Err(e) => {
-                return Json(ApiResponse::from(TopemsError::internal(
-                    "数据库操作失败",
-                    e,
-                )))
-            }
+            Err(e) => return ApiResponse::from(TopemsError::internal("数据库操作失败", e)),
         }
     };
 }
@@ -914,7 +909,7 @@ pub async fn analyze(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeRequest>,
-) -> Json<ApiResponse<Vec<GovernanceSuggestionV59>>> {
+) -> ApiResponse<Vec<GovernanceSuggestionV59>> {
     let suggestions = db_exec!(
         GovernanceAIEngine::generate_suggestions(
             &state.db,
@@ -924,7 +919,7 @@ pub async fn analyze(
         )
         .await
     );
-    Json(ApiResponse::success(suggestions, "数据治理分析完成"))
+    ApiResponse::success(suggestions, "数据治理分析完成")
 }
 #[utoipa::path(
     get,
@@ -937,14 +932,14 @@ pub async fn analyze(
 pub async fn get_suggestions(
     State(state): State<AppState>,
     Query(params): Query<GetSuggestionsQuery>,
-) -> Json<ApiResponse<Vec<GovernanceSuggestionV59>>> {
+) -> ApiResponse<Vec<GovernanceSuggestionV59>> {
     if let (Some(et), Some(eid)) = (&params.entity_type, &params.entity_id) {
         let suggestions =
             db_exec!(GovernanceAIEngine::get_suggestion_by_entity(&state.db, et, eid).await);
-        Json(ApiResponse::success(suggestions, "实体治理建议"))
+        ApiResponse::success(suggestions, "实体治理建议")
     } else {
         let suggestions = db_exec!(GovernanceAIEngine::get_suggestions(&state.db).await);
-        Json(ApiResponse::success(suggestions, "治理建议列表"))
+        ApiResponse::success(suggestions, "治理建议列表")
     }
 }
 
@@ -964,10 +959,10 @@ pub async fn get_suggestions(
 pub async fn get_entity_suggestions(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Vec<GovernanceSuggestionV59>>> {
+) -> ApiResponse<Vec<GovernanceSuggestionV59>> {
     let suggestions =
         db_exec!(GovernanceAIEngine::get_suggestion_by_entity(&state.db, "unknown", &id).await);
-    Json(ApiResponse::success(suggestions, "实体治理建议"))
+    ApiResponse::success(suggestions, "实体治理建议")
 }
 
 #[utoipa::path(
@@ -986,10 +981,10 @@ pub async fn get_entity_suggestions(
 pub async fn apply_suggestion(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<GovernanceSuggestionV59>> {
+) -> ApiResponse<GovernanceSuggestionV59> {
     match db_exec!(GovernanceAIEngine::apply_suggestion(&state.db, &id).await) {
-        Some(s) => Json(ApiResponse::success(s, "建议已应用")),
-        None => Json(ApiResponse::not_found("未找到建议")),
+        Some(s) => ApiResponse::success(s, "建议已应用"),
+        None => ApiResponse::not_found("未找到建议"),
     }
 }
 
@@ -1009,10 +1004,10 @@ pub async fn apply_suggestion(
 pub async fn dismiss_suggestion(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     match db_exec!(GovernanceAIEngine::dismiss_suggestion(&state.db, &id).await) {
-        Some(_) => Json(ApiResponse::success((), "建议已忽略")),
-        None => Json(ApiResponse::success((), "建议已忽略")),
+        Some(_) => ApiResponse::success((), "建议已忽略"),
+        None => ApiResponse::success((), "建议已忽略"),
     }
 }
 
@@ -1026,9 +1021,9 @@ pub async fn dismiss_suggestion(
     ),
     tag = "ai_governance_v59"
 )]
-pub async fn get_models(State(state): State<AppState>) -> Json<ApiResponse<Vec<GovernanceModel>>> {
+pub async fn get_models(State(state): State<AppState>) -> ApiResponse<Vec<GovernanceModel>> {
     let models = db_exec!(GovernanceAIEngine::get_models(&state.db).await);
-    Json(ApiResponse::success(models, "治理模型列表"))
+    ApiResponse::success(models, "治理模型列表")
 }
 
 #[utoipa::path(
@@ -1047,10 +1042,10 @@ pub async fn get_models(State(state): State<AppState>) -> Json<ApiResponse<Vec<G
 pub async fn train_model(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<GovernanceModel>> {
+) -> ApiResponse<GovernanceModel> {
     match db_exec!(GovernanceAIEngine::train_model(&state.db, &id).await) {
-        Some(m) => Json(ApiResponse::success(m, "模型训练完成")),
-        None => Json(ApiResponse::not_found("未找到模型")),
+        Some(m) => ApiResponse::success(m, "模型训练完成"),
+        None => ApiResponse::not_found("未找到模型"),
     }
 }
 
@@ -1070,10 +1065,10 @@ pub async fn create_match_rule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMatchRuleRequest>,
-) -> Json<ApiResponse<MatchRule>> {
+) -> ApiResponse<MatchRule> {
     let rule_type = match parse_match_rule_type(&req.rule_type) {
         Some(r) => r,
-        None => return Json(ApiResponse::bad_request("无效的匹配规则类型")),
+        None => return ApiResponse::bad_request("无效的匹配规则类型"),
     };
 
     let threshold = req.threshold.unwrap_or(0.8);
@@ -1089,7 +1084,7 @@ pub async fn create_match_rule(
         )
         .await
     );
-    Json(ApiResponse::success(rule, "匹配规则已创建"))
+    ApiResponse::success(rule, "匹配规则已创建")
 }
 
 #[utoipa::path(
@@ -1102,9 +1097,9 @@ pub async fn create_match_rule(
     ),
     tag = "ai_governance_v59"
 )]
-pub async fn get_match_rules(State(state): State<AppState>) -> Json<ApiResponse<Vec<MatchRule>>> {
+pub async fn get_match_rules(State(state): State<AppState>) -> ApiResponse<Vec<MatchRule>> {
     let rules = db_exec!(IntelligentMatcher::get_match_rules(&state.db).await);
-    Json(ApiResponse::success(rules, "匹配规则列表"))
+    ApiResponse::success(rules, "匹配规则列表")
 }
 
 #[utoipa::path(
@@ -1121,7 +1116,7 @@ pub async fn match_entities(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<MatchEntitiesRequest>,
-) -> Json<ApiResponse<Vec<MatchResult>>> {
+) -> ApiResponse<Vec<MatchResult>> {
     let entity_type = req.entity_type.as_deref().unwrap_or("unknown");
     let results = db_exec!(
         IntelligentMatcher::match_entities(
@@ -1133,7 +1128,7 @@ pub async fn match_entities(
         )
         .await
     );
-    Json(ApiResponse::success(results, "实体匹配完成"))
+    ApiResponse::success(results, "实体匹配完成")
 }
 
 #[utoipa::path(
@@ -1146,11 +1141,9 @@ pub async fn match_entities(
     ),
     tag = "ai_governance_v59"
 )]
-pub async fn get_match_results(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<MatchResult>>> {
+pub async fn get_match_results(State(state): State<AppState>) -> ApiResponse<Vec<MatchResult>> {
     let results = db_exec!(IntelligentMatcher::get_match_results(&state.db).await);
-    Json(ApiResponse::success(results, "匹配结果列表"))
+    ApiResponse::success(results, "匹配结果列表")
 }
 
 #[utoipa::path(
@@ -1170,15 +1163,15 @@ pub async fn review_match(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<ReviewMatchRequest>,
-) -> Json<ApiResponse<MatchResult>> {
+) -> ApiResponse<MatchResult> {
     let status = match parse_match_status(&req.action) {
         Some(s) => s,
-        None => return Json(ApiResponse::bad_request("无效的审核操作")),
+        None => return ApiResponse::bad_request("无效的审核操作"),
     };
 
     match db_exec!(IntelligentMatcher::manual_review(&state.db, &id, status).await) {
-        Some(r) => Json(ApiResponse::success(r, "匹配审核完成")),
-        None => Json(ApiResponse::not_found("未找到匹配结果")),
+        Some(r) => ApiResponse::success(r, "匹配审核完成"),
+        None => ApiResponse::not_found("未找到匹配结果"),
     }
 }
 
@@ -1198,10 +1191,10 @@ pub async fn review_match(
 pub async fn confirm_match(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<MatchResult>> {
+) -> ApiResponse<MatchResult> {
     match db_exec!(IntelligentMatcher::confirm_match(&state.db, &id).await) {
-        Some(r) => Json(ApiResponse::success(r, "匹配已确认")),
-        None => Json(ApiResponse::not_found("未找到匹配结果")),
+        Some(r) => ApiResponse::success(r, "匹配已确认"),
+        None => ApiResponse::not_found("未找到匹配结果"),
     }
 }
 
@@ -1221,10 +1214,10 @@ pub async fn confirm_match(
 pub async fn reject_match(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<MatchResult>> {
+) -> ApiResponse<MatchResult> {
     match db_exec!(IntelligentMatcher::reject_match(&state.db, &id).await) {
-        Some(r) => Json(ApiResponse::success(r, "匹配已拒绝")),
-        None => Json(ApiResponse::not_found("未找到匹配结果")),
+        Some(r) => ApiResponse::success(r, "匹配已拒绝"),
+        None => ApiResponse::not_found("未找到匹配结果"),
     }
 }
 
@@ -1238,9 +1231,9 @@ pub async fn reject_match(
     ),
     tag = "ai_governance_v59"
 )]
-pub async fn get_match_stats(State(state): State<AppState>) -> Json<ApiResponse<MatchStats>> {
+pub async fn get_match_stats(State(state): State<AppState>) -> ApiResponse<MatchStats> {
     let stats = db_exec!(IntelligentMatcher::get_match_stats(&state.db).await);
-    Json(ApiResponse::success(stats, "匹配统计"))
+    ApiResponse::success(stats, "匹配统计")
 }
 
 // ==================== 处理器：自动分类 ====================
@@ -1259,7 +1252,7 @@ pub async fn create_classifier(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateClassifierRequest>,
-) -> Json<ApiResponse<ClassificationModel>> {
+) -> ApiResponse<ClassificationModel> {
     let algorithm = req
         .algorithm
         .as_deref()
@@ -1277,7 +1270,7 @@ pub async fn create_classifier(
         )
         .await
     );
-    Json(ApiResponse::success(model, "分类器已创建"))
+    ApiResponse::success(model, "分类器已创建")
 }
 
 #[utoipa::path(
@@ -1292,9 +1285,9 @@ pub async fn create_classifier(
 )]
 pub async fn get_classifiers(
     State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<ClassificationModel>>> {
+) -> ApiResponse<Vec<ClassificationModel>> {
     let models = db_exec!(AutoClassifier::get_classifiers(&state.db).await);
-    Json(ApiResponse::success(models, "分类器列表"))
+    ApiResponse::success(models, "分类器列表")
 }
 
 #[utoipa::path(
@@ -1315,12 +1308,12 @@ pub async fn classify_entity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((entity_type, id)): Path<(String, String)>,
-) -> Json<ApiResponse<ClassificationResult>> {
+) -> ApiResponse<ClassificationResult> {
     let result = db_exec!(
         AutoClassifier::classify_entity(&state.db, req_tenant_uuid(&claims), &entity_type, &id)
             .await
     );
-    Json(ApiResponse::success(result, "分类完成"))
+    ApiResponse::success(result, "分类完成")
 }
 
 #[utoipa::path(
@@ -1340,10 +1333,10 @@ pub async fn classify_entity(
 pub async fn get_classification(
     State(state): State<AppState>,
     Path((_entity_type, id)): Path<(String, String)>,
-) -> Json<ApiResponse<ClassificationResult>> {
+) -> ApiResponse<ClassificationResult> {
     match db_exec!(AutoClassifier::get_classification(&state.db, &id).await) {
-        Some(r) => Json(ApiResponse::success(r, "分类结果")),
-        None => Json(ApiResponse::not_found("未找到分类结果")),
+        Some(r) => ApiResponse::success(r, "分类结果"),
+        None => ApiResponse::not_found("未找到分类结果"),
     }
 }
 
@@ -1363,9 +1356,9 @@ pub async fn get_classification(
 pub async fn get_entity_categories(
     State(state): State<AppState>,
     Path(entity_type): Path<String>,
-) -> Json<ApiResponse<Vec<String>>> {
+) -> ApiResponse<Vec<String>> {
     let categories = db_exec!(AutoClassifier::get_entity_categories(&state.db, &entity_type).await);
-    Json(ApiResponse::success(categories, "实体分类列表"))
+    ApiResponse::success(categories, "实体分类列表")
 }
 
 #[utoipa::path(
@@ -1385,13 +1378,13 @@ pub async fn review_classification(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<ReviewClassificationRequest>,
-) -> Json<ApiResponse<ClassificationResult>> {
+) -> ApiResponse<ClassificationResult> {
     match db_exec!(
         AutoClassifier::review_classification(&state.db, &id, req.approved, req.corrected_category)
             .await
     ) {
-        Some(r) => Json(ApiResponse::success(r, "分类审核完成")),
-        None => Json(ApiResponse::not_found("未找到分类结果")),
+        Some(r) => ApiResponse::success(r, "分类审核完成"),
+        None => ApiResponse::not_found("未找到分类结果"),
     }
 }
 
@@ -1407,9 +1400,9 @@ pub async fn review_classification(
 )]
 pub async fn get_classification_stats(
     State(state): State<AppState>,
-) -> Json<ApiResponse<ClassificationStats>> {
+) -> ApiResponse<ClassificationStats> {
     let stats = db_exec!(AutoClassifier::get_classification_stats(&state.db).await);
-    Json(ApiResponse::success(stats, "分类统计"))
+    ApiResponse::success(stats, "分类统计")
 }
 
 #[utoipa::path(
@@ -1430,12 +1423,12 @@ pub async fn update_classifier_rules(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<UpdateRulesRequest>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let _ = id;
     let rules = db_exec!(
         AutoClassifier::update_rules(&state.db, req_tenant_uuid(&claims), req.rules).await
     );
-    Json(ApiResponse::success(rules, "分类规则已更新"))
+    ApiResponse::success(rules, "分类规则已更新")
 }
 
 // ==================== DB 映射层（接真表） ====================

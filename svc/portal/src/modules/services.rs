@@ -1,4 +1,4 @@
-use axum::{extract::State, Json};
+use axum::extract::State;
 use topems_shared_core::response::ApiResponse;
 
 use crate::{
@@ -15,8 +15,8 @@ use crate::{
         (status = 500, description = "Internal server error")
     )
 )]
-pub async fn list_services(State(state): State<AppState>) -> Json<ApiResponse<Vec<ServiceDto>>> {
+pub async fn list_services(State(state): State<AppState>) -> ApiResponse<Vec<ServiceDto>> {
     let service = ServiceRegistryService::new(state.service_aggregator.clone());
     let services = service.list_all().await;
-    Json(ApiResponse::success(services, "服务列表获取成功"))
+    ApiResponse::success(services, "服务列表获取成功")
 }

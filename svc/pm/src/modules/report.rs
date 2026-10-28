@@ -67,11 +67,11 @@ pub fn create_routes(pool: PgPool) -> Router {
 async fn get_project_reports(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<ProjectReport>>> {
+) -> ApiResponse<Vec<ProjectReport>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let reports = sqlx::query_as::<_, ProjectReport>(
         only_own_schema_query!("pm", "SELECT id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at, updated_at FROM pm.project_reports WHERE project_id = $1 ORDER BY generated_at DESC"),
@@ -81,10 +81,10 @@ async fn get_project_reports(
     .await;
 
     match reports {
-        Ok(r) => Json(ApiResponse::success(r, "获取报告列表成功")),
+        Ok(r) => ApiResponse::success(r, "获取报告列表成功"),
         Err(e) => {
             tracing::error!("获取报告失败: {}", e);
-            Json(ApiResponse::server_error("获取报告失败"))
+            ApiResponse::server_error("获取报告失败")
         }
     }
 }
@@ -105,11 +105,11 @@ async fn get_project_reports(
 async fn get_report(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ProjectReport>> {
+) -> ApiResponse<ProjectReport> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let report =
         sqlx::query_as::<_, ProjectReport>(only_own_schema_query!("pm", "SELECT id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at, updated_at FROM pm.project_reports WHERE id = $1"))
@@ -118,11 +118,11 @@ async fn get_report(
             .await;
 
     match report {
-        Ok(r) => Json(ApiResponse::success(r, "获取报告详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("报告不存在")),
+        Ok(r) => ApiResponse::success(r, "获取报告详情成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("报告不存在"),
         Err(e) => {
             tracing::error!("获取报告失败: {}", e);
-            Json(ApiResponse::server_error("获取报告失败"))
+            ApiResponse::server_error("获取报告失败")
         }
     }
 }
@@ -133,11 +133,11 @@ async fn create_report(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReportRequest>,
-) -> Json<ApiResponse<ProjectReport>> {
+) -> ApiResponse<ProjectReport> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -160,10 +160,10 @@ async fn create_report(
     .await;
 
     match report {
-        Ok(r) => Json(ApiResponse::success(r, "创建报告成功")),
+        Ok(r) => ApiResponse::success(r, "创建报告成功"),
         Err(e) => {
             tracing::error!("创建报告失败: {}", e);
-            Json(ApiResponse::server_error("创建报告失败"))
+            ApiResponse::server_error("创建报告失败")
         }
     }
 }
@@ -187,11 +187,11 @@ async fn generate_report(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReportRequest>,
-) -> Json<ApiResponse<ProjectReport>> {
+) -> ApiResponse<ProjectReport> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -311,10 +311,10 @@ async fn generate_report(
     .await;
 
     match report {
-        Ok(r) => Json(ApiResponse::success(r, "生成报告成功")),
+        Ok(r) => ApiResponse::success(r, "生成报告成功"),
         Err(e) => {
             tracing::error!("生成报告失败: {}", e);
-            Json(ApiResponse::server_error("生成报告失败"))
+            ApiResponse::server_error("生成报告失败")
         }
     }
 }
@@ -350,11 +350,11 @@ fn generate_summary(data: &serde_json::Value) -> Option<String> {
 )]
 async fn list_templates(
     Extension(txn_arc): Extension<RlsTxnArc>,
-) -> Json<ApiResponse<Vec<ReportTemplate>>> {
+) -> ApiResponse<Vec<ReportTemplate>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let templates = sqlx::query_as::<_, ReportTemplate>(
         only_own_schema_query!("pm", "SELECT id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at FROM pm.report_templates WHERE is_active = true ORDER BY template_name"),
@@ -363,10 +363,10 @@ async fn list_templates(
     .await;
 
     match templates {
-        Ok(t) => Json(ApiResponse::success(t, "获取报告模板列表成功")),
+        Ok(t) => ApiResponse::success(t, "获取报告模板列表成功"),
         Err(e) => {
             tracing::error!("获取报告模板失败: {}", e);
-            Json(ApiResponse::server_error("获取报告模板失败"))
+            ApiResponse::server_error("获取报告模板失败")
         }
     }
 }
@@ -387,11 +387,11 @@ async fn list_templates(
 async fn get_template(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ReportTemplate>> {
+) -> ApiResponse<ReportTemplate> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let template = sqlx::query_as::<_, ReportTemplate>(
         only_own_schema_query!("pm", "SELECT id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at FROM pm.report_templates WHERE id = $1"),
@@ -401,11 +401,11 @@ async fn get_template(
     .await;
 
     match template {
-        Ok(t) => Json(ApiResponse::success(t, "获取报告模板详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("报告模板不存在")),
+        Ok(t) => ApiResponse::success(t, "获取报告模板详情成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("报告模板不存在"),
         Err(e) => {
             tracing::error!("获取报告模板失败: {}", e);
-            Json(ApiResponse::server_error("获取报告模板失败"))
+            ApiResponse::server_error("获取报告模板失败")
         }
     }
 }
@@ -415,11 +415,11 @@ async fn create_template(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReportTemplateRequest>,
-) -> Json<ApiResponse<ReportTemplate>> {
+) -> ApiResponse<ReportTemplate> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -441,10 +441,10 @@ async fn create_template(
     .await;
 
     match template {
-        Ok(t) => Json(ApiResponse::success(t, "创建报告模板成功")),
+        Ok(t) => ApiResponse::success(t, "创建报告模板成功"),
         Err(e) => {
             tracing::error!("创建报告模板失败: {}", e);
-            Json(ApiResponse::server_error("创建报告模板失败"))
+            ApiResponse::server_error("创建报告模板失败")
         }
     }
 }
@@ -453,11 +453,11 @@ async fn update_template(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateReportTemplateRequest>,
-) -> Json<ApiResponse<ReportTemplate>> {
+) -> ApiResponse<ReportTemplate> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let template = sqlx::query_as::<_, ReportTemplate>(only_own_schema_query!(
         "pm",
@@ -475,11 +475,11 @@ async fn update_template(
     .await;
 
     match template {
-        Ok(t) => Json(ApiResponse::success(t, "更新报告模板成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("报告模板不存在")),
+        Ok(t) => ApiResponse::success(t, "更新报告模板成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("报告模板不存在"),
         Err(e) => {
             tracing::error!("更新报告模板失败: {}", e);
-            Json(ApiResponse::server_error("更新报告模板失败"))
+            ApiResponse::server_error("更新报告模板失败")
         }
     }
 }
@@ -487,11 +487,11 @@ async fn update_template(
 async fn delete_template(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
@@ -502,11 +502,11 @@ async fn delete_template(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除报告模板成功")),
-        Ok(_) => Json(ApiResponse::not_found("报告模板不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除报告模板成功"),
+        Ok(_) => ApiResponse::not_found("报告模板不存在"),
         Err(e) => {
             tracing::error!("删除报告模板失败: {}", e);
-            Json(ApiResponse::server_error("删除报告模板失败"))
+            ApiResponse::server_error("删除报告模板失败")
         }
     }
 }

@@ -1,4 +1,4 @@
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Router};
 use serde::Serialize;
 use sqlx::Row;
 use topems_shared_core::response::ApiResponse;
@@ -43,7 +43,7 @@ pub struct Statistics {
 )]
 pub async fn get_statistics(
     State(state): State<crate::shared::AppState>,
-) -> Json<ApiResponse<Statistics>> {
+) -> ApiResponse<Statistics> {
     let total_samples = sqlx::query("SELECT COUNT(*) FROM public.qa_lab_samples")
         .fetch_one(&state.pool)
         .await
@@ -160,7 +160,7 @@ pub async fn get_statistics(
             .and_then(|row| row.try_get::<i64, _>(0).ok())
             .unwrap_or(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         Statistics {
             total_samples,
             pending_samples,
@@ -179,5 +179,5 @@ pub async fn get_statistics(
             disabled_instruments,
         },
         "获取统计数据成功",
-    ))
+    )
 }

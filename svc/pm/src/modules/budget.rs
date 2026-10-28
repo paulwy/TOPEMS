@@ -158,11 +158,11 @@ pub fn create_routes(pool: PgPool) -> Router {
 async fn get_project_budgets(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<Budget>>> {
+) -> ApiResponse<Vec<Budget>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let budgets = sqlx::query_as::<_, Budget>(
         only_own_schema_query!("pm", "SELECT id, project_id, budget_code, budget_name, budget_type, total_amount, allocated_amount, spent_amount, remaining_amount, status, start_date, end_date, description, created_by, created_at, updated_at FROM pm.budgets WHERE project_id = $1 ORDER BY version DESC"),
@@ -172,10 +172,10 @@ async fn get_project_budgets(
     .await;
 
     match budgets {
-        Ok(b) => Json(ApiResponse::success(b, "获取项目预算列表成功")),
+        Ok(b) => ApiResponse::success(b, "获取项目预算列表成功"),
         Err(e) => {
             tracing::error!("获取预算失败: {}", e);
-            Json(ApiResponse::server_error("获取预算失败"))
+            ApiResponse::server_error("获取预算失败")
         }
     }
 }
@@ -196,11 +196,11 @@ async fn get_project_budgets(
 async fn get_budget(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Budget>> {
+) -> ApiResponse<Budget> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let budget = sqlx::query_as::<_, Budget>(only_own_schema_query!("pm", "SELECT id, project_id, budget_code, budget_name, budget_type, total_amount, allocated_amount, spent_amount, remaining_amount, status, start_date, end_date, description, created_by, created_at, updated_at FROM pm.budgets WHERE id = $1"))
         .bind(id)
@@ -208,11 +208,11 @@ async fn get_budget(
         .await;
 
     match budget {
-        Ok(b) => Json(ApiResponse::success(b, "获取预算详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("预算不存在")),
+        Ok(b) => ApiResponse::success(b, "获取预算详情成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("预算不存在"),
         Err(e) => {
             tracing::error!("获取预算失败: {}", e);
-            Json(ApiResponse::server_error("获取预算失败"))
+            ApiResponse::server_error("获取预算失败")
         }
     }
 }
@@ -224,11 +224,11 @@ async fn create_budget(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateBudgetRequest>,
-) -> Json<ApiResponse<Budget>> {
+) -> ApiResponse<Budget> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -269,7 +269,7 @@ async fn create_budget(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::success(b, "创建预算成功"))
+            ApiResponse::success(b, "创建预算成功")
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -286,7 +286,7 @@ async fn create_budget(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("创建预算失败: {}", e);
-            Json(ApiResponse::server_error("创建预算失败"))
+            ApiResponse::server_error("创建预算失败")
         }
     }
 }
@@ -297,11 +297,11 @@ async fn update_budget(
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
     Json(req): Json<UpdateBudgetRequest>,
-) -> Json<ApiResponse<Budget>> {
+) -> ApiResponse<Budget> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"status": req.status, "total_amount": req.total_amount}));
@@ -339,7 +339,7 @@ async fn update_budget(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::success(b, "更新预算成功"))
+            ApiResponse::success(b, "更新预算成功")
         }
         Err(sqlx::Error::RowNotFound) => {
             if let Err(e) = audit
@@ -355,7 +355,7 @@ async fn update_budget(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found("预算不存在"))
+            ApiResponse::not_found("预算不存在")
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -372,7 +372,7 @@ async fn update_budget(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("更新预算失败: {}", e);
-            Json(ApiResponse::server_error("更新预算失败"))
+            ApiResponse::server_error("更新预算失败")
         }
     }
 }
@@ -395,11 +395,11 @@ async fn submit_budget(
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Budget>> {
+) -> ApiResponse<Budget> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let budget = sqlx::query_as::<_, Budget>(only_own_schema_query!(
@@ -419,7 +419,7 @@ async fn submit_budget(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::success(b, "提交审批成功"))
+            ApiResponse::success(b, "提交审批成功")
         }
         Err(sqlx::Error::RowNotFound) => {
             if let Err(e) = audit
@@ -435,7 +435,7 @@ async fn submit_budget(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found("预算不存在"))
+            ApiResponse::not_found("预算不存在")
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -452,7 +452,7 @@ async fn submit_budget(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("提交审批失败: {}", e);
-            Json(ApiResponse::server_error("提交审批失败"))
+            ApiResponse::server_error("提交审批失败")
         }
     }
 }
@@ -475,11 +475,11 @@ async fn approve_budget(
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Budget>> {
+) -> ApiResponse<Budget> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let budget = sqlx::query_as::<_, Budget>(only_own_schema_query!(
@@ -499,7 +499,7 @@ async fn approve_budget(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::success(b, "批准预算成功"))
+            ApiResponse::success(b, "批准预算成功")
         }
         Err(sqlx::Error::RowNotFound) => {
             if let Err(e) = audit
@@ -515,7 +515,7 @@ async fn approve_budget(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found("预算不存在"))
+            ApiResponse::not_found("预算不存在")
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -532,7 +532,7 @@ async fn approve_budget(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("批准预算失败: {}", e);
-            Json(ApiResponse::server_error("批准预算失败"))
+            ApiResponse::server_error("批准预算失败")
         }
     }
 }
@@ -553,11 +553,11 @@ async fn approve_budget(
 async fn get_budget_items(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<BudgetItem>>> {
+) -> ApiResponse<Vec<BudgetItem>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let items = sqlx::query_as::<_, BudgetItem>(
         only_own_schema_query!("pm", "SELECT id, budget_id, item_code, item_name, category, subcategory, budget_amount, allocated_amount, spent_amount, description, created_at, updated_at FROM pm.budget_items WHERE budget_id = $1"),
@@ -567,10 +567,10 @@ async fn get_budget_items(
     .await;
 
     match items {
-        Ok(i) => Json(ApiResponse::success(i, "获取预算项列表成功")),
+        Ok(i) => ApiResponse::success(i, "获取预算项列表成功"),
         Err(e) => {
             tracing::error!("获取预算项失败: {}", e);
-            Json(ApiResponse::server_error("获取预算项失败"))
+            ApiResponse::server_error("获取预算项失败")
         }
     }
 }
@@ -581,17 +581,17 @@ async fn create_budget_item(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateBudgetItemRequest>,
-) -> Json<ApiResponse<BudgetItem>> {
+) -> ApiResponse<BudgetItem> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     // 超支硬拦截（拍板 A）：登记支出项前校验预算项合计 ≤ 预算总额
     if let Err((code, msg)) =
         assert_budget_not_exceeded(&mut **txn, id, None, Some(req.budget_amount)).await
     {
-        return Json(ApiResponse::error(code, msg.as_str()));
+        return ApiResponse::error(code, msg.as_str());
     }
     let item_id = Uuid::new_v4();
     let now = Utc::now();
@@ -614,10 +614,10 @@ async fn create_budget_item(
     .await;
 
     match item {
-        Ok(i) => Json(ApiResponse::success(i, "创建预算项成功")),
+        Ok(i) => ApiResponse::success(i, "创建预算项成功"),
         Err(e) => {
             tracing::error!("创建预算项失败: {}", e);
-            Json(ApiResponse::server_error("创建预算项失败"))
+            ApiResponse::server_error("创建预算项失败")
         }
     }
 }
@@ -640,17 +640,17 @@ async fn update_budget_item(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateBudgetItemRequest>,
-) -> Json<ApiResponse<BudgetItem>> {
+) -> ApiResponse<BudgetItem> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     // 超支硬拦截（拍板 A）：更新金额时校验（排除自身）预算项合计 ≤ 预算总额
     if let Err((code, msg)) =
         assert_budget_not_exceeded(&mut **txn, id, Some(item_id), req.budget_amount).await
     {
-        return Json(ApiResponse::error(code, msg.as_str()));
+        return ApiResponse::error(code, msg.as_str());
     }
     let item = sqlx::query_as::<_, BudgetItem>(only_own_schema_query!(
         "pm",
@@ -675,11 +675,11 @@ async fn update_budget_item(
     .await;
 
     match item {
-        Ok(i) => Json(ApiResponse::success(i, "更新预算项成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("预算项不存在")),
+        Ok(i) => ApiResponse::success(i, "更新预算项成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("预算项不存在"),
         Err(e) => {
             tracing::error!("更新预算项失败: {}", e);
-            Json(ApiResponse::server_error("更新预算项失败"))
+            ApiResponse::server_error("更新预算项失败")
         }
     }
 }
@@ -687,11 +687,11 @@ async fn update_budget_item(
 async fn delete_budget_item(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
@@ -703,11 +703,11 @@ async fn delete_budget_item(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除预算项成功")),
-        Ok(_) => Json(ApiResponse::not_found("预算项不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除预算项成功"),
+        Ok(_) => ApiResponse::not_found("预算项不存在"),
         Err(e) => {
             tracing::error!("删除预算项失败: {}", e);
-            Json(ApiResponse::server_error("删除预算项失败"))
+            ApiResponse::server_error("删除预算项失败")
         }
     }
 }

@@ -362,15 +362,15 @@ pub async fn list_quotes(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
@@ -428,7 +428,7 @@ pub async fn list_quotes(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "quotes": quotes,
                     "total": total,
@@ -436,12 +436,9 @@ pub async fn list_quotes(
                     "page_size": page_size
                 }),
                 "获取报价单列表成功",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "获取报价单列表失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("获取报价单列表失败", e)),
     }
 }
 
@@ -452,15 +449,15 @@ pub async fn create_quote(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateSupplierQuoteRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let id = Uuid::new_v4();
@@ -491,19 +488,16 @@ pub async fn create_quote(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
     match result {
-        Ok(_) => Json(ApiResponse::success(
+        Ok(_) => ApiResponse::success(
             serde_json::json!({"id": id, "quote_no": quote_no}),
             "创建报价单成功",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "创建报价单失败",
-            e,
-        ))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建报价单失败", e)),
     }
 }
 
@@ -528,15 +522,15 @@ pub async fn get_quote(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
@@ -576,21 +570,16 @@ pub async fn get_quote(
             .await
             .unwrap_or_default();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "quote": quote,
                     "items": items
                 }),
                 "获取报价单详情成功",
-            ))
+            )
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "报价单不存在".to_string(),
-        ))),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "获取报价单详情失败",
-            e,
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("报价单不存在".to_string())),
+        Err(e) => ApiResponse::from(TopemsError::internal("获取报价单详情失败", e)),
     }
 }
 
@@ -602,15 +591,15 @@ pub async fn update_quote(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateSupplierQuoteRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
@@ -634,22 +623,18 @@ pub async fn update_quote(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"id": id}),
-            "更新报价单成功",
-        )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"id": id}), "更新报价单成功")
+        }
+        Ok(_) => ApiResponse::from(TopemsError::ValidationFailed(
             "只能更新草稿状态的报价单".to_string(),
-        ))),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "更新报价单失败",
-            e,
-        ))),
+        )),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新报价单失败", e)),
     }
 }
 
@@ -673,15 +658,15 @@ pub async fn submit_quote(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
@@ -701,22 +686,18 @@ pub async fn submit_quote(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"id": id}),
-            "报价单已提交",
-        )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"id": id}), "报价单已提交")
+        }
+        Ok(_) => ApiResponse::from(TopemsError::ValidationFailed(
             "只能提交草稿状态的报价单".to_string(),
-        ))),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "提交报价单失败",
-            e,
-        ))),
+        )),
+        Err(e) => ApiResponse::from(TopemsError::internal("提交报价单失败", e)),
     }
 }
 
@@ -738,15 +719,15 @@ pub async fn list_comparisons(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
@@ -798,7 +779,7 @@ pub async fn list_comparisons(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "comparisons": comparisons,
                     "total": total,
@@ -806,12 +787,9 @@ pub async fn list_comparisons(
                     "page_size": page_size
                 }),
                 "获取比价分析列表成功",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "获取比价分析列表失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("获取比价分析列表失败", e)),
     }
 }
 
@@ -822,15 +800,15 @@ pub async fn create_comparison(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreatePriceComparisonRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let id = Uuid::new_v4();
@@ -905,19 +883,16 @@ pub async fn create_comparison(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({"id": id, "comparison_no": comparison_no, "total_score": total_score}),
                 "创建比价分析成功",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "创建比价分析失败",
-            e,
-        ))),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建比价分析失败", e)),
     }
 }
 
@@ -942,15 +917,15 @@ pub async fn get_comparison(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
@@ -994,21 +969,16 @@ pub async fn get_comparison(
             .await
             .unwrap_or_default();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "comparison": comparison,
                     "items": items
                 }),
                 "获取比价分析详情成功",
-            ))
+            )
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "比价分析不存在".to_string(),
-        ))),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "获取比价分析详情失败",
-            e,
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("比价分析不存在".to_string())),
+        Err(e) => ApiResponse::from(TopemsError::internal("获取比价分析详情失败", e)),
     }
 }
 
@@ -1032,15 +1002,15 @@ pub async fn approve_comparison(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let now_str = Utc::now().to_rfc3339();
@@ -1064,22 +1034,16 @@ pub async fn approve_comparison(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"id": id}),
-            "比价分析已审批",
-        )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "比价分析不存在".to_string(),
-        ))),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "审批比价分析失败",
-            e,
-        ))),
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"id": id}), "比价分析已审批")
+        }
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("比价分析不存在".to_string())),
+        Err(e) => ApiResponse::from(TopemsError::internal("审批比价分析失败", e)),
     }
 }
 
@@ -1091,15 +1055,15 @@ pub async fn update_comparison(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdatePriceComparisonRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let now = Utc::now();
@@ -1139,22 +1103,16 @@ pub async fn update_comparison(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"id": id}),
-            "比价分析已更新",
-        )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "比价分析不存在".to_string(),
-        ))),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "更新比价分析失败",
-            e,
-        ))),
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"id": id}), "比价分析已更新")
+        }
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("比价分析不存在".to_string())),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新比价分析失败", e)),
     }
 }
 
@@ -1165,15 +1123,15 @@ pub async fn delete_comparison(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -1204,21 +1162,15 @@ pub async fn delete_comparison(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"id": id}),
-            "比价分析已删除",
-        )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "比价分析不存在".to_string(),
-        ))),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "删除比价分析失败",
-            e,
-        ))),
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"id": id}), "比价分析已删除")
+        }
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("比价分析不存在".to_string())),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除比价分析失败", e)),
     }
 }

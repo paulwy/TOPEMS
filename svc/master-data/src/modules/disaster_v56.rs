@@ -252,12 +252,7 @@ macro_rules! db_exec {
     ($e:expr) => {
         match $e {
             Ok(v) => v,
-            Err(e) => {
-                return Json(ApiResponse::from(TopemsError::internal(
-                    "数据库操作失败",
-                    e,
-                )))
-            }
+            Err(e) => return ApiResponse::from(TopemsError::internal("数据库操作失败", e)),
         }
     };
 }
@@ -680,7 +675,7 @@ pub struct SwitchRegionsRequest {
 pub async fn create_recovery_point(
     State(state): State<AppState>,
     Json(req): Json<CreateRecoveryPointRequest>,
-) -> Json<ApiResponse<RecoveryPoint>> {
+) -> ApiResponse<RecoveryPoint> {
     let snapshot_type = req
         .snapshot_type
         .as_deref()
@@ -721,10 +716,10 @@ pub async fn create_recovery_point(
     .await
     .map_err(|e| TopemsError::internal("写入恢复点失败", e))
     {
-        return Json(ApiResponse::from(e));
+        return ApiResponse::from(e);
     }
 
-    Json(ApiResponse::success(rp, "恢复点已创建"))
+    ApiResponse::success(rp, "恢复点已创建")
 }
 
 #[utoipa::path(
@@ -746,7 +741,7 @@ pub async fn create_recovery_point(
 pub async fn list_recovery_points(
     State(state): State<AppState>,
     Query(params): Query<ListRecoveryPointsQuery>,
-) -> Json<ApiResponse<PaginatedResponse<RecoveryPoint>>> {
+) -> ApiResponse<PaginatedResponse<RecoveryPoint>> {
     let points: Vec<RecoveryPoint> = sqlx::query(&format!(
         "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points"
     ))
@@ -788,10 +783,10 @@ pub async fn list_recovery_points(
         .take(page_size as usize)
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
         "恢复点列表",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -807,7 +802,7 @@ pub async fn list_recovery_points(
 pub async fn restore_from_point(
     State(state): State<AppState>,
     Json(req): Json<RestoreRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let point = db_exec!(sqlx::query(&format!(
         "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points WHERE id = $1"
     ))
@@ -818,7 +813,7 @@ pub async fn restore_from_point(
     .map(|r| recovery_point_from_row(&r));
 
     let Some(point) = point else {
-        return Json(ApiResponse::not_found("未找到恢复点"));
+        return ApiResponse::not_found("未找到恢复点");
     };
 
     let now = chrono::Utc::now();
@@ -833,7 +828,7 @@ pub async fn restore_from_point(
         "status": "restored",
     });
 
-    Json(ApiResponse::success(restore_result, "数据恢复已完成"))
+    ApiResponse::success(restore_result, "数据恢复已完成")
 }
 
 #[utoipa::path(
@@ -847,9 +842,7 @@ pub async fn restore_from_point(
     tag = "disaster_v56"
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn get_recovery_status(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn get_recovery_status(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     let points: Vec<RecoveryPoint> = sqlx::query(&format!(
         "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points"
     ))
@@ -891,7 +884,7 @@ pub async fn get_recovery_status(
 
     let total_size: i64 = points.iter().map(|p| p.size_bytes).sum();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "total_recovery_points": total_points,
             "full_snapshots": full_points,
@@ -903,7 +896,7 @@ pub async fn get_recovery_status(
             "executing_plans": executing_plans,
         }),
         "灾难恢复状态",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -924,7 +917,7 @@ pub async fn get_recovery_status(
 pub async fn create_recovery_plan(
     State(state): State<AppState>,
     Json(req): Json<CreateRecoveryPlanRequest>,
-) -> Json<ApiResponse<RecoveryPlan>> {
+) -> ApiResponse<RecoveryPlan> {
     let priority = req
         .priority
         .as_deref()
@@ -979,10 +972,10 @@ pub async fn create_recovery_plan(
     .await
     .map_err(|e| TopemsError::internal("写入恢复计划失败", e))
     {
-        return Json(ApiResponse::from(e));
+        return ApiResponse::from(e);
     }
 
-    Json(ApiResponse::success(plan, "恢复计划已创建"))
+    ApiResponse::success(plan, "恢复计划已创建")
 }
 
 #[utoipa::path(
@@ -999,7 +992,7 @@ pub async fn create_recovery_plan(
 pub async fn execute_plan(
     State(state): State<AppState>,
     Json(req): Json<ExecutePlanRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let plan = db_exec!(sqlx::query(&format!(
         "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans WHERE id = $1"
     ))
@@ -1010,7 +1003,7 @@ pub async fn execute_plan(
     .map(|r| recovery_plan_from_row(&r));
 
     let Some(mut plan) = plan else {
-        return Json(ApiResponse::not_found("未找到恢复计划"));
+        return ApiResponse::not_found("未找到恢复计划");
     };
 
     plan.status = RecoveryPlanStatus::Completed;
@@ -1034,10 +1027,10 @@ pub async fn execute_plan(
     .await
     .map_err(|e| TopemsError::internal("更新恢复计划失败", e))
     {
-        return Json(ApiResponse::from(e));
+        return ApiResponse::from(e);
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "plan_id": plan_id,
             "plan_name": plan_name,
@@ -1049,7 +1042,7 @@ pub async fn execute_plan(
             "executed_at": chrono::Utc::now().to_rfc3339(),
         }),
         "恢复计划已执行",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1073,7 +1066,7 @@ pub async fn execute_plan(
 pub async fn get_plan_progress(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let plan = db_exec!(sqlx::query(&format!(
         "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans WHERE id = $1"
     ))
@@ -1084,7 +1077,7 @@ pub async fn get_plan_progress(
     .map(|r| recovery_plan_from_row(&r));
 
     let Some(plan) = plan else {
-        return Json(ApiResponse::not_found("未找到恢复计划"));
+        return ApiResponse::not_found("未找到恢复计划");
     };
 
     let total_steps = plan.steps.len() as i64;
@@ -1099,7 +1092,7 @@ pub async fn get_plan_progress(
         100.0
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "plan_id": plan.id,
             "plan_name": plan.name,
@@ -1110,7 +1103,7 @@ pub async fn get_plan_progress(
             "steps": plan.steps,
         }),
         "恢复计划进度",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1126,7 +1119,7 @@ pub async fn get_plan_progress(
 pub async fn test_recovery(
     State(state): State<AppState>,
     Json(req): Json<TestRecoveryRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let point_id = req
         .recovery_point_id
         .clone()
@@ -1174,7 +1167,7 @@ pub async fn test_recovery(
         "issues_found": serde_json::Value::Null,
     });
 
-    Json(ApiResponse::success(test_result, "灾难恢复测试完成"))
+    ApiResponse::success(test_result, "灾难恢复测试完成")
 }
 
 // ==================== 处理器：业务连续性 ====================
@@ -1192,7 +1185,7 @@ pub async fn test_recovery(
 pub async fn create_continuity_plan(
     State(state): State<AppState>,
     Json(req): Json<CreateContinuityPlanRequest>,
-) -> Json<ApiResponse<ContinuityPlan>> {
+) -> ApiResponse<ContinuityPlan> {
     let strategy = req
         .recovery_strategy
         .as_deref()
@@ -1243,9 +1236,9 @@ pub async fn create_continuity_plan(
     .bind(continuity_status_to_str(&plan.status))
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::internal("写入连续性计划失败", e)) { return Json(ApiResponse::from(e)); }
+    .map_err(|e| TopemsError::internal("写入连续性计划失败", e)) { return ApiResponse::from(e); }
 
-    Json(ApiResponse::success(plan, "连续性计划已创建"))
+    ApiResponse::success(plan, "连续性计划已创建")
 }
 
 #[utoipa::path(
@@ -1258,7 +1251,7 @@ pub async fn create_continuity_plan(
     ),
     tag = "disaster_v56"
 )]
-pub async fn list_plans(State(state): State<AppState>) -> Json<ApiResponse<Vec<ContinuityPlan>>> {
+pub async fn list_plans(State(state): State<AppState>) -> ApiResponse<Vec<ContinuityPlan>> {
     let plans: Vec<ContinuityPlan> = sqlx::query(&format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans"
     ))
@@ -1266,7 +1259,7 @@ pub async fn list_plans(State(state): State<AppState>) -> Json<ApiResponse<Vec<C
     .await
     .map(|rows| rows.iter().map(continuity_plan_from_row).collect())
     .unwrap_or_default();
-    Json(ApiResponse::success(plans, "连续性计划列表"))
+    ApiResponse::success(plans, "连续性计划列表")
 }
 
 #[utoipa::path(
@@ -1285,7 +1278,7 @@ pub async fn list_plans(State(state): State<AppState>) -> Json<ApiResponse<Vec<C
 pub async fn get_plan(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<ContinuityPlan>> {
+) -> ApiResponse<ContinuityPlan> {
     let plan = db_exec!(sqlx::query(&format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
     ))
@@ -1295,8 +1288,8 @@ pub async fn get_plan(
     .map_err(|e| TopemsError::internal("查询连续性计划失败", e)))
     .map(|r| continuity_plan_from_row(&r));
     match plan {
-        Some(p) => Json(ApiResponse::success(p, "连续性计划详情")),
-        None => Json(ApiResponse::not_found("未找到连续性计划")),
+        Some(p) => ApiResponse::success(p, "连续性计划详情"),
+        None => ApiResponse::not_found("未找到连续性计划"),
     }
 }
 
@@ -1317,7 +1310,7 @@ pub async fn update_plan(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateContinuityPlanRequest>,
-) -> Json<ApiResponse<ContinuityPlan>> {
+) -> ApiResponse<ContinuityPlan> {
     let plan = db_exec!(sqlx::query(&format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
     ))
@@ -1328,7 +1321,7 @@ pub async fn update_plan(
     .map(|r| continuity_plan_from_row(&r));
 
     let Some(mut plan) = plan else {
-        return Json(ApiResponse::not_found("未找到连续性计划"));
+        return ApiResponse::not_found("未找到连续性计划");
     };
 
     if let Some(name) = req.name {
@@ -1367,10 +1360,10 @@ pub async fn update_plan(
     .await
     .map_err(|e| TopemsError::internal("更新连续性计划失败", e))
     {
-        return Json(ApiResponse::from(e));
+        return ApiResponse::from(e);
     }
 
-    Json(ApiResponse::success(plan, "连续性计划已更新"))
+    ApiResponse::success(plan, "连续性计划已更新")
 }
 
 #[utoipa::path(
@@ -1390,7 +1383,7 @@ pub async fn test_plan(
     State(state): State<AppState>,
     Path(id): Path<String>,
     _req: Json<TestPlanRequest>,
-) -> Json<ApiResponse<BCTest>> {
+) -> ApiResponse<BCTest> {
     let plan = db_exec!(sqlx::query(&format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
     ))
@@ -1401,7 +1394,7 @@ pub async fn test_plan(
     .map(|r| continuity_plan_from_row(&r));
 
     let Some(_plan) = plan else {
-        return Json(ApiResponse::not_found("未找到连续性计划"));
+        return ApiResponse::not_found("未找到连续性计划");
     };
 
     let now = chrono::Utc::now();
@@ -1413,7 +1406,7 @@ pub async fn test_plan(
     .bind("tested")
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::internal("更新连续性计划失败", e)) { return Json(ApiResponse::from(e)); }
+    .map_err(|e| TopemsError::internal("更新连续性计划失败", e)) { return ApiResponse::from(e); }
 
     let bc_test = BCTest {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1439,16 +1432,16 @@ pub async fn test_plan(
     .await
     .map_err(|e| TopemsError::internal("写入演练记录失败", e))
     {
-        return Json(ApiResponse::from(e));
+        return ApiResponse::from(e);
     }
 
-    Json(ApiResponse::success(bc_test, "连续性计划测试完成"))
+    ApiResponse::success(bc_test, "连续性计划测试完成")
 }
 
 pub async fn get_test_results(
     State(state): State<AppState>,
     Query(params): Query<serde_json::Value>,
-) -> Json<ApiResponse<Vec<BCTest>>> {
+) -> ApiResponse<Vec<BCTest>> {
     let plan_id = params.get("plan_id").and_then(|v| v.as_str());
 
     let tests: Vec<BCTest> = sqlx::query(&format!(
@@ -1471,7 +1464,7 @@ pub async fn get_test_results(
         })
         .collect();
 
-    Json(ApiResponse::success(filtered, "测试结果列表"))
+    ApiResponse::success(filtered, "测试结果列表")
 }
 
 #[utoipa::path(
@@ -1492,7 +1485,7 @@ pub async fn get_test_results(
 pub async fn assess_impact(
     State(state): State<AppState>,
     Query(params): Query<ImpactQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let plans: Vec<ContinuityPlan> = sqlx::query(&format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans"
     ))
@@ -1554,7 +1547,7 @@ pub async fn assess_impact(
         },
     });
 
-    Json(ApiResponse::success(impact, "影响评估报告"))
+    ApiResponse::success(impact, "影响评估报告")
 }
 
 #[utoipa::path(
@@ -1572,9 +1565,7 @@ pub async fn assess_impact(
     clippy::cast_possible_truncation,
     clippy::cast_precision_loss
 )]
-pub async fn get_continuity_score(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn get_continuity_score(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     let plans: Vec<ContinuityPlan> = sqlx::query(&format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans"
     ))
@@ -1633,7 +1624,7 @@ pub async fn get_continuity_score(
 
     let overall_score = (coverage_score * 0.3 + test_pass_rate * 0.3 + avg_strategy * 0.4).round();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "overall_score": overall_score,
             "coverage_score": coverage_score,
@@ -1644,7 +1635,7 @@ pub async fn get_continuity_score(
             "grade": if overall_score >= 80.0 { "A" } else if overall_score >= 60.0 { "B" } else { "C" },
         }),
         "业务连续性评分",
-    ))
+    )
 }
 
 // ==================== 处理器：跨地域容灾 ====================
@@ -1662,7 +1653,7 @@ pub async fn get_continuity_score(
 pub async fn configure_replication(
     State(state): State<AppState>,
     Json(req): Json<ConfigureReplicationRequest>,
-) -> Json<ApiResponse<ReplicationConfig>> {
+) -> ApiResponse<ReplicationConfig> {
     let mode = req
         .replication_mode
         .as_deref()
@@ -1693,10 +1684,10 @@ pub async fn configure_replication(
     .await
     .map_err(|e| TopemsError::internal("写入复制配置失败", e))
     {
-        return Json(ApiResponse::from(e));
+        return ApiResponse::from(e);
     }
 
-    Json(ApiResponse::success(config, "复制配置已创建"))
+    ApiResponse::success(config, "复制配置已创建")
 }
 
 #[utoipa::path(
@@ -1712,7 +1703,7 @@ pub async fn configure_replication(
 pub async fn start_replication(
     State(state): State<AppState>,
     Json(req): Json<ReplicationActionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let config = db_exec!(sqlx::query(&format!(
         "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs WHERE id = $1"
     ))
@@ -1723,7 +1714,7 @@ pub async fn start_replication(
     .map(|r| replication_config_from_row(&r));
 
     let Some(config) = config else {
-        return Json(ApiResponse::not_found("未找到复制配置"));
+        return ApiResponse::not_found("未找到复制配置");
     };
 
     if let Err(e) = sqlx::query(
@@ -1734,10 +1725,10 @@ pub async fn start_replication(
     .await
     .map_err(|e| TopemsError::internal("启动复制失败", e))
     {
-        return Json(ApiResponse::from(e));
+        return ApiResponse::from(e);
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "replication_id": config.id,
             "status": "running",
@@ -1746,7 +1737,7 @@ pub async fn start_replication(
             "started_at": chrono::Utc::now().to_rfc3339(),
         }),
         "复制已启动",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1762,7 +1753,7 @@ pub async fn start_replication(
 pub async fn stop_replication(
     State(state): State<AppState>,
     Json(req): Json<ReplicationActionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let config = db_exec!(sqlx::query(&format!(
         "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs WHERE id = $1"
     ))
@@ -1773,7 +1764,7 @@ pub async fn stop_replication(
     .map(|r| replication_config_from_row(&r));
 
     let Some(config) = config else {
-        return Json(ApiResponse::not_found("未找到复制配置"));
+        return ApiResponse::not_found("未找到复制配置");
     };
 
     if let Err(e) = sqlx::query(
@@ -1784,17 +1775,17 @@ pub async fn stop_replication(
     .await
     .map_err(|e| TopemsError::internal("停止复制失败", e))
     {
-        return Json(ApiResponse::from(e));
+        return ApiResponse::from(e);
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "replication_id": config.id,
             "status": "stopped",
             "stopped_at": chrono::Utc::now().to_rfc3339(),
         }),
         "复制已停止",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1809,7 +1800,7 @@ pub async fn stop_replication(
 )]
 pub async fn get_replication_status(
     State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let configs: Vec<ReplicationConfig> = sqlx::query(&format!(
         "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs"
     ))
@@ -1846,10 +1837,7 @@ pub async fn get_replication_status(
         }));
     }
 
-    Json(ApiResponse::success(
-        serde_json::json!({ "replications": statuses }),
-        "复制状态",
-    ))
+    ApiResponse::success(serde_json::json!({ "replications": statuses }), "复制状态")
 }
 
 #[utoipa::path(
@@ -1865,7 +1853,7 @@ pub async fn get_replication_status(
 pub async fn initiate_failover(
     State(state): State<AppState>,
     Json(req): Json<InitiateFailoverRequest>,
-) -> Json<ApiResponse<FailoverRecord>> {
+) -> ApiResponse<FailoverRecord> {
     let trigger = req
         .trigger
         .as_deref()
@@ -1904,10 +1892,10 @@ pub async fn initiate_failover(
     .await
     .map_err(|e| TopemsError::internal("写入故障转移记录失败", e))
     {
-        return Json(ApiResponse::from(e));
+        return ApiResponse::from(e);
     }
 
-    Json(ApiResponse::success(failover, "故障转移已发起"))
+    ApiResponse::success(failover, "故障转移已发起")
 }
 
 #[utoipa::path(
@@ -1927,7 +1915,7 @@ pub async fn complete_failover(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<CompleteFailoverRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let record = db_exec!(sqlx::query(&format!(
         "SELECT {FAILOVER_RECORD_COLS} FROM master_data.mdm_failover_records WHERE id = $1 OR id = $2"
     ))
@@ -1939,7 +1927,7 @@ pub async fn complete_failover(
     .map(|r| failover_record_from_row(&r));
 
     let Some(record) = record else {
-        return Json(ApiResponse::not_found("未找到故障转移记录"));
+        return ApiResponse::not_found("未找到故障转移记录");
     };
 
     let completed_at = chrono::Utc::now().to_rfc3339();
@@ -1950,7 +1938,7 @@ pub async fn complete_failover(
     .bind(&completed_at)
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::internal("更新故障转移记录失败", e)) { return Json(ApiResponse::from(e)); }
+    .map_err(|e| TopemsError::internal("更新故障转移记录失败", e)) { return ApiResponse::from(e); }
 
     if let Err(e) = sqlx::query(
         r#"UPDATE master_data.mdm_region_configs SET status = 'offline', primary_flag = false WHERE region_id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
@@ -1958,16 +1946,16 @@ pub async fn complete_failover(
     .bind(&record.from_region)
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::internal("更新源地域失败", e)) { return Json(ApiResponse::from(e)); }
+    .map_err(|e| TopemsError::internal("更新源地域失败", e)) { return ApiResponse::from(e); }
     if let Err(e) = sqlx::query(
         r#"UPDATE master_data.mdm_region_configs SET status = 'online', primary_flag = true WHERE region_id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&record.to_region)
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::internal("更新目标地域失败", e)) { return Json(ApiResponse::from(e)); }
+    .map_err(|e| TopemsError::internal("更新目标地域失败", e)) { return ApiResponse::from(e); }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "failover_id": record.id,
             "from_region": record.from_region,
@@ -1977,7 +1965,7 @@ pub async fn complete_failover(
             "region_updated": true,
         }),
         "故障转移已完成",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1992,7 +1980,7 @@ pub async fn complete_failover(
 )]
 pub async fn get_failover_history(
     State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<FailoverRecord>>> {
+) -> ApiResponse<Vec<FailoverRecord>> {
     let records: Vec<FailoverRecord> = sqlx::query(&format!(
         "SELECT {FAILOVER_RECORD_COLS} FROM master_data.mdm_failover_records"
     ))
@@ -2000,7 +1988,7 @@ pub async fn get_failover_history(
     .await
     .map(|rows| rows.iter().map(failover_record_from_row).collect())
     .unwrap_or_default();
-    Json(ApiResponse::success(records, "故障转移历史"))
+    ApiResponse::success(records, "故障转移历史")
 }
 
 #[utoipa::path(
@@ -2016,7 +2004,7 @@ pub async fn get_failover_history(
 pub async fn switch_regions(
     State(state): State<AppState>,
     Json(req): Json<SwitchRegionsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let target = db_exec!(sqlx::query(&format!(
         "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs WHERE region_id = $1"
     ))
@@ -2027,7 +2015,7 @@ pub async fn switch_regions(
     .map(|r| region_config_from_row(&r));
 
     let Some(_target) = target else {
-        return Json(ApiResponse::not_found("未找到目标地域"));
+        return ApiResponse::not_found("未找到目标地域");
     };
 
     if let Err(e) = sqlx::query(
@@ -2038,7 +2026,7 @@ pub async fn switch_regions(
     .await
     .map_err(|e| TopemsError::internal("重置地域主备失败", e))
     {
-        return Json(ApiResponse::from(e));
+        return ApiResponse::from(e);
     }
     if let Err(e) = sqlx::query(
         r#"UPDATE master_data.mdm_region_configs SET primary_flag = true, status = 'online' WHERE region_id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
@@ -2046,7 +2034,7 @@ pub async fn switch_regions(
     .bind(&req.primary_region)
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::internal("切换主地域失败", e)) { return Json(ApiResponse::from(e)); }
+    .map_err(|e| TopemsError::internal("切换主地域失败", e)) { return ApiResponse::from(e); }
 
     let regions: Vec<RegionConfig> = sqlx::query(&format!(
         "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs"
@@ -2067,14 +2055,14 @@ pub async fn switch_regions(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "switched_to": req.primary_region,
             "regions": region_snapshot,
             "switched_at": chrono::Utc::now().to_rfc3339(),
         }),
         "地域切换已完成",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -2087,9 +2075,7 @@ pub async fn switch_regions(
     ),
     tag = "disaster_v56"
 )]
-pub async fn get_region_health(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn get_region_health(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     let regions: Vec<RegionConfig> = sqlx::query(&format!(
         "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs"
     ))
@@ -2125,7 +2111,7 @@ pub async fn get_region_health(
         .filter(|r| matches!(r.status, RegionStatus::Offline))
         .count();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "regions": health,
             "summary": {
@@ -2137,7 +2123,7 @@ pub async fn get_region_health(
             "checked_at": chrono::Utc::now().to_rfc3339(),
         }),
         "地域健康状态",
-    ))
+    )
 }
 
 #[cfg(test)]

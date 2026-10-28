@@ -1384,7 +1384,7 @@ pub struct ModelsQuery {
 pub async fn record_metric_handler(
     State(_state): State<AppState>,
     Json(req): Json<RecordMetricRequest>,
-) -> Json<ApiResponse<Metric>> {
+) -> ApiResponse<Metric> {
     let mtype = req
         .metric_type
         .as_deref()
@@ -1399,24 +1399,22 @@ pub async fn record_metric_handler(
     );
 
     let recorded = GatewayMonitor::record_metric(metric).await;
-    Json(ApiResponse::success(recorded, "指标记录成功"))
+    ApiResponse::success(recorded, "指标记录成功")
 }
 
 pub async fn get_metrics_handler(
     State(_state): State<AppState>,
     Query(params): Query<MetricsQuery>,
-) -> Json<ApiResponse<Vec<Metric>>> {
+) -> ApiResponse<Vec<Metric>> {
     let mtype = params.metric_type.as_deref().and_then(MetricType::from_str);
 
     let metrics = GatewayMonitor::get_metrics(params.name.as_deref(), mtype, params.limit).await;
-    Json(ApiResponse::success(metrics, "指标列表"))
+    ApiResponse::success(metrics, "指标列表")
 }
 
-pub async fn get_health_handler(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<GatewayHealth>> {
+pub async fn get_health_handler(State(_state): State<AppState>) -> ApiResponse<GatewayHealth> {
     let health = GatewayMonitor::get_health().await;
-    Json(ApiResponse::success(health, "网关健康状态"))
+    ApiResponse::success(health, "网关健康状态")
 }
 
 #[utoipa::path(
@@ -1429,9 +1427,9 @@ pub async fn get_health_handler(
     ),
     tag = "GatewayMonitoring"
 )]
-pub async fn get_dashboard_handler(State(_state): State<AppState>) -> Json<ApiResponse<Dashboard>> {
+pub async fn get_dashboard_handler(State(_state): State<AppState>) -> ApiResponse<Dashboard> {
     let dashboard = GatewayMonitor::get_dashboard().await;
-    Json(ApiResponse::success(dashboard, "仪表盘数据"))
+    ApiResponse::success(dashboard, "仪表盘数据")
 }
 
 #[utoipa::path(
@@ -1451,14 +1449,14 @@ pub async fn get_metric_history_handler(
     State(_state): State<AppState>,
     Path(metric_name): Path<String>,
     Query(params): Query<MetricHistoryQuery>,
-) -> Json<ApiResponse<Vec<Metric>>> {
+) -> ApiResponse<Vec<Metric>> {
     let history = GatewayMonitor::get_metric_history(
         &metric_name,
         params.from.as_deref(),
         params.to.as_deref(),
     )
     .await;
-    Json(ApiResponse::success(history, "指标历史"))
+    ApiResponse::success(history, "指标历史")
 }
 
 #[utoipa::path(
@@ -1474,7 +1472,7 @@ pub async fn get_metric_history_handler(
 pub async fn set_threshold_handler(
     State(_state): State<AppState>,
     Json(req): Json<SetThresholdRequest>,
-) -> Json<ApiResponse<AlertThreshold>> {
+) -> ApiResponse<AlertThreshold> {
     let threshold = AlertThreshold {
         id: uuid::Uuid::new_v4().to_string(),
         metric_name: req.metric_name,
@@ -1485,7 +1483,7 @@ pub async fn set_threshold_handler(
     };
 
     let saved = GatewayMonitor::set_alert_threshold(threshold).await;
-    Json(ApiResponse::success(saved, "告警阈值设置成功"))
+    ApiResponse::success(saved, "告警阈值设置成功")
 }
 
 #[utoipa::path(
@@ -1501,9 +1499,9 @@ pub async fn set_threshold_handler(
 pub async fn get_thresholds_handler(
     State(_state): State<AppState>,
     Query(params): Query<ThresholdsQuery>,
-) -> Json<ApiResponse<Vec<AlertThreshold>>> {
+) -> ApiResponse<Vec<AlertThreshold>> {
     let thresholds = GatewayMonitor::get_alert_thresholds(params.metric_name.as_deref()).await;
-    Json(ApiResponse::success(thresholds, "告警阈值列表"))
+    ApiResponse::success(thresholds, "告警阈值列表")
 }
 
 // ==================== API 处理器: 性能追踪 ====================
@@ -1521,9 +1519,9 @@ pub async fn get_thresholds_handler(
 pub async fn start_trace_handler(
     State(_state): State<AppState>,
     Json(req): Json<StartTraceRequest>,
-) -> Json<ApiResponse<Trace>> {
+) -> ApiResponse<Trace> {
     let trace = PerformanceTracer::start_trace(req.query_hash).await;
-    Json(ApiResponse::success(trace, "追踪已启动"))
+    ApiResponse::success(trace, "追踪已启动")
 }
 
 #[utoipa::path(
@@ -1539,10 +1537,10 @@ pub async fn start_trace_handler(
 pub async fn end_trace_handler(
     State(_state): State<AppState>,
     Json(req): Json<EndTraceRequest>,
-) -> Json<ApiResponse<Trace>> {
+) -> ApiResponse<Trace> {
     match PerformanceTracer::end_trace(&req.trace_id).await {
-        Ok(trace) => Json(ApiResponse::success(trace, "追踪已结束")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(trace) => ApiResponse::success(trace, "追踪已结束"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1559,7 +1557,7 @@ pub async fn end_trace_handler(
 pub async fn add_resolver_timing_handler(
     State(_state): State<AppState>,
     Json(req): Json<AddResolverTimingRequest>,
-) -> Json<ApiResponse<ResolverTiming>> {
+) -> ApiResponse<ResolverTiming> {
     let start_time = req
         .start_time
         .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
@@ -1576,8 +1574,8 @@ pub async fn add_resolver_timing_handler(
     )
     .await
     {
-        Ok(timing) => Json(ApiResponse::success(timing, "Resolver 计时已添加")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(timing) => ApiResponse::success(timing, "Resolver 计时已添加"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1597,10 +1595,10 @@ pub async fn add_resolver_timing_handler(
 pub async fn get_trace_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Trace>> {
+) -> ApiResponse<Trace> {
     match PerformanceTracer::get_trace(&id).await {
-        Some(trace) => Json(ApiResponse::success(trace, "追踪详情")),
-        None => Json(ApiResponse::not_found("追踪不存在")),
+        Some(trace) => ApiResponse::success(trace, "追踪详情"),
+        None => ApiResponse::not_found("追踪不存在"),
     }
 }
 
@@ -1617,9 +1615,9 @@ pub async fn get_trace_handler(
 pub async fn list_traces_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListTracesQuery>,
-) -> Json<ApiResponse<Vec<Trace>>> {
+) -> ApiResponse<Vec<Trace>> {
     let traces = PerformanceTracer::list_traces(params.query_hash.as_deref(), params.limit).await;
-    Json(ApiResponse::success(traces, "追踪列表"))
+    ApiResponse::success(traces, "追踪列表")
 }
 
 #[utoipa::path(
@@ -1635,9 +1633,9 @@ pub async fn list_traces_handler(
 pub async fn get_slow_queries_handler(
     State(_state): State<AppState>,
     Query(params): Query<SlowQueriesQuery>,
-) -> Json<ApiResponse<Vec<Trace>>> {
+) -> ApiResponse<Vec<Trace>> {
     let slow = PerformanceTracer::get_slow_queries(params.threshold_ms, params.limit).await;
-    Json(ApiResponse::success(slow, "慢查询列表"))
+    ApiResponse::success(slow, "慢查询列表")
 }
 
 #[utoipa::path(
@@ -1652,9 +1650,9 @@ pub async fn get_slow_queries_handler(
 )]
 pub async fn get_performance_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<PerformanceSummary>> {
+) -> ApiResponse<PerformanceSummary> {
     let summary = PerformanceTracer::get_performance_summary().await;
-    Json(ApiResponse::success(summary, "性能汇总"))
+    ApiResponse::success(summary, "性能汇总")
 }
 
 #[utoipa::path(
@@ -1670,11 +1668,11 @@ pub async fn get_performance_handler(
 pub async fn export_traces_handler(
     State(_state): State<AppState>,
     Json(req): Json<ExportTracesRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let format = req.format.unwrap_or_else(|| "json".to_string());
     match PerformanceTracer::export_traces(&format, req.query_hash.as_deref()).await {
-        Ok(data) => Json(ApiResponse::success(data, "追踪数据导出成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(data) => ApiResponse::success(data, "追踪数据导出成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1693,10 +1691,10 @@ pub async fn export_traces_handler(
 pub async fn detect_anomalies_handler(
     State(_state): State<AppState>,
     Json(req): Json<DetectAnomaliesRequest>,
-) -> Json<ApiResponse<Vec<Anomaly>>> {
+) -> ApiResponse<Vec<Anomaly>> {
     let anomalies =
         AnomalyDetector::detect_anomalies(&req.metric_name, req.model_id.as_deref()).await;
-    Json(ApiResponse::success(anomalies, "异常检测完成"))
+    ApiResponse::success(anomalies, "异常检测完成")
 }
 
 #[utoipa::path(
@@ -1712,7 +1710,7 @@ pub async fn detect_anomalies_handler(
 pub async fn get_anomalies_handler(
     State(_state): State<AppState>,
     Query(params): Query<AnomaliesQuery>,
-) -> Json<ApiResponse<Vec<Anomaly>>> {
+) -> ApiResponse<Vec<Anomaly>> {
     let atype = params
         .anomaly_type
         .as_deref()
@@ -1729,7 +1727,7 @@ pub async fn get_anomalies_handler(
         params.limit,
     )
     .await;
-    Json(ApiResponse::success(anomalies, "异常事件列表"))
+    ApiResponse::success(anomalies, "异常事件列表")
 }
 
 #[utoipa::path(
@@ -1745,7 +1743,7 @@ pub async fn get_anomalies_handler(
 pub async fn create_model_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateModelRequest>,
-) -> Json<ApiResponse<DetectionModel>> {
+) -> ApiResponse<DetectionModel> {
     let algorithm = req
         .algorithm
         .as_deref()
@@ -1762,7 +1760,7 @@ pub async fn create_model_handler(
     };
 
     let created = AnomalyDetector::create_model(model).await;
-    Json(ApiResponse::success(created, "检测模型创建成功"))
+    ApiResponse::success(created, "检测模型创建成功")
 }
 
 #[utoipa::path(
@@ -1782,14 +1780,14 @@ pub async fn update_model_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateModelRequest>,
-) -> Json<ApiResponse<DetectionModel>> {
+) -> ApiResponse<DetectionModel> {
     let current = match AnomalyDetector::get_models(Some(&id))
         .await
         .first()
         .cloned()
     {
         Some(m) => m,
-        None => return Json(ApiResponse::not_found("检测模型不存在")),
+        None => return ApiResponse::not_found("检测模型不存在"),
     };
 
     let algorithm = req
@@ -1808,8 +1806,8 @@ pub async fn update_model_handler(
     };
 
     match AnomalyDetector::update_model(&id, updates).await {
-        Ok(model) => Json(ApiResponse::success(model, "检测模型更新成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(model) => ApiResponse::success(model, "检测模型更新成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1826,9 +1824,9 @@ pub async fn update_model_handler(
 pub async fn get_models_handler(
     State(_state): State<AppState>,
     Query(params): Query<ModelsQuery>,
-) -> Json<ApiResponse<Vec<DetectionModel>>> {
+) -> ApiResponse<Vec<DetectionModel>> {
     let models = AnomalyDetector::get_models(params.metric_name.as_deref()).await;
-    Json(ApiResponse::success(models, "检测模型列表"))
+    ApiResponse::success(models, "检测模型列表")
 }
 
 #[utoipa::path(
@@ -1843,9 +1841,9 @@ pub async fn get_models_handler(
 )]
 pub async fn get_anomaly_summary_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<AnomalySummary>> {
+) -> ApiResponse<AnomalySummary> {
     let summary = AnomalyDetector::get_anomaly_summary().await;
-    Json(ApiResponse::success(summary, "异常检测汇总"))
+    ApiResponse::success(summary, "异常检测汇总")
 }
 
 #[utoipa::path(
@@ -1864,10 +1862,10 @@ pub async fn get_anomaly_summary_handler(
 pub async fn train_model_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<DetectionModel>> {
+) -> ApiResponse<DetectionModel> {
     match AnomalyDetector::train_model(&id).await {
-        Ok(model) => Json(ApiResponse::success(model, "模型训练完成")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(model) => ApiResponse::success(model, "模型训练完成"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 

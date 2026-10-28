@@ -224,7 +224,7 @@ pub async fn list_accidents(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(q): Query<AccidentQuery>,
-) -> Json<ApiResponse<Vec<Accident>>> {
+) -> ApiResponse<Vec<Accident>> {
     let tenant_bind: String = resolve_tenant_id(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -265,12 +265,12 @@ pub async fn list_accidents(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list accidents: {}", e);
-            return Json(ApiResponse::server_error("获取事故列表失败"));
+            return ApiResponse::server_error("获取事故列表失败");
         }
     };
 
     let list: Vec<Accident> = rows.iter().map(accident_from_row).collect();
-    Json(ApiResponse::success(list, "获取事故列表成功"))
+    ApiResponse::success(list, "获取事故列表成功")
 }
 
 /// 行映射（SELECT 列均对齐 accident_from_row 别名）
@@ -313,11 +313,11 @@ pub async fn report_accident(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateAccidentRequest>,
-) -> Json<ApiResponse<Accident>> {
+) -> ApiResponse<Accident> {
     // 超管落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400，禁止落全零
     let tenant_opt = match resolve_create_tenant(&claims) {
         Ok(t) => t,
-        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
     // 响应结构体需要 Uuid，公共行（超管）沿用 nil 仅用于序列化，不落库
     let tenant_id = tenant_opt.unwrap_or(Uuid::nil());
@@ -372,7 +372,7 @@ pub async fn report_accident(
     .bind(tenant_opt);
     if let Err(e) = insert.execute(&state.pool).await {
         tracing::error!("Failed to insert accident: {}", e);
-        return Json(ApiResponse::server_error("事故上报失败"));
+        return ApiResponse::server_error("事故上报失败");
     }
 
     // 发布端补全：EhsAccidentReported（→ integration → LIMS 建样/任务联动）
@@ -402,7 +402,7 @@ pub async fn report_accident(
         });
     }
 
-    Json(ApiResponse::success(accident, "事故报告成功"))
+    ApiResponse::success(accident, "事故报告成功")
 }
 
 fn resolve_tenant_id(claims: &Claims) -> uuid::Uuid {
@@ -430,7 +430,7 @@ pub async fn get_accident(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<AccidentDetail>> {
+) -> ApiResponse<AccidentDetail> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::debug!("Getting accident detail: {}", id);
 
@@ -451,15 +451,15 @@ pub async fn get_accident(
 
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("事故不存在")),
+        Ok(None) => return ApiResponse::not_found("事故不存在"),
         Err(e) => {
             tracing::error!("Failed to get accident: {}", e);
-            return Json(ApiResponse::server_error("获取事故详情失败"));
+            return ApiResponse::server_error("获取事故详情失败");
         }
     };
     let accident = accident_from_row(&row);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         AccidentDetail {
             accident,
             investigation: None,
@@ -468,7 +468,7 @@ pub async fn get_accident(
             tenant_id: tenant_id_from_row(&row),
         },
         "获取事故详情成功",
-    ))
+    )
 }
 
 fn tenant_id_from_row(r: &sqlx::postgres::PgRow) -> Uuid {
@@ -491,7 +491,7 @@ pub async fn update_accident(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateAccidentRequest>,
-) -> Json<ApiResponse<Accident>> {
+) -> ApiResponse<Accident> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::debug!("Updating accident {}: {:?}", id, req);
 
@@ -523,16 +523,13 @@ pub async fn update_accident(
     .bind(&id);
     let row = match result.fetch_optional(&state.pool).await {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("事故不存在")),
+        Ok(None) => return ApiResponse::not_found("事故不存在"),
         Err(e) => {
             tracing::error!("Failed to update accident: {}", e);
-            return Json(ApiResponse::server_error("事故更新失败"));
+            return ApiResponse::server_error("事故更新失败");
         }
     };
-    Json(ApiResponse::success(
-        accident_from_row(&row),
-        "事故更新成功",
-    ))
+    ApiResponse::success(accident_from_row(&row), "事故更新成功")
 }
 
 #[utoipa::path(
@@ -548,7 +545,7 @@ pub async fn delete_accident(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::debug!("Deleting accident: {}", id);
     let r = sqlx::query(
@@ -560,10 +557,10 @@ pub async fn delete_accident(
     .execute(&state.pool)
     .await;
     match r {
-        Ok(_) => Json(ApiResponse::success(serde_json::json!({}), "事故删除成功")),
+        Ok(_) => ApiResponse::success(serde_json::json!({}), "事故删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete accident: {}", e);
-            Json(ApiResponse::server_error("事故删除失败"))
+            ApiResponse::server_error("事故删除失败")
         }
     }
 }
@@ -584,7 +581,7 @@ pub async fn start_investigation(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateInvestigationRequest>,
-) -> Json<ApiResponse<Investigation>> {
+) -> ApiResponse<Investigation> {
     let tenant_id = resolve_tenant_id(&claims);
     tracing::debug!("Starting investigation for accident {}: {:?}", id, req);
     let inv_id = uuid::Uuid::new_v4();
@@ -605,13 +602,10 @@ pub async fn start_investigation(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to start investigation: {}", e);
-            return Json(ApiResponse::server_error("调查启动失败"));
+            return ApiResponse::server_error("调查启动失败");
         }
     };
-    Json(ApiResponse::success(
-        investigation_from_row(&row),
-        "调查已启动",
-    ))
+    ApiResponse::success(investigation_from_row(&row), "调查已启动")
 }
 
 fn investigation_from_row(r: &sqlx::postgres::PgRow) -> Investigation {
@@ -658,7 +652,7 @@ pub async fn update_investigation(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateInvestigationRequest>,
-) -> Json<ApiResponse<Investigation>> {
+) -> ApiResponse<Investigation> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::debug!("Updating investigation for accident {}: {:?}", id, req);
     let row = sqlx::query(
@@ -681,16 +675,13 @@ pub async fn update_investigation(
     .await;
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("调查记录不存在")),
+        Ok(None) => return ApiResponse::not_found("调查记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update investigation: {}", e);
-            return Json(ApiResponse::server_error("调查更新失败"));
+            return ApiResponse::server_error("调查更新失败");
         }
     };
-    Json(ApiResponse::success(
-        investigation_from_row(&row),
-        "调查更新成功",
-    ))
+    ApiResponse::success(investigation_from_row(&row), "调查更新成功")
 }
 
 #[utoipa::path(
@@ -708,7 +699,7 @@ pub async fn create_treatment(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateTreatmentRequest>,
-) -> Json<ApiResponse<Treatment>> {
+) -> ApiResponse<Treatment> {
     let tenant_id = resolve_tenant_id(&claims);
     tracing::debug!("Creating treatment for accident {}: {:?}", id, req);
     let tx_id = uuid::Uuid::new_v4();
@@ -727,7 +718,7 @@ pub async fn create_treatment(
     .await
     {
         tracing::error!("Failed to insert treatment: {}", e);
-        return Json(ApiResponse::server_error("处理方案创建失败"));
+        return ApiResponse::server_error("处理方案创建失败");
     }
 
     // INSERT treatment_actions（多行）
@@ -760,7 +751,7 @@ pub async fn create_treatment(
         });
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         Treatment {
             id: tx_id.to_string(),
             accident_id: id,
@@ -774,7 +765,7 @@ pub async fn create_treatment(
             tenant_id,
         },
         "处理方案已创建",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -795,7 +786,7 @@ pub async fn update_treatment_action(
     _headers: HeaderMap,
     axum::extract::Path((_id, action_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<UpdateTreatmentActionRequest>,
-) -> Json<ApiResponse<TreatmentAction>> {
+) -> ApiResponse<TreatmentAction> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::debug!("Updating treatment action {}: {:?}", action_id, req);
     let row = sqlx::query(
@@ -818,13 +809,13 @@ pub async fn update_treatment_action(
     .await;
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("处置行动不存在")),
+        Ok(None) => return ApiResponse::not_found("处置行动不存在"),
         Err(e) => {
             tracing::error!("Failed to update treatment action: {}", e);
-            return Json(ApiResponse::server_error("处置行动更新失败"));
+            return ApiResponse::server_error("处置行动更新失败");
         }
     };
-    Json(ApiResponse::success(
+    ApiResponse::success(
         TreatmentAction {
             id: row.try_get("id").unwrap_or_default(),
             description: row.try_get("description").unwrap_or_default(),
@@ -838,7 +829,7 @@ pub async fn update_treatment_action(
                 .unwrap_or_default(),
         },
         "处置行动更新成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -854,7 +845,7 @@ pub async fn close_accident(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Accident>> {
+) -> ApiResponse<Accident> {
     tracing::info!("Closing accident: {}", id);
 
     let tenant_bind = resolve_tenant_id(&claims).to_string();
@@ -874,13 +865,13 @@ pub async fn close_accident(
     .await;
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("事故不存在")),
+        Ok(None) => return ApiResponse::not_found("事故不存在"),
         Err(e) => {
             tracing::error!("Failed to close accident: {}", e);
-            return Json(ApiResponse::server_error("事故关闭失败"));
+            return ApiResponse::server_error("事故关闭失败");
         }
     };
-    Json(ApiResponse::success(accident_from_row(&row), "事故已关闭"))
+    ApiResponse::success(accident_from_row(&row), "事故已关闭")
 }
 #[utoipa::path(
     post,
@@ -899,7 +890,7 @@ pub async fn complete_investigation(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Investigation>> {
+) -> ApiResponse<Investigation> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::info!("Completing investigation for accident: {}", id);
     let row = sqlx::query(
@@ -918,16 +909,13 @@ pub async fn complete_investigation(
     .await;
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("调查记录不存在")),
+        Ok(None) => return ApiResponse::not_found("调查记录不存在"),
         Err(e) => {
             tracing::error!("Failed to complete investigation: {}", e);
-            return Json(ApiResponse::server_error("调查完成失败"));
+            return ApiResponse::server_error("调查完成失败");
         }
     };
-    Json(ApiResponse::success(
-        investigation_from_row(&row),
-        "调查完成",
-    ))
+    ApiResponse::success(investigation_from_row(&row), "调查完成")
 }
 
 #[utoipa::path(
@@ -946,7 +934,7 @@ pub async fn complete_treatment(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Treatment>> {
+) -> ApiResponse<Treatment> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::info!("Completing treatment for accident: {}", id);
     // UPDATE treatments 主行 + 其下 actions 全部置 completed
@@ -964,10 +952,10 @@ pub async fn complete_treatment(
     .await;
     let row = match result {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("处理方案不存在")),
+        Ok(None) => return ApiResponse::not_found("处理方案不存在"),
         Err(e) => {
             tracing::error!("Failed to complete treatment: {}", e);
-            return Json(ApiResponse::server_error("处理完成失败"));
+            return ApiResponse::server_error("处理完成失败");
         }
     };
     let _ = sqlx::query(
@@ -978,7 +966,7 @@ pub async fn complete_treatment(
     .bind(&id)
     .execute(&state.pool)
     .await;
-    Json(ApiResponse::success(
+    ApiResponse::success(
         Treatment {
             id: row.try_get("id").unwrap_or_default(),
             accident_id: row.try_get("accident_id").unwrap_or_default(),
@@ -995,7 +983,7 @@ pub async fn complete_treatment(
                 .unwrap_or_default(),
         },
         "处理完成",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1016,7 +1004,7 @@ pub async fn create_review(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateReviewRequest>,
-) -> Json<ApiResponse<Review>> {
+) -> ApiResponse<Review> {
     let tenant_id = resolve_tenant_id(&claims);
     tracing::debug!("Creating review for accident {}: {:?}", id, req);
     let rev_id = uuid::Uuid::new_v4();
@@ -1038,10 +1026,10 @@ pub async fn create_review(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create review: {}", e);
-            return Json(ApiResponse::server_error("复盘创建失败"));
+            return ApiResponse::server_error("复盘创建失败");
         }
     };
-    Json(ApiResponse::success(
+    ApiResponse::success(
         Review {
             id: row.try_get("id").unwrap_or_default(),
             accident_id: row.try_get("accident_id").unwrap_or_default(),
@@ -1063,7 +1051,7 @@ pub async fn create_review(
                 .unwrap_or_default(),
         },
         "复盘完成",
-    ))
+    )
 }
 
 pub async fn list_incident_actions(
@@ -1071,7 +1059,7 @@ pub async fn list_incident_actions(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let rows = sqlx::query(
         r#"SELECT id::text AS id, title, status, created_at::text AS created_at
@@ -1098,11 +1086,11 @@ pub async fn list_incident_actions(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(list, "获取事故行动列表成功"))
+            ApiResponse::success(list, "获取事故行动列表成功")
         }
         Err(e) => {
             tracing::error!("Failed to list incident actions: {}", e);
-            Json(ApiResponse::server_error("获取事故行动列表失败"))
+            ApiResponse::server_error("获取事故行动列表失败")
         }
     }
 }
@@ -1113,7 +1101,7 @@ pub async fn create_incident_action(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = resolve_tenant_id(&claims);
     let act_id = uuid::Uuid::new_v4();
     let title = req
@@ -1132,9 +1120,9 @@ pub async fn create_incident_action(
     .await
     {
         tracing::error!("Failed to insert incident action: {}", e);
-        return Json(ApiResponse::server_error("事故行动创建失败"));
+        return ApiResponse::server_error("事故行动创建失败");
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "id": act_id.to_string(),
             "incident_id": id,
@@ -1144,7 +1132,7 @@ pub async fn create_incident_action(
             "created_at": chrono::Utc::now().to_rfc3339(),
         }),
         "事故行动创建成功",
-    ))
+    )
 }
 
 pub async fn update_incident_action(
@@ -1153,7 +1141,7 @@ pub async fn update_incident_action(
     _headers: HeaderMap,
     axum::extract::Path((_id, action_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let status = req
         .get("status")
@@ -1170,17 +1158,17 @@ pub async fn update_incident_action(
     .execute(&state.pool)
     .await;
     match r {
-        Ok(_) => Json(ApiResponse::success(
+        Ok(_) => ApiResponse::success(
             serde_json::json!({
                 "id": action_id,
                 "status": status,
                 "updated_at": chrono::Utc::now().to_rfc3339(),
             }),
             "事故行动更新成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to update incident action: {}", e);
-            Json(ApiResponse::server_error("事故行动更新失败"))
+            ApiResponse::server_error("事故行动更新失败")
         }
     }
 }

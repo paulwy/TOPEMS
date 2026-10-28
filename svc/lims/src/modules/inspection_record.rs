@@ -55,7 +55,7 @@ pub struct CreateRecordRequest {
 pub async fn list_records(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<RecordQuery>,
-) -> Json<ApiResponse<Vec<InspectionRecord>>> {
+) -> ApiResponse<Vec<InspectionRecord>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -64,7 +64,7 @@ pub async fn list_records(
         Some(tid) => {
             let tid = match Uuid::parse_str(tid) {
                 Ok(u) => u,
-                Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
+                Err(_) => return ApiResponse::bad_request("无效的任务ID"),
             };
             sqlx::query(
                 "SELECT r.id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT, r.tenant_id FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.task_id = $1 ORDER BY r.created_at DESC LIMIT $2 OFFSET $3"
@@ -101,11 +101,11 @@ pub async fn list_records(
                     created_at: row.get("created_at"),
                 })
                 .collect();
-            Json(ApiResponse::success(records, "获取检测记录列表成功"))
+            ApiResponse::success(records, "获取检测记录列表成功")
         }
         Err(e) => {
             tracing::error!("Failed to fetch records: {}", e);
-            Json(ApiResponse::server_error("获取检测记录列表失败"))
+            ApiResponse::server_error("获取检测记录列表失败")
         }
     }
 }
@@ -114,7 +114,7 @@ pub async fn create_record(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateRecordRequest>,
-) -> Json<ApiResponse<InspectionRecord>> {
+) -> ApiResponse<InspectionRecord> {
     let record_no = format!(
         "REC-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
@@ -122,7 +122,7 @@ pub async fn create_record(
 
     let task_id = match Uuid::parse_str(&req.task_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
+        Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
     let row = sqlx::query(
@@ -146,7 +146,7 @@ pub async fn create_record(
                 .ok()
                 .flatten()
                 .map(|r| r.get::<String, _>("task_no"));
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 InspectionRecord {
                     id: r.get("id"),
                     tenant_id: r.get("tenant_id"),
@@ -160,11 +160,11 @@ pub async fn create_record(
                     created_at: r.get("created_at"),
                 },
                 "检测记录创建成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("Failed to create record: {}", e);
-            Json(ApiResponse::server_error("检测记录创建失败"))
+            ApiResponse::server_error("检测记录创建失败")
         }
     }
 }
@@ -173,10 +173,10 @@ pub async fn create_record(
 pub async fn list_records_by_task(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(task_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<InspectionRecord>>> {
+) -> ApiResponse<Vec<InspectionRecord>> {
     let task_id = match Uuid::parse_str(&task_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
+        Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
     let rows = sqlx::query(
@@ -187,7 +187,7 @@ pub async fn list_records_by_task(
     .await;
 
     match rows {
-        Ok(rows) => Json(ApiResponse::success(
+        Ok(rows) => ApiResponse::success(
             rows.iter()
                 .map(|r| InspectionRecord {
                     id: r.get("id"),
@@ -203,10 +203,10 @@ pub async fn list_records_by_task(
                 })
                 .collect(),
             "获取任务检测记录成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("获取任务检测记录失败: {}", e);
-            Json(ApiResponse::server_error("获取任务检测记录失败"))
+            ApiResponse::server_error("获取任务检测记录失败")
         }
     }
 }
@@ -227,10 +227,10 @@ pub async fn list_records_by_task(
 pub async fn get_record(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<InspectionRecord>> {
+) -> ApiResponse<InspectionRecord> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的记录ID")),
+        Err(_) => return ApiResponse::bad_request("无效的记录ID"),
     };
 
     let row = sqlx::query(
@@ -241,7 +241,7 @@ pub async fn get_record(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             InspectionRecord {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -255,12 +255,12 @@ pub async fn get_record(
                 created_at: r.get("created_at"),
             },
             "获取检测记录成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to fetch record: {}", e);
-            Json(ApiResponse::server_error("获取检测记录失败"))
+            ApiResponse::server_error("获取检测记录失败")
         }
     }
 }
@@ -268,10 +268,10 @@ pub async fn get_record(
 pub async fn delete_record(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的记录ID")),
+        Err(_) => return ApiResponse::bad_request("无效的记录ID"),
     };
 
     let result = sqlx::query("UPDATE qa_lab_records SET deleted_at = NOW() WHERE id = $1")
@@ -280,10 +280,10 @@ pub async fn delete_record(
         .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "检测记录删除成功")),
+        Ok(_) => ApiResponse::success(true, "检测记录删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete record: {}", e);
-            Json(ApiResponse::server_error("检测记录删除失败"))
+            ApiResponse::server_error("检测记录删除失败")
         }
     }
 }

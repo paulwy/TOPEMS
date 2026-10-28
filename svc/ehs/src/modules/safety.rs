@@ -189,11 +189,11 @@ pub async fn create_plan_item(
     _headers: HeaderMap,
     axum::extract::Path(plan_id_str): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let plan_id = match uuid::Uuid::parse_str(&plan_id_str) {
         Ok(id) => id,
         Err(_) => {
-            return Json(ApiResponse::bad_request("plan_id 格式无效"));
+            return ApiResponse::bad_request("plan_id 格式无效");
         }
     };
     let tenant_id = resolve_inspection_tenant(&claims);
@@ -211,7 +211,7 @@ pub async fn create_plan_item(
     let title = match req.get("title").and_then(|v| v.as_str()) {
         Some(t) if !t.is_empty() => t.to_string(),
         _ => {
-            return Json(ApiResponse::bad_request("title 不能为空"));
+            return ApiResponse::bad_request("title 不能为空");
         }
     };
     let category = req
@@ -265,12 +265,12 @@ pub async fn create_plan_item(
                 "created_at": row.try_get::<String, _>("created_at").unwrap_or_default(),
                 "updated_at": row.try_get::<String, _>("updated_at").unwrap_or_default(),
             });
-            Json(ApiResponse::success(obj, "检查项创建成功"))
+            ApiResponse::success(obj, "检查项创建成功")
         }
-        Ok(None) => Json(ApiResponse::server_error("检查项创建失败")),
+        Ok(None) => ApiResponse::server_error("检查项创建失败"),
         Err(e) => {
             tracing::error!("Failed to create inspection plan item: {}", e);
-            Json(ApiResponse::server_error("检查项创建失败"))
+            ApiResponse::server_error("检查项创建失败")
         }
     }
 }
@@ -280,17 +280,17 @@ pub async fn delete_plan_item(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path((plan_id_str, item_id_str)): axum::extract::Path<(String, String)>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let plan_id = match uuid::Uuid::parse_str(&plan_id_str) {
         Ok(id) => id,
         Err(_) => {
-            return Json(ApiResponse::bad_request("plan_id 格式无效"));
+            return ApiResponse::bad_request("plan_id 格式无效");
         }
     };
     let item_id = match uuid::Uuid::parse_str(&item_id_str) {
         Ok(id) => id,
         Err(_) => {
-            return Json(ApiResponse::bad_request("item_id 格式无效"));
+            return ApiResponse::bad_request("item_id 格式无效");
         }
     };
     let tenant_id = resolve_inspection_tenant(&claims);
@@ -310,14 +310,14 @@ pub async fn delete_plan_item(
     match result {
         Ok(pg_result) => {
             if pg_result.rows_affected() == 0 {
-                Json(ApiResponse::not_found("检查项不存在或已删除"))
+                ApiResponse::not_found("检查项不存在或已删除")
             } else {
-                Json(ApiResponse::success((), "检查项删除成功"))
+                ApiResponse::success((), "检查项删除成功")
             }
         }
         Err(e) => {
             tracing::error!("Failed to delete inspection plan item: {}", e);
-            Json(ApiResponse::server_error("检查项删除失败"))
+            ApiResponse::server_error("检查项删除失败")
         }
     }
 }
@@ -341,7 +341,7 @@ pub async fn create_safety_check(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateSafetyCheckRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = claims
         .tenant_id
         .as_deref()
@@ -368,7 +368,7 @@ pub async fn create_safety_check(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             serde_json::json!({
                 "id": r.get::<uuid::Uuid, _>("id"),
                 "check_no": r.get::<String, _>("check_no"),
@@ -384,12 +384,10 @@ pub async fn create_safety_check(
                 "updated_at": r.get::<String, _>("updated_at"),
             }),
             "安全检查创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("创建安全检查失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "创建安全检查失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("创建安全检查失败")
         }
     }
 }
@@ -408,7 +406,7 @@ pub async fn list_plans_db(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(q): Query<InspectionPlanQuery>,
-) -> Json<ApiResponse<Vec<InspectionPlan>>> {
+) -> ApiResponse<Vec<InspectionPlan>> {
     let tenant_bind = resolve_inspection_tenant(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -453,11 +451,11 @@ pub async fn list_plans_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list inspection plans: {}", e);
-            return Json(ApiResponse::server_error("获取检查计划列表失败"));
+            return ApiResponse::server_error("获取检查计划列表失败");
         }
     };
     let list: Vec<InspectionPlan> = rows.iter().map(inspection_plan_from_row).collect();
-    Json(ApiResponse::success(list, "获取检查计划列表成功"))
+    ApiResponse::success(list, "获取检查计划列表成功")
 }
 
 #[utoipa::path(
@@ -473,7 +471,7 @@ pub async fn create_plan_db(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateInspectionPlanRequest>,
-) -> Json<ApiResponse<InspectionPlan>> {
+) -> ApiResponse<InspectionPlan> {
     let tenant_id = resolve_inspection_tenant(&claims);
     let plan_no = format!("IP-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let sql = r#"
@@ -503,11 +501,11 @@ pub async fn create_plan_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create inspection plan: {}", e);
-            return Json(ApiResponse::server_error("检查计划创建失败"));
+            return ApiResponse::server_error("检查计划创建失败");
         }
     };
     let record = inspection_plan_from_row(&row);
-    Json(ApiResponse::success(record, "检查计划创建成功"))
+    ApiResponse::success(record, "检查计划创建成功")
 }
 
 #[utoipa::path(
@@ -523,7 +521,7 @@ pub async fn get_plan_db(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<InspectionPlan>> {
+) -> ApiResponse<InspectionPlan> {
     let tenant_bind = resolve_inspection_tenant(&claims).to_string();
     let sql = r#"
         SELECT id::text AS id, plan_no, title, description, inspection_type, frequency,
@@ -542,14 +540,14 @@ pub async fn get_plan_db(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("检查计划不存在")),
+        Ok(None) => return ApiResponse::not_found("检查计划不存在"),
         Err(e) => {
             tracing::error!("Failed to get inspection plan: {}", e);
-            return Json(ApiResponse::server_error("获取检查计划失败"));
+            return ApiResponse::server_error("获取检查计划失败");
         }
     };
     let record = inspection_plan_from_row(&row);
-    Json(ApiResponse::success(record, "获取检查计划成功"))
+    ApiResponse::success(record, "获取检查计划成功")
 }
 
 #[utoipa::path(
@@ -567,7 +565,7 @@ pub async fn update_plan_db(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateInspectionPlanRequest>,
-) -> Json<ApiResponse<InspectionPlan>> {
+) -> ApiResponse<InspectionPlan> {
     let tenant_bind = resolve_inspection_tenant(&claims).to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -621,14 +619,14 @@ pub async fn update_plan_db(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("检查计划不存在")),
+        Ok(None) => return ApiResponse::not_found("检查计划不存在"),
         Err(e) => {
             tracing::error!("Failed to update inspection plan: {}", e);
-            return Json(ApiResponse::server_error("检查计划更新失败"));
+            return ApiResponse::server_error("检查计划更新失败");
         }
     };
     let record = inspection_plan_from_row(&row);
-    Json(ApiResponse::success(record, "检查计划更新成功"))
+    ApiResponse::success(record, "检查计划更新成功")
 }
 
 #[utoipa::path(
@@ -644,7 +642,7 @@ pub async fn delete_plan_db(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_inspection_tenant(&claims).to_string();
     let sql = r#"
         UPDATE ehs.qa_ehs_inspection_plans
@@ -662,13 +660,13 @@ pub async fn delete_plan_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete inspection plan: {}", e);
-            return Json(ApiResponse::server_error("检查计划删除失败"));
+            return ApiResponse::server_error("检查计划删除失败");
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("检查计划不存在"));
+        return ApiResponse::not_found("检查计划不存在");
     }
-    Json(ApiResponse::success((), "检查计划删除成功"))
+    ApiResponse::success((), "检查计划删除成功")
 }
 
 #[utoipa::path(
@@ -683,7 +681,7 @@ pub async fn list_records_db(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(q): Query<InspectionQuery>,
-) -> Json<ApiResponse<Vec<InspectionRecord>>> {
+) -> ApiResponse<Vec<InspectionRecord>> {
     let tenant_bind = resolve_inspection_tenant(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -733,11 +731,11 @@ pub async fn list_records_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list inspection records: {}", e);
-            return Json(ApiResponse::server_error("获取检查记录列表失败"));
+            return ApiResponse::server_error("获取检查记录列表失败");
         }
     };
     let list: Vec<InspectionRecord> = rows.iter().map(inspection_record_from_row).collect();
-    Json(ApiResponse::success(list, "获取检查记录列表成功"))
+    ApiResponse::success(list, "获取检查记录列表成功")
 }
 
 #[utoipa::path(
@@ -753,7 +751,7 @@ pub async fn create_record_db(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateInspectionRecordRequest>,
-) -> Json<ApiResponse<InspectionRecord>> {
+) -> ApiResponse<InspectionRecord> {
     let tenant_id = resolve_inspection_tenant(&claims);
     let record_no = format!("CR-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let issues: serde_json::Value = req
@@ -790,7 +788,7 @@ pub async fn create_record_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create inspection record: {}", e);
-            return Json(ApiResponse::server_error("检查记录创建失败"));
+            return ApiResponse::server_error("检查记录创建失败");
         }
     };
     let record_id: String = row.try_get("id").unwrap_or_default();
@@ -814,7 +812,7 @@ pub async fn create_record_db(
         .await;
     }
     let record = inspection_record_from_row(&row);
-    Json(ApiResponse::success(record, "检查记录创建成功"))
+    ApiResponse::success(record, "检查记录创建成功")
 }
 
 #[utoipa::path(
@@ -832,7 +830,7 @@ pub async fn update_record_db(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateInspectionRecordRequest>,
-) -> Json<ApiResponse<InspectionRecord>> {
+) -> ApiResponse<InspectionRecord> {
     let tenant_bind = resolve_inspection_tenant(&claims).to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -877,14 +875,14 @@ pub async fn update_record_db(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("检查记录不存在")),
+        Ok(None) => return ApiResponse::not_found("检查记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update inspection record: {}", e);
-            return Json(ApiResponse::server_error("检查记录更新失败"));
+            return ApiResponse::server_error("检查记录更新失败");
         }
     };
     let record = inspection_record_from_row(&row);
-    Json(ApiResponse::success(record, "检查记录更新成功"))
+    ApiResponse::success(record, "检查记录更新成功")
 }
 
 #[utoipa::path(
@@ -900,7 +898,7 @@ pub async fn delete_record_db(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_inspection_tenant(&claims).to_string();
     let sql = r#"
         UPDATE ehs.qa_ehs_inspection_records
@@ -918,13 +916,13 @@ pub async fn delete_record_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete inspection record: {}", e);
-            return Json(ApiResponse::server_error("检查记录删除失败"));
+            return ApiResponse::server_error("检查记录删除失败");
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("检查记录不存在"));
+        return ApiResponse::not_found("检查记录不存在");
     }
-    Json(ApiResponse::success((), "检查记录删除成功"))
+    ApiResponse::success((), "检查记录删除成功")
 }
 
 // ---- 检查记录详情（GET /checks/records/{id}）：记录 + 子项 ----
@@ -942,7 +940,7 @@ pub async fn get_record_db(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<InspectionRecordDetail>> {
+) -> ApiResponse<InspectionRecordDetail> {
     let tenant_id = resolve_inspection_tenant(&claims);
     let tenant_bind = tenant_id.to_string();
     let record_sql = r#"
@@ -963,10 +961,10 @@ pub async fn get_record_db(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("检查记录不存在")),
+        Ok(None) => return ApiResponse::not_found("检查记录不存在"),
         Err(e) => {
             tracing::error!("Failed to get inspection record: {}", e);
-            return Json(ApiResponse::server_error("获取检查记录失败"));
+            return ApiResponse::server_error("获取检查记录失败");
         }
     };
     let record = inspection_record_from_row(&row);
@@ -1007,14 +1005,14 @@ pub async fn get_record_db(
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         InspectionRecordDetail {
             record,
             items,
             tenant_id,
         },
         "获取检查记录成功",
-    ))
+    )
 }
 
 // ---- SafetyCheck 域（ehs.safety_checks：GET/PUT/DELETE /checks[/{id}]）----
@@ -1031,7 +1029,7 @@ pub async fn list_safety_checks_db(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(q): Query<InspectionQuery>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let tenant_bind = resolve_inspection_tenant(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -1064,11 +1062,11 @@ pub async fn list_safety_checks_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list safety checks: {}", e);
-            return Json(ApiResponse::server_error("获取安全检查列表失败"));
+            return ApiResponse::server_error("获取安全检查列表失败");
         }
     };
     let list: Vec<serde_json::Value> = rows.iter().map(safety_check_to_json).collect();
-    Json(ApiResponse::success(list, "获取安全检查列表成功"))
+    ApiResponse::success(list, "获取安全检查列表成功")
 }
 
 #[utoipa::path(
@@ -1084,7 +1082,7 @@ pub async fn get_safety_check_db(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_bind = resolve_inspection_tenant(&claims).to_string();
     let sql = r#"
         SELECT id, check_no, check_type, inspector, check_date::TEXT AS check_date, location,
@@ -1102,16 +1100,13 @@ pub async fn get_safety_check_db(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("安全检查不存在")),
+        Ok(None) => return ApiResponse::not_found("安全检查不存在"),
         Err(e) => {
             tracing::error!("Failed to get safety check: {}", e);
-            return Json(ApiResponse::server_error("获取安全检查失败"));
+            return ApiResponse::server_error("获取安全检查失败");
         }
     };
-    Json(ApiResponse::success(
-        safety_check_to_json(&row),
-        "获取安全检查成功",
-    ))
+    ApiResponse::success(safety_check_to_json(&row), "获取安全检查成功")
 }
 
 #[utoipa::path(
@@ -1129,7 +1124,7 @@ pub async fn update_safety_check_db(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_bind = resolve_inspection_tenant(&claims).to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -1185,16 +1180,13 @@ pub async fn update_safety_check_db(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("安全检查不存在")),
+        Ok(None) => return ApiResponse::not_found("安全检查不存在"),
         Err(e) => {
             tracing::error!("Failed to update safety check: {}", e);
-            return Json(ApiResponse::server_error("安全检查更新失败"));
+            return ApiResponse::server_error("安全检查更新失败");
         }
     };
-    Json(ApiResponse::success(
-        safety_check_to_json(&row),
-        "安全检查更新成功",
-    ))
+    ApiResponse::success(safety_check_to_json(&row), "安全检查更新成功")
 }
 
 #[utoipa::path(
@@ -1210,7 +1202,7 @@ pub async fn delete_safety_check_db(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_inspection_tenant(&claims).to_string();
     let sql = r#"
         UPDATE ehs.safety_checks
@@ -1228,13 +1220,13 @@ pub async fn delete_safety_check_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete safety check: {}", e);
-            return Json(ApiResponse::server_error("安全检查删除失败"));
+            return ApiResponse::server_error("安全检查删除失败");
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("安全检查不存在"));
+        return ApiResponse::not_found("安全检查不存在");
     }
-    Json(ApiResponse::success((), "安全检查删除成功"))
+    ApiResponse::success((), "安全检查删除成功")
 }
 
 /// ehs.safety_checks 行 → serde_json::Value（与 create_safety_check 返回契约一致）

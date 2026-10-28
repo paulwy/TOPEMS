@@ -179,7 +179,7 @@ async fn list_projects(
     State(state): State<AppState>,
     headers: HeaderMap,
     axum::extract::Query(query): axum::extract::Query<ProjectQuery>,
-) -> Json<ApiResponse<ProjectListResponse>> {
+) -> ApiResponse<ProjectListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).clamp(1, 1000);
 
@@ -208,7 +208,7 @@ async fn list_projects(
         Ok(p) => p,
         Err(e) => {
             tracing::error!("获取项目列表失败: {}", e);
-            return Json(ApiResponse::server_error("获取项目列表失败"));
+            return ApiResponse::server_error("获取项目列表失败");
         }
     };
 
@@ -226,7 +226,7 @@ async fn list_projects(
 
     let total = filtered_projects.len() as i32;
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ProjectListResponse {
             projects: filtered_projects.clone(),
             items: filtered_projects,
@@ -235,7 +235,7 @@ async fn list_projects(
             page_size,
         },
         "获取项目列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -256,7 +256,7 @@ async fn create_project(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateProjectRequest>,
-) -> Json<ApiResponse<Project>> {
+) -> ApiResponse<Project> {
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = effective_tenant_id(&ctx, &claims);
@@ -355,7 +355,7 @@ async fn create_project(
                 });
             }
 
-            Json(ApiResponse::success(project, "创建项目成功"))
+            ApiResponse::success(project, "创建项目成功")
         }
         Err(sqlx::Error::RowNotFound) => {
             if let Err(e) = audit
@@ -371,7 +371,7 @@ async fn create_project(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::conflict("项目代码已存在"))
+            ApiResponse::conflict("项目代码已存在")
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -388,7 +388,7 @@ async fn create_project(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("创建项目失败: {}", e);
-            Json(ApiResponse::server_error("创建项目失败"))
+            ApiResponse::server_error("创建项目失败")
         }
     }
 }
@@ -412,7 +412,7 @@ async fn get_project(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Project>> {
+) -> ApiResponse<Project> {
     let result = sqlx::query_as::<_, Project>(only_own_schema_query!(
         "pm",
         r#"
@@ -435,11 +435,11 @@ async fn get_project(
     .await;
 
     match result {
-        Ok(Some(project)) => Json(ApiResponse::success(project, "获取项目成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目不存在")),
+        Ok(Some(project)) => ApiResponse::success(project, "获取项目成功"),
+        Ok(None) => ApiResponse::not_found("项目不存在"),
         Err(e) => {
             tracing::error!("获取项目失败: {}", e);
-            Json(ApiResponse::server_error("获取项目失败"))
+            ApiResponse::server_error("获取项目失败")
         }
     }
 }
@@ -466,7 +466,7 @@ async fn update_project(
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
     Json(req): Json<UpdateProjectRequest>,
-) -> Json<ApiResponse<Project>> {
+) -> ApiResponse<Project> {
     let now = Utc::now();
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"status": req.status}));
@@ -536,7 +536,7 @@ async fn update_project(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::success(project, "更新项目成功"))
+            ApiResponse::success(project, "更新项目成功")
         }
         Ok(None) => {
             if let Err(e) = audit
@@ -552,7 +552,7 @@ async fn update_project(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found("项目不存在"))
+            ApiResponse::not_found("项目不存在")
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -569,7 +569,7 @@ async fn update_project(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("更新项目失败: {}", e);
-            Json(ApiResponse::server_error("更新项目失败"))
+            ApiResponse::server_error("更新项目失败")
         }
     }
 }
@@ -594,7 +594,7 @@ async fn delete_project(
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let result = sqlx::query(only_own_schema_query!(
         "pm",
@@ -612,7 +612,7 @@ async fn delete_project(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::success(true, "删除项目成功"))
+            ApiResponse::success(true, "删除项目成功")
         }
         Ok(_) => {
             if let Err(e) = audit
@@ -628,7 +628,7 @@ async fn delete_project(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found("项目不存在"))
+            ApiResponse::not_found("项目不存在")
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -645,7 +645,7 @@ async fn delete_project(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("删除项目失败: {}", e);
-            Json(ApiResponse::server_error("删除项目失败"))
+            ApiResponse::server_error("删除项目失败")
         }
     }
 }
@@ -673,7 +673,7 @@ async fn delete_project(
 async fn get_project_dashboard(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ProjectDashboardResponse>> {
+) -> ApiResponse<ProjectDashboardResponse> {
     let project_result = sqlx::query_as::<_, Project>(only_own_schema_query!(
         "pm",
         "SELECT * FROM pm.projects WHERE deleted_at IS NULL AND id = $1"
@@ -684,10 +684,10 @@ async fn get_project_dashboard(
 
     let project = match project_result {
         Ok(Some(p)) => p,
-        Ok(None) => return Json(ApiResponse::not_found("项目不存在")),
+        Ok(None) => return ApiResponse::not_found("项目不存在"),
         Err(e) => {
             tracing::error!("获取项目失败: {}", e);
-            return Json(ApiResponse::server_error("获取项目失败"));
+            return ApiResponse::server_error("获取项目失败");
         }
     };
 
@@ -779,7 +779,7 @@ async fn get_project_dashboard(
         risks,
     };
 
-    Json(ApiResponse::success(response, "获取项目仪表盘成功"))
+    ApiResponse::success(response, "获取项目仪表盘成功")
 }
 
 #[utoipa::path(
@@ -799,7 +799,7 @@ async fn get_project_dashboard(
 async fn get_project_gantt(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ProjectGanttResponse>> {
+) -> ApiResponse<ProjectGanttResponse> {
     let phases_result =
         sqlx::query_as::<_, crate::models::project_phase::ProjectPhase>(only_own_schema_query!(
             "pm",
@@ -863,7 +863,7 @@ async fn get_project_gantt(
         resources: Vec::new(),
     };
 
-    Json(ApiResponse::success(response, "获取甘特图数据成功"))
+    ApiResponse::success(response, "获取甘特图数据成功")
 }
 
 #[cfg(test)]
@@ -1213,7 +1213,7 @@ pub struct KanbanBoardResponse {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn get_kanban_board(State(state): State<AppState>) -> Json<ApiResponse<KanbanBoardResponse>> {
+async fn get_kanban_board(State(state): State<AppState>) -> ApiResponse<KanbanBoardResponse> {
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "SELECT id::TEXT, title, description, priority, status, assignee, COALESCE(progress, 0) AS progress FROM pm.pm_tasks WHERE deleted_at IS NULL ORDER BY created_at DESC"
@@ -1225,7 +1225,7 @@ async fn get_kanban_board(State(state): State<AppState>) -> Json<ApiResponse<Kan
         Ok(rows) => rows,
         Err(e) => {
             tracing::error!("获取看板任务失败: {}", e);
-            return Json(ApiResponse::server_error("获取看板任务失败"));
+            return ApiResponse::server_error("获取看板任务失败");
         }
     };
 
@@ -1252,7 +1252,7 @@ async fn get_kanban_board(State(state): State<AppState>) -> Json<ApiResponse<Kan
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         KanbanBoardResponse {
             columns: vec![
                 KanbanColumn {
@@ -1282,7 +1282,7 @@ async fn get_kanban_board(State(state): State<AppState>) -> Json<ApiResponse<Kan
             ],
         },
         "获取看板成功",
-    ))
+    )
 }
 
 /// 项目里程碑时间线：聚合 pm.project_milestones + pm.projects 名称
@@ -1298,7 +1298,7 @@ async fn get_kanban_board(State(state): State<AppState>) -> Json<ApiResponse<Kan
 )]
 async fn get_milestones_timeline(
     State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         r#"
@@ -1319,7 +1319,7 @@ async fn get_milestones_timeline(
         Ok(rows) => rows,
         Err(e) => {
             tracing::error!("获取里程碑时间线失败: {}", e);
-            return Json(ApiResponse::server_error("获取里程碑时间线失败"));
+            return ApiResponse::server_error("获取里程碑时间线失败");
         }
     };
 
@@ -1341,5 +1341,5 @@ async fn get_milestones_timeline(
         })
         .collect();
 
-    Json(ApiResponse::success(items, "里程碑时间线获取成功"))
+    ApiResponse::success(items, "里程碑时间线获取成功")
 }

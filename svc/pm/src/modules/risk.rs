@@ -80,11 +80,11 @@ pub fn create_routes(pool: PgPool) -> Router {
 async fn get_project_risks(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<ProjectRisk>>> {
+) -> ApiResponse<Vec<ProjectRisk>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let risks = sqlx::query_as::<_, ProjectRisk>(
         only_own_schema_query!("pm", "SELECT id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_at, updated_at FROM pm.project_risks WHERE project_id = $1 ORDER BY risk_score DESC"),
@@ -94,10 +94,10 @@ async fn get_project_risks(
     .await;
 
     match risks {
-        Ok(r) => Json(ApiResponse::success(r, "获取项目风险列表成功")),
+        Ok(r) => ApiResponse::success(r, "获取项目风险列表成功"),
         Err(e) => {
             tracing::error!("获取风险失败: {}", e);
-            Json(ApiResponse::server_error("获取风险失败"))
+            ApiResponse::server_error("获取风险失败")
         }
     }
 }
@@ -118,11 +118,11 @@ async fn get_project_risks(
 async fn get_risk(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ProjectRisk>> {
+) -> ApiResponse<ProjectRisk> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let risk = sqlx::query_as::<_, ProjectRisk>(only_own_schema_query!("pm", "SELECT id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_at, updated_at FROM pm.project_risks WHERE id = $1"))
         .bind(id)
@@ -130,11 +130,11 @@ async fn get_risk(
         .await;
 
     match risk {
-        Ok(r) => Json(ApiResponse::success(r, "获取风险详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("风险不存在")),
+        Ok(r) => ApiResponse::success(r, "获取风险详情成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("风险不存在"),
         Err(e) => {
             tracing::error!("获取风险失败: {}", e);
-            Json(ApiResponse::server_error("获取风险失败"))
+            ApiResponse::server_error("获取风险失败")
         }
     }
 }
@@ -147,11 +147,11 @@ async fn create_risk(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRiskRequest>,
-) -> Json<ApiResponse<ProjectRisk>> {
+) -> ApiResponse<ProjectRisk> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -201,7 +201,7 @@ async fn create_risk(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::success(r, "创建风险成功"))
+            ApiResponse::success(r, "创建风险成功")
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -218,7 +218,7 @@ async fn create_risk(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("创建风险失败: {}", e);
-            Json(ApiResponse::server_error("创建风险失败"))
+            ApiResponse::server_error("创建风险失败")
         }
     }
 }
@@ -229,11 +229,11 @@ async fn update_risk(
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
     Json(req): Json<UpdateRiskRequest>,
-) -> Json<ApiResponse<ProjectRisk>> {
+) -> ApiResponse<ProjectRisk> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"status": req.status, "risk_score": req.risk_score}));
@@ -291,7 +291,7 @@ async fn update_risk(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::success(r, "更新风险成功"))
+            ApiResponse::success(r, "更新风险成功")
         }
         Err(sqlx::Error::RowNotFound) => {
             if let Err(e) = audit
@@ -307,7 +307,7 @@ async fn update_risk(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found("风险不存在"))
+            ApiResponse::not_found("风险不存在")
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -324,7 +324,7 @@ async fn update_risk(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("更新风险失败: {}", e);
-            Json(ApiResponse::server_error("更新风险失败"))
+            ApiResponse::server_error("更新风险失败")
         }
     }
 }
@@ -345,11 +345,11 @@ async fn update_risk(
 async fn get_risk_events(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<RiskEvent>>> {
+) -> ApiResponse<Vec<RiskEvent>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let events = sqlx::query_as::<_, RiskEvent>(
         only_own_schema_query!("pm", "SELECT id, risk_id, event_type, event_description, occurred_at, reported_by, created_at FROM pm.risk_events WHERE risk_id = $1 ORDER BY occurred_at DESC"),
@@ -359,10 +359,10 @@ async fn get_risk_events(
     .await;
 
     match events {
-        Ok(e) => Json(ApiResponse::success(e, "获取风险事件列表成功")),
+        Ok(e) => ApiResponse::success(e, "获取风险事件列表成功"),
         Err(e) => {
             tracing::error!("获取风险事件失败: {}", e);
-            Json(ApiResponse::server_error("获取风险事件失败"))
+            ApiResponse::server_error("获取风险事件失败")
         }
     }
 }
@@ -373,11 +373,11 @@ async fn create_risk_event(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRiskEventRequest>,
-) -> Json<ApiResponse<RiskEvent>> {
+) -> ApiResponse<RiskEvent> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let event_id = Uuid::new_v4();
     let now = Utc::now();
@@ -397,10 +397,10 @@ async fn create_risk_event(
     .await;
 
     match event {
-        Ok(e) => Json(ApiResponse::success(e, "创建风险事件成功")),
+        Ok(e) => ApiResponse::success(e, "创建风险事件成功"),
         Err(e) => {
             tracing::error!("创建风险事件失败: {}", e);
-            Json(ApiResponse::server_error("创建风险事件失败"))
+            ApiResponse::server_error("创建风险事件失败")
         }
     }
 }

@@ -83,7 +83,7 @@ pub async fn list_quality_tasks(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<QualityTaskQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -116,7 +116,7 @@ pub async fn list_quality_tasks(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("quality-tasks count 失败: {}", e);
-            return Json(ApiResponse::server_error("获取质检任务列表失败"));
+            return ApiResponse::server_error("获取质检任务列表失败");
         }
     };
 
@@ -158,14 +158,14 @@ pub async fn list_quality_tasks(
         Ok(rows) => rows,
         Err(e) => {
             tracing::error!("quality-tasks list 失败: {}", e);
-            return Json(ApiResponse::server_error("获取质检任务列表失败"));
+            return ApiResponse::server_error("获取质检任务列表失败");
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "获取质检任务列表成功",
-    ))
+    )
 }
 
 /// GET /quality-tasks/{id} —— 质检任务详情
@@ -173,7 +173,7 @@ pub async fn get_quality_task(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -184,7 +184,7 @@ pub async fn get_quality_task(
     };
     let id = match uuid::Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的质检任务ID")),
+        Err(_) => return ApiResponse::bad_request("无效的质检任务ID"),
     };
 
     let row = sqlx::query_as::<_, QualityTask>(only_own_schema_query!(
@@ -215,14 +215,14 @@ pub async fn get_quality_task(
     .await;
 
     match row {
-        Ok(Some(task)) => Json(ApiResponse::success(
+        Ok(Some(task)) => ApiResponse::success(
             serde_json::to_value(task).unwrap_or(serde_json::json!({})),
             "获取质检任务详情成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("质检任务不存在")),
+        ),
+        Ok(None) => ApiResponse::not_found("质检任务不存在"),
         Err(e) => {
             tracing::error!("quality-task get 失败: {}", e);
-            Json(ApiResponse::server_error("获取质检任务详情失败"))
+            ApiResponse::server_error("获取质检任务详情失败")
         }
     }
 }
@@ -233,7 +233,7 @@ pub async fn update_quality_task_status(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<QualityTaskStatusRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -244,10 +244,10 @@ pub async fn update_quality_task_status(
     };
     let id = match uuid::Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的质检任务ID")),
+        Err(_) => return ApiResponse::bad_request("无效的质检任务ID"),
     };
     if req.status.is_empty() {
-        return Json(ApiResponse::bad_request("状态不能为空"));
+        return ApiResponse::bad_request("状态不能为空");
     }
 
     let updated = sqlx::query(only_own_schema_query!(
@@ -265,14 +265,14 @@ pub async fn update_quality_task_status(
     .await;
 
     match updated {
-        Ok(r) if r.rows_affected() == 0 => Json(ApiResponse::not_found("质检任务不存在")),
-        Ok(_) => Json(ApiResponse::success(
+        Ok(r) if r.rows_affected() == 0 => ApiResponse::not_found("质检任务不存在"),
+        Ok(_) => ApiResponse::success(
             serde_json::json!({ "id": id, "status": req.status }),
             "更新质检任务状态成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("quality-task status 更新失败: {}", e);
-            Json(ApiResponse::server_error("更新质检任务状态失败"))
+            ApiResponse::server_error("更新质检任务状态失败")
         }
     }
 }
@@ -282,7 +282,7 @@ pub async fn list_defect_records(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<DefectRecordQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -310,7 +310,7 @@ pub async fn list_defect_records(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("defect-records count 失败: {}", e);
-            return Json(ApiResponse::server_error("获取缺陷记录列表失败"));
+            return ApiResponse::server_error("获取缺陷记录列表失败");
         }
     };
 
@@ -342,14 +342,14 @@ pub async fn list_defect_records(
         Ok(rows) => rows,
         Err(e) => {
             tracing::error!("defect-records list 失败: {}", e);
-            return Json(ApiResponse::server_error("获取缺陷记录列表失败"));
+            return ApiResponse::server_error("获取缺陷记录列表失败");
         }
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "获取缺陷记录列表成功",
-    ))
+    )
 }
 
 /// POST /defect-records —— 上报缺陷记录
@@ -357,7 +357,7 @@ pub async fn report_defect(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ReportDefectRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -369,11 +369,11 @@ pub async fn report_defect(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     if req.item_name.is_empty() {
-        return Json(ApiResponse::bad_request("缺陷项目名称不能为空"));
+        return ApiResponse::bad_request("缺陷项目名称不能为空");
     }
     let inspection_id = match req.inspection_id.as_deref().map(uuid::Uuid::parse_str) {
         Some(Ok(u)) => u,
-        Some(Err(_)) => return Json(ApiResponse::bad_request("无效的检查ID")),
+        Some(Err(_)) => return ApiResponse::bad_request("无效的检查ID"),
         None => uuid::Uuid::nil(),
     };
 
@@ -397,13 +397,13 @@ pub async fn report_defect(
     .await;
 
     match inserted {
-        Ok(record) => Json(ApiResponse::success(
+        Ok(record) => ApiResponse::success(
             serde_json::to_value(record).unwrap_or(serde_json::json!({})),
             "上报缺陷记录成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("defect-record 创建失败: {}", e);
-            Json(ApiResponse::server_error("上报缺陷记录失败"))
+            ApiResponse::server_error("上报缺陷记录失败")
         }
     }
 }

@@ -152,7 +152,7 @@ pub async fn scan_barcode(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -162,7 +162,7 @@ pub async fn scan_barcode(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::bad_request("无效的用户ID")),
+                ApiResponse::bad_request("无效的用户ID"),
             );
         }
     };
@@ -201,7 +201,7 @@ pub async fn scan_barcode(
             tracing::error!("保存扫描记录失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("保存扫描记录失败")),
+                ApiResponse::server_error("保存扫描记录失败"),
             );
         }
     };
@@ -218,7 +218,7 @@ pub async fn scan_barcode(
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(response, "条码扫描成功")),
+        ApiResponse::success(response, "条码扫描成功"),
     )
 }
 
@@ -331,7 +331,7 @@ pub async fn get_scan_history(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -341,7 +341,7 @@ pub async fn get_scan_history(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::bad_request("无效的用户ID")),
+                ApiResponse::bad_request("无效的用户ID"),
             );
         }
     };
@@ -371,7 +371,7 @@ pub async fn get_scan_history(
             tracing::error!("获取扫描历史失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("获取扫描历史失败")),
+                ApiResponse::server_error("获取扫描历史失败"),
             );
         }
     };
@@ -385,7 +385,7 @@ pub async fn get_scan_history(
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(response, "获取扫描历史成功")),
+        ApiResponse::success(response, "获取扫描历史成功"),
     )
 }
 
@@ -437,7 +437,7 @@ pub async fn get_scan_by_id(
             tracing::error!("查询扫描记录失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("查询扫描记录失败")),
+                ApiResponse::server_error("查询扫描记录失败"),
             );
         }
     };
@@ -449,18 +449,18 @@ pub async fn get_scan_by_id(
                 tracing::error!("解析扫描记录失败: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiResponse::server_error("解析扫描记录失败")),
+                    ApiResponse::server_error("解析扫描记录失败"),
                 );
             }
         };
         (
             StatusCode::OK,
-            Json(ApiResponse::success(scan, "获取扫描记录成功")),
+            ApiResponse::success(scan, "获取扫描记录成功"),
         )
     } else {
         (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::not_found("扫描记录不存在")),
+            ApiResponse::not_found("扫描记录不存在"),
         )
     }
 }
@@ -514,7 +514,7 @@ pub async fn get_supported_barcode_types(
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(types, "获取支持的条码类型成功")),
+        ApiResponse::success(types, "获取支持的条码类型成功"),
     )
 }
 
@@ -529,7 +529,7 @@ pub async fn delete_scan_record(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -539,7 +539,7 @@ pub async fn delete_scan_record(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::bad_request("无效的用户ID")),
+                ApiResponse::bad_request("无效的用户ID"),
             );
         }
     };
@@ -554,19 +554,18 @@ pub async fn delete_scan_record(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => (
-            StatusCode::OK,
-            Json(ApiResponse::success((), "删除扫描记录成功")),
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            (StatusCode::OK, ApiResponse::success((), "删除扫描记录成功"))
+        }
         Ok(_) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::not_found("扫描记录不存在或无权删除")),
+            ApiResponse::not_found("扫描记录不存在或无权删除"),
         ),
         Err(e) => {
             tracing::error!("删除扫描记录失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("删除扫描记录失败")),
+                ApiResponse::server_error("删除扫描记录失败"),
             )
         }
     }

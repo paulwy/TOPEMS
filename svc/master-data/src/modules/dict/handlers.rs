@@ -62,7 +62,7 @@ pub async fn list_dict_types(
     State(state): State<AppState>,
     headers: HeaderMap,
     Query(query): Query<DictTypeQuery>,
-) -> Json<ApiResponse<DictTypeListResponse>> {
+) -> ApiResponse<DictTypeListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -86,9 +86,7 @@ pub async fn list_dict_types(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询字典类型总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询字典类型总数失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询字典类型总数失败".to_string()));
         }
     };
 
@@ -115,18 +113,16 @@ pub async fn list_dict_types(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询字典类型列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询字典类型列表失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询字典类型列表失败".to_string()));
         }
     };
 
-    Json(api_success(DictTypeListResponse {
+    api_success(DictTypeListResponse {
         items,
         total,
         page,
         page_size,
-    }))
+    })
 }
 
 #[utoipa::path(
@@ -147,7 +143,7 @@ pub async fn get_dict_type(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<DictType>> {
+) -> ApiResponse<DictType> {
     let sql = format!(
         r#"SELECT {} FROM core_dict_types WHERE deleted_at IS NULL AND id = $1"#,
         dict_type_columns("$2")
@@ -162,17 +158,13 @@ pub async fn get_dict_type(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询字典类型详情失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询字典类型详情失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询字典类型详情失败".to_string()));
         }
     };
 
     match dict_type {
-        Some(dt) => Json(api_success(dt)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "字典类型不存在".to_string(),
-        ))),
+        Some(dt) => api_success(dt),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("字典类型不存在".to_string())),
     }
 }
 
@@ -192,16 +184,16 @@ pub async fn create_dict_type(
     State(state): State<AppState>,
     headers: HeaderMap,
     Json(req): Json<CreateDictTypeRequest>,
-) -> Json<ApiResponse<DictType>> {
+) -> ApiResponse<DictType> {
     if req.code.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "字典类型编码不能为空".to_string(),
-        )));
+        ));
     }
     if req.name.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "字典类型名称不能为空".to_string(),
-        )));
+        ));
     }
 
     let sql = format!(
@@ -224,13 +216,11 @@ pub async fn create_dict_type(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建字典类型失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "创建字典类型失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("创建字典类型失败".to_string()));
         }
     };
 
-    Json(api_success(dict_type))
+    api_success(dict_type)
 }
 
 #[utoipa::path(
@@ -253,7 +243,7 @@ pub async fn update_dict_type(
     headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDictTypeRequest>,
-) -> Json<ApiResponse<DictType>> {
+) -> ApiResponse<DictType> {
     let sql = format!(
         r#"UPDATE core_dict_types
            SET code = COALESCE($1, code),
@@ -284,17 +274,13 @@ pub async fn update_dict_type(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("更新字典类型失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "更新字典类型失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("更新字典类型失败".to_string()));
         }
     };
 
     match dict_type {
-        Some(dt) => Json(api_success(dt)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "字典类型不存在".to_string(),
-        ))),
+        Some(dt) => api_success(dt),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("字典类型不存在".to_string())),
     }
 }
 
@@ -315,22 +301,18 @@ pub async fn update_dict_type(
 pub async fn delete_dict_type(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let result = sqlx::query(r#"UPDATE core_dict_types SET deleted_at = NOW() WHERE id = $1"#)
         .bind(id)
         .execute(&state.db)
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(api_success("字典类型删除成功".to_string())),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "字典类型不存在".to_string(),
-        ))),
+        Ok(r) if r.rows_affected() > 0 => api_success("字典类型删除成功".to_string()),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("字典类型不存在".to_string())),
         Err(e) => {
             tracing::error!("删除字典类型失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除字典类型失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除字典类型失败".to_string()))
         }
     }
 }
@@ -359,7 +341,7 @@ pub async fn list_dict_items(
     headers: HeaderMap,
     Path(dict_type_id): Path<Uuid>,
     Query(query): Query<DictItemQuery>,
-) -> Json<ApiResponse<DictItemListResponse>> {
+) -> ApiResponse<DictItemListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -382,9 +364,7 @@ pub async fn list_dict_items(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询字典项总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询字典项总数失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询字典项总数失败".to_string()));
         }
     };
 
@@ -411,18 +391,16 @@ pub async fn list_dict_items(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询字典项列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询字典项列表失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询字典项列表失败".to_string()));
         }
     };
 
-    Json(api_success(DictItemListResponse {
+    api_success(DictItemListResponse {
         items,
         total,
         page,
         page_size,
-    }))
+    })
 }
 
 #[utoipa::path(
@@ -443,7 +421,7 @@ pub async fn get_dict_item(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<DictItem>> {
+) -> ApiResponse<DictItem> {
     let sql = format!(
         r#"SELECT {} FROM core_dict_items WHERE deleted_at IS NULL AND id = $1"#,
         dict_item_columns("$2")
@@ -458,17 +436,13 @@ pub async fn get_dict_item(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询字典项详情失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询字典项详情失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询字典项详情失败".to_string()));
         }
     };
 
     match dict_item {
-        Some(di) => Json(api_success(di)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "字典项不存在".to_string(),
-        ))),
+        Some(di) => api_success(di),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("字典项不存在".to_string())),
     }
 }
 
@@ -488,16 +462,16 @@ pub async fn create_dict_item(
     State(state): State<AppState>,
     headers: HeaderMap,
     Json(req): Json<CreateDictItemRequest>,
-) -> Json<ApiResponse<DictItem>> {
+) -> ApiResponse<DictItem> {
     if req.code.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "字典项编码不能为空".to_string(),
-        )));
+        ));
     }
     if req.name.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "字典项名称不能为空".to_string(),
-        )));
+        ));
     }
 
     let sql = format!(
@@ -523,13 +497,11 @@ pub async fn create_dict_item(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建字典项失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "创建字典项失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("创建字典项失败".to_string()));
         }
     };
 
-    Json(api_success(dict_item))
+    api_success(dict_item)
 }
 
 #[utoipa::path(
@@ -552,7 +524,7 @@ pub async fn update_dict_item(
     headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDictItemRequest>,
-) -> Json<ApiResponse<DictItem>> {
+) -> ApiResponse<DictItem> {
     let sql = format!(
         r#"UPDATE core_dict_items
            SET code = COALESCE($1, code),
@@ -587,17 +559,13 @@ pub async fn update_dict_item(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("更新字典项失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "更新字典项失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("更新字典项失败".to_string()));
         }
     };
 
     match dict_item {
-        Some(di) => Json(api_success(di)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "字典项不存在".to_string(),
-        ))),
+        Some(di) => api_success(di),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("字典项不存在".to_string())),
     }
 }
 
@@ -618,22 +586,18 @@ pub async fn update_dict_item(
 pub async fn delete_dict_item(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let result = sqlx::query(r#"UPDATE core_dict_items SET deleted_at = NOW() WHERE id = $1"#)
         .bind(id)
         .execute(&state.db)
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(api_success("字典项删除成功".to_string())),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "字典项不存在".to_string(),
-        ))),
+        Ok(r) if r.rows_affected() > 0 => api_success("字典项删除成功".to_string()),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("字典项不存在".to_string())),
         Err(e) => {
             tracing::error!("删除字典项失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除字典项失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除字典项失败".to_string()))
         }
     }
 }
@@ -654,20 +618,18 @@ pub async fn batch_create_dict_items(
     State(state): State<AppState>,
     headers: HeaderMap,
     Json(req): Json<BatchCreateDictItemsRequest>,
-) -> Json<ApiResponse<Vec<DictItem>>> {
+) -> ApiResponse<Vec<DictItem>> {
     if req.items.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "字典项列表不能为空".to_string(),
-        )));
+        ));
     }
 
     let mut tx = match state.db.begin().await {
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("开启事务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "开启事务失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("开启事务失败".to_string()));
         }
     };
 
@@ -697,9 +659,7 @@ pub async fn batch_create_dict_items(
             Err(e) => {
                 tracing::error!("批量创建字典项失败: {}", e);
                 let _ = tx.rollback().await;
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "批量创建字典项失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("批量创建字典项失败".to_string()));
             }
         };
         results.push(dict_item);
@@ -707,12 +667,10 @@ pub async fn batch_create_dict_items(
 
     if let Err(e) = tx.commit().await {
         tracing::error!("提交事务失败: {}", e);
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "提交事务失败".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("提交事务失败".to_string()));
     }
 
-    Json(api_success(results))
+    api_success(results)
 }
 
 #[utoipa::path(

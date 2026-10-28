@@ -118,7 +118,7 @@ pub async fn get_profile(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -128,7 +128,7 @@ pub async fn get_profile(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::bad_request("无效的用户ID")),
+                ApiResponse::bad_request("无效的用户ID"),
             );
         }
     };
@@ -144,21 +144,21 @@ pub async fn get_profile(
             Ok(p) => p,
             Err(e) => {
                 tracing::error!("解析用户信息失败: {}", e);
-                return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::server_error("内部服务器错误")));
+                return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("内部服务器错误"));
             }
         },
         Ok(None) => {
-            return (StatusCode::NOT_FOUND, Json(ApiResponse::not_found("用户不存在")));
+            return (StatusCode::NOT_FOUND, ApiResponse::not_found("用户不存在"));
         }
         Err(e) => {
             tracing::error!("查询用户信息失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::server_error("内部服务器错误")));
+            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("内部服务器错误"));
         }
     };
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(profile, "获取用户信息成功")),
+        ApiResponse::success(profile, "获取用户信息成功"),
     )
 }
 
@@ -174,7 +174,7 @@ pub async fn update_profile(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -184,7 +184,7 @@ pub async fn update_profile(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::bad_request("无效的用户ID")),
+                ApiResponse::bad_request("无效的用户ID"),
             );
         }
     };
@@ -203,19 +203,15 @@ pub async fn update_profile(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => (
-            StatusCode::OK,
-            Json(ApiResponse::success((), "更新用户信息成功")),
-        ),
-        Ok(_) => (
-            StatusCode::NOT_FOUND,
-            Json(ApiResponse::not_found("用户不存在")),
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            (StatusCode::OK, ApiResponse::success((), "更新用户信息成功"))
+        }
+        Ok(_) => (StatusCode::NOT_FOUND, ApiResponse::not_found("用户不存在")),
         Err(e) => {
             tracing::error!("更新用户信息失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("内部服务器错误")),
+                ApiResponse::server_error("内部服务器错误"),
             )
         }
     }
@@ -248,7 +244,7 @@ pub async fn upload_avatar(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -258,7 +254,7 @@ pub async fn upload_avatar(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::bad_request("无效的用户ID")),
+                ApiResponse::bad_request("无效的用户ID"),
             );
         }
     };
@@ -268,7 +264,7 @@ pub async fn upload_avatar(
         _ => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::bad_request("缺少头像文件")),
+                ApiResponse::bad_request("缺少头像文件"),
             )
         }
     };
@@ -280,7 +276,7 @@ pub async fn upload_avatar(
         tracing::error!("创建上传目录失败: {}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::server_error("创建上传目录失败")),
+            ApiResponse::server_error("创建上传目录失败"),
         );
     }
 
@@ -288,7 +284,7 @@ pub async fn upload_avatar(
         tracing::error!("保存头像失败: {}", e);
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::server_error("保存头像失败")),
+            ApiResponse::server_error("保存头像失败"),
         );
     }
 
@@ -308,13 +304,13 @@ pub async fn upload_avatar(
     match result {
         Ok(_) => (
             StatusCode::OK,
-            Json(ApiResponse::success(avatar_url, "上传头像成功")),
+            ApiResponse::success(avatar_url, "上传头像成功"),
         ),
         Err(e) => {
             tracing::error!("更新头像URL失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("更新头像URL失败")),
+                ApiResponse::server_error("更新头像URL失败"),
             )
         }
     }
@@ -438,7 +434,7 @@ pub async fn get_user_by_id(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -457,25 +453,22 @@ pub async fn get_user_by_id(
         Ok(Some(r)) => match UserProfile::from_row(&r) {
             Ok(profile) => (
                 StatusCode::OK,
-                Json(ApiResponse::success(profile, "获取用户详情成功")),
+                ApiResponse::success(profile, "获取用户详情成功"),
             ),
             Err(e) => {
                 tracing::error!("解析用户详情失败: {}", e);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiResponse::server_error("解析用户详情失败")),
+                    ApiResponse::server_error("解析用户详情失败"),
                 )
             }
         },
-        Ok(None) => (
-            StatusCode::NOT_FOUND,
-            Json(ApiResponse::not_found("用户不存在")),
-        ),
+        Ok(None) => (StatusCode::NOT_FOUND, ApiResponse::not_found("用户不存在")),
         Err(e) => {
             tracing::error!("查询用户详情失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("查询用户详情失败")),
+                ApiResponse::server_error("查询用户详情失败"),
             )
         }
     }
@@ -505,7 +498,7 @@ pub async fn list_users(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -542,17 +535,17 @@ pub async fn list_users(
                 .collect();
             (
                 StatusCode::OK,
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     serde_json::json!({ "items": users, "total": users.len() }),
                     "获取用户列表成功",
-                )),
+                ),
             )
         }
         Err(e) => {
             tracing::error!("查询用户列表失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("查询用户列表失败")),
+                ApiResponse::server_error("查询用户列表失败"),
             )
         }
     }
@@ -571,7 +564,7 @@ pub async fn get_department_members(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -595,14 +588,14 @@ pub async fn get_department_members(
                 .collect();
             (
                 StatusCode::OK,
-                Json(ApiResponse::success(users, "获取部门成员成功")),
+                ApiResponse::success(users, "获取部门成员成功"),
             )
         }
         Err(e) => {
             tracing::error!("查询部门成员失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("查询部门成员失败")),
+                ApiResponse::server_error("查询部门成员失败"),
             )
         }
     }
@@ -622,7 +615,7 @@ pub async fn update_user_status(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -641,20 +634,17 @@ pub async fn update_user_status(
     match exists {
         Ok(Some(_)) => (
             StatusCode::OK,
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "id": id, "status": status }),
                 "用户状态已更新（占位实现，待 IAM 状态字段接入）",
-            )),
+            ),
         ),
-        Ok(None) => (
-            StatusCode::NOT_FOUND,
-            Json(ApiResponse::not_found("用户不存在")),
-        ),
+        Ok(None) => (StatusCode::NOT_FOUND, ApiResponse::not_found("用户不存在")),
         Err(e) => {
             tracing::error!("查询用户失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("查询用户失败")),
+                ApiResponse::server_error("查询用户失败"),
             )
         }
     }
@@ -670,7 +660,7 @@ pub async fn get_permissions(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -688,7 +678,7 @@ pub async fn get_permissions(
     });
     (
         StatusCode::OK,
-        Json(ApiResponse::success(permissions, "获取用户权限成功")),
+        ApiResponse::success(permissions, "获取用户权限成功"),
     )
 }
 

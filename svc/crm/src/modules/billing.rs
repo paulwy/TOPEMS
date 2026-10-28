@@ -53,15 +53,15 @@ pub async fn list_billing_records(
     Extension(claims): Extension<Claims>,
     Query(params): Query<BillingQueryParams>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::BillingRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1).min(1000);
@@ -118,7 +118,7 @@ pub async fn list_billing_records(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": records,
                     "total": total,
@@ -126,13 +126,11 @@ pub async fn list_billing_records(
                     "page_size": page_size
                 }),
                 "获取账单列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取账单列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取账单列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取账单列表失败".to_string()))
         }
     }
 }
@@ -158,15 +156,15 @@ pub async fn get_billing_record(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<BillingRecord>> {
+) -> ApiResponse<BillingRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::BillingRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -192,15 +190,11 @@ pub async fn get_billing_record(
     .await;
 
     match result {
-        Ok(Some(record)) => Json(ApiResponse::success(record, "获取账单成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "账单不存在".to_string(),
-        ))),
+        Ok(Some(record)) => ApiResponse::success(record, "获取账单成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("账单不存在".to_string())),
         Err(e) => {
             tracing::error!("获取账单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取账单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取账单失败".to_string()))
         }
     }
 }
@@ -213,15 +207,15 @@ async fn create_billing_record(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateBillingRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::BillingWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -282,21 +276,19 @@ async fn create_billing_record(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             let id: Uuid = row.get("id");
             tracing::info!("[crm] 账单创建成功 - invoice_no={}", invoice_no);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "id": id, "invoice_no": invoice_no }),
                 "创建账单成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("创建账单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建账单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建账单失败".to_string()))
         }
     }
 }
@@ -310,15 +302,15 @@ async fn update_billing_record(
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
     Json(req): Json<UpdateBillingRequest>,
-) -> Json<ApiResponse<BillingRecord>> {
+) -> ApiResponse<BillingRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::BillingWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -371,19 +363,15 @@ async fn update_billing_record(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(record, "更新账单成功"))
+            ApiResponse::success(record, "更新账单成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "账单不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("账单不存在".to_string())),
         Err(e) => {
             tracing::error!("更新账单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新账单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新账单失败".to_string()))
         }
     }
 }
@@ -396,15 +384,15 @@ async fn delete_billing_record(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::BillingWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -431,22 +419,15 @@ async fn delete_billing_record(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
-                serde_json::json!({ "deleted": true }),
-                "删除账单成功",
-            ))
+            ApiResponse::success(serde_json::json!({ "deleted": true }), "删除账单成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "账单不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("账单不存在".to_string())),
         Err(e) => {
             tracing::error!("删除账单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除账单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除账单失败".to_string()))
         }
     }
 }
@@ -472,15 +453,15 @@ pub async fn mark_billing_paid(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::BillingWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -512,22 +493,18 @@ pub async fn mark_billing_paid(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "id": id, "status": "paid", "paid_at": now }),
                 "标记已收款成功",
-            ))
+            )
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "账单不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("账单不存在".to_string())),
         Err(e) => {
             tracing::error!("标记已收款失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "标记已收款失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("标记已收款失败".to_string()))
         }
     }
 }
@@ -553,15 +530,15 @@ pub async fn send_billing_notification(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::BillingWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -584,16 +561,14 @@ pub async fn send_billing_notification(
     .unwrap_or(0);
 
     if exists == 0 {
-        return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "账单不存在".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ResourceNotFound("账单不存在".to_string()));
     }
     // 通知设施为后续专项（站内信/邮件）；当前记录日志并返回已入队
     tracing::info!("[crm] 账单催款通知已入队 - id={}", id);
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "id": id, "queued": true }),
         "催款通知已入队",
-    ))
+    )
 }
 
 #[allow(dead_code)]

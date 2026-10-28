@@ -108,7 +108,7 @@ pub async fn get_all_patrol_records(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -126,13 +126,13 @@ pub async fn get_all_patrol_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("查询巡逻记录失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::server_error("查询失败")));
+            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("查询失败"));
         }
     };
 
     (
         StatusCode::OK,
-        axum::Json(ApiResponse::success(records, "获取巡逻记录成功")),
+        ApiResponse::success(records, "获取巡逻记录成功"),
     )
 }
 
@@ -162,7 +162,7 @@ pub async fn get_patrol_record(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -179,17 +179,17 @@ pub async fn get_patrol_record(
     {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return (StatusCode::NOT_FOUND, axum::Json(ApiResponse::not_found("巡逻记录不存在")));
+            return (StatusCode::NOT_FOUND, ApiResponse::not_found("巡逻记录不存在"));
         }
         Err(e) => {
             tracing::error!("查询巡逻记录失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::server_error("查询失败")));
+            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("查询失败"));
         }
     };
 
     (
         StatusCode::OK,
-        axum::Json(ApiResponse::success(record, "获取巡逻记录成功")),
+        ApiResponse::success(record, "获取巡逻记录成功"),
     )
 }
 
@@ -216,7 +216,7 @@ pub async fn create_patrol_record(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -243,7 +243,7 @@ pub async fn create_patrol_record(
     .await
     {
         tracing::error!("创建巡逻记录失败: {}", e);
-        return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::server_error("创建失败")));
+        return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("创建失败"));
     }
 
     let record = PatrolRecord {
@@ -262,7 +262,7 @@ pub async fn create_patrol_record(
 
     (
         StatusCode::CREATED,
-        axum::Json(ApiResponse::success(record, "创建巡逻记录成功")),
+        ApiResponse::success(record, "创建巡逻记录成功"),
     )
 }
 
@@ -278,7 +278,7 @@ pub async fn update_patrol_record(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -294,11 +294,11 @@ pub async fn update_patrol_record(
     {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return (StatusCode::NOT_FOUND, axum::Json(ApiResponse::not_found("巡逻记录不存在或无权修改")));
+            return (StatusCode::NOT_FOUND, ApiResponse::not_found("巡逻记录不存在或无权修改"));
         }
         Err(e) => {
             tracing::error!("查询巡逻记录失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::server_error("查询失败")));
+            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("查询失败"));
         }
     };
 
@@ -327,13 +327,10 @@ pub async fn update_patrol_record(
     .await
     {
         tracing::error!("更新巡逻记录失败: {}", e);
-        return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(ApiResponse::server_error("更新失败")));
+        return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("更新失败"));
     }
 
-    (
-        StatusCode::OK,
-        axum::Json(ApiResponse::success((), "更新成功")),
-    )
+    (StatusCode::OK, ApiResponse::success((), "更新成功"))
 }
 
 pub async fn delete_patrol_record(
@@ -347,7 +344,7 @@ pub async fn delete_patrol_record(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -361,19 +358,16 @@ pub async fn delete_patrol_record(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => (
-            StatusCode::OK,
-            axum::Json(ApiResponse::success((), "删除成功")),
-        ),
+        Ok(r) if r.rows_affected() > 0 => (StatusCode::OK, ApiResponse::success((), "删除成功")),
         Ok(_) => (
             StatusCode::NOT_FOUND,
-            axum::Json(ApiResponse::not_found("巡逻记录不存在或无权删除")),
+            ApiResponse::not_found("巡逻记录不存在或无权删除"),
         ),
         Err(e) => {
             tracing::error!("删除巡逻记录失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                axum::Json(ApiResponse::server_error("删除失败")),
+                ApiResponse::server_error("删除失败"),
             )
         }
     }

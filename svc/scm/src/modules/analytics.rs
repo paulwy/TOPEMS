@@ -6,7 +6,7 @@ use axum::{
     extract::{Extension, State},
     http::HeaderMap,
     routing::get,
-    Json, Router,
+    Router,
 };
 use serde::{Deserialize, Serialize};
 
@@ -56,7 +56,7 @@ pub struct SupplierRankingItem {
 pub async fn get_purchase_trend(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<PurchaseTrendItem>>> {
+) -> ApiResponse<Vec<PurchaseTrendItem>> {
     tracing::info!("获取SCM采购趋势数据");
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -91,7 +91,7 @@ pub async fn get_purchase_trend(
         })
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 /// 获取采购状态分布
@@ -109,7 +109,7 @@ pub async fn get_purchase_trend(
 pub async fn get_purchase_status(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<PurchaseStatusItem>>> {
+) -> ApiResponse<Vec<PurchaseStatusItem>> {
     tracing::info!("获取SCM采购状态分布");
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -150,7 +150,7 @@ pub async fn get_purchase_status(
         })
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 /// 获取供应商采购排名
@@ -168,7 +168,7 @@ pub async fn get_supplier_ranking(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<SupplierRankingItem>>> {
+) -> ApiResponse<Vec<SupplierRankingItem>> {
     tracing::info!("获取SCM供应商采购排名");
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -204,7 +204,7 @@ pub async fn get_supplier_ranking(
         )
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 // ===== 路由注册 =====

@@ -57,11 +57,11 @@ pub async fn list_evaluations(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -71,7 +71,7 @@ pub async fn list_evaluations(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
@@ -112,7 +112,7 @@ pub async fn list_evaluations(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "evaluations": evaluations,
                     "total": total,
@@ -120,13 +120,11 @@ pub async fn list_evaluations(
                     "page_size": page_size
                 }),
                 "获取供应商评估列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取供应商评估列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取供应商评估列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取供应商评估列表失败".to_string()))
         }
     }
 }
@@ -139,11 +137,11 @@ pub async fn create_evaluation(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateSupplierEvaluationRequest>,
-) -> Json<ApiResponse<SupplierEvaluation>> {
+) -> ApiResponse<SupplierEvaluation> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -153,7 +151,7 @@ pub async fn create_evaluation(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
@@ -187,19 +185,14 @@ pub async fn create_evaluation(
 
     let (response, status, error_msg) = match &result {
         Ok(evaluation) => (
-            Json(ApiResponse::success(
-                evaluation.clone(),
-                "供应商评估创建成功",
-            )),
+            ApiResponse::success(evaluation.clone(), "供应商评估创建成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("创建供应商评估失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "供应商评估创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("供应商评估创建失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -216,7 +209,7 @@ pub async fn create_evaluation(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("rls commit failed: {}", e);
-                return Json(ApiResponse::server_error("提交事务失败"));
+                return ApiResponse::server_error("提交事务失败");
             }
         }
     }
@@ -260,11 +253,11 @@ pub async fn get_evaluation(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<SupplierEvaluation>> {
+) -> ApiResponse<SupplierEvaluation> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -274,7 +267,7 @@ pub async fn get_evaluation(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query_as::<_, SupplierEvaluation>(
@@ -289,15 +282,13 @@ pub async fn get_evaluation(
     .await;
 
     match result {
-        Ok(Some(evaluation)) => Json(ApiResponse::success(evaluation, "获取供应商评估成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(Some(evaluation)) => ApiResponse::success(evaluation, "获取供应商评估成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
             "供应商评估不存在".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("获取供应商评估失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取供应商评估失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取供应商评估失败".to_string()))
         }
     }
 }
@@ -311,11 +302,11 @@ pub async fn update_evaluation(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateSupplierEvaluationRequest>,
-) -> Json<ApiResponse<SupplierEvaluation>> {
+) -> ApiResponse<SupplierEvaluation> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -325,7 +316,7 @@ pub async fn update_evaluation(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
@@ -341,16 +332,11 @@ pub async fn update_evaluation(
     let existing = match existing {
         Ok(Some(e)) => e,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            return ApiResponse::from(TopemsError::ResourceNotFound(
                 "供应商评估不存在".to_string(),
-            )))
+            ))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询供应商评估失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询供应商评估失败", e)),
     };
 
     let quality_score = req.quality_score.or(existing.quality_score);
@@ -385,19 +371,14 @@ pub async fn update_evaluation(
 
     let (response, status_str, error_msg) = match &result {
         Ok(evaluation) => (
-            Json(ApiResponse::success(
-                evaluation.clone(),
-                "供应商评估更新成功",
-            )),
+            ApiResponse::success(evaluation.clone(), "供应商评估更新成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("更新供应商评估失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "供应商评估更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("供应商评估更新失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -414,7 +395,7 @@ pub async fn update_evaluation(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("rls commit failed: {}", e);
-                return Json(ApiResponse::server_error("提交事务失败"));
+                return ApiResponse::server_error("提交事务失败");
             }
         }
     }
@@ -446,11 +427,11 @@ pub async fn delete_evaluation(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -460,7 +441,7 @@ pub async fn delete_evaluation(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
@@ -474,23 +455,21 @@ pub async fn delete_evaluation(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "供应商评估删除成功")),
+            ApiResponse::success("".to_string(), "供应商评估删除成功"),
             "success",
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            ApiResponse::from(TopemsError::ResourceNotFound(
                 "供应商评估不存在".to_string(),
-            ))),
+            )),
             "error",
             Some("供应商评估不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除供应商评估失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "供应商评估删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("供应商评估删除失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -507,7 +486,7 @@ pub async fn delete_evaluation(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("rls commit failed: {}", e);
-                return Json(ApiResponse::server_error("提交事务失败"));
+                return ApiResponse::server_error("提交事务失败");
             }
         }
     }

@@ -127,15 +127,15 @@ pub async fn get_customer_profile(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Query(params): Query<ProfileQueryParams>,
-) -> Json<ApiResponse<CustomerProfile>> {
+) -> ApiResponse<CustomerProfile> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let customer_result = sqlx::query_as::<_, Customer>(
@@ -151,15 +151,11 @@ pub async fn get_customer_profile(
     let customer = match customer_result {
         Ok(Some(c)) => c,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "客户不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("客户不存在".to_string()))
         }
         Err(e) => {
             tracing::error!("获取客户信息失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "获取客户信息失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("获取客户信息失败".to_string()));
         }
     };
 
@@ -213,7 +209,7 @@ pub async fn get_customer_profile(
         profile_tags,
     };
 
-    Json(ApiResponse::success(profile, "获取客户画像成功"))
+    ApiResponse::success(profile, "获取客户画像成功")
 }
 
 async fn fetch_customer_score(
@@ -392,15 +388,15 @@ pub async fn add_profile_tags(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<AddProfileTagRequest>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     for tag in &req.tags {
@@ -420,21 +416,17 @@ pub async fn add_profile_tags(
 
         if let Err(e) = result {
             tracing::error!("添加标签失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "添加标签失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("添加标签失败".to_string()));
         }
     }
 
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
-    Json(ApiResponse::success("".to_string(), "标签添加成功"))
+    ApiResponse::success("".to_string(), "标签添加成功")
 }
 
 #[utoipa::path(
@@ -458,15 +450,15 @@ pub async fn remove_profile_tags(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<AddProfileTagRequest>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -489,21 +481,17 @@ pub async fn remove_profile_tags(
 
         if let Err(e) = result {
             tracing::error!("删除标签失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "删除标签失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("删除标签失败".to_string()));
         }
     }
 
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
-    Json(ApiResponse::success("".to_string(), "标签删除成功"))
+    ApiResponse::success("".to_string(), "标签删除成功")
 }
 
 #[utoipa::path(
@@ -523,15 +511,15 @@ pub async fn list_customer_profiles(
     >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CustomerPaginationParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -614,7 +602,7 @@ pub async fn list_customer_profiles(
                 });
             }
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": profiles,
                     "total": total,
@@ -622,13 +610,11 @@ pub async fn list_customer_profiles(
                     "page_size": page_size
                 }),
                 "获取客户画像列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取客户画像列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取客户画像列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取客户画像列表失败".to_string()))
         }
     }
 }

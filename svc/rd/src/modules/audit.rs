@@ -3,7 +3,7 @@ use axum::{
     http::{HeaderMap, HeaderValue, StatusCode},
     response::IntoResponse,
     routing::get,
-    Json, Router,
+    Router,
 };
 use chrono::Utc;
 use serde::Deserialize;
@@ -60,11 +60,11 @@ async fn list_audit_logs(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
 
     let page = params.page.unwrap_or(1).max(1);
@@ -127,7 +127,7 @@ async fn list_audit_logs(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "audit_logs": logs,
                     "total": total,
@@ -135,11 +135,11 @@ async fn list_audit_logs(
                     "page_size": page_size
                 }),
                 "获取审计日志成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(ApiResponse::server_error("获取审计日志失败"))
+            ApiResponse::server_error("获取审计日志失败")
         }
     }
 }
@@ -164,11 +164,11 @@ async fn get_audit_log(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<AuditLog>> {
+) -> ApiResponse<AuditLog> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
 
     let result = sqlx::query_as::<_, AuditLog>(
@@ -190,11 +190,11 @@ async fn get_audit_log(
     .await;
 
     match result {
-        Ok(Some(log)) => Json(ApiResponse::success(log, "获取审计日志成功")),
-        Ok(None) => Json(ApiResponse::not_found("审计日志不存在")),
+        Ok(Some(log)) => ApiResponse::success(log, "获取审计日志成功"),
+        Ok(None) => ApiResponse::not_found("审计日志不存在"),
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(ApiResponse::server_error("获取审计日志失败"))
+            ApiResponse::server_error("获取审计日志失败")
         }
     }
 }
@@ -290,9 +290,7 @@ async fn export_audit_logs(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<serde_json::Value>::server_error(
-                    "rls transaction unavailable",
-                )),
+                ApiResponse::<serde_json::Value>::server_error("rls transaction unavailable"),
             )
                 .into_response()
         }
@@ -345,10 +343,7 @@ async fn export_audit_logs(
         }
         Err(e) => {
             tracing::error!("导出审计日志失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "导出审计日志失败",
-            ))
-            .into_response()
+            ApiResponse::<serde_json::Value>::server_error("导出审计日志失败").into_response()
         }
     }
 }

@@ -1,6 +1,6 @@
 //! Dashboard handlers
 
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Router};
 use bigdecimal::BigDecimal;
 use serde::Serialize;
 use topems_shared_boundary::only_own_schema_query;
@@ -35,7 +35,7 @@ pub struct DashboardStats {
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_today_quality_pass_rate(
     State(state): State<crate::AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // Mobile BFF 数据迁移已完成：改为查询 QMS 自有表 qa_quality_inspections。
     // Mobile 端通过 QmsApi（由 TypedServiceClient<QmsApi> 转发）直接写入/查询
     // QMS 表，无需跨 schema 查询 plugin_mobile。
@@ -68,10 +68,10 @@ pub async fn get_today_quality_pass_rate(
         (passed as f64 / total as f64) * 100.0
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "pass_rate": pass_rate, "total": total, "passed": passed }),
         "获取今日质量合格率成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -86,7 +86,7 @@ pub async fn get_today_quality_pass_rate(
 )]
 pub async fn get_dashboard_stats(
     State(state): State<crate::AppState>,
-) -> Json<ApiResponse<DashboardStats>> {
+) -> ApiResponse<DashboardStats> {
     // Total inspections
     let total_inspections: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
@@ -191,7 +191,7 @@ pub async fn get_dashboard_stats(
         in_progress_plans,
     };
 
-    Json(ApiResponse::success(stats, "获取仪表盘统计成功"))
+    ApiResponse::success(stats, "获取仪表盘统计成功")
 }
 
 pub fn create_routes() -> Router<crate::AppState> {

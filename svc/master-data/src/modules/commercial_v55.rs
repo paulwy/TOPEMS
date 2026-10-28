@@ -453,7 +453,7 @@ pub struct SLAReportQuery {
 pub async fn create_api_product(
     State(state): State<AppState>,
     Json(req): Json<CreateAPIProductRequest>,
-) -> Json<ApiResponse<APIProduct>> {
+) -> ApiResponse<APIProduct> {
     let tier = req
         .tier
         .as_deref()
@@ -488,10 +488,10 @@ pub async fn create_api_product(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("写入 API 产品失败: {e}")));
+        return ApiResponse::server_error(&format!("写入 API 产品失败: {e}"));
     }
 
-    Json(ApiResponse::success(product, "API 产品已创建"))
+    ApiResponse::success(product, "API 产品已创建")
 }
 
 #[utoipa::path(
@@ -504,9 +504,7 @@ pub async fn create_api_product(
     ),
     tag = "commercial_v55"
 )]
-pub async fn list_api_products(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<APIProduct>>> {
+pub async fn list_api_products(State(state): State<AppState>) -> ApiResponse<Vec<APIProduct>> {
     // K1：真表读取启用产品。
     let rows = sqlx::query(&format!(
         "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE active = TRUE ORDER BY name"
@@ -515,7 +513,7 @@ pub async fn list_api_products(
     .await
     .unwrap_or_default();
     let active: Vec<APIProduct> = rows.iter().map(product_from_row).collect();
-    Json(ApiResponse::success(active, "API 产品列表"))
+    ApiResponse::success(active, "API 产品列表")
 }
 
 #[utoipa::path(
@@ -534,7 +532,7 @@ pub async fn list_api_products(
 pub async fn get_api_product(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<APIProduct>> {
+) -> ApiResponse<APIProduct> {
     // K1：真表读取。
     let row = sqlx::query(&format!(
         "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1 LIMIT 1"
@@ -545,8 +543,8 @@ pub async fn get_api_product(
     .unwrap_or(None);
 
     match row {
-        Some(r) => Json(ApiResponse::success(product_from_row(&r), "API 产品详情")),
-        None => Json(ApiResponse::not_found("未找到 API 产品")),
+        Some(r) => ApiResponse::success(product_from_row(&r), "API 产品详情"),
+        None => ApiResponse::not_found("未找到 API 产品"),
     }
 }
 
@@ -563,7 +561,7 @@ pub async fn get_api_product(
 pub async fn subscribe_tenant(
     State(state): State<AppState>,
     Json(req): Json<SubscribeTenantRequest>,
-) -> Json<ApiResponse<Subscription>> {
+) -> ApiResponse<Subscription> {
     // K1：产品从真表查找。
     let product_row = sqlx::query(&format!(
         "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1 LIMIT 1"
@@ -574,7 +572,7 @@ pub async fn subscribe_tenant(
     .unwrap_or(None);
 
     let Some(product_row) = product_row else {
-        return Json(ApiResponse::not_found("未找到 API 产品"));
+        return ApiResponse::not_found("未找到 API 产品");
     };
     let product = product_from_row(&product_row);
 
@@ -613,10 +611,10 @@ pub async fn subscribe_tenant(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("写入订阅失败: {e}")));
+        return ApiResponse::server_error(&format!("写入订阅失败: {e}"));
     }
 
-    Json(ApiResponse::success(sub, "租户订阅已创建"))
+    ApiResponse::success(sub, "租户订阅已创建")
 }
 
 #[utoipa::path(
@@ -635,7 +633,7 @@ pub async fn subscribe_tenant(
 pub async fn get_subscription(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Subscription>> {
+) -> ApiResponse<Subscription> {
     // K1：真表读取。
     let row = sqlx::query(&format!(
         "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1 LIMIT 1"
@@ -646,8 +644,8 @@ pub async fn get_subscription(
     .unwrap_or(None);
 
     match row {
-        Some(r) => Json(ApiResponse::success(subscription_from_row(&r), "订阅详情")),
-        None => Json(ApiResponse::not_found("未找到订阅")),
+        Some(r) => ApiResponse::success(subscription_from_row(&r), "订阅详情"),
+        None => ApiResponse::not_found("未找到订阅"),
     }
 }
 
@@ -664,7 +662,7 @@ pub async fn get_subscription(
 pub async fn list_subscriptions(
     State(state): State<AppState>,
     Query(params): Query<UsageSummaryQuery>,
-) -> Json<ApiResponse<Vec<Subscription>>> {
+) -> ApiResponse<Vec<Subscription>> {
     // K1：真表读取，可选 tenant_id / api_product_id 过滤。
     let rows = sqlx::query(&format!(
         "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions
@@ -679,7 +677,7 @@ pub async fn list_subscriptions(
     .unwrap_or_default();
     let filtered: Vec<Subscription> = rows.iter().map(subscription_from_row).collect();
 
-    Json(ApiResponse::success(filtered, "订阅列表"))
+    ApiResponse::success(filtered, "订阅列表")
 }
 
 #[utoipa::path(
@@ -698,7 +696,7 @@ pub async fn list_subscriptions(
 pub async fn cancel_subscription(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Subscription>> {
+) -> ApiResponse<Subscription> {
     // K1：写真表 master_data.mdm_subscriptions（UPDATE...RETURNING，无行 404）。
     let row = sqlx::query(&format!(
         r#"UPDATE master_data.mdm_subscriptions SET status = 'cancelled'
@@ -710,13 +708,13 @@ pub async fn cancel_subscription(
     .await;
     let Some(row) = (match row {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::server_error(&format!("取消订阅失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("取消订阅失败: {e}")),
     }) else {
-        return Json(ApiResponse::not_found("未找到订阅"));
+        return ApiResponse::not_found("未找到订阅");
     };
     let updated = subscription_from_row(&row);
 
-    Json(ApiResponse::success(updated, "订阅已取消"))
+    ApiResponse::success(updated, "订阅已取消")
 }
 #[utoipa::path(
     put,
@@ -735,7 +733,7 @@ pub async fn upgrade_tier(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateSubscriptionRequest>,
-) -> Json<ApiResponse<Subscription>> {
+) -> ApiResponse<Subscription> {
     // K1：写真表（先查后更，无行 404）。
     let row = sqlx::query(&format!(
         r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"#,
@@ -745,9 +743,9 @@ pub async fn upgrade_tier(
     .await;
     let Some(row) = (match row {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询订阅失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询订阅失败: {e}")),
     }) else {
-        return Json(ApiResponse::not_found("未找到订阅"));
+        return ApiResponse::not_found("未找到订阅");
     };
     let current = subscription_from_row(&row);
     let new_tier = req
@@ -764,7 +762,7 @@ pub async fn upgrade_tier(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("升级套餐失败: {e}")));
+        return ApiResponse::server_error(&format!("升级套餐失败: {e}"));
     }
 
     let row = sqlx::query(&format!(
@@ -775,13 +773,13 @@ pub async fn upgrade_tier(
     .await;
     let Some(row) = (match row {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::server_error(&format!("回读订阅失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("回读订阅失败: {e}")),
     }) else {
-        return Json(ApiResponse::not_found("未找到订阅"));
+        return ApiResponse::not_found("未找到订阅");
     };
     let updated = subscription_from_row(&row);
 
-    Json(ApiResponse::success(updated, "套餐已升级"))
+    ApiResponse::success(updated, "套餐已升级")
 }
 #[utoipa::path(
     post,
@@ -796,7 +794,7 @@ pub async fn upgrade_tier(
 pub async fn record_usage(
     State(state): State<AppState>,
     Json(req): Json<RecordUsageRequest>,
-) -> Json<ApiResponse<UsageRecord>> {
+) -> ApiResponse<UsageRecord> {
     // K1：写真表 master_data.mdm_usage_records。
     let record = UsageRecord {
         id: uuid::Uuid::new_v4().to_string(),
@@ -825,10 +823,10 @@ pub async fn record_usage(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("写入使用记录失败: {e}")));
+        return ApiResponse::server_error(&format!("写入使用记录失败: {e}"));
     }
 
-    Json(ApiResponse::success(record, "使用记录已保存"))
+    ApiResponse::success(record, "使用记录已保存")
 }
 #[utoipa::path(
     get,
@@ -844,7 +842,7 @@ pub async fn record_usage(
 pub async fn get_usage_summary(
     State(state): State<AppState>,
     Query(params): Query<UsageSummaryQuery>,
-) -> Json<ApiResponse<UsageSummary>> {
+) -> ApiResponse<UsageSummary> {
     // K1：数据源改真表 master_data.mdm_usage_records，聚合逻辑保留。
     let query = sqlx::query(&format!(
         r#"SELECT {USAGE_COLS} FROM master_data.mdm_usage_records
@@ -863,7 +861,7 @@ pub async fn get_usage_summary(
 
     let rows = match query {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询用量失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询用量失败: {e}")),
     };
     let filtered: Vec<UsageRecord> = rows.iter().map(usage_record_from_row).collect();
 
@@ -876,7 +874,7 @@ pub async fn get_usage_summary(
         0.0
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         UsageSummary {
             total_requests,
             total_errors,
@@ -884,7 +882,7 @@ pub async fn get_usage_summary(
             error_rate,
         },
         "用量汇总",
-    ))
+    )
 }
 #[utoipa::path(
     post,
@@ -900,7 +898,7 @@ pub async fn get_usage_summary(
 pub async fn generate_bill(
     State(state): State<AppState>,
     Json(req): Json<GenerateBillRequest>,
-) -> Json<ApiResponse<BillingRecord>> {
+) -> ApiResponse<BillingRecord> {
     // K1：数据源改真表（usage_records / rate_cards / api_products），逻辑保留。
     let period_start = req
         .period_start
@@ -921,7 +919,7 @@ pub async fn generate_bill(
     .await;
     let filtered: Vec<UsageRecord> = match usage_rows {
         Ok(r) => r.iter().map(usage_record_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询用量失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询用量失败: {e}")),
     };
 
     let total_requests: i64 = filtered.iter().map(|r| r.requests).sum();
@@ -940,7 +938,7 @@ pub async fn generate_bill(
     .await;
     let rate_cards: Vec<RateCard> = match rate_card_rows {
         Ok(r) => r.iter().map(rate_card_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询费率卡失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询费率卡失败: {e}")),
     };
     let rate_card = rate_cards.first().cloned().unwrap_or(RateCard {
         id: String::new(),
@@ -958,7 +956,7 @@ pub async fn generate_bill(
     .await;
     let products: Vec<APIProduct> = match product_rows {
         Ok(r) => r.iter().map(product_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询产品失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询产品失败: {e}")),
     };
     let matched_product = products
         .iter()
@@ -1009,10 +1007,10 @@ pub async fn generate_bill(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("写入账单失败: {e}")));
+        return ApiResponse::server_error(&format!("写入账单失败: {e}"));
     }
 
-    Json(ApiResponse::success(bill, "账单已生成"))
+    ApiResponse::success(bill, "账单已生成")
 }
 #[utoipa::path(
     get,
@@ -1033,7 +1031,7 @@ pub async fn generate_bill(
 pub async fn get_billing_history(
     State(state): State<AppState>,
     Query(params): Query<BillingHistoryQuery>,
-) -> Json<ApiResponse<PaginatedResponse<BillingRecord>>> {
+) -> ApiResponse<PaginatedResponse<BillingRecord>> {
     // K1：真表分页（COALESCE 过滤 + LIMIT/OFFSET + 独立 COUNT）。
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -1046,7 +1044,7 @@ pub async fn get_billing_history(
     .await;
     let total: i64 = match count_rows {
         Ok(r) => r.get::<i64, _>("total"),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询账单失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询账单失败: {e}")),
     };
 
     let rows = sqlx::query(&format!(
@@ -1062,10 +1060,10 @@ pub async fn get_billing_history(
     .await;
     let items: Vec<BillingRecord> = match rows {
         Ok(r) => r.iter().map(billing_record_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询账单失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询账单失败: {e}")),
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -1074,7 +1072,7 @@ pub async fn get_billing_history(
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "账单历史",
-    ))
+    )
 }
 #[utoipa::path(
     post,
@@ -1089,7 +1087,7 @@ pub async fn get_billing_history(
 pub async fn create_rate_card(
     State(state): State<AppState>,
     Json(req): Json<CreateRateCardRequest>,
-) -> Json<ApiResponse<RateCard>> {
+) -> ApiResponse<RateCard> {
     // K1：写真表 master_data.mdm_rate_cards。
     let card = RateCard {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1114,10 +1112,10 @@ pub async fn create_rate_card(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("创建费率卡失败: {e}")));
+        return ApiResponse::server_error(&format!("创建费率卡失败: {e}"));
     }
 
-    Json(ApiResponse::success(card, "费率卡已创建"))
+    ApiResponse::success(card, "费率卡已创建")
 }
 #[utoipa::path(
     get,
@@ -1129,7 +1127,7 @@ pub async fn create_rate_card(
     ),
     tag = "commercial_v55"
 )]
-pub async fn get_rate_cards(State(state): State<AppState>) -> Json<ApiResponse<Vec<RateCard>>> {
+pub async fn get_rate_cards(State(state): State<AppState>) -> ApiResponse<Vec<RateCard>> {
     // K1：读真表。
     let rows = sqlx::query(&format!(
         r#"SELECT {RATE_CARD_COLS} FROM master_data.mdm_rate_cards ORDER BY tier"#,
@@ -1138,9 +1136,9 @@ pub async fn get_rate_cards(State(state): State<AppState>) -> Json<ApiResponse<V
     .await;
     let cards: Vec<RateCard> = match rows {
         Ok(r) => r.iter().map(rate_card_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询费率卡失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询费率卡失败: {e}")),
     };
-    Json(ApiResponse::success(cards, "费率卡列表"))
+    ApiResponse::success(cards, "费率卡列表")
 }
 #[utoipa::path(
     put,
@@ -1158,7 +1156,7 @@ pub async fn get_rate_cards(State(state): State<AppState>) -> Json<ApiResponse<V
 pub async fn mark_bill_paid(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<BillingRecord>> {
+) -> ApiResponse<BillingRecord> {
     // K1：写真表（UPDATE...RETURNING，无行 404）。
     let row = sqlx::query(&format!(
         r#"UPDATE master_data.mdm_billing_records SET status = 'paid'
@@ -1170,13 +1168,13 @@ pub async fn mark_bill_paid(
     .await;
     let Some(row) = (match row {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::server_error(&format!("标记账单失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("标记账单失败: {e}")),
     }) else {
-        return Json(ApiResponse::not_found("未找到账单"));
+        return ApiResponse::not_found("未找到账单");
     };
     let updated = billing_record_from_row(&row);
 
-    Json(ApiResponse::success(updated, "账单已标记为已支付"))
+    ApiResponse::success(updated, "账单已标记为已支付")
 }
 #[utoipa::path(
     post,
@@ -1191,7 +1189,7 @@ pub async fn mark_bill_paid(
 pub async fn configure_sla(
     State(state): State<AppState>,
     Json(req): Json<ConfigureSLARequest>,
-) -> Json<ApiResponse<SLAConfig>> {
+) -> ApiResponse<SLAConfig> {
     // K1：写真表 master_data.mdm_sla_configs。
     let config = SLAConfig {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1216,10 +1214,10 @@ pub async fn configure_sla(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("配置 SLA 失败: {e}")));
+        return ApiResponse::server_error(&format!("配置 SLA 失败: {e}"));
     }
 
-    Json(ApiResponse::success(config, "SLA 配置已创建"))
+    ApiResponse::success(config, "SLA 配置已创建")
 }
 #[utoipa::path(
     post,
@@ -1235,7 +1233,7 @@ pub async fn configure_sla(
 pub async fn measure_sla(
     State(state): State<AppState>,
     Json(req): Json<MeasureSLARequest>,
-) -> Json<ApiResponse<SLAMeasurement>> {
+) -> ApiResponse<SLAMeasurement> {
     // K1：先读真表 SLA 配置（无行 404），再写度量。
     let config_row = sqlx::query(&format!(
         r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1 LIMIT 1"#,
@@ -1245,12 +1243,8 @@ pub async fn measure_sla(
     .await;
     let config = match config_row {
         Ok(Some(r)) => sla_config_from_row(&r),
-        Ok(None) => return Json(ApiResponse::not_found("未找到 SLA 配置")),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询 SLA 配置失败: {e}"
-            )))
-        }
+        Ok(None) => return ApiResponse::not_found("未找到 SLA 配置"),
+        Err(e) => return ApiResponse::server_error(&format!("查询 SLA 配置失败: {e}")),
     };
 
     let target = config.target_value;
@@ -1290,10 +1284,10 @@ pub async fn measure_sla(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("写入 SLA 度量失败: {e}")));
+        return ApiResponse::server_error(&format!("写入 SLA 度量失败: {e}"));
     }
 
-    Json(ApiResponse::success(measurement, "SLA 度量已记录"))
+    ApiResponse::success(measurement, "SLA 度量已记录")
 }
 #[utoipa::path(
     get,
@@ -1309,7 +1303,7 @@ pub async fn measure_sla(
 pub async fn get_sla_status(
     State(state): State<AppState>,
     Query(params): Query<SLAStatusQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // K1：数据源改真表（configs + measurements），聚合逻辑保留。
     let config_rows = sqlx::query(&format!(
         r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs
@@ -1320,11 +1314,7 @@ pub async fn get_sla_status(
     .await;
     let configs: Vec<SLAConfig> = match config_rows {
         Ok(r) => r.iter().map(sla_config_from_row).collect(),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询 SLA 配置失败: {e}"
-            )))
-        }
+        Err(e) => return ApiResponse::server_error(&format!("查询 SLA 配置失败: {e}")),
     };
 
     let meas_rows = sqlx::query(&format!(
@@ -1336,11 +1326,7 @@ pub async fn get_sla_status(
     .await;
     let measurements: Vec<SLAMeasurement> = match meas_rows {
         Ok(r) => r.iter().map(sla_measurement_from_row).collect(),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询 SLA 度量失败: {e}"
-            )))
-        }
+        Err(e) => return ApiResponse::server_error(&format!("查询 SLA 度量失败: {e}")),
     };
 
     let mut statuses: Vec<serde_json::Value> = Vec::new();
@@ -1371,10 +1357,7 @@ pub async fn get_sla_status(
         }));
     }
 
-    Json(ApiResponse::success(
-        serde_json::json!({ "sla_statuses": statuses }),
-        "SLA 状态",
-    ))
+    ApiResponse::success(serde_json::json!({ "sla_statuses": statuses }), "SLA 状态")
 }
 #[utoipa::path(
     get,
@@ -1389,7 +1372,7 @@ pub async fn get_sla_status(
 pub async fn get_sla_history(
     State(state): State<AppState>,
     Query(params): Query<SLAHistoryQuery>,
-) -> Json<ApiResponse<Vec<SLAMeasurement>>> {
+) -> ApiResponse<Vec<SLAMeasurement>> {
     // K1：真表 COALESCE 过滤。
     let rows = sqlx::query(&format!(
         r#"SELECT {SLA_MEASUREMENT_COLS} FROM master_data.mdm_sla_measurements
@@ -1407,14 +1390,10 @@ pub async fn get_sla_history(
     .await;
     let filtered: Vec<SLAMeasurement> = match rows {
         Ok(r) => r.iter().map(sla_measurement_from_row).collect(),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询 SLA 历史失败: {e}"
-            )))
-        }
+        Err(e) => return ApiResponse::server_error(&format!("查询 SLA 历史失败: {e}")),
     };
 
-    Json(ApiResponse::success(filtered, "SLA 历史记录"))
+    ApiResponse::success(filtered, "SLA 历史记录")
 }
 #[utoipa::path(
     get,
@@ -1434,7 +1413,7 @@ pub async fn get_sla_history(
 pub async fn calculate_penalty(
     State(state): State<AppState>,
     Query(params): Query<SLAPenaltyQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // K1：数据源改真表（config + measurements），逻辑保留。
     let config_row = sqlx::query(&format!(
         r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1 LIMIT 1"#,
@@ -1444,12 +1423,8 @@ pub async fn calculate_penalty(
     .await;
     let config = match config_row {
         Ok(Some(r)) => sla_config_from_row(&r),
-        Ok(None) => return Json(ApiResponse::not_found("未找到 SLA 配置")),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询 SLA 配置失败: {e}"
-            )))
-        }
+        Ok(None) => return ApiResponse::not_found("未找到 SLA 配置"),
+        Err(e) => return ApiResponse::server_error(&format!("查询 SLA 配置失败: {e}")),
     };
 
     let meas_rows = sqlx::query(&format!(
@@ -1462,18 +1437,14 @@ pub async fn calculate_penalty(
     .await;
     let breached: Vec<SLAMeasurement> = match meas_rows {
         Ok(r) => r.iter().map(sla_measurement_from_row).collect(),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询 SLA 度量失败: {e}"
-            )))
-        }
+        Err(e) => return ApiResponse::server_error(&format!("查询 SLA 度量失败: {e}")),
     };
 
     let breach_count = breached.len() as i64;
     let penalty_per_breach = config.penalty_per_min;
     let total_penalty = breach_count as f64 * penalty_per_breach;
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "config_id": params.config_id,
             "tenant_id": params.tenant_id,
@@ -1483,7 +1454,7 @@ pub async fn calculate_penalty(
             "currency": "CNY",
         }),
         "SLA 违约金额",
-    ))
+    )
 }
 #[utoipa::path(
     post,
@@ -1499,7 +1470,7 @@ pub async fn calculate_penalty(
 pub async fn create_incident(
     State(state): State<AppState>,
     Json(req): Json<CreateSLAIncidentRequest>,
-) -> Json<ApiResponse<SLAIncident>> {
+) -> ApiResponse<SLAIncident> {
     // K1：写真表 master_data.mdm_sla_incidents。
     let incident_type = sla_incident_type_from_str(&req.incident_type);
     let impact_severity = req
@@ -1549,10 +1520,10 @@ pub async fn create_incident(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("创建 SLA 事故失败: {e}")));
+        return ApiResponse::server_error(&format!("创建 SLA 事故失败: {e}"));
     }
 
-    Json(ApiResponse::success(incident, "SLA 事故已创建"))
+    ApiResponse::success(incident, "SLA 事故已创建")
 }
 #[utoipa::path(
     get,
@@ -1567,7 +1538,7 @@ pub async fn create_incident(
 pub async fn get_incidents(
     State(state): State<AppState>,
     Query(params): Query<SLAIncidentsQuery>,
-) -> Json<ApiResponse<Vec<SLAIncident>>> {
+) -> ApiResponse<Vec<SLAIncident>> {
     // K1：真表 COALESCE 过滤。
     let rows = sqlx::query(&format!(
         r#"SELECT {SLA_INCIDENT_COLS} FROM master_data.mdm_sla_incidents
@@ -1581,14 +1552,10 @@ pub async fn get_incidents(
     .await;
     let filtered: Vec<SLAIncident> = match rows {
         Ok(r) => r.iter().map(sla_incident_from_row).collect(),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询 SLA 事故失败: {e}"
-            )))
-        }
+        Err(e) => return ApiResponse::server_error(&format!("查询 SLA 事故失败: {e}")),
     };
 
-    Json(ApiResponse::success(filtered, "SLA 事故列表"))
+    ApiResponse::success(filtered, "SLA 事故列表")
 }
 #[utoipa::path(
     get,
@@ -1608,7 +1575,7 @@ pub async fn get_incidents(
 pub async fn generate_sla_report(
     State(state): State<AppState>,
     Query(params): Query<SLAReportQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // K1：数据源改真表（configs / measurements / incidents），逻辑保留。
     let config_rows = sqlx::query(&format!(
         r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs ORDER BY metric"#,
@@ -1617,11 +1584,7 @@ pub async fn generate_sla_report(
     .await;
     let configs: Vec<SLAConfig> = match config_rows {
         Ok(r) => r.iter().map(sla_config_from_row).collect(),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询 SLA 配置失败: {e}"
-            )))
-        }
+        Err(e) => return ApiResponse::server_error(&format!("查询 SLA 配置失败: {e}")),
     };
 
     let meas_rows = sqlx::query(&format!(
@@ -1631,11 +1594,7 @@ pub async fn generate_sla_report(
     .await;
     let measurements: Vec<SLAMeasurement> = match meas_rows {
         Ok(r) => r.iter().map(sla_measurement_from_row).collect(),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询 SLA 度量失败: {e}"
-            )))
-        }
+        Err(e) => return ApiResponse::server_error(&format!("查询 SLA 度量失败: {e}")),
     };
 
     let incident_rows = sqlx::query(&format!(
@@ -1645,11 +1604,7 @@ pub async fn generate_sla_report(
     .await;
     let incidents: Vec<SLAIncident> = match incident_rows {
         Ok(r) => r.iter().map(sla_incident_from_row).collect(),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询 SLA 事故失败: {e}"
-            )))
-        }
+        Err(e) => return ApiResponse::server_error(&format!("查询 SLA 事故失败: {e}")),
     };
 
     let tenant_filter = params.tenant_id.as_deref();
@@ -1726,7 +1681,7 @@ pub async fn generate_sla_report(
         "overall_status": if total_breaches == 0 { "passing" } else { "needs_attention" },
     });
 
-    Json(ApiResponse::success(report, "SLA 报告"))
+    ApiResponse::success(report, "SLA 报告")
 }
 // ==================== K1：真表映射（master_data.mdm_usage_records / billing / rate_cards / sla_*） ====================
 

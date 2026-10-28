@@ -5,7 +5,7 @@
 //! 聚合统计数据返回。
 
 use axum::extract::{Extension, State};
-use axum::{routing::get, Json, Router};
+use axum::{routing::get, Router};
 use serde::Serialize;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
@@ -48,7 +48,7 @@ pub struct EhsDashboardStats {
 pub async fn get_dashboard(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<EhsDashboardStats>> {
+) -> ApiResponse<EhsDashboardStats> {
     let pool = &state.pool;
     let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
@@ -217,5 +217,5 @@ pub async fn get_dashboard(
         ],
     };
 
-    Json(ApiResponse::success(stats, "获取EHS仪表盘数据成功"))
+    ApiResponse::success(stats, "获取EHS仪表盘数据成功")
 }

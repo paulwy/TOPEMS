@@ -118,7 +118,7 @@ fn map_announcement(a: &serde_json::Value) -> Option<Announcement> {
 pub async fn get_announcements(
     State(state): State<AppState>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<Announcement>>> {
+) -> ApiResponse<Vec<Announcement>> {
     let url = format!("{}/api/erp/announcements", erp_base_url());
     let req = forward_accept_language(erp_auth(state.http_client.get(&url), &state), &headers);
     match req.send().await {
@@ -132,16 +132,16 @@ pub async fn get_announcements(
                     .unwrap_or_default();
                 let announcements: Vec<Announcement> =
                     list.iter().filter_map(map_announcement).collect();
-                Json(ApiResponse::success(announcements, "公告列表获取成功"))
+                ApiResponse::success(announcements, "公告列表获取成功")
             }
             Err(e) => {
                 tracing::warn!("Failed to parse announcements response: {}", e);
-                Json(ApiResponse::success(vec![], "公告服务暂不可用，已降级"))
+                ApiResponse::success(vec![], "公告服务暂不可用，已降级")
             }
         },
         Err(e) => {
             tracing::warn!("Announcement service unavailable: {}", e);
-            Json(ApiResponse::success(vec![], "公告服务暂不可用，已降级"))
+            ApiResponse::success(vec![], "公告服务暂不可用，已降级")
         }
     }
 }
@@ -160,7 +160,7 @@ pub async fn get_announcement(
     State(state): State<AppState>,
     Path(id): Path<String>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Announcement>> {
+) -> ApiResponse<Announcement> {
     let url = format!("{}/api/erp/announcements/{}", erp_base_url(), id);
     let req = forward_accept_language(erp_auth(state.http_client.get(&url), &state), &headers);
     match req.send().await {
@@ -168,19 +168,19 @@ pub async fn get_announcement(
             Ok(json) => {
                 if let Some(data) = json.get("data") {
                     if let Some(a) = map_announcement(data) {
-                        return Json(ApiResponse::success(a, "公告详情获取成功"));
+                        return ApiResponse::success(a, "公告详情获取成功");
                     }
                 }
-                Json(ApiResponse::not_found("公告不存在"))
+                ApiResponse::not_found("公告不存在")
             }
             Err(e) => {
                 tracing::error!("Failed to parse announcement response: {}", e);
-                Json(ApiResponse::server_error("获取公告详情失败"))
+                ApiResponse::server_error("获取公告详情失败")
             }
         },
         Err(e) => {
             tracing::error!("Failed to fetch announcement: {}", e);
-            Json(ApiResponse::server_error("获取公告详情失败"))
+            ApiResponse::server_error("获取公告详情失败")
         }
     }
 }
@@ -200,7 +200,7 @@ pub async fn get_announcement(
 pub async fn create_announcement(
     State(state): State<AppState>,
     Json(data): Json<NewAnnouncement>,
-) -> Json<ApiResponse<Announcement>> {
+) -> ApiResponse<Announcement> {
     let url = format!("{}/api/erp/announcements", erp_base_url());
     let body = serde_json::json!({
         "title": data.title,
@@ -217,19 +217,19 @@ pub async fn create_announcement(
             Ok(json) => {
                 if let Some(data) = json.get("data") {
                     if let Some(a) = map_announcement(data) {
-                        return Json(ApiResponse::success(a, "公告创建成功"));
+                        return ApiResponse::success(a, "公告创建成功");
                     }
                 }
-                Json(ApiResponse::server_error("创建公告失败"))
+                ApiResponse::server_error("创建公告失败")
             }
             Err(e) => {
                 tracing::error!("Failed to parse create response: {}", e);
-                Json(ApiResponse::server_error("创建公告失败"))
+                ApiResponse::server_error("创建公告失败")
             }
         },
         Err(e) => {
             tracing::error!("Failed to create announcement: {}", e);
-            Json(ApiResponse::server_error("创建公告失败"))
+            ApiResponse::server_error("创建公告失败")
         }
     }
 }
@@ -249,7 +249,7 @@ pub async fn update_announcement(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(data): Json<NewAnnouncement>,
-) -> Json<ApiResponse<Announcement>> {
+) -> ApiResponse<Announcement> {
     let url = format!("{}/api/erp/announcements/{}", erp_base_url(), id);
     let body = serde_json::json!({
         "title": data.title,
@@ -266,19 +266,19 @@ pub async fn update_announcement(
             Ok(json) => {
                 if let Some(data) = json.get("data") {
                     if let Some(a) = map_announcement(data) {
-                        return Json(ApiResponse::success(a, "公告更新成功"));
+                        return ApiResponse::success(a, "公告更新成功");
                     }
                 }
-                Json(ApiResponse::server_error("更新公告失败"))
+                ApiResponse::server_error("更新公告失败")
             }
             Err(e) => {
                 tracing::error!("Failed to parse update response: {}", e);
-                Json(ApiResponse::server_error("更新公告失败"))
+                ApiResponse::server_error("更新公告失败")
             }
         },
         Err(e) => {
             tracing::error!("Failed to update announcement: {}", e);
-            Json(ApiResponse::server_error("更新公告失败"))
+            ApiResponse::server_error("更新公告失败")
         }
     }
 }
@@ -297,19 +297,19 @@ pub async fn update_announcement(
 pub async fn delete_announcement(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let url = format!("{}/api/erp/announcements/{}", erp_base_url(), id);
     match erp_auth(state.http_client.delete(&url), &state)
         .send()
         .await
     {
-        Ok(_) => Json(ApiResponse::success(
+        Ok(_) => ApiResponse::success(
             serde_json::json!({ "id": id, "deleted": true }),
             "公告删除成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to delete announcement: {}", e);
-            Json(ApiResponse::server_error("删除公告失败"))
+            ApiResponse::server_error("删除公告失败")
         }
     }
 }
@@ -317,26 +317,26 @@ pub async fn delete_announcement(
 pub async fn toggle_announcement_pin(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Announcement>> {
+) -> ApiResponse<Announcement> {
     let url = format!("{}/api/erp/announcements/{}/pin", erp_base_url(), id);
     match erp_auth(state.http_client.post(&url), &state).send().await {
         Ok(resp) => match resp.json::<serde_json::Value>().await {
             Ok(json) => {
                 if let Some(data) = json.get("data") {
                     if let Some(a) = map_announcement(data) {
-                        return Json(ApiResponse::success(a, "公告置顶状态已更新"));
+                        return ApiResponse::success(a, "公告置顶状态已更新");
                     }
                 }
-                Json(ApiResponse::server_error("更新置顶状态失败"))
+                ApiResponse::server_error("更新置顶状态失败")
             }
             Err(e) => {
                 tracing::error!("Failed to parse pin response: {}", e);
-                Json(ApiResponse::server_error("更新置顶状态失败"))
+                ApiResponse::server_error("更新置顶状态失败")
             }
         },
         Err(e) => {
             tracing::error!("Failed to toggle pin: {}", e);
-            Json(ApiResponse::server_error("更新置顶状态失败"))
+            ApiResponse::server_error("更新置顶状态失败")
         }
     }
 }
@@ -344,7 +344,7 @@ pub async fn toggle_announcement_pin(
 pub async fn get_pinned_announcements(
     State(state): State<AppState>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<Announcement>>> {
+) -> ApiResponse<Vec<Announcement>> {
     let url = format!("{}/api/erp/announcements?priority=pinned", erp_base_url());
     let req = forward_accept_language(erp_auth(state.http_client.get(&url), &state), &headers);
     match req.send().await {
@@ -358,16 +358,16 @@ pub async fn get_pinned_announcements(
                     .unwrap_or_default();
                 let announcements: Vec<Announcement> =
                     list.iter().filter_map(map_announcement).collect();
-                Json(ApiResponse::success(announcements, "置顶公告获取成功"))
+                ApiResponse::success(announcements, "置顶公告获取成功")
             }
             Err(e) => {
                 tracing::error!("Failed to parse pinned response: {}", e);
-                Json(ApiResponse::server_error("获取置顶公告失败"))
+                ApiResponse::server_error("获取置顶公告失败")
             }
         },
         Err(e) => {
             tracing::error!("Failed to fetch pinned announcements: {}", e);
-            Json(ApiResponse::server_error("获取置顶公告失败"))
+            ApiResponse::server_error("获取置顶公告失败")
         }
     }
 }

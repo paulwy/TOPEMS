@@ -70,7 +70,7 @@ pub struct UpdateFaqRequest {
 pub async fn list_faqs(
     State(state): State<AppState>,
     Query(query): Query<FaqQuery>,
-) -> Json<ApiResponse<FaqListResponse>> {
+) -> ApiResponse<FaqListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -92,7 +92,7 @@ pub async fn list_faqs(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询FAQ总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询FAQ总数失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询FAQ总数失败".to_string()));
         }
     };
 
@@ -115,16 +115,16 @@ pub async fn list_faqs(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询FAQ列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询FAQ列表失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询FAQ列表失败".to_string()));
         }
     };
 
-    Json(api_success(FaqListResponse {
+    api_success(FaqListResponse {
         items,
         total,
         page,
         page_size,
-    }))
+    })
 }
 
 #[utoipa::path(
@@ -140,10 +140,7 @@ pub async fn list_faqs(
     ),
     tag = "Faq"
 )]
-pub async fn get_faq(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Faq>> {
+pub async fn get_faq(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiResponse<Faq> {
     let faq: Option<Faq> = match sqlx::query_as(
         r#"SELECT id, question, answer, category, views, is_active, sort_order, created_at, updated_at
            FROM core_faqs WHERE id = $1 AND is_active = true"#,
@@ -155,7 +152,7 @@ pub async fn get_faq(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询FAQ详情失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询FAQ详情失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询FAQ详情失败".to_string()));
         }
     };
 
@@ -167,11 +164,9 @@ pub async fn get_faq(
             )
             .execute(&state.pool)
             .await;
-            Json(api_success(faq))
+            api_success(faq)
         }
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "FAQ不存在".to_string(),
-        ))),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("FAQ不存在".to_string())),
     }
 }
 
@@ -188,16 +183,12 @@ pub async fn get_faq(
 pub async fn create_faq(
     State(state): State<AppState>,
     Json(req): Json<CreateFaqRequest>,
-) -> Json<ApiResponse<Faq>> {
+) -> ApiResponse<Faq> {
     if req.question.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            "问题不能为空".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed("问题不能为空".to_string()));
     }
     if req.answer.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            "答案不能为空".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed("答案不能为空".to_string()));
     }
 
     let id = Uuid::new_v4();
@@ -222,11 +213,11 @@ pub async fn create_faq(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建FAQ失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("创建FAQ失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("创建FAQ失败".to_string()));
         }
     };
 
-    Json(api_success(faq))
+    api_success(faq)
 }
 
 #[utoipa::path(
@@ -246,7 +237,7 @@ pub async fn update_faq(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateFaqRequest>,
-) -> Json<ApiResponse<Faq>> {
+) -> ApiResponse<Faq> {
     let faq: Option<Faq> = match sqlx::query_as(
         r#"UPDATE core_faqs
            SET question = COALESCE($1, question),
@@ -271,22 +262,17 @@ pub async fn update_faq(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("更新FAQ失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("更新FAQ失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("更新FAQ失败".to_string()));
         }
     };
 
     match faq {
-        Some(faq) => Json(api_success(faq)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "FAQ不存在".to_string(),
-        ))),
+        Some(faq) => api_success(faq),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("FAQ不存在".to_string())),
     }
 }
 
-pub async fn delete_faq(
-    State(state): State<AppState>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<bool>> {
+pub async fn delete_faq(State(state): State<AppState>, Path(id): Path<Uuid>) -> ApiResponse<bool> {
     let result = sqlx::query!(
         r#"UPDATE core_faqs SET is_active = false, updated_at = $1 WHERE id = $2"#,
         chrono::Utc::now(),
@@ -296,15 +282,11 @@ pub async fn delete_faq(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(api_success(true)),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "FAQ不存在".to_string(),
-        ))),
+        Ok(r) if r.rows_affected() > 0 => api_success(true),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("FAQ不存在".to_string())),
         Err(e) => {
             tracing::error!("删除FAQ失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除FAQ失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除FAQ失败".to_string()))
         }
     }
 }
@@ -319,7 +301,7 @@ pub async fn delete_faq(
     ),
     tag = "Faq"
 )]
-pub async fn get_faq_categories(State(state): State<AppState>) -> Json<ApiResponse<Vec<String>>> {
+pub async fn get_faq_categories(State(state): State<AppState>) -> ApiResponse<Vec<String>> {
     let categories: Vec<String> = match sqlx::query_scalar(
         r#"SELECT DISTINCT category FROM core_faqs WHERE is_active = true ORDER BY category"#,
     )
@@ -329,13 +311,11 @@ pub async fn get_faq_categories(State(state): State<AppState>) -> Json<ApiRespon
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询FAQ分类失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询FAQ分类失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询FAQ分类失败".to_string()));
         }
     };
 
-    Json(api_success(categories))
+    api_success(categories)
 }
 
 #[cfg(test)]

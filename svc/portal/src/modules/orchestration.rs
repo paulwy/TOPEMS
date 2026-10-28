@@ -1060,11 +1060,11 @@ pub struct ListRulesQuery {
 pub async fn create_plan_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreatePlanRequest>,
-) -> Json<ApiResponse<OrchestrationPlan>> {
+) -> ApiResponse<OrchestrationPlan> {
     match GatewayOrchestrator::create_plan(req.query_id, req.execution_steps, req.timeout_ms).await
     {
-        Ok(plan) => Json(ApiResponse::success(plan, "编排计划创建成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(plan) => ApiResponse::success(plan, "编排计划创建成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1084,10 +1084,10 @@ pub async fn create_plan_handler(
 pub async fn execute_plan_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<OrchestrationPlan>> {
+) -> ApiResponse<OrchestrationPlan> {
     match GatewayOrchestrator::execute_plan(&id).await {
-        Ok(plan) => Json(ApiResponse::success(plan, "编排计划执行完成")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(plan) => ApiResponse::success(plan, "编排计划执行完成"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1107,10 +1107,10 @@ pub async fn execute_plan_handler(
 pub async fn get_plan_status_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<PlanStatusInfo>> {
+) -> ApiResponse<PlanStatusInfo> {
     match GatewayOrchestrator::get_plan_status(&id).await {
-        Ok(info) => Json(ApiResponse::success(info, "计划状态")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(info) => ApiResponse::success(info, "计划状态"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1130,10 +1130,10 @@ pub async fn get_plan_status_handler(
 pub async fn cancel_plan_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<OrchestrationPlan>> {
+) -> ApiResponse<OrchestrationPlan> {
     match GatewayOrchestrator::cancel_plan(&id).await {
-        Ok(plan) => Json(ApiResponse::success(plan, "编排计划已取消")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(plan) => ApiResponse::success(plan, "编排计划已取消"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1150,19 +1150,19 @@ pub async fn cancel_plan_handler(
 pub async fn get_execution_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<HistoryQuery>,
-) -> Json<ApiResponse<Vec<ExecutionHistoryEntry>>> {
+) -> ApiResponse<Vec<ExecutionHistoryEntry>> {
     let history =
         GatewayOrchestrator::get_execution_history(params.query_id.as_deref(), params.limit).await;
-    Json(ApiResponse::success(history, "执行历史"))
+    ApiResponse::success(history, "执行历史")
 }
 
 pub async fn optimize_plan_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<OrchestrationPlan>> {
+) -> ApiResponse<OrchestrationPlan> {
     match GatewayOrchestrator::optimize_plan(&id).await {
-        Ok(plan) => Json(ApiResponse::success(plan, "编排计划已优化")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(plan) => ApiResponse::success(plan, "编排计划已优化"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1181,7 +1181,7 @@ pub async fn optimize_plan_handler(
 pub async fn register_service_handler(
     State(_state): State<AppState>,
     Json(req): Json<RegisterServiceRequest>,
-) -> Json<ApiResponse<ServiceDescriptor>> {
+) -> ApiResponse<ServiceDescriptor> {
     match ServiceDiscoveryEngine::register_service(
         req.name,
         req.version,
@@ -1191,8 +1191,8 @@ pub async fn register_service_handler(
     )
     .await
     {
-        Ok(descriptor) => Json(ApiResponse::success(descriptor, "服务注册成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(descriptor) => ApiResponse::success(descriptor, "服务注册成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1212,11 +1212,11 @@ pub async fn register_service_handler(
 pub async fn deregister_service_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     match ServiceDiscoveryEngine::deregister_service(&id).await {
-        Ok(true) => Json(ApiResponse::success(true, "服务注销成功")),
-        Ok(false) => Json(ApiResponse::not_found("服务不存在")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(true) => ApiResponse::success(true, "服务注销成功"),
+        Ok(false) => ApiResponse::not_found("服务不存在"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1233,10 +1233,10 @@ pub async fn deregister_service_handler(
 pub async fn discover_services_handler(
     State(_state): State<AppState>,
     Query(params): Query<DiscoverServicesQuery>,
-) -> Json<ApiResponse<Vec<ServiceDescriptor>>> {
+) -> ApiResponse<Vec<ServiceDescriptor>> {
     let status = params.health_status.as_deref().map(HealthStatus::from_str);
     let services = ServiceDiscoveryEngine::discover_services(status).await;
-    Json(ApiResponse::success(services, "服务列表"))
+    ApiResponse::success(services, "服务列表")
 }
 
 #[utoipa::path(
@@ -1255,10 +1255,10 @@ pub async fn discover_services_handler(
 pub async fn get_service_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<ServiceDescriptor>> {
+) -> ApiResponse<ServiceDescriptor> {
     match ServiceDiscoveryEngine::get_service(&id).await {
-        Some(descriptor) => Json(ApiResponse::success(descriptor, "服务详情")),
-        None => Json(ApiResponse::not_found("服务不存在")),
+        Some(descriptor) => ApiResponse::success(descriptor, "服务详情"),
+        None => ApiResponse::not_found("服务不存在"),
     }
 }
 
@@ -1278,9 +1278,9 @@ pub async fn get_service_handler(
 pub async fn get_services_by_capability_handler(
     State(_state): State<AppState>,
     Path(cap): Path<String>,
-) -> Json<ApiResponse<Vec<ServiceDescriptor>>> {
+) -> ApiResponse<Vec<ServiceDescriptor>> {
     let services = ServiceDiscoveryEngine::get_services_by_capability(&cap).await;
-    Json(ApiResponse::success(services, "能力匹配服务列表"))
+    ApiResponse::success(services, "能力匹配服务列表")
 }
 
 #[utoipa::path(
@@ -1299,10 +1299,10 @@ pub async fn get_services_by_capability_handler(
 pub async fn check_health_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<ServiceHeartbeat>> {
+) -> ApiResponse<ServiceHeartbeat> {
     match ServiceDiscoveryEngine::check_health(&id).await {
-        Ok(heartbeat) => Json(ApiResponse::success(heartbeat, "健康检查完成")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(heartbeat) => ApiResponse::success(heartbeat, "健康检查完成"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1318,9 +1318,9 @@ pub async fn check_health_handler(
 )]
 pub async fn get_registry_stats_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<RegistryStats>> {
+) -> ApiResponse<RegistryStats> {
     let stats = ServiceDiscoveryEngine::get_registry_stats().await;
-    Json(ApiResponse::success(stats, "注册表统计"))
+    ApiResponse::success(stats, "注册表统计")
 }
 
 // ==================== API 处理器: 动态路由 ====================
@@ -1338,10 +1338,10 @@ pub async fn get_registry_stats_handler(
 pub async fn route_request_handler(
     State(_state): State<AppState>,
     Json(req): Json<RouteRequest>,
-) -> Json<ApiResponse<RoutingDecision>> {
+) -> ApiResponse<RoutingDecision> {
     let request_id = uuid::Uuid::new_v4().to_string();
     let decision = DynamicRouter::route_request(request_id, req.path, req.headers).await;
-    Json(ApiResponse::success(decision, "路由决策完成"))
+    ApiResponse::success(decision, "路由决策完成")
 }
 
 #[utoipa::path(
@@ -1357,7 +1357,7 @@ pub async fn route_request_handler(
 pub async fn add_rule_handler(
     State(_state): State<AppState>,
     Json(req): Json<AddRuleRequest>,
-) -> Json<ApiResponse<RouteRule>> {
+) -> ApiResponse<RouteRule> {
     match DynamicRouter::add_rule(
         req.pattern,
         req.target_service,
@@ -1367,31 +1367,31 @@ pub async fn add_rule_handler(
     )
     .await
     {
-        Ok(rule) => Json(ApiResponse::success(rule, "路由规则创建成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(rule) => ApiResponse::success(rule, "路由规则创建成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
 pub async fn list_rules_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListRulesQuery>,
-) -> Json<ApiResponse<Vec<RouteRule>>> {
+) -> ApiResponse<Vec<RouteRule>> {
     let rules = DynamicRouter::list_rules(params.enabled).await;
-    Json(ApiResponse::success(rules, "路由规则列表"))
+    ApiResponse::success(rules, "路由规则列表")
 }
 
 pub async fn update_rule_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateRuleRequest>,
-) -> Json<ApiResponse<RouteRule>> {
+) -> ApiResponse<RouteRule> {
     let current = match DynamicRouter::list_rules(None)
         .await
         .into_iter()
         .find(|r| r.id == id)
     {
         Some(rule) => rule,
-        None => return Json(ApiResponse::not_found("路由规则不存在")),
+        None => return ApiResponse::not_found("路由规则不存在"),
     };
 
     let updated = RouteRule {
@@ -1405,8 +1405,8 @@ pub async fn update_rule_handler(
     };
 
     match DynamicRouter::update_rule(&id, updated).await {
-        Ok(rule) => Json(ApiResponse::success(rule, "路由规则更新成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(rule) => ApiResponse::success(rule, "路由规则更新成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1426,11 +1426,11 @@ pub async fn update_rule_handler(
 pub async fn remove_rule_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     match DynamicRouter::remove_rule(&id).await {
-        Ok(true) => Json(ApiResponse::success(true, "路由规则删除成功")),
-        Ok(false) => Json(ApiResponse::not_found("路由规则不存在")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(true) => ApiResponse::success(true, "路由规则删除成功"),
+        Ok(false) => ApiResponse::not_found("路由规则不存在"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1446,9 +1446,9 @@ pub async fn remove_rule_handler(
 )]
 pub async fn get_routing_stats_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<RoutingStats>> {
+) -> ApiResponse<RoutingStats> {
     let stats = DynamicRouter::get_routing_stats().await;
-    Json(ApiResponse::success(stats, "路由统计"))
+    ApiResponse::success(stats, "路由统计")
 }
 
 #[cfg(test)]

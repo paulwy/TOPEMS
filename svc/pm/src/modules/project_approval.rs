@@ -72,11 +72,11 @@ fn get_approval_workflow_id() -> Option<Uuid> {
 async fn get_approval(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<ProjectApproval>> {
+) -> ApiResponse<ProjectApproval> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, ProjectApproval>(
         only_own_schema_query!("pm", "SELECT id, project_id, status, current_step, total_steps, approvals, comments, created_by, created_at, updated_at FROM pm.project_approvals WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1"),
@@ -86,11 +86,11 @@ async fn get_approval(
     .await;
 
     match result {
-        Ok(Some(approval)) => Json(ApiResponse::success(approval, "获取项目审批信息成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目审批信息不存在")),
+        Ok(Some(approval)) => ApiResponse::success(approval, "获取项目审批信息成功"),
+        Ok(None) => ApiResponse::not_found("项目审批信息不存在"),
         Err(e) => {
             tracing::error!("获取项目审批信息失败: {}", e);
-            Json(ApiResponse::server_error("获取项目审批信息失败"))
+            ApiResponse::server_error("获取项目审批信息失败")
         }
     }
 }
@@ -117,7 +117,7 @@ async fn submit_approval(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<ProjectApproval>> {
+) -> ApiResponse<ProjectApproval> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -172,7 +172,7 @@ async fn submit_approval(
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
 
     let result = sqlx::query_as::<_, ProjectApproval>(only_own_schema_query!(
@@ -219,11 +219,11 @@ async fn submit_approval(
                 approver_uuid,
             )
             .await;
-            Json(ApiResponse::success(approval, "提交审批成功"))
+            ApiResponse::success(approval, "提交审批成功")
         }
         Err(e) => {
             tracing::error!("提交审批失败: {}", e);
-            Json(ApiResponse::server_error("提交审批失败"))
+            ApiResponse::server_error("提交审批失败")
         }
     }
 }
@@ -251,16 +251,16 @@ async fn handle_approval_action(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<ProjectApproval>> {
+) -> ApiResponse<ProjectApproval> {
     let action = req.action.to_lowercase();
     if !["approve", "reject", "cancel"].contains(&action.as_str()) {
-        return Json(ApiResponse::bad_request("无效的审批操作"));
+        return ApiResponse::bad_request("无效的审批操作");
     }
 
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
 
     let result = sqlx::query_as::<_, ProjectApproval>(
@@ -272,10 +272,10 @@ async fn handle_approval_action(
 
     let approval = match result {
         Ok(Some(a)) => a,
-        Ok(None) => return Json(ApiResponse::not_found("项目审批信息不存在")),
+        Ok(None) => return ApiResponse::not_found("项目审批信息不存在"),
         Err(e) => {
             tracing::error!("获取审批信息失败: {}", e);
-            return Json(ApiResponse::server_error("获取审批信息失败"));
+            return ApiResponse::server_error("获取审批信息失败");
         }
     };
 
@@ -388,18 +388,18 @@ async fn handle_approval_action(
                     req.comment.as_deref().unwrap_or(""),
                 )
                 .await;
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     updated,
                     if action == "reject" {
                         "审批已拒绝"
                     } else {
                         "审批已取消"
                     },
-                ))
+                )
             }
             Err(e) => {
                 tracing::error!("更新审批状态失败: {}", e);
-                Json(ApiResponse::server_error("更新审批状态失败"))
+                ApiResponse::server_error("更新审批状态失败")
             }
         }
     } else {
@@ -480,14 +480,14 @@ async fn handle_approval_action(
                         "approved",
                     )
                     .await;
-                    Json(ApiResponse::success(updated, "审批已通过"))
+                    ApiResponse::success(updated, "审批已通过")
                 } else {
-                    Json(ApiResponse::success(updated, "审批步骤已通过，等待下一步"))
+                    ApiResponse::success(updated, "审批步骤已通过，等待下一步")
                 }
             }
             Err(e) => {
                 tracing::error!("更新审批状态失败: {}", e);
-                Json(ApiResponse::server_error("更新审批状态失败"))
+                ApiResponse::server_error("更新审批状态失败")
             }
         }
     }

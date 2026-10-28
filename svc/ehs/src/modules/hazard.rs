@@ -190,7 +190,7 @@ pub async fn list_hazards(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Query(query): Query<HazardQuery>,
-) -> Json<ApiResponse<Vec<Hazard>>> {
+) -> ApiResponse<Vec<Hazard>> {
     let _ = &claims;
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
@@ -253,7 +253,7 @@ pub async fn list_hazards(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list hazards: {}", e);
-            return Json(ApiResponse::server_error("获取隐患列表失败"));
+            return ApiResponse::server_error("获取隐患列表失败");
         }
     };
 
@@ -299,7 +299,7 @@ pub async fn list_hazards(
         })
         .collect();
 
-    Json(ApiResponse::success(hazards, "获取隐患列表成功"))
+    ApiResponse::success(hazards, "获取隐患列表成功")
 }
 
 // gate: admin-only
@@ -316,7 +316,7 @@ pub async fn create_hazard(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateHazardRequest>,
-) -> Json<ApiResponse<Hazard>> {
+) -> ApiResponse<Hazard> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -427,7 +427,7 @@ pub async fn create_hazard(
             .await;
     }
 
-    Json(ApiResponse::success(hazard, "隐患上报成功"))
+    ApiResponse::success(hazard, "隐患上报成功")
 }
 
 #[utoipa::path(
@@ -446,7 +446,7 @@ pub async fn get_hazard(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<HazardDetail>> {
+) -> ApiResponse<HazardDetail> {
     let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
@@ -481,12 +481,12 @@ pub async fn get_hazard(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to get hazard: {}", e);
-            return Json(ApiResponse::server_error("获取隐患详情失败"));
+            return ApiResponse::server_error("获取隐患详情失败");
         }
     };
     let row = match row {
         Some(r) => r,
-        None => return Json(ApiResponse::not_found("隐患不存在")),
+        None => return ApiResponse::not_found("隐患不存在"),
     };
 
     let hazard = Hazard {
@@ -543,7 +543,7 @@ pub async fn get_hazard(
         tenant_id: uuid::Uuid::nil(),
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         HazardDetail {
             hazard,
             rectification: None,
@@ -551,7 +551,7 @@ pub async fn get_hazard(
             tenant_id: uuid::Uuid::nil(),
         },
         "获取隐患详情成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -572,7 +572,7 @@ pub async fn update_hazard(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<Hazard>> {
+) -> ApiResponse<Hazard> {
     let tenant_id = resolve_hazard_tenant(&claims);
     let tenant_bind = tenant_id.to_string();
     tracing::debug!("Updating hazard {}: {:?}", id, req);
@@ -622,10 +622,10 @@ pub async fn update_hazard(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("隐患不存在")),
+        Ok(None) => return ApiResponse::not_found("隐患不存在"),
         Err(e) => {
             tracing::error!("Failed to update hazard: {}", e);
-            return Json(ApiResponse::server_error("隐患更新失败"));
+            return ApiResponse::server_error("隐患更新失败");
         }
     };
 
@@ -644,7 +644,7 @@ pub async fn update_hazard(
             .await;
     }
 
-    Json(ApiResponse::success(hazard_from_row(&row), "隐患更新成功"))
+    ApiResponse::success(hazard_from_row(&row), "隐患更新成功")
 }
 
 // gate: admin-only
@@ -664,7 +664,7 @@ pub async fn delete_hazard(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -692,7 +692,7 @@ pub async fn delete_hazard(
             .await;
     }
 
-    Json(ApiResponse::success((), "隐患删除成功"))
+    ApiResponse::success((), "隐患删除成功")
 }
 
 #[derive(Debug, Deserialize)]
@@ -719,7 +719,7 @@ pub async fn start_hazard_approval(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<StartApprovalRequest>,
-) -> Json<ApiResponse<Hazard>> {
+) -> ApiResponse<Hazard> {
     let tenant_id = resolve_hazard_tenant(&claims);
     let tenant_bind = tenant_id.to_string();
     tracing::info!(
@@ -744,12 +744,12 @@ pub async fn start_hazard_approval(
     .await;
     match upd {
         Ok(r) if r.rows_affected() == 0 => {
-            return Json(ApiResponse::not_found("隐患不存在"));
+            return ApiResponse::not_found("隐患不存在");
         }
         Ok(_) => {}
         Err(e) => {
             tracing::error!("Failed to start hazard approval: {}", e);
-            return Json(ApiResponse::server_error("启动隐患审批失败"));
+            return ApiResponse::server_error("启动隐患审批失败");
         }
     }
 
@@ -778,10 +778,10 @@ pub async fn start_hazard_approval(
             let mut hazard = hazard_from_row(&row);
             hazard.approval_workflow_id = Some(req.workflow_id.to_string());
             hazard.approval_status = Some("pending".to_string());
-            Json(ApiResponse::success(hazard, "隐患审批流程已启动"))
+            ApiResponse::success(hazard, "隐患审批流程已启动")
         }
-        Ok(None) => Json(ApiResponse::not_found("隐患不存在")),
-        Err((code, msg)) => Json(ApiResponse::error(code, msg)),
+        Ok(None) => ApiResponse::not_found("隐患不存在"),
+        Err((code, msg)) => ApiResponse::error(code, msg),
     }
 }
 
@@ -798,7 +798,7 @@ pub async fn close_hazard(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Hazard>> {
+) -> ApiResponse<Hazard> {
     let tenant_id = resolve_hazard_tenant(&claims);
     let tenant_bind = tenant_id.to_string();
     tracing::info!("Closing hazard: {}", id);
@@ -817,21 +817,21 @@ pub async fn close_hazard(
     .await;
     match upd {
         Ok(r) if r.rows_affected() == 0 => {
-            return Json(ApiResponse::not_found("隐患不存在"));
+            return ApiResponse::not_found("隐患不存在");
         }
         Ok(_) => {}
         Err(e) => {
             tracing::error!("Failed to close hazard: {}", e);
-            return Json(ApiResponse::server_error("关闭隐患失败"));
+            return ApiResponse::server_error("关闭隐患失败");
         }
     }
     let cache_key = hazard_cache_key(tenant_id, &id);
     state.hazard_cache.remove(&cache_key).await;
     state.hazard_cache.clear_l1();
     match fetch_hazard_row(&state, &id, &tenant_bind).await {
-        Ok(Some(row)) => Json(ApiResponse::success(hazard_from_row(&row), "隐患已关闭")),
-        Ok(None) => Json(ApiResponse::not_found("隐患不存在")),
-        Err((code, msg)) => Json(ApiResponse::error(code, msg)),
+        Ok(Some(row)) => ApiResponse::success(hazard_from_row(&row), "隐患已关闭"),
+        Ok(None) => ApiResponse::not_found("隐患不存在"),
+        Err((code, msg)) => ApiResponse::error(code, msg),
     }
 }
 
@@ -841,7 +841,7 @@ pub async fn create_rectification(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = resolve_hazard_tenant(&claims);
     let tenant_bind = tenant_id.to_string();
     tracing::debug!("Creating rectification for hazard {}: {:?}", id, req);
@@ -886,10 +886,10 @@ pub async fn create_rectification(
             tracing::error!("Failed to create rectification: {}", e);
             if let sqlx::Error::Database(db) = &e {
                 if db.code().as_deref() == Some("23503") {
-                    return Json(ApiResponse::not_found("危险源不存在"));
+                    return ApiResponse::not_found("危险源不存在");
                 }
             }
-            return Json(ApiResponse::server_error("整改方案创建失败"));
+            return ApiResponse::server_error("整改方案创建失败");
         }
     };
 
@@ -908,7 +908,7 @@ pub async fn create_rectification(
     state.hazard_cache.remove(&cache_key).await;
     state.hazard_cache.clear_l1();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "id": row.try_get::<String, _>("id").unwrap_or_default(),
             "hazard_id": row.try_get::<String, _>("hazard_id").unwrap_or_default(),
@@ -924,7 +924,7 @@ pub async fn create_rectification(
             "tenant_id": tenant_id.to_string(),
         }),
         "整改方案创建成功",
-    ))
+    )
 }
 
 pub async fn update_rectification(
@@ -933,7 +933,7 @@ pub async fn update_rectification(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = resolve_hazard_tenant(&claims);
     let tenant_bind = tenant_id.to_string();
     tracing::debug!("Updating rectification for hazard {}: {:?}", id, req);
@@ -977,15 +977,15 @@ pub async fn update_rectification(
     .await;
     let row = match row {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("整改方案不存在")),
+        Ok(None) => return ApiResponse::not_found("整改方案不存在"),
         Err(e) => {
             tracing::error!("Failed to update rectification: {}", e);
             if let sqlx::Error::Database(db) = &e {
                 if db.code().as_deref() == Some("23503") {
-                    return Json(ApiResponse::not_found("危险源不存在"));
+                    return ApiResponse::not_found("危险源不存在");
                 }
             }
-            return Json(ApiResponse::server_error("整改方案更新失败"));
+            return ApiResponse::server_error("整改方案更新失败");
         }
     };
 
@@ -993,7 +993,7 @@ pub async fn update_rectification(
     state.hazard_cache.remove(&cache_key).await;
     state.hazard_cache.clear_l1();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "id": row.try_get::<String, _>("id").unwrap_or_default(),
             "hazard_id": row.try_get::<String, _>("hazard_id").unwrap_or_default(),
@@ -1009,7 +1009,7 @@ pub async fn update_rectification(
             "tenant_id": tenant_id.to_string(),
         }),
         "整改方案更新成功",
-    ))
+    )
 }
 
 pub async fn submit_rectification(
@@ -1018,7 +1018,7 @@ pub async fn submit_rectification(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = resolve_hazard_tenant(&claims);
     let tenant_bind = tenant_id.to_string();
     tracing::info!("Submitting rectification for hazard: {}", id);
@@ -1038,12 +1038,12 @@ pub async fn submit_rectification(
     .await;
     match upd {
         Ok(r) if r.rows_affected() == 0 => {
-            return Json(ApiResponse::not_found("整改方案不存在"));
+            return ApiResponse::not_found("整改方案不存在");
         }
         Ok(_) => {}
         Err(e) => {
             tracing::error!("Failed to submit rectification: {}", e);
-            return Json(ApiResponse::server_error("整改提交失败"));
+            return ApiResponse::server_error("整改提交失败");
         }
     }
 
@@ -1062,7 +1062,7 @@ pub async fn submit_rectification(
     state.hazard_cache.remove(&cache_key).await;
     state.hazard_cache.clear_l1();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "hazard_id": id,
             "status": "submitted",
@@ -1070,7 +1070,7 @@ pub async fn submit_rectification(
             "tenant_id": tenant_id.to_string(),
         }),
         "整改已提交",
-    ))
+    )
 }
 
 pub async fn verify_hazard(
@@ -1079,7 +1079,7 @@ pub async fn verify_hazard(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = resolve_hazard_tenant(&claims);
     let tenant_bind = tenant_id.to_string();
     tracing::debug!("Verifying hazard {}: {:?}", id, req);
@@ -1123,10 +1123,10 @@ pub async fn verify_hazard(
             tracing::error!("Failed to verify hazard: {}", e);
             if let sqlx::Error::Database(db) = &e {
                 if db.code().as_deref() == Some("23503") {
-                    return Json(ApiResponse::not_found("危险源不存在"));
+                    return ApiResponse::not_found("危险源不存在");
                 }
             }
-            return Json(ApiResponse::server_error("隐患验收失败"));
+            return ApiResponse::server_error("隐患验收失败");
         }
     };
 
@@ -1151,7 +1151,7 @@ pub async fn verify_hazard(
     state.hazard_cache.remove(&cache_key).await;
     state.hazard_cache.clear_l1();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "id": row.try_get::<String, _>("id").unwrap_or_default(),
             "hazard_id": row.try_get::<String, _>("hazard_id").unwrap_or_default(),
@@ -1163,7 +1163,7 @@ pub async fn verify_hazard(
             "tenant_id": tenant_id.to_string(),
         }),
         "隐患验证完成",
-    ))
+    )
 }
 
 // ---- /issues 主 CRUD（接 ehs.safety_hazards，对齐前端 SafetyHazard 契约）----
@@ -1233,7 +1233,7 @@ pub async fn list_safety_hazards(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(q): Query<HazardQuery>,
-) -> Json<ApiResponse<Vec<SafetyHazard>>> {
+) -> ApiResponse<Vec<SafetyHazard>> {
     let tenant_bind = resolve_hazard_tenant(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -1284,11 +1284,11 @@ pub async fn list_safety_hazards(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list safety hazards: {}", e);
-            return Json(ApiResponse::server_error("获取危险源列表失败"));
+            return ApiResponse::server_error("获取危险源列表失败");
         }
     };
     let list: Vec<SafetyHazard> = rows.iter().map(safety_hazard_from_row).collect();
-    Json(ApiResponse::success(list, "获取危险源列表成功"))
+    ApiResponse::success(list, "获取危险源列表成功")
 }
 
 #[utoipa::path(
@@ -1304,7 +1304,7 @@ pub async fn create_safety_hazard(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateSafetyHazardRequest>,
-) -> Json<ApiResponse<SafetyHazard>> {
+) -> ApiResponse<SafetyHazard> {
     let tenant_id = resolve_hazard_tenant(&claims);
     let hazard_no = req
         .hazard_no
@@ -1347,11 +1347,11 @@ pub async fn create_safety_hazard(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create safety hazard: {}", e);
-            return Json(ApiResponse::server_error("危险源创建失败"));
+            return ApiResponse::server_error("危险源创建失败");
         }
     };
     let record = safety_hazard_from_row(&row);
-    Json(ApiResponse::success(record, "危险源创建成功"))
+    ApiResponse::success(record, "危险源创建成功")
 }
 
 #[utoipa::path(
@@ -1367,7 +1367,7 @@ pub async fn get_safety_hazard(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<SafetyHazard>> {
+) -> ApiResponse<SafetyHazard> {
     let tenant_bind = resolve_hazard_tenant(&claims).to_string();
     let sql = r#"
         SELECT id::text AS id, hazard_no, name, category, level, description, location,
@@ -1386,14 +1386,14 @@ pub async fn get_safety_hazard(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("危险源不存在")),
+        Ok(None) => return ApiResponse::not_found("危险源不存在"),
         Err(e) => {
             tracing::error!("Failed to get safety hazard: {}", e);
-            return Json(ApiResponse::server_error("获取危险源失败"));
+            return ApiResponse::server_error("获取危险源失败");
         }
     };
     let record = safety_hazard_from_row(&row);
-    Json(ApiResponse::success(record, "获取危险源成功"))
+    ApiResponse::success(record, "获取危险源成功")
 }
 
 #[utoipa::path(
@@ -1411,7 +1411,7 @@ pub async fn update_safety_hazard(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateSafetyHazardRequest>,
-) -> Json<ApiResponse<SafetyHazard>> {
+) -> ApiResponse<SafetyHazard> {
     let tenant_bind = resolve_hazard_tenant(&claims).to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -1487,14 +1487,14 @@ pub async fn update_safety_hazard(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("危险源不存在")),
+        Ok(None) => return ApiResponse::not_found("危险源不存在"),
         Err(e) => {
             tracing::error!("Failed to update safety hazard: {}", e);
-            return Json(ApiResponse::server_error("危险源更新失败"));
+            return ApiResponse::server_error("危险源更新失败");
         }
     };
     let record = safety_hazard_from_row(&row);
-    Json(ApiResponse::success(record, "危险源更新成功"))
+    ApiResponse::success(record, "危险源更新成功")
 }
 
 #[utoipa::path(
@@ -1510,7 +1510,7 @@ pub async fn delete_safety_hazard(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_hazard_tenant(&claims).to_string();
     let sql = r#"
         UPDATE ehs.safety_hazards
@@ -1528,13 +1528,13 @@ pub async fn delete_safety_hazard(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete safety hazard: {}", e);
-            return Json(ApiResponse::server_error("危险源删除失败"));
+            return ApiResponse::server_error("危险源删除失败");
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("危险源不存在"));
+        return ApiResponse::not_found("危险源不存在");
     }
-    Json(ApiResponse::success((), "危险源删除成功"))
+    ApiResponse::success((), "危险源删除成功")
 }
 
 /// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。
@@ -1728,7 +1728,7 @@ pub async fn list_risk_assessments_db(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(hazard_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<RiskAssessment>>> {
+) -> ApiResponse<Vec<RiskAssessment>> {
     let tenant_bind = resolve_hazard_tenant(&claims).to_string();
     let sql = r#"
         SELECT id::text AS id, hazard_id::text AS hazard_id,
@@ -1749,11 +1749,11 @@ pub async fn list_risk_assessments_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list hazard risk assessments: {}", e);
-            return Json(ApiResponse::server_error("获取风险评估列表失败"));
+            return ApiResponse::server_error("获取风险评估列表失败");
         }
     };
     let list: Vec<RiskAssessment> = rows.iter().map(hazard_risk_assessment_from_row).collect();
-    Json(ApiResponse::success(list, "获取风险评估列表成功"))
+    ApiResponse::success(list, "获取风险评估列表成功")
 }
 
 #[utoipa::path(
@@ -1769,7 +1769,7 @@ pub async fn list_control_measures_db(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(hazard_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<ControlMeasure>>> {
+) -> ApiResponse<Vec<ControlMeasure>> {
     let tenant_bind = resolve_hazard_tenant(&claims).to_string();
     let sql = r#"
         SELECT id::text AS id, hazard_id::text AS hazard_id, measure_type, description,
@@ -1790,11 +1790,11 @@ pub async fn list_control_measures_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list hazard control measures: {}", e);
-            return Json(ApiResponse::server_error("获取管控措施列表失败"));
+            return ApiResponse::server_error("获取管控措施列表失败");
         }
     };
     let list: Vec<ControlMeasure> = rows.iter().map(hazard_control_measure_from_row).collect();
-    Json(ApiResponse::success(list, "获取管控措施列表成功"))
+    ApiResponse::success(list, "获取管控措施列表成功")
 }
 
 #[utoipa::path(
@@ -1812,7 +1812,7 @@ pub async fn create_control_measure_db(
     _headers: HeaderMap,
     axum::extract::Path(hazard_id): axum::extract::Path<String>,
     Json(req): Json<CreateControlMeasureRequest>,
-) -> Json<ApiResponse<ControlMeasure>> {
+) -> ApiResponse<ControlMeasure> {
     let tenant_id = resolve_hazard_tenant(&claims);
     let status = req.status.clone().unwrap_or_else(|| "pending".to_string());
     let sql = r#"
@@ -1837,11 +1837,11 @@ pub async fn create_control_measure_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create hazard control measure: {}", e);
-            return Json(ApiResponse::server_error("管控措施创建失败"));
+            return ApiResponse::server_error("管控措施创建失败");
         }
     };
     let record = hazard_control_measure_from_row(&row);
-    Json(ApiResponse::success(record, "管控措施创建成功"))
+    ApiResponse::success(record, "管控措施创建成功")
 }
 
 #[utoipa::path(
@@ -1860,7 +1860,7 @@ pub async fn delete_control_measure_db(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path((_hazard_id, measure_id)): axum::extract::Path<(String, String)>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_hazard_tenant(&claims).to_string();
     let sql = r#"
         UPDATE ehs.hazard_control_measures
@@ -1878,13 +1878,13 @@ pub async fn delete_control_measure_db(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete hazard control measure: {}", e);
-            return Json(ApiResponse::server_error("管控措施删除失败"));
+            return ApiResponse::server_error("管控措施删除失败");
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("管控措施不存在"));
+        return ApiResponse::not_found("管控措施不存在");
     }
-    Json(ApiResponse::success((), "管控措施删除成功"))
+    ApiResponse::success((), "管控措施删除成功")
 }
 
 /// hazard_risk_assessments 行 → RiskAssessment

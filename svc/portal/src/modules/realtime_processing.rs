@@ -1129,12 +1129,12 @@ pub struct SubscribeAggregationRequest {
 pub async fn create_subscription_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateSubscriptionRequest>,
-) -> Json<ApiResponse<SubscriptionRecord>> {
+) -> ApiResponse<SubscriptionRecord> {
     match PersistentSubscription::create_subscription(req.subscriber_id, req.topic, req.filter)
         .await
     {
-        Ok(record) => Json(ApiResponse::success(record, "订阅创建成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(record) => ApiResponse::success(record, "订阅创建成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1154,10 +1154,10 @@ pub async fn create_subscription_handler(
 pub async fn get_subscription_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<SubscriptionRecord>> {
+) -> ApiResponse<SubscriptionRecord> {
     match PersistentSubscription::get_subscription(&id).await {
-        Some(record) => Json(ApiResponse::success(record, "订阅详情")),
-        None => Json(ApiResponse::not_found("订阅不存在")),
+        Some(record) => ApiResponse::success(record, "订阅详情"),
+        None => ApiResponse::not_found("订阅不存在"),
     }
 }
 
@@ -1174,7 +1174,7 @@ pub async fn get_subscription_handler(
 pub async fn list_subscriptions_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListSubscriptionsQuery>,
-) -> Json<ApiResponse<Vec<SubscriptionRecord>>> {
+) -> ApiResponse<Vec<SubscriptionRecord>> {
     let status = params.status.as_deref().map(SubscriptionStatus::from_str);
     let list = PersistentSubscription::list_subscriptions(
         params.subscriber_id.as_deref(),
@@ -1182,7 +1182,7 @@ pub async fn list_subscriptions_handler(
         status,
     )
     .await;
-    Json(ApiResponse::success(list, "订阅列表"))
+    ApiResponse::success(list, "订阅列表")
 }
 
 #[utoipa::path(
@@ -1201,10 +1201,10 @@ pub async fn list_subscriptions_handler(
 pub async fn pause_subscription_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<SubscriptionRecord>> {
+) -> ApiResponse<SubscriptionRecord> {
     match PersistentSubscription::pause_subscription(&id).await {
-        Ok(record) => Json(ApiResponse::success(record, "订阅已暂停")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(record) => ApiResponse::success(record, "订阅已暂停"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1224,10 +1224,10 @@ pub async fn pause_subscription_handler(
 pub async fn resume_subscription_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<SubscriptionRecord>> {
+) -> ApiResponse<SubscriptionRecord> {
     match PersistentSubscription::resume_subscription(&id).await {
-        Ok(record) => Json(ApiResponse::success(record, "订阅已恢复")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(record) => ApiResponse::success(record, "订阅已恢复"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1247,11 +1247,11 @@ pub async fn resume_subscription_handler(
 pub async fn cancel_subscription_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     match PersistentSubscription::cancel_subscription(&id).await {
-        Ok(true) => Json(ApiResponse::success(true, "订阅已取消")),
-        Ok(false) => Json(ApiResponse::not_found("订阅不存在")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(true) => ApiResponse::success(true, "订阅已取消"),
+        Ok(false) => ApiResponse::not_found("订阅不存在"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1272,9 +1272,9 @@ pub async fn get_pending_events_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Query(params): Query<PendingEventsQuery>,
-) -> Json<ApiResponse<PendingEventsList>> {
+) -> ApiResponse<PendingEventsList> {
     let list = PersistentSubscription::get_pending_events(&id, params.limit).await;
-    Json(ApiResponse::success(list, "待投递事件列表"))
+    ApiResponse::success(list, "待投递事件列表")
 }
 
 // ==================== API 处理器: 消息重放 ====================
@@ -1292,7 +1292,7 @@ pub async fn get_pending_events_handler(
 pub async fn request_replay_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateReplayRequest>,
-) -> Json<ApiResponse<ReplayRequest>> {
+) -> ApiResponse<ReplayRequest> {
     let replay_type = req
         .replay_type
         .as_deref()
@@ -1308,8 +1308,8 @@ pub async fn request_replay_handler(
     )
     .await
     {
-        Ok(request) => Json(ApiResponse::success(request, "重放请求已创建")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(request) => ApiResponse::success(request, "重放请求已创建"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1329,10 +1329,10 @@ pub async fn request_replay_handler(
 pub async fn execute_replay_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<ReplayResult>> {
+) -> ApiResponse<ReplayResult> {
     match MessageReplayEngine::execute_replay(&id).await {
-        Ok(result) => Json(ApiResponse::success(result, "重放执行完成")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(result) => ApiResponse::success(result, "重放执行完成"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1352,10 +1352,10 @@ pub async fn execute_replay_handler(
 pub async fn get_replay_status_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<ReplayResult>> {
+) -> ApiResponse<ReplayResult> {
     match MessageReplayEngine::get_replay_status(&id).await {
-        Some(result) => Json(ApiResponse::success(result, "重放状态")),
-        None => Json(ApiResponse::not_found("重放结果不存在")),
+        Some(result) => ApiResponse::success(result, "重放状态"),
+        None => ApiResponse::not_found("重放结果不存在"),
     }
 }
 
@@ -1375,10 +1375,10 @@ pub async fn get_replay_status_handler(
 pub async fn cancel_replay_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<ReplayResult>> {
+) -> ApiResponse<ReplayResult> {
     match MessageReplayEngine::cancel_replay(&id).await {
-        Ok(result) => Json(ApiResponse::success(result, "重放已取消")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(result) => ApiResponse::success(result, "重放已取消"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1395,11 +1395,11 @@ pub async fn cancel_replay_handler(
 pub async fn get_replay_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<ReplayHistoryQuery>,
-) -> Json<ApiResponse<Vec<ReplayHistoryEntry>>> {
+) -> ApiResponse<Vec<ReplayHistoryEntry>> {
     let history =
         MessageReplayEngine::get_replay_history(params.subscription_id.as_deref(), params.limit)
             .await;
-    Json(ApiResponse::success(history, "重放历史"))
+    ApiResponse::success(history, "重放历史")
 }
 
 #[utoipa::path(
@@ -1419,10 +1419,10 @@ pub async fn get_events_range_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Query(params): Query<EventsRangeQuery>,
-) -> Json<ApiResponse<Vec<SubscriptionEvent>>> {
+) -> ApiResponse<Vec<SubscriptionEvent>> {
     let events =
         MessageReplayEngine::get_events_range(&id, params.from_sequence, params.to_sequence).await;
-    Json(ApiResponse::success(events, "事件范围查询"))
+    ApiResponse::success(events, "事件范围查询")
 }
 
 // ==================== API 处理器: 实时聚合 ====================
@@ -1440,7 +1440,7 @@ pub async fn get_events_range_handler(
 pub async fn create_aggregation_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateAggregationRequest>,
-) -> Json<ApiResponse<AggregationConfig>> {
+) -> ApiResponse<AggregationConfig> {
     let agg_type = req
         .aggregation_type
         .as_deref()
@@ -1463,8 +1463,8 @@ pub async fn create_aggregation_handler(
     )
     .await
     {
-        Ok(config) => Json(ApiResponse::success(config, "聚合配置创建成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(config) => ApiResponse::success(config, "聚合配置创建成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1484,11 +1484,11 @@ pub async fn create_aggregation_handler(
 pub async fn start_aggregation_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     match RealtimeAggregator::start_aggregation(&id).await {
-        Ok(true) => Json(ApiResponse::success(true, "聚合已启动")),
-        Ok(false) => Json(ApiResponse::server_error("聚合启动失败")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(true) => ApiResponse::success(true, "聚合已启动"),
+        Ok(false) => ApiResponse::server_error("聚合启动失败"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1508,11 +1508,11 @@ pub async fn start_aggregation_handler(
 pub async fn stop_aggregation_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     match RealtimeAggregator::stop_aggregation(&id).await {
-        Ok(true) => Json(ApiResponse::success(true, "聚合已停止")),
-        Ok(false) => Json(ApiResponse::server_error("聚合停止失败")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(true) => ApiResponse::success(true, "聚合已停止"),
+        Ok(false) => ApiResponse::server_error("聚合停止失败"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1532,12 +1532,12 @@ pub async fn stop_aggregation_handler(
 pub async fn get_aggregation_result_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<AggregationResult>> {
+) -> ApiResponse<AggregationResult> {
     match RealtimeAggregator::get_aggregation_result(&id).await {
-        Some(result) => Json(ApiResponse::success(result, "聚合结果")),
+        Some(result) => ApiResponse::success(result, "聚合结果"),
         None => match RealtimeAggregator::compute_window(&id).await {
-            Ok(result) => Json(ApiResponse::success(result, "聚合结果（首次计算）")),
-            Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+            Ok(result) => ApiResponse::success(result, "聚合结果（首次计算）"),
+            Err(e) => ApiResponse::not_found(&e.classify().1),
         },
     }
 }
@@ -1555,10 +1555,10 @@ pub async fn get_aggregation_result_handler(
 pub async fn list_aggregations_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListAggregationsQuery>,
-) -> Json<ApiResponse<Vec<AggregationConfig>>> {
+) -> ApiResponse<Vec<AggregationConfig>> {
     let list =
         RealtimeAggregator::list_aggregations(params.topic.as_deref(), params.active_only).await;
-    Json(ApiResponse::success(list, "聚合配置列表"))
+    ApiResponse::success(list, "聚合配置列表")
 }
 
 #[utoipa::path(
@@ -1577,10 +1577,10 @@ pub async fn list_aggregations_handler(
 pub async fn get_aggregation_stats_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<AggregationStats>> {
+) -> ApiResponse<AggregationStats> {
     match RealtimeAggregator::get_aggregation_stats(&id).await {
-        Some(stats) => Json(ApiResponse::success(stats, "聚合统计")),
-        None => Json(ApiResponse::not_found("聚合不存在")),
+        Some(stats) => ApiResponse::success(stats, "聚合统计"),
+        None => ApiResponse::not_found("聚合不存在"),
     }
 }
 

@@ -50,7 +50,7 @@ pub struct MobileSyncFailedItem {
 pub async fn sync_records(
     State(pool): State<PgPool>,
     Json(req): Json<MobileSyncRequest>,
-) -> Json<ApiResponse<MobileSyncResponse>> {
+) -> ApiResponse<MobileSyncResponse> {
     let mut success: Vec<String> = Vec::new();
     let mut failed: Vec<MobileSyncFailedItem> = Vec::new();
 
@@ -95,9 +95,9 @@ pub async fn sync_records(
     };
 
     if failed.is_empty() {
-        Json(ApiResponse::success(response, "同步成功"))
+        ApiResponse::success(response, "同步成功")
     } else {
-        Json(ApiResponse::success(response, "部分同步成功"))
+        ApiResponse::success(response, "部分同步成功")
     }
 }
 
@@ -111,7 +111,7 @@ pub async fn sync_records(
 )]
 pub async fn get_pending_records(
     State(pool): State<PgPool>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     match sqlx::query(only_own_schema_query!(
         "mobile",
         r#"
@@ -145,13 +145,11 @@ pub async fn get_pending_records(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(records, "查询成功"))
+            ApiResponse::success(records, "查询成功")
         }
         Err(e) => {
             tracing::error!("查询离线记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询离线记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询离线记录失败".to_string()))
         }
     }
 }
@@ -167,7 +165,7 @@ pub async fn get_pending_records(
 pub async fn mark_synced(
     State(pool): State<PgPool>,
     axum::extract::Path(record_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     match Uuid::parse_str(&record_id) {
         Ok(id) => {
             match sqlx::query(only_own_schema_query!(
@@ -182,18 +180,18 @@ pub async fn mark_synced(
             .execute(&pool)
             .await
             {
-                Ok(_) => Json(ApiResponse::success((), "标记同步成功")),
+                Ok(_) => ApiResponse::success((), "标记同步成功"),
                 Err(e) => {
                     tracing::error!("更新离线记录状态失败: {}", e);
-                    Json(ApiResponse::from(TopemsError::Internal(
+                    ApiResponse::from(TopemsError::Internal(
                         "更新状态失败".to_string(),
-                    )))
+                    ))
                 }
             }
         }
-        Err(_) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+        Err(_) => ApiResponse::from(TopemsError::ValidationFailed(
             "记录ID格式错误".to_string(),
-        ))),
+        )),
     }
 }
 
@@ -205,7 +203,7 @@ pub async fn mark_synced(
     responses((status = 200, description = "clear_synced OK")),
     tag = "offline_records"
 )]
-pub async fn clear_synced(State(pool): State<PgPool>) -> Json<ApiResponse<()>> {
+pub async fn clear_synced(State(pool): State<PgPool>) -> ApiResponse<()> {
     match sqlx::query(only_own_schema_query!(
         "mobile",
         r#"
@@ -216,12 +214,10 @@ pub async fn clear_synced(State(pool): State<PgPool>) -> Json<ApiResponse<()>> {
     .execute(&pool)
     .await
     {
-        Ok(_) => Json(ApiResponse::success((), "清理已同步记录成功")),
+        Ok(_) => ApiResponse::success((), "清理已同步记录成功"),
         Err(e) => {
             tracing::error!("清理已同步记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "清理失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("清理失败".to_string()))
         }
     }
 }

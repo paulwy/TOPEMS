@@ -67,11 +67,11 @@ pub fn create_routes(pool: PgPool) -> Router {
 async fn list_resources(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<ProjectResource>>> {
+) -> ApiResponse<Vec<ProjectResource>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, ProjectResource>(
         only_own_schema_query!("pm", "SELECT id, project_id, resource_type, resource_name, resource_service, quantity, cost, resource_id, role, actual_hours, actual_cost, start_date, end_date, allocation_percent, status, created_by, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY resource_type ASC"),
@@ -81,10 +81,10 @@ async fn list_resources(
     .await;
 
     match result {
-        Ok(resources) => Json(ApiResponse::success(resources, "获取项目资源列表成功")),
+        Ok(resources) => ApiResponse::success(resources, "获取项目资源列表成功"),
         Err(e) => {
             tracing::error!("获取项目资源列表失败: {}", e);
-            Json(ApiResponse::server_error("获取项目资源列表失败"))
+            ApiResponse::server_error("获取项目资源列表失败")
         }
     }
 }
@@ -110,11 +110,11 @@ async fn add_resource(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateResourceRequest>,
-) -> Json<ApiResponse<ProjectResource>> {
+) -> ApiResponse<ProjectResource> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -158,10 +158,10 @@ async fn add_resource(
     .await;
 
     match result {
-        Ok(resource) => Json(ApiResponse::success(resource, "添加项目资源成功")),
+        Ok(resource) => ApiResponse::success(resource, "添加项目资源成功"),
         Err(e) => {
             tracing::error!("添加项目资源失败: {}", e);
-            Json(ApiResponse::server_error("添加项目资源失败"))
+            ApiResponse::server_error("添加项目资源失败")
         }
     }
 }
@@ -185,11 +185,11 @@ async fn add_resource(
 async fn get_resource(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<ProjectResource>> {
+) -> ApiResponse<ProjectResource> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, ProjectResource>(
         only_own_schema_query!("pm", "SELECT id, project_id, resource_type, resource_name, resource_service, quantity, cost, resource_id, role, actual_hours, actual_cost, start_date, end_date, allocation_percent, status, created_by, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 AND id = $2"),
@@ -200,11 +200,11 @@ async fn get_resource(
     .await;
 
     match result {
-        Ok(Some(resource)) => Json(ApiResponse::success(resource, "获取项目资源成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目资源不存在")),
+        Ok(Some(resource)) => ApiResponse::success(resource, "获取项目资源成功"),
+        Ok(None) => ApiResponse::not_found("项目资源不存在"),
         Err(e) => {
             tracing::error!("获取项目资源失败: {}", e);
-            Json(ApiResponse::server_error("获取项目资源失败"))
+            ApiResponse::server_error("获取项目资源失败")
         }
     }
 }
@@ -230,11 +230,11 @@ async fn update_resource(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateResourceRequest>,
-) -> Json<ApiResponse<ProjectResource>> {
+) -> ApiResponse<ProjectResource> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
 
@@ -277,11 +277,11 @@ async fn update_resource(
     .await;
 
     match result {
-        Ok(Some(resource)) => Json(ApiResponse::success(resource, "更新项目资源成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目资源不存在")),
+        Ok(Some(resource)) => ApiResponse::success(resource, "更新项目资源成功"),
+        Ok(None) => ApiResponse::not_found("项目资源不存在"),
         Err(e) => {
             tracing::error!("更新项目资源失败: {}", e);
-            Json(ApiResponse::server_error("更新项目资源失败"))
+            ApiResponse::server_error("更新项目资源失败")
         }
     }
 }
@@ -305,11 +305,11 @@ async fn update_resource(
 async fn remove_resource(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
@@ -321,13 +321,11 @@ async fn remove_resource(
     .await;
 
     match result {
-        Ok(result) if result.rows_affected() > 0 => {
-            Json(ApiResponse::success(true, "删除项目资源成功"))
-        }
-        Ok(_) => Json(ApiResponse::not_found("项目资源不存在")),
+        Ok(result) if result.rows_affected() > 0 => ApiResponse::success(true, "删除项目资源成功"),
+        Ok(_) => ApiResponse::not_found("项目资源不存在"),
         Err(e) => {
             tracing::error!("删除项目资源失败: {}", e);
-            Json(ApiResponse::server_error("删除项目资源失败"))
+            ApiResponse::server_error("删除项目资源失败")
         }
     }
 }

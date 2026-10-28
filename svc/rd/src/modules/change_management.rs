@@ -164,9 +164,7 @@ pub async fn create_change_request(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<ChangeRequest>::server_error(
-                    "rls transaction unavailable",
-                )),
+                ApiResponse::<ChangeRequest>::server_error("rls transaction unavailable"),
             )
         }
     };
@@ -207,21 +205,18 @@ pub async fn create_change_request(
                     tracing::error!("事务提交失败: {}", e);
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::server_error("事务提交失败")),
+                        ApiResponse::server_error("事务提交失败"),
                     );
                 }
             }
             (
                 StatusCode::CREATED,
-                Json(ApiResponse::success(cr, "变更请求创建成功")),
+                ApiResponse::success(cr, "变更请求创建成功"),
             )
         }
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<ChangeRequest>::from(TopemsError::internal(
-                "创建变更请求失败",
-                e,
-            ))),
+            ApiResponse::<ChangeRequest>::from(TopemsError::internal("创建变更请求失败", e)),
         ),
     }
 }
@@ -249,10 +244,10 @@ pub async fn list_change_requests(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<PaginatedResponse<ChangeRequest>>::error(
+                ApiResponse::<PaginatedResponse<ChangeRequest>>::error(
                     500,
                     "rls transaction unavailable",
-                )),
+                ),
             )
         }
     };
@@ -291,17 +286,17 @@ pub async fn list_change_requests(
     match (result, total) {
         (Ok(items), Ok(total_count)) => (
             StatusCode::OK,
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse::new(items, total_count, page, page_size),
                 "变更请求列表获取成功",
-            )),
+            ),
         ),
         (_, Err(e)) | (Err(e), _) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<PaginatedResponse<ChangeRequest>>::error(
+            ApiResponse::<PaginatedResponse<ChangeRequest>>::error(
                 500,
                 &format!("获取变更请求列表失败: {}", e),
-            )),
+            ),
         ),
     }
 }
@@ -332,9 +327,7 @@ pub async fn get_change_request(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<ChangeRequest>::server_error(
-                    "rls transaction unavailable",
-                )),
+                ApiResponse::<ChangeRequest>::server_error("rls transaction unavailable"),
             )
         }
     };
@@ -346,20 +339,14 @@ pub async fn get_change_request(
     .await;
 
     match result {
-        Ok(Some(cr)) => (
-            StatusCode::OK,
-            Json(ApiResponse::success(cr, "变更请求获取成功")),
-        ),
+        Ok(Some(cr)) => (StatusCode::OK, ApiResponse::success(cr, "变更请求获取成功")),
         Ok(None) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::<ChangeRequest>::not_found("变更请求不存在")),
+            ApiResponse::<ChangeRequest>::not_found("变更请求不存在"),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<ChangeRequest>::from(TopemsError::internal(
-                "获取变更请求失败",
-                e,
-            ))),
+            ApiResponse::<ChangeRequest>::from(TopemsError::internal("获取变更请求失败", e)),
         ),
     }
 }
@@ -378,9 +365,7 @@ pub async fn update_change_request(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<ChangeRequest>::server_error(
-                    "rls transaction unavailable",
-                )),
+                ApiResponse::<ChangeRequest>::server_error("rls transaction unavailable"),
             )
         }
     };
@@ -423,25 +408,19 @@ pub async fn update_change_request(
                     tracing::error!("事务提交失败: {}", e);
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::server_error("事务提交失败")),
+                        ApiResponse::server_error("事务提交失败"),
                     );
                 }
             }
-            (
-                StatusCode::OK,
-                Json(ApiResponse::success(cr, "变更请求更新成功")),
-            )
+            (StatusCode::OK, ApiResponse::success(cr, "变更请求更新成功"))
         }
         Ok(None) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::<ChangeRequest>::not_found("变更请求不存在")),
+            ApiResponse::<ChangeRequest>::not_found("变更请求不存在"),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<ChangeRequest>::from(TopemsError::internal(
-                "更新变更请求失败",
-                e,
-            ))),
+            ApiResponse::<ChangeRequest>::from(TopemsError::internal("更新变更请求失败", e)),
         ),
     }
 }
@@ -459,9 +438,7 @@ pub async fn delete_change_request(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<serde_json::Value>::server_error(
-                    "rls transaction unavailable",
-                )),
+                ApiResponse::<serde_json::Value>::server_error("rls transaction unavailable"),
             )
         }
     };
@@ -476,29 +453,22 @@ pub async fn delete_change_request(
                     tracing::error!("事务提交失败: {}", e);
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::server_error("事务提交失败")),
+                        ApiResponse::server_error("事务提交失败"),
                     );
                 }
             }
             (
                 StatusCode::OK,
-                Json(ApiResponse::success(
-                    serde_json::json!({"deleted": true}),
-                    "变更请求已删除",
-                )),
+                ApiResponse::success(serde_json::json!({"deleted": true}), "变更请求已删除"),
             )
         }
         Ok(_) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::<serde_json::Value>::not_found(
-                "变更请求不存在",
-            )),
+            ApiResponse::<serde_json::Value>::not_found("变更请求不存在"),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<serde_json::Value>::from(
-                TopemsError::internal("删除变更请求失败", e),
-            )),
+            ApiResponse::<serde_json::Value>::from(TopemsError::internal("删除变更请求失败", e)),
         ),
     }
 }
@@ -530,9 +500,7 @@ pub async fn transition_change_request(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<ChangeRequest>::server_error(
-                    "rls transaction unavailable",
-                )),
+                ApiResponse::<ChangeRequest>::server_error("rls transaction unavailable"),
             )
         }
     };
@@ -547,16 +515,13 @@ pub async fn transition_change_request(
         Ok(None) => {
             return (
                 StatusCode::NOT_FOUND,
-                Json(ApiResponse::<ChangeRequest>::not_found("变更请求不存在")),
+                ApiResponse::<ChangeRequest>::not_found("变更请求不存在"),
             )
         }
         Err(e) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<ChangeRequest>::from(TopemsError::internal(
-                    "查询变更请求失败",
-                    e,
-                ))),
+                ApiResponse::<ChangeRequest>::from(TopemsError::internal("查询变更请求失败", e)),
             )
         }
     };
@@ -564,10 +529,10 @@ pub async fn transition_change_request(
     if !change_request_can_transition(&current, &req.to) {
         return (
             StatusCode::BAD_REQUEST,
-            Json(ApiResponse::<ChangeRequest>::bad_request(&format!(
+            ApiResponse::<ChangeRequest>::bad_request(&format!(
                 "非法状态流转: {current} -> {}",
                 req.to
-            ))),
+            )),
         );
     }
 
@@ -589,25 +554,19 @@ pub async fn transition_change_request(
                     tracing::error!("rls commit failed: {}", e);
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::server_error("提交事务失败")),
+                        ApiResponse::server_error("提交事务失败"),
                     );
                 }
             }
-            (
-                StatusCode::OK,
-                Json(ApiResponse::success(cr, "状态流转成功")),
-            )
+            (StatusCode::OK, ApiResponse::success(cr, "状态流转成功"))
         }
         Ok(None) => (
             StatusCode::NOT_FOUND,
-            Json(ApiResponse::<ChangeRequest>::not_found("变更请求不存在")),
+            ApiResponse::<ChangeRequest>::not_found("变更请求不存在"),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<ChangeRequest>::from(TopemsError::internal(
-                "状态流转失败",
-                e,
-            ))),
+            ApiResponse::<ChangeRequest>::from(TopemsError::internal("状态流转失败", e)),
         ),
     }
 }
@@ -639,9 +598,7 @@ pub async fn create_change_order(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<ChangeOrder>::server_error(
-                    "rls transaction unavailable",
-                )),
+                ApiResponse::<ChangeOrder>::server_error("rls transaction unavailable"),
             )
         }
     };
@@ -657,25 +614,20 @@ pub async fn create_change_order(
         Ok(None) => {
             return (
                 StatusCode::NOT_FOUND,
-                Json(ApiResponse::<ChangeOrder>::not_found("变更请求不存在")),
+                ApiResponse::<ChangeOrder>::not_found("变更请求不存在"),
             )
         }
         Err(e) => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<ChangeOrder>::from(TopemsError::internal(
-                    "查询变更请求失败",
-                    e,
-                ))),
+                ApiResponse::<ChangeOrder>::from(TopemsError::internal("查询变更请求失败", e)),
             )
         }
     };
     if !approved {
         return (
             StatusCode::BAD_REQUEST,
-            Json(ApiResponse::<ChangeOrder>::bad_request(
-                "仅已批准的变更请求可创建变更单",
-            )),
+            ApiResponse::<ChangeOrder>::bad_request("仅已批准的变更请求可创建变更单"),
         );
     }
 
@@ -706,21 +658,18 @@ pub async fn create_change_order(
                     tracing::error!("事务提交失败: {}", e);
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::server_error("事务提交失败")),
+                        ApiResponse::server_error("事务提交失败"),
                     );
                 }
             }
             (
                 StatusCode::CREATED,
-                Json(ApiResponse::success(co, "变更单创建成功")),
+                ApiResponse::success(co, "变更单创建成功"),
             )
         }
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<ChangeOrder>::from(TopemsError::internal(
-                "创建变更单失败",
-                e,
-            ))),
+            ApiResponse::<ChangeOrder>::from(TopemsError::internal("创建变更单失败", e)),
         ),
     }
 }
@@ -747,10 +696,7 @@ pub async fn list_change_orders(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<Vec<ChangeOrder>>::error(
-                    500,
-                    "rls transaction unavailable",
-                )),
+                ApiResponse::<Vec<ChangeOrder>>::error(500, "rls transaction unavailable"),
             )
         }
     };
@@ -763,14 +709,11 @@ pub async fn list_change_orders(
     match result {
         Ok(items) => (
             StatusCode::OK,
-            Json(ApiResponse::success(items, "变更单列表获取成功")),
+            ApiResponse::success(items, "变更单列表获取成功"),
         ),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<Vec<ChangeOrder>>::error(
-                500,
-                &format!("获取变更单列表失败: {}", e),
-            )),
+            ApiResponse::<Vec<ChangeOrder>>::error(500, &format!("获取变更单列表失败: {}", e)),
         ),
     }
 }

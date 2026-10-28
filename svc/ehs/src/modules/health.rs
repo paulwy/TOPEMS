@@ -90,7 +90,7 @@ pub async fn list_records(
     claims_ext: Option<Extension<Claims>>,
     _headers: HeaderMap,
     axum::extract::Query(q): axum::extract::Query<HealthQuery>,
-) -> Json<ApiResponse<Vec<HealthRecord>>> {
+) -> ApiResponse<Vec<HealthRecord>> {
     let claims = claims_ext.as_ref().map(|e| &e.0);
     let tenant_bind = claims
         .map(resolve_tenant_id)
@@ -147,12 +147,12 @@ pub async fn list_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list health records: {}", e);
-            return Json(ApiResponse::server_error("获取健康监测记录列表失败"));
+            return ApiResponse::server_error("获取健康监测记录列表失败");
         }
     };
 
     let records: Vec<HealthRecord> = rows.iter().map(health_record_from_row).collect();
-    Json(ApiResponse::success(records, "获取健康监测记录列表成功"))
+    ApiResponse::success(records, "获取健康监测记录列表成功")
 }
 
 pub async fn create_record(
@@ -161,7 +161,7 @@ pub async fn create_record(
     claims_ext: Option<Extension<Claims>>,
     _headers: HeaderMap,
     Json(req): Json<CreateHealthRecordRequest>,
-) -> Json<ApiResponse<HealthRecord>> {
+) -> ApiResponse<HealthRecord> {
     let claims = claims_ext.as_ref().map(|e| &e.0);
     let tenant_opt: Option<Uuid> = match claims {
         Some(c) if c.is_superuser => None,
@@ -207,14 +207,11 @@ pub async fn create_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create health record: {}", e);
-            return Json(ApiResponse::server_error("创建健康监测记录失败"));
+            return ApiResponse::server_error("创建健康监测记录失败");
         }
     };
 
-    Json(ApiResponse::success(
-        health_record_from_row(&row),
-        "创建健康监测记录成功",
-    ))
+    ApiResponse::success(health_record_from_row(&row), "创建健康监测记录成功")
 }
 
 pub async fn get_record(
@@ -222,7 +219,7 @@ pub async fn get_record(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<HealthRecord>> {
+) -> ApiResponse<HealthRecord> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let result = sqlx::query(
         r#"
@@ -245,13 +242,10 @@ pub async fn get_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to get health record: {}", e);
-            return Json(ApiResponse::not_found("健康记录不存在"));
+            return ApiResponse::not_found("健康记录不存在");
         }
     };
-    Json(ApiResponse::success(
-        health_record_from_row(&row),
-        "获取健康记录成功",
-    ))
+    ApiResponse::success(health_record_from_row(&row), "获取健康记录成功")
 }
 pub async fn update_record(
     State(state): State<crate::shared::AppState>,
@@ -259,7 +253,7 @@ pub async fn update_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateHealthRecordRequest>,
-) -> Json<ApiResponse<HealthRecord>> {
+) -> ApiResponse<HealthRecord> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
 
     let mut sets: Vec<String> = Vec::new();
@@ -281,7 +275,7 @@ pub async fn update_record(
     add("remarks", req.remarks);
 
     if sets.is_empty() {
-        return Json(ApiResponse::bad_request("无更新字段"));
+        return ApiResponse::bad_request("无更新字段");
     }
     sets.push(format!("updated_at = ${}", params.len() + 1));
     params.push(chrono::Utc::now().to_rfc3339());
@@ -315,20 +309,17 @@ pub async fn update_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update health record: {}", e);
-            return Json(ApiResponse::not_found("健康记录不存在或更新失败"));
+            return ApiResponse::not_found("健康记录不存在或更新失败");
         }
     };
-    Json(ApiResponse::success(
-        health_record_from_row(&row),
-        "更新健康记录成功",
-    ))
+    ApiResponse::success(health_record_from_row(&row), "更新健康记录成功")
 }
 pub async fn delete_record(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let result = sqlx::query(
         r#"
@@ -345,11 +336,11 @@ pub async fn delete_record(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "健康记录删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("健康记录不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "健康记录删除成功"),
+        Ok(_) => ApiResponse::not_found("健康记录不存在"),
         Err(e) => {
             tracing::error!("Failed to delete health record: {}", e);
-            Json(ApiResponse::server_error("删除健康记录失败"))
+            ApiResponse::server_error("删除健康记录失败")
         }
     }
 }
@@ -357,7 +348,7 @@ pub async fn get_statistics(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<HealthStatistics>> {
+) -> ApiResponse<HealthStatistics> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
@@ -428,7 +419,7 @@ pub async fn get_statistics(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         HealthStatistics {
             total_records: i32::try_from(total_records).unwrap_or(i32::MAX),
             normal_count: i32::try_from(normal_count).unwrap_or(i32::MAX),
@@ -438,7 +429,7 @@ pub async fn get_statistics(
             by_department,
         },
         "获取健康监测统计成功",
-    ))
+    )
 }
 
 fn resolve_tenant_id(claims: &Claims) -> uuid::Uuid {

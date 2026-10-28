@@ -1400,13 +1400,13 @@ pub struct UpdateAssetRequest {
 pub async fn add_kg_node(
     State(state): State<AppState>,
     Json(req): Json<AddKGNodeRequest>,
-) -> Json<ApiResponse<KGNode>> {
+) -> ApiResponse<KGNode> {
     let node_type = node_type_from_str(&req.node_type);
     let props = req.properties.unwrap_or_else(|| serde_json::json!({}));
 
     match KnowledgeGraphEngine::add_node(&state.db, req.label, node_type, props).await {
-        Ok(node) => Json(ApiResponse::success(node, "知识图谱节点已添加")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(node) => ApiResponse::success(node, "知识图谱节点已添加"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1423,7 +1423,7 @@ pub async fn add_kg_node(
 pub async fn add_kg_edge(
     State(state): State<AppState>,
     Json(req): Json<AddKGEdgeRequest>,
-) -> Json<ApiResponse<KGEdge>> {
+) -> ApiResponse<KGEdge> {
     let relation_type = relation_type_from_str(&req.relation_type);
     match KnowledgeGraphEngine::add_edge(
         &state.db,
@@ -1435,8 +1435,8 @@ pub async fn add_kg_edge(
     )
     .await
     {
-        Ok(edge) => Json(ApiResponse::success(edge, "知识图谱边已添加")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(edge) => ApiResponse::success(edge, "知识图谱边已添加"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 #[utoipa::path(
@@ -1454,10 +1454,10 @@ pub async fn get_subgraph(
     State(state): State<AppState>,
     Path(node_id): Path<String>,
     Query(params): Query<SubgraphQuery>,
-) -> Json<ApiResponse<KnowledgeGraph>> {
+) -> ApiResponse<KnowledgeGraph> {
     match KnowledgeGraphEngine::get_subgraph(&state.db, &node_id, params.depth).await {
-        Ok(graph) => Json(ApiResponse::success(graph, "子图谱")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(graph) => ApiResponse::success(graph, "子图谱"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1474,10 +1474,10 @@ pub async fn get_subgraph(
 pub async fn find_path(
     State(state): State<AppState>,
     Query(params): Query<PathQuery>,
-) -> Json<ApiResponse<Vec<KGEdge>>> {
+) -> ApiResponse<Vec<KGEdge>> {
     match KnowledgeGraphEngine::find_path(&state.db, &params.start_id, &params.end_id).await {
-        Ok(path) => Json(ApiResponse::success(path, "路径查找成功")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(path) => ApiResponse::success(path, "路径查找成功"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1498,10 +1498,10 @@ pub async fn get_similar(
     State(state): State<AppState>,
     Path(node_id): Path<String>,
     Query(params): Query<SimilarQuery>,
-) -> Json<ApiResponse<Vec<KGNode>>> {
+) -> ApiResponse<Vec<KGNode>> {
     match KnowledgeGraphEngine::get_similar(&state.db, &node_id, params.limit).await {
-        Ok(nodes) => Json(ApiResponse::success(nodes, "相似节点")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(nodes) => ApiResponse::success(nodes, "相似节点"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1518,7 +1518,7 @@ pub async fn get_similar(
 pub async fn export_kg(
     State(state): State<AppState>,
     Query(params): Query<ExportKGQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let format = params.format.unwrap_or_else(|| "json".to_string());
     match KnowledgeGraphEngine::export_graph(&state.db, &format).await {
         Ok(content) => {
@@ -1526,16 +1526,16 @@ pub async fn export_kg(
                 "dot" => "text/vnd.graphviz",
                 _ => "application/json",
             };
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "format": format,
                     "content": content,
                     "content_type": content_type,
                 }),
                 "知识图谱导出成功",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1558,7 +1558,7 @@ pub async fn get_recommendations(
     State(state): State<AppState>,
     Path(user_id): Path<String>,
     Query(params): Query<RecommendationQuery>,
-) -> Json<ApiResponse<Vec<Recommendation>>> {
+) -> ApiResponse<Vec<Recommendation>> {
     match RecommendationEngine::get_recommendations(
         &state.db,
         &user_id,
@@ -1567,8 +1567,8 @@ pub async fn get_recommendations(
     )
     .await
     {
-        Ok(recs) => Json(ApiResponse::success(recs, "推荐结果")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(recs) => ApiResponse::success(recs, "推荐结果"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1585,7 +1585,7 @@ pub async fn get_recommendations(
 pub async fn record_interaction(
     State(state): State<AppState>,
     Json(req): Json<RecordInteractionRequest>,
-) -> Json<ApiResponse<InteractionRecord>> {
+) -> ApiResponse<InteractionRecord> {
     let interaction_type = req.interaction_type.unwrap_or_else(|| "view".to_string());
     match RecommendationEngine::record_interaction(
         &state.db,
@@ -1595,8 +1595,8 @@ pub async fn record_interaction(
     )
     .await
     {
-        Ok(record) => Json(ApiResponse::success(record, "交互记录已保存")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(record) => ApiResponse::success(record, "交互记录已保存"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1617,10 +1617,10 @@ pub async fn get_similar_items(
     State(state): State<AppState>,
     Path(item_id): Path<String>,
     Query(params): Query<SimilarItemsQuery>,
-) -> Json<ApiResponse<Vec<DataAsset>>> {
+) -> ApiResponse<Vec<DataAsset>> {
     match RecommendationEngine::get_similar_items(&state.db, &item_id, params.limit).await {
-        Ok(items) => Json(ApiResponse::success(items, "相似资产")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(items) => ApiResponse::success(items, "相似资产"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1637,9 +1637,9 @@ pub async fn get_similar_items(
 pub async fn get_trending_items(
     State(state): State<AppState>,
     Query(params): Query<TrendingQuery>,
-) -> Json<ApiResponse<Vec<DataAsset>>> {
+) -> ApiResponse<Vec<DataAsset>> {
     let items = RecommendationEngine::get_trending_items(&state.db, params.limit).await;
-    Json(ApiResponse::success(items, "趋势资产"))
+    ApiResponse::success(items, "趋势资产")
 }
 
 // ==================== API 处理器：数据资产目录 ====================
@@ -1657,7 +1657,7 @@ pub async fn get_trending_items(
 pub async fn register_asset(
     State(state): State<AppState>,
     Json(req): Json<RegisterAssetRequest>,
-) -> Json<ApiResponse<DataAsset>> {
+) -> ApiResponse<DataAsset> {
     let asset_type = asset_type_from_str(&req.asset_type);
     let tags = req.tags.unwrap_or_default();
 
@@ -1672,8 +1672,8 @@ pub async fn register_asset(
     )
     .await
     {
-        Ok(asset) => Json(ApiResponse::success(asset, "数据资产已注册")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(asset) => ApiResponse::success(asset, "数据资产已注册"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1690,7 +1690,7 @@ pub async fn register_asset(
 pub async fn search_assets(
     State(state): State<AppState>,
     Query(params): Query<SearchAssetsQuery>,
-) -> Json<ApiResponse<PaginatedResponse<DataAsset>>> {
+) -> ApiResponse<PaginatedResponse<DataAsset>> {
     let asset_type = params.asset_type.as_ref().map(|t| asset_type_from_str(t));
     let tags = params
         .tags
@@ -1711,7 +1711,7 @@ pub async fn search_assets(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -1720,7 +1720,7 @@ pub async fn search_assets(
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "资产列表",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1739,10 +1739,10 @@ pub async fn search_assets(
 pub async fn get_asset(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<DataAsset>> {
+) -> ApiResponse<DataAsset> {
     match AssetCatalogManager::get_asset(&state.db, &id).await {
-        Ok(asset) => Json(ApiResponse::success(asset, "资产详情")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(asset) => ApiResponse::success(asset, "资产详情"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1763,7 +1763,7 @@ pub async fn update_asset(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateAssetRequest>,
-) -> Json<ApiResponse<DataAsset>> {
+) -> ApiResponse<DataAsset> {
     match AssetCatalogManager::update_asset(
         &state.db,
         &id,
@@ -1775,8 +1775,8 @@ pub async fn update_asset(
     )
     .await
     {
-        Ok(asset) => Json(ApiResponse::success(asset, "资产已更新")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(asset) => ApiResponse::success(asset, "资产已更新"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1790,11 +1790,9 @@ pub async fn update_asset(
     ),
     tag = "knowledge_v53"
 )]
-pub async fn list_categories(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<AssetCategory>>> {
+pub async fn list_categories(State(state): State<AppState>) -> ApiResponse<Vec<AssetCategory>> {
     let categories = AssetCatalogManager::list_categories(&state.db).await;
-    Json(ApiResponse::success(categories, "资产分类列表"))
+    ApiResponse::success(categories, "资产分类列表")
 }
 
 #[utoipa::path(
@@ -1807,9 +1805,9 @@ pub async fn list_categories(
     ),
     tag = "knowledge_v53"
 )]
-pub async fn get_asset_stats(State(state): State<AppState>) -> Json<ApiResponse<AssetStats>> {
+pub async fn get_asset_stats(State(state): State<AppState>) -> ApiResponse<AssetStats> {
     let stats = AssetCatalogManager::get_asset_stats(&state.db).await;
-    Json(ApiResponse::success(stats, "资产统计"))
+    ApiResponse::success(stats, "资产统计")
 }
 
 #[cfg(test)]

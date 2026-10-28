@@ -1,7 +1,7 @@
 use axum::{
     extract::{Path, State},
     routing::get,
-    Json, Router,
+    Router,
 };
 use sqlx::PgPool;
 use topems_shared_core::response::ApiResponse;
@@ -30,12 +30,12 @@ pub fn create_routes(pool: PgPool) -> Router {
     ),
     tag = "service_integration"
 )]
-async fn list_integrations(State(_pool): State<PgPool>) -> Json<ApiResponse<Vec<()>>> {
-    Json(ApiResponse::success(vec![], "获取服务集成列表成功"))
+async fn list_integrations(State(_pool): State<PgPool>) -> ApiResponse<Vec<()>> {
+    ApiResponse::success(vec![], "获取服务集成列表成功")
 }
 
-async fn create_integration(State(_pool): State<PgPool>) -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success((), "创建服务集成成功"))
+async fn create_integration(State(_pool): State<PgPool>) -> ApiResponse<()> {
+    ApiResponse::success((), "创建服务集成成功")
 }
 
 #[utoipa::path(
@@ -51,18 +51,12 @@ async fn create_integration(State(_pool): State<PgPool>) -> Json<ApiResponse<()>
     ),
     tag = "service_integration"
 )]
-async fn get_integration(
-    State(_pool): State<PgPool>,
-    Path(_id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success((), "获取服务集成成功"))
+async fn get_integration(State(_pool): State<PgPool>, Path(_id): Path<Uuid>) -> ApiResponse<()> {
+    ApiResponse::success((), "获取服务集成成功")
 }
 
-async fn update_integration(
-    State(_pool): State<PgPool>,
-    Path(_id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
-    Json(ApiResponse::success((), "更新服务集成成功"))
+async fn update_integration(State(_pool): State<PgPool>, Path(_id): Path<Uuid>) -> ApiResponse<()> {
+    ApiResponse::success((), "更新服务集成成功")
 }
 
 #[cfg(test)]

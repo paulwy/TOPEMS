@@ -119,10 +119,10 @@ async fn list_analyses(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<PaginatedResponse<AiAnalysis>>::error(
+                ApiResponse::<PaginatedResponse<AiAnalysis>>::error(
                     500,
                     "rls transaction unavailable",
-                )),
+                ),
             )
         }
     };
@@ -152,14 +152,14 @@ async fn list_analyses(
                 PaginatedResponse::new(items, total_count, page as i64, page_size as i64),
                 "AI分析列表获取成功",
             );
-            (StatusCode::OK, Json(response))
+            (StatusCode::OK, response)
         }
         (_, Err(e)) | (Err(e), _) => {
             let response = ApiResponse::<PaginatedResponse<AiAnalysis>>::error(
                 500,
                 &format!("获取AI分析列表失败: {}", e),
             );
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
+            (StatusCode::INTERNAL_SERVER_ERROR, response)
         }
     }
 }
@@ -187,9 +187,7 @@ async fn create_analysis(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<AiAnalysis>::server_error(
-                    "rls transaction unavailable",
-                )),
+                ApiResponse::<AiAnalysis>::server_error("rls transaction unavailable"),
             )
         }
     };
@@ -201,7 +199,7 @@ async fn create_analysis(
         Err(e) => {
             let response =
                 ApiResponse::<AiAnalysis>::from(TopemsError::internal("AI服务调用失败", e));
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(response));
+            return (StatusCode::INTERNAL_SERVER_ERROR, response);
         }
     };
 
@@ -233,17 +231,17 @@ async fn create_analysis(
                     tracing::error!("rls commit failed: {}", e);
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::server_error("提交事务失败")),
+                        ApiResponse::server_error("提交事务失败"),
                     );
                 }
             }
             let response = ApiResponse::success(analysis, "AI分析创建成功");
-            (StatusCode::CREATED, Json(response))
+            (StatusCode::CREATED, response)
         }
         Err(e) => {
             let response =
                 ApiResponse::<AiAnalysis>::from(TopemsError::internal("创建AI分析失败", e));
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
+            (StatusCode::INTERNAL_SERVER_ERROR, response)
         }
     }
 }
@@ -275,9 +273,7 @@ async fn get_analysis(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<AiAnalysis>::server_error(
-                    "rls transaction unavailable",
-                )),
+                ApiResponse::<AiAnalysis>::server_error("rls transaction unavailable"),
             )
         }
     };
@@ -293,16 +289,16 @@ async fn get_analysis(
     match result {
         Ok(Some(analysis)) => {
             let response = ApiResponse::success(analysis, "获取AI分析成功");
-            (StatusCode::OK, Json(response))
+            (StatusCode::OK, response)
         }
         Ok(None) => {
             let response = ApiResponse::<AiAnalysis>::not_found("AI分析不存在");
-            (StatusCode::NOT_FOUND, Json(response))
+            (StatusCode::NOT_FOUND, response)
         }
         Err(e) => {
             let response =
                 ApiResponse::<AiAnalysis>::from(TopemsError::internal("获取AI分析失败", e));
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
+            (StatusCode::INTERNAL_SERVER_ERROR, response)
         }
     }
 }
@@ -323,12 +319,12 @@ async fn ai_chat(Json(request): Json<AiChatRequest>) -> impl IntoResponse {
     match call_ai_service(&request.query, &ai_service_url).await {
         Ok(answer) => {
             let response = ApiResponse::success(AiChatResponse { answer }, "AI聊天成功");
-            (StatusCode::OK, Json(response))
+            (StatusCode::OK, response)
         }
         Err(e) => {
             let response =
                 ApiResponse::<AiChatResponse>::from(TopemsError::internal("AI聊天失败", e));
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
+            (StatusCode::INTERNAL_SERVER_ERROR, response)
         }
     }
 }
@@ -361,10 +357,7 @@ async fn get_entity_analyses(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<Vec<AiAnalysis>>::error(
-                    500,
-                    "rls transaction unavailable",
-                )),
+                ApiResponse::<Vec<AiAnalysis>>::error(500, "rls transaction unavailable"),
             )
         }
     };
@@ -383,14 +376,14 @@ async fn get_entity_analyses(
     match result {
         Ok(analyses) => {
             let response = ApiResponse::success(analyses, "获取实体AI分析列表成功");
-            (StatusCode::OK, Json(response))
+            (StatusCode::OK, response)
         }
         Err(e) => {
             let response = ApiResponse::<Vec<AiAnalysis>>::error(
                 500,
                 &format!("获取实体AI分析列表失败: {}", e),
             );
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
+            (StatusCode::INTERNAL_SERVER_ERROR, response)
         }
     }
 }

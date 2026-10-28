@@ -4,7 +4,7 @@
 //! 从 public.qa_lab_samples / public.qa_lab_tasks / public.qa_lab_records / public.qa_lab_instruments
 //! 聚合统计数据返回。
 
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Router};
 use serde::Serialize;
 use sqlx::Row;
 use topems_shared_core::response::ApiResponse;
@@ -45,7 +45,7 @@ pub struct LimsDashboardStats {
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_dashboard(
     State(state): State<crate::shared::AppState>,
-) -> Json<ApiResponse<LimsDashboardStats>> {
+) -> ApiResponse<LimsDashboardStats> {
     let pool = &state.pool;
 
     // --- 样品状态分布 ---
@@ -231,5 +231,5 @@ pub async fn get_dashboard(
         ],
     };
 
-    Json(ApiResponse::success(stats, "获取LIMS仪表盘数据成功"))
+    ApiResponse::success(stats, "获取LIMS仪表盘数据成功")
 }

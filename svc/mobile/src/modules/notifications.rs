@@ -5,7 +5,6 @@ use axum::{
     extract::{Path, Query, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
-    Json,
 };
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -28,17 +27,17 @@ pub struct NotificationListParams {
     pub notification_type: Option<String>,
 }
 
-fn unauthorized() -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
+fn unauthorized() -> (StatusCode, ApiResponse<serde_json::Value>) {
     (
         StatusCode::UNAUTHORIZED,
-        Json(ApiResponse::unauthorized("未授权")),
+        ApiResponse::unauthorized("未授权"),
     )
 }
 
-fn internal_error(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
+fn internal_error(msg: &str) -> (StatusCode, ApiResponse<serde_json::Value>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiResponse::server_error(msg)),
+        ApiResponse::server_error(msg),
     )
 }
 
@@ -79,7 +78,7 @@ pub async fn list_notifications(
             };
             (
                 StatusCode::OK,
-                Json(ApiResponse::success(body, "获取通知列表成功")),
+                ApiResponse::success(body, "获取通知列表成功"),
             )
         }
         Err(e) => {
@@ -110,7 +109,7 @@ pub async fn get_unread_count(
             let body = json!({ "count": count });
             (
                 StatusCode::OK,
-                Json(ApiResponse::success(body, "获取未读通知数成功")),
+                ApiResponse::success(body, "获取未读通知数成功"),
             )
         }
         Err(e) => {
@@ -122,7 +121,7 @@ pub async fn get_unread_count(
                     let body = json!({ "count": count });
                     (
                         StatusCode::OK,
-                        Json(ApiResponse::success(body, "获取未读通知数成功")),
+                        ApiResponse::success(body, "获取未读通知数成功"),
                     )
                 }
                 Err(e2) => {
@@ -157,7 +156,7 @@ pub async fn get_notification(
             let data = extract_data(&raw);
             (
                 StatusCode::OK,
-                Json(ApiResponse::success(unwrap_data(data), "获取通知详情成功")),
+                ApiResponse::success(unwrap_data(data), "获取通知详情成功"),
             )
         }
         Err(e) => {
@@ -189,7 +188,7 @@ pub async fn mark_notification_read(
             let data = extract_data(&raw);
             (
                 StatusCode::OK,
-                Json(ApiResponse::success(unwrap_data(data), "标记已读成功")),
+                ApiResponse::success(unwrap_data(data), "标记已读成功"),
             )
         }
         Err(e) => {
@@ -218,10 +217,7 @@ pub async fn mark_all_notifications_read(
     match client.mark_all_as_read().await {
         Ok(_) => (
             StatusCode::OK,
-            Json(ApiResponse::success(
-                serde_json::Value::Null,
-                "全部标记已读成功",
-            )),
+            ApiResponse::success(serde_json::Value::Null, "全部标记已读成功"),
         ),
         Err(e) => {
             tracing::error!("调用Notification服务全部标记已读失败: {}", e);
@@ -250,10 +246,7 @@ pub async fn delete_notification(
     match client.delete_notification(&id).await {
         Ok(_) => (
             StatusCode::OK,
-            Json(ApiResponse::success(
-                serde_json::Value::Null,
-                "删除通知成功",
-            )),
+            ApiResponse::success(serde_json::Value::Null, "删除通知成功"),
         ),
         Err(e) => {
             tracing::error!("调用Notification服务删除通知失败: {}", e);
@@ -276,9 +269,6 @@ pub async fn delete_read_notifications(
     // 前端契约端点保留，返回成功空操作，待上游支持后接入真实调用。
     (
         StatusCode::OK,
-        Json(ApiResponse::success(
-            serde_json::Value::Null,
-            "删除已读通知成功",
-        )),
+        ApiResponse::success(serde_json::Value::Null, "删除已读通知成功"),
     )
 }

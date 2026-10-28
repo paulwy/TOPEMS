@@ -1505,7 +1505,7 @@ pub struct CreateRecoveryPlanRequest {
 pub async fn create_routing_rule_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateRoutingRuleRequest>,
-) -> Json<ApiResponse<RoutingRule>> {
+) -> ApiResponse<RoutingRule> {
     let rule = SmartRouter::create_routing_rule(
         req.name,
         req.condition,
@@ -1514,7 +1514,7 @@ pub async fn create_routing_rule_handler(
         req.weight,
     )
     .await;
-    Json(ApiResponse::success(rule, "路由规则创建成功"))
+    ApiResponse::success(rule, "路由规则创建成功")
 }
 
 #[utoipa::path(
@@ -1530,18 +1530,18 @@ pub async fn create_routing_rule_handler(
 pub async fn get_routing_rules_handler(
     State(_state): State<AppState>,
     Query(params): Query<RoutingRulesQuery>,
-) -> Json<ApiResponse<Vec<RoutingRule>>> {
+) -> ApiResponse<Vec<RoutingRule>> {
     let rules =
         SmartRouter::get_routing_rules(params.enabled, params.target_service.as_deref()).await;
-    Json(ApiResponse::success(rules, "路由规则列表"))
+    ApiResponse::success(rules, "路由规则列表")
 }
 
 pub async fn route_query_handler(
     State(_state): State<AppState>,
     Json(req): Json<RouteQueryRequest>,
-) -> Json<ApiResponse<RoutingDecision>> {
+) -> ApiResponse<RoutingDecision> {
     let decision = SmartRouter::route_query(req.query_hash, req.operation_name).await;
-    Json(ApiResponse::success(decision, "查询路由完成"))
+    ApiResponse::success(decision, "查询路由完成")
 }
 
 #[utoipa::path(
@@ -1557,9 +1557,9 @@ pub async fn route_query_handler(
 pub async fn get_service_loads_handler(
     State(_state): State<AppState>,
     Query(params): Query<ServiceLoadQuery>,
-) -> Json<ApiResponse<Vec<ServiceLoad>>> {
+) -> ApiResponse<Vec<ServiceLoad>> {
     let loads = SmartRouter::get_service_loads(params.service_id.as_deref()).await;
-    Json(ApiResponse::success(loads, "服务负载列表"))
+    ApiResponse::success(loads, "服务负载列表")
 }
 
 #[utoipa::path(
@@ -1579,7 +1579,7 @@ pub async fn update_service_load_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateServiceLoadRequest>,
-) -> Json<ApiResponse<ServiceLoad>> {
+) -> ApiResponse<ServiceLoad> {
     let store = get_smart_router_store();
     let loads = store.service_loads.lock().await;
     let current = loads
@@ -1598,7 +1598,7 @@ pub async fn update_service_load_handler(
     };
 
     let updated = SmartRouter::update_service_load(load).await;
-    Json(ApiResponse::success(updated, "服务负载已更新"))
+    ApiResponse::success(updated, "服务负载已更新")
 }
 
 #[utoipa::path(
@@ -1614,10 +1614,10 @@ pub async fn update_service_load_handler(
 pub async fn get_routing_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<RoutingHistoryQuery>,
-) -> Json<ApiResponse<Vec<RoutingDecision>>> {
+) -> ApiResponse<Vec<RoutingDecision>> {
     let history =
         SmartRouter::get_routing_history(params.limit, params.target_service.as_deref()).await;
-    Json(ApiResponse::success(history, "路由决策历史"))
+    ApiResponse::success(history, "路由决策历史")
 }
 
 #[utoipa::path(
@@ -1633,9 +1633,9 @@ pub async fn get_routing_history_handler(
 pub async fn simulate_routing_handler(
     State(_state): State<AppState>,
     Json(req): Json<SimulateRoutingRequest>,
-) -> Json<ApiResponse<RoutingDecision>> {
+) -> ApiResponse<RoutingDecision> {
     let decision = SmartRouter::simulate_routing(req.query_hash, req.operation_name).await;
-    Json(ApiResponse::success(decision, "路由模拟完成"))
+    ApiResponse::success(decision, "路由模拟完成")
 }
 
 #[utoipa::path(
@@ -1648,11 +1648,9 @@ pub async fn simulate_routing_handler(
     ),
     tag = "AiOps"
 )]
-pub async fn get_route_stats_handler(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<RouteStats>> {
+pub async fn get_route_stats_handler(State(_state): State<AppState>) -> ApiResponse<RouteStats> {
     let stats = SmartRouter::get_route_stats().await;
-    Json(ApiResponse::success(stats, "路由统计"))
+    ApiResponse::success(stats, "路由统计")
 }
 
 // ==================== API 处理器: 自动缓存 ====================
@@ -1670,7 +1668,7 @@ pub async fn get_route_stats_handler(
 pub async fn create_cache_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateCachePolicyRequest>,
-) -> Json<ApiResponse<CachePolicy>> {
+) -> ApiResponse<CachePolicy> {
     let scope = req
         .scope
         .as_deref()
@@ -1690,7 +1688,7 @@ pub async fn create_cache_policy_handler(
         req.max_size.unwrap_or(10000),
     )
     .await;
-    Json(ApiResponse::success(policy, "缓存策略创建成功"))
+    ApiResponse::success(policy, "缓存策略创建成功")
 }
 
 #[utoipa::path(
@@ -1706,10 +1704,10 @@ pub async fn create_cache_policy_handler(
 pub async fn get_cache_policies_handler(
     State(_state): State<AppState>,
     Query(params): Query<CachePoliciesQuery>,
-) -> Json<ApiResponse<Vec<CachePolicy>>> {
+) -> ApiResponse<Vec<CachePolicy>> {
     let scope = params.scope.as_deref().map(CacheScope::from_str);
     let policies = AutoCacheManager::get_cache_policies(scope).await;
-    Json(ApiResponse::success(policies, "缓存策略列表"))
+    ApiResponse::success(policies, "缓存策略列表")
 }
 
 #[utoipa::path(
@@ -1728,23 +1726,23 @@ pub async fn get_cache_policies_handler(
 pub async fn get_cache_entry_handler(
     State(_state): State<AppState>,
     Path(key): Path<String>,
-) -> Json<ApiResponse<CacheEntry>> {
+) -> ApiResponse<CacheEntry> {
     match AutoCacheManager::get_entry(&key).await {
         Some(entry) => {
             if entry.is_expired() {
-                Json(ApiResponse::not_found("缓存已过期"))
+                ApiResponse::not_found("缓存已过期")
             } else {
-                Json(ApiResponse::success(entry, "缓存条目"))
+                ApiResponse::success(entry, "缓存条目")
             }
         }
-        None => Json(ApiResponse::not_found("缓存不存在")),
+        None => ApiResponse::not_found("缓存不存在"),
     }
 }
 
 pub async fn invalidate_cache_handler(
     State(_state): State<AppState>,
     Json(req): Json<InvalidateCacheRequest>,
-) -> Json<ApiResponse<u64>> {
+) -> ApiResponse<u64> {
     match AutoCacheManager::invalidate_cache(
         req.cache_key,
         req.reason.unwrap_or_else(|| "manual".to_string()),
@@ -1752,8 +1750,8 @@ pub async fn invalidate_cache_handler(
     )
     .await
     {
-        Ok(removed) => Json(ApiResponse::success(removed, "缓存失效完成")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(removed) => ApiResponse::success(removed, "缓存失效完成"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1767,11 +1765,9 @@ pub async fn invalidate_cache_handler(
     ),
     tag = "AiOps"
 )]
-pub async fn get_cache_stats_handler(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<CacheStats>> {
+pub async fn get_cache_stats_handler(State(_state): State<AppState>) -> ApiResponse<CacheStats> {
     let stats = AutoCacheManager::get_cache_stats().await;
-    Json(ApiResponse::success(stats, "缓存统计"))
+    ApiResponse::success(stats, "缓存统计")
 }
 
 #[utoipa::path(
@@ -1787,10 +1783,10 @@ pub async fn get_cache_stats_handler(
 pub async fn cleanup_cache_handler(
     State(_state): State<AppState>,
     Json(req): Json<CleanupRequest>,
-) -> Json<ApiResponse<u64>> {
+) -> ApiResponse<u64> {
     let removed = AutoCacheManager::cleanup_expired().await;
     let _ = req.max_size;
-    Json(ApiResponse::success(removed, "过期缓存已清理"))
+    ApiResponse::success(removed, "过期缓存已清理")
 }
 
 #[utoipa::path(
@@ -1803,9 +1799,9 @@ pub async fn cleanup_cache_handler(
     ),
     tag = "AiOps"
 )]
-pub async fn get_cache_hit_rate_handler(State(_state): State<AppState>) -> Json<ApiResponse<f64>> {
+pub async fn get_cache_hit_rate_handler(State(_state): State<AppState>) -> ApiResponse<f64> {
     let rate = AutoCacheManager::get_cache_hit_rate().await;
-    Json(ApiResponse::success(rate, "缓存命中率"))
+    ApiResponse::success(rate, "缓存命中率")
 }
 
 #[utoipa::path(
@@ -1821,10 +1817,10 @@ pub async fn get_cache_hit_rate_handler(State(_state): State<AppState>) -> Json<
 pub async fn evict_cache_handler(
     State(_state): State<AppState>,
     Json(req): Json<CleanupRequest>,
-) -> Json<ApiResponse<u64>> {
+) -> ApiResponse<u64> {
     let max_size = req.max_size.unwrap_or(1000);
     let removed = AutoCacheManager::evict_cache(max_size).await;
-    Json(ApiResponse::success(removed, "缓存淘汰完成"))
+    ApiResponse::success(removed, "缓存淘汰完成")
 }
 
 // ==================== API 处理器: 自愈机制 ====================
@@ -1842,7 +1838,7 @@ pub async fn evict_cache_handler(
 pub async fn create_health_check_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateHealthCheckRequest>,
-) -> Json<ApiResponse<HealthCheck>> {
+) -> ApiResponse<HealthCheck> {
     let check_type = req
         .check_type
         .as_deref()
@@ -1858,7 +1854,7 @@ pub async fn create_health_check_handler(
         req.unhealthy_threshold,
     )
     .await;
-    Json(ApiResponse::success(check, "健康检查创建成功"))
+    ApiResponse::success(check, "健康检查创建成功")
 }
 
 #[utoipa::path(
@@ -1874,11 +1870,11 @@ pub async fn create_health_check_handler(
 pub async fn get_health_checks_handler(
     State(_state): State<AppState>,
     Query(params): Query<HealthChecksQuery>,
-) -> Json<ApiResponse<Vec<HealthCheck>>> {
+) -> ApiResponse<Vec<HealthCheck>> {
     let check_type = params.check_type.as_deref().map(HealthCheckType::from_str);
     let checks =
         SelfHealingEngine::get_health_checks(params.service_id.as_deref(), check_type).await;
-    Json(ApiResponse::success(checks, "健康检查列表"))
+    ApiResponse::success(checks, "健康检查列表")
 }
 
 #[utoipa::path(
@@ -1894,11 +1890,11 @@ pub async fn get_health_checks_handler(
 pub async fn run_health_check_handler(
     State(_state): State<AppState>,
     Json(req): Json<RouteQueryRequest>,
-) -> Json<ApiResponse<HealthCheck>> {
+) -> ApiResponse<HealthCheck> {
     let check_id = req.query_hash.unwrap_or_default();
     match SelfHealingEngine::run_health_check(&check_id).await {
-        Ok(check) => Json(ApiResponse::success(check, "健康检查执行完成")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(check) => ApiResponse::success(check, "健康检查执行完成"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1915,7 +1911,7 @@ pub async fn run_health_check_handler(
 pub async fn execute_healing_handler(
     State(_state): State<AppState>,
     Json(req): Json<ExecuteHealingRequest>,
-) -> Json<ApiResponse<HealingAction>> {
+) -> ApiResponse<HealingAction> {
     let trigger = req
         .trigger
         .as_deref()
@@ -1928,7 +1924,7 @@ pub async fn execute_healing_handler(
         .unwrap_or(HealingActionType::Restart);
 
     let action = SelfHealingEngine::execute_healing(trigger, action_type, req.target).await;
-    Json(ApiResponse::success(action, "自愈动作已执行"))
+    ApiResponse::success(action, "自愈动作已执行")
 }
 
 #[utoipa::path(
@@ -1944,11 +1940,11 @@ pub async fn execute_healing_handler(
 pub async fn get_healing_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<HealingHistoryQuery>,
-) -> Json<ApiResponse<Vec<HealingAction>>> {
+) -> ApiResponse<Vec<HealingAction>> {
     let trigger = params.trigger.as_deref().map(HealingTrigger::from_str);
     let status = params.status.as_deref().map(HealingStatus::from_str);
     let history = SelfHealingEngine::get_healing_history(trigger, status, params.limit).await;
-    Json(ApiResponse::success(history, "自愈历史"))
+    ApiResponse::success(history, "自愈历史")
 }
 
 #[utoipa::path(
@@ -1964,14 +1960,14 @@ pub async fn get_healing_history_handler(
 pub async fn create_recovery_plan_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateRecoveryPlanRequest>,
-) -> Json<ApiResponse<RecoveryPlan>> {
+) -> ApiResponse<RecoveryPlan> {
     let plan = SelfHealingEngine::create_recovery_plan(
         req.service_id,
         req.steps,
         req.estimated_duration_ms,
     )
     .await;
-    Json(ApiResponse::success(plan, "恢复计划创建成功"))
+    ApiResponse::success(plan, "恢复计划创建成功")
 }
 
 #[utoipa::path(
@@ -1990,10 +1986,10 @@ pub async fn create_recovery_plan_handler(
 pub async fn get_recovery_status_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<RecoveryPlan>> {
+) -> ApiResponse<RecoveryPlan> {
     match SelfHealingEngine::get_recovery_status(&id).await {
-        Ok(plan) => Json(ApiResponse::success(plan, "恢复计划状态")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(plan) => ApiResponse::success(plan, "恢复计划状态"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -2009,9 +2005,9 @@ pub async fn get_recovery_status_handler(
 )]
 pub async fn get_health_summary_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<HealthSummary>> {
+) -> ApiResponse<HealthSummary> {
     let summary = SelfHealingEngine::get_health_summary().await;
-    Json(ApiResponse::success(summary, "健康汇总"))
+    ApiResponse::success(summary, "健康汇总")
 }
 
 #[cfg(test)]

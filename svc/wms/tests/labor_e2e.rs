@@ -105,9 +105,8 @@ async fn shifts_body(pool: sqlx::PgPool) -> Value {
     )
     .await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     serde_json::to_value(data).unwrap()
 }
 
@@ -154,9 +153,8 @@ async fn create_shift_creates(pool: sqlx::PgPool) {
     )
     .await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     let shift = serde_json::to_value(data).unwrap();
     assert_eq!(shift["user_id"], serde_json::to_value(uid).unwrap());
     assert_eq!(shift["status"], "scheduled");
@@ -207,9 +205,8 @@ async fn efficiency_computes_from_wave_picks(pool: sqlx::PgPool) {
     )
     .await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     let rows = serde_json::to_value(data).unwrap();
     let rows = rows.as_array().unwrap();
     assert_eq!(rows.len(), 1);

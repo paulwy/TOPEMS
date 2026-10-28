@@ -1354,7 +1354,7 @@ pub struct UpdateAuthPolicyRequest {
 pub async fn check_consistency_handler(
     State(_state): State<AppState>,
     Json(req): Json<CheckConsistencyRequest>,
-) -> Json<ApiResponse<ConsistencyCheck>> {
+) -> ApiResponse<ConsistencyCheck> {
     let model = req
         .model
         .as_deref()
@@ -1362,8 +1362,8 @@ pub async fn check_consistency_handler(
         .unwrap_or(ConsistencyModel::StrongEventual);
 
     match ConsistencyManager::check_consistency(req.entity_ids, model).await {
-        Ok(check) => Json(ApiResponse::success(check, "一致性检查完成")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(check) => ApiResponse::success(check, "一致性检查完成"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1379,12 +1379,12 @@ pub async fn check_consistency_handler(
 )]
 pub async fn get_consistency_model_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let model = ConsistencyManager::get_consistency_model().await;
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "model": model.as_str() }),
         "当前一致性模型",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1400,14 +1400,14 @@ pub async fn get_consistency_model_handler(
 pub async fn set_consistency_model_handler(
     State(_state): State<AppState>,
     Json(req): Json<SetModelRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let model = ConsistencyModel::from_str(&req.model);
     match ConsistencyManager::set_consistency_model(model).await {
-        Ok(m) => Json(ApiResponse::success(
+        Ok(m) => ApiResponse::success(
             serde_json::json!({ "model": m.as_str() }),
             "一致性模型已更新",
-        )),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        ),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1424,10 +1424,10 @@ pub async fn set_consistency_model_handler(
 pub async fn detect_conflicts_handler(
     State(_state): State<AppState>,
     Json(req): Json<DetectConflictsRequest>,
-) -> Json<ApiResponse<Vec<ConflictInfo>>> {
+) -> ApiResponse<Vec<ConflictInfo>> {
     match ConsistencyManager::detect_conflicts(req.entity_ids).await {
-        Ok(conflicts) => Json(ApiResponse::success(conflicts, "冲突检测完成")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(conflicts) => ApiResponse::success(conflicts, "冲突检测完成"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1448,11 +1448,11 @@ pub async fn resolve_conflict_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<ResolveConflictRequest>,
-) -> Json<ApiResponse<VersionVector>> {
+) -> ApiResponse<VersionVector> {
     let strategy = req.strategy.unwrap_or_else(|| "merge_by_max".to_string());
     match ConsistencyManager::resolve_conflict(&id, strategy).await {
-        Ok(vector) => Json(ApiResponse::success(vector, "冲突已解决")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(vector) => ApiResponse::success(vector, "冲突已解决"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1472,10 +1472,10 @@ pub async fn resolve_conflict_handler(
 pub async fn get_version_vector_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<VersionVector>> {
+) -> ApiResponse<VersionVector> {
     match ConsistencyManager::get_version_vector(&id).await {
-        Ok(vector) => Json(ApiResponse::success(vector, "版本向量")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(vector) => ApiResponse::success(vector, "版本向量"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1491,9 +1491,9 @@ pub async fn get_version_vector_handler(
 )]
 pub async fn get_consistency_report_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<ConsistencyReport>> {
+) -> ApiResponse<ConsistencyReport> {
     let report = ConsistencyManager::get_consistency_report().await;
-    Json(ApiResponse::success(report, "一致性报告"))
+    ApiResponse::success(report, "一致性报告")
 }
 
 // ==================== API 处理器: 分布式查询 ====================
@@ -1511,7 +1511,7 @@ pub async fn get_consistency_report_handler(
 pub async fn create_distributed_query_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateDistributedQueryRequest>,
-) -> Json<ApiResponse<DistributedQuery>> {
+) -> ApiResponse<DistributedQuery> {
     let consistency = req
         .consistency_requirement
         .as_deref()
@@ -1526,8 +1526,8 @@ pub async fn create_distributed_query_handler(
     )
     .await
     {
-        Ok(query) => Json(ApiResponse::success(query, "分布式查询创建成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(query) => ApiResponse::success(query, "分布式查询创建成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1547,10 +1547,10 @@ pub async fn create_distributed_query_handler(
 pub async fn execute_distributed_query_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<DistributedQuery>> {
+) -> ApiResponse<DistributedQuery> {
     match DistributedQueryEngine::execute_distributed_query(&id).await {
-        Ok(query) => Json(ApiResponse::success(query, "分布式查询执行完成")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(query) => ApiResponse::success(query, "分布式查询执行完成"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1570,10 +1570,10 @@ pub async fn execute_distributed_query_handler(
 pub async fn get_query_status_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<QueryStatusInfo>> {
+) -> ApiResponse<QueryStatusInfo> {
     match DistributedQueryEngine::get_query_status(&id).await {
-        Ok(info) => Json(ApiResponse::success(info, "查询状态")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(info) => ApiResponse::success(info, "查询状态"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1593,10 +1593,10 @@ pub async fn get_query_status_handler(
 pub async fn cancel_query_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<DistributedQuery>> {
+) -> ApiResponse<DistributedQuery> {
     match DistributedQueryEngine::cancel_query(&id).await {
-        Ok(query) => Json(ApiResponse::success(query, "查询已取消")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(query) => ApiResponse::success(query, "查询已取消"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1613,9 +1613,9 @@ pub async fn cancel_query_handler(
 pub async fn get_query_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<HistoryQuery>,
-) -> Json<ApiResponse<Vec<QueryHistoryEntry>>> {
+) -> ApiResponse<Vec<QueryHistoryEntry>> {
     let history = DistributedQueryEngine::get_query_history(params.limit).await;
-    Json(ApiResponse::success(history, "查询历史"))
+    ApiResponse::success(history, "查询历史")
 }
 
 #[utoipa::path(
@@ -1631,10 +1631,10 @@ pub async fn get_query_history_handler(
 pub async fn validate_query_plan_handler(
     State(_state): State<AppState>,
     Json(req): Json<ValidateQueryPlanRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match DistributedQueryEngine::validate_query_plan(req.query_plan).await {
-        Ok(result) => Json(ApiResponse::success(result, "查询计划验证完成")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(result) => ApiResponse::success(result, "查询计划验证完成"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1653,11 +1653,11 @@ pub async fn validate_query_plan_handler(
 pub async fn authenticate_federated_handler(
     State(_state): State<AppState>,
     Json(req): Json<AuthenticateRequest>,
-) -> Json<ApiResponse<FederatedIdentity>> {
+) -> ApiResponse<FederatedIdentity> {
     let provider = AuthProvider::from_str(&req.provider);
     match FederatedAuthService::authenticate_federated(provider, req.token).await {
-        Ok(identity) => Json(ApiResponse::success(identity, "联邦认证成功")),
-        Err(e) => Json(ApiResponse::unauthorized(&e.classify().1)),
+        Ok(identity) => ApiResponse::success(identity, "联邦认证成功"),
+        Err(e) => ApiResponse::unauthorized(&e.classify().1),
     }
 }
 
@@ -1678,10 +1678,10 @@ pub async fn propagate_identity_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<PropagateRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match FederatedAuthService::propagate_identity(&id, req.target_services).await {
-        Ok(result) => Json(ApiResponse::success(result, "身份传播完成")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(result) => ApiResponse::success(result, "身份传播完成"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1698,10 +1698,10 @@ pub async fn propagate_identity_handler(
 pub async fn verify_token_chain_handler(
     State(_state): State<AppState>,
     Json(req): Json<VerifyTokenChainRequest>,
-) -> Json<ApiResponse<TokenChain>> {
+) -> ApiResponse<TokenChain> {
     match FederatedAuthService::verify_token_chain(req.tokens).await {
-        Ok(chain) => Json(ApiResponse::success(chain, "令牌链验证完成")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(chain) => ApiResponse::success(chain, "令牌链验证完成"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1721,10 +1721,10 @@ pub async fn verify_token_chain_handler(
 pub async fn get_identity_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<FederatedIdentity>> {
+) -> ApiResponse<FederatedIdentity> {
     match FederatedAuthService::get_identity(&id).await {
-        Ok(identity) => Json(ApiResponse::success(identity, "身份详情")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(identity) => ApiResponse::success(identity, "身份详情"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1741,7 +1741,7 @@ pub async fn get_identity_handler(
 pub async fn create_auth_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateAuthPolicyRequest>,
-) -> Json<ApiResponse<AuthPolicy>> {
+) -> ApiResponse<AuthPolicy> {
     match FederatedAuthService::create_auth_policy(
         req.federation_id,
         req.required_roles,
@@ -1751,8 +1751,8 @@ pub async fn create_auth_policy_handler(
     )
     .await
     {
-        Ok(policy) => Json(ApiResponse::success(policy, "认证策略创建成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(policy) => ApiResponse::success(policy, "认证策略创建成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1773,7 +1773,7 @@ pub async fn update_auth_policy_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateAuthPolicyRequest>,
-) -> Json<ApiResponse<AuthPolicy>> {
+) -> ApiResponse<AuthPolicy> {
     match FederatedAuthService::update_auth_policy(
         &id,
         req.required_roles,
@@ -1783,8 +1783,8 @@ pub async fn update_auth_policy_handler(
     )
     .await
     {
-        Ok(policy) => Json(ApiResponse::success(policy, "认证策略已更新")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(policy) => ApiResponse::success(policy, "认证策略已更新"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1801,14 +1801,14 @@ pub async fn update_auth_policy_handler(
 pub async fn get_auth_status_handler(
     State(_state): State<AppState>,
     Query(params): Query<HashMap<String, String>>,
-) -> Json<ApiResponse<AuthStatusInfo>> {
+) -> ApiResponse<AuthStatusInfo> {
     let identity_id = params
         .get("identity_id")
         .cloned()
         .unwrap_or_else(|| "identity-001".to_string());
     match FederatedAuthService::get_auth_status(&identity_id).await {
-        Ok(status) => Json(ApiResponse::success(status, "认证状态")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(status) => ApiResponse::success(status, "认证状态"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 

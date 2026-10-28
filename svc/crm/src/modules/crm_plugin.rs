@@ -1,7 +1,4 @@
-use axum::{
-    extract::{Extension, State},
-    Json,
-};
+use axum::extract::{Extension, State};
 use serde::{Deserialize, Serialize};
 
 use crate::modules::ApiState;
@@ -34,7 +31,7 @@ pub struct PermissionDef {
 }
 
 /// 获取插件信息
-pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
     let runtime_url =
         std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8029".to_string());
 
@@ -117,7 +114,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         ])),
         category: Some("crm".to_string()),
     };
-    Json(ApiResponse::success(info, "Plugin info"))
+    ApiResponse::success(info, "Plugin info")
 }
 
 /// 插件健康检查
@@ -126,19 +123,19 @@ pub async fn plugin_health_check(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     // 检查数据库连接
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match sqlx::query("SELECT 1").fetch_one(&mut **txn).await {
-        Ok(_) => Json(ApiResponse::success((), "Healthy")),
-        Err(e) => Json(ApiResponse::from({
+        Ok(_) => ApiResponse::success((), "Healthy"),
+        Err(e) => ApiResponse::from({
             tracing::warn!("Database error: {}", e);
             TopemsError::ServiceUnavailable("Database error".to_string())
-        })),
+        }),
     }
 }
 

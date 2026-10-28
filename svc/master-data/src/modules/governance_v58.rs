@@ -19,12 +19,7 @@ macro_rules! db_exec {
     ($expr:expr) => {
         match $expr {
             Ok(v) => v,
-            Err(e) => {
-                return Json(ApiResponse::from(TopemsError::internal(
-                    "数据库操作失败",
-                    e,
-                )))
-            }
+            Err(e) => return ApiResponse::from(TopemsError::internal("数据库操作失败", e)),
         }
     };
 }
@@ -1252,10 +1247,10 @@ pub struct ExposeApiRequest {
 pub async fn assess_maturity(
     State(state): State<AppState>,
     Json(req): Json<AssessMaturityRequest>,
-) -> Json<ApiResponse<MaturityAssessment>> {
+) -> ApiResponse<MaturityAssessment> {
     let dimension = match parse_dimension(&req.dimension) {
         Some(d) => d,
-        None => return Json(ApiResponse::bad_request("无效的维度类型")),
+        None => return ApiResponse::bad_request("无效的维度类型"),
     };
     let target = req
         .target_level
@@ -1264,7 +1259,7 @@ pub async fn assess_maturity(
         .unwrap_or(MaturityLevel::Optimized);
 
     let result = db_exec!(GovernanceMaturity::assess_maturity(&state.db, dimension, target).await);
-    Json(ApiResponse::success(result, "成熟度评估完成"))
+    ApiResponse::success(result, "成熟度评估完成")
 }
 
 #[utoipa::path(
@@ -1280,18 +1275,18 @@ pub async fn assess_maturity(
 pub async fn get_assessment(
     State(state): State<AppState>,
     Query(params): Query<GetAssessmentQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     if let Some(id) = params.id {
         match db_exec!(GovernanceMaturity::get_assessment(&state.db, &id).await) {
-            Some(a) => Json(ApiResponse::success(serde_json::json!(a), "成熟度评估详情")),
-            None => Json(ApiResponse::not_found("未找到评估记录")),
+            Some(a) => ApiResponse::success(serde_json::json!(a), "成熟度评估详情"),
+            None => ApiResponse::not_found("未找到评估记录"),
         }
     } else {
         let scores = db_exec!(GovernanceMaturity::get_dimension_scores(&state.db).await);
-        Json(ApiResponse::success(
+        ApiResponse::success(
             serde_json::json!({"dimension_scores": scores}),
             "成熟度概览",
-        ))
+        )
     }
 }
 
@@ -1307,9 +1302,9 @@ pub async fn get_assessment(
 )]
 pub async fn get_dimension_scores(
     State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<DimensionScore>>> {
+) -> ApiResponse<Vec<DimensionScore>> {
     let scores = db_exec!(GovernanceMaturity::get_dimension_scores(&state.db).await);
-    Json(ApiResponse::success(scores, "维度评分列表"))
+    ApiResponse::success(scores, "维度评分列表")
 }
 
 #[utoipa::path(
@@ -1325,21 +1320,21 @@ pub async fn get_dimension_scores(
 pub async fn create_improvement_plan(
     State(state): State<AppState>,
     Json(req): Json<ImprovementPlanRequest>,
-) -> Json<ApiResponse<ImprovementPlan>> {
+) -> ApiResponse<ImprovementPlan> {
     let dimension = match parse_dimension(&req.dimension) {
         Some(d) => d,
-        None => return Json(ApiResponse::bad_request("无效的维度类型")),
+        None => return ApiResponse::bad_request("无效的维度类型"),
     };
     let target = match parse_maturity_level(&req.target_level) {
         Some(l) => l,
-        None => return Json(ApiResponse::bad_request("无效的目标等级")),
+        None => return ApiResponse::bad_request("无效的目标等级"),
     };
 
     let plan = db_exec!(
         GovernanceMaturity::create_improvement_plan(&state.db, dimension, target, req.actions)
             .await
     );
-    Json(ApiResponse::success(plan, "改进计划已创建"))
+    ApiResponse::success(plan, "改进计划已创建")
 }
 
 #[utoipa::path(
@@ -1352,11 +1347,9 @@ pub async fn create_improvement_plan(
     ),
     tag = "governance_v58"
 )]
-pub async fn track_progress(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<MaturityProgress>>> {
+pub async fn track_progress(State(state): State<AppState>) -> ApiResponse<Vec<MaturityProgress>> {
     let progress = db_exec!(GovernanceMaturity::track_progress(&state.db).await);
-    Json(ApiResponse::success(progress, "成熟度进度"))
+    ApiResponse::success(progress, "成熟度进度")
 }
 
 #[utoipa::path(
@@ -1372,11 +1365,11 @@ pub async fn track_progress(
 pub async fn get_maturity_history(
     State(state): State<AppState>,
     Query(params): Query<MaturityHistoryQuery>,
-) -> Json<ApiResponse<Vec<MaturityHistoryEntry>>> {
+) -> ApiResponse<Vec<MaturityHistoryEntry>> {
     let history = db_exec!(
         GovernanceMaturity::get_maturity_history(&state.db, params.dimension.as_deref()).await
     );
-    Json(ApiResponse::success(history, "成熟度历史"))
+    ApiResponse::success(history, "成熟度历史")
 }
 
 #[utoipa::path(
@@ -1389,9 +1382,9 @@ pub async fn get_maturity_history(
     ),
     tag = "governance_v58"
 )]
-pub async fn get_benchmark(State(state): State<AppState>) -> Json<ApiResponse<Vec<BenchmarkData>>> {
+pub async fn get_benchmark(State(state): State<AppState>) -> ApiResponse<Vec<BenchmarkData>> {
     let benchmark = db_exec!(GovernanceMaturity::get_benchmark(&state.db).await);
-    Json(ApiResponse::success(benchmark, "基准对比数据"))
+    ApiResponse::success(benchmark, "基准对比数据")
 }
 
 // ==================== 处理器：自动化工作流 ====================
@@ -1409,10 +1402,10 @@ pub async fn get_benchmark(State(state): State<AppState>) -> Json<ApiResponse<Ve
 pub async fn create_workflow(
     State(state): State<AppState>,
     Json(req): Json<CreateWorkflowRequest>,
-) -> Json<ApiResponse<WorkflowV58>> {
+) -> ApiResponse<WorkflowV58> {
     let workflow_type = match parse_workflow_type(&req.workflow_type) {
         Some(t) => t,
-        None => return Json(ApiResponse::bad_request("无效的工作流类型")),
+        None => return ApiResponse::bad_request("无效的工作流类型"),
     };
 
     let steps: Vec<WorkflowStepV58> = req
@@ -1440,7 +1433,7 @@ pub async fn create_workflow(
     let workflow = db_exec!(
         MDMWorkflowEngine::create_workflow(&state.db, req.name, workflow_type, steps).await
     );
-    Json(ApiResponse::success(workflow, "工作流已创建"))
+    ApiResponse::success(workflow, "工作流已创建")
 }
 
 #[utoipa::path(
@@ -1459,10 +1452,10 @@ pub async fn create_workflow(
 pub async fn start_workflow(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<WorkflowV58>> {
+) -> ApiResponse<WorkflowV58> {
     match db_exec!(MDMWorkflowEngine::start_workflow(&state.db, &id).await) {
-        Some(w) => Json(ApiResponse::success(w, "工作流已启动")),
-        None => Json(ApiResponse::bad_request("工作流无法启动")),
+        Some(w) => ApiResponse::success(w, "工作流已启动"),
+        None => ApiResponse::bad_request("工作流无法启动"),
     }
 }
 
@@ -1483,10 +1476,10 @@ pub async fn advance_step(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(_req): Json<AdvanceStepRequest>,
-) -> Json<ApiResponse<WorkflowV58>> {
+) -> ApiResponse<WorkflowV58> {
     match db_exec!(MDMWorkflowEngine::advance_step(&state.db, &id).await) {
-        Some(w) => Json(ApiResponse::success(w, "步骤已推进")),
-        None => Json(ApiResponse::bad_request("无法推进工作流")),
+        Some(w) => ApiResponse::success(w, "步骤已推进"),
+        None => ApiResponse::bad_request("无法推进工作流"),
     }
 }
 
@@ -1506,10 +1499,10 @@ pub async fn advance_step(
 pub async fn get_workflow_status(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<WorkflowV58>> {
+) -> ApiResponse<WorkflowV58> {
     match db_exec!(MDMWorkflowEngine::get_workflow_status(&state.db, &id).await) {
-        Some(w) => Json(ApiResponse::success(w, "工作流状态")),
-        None => Json(ApiResponse::not_found("未找到工作流")),
+        Some(w) => ApiResponse::success(w, "工作流状态"),
+        None => ApiResponse::not_found("未找到工作流"),
     }
 }
 
@@ -1526,7 +1519,7 @@ pub async fn get_workflow_status(
 pub async fn list_workflows(
     State(state): State<AppState>,
     Query(params): Query<ListWorkflowsQuery>,
-) -> Json<ApiResponse<Vec<WorkflowV58>>> {
+) -> ApiResponse<Vec<WorkflowV58>> {
     let workflows = db_exec!(
         MDMWorkflowEngine::list_workflows(
             &state.db,
@@ -1535,7 +1528,7 @@ pub async fn list_workflows(
         )
         .await
     );
-    Json(ApiResponse::success(workflows, "工作流列表"))
+    ApiResponse::success(workflows, "工作流列表")
 }
 
 #[utoipa::path(
@@ -1550,9 +1543,9 @@ pub async fn list_workflows(
 )]
 pub async fn get_workflow_templates(
     State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<WorkflowTemplate>>> {
+) -> ApiResponse<Vec<WorkflowTemplate>> {
     let templates = db_exec!(MDMWorkflowEngine::get_templates(&state.db).await);
-    Json(ApiResponse::success(templates, "工作流模板"))
+    ApiResponse::success(templates, "工作流模板")
 }
 
 #[utoipa::path(
@@ -1572,15 +1565,14 @@ pub async fn approve_step(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<ApproveStepRequest>,
-) -> Json<ApiResponse<WorkflowV58>> {
+) -> ApiResponse<WorkflowV58> {
     let (workflow_id, step_id) = parse_step_path(&id);
 
     match db_exec!(MDMWorkflowEngine::approve_step(&state.db, &workflow_id, &step_id).await) {
-        Some(w) => Json(ApiResponse::success(
-            w,
-            &req.comment.unwrap_or_else(|| "步骤已批准".to_string()),
-        )),
-        None => Json(ApiResponse::bad_request("无法批准该步骤")),
+        Some(w) => {
+            ApiResponse::success(w, &req.comment.unwrap_or_else(|| "步骤已批准".to_string()))
+        }
+        None => ApiResponse::bad_request("无法批准该步骤"),
     }
 }
 
@@ -1601,24 +1593,21 @@ pub async fn reject_step(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<RejectStepRequest>,
-) -> Json<ApiResponse<WorkflowV58>> {
+) -> ApiResponse<WorkflowV58> {
     let (workflow_id, step_id) = parse_step_path(&id);
 
     match db_exec!(MDMWorkflowEngine::reject_step(&state.db, &workflow_id, &step_id).await) {
-        Some(w) => Json(ApiResponse::success(
-            w,
-            &req.reason.unwrap_or_else(|| "步骤已拒绝".to_string()),
-        )),
-        None => Json(ApiResponse::bad_request("无法拒绝该步骤")),
+        Some(w) => ApiResponse::success(w, &req.reason.unwrap_or_else(|| "步骤已拒绝".to_string())),
+        None => ApiResponse::bad_request("无法拒绝该步骤"),
     }
 }
 
 pub async fn get_workflow_history(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Vec<WorkflowHistoryEntry>>> {
+) -> ApiResponse<Vec<WorkflowHistoryEntry>> {
     let history = db_exec!(MDMWorkflowEngine::get_workflow_history(&state.db, &id).await);
-    Json(ApiResponse::success(history, "工作流历史"))
+    ApiResponse::success(history, "工作流历史")
 }
 
 // ==================== 处理器：数据产品化 ====================
@@ -1636,7 +1625,7 @@ pub async fn get_workflow_history(
 pub async fn create_data_product(
     State(state): State<AppState>,
     Json(req): Json<CreateDataProductRequest>,
-) -> Json<ApiResponse<DataProduct>> {
+) -> ApiResponse<DataProduct> {
     let sla = req
         .sla_level
         .as_deref()
@@ -1654,7 +1643,7 @@ pub async fn create_data_product(
         )
         .await
     );
-    Json(ApiResponse::success(product, "数据产品已创建"))
+    ApiResponse::success(product, "数据产品已创建")
 }
 
 #[utoipa::path(
@@ -1673,10 +1662,10 @@ pub async fn create_data_product(
 pub async fn get_data_product(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<DataProduct>> {
+) -> ApiResponse<DataProduct> {
     match db_exec!(DataProductManager::get_data_product(&state.db, &id).await) {
-        Some(p) => Json(ApiResponse::success(p, "数据产品详情")),
-        None => Json(ApiResponse::not_found("未找到数据产品")),
+        Some(p) => ApiResponse::success(p, "数据产品详情"),
+        None => ApiResponse::not_found("未找到数据产品"),
     }
 }
 
@@ -1693,7 +1682,7 @@ pub async fn get_data_product(
 pub async fn list_data_products(
     State(state): State<AppState>,
     Query(params): Query<ListDataProductsQuery>,
-) -> Json<ApiResponse<Vec<DataProduct>>> {
+) -> ApiResponse<Vec<DataProduct>> {
     let products = db_exec!(
         DataProductManager::list_data_products(
             &state.db,
@@ -1702,7 +1691,7 @@ pub async fn list_data_products(
         )
         .await
     );
-    Json(ApiResponse::success(products, "数据产品列表"))
+    ApiResponse::success(products, "数据产品列表")
 }
 
 #[utoipa::path(
@@ -1722,7 +1711,7 @@ pub async fn update_contract(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateContractRequest>,
-) -> Json<ApiResponse<DataContract>> {
+) -> ApiResponse<DataContract> {
     let security = req
         .security_level
         .as_deref()
@@ -1750,8 +1739,8 @@ pub async fn update_contract(
         )
         .await
     ) {
-        Some(c) => Json(ApiResponse::success(c, "数据契约已更新")),
-        None => Json(ApiResponse::not_found("未找到数据产品")),
+        Some(c) => ApiResponse::success(c, "数据契约已更新"),
+        None => ApiResponse::not_found("未找到数据产品"),
     }
 }
 
@@ -1771,10 +1760,10 @@ pub async fn update_contract(
 pub async fn get_contract_status(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<ContractStatus>> {
+) -> ApiResponse<ContractStatus> {
     match db_exec!(DataProductManager::get_contract_status(&state.db, &id).await) {
-        Some(s) => Json(ApiResponse::success(s, "契约状态")),
-        None => Json(ApiResponse::not_found("未找到数据产品")),
+        Some(s) => ApiResponse::success(s, "契约状态"),
+        None => ApiResponse::not_found("未找到数据产品"),
     }
 }
 
@@ -1795,13 +1784,13 @@ pub async fn expose_as_api(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<ExposeApiRequest>,
-) -> Json<ApiResponse<ApiExposure>> {
+) -> ApiResponse<ApiExposure> {
     let auth = req.auth_type.unwrap_or_else(|| "bearer".to_string());
     let rate = req.rate_limit.unwrap_or_else(|| "1000/min".to_string());
 
     match db_exec!(DataProductManager::expose_as_api(&state.db, &id, auth, rate).await) {
-        Some(e) => Json(ApiResponse::success(e, "API 已暴露")),
-        None => Json(ApiResponse::not_found("未找到数据产品")),
+        Some(e) => ApiResponse::success(e, "API 已暴露"),
+        None => ApiResponse::not_found("未找到数据产品"),
     }
 }
 
@@ -1821,9 +1810,9 @@ pub async fn expose_as_api(
 pub async fn get_consumers(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Vec<ConsumerInfo>>> {
+) -> ApiResponse<Vec<ConsumerInfo>> {
     let consumers = db_exec!(DataProductManager::get_consumers(&state.db, &id).await);
-    Json(ApiResponse::success(consumers, "消费者列表"))
+    ApiResponse::success(consumers, "消费者列表")
 }
 
 #[utoipa::path(
@@ -1842,9 +1831,9 @@ pub async fn get_consumers(
 pub async fn get_product_lineage(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<ProductLineage>> {
+) -> ApiResponse<ProductLineage> {
     let lineage = db_exec!(DataProductManager::get_product_lineage(&state.db, &id).await);
-    Json(ApiResponse::success(lineage, "数据产品血缘"))
+    ApiResponse::success(lineage, "数据产品血缘")
 }
 
 // ==================== 解析辅助函数 ====================

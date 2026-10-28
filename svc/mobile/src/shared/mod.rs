@@ -912,9 +912,7 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-async fn list_patrol_records(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+async fn list_patrol_records(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     let records = match db_get_patrol_records(&state.pool, None).await {
         Ok(r) => r,
         Err(e) => {
@@ -923,14 +921,14 @@ async fn list_patrol_records(
         }
     };
     let total = records.len() as i64;
-    Json(ApiResponse::success(
+    ApiResponse::success(
         json!({ "items": records, "total": total }),
         "获取巡逻记录成功",
-    ))
+    )
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-async fn list_scan_records(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn list_scan_records(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     let records = match db_get_scan_records(&state.pool, None).await {
         Ok(r) => r,
         Err(e) => {
@@ -939,32 +937,27 @@ async fn list_scan_records(State(state): State<AppState>) -> Json<ApiResponse<se
         }
     };
     let total = records.len() as i64;
-    Json(ApiResponse::success(
+    ApiResponse::success(
         json!({ "items": records, "total": total }),
         "获取扫码记录成功",
-    ))
+    )
 }
 
 async fn create_scan_record(
     State(state): State<AppState>,
     Json(payload): Json<CreateScanRecord>,
-) -> Json<ApiResponse<ScanRecord>> {
+) -> ApiResponse<ScanRecord> {
     let tenant_id = Uuid::new_v4();
     match db_create_scan_record(&state.pool, tenant_id, payload).await {
-        Ok(record) => Json(ApiResponse::success(record, "创建扫码记录成功")),
+        Ok(record) => ApiResponse::success(record, "创建扫码记录成功"),
         Err(e) => {
             tracing::error!("创建扫码记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "创建扫码记录失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("创建扫码记录失败", e))
         }
     }
 }
 
-async fn list_photo_evidences(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+async fn list_photo_evidences(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     let records = match db_get_photo_evidence(&state.pool, None).await {
         Ok(r) => r,
         Err(e) => {
@@ -972,32 +965,27 @@ async fn list_photo_evidences(
             vec![]
         }
     };
-    Json(ApiResponse::success(
+    ApiResponse::success(
         json!({ "items": records, "total": records.len() }),
         "获取照片记录成功",
-    ))
+    )
 }
 
 async fn create_photo_evidence(
     State(state): State<AppState>,
     Json(payload): Json<CreatePhotoEvidence>,
-) -> Json<ApiResponse<PhotoEvidence>> {
+) -> ApiResponse<PhotoEvidence> {
     let tenant_id = Uuid::new_v4();
     match db_create_photo_evidence(&state.pool, tenant_id, payload).await {
-        Ok(record) => Json(ApiResponse::success(record, "创建照片记录成功")),
+        Ok(record) => ApiResponse::success(record, "创建照片记录成功"),
         Err(e) => {
             tracing::error!("创建照片记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "创建照片记录失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("创建照片记录失败", e))
         }
     }
 }
 
-async fn list_audio_recordings(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+async fn list_audio_recordings(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     let records = match db_get_audio_recordings(&state.pool).await {
         Ok(r) => r,
         Err(e) => {
@@ -1005,32 +993,27 @@ async fn list_audio_recordings(
             vec![]
         }
     };
-    Json(ApiResponse::success(
+    ApiResponse::success(
         json!({ "items": records, "total": records.len() }),
         "获取音频记录成功",
-    ))
+    )
 }
 
 async fn create_audio_recording(
     State(state): State<AppState>,
     Json(payload): Json<CreateAudioRecording>,
-) -> Json<ApiResponse<AudioRecording>> {
+) -> ApiResponse<AudioRecording> {
     let tenant_id = Uuid::new_v4();
     match db_create_audio_recording(&state.pool, tenant_id, payload).await {
-        Ok(record) => Json(ApiResponse::success(record, "创建音频记录成功")),
+        Ok(record) => ApiResponse::success(record, "创建音频记录成功"),
         Err(e) => {
             tracing::error!("创建音频记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "创建音频记录失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("创建音频记录失败", e))
         }
     }
 }
 
-async fn list_video_recordings(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+async fn list_video_recordings(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     let records = match db_get_video_recordings(&state.pool).await {
         Ok(r) => r,
         Err(e) => {
@@ -1038,25 +1021,22 @@ async fn list_video_recordings(
             vec![]
         }
     };
-    Json(ApiResponse::success(
+    ApiResponse::success(
         json!({ "items": records, "total": records.len() }),
         "获取视频记录成功",
-    ))
+    )
 }
 
 async fn create_video_recording(
     State(state): State<AppState>,
     Json(payload): Json<CreateVideoRecording>,
-) -> Json<ApiResponse<VideoRecording>> {
+) -> ApiResponse<VideoRecording> {
     let tenant_id = Uuid::new_v4();
     match db_create_video_recording(&state.pool, tenant_id, payload).await {
-        Ok(record) => Json(ApiResponse::success(record, "创建视频记录成功")),
+        Ok(record) => ApiResponse::success(record, "创建视频记录成功"),
         Err(e) => {
             tracing::error!("创建视频记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "创建视频记录失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("创建视频记录失败", e))
         }
     }
 }

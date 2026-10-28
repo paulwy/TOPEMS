@@ -137,15 +137,15 @@ pub async fn list_alerts(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -265,7 +265,7 @@ pub async fn list_alerts(
 
             let total = alerts.len() as i64;
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "alerts": alerts,
                     "total": total,
@@ -273,13 +273,11 @@ pub async fn list_alerts(
                     "page_size": page_size
                 }),
                 "获取库存预警列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取库存预警列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取库存预警列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取库存预警列表失败".to_string()))
         }
     }
 }
@@ -304,15 +302,15 @@ pub async fn get_alert(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<InventoryAlert>> {
+) -> ApiResponse<InventoryAlert> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let result = sqlx::query!(
@@ -384,16 +382,12 @@ pub async fn get_alert(
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
             };
-            Json(ApiResponse::success(alert, "获取预警详情成功"))
+            ApiResponse::success(alert, "获取预警详情成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "预警不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("预警不存在".to_string())),
         Err(e) => {
             tracing::error!("获取预警详情失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取预警详情失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取预警详情失败".to_string()))
         }
     }
 }
@@ -419,15 +413,15 @@ pub async fn acknowledge_alert(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     // 检查库存是否存在
@@ -457,19 +451,12 @@ pub async fn acknowledge_alert(
             )
             .await;
 
-            Json(ApiResponse::success(
-                serde_json::json!({"id": id}),
-                "预警已确认",
-            ))
+            ApiResponse::success(serde_json::json!({"id": id}), "预警已确认")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "预警不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("预警不存在".to_string())),
         Err(e) => {
             tracing::error!("确认预警失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "确认预警失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("确认预警失败".to_string()))
         }
     }
 }
@@ -491,15 +478,15 @@ pub async fn get_alert_statistics(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     // 获取预警汇总
@@ -541,9 +528,7 @@ pub async fn get_alert_statistics(
         },
         Err(e) => {
             tracing::error!("获取预警汇总失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "获取预警统计失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("获取预警统计失败".to_string()));
         }
     };
 
@@ -616,14 +601,14 @@ pub async fn get_alert_statistics(
         Err(_) => vec![],
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "summary": summary,
             "alerts_by_warehouse": alerts_by_warehouse,
             "alerts_by_material": alerts_by_material
         }),
         "获取预警统计成功",
-    ))
+    )
 }
 
 /// 获取预警汇总（简化版）
@@ -644,15 +629,15 @@ pub async fn get_alert_summary(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<AlertSummary>> {
+) -> ApiResponse<AlertSummary> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let result = sqlx::query!(
@@ -708,13 +693,11 @@ pub async fn get_alert_summary(
                 });
             }
 
-            Json(ApiResponse::success(summary, "获取预警汇总成功"))
+            ApiResponse::success(summary, "获取预警汇总成功")
         }
         Err(e) => {
             tracing::error!("获取预警汇总失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取预警汇总失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取预警汇总失败".to_string()))
         }
     }
 }
@@ -738,15 +721,15 @@ pub async fn get_alerts_by_warehouse(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let warehouse_id = params.warehouse_id;
@@ -841,19 +824,17 @@ pub async fn get_alerts_by_warehouse(
 
             let total = alerts.len() as i64;
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "alerts": alerts,
                     "total": total
                 }),
                 "获取仓库预警列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取仓库预警列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取仓库预警列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取仓库预警列表失败".to_string()))
         }
     }
 }
@@ -911,15 +892,15 @@ pub async fn list_alert_rules(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -979,7 +960,7 @@ pub async fn list_alert_rules(
                 })
                 .collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "rules": rules_json,
                     "total": total,
@@ -987,13 +968,11 @@ pub async fn list_alert_rules(
                     "page_size": page_size
                 }),
                 "获取预警规则列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取预警规则列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取预警规则列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取预警规则列表失败".to_string()))
         }
     }
 }
@@ -1015,15 +994,15 @@ pub async fn create_alert_rule(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateAlertRuleRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
@@ -1080,7 +1059,7 @@ pub async fn create_alert_rule(
                 "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),
             });
             (
-                Json(ApiResponse::success(rule_json.clone(), "预警规则创建成功")),
+                ApiResponse::success(rule_json.clone(), "预警规则创建成功"),
                 "success",
                 None,
                 Some(rule_json),
@@ -1089,9 +1068,7 @@ pub async fn create_alert_rule(
         Err(e) => {
             tracing::error!("创建预警规则失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "创建预警规则失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("创建预警规则失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1119,7 +1096,7 @@ pub async fn create_alert_rule(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -1146,15 +1123,15 @@ pub async fn get_alert_rule(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let result =
@@ -1178,16 +1155,12 @@ pub async fn get_alert_rule(
                 "created_at": row.try_get::<chrono::DateTime<Utc>, _>("created_at").ok(),
                 "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),
             });
-            Json(ApiResponse::success(rule_json, "获取预警规则成功"))
+            ApiResponse::success(rule_json, "获取预警规则成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "预警规则不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("预警规则不存在".to_string())),
         Err(e) => {
             tracing::error!("获取预警规则失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取预警规则失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取预警规则失败".to_string()))
         }
     }
 }
@@ -1213,15 +1186,15 @@ pub async fn update_alert_rule(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateAlertRuleRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
@@ -1277,16 +1250,14 @@ pub async fn update_alert_rule(
                 "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),
             });
             (
-                Json(ApiResponse::success(rule_json.clone(), "预警规则更新成功")),
+                ApiResponse::success(rule_json.clone(), "预警规则更新成功"),
                 "success",
                 None,
                 Some(rule_json),
             )
         }
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "预警规则不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("预警规则不存在".to_string())),
             "error",
             Some("预警规则不存在".to_string()),
             None,
@@ -1294,9 +1265,7 @@ pub async fn update_alert_rule(
         Err(e) => {
             tracing::error!("更新预警规则失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "更新预警规则失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("更新预警规则失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1324,7 +1293,7 @@ pub async fn update_alert_rule(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -1352,15 +1321,15 @@ pub async fn delete_alert_rule(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -1385,20 +1354,18 @@ pub async fn delete_alert_rule(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success("".to_string(), "预警规则删除成功")),
+                ApiResponse::success("".to_string(), "预警规则删除成功"),
                 "success",
                 None,
                 Some(serde_json::json!({ "rows_affected": r.rows_affected() })),
             )
         }
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "预警规则不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("预警规则不存在".to_string())),
             "error",
             Some("预警规则不存在".to_string()),
             None,
@@ -1406,9 +1373,7 @@ pub async fn delete_alert_rule(
         Err(e) => {
             tracing::error!("删除预警规则失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "删除预警规则失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("删除预警规则失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1451,15 +1416,15 @@ pub async fn list_alert_records(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -1528,7 +1493,7 @@ pub async fn list_alert_records(
                 }))
                 .collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "records": records_json,
                     "total": total,
@@ -1536,13 +1501,11 @@ pub async fn list_alert_records(
                     "page_size": page_size
                 }),
                 "获取预警记录列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取预警记录列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取预警记录列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取预警记录列表失败".to_string()))
         }
     }
 }
@@ -1566,15 +1529,15 @@ pub async fn get_alert_record(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let result = sqlx::query(only_own_schema_query!("wms", "SELECT id, tenant_id, rule_id, warehouse_id, item_id, item_code, alert_type, alert_level, current_quantity, threshold_quantity, status, created_at FROM wms.inventory_alert_records WHERE id = $1"))
@@ -1603,16 +1566,12 @@ pub async fn get_alert_record(
                 "created_at": row.try_get::<chrono::DateTime<Utc>, _>("created_at").ok(),
                 "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),
             });
-            Json(ApiResponse::success(record_json, "获取预警记录成功"))
+            ApiResponse::success(record_json, "获取预警记录成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "预警记录不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("预警记录不存在".to_string())),
         Err(e) => {
             tracing::error!("获取预警记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取预警记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取预警记录失败".to_string()))
         }
     }
 }
@@ -1643,15 +1602,15 @@ pub async fn confirm_alert_record(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ConfirmAlertRecordRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
@@ -1690,16 +1649,14 @@ pub async fn confirm_alert_record(
                 "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),
             });
             (
-                Json(ApiResponse::success(record_json.clone(), "预警记录已确认")),
+                ApiResponse::success(record_json.clone(), "预警记录已确认"),
                 "success",
                 None,
                 Some(record_json),
             )
         }
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "预警记录不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("预警记录不存在".to_string())),
             "error",
             Some("预警记录不存在".to_string()),
             None,
@@ -1707,9 +1664,7 @@ pub async fn confirm_alert_record(
         Err(e) => {
             tracing::error!("确认预警记录失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "确认预警记录失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("确认预警记录失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1737,7 +1692,7 @@ pub async fn confirm_alert_record(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }

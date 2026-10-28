@@ -224,7 +224,7 @@ pub struct TypeBCalculationRequest {
 pub async fn list_projects(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<UncertaintyProjectQuery>,
-) -> Json<ApiResponse<Vec<UncertaintyProject>>> {
+) -> ApiResponse<Vec<UncertaintyProject>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -326,10 +326,10 @@ pub async fn list_projects(
     });
 
     match projects {
-        Ok(data) => Json(ApiResponse::success(data, "获取不确定度评定项目列表成功")),
+        Ok(data) => ApiResponse::success(data, "获取不确定度评定项目列表成功"),
         Err(e) => {
             tracing::error!("Failed to fetch uncertainty projects: {}", e);
-            Json(ApiResponse::server_error("获取不确定度评定项目列表失败"))
+            ApiResponse::server_error("获取不确定度评定项目列表失败")
         }
     }
 }
@@ -338,7 +338,7 @@ pub async fn create_project(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateUncertaintyProjectRequest>,
-) -> Json<ApiResponse<UncertaintyProject>> {
+) -> ApiResponse<UncertaintyProject> {
     let project_no = format!(
         "UNC-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
@@ -371,7 +371,7 @@ pub async fn create_project(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             UncertaintyProject {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -395,10 +395,10 @@ pub async fn create_project(
                 updated_at: r.get("updated_at"),
             },
             "不确定度评定项目创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create uncertainty project: {}", e);
-            Json(ApiResponse::server_error("不确定度评定项目创建失败"))
+            ApiResponse::server_error("不确定度评定项目创建失败")
         }
     }
 }
@@ -419,10 +419,10 @@ pub async fn create_project(
 pub async fn get_project(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<UncertaintyProject>> {
+) -> ApiResponse<UncertaintyProject> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
+        Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
     let row = sqlx::query(
@@ -433,7 +433,7 @@ pub async fn get_project(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             UncertaintyProject {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -457,12 +457,12 @@ pub async fn get_project(
                 updated_at: r.get("updated_at"),
             },
             "获取不确定度评定项目成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to fetch uncertainty project: {}", e);
-            Json(ApiResponse::server_error("获取不确定度评定项目失败"))
+            ApiResponse::server_error("获取不确定度评定项目失败")
         }
     }
 }
@@ -471,10 +471,10 @@ pub async fn update_project(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateUncertaintyProjectRequest>,
-) -> Json<ApiResponse<UncertaintyProject>> {
+) -> ApiResponse<UncertaintyProject> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
+        Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
     let row = sqlx::query(
@@ -519,7 +519,7 @@ pub async fn update_project(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             UncertaintyProject {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -543,12 +543,12 @@ pub async fn update_project(
                 updated_at: r.get("updated_at"),
             },
             "不确定度评定项目更新成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to update uncertainty project: {}", e);
-            Json(ApiResponse::server_error("不确定度评定项目更新失败"))
+            ApiResponse::server_error("不确定度评定项目更新失败")
         }
     }
 }
@@ -556,10 +556,10 @@ pub async fn update_project(
 pub async fn delete_project(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
+        Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
     let result =
@@ -569,10 +569,10 @@ pub async fn delete_project(
             .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "不确定度评定项目删除成功")),
+        Ok(_) => ApiResponse::success(true, "不确定度评定项目删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete uncertainty project: {}", e);
-            Json(ApiResponse::server_error("不确定度评定项目删除失败"))
+            ApiResponse::server_error("不确定度评定项目删除失败")
         }
     }
 }
@@ -593,10 +593,10 @@ pub async fn delete_project(
 pub async fn list_sources(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(project_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<UncertaintySource>>> {
+) -> ApiResponse<Vec<UncertaintySource>> {
     let id = match Uuid::parse_str(&project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
+        Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
     let rows = sqlx::query(
@@ -631,11 +631,11 @@ pub async fn list_sources(
                     updated_at: row.get("updated_at"),
                 })
                 .collect();
-            Json(ApiResponse::success(sources, "获取不确定度来源列表成功"))
+            ApiResponse::success(sources, "获取不确定度来源列表成功")
         }
         Err(e) => {
             tracing::error!("Failed to fetch uncertainty sources: {}", e);
-            Json(ApiResponse::server_error("获取不确定度来源列表失败"))
+            ApiResponse::server_error("获取不确定度来源列表失败")
         }
     }
 }
@@ -654,10 +654,10 @@ pub async fn create_source(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateUncertaintySourceRequest>,
-) -> Json<ApiResponse<UncertaintySource>> {
+) -> ApiResponse<UncertaintySource> {
     let project_id = match Uuid::parse_str(&req.project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
+        Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
     let sort_order = req.sort_order.unwrap_or(0);
@@ -685,7 +685,7 @@ pub async fn create_source(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             UncertaintySource {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -700,10 +700,10 @@ pub async fn create_source(
                 updated_at: r.get("updated_at"),
             },
             "不确定度来源创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create uncertainty source: {}", e);
-            Json(ApiResponse::server_error("不确定度来源创建失败"))
+            ApiResponse::server_error("不确定度来源创建失败")
         }
     }
 }
@@ -725,10 +725,10 @@ pub async fn update_source(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateUncertaintySourceRequest>,
-) -> Json<ApiResponse<UncertaintySource>> {
+) -> ApiResponse<UncertaintySource> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的来源ID")),
+        Err(_) => return ApiResponse::bad_request("无效的来源ID"),
     };
 
     let row = sqlx::query(
@@ -758,7 +758,7 @@ pub async fn update_source(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             UncertaintySource {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -773,12 +773,12 @@ pub async fn update_source(
                 updated_at: r.get("updated_at"),
             },
             "不确定度来源更新成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to update uncertainty source: {}", e);
-            Json(ApiResponse::server_error("不确定度来源更新失败"))
+            ApiResponse::server_error("不确定度来源更新失败")
         }
     }
 }
@@ -786,10 +786,10 @@ pub async fn update_source(
 pub async fn delete_source(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的来源ID")),
+        Err(_) => return ApiResponse::bad_request("无效的来源ID"),
     };
 
     let result =
@@ -799,10 +799,10 @@ pub async fn delete_source(
             .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "不确定度来源删除成功")),
+        Ok(_) => ApiResponse::success(true, "不确定度来源删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete uncertainty source: {}", e);
-            Json(ApiResponse::server_error("不确定度来源删除失败"))
+            ApiResponse::server_error("不确定度来源删除失败")
         }
     }
 }
@@ -823,10 +823,10 @@ pub async fn delete_source(
 pub async fn list_components(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(project_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<UncertaintyComponent>>> {
+) -> ApiResponse<Vec<UncertaintyComponent>> {
     let id = match Uuid::parse_str(&project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
+        Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
     let rows = sqlx::query(
@@ -868,11 +868,11 @@ pub async fn list_components(
                     updated_at: row.get("updated_at"),
                 })
                 .collect();
-            Json(ApiResponse::success(components, "获取不确定度分量列表成功"))
+            ApiResponse::success(components, "获取不确定度分量列表成功")
         }
         Err(e) => {
             tracing::error!("Failed to fetch uncertainty components: {}", e);
-            Json(ApiResponse::server_error("获取不确定度分量列表失败"))
+            ApiResponse::server_error("获取不确定度分量列表失败")
         }
     }
 }
@@ -891,15 +891,15 @@ pub async fn create_component(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateUncertaintyComponentRequest>,
-) -> Json<ApiResponse<UncertaintyComponent>> {
+) -> ApiResponse<UncertaintyComponent> {
     let project_id = match Uuid::parse_str(&req.project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
+        Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
     let source_id = match Uuid::parse_str(&req.source_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的来源ID")),
+        Err(_) => return ApiResponse::bad_request("无效的来源ID"),
     };
 
     let source_row = sqlx::query(
@@ -945,7 +945,7 @@ pub async fn create_component(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             UncertaintyComponent {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -965,10 +965,10 @@ pub async fn create_component(
                 updated_at: r.get("updated_at"),
             },
             "不确定度分量创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create uncertainty component: {}", e);
-            Json(ApiResponse::server_error("不确定度分量创建失败"))
+            ApiResponse::server_error("不确定度分量创建失败")
         }
     }
 }
@@ -990,10 +990,10 @@ pub async fn update_component(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateUncertaintyComponentRequest>,
-) -> Json<ApiResponse<UncertaintyComponent>> {
+) -> ApiResponse<UncertaintyComponent> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的分量ID")),
+        Err(_) => return ApiResponse::bad_request("无效的分量ID"),
     };
 
     let row = sqlx::query(
@@ -1028,7 +1028,7 @@ pub async fn update_component(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             UncertaintyComponent {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -1048,12 +1048,12 @@ pub async fn update_component(
                 updated_at: r.get("updated_at"),
             },
             "不确定度分量更新成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to update uncertainty component: {}", e);
-            Json(ApiResponse::server_error("不确定度分量更新失败"))
+            ApiResponse::server_error("不确定度分量更新失败")
         }
     }
 }
@@ -1061,10 +1061,10 @@ pub async fn update_component(
 pub async fn delete_component(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的分量ID")),
+        Err(_) => return ApiResponse::bad_request("无效的分量ID"),
     };
 
     let result =
@@ -1074,10 +1074,10 @@ pub async fn delete_component(
             .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "不确定度分量删除成功")),
+        Ok(_) => ApiResponse::success(true, "不确定度分量删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete uncertainty component: {}", e);
-            Json(ApiResponse::server_error("不确定度分量删除失败"))
+            ApiResponse::server_error("不确定度分量删除失败")
         }
     }
 }
@@ -1097,19 +1097,19 @@ pub async fn calculate_type_a(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<TypeACalculationRequest>,
-) -> Json<ApiResponse<UncertaintyComponent>> {
+) -> ApiResponse<UncertaintyComponent> {
     let project_id = match Uuid::parse_str(&req.project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
+        Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
     let source_id = match Uuid::parse_str(&req.source_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的来源ID")),
+        Err(_) => return ApiResponse::bad_request("无效的来源ID"),
     };
 
     if req.measurements.is_empty() {
-        return Json(ApiResponse::bad_request("测量数据不能为空"));
+        return ApiResponse::bad_request("测量数据不能为空");
     }
 
     let n = req.measurements.len() as f64;
@@ -1162,7 +1162,7 @@ pub async fn calculate_type_a(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             UncertaintyComponent {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -1182,10 +1182,10 @@ pub async fn calculate_type_a(
                 updated_at: r.get("updated_at"),
             },
             "A类不确定度计算完成",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to calculate Type A uncertainty: {}", e);
-            Json(ApiResponse::server_error("A类不确定度计算失败"))
+            ApiResponse::server_error("A类不确定度计算失败")
         }
     }
 }
@@ -1204,15 +1204,15 @@ pub async fn calculate_type_b(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<TypeBCalculationRequest>,
-) -> Json<ApiResponse<UncertaintyComponent>> {
+) -> ApiResponse<UncertaintyComponent> {
     let project_id = match Uuid::parse_str(&req.project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
+        Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
     let source_id = match Uuid::parse_str(&req.source_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的来源ID")),
+        Err(_) => return ApiResponse::bad_request("无效的来源ID"),
     };
 
     let divisor = match req.distribution_type.as_str() {
@@ -1259,7 +1259,7 @@ pub async fn calculate_type_b(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             UncertaintyComponent {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -1279,10 +1279,10 @@ pub async fn calculate_type_b(
                 updated_at: r.get("updated_at"),
             },
             "B类不确定度计算完成",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to calculate Type B uncertainty: {}", e);
-            Json(ApiResponse::server_error("B类不确定度计算失败"))
+            ApiResponse::server_error("B类不确定度计算失败")
         }
     }
 }
@@ -1303,10 +1303,10 @@ pub async fn calculate_type_b(
 pub async fn calculate_combined(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(project_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let id = match Uuid::parse_str(&project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
+        Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
     let rows = sqlx::query(
@@ -1318,11 +1318,11 @@ pub async fn calculate_combined(
 
     let components = match rows {
         Ok(rows) => rows,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询分量失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询分量失败", e)),
     };
 
     if components.is_empty() {
-        return Json(ApiResponse::bad_request("没有可计算的不确定度分量"));
+        return ApiResponse::bad_request("没有可计算的不确定度分量");
     }
 
     let mut combined_var = 0.0;
@@ -1404,16 +1404,16 @@ pub async fn calculate_combined(
         "component_count": components.len()
     });
 
-    Json(ApiResponse::success(result, "合成不确定度计算完成"))
+    ApiResponse::success(result, "合成不确定度计算完成")
 }
 
 pub async fn generate_report(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(project_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let id = match Uuid::parse_str(&project_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的项目ID")),
+        Err(_) => return ApiResponse::bad_request("无效的项目ID"),
     };
 
     let project_row = sqlx::query(
@@ -1446,8 +1446,8 @@ pub async fn generate_report(
                 "created_at": row.get::<Option<String>, _>("created_at"),
             })
         }
-        Ok(None) => return Json(ApiResponse::not_found("不确定度评定项目不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询项目失败", e))),
+        Ok(None) => return ApiResponse::not_found("不确定度评定项目不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询项目失败", e)),
     };
 
     let source_rows = sqlx::query(
@@ -1471,7 +1471,7 @@ pub async fn generate_report(
                 })
             })
             .collect(),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询来源失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询来源失败", e)),
     };
 
     let component_rows = sqlx::query(
@@ -1506,7 +1506,7 @@ pub async fn generate_report(
                 })
             })
             .collect(),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询分量失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询分量失败", e)),
     };
 
     let report = serde_json::json!({
@@ -1548,5 +1548,5 @@ pub async fn generate_report(
         ]
     });
 
-    Json(ApiResponse::success(report, "不确定度评定报告生成成功"))
+    ApiResponse::success(report, "不确定度评定报告生成成功")
 }

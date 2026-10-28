@@ -38,7 +38,7 @@ pub async fn list_quality_costs(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<QualityCostQuery>,
-) -> Json<ApiResponse<ListQualityCostsResponse>> {
+) -> ApiResponse<ListQualityCostsResponse> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
@@ -91,7 +91,7 @@ pub async fn list_quality_costs(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count quality costs: {}", e);
-            return Json(ApiResponse::server_error("获取质量成本列表失败"));
+            return ApiResponse::server_error("获取质量成本列表失败");
         }
     };
 
@@ -109,7 +109,7 @@ pub async fn list_quality_costs(
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
     match fetch_query.fetch_all(&state.pool).await {
-        Ok(data) => Json(ApiResponse::success(
+        Ok(data) => ApiResponse::success(
             ListQualityCostsResponse {
                 costs: data,
                 total,
@@ -117,10 +117,10 @@ pub async fn list_quality_costs(
                 page_size,
             },
             "获取质量成本列表成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to fetch quality costs: {}", e);
-            Json(ApiResponse::server_error("获取质量成本列表失败"))
+            ApiResponse::server_error("获取质量成本列表失败")
         }
     }
 }
@@ -141,7 +141,7 @@ pub async fn create_quality_cost(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateQualityCostRequest>,
-) -> Json<ApiResponse<QualityCost>> {
+) -> ApiResponse<QualityCost> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let cost_no = format!(
         "QC-{}",
@@ -161,10 +161,10 @@ pub async fn create_quality_cost(
     .await;
 
     match cost {
-        Ok(data) => Json(ApiResponse::success(data, "质量成本记录创建成功")),
+        Ok(data) => ApiResponse::success(data, "质量成本记录创建成功"),
         Err(e) => {
             tracing::error!("Failed to create quality cost: {}", e);
-            Json(ApiResponse::server_error("质量成本记录创建失败"))
+            ApiResponse::server_error("质量成本记录创建失败")
         }
     }
 }
@@ -188,7 +188,7 @@ pub async fn get_quality_cost(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<QualityCost>> {
+) -> ApiResponse<QualityCost> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -200,7 +200,7 @@ pub async fn get_quality_cost(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的成本记录ID")),
+        Err(_) => return ApiResponse::bad_request("无效的成本记录ID"),
     };
 
     let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date, created_by, created_at, updated_at FROM qms.qa_quality_costs WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
@@ -208,12 +208,12 @@ pub async fn get_quality_cost(
     .await;
 
     match cost {
-        Ok(data) => Json(ApiResponse::success(data, "获取质量成本记录成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "获取质量成本记录成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to fetch quality cost: {}", e);
-            Json(ApiResponse::server_error("获取质量成本记录失败"))
+            ApiResponse::server_error("获取质量成本记录失败")
         }
     }
 }
@@ -239,11 +239,11 @@ pub async fn update_quality_cost(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateQualityCostRequest>,
-) -> Json<ApiResponse<QualityCost>> {
+) -> ApiResponse<QualityCost> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的成本记录ID")),
+        Err(_) => return ApiResponse::bad_request("无效的成本记录ID"),
     };
 
     let related_issue_id = req
@@ -259,11 +259,11 @@ pub async fn update_quality_cost(
     .await;
 
     match cost {
-        Ok(data) => Json(ApiResponse::success(data, "质量成本记录更新成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "质量成本记录更新成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update quality cost: {}", e);
-            Json(ApiResponse::server_error("质量成本记录更新失败"))
+            ApiResponse::server_error("质量成本记录更新失败")
         }
     }
 }
@@ -287,11 +287,11 @@ pub async fn delete_quality_cost(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的成本记录ID")),
+        Err(_) => return ApiResponse::bad_request("无效的成本记录ID"),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -304,10 +304,10 @@ pub async fn delete_quality_cost(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "质量成本记录删除成功")),
+        Ok(_) => ApiResponse::success(true, "质量成本记录删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete quality cost: {}", e);
-            Json(ApiResponse::server_error("质量成本记录删除失败"))
+            ApiResponse::server_error("质量成本记录删除失败")
         }
     }
 }
@@ -333,7 +333,7 @@ pub async fn get_cost_statistics(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<QualityCostQuery>,
-) -> Json<ApiResponse<QualityCostStatistics>> {
+) -> ApiResponse<QualityCostStatistics> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let mut params: Vec<String> = Vec::new();
     let mut where_clause = String::from(" WHERE 1=1");
@@ -465,7 +465,7 @@ pub async fn get_cost_statistics(
         department_summary,
     };
 
-    Json(ApiResponse::success(stats, "获取质量成本统计成功"))
+    ApiResponse::success(stats, "获取质量成本统计成功")
 }
 
 #[utoipa::path(
@@ -489,7 +489,7 @@ pub async fn get_cost_trend(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<QualityCostQuery>,
-) -> Json<ApiResponse<Vec<CostTrendItem>>> {
+) -> ApiResponse<Vec<CostTrendItem>> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let mut params: Vec<String> = Vec::new();
     let mut where_clause = String::from(" WHERE 1=1");
@@ -567,11 +567,11 @@ pub async fn get_cost_trend(
                     total: r.get::<BigDecimal, _>("total"),
                 })
                 .collect();
-            Json(ApiResponse::success(trend, "获取质量成本趋势成功"))
+            ApiResponse::success(trend, "获取质量成本趋势成功")
         }
         Err(e) => {
             tracing::error!("Failed to fetch cost trend: {}", e);
-            Json(ApiResponse::server_error("获取质量成本趋势失败"))
+            ApiResponse::server_error("获取质量成本趋势失败")
         }
     }
 }

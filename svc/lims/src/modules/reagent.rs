@@ -89,7 +89,7 @@ pub async fn list_reagents(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Query(query): axum::extract::Query<ReagentQuery>,
-) -> Json<ApiResponse<Vec<Reagent>>> {
+) -> ApiResponse<Vec<Reagent>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -157,10 +157,10 @@ pub async fn list_reagents(
     });
 
     match reagents {
-        Ok(data) => Json(ApiResponse::success(data, "获取试剂列表成功")),
+        Ok(data) => ApiResponse::success(data, "获取试剂列表成功"),
         Err(e) => {
             tracing::error!("Failed to fetch reagents: {}", e);
-            Json(ApiResponse::server_error("获取试剂列表失败"))
+            ApiResponse::server_error("获取试剂列表失败")
         }
     }
 }
@@ -181,7 +181,7 @@ pub async fn create_reagent(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateReagentRequest>,
-) -> Json<ApiResponse<Reagent>> {
+) -> ApiResponse<Reagent> {
     let reagent_no = format!(
         "RGT-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
@@ -259,11 +259,11 @@ pub async fn create_reagent(
                 }
             }
 
-            Json(ApiResponse::success(reagent, "试剂创建成功"))
+            ApiResponse::success(reagent, "试剂创建成功")
         }
         Err(e) => {
             tracing::error!("Failed to create reagent: {}", e);
-            Json(ApiResponse::server_error("试剂创建失败"))
+            ApiResponse::server_error("试剂创建失败")
         }
     }
 }
@@ -287,10 +287,10 @@ pub async fn get_reagent(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Reagent>> {
+) -> ApiResponse<Reagent> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的试剂ID")),
+        Err(_) => return ApiResponse::bad_request("无效的试剂ID"),
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -309,7 +309,7 @@ pub async fn get_reagent(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             Reagent {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -326,12 +326,12 @@ pub async fn get_reagent(
                 updated_at: r.get("updated_at"),
             },
             "获取试剂成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to fetch reagent: {}", e);
-            Json(ApiResponse::server_error("获取试剂失败"))
+            ApiResponse::server_error("获取试剂失败")
         }
     }
 }
@@ -341,10 +341,10 @@ pub async fn update_reagent(
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateReagentRequest>,
-) -> Json<ApiResponse<Reagent>> {
+) -> ApiResponse<Reagent> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的试剂ID")),
+        Err(_) => return ApiResponse::bad_request("无效的试剂ID"),
     };
     let tenant_id = ctx.tenant_id;
 
@@ -365,7 +365,7 @@ pub async fn update_reagent(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             Reagent {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -382,12 +382,12 @@ pub async fn update_reagent(
                 updated_at: r.get("updated_at"),
             },
             "试剂更新成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to update reagent: {}", e);
-            Json(ApiResponse::server_error("试剂更新失败"))
+            ApiResponse::server_error("试剂更新失败")
         }
     }
 }
@@ -396,10 +396,10 @@ pub async fn delete_reagent(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的试剂ID")),
+        Err(_) => return ApiResponse::bad_request("无效的试剂ID"),
     };
     let tenant_id = ctx.tenant_id;
 
@@ -412,10 +412,10 @@ pub async fn delete_reagent(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "试剂删除成功")),
+        Ok(_) => ApiResponse::success(true, "试剂删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete reagent: {}", e);
-            Json(ApiResponse::server_error("试剂删除失败"))
+            ApiResponse::server_error("试剂删除失败")
         }
     }
 }

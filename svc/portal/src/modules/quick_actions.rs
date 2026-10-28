@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Extension, Json, Path, State},
+    extract::{Extension, Path, State},
     http::HeaderMap,
 };
 use sqlx::{PgPool, Row};
@@ -168,9 +168,9 @@ pub async fn get_quick_actions(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<QuickAction>>> {
+) -> ApiResponse<Vec<QuickAction>> {
     let actions = load_quick_actions(&state.pool, &state, &headers).await;
-    Json(ApiResponse::success(actions, "快捷操作列表获取成功"))
+    ApiResponse::success(actions, "快捷操作列表获取成功")
 }
 
 #[utoipa::path(
@@ -187,10 +187,10 @@ pub async fn get_favorite_actions(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<QuickAction>>> {
+) -> ApiResponse<Vec<QuickAction>> {
     let actions = load_quick_actions(&state.pool, &state, &headers).await;
     let favorites: Vec<_> = actions.into_iter().filter(|a| a.is_favorite).collect();
-    Json(ApiResponse::success(favorites, "收藏的快捷操作获取成功"))
+    ApiResponse::success(favorites, "收藏的快捷操作获取成功")
 }
 
 #[utoipa::path(
@@ -211,7 +211,7 @@ pub async fn toggle_favorite_action(
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
     headers: HeaderMap,
-) -> Json<ApiResponse<QuickAction>> {
+) -> ApiResponse<QuickAction> {
     let mut actions = load_quick_actions(&state.pool, &state, &headers).await;
 
     let mut favorites: Vec<String> = actions
@@ -237,7 +237,7 @@ pub async fn toggle_favorite_action(
             ..Default::default()
         });
 
-    Json(ApiResponse::success(action, "快捷操作收藏状态已更新"))
+    ApiResponse::success(action, "快捷操作收藏状态已更新")
 }
 
 #[utoipa::path(
@@ -253,11 +253,11 @@ pub async fn toggle_favorite_action(
 pub async fn execute_quick_action(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({ "id": id, "executed": true }),
         "快捷操作执行成功",
-    ))
+    )
 }
 
 impl Default for QuickAction {

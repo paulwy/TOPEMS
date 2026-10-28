@@ -225,15 +225,15 @@ pub async fn list_returns(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReturnQuery>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -304,7 +304,7 @@ pub async fn list_returns(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": returns,
                     "total": total,
@@ -312,13 +312,11 @@ pub async fn list_returns(
                     "page_size": page_size
                 }),
                 "获取退换货列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取退换货列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取退换货列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取退换货列表失败".to_string()))
         }
     }
 }
@@ -331,15 +329,15 @@ async fn create_return(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateReturnRequest>,
-) -> Json<ApiResponse<Return>> {
+) -> ApiResponse<Return> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -394,19 +392,14 @@ async fn create_return(
 
     let (response, status_str, error_msg) = match &result {
         Ok(return_record) => (
-            Json(ApiResponse::success(
-                return_record.clone(),
-                "退换货申请创建成功",
-            )),
+            ApiResponse::success(return_record.clone(), "退换货申请创建成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("创建退换货申请失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "创建退换货申请失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("创建退换货申请失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -416,9 +409,7 @@ async fn create_return(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -472,15 +463,15 @@ pub async fn get_return(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Return>> {
+) -> ApiResponse<Return> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -509,15 +500,11 @@ pub async fn get_return(
     .await;
 
     match result {
-        Ok(Some(return_record)) => Json(ApiResponse::success(return_record, "获取退换货成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "退换货不存在".to_string(),
-        ))),
+        Ok(Some(return_record)) => ApiResponse::success(return_record, "获取退换货成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string())),
         Err(e) => {
             tracing::error!("获取退换货失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取退换货失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取退换货失败".to_string()))
         }
     }
 }
@@ -531,15 +518,15 @@ async fn update_return(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateReturnRequest>,
-) -> Json<ApiResponse<Return>> {
+) -> ApiResponse<Return> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -570,16 +557,9 @@ async fn update_return(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "退换货不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询退换货失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询退换货失败", e)),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -629,19 +609,14 @@ async fn update_return(
 
     let (response, status_str, error_msg) = match &result {
         Ok(return_record) => (
-            Json(ApiResponse::success(
-                return_record.clone(),
-                "退换货更新成功",
-            )),
+            ApiResponse::success(return_record.clone(), "退换货更新成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("更新退换货失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "更新退换货失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("更新退换货失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -651,9 +626,7 @@ async fn update_return(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
     }
@@ -693,15 +666,15 @@ async fn delete_return(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -733,23 +706,16 @@ async fn delete_return(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "退换货不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询退换货失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询退换货失败", e)),
     };
 
     // 仅允许 pending/cancelled 状态的退换单被删除
     if existing.status != "pending" && existing.status != "cancelled" {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "仅 pending/cancelled 状态的退换单可删除".to_string(),
-        )));
+        ));
     }
 
     let result =
@@ -762,31 +728,25 @@ async fn delete_return(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "退换货删除成功")),
+            ApiResponse::success("".to_string(), "退换货删除成功"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "退换货不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string())),
             "error".to_string(),
             Some("退换货不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除退换货失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "删除退换货失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("删除退换货失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -842,15 +802,15 @@ pub async fn approve_return(
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
-) -> Json<ApiResponse<Return>> {
+) -> ApiResponse<Return> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -883,24 +843,17 @@ pub async fn approve_return(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "退换货不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询退换货失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询退换货失败", e)),
     };
 
     // 状态流转校验：pending → approved
     if existing.status != "pending" {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "当前状态 {} 不允许审批通过，仅 pending 状态可审批",
             existing.status
-        ))));
+        )));
     }
 
     let result = sqlx::query_as::<_, Return>(
@@ -927,9 +880,7 @@ pub async fn approve_return(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             tracing::debug!(
@@ -937,13 +888,11 @@ pub async fn approve_return(
                 return_record.return_no,
                 req.comment
             );
-            Json(ApiResponse::success(return_record, "退换货审批通过"))
+            ApiResponse::success(return_record, "退换货审批通过")
         }
         Err(e) => {
             tracing::error!("审批退换货失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "审批退换货失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("审批退换货失败".to_string()))
         }
     }
 }
@@ -970,15 +919,15 @@ pub async fn reject_return(
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
-) -> Json<ApiResponse<Return>> {
+) -> ApiResponse<Return> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -1011,24 +960,17 @@ pub async fn reject_return(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "退换货不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询退换货失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询退换货失败", e)),
     };
 
     // 状态流转校验：pending → rejected
     if existing.status != "pending" {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "当前状态 {} 不允许拒绝，仅 pending 状态可拒绝",
             existing.status
-        ))));
+        )));
     }
 
     let result = sqlx::query_as::<_, Return>(
@@ -1055,9 +997,7 @@ pub async fn reject_return(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             tracing::debug!(
@@ -1065,13 +1005,11 @@ pub async fn reject_return(
                 return_record.return_no,
                 req.comment
             );
-            Json(ApiResponse::success(return_record, "退换货已拒绝"))
+            ApiResponse::success(return_record, "退换货已拒绝")
         }
         Err(e) => {
             tracing::error!("拒绝退换货失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "拒绝退换货失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("拒绝退换货失败".to_string()))
         }
     }
 }
@@ -1098,15 +1036,15 @@ pub async fn receive_return(
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
-) -> Json<ApiResponse<Return>> {
+) -> ApiResponse<Return> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -1139,24 +1077,17 @@ pub async fn receive_return(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "退换货不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询退换货失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询退换货失败", e)),
     };
 
     // 状态流转校验：approved → processing，记录 received_at
     if existing.status != "approved" {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "当前状态 {} 不允许确认收货，仅 approved 状态可确认收货",
             existing.status
-        ))));
+        )));
     }
 
     let result = sqlx::query_as::<_, Return>(
@@ -1195,18 +1126,14 @@ pub async fn receive_return(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
-            Json(ApiResponse::success(return_record, "退换货已确认收货"))
+            ApiResponse::success(return_record, "退换货已确认收货")
         }
         Err(e) => {
             tracing::error!("确认收货失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "确认收货失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("确认收货失败".to_string()))
         }
     }
 }
@@ -1233,16 +1160,16 @@ pub async fn complete_return(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
-) -> Json<ApiResponse<Return>> {
+) -> ApiResponse<Return> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let locale = Locale::from_headers(&headers).as_sql();
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -1275,24 +1202,17 @@ pub async fn complete_return(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "退换货不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询退换货失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询退换货失败", e)),
     };
 
     // 状态流转校验：processing → completed，记录 completed_at
     if existing.status != "processing" {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "当前状态 {} 不允许完成，仅 processing 状态可完成",
             existing.status
-        ))));
+        )));
     }
 
     let result = sqlx::query_as::<_, Return>(
@@ -1333,9 +1253,7 @@ pub async fn complete_return(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
 
@@ -1416,13 +1334,11 @@ pub async fn complete_return(
                 });
             }
 
-            Json(ApiResponse::success(return_record, "退换货已完成"))
+            ApiResponse::success(return_record, "退换货已完成")
         }
         Err(e) => {
             tracing::error!("完成退换货失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "完成退换货失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("完成退换货失败".to_string()))
         }
     }
 }
@@ -1449,15 +1365,15 @@ pub async fn cancel_return(
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
-) -> Json<ApiResponse<Return>> {
+) -> ApiResponse<Return> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -1490,24 +1406,17 @@ pub async fn cancel_return(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "退换货不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询退换货失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询退换货失败", e)),
     };
 
     // 状态流转校验：pending → cancelled（已完成/已拒绝的不可取消）
     if existing.status == "completed" || existing.status == "cancelled" {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "当前状态 {} 不允许取消",
             existing.status
-        ))));
+        )));
     }
 
     let result = sqlx::query_as::<_, Return>(
@@ -1533,9 +1442,7 @@ pub async fn cancel_return(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             tracing::debug!(
@@ -1543,13 +1450,11 @@ pub async fn cancel_return(
                 return_record.return_no,
                 req.comment
             );
-            Json(ApiResponse::success(return_record, "退换货已取消"))
+            ApiResponse::success(return_record, "退换货已取消")
         }
         Err(e) => {
             tracing::error!("取消退换货失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "取消退换货失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("取消退换货失败".to_string()))
         }
     }
 }
@@ -1575,15 +1480,15 @@ pub async fn list_return_items(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<ReturnItem>>> {
+) -> ApiResponse<Vec<ReturnItem>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -1611,12 +1516,10 @@ pub async fn list_return_items(
     .await;
 
     match result {
-        Ok(items) => Json(ApiResponse::success(items, "获取退换货明细成功")),
+        Ok(items) => ApiResponse::success(items, "获取退换货明细成功"),
         Err(e) => {
             tracing::error!("获取退换货明细失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取退换货明细失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取退换货明细失败".to_string()))
         }
     }
 }
@@ -1630,26 +1533,22 @@ async fn add_return_item(
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
     Json(req): Json<CreateReturnItemRequest>,
-) -> Json<ApiResponse<ReturnItem>> {
+) -> ApiResponse<ReturnItem> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     if req.quantity <= 0 {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            "数量必须大于零".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed("数量必须大于零".to_string()));
     }
     if req.unit_price < Decimal::ZERO {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            "单价不能为负".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed("单价不能为负".to_string()));
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -1674,9 +1573,7 @@ async fn add_return_item(
     .unwrap_or(None);
 
     if exists.is_none() {
-        return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "退换货不存在".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()));
     }
 
     let item_id = Uuid::new_v4();
@@ -1710,18 +1607,14 @@ async fn add_return_item(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
-            Json(ApiResponse::success(item, "退换货明细添加成功"))
+            ApiResponse::success(item, "退换货明细添加成功")
         }
         Err(e) => {
             tracing::error!("添加退换货明细失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "添加退换货明细失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("添加退换货明细失败".to_string()))
         }
     }
 }
@@ -2020,15 +1913,15 @@ pub async fn get_return_finance_status(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -2054,9 +1947,7 @@ pub async fn get_return_finance_status(
     .flatten();
 
     if exists.is_none() {
-        return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "退换货不存在".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()));
     }
 
     // V19.0: 服务边界治理 - 跨库直写已替换为 HTTP API 调用
@@ -2070,9 +1961,9 @@ pub async fn get_return_finance_status(
             Ok(resp) => serde_json::Value::Array(resp),
             Err(e) => {
                 tracing::error!("获取退换货财务对账状态失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
+                return ApiResponse::from(TopemsError::Internal(
                     "获取退换货财务对账状态失败".to_string(),
-                )));
+                ));
             }
         },
         None => {
@@ -2093,14 +1984,14 @@ pub async fn get_return_finance_status(
         _ => vec![],
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "return_id": id,
             "reconciliations": items,
             "total": items.len()
         }),
         "获取退换货财务对账状态成功",
-    ))
+    )
 }
 
 /// 查询退换货的库存联动状态（已记录的库存移动流水）
@@ -2125,15 +2016,15 @@ pub async fn get_return_inventory_status(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -2159,9 +2050,7 @@ pub async fn get_return_inventory_status(
     .flatten();
 
     if exists.is_none() {
-        return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "退换货不存在".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()));
     }
 
     // V19.0: 服务边界治理 - 跨库直写已替换为 HTTP API 调用
@@ -2175,9 +2064,9 @@ pub async fn get_return_inventory_status(
             Ok(resp) => resp,
             Err(e) => {
                 tracing::error!("获取退换货库存联动状态失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
+                return ApiResponse::from(TopemsError::Internal(
                     "获取退换货库存联动状态失败".to_string(),
-                )));
+                ));
             }
         },
         None => {
@@ -2198,14 +2087,14 @@ pub async fn get_return_inventory_status(
         _ => vec![],
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "return_id": id,
             "movements": items,
             "total": items.len()
         }),
         "获取退换货库存联动状态成功",
-    ))
+    )
 }
 
 // ============================================================
@@ -2238,15 +2127,15 @@ async fn accept_return(
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
     Json(_req): Json<ReturnActionRequest>,
-) -> Json<ApiResponse<Return>> {
+) -> ApiResponse<Return> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -2279,33 +2168,26 @@ async fn accept_return(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "退换货不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询退换货失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询退换货失败", e)),
     };
 
     let from = match ReturnStage::from_str(&existing.status) {
         Some(s) => s,
         None => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
                 "未知状态: {}",
                 existing.status
-            ))))
+            )))
         }
     };
 
     if let Err(e) = can_transition(from, ReturnStage::Accepted) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "状态 {} → accepted 流转被拒绝: {}",
             existing.status, e
-        ))));
+        )));
     }
 
     let result = sqlx::query_as::<_, Return>(
@@ -2332,18 +2214,14 @@ async fn accept_return(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
-            Json(ApiResponse::success(r, "退换货已受理"))
+            ApiResponse::success(r, "退换货已受理")
         }
         Err(e) => {
             tracing::error!("受理退换货失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "受理退换货失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("受理退换货失败".to_string()))
         }
     }
 }
@@ -2370,15 +2248,15 @@ pub async fn process_return(
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
     Json(_req): Json<ReturnActionRequest>,
-) -> Json<ApiResponse<Return>> {
+) -> ApiResponse<Return> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -2411,33 +2289,26 @@ pub async fn process_return(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "退换货不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询退换货失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询退换货失败", e)),
     };
 
     let from = match ReturnStage::from_str(&existing.status) {
         Some(s) => s,
         None => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
                 "未知状态: {}",
                 existing.status
-            ))))
+            )))
         }
     };
 
     if let Err(e) = can_transition(from, ReturnStage::Processing) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "状态 {} → processing 流转被拒绝: {}",
             existing.status, e
-        ))));
+        )));
     }
 
     let result = sqlx::query_as::<_, Return>(
@@ -2470,18 +2341,14 @@ pub async fn process_return(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
-            Json(ApiResponse::success(return_record, "退换货进入处理中"))
+            ApiResponse::success(return_record, "退换货进入处理中")
         }
         Err(e) => {
             tracing::error!("处理退换货失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "处理退换货失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("处理退换货失败".to_string()))
         }
     }
 }
@@ -2508,15 +2375,15 @@ pub async fn resolve_return(
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
-) -> Json<ApiResponse<Return>> {
+) -> ApiResponse<Return> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -2549,25 +2416,18 @@ pub async fn resolve_return(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "退换货不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询退换货失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询退换货失败", e)),
     };
 
     let from = match ReturnStage::from_str(&existing.status) {
         Some(s) => s,
         None => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
                 "未知状态: {}",
                 existing.status
-            ))))
+            )))
         }
     };
 
@@ -2577,11 +2437,11 @@ pub async fn resolve_return(
     };
 
     if let Err(_) = can_transition(from, target) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "状态 {} → {} 流转被拒绝",
             existing.status,
             target.as_str()
-        ))));
+        )));
     }
 
     let result = sqlx::query_as::<_, Return>(
@@ -2608,9 +2468,7 @@ pub async fn resolve_return(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             let msg = match target {
@@ -2618,13 +2476,11 @@ pub async fn resolve_return(
                 ReturnStage::Processing => "退换货已退回重新处理".to_string(),
                 _ => "退换货状态更新成功".to_string(),
             };
-            Json(ApiResponse::success(r, &msg))
+            ApiResponse::success(r, &msg)
         }
         Err(e) => {
             tracing::error!("方案确认失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "方案确认失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("方案确认失败".to_string()))
         }
     }
 }
@@ -2651,16 +2507,16 @@ pub async fn confirm_return(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
-) -> Json<ApiResponse<Return>> {
+) -> ApiResponse<Return> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let locale = Locale::from_headers(&headers).as_sql();
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -2693,25 +2549,18 @@ pub async fn confirm_return(
     let existing = match existing {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "退换货不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("退换货不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询退换货失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询退换货失败", e)),
     };
 
     let from = match ReturnStage::from_str(&existing.status) {
         Some(s) => s,
         None => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
                 "未知状态: {}",
                 existing.status
-            ))))
+            )))
         }
     };
 
@@ -2721,11 +2570,11 @@ pub async fn confirm_return(
     };
 
     if let Err(_) = can_transition(from, target) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "状态 {} → {} 流转被拒绝",
             existing.status,
             target.as_str()
-        ))));
+        )));
     }
 
     let result = sqlx::query_as::<_, Return>(
@@ -2762,9 +2611,7 @@ pub async fn confirm_return(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
 
@@ -2820,13 +2667,11 @@ pub async fn confirm_return(
                 ReturnStage::Rejected => "退换货已拒绝结案".to_string(),
                 _ => "退换货确认成功".to_string(),
             };
-            Json(ApiResponse::success(return_record, &msg))
+            ApiResponse::success(return_record, &msg)
         }
         Err(e) => {
             tracing::error!("确认退换货失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "确认退换货失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("确认退换货失败".to_string()))
         }
     }
 }

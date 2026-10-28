@@ -82,21 +82,21 @@ pub async fn sync_supplier_from_scm(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<SyncSupplierFromScmRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(id) => id,
         Err(_) => {
-            return Json(ApiResponse::success(
+            return ApiResponse::success(
                 serde_json::json!({
                     "success": false,
                     "message": "供应商ID格式错误".to_string(),
@@ -104,7 +104,7 @@ pub async fn sync_supplier_from_scm(
                     "action": "none".to_string(),
                 }),
                 "供应商ID格式错误",
-            ));
+            );
         }
     };
 
@@ -148,10 +148,10 @@ pub async fn sync_supplier_from_scm(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            return Json(ApiResponse::success(
+            return ApiResponse::success(
                 serde_json::json!({
                     "success": false,
                     "message": "SCM供应商不存在".to_string(),
@@ -159,13 +159,11 @@ pub async fn sync_supplier_from_scm(
                     "action": "none".to_string(),
                 }),
                 "SCM供应商不存在",
-            ));
+            );
         }
         Err(e) => {
             tracing::error!("查询SCM供应商失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询SCM供应商失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询SCM供应商失败".to_string()));
         }
     };
 
@@ -219,9 +217,9 @@ pub async fn sync_supplier_from_scm(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("rls commit failed: {}", e);
-                        return Json(ApiResponse::from(TopemsError::Internal(
+                        return ApiResponse::from(TopemsError::Internal(
                             "提交事务失败".to_string(),
-                        )));
+                        ));
                     }
                 }
                 let _ = record_sync_log(
@@ -240,7 +238,7 @@ pub async fn sync_supplier_from_scm(
                     None,
                 )
                 .await;
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     serde_json::json!({
                         "success": true,
                         "message": "供应商信息更新成功".to_string(),
@@ -248,13 +246,11 @@ pub async fn sync_supplier_from_scm(
                         "action": "updated".to_string(),
                     }),
                     "供应商同步成功",
-                ))
+                )
             }
             Err(e) => {
                 tracing::error!("更新供应商失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "更新供应商失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("更新供应商失败".to_string()))
             }
         }
     } else {
@@ -292,9 +288,9 @@ pub async fn sync_supplier_from_scm(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("rls commit failed: {}", e);
-                        return Json(ApiResponse::from(TopemsError::Internal(
+                        return ApiResponse::from(TopemsError::Internal(
                             "提交事务失败".to_string(),
-                        )));
+                        ));
                     }
                 }
                 let _ = record_sync_log(
@@ -313,7 +309,7 @@ pub async fn sync_supplier_from_scm(
                     None,
                 )
                 .await;
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     serde_json::json!({
                         "success": true,
                         "message": "供应商创建成功".to_string(),
@@ -321,13 +317,11 @@ pub async fn sync_supplier_from_scm(
                         "action": "created".to_string(),
                     }),
                     "供应商同步成功",
-                ))
+                )
             }
             Err(e) => {
                 tracing::error!("创建供应商失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "创建供应商失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("创建供应商失败".to_string()))
             }
         }
     }
@@ -350,15 +344,15 @@ pub async fn sync_all_suppliers_from_scm(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -387,9 +381,7 @@ pub async fn sync_all_suppliers_from_scm(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("查询SCM供应商列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询SCM供应商列表失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询SCM供应商列表失败".to_string()));
         }
     };
 
@@ -492,13 +484,11 @@ pub async fn sync_all_suppliers_from_scm(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "提交事务失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("提交事务失败".to_string()));
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "total_processed": total_count,
             "created": created_count,
@@ -506,7 +496,7 @@ pub async fn sync_all_suppliers_from_scm(
             "failed": failed_count
         }),
         "供应商批量同步完成",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -527,21 +517,21 @@ pub async fn sync_supplier_to_scm(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<SyncSupplierToScmRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(id) => id,
         Err(_) => {
-            return Json(ApiResponse::success(
+            return ApiResponse::success(
                 serde_json::json!({
                     "success": false,
                     "message": "供应商ID格式错误".to_string(),
@@ -549,7 +539,7 @@ pub async fn sync_supplier_to_scm(
                     "action": "none".to_string(),
                 }),
                 "供应商ID格式错误",
-            ));
+            );
         }
     };
 
@@ -595,7 +585,7 @@ pub async fn sync_supplier_to_scm(
         match srm_supplier {
             Ok(Some(s)) => s,
             Ok(None) => {
-                return Json(ApiResponse::success(
+                return ApiResponse::success(
                     serde_json::json!({
                         "success": false,
                         "message": "SRM供应商不存在".to_string(),
@@ -603,13 +593,11 @@ pub async fn sync_supplier_to_scm(
                         "action": "none".to_string(),
                     }),
                     "SRM供应商不存在",
-                ));
+                );
             }
             Err(e) => {
                 tracing::error!("查询SRM供应商失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "查询SRM供应商失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("查询SRM供应商失败".to_string()));
             }
         };
 
@@ -658,7 +646,7 @@ pub async fn sync_supplier_to_scm(
                     None,
                 )
                 .await;
-                return Json(ApiResponse::success(
+                return ApiResponse::success(
                     serde_json::json!({
                         "success": true,
                         "message": "供应商同步事件已发布，SCM将异步处理".to_string(),
@@ -666,7 +654,7 @@ pub async fn sync_supplier_to_scm(
                         "action": "event_published".to_string(),
                     }),
                     "供应商同步事件发布成功",
-                ));
+                );
             }
             Err(e) => {
                 tracing::error!(
@@ -698,7 +686,7 @@ pub async fn sync_supplier_to_scm(
     )
     .await;
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "success": false,
             "message": "供应商同步事件发布失败，请检查事件服务状态".to_string(),
@@ -706,7 +694,7 @@ pub async fn sync_supplier_to_scm(
             "action": "pending".to_string(),
         }),
         "供应商同步事件发布失败",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -726,15 +714,15 @@ pub async fn sync_all_suppliers_to_scm(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -778,9 +766,7 @@ pub async fn sync_all_suppliers_to_scm(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("查询SRM供应商列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询SRM供应商列表失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询SRM供应商列表失败".to_string()));
         }
     };
 
@@ -834,7 +820,7 @@ pub async fn sync_all_suppliers_to_scm(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "total_processed": total_count,
             "event_published": published_count,
@@ -843,7 +829,7 @@ pub async fn sync_all_suppliers_to_scm(
             "mode": if use_events { "event_driven" } else { "direct" }
         }),
         "供应商批量同步完成",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -864,11 +850,11 @@ pub async fn get_sync_logs(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<SyncLogsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let page = req.page.unwrap_or(1).max(1);
     let page_size = req.page_size.unwrap_or(20).min(100);
@@ -934,16 +920,11 @@ pub async fn get_sync_logs(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(
-                serde_json::json!({ "logs": logs }),
-                "同步日志查询成功",
-            ))
+            ApiResponse::success(serde_json::json!({ "logs": logs }), "同步日志查询成功")
         }
         Err(e) => {
             tracing::error!("查询同步日志失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询同步日志失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询同步日志失败".to_string()))
         }
     }
 }

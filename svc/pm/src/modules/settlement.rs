@@ -78,7 +78,7 @@ pub fn create_routes(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>)
 async fn get_project_settlements(
     State(state): State<SettlementState>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<Settlement>>> {
+) -> ApiResponse<Vec<Settlement>> {
     let settlements = sqlx::query_as::<_, Settlement>(
         only_own_schema_query!("pm", "SELECT id, project_id, settlement_no, settlement_name, settlement_type, status, settlement_date, amount, currency, remarks, settlement_period_start, settlement_period_end, approved_at, created_by, created_at, updated_at FROM pm.settlements WHERE project_id = $1 ORDER BY settlement_date DESC"),
     )
@@ -87,10 +87,10 @@ async fn get_project_settlements(
     .await;
 
     match settlements {
-        Ok(s) => Json(ApiResponse::success(s, "获取决算列表成功")),
+        Ok(s) => ApiResponse::success(s, "获取决算列表成功"),
         Err(e) => {
             tracing::error!("获取决算失败: {}", e);
-            Json(ApiResponse::server_error("获取决算失败"))
+            ApiResponse::server_error("获取决算失败")
         }
     }
 }
@@ -111,7 +111,7 @@ async fn get_project_settlements(
 async fn get_settlement(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Settlement>> {
+) -> ApiResponse<Settlement> {
     let settlement =
         sqlx::query_as::<_, Settlement>(only_own_schema_query!("pm", "SELECT id, project_id, settlement_no, settlement_name, settlement_type, status, settlement_date, amount, currency, remarks, settlement_period_start, settlement_period_end, approved_at, created_by, created_at, updated_at FROM pm.settlements WHERE id = $1"))
             .bind(id)
@@ -119,11 +119,11 @@ async fn get_settlement(
             .await;
 
     match settlement {
-        Ok(s) => Json(ApiResponse::success(s, "获取决算详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("决算不存在")),
+        Ok(s) => ApiResponse::success(s, "获取决算详情成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("决算不存在"),
         Err(e) => {
             tracing::error!("获取决算失败: {}", e);
-            Json(ApiResponse::server_error("获取决算失败"))
+            ApiResponse::server_error("获取决算失败")
         }
     }
 }
@@ -134,7 +134,7 @@ async fn create_settlement(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSettlementRequest>,
-) -> Json<ApiResponse<Settlement>> {
+) -> ApiResponse<Settlement> {
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = effective_tenant_id(&ctx, &claims);
@@ -189,11 +189,11 @@ async fn create_settlement(
                     commit_retry::push_retry_typed("pm", et, &payload).await;
                 }
             }
-            Json(ApiResponse::success(s, "创建决算成功"))
+            ApiResponse::success(s, "创建决算成功")
         }
         Err(e) => {
             tracing::error!("创建决算失败: {}", e);
-            Json(ApiResponse::server_error("创建决算失败"))
+            ApiResponse::server_error("创建决算失败")
         }
     }
 }
@@ -202,7 +202,7 @@ async fn update_settlement(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSettlementRequest>,
-) -> Json<ApiResponse<Settlement>> {
+) -> ApiResponse<Settlement> {
     // actual_amount->amount, description->remarks。
     let settlement = sqlx::query_as::<_, Settlement>(only_own_schema_query!(
         "pm",
@@ -224,11 +224,11 @@ async fn update_settlement(
     .await;
 
     match settlement {
-        Ok(s) => Json(ApiResponse::success(s, "更新决算成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("决算不存在")),
+        Ok(s) => ApiResponse::success(s, "更新决算成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("决算不存在"),
         Err(e) => {
             tracing::error!("更新决算失败: {}", e);
-            Json(ApiResponse::server_error("更新决算失败"))
+            ApiResponse::server_error("更新决算失败")
         }
     }
 }
@@ -251,7 +251,7 @@ async fn approve_settlement(
     Path(id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Settlement>> {
+) -> ApiResponse<Settlement> {
     let now = Utc::now();
     // 与 INSERT 同源：superuser 会话回退默认租户，普通用户取会话租户；
     // 操作人取 JWT 真实 sub（与 pdm created_by 写法一致），不再写死 "system"。
@@ -287,12 +287,12 @@ async fn approve_settlement(
                     commit_retry::push_retry_typed("pm", et, &payload).await;
                 }
             }
-            Json(ApiResponse::success(s, "决算审批通过"))
+            ApiResponse::success(s, "决算审批通过")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("决算不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("决算不存在"),
         Err(e) => {
             tracing::error!("审批决算失败: {}", e);
-            Json(ApiResponse::server_error("审批决算失败"))
+            ApiResponse::server_error("审批决算失败")
         }
     }
 }
@@ -313,7 +313,7 @@ async fn approve_settlement(
 async fn get_settlement_items(
     State(state): State<SettlementState>,
     Path(settlement_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<SettlementItem>>> {
+) -> ApiResponse<Vec<SettlementItem>> {
     let items = sqlx::query_as::<_, SettlementItem>(
         only_own_schema_query!("pm", "SELECT id, settlement_id, item_code, item_name, category, budget_amount, actual_amount, variance_amount, variance_percent, description, expense_ref_id, contract_ref_id, created_at FROM pm.settlement_items WHERE settlement_id = $1 ORDER BY category, item_name"),
     )
@@ -322,10 +322,10 @@ async fn get_settlement_items(
     .await;
 
     match items {
-        Ok(i) => Json(ApiResponse::success(i, "获取决算项列表成功")),
+        Ok(i) => ApiResponse::success(i, "获取决算项列表成功"),
         Err(e) => {
             tracing::error!("获取决算项失败: {}", e);
-            Json(ApiResponse::server_error("获取决算项失败"))
+            ApiResponse::server_error("获取决算项失败")
         }
     }
 }
@@ -336,7 +336,7 @@ async fn create_settlement_item(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSettlementItemRequest>,
-) -> Json<ApiResponse<SettlementItem>> {
+) -> ApiResponse<SettlementItem> {
     let id = Uuid::new_v4();
     let now = Utc::now();
     let variance_amount = req.actual_amount - req.budget_amount;
@@ -369,10 +369,10 @@ async fn create_settlement_item(
     .await;
 
     match item {
-        Ok(i) => Json(ApiResponse::success(i, "创建决算项成功")),
+        Ok(i) => ApiResponse::success(i, "创建决算项成功"),
         Err(e) => {
             tracing::error!("创建决算项失败: {}", e);
-            Json(ApiResponse::server_error("创建决算项失败"))
+            ApiResponse::server_error("创建决算项失败")
         }
     }
 }
@@ -394,7 +394,7 @@ async fn update_settlement_item(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSettlementItemRequest>,
-) -> Json<ApiResponse<SettlementItem>> {
+) -> ApiResponse<SettlementItem> {
     let item = sqlx::query_as::<_, SettlementItem>(
         only_own_schema_query!("pm", "UPDATE pm.settlement_items SET
             item_name = COALESCE($1, item_name),
@@ -416,11 +416,11 @@ async fn update_settlement_item(
     .await;
 
     match item {
-        Ok(i) => Json(ApiResponse::success(i, "更新决算项成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("决算项不存在")),
+        Ok(i) => ApiResponse::success(i, "更新决算项成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("决算项不存在"),
         Err(e) => {
             tracing::error!("更新决算项失败: {}", e);
-            Json(ApiResponse::server_error("更新决算项失败"))
+            ApiResponse::server_error("更新决算项失败")
         }
     }
 }
@@ -428,7 +428,7 @@ async fn update_settlement_item(
 async fn delete_settlement_item(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "DELETE FROM pm.settlement_items WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
@@ -438,11 +438,11 @@ async fn delete_settlement_item(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除决算项成功")),
-        Ok(_) => Json(ApiResponse::not_found("决算项不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除决算项成功"),
+        Ok(_) => ApiResponse::not_found("决算项不存在"),
         Err(e) => {
             tracing::error!("删除决算项失败: {}", e);
-            Json(ApiResponse::server_error("删除决算项失败"))
+            ApiResponse::server_error("删除决算项失败")
         }
     }
 }
@@ -463,7 +463,7 @@ async fn delete_settlement_item(
 async fn get_settlement_adjustments(
     State(state): State<SettlementState>,
     Path(settlement_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<SettlementAdjustment>>> {
+) -> ApiResponse<Vec<SettlementAdjustment>> {
     let adjustments = sqlx::query_as::<_, SettlementAdjustment>(
         only_own_schema_query!("pm", "SELECT id, settlement_id, adjustment_type, adjustment_code, description, amount, reason, supporting_documents, created_by, created_at FROM pm.settlement_adjustments WHERE settlement_id = $1 ORDER BY created_at"),
     )
@@ -472,10 +472,10 @@ async fn get_settlement_adjustments(
     .await;
 
     match adjustments {
-        Ok(a) => Json(ApiResponse::success(a, "获取调整项列表成功")),
+        Ok(a) => ApiResponse::success(a, "获取调整项列表成功"),
         Err(e) => {
             tracing::error!("获取调整项失败: {}", e);
-            Json(ApiResponse::server_error("获取调整项失败"))
+            ApiResponse::server_error("获取调整项失败")
         }
     }
 }
@@ -486,7 +486,7 @@ async fn create_settlement_adjustment(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSettlementAdjustmentRequest>,
-) -> Json<ApiResponse<SettlementAdjustment>> {
+) -> ApiResponse<SettlementAdjustment> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -509,10 +509,10 @@ async fn create_settlement_adjustment(
     .await;
 
     match adjustment {
-        Ok(a) => Json(ApiResponse::success(a, "创建调整项成功")),
+        Ok(a) => ApiResponse::success(a, "创建调整项成功"),
         Err(e) => {
             tracing::error!("创建调整项失败: {}", e);
-            Json(ApiResponse::server_error("创建调整项失败"))
+            ApiResponse::server_error("创建调整项失败")
         }
     }
 }

@@ -20,12 +20,7 @@ macro_rules! db_exec {
     ($e:expr) => {
         match $e {
             Ok(v) => v,
-            Err(e) => {
-                return Json(ApiResponse::from(TopemsError::internal(
-                    "数据库操作失败",
-                    e,
-                )))
-            }
+            Err(e) => return ApiResponse::from(TopemsError::internal("数据库操作失败", e)),
         }
     };
 }
@@ -1173,7 +1168,7 @@ pub struct SuggestQuery {
 pub async fn add_graph_node(
     State(state): State<AppState>,
     Json(req): Json<AddGraphNodeRequest>,
-) -> Json<ApiResponse<GraphNodeV57>> {
+) -> ApiResponse<GraphNodeV57> {
     let id = req.id.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
     let embeddings = generate_simulated_embedding(&req.label, &req.node_type);
 
@@ -1188,7 +1183,7 @@ pub async fn add_graph_node(
     };
 
     let result = db_exec!(EnhancedKnowledgeGraph::add_node(&state.db, node).await);
-    Json(ApiResponse::success(result, "图谱节点已创建"))
+    ApiResponse::success(result, "图谱节点已创建")
 }
 
 #[utoipa::path(
@@ -1204,7 +1199,7 @@ pub async fn add_graph_node(
 pub async fn add_graph_edge(
     State(state): State<AppState>,
     Json(req): Json<AddGraphEdgeRequest>,
-) -> Json<ApiResponse<GraphEdgeV57>> {
+) -> ApiResponse<GraphEdgeV57> {
     let edge = GraphEdgeV57 {
         source_id: req.source_id,
         target_id: req.target_id,
@@ -1214,7 +1209,7 @@ pub async fn add_graph_edge(
     };
 
     let result = db_exec!(EnhancedKnowledgeGraph::add_edge(&state.db, edge).await);
-    Json(ApiResponse::success(result, "图谱边已创建"))
+    ApiResponse::success(result, "图谱边已创建")
 }
 
 #[utoipa::path(
@@ -1233,9 +1228,9 @@ pub async fn add_graph_edge(
 pub async fn get_neighbors(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Vec<GraphNodeV57>>> {
+) -> ApiResponse<Vec<GraphNodeV57>> {
     let neighbors = db_exec!(EnhancedKnowledgeGraph::get_neighbors(&state.db, &id).await);
-    Json(ApiResponse::success(neighbors, "邻居节点列表"))
+    ApiResponse::success(neighbors, "邻居节点列表")
 }
 
 #[utoipa::path(
@@ -1254,13 +1249,10 @@ pub async fn get_neighbors(
 pub async fn get_community(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match db_exec!(EnhancedKnowledgeGraph::get_community(&state.db, &id).await) {
-        Some(community) => Json(ApiResponse::success(
-            serde_json::json!(community),
-            "社区信息",
-        )),
-        None => Json(ApiResponse::not_found("未找到社区信息")),
+        Some(community) => ApiResponse::success(serde_json::json!(community), "社区信息"),
+        None => ApiResponse::not_found("未找到社区信息"),
     }
 }
 
@@ -1278,16 +1270,16 @@ pub async fn get_community(
 pub async fn find_shortest_path_handler(
     State(state): State<AppState>,
     Json(req): Json<FindPathRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let path = db_exec!(
         EnhancedKnowledgeGraph::find_shortest_path(&state.db, &req.from_id, &req.to_id).await
     );
 
     if path.is_empty() {
-        return Json(ApiResponse::not_found("未找到可达路径"));
+        return ApiResponse::not_found("未找到可达路径");
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "path": path,
             "length": path.len() as i64,
@@ -1295,7 +1287,7 @@ pub async fn find_shortest_path_handler(
             "to_id": req.to_id,
         }),
         "最短路径",
-    ))
+    )
 }
 #[utoipa::path(
     get,
@@ -1308,7 +1300,7 @@ pub async fn find_shortest_path_handler(
 pub async fn get_subgraph(
     State(state): State<AppState>,
     Query(params): Query<SubgraphQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let node_ids: Vec<String> = params
         .node_ids
         .unwrap_or_else(String::new)
@@ -1318,12 +1310,12 @@ pub async fn get_subgraph(
         .collect();
 
     if node_ids.is_empty() {
-        return Json(ApiResponse::bad_request("请提供 node_ids 参数"));
+        return ApiResponse::bad_request("请提供 node_ids 参数");
     }
 
     let (nodes, edges) = db_exec!(EnhancedKnowledgeGraph::get_subgraph(&state.db, &node_ids).await);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "nodes": nodes,
             "edges": edges,
@@ -1331,7 +1323,7 @@ pub async fn get_subgraph(
             "edge_count": edges.len() as i64,
         }),
         "子图数据",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1346,9 +1338,9 @@ pub async fn get_subgraph(
 )]
 pub async fn detect_communities_handler(
     State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<GraphCommunity>>> {
+) -> ApiResponse<Vec<GraphCommunity>> {
     let communities = db_exec!(EnhancedKnowledgeGraph::detect_communities(&state.db).await);
-    Json(ApiResponse::success(communities, "社区检测完成"))
+    ApiResponse::success(communities, "社区检测完成")
 }
 
 // ==================== 处理器：语义搜索 ====================
@@ -1366,7 +1358,7 @@ pub async fn detect_communities_handler(
 pub async fn index_entity(
     State(state): State<AppState>,
     Json(req): Json<IndexEntityRequest>,
-) -> Json<ApiResponse<SearchIndex>> {
+) -> ApiResponse<SearchIndex> {
     let metadata = req.metadata.unwrap_or_else(|| serde_json::json!({}));
     let result = db_exec!(
         SemanticSearchEngine::index_entity(
@@ -1379,7 +1371,7 @@ pub async fn index_entity(
         .await
     );
 
-    Json(ApiResponse::success(result, "实体已索引"))
+    ApiResponse::success(result, "实体已索引")
 }
 
 #[utoipa::path(
@@ -1396,7 +1388,7 @@ pub async fn index_entity(
 pub async fn search_semantic_handler(
     State(state): State<AppState>,
     Json(req): Json<SemanticSearchRequest>,
-) -> Json<ApiResponse<Vec<SearchResult>>> {
+) -> ApiResponse<Vec<SearchResult>> {
     let top_k = req.top_k.unwrap_or(10);
     let query_embeddings = generate_simulated_embedding(&req.query, "search_query");
     let results =
@@ -1415,10 +1407,10 @@ pub async fn search_semantic_handler(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::from(TopemsError::internal("写入搜索历史失败", e)));
+        return ApiResponse::from(TopemsError::internal("写入搜索历史失败", e));
     }
 
-    Json(ApiResponse::success(results, "语义搜索结果"))
+    ApiResponse::success(results, "语义搜索结果")
 }
 
 #[utoipa::path(
@@ -1435,7 +1427,7 @@ pub async fn search_semantic_handler(
 pub async fn search_hybrid_handler(
     State(state): State<AppState>,
     Json(req): Json<HybridSearchRequest>,
-) -> Json<ApiResponse<Vec<SearchResult>>> {
+) -> ApiResponse<Vec<SearchResult>> {
     let top_k = req.top_k.unwrap_or(10);
     let results = db_exec!(SemanticSearchEngine::search_hybrid(&state.db, &req.query, top_k).await);
 
@@ -1452,10 +1444,10 @@ pub async fn search_hybrid_handler(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::from(TopemsError::internal("写入搜索历史失败", e)));
+        return ApiResponse::from(TopemsError::internal("写入搜索历史失败", e));
     }
 
-    Json(ApiResponse::success(results, "混合搜索结果"))
+    ApiResponse::success(results, "混合搜索结果")
 }
 
 #[utoipa::path(
@@ -1471,16 +1463,16 @@ pub async fn search_hybrid_handler(
 pub async fn reindex_all(
     State(state): State<AppState>,
     Json(_req): Json<ReindexRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let count = db_exec!(SemanticSearchEngine::reindex_all(&state.db).await);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "total_indexes": count,
             "status": "reindexed",
         }),
         "全量重建索引完成",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1493,11 +1485,9 @@ pub async fn reindex_all(
     ),
     tag = "semantic_v57"
 )]
-pub async fn get_search_stats(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn get_search_stats(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     let stats = db_exec!(SemanticSearchEngine::get_search_stats(&state.db).await);
-    Json(ApiResponse::success(stats, "搜索统计"))
+    ApiResponse::success(stats, "搜索统计")
 }
 
 #[utoipa::path(
@@ -1516,16 +1506,16 @@ pub async fn get_search_stats(
 pub async fn remove_from_index(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let removed = db_exec!(SemanticSearchEngine::remove_from_index(&state.db, &id).await);
 
     if removed {
-        Json(ApiResponse::success(
+        ApiResponse::success(
             serde_json::json!({"index_id": id, "removed": true}),
             "索引已删除",
-        ))
+        )
     } else {
-        Json(ApiResponse::not_found("未找到索引"))
+        ApiResponse::not_found("未找到索引")
     }
 }
 
@@ -1544,7 +1534,7 @@ pub async fn remove_from_index(
 pub async fn create_tag(
     State(state): State<AppState>,
     Json(req): Json<CreateTagRequest>,
-) -> Json<ApiResponse<Tag>> {
+) -> ApiResponse<Tag> {
     let tag = Tag {
         id: uuid::Uuid::new_v4().to_string(),
         name: req.name,
@@ -1555,7 +1545,7 @@ pub async fn create_tag(
     };
 
     let result = db_exec!(SmartTagger::create_tag(&state.db, tag).await);
-    Json(ApiResponse::success(result, "标签已创建"))
+    ApiResponse::success(result, "标签已创建")
 }
 
 #[utoipa::path(
@@ -1571,12 +1561,12 @@ pub async fn create_tag(
 pub async fn apply_tag(
     State(state): State<AppState>,
     Json(req): Json<ApplyTagRequest>,
-) -> Json<ApiResponse<TaggedEntity>> {
+) -> ApiResponse<TaggedEntity> {
     let result = db_exec!(
         SmartTagger::apply_tag(&state.db, req.entity_type, req.entity_id, req.tag_id).await
     );
 
-    Json(ApiResponse::success(result, "标签已应用"))
+    ApiResponse::success(result, "标签已应用")
 }
 
 #[utoipa::path(
@@ -1593,12 +1583,12 @@ pub async fn apply_tag(
 pub async fn auto_tag(
     State(state): State<AppState>,
     Json(req): Json<AutoTagRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let applied = db_exec!(
         SmartTagger::auto_tag(&state.db, &req.entity_type, &req.entity_id, &req.data).await
     );
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "entity_type": req.entity_type,
             "entity_id": req.entity_id,
@@ -1606,7 +1596,7 @@ pub async fn auto_tag(
             "applied_count": applied.len() as i64,
         }),
         "自动标签已应用",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1626,10 +1616,10 @@ pub async fn auto_tag(
 pub async fn get_tags_for_entity(
     State(state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
-) -> Json<ApiResponse<Vec<Tag>>> {
+) -> ApiResponse<Vec<Tag>> {
     let tags =
         db_exec!(SmartTagger::get_tags_for_entity(&state.db, &entity_type, &entity_id).await);
-    Json(ApiResponse::success(tags, "实体标签列表"))
+    ApiResponse::success(tags, "实体标签列表")
 }
 
 #[utoipa::path(
@@ -1648,9 +1638,9 @@ pub async fn get_tags_for_entity(
 pub async fn get_entities_by_tag(
     State(state): State<AppState>,
     Path(tag): Path<String>,
-) -> Json<ApiResponse<Vec<TaggedEntity>>> {
+) -> ApiResponse<Vec<TaggedEntity>> {
     let entities = db_exec!(SmartTagger::get_entities_by_tag(&state.db, &tag).await);
-    Json(ApiResponse::success(entities, "标签实体列表"))
+    ApiResponse::success(entities, "标签实体列表")
 }
 
 #[utoipa::path(
@@ -1669,13 +1659,13 @@ pub async fn get_entities_by_tag(
 pub async fn remove_tag_handler(
     State(state): State<AppState>,
     Json(req): Json<RemoveTagRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let removed = db_exec!(
         SmartTagger::remove_tag(&state.db, &req.entity_type, &req.entity_id, &req.tag_id).await
     );
 
     if removed {
-        Json(ApiResponse::success(
+        ApiResponse::success(
             serde_json::json!({
                 "entity_type": req.entity_type,
                 "entity_id": req.entity_id,
@@ -1683,9 +1673,9 @@ pub async fn remove_tag_handler(
                 "removed": true,
             }),
             "标签已移除",
-        ))
+        )
     } else {
-        Json(ApiResponse::not_found("未找到标签关系"))
+        ApiResponse::not_found("未找到标签关系")
     }
 }
 
@@ -1702,14 +1692,14 @@ pub async fn remove_tag_handler(
 pub async fn list_tags(
     State(state): State<AppState>,
     Query(params): Query<ListTagsQuery>,
-) -> Json<ApiResponse<Vec<Tag>>> {
+) -> ApiResponse<Vec<Tag>> {
     let tags = db_exec!(SmartTagger::list_tags(&state.db, params.category.as_deref()).await);
-    Json(ApiResponse::success(tags, "标签列表"))
+    ApiResponse::success(tags, "标签列表")
 }
 
-pub async fn get_tag_stats(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn get_tag_stats(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     let stats = db_exec!(SmartTagger::get_tag_stats(&state.db).await);
-    Json(ApiResponse::success(stats, "标签统计"))
+    ApiResponse::success(stats, "标签统计")
 }
 
 #[utoipa::path(
@@ -1725,10 +1715,10 @@ pub async fn get_tag_stats(State(state): State<AppState>) -> Json<ApiResponse<se
 pub async fn suggest_tags(
     State(state): State<AppState>,
     Query(params): Query<SuggestQuery>,
-) -> Json<ApiResponse<Vec<Tag>>> {
+) -> ApiResponse<Vec<Tag>> {
     let data = fetch_graph_node_properties(&state.db, &params.id).await;
     let tags = db_exec!(SmartTagger::suggest_tags(&state.db, &params.entity_type, &data).await);
-    Json(ApiResponse::success(tags, "推荐标签"))
+    ApiResponse::success(tags, "推荐标签")
 }
 
 #[utoipa::path(
@@ -1746,8 +1736,6 @@ pub async fn suggest_tags(
 pub async fn compute_embeddings(
     State(_state): State<AppState>,
     Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::not_implemented(
-        "Embedding 服务未接入：请配置 embedding_model 后由 AI 服务提供",
-    ))
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::not_implemented("Embedding 服务未接入：请配置 embedding_model 后由 AI 服务提供")
 }

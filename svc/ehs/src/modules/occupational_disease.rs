@@ -337,7 +337,7 @@ pub async fn list_hazard_factors(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<HazardFactor>>> {
+) -> ApiResponse<Vec<HazardFactor>> {
     let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
@@ -373,7 +373,7 @@ pub async fn list_hazard_factors(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list hazard factors: {}", e);
-            return Json(ApiResponse::server_error("获取危害因素列表失败"));
+            return ApiResponse::server_error("获取危害因素列表失败");
         }
     };
 
@@ -422,7 +422,7 @@ pub async fn list_hazard_factors(
         })
         .collect();
 
-    Json(ApiResponse::success(factors, "获取危害因素列表成功"))
+    ApiResponse::success(factors, "获取危害因素列表成功")
 }
 
 // gate: admin-only
@@ -439,9 +439,9 @@ pub async fn create_hazard_factor(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(_req): Json<CreateHazardFactorRequest>,
-) -> Json<ApiResponse<HazardFactor>> {
+) -> ApiResponse<HazardFactor> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
+    ApiResponse::not_implemented("职业危害数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -460,7 +460,7 @@ pub async fn get_hazard_factor(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<HazardFactor>> {
+) -> ApiResponse<HazardFactor> {
     let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
@@ -495,12 +495,12 @@ pub async fn get_hazard_factor(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to get hazard factor: {}", e);
-            return Json(ApiResponse::server_error("获取危害因素详情失败"));
+            return ApiResponse::server_error("获取危害因素详情失败");
         }
     };
     let row = match row {
         Some(r) => r,
-        None => return Json(ApiResponse::not_found("危害因素不存在")),
+        None => return ApiResponse::not_found("危害因素不存在"),
     };
 
     let sources = row
@@ -555,7 +555,7 @@ pub async fn get_hazard_factor(
         tenant_id: uuid::Uuid::nil(),
     };
 
-    Json(ApiResponse::success(factor, "获取危害因素详情成功"))
+    ApiResponse::success(factor, "获取危害因素详情成功")
 }
 
 #[utoipa::path(
@@ -576,9 +576,9 @@ pub async fn update_hazard_factor(
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
     Json(_req): Json<UpdateHazardFactorRequest>,
-) -> Json<ApiResponse<HazardFactor>> {
+) -> ApiResponse<HazardFactor> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
+    ApiResponse::not_implemented("职业危害数据源尚未启用")
 }
 
 // gate: admin-only
@@ -598,9 +598,9 @@ pub async fn delete_hazard_factor(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
+    ApiResponse::not_implemented("职业危害数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -614,9 +614,9 @@ pub async fn list_detection_records(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<DetectionRecord>>> {
+) -> ApiResponse<Vec<DetectionRecord>> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
+    ApiResponse::not_implemented("职业危害数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -632,9 +632,9 @@ pub async fn create_detection_record(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(_req): Json<CreateDetectionRecordRequest>,
-) -> Json<ApiResponse<DetectionRecord>> {
+) -> ApiResponse<DetectionRecord> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
+    ApiResponse::not_implemented("职业危害数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -653,9 +653,9 @@ pub async fn get_detection_record(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<DetectionRecord>> {
+) -> ApiResponse<DetectionRecord> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
+    ApiResponse::not_implemented("职业危害数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -674,9 +674,9 @@ pub async fn delete_detection_record(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
+    ApiResponse::not_implemented("职业危害数据源尚未启用")
 }
 
 #[derive(Debug, Deserialize)]
@@ -701,7 +701,7 @@ pub async fn list_disease_cases(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(q): Query<DiseaseCaseQuery>,
-) -> Json<ApiResponse<Vec<DiseaseCase>>> {
+) -> ApiResponse<Vec<DiseaseCase>> {
     let tenant_bind = resolve_disease_tenant(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -759,11 +759,11 @@ pub async fn list_disease_cases(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list disease cases: {}", e);
-            return Json(ApiResponse::server_error("获取职业病案例列表失败"));
+            return ApiResponse::server_error("获取职业病案例列表失败");
         }
     };
     let list: Vec<DiseaseCase> = rows.iter().map(disease_case_from_row).collect();
-    Json(ApiResponse::success(list, "获取职业病案例列表成功"))
+    ApiResponse::success(list, "获取职业病案例列表成功")
 }
 #[utoipa::path(
     post,
@@ -778,7 +778,7 @@ pub async fn create_disease_case(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateDiseaseCaseRequest>,
-) -> Json<ApiResponse<DiseaseCase>> {
+) -> ApiResponse<DiseaseCase> {
     let tenant_id = resolve_disease_tenant(&claims);
     let case_no = format!("DC-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let status = req
@@ -838,11 +838,11 @@ pub async fn create_disease_case(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create disease case: {}", e);
-            return Json(ApiResponse::server_error("职业病案例创建失败"));
+            return ApiResponse::server_error("职业病案例创建失败");
         }
     };
     let record = disease_case_from_row(&row);
-    Json(ApiResponse::success(record, "职业病案例创建成功"))
+    ApiResponse::success(record, "职业病案例创建成功")
 }
 #[utoipa::path(
     get,
@@ -860,7 +860,7 @@ pub async fn get_disease_case(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<DiseaseCase>> {
+) -> ApiResponse<DiseaseCase> {
     let tenant_bind = resolve_disease_tenant(&claims).to_string();
     let sql = r#"
         SELECT id::text AS id, case_no, employee_id, employee_name, gender, age,
@@ -882,14 +882,14 @@ pub async fn get_disease_case(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("职业病案例不存在")),
+        Ok(None) => return ApiResponse::not_found("职业病案例不存在"),
         Err(e) => {
             tracing::error!("Failed to get disease case: {}", e);
-            return Json(ApiResponse::server_error("获取职业病案例详情失败"));
+            return ApiResponse::server_error("获取职业病案例详情失败");
         }
     };
     let record = disease_case_from_row(&row);
-    Json(ApiResponse::success(record, "获取职业病案例详情成功"))
+    ApiResponse::success(record, "获取职业病案例详情成功")
 }
 #[utoipa::path(
     put,
@@ -909,7 +909,7 @@ pub async fn update_disease_case(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateDiseaseCaseRequest>,
-) -> Json<ApiResponse<DiseaseCase>> {
+) -> ApiResponse<DiseaseCase> {
     let tenant_bind = resolve_disease_tenant(&claims).to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -1013,14 +1013,14 @@ pub async fn update_disease_case(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("职业病案例不存在")),
+        Ok(None) => return ApiResponse::not_found("职业病案例不存在"),
         Err(e) => {
             tracing::error!("Failed to update disease case: {}", e);
-            return Json(ApiResponse::server_error("职业病案例更新失败"));
+            return ApiResponse::server_error("职业病案例更新失败");
         }
     };
     let record = disease_case_from_row(&row);
-    Json(ApiResponse::success(record, "职业病案例更新成功"))
+    ApiResponse::success(record, "职业病案例更新成功")
 }
 #[utoipa::path(
     delete,
@@ -1038,7 +1038,7 @@ pub async fn delete_disease_case(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_disease_tenant(&claims).to_string();
     let sql = r#"
         UPDATE ehs.qa_ehs_disease_cases
@@ -1056,13 +1056,13 @@ pub async fn delete_disease_case(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete disease case: {}", e);
-            return Json(ApiResponse::server_error("职业病案例删除失败"));
+            return ApiResponse::server_error("职业病案例删除失败");
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("职业病案例不存在"));
+        return ApiResponse::not_found("职业病案例不存在");
     }
-    Json(ApiResponse::success((), "职业病案例删除成功"))
+    ApiResponse::success((), "职业病案例删除成功")
 }
 #[utoipa::path(
     get,
@@ -1075,9 +1075,9 @@ pub async fn list_protection_measures(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<ProtectionMeasure>>> {
+) -> ApiResponse<Vec<ProtectionMeasure>> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
+    ApiResponse::not_implemented("职业危害数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -1093,9 +1093,9 @@ pub async fn create_protection_measure(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(_req): Json<CreateProtectionMeasureRequest>,
-) -> Json<ApiResponse<ProtectionMeasure>> {
+) -> ApiResponse<ProtectionMeasure> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
+    ApiResponse::not_implemented("职业危害数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -1114,9 +1114,9 @@ pub async fn get_protection_measure(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<ProtectionMeasure>> {
+) -> ApiResponse<ProtectionMeasure> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
+    ApiResponse::not_implemented("职业危害数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -1137,9 +1137,9 @@ pub async fn update_protection_measure(
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
     Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<ProtectionMeasure>> {
+) -> ApiResponse<ProtectionMeasure> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
+    ApiResponse::not_implemented("职业危害数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -1158,9 +1158,9 @@ pub async fn delete_protection_measure(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
+    ApiResponse::not_implemented("职业危害数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -1174,9 +1174,9 @@ pub async fn get_disease_statistics(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<DiseaseStatistics>> {
+) -> ApiResponse<DiseaseStatistics> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
+    ApiResponse::not_implemented("职业危害数据源尚未启用")
 }
 
 pub async fn update_detection_record(
@@ -1185,9 +1185,9 @@ pub async fn update_detection_record(
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
     Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     tracing::warn!("Occupational disease module not yet enabled");
-    Json(ApiResponse::not_implemented("职业危害数据源尚未启用"))
+    ApiResponse::not_implemented("职业危害数据源尚未启用")
 }
 
 /// 解析请求租户：超管 → nil UUID；否则取 claims.tenant_id。

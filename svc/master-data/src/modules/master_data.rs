@@ -108,7 +108,7 @@ pub async fn list_materials(
     State(state): State<AppState>,
     headers: HeaderMap,
     Query(query): Query<MaterialQuery>,
-) -> Json<ApiResponse<MaterialListResponse>> {
+) -> ApiResponse<MaterialListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -132,9 +132,9 @@ pub async fn list_materials(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询物料总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
+            return ApiResponse::from(TopemsError::Internal(
                 "查询物料总数失败".to_string(),
-            )));
+            ));
         }
     };
 
@@ -163,25 +163,23 @@ pub async fn list_materials(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询物料列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询物料列表失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询物料列表失败".to_string()));
         }
     };
 
-    Json(api_success(MaterialListResponse {
+    api_success(MaterialListResponse {
         items,
         total,
         page,
         page_size,
-    }))
+    })
 }
 
 pub async fn get_material(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Material>> {
+) -> ApiResponse<Material> {
     let locale = Locale::from_headers(&headers).as_sql();
     let sql = format!(
         r#"SELECT {} FROM master_data.materials WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
@@ -196,16 +194,12 @@ pub async fn get_material(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询物料详情失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询物料详情失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询物料详情失败".to_string()));
         }
     };
     match row {
-        Some(m) => Json(api_success(m)),
-        None => Json(ApiResponse::from(TopemsError::NotFound(
-            "物料不存在".to_string(),
-        ))),
+        Some(m) => api_success(m),
+        None => ApiResponse::from(TopemsError::NotFound("物料不存在".to_string())),
     }
 }
 
@@ -213,7 +207,7 @@ pub async fn create_material(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMaterialRequest>,
-) -> Json<ApiResponse<Material>> {
+) -> ApiResponse<Material> {
     let status = req.status.unwrap_or_else(|| "active".to_string());
     let row: Option<Material> = match sqlx::query_as(
         r#"INSERT INTO master_data.materials
@@ -238,17 +232,15 @@ pub async fn create_material(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建物料失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
+            return ApiResponse::from(TopemsError::Internal(
                 "创建物料失败".to_string(),
-            )));
+            ));
         }
     };
 
     match row {
-        Some(m) => Json(api_success(m)),
-        None => Json(ApiResponse::from(TopemsError::Internal(
-            "创建物料失败".to_string(),
-        ))),
+        Some(m) => api_success(m),
+        None => ApiResponse::from(TopemsError::Internal("创建物料失败".to_string())),
     }
 }
 
@@ -257,7 +249,7 @@ pub async fn update_material(
     headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaterialRequest>,
-) -> Json<ApiResponse<Material>> {
+) -> ApiResponse<Material> {
     let row: Option<Material> = match sqlx::query_as(
         r#"UPDATE master_data.materials SET
              material_name = COALESCE($2, material_name),
@@ -289,17 +281,15 @@ pub async fn update_material(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("更新物料失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
+            return ApiResponse::from(TopemsError::Internal(
                 "更新物料失败".to_string(),
-            )));
+            ));
         }
     };
 
     match row {
-        Some(m) => Json(api_success(m)),
-        None => Json(ApiResponse::from(TopemsError::NotFound(
-            "物料不存在".to_string(),
-        ))),
+        Some(m) => api_success(m),
+        None => ApiResponse::from(TopemsError::NotFound("物料不存在".to_string())),
     }
 }
 
@@ -307,7 +297,7 @@ pub async fn delete_material(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     match sqlx::query(
         "UPDATE master_data.materials SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
     )
@@ -318,18 +308,18 @@ pub async fn delete_material(
     {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                Json(ApiResponse::from(TopemsError::NotFound(
+                ApiResponse::from(TopemsError::NotFound(
                     "物料不存在".to_string(),
-                )))
+                ))
             } else {
-                Json(api_success("删除成功".to_string()))
+                api_success("删除成功".to_string())
             }
         }
         Err(e) => {
             tracing::error!("删除物料失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
+            ApiResponse::from(TopemsError::Internal(
                 "删除物料失败".to_string(),
-            )))
+            ))
         }
     }
 }
@@ -391,7 +381,7 @@ pub async fn list_uoms(
     State(state): State<AppState>,
     headers: HeaderMap,
     Query(query): Query<UomQuery>,
-) -> Json<ApiResponse<UomListResponse>> {
+) -> ApiResponse<UomListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -415,9 +405,9 @@ pub async fn list_uoms(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询计量单位总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
+            return ApiResponse::from(TopemsError::Internal(
                 "查询计量单位总数失败".to_string(),
-            )));
+            ));
         }
     };
 
@@ -446,25 +436,23 @@ pub async fn list_uoms(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询计量单位列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询计量单位列表失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询计量单位列表失败".to_string()));
         }
     };
 
-    Json(api_success(UomListResponse {
+    api_success(UomListResponse {
         items,
         total,
         page,
         page_size,
-    }))
+    })
 }
 
 pub async fn get_uom(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Uom>> {
+) -> ApiResponse<Uom> {
     let locale = Locale::from_headers(&headers).as_sql();
     let sql = format!(
         r#"SELECT {} FROM master_data.uoms WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
@@ -479,16 +467,12 @@ pub async fn get_uom(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询计量单位详情失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询计量单位详情失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询计量单位详情失败".to_string()));
         }
     };
     match row {
-        Some(m) => Json(api_success(m)),
-        None => Json(ApiResponse::from(TopemsError::NotFound(
-            "计量单位不存在".to_string(),
-        ))),
+        Some(m) => api_success(m),
+        None => ApiResponse::from(TopemsError::NotFound("计量单位不存在".to_string())),
     }
 }
 
@@ -496,7 +480,7 @@ pub async fn create_uom(
     State(state): State<AppState>,
     headers: HeaderMap,
     Json(req): Json<CreateUomRequest>,
-) -> Json<ApiResponse<Uom>> {
+) -> ApiResponse<Uom> {
     let status = req.status.unwrap_or_else(|| "active".to_string());
     let row: Option<Uom> = match sqlx::query_as(
         r#"INSERT INTO master_data.uoms
@@ -518,17 +502,15 @@ pub async fn create_uom(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建计量单位失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
+            return ApiResponse::from(TopemsError::Internal(
                 "创建计量单位失败".to_string(),
-            )));
+            ));
         }
     };
 
     match row {
-        Some(m) => Json(api_success(m)),
-        None => Json(ApiResponse::from(TopemsError::Internal(
-            "创建计量单位失败".to_string(),
-        ))),
+        Some(m) => api_success(m),
+        None => ApiResponse::from(TopemsError::Internal("创建计量单位失败".to_string())),
     }
 }
 
@@ -537,7 +519,7 @@ pub async fn update_uom(
     headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateUomRequest>,
-) -> Json<ApiResponse<Uom>> {
+) -> ApiResponse<Uom> {
     let row: Option<Uom> = match sqlx::query_as(
         r#"UPDATE master_data.uoms SET
              uom_name = COALESCE($2, uom_name),
@@ -565,17 +547,15 @@ pub async fn update_uom(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("更新计量单位失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
+            return ApiResponse::from(TopemsError::Internal(
                 "更新计量单位失败".to_string(),
-            )));
+            ));
         }
     };
 
     match row {
-        Some(m) => Json(api_success(m)),
-        None => Json(ApiResponse::from(TopemsError::NotFound(
-            "计量单位不存在".to_string(),
-        ))),
+        Some(m) => api_success(m),
+        None => ApiResponse::from(TopemsError::NotFound("计量单位不存在".to_string())),
     }
 }
 
@@ -583,7 +563,7 @@ pub async fn delete_uom(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     match sqlx::query(
         "UPDATE master_data.uoms SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
     )
@@ -594,18 +574,18 @@ pub async fn delete_uom(
     {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                Json(ApiResponse::from(TopemsError::NotFound(
+                ApiResponse::from(TopemsError::NotFound(
                     "计量单位不存在".to_string(),
-                )))
+                ))
             } else {
-                Json(api_success("删除成功".to_string()))
+                api_success("删除成功".to_string())
             }
         }
         Err(e) => {
             tracing::error!("删除计量单位失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
+            ApiResponse::from(TopemsError::Internal(
                 "删除计量单位失败".to_string(),
-            )))
+            ))
         }
     }
 }
@@ -667,7 +647,7 @@ pub async fn list_samples(
     State(state): State<AppState>,
     headers: HeaderMap,
     Query(query): Query<SampleQuery>,
-) -> Json<ApiResponse<SampleListResponse>> {
+) -> ApiResponse<SampleListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -691,9 +671,9 @@ pub async fn list_samples(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询样品总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
+            return ApiResponse::from(TopemsError::Internal(
                 "查询样品总数失败".to_string(),
-            )));
+            ));
         }
     };
 
@@ -722,25 +702,23 @@ pub async fn list_samples(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询样品列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询样品列表失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询样品列表失败".to_string()));
         }
     };
 
-    Json(api_success(SampleListResponse {
+    api_success(SampleListResponse {
         items,
         total,
         page,
         page_size,
-    }))
+    })
 }
 
 pub async fn get_sample(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Sample>> {
+) -> ApiResponse<Sample> {
     let locale = Locale::from_headers(&headers).as_sql();
     let sql = format!(
         r#"SELECT {} FROM master_data.samples WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
@@ -755,16 +733,12 @@ pub async fn get_sample(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询样品详情失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询样品详情失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询样品详情失败".to_string()));
         }
     };
     match row {
-        Some(m) => Json(api_success(m)),
-        None => Json(ApiResponse::from(TopemsError::NotFound(
-            "样品不存在".to_string(),
-        ))),
+        Some(m) => api_success(m),
+        None => ApiResponse::from(TopemsError::NotFound("样品不存在".to_string())),
     }
 }
 
@@ -772,7 +746,7 @@ pub async fn create_sample(
     State(state): State<AppState>,
     headers: HeaderMap,
     Json(req): Json<CreateSampleRequest>,
-) -> Json<ApiResponse<Sample>> {
+) -> ApiResponse<Sample> {
     let status = req.status.unwrap_or_else(|| "active".to_string());
     let row: Option<Sample> = match sqlx::query_as(
         r#"INSERT INTO master_data.samples
@@ -794,17 +768,15 @@ pub async fn create_sample(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建样品失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
+            return ApiResponse::from(TopemsError::Internal(
                 "创建样品失败".to_string(),
-            )));
+            ));
         }
     };
 
     match row {
-        Some(m) => Json(api_success(m)),
-        None => Json(ApiResponse::from(TopemsError::Internal(
-            "创建样品失败".to_string(),
-        ))),
+        Some(m) => api_success(m),
+        None => ApiResponse::from(TopemsError::Internal("创建样品失败".to_string())),
     }
 }
 
@@ -813,7 +785,7 @@ pub async fn update_sample(
     headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSampleRequest>,
-) -> Json<ApiResponse<Sample>> {
+) -> ApiResponse<Sample> {
     let row: Option<Sample> = match sqlx::query_as(
         r#"UPDATE master_data.samples SET
              sample_name = COALESCE($2, sample_name),
@@ -841,17 +813,15 @@ pub async fn update_sample(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("更新样品失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
+            return ApiResponse::from(TopemsError::Internal(
                 "更新样品失败".to_string(),
-            )));
+            ));
         }
     };
 
     match row {
-        Some(m) => Json(api_success(m)),
-        None => Json(ApiResponse::from(TopemsError::NotFound(
-            "样品不存在".to_string(),
-        ))),
+        Some(m) => api_success(m),
+        None => ApiResponse::from(TopemsError::NotFound("样品不存在".to_string())),
     }
 }
 
@@ -859,7 +829,7 @@ pub async fn delete_sample(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     match sqlx::query(
         "UPDATE master_data.samples SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
     )
@@ -870,18 +840,18 @@ pub async fn delete_sample(
     {
         Ok(r) => {
             if r.rows_affected() == 0 {
-                Json(ApiResponse::from(TopemsError::NotFound(
+                ApiResponse::from(TopemsError::NotFound(
                     "样品不存在".to_string(),
-                )))
+                ))
             } else {
-                Json(api_success("删除成功".to_string()))
+                api_success("删除成功".to_string())
             }
         }
         Err(e) => {
             tracing::error!("删除样品失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
+            ApiResponse::from(TopemsError::Internal(
                 "删除样品失败".to_string(),
-            )))
+            ))
         }
     }
 }

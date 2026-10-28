@@ -66,10 +66,10 @@ async fn body_of(pool: sqlx::PgPool, status: Option<String>) -> Value {
         Extension(txn_arc),
     )
     .await;
-    resp.0
+    resp
         .data
         .clone()
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message))
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message))
 }
 
 async fn insert_location(pool: &sqlx::PgPool, code: &str, status: &str) {

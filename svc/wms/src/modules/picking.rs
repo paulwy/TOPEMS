@@ -5,7 +5,7 @@
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     routing::get,
-    Json, Router,
+    Router,
 };
 use serde::Serialize;
 use serde_json::json;
@@ -48,14 +48,14 @@ pub async fn list_picking_lists(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<WavePick>>> {
+) -> ApiResponse<PaginatedResponse<WavePick>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
-        return e;
+        return e.0;
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -103,7 +103,7 @@ pub async fn list_picking_lists(
             .await
             .unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse {
                     items: picks,
                     total,
@@ -112,11 +112,9 @@ pub async fn list_picking_lists(
                     total_pages: topems_shared_core::response::total_pages_of(total, page_size),
                 },
                 "拣货单列表获取成功",
-            ))
+            )
         }
-        Err(_e) => Json(ApiResponse::from(TopemsError::Internal(
-            "获取拣货单列表失败".to_string(),
-        ))),
+        Err(_e) => ApiResponse::from(TopemsError::Internal("获取拣货单列表失败".to_string())),
     }
 }
 
@@ -142,14 +140,14 @@ pub async fn get_picking_list(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
-        return e;
+        return e.0;
     }
 
     let pick = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
@@ -186,17 +184,10 @@ pub async fn get_picking_list(
             .await
             .unwrap_or_default();
 
-            Json(ApiResponse::success(
-                json!({"pick": pick, "items": items}),
-                "拣货单详情获取成功",
-            ))
+            ApiResponse::success(json!({"pick": pick, "items": items}), "拣货单详情获取成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "拣货单不存在".to_string(),
-        ))),
-        Err(_e) => Json(ApiResponse::from(TopemsError::Internal(
-            "获取拣货单详情失败".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("拣货单不存在".to_string())),
+        Err(_e) => ApiResponse::from(TopemsError::Internal("获取拣货单详情失败".to_string())),
     }
 }
 
@@ -231,14 +222,14 @@ pub async fn picking_statistics(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PickingStats>> {
+) -> ApiResponse<PickingStats> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
-        return e;
+        return e.0;
     }
 
     let total_lists = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -304,7 +295,7 @@ pub async fn picking_statistics(
         0.0
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PickingStats {
             total_lists,
             pending,
@@ -316,7 +307,7 @@ pub async fn picking_statistics(
             overdue,
         },
         "拣货统计获取成功",
-    ))
+    )
 }
 
 // ==================== 拣货策略（静态配置） ====================
@@ -342,7 +333,7 @@ pub struct PickingStrategy {
 pub async fn picking_strategies(
     State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<PickingStrategy>>> {
+) -> ApiResponse<Vec<PickingStrategy>> {
     // 静态默认策略（无独立数据表；后续可扩展为 wms.picking_strategies 持久化）
     let strategies = vec![
         PickingStrategy {
@@ -370,5 +361,5 @@ pub async fn picking_strategies(
             enabled: true,
         },
     ];
-    Json(ApiResponse::success(strategies, "拣货策略获取成功"))
+    ApiResponse::success(strategies, "拣货策略获取成功")
 }

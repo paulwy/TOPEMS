@@ -181,15 +181,15 @@ pub async fn run_optimization(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(params): Json<OptimizeParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let _tenant_id = claims.tenant_id;
@@ -272,10 +272,10 @@ pub async fn run_optimization(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "task_id": Uuid::new_v4().to_string(),
             "suggestions_count": suggestion_count,
@@ -287,7 +287,7 @@ pub async fn run_optimization(
         } else {
             "success"
         },
-    ))
+    )
 }
 
 /// 建议列表
@@ -305,15 +305,15 @@ pub async fn list_suggestions(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -343,7 +343,7 @@ pub async fn list_suggestions(
     .await
     {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询建议失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询建议失败", e)),
     };
 
     let total_row = match sqlx::query!(
@@ -360,7 +360,7 @@ pub async fn list_suggestions(
     .await
     {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("统计建议失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("统计建议失败", e)),
     };
 
     let suggestions: Vec<SlottingSuggestion> = items
@@ -384,13 +384,13 @@ pub async fn list_suggestions(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "items": suggestions,
             "total": total_row.total,
         }),
         "success",
-    ))
+    )
 }
 
 /// 建议详情
@@ -408,15 +408,15 @@ pub async fn get_suggestion(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let row = match sqlx::query!(
@@ -434,11 +434,11 @@ pub async fn get_suggestion(
     .await
     {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询建议失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询建议失败", e)),
     };
 
     match row {
-        Some(r) => Json(ApiResponse::success(
+        Some(r) => ApiResponse::success(
             serde_json::to_value(SlottingSuggestion {
                 id: r.id,
                 tenant_id: r.tenant_id,
@@ -458,10 +458,8 @@ pub async fn get_suggestion(
             })
             .unwrap_or(serde_json::Value::Null),
             "success",
-        )),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "建议不存在".to_string(),
-        ))),
+        ),
+        None => ApiResponse::from(TopemsError::ResourceNotFound("建议不存在".to_string())),
     }
 }
 
@@ -480,15 +478,15 @@ pub async fn apply_suggestion(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let row = match sqlx::query!(
@@ -504,7 +502,7 @@ pub async fn apply_suggestion(
     .await
     {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("应用建议失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("应用建议失败", e)),
     };
 
     match row {
@@ -513,19 +511,19 @@ pub async fn apply_suggestion(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "id": r.id, "status": r.status }),
                 "success",
-            ))
+            )
         }
 
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        None => ApiResponse::from(TopemsError::ResourceNotFound(
             "建议不存在或已处理".to_string(),
-        ))),
+        )),
     }
 }
 
@@ -544,15 +542,15 @@ pub async fn reject_suggestion(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let row = match sqlx::query!(
@@ -568,7 +566,7 @@ pub async fn reject_suggestion(
     .await
     {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("拒绝建议失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("拒绝建议失败", e)),
     };
 
     match row {
@@ -577,19 +575,19 @@ pub async fn reject_suggestion(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "id": r.id, "status": r.status }),
                 "success",
-            ))
+            )
         }
 
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        None => ApiResponse::from(TopemsError::ResourceNotFound(
             "建议不存在或已处理".to_string(),
-        ))),
+        )),
     }
 }
 
@@ -609,15 +607,15 @@ pub async fn list_zones(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let locale = Locale::from_headers(&headers).as_sql();
@@ -637,7 +635,7 @@ pub async fn list_zones(
     .await
     {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询分区失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询分区失败", e)),
     };
 
     let zones: Vec<SlottingZone> = rows
@@ -654,10 +652,10 @@ pub async fn list_zones(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::to_value(zones).unwrap_or(serde_json::Value::Null),
         "success",
-    ))
+    )
 }
 
 /// 创建分区
@@ -675,15 +673,15 @@ pub async fn create_zone(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(payload): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let warehouse_id: Uuid = match payload
@@ -693,9 +691,9 @@ pub async fn create_zone(
     {
         Some(v) => v,
         None => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "warehouse_id 必填".to_string(),
-            )))
+            ))
         }
     };
     let name = payload
@@ -739,16 +737,16 @@ pub async fn create_zone(
     .await
     {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("创建分区失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("创建分区失败", e)),
     };
 
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::to_value(SlottingZone {
             id: row.id,
             tenant_id: row.tenant_id,
@@ -761,7 +759,7 @@ pub async fn create_zone(
         })
         .unwrap_or(serde_json::Value::Null),
         "success",
-    ))
+    )
 }
 
 /// 规则列表
@@ -779,15 +777,15 @@ pub async fn list_rules(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let rows = match sqlx::query!(
@@ -802,7 +800,7 @@ pub async fn list_rules(
     .fetch_all(&mut **txn)
     .await {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询规则失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询规则失败", e)),
     };
 
     let rules: Vec<SlottingRule> = rows
@@ -820,10 +818,10 @@ pub async fn list_rules(
         })
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::to_value(rules).unwrap_or(serde_json::Value::Null),
         "success",
-    ))
+    )
 }
 
 /// 创建规则
@@ -842,15 +840,15 @@ pub async fn create_rule(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(payload): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let warehouse_id: Uuid = match payload
@@ -860,9 +858,9 @@ pub async fn create_rule(
     {
         Some(v) => v,
         None => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "warehouse_id 必填".to_string(),
-            )))
+            ))
         }
     };
     let rule_type = payload
@@ -905,16 +903,16 @@ pub async fn create_rule(
     .fetch_one(&mut **txn)
     .await {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("创建规则失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("创建规则失败", e)),
     };
 
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::to_value(SlottingRule {
             id: row.id,
             tenant_id: row.tenant_id,
@@ -928,7 +926,7 @@ pub async fn create_rule(
         })
         .unwrap_or(serde_json::Value::Null),
         "success",
-    ))
+    )
 }
 
 /// 影响分析：从建议聚合出优化前后距离、分数与影响面
@@ -947,15 +945,15 @@ pub async fn get_impact_analysis(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let agg = match sqlx::query!(
@@ -973,7 +971,7 @@ pub async fn get_impact_analysis(
     .await
     {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("分析失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("分析失败", e)),
     };
 
     let total_improvement = agg.total_improvement.unwrap_or(0.0);
@@ -992,8 +990,8 @@ pub async fn get_impact_analysis(
         implementation_cost_estimate: (agg.total_suggestions.unwrap_or(0) as f64 * 50.0),
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::to_value(result).unwrap_or(serde_json::Value::Null),
         "success",
-    ))
+    )
 }

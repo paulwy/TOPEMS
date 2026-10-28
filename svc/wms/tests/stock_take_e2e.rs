@@ -75,10 +75,10 @@ async fn body_of(pool: sqlx::PgPool, params: StockTakePaginationParams) -> Value
         Extension(txn_arc),
     )
     .await;
-    resp.0
+    resp
         .data
         .clone()
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message))
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message))
 }
 
 #[sqlx::test(migrations = false)]

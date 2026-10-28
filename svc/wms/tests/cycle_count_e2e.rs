@@ -64,10 +64,10 @@ async fn body_of(pool: sqlx::PgPool, is_active: Option<bool>) -> Value {
         Extension(txn_arc),
     )
     .await;
-    resp.0
+    resp
         .data
         .clone()
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message))
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message))
 }
 
 async fn insert_config(pool: &sqlx::PgPool, material_category: &str, is_active: bool) {

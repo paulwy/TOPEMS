@@ -94,11 +94,11 @@ pub async fn list_projects(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -156,7 +156,7 @@ pub async fn list_projects(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "projects": projects,
                     "total": total,
@@ -164,11 +164,11 @@ pub async fn list_projects(
                     "page_size": page_size
                 }),
                 "获取项目列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取项目列表失败: {}", e);
-            Json(ApiResponse::server_error("获取项目列表失败"))
+            ApiResponse::server_error("获取项目列表失败")
         }
     }
 }
@@ -195,11 +195,11 @@ pub async fn create_project(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateProjectRequest>,
-) -> Json<ApiResponse<Project>> {
+) -> ApiResponse<Project> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_id = claims
         .tenant_id
@@ -260,7 +260,7 @@ pub async fn create_project(
                 Ok(_) => {}
                 Err(e) => {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
         }
@@ -268,7 +268,7 @@ pub async fn create_project(
 
     let (response, status_str, error_msg, project_id) = match &result {
         Ok(project) => (
-            Json(ApiResponse::success(project.clone(), "项目创建成功")),
+            ApiResponse::success(project.clone(), "项目创建成功"),
             "success",
             None,
             Some(project.id),
@@ -276,7 +276,7 @@ pub async fn create_project(
         Err(e) => {
             tracing::error!("创建项目失败: {}", e);
             (
-                Json(ApiResponse::server_error("项目创建失败")),
+                ApiResponse::server_error("项目创建失败"),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -371,11 +371,11 @@ pub async fn get_project(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Project>> {
+) -> ApiResponse<Project> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -394,7 +394,7 @@ pub async fn get_project(
     let cache_key = format!("project:{}:{}", id, locale);
 
     if let Some(cached) = cache_get(&cache_key).await {
-        return Json(ApiResponse::success(cached, "获取项目成功"));
+        return ApiResponse::success(cached, "获取项目成功");
     }
 
     let result = sqlx::query_as::<_, Project>(
@@ -417,12 +417,12 @@ pub async fn get_project(
     match result {
         Ok(Some(project)) => {
             cache_set(&cache_key, project.clone(), Duration::from_secs(300)).await;
-            Json(ApiResponse::success(project, "获取项目成功"))
+            ApiResponse::success(project, "获取项目成功")
         }
-        Ok(None) => Json(ApiResponse::not_found("项目不存在")),
+        Ok(None) => ApiResponse::not_found("项目不存在"),
         Err(e) => {
             tracing::error!("获取项目失败: {}", e);
-            Json(ApiResponse::server_error("获取项目失败"))
+            ApiResponse::server_error("获取项目失败")
         }
     }
 }
@@ -454,11 +454,11 @@ pub async fn update_project(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateProjectRequest>,
-) -> Json<ApiResponse<Project>> {
+) -> ApiResponse<Project> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -487,13 +487,13 @@ pub async fn update_project(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            return Json(ApiResponse::not_found("项目不存在"));
+            return ApiResponse::not_found("项目不存在");
         }
 
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询项目失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询项目失败", e)),
     };
 
     let name = req.name.clone().unwrap_or(existing.name);
@@ -537,11 +537,11 @@ pub async fn update_project(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(project.clone(), "项目更新成功")),
+                ApiResponse::success(project.clone(), "项目更新成功"),
                 "success",
                 None,
             )
@@ -549,7 +549,7 @@ pub async fn update_project(
         Err(e) => {
             tracing::error!("更新项目失败: {}", e);
             (
-                Json(ApiResponse::server_error("项目更新失败")),
+                ApiResponse::server_error("项目更新失败"),
                 "error",
                 Some(e.to_string()),
             )
@@ -609,11 +609,11 @@ pub async fn delete_project(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -637,7 +637,7 @@ pub async fn delete_project(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "项目删除成功")),
+            ApiResponse::success("".to_string(), "项目删除成功"),
             "success",
             None,
         ),
@@ -645,11 +645,11 @@ pub async fn delete_project(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::not_found("项目不存在")),
+                ApiResponse::not_found("项目不存在"),
                 "error",
                 Some("项目不存在".to_string()),
             )
@@ -657,7 +657,7 @@ pub async fn delete_project(
         Err(e) => {
             tracing::error!("删除项目失败: {}", e);
             (
-                Json(ApiResponse::server_error("项目删除失败")),
+                ApiResponse::server_error("项目删除失败"),
                 "error",
                 Some(e.to_string()),
             )
@@ -713,11 +713,11 @@ pub async fn batch_create_projects(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<BatchCreateRequest>,
-) -> Json<ApiResponse<BatchOperationResult>> {
+) -> ApiResponse<BatchOperationResult> {
     let mut guard = txn_arc.lock().await;
     let _txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_id = claims
         .tenant_id
@@ -731,7 +731,7 @@ pub async fn batch_create_projects(
     let mut tx = match state.db.begin().await {
         Ok(tx) => tx,
         Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal("开启事务失败", e)));
+            return ApiResponse::from(TopemsError::internal("开启事务失败", e));
         }
     };
 
@@ -793,21 +793,21 @@ pub async fn batch_create_projects(
                     failed: total,
                     errors,
                 };
-                return Json(ApiResponse::success(result, "批量创建失败，已回滚"));
+                return ApiResponse::success(result, "批量创建失败，已回滚");
             }
         }
     }
 
     // 提交事务
     if let Err(e) = tx.commit().await {
-        return Json(ApiResponse::from(TopemsError::internal("提交事务失败", e)));
+        return ApiResponse::from(TopemsError::internal("提交事务失败", e));
     }
 
     let total = req.projects.len();
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
@@ -846,9 +846,9 @@ pub async fn batch_create_projects(
     .await;
 
     if success == total {
-        Json(ApiResponse::success(result, "批量创建项目成功"))
+        ApiResponse::success(result, "批量创建项目成功")
     } else {
-        Json(ApiResponse::success(result, "部分项目创建成功"))
+        ApiResponse::success(result, "部分项目创建成功")
     }
 }
 
@@ -875,11 +875,11 @@ pub async fn batch_delete_projects(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<BatchDeleteRequest>,
-) -> Json<ApiResponse<BatchOperationResult>> {
+) -> ApiResponse<BatchOperationResult> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -890,7 +890,7 @@ pub async fn batch_delete_projects(
             .and_then(|t| Uuid::parse_str(t).ok())
     };
     if req.ids.is_empty() {
-        return Json(ApiResponse::bad_request("未提供要删除的项目 ID"));
+        return ApiResponse::bad_request("未提供要删除的项目 ID");
     }
 
     let result = sqlx::query(
@@ -906,7 +906,7 @@ pub async fn batch_delete_projects(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
             let affected = r.rows_affected() as usize;
@@ -949,7 +949,7 @@ pub async fn batch_delete_projects(
             )
             .await;
 
-            Json(ApiResponse::success(result, "批量删除操作完成"))
+            ApiResponse::success(result, "批量删除操作完成")
         }
         Err(e) => {
             tracing::error!("批量删除项目失败: {}", e);
@@ -970,7 +970,7 @@ pub async fn batch_delete_projects(
             )
             .await;
 
-            Json(ApiResponse::server_error("批量删除失败"))
+            ApiResponse::server_error("批量删除失败")
         }
     }
 }
@@ -1002,9 +1002,7 @@ pub async fn export_projects(
         None => {
             return (
                 [(header::CONTENT_TYPE, "application/json")],
-                Json(ApiResponse::<&str>::server_error(
-                    "rls transaction unavailable",
-                )),
+                ApiResponse::<&str>::server_error("rls transaction unavailable"),
             )
                 .into_response()
         }
@@ -1075,7 +1073,7 @@ pub async fn export_projects(
 
                 return (
                     [(header::CONTENT_TYPE, "application/json")],
-                    Json(ApiResponse::<&str>::server_error("导出失败")),
+                    ApiResponse::<&str>::server_error("导出失败"),
                 )
                     .into_response();
             }
@@ -1121,7 +1119,7 @@ pub async fn export_projects(
 
                     return (
                         [(header::CONTENT_TYPE, "application/json")],
-                        Json(ApiResponse::<&str>::server_error("导出失败")),
+                        ApiResponse::<&str>::server_error("导出失败"),
                     )
                         .into_response();
                 }
@@ -1180,7 +1178,7 @@ pub async fn export_projects(
 
                     (
                         [(header::CONTENT_TYPE, "application/json")],
-                        Json(ApiResponse::<&str>::server_error("导出失败")),
+                        ApiResponse::<&str>::server_error("导出失败"),
                     )
                         .into_response()
                 }
@@ -1207,7 +1205,7 @@ pub async fn export_projects(
 
             (
                 [(header::CONTENT_TYPE, "application/json")],
-                Json(ApiResponse::<&str>::server_error("导出失败")),
+                ApiResponse::<&str>::server_error("导出失败"),
             )
                 .into_response()
         }
@@ -1236,11 +1234,11 @@ pub async fn import_projects(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     bytes: Bytes,
-) -> Json<ApiResponse<BatchOperationResult>> {
+) -> ApiResponse<BatchOperationResult> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_id = claims
         .tenant_id
@@ -1270,7 +1268,7 @@ pub async fn import_projects(
             )
             .await;
 
-            return Json(ApiResponse::bad_request("CSV 格式错误"));
+            return ApiResponse::bad_request("CSV 格式错误");
         }
     };
 
@@ -1419,14 +1417,14 @@ pub async fn import_projects(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
 
     if success == total {
-        Json(ApiResponse::success(result, "导入完成"))
+        ApiResponse::success(result, "导入完成")
     } else {
-        Json(ApiResponse::success(result, "部分导入成功"))
+        ApiResponse::success(result, "部分导入成功")
     }
 }
 
@@ -1470,11 +1468,11 @@ pub async fn get_project_dashboard(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ProjectDashboardResponse>> {
+) -> ApiResponse<ProjectDashboardResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -1500,10 +1498,10 @@ pub async fn get_project_dashboard(
 
     let project = match project_result {
         Ok(Some(p)) => p,
-        Ok(None) => return Json(ApiResponse::not_found("项目不存在")),
+        Ok(None) => return ApiResponse::not_found("项目不存在"),
         Err(e) => {
             tracing::error!("获取项目失败: {}", e);
-            return Json(ApiResponse::server_error("获取项目失败"));
+            return ApiResponse::server_error("获取项目失败");
         }
     };
 
@@ -1613,7 +1611,7 @@ pub async fn get_project_dashboard(
         risks,
     };
 
-    Json(ApiResponse::success(response, "获取项目仪表盘成功"))
+    ApiResponse::success(response, "获取项目仪表盘成功")
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -1676,11 +1674,11 @@ pub async fn get_project_gantt(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ProjectGanttResponse>> {
+) -> ApiResponse<ProjectGanttResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -1707,7 +1705,7 @@ pub async fn get_project_gantt(
         Ok(p) => p,
         Err(e) => {
             tracing::error!("获取项目阶段失败: {}", e);
-            return Json(ApiResponse::server_error("获取项目阶段失败"));
+            return ApiResponse::server_error("获取项目阶段失败");
         }
     };
 
@@ -1741,7 +1739,7 @@ pub async fn get_project_gantt(
         Ok(m) => m,
         Err(e) => {
             tracing::error!("获取项目里程碑失败: {}", e);
-            return Json(ApiResponse::server_error("获取项目里程碑失败"));
+            return ApiResponse::server_error("获取项目里程碑失败");
         }
     };
 
@@ -1780,5 +1778,5 @@ pub async fn get_project_gantt(
         resources: gantt_resources,
     };
 
-    Json(ApiResponse::success(response, "获取甘特图数据成功"))
+    ApiResponse::success(response, "获取甘特图数据成功")
 }

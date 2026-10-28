@@ -63,15 +63,15 @@ pub async fn list_customer_scores(
     Extension(claims): Extension<Claims>,
     Query(params): Query<CustomerScoringQueryParams>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -128,7 +128,7 @@ pub async fn list_customer_scores(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": scores,
                     "total": total,
@@ -136,13 +136,11 @@ pub async fn list_customer_scores(
                     "page_size": page_size
                 }),
                 "获取客户评分列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取客户评分列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取客户评分列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取客户评分列表失败".to_string()))
         }
     }
 }
@@ -168,15 +166,15 @@ pub async fn get_customer_score(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<CustomerScore>> {
+) -> ApiResponse<CustomerScore> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -202,15 +200,11 @@ pub async fn get_customer_score(
     .await;
 
     match result {
-        Ok(Some(score)) => Json(ApiResponse::success(score, "获取客户评分成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "客户评分不存在".to_string(),
-        ))),
+        Ok(Some(score)) => ApiResponse::success(score, "获取客户评分成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("客户评分不存在".to_string())),
         Err(e) => {
             tracing::error!("获取客户评分失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取客户评分失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取客户评分失败".to_string()))
         }
     }
 }
@@ -223,15 +217,15 @@ async fn create_customer_score(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateCustomerScoreRequest>,
-) -> Json<ApiResponse<CustomerScore>> {
+) -> ApiResponse<CustomerScore> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -258,11 +252,9 @@ async fn create_customer_score(
     let customer_name = match customer {
         Ok(Some(name)) => name,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "客户不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("客户不存在".to_string()))
         }
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询客户失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询客户失败", e)),
     };
 
     let id = Uuid::new_v4();
@@ -312,16 +304,14 @@ async fn create_customer_score(
 
     let (response, status_str, error_msg) = match &result {
         Ok(score) => (
-            Json(ApiResponse::success(score.clone(), "客户评分创建成功")),
+            ApiResponse::success(score.clone(), "客户评分创建成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("创建客户评分失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "客户评分创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("客户评分创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -330,9 +320,7 @@ async fn create_customer_score(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
 
@@ -373,15 +361,15 @@ async fn update_customer_score(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateCustomerScoreRequest>,
-) -> Json<ApiResponse<CustomerScore>> {
+) -> ApiResponse<CustomerScore> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -408,16 +396,9 @@ async fn update_customer_score(
     let existing = match existing {
         Ok(Some(c)) => c,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "客户评分不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("客户评分不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询客户评分失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询客户评分失败", e)),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -446,16 +427,14 @@ async fn update_customer_score(
 
     let (response, status_str, error_msg) = match &result {
         Ok(score) => (
-            Json(ApiResponse::success(score.clone(), "客户评分更新成功")),
+            ApiResponse::success(score.clone(), "客户评分更新成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("更新客户评分失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "客户评分更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("客户评分更新失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -464,9 +443,7 @@ async fn update_customer_score(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
 
@@ -505,15 +482,15 @@ async fn delete_customer_score(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -537,23 +514,19 @@ async fn delete_customer_score(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "客户评分删除成功")),
+            ApiResponse::success("".to_string(), "客户评分删除成功"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "客户评分不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("客户评分不存在".to_string())),
             "error".to_string(),
             Some("客户评分不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除客户评分失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "客户评分删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("客户评分删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -562,9 +535,7 @@ async fn delete_customer_score(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
 
@@ -613,21 +584,21 @@ pub async fn batch_calculate(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<BatchCalculateRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     if req.customer_ids.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "请选择要计算评分的客户".to_string(),
-        )));
+        ));
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -761,15 +732,13 @@ pub async fn batch_calculate(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "scores": results, "count": results.len() }),
         &format!("成功计算 {} 个客户评分", results.len()),
-    ))
+    )
 }
 
 #[cfg(test)]

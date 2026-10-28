@@ -73,15 +73,15 @@ pub async fn list_categories(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -157,7 +157,7 @@ pub async fn list_categories(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "categories": categories,
                     "total": total,
@@ -165,13 +165,11 @@ pub async fn list_categories(
                     "page_size": page_size
                 }),
                 "获取供应商分类列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取供应商分类列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取供应商分类列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取供应商分类列表失败")
         }
     }
 }
@@ -184,15 +182,15 @@ pub async fn create_category(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateSupplierCategoryRequest>,
-) -> Json<ApiResponse<SupplierCategory>> {
+) -> ApiResponse<SupplierCategory> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -207,15 +205,11 @@ pub async fn create_category(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.category_no.is_empty() || req.name.is_empty() {
-        return Json(ApiResponse::<SupplierCategory>::bad_request(
-            "分类编号和名称不能为空",
-        ));
+        return ApiResponse::<SupplierCategory>::bad_request("分类编号和名称不能为空");
     }
 
     if req.level < 1 || req.level > 5 {
-        return Json(ApiResponse::<SupplierCategory>::bad_request(
-            "分类层级必须在1-5之间",
-        ));
+        return ApiResponse::<SupplierCategory>::bad_request("分类层级必须在1-5之间");
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
@@ -227,18 +221,14 @@ pub async fn create_category(
     .await;
 
     if existing.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<SupplierCategory>::bad_request(
-            "分类编号已存在",
-        ));
+        return ApiResponse::<SupplierCategory>::bad_request("分类编号已存在");
     }
 
     if let Some(parent_id_str) = &req.parent_id {
         let parent_uuid = match Uuid::parse_str(parent_id_str) {
             Ok(uuid) => uuid,
             Err(_) => {
-                return Json(ApiResponse::<SupplierCategory>::bad_request(
-                    "父分类ID格式错误",
-                ));
+                return ApiResponse::<SupplierCategory>::bad_request("父分类ID格式错误");
             }
         };
 
@@ -251,9 +241,7 @@ pub async fn create_category(
         .await;
 
         if parent_exists.unwrap_or(0) == 0 {
-            return Json(ApiResponse::<SupplierCategory>::bad_request(
-                "父分类不存在或已禁用",
-            ));
+            return ApiResponse::<SupplierCategory>::bad_request("父分类不存在或已禁用");
         }
     }
 
@@ -288,16 +276,14 @@ pub async fn create_category(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(category, "供应商分类创建成功"))
+            ApiResponse::success(category, "供应商分类创建成功")
         }
         Err(e) => {
             tracing::error!("创建供应商分类失败: {}", e);
-            Json(ApiResponse::<SupplierCategory>::server_error(
-                "供应商分类创建失败",
-            ))
+            ApiResponse::<SupplierCategory>::server_error("供应商分类创建失败")
         }
     }
 }
@@ -323,15 +309,15 @@ pub async fn get_category(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<SupplierCategory>> {
+) -> ApiResponse<SupplierCategory> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -363,15 +349,11 @@ pub async fn get_category(
     .await;
 
     match result {
-        Ok(Some(category)) => Json(ApiResponse::success(category, "获取供应商分类成功")),
-        Ok(None) => Json(ApiResponse::<SupplierCategory>::not_found(
-            "供应商分类不存在",
-        )),
+        Ok(Some(category)) => ApiResponse::success(category, "获取供应商分类成功"),
+        Ok(None) => ApiResponse::<SupplierCategory>::not_found("供应商分类不存在"),
         Err(e) => {
             tracing::error!("获取供应商分类失败: {}", e);
-            Json(ApiResponse::<SupplierCategory>::server_error(
-                "获取供应商分类失败",
-            ))
+            ApiResponse::<SupplierCategory>::server_error("获取供应商分类失败")
         }
     }
 }
@@ -385,15 +367,15 @@ pub async fn update_category(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateSupplierCategoryRequest>,
-) -> Json<ApiResponse<SupplierCategory>> {
+) -> ApiResponse<SupplierCategory> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -417,23 +399,18 @@ pub async fn update_category(
 
     let existing = match existing {
         Ok(Some(c)) => c,
-        Ok(None) => {
-            return Json(ApiResponse::<SupplierCategory>::not_found(
-                "供应商分类不存在",
-            ))
-        }
+        Ok(None) => return ApiResponse::<SupplierCategory>::not_found("供应商分类不存在"),
         Err(e) => {
-            return Json(ApiResponse::<SupplierCategory>::from(
-                TopemsError::internal("查询供应商分类失败", e),
+            return ApiResponse::<SupplierCategory>::from(TopemsError::internal(
+                "查询供应商分类失败",
+                e,
             ))
         }
     };
 
     if let Some(level) = req.level {
         if !(1..=5).contains(&level) {
-            return Json(ApiResponse::<SupplierCategory>::bad_request(
-                "分类层级必须在1-5之间",
-            ));
+            return ApiResponse::<SupplierCategory>::bad_request("分类层级必须在1-5之间");
         }
     }
 
@@ -441,16 +418,12 @@ pub async fn update_category(
         let parent_uuid = match Uuid::parse_str(parent_id_str) {
             Ok(uuid) => uuid,
             Err(_) => {
-                return Json(ApiResponse::<SupplierCategory>::bad_request(
-                    "父分类ID格式错误",
-                ));
+                return ApiResponse::<SupplierCategory>::bad_request("父分类ID格式错误");
             }
         };
 
         if parent_uuid == id {
-            return Json(ApiResponse::<SupplierCategory>::bad_request(
-                "不能将自己设为父分类",
-            ));
+            return ApiResponse::<SupplierCategory>::bad_request("不能将自己设为父分类");
         }
 
         let parent_exists = sqlx::query_scalar::<_, i64>(
@@ -462,9 +435,7 @@ pub async fn update_category(
         .await;
 
         if parent_exists.unwrap_or(0) == 0 {
-            return Json(ApiResponse::<SupplierCategory>::bad_request(
-                "父分类不存在或已禁用",
-            ));
+            return ApiResponse::<SupplierCategory>::bad_request("父分类不存在或已禁用");
         }
     }
 
@@ -504,16 +475,14 @@ pub async fn update_category(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(category, "供应商分类更新成功"))
+            ApiResponse::success(category, "供应商分类更新成功")
         }
         Err(e) => {
             tracing::error!("更新供应商分类失败: {}", e);
-            Json(ApiResponse::<SupplierCategory>::server_error(
-                "供应商分类更新失败",
-            ))
+            ApiResponse::<SupplierCategory>::server_error("供应商分类更新失败")
         }
     }
 }
@@ -526,15 +495,15 @@ pub async fn delete_category(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -557,9 +526,7 @@ pub async fn delete_category(
     .await;
 
     if child_count.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<String>::bad_request(
-            "该分类下存在子分类，无法删除",
-        ));
+        return ApiResponse::<String>::bad_request("该分类下存在子分类，无法删除");
     }
 
     let supplier_count = sqlx::query_scalar::<_, i64>(
@@ -571,9 +538,7 @@ pub async fn delete_category(
     .await;
 
     if supplier_count.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<String>::bad_request(
-            "该分类下存在供应商，无法删除",
-        ));
+        return ApiResponse::<String>::bad_request("该分类下存在供应商，无法删除");
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -591,15 +556,15 @@ pub async fn delete_category(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success("".to_string(), "供应商分类删除成功"))
+            ApiResponse::success("".to_string(), "供应商分类删除成功")
         }
-        Ok(_) => Json(ApiResponse::<String>::not_found("供应商分类不存在")),
+        Ok(_) => ApiResponse::<String>::not_found("供应商分类不存在"),
         Err(e) => {
             tracing::error!("删除供应商分类失败: {}", e);
-            Json(ApiResponse::<String>::server_error("供应商分类删除失败"))
+            ApiResponse::<String>::server_error("供应商分类删除失败")
         }
     }
 }

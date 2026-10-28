@@ -78,13 +78,11 @@ pub fn create_routes(pool: PgPool) -> Router {
     ),
     tag = "contract"
 )]
-async fn list_contracts(
-    Extension(txn_arc): Extension<RlsTxnArc>,
-) -> Json<ApiResponse<Vec<Contract>>> {
+async fn list_contracts(Extension(txn_arc): Extension<RlsTxnArc>) -> ApiResponse<Vec<Contract>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let contracts =
         sqlx::query_as::<_, Contract>(only_own_schema_query!("pm", "SELECT id, project_id, contract_no, contract_name, contract_type, party_a, party_b, amount, currency, sign_date, start_date, end_date, status, tax_rate, description, created_by, created_at, updated_at FROM pm.contracts ORDER BY created_at DESC"))
@@ -92,10 +90,10 @@ async fn list_contracts(
             .await;
 
     match contracts {
-        Ok(c) => Json(ApiResponse::success(c, "获取合同列表成功")),
+        Ok(c) => ApiResponse::success(c, "获取合同列表成功"),
         Err(e) => {
             tracing::error!("获取合同列表失败: {}", e);
-            Json(ApiResponse::server_error("获取合同列表失败"))
+            ApiResponse::server_error("获取合同列表失败")
         }
     }
 }
@@ -116,11 +114,11 @@ async fn list_contracts(
 async fn get_contract(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Contract>> {
+) -> ApiResponse<Contract> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let contract = sqlx::query_as::<_, Contract>(only_own_schema_query!("pm", "SELECT id, project_id, contract_no, contract_name, contract_type, party_a, party_b, amount, currency, sign_date, start_date, end_date, status, tax_rate, description, created_by, created_at, updated_at FROM pm.contracts WHERE id = $1"))
         .bind(id)
@@ -128,11 +126,11 @@ async fn get_contract(
         .await;
 
     match contract {
-        Ok(c) => Json(ApiResponse::success(c, "获取合同详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("合同不存在")),
+        Ok(c) => ApiResponse::success(c, "获取合同详情成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("合同不存在"),
         Err(e) => {
             tracing::error!("获取合同失败: {}", e);
-            Json(ApiResponse::server_error("获取合同失败"))
+            ApiResponse::server_error("获取合同失败")
         }
     }
 }
@@ -144,11 +142,11 @@ async fn create_contract(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateContractRequest>,
-) -> Json<ApiResponse<Contract>> {
+) -> ApiResponse<Contract> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -200,7 +198,7 @@ async fn create_contract(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::success(c, "创建合同成功"))
+            ApiResponse::success(c, "创建合同成功")
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -217,7 +215,7 @@ async fn create_contract(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("创建合同失败: {}", e);
-            Json(ApiResponse::server_error("创建合同失败"))
+            ApiResponse::server_error("创建合同失败")
         }
     }
 }
@@ -228,11 +226,11 @@ async fn update_contract(
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
     Json(req): Json<UpdateContractRequest>,
-) -> Json<ApiResponse<Contract>> {
+) -> ApiResponse<Contract> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"status": req.status, "amount": req.amount}));
@@ -283,7 +281,7 @@ async fn update_contract(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::success(c, "更新合同成功"))
+            ApiResponse::success(c, "更新合同成功")
         }
         Err(sqlx::Error::RowNotFound) => {
             if let Err(e) = audit
@@ -299,7 +297,7 @@ async fn update_contract(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found("合同不存在"))
+            ApiResponse::not_found("合同不存在")
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -316,7 +314,7 @@ async fn update_contract(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("更新合同失败: {}", e);
-            Json(ApiResponse::server_error("更新合同失败"))
+            ApiResponse::server_error("更新合同失败")
         }
     }
 }
@@ -326,11 +324,11 @@ async fn delete_contract(
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let result = sqlx::query(only_own_schema_query!(
@@ -349,7 +347,7 @@ async fn delete_contract(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::success((), "删除合同成功"))
+            ApiResponse::success((), "删除合同成功")
         }
         Ok(_) => {
             if let Err(e) = audit
@@ -365,7 +363,7 @@ async fn delete_contract(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found("合同不存在"))
+            ApiResponse::not_found("合同不存在")
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -382,7 +380,7 @@ async fn delete_contract(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("删除合同失败: {}", e);
-            Json(ApiResponse::server_error("删除合同失败"))
+            ApiResponse::server_error("删除合同失败")
         }
     }
 }
@@ -405,11 +403,11 @@ async fn submit_contract(
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Contract>> {
+) -> ApiResponse<Contract> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let contract = sqlx::query_as::<_, Contract>(only_own_schema_query!(
@@ -436,7 +434,7 @@ async fn submit_contract(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::success(c, "提交审批成功"))
+            ApiResponse::success(c, "提交审批成功")
         }
         Err(sqlx::Error::RowNotFound) => {
             if let Err(e) = audit
@@ -452,7 +450,7 @@ async fn submit_contract(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found("合同不存在"))
+            ApiResponse::not_found("合同不存在")
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -469,7 +467,7 @@ async fn submit_contract(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("提交审批失败: {}", e);
-            Json(ApiResponse::server_error("提交审批失败"))
+            ApiResponse::server_error("提交审批失败")
         }
     }
 }
@@ -492,11 +490,11 @@ async fn approve_contract(
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Contract>> {
+) -> ApiResponse<Contract> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let contract = sqlx::query_as::<_, Contract>(only_own_schema_query!(
@@ -523,7 +521,7 @@ async fn approve_contract(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::success(c, "批准合同成功"))
+            ApiResponse::success(c, "批准合同成功")
         }
         Err(sqlx::Error::RowNotFound) => {
             if let Err(e) = audit
@@ -539,7 +537,7 @@ async fn approve_contract(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found("合同不存在"))
+            ApiResponse::not_found("合同不存在")
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -556,7 +554,7 @@ async fn approve_contract(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("批准合同失败: {}", e);
-            Json(ApiResponse::server_error("批准合同失败"))
+            ApiResponse::server_error("批准合同失败")
         }
     }
 }
@@ -579,11 +577,11 @@ async fn reject_contract(
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Contract>> {
+) -> ApiResponse<Contract> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let contract = sqlx::query_as::<_, Contract>(only_own_schema_query!(
@@ -610,7 +608,7 @@ async fn reject_contract(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::success(c, "拒绝合同成功"))
+            ApiResponse::success(c, "拒绝合同成功")
         }
         Err(sqlx::Error::RowNotFound) => {
             if let Err(e) = audit
@@ -626,7 +624,7 @@ async fn reject_contract(
             {
                 tracing::warn!("pm audit failed: {e}");
             }
-            Json(ApiResponse::not_found("合同不存在"))
+            ApiResponse::not_found("合同不存在")
         }
         Err(e) => {
             if let Err(audit_err) = audit
@@ -643,7 +641,7 @@ async fn reject_contract(
                 tracing::warn!("pm audit failed: {audit_err}");
             }
             tracing::error!("拒绝合同失败: {}", e);
-            Json(ApiResponse::server_error("拒绝合同失败"))
+            ApiResponse::server_error("拒绝合同失败")
         }
     }
 }
@@ -664,11 +662,11 @@ async fn reject_contract(
 async fn list_contract_milestones(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<ContractMilestone>>> {
+) -> ApiResponse<Vec<ContractMilestone>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let milestones = sqlx::query_as::<_, ContractMilestone>(
         only_own_schema_query!("pm", "SELECT id, contract_id, project_milestone_id, name, description, target_date, payment_amount, payment_percent, status, actual_date, payment_status, created_at, updated_at FROM pm.contract_milestones WHERE contract_id = $1 ORDER BY target_date"),
@@ -678,10 +676,10 @@ async fn list_contract_milestones(
     .await;
 
     match milestones {
-        Ok(m) => Json(ApiResponse::success(m, "获取里程碑列表成功")),
+        Ok(m) => ApiResponse::success(m, "获取里程碑列表成功"),
         Err(e) => {
             tracing::error!("获取里程碑失败: {}", e);
-            Json(ApiResponse::server_error("获取里程碑失败"))
+            ApiResponse::server_error("获取里程碑失败")
         }
     }
 }
@@ -692,11 +690,11 @@ async fn create_contract_milestone(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateContractMilestoneRequest>,
-) -> Json<ApiResponse<ContractMilestone>> {
+) -> ApiResponse<ContractMilestone> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let milestone_id = Uuid::new_v4();
     let now = Utc::now();
@@ -723,10 +721,10 @@ async fn create_contract_milestone(
     .await;
 
     match milestone {
-        Ok(m) => Json(ApiResponse::success(m, "创建里程碑成功")),
+        Ok(m) => ApiResponse::success(m, "创建里程碑成功"),
         Err(e) => {
             tracing::error!("创建里程碑失败: {}", e);
-            Json(ApiResponse::server_error("创建里程碑失败"))
+            ApiResponse::server_error("创建里程碑失败")
         }
     }
 }
@@ -749,11 +747,11 @@ async fn update_contract_milestone(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((id, milestone_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<CreateContractMilestoneRequest>,
-) -> Json<ApiResponse<ContractMilestone>> {
+) -> ApiResponse<ContractMilestone> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let milestone = sqlx::query_as::<_, ContractMilestone>(only_own_schema_query!(
         "pm",
@@ -778,11 +776,11 @@ async fn update_contract_milestone(
     .await;
 
     match milestone {
-        Ok(m) => Json(ApiResponse::success(m, "更新里程碑成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("里程碑不存在")),
+        Ok(m) => ApiResponse::success(m, "更新里程碑成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("里程碑不存在"),
         Err(e) => {
             tracing::error!("更新里程碑失败: {}", e);
-            Json(ApiResponse::server_error("更新里程碑失败"))
+            ApiResponse::server_error("更新里程碑失败")
         }
     }
 }
@@ -790,11 +788,11 @@ async fn update_contract_milestone(
 async fn delete_contract_milestone(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((id, milestone_id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
@@ -806,11 +804,11 @@ async fn delete_contract_milestone(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除里程碑成功")),
-        Ok(_) => Json(ApiResponse::not_found("里程碑不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除里程碑成功"),
+        Ok(_) => ApiResponse::not_found("里程碑不存在"),
         Err(e) => {
             tracing::error!("删除里程碑失败: {}", e);
-            Json(ApiResponse::server_error("删除里程碑失败"))
+            ApiResponse::server_error("删除里程碑失败")
         }
     }
 }
@@ -831,11 +829,11 @@ async fn delete_contract_milestone(
 async fn list_payment_schedule(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<ContractPaymentSchedule>>> {
+) -> ApiResponse<Vec<ContractPaymentSchedule>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let payments = sqlx::query_as::<_, ContractPaymentSchedule>(
         only_own_schema_query!("pm", "SELECT id, contract_id, payment_number, payment_name, payment_percent, payment_amount, due_date, actual_payment_date, status, created_at FROM pm.contract_payment_schedule WHERE deleted_at IS NULL AND contract_id = $1 ORDER BY payment_number"),
@@ -845,10 +843,10 @@ async fn list_payment_schedule(
     .await;
 
     match payments {
-        Ok(p) => Json(ApiResponse::success(p, "获取付款计划成功")),
+        Ok(p) => ApiResponse::success(p, "获取付款计划成功"),
         Err(e) => {
             tracing::error!("获取付款计划失败: {}", e);
-            Json(ApiResponse::server_error("获取付款计划失败"))
+            ApiResponse::server_error("获取付款计划失败")
         }
     }
 }
@@ -859,11 +857,11 @@ async fn create_payment_schedule(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePaymentScheduleRequest>,
-) -> Json<ApiResponse<ContractPaymentSchedule>> {
+) -> ApiResponse<ContractPaymentSchedule> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let payment_id = Uuid::new_v4();
     let now = Utc::now();
@@ -889,10 +887,10 @@ async fn create_payment_schedule(
     .await;
 
     match payment {
-        Ok(p) => Json(ApiResponse::success(p, "创建付款计划成功")),
+        Ok(p) => ApiResponse::success(p, "创建付款计划成功"),
         Err(e) => {
             tracing::error!("创建付款计划失败: {}", e);
-            Json(ApiResponse::server_error("创建付款计划失败"))
+            ApiResponse::server_error("创建付款计划失败")
         }
     }
 }
@@ -915,11 +913,11 @@ async fn update_payment_schedule(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((id, payment_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<CreatePaymentScheduleRequest>,
-) -> Json<ApiResponse<ContractPaymentSchedule>> {
+) -> ApiResponse<ContractPaymentSchedule> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let payment = sqlx::query_as::<_, ContractPaymentSchedule>(only_own_schema_query!(
         "pm",
@@ -942,11 +940,11 @@ async fn update_payment_schedule(
     .await;
 
     match payment {
-        Ok(p) => Json(ApiResponse::success(p, "更新付款计划成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("付款计划不存在")),
+        Ok(p) => ApiResponse::success(p, "更新付款计划成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("付款计划不存在"),
         Err(e) => {
             tracing::error!("更新付款计划失败: {}", e);
-            Json(ApiResponse::server_error("更新付款计划失败"))
+            ApiResponse::server_error("更新付款计划失败")
         }
     }
 }
@@ -954,11 +952,11 @@ async fn update_payment_schedule(
 async fn delete_payment_schedule(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((id, payment_id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result =
         sqlx::query(only_own_schema_query!("pm", "UPDATE pm.contract_payment_schedule SET deleted_at = NOW() WHERE id = $1 AND contract_id = $2"))
@@ -968,22 +966,22 @@ async fn delete_payment_schedule(
             .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除付款计划成功")),
-        Ok(_) => Json(ApiResponse::not_found("付款计划不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除付款计划成功"),
+        Ok(_) => ApiResponse::not_found("付款计划不存在"),
         Err(e) => {
             tracing::error!("删除付款计划失败: {}", e);
-            Json(ApiResponse::server_error("删除付款计划失败"))
+            ApiResponse::server_error("删除付款计划失败")
         }
     }
 }
 
 async fn list_templates(
     Extension(txn_arc): Extension<RlsTxnArc>,
-) -> Json<ApiResponse<Vec<ContractTemplate>>> {
+) -> ApiResponse<Vec<ContractTemplate>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let templates = sqlx::query_as::<_, ContractTemplate>(
         only_own_schema_query!("pm", "SELECT id, name, contract_type, description, content, is_active, created_by, created_at, updated_at FROM pm.contract_templates WHERE is_active = true ORDER BY name"),
@@ -992,10 +990,10 @@ async fn list_templates(
     .await;
 
     match templates {
-        Ok(t) => Json(ApiResponse::success(t, "获取模板列表成功")),
+        Ok(t) => ApiResponse::success(t, "获取模板列表成功"),
         Err(e) => {
             tracing::error!("获取模板失败: {}", e);
-            Json(ApiResponse::server_error("获取模板失败"))
+            ApiResponse::server_error("获取模板失败")
         }
     }
 }
@@ -1003,11 +1001,11 @@ async fn list_templates(
 async fn get_template(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ContractTemplate>> {
+) -> ApiResponse<ContractTemplate> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let template =
         sqlx::query_as::<_, ContractTemplate>(only_own_schema_query!("pm", "SELECT id, name, contract_type, description, content, is_active, created_by, created_at, updated_at FROM pm.contract_templates WHERE id = $1"))
@@ -1016,11 +1014,11 @@ async fn get_template(
             .await;
 
     match template {
-        Ok(t) => Json(ApiResponse::success(t, "获取模板详情成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("模板不存在")),
+        Ok(t) => ApiResponse::success(t, "获取模板详情成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("模板不存在"),
         Err(e) => {
             tracing::error!("获取模板失败: {}", e);
-            Json(ApiResponse::server_error("获取模板失败"))
+            ApiResponse::server_error("获取模板失败")
         }
     }
 }
@@ -1030,11 +1028,11 @@ async fn create_template(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateContractTemplateRequest>,
-) -> Json<ApiResponse<ContractTemplate>> {
+) -> ApiResponse<ContractTemplate> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -1056,10 +1054,10 @@ async fn create_template(
     .await;
 
     match template {
-        Ok(t) => Json(ApiResponse::success(t, "创建模板成功")),
+        Ok(t) => ApiResponse::success(t, "创建模板成功"),
         Err(e) => {
             tracing::error!("创建模板失败: {}", e);
-            Json(ApiResponse::server_error("创建模板失败"))
+            ApiResponse::server_error("创建模板失败")
         }
     }
 }
@@ -1068,11 +1066,11 @@ async fn update_template(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateContractTemplateRequest>,
-) -> Json<ApiResponse<ContractTemplate>> {
+) -> ApiResponse<ContractTemplate> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let template = sqlx::query_as::<_, ContractTemplate>(only_own_schema_query!(
         "pm",
@@ -1094,11 +1092,11 @@ async fn update_template(
     .await;
 
     match template {
-        Ok(t) => Json(ApiResponse::success(t, "更新模板成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("模板不存在")),
+        Ok(t) => ApiResponse::success(t, "更新模板成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("模板不存在"),
         Err(e) => {
             tracing::error!("更新模板失败: {}", e);
-            Json(ApiResponse::server_error("更新模板失败"))
+            ApiResponse::server_error("更新模板失败")
         }
     }
 }
@@ -1106,11 +1104,11 @@ async fn update_template(
 async fn delete_template(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
@@ -1121,11 +1119,11 @@ async fn delete_template(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除模板成功")),
-        Ok(_) => Json(ApiResponse::not_found("模板不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除模板成功"),
+        Ok(_) => ApiResponse::not_found("模板不存在"),
         Err(e) => {
             tracing::error!("删除模板失败: {}", e);
-            Json(ApiResponse::server_error("删除模板失败"))
+            ApiResponse::server_error("删除模板失败")
         }
     }
 }
@@ -1146,11 +1144,11 @@ async fn delete_template(
 async fn get_project_contracts(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<Contract>>> {
+) -> ApiResponse<Vec<Contract>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let contracts = sqlx::query_as::<_, Contract>(
         only_own_schema_query!("pm", "SELECT id, project_id, contract_no, contract_name, contract_type, party_a, party_b, amount, currency, sign_date, start_date, end_date, status, tax_rate, description, created_by, created_at, updated_at FROM pm.contracts WHERE project_id = $1 ORDER BY created_at DESC"),
@@ -1160,10 +1158,10 @@ async fn get_project_contracts(
     .await;
 
     match contracts {
-        Ok(c) => Json(ApiResponse::success(c, "获取项目合同列表成功")),
+        Ok(c) => ApiResponse::success(c, "获取项目合同列表成功"),
         Err(e) => {
             tracing::error!("获取项目合同失败: {}", e);
-            Json(ApiResponse::server_error("获取项目合同失败"))
+            ApiResponse::server_error("获取项目合同失败")
         }
     }
 }
@@ -1174,11 +1172,11 @@ async fn create_project_contract(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateContractRequest>,
-) -> Json<ApiResponse<Contract>> {
+) -> ApiResponse<Contract> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -1212,10 +1210,10 @@ async fn create_project_contract(
     .await;
 
     match contract {
-        Ok(c) => Json(ApiResponse::success(c, "创建合同成功")),
+        Ok(c) => ApiResponse::success(c, "创建合同成功"),
         Err(e) => {
             tracing::error!("创建合同失败: {}", e);
-            Json(ApiResponse::server_error("创建合同失败"))
+            ApiResponse::server_error("创建合同失败")
         }
     }
 }

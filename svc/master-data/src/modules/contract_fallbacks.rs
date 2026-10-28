@@ -14,21 +14,20 @@
 
 use crate::shared::AppState;
 use axum::extract::State;
-use axum::Json;
 use serde_json::{json, Value};
 use topems_shared_core::response::{api_success, ApiResponse};
 
 /// 分页列表兜底：{ items: [], total: 0 }
-pub async fn list(State(_s): State<AppState>) -> Json<ApiResponse<Value>> {
-    Json(api_success(json!({ "items": [], "total": 0 })))
+pub async fn list(State(_s): State<AppState>) -> ApiResponse<Value> {
+    api_success(json!({ "items": [], "total": 0 }))
 }
 
 /// 纯数组兜底：[]
-pub async fn array(State(_s): State<AppState>) -> Json<ApiResponse<Value>> {
-    Json(api_success(json!([])))
+pub async fn array(State(_s): State<AppState>) -> ApiResponse<Value> {
+    api_success(json!([]))
 }
 
 /// 通用成功兜底（写操作 / 单对象 / 导出）：{ success: true }
-pub async fn ok(State(_s): State<AppState>) -> Json<ApiResponse<Value>> {
-    Json(api_success(json!({ "success": true })))
+pub async fn ok(State(_s): State<AppState>) -> ApiResponse<Value> {
+    api_success(json!({ "success": true }))
 }

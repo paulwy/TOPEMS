@@ -1374,18 +1374,16 @@ pub struct PermissionsUserQuery {
 pub async fn validate_token_handler(
     State(_state): State<AppState>,
     Json(req): Json<ValidateTokenRequest>,
-) -> Json<ApiResponse<TokenValidationResult>> {
+) -> ApiResponse<TokenValidationResult> {
     match GatewaySecurityV2::validate_token(&req.token, req.policy_id.as_deref()).await {
         Ok(result) => {
             if result.valid {
-                Json(ApiResponse::success(result, "Token 验证通过"))
+                ApiResponse::success(result, "Token 验证通过")
             } else {
-                Json(ApiResponse::unauthorized(
-                    result.reason.as_deref().unwrap_or("Token 验证失败"),
-                ))
+                ApiResponse::unauthorized(result.reason.as_deref().unwrap_or("Token 验证失败"))
             }
         }
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1402,11 +1400,11 @@ pub async fn validate_token_handler(
 pub async fn authenticate_handler(
     State(_state): State<AppState>,
     Json(req): Json<AuthenticateRequest>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     match GatewaySecurityV2::check_authentication(&req.token, req.policy_id.as_deref()).await {
-        Ok(true) => Json(ApiResponse::success(true, "认证通过")),
-        Ok(false) => Json(ApiResponse::unauthorized("认证失败")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(true) => ApiResponse::success(true, "认证通过"),
+        Ok(false) => ApiResponse::unauthorized("认证失败"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1423,14 +1421,14 @@ pub async fn authenticate_handler(
 pub async fn get_incidents_handler(
     State(_state): State<AppState>,
     Query(params): Query<IncidentsQuery>,
-) -> Json<ApiResponse<Vec<SecurityIncident>>> {
+) -> ApiResponse<Vec<SecurityIncident>> {
     let incident_type = params
         .incident_type
         .as_deref()
         .and_then(IncidentType::from_str);
     let severity = params.severity.as_deref().and_then(Severity::from_str);
     let incidents = GatewaySecurityV2::get_incidents(incident_type, severity, params.limit).await;
-    Json(ApiResponse::success(incidents, "安全事件列表"))
+    ApiResponse::success(incidents, "安全事件列表")
 }
 
 #[utoipa::path(
@@ -1446,7 +1444,7 @@ pub async fn get_incidents_handler(
 pub async fn create_security_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateSecurityPolicyRequest>,
-) -> Json<ApiResponse<SecurityPolicyV2>> {
+) -> ApiResponse<SecurityPolicyV2> {
     let auth_type = req
         .authentication_type
         .as_deref()
@@ -1465,8 +1463,8 @@ pub async fn create_security_policy_handler(
     };
 
     match GatewaySecurityV2::create_policy(policy).await {
-        Ok(p) => Json(ApiResponse::success(p, "安全策略创建成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(p) => ApiResponse::success(p, "安全策略创建成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1482,9 +1480,9 @@ pub async fn create_security_policy_handler(
 )]
 pub async fn list_security_policies_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<SecurityPolicyV2>>> {
+) -> ApiResponse<Vec<SecurityPolicyV2>> {
     let policies = GatewaySecurityV2::list_policies().await;
-    Json(ApiResponse::success(policies, "安全策略列表"))
+    ApiResponse::success(policies, "安全策略列表")
 }
 
 #[utoipa::path(
@@ -1504,10 +1502,10 @@ pub async fn update_security_policy_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateSecurityPolicyRequest>,
-) -> Json<ApiResponse<SecurityPolicyV2>> {
+) -> ApiResponse<SecurityPolicyV2> {
     let existing = match GatewaySecurityV2::get_policy_by_id(&id).await {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("策略不存在")),
+        None => return ApiResponse::not_found("策略不存在"),
     };
 
     let auth_type = req
@@ -1532,8 +1530,8 @@ pub async fn update_security_policy_handler(
     };
 
     match GatewaySecurityV2::update_policy(&id, updates).await {
-        Ok(p) => Json(ApiResponse::success(p, "安全策略更新成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(p) => ApiResponse::success(p, "安全策略更新成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1552,7 +1550,7 @@ pub async fn update_security_policy_handler(
 pub async fn write_audit_handler(
     State(_state): State<AppState>,
     Json(req): Json<WriteAuditRequest>,
-) -> Json<ApiResponse<AuditEntryV2>> {
+) -> ApiResponse<AuditEntryV2> {
     let actor_type = req
         .actor_type
         .as_deref()
@@ -1572,8 +1570,8 @@ pub async fn write_audit_handler(
     );
 
     match AuditTrailV2::write_audit(entry).await {
-        Ok(e) => Json(ApiResponse::success(e, "审计条目写入成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(e) => ApiResponse::success(e, "审计条目写入成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1590,7 +1588,7 @@ pub async fn write_audit_handler(
 pub async fn query_audit_handler(
     State(_state): State<AppState>,
     Query(params): Query<AuditQueryParams>,
-) -> Json<ApiResponse<Vec<AuditEntryV2>>> {
+) -> ApiResponse<Vec<AuditEntryV2>> {
     let filter = AuditFilter {
         actor_id: params.actor_id,
         action: params.action,
@@ -1601,7 +1599,7 @@ pub async fn query_audit_handler(
     };
 
     let entries = AuditTrailV2::query_audit(filter).await;
-    Json(ApiResponse::success(entries, "审计查询结果"))
+    ApiResponse::success(entries, "审计查询结果")
 }
 
 #[utoipa::path(
@@ -1620,9 +1618,9 @@ pub async fn query_audit_handler(
 pub async fn get_audit_by_actor_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Vec<AuditEntryV2>>> {
+) -> ApiResponse<Vec<AuditEntryV2>> {
     let entries = AuditTrailV2::get_audit_by_actor(&id).await;
-    Json(ApiResponse::success(entries, "演员审计记录"))
+    ApiResponse::success(entries, "演员审计记录")
 }
 
 #[utoipa::path(
@@ -1642,9 +1640,9 @@ pub async fn get_audit_by_actor_handler(
 pub async fn get_audit_by_resource_handler(
     State(_state): State<AppState>,
     Path((resource_type, resource_id)): Path<(String, String)>,
-) -> Json<ApiResponse<Vec<AuditEntryV2>>> {
+) -> ApiResponse<Vec<AuditEntryV2>> {
     let entries = AuditTrailV2::get_audit_by_resource(&resource_type, Some(&resource_id)).await;
-    Json(ApiResponse::success(entries, "资源审计记录"))
+    ApiResponse::success(entries, "资源审计记录")
 }
 
 #[utoipa::path(
@@ -1660,7 +1658,7 @@ pub async fn get_audit_by_resource_handler(
 pub async fn get_audit_summary_handler(
     State(_state): State<AppState>,
     Query(params): Query<AuditQueryParams>,
-) -> Json<ApiResponse<AuditSummary>> {
+) -> ApiResponse<AuditSummary> {
     let filter = AuditFilter {
         actor_id: params.actor_id,
         action: params.action,
@@ -1671,7 +1669,7 @@ pub async fn get_audit_summary_handler(
     };
 
     let summary = AuditTrailV2::get_audit_summary(filter).await;
-    Json(ApiResponse::success(summary, "审计汇总"))
+    ApiResponse::success(summary, "审计汇总")
 }
 
 #[utoipa::path(
@@ -1687,13 +1685,13 @@ pub async fn get_audit_summary_handler(
 pub async fn export_audit_handler(
     State(_state): State<AppState>,
     Json(req): Json<AuditExportRequest>,
-) -> Json<ApiResponse<AuditExport>> {
+) -> ApiResponse<AuditExport> {
     let filter = req.filter.unwrap_or_default();
     let format = req.format.unwrap_or_else(|| "json".to_string());
 
     match AuditTrailV2::export_audit(filter, &format, req.created_by).await {
-        Ok(export) => Json(ApiResponse::success(export, "审计导出任务创建成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(export) => ApiResponse::success(export, "审计导出任务创建成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1712,10 +1710,10 @@ pub async fn export_audit_handler(
 pub async fn evaluate_access_handler(
     State(_state): State<AppState>,
     Json(req): Json<EvaluateAccessRequest>,
-) -> Json<ApiResponse<AccessDecision>> {
+) -> ApiResponse<AccessDecision> {
     let decision =
         AccessControlV2::evaluate_access(&req.actor_id, &req.resource, &req.action).await;
-    Json(ApiResponse::success(decision, "访问决策完成"))
+    ApiResponse::success(decision, "访问决策完成")
 }
 
 #[utoipa::path(
@@ -1731,12 +1729,12 @@ pub async fn evaluate_access_handler(
 pub async fn grant_access_handler(
     State(_state): State<AppState>,
     Json(req): Json<GrantAccessRequest>,
-) -> Json<ApiResponse<UserPermissions>> {
+) -> ApiResponse<UserPermissions> {
     let permissions = req.permissions.unwrap_or_default();
 
     match AccessControlV2::grant_access(&req.actor_id, &req.role, permissions).await {
-        Ok(p) => Json(ApiResponse::success(p, "授权成功")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(p) => ApiResponse::success(p, "授权成功"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1757,10 +1755,10 @@ pub async fn revoke_access_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<RevokeAccessRequest>,
-) -> Json<ApiResponse<UserPermissions>> {
+) -> ApiResponse<UserPermissions> {
     match AccessControlV2::revoke_access(&id, req.role.as_deref(), req.permissions).await {
-        Ok(p) => Json(ApiResponse::success(p, "权限撤销成功")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(p) => ApiResponse::success(p, "权限撤销成功"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1777,9 +1775,9 @@ pub async fn revoke_access_handler(
 pub async fn list_access_policies_handler(
     State(_state): State<AppState>,
     Query(params): Query<AccessPoliciesQuery>,
-) -> Json<ApiResponse<Vec<AccessPolicy>>> {
+) -> ApiResponse<Vec<AccessPolicy>> {
     let policies = AccessControlV2::get_policies(params.resource_type.as_deref()).await;
-    Json(ApiResponse::success(policies, "访问策略列表"))
+    ApiResponse::success(policies, "访问策略列表")
 }
 
 #[utoipa::path(
@@ -1795,7 +1793,7 @@ pub async fn list_access_policies_handler(
 pub async fn create_access_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateAccessPolicyRequest>,
-) -> Json<ApiResponse<AccessPolicy>> {
+) -> ApiResponse<AccessPolicy> {
     let effect = req
         .effect
         .as_deref()
@@ -1813,8 +1811,8 @@ pub async fn create_access_policy_handler(
     };
 
     match AccessControlV2::create_policy(policy).await {
-        Ok(p) => Json(ApiResponse::success(p, "访问策略创建成功")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(p) => ApiResponse::success(p, "访问策略创建成功"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1834,10 +1832,10 @@ pub async fn create_access_policy_handler(
 pub async fn get_user_permissions_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<UserPermissions>> {
+) -> ApiResponse<UserPermissions> {
     match AccessControlV2::get_user_permissions(&id).await {
-        Some(p) => Json(ApiResponse::success(p, "用户权限")),
-        None => Json(ApiResponse::not_found("用户权限不存在")),
+        Some(p) => ApiResponse::success(p, "用户权限"),
+        None => ApiResponse::not_found("用户权限不存在"),
     }
 }
 
@@ -1854,10 +1852,10 @@ pub async fn get_user_permissions_handler(
 pub async fn simulate_access_handler(
     State(_state): State<AppState>,
     Json(req): Json<SimulateAccessRequest>,
-) -> Json<ApiResponse<AccessDecision>> {
+) -> ApiResponse<AccessDecision> {
     let decision =
         AccessControlV2::simulate_access(&req.actor_id, &req.resource, &req.action).await;
-    Json(ApiResponse::success(decision, "访问模拟完成"))
+    ApiResponse::success(decision, "访问模拟完成")
 }
 
 #[cfg(test)]

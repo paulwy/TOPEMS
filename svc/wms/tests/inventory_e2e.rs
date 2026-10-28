@@ -74,10 +74,10 @@ async fn body_of(pool: sqlx::PgPool, warehouse_id: Option<uuid::Uuid>) -> ListRe
         Extension(txn_arc),
     )
     .await;
-    resp.0
+    resp
         .data
         .clone()
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message))
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message))
 }
 
 async fn insert_inventory(pool: &sqlx::PgPool, material_code: &str, warehouse_id: uuid::Uuid) {

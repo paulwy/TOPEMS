@@ -266,7 +266,7 @@ pub async fn list_materials(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<HazardousMaterial>>> {
+) -> ApiResponse<Vec<HazardousMaterial>> {
     let tenant_bind = resolve_material_tenant(&claims).to_string();
     let sql = format!(
         r#"
@@ -293,11 +293,11 @@ pub async fn list_materials(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list materials: {}", e);
-            return Json(ApiResponse::server_error("获取危险品列表失败"));
+            return ApiResponse::server_error("获取危险品列表失败");
         }
     };
     let list: Vec<HazardousMaterial> = rows.iter().map(material_from_row).collect();
-    Json(ApiResponse::success(list, "获取危险品列表成功"))
+    ApiResponse::success(list, "获取危险品列表成功")
 }
 #[utoipa::path(
     post,
@@ -312,7 +312,7 @@ pub async fn create_material(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateMaterialRequest>,
-) -> Json<ApiResponse<HazardousMaterial>> {
+) -> ApiResponse<HazardousMaterial> {
     let tenant_id = resolve_material_tenant(&claims);
     let material_no = format!("HM-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let status = req.status.clone().unwrap_or_else(|| "active".to_string());
@@ -363,11 +363,11 @@ pub async fn create_material(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create material: {}", e);
-            return Json(ApiResponse::server_error("危险品创建失败"));
+            return ApiResponse::server_error("危险品创建失败");
         }
     };
     let record = material_from_row(&row);
-    Json(ApiResponse::success(record, "危险品创建成功"))
+    ApiResponse::success(record, "危险品创建成功")
 }
 #[utoipa::path(
     get,
@@ -385,7 +385,7 @@ pub async fn get_material(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<MaterialDetail>> {
+) -> ApiResponse<MaterialDetail> {
     let tenant_bind = resolve_material_tenant(&claims).to_string();
     let sql = format!(
         r#"
@@ -411,14 +411,14 @@ pub async fn get_material(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("危险品不存在")),
+        Ok(None) => return ApiResponse::not_found("危险品不存在"),
         Err(e) => {
             tracing::error!("Failed to get material: {}", e);
-            return Json(ApiResponse::server_error("获取危险品详情失败"));
+            return ApiResponse::server_error("获取危险品详情失败");
         }
     };
     let material = material_from_row(&row);
-    Json(ApiResponse::success(
+    ApiResponse::success(
         MaterialDetail {
             material,
             stocks: vec![],
@@ -427,7 +427,7 @@ pub async fn get_material(
             tenant_id: uuid::Uuid::nil(),
         },
         "获取危险品详情成功",
-    ))
+    )
 }
 #[utoipa::path(
     put,
@@ -447,7 +447,7 @@ pub async fn update_material(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateMaterialRequest>,
-) -> Json<ApiResponse<HazardousMaterial>> {
+) -> ApiResponse<HazardousMaterial> {
     let tenant_bind = resolve_material_tenant(&claims).to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -539,14 +539,14 @@ pub async fn update_material(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("危险品不存在")),
+        Ok(None) => return ApiResponse::not_found("危险品不存在"),
         Err(e) => {
             tracing::error!("Failed to update material: {}", e);
-            return Json(ApiResponse::server_error("危险品更新失败"));
+            return ApiResponse::server_error("危险品更新失败");
         }
     };
     let record = material_from_row(&row);
-    Json(ApiResponse::success(record, "危险品更新成功"))
+    ApiResponse::success(record, "危险品更新成功")
 }
 #[utoipa::path(
     delete,
@@ -564,7 +564,7 @@ pub async fn delete_material(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_material_tenant(&claims).to_string();
     let sql = r#"
         UPDATE ehs.qa_ehs_hazardous_materials
@@ -582,13 +582,13 @@ pub async fn delete_material(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete material: {}", e);
-            return Json(ApiResponse::server_error("危险品删除失败"));
+            return ApiResponse::server_error("危险品删除失败");
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("危险品不存在"));
+        return ApiResponse::not_found("危险品不存在");
     }
-    Json(ApiResponse::success((), "危险品删除成功"))
+    ApiResponse::success((), "危险品删除成功")
 }
 #[utoipa::path(
     get,
@@ -601,7 +601,7 @@ pub async fn list_stock_records(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<StockRecord>>> {
+) -> ApiResponse<Vec<StockRecord>> {
     let tenant_filter = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -624,7 +624,7 @@ pub async fn list_stock_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list stock records: {}", e);
-            return Json(ApiResponse::server_error("出入库记录列表获取失败"));
+            return ApiResponse::server_error("出入库记录列表获取失败");
         }
     };
     let list: Vec<StockRecord> = rows
@@ -653,7 +653,7 @@ pub async fn list_stock_records(
         })
         .collect();
     tracing::debug!("Listed {} stock records (real DB)", list.len());
-    Json(ApiResponse::success(list, "获取出入库记录列表成功"))
+    ApiResponse::success(list, "获取出入库记录列表成功")
 }
 
 #[utoipa::path(
@@ -672,7 +672,7 @@ pub async fn get_stock_record(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<StockRecord>> {
+) -> ApiResponse<StockRecord> {
     let tenant_clause = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -697,10 +697,10 @@ pub async fn get_stock_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("出入库记录不存在")),
+        Ok(None) => return ApiResponse::not_found("出入库记录不存在"),
         Err(e) => {
             tracing::error!("Failed to get stock record {}: {}", id, e);
-            return Json(ApiResponse::server_error("出入库记录获取失败"));
+            return ApiResponse::server_error("出入库记录获取失败");
         }
     };
     let rec = StockRecord {
@@ -726,7 +726,7 @@ pub async fn get_stock_record(
         tenant_id: Uuid::nil(),
     };
     tracing::debug!("Got stock record from real DB: {}", id);
-    Json(ApiResponse::success(rec, "获取出入库记录详情成功"))
+    ApiResponse::success(rec, "获取出入库记录详情成功")
 }
 
 #[utoipa::path(
@@ -745,7 +745,7 @@ pub async fn get_material_msds(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<MsdsData>> {
+) -> ApiResponse<MsdsData> {
     let tenant_bind = resolve_material_tenant(&claims).to_string();
     let sql = r#"
         SELECT id::text AS id, material_id::text AS material_id, material_name, version,
@@ -770,14 +770,14 @@ pub async fn get_material_msds(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("该危险品暂无 MSDS")),
+        Ok(None) => return ApiResponse::not_found("该危险品暂无 MSDS"),
         Err(e) => {
             tracing::error!("Failed to get material MSDS: {}", e);
-            return Json(ApiResponse::server_error("获取 MSDS 失败"));
+            return ApiResponse::server_error("获取 MSDS 失败");
         }
     };
     let record = msds_from_row(&row);
-    Json(ApiResponse::success(record, "获取 MSDS 成功"))
+    ApiResponse::success(record, "获取 MSDS 成功")
 }
 #[utoipa::path(
     get,
@@ -790,7 +790,7 @@ pub async fn get_material_statistics(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<MaterialStatistics>> {
+) -> ApiResponse<MaterialStatistics> {
     let tenant_bind = resolve_material_tenant(&claims).to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
@@ -876,7 +876,7 @@ pub async fn get_material_statistics(
         by_category.len(), by_hazard_level.len()
     );
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         MaterialStatistics {
             total_materials,
             total_stock_value: None, // inventory 表空，无 stock_value
@@ -889,7 +889,7 @@ pub async fn get_material_statistics(
             tenant_id: resolve_material_tenant(&claims),
         },
         "获取危险品统计成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -903,10 +903,10 @@ pub async fn list_material_categories(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     // 危险品分类无持久化配置源；待建字典表后再接真。
     tracing::warn!("Material categories data source not yet enabled");
-    Json(ApiResponse::not_implemented("危险品分类数据源尚未启用"))
+    ApiResponse::not_implemented("危险品分类数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -922,11 +922,9 @@ pub async fn create_material_category(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     tracing::warn!("Material category create called but data source not yet enabled");
-    Json(ApiResponse::not_implemented(
-        "危险品分类数据源尚未启用，写入操作暂不可用",
-    ))
+    ApiResponse::not_implemented("危险品分类数据源尚未启用，写入操作暂不可用")
 }
 
 pub fn ghs_hazard_class(health: Option<u8>, flamm: Option<u8>, phys: Option<u8>) -> &'static str {
@@ -1042,9 +1040,9 @@ pub async fn update_stock_record(
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
     Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<StockRecord>> {
+) -> ApiResponse<StockRecord> {
     tracing::warn!("Stock record update called but data source not yet enabled");
-    Json(ApiResponse::not_implemented("出入库记录数据源尚未启用"))
+    ApiResponse::not_implemented("出入库记录数据源尚未启用")
 }
 
 pub async fn delete_stock_record(
@@ -1052,11 +1050,9 @@ pub async fn delete_stock_record(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     tracing::warn!("Stock record delete called but data source not yet enabled");
-    Json(ApiResponse::not_implemented(
-        "出入库记录数据源尚未启用，删除操作暂不可用",
-    ))
+    ApiResponse::not_implemented("出入库记录数据源尚未启用，删除操作暂不可用")
 }
 
 pub async fn get_msds_by_id(
@@ -1064,7 +1060,7 @@ pub async fn get_msds_by_id(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<MsdsData>> {
+) -> ApiResponse<MsdsData> {
     // 待上游支持：MSDS 按 ID 直取复用现有按 material_id 取数（路径语义对齐）。
     get_material_msds(
         State(state),
@@ -1081,10 +1077,10 @@ pub async fn update_msds_by_id(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<MsdsData>> {
+) -> ApiResponse<MsdsData> {
     // 待上游支持：MSDS 按 ID 更新，入参宽松映射占位。
     let _ = (state, claims, headers, id, req);
-    Json(ApiResponse::not_found("MSDS 不存在"))
+    ApiResponse::not_found("MSDS 不存在")
 }
 
 pub async fn delete_msds_by_id(
@@ -1092,11 +1088,9 @@ pub async fn delete_msds_by_id(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     tracing::warn!("MSDS delete called but data source not yet enabled");
-    Json(ApiResponse::not_implemented(
-        "MSDS 数据源尚未启用，删除操作暂不可用",
-    ))
+    ApiResponse::not_implemented("MSDS 数据源尚未启用，删除操作暂不可用")
 }
 
 pub async fn update_material_category(
@@ -1105,11 +1099,9 @@ pub async fn update_material_category(
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
     Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     tracing::warn!("Material category update called but data source not yet enabled");
-    Json(ApiResponse::not_implemented(
-        "危险品分类数据源尚未启用，更新操作暂不可用",
-    ))
+    ApiResponse::not_implemented("危险品分类数据源尚未启用，更新操作暂不可用")
 }
 
 pub async fn delete_material_category(
@@ -1117,11 +1109,9 @@ pub async fn delete_material_category(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     tracing::warn!("Material category delete called but data source not yet enabled");
-    Json(ApiResponse::not_implemented(
-        "危险品分类数据源尚未启用，删除操作暂不可用",
-    ))
+    ApiResponse::not_implemented("危险品分类数据源尚未启用，删除操作暂不可用")
 }
 
 /// 解析请求租户：超管 → nil UUID；否则取 claims.tenant_id。

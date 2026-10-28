@@ -48,7 +48,7 @@ pub struct PluginHealth {
     tag = "rs_plugin"
 )]
 
-pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
     let runtime_url = get_runtime_url();
     let plugin_info = PluginInfo {
         code: "rs".to_string(),
@@ -87,7 +87,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         ])),
     };
 
-    Json(ApiResponse::success(plugin_info, "获取插件信息成功"))
+    ApiResponse::success(plugin_info, "获取插件信息成功")
 }
 #[utoipa::path(
     get,

@@ -1092,10 +1092,10 @@ pub struct StrategyQuery {
 pub async fn compile_query_handler(
     State(_state): State<AppState>,
     Json(req): Json<CompileQueryRequest>,
-) -> Json<ApiResponse<CompiledQuery>> {
+) -> ApiResponse<CompiledQuery> {
     match QueryCompiler::compile_query(req.query).await {
-        Ok(compiled) => Json(ApiResponse::success(compiled, "查询编译成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(compiled) => ApiResponse::success(compiled, "查询编译成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1115,25 +1115,25 @@ pub async fn compile_query_handler(
 pub async fn get_compilation_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<CompiledQuery>> {
+) -> ApiResponse<CompiledQuery> {
     match QueryCompiler::get_compilation(&id).await {
-        Some(compiled) => Json(ApiResponse::success(compiled, "编译详情")),
-        None => Json(ApiResponse::not_found("编译记录不存在")),
+        Some(compiled) => ApiResponse::success(compiled, "编译详情"),
+        None => ApiResponse::not_found("编译记录不存在"),
     }
 }
 
 pub async fn list_rules_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<CompilationRule>>> {
+) -> ApiResponse<Vec<CompilationRule>> {
     let rules = QueryCompiler::list_rules().await;
-    Json(ApiResponse::success(rules, "编译规则列表"))
+    ApiResponse::success(rules, "编译规则列表")
 }
 
 pub async fn update_rule_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateRuleRequest>,
-) -> Json<ApiResponse<CompilationRule>> {
+) -> ApiResponse<CompilationRule> {
     let rule_type = CompilationRuleType::from_str(&id);
 
     if let Some(enabled) = req.enabled {
@@ -1144,15 +1144,15 @@ pub async fn update_rule_handler(
         };
 
         return match result {
-            Ok(rule) => Json(ApiResponse::success(rule, "规则已更新")),
-            Err(e) => Json(ApiResponse::from(e)),
+            Ok(rule) => ApiResponse::success(rule, "规则已更新"),
+            Err(e) => ApiResponse::from(e),
         };
     }
 
     let rules = QueryCompiler::list_rules().await;
     match rules.iter().find(|r| r.rule_type == rule_type) {
-        Some(rule) => Json(ApiResponse::success(rule.clone(), "规则详情")),
-        None => Json(ApiResponse::not_found("规则不存在")),
+        Some(rule) => ApiResponse::success(rule.clone(), "规则详情"),
+        None => ApiResponse::not_found("规则不存在"),
     }
 }
 
@@ -1168,9 +1168,9 @@ pub async fn update_rule_handler(
 )]
 pub async fn get_compilation_stats_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<CompilationStats>> {
+) -> ApiResponse<CompilationStats> {
     let stats = QueryCompiler::get_compilation_stats().await;
-    Json(ApiResponse::success(stats, "编译统计"))
+    ApiResponse::success(stats, "编译统计")
 }
 
 // ==================== API 处理器: 查询计划 ====================
@@ -1178,10 +1178,10 @@ pub async fn get_compilation_stats_handler(
 pub async fn create_plan_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreatePlanRequest>,
-) -> Json<ApiResponse<ExecutionPlan>> {
+) -> ApiResponse<ExecutionPlan> {
     match QueryPlanner::create_plan(req.query_hash, req.field_paths).await {
-        Ok(plan) => Json(ApiResponse::success(plan, "计划创建成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(plan) => ApiResponse::success(plan, "计划创建成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1201,10 +1201,10 @@ pub async fn create_plan_handler(
 pub async fn get_plan_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<ExecutionPlan>> {
+) -> ApiResponse<ExecutionPlan> {
     match QueryPlanner::get_plan(&id).await {
-        Some(plan) => Json(ApiResponse::success(plan, "计划详情")),
-        None => Json(ApiResponse::not_found("计划不存在")),
+        Some(plan) => ApiResponse::success(plan, "计划详情"),
+        None => ApiResponse::not_found("计划不存在"),
     }
 }
 
@@ -1221,10 +1221,10 @@ pub async fn get_plan_handler(
 pub async fn compare_plans_handler(
     State(_state): State<AppState>,
     Json(req): Json<ComparePlansRequest>,
-) -> Json<ApiResponse<PlanCompareResult>> {
+) -> ApiResponse<PlanCompareResult> {
     match QueryPlanner::compare_plans(req.plan_id_a, req.plan_id_b).await {
-        Ok(result) => Json(ApiResponse::success(result, "计划对比完成")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(result) => ApiResponse::success(result, "计划对比完成"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1241,24 +1241,24 @@ pub async fn compare_plans_handler(
 pub async fn get_plan_cost_handler(
     State(_state): State<AppState>,
     Query(params): Query<StrategyQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let plan_id = params.strategy.unwrap_or_default();
     match QueryPlanner::get_plan_cost(&plan_id).await {
-        Ok(cost) => Json(ApiResponse::success(
+        Ok(cost) => ApiResponse::success(
             serde_json::json!({ "plan_id": plan_id, "estimated_cost": cost }),
             "计划成本",
-        )),
-        Err(e) => Json(ApiResponse::from(e)),
+        ),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
 pub async fn optimize_plan_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<ExecutionPlan>> {
+) -> ApiResponse<ExecutionPlan> {
     match QueryPlanner::optimize_plan(&id).await {
-        Ok(plan) => Json(ApiResponse::success(plan, "计划优化完成")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(plan) => ApiResponse::success(plan, "计划优化完成"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1274,9 +1274,9 @@ pub async fn optimize_plan_handler(
 )]
 pub async fn get_planner_stats_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<PlannerStats>> {
+) -> ApiResponse<PlannerStats> {
     let stats = QueryPlanner::get_planner_stats().await;
-    Json(ApiResponse::success(stats, "计划统计"))
+    ApiResponse::success(stats, "计划统计")
 }
 
 // ==================== API 处理器: 执行加速 ====================
@@ -1294,7 +1294,7 @@ pub async fn get_planner_stats_handler(
 pub async fn accelerate_handler(
     State(_state): State<AppState>,
     Json(req): Json<AccelerateRequest>,
-) -> Json<ApiResponse<AccelerationResult>> {
+) -> ApiResponse<AccelerationResult> {
     let strategies = req.strategies.map(|strats| {
         strats
             .iter()
@@ -1304,8 +1304,8 @@ pub async fn accelerate_handler(
 
     match ExecutionAccelerator::accelerate(req.original_time_ms, req.field_count, strategies).await
     {
-        Ok(result) => Json(ApiResponse::success(result, "加速完成")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(result) => ApiResponse::success(result, "加速完成"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1321,9 +1321,9 @@ pub async fn accelerate_handler(
 )]
 pub async fn get_strategy_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<AccelerationConfig>>> {
+) -> ApiResponse<Vec<AccelerationConfig>> {
     let configs = ExecutionAccelerator::get_strategy().await;
-    Json(ApiResponse::success(configs, "加速策略列表"))
+    ApiResponse::success(configs, "加速策略列表")
 }
 
 #[utoipa::path(
@@ -1338,9 +1338,9 @@ pub async fn get_strategy_handler(
 )]
 pub async fn get_improvement_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<AccelerationResult>>> {
+) -> ApiResponse<Vec<AccelerationResult>> {
     let improvements = ExecutionAccelerator::measure_improvement().await;
-    Json(ApiResponse::success(improvements, "加速改进详情"))
+    ApiResponse::success(improvements, "加速改进详情")
 }
 
 #[utoipa::path(
@@ -1356,22 +1356,22 @@ pub async fn get_improvement_handler(
 pub async fn get_acceleration_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<StrategyQuery>,
-) -> Json<ApiResponse<Vec<AccelerationResult>>> {
+) -> ApiResponse<Vec<AccelerationResult>> {
     let limit = params.strategy.and_then(|s| s.parse::<u32>().ok());
     let history = ExecutionAccelerator::get_acceleration_history(limit).await;
-    Json(ApiResponse::success(history, "加速历史"))
+    ApiResponse::success(history, "加速历史")
 }
 
 pub async fn configure_strategy_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<ConfigureStrategyRequest>,
-) -> Json<ApiResponse<AccelerationConfig>> {
+) -> ApiResponse<AccelerationConfig> {
     let strategy = AccelerationStrategy::from_str(&id);
     let enabled = req.enabled.unwrap_or(true);
     match ExecutionAccelerator::configure_strategy(strategy, enabled, req.parameters).await {
-        Ok(config) => Json(ApiResponse::success(config, "策略配置已更新")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(config) => ApiResponse::success(config, "策略配置已更新"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1387,9 +1387,9 @@ pub async fn configure_strategy_handler(
 )]
 pub async fn get_performance_profile_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<PerformanceProfile>> {
+) -> ApiResponse<PerformanceProfile> {
     let profile = ExecutionAccelerator::get_performance_profile().await;
-    Json(ApiResponse::success(profile, "性能画像"))
+    ApiResponse::success(profile, "性能画像")
 }
 
 #[cfg(test)]

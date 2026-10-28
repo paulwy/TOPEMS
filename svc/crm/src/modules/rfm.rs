@@ -342,15 +342,15 @@ pub async fn analyze_rfm(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
     Json(req): Json<RfmConfig>,
-) -> Json<ApiResponse<Vec<RfmRecord>>> {
+) -> ApiResponse<Vec<RfmRecord>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -398,9 +398,9 @@ pub async fn analyze_rfm(
         Ok(rows) => rows,
         Err(e) => {
             tracing::error!("[rfm] 查询客户订单聚合失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
+            return ApiResponse::from(TopemsError::Internal(
                 "RFM 分析失败：无法查询订单数据".to_string(),
-            )));
+            ));
         }
     };
 
@@ -442,12 +442,10 @@ pub async fn analyze_rfm(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
-    Json(ApiResponse::success(records, "RFM 分析完成"))
+    ApiResponse::success(records, "RFM 分析完成")
 }
 
 /// GET /rfm/segments — 获取所有分群及统计
@@ -468,15 +466,15 @@ pub async fn get_segments(
     >,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<Vec<SegmentStats>>> {
+) -> ApiResponse<Vec<SegmentStats>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -523,9 +521,7 @@ pub async fn get_segments(
         Ok(rows) => rows.into_iter().map(|r| (r.segment.clone(), r)).collect(),
         Err(e) => {
             tracing::error!("[rfm] 查询分群统计失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "获取分群统计失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("获取分群统计失败".to_string()));
         }
     };
 
@@ -554,7 +550,7 @@ pub async fn get_segments(
         }
     }
 
-    Json(ApiResponse::success(stats, "获取分群统计成功"))
+    ApiResponse::success(stats, "获取分群统计成功")
 }
 
 /// GET /rfm/customer/{id} — 获取单个客户的 RFM 记录
@@ -580,15 +576,15 @@ async fn get_customer_rfm(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<RfmRecord>> {
+) -> ApiResponse<RfmRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -655,16 +651,14 @@ async fn get_customer_rfm(
                 rfm_score: row.rfm_score,
                 segment: RfmSegment::from_str(&row.segment),
             };
-            Json(ApiResponse::success(record, "获取客户 RFM 记录成功"))
+            ApiResponse::success(record, "获取客户 RFM 记录成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
             "未找到该客户的 RFM 记录，请先执行 RFM 分析".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("[rfm] 查询客户 RFM 记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取客户 RFM 记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取客户 RFM 记录失败".to_string()))
         }
     }
 }

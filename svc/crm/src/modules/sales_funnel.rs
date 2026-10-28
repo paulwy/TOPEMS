@@ -1,7 +1,7 @@
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
-    Json, Router,
+    Router,
 };
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -93,7 +93,7 @@ async fn get_stage_opportunities_tail(
     Extension(claims): Extension<Claims>,
     Path((stage, _tail)): Path<(String, String)>,
     Query(params): Query<FunnelQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     get_stage_opportunities(
         State(state),
         Extension(txn_arc),
@@ -121,15 +121,15 @@ pub async fn get_funnel_data(
     >,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<FunnelQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let stage_order = [
@@ -174,13 +174,13 @@ pub async fn get_funnel_data(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "stages": stages,
             "stage_order": stage_order
         }),
         "获取销售漏斗数据成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -200,15 +200,15 @@ pub async fn get_funnel_metrics(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<FunnelMetrics>> {
+) -> ApiResponse<FunnelMetrics> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let result = sqlx::query(
@@ -249,7 +249,7 @@ pub async fn get_funnel_metrics(
 
             let weighted_value = weighted_result.unwrap_or(Decimal::from(0));
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 FunnelMetrics {
                     total_opportunities: total_count,
                     total_value,
@@ -258,13 +258,11 @@ pub async fn get_funnel_metrics(
                     weighted_value,
                 },
                 "获取销售漏斗指标成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取漏斗指标失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取销售漏斗指标失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取销售漏斗指标失败".to_string()))
         }
     }
 }
@@ -286,15 +284,15 @@ pub async fn get_funnel_conversion(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<FunnelConversion>>> {
+) -> ApiResponse<Vec<FunnelConversion>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let stage_order = ["lead", "qualified", "proposal", "negotiation", "closed_won"];
@@ -332,7 +330,7 @@ pub async fn get_funnel_conversion(
         }
     }
 
-    Json(ApiResponse::success(conversions, "获取销售漏斗转化率成功"))
+    ApiResponse::success(conversions, "获取销售漏斗转化率成功")
 }
 
 #[utoipa::path(
@@ -352,15 +350,15 @@ pub async fn get_funnel_trend(
     >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<FunnelQueryParams>,
-) -> Json<ApiResponse<Vec<FunnelTrend>>> {
+) -> ApiResponse<Vec<FunnelTrend>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let period_type = params.period_type.unwrap_or_else(|| "month".to_string());
@@ -401,13 +399,11 @@ pub async fn get_funnel_trend(
                 })
                 .collect();
 
-            Json(ApiResponse::success(trends, "获取销售漏斗趋势成功"))
+            ApiResponse::success(trends, "获取销售漏斗趋势成功")
         }
         Err(e) => {
             tracing::error!("获取漏斗趋势失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取销售漏斗趋势失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取销售漏斗趋势失败".to_string()))
         }
     }
 }
@@ -434,15 +430,15 @@ pub async fn get_stage_opportunities(
     Extension(claims): Extension<Claims>,
     Path(stage): Path<String>,
     Query(params): Query<FunnelQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1) as i64;
@@ -475,7 +471,7 @@ pub async fn get_stage_opportunities(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": opportunities,
                     "total": total,
@@ -484,13 +480,11 @@ pub async fn get_stage_opportunities(
                     "stage": stage
                 }),
                 "获取阶段商机列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取阶段商机失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取阶段商机失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取阶段商机失败".to_string()))
         }
     }
 }

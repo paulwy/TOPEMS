@@ -76,11 +76,11 @@ pub fn create_routes(pool: PgPool) -> Router {
 async fn get_benefits(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<ProjectBenefit>>> {
+) -> ApiResponse<Vec<ProjectBenefit>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
 
     let result = sqlx::query_as::<_, ProjectBenefit>(
@@ -91,10 +91,10 @@ async fn get_benefits(
     .await;
 
     match result {
-        Ok(benefits) => Json(ApiResponse::success(benefits, "获取项目效益分析列表成功")),
+        Ok(benefits) => ApiResponse::success(benefits, "获取项目效益分析列表成功"),
         Err(e) => {
             tracing::error!("获取项目效益分析列表失败: {}", e);
-            Json(ApiResponse::server_error("获取项目效益分析列表失败"))
+            ApiResponse::server_error("获取项目效益分析列表失败")
         }
     }
 }
@@ -116,11 +116,11 @@ async fn get_benefits(
 async fn get_analysis(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
 
     let benefits_result = sqlx::query_as::<_, ProjectBenefit>(
@@ -134,7 +134,7 @@ async fn get_analysis(
         Ok(b) => b,
         Err(e) => {
             tracing::error!("获取效益数据失败: {}", e);
-            return Json(ApiResponse::server_error("获取效益数据失败"));
+            return ApiResponse::server_error("获取效益数据失败");
         }
     };
 
@@ -205,7 +205,7 @@ async fn get_analysis(
         })).collect::<Vec<_>>(),
     });
 
-    Json(ApiResponse::success(analysis, "获取项目效益综合分析成功"))
+    ApiResponse::success(analysis, "获取项目效益综合分析成功")
 }
 
 #[utoipa::path(
@@ -229,11 +229,11 @@ async fn calculate_benefits(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateBenefitRequest>,
-) -> Json<ApiResponse<ProjectBenefit>> {
+) -> ApiResponse<ProjectBenefit> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
 
     let id = Uuid::new_v4();
@@ -325,10 +325,10 @@ async fn calculate_benefits(
     .await;
 
     match result {
-        Ok(benefit) => Json(ApiResponse::success(benefit, "计算项目效益分析成功")),
+        Ok(benefit) => ApiResponse::success(benefit, "计算项目效益分析成功"),
         Err(e) => {
             tracing::error!("计算项目效益分析失败: {}", e);
-            Json(ApiResponse::server_error("计算项目效益分析失败"))
+            ApiResponse::server_error("计算项目效益分析失败")
         }
     }
 }

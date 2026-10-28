@@ -1,7 +1,7 @@
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
-    Json, Router,
+    Router,
 };
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
@@ -86,15 +86,15 @@ pub async fn get_performance_reports(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -250,7 +250,7 @@ pub async fn get_performance_reports(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "performances": performances,
                     "total": total,
@@ -258,13 +258,11 @@ pub async fn get_performance_reports(
                     "page_size": page_size
                 }),
                 "获取供应商绩效报表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取供应商绩效报表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取供应商绩效报表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取供应商绩效报表失败")
         }
     }
 }
@@ -290,15 +288,15 @@ pub async fn get_performance_report(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -331,15 +329,11 @@ pub async fn get_performance_report(
     let (supplier_name, category, status, contact_person) = match supplier_info {
         Ok(Some(s)) => s,
         Ok(None) => {
-            return Json(ApiResponse::<serde_json::Value>::not_found(
-                "供应商不存在或已删除",
-            ));
+            return ApiResponse::<serde_json::Value>::not_found("供应商不存在或已删除");
         }
         Err(e) => {
             tracing::error!("查询供应商信息失败: {}", e);
-            return Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询供应商信息失败",
-            ));
+            return ApiResponse::<serde_json::Value>::server_error("查询供应商信息失败");
         }
     };
 
@@ -408,15 +402,11 @@ pub async fn get_performance_report(
     let performance = match performance {
         Ok(Some(p)) => p,
         Ok(None) => {
-            return Json(ApiResponse::<serde_json::Value>::not_found(
-                "未找到供应商绩效数据",
-            ));
+            return ApiResponse::<serde_json::Value>::not_found("未找到供应商绩效数据");
         }
         Err(e) => {
             tracing::error!("查询供应商绩效失败: {}", e);
-            return Json(ApiResponse::<serde_json::Value>::server_error(
-                "查询供应商绩效失败",
-            ));
+            return ApiResponse::<serde_json::Value>::server_error("查询供应商绩效失败");
         }
     };
 
@@ -493,7 +483,7 @@ pub async fn get_performance_report(
         "products": products
     });
 
-    Json(ApiResponse::success(result, "获取供应商绩效详情成功"))
+    ApiResponse::success(result, "获取供应商绩效详情成功")
 }
 
 #[utoipa::path(
@@ -514,15 +504,15 @@ pub async fn compare_supplier_performance(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -543,9 +533,7 @@ pub async fn compare_supplier_performance(
         .collect();
 
     if supplier_ids.is_empty() {
-        return Json(ApiResponse::<serde_json::Value>::bad_request(
-            "请至少选择一个供应商ID",
-        ));
+        return ApiResponse::<serde_json::Value>::bad_request("请至少选择一个供应商ID");
     }
 
     let placeholders: Vec<String> = (2..=supplier_ids.len() + 1)
@@ -636,13 +624,11 @@ pub async fn compare_supplier_performance(
                 ]
             });
 
-            Json(ApiResponse::success(comparison, "供应商绩效对比成功"))
+            ApiResponse::success(comparison, "供应商绩效对比成功")
         }
         Err(e) => {
             tracing::error!("供应商绩效对比失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "供应商绩效对比失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("供应商绩效对比失败")
         }
     }
 }
@@ -665,15 +651,15 @@ pub async fn get_performance_trend(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -764,13 +750,11 @@ pub async fn get_performance_trend(
                 "trend_data": trend_data
             });
 
-            Json(ApiResponse::success(result, "获取供应商绩效趋势成功"))
+            ApiResponse::success(result, "获取供应商绩效趋势成功")
         }
         Err(e) => {
             tracing::error!("获取供应商绩效趋势失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取供应商绩效趋势失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取供应商绩效趋势失败")
         }
     }
 }
@@ -792,15 +776,15 @@ pub async fn get_top_suppliers(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -909,7 +893,7 @@ pub async fn get_top_suppliers(
         "top_by_orders": top_by_orders
     });
 
-    Json(ApiResponse::success(result, "获取TOP供应商成功"))
+    ApiResponse::success(result, "获取TOP供应商成功")
 }
 
 #[utoipa::path(
@@ -930,15 +914,15 @@ pub async fn export_performance_report(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -1049,13 +1033,11 @@ pub async fn export_performance_report(
                 "data": performances
             });
 
-            Json(ApiResponse::success(report, "导出供应商绩效报表成功"))
+            ApiResponse::success(report, "导出供应商绩效报表成功")
         }
         Err(e) => {
             tracing::error!("导出供应商绩效报表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "导出供应商绩效报表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("导出供应商绩效报表失败")
         }
     }
 }
@@ -1077,15 +1059,15 @@ pub async fn get_score_level_distribution(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -1157,7 +1139,7 @@ pub async fn get_score_level_distribution(
         ]
     });
 
-    Json(ApiResponse::success(result, "获取评分等级分布成功"))
+    ApiResponse::success(result, "获取评分等级分布成功")
 }
 
 #[utoipa::path(
@@ -1178,15 +1160,15 @@ pub async fn get_performance_summary(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -1313,7 +1295,7 @@ pub async fn get_performance_summary(
         "category_scores": category_scores_json
     });
 
-    Json(ApiResponse::success(result, "获取绩效汇总成功"))
+    ApiResponse::success(result, "获取绩效汇总成功")
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]

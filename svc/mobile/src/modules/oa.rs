@@ -174,7 +174,7 @@ pub struct AnnouncementQuery {
 pub async fn list_meetings(
     State(pool): State<PgPool>,
     Query(q): Query<MeetingQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tid = tenant_id();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
@@ -201,12 +201,12 @@ pub async fn list_meetings(
             .fetch_one(&pool)
             .await
             .unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({"items": rows, "total": total, "page": page, "page_size": page_size}),
                 "ok",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -226,7 +226,7 @@ pub async fn list_meetings(
 pub async fn get_meeting(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<OaMeeting>> {
+) -> ApiResponse<OaMeeting> {
     match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
         "SELECT * FROM mobile.oa_meetings WHERE id = $1"
@@ -235,16 +235,16 @@ pub async fn get_meeting(
     .fetch_optional(&pool)
     .await
     {
-        Ok(Some(m)) => Json(ApiResponse::success(m, "ok")),
-        Ok(None) => Json(ApiResponse::not_found("会议不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(Some(m)) => ApiResponse::success(m, "ok"),
+        Ok(None) => ApiResponse::not_found("会议不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
 pub async fn create_meeting(
     State(pool): State<PgPool>,
     Json(req): Json<CreateMeetingRequest>,
-) -> Json<ApiResponse<OaMeeting>> {
+) -> ApiResponse<OaMeeting> {
     let tid = tenant_id();
     let id = Uuid::new_v4();
     let start = DateTime::parse_from_rfc3339(&req.start_time)
@@ -275,8 +275,8 @@ pub async fn create_meeting(
     .fetch_one(&pool)
     .await
     {
-        Ok(m) => Json(ApiResponse::success(m, "创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
+        Ok(m) => ApiResponse::success(m, "创建成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建失败", e)),
     }
 }
 
@@ -284,7 +284,7 @@ pub async fn update_meeting(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<OaMeeting>> {
+) -> ApiResponse<OaMeeting> {
     let title = req.get("title").and_then(|v| v.as_str().map(String::from));
     let description = req
         .get("description")
@@ -311,16 +311,13 @@ pub async fn update_meeting(
     .fetch_optional(&pool)
     .await
     {
-        Ok(Some(m)) => Json(ApiResponse::success(m, "更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("会议不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+        Ok(Some(m)) => ApiResponse::success(m, "更新成功"),
+        Ok(None) => ApiResponse::not_found("会议不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
 }
 
-pub async fn delete_meeting(
-    State(pool): State<PgPool>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+pub async fn delete_meeting(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> ApiResponse<()> {
     match sqlx::query(only_own_schema_query!(
         "mobile",
         "DELETE FROM mobile.oa_meetings WHERE id = $1"
@@ -329,9 +326,9 @@ pub async fn delete_meeting(
     .execute(&pool)
     .await
     {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("会议不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
+        Ok(_) => ApiResponse::not_found("会议不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
     }
 }
 
@@ -351,7 +348,7 @@ pub async fn delete_meeting(
 pub async fn join_meeting(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<OaMeeting>> {
+) -> ApiResponse<OaMeeting> {
     match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_meetings SET status = 'in_progress', updated_at = NOW() WHERE id = $1 RETURNING *"
@@ -360,9 +357,9 @@ pub async fn join_meeting(
     .fetch_optional(&pool)
     .await
     {
-        Ok(Some(m)) => Json(ApiResponse::success(m, "已加入会议")),
-        Ok(None) => Json(ApiResponse::not_found("会议不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("操作失败", e))),
+        Ok(Some(m)) => ApiResponse::success(m, "已加入会议"),
+        Ok(None) => ApiResponse::not_found("会议不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("操作失败", e)),
     }
 }
 
@@ -382,7 +379,7 @@ pub async fn join_meeting(
 pub async fn leave_meeting(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<OaMeeting>> {
+) -> ApiResponse<OaMeeting> {
     match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_meetings SET status = 'completed', updated_at = NOW() WHERE id = $1 RETURNING *"
@@ -391,9 +388,9 @@ pub async fn leave_meeting(
     .fetch_optional(&pool)
     .await
     {
-        Ok(Some(m)) => Json(ApiResponse::success(m, "已离开会议")),
-        Ok(None) => Json(ApiResponse::not_found("会议不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("操作失败", e))),
+        Ok(Some(m)) => ApiResponse::success(m, "已离开会议"),
+        Ok(None) => ApiResponse::not_found("会议不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("操作失败", e)),
     }
 }
 
@@ -412,7 +409,7 @@ pub async fn leave_meeting(
 pub async fn list_calendar_events(
     State(pool): State<PgPool>,
     Query(_q): Query<CalendarEventQuery>,
-) -> Json<ApiResponse<Vec<OaCalendarEvent>>> {
+) -> ApiResponse<Vec<OaCalendarEvent>> {
     let tid = tenant_id();
     match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
         "mobile",
@@ -422,8 +419,8 @@ pub async fn list_calendar_events(
     .fetch_all(&pool)
     .await
     {
-        Ok(rows) => Json(ApiResponse::success(rows, "ok")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(rows) => ApiResponse::success(rows, "ok"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -450,7 +447,7 @@ async fn fetch_events_in_range(
 pub async fn get_schedule_event(
     State(pool): State<PgPool>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
-) -> Json<ApiResponse<Option<OaCalendarEvent>>> {
+) -> ApiResponse<Option<OaCalendarEvent>> {
     let tid = tenant_id();
     match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
         "mobile",
@@ -461,15 +458,13 @@ pub async fn get_schedule_event(
     .fetch_optional(&pool)
     .await
     {
-        Ok(row) => Json(ApiResponse::success(row, "ok")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(row) => ApiResponse::success(row, "ok"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
 /// 今日事件（前端 GET /schedule/events/today）
-pub async fn list_today_events(
-    State(pool): State<PgPool>,
-) -> Json<ApiResponse<Vec<OaCalendarEvent>>> {
+pub async fn list_today_events(State(pool): State<PgPool>) -> ApiResponse<Vec<OaCalendarEvent>> {
     let now = chrono::Utc::now();
     let start = DateTime::<Utc>::from_naive_utc_and_offset(
         now.date_naive().and_hms_opt(0, 0, 0).unwrap(),
@@ -477,15 +472,13 @@ pub async fn list_today_events(
     );
     let end = start + chrono::Duration::days(1);
     match fetch_events_in_range(&pool, start, end).await {
-        Ok(rows) => Json(ApiResponse::success(rows, "ok")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(rows) => ApiResponse::success(rows, "ok"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
 /// 本周事件（前端 GET /schedule/events/week）
-pub async fn list_week_events(
-    State(pool): State<PgPool>,
-) -> Json<ApiResponse<Vec<OaCalendarEvent>>> {
+pub async fn list_week_events(State(pool): State<PgPool>) -> ApiResponse<Vec<OaCalendarEvent>> {
     let now = chrono::Utc::now();
     let today = now.date_naive();
     let weekday = today.weekday().num_days_from_monday();
@@ -494,8 +487,8 @@ pub async fn list_week_events(
         DateTime::<Utc>::from_naive_utc_and_offset(monday.and_hms_opt(0, 0, 0).unwrap(), Utc);
     let end = start + chrono::Duration::days(7);
     match fetch_events_in_range(&pool, start, end).await {
-        Ok(rows) => Json(ApiResponse::success(rows, "ok")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(rows) => ApiResponse::success(rows, "ok"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -509,7 +502,7 @@ pub struct MonthEventParams {
 pub async fn list_month_events(
     State(pool): State<PgPool>,
     Query(params): Query<MonthEventParams>,
-) -> Json<ApiResponse<Vec<OaCalendarEvent>>> {
+) -> ApiResponse<Vec<OaCalendarEvent>> {
     let now = chrono::Utc::now();
     let year = params.year.unwrap_or(now.year());
     let month = params
@@ -545,8 +538,8 @@ pub async fn list_month_events(
         )
     };
     match fetch_events_in_range(&pool, start, end).await {
-        Ok(rows) => Json(ApiResponse::success(rows, "ok")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(rows) => ApiResponse::success(rows, "ok"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -563,7 +556,7 @@ pub struct MyEventsParams {
 pub async fn list_my_events(
     State(pool): State<PgPool>,
     Query(params): Query<MyEventsParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tid = tenant_id();
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
@@ -589,19 +582,19 @@ pub async fn list_my_events(
         {
             Ok(r) => r,
             Err(e) => {
-                return Json(ApiResponse::from(TopemsError::internal("查询失败", e)));
+                return ApiResponse::from(TopemsError::internal("查询失败", e));
             }
         };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "items": events, "total": events.len() }),
         "ok",
-    ))
+    )
 }
 
 /// 我参与的事件（前端 GET /schedule/events/attending → 空列表占位，需 attendees 表）
-pub async fn list_attending_events() -> Json<ApiResponse<Vec<OaCalendarEvent>>> {
-    Json(ApiResponse::success(Vec::new(), "ok"))
+pub async fn list_attending_events() -> ApiResponse<Vec<OaCalendarEvent>> {
+    ApiResponse::success(Vec::new(), "ok")
 }
 
 /// 更新事件状态（前端 PUT /schedule/events/{id}/status → 占位兜底）
@@ -609,7 +602,7 @@ pub async fn update_event_status(
     State(pool): State<PgPool>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tid = tenant_id();
     let status = payload
         .get("status")
@@ -624,11 +617,11 @@ pub async fn update_event_status(
     .execute(&pool)
     .await
     {
-        Ok(_) => Json(ApiResponse::success(
+        Ok(_) => ApiResponse::success(
             (),
             &("事件状态已更新（占位：status=".to_owned() + status + "）"),
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+        ),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
 }
 
@@ -637,7 +630,7 @@ pub async fn add_event_attendee(
     State(pool): State<PgPool>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Json(_payload): Json<serde_json::Value>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tid = tenant_id();
     match sqlx::query(only_own_schema_query!(
         "mobile",
@@ -648,11 +641,8 @@ pub async fn add_event_attendee(
     .execute(&pool)
     .await
     {
-        Ok(_) => Json(ApiResponse::success(
-            (),
-            "参与者已添加（占位实现，待 attendees 表）",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+        Ok(_) => ApiResponse::success((), "参与者已添加（占位实现，待 attendees 表）"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
 }
 
@@ -660,7 +650,7 @@ pub async fn add_event_attendee(
 pub async fn remove_event_attendee(
     State(pool): State<PgPool>,
     axum::extract::Path((id, _user_id)): axum::extract::Path<(Uuid, String)>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tid = tenant_id();
     match sqlx::query(only_own_schema_query!(
         "mobile",
@@ -671,18 +661,15 @@ pub async fn remove_event_attendee(
     .execute(&pool)
     .await
     {
-        Ok(_) => Json(ApiResponse::success(
-            (),
-            "参与者已移除（占位实现，待 attendees 表）",
-        )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+        Ok(_) => ApiResponse::success((), "参与者已移除（占位实现，待 attendees 表）"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
 }
 
 pub async fn create_calendar_event(
     State(pool): State<PgPool>,
     Json(req): Json<CreateCalendarEventRequest>,
-) -> Json<ApiResponse<OaCalendarEvent>> {
+) -> ApiResponse<OaCalendarEvent> {
     let tid = tenant_id();
     let id = Uuid::new_v4();
     let start = DateTime::parse_from_rfc3339(&req.start_time)
@@ -711,8 +698,8 @@ pub async fn create_calendar_event(
     .fetch_one(&pool)
     .await
     {
-        Ok(e) => Json(ApiResponse::success(e, "创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
+        Ok(e) => ApiResponse::success(e, "创建成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建失败", e)),
     }
 }
 
@@ -733,7 +720,7 @@ pub async fn update_calendar_event(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<OaCalendarEvent>> {
+) -> ApiResponse<OaCalendarEvent> {
     let title = req.get("title").and_then(|v| v.as_str().map(String::from));
     let description = req
         .get("description")
@@ -755,16 +742,16 @@ pub async fn update_calendar_event(
     .fetch_optional(&pool)
     .await
     {
-        Ok(Some(e)) => Json(ApiResponse::success(e, "更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("事件不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+        Ok(Some(e)) => ApiResponse::success(e, "更新成功"),
+        Ok(None) => ApiResponse::not_found("事件不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
 }
 
 pub async fn delete_calendar_event(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     match sqlx::query(only_own_schema_query!(
         "mobile",
         "DELETE FROM mobile.oa_calendar_events WHERE id = $1"
@@ -773,9 +760,9 @@ pub async fn delete_calendar_event(
     .execute(&pool)
     .await
     {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("事件不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
+        Ok(_) => ApiResponse::not_found("事件不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
     }
 }
 
@@ -794,7 +781,7 @@ pub async fn delete_calendar_event(
 pub async fn list_oa_tasks(
     State(pool): State<PgPool>,
     Query(q): Query<OaTaskQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tid = tenant_id();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
@@ -823,12 +810,12 @@ pub async fn list_oa_tasks(
             .fetch_one(&pool)
             .await
             .unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({"items": rows, "total": total, "page": page, "page_size": page_size}),
                 "ok",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -845,10 +832,7 @@ pub async fn list_oa_tasks(
     ),
     tag = "tasks"
 )]
-pub async fn get_oa_task(
-    State(pool): State<PgPool>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<OaTask>> {
+pub async fn get_oa_task(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> ApiResponse<OaTask> {
     match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
         "SELECT * FROM mobile.oa_tasks WHERE id = $1"
@@ -857,16 +841,16 @@ pub async fn get_oa_task(
     .fetch_optional(&pool)
     .await
     {
-        Ok(Some(t)) => Json(ApiResponse::success(t, "ok")),
-        Ok(None) => Json(ApiResponse::not_found("任务不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(Some(t)) => ApiResponse::success(t, "ok"),
+        Ok(None) => ApiResponse::not_found("任务不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
 pub async fn create_oa_task(
     State(pool): State<PgPool>,
     Json(req): Json<CreateOaTaskRequest>,
-) -> Json<ApiResponse<OaTask>> {
+) -> ApiResponse<OaTask> {
     let tid = tenant_id();
     let id = Uuid::new_v4();
     let due = req.due_date.and_then(|d| {
@@ -895,8 +879,8 @@ pub async fn create_oa_task(
     .fetch_one(&pool)
     .await
     {
-        Ok(t) => Json(ApiResponse::success(t, "创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
+        Ok(t) => ApiResponse::success(t, "创建成功"),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建失败", e)),
     }
 }
 
@@ -904,7 +888,7 @@ pub async fn update_oa_task(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<OaTask>> {
+) -> ApiResponse<OaTask> {
     let title = req.get("title").and_then(|v| v.as_str().map(String::from));
     let description = req
         .get("description")
@@ -931,16 +915,13 @@ pub async fn update_oa_task(
     .fetch_optional(&pool)
     .await
     {
-        Ok(Some(t)) => Json(ApiResponse::success(t, "更新成功")),
-        Ok(None) => Json(ApiResponse::not_found("任务不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+        Ok(Some(t)) => ApiResponse::success(t, "更新成功"),
+        Ok(None) => ApiResponse::not_found("任务不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
 }
 
-pub async fn delete_oa_task(
-    State(pool): State<PgPool>,
-    Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+pub async fn delete_oa_task(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> ApiResponse<()> {
     match sqlx::query(only_own_schema_query!(
         "mobile",
         "DELETE FROM mobile.oa_tasks WHERE id = $1"
@@ -949,9 +930,9 @@ pub async fn delete_oa_task(
     .execute(&pool)
     .await
     {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("任务不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
+        Ok(_) => ApiResponse::not_found("任务不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
     }
 }
 
@@ -971,7 +952,7 @@ pub async fn delete_oa_task(
 pub async fn complete_oa_task(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<OaTask>> {
+) -> ApiResponse<OaTask> {
     match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING *"
@@ -980,9 +961,9 @@ pub async fn complete_oa_task(
     .fetch_optional(&pool)
     .await
     {
-        Ok(Some(t)) => Json(ApiResponse::success(t, "任务已完成")),
-        Ok(None) => Json(ApiResponse::not_found("任务不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("操作失败", e))),
+        Ok(Some(t)) => ApiResponse::success(t, "任务已完成"),
+        Ok(None) => ApiResponse::not_found("任务不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("操作失败", e)),
     }
 }
 
@@ -1001,7 +982,7 @@ pub async fn complete_oa_task(
 pub async fn list_announcements(
     State(pool): State<PgPool>,
     Query(q): Query<AnnouncementQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tid = tenant_id();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
@@ -1028,12 +1009,12 @@ pub async fn list_announcements(
             .fetch_one(&pool)
             .await
             .unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({"items": rows, "total": total, "page": page, "page_size": page_size}),
                 "ok",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -1053,7 +1034,7 @@ pub async fn list_announcements(
 pub async fn get_announcement(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<OaAnnouncement>> {
+) -> ApiResponse<OaAnnouncement> {
     match sqlx::query_as::<_, OaAnnouncement>(only_own_schema_query!(
         "mobile",
         "SELECT * FROM mobile.oa_announcements WHERE id = $1"
@@ -1062,9 +1043,9 @@ pub async fn get_announcement(
     .fetch_optional(&pool)
     .await
     {
-        Ok(Some(a)) => Json(ApiResponse::success(a, "ok")),
-        Ok(None) => Json(ApiResponse::not_found("公告不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+        Ok(Some(a)) => ApiResponse::success(a, "ok"),
+        Ok(None) => ApiResponse::not_found("公告不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
 }
 
@@ -1084,7 +1065,7 @@ pub async fn get_announcement(
 pub async fn mark_announcement_read(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let user_id = "default_user".to_string();
     let _ = sqlx::query(only_own_schema_query!(
         "mobile",
@@ -1094,7 +1075,7 @@ pub async fn mark_announcement_read(
     .bind(&user_id)
     .execute(&pool)
     .await;
-    Json(ApiResponse::success((), "已标记已读"))
+    ApiResponse::success((), "已标记已读")
 }
 
 // ===== OA Stats =====
@@ -1109,7 +1090,7 @@ pub async fn mark_announcement_read(
     ),
     tag = "task"
 )]
-pub async fn get_oa_stats(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn get_oa_stats(State(pool): State<PgPool>) -> ApiResponse<serde_json::Value> {
     let tid = tenant_id();
     let meetings_today = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "mobile",
@@ -1135,7 +1116,7 @@ pub async fn get_oa_stats(State(pool): State<PgPool>) -> Json<ApiResponse<serde_
     .fetch_one(&pool)
     .await
     .unwrap_or(0);
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "total_meetings_today": meetings_today,
             "upcoming_meetings": meetings_today,
@@ -1151,5 +1132,5 @@ pub async fn get_oa_stats(State(pool): State<PgPool>) -> Json<ApiResponse<serde_
             ]
         }),
         "ok",
-    ))
+    )
 }

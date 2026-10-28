@@ -2,7 +2,7 @@
 // 质量管理与安全服务插件接口实现
 
 use crate::AppState;
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Router};
 use serde::{Deserialize, Serialize};
 use std::env;
 use topems_shared_boundary::only_own_schema_query;
@@ -47,7 +47,7 @@ pub struct PluginHealth {
     responses((status = 200, description = "get_plugin_info OK")),
     tag = "qms_plugin"
 )]
-pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
     let runtime_url = get_runtime_url();
     let plugin_info = PluginInfo {
         code: "qms".to_string(),
@@ -94,7 +94,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         ])),
     };
 
-    Json(ApiResponse::success(plugin_info, "QMS plugin info"))
+    ApiResponse::success(plugin_info, "QMS plugin info")
 }
 
 // Plugin health check endpoint
@@ -105,7 +105,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     responses((status = 200, description = "plugin_health_check OK")),
     tag = "qms_plugin"
 )]
-pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<PluginHealth>> {
+pub async fn plugin_health_check(State(state): State<AppState>) -> ApiResponse<PluginHealth> {
     let db_status = sqlx::query(only_own_schema_query!("qms", "SELECT 1"))
         .fetch_one(&state.pool)
         .await
@@ -120,7 +120,7 @@ pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiRespo
         database: db_status,
     };
 
-    Json(ApiResponse::success(health, "QMS plugin health check"))
+    ApiResponse::success(health, "QMS plugin health check")
 }
 
 // Create plugin routes

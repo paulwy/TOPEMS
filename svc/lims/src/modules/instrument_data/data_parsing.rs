@@ -21,10 +21,10 @@ use super::models::{InstrumentData, ParseDataRequest, ParseResult, TestItemResul
 pub async fn parse_instrument_data(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<InstrumentData>> {
+) -> ApiResponse<InstrumentData> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的数据ID")),
+        Err(_) => return ApiResponse::bad_request("无效的数据ID"),
     };
 
     let data_row = sqlx::query(
@@ -39,16 +39,16 @@ pub async fn parse_instrument_data(
             row.get::<Option<serde_json::Value>, _>("raw_data"),
             row.get::<String, _>("protocol"),
         ),
-        Ok(None) => return Json(ApiResponse::not_found("仪器数据不存在")),
+        Ok(None) => return ApiResponse::not_found("仪器数据不存在"),
         Err(e) => {
             tracing::error!("Failed to fetch instrument data: {}", e);
-            return Json(ApiResponse::server_error("获取仪器数据失败"));
+            return ApiResponse::server_error("获取仪器数据失败");
         }
     };
 
     let raw_data = match raw_data {
         Some(data) => data,
-        None => return Json(ApiResponse::bad_request("原始数据为空，无法解析")),
+        None => return ApiResponse::bad_request("原始数据为空，无法解析"),
     };
 
     let parse_result = parse_data(&protocol, &raw_data);
@@ -82,7 +82,7 @@ pub async fn parse_instrument_data(
     .await;
 
     match row {
-        Ok(Some(r)) => Json(ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             InstrumentData {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -108,11 +108,11 @@ pub async fn parse_instrument_data(
             } else {
                 "数据解析失败"
             },
-        )),
-        Ok(None) => Json(ApiResponse::not_found("仪器数据不存在")),
+        ),
+        Ok(None) => ApiResponse::not_found("仪器数据不存在"),
         Err(e) => {
             tracing::error!("Failed to update parsed data: {}", e);
-            Json(ApiResponse::server_error("解析数据失败"))
+            ApiResponse::server_error("解析数据失败")
         }
     }
 }
@@ -130,9 +130,9 @@ pub async fn parse_instrument_data(
 pub async fn test_parse_data(
     State(_state): State<crate::shared::AppState>,
     Json(req): Json<ParseDataRequest>,
-) -> Json<ApiResponse<ParseResult>> {
+) -> ApiResponse<ParseResult> {
     let result = parse_data(&req.protocol, &req.raw_data);
-    Json(ApiResponse::success(result, "解析测试完成"))
+    ApiResponse::success(result, "解析测试完成")
 }
 
 pub fn parse_data(protocol: &str, raw_data: &serde_json::Value) -> ParseResult {

@@ -226,7 +226,7 @@ async fn list_inspection_items(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Query(query): Query<ListQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let filter = tenant_filter(&claims, &headers);
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
@@ -259,7 +259,7 @@ async fn list_inspection_items(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[qms] 检验项计数失败: {}", e);
-            return Json(ApiResponse::server_error("查询检验项失败"));
+            return ApiResponse::server_error("查询检验项失败");
         }
     };
     let fetch_sql = format!(
@@ -275,7 +275,7 @@ async fn list_inspection_items(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[qms] 检验项查询失败: {}", e);
-            return Json(ApiResponse::server_error("查询检验项失败"));
+            return ApiResponse::server_error("查询检验项失败");
         }
     };
     let items: Vec<InspectionItemResponse> = rows
@@ -294,10 +294,10 @@ async fn list_inspection_items(
             description: r.get("description"),
         })
         .collect();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "查询成功",
-    ))
+    )
 }
 
 async fn get_inspection_item(
@@ -305,7 +305,7 @@ async fn get_inspection_item(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let filter = tenant_filter(&claims, &headers);
     let mut sql = String::from(
         "SELECT id, code, name, category, specification, method, unit, standard_value, tolerance, status, description \
@@ -318,7 +318,7 @@ async fn get_inspection_item(
     }
     let row = q.fetch_optional(&state.pool).await;
     match row {
-        Ok(Some(r)) => Json(ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             serde_json::json!({
                 "id": r.get::<Uuid, _>("id"),
                 "code": r.get::<String, _>("code"),
@@ -333,11 +333,11 @@ async fn get_inspection_item(
                 "description": r.get::<Option<String>, _>("description"),
             }),
             "查询成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("检验项不存在")),
+        ),
+        Ok(None) => ApiResponse::not_found("检验项不存在"),
         Err(e) => {
             tracing::error!("[qms] 检验项查询失败: {}", e);
-            Json(ApiResponse::server_error("查询检验项失败"))
+            ApiResponse::server_error("查询检验项失败")
         }
     }
 }
@@ -347,7 +347,7 @@ async fn create_inspection_item(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateInspectionItemRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query(
         "INSERT INTO qa_inspection_items \
@@ -370,18 +370,15 @@ async fn create_inspection_item(
     match result {
         Ok(Some(r)) => {
             let id: Uuid = r.get("id");
-            Json(ApiResponse::success(
-                serde_json::json!({ "id": id }),
-                "检验项创建成功",
-            ))
+            ApiResponse::success(serde_json::json!({ "id": id }), "检验项创建成功")
         }
-        Ok(None) => Json(ApiResponse::server_error("检验项创建失败")),
+        Ok(None) => ApiResponse::server_error("检验项创建失败"),
         Err(e) => {
             tracing::error!("[qms] 检验项创建失败: {}", e);
             if e.to_string().contains("duplicate") {
-                return Json(ApiResponse::conflict("检验项编码已存在"));
+                return ApiResponse::conflict("检验项编码已存在");
             }
-            Json(ApiResponse::server_error("检验项创建失败"))
+            ApiResponse::server_error("检验项创建失败")
         }
     }
 }
@@ -392,7 +389,7 @@ async fn update_inspection_item(
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateInspectionItemRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let filter = tenant_filter(&claims, &headers);
     let result = if let Some(t) = filter {
         sqlx::query(
@@ -441,14 +438,11 @@ async fn update_inspection_item(
         .await
     };
     match result {
-        Ok(Some(_)) => Json(ApiResponse::success(
-            serde_json::json!({ "id": id }),
-            "检验项更新成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("检验项不存在")),
+        Ok(Some(_)) => ApiResponse::success(serde_json::json!({ "id": id }), "检验项更新成功"),
+        Ok(None) => ApiResponse::not_found("检验项不存在"),
         Err(e) => {
             tracing::error!("[qms] 检验项更新失败: {}", e);
-            Json(ApiResponse::server_error("检验项更新失败"))
+            ApiResponse::server_error("检验项更新失败")
         }
     }
 }
@@ -458,7 +452,7 @@ async fn delete_inspection_item(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let filter = tenant_filter(&claims, &headers);
     let result = if let Some(t) = filter {
         sqlx::query(
@@ -475,13 +469,11 @@ async fn delete_inspection_item(
             .await
     };
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("".to_string(), "检验项删除成功"))
-        }
-        Ok(_) => Json(ApiResponse::not_found("检验项不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "检验项删除成功"),
+        Ok(_) => ApiResponse::not_found("检验项不存在"),
         Err(e) => {
             tracing::error!("[qms] 检验项删除失败: {}", e);
-            Json(ApiResponse::server_error("检验项删除失败"))
+            ApiResponse::server_error("检验项删除失败")
         }
     }
 }
@@ -493,7 +485,7 @@ async fn list_sampling_plans(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Query(query): Query<ListQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let filter = tenant_filter(&claims, &headers);
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
@@ -526,7 +518,7 @@ async fn list_sampling_plans(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[qms] 抽样方案计数失败: {}", e);
-            return Json(ApiResponse::server_error("查询抽样方案失败"));
+            return ApiResponse::server_error("查询抽样方案失败");
         }
     };
     let fetch_sql = format!(
@@ -542,7 +534,7 @@ async fn list_sampling_plans(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[qms] 抽样方案查询失败: {}", e);
-            return Json(ApiResponse::server_error("查询抽样方案失败"));
+            return ApiResponse::server_error("查询抽样方案失败");
         }
     };
     let items: Vec<SamplingPlanResponse> = rows
@@ -559,10 +551,10 @@ async fn list_sampling_plans(
             description: r.get("description"),
         })
         .collect();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "查询成功",
-    ))
+    )
 }
 
 async fn get_sampling_plan(
@@ -570,7 +562,7 @@ async fn get_sampling_plan(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let filter = tenant_filter(&claims, &headers);
     let mut sql = String::from(
         "SELECT id, code, name, level, sample_size, aql, inspection_level, status, description \
@@ -583,7 +575,7 @@ async fn get_sampling_plan(
     }
     let row = q.fetch_optional(&state.pool).await;
     match row {
-        Ok(Some(r)) => Json(ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             serde_json::json!({
                 "id": r.get::<Uuid, _>("id"),
                 "code": r.get::<String, _>("code"),
@@ -596,11 +588,11 @@ async fn get_sampling_plan(
                 "description": r.get::<Option<String>, _>("description"),
             }),
             "查询成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("抽样方案不存在")),
+        ),
+        Ok(None) => ApiResponse::not_found("抽样方案不存在"),
         Err(e) => {
             tracing::error!("[qms] 抽样方案查询失败: {}", e);
-            Json(ApiResponse::server_error("查询抽样方案失败"))
+            ApiResponse::server_error("查询抽样方案失败")
         }
     }
 }
@@ -610,7 +602,7 @@ async fn create_sampling_plan(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateSamplingPlanRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query(
         "INSERT INTO qa_sampling_plans \
@@ -631,18 +623,15 @@ async fn create_sampling_plan(
     match result {
         Ok(Some(r)) => {
             let id: Uuid = r.get("id");
-            Json(ApiResponse::success(
-                serde_json::json!({ "id": id }),
-                "抽样方案创建成功",
-            ))
+            ApiResponse::success(serde_json::json!({ "id": id }), "抽样方案创建成功")
         }
-        Ok(None) => Json(ApiResponse::server_error("抽样方案创建失败")),
+        Ok(None) => ApiResponse::server_error("抽样方案创建失败"),
         Err(e) => {
             tracing::error!("[qms] 抽样方案创建失败: {}", e);
             if e.to_string().contains("duplicate") {
-                return Json(ApiResponse::conflict("抽样方案编码已存在"));
+                return ApiResponse::conflict("抽样方案编码已存在");
             }
-            Json(ApiResponse::server_error("抽样方案创建失败"))
+            ApiResponse::server_error("抽样方案创建失败")
         }
     }
 }
@@ -653,7 +642,7 @@ async fn update_sampling_plan(
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSamplingPlanRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let filter = tenant_filter(&claims, &headers);
     let base_sql = "UPDATE qa_sampling_plans SET \
         name = COALESCE($2, name), level = COALESCE($3, level), \
@@ -691,14 +680,11 @@ async fn update_sampling_plan(
         }
     };
     match result {
-        Ok(Some(_)) => Json(ApiResponse::success(
-            serde_json::json!({ "id": id }),
-            "抽样方案更新成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("抽样方案不存在")),
+        Ok(Some(_)) => ApiResponse::success(serde_json::json!({ "id": id }), "抽样方案更新成功"),
+        Ok(None) => ApiResponse::not_found("抽样方案不存在"),
         Err(e) => {
             tracing::error!("[qms] 抽样方案更新失败: {}", e);
-            Json(ApiResponse::server_error("抽样方案更新失败"))
+            ApiResponse::server_error("抽样方案更新失败")
         }
     }
 }
@@ -708,7 +694,7 @@ async fn delete_sampling_plan(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let filter = tenant_filter(&claims, &headers);
     let result = if let Some(t) = filter {
         sqlx::query(
@@ -725,13 +711,11 @@ async fn delete_sampling_plan(
             .await
     };
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("".to_string(), "抽样方案删除成功"))
-        }
-        Ok(_) => Json(ApiResponse::not_found("抽样方案不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "抽样方案删除成功"),
+        Ok(_) => ApiResponse::not_found("抽样方案不存在"),
         Err(e) => {
             tracing::error!("[qms] 抽样方案删除失败: {}", e);
-            Json(ApiResponse::server_error("抽样方案删除失败"))
+            ApiResponse::server_error("抽样方案删除失败")
         }
     }
 }
@@ -743,7 +727,7 @@ async fn list_inspection_plans(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Query(query): Query<ListQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let filter = tenant_filter(&claims, &headers);
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
@@ -778,7 +762,7 @@ async fn list_inspection_plans(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[qms] 检验方案计数失败: {}", e);
-            return Json(ApiResponse::server_error("查询检验方案失败"));
+            return ApiResponse::server_error("查询检验方案失败");
         }
     };
     let fetch_sql = format!(
@@ -794,7 +778,7 @@ async fn list_inspection_plans(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[qms] 检验方案查询失败: {}", e);
-            return Json(ApiResponse::server_error("查询检验方案失败"));
+            return ApiResponse::server_error("查询检验方案失败");
         }
     };
     let items: Vec<InspectionPlanResponse> = rows
@@ -810,10 +794,10 @@ async fn list_inspection_plans(
             description: r.get("description"),
         })
         .collect();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "查询成功",
-    ))
+    )
 }
 
 async fn get_inspection_plan(
@@ -821,7 +805,7 @@ async fn get_inspection_plan(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let filter = tenant_filter(&claims, &headers);
     let mut sql = String::from(
         "SELECT id, code, name, product_code, product_name, sampling_plan_id, status, description \
@@ -834,7 +818,7 @@ async fn get_inspection_plan(
     }
     let row = q.fetch_optional(&state.pool).await;
     match row {
-        Ok(Some(r)) => Json(ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             serde_json::json!({
                 "id": r.get::<Uuid, _>("id"),
                 "code": r.get::<String, _>("code"),
@@ -846,11 +830,11 @@ async fn get_inspection_plan(
                 "description": r.get::<Option<String>, _>("description"),
             }),
             "查询成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("检验方案不存在")),
+        ),
+        Ok(None) => ApiResponse::not_found("检验方案不存在"),
         Err(e) => {
             tracing::error!("[qms] 检验方案查询失败: {}", e);
-            Json(ApiResponse::server_error("查询检验方案失败"))
+            ApiResponse::server_error("查询检验方案失败")
         }
     }
 }
@@ -860,7 +844,7 @@ async fn create_inspection_plan(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateInspectionPlanRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query(
         "INSERT INTO qa_inspection_plans \
@@ -880,18 +864,15 @@ async fn create_inspection_plan(
     match result {
         Ok(Some(r)) => {
             let id: Uuid = r.get("id");
-            Json(ApiResponse::success(
-                serde_json::json!({ "id": id }),
-                "检验方案创建成功",
-            ))
+            ApiResponse::success(serde_json::json!({ "id": id }), "检验方案创建成功")
         }
-        Ok(None) => Json(ApiResponse::server_error("检验方案创建失败")),
+        Ok(None) => ApiResponse::server_error("检验方案创建失败"),
         Err(e) => {
             tracing::error!("[qms] 检验方案创建失败: {}", e);
             if e.to_string().contains("duplicate") {
-                return Json(ApiResponse::conflict("检验方案编码已存在"));
+                return ApiResponse::conflict("检验方案编码已存在");
             }
-            Json(ApiResponse::server_error("检验方案创建失败"))
+            ApiResponse::server_error("检验方案创建失败")
         }
     }
 }
@@ -902,7 +883,7 @@ async fn update_inspection_plan(
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateInspectionPlanRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let filter = tenant_filter(&claims, &headers);
     let base_sql = "UPDATE qa_inspection_plans SET \
         name = COALESCE($2, name), product_code = COALESCE($3, product_code), \
@@ -937,14 +918,11 @@ async fn update_inspection_plan(
         }
     };
     match result {
-        Ok(Some(_)) => Json(ApiResponse::success(
-            serde_json::json!({ "id": id }),
-            "检验方案更新成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("检验方案不存在")),
+        Ok(Some(_)) => ApiResponse::success(serde_json::json!({ "id": id }), "检验方案更新成功"),
+        Ok(None) => ApiResponse::not_found("检验方案不存在"),
         Err(e) => {
             tracing::error!("[qms] 检验方案更新失败: {}", e);
-            Json(ApiResponse::server_error("检验方案更新失败"))
+            ApiResponse::server_error("检验方案更新失败")
         }
     }
 }
@@ -954,7 +932,7 @@ async fn delete_inspection_plan(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let filter = tenant_filter(&claims, &headers);
     let result = if let Some(t) = filter {
         sqlx::query(
@@ -971,13 +949,11 @@ async fn delete_inspection_plan(
             .await
     };
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("".to_string(), "检验方案删除成功"))
-        }
-        Ok(_) => Json(ApiResponse::not_found("检验方案不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "检验方案删除成功"),
+        Ok(_) => ApiResponse::not_found("检验方案不存在"),
         Err(e) => {
             tracing::error!("[qms] 检验方案删除失败: {}", e);
-            Json(ApiResponse::server_error("检验方案删除失败"))
+            ApiResponse::server_error("检验方案删除失败")
         }
     }
 }
@@ -989,7 +965,7 @@ async fn list_plan_items(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let filter = tenant_filter(&claims, &headers);
     let mut sql = String::from(
         "SELECT pi.id, pi.item_id, i.code AS item_code, i.name AS item_name, pi.sample_qty, pi.sort_order \
@@ -1006,7 +982,7 @@ async fn list_plan_items(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[qms] 方案检验项查询失败: {}", e);
-            return Json(ApiResponse::server_error("查询方案检验项失败"));
+            return ApiResponse::server_error("查询方案检验项失败");
         }
     };
     let items: Vec<PlanItemResponse> = rows
@@ -1020,10 +996,7 @@ async fn list_plan_items(
             sort_order: r.get("sort_order"),
         })
         .collect();
-    Json(ApiResponse::success(
-        serde_json::json!({ "items": items }),
-        "查询成功",
-    ))
+    ApiResponse::success(serde_json::json!({ "items": items }), "查询成功")
 }
 
 async fn add_plan_item(
@@ -1032,7 +1005,7 @@ async fn add_plan_item(
     headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<AddPlanItemRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let filter = tenant_filter(&claims, &headers);
     // 校验方案与检验项归属（非超管按租户隔离）
     if let Some(t) = filter {
@@ -1045,7 +1018,7 @@ async fn add_plan_item(
         .await
         .unwrap_or(0);
         if ok == 0 {
-            return Json(ApiResponse::not_found("检验方案不存在"));
+            return ApiResponse::not_found("检验方案不存在");
         }
     }
     let result = sqlx::query(
@@ -1061,18 +1034,15 @@ async fn add_plan_item(
     match result {
         Ok(Some(r)) => {
             let pid: Uuid = r.get("id");
-            Json(ApiResponse::success(
-                serde_json::json!({ "id": pid }),
-                "检验项添加成功",
-            ))
+            ApiResponse::success(serde_json::json!({ "id": pid }), "检验项添加成功")
         }
-        Ok(None) => Json(ApiResponse::server_error("检验项添加失败")),
+        Ok(None) => ApiResponse::server_error("检验项添加失败"),
         Err(e) => {
             tracing::error!("[qms] 检验项添加失败: {}", e);
             if e.to_string().contains("duplicate") {
-                return Json(ApiResponse::conflict("该检验项已在方案中"));
+                return ApiResponse::conflict("该检验项已在方案中");
             }
-            Json(ApiResponse::server_error("检验项添加失败"))
+            ApiResponse::server_error("检验项添加失败")
         }
     }
 }
@@ -1082,7 +1052,7 @@ async fn remove_plan_item(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let _ = tenant_filter(&claims, &headers);
     let result =
         sqlx::query("DELETE FROM qa_inspection_plan_items WHERE plan_id = $1 AND item_id = $2")
@@ -1091,13 +1061,11 @@ async fn remove_plan_item(
             .execute(&state.pool)
             .await;
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("".to_string(), "检验项移除成功"))
-        }
-        Ok(_) => Json(ApiResponse::not_found("关联不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "检验项移除成功"),
+        Ok(_) => ApiResponse::not_found("关联不存在"),
         Err(e) => {
             tracing::error!("[qms] 检验项移除失败: {}", e);
-            Json(ApiResponse::server_error("检验项移除失败"))
+            ApiResponse::server_error("检验项移除失败")
         }
     }
 }

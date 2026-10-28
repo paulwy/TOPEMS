@@ -94,11 +94,11 @@ pub async fn list_tasks(
     Extension(_ctx): Extension<TenantContext>,
     Query(query): Query<TaskQuery>,
     headers: HeaderMap,
-) -> Json<ApiResponse<TaskListResponse>> {
+) -> ApiResponse<TaskListResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
 
     let page = query.page.unwrap_or(1).max(1);
@@ -138,10 +138,10 @@ pub async fn list_tasks(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 TaskListResponse {
                     items,
                     total,
@@ -149,12 +149,11 @@ pub async fn list_tasks(
                     page_size,
                 },
                 "任务列表获取成功",
-            ))
+            )
         }
-        (Err(e), _) | (_, Err(e)) => Json(ApiResponse::from(TopemsError::internal(
-            "获取任务列表失败",
-            e,
-        ))),
+        (Err(e), _) | (_, Err(e)) => {
+            ApiResponse::from(TopemsError::internal("获取任务列表失败", e))
+        }
     }
 }
 
@@ -177,11 +176,11 @@ pub async fn list_tasks_by_project(
     Path(project_id): Path<Uuid>,
     Query(query): Query<TaskQuery>,
     headers: HeaderMap,
-) -> Json<ApiResponse<TaskListResponse>> {
+) -> ApiResponse<TaskListResponse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
@@ -216,10 +215,10 @@ pub async fn list_tasks_by_project(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 TaskListResponse {
                     items,
                     total,
@@ -227,12 +226,11 @@ pub async fn list_tasks_by_project(
                     page_size,
                 },
                 "项目任务列表获取成功",
-            ))
+            )
         }
-        (Err(e), _) | (_, Err(e)) => Json(ApiResponse::from(TopemsError::internal(
-            "获取项目任务列表失败",
-            e,
-        ))),
+        (Err(e), _) | (_, Err(e)) => {
+            ApiResponse::from(TopemsError::internal("获取项目任务列表失败", e))
+        }
     }
 }
 
@@ -242,11 +240,11 @@ pub async fn create_task(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTaskRequest>,
-) -> Json<ApiResponse<Task>> {
+) -> ApiResponse<Task> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let tenant_id = effective_tenant_id(&ctx, &claims);
@@ -296,12 +294,12 @@ pub async fn create_task(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(task, "任务创建成功"))
+            ApiResponse::success(task, "任务创建成功")
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建任务失败", e))),
+        Err(e) => ApiResponse::from(TopemsError::internal("创建任务失败", e)),
     }
 }
 
@@ -323,11 +321,11 @@ pub async fn get_task(
     Extension(_ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Task>> {
+) -> ApiResponse<Task> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     // 多语言：locale 追加为 $2，title 的 CASE 表达式引用它
     let locale = Locale::from_headers(&headers).as_sql();
@@ -345,13 +343,13 @@ pub async fn get_task(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(task, "任务获取成功"))
+            ApiResponse::success(task, "任务获取成功")
         }
-        Ok(None) => Json(ApiResponse::not_found("任务不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("获取任务失败", e))),
+        Ok(None) => ApiResponse::not_found("任务不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("获取任务失败", e)),
     }
 }
 
@@ -361,11 +359,11 @@ pub async fn update_task(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateTaskRequest>,
-) -> Json<ApiResponse<Task>> {
+) -> ApiResponse<Task> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
     // 若仅更新状态，校验状态机（todo/in_progress/review/done/blocked）
@@ -378,10 +376,7 @@ pub async fn update_task(
         .await;
         if let Ok(Some(from)) = from {
             if !task_status_transition_valid(&from, to) {
-                return Json(ApiResponse::bad_request(&format!(
-                    "非法任务状态流转: {} -> {}",
-                    from, to
-                )));
+                return ApiResponse::bad_request(&format!("非法任务状态流转: {} -> {}", from, to));
             }
         }
     }
@@ -428,13 +423,13 @@ pub async fn update_task(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(task, "任务更新成功"))
+            ApiResponse::success(task, "任务更新成功")
         }
-        Ok(None) => Json(ApiResponse::not_found("任务不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新任务失败", e))),
+        Ok(None) => ApiResponse::not_found("任务不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新任务失败", e)),
     }
 }
 
@@ -442,11 +437,11 @@ pub async fn delete_task(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(_ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query(
         "UPDATE pm.pm_tasks SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
@@ -459,16 +454,13 @@ pub async fn delete_task(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
-                serde_json::json!({"deleted": true}),
-                "任务已删除",
-            ))
+            ApiResponse::success(serde_json::json!({"deleted": true}), "任务已删除")
         }
-        Ok(_) => Json(ApiResponse::not_found("任务不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除任务失败", e))),
+        Ok(_) => ApiResponse::not_found("任务不存在"),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除任务失败", e)),
     }
 }
 

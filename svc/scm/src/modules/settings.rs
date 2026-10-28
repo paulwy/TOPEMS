@@ -49,15 +49,15 @@ pub async fn get_settings(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -83,19 +83,17 @@ pub async fn get_settings(
                 let value: String = row.try_get("value").unwrap_or_default();
                 settings.insert(key, value);
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "category": category,
                     "settings": settings,
                 }),
                 "获取模块设置成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取模块设置失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取模块设置失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取模块设置失败".to_string()))
         }
     }
 }
@@ -109,15 +107,15 @@ pub async fn update_settings(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateSettingsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
@@ -146,10 +144,10 @@ pub async fn update_settings(
             Ok(_) => updated += 1,
             Err(e) => {
                 tracing::error!("更新模块设置失败 (key={}): {}", key, e);
-                return Json(ApiResponse::from(TopemsError::Internal(format!(
+                return ApiResponse::from(TopemsError::Internal(format!(
                     "更新设置项失败: {}",
                     key
-                ))));
+                )));
             }
         }
     }
@@ -157,7 +155,7 @@ pub async fn update_settings(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
@@ -183,5 +181,5 @@ pub async fn update_settings(
     )
     .await;
 
-    Json(ApiResponse::success(response_data, "模块设置更新成功"))
+    ApiResponse::success(response_data, "模块设置更新成功")
 }

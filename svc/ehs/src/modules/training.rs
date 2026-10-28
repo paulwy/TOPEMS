@@ -149,7 +149,7 @@ pub async fn list_trainings(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<Training>>> {
+) -> ApiResponse<Vec<Training>> {
     // 接真 ehs.qa_ehs_trainings；超管全量可见，普通用户强制 tenant 过滤
     let tenant_filter = if claims.is_superuser {
         String::from("deleted_at IS NULL")
@@ -174,7 +174,7 @@ pub async fn list_trainings(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list trainings: {}", e);
-            return Json(ApiResponse::server_error("培训列表获取失败"));
+            return ApiResponse::server_error("培训列表获取失败");
         }
     };
     let list: Vec<Training> = rows
@@ -198,7 +198,7 @@ pub async fn list_trainings(
             tenant_id: r.try_get::<Uuid, _>("tenant_id").unwrap_or_default(),
         })
         .collect();
-    Json(ApiResponse::success(list, "获取培训列表成功"))
+    ApiResponse::success(list, "获取培训列表成功")
 }
 
 #[utoipa::path(
@@ -215,7 +215,7 @@ pub async fn create_training(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<Training>> {
+) -> ApiResponse<Training> {
     let tenant_id = resolve_tenant_id(&claims);
     let training_no = format!("TRN-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let title = req
@@ -269,7 +269,7 @@ pub async fn create_training(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create training: {}", e);
-            return Json(ApiResponse::server_error("培训创建失败"));
+            return ApiResponse::server_error("培训创建失败");
         }
     };
     let training = Training {
@@ -290,7 +290,7 @@ pub async fn create_training(
         status: row.try_get::<String, _>("status").unwrap_or_default(),
         tenant_id: row.try_get::<Uuid, _>("tenant_id").unwrap_or_default(),
     };
-    Json(ApiResponse::success(training, "培训创建成功"))
+    ApiResponse::success(training, "培训创建成功")
 }
 
 #[utoipa::path(
@@ -306,7 +306,7 @@ pub async fn get_training(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Training>> {
+) -> ApiResponse<Training> {
     let tenant_clause = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -332,10 +332,10 @@ pub async fn get_training(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("培训不存在")),
+        Ok(None) => return ApiResponse::not_found("培训不存在"),
         Err(e) => {
             tracing::error!("Failed to get training {}: {}", id, e);
-            return Json(ApiResponse::server_error("培训获取失败"));
+            return ApiResponse::server_error("培训获取失败");
         }
     };
     let training = Training {
@@ -356,7 +356,7 @@ pub async fn get_training(
         status: row.try_get::<String, _>("status").unwrap_or_default(),
         tenant_id: row.try_get::<Uuid, _>("tenant_id").unwrap_or_default(),
     };
-    Json(ApiResponse::success(training, "获取培训成功"))
+    ApiResponse::success(training, "获取培训成功")
 }
 
 #[utoipa::path(
@@ -375,7 +375,7 @@ pub async fn update_training(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<Training>> {
+) -> ApiResponse<Training> {
     let tenant_clause = if claims.is_superuser {
         String::from("")
     } else {
@@ -440,10 +440,10 @@ pub async fn update_training(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("培训不存在")),
+        Ok(None) => return ApiResponse::not_found("培训不存在"),
         Err(e) => {
             tracing::error!("Failed to update training {}: {}", id, e);
-            return Json(ApiResponse::server_error("培训更新失败"));
+            return ApiResponse::server_error("培训更新失败");
         }
     };
     let training = Training {
@@ -464,7 +464,7 @@ pub async fn update_training(
         status: row.try_get::<String, _>("status").unwrap_or_default(),
         tenant_id: row.try_get::<Uuid, _>("tenant_id").unwrap_or_default(),
     };
-    Json(ApiResponse::success(training, "培训更新成功"))
+    ApiResponse::success(training, "培训更新成功")
 }
 
 #[utoipa::path(
@@ -480,7 +480,7 @@ pub async fn delete_training(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_clause = if claims.is_superuser {
         String::from("")
     } else {
@@ -501,13 +501,13 @@ pub async fn delete_training(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete training {}: {}", id, e);
-            return Json(ApiResponse::server_error("培训删除失败"));
+            return ApiResponse::server_error("培训删除失败");
         }
     };
     if res.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("培训不存在"));
+        return ApiResponse::not_found("培训不存在");
     }
-    Json(ApiResponse::success((), "培训删除成功"))
+    ApiResponse::success((), "培训删除成功")
 }
 
 #[utoipa::path(
@@ -523,7 +523,7 @@ pub async fn get_training_plan(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<TrainingPlan>> {
+) -> ApiResponse<TrainingPlan> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::debug!("Getting training plan: {}", id);
     let sql = r#"
@@ -542,14 +542,14 @@ pub async fn get_training_plan(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("培训计划不存在")),
+        Ok(None) => return ApiResponse::not_found("培训计划不存在"),
         Err(e) => {
             tracing::error!("Failed to get training plan: {}", e);
-            return Json(ApiResponse::server_error("获取培训计划失败"));
+            return ApiResponse::server_error("获取培训计划失败");
         }
     };
     let plan = training_plan_from_row(&row);
-    Json(ApiResponse::success(plan, "获取培训计划成功"))
+    ApiResponse::success(plan, "获取培训计划成功")
 }
 
 #[utoipa::path(
@@ -567,7 +567,7 @@ pub async fn update_training_plan(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<TrainingPlan>> {
+) -> ApiResponse<TrainingPlan> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -622,14 +622,14 @@ pub async fn update_training_plan(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("培训计划不存在")),
+        Ok(None) => return ApiResponse::not_found("培训计划不存在"),
         Err(e) => {
             tracing::error!("Failed to update training plan: {}", e);
-            return Json(ApiResponse::server_error("培训计划更新失败"));
+            return ApiResponse::server_error("培训计划更新失败");
         }
     };
     let plan = training_plan_from_row(&row);
-    Json(ApiResponse::success(plan, "培训计划更新成功"))
+    ApiResponse::success(plan, "培训计划更新成功")
 }
 
 #[utoipa::path(
@@ -645,7 +645,7 @@ pub async fn delete_training_plan(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let sql = r#"
         UPDATE ehs.training_programs
@@ -663,13 +663,13 @@ pub async fn delete_training_plan(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete training plan: {}", e);
-            return Json(ApiResponse::server_error("培训计划删除失败"));
+            return ApiResponse::server_error("培训计划删除失败");
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("培训计划不存在"));
+        return ApiResponse::not_found("培训计划不存在");
     }
-    Json(ApiResponse::success((), "培训计划删除成功"))
+    ApiResponse::success((), "培训计划删除成功")
 }
 
 #[utoipa::path(
@@ -685,7 +685,7 @@ pub async fn get_training_record(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<TrainingRecord>> {
+) -> ApiResponse<TrainingRecord> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::debug!("Getting training record: {}", id);
     let sql = r#"
@@ -706,14 +706,14 @@ pub async fn get_training_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("培训记录不存在")),
+        Ok(None) => return ApiResponse::not_found("培训记录不存在"),
         Err(e) => {
             tracing::error!("Failed to get training record: {}", e);
-            return Json(ApiResponse::server_error("获取培训记录失败"));
+            return ApiResponse::server_error("获取培训记录失败");
         }
     };
     let record = training_record_from_row(&row);
-    Json(ApiResponse::success(record, "获取培训记录成功"))
+    ApiResponse::success(record, "获取培训记录成功")
 }
 
 #[utoipa::path(
@@ -736,7 +736,7 @@ pub async fn update_training_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<TrainingRecord>> {
+) -> ApiResponse<TrainingRecord> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -824,14 +824,14 @@ pub async fn update_training_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("培训记录不存在")),
+        Ok(None) => return ApiResponse::not_found("培训记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update training record: {}", e);
-            return Json(ApiResponse::server_error("培训记录更新失败"));
+            return ApiResponse::server_error("培训记录更新失败");
         }
     };
     let record = training_record_from_row(&row);
-    Json(ApiResponse::success(record, "培训记录更新成功"))
+    ApiResponse::success(record, "培训记录更新成功")
 }
 
 #[utoipa::path(
@@ -847,7 +847,7 @@ pub async fn delete_training_record(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let sql = r#"
         UPDATE ehs.training_records
@@ -865,13 +865,13 @@ pub async fn delete_training_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete training record: {}", e);
-            return Json(ApiResponse::server_error("培训记录删除失败"));
+            return ApiResponse::server_error("培训记录删除失败");
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("培训记录不存在"));
+        return ApiResponse::not_found("培训记录不存在");
     }
-    Json(ApiResponse::success((), "培训记录删除成功"))
+    ApiResponse::success((), "培训记录删除成功")
 }
 
 #[utoipa::path(
@@ -887,7 +887,7 @@ pub async fn get_certificate(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<TrainingCertificate>> {
+) -> ApiResponse<TrainingCertificate> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::debug!("Getting certificate: {}", id);
     let sql = r#"
@@ -908,14 +908,14 @@ pub async fn get_certificate(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("培训证书不存在")),
+        Ok(None) => return ApiResponse::not_found("培训证书不存在"),
         Err(e) => {
             tracing::error!("Failed to get training certificate: {}", e);
-            return Json(ApiResponse::server_error("获取培训证书失败"));
+            return ApiResponse::server_error("获取培训证书失败");
         }
     };
     let certificate = training_certificate_from_row(&row);
-    Json(ApiResponse::success(certificate, "获取培训证书成功"))
+    ApiResponse::success(certificate, "获取培训证书成功")
 }
 
 #[utoipa::path(
@@ -933,7 +933,7 @@ pub async fn update_certificate(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<TrainingCertificate>> {
+) -> ApiResponse<TrainingCertificate> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -998,14 +998,14 @@ pub async fn update_certificate(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("培训证书不存在")),
+        Ok(None) => return ApiResponse::not_found("培训证书不存在"),
         Err(e) => {
             tracing::error!("Failed to update training certificate: {}", e);
-            return Json(ApiResponse::server_error("培训证书更新失败"));
+            return ApiResponse::server_error("培训证书更新失败");
         }
     };
     let certificate = training_certificate_from_row(&row);
-    Json(ApiResponse::success(certificate, "培训证书更新成功"))
+    ApiResponse::success(certificate, "培训证书更新成功")
 }
 
 #[utoipa::path(
@@ -1021,7 +1021,7 @@ pub async fn delete_certificate(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let sql = r#"
         UPDATE ehs.qa_ehs_training_certificates
@@ -1039,13 +1039,13 @@ pub async fn delete_certificate(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete training certificate: {}", e);
-            return Json(ApiResponse::server_error("培训证书删除失败"));
+            return ApiResponse::server_error("培训证书删除失败");
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("培训证书不存在"));
+        return ApiResponse::not_found("培训证书不存在");
     }
-    Json(ApiResponse::success((), "培训证书删除成功"))
+    ApiResponse::success((), "培训证书删除成功")
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
@@ -1053,7 +1053,7 @@ pub async fn get_training_statistics(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
@@ -1103,7 +1103,7 @@ pub async fn get_training_statistics(
         "total_certificates": total_certificates,
         "completion_rate": completion_rate,
     });
-    Json(ApiResponse::success(obj, "获取培训统计成功"))
+    ApiResponse::success(obj, "获取培训统计成功")
 }
 
 #[derive(Debug, Deserialize)]
@@ -1128,7 +1128,7 @@ pub async fn list_training_plans(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(q): Query<TrainingPlanQuery>,
-) -> Json<ApiResponse<Vec<TrainingPlan>>> {
+) -> ApiResponse<Vec<TrainingPlan>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -1171,12 +1171,12 @@ pub async fn list_training_plans(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list training plans: {}", e);
-            return Json(ApiResponse::server_error("获取培训计划列表失败"));
+            return ApiResponse::server_error("获取培训计划列表失败");
         }
     };
 
     let list: Vec<TrainingPlan> = rows.iter().map(training_plan_from_row).collect();
-    Json(ApiResponse::success(list, "获取培训计划列表成功"))
+    ApiResponse::success(list, "获取培训计划列表成功")
 }
 
 #[utoipa::path(
@@ -1192,7 +1192,7 @@ pub async fn create_training_plan(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<TrainingPlan>> {
+) -> ApiResponse<TrainingPlan> {
     let tenant_id = resolve_tenant_id(&claims);
     let program_no = format!("TPL-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let title = req
@@ -1247,11 +1247,11 @@ pub async fn create_training_plan(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create training plan: {}", e);
-            return Json(ApiResponse::server_error("培训计划创建失败"));
+            return ApiResponse::server_error("培训计划创建失败");
         }
     };
     let plan = training_plan_from_row(&row);
-    Json(ApiResponse::success(plan, "培训计划创建成功"))
+    ApiResponse::success(plan, "培训计划创建成功")
 }
 
 #[derive(Debug, Deserialize)]
@@ -1276,7 +1276,7 @@ pub async fn list_training_records(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(q): Query<TrainingRecordQuery>,
-) -> Json<ApiResponse<Vec<TrainingRecord>>> {
+) -> ApiResponse<Vec<TrainingRecord>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -1333,12 +1333,12 @@ pub async fn list_training_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list training records: {}", e);
-            return Json(ApiResponse::server_error("获取培训记录列表失败"));
+            return ApiResponse::server_error("获取培训记录列表失败");
         }
     };
 
     let list: Vec<TrainingRecord> = rows.iter().map(training_record_from_row).collect();
-    Json(ApiResponse::success(list, "获取培训记录列表成功"))
+    ApiResponse::success(list, "获取培训记录列表成功")
 }
 
 #[utoipa::path(
@@ -1355,7 +1355,7 @@ pub async fn create_training_record(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<TrainingRecord>> {
+) -> ApiResponse<TrainingRecord> {
     let tenant_id = resolve_tenant_id(&claims);
     let record_no = format!("TRC-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let plan_id = req
@@ -1448,11 +1448,11 @@ pub async fn create_training_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create training record: {}", e);
-            return Json(ApiResponse::server_error("培训记录创建失败"));
+            return ApiResponse::server_error("培训记录创建失败");
         }
     };
     let record = training_record_from_row(&row);
-    Json(ApiResponse::success(record, "培训记录创建成功"))
+    ApiResponse::success(record, "培训记录创建成功")
 }
 
 #[derive(Debug, Deserialize)]
@@ -1477,7 +1477,7 @@ pub async fn list_certificates(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(q): Query<TrainingCertificateQuery>,
-) -> Json<ApiResponse<Vec<TrainingCertificate>>> {
+) -> ApiResponse<Vec<TrainingCertificate>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -1532,12 +1532,12 @@ pub async fn list_certificates(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list training certificates: {}", e);
-            return Json(ApiResponse::server_error("获取证书列表失败"));
+            return ApiResponse::server_error("获取证书列表失败");
         }
     };
 
     let list: Vec<TrainingCertificate> = rows.iter().map(training_certificate_from_row).collect();
-    Json(ApiResponse::success(list, "获取证书列表成功"))
+    ApiResponse::success(list, "获取证书列表成功")
 }
 
 // gate: admin-only
@@ -1554,7 +1554,7 @@ pub async fn create_certificate(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<TrainingCertificate>> {
+) -> ApiResponse<TrainingCertificate> {
     let tenant_id = resolve_tenant_id(&claims);
     let certificate_no = format!("CERT-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let employee_id = req
@@ -1633,11 +1633,11 @@ pub async fn create_certificate(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create training certificate: {}", e);
-            return Json(ApiResponse::server_error("证书创建失败"));
+            return ApiResponse::server_error("证书创建失败");
         }
     };
     let certificate = training_certificate_from_row(&row);
-    Json(ApiResponse::success(certificate, "证书创建成功"))
+    ApiResponse::success(certificate, "证书创建成功")
 }
 
 /// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。

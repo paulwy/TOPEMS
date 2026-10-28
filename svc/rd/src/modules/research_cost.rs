@@ -138,11 +138,11 @@ pub async fn list_costs(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
@@ -194,7 +194,7 @@ pub async fn list_costs(
     match result {
         Ok(costs) => {
             let total = count_costs(&mut **txn, &params).await;
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "costs": costs,
                     "total": total,
@@ -202,11 +202,11 @@ pub async fn list_costs(
                     "page_size": page_size
                 }),
                 "获取研发费用列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取研发费用列表失败: {}", e);
-            Json(ApiResponse::server_error("获取研发费用列表失败"))
+            ApiResponse::server_error("获取研发费用列表失败")
         }
     }
 }
@@ -256,14 +256,14 @@ pub async fn create_cost(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateResearchCostRequest>,
-) -> Json<ApiResponse<ResearchCost>> {
+) -> ApiResponse<ResearchCost> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if req.amount <= 0.0 {
-        return Json(ApiResponse::bad_request("费用金额必须大于0"));
+        return ApiResponse::bad_request("费用金额必须大于0");
     }
 
     let id = Uuid::new_v4();
@@ -312,14 +312,14 @@ pub async fn create_cost(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(cost, "研发费用创建成功"))
+            ApiResponse::success(cost, "研发费用创建成功")
         }
         Err(e) => {
             tracing::error!("创建研发费用失败: {}", e);
-            Json(ApiResponse::server_error("创建研发费用失败"))
+            ApiResponse::server_error("创建研发费用失败")
         }
     }
 }
@@ -343,11 +343,11 @@ pub async fn get_cost(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ResearchCost>> {
+) -> ApiResponse<ResearchCost> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, ResearchCost>(
         r#"
@@ -362,11 +362,11 @@ pub async fn get_cost(
     .await;
 
     match result {
-        Ok(Some(cost)) => Json(ApiResponse::success(cost, "获取研发费用成功")),
-        Ok(None) => Json(ApiResponse::not_found("研发费用不存在")),
+        Ok(Some(cost)) => ApiResponse::success(cost, "获取研发费用成功"),
+        Ok(None) => ApiResponse::not_found("研发费用不存在"),
         Err(e) => {
             tracing::error!("获取研发费用失败: {}", e);
-            Json(ApiResponse::server_error("获取研发费用失败"))
+            ApiResponse::server_error("获取研发费用失败")
         }
     }
 }
@@ -378,11 +378,11 @@ pub async fn update_cost(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateResearchCostRequest>,
-) -> Json<ApiResponse<ResearchCost>> {
+) -> ApiResponse<ResearchCost> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let existing = sqlx::query_as::<_, ResearchCost>(
         r#"
@@ -398,10 +398,10 @@ pub async fn update_cost(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => return Json(ApiResponse::not_found("研发费用不存在")),
+        Ok(None) => return ApiResponse::not_found("研发费用不存在"),
         Err(e) => {
             tracing::error!("查询研发费用失败: {}", e);
-            return Json(ApiResponse::server_error("查询研发费用失败"));
+            return ApiResponse::server_error("查询研发费用失败");
         }
     };
 
@@ -456,14 +456,14 @@ pub async fn update_cost(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(cost, "研发费用更新成功"))
+            ApiResponse::success(cost, "研发费用更新成功")
         }
         Err(e) => {
             tracing::error!("更新研发费用失败: {}", e);
-            Json(ApiResponse::server_error("更新研发费用失败"))
+            ApiResponse::server_error("更新研发费用失败")
         }
     }
 }
@@ -474,11 +474,11 @@ pub async fn delete_cost(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query("UPDATE rs.research_costs SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
@@ -486,22 +486,20 @@ pub async fn delete_cost(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("".to_string(), "研发费用删除成功"))
-        }
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "研发费用删除成功"),
         Ok(_) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::not_found("研发费用不存在"))
+            ApiResponse::not_found("研发费用不存在")
         }
 
         Err(e) => {
             tracing::error!("删除研发费用失败: {}", e);
-            Json(ApiResponse::server_error("删除研发费用失败"))
+            ApiResponse::server_error("删除研发费用失败")
         }
     }
 }
@@ -525,11 +523,11 @@ pub async fn list_costs_by_project(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<ResearchCost>>> {
+) -> ApiResponse<Vec<ResearchCost>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, ResearchCost>(
         r#"
@@ -546,10 +544,10 @@ pub async fn list_costs_by_project(
     .await;
 
     match result {
-        Ok(costs) => Json(ApiResponse::success(costs, "获取项目研发费用列表成功")),
+        Ok(costs) => ApiResponse::success(costs, "获取项目研发费用列表成功"),
         Err(e) => {
             tracing::error!("获取项目研发费用列表失败: {}", e);
-            Json(ApiResponse::server_error("获取项目研发费用列表失败"))
+            ApiResponse::server_error("获取项目研发费用列表失败")
         }
     }
 }
@@ -575,11 +573,11 @@ pub async fn get_cost_statistics(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let mut query = String::from(
         r#"
@@ -636,18 +634,18 @@ pub async fn get_cost_statistics(
                 }));
             }
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "statistics": statistics,
                     "total_amount": total_amount,
                     "total_count": total_count
                 }),
                 "获取研发费用统计成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取研发费用统计失败: {}", e);
-            Json(ApiResponse::server_error("获取研发费用统计失败"))
+            ApiResponse::server_error("获取研发费用统计失败")
         }
     }
 }

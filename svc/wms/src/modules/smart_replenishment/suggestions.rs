@@ -63,15 +63,15 @@ pub async fn list_suggestions(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -126,7 +126,7 @@ pub async fn list_suggestions(
             let items_json: Vec<serde_json::Value> =
                 items.iter().map(suggestion_row_to_json).collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "suggestions": items_json,
                     "total": total,
@@ -134,13 +134,11 @@ pub async fn list_suggestions(
                     "page_size": page_size
                 }),
                 "获取补货建议列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取补货建议列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取补货建议列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取补货建议列表失败".to_string()))
         }
     }
 }
@@ -162,15 +160,15 @@ pub async fn get_suggestion(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let result = sqlx::query(
         r#"
@@ -187,18 +185,11 @@ pub async fn get_suggestion(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(
-            suggestion_row_to_json(&row),
-            "获取补货建议详情成功",
-        )),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "补货建议不存在".to_string(),
-        ))),
+        Ok(Some(row)) => ApiResponse::success(suggestion_row_to_json(&row), "获取补货建议详情成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("补货建议不存在".to_string())),
         Err(e) => {
             tracing::error!("获取补货建议详情失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取补货建议详情失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取补货建议详情失败".to_string()))
         }
     }
 }
@@ -222,15 +213,15 @@ pub async fn compute_replenishment(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ReplenishmentComputeRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let _txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let request_data = serde_json::to_value(&req).ok();
     let consumption_days = req.consumption_period_days.unwrap_or(30);
@@ -239,9 +230,7 @@ pub async fn compute_replenishment(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("开启事务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "补货计算失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("补货计算失败".to_string()));
         }
     };
 
@@ -254,9 +243,7 @@ pub async fn compute_replenishment(
     if let Err(e) = clear_result {
         tracing::error!("清理草稿建议失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "补货计算失败".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("补货计算失败".to_string()));
     }
 
     let now = Utc::now();
@@ -389,31 +376,27 @@ pub async fn compute_replenishment(
                 &headers,
             )
             .await;
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "补货计算失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("补货计算失败".to_string()));
         }
     };
 
     if let Err(e) = tx.commit().await {
         tracing::error!("提交事务失败: {}", e);
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "补货计算失败".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("补货计算失败".to_string()));
     }
 
     let items_json: Vec<serde_json::Value> = items.iter().map(suggestion_row_to_json).collect();
     let count = items.len() as i64;
     let response_data = Some(serde_json::json!({ "generated_count": count }));
 
-    let response = Json(ApiResponse::success(
+    let response = ApiResponse::success(
         serde_json::json!({
             "suggestions": items_json,
             "total": count,
             "consumption_period_days": consumption_days
         }),
         &format!("补货计算完成，生成{}条建议", count),
-    ));
+    );
 
     log_audit_event(
         &state.db,
@@ -453,15 +436,15 @@ pub async fn confirm_suggestion(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ConfirmSuggestionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
@@ -476,24 +459,17 @@ pub async fn confirm_suggestion(
     let existing = match existing {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "补货建议不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("补货建议不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询补货建议失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询补货建议失败", e)),
     };
 
     let status: String = existing.try_get("status").unwrap_or_default();
     if status != "draft" {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "补货建议当前状态为{}，无法确认",
             status
-        ))));
+        )));
     }
 
     let confirmed_qty = req
@@ -529,10 +505,7 @@ pub async fn confirm_suggestion(
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(row) => (
-            Json(ApiResponse::success(
-                suggestion_row_to_json(row),
-                "补货建议确认成功",
-            )),
+            ApiResponse::success(suggestion_row_to_json(row), "补货建议确认成功"),
             "success",
             None,
             Some(suggestion_row_to_json(row)),
@@ -540,9 +513,7 @@ pub async fn confirm_suggestion(
         Err(e) => {
             tracing::error!("确认补货建议失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "确认补货建议失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("确认补货建议失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -570,7 +541,7 @@ pub async fn confirm_suggestion(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -595,15 +566,15 @@ pub async fn get_statistics(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let warehouse_id_str = params.get("warehouse_id").and_then(|v| v.as_str());
@@ -629,7 +600,7 @@ pub async fn get_statistics(
     match result {
         Ok(row) => {
             let total_suggested_quantity = row.total_suggested_quantity.unwrap_or_default();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "total_suggestions": row.total_suggestions.unwrap_or(0),
                     "draft_count": row.draft_count.unwrap_or(0),
@@ -639,13 +610,11 @@ pub async fn get_statistics(
                     "total_suggested_quantity": total_suggested_quantity,
                 }),
                 "获取补货统计成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取补货统计失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取补货统计失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取补货统计失败".to_string()))
         }
     }
 }

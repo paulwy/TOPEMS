@@ -54,7 +54,7 @@ pub struct CreateIntegrationActionRequest {
 pub async fn create_integration_action(
     State(state): State<AppState>,
     Json(req): Json<CreateIntegrationActionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let status = req.status.unwrap_or_else(|| "pending".to_string());
     let priority = req.priority.unwrap_or_else(|| "medium".to_string());
     let created_by = req.created_by.unwrap_or_else(|| "system".to_string());
@@ -81,7 +81,7 @@ pub async fn create_integration_action(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
+        Ok(row) => ApiResponse::success(
             serde_json::json!({
                 "id": row.try_get::<Uuid, _>("id").ok(),
                 "action_no": row.try_get::<String, _>("action_no").ok(),
@@ -89,10 +89,10 @@ pub async fn create_integration_action(
                 "priority": row.try_get::<String, _>("priority").ok(),
             }),
             "集成纠正措施创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("[integration] 创建纠正措施失败: {}", e);
-            Json(ApiResponse::server_error("集成纠正措施创建失败"))
+            ApiResponse::server_error("集成纠正措施创建失败")
         }
     }
 }
@@ -111,7 +111,7 @@ pub struct UpdateInspectionResultRequest {
 pub async fn update_integration_inspection_result(
     State(state): State<AppState>,
     Json(req): Json<UpdateInspectionResultRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let result = sqlx::query(only_own_schema_query!(
         "qms",
         "UPDATE qms.qa_quality_inspections
@@ -127,18 +127,18 @@ pub async fn update_integration_inspection_result(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(
+        Ok(Some(row)) => ApiResponse::success(
             serde_json::json!({
                 "id": row.try_get::<Uuid, _>("id").ok(),
                 "inspection_no": row.try_get::<String, _>("inspection_no").ok(),
                 "result": row.try_get::<String, _>("result").ok(),
             }),
             "质检结果回写成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("质检记录不存在或已删除")),
+        ),
+        Ok(None) => ApiResponse::not_found("质检记录不存在或已删除"),
         Err(e) => {
             tracing::error!("[integration] 回写质检结果失败: {}", e);
-            Json(ApiResponse::server_error("质检结果回写失败"))
+            ApiResponse::server_error("质检结果回写失败")
         }
     }
 }

@@ -1,7 +1,7 @@
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
-    Json, Router,
+    Router,
 };
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
@@ -87,11 +87,11 @@ pub async fn get_project_summary(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ProjectSummary>> {
+) -> ApiResponse<ProjectSummary> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let start_date = query.start_date.clone().unwrap_or_else(|| {
         (Utc::now() - Duration::days(30))
@@ -149,11 +149,11 @@ pub async fn get_project_summary(
                 total_members: member_count,
             };
 
-            Json(ApiResponse::success(summary, "获取项目汇总成功"))
+            ApiResponse::success(summary, "获取项目汇总成功")
         }
         Err(e) => {
             tracing::error!("获取项目汇总失败: {}", e);
-            Json(ApiResponse::server_error("获取项目汇总失败"))
+            ApiResponse::server_error("获取项目汇总失败")
         }
     }
 }
@@ -174,11 +174,11 @@ pub async fn get_project_trends(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<TrendData>>> {
+) -> ApiResponse<Vec<TrendData>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let start_date = query.start_date.clone().unwrap_or_else(|| {
         (Utc::now() - Duration::days(90))
@@ -222,11 +222,11 @@ pub async fn get_project_trends(
                 })
                 .collect();
 
-            Json(ApiResponse::success(trends, "获取项目趋势成功"))
+            ApiResponse::success(trends, "获取项目趋势成功")
         }
         Err(e) => {
             tracing::error!("获取项目趋势失败: {}", e);
-            Json(ApiResponse::server_error("获取项目趋势失败"))
+            ApiResponse::server_error("获取项目趋势失败")
         }
     }
 }
@@ -246,11 +246,11 @@ pub async fn get_project_type_stats(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<ProjectTypeStats>>> {
+) -> ApiResponse<Vec<ProjectTypeStats>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query(
         r#"
@@ -279,11 +279,11 @@ pub async fn get_project_type_stats(
                 })
                 .collect();
 
-            Json(ApiResponse::success(stats, "获取项目类型统计成功"))
+            ApiResponse::success(stats, "获取项目类型统计成功")
         }
         Err(e) => {
             tracing::error!("获取项目类型统计失败: {}", e);
-            Json(ApiResponse::server_error("获取项目类型统计失败"))
+            ApiResponse::server_error("获取项目类型统计失败")
         }
     }
 }
@@ -304,11 +304,11 @@ pub async fn get_performance_metrics(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PerformanceMetrics>> {
+) -> ApiResponse<PerformanceMetrics> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let on_time_result = sqlx::query(
         r#"
@@ -389,9 +389,9 @@ pub async fn get_performance_metrics(
                     * 100.0,
             };
 
-            Json(ApiResponse::success(metrics, "获取绩效指标成功"))
+            ApiResponse::success(metrics, "获取绩效指标成功")
         }
-        _ => Json(ApiResponse::server_error("获取绩效指标失败")),
+        _ => ApiResponse::server_error("获取绩效指标失败"),
     }
 }
 
@@ -434,11 +434,11 @@ pub async fn get_project_detail_report(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ProjectDetailReport>> {
+) -> ApiResponse<ProjectDetailReport> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let project = sqlx::query_as::<_, ProjectDetailReport>(
         r#"
@@ -462,11 +462,11 @@ pub async fn get_project_detail_report(
     .await;
 
     match project {
-        Ok(Some(report)) => Json(ApiResponse::success(report, "获取项目详情报告成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目不存在")),
+        Ok(Some(report)) => ApiResponse::success(report, "获取项目详情报告成功"),
+        Ok(None) => ApiResponse::not_found("项目不存在"),
         Err(e) => {
             tracing::error!("获取项目详情报告失败: {}", e);
-            Json(ApiResponse::server_error("获取项目详情报告失败"))
+            ApiResponse::server_error("获取项目详情报告失败")
         }
     }
 }

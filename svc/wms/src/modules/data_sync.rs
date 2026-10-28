@@ -71,16 +71,16 @@ pub async fn outbound_to_shipping(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<OutboundToShippingRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let outbound_order_id = match Uuid::parse_str(&req.outbound_order_id) {
         Ok(id) => id,
         Err(_) => {
-            return Json(ApiResponse::success(
+            return ApiResponse::success(
                 serde_json::json!({
                     "success": false,
                     "message": "出库单ID格式错误".to_string(),
@@ -89,7 +89,7 @@ pub async fn outbound_to_shipping(
                     "shipping_order_number": null,
                 }),
                 "出库单ID格式错误",
-            ));
+            );
         }
     };
 
@@ -109,7 +109,7 @@ pub async fn outbound_to_shipping(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
     publish_shipping_requested_after_commit(&state, opt_payload, outbound_order_id).await;
@@ -132,18 +132,18 @@ pub async fn create_shipping_from_outbound(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let (_resp, opt_payload) =
         create_shipping_from_outbound_internal(&state, id, None, None, &mut *txn).await;
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
     publish_shipping_requested_after_commit(&state, opt_payload, id).await;
@@ -157,7 +157,7 @@ pub async fn create_shipping_from_outbound_internal(
     _remarks: Option<String>,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
 ) -> (
-    Json<ApiResponse<serde_json::Value>>,
+    ApiResponse<serde_json::Value>,
     Option<ShippingOrderRequestedPayload>,
 ) {
     let outbound_order = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
@@ -178,7 +178,7 @@ pub async fn create_shipping_from_outbound_internal(
         Ok(Some(oo)) => oo,
         Ok(None) => {
             return (
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     serde_json::json!({
                         "success": false,
                         "message": "出库单不存在或状态不是已确认".to_string(),
@@ -187,16 +187,14 @@ pub async fn create_shipping_from_outbound_internal(
                         "shipping_order_number": null,
                     }),
                     "出库单不存在或状态不是已确认",
-                )),
+                ),
                 None,
             );
         }
         Err(e) => {
             tracing::error!("查询出库单失败: {}", e);
             return (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "查询出库单失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("查询出库单失败".to_string())),
                 None,
             );
         }
@@ -204,7 +202,7 @@ pub async fn create_shipping_from_outbound_internal(
 
     if outbound_order.sales_order_id.is_some() {
         return (
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "success": false,
                     "message": "该出库单已创建销售订单".to_string(),
@@ -213,7 +211,7 @@ pub async fn create_shipping_from_outbound_internal(
                     "shipping_order_number": outbound_order.sales_order_number,
                 }),
                 "该出库单已创建销售订单",
-            )),
+            ),
             None,
         );
     }
@@ -281,7 +279,7 @@ pub async fn create_shipping_from_outbound_internal(
     .await;
 
     (
-        Json(ApiResponse::success(
+        ApiResponse::success(
             serde_json::json!({
                 "success": true,
                 "message": "出库单转销售订单事件已发布，CRM将异步创建销售订单".to_string(),
@@ -290,7 +288,7 @@ pub async fn create_shipping_from_outbound_internal(
                 "shipping_order_number": shipping_order_number,
             }),
             "出库单转销售订单事件发布成功",
-        )),
+        ),
         Some(payload),
     )
 }
@@ -341,22 +339,22 @@ pub async fn create_inbound_from_scm(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<InboundFromScmRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let purchase_order_id = match Uuid::parse_str(&req.purchase_order_id) {
         Ok(id) => id,
         Err(_) => {
-            return Json(ApiResponse::success(
+            return ApiResponse::success(
                 serde_json::json!({
                     "success": false,
                     "message": "采购订单ID格式错误".to_string(),
                 }),
                 "采购订单ID格式错误",
-            ));
+            );
         }
     };
 
@@ -380,19 +378,17 @@ pub async fn create_inbound_from_scm(
             row.get::<Option<Uuid>, _>("supplier_id"),
         ),
         Ok(None) => {
-            return Json(ApiResponse::success(
+            return ApiResponse::success(
                 serde_json::json!({
                     "success": false,
                     "message": "采购订单不存在或状态不是已批准".to_string(),
                 }),
                 "采购订单不存在或状态不是已批准",
-            ));
+            );
         }
         Err(e) => {
             tracing::error!("查询采购订单失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询采购订单失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询采购订单失败".to_string()));
         }
     };
 
@@ -443,10 +439,10 @@ pub async fn create_inbound_from_scm(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "success": true,
                     "message": "入库单创建成功".to_string(),
@@ -455,13 +451,11 @@ pub async fn create_inbound_from_scm(
                     "inbound_order_number": inbound_order_number,
                 }),
                 "从SCM同步采购订单创建入库单成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("创建入库单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建入库单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建入库单失败".to_string()))
         }
     }
 }
@@ -482,11 +476,11 @@ pub async fn get_sync_logs(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<SyncLogsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let page = req.page.unwrap_or(1).max(1);
     let page_size = req.page_size.unwrap_or(20).min(100);
@@ -539,16 +533,11 @@ pub async fn get_sync_logs(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(
-                serde_json::json!({ "logs": logs }),
-                "同步日志查询成功",
-            ))
+            ApiResponse::success(serde_json::json!({ "logs": logs }), "同步日志查询成功")
         }
         Err(e) => {
             tracing::error!("查询同步日志失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询同步日志失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询同步日志失败".to_string()))
         }
     }
 }

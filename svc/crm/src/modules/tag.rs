@@ -63,15 +63,15 @@ pub async fn list_tags(
     Extension(claims): Extension<Claims>,
     Query(params): Query<TagPaginationParams>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -126,7 +126,7 @@ pub async fn list_tags(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": tags,
                     "total": total,
@@ -134,13 +134,11 @@ pub async fn list_tags(
                     "page_size": page_size
                 }),
                 "获取标签列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取标签列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取标签列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取标签列表失败".to_string()))
         }
     }
 }
@@ -153,21 +151,21 @@ async fn create_tag(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateTagRequest>,
-) -> Json<ApiResponse<Tag>> {
+) -> ApiResponse<Tag> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     if req.name.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "标签名称不能为空".to_string(),
-        )));
+        ));
     }
 
     let id = Uuid::new_v4();
@@ -212,11 +210,11 @@ async fn create_tag(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(tag.clone(), "标签创建成功")),
+                ApiResponse::success(tag.clone(), "标签创建成功"),
                 "success".to_string(),
                 None,
             )
@@ -224,9 +222,7 @@ async fn create_tag(
         Err(e) => {
             tracing::error!("创建标签失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "标签创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("标签创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -282,15 +278,15 @@ pub async fn get_tag(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Tag>> {
+) -> ApiResponse<Tag> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -319,15 +315,11 @@ pub async fn get_tag(
     .await;
 
     match result {
-        Ok(Some(tag)) => Json(ApiResponse::success(tag, "获取标签成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "标签不存在".to_string(),
-        ))),
+        Ok(Some(tag)) => ApiResponse::success(tag, "获取标签成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("标签不存在".to_string())),
         Err(e) => {
             tracing::error!("获取标签失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取标签失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取标签失败".to_string()))
         }
     }
 }
@@ -341,15 +333,15 @@ async fn update_tag(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateTagRequest>,
-) -> Json<ApiResponse<Tag>> {
+) -> ApiResponse<Tag> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -376,11 +368,9 @@ async fn update_tag(
     let existing = match existing {
         Ok(Some(t)) => t,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "标签不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("标签不存在".to_string()))
         }
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询标签失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询标签失败", e)),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -417,11 +407,11 @@ async fn update_tag(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(tag.clone(), "标签更新成功")),
+                ApiResponse::success(tag.clone(), "标签更新成功"),
                 "success".to_string(),
                 None,
             )
@@ -429,9 +419,7 @@ async fn update_tag(
         Err(e) => {
             tracing::error!("更新标签失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "标签更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("标签更新失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -473,15 +461,15 @@ async fn delete_tag(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -505,31 +493,25 @@ async fn delete_tag(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "标签删除成功")),
+            ApiResponse::success("".to_string(), "标签删除成功"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "标签不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("标签不存在".to_string())),
             "error".to_string(),
             Some("标签不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除标签失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "标签删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("标签删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -584,15 +566,15 @@ pub async fn get_customer_tags(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<Tag>>> {
+) -> ApiResponse<Vec<Tag>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -621,12 +603,10 @@ pub async fn get_customer_tags(
     .await;
 
     match result {
-        Ok(tags) => Json(ApiResponse::success(tags, "获取客户标签成功")),
+        Ok(tags) => ApiResponse::success(tags, "获取客户标签成功"),
         Err(e) => {
             tracing::error!("获取客户标签失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取客户标签失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取客户标签失败".to_string()))
         }
     }
 }
@@ -640,15 +620,15 @@ async fn add_tag_to_customer(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<AddTagToCustomerRequest>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let customer_id = id;
@@ -675,9 +655,9 @@ async fn add_tag_to_customer(
     .unwrap_or(false);
 
     if exists {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "标签已添加到客户".to_string(),
-        )));
+        ));
     }
 
     let result = sqlx::query(
@@ -693,24 +673,20 @@ async fn add_tag_to_customer(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
 
     let (response, status_str, error_msg) = match &result {
         Ok(_) => (
-            Json(ApiResponse::success("".to_string(), "标签添加成功")),
+            ApiResponse::success("".to_string(), "标签添加成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("添加标签失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "添加标签失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("添加标签失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -762,15 +738,15 @@ pub async fn remove_tag_from_customer(
     Extension(claims): Extension<Claims>,
     Path((id, tag_id)): Path<(Uuid, Uuid)>,
     headers: HeaderMap,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let customer_id = id;
@@ -797,31 +773,27 @@ pub async fn remove_tag_from_customer(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "标签移除成功")),
+            ApiResponse::success("".to_string(), "标签移除成功"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            ApiResponse::from(TopemsError::ResourceNotFound(
                 "客户标签关系不存在".to_string(),
-            ))),
+            )),
             "error".to_string(),
             Some("客户标签关系不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("移除标签失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "移除标签失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("移除标签失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -870,15 +842,15 @@ pub async fn get_tagged_customers(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<CustomerWithTags>>> {
+) -> ApiResponse<Vec<CustomerWithTags>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -932,13 +904,11 @@ pub async fn get_tagged_customers(
                     tags,
                 });
             }
-            Json(ApiResponse::success(result, "获取标签关联客户成功"))
+            ApiResponse::success(result, "获取标签关联客户成功")
         }
         Err(e) => {
             tracing::error!("获取标签关联客户失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取标签关联客户失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取标签关联客户失败".to_string()))
         }
     }
 }

@@ -35,17 +35,17 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-fn internal_error(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
+fn internal_error(msg: &str) -> (StatusCode, ApiResponse<serde_json::Value>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ApiResponse::server_error(msg)),
+        ApiResponse::server_error(msg),
     )
 }
 
 /// 业务"资源不存在"：HTTP 200 + 内层 body.code=404（与跨服务契约一致，
 /// 前端 apiClient 按 body.code 判定；避免裸 HTTP 404 被冒烟判为路由缺失）。
-fn not_found(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
-    (StatusCode::OK, Json(ApiResponse::not_found(msg)))
+fn not_found(msg: &str) -> (StatusCode, ApiResponse<serde_json::Value>) {
+    (StatusCode::OK, ApiResponse::not_found(msg))
 }
 
 // ==================== 缺陷 Bug ====================
@@ -152,8 +152,7 @@ pub async fn list_bugs(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -169,10 +168,10 @@ pub async fn list_bugs(
         }
     };
     let items: Vec<serde_json::Value> = rows.iter().map(bug_to_json).collect();
-    Ok(Json(ApiResponse::success(
+    Ok(ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "获取缺陷列表成功",
-    )))
+    ))
 }
 
 #[utoipa::path(
@@ -194,8 +193,7 @@ pub async fn get_bug(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -206,7 +204,7 @@ pub async fn get_bug(
         .fetch_optional(&mut **txn)
         .await;
     match row {
-        Ok(Some(r)) => Ok(Json(ApiResponse::success(bug_to_json(&r), "获取缺陷成功"))),
+        Ok(Some(r)) => Ok(ApiResponse::success(bug_to_json(&r), "获取缺陷成功")),
         Ok(None) => Err(not_found("缺陷不存在")),
         Err(e) => {
             tracing::error!("查询缺陷失败: {}", e);
@@ -221,8 +219,7 @@ pub async fn create_bug(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateBugRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -251,7 +248,7 @@ pub async fn create_bug(
                     return Err(internal_error("事务提交失败"));
                 }
             }
-            Ok(Json(ApiResponse::success(bug_to_json(&r), "创建缺陷成功")))
+            Ok(ApiResponse::success(bug_to_json(&r), "创建缺陷成功"))
         }
 
         Err(e) => {
@@ -268,8 +265,7 @@ pub async fn update_bug(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateBugRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -303,7 +299,7 @@ pub async fn update_bug(
                     return Err(internal_error("事务提交失败"));
                 }
             }
-            Ok(Json(ApiResponse::success(bug_to_json(&r), "更新缺陷成功")))
+            Ok(ApiResponse::success(bug_to_json(&r), "更新缺陷成功"))
         }
 
         Ok(None) => {
@@ -329,8 +325,7 @@ pub async fn delete_bug(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -341,10 +336,10 @@ pub async fn delete_bug(
         .execute(&mut **txn)
         .await;
     match result {
-        Ok(res) if res.rows_affected() > 0 => Ok(Json(ApiResponse::success(
+        Ok(res) if res.rows_affected() > 0 => Ok(ApiResponse::success(
             serde_json::json!({ "deleted": true, "id": id.to_string() }),
             "删除缺陷成功",
-        ))),
+        )),
         Ok(_) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
@@ -407,8 +402,7 @@ pub async fn list_builds(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -425,10 +419,10 @@ pub async fn list_builds(
             }
         };
     let items: Vec<serde_json::Value> = rows.iter().map(build_to_json).collect();
-    Ok(Json(ApiResponse::success(
+    Ok(ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "获取构建列表成功",
-    )))
+    ))
 }
 
 #[utoipa::path(
@@ -450,8 +444,7 @@ pub async fn get_build(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -462,10 +455,7 @@ pub async fn get_build(
         .fetch_optional(&mut **txn)
         .await;
     match row {
-        Ok(Some(r)) => Ok(Json(ApiResponse::success(
-            build_to_json(&r),
-            "获取构建成功",
-        ))),
+        Ok(Some(r)) => Ok(ApiResponse::success(build_to_json(&r), "获取构建成功")),
         Ok(None) => Err(not_found("构建不存在")),
         Err(e) => {
             tracing::error!("查询构建失败: {}", e);
@@ -480,8 +470,7 @@ pub async fn create_build(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateBuildRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -513,10 +502,7 @@ pub async fn create_build(
                 }
             }
 
-            Ok(Json(ApiResponse::success(
-                build_to_json(&r),
-                "创建构建成功",
-            )))
+            Ok(ApiResponse::success(build_to_json(&r), "创建构建成功"))
         }
         Err(e) => {
             tracing::error!("创建构建失败: {}", e);
@@ -576,8 +562,7 @@ pub async fn list_deploys(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -594,10 +579,10 @@ pub async fn list_deploys(
             }
         };
     let items: Vec<serde_json::Value> = rows.iter().map(deploy_to_json).collect();
-    Ok(Json(ApiResponse::success(
+    Ok(ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "获取部署列表成功",
-    )))
+    ))
 }
 
 #[utoipa::path(
@@ -619,8 +604,7 @@ pub async fn get_deploy(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -631,10 +615,7 @@ pub async fn get_deploy(
         .fetch_optional(&mut **txn)
         .await;
     match row {
-        Ok(Some(r)) => Ok(Json(ApiResponse::success(
-            deploy_to_json(&r),
-            "获取部署成功",
-        ))),
+        Ok(Some(r)) => Ok(ApiResponse::success(deploy_to_json(&r), "获取部署成功")),
         Ok(None) => Err(not_found("部署不存在")),
         Err(e) => {
             tracing::error!("查询部署失败: {}", e);
@@ -649,8 +630,7 @@ pub async fn create_deploy(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateDeployRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -684,10 +664,7 @@ pub async fn create_deploy(
                 }
             }
 
-            Ok(Json(ApiResponse::success(
-                deploy_to_json(&r),
-                "创建部署成功",
-            )))
+            Ok(ApiResponse::success(deploy_to_json(&r), "创建部署成功"))
         }
         Err(e) => {
             tracing::error!("创建部署失败: {}", e);
@@ -744,8 +721,7 @@ pub async fn list_tests(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -762,10 +738,10 @@ pub async fn list_tests(
             }
         };
     let items: Vec<serde_json::Value> = rows.iter().map(test_to_json).collect();
-    Ok(Json(ApiResponse::success(
+    Ok(ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "获取测试用例列表成功",
-    )))
+    ))
 }
 
 #[utoipa::path(
@@ -787,8 +763,7 @@ pub async fn get_test(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -799,10 +774,7 @@ pub async fn get_test(
         .fetch_optional(&mut **txn)
         .await;
     match row {
-        Ok(Some(r)) => Ok(Json(ApiResponse::success(
-            test_to_json(&r),
-            "获取测试用例成功",
-        ))),
+        Ok(Some(r)) => Ok(ApiResponse::success(test_to_json(&r), "获取测试用例成功")),
         Ok(None) => Err(not_found("测试用例不存在")),
         Err(e) => {
             tracing::error!("查询测试用例失败: {}", e);
@@ -817,8 +789,7 @@ pub async fn create_test(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateTestCaseRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -849,10 +820,7 @@ pub async fn create_test(
                 }
             }
 
-            Ok(Json(ApiResponse::success(
-                test_to_json(&r),
-                "创建测试用例成功",
-            )))
+            Ok(ApiResponse::success(test_to_json(&r), "创建测试用例成功"))
         }
         Err(e) => {
             tracing::error!("创建测试用例失败: {}", e);
@@ -868,8 +836,7 @@ pub async fn update_test(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateTestCaseRequest>,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -894,10 +861,7 @@ pub async fn update_test(
     .fetch_optional(&mut **txn)
     .await;
     match row {
-        Ok(Some(r)) => Ok(Json(ApiResponse::success(
-            test_to_json(&r),
-            "更新测试用例成功",
-        ))),
+        Ok(Some(r)) => Ok(ApiResponse::success(test_to_json(&r), "更新测试用例成功")),
         Ok(None) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
@@ -921,8 +885,7 @@ pub async fn delete_test(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
-{
+) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
@@ -933,10 +896,10 @@ pub async fn delete_test(
         .execute(&mut **txn)
         .await;
     match result {
-        Ok(res) if res.rows_affected() > 0 => Ok(Json(ApiResponse::success(
+        Ok(res) if res.rows_affected() > 0 => Ok(ApiResponse::success(
             serde_json::json!({ "deleted": true, "id": id.to_string() }),
             "删除测试用例成功",
-        ))),
+        )),
         Ok(_) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {

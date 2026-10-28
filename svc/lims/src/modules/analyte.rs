@@ -84,7 +84,7 @@ async fn list_analytes(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<AnalyteQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let filter = resolve_tenant(&ctx, &claims);
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
@@ -120,7 +120,7 @@ async fn list_analytes(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("[lims] analyte 计数失败: {}", e);
-            return Json(ApiResponse::server_error("查询检验项目失败"));
+            return ApiResponse::server_error("查询检验项目失败");
         }
     };
     let fetch_sql = format!(
@@ -136,7 +136,7 @@ async fn list_analytes(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("[lims] analyte 查询失败: {}", e);
-            return Json(ApiResponse::server_error("查询检验项目失败"));
+            return ApiResponse::server_error("查询检验项目失败");
         }
     };
     let items: Vec<AnalyteResponse> = rows
@@ -154,10 +154,10 @@ async fn list_analytes(
             description: r.get("description"),
         })
         .collect();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "查询成功",
-    ))
+    )
 }
 
 async fn get_analyte(
@@ -165,7 +165,7 @@ async fn get_analyte(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let filter = resolve_tenant(&ctx, &claims);
     let mut sql = String::from(
         "SELECT id, analyte_code, analyte_name, category, unit, method_reference, limit_value, accuracy, status, description \
@@ -178,7 +178,7 @@ async fn get_analyte(
     }
     let row = q.fetch_optional(&state.pool).await;
     match row {
-        Ok(Some(r)) => Json(ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             serde_json::json!({
                 "id": r.get::<Uuid, _>("id"),
                 "analyte_code": r.get::<String, _>("analyte_code"),
@@ -192,11 +192,11 @@ async fn get_analyte(
                 "description": r.get::<Option<String>, _>("description"),
             }),
             "查询成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("检验项目不存在")),
+        ),
+        Ok(None) => ApiResponse::not_found("检验项目不存在"),
         Err(e) => {
             tracing::error!("[lims] analyte 查询失败: {}", e);
-            Json(ApiResponse::server_error("查询检验项目失败"))
+            ApiResponse::server_error("查询检验项目失败")
         }
     }
 }
@@ -206,7 +206,7 @@ async fn create_analyte(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAnalyteRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_id = ctx.tenant_id;
     let _ = claims;
     let result = sqlx::query(
@@ -229,18 +229,15 @@ async fn create_analyte(
     match result {
         Ok(Some(r)) => {
             let id: Uuid = r.get("id");
-            Json(ApiResponse::success(
-                serde_json::json!({ "id": id }),
-                "检验项目创建成功",
-            ))
+            ApiResponse::success(serde_json::json!({ "id": id }), "检验项目创建成功")
         }
-        Ok(None) => Json(ApiResponse::server_error("检验项目创建失败")),
+        Ok(None) => ApiResponse::server_error("检验项目创建失败"),
         Err(e) => {
             tracing::error!("[lims] analyte 创建失败: {}", e);
             if e.to_string().contains("duplicate") {
-                return Json(ApiResponse::conflict("检验项目编码已存在"));
+                return ApiResponse::conflict("检验项目编码已存在");
             }
-            Json(ApiResponse::server_error("检验项目创建失败"))
+            ApiResponse::server_error("检验项目创建失败")
         }
     }
 }
@@ -251,7 +248,7 @@ async fn update_analyte(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAnalyteRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let filter = resolve_tenant(&ctx, &claims);
     let base_sql = "UPDATE qa_lims_analytes SET \
         analyte_name = COALESCE($2, analyte_name), category = COALESCE($3, category), \
@@ -291,14 +288,11 @@ async fn update_analyte(
         }
     };
     match result {
-        Ok(Some(_)) => Json(ApiResponse::success(
-            serde_json::json!({ "id": id }),
-            "检验项目更新成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("检验项目不存在")),
+        Ok(Some(_)) => ApiResponse::success(serde_json::json!({ "id": id }), "检验项目更新成功"),
+        Ok(None) => ApiResponse::not_found("检验项目不存在"),
         Err(e) => {
             tracing::error!("[lims] analyte 更新失败: {}", e);
-            Json(ApiResponse::server_error("检验项目更新失败"))
+            ApiResponse::server_error("检验项目更新失败")
         }
     }
 }
@@ -308,7 +302,7 @@ async fn delete_analyte(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let filter = resolve_tenant(&ctx, &claims);
     let result = if let Some(t) = filter {
         sqlx::query(
@@ -325,13 +319,11 @@ async fn delete_analyte(
             .await
     };
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("".to_string(), "检验项目删除成功"))
-        }
-        Ok(_) => Json(ApiResponse::not_found("检验项目不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "检验项目删除成功"),
+        Ok(_) => ApiResponse::not_found("检验项目不存在"),
         Err(e) => {
             tracing::error!("[lims] analyte 删除失败: {}", e);
-            Json(ApiResponse::server_error("检验项目删除失败"))
+            ApiResponse::server_error("检验项目删除失败")
         }
     }
 }

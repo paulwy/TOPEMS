@@ -31,12 +31,12 @@ pub struct ScanInventoryParams {
 )]
 pub async fn list_inventory_items(
     State(client): State<TypedServiceClient<WmsApi>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match client.list_inventory_items(1, 100).await {
-        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "获取库存列表成功")),
+        Ok(data) => ApiResponse::success(unwrap_data(data), "获取库存列表成功"),
         Err(e) => {
             tracing::error!("调用WMS服务获取库存列表失败: {}", e);
-            Json(ApiResponse::server_error("获取库存列表失败"))
+            ApiResponse::server_error("获取库存列表失败")
         }
     }
 }
@@ -55,12 +55,12 @@ pub async fn list_inventory_items(
 pub async fn create_inventory_item(
     State(client): State<TypedServiceClient<WmsApi>>,
     Json(payload): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match client.create_inventory(&payload).await {
-        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "创建库存成功")),
+        Ok(data) => ApiResponse::success(unwrap_data(data), "创建库存成功"),
         Err(e) => {
             tracing::error!("调用WMS服务创建库存失败: {}", e);
-            Json(ApiResponse::server_error("创建库存失败"))
+            ApiResponse::server_error("创建库存失败")
         }
     }
 }
@@ -81,12 +81,12 @@ pub async fn create_inventory_item(
 pub async fn get_inventory_item(
     State(client): State<TypedServiceClient<WmsApi>>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match client.get_inventory_item(&id).await {
-        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "获取库存详情成功")),
+        Ok(data) => ApiResponse::success(unwrap_data(data), "获取库存详情成功"),
         Err(e) => {
             tracing::error!("调用WMS服务获取库存详情失败: {}", e);
-            Json(ApiResponse::server_error("获取库存详情失败"))
+            ApiResponse::server_error("获取库存详情失败")
         }
     }
 }
@@ -96,12 +96,12 @@ pub async fn update_inventory_item(
     State(client): State<TypedServiceClient<WmsApi>>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(payload): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match client.update_inventory(&id, &payload).await {
-        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "更新库存成功")),
+        Ok(data) => ApiResponse::success(unwrap_data(data), "更新库存成功"),
         Err(e) => {
             tracing::error!("调用WMS服务更新库存失败: {}", e);
-            Json(ApiResponse::server_error("更新库存失败"))
+            ApiResponse::server_error("更新库存失败")
         }
     }
 }
@@ -110,12 +110,12 @@ pub async fn update_inventory_item(
 pub async fn delete_inventory_item(
     State(client): State<TypedServiceClient<WmsApi>>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match client.delete_inventory(&id).await {
-        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "删除库存成功")),
+        Ok(data) => ApiResponse::success(unwrap_data(data), "删除库存成功"),
         Err(e) => {
             tracing::error!("调用WMS服务删除库存失败: {}", e);
-            Json(ApiResponse::server_error("删除库存失败"))
+            ApiResponse::server_error("删除库存失败")
         }
     }
 }
@@ -123,15 +123,12 @@ pub async fn delete_inventory_item(
 /// 低库存列表（前端 GET /inventory/low-stock → WMS /inventory/low-stock）
 pub async fn list_low_stock_items(
     State(client): State<TypedServiceClient<WmsApi>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match client.list_low_stock_inventory().await {
-        Ok(data) => Json(ApiResponse::success(
-            unwrap_data(data),
-            "获取低库存列表成功",
-        )),
+        Ok(data) => ApiResponse::success(unwrap_data(data), "获取低库存列表成功"),
         Err(e) => {
             tracing::error!("调用WMS服务获取低库存列表失败: {}", e);
-            Json(ApiResponse::server_error("获取低库存列表失败"))
+            ApiResponse::server_error("获取低库存列表失败")
         }
     }
 }
@@ -140,10 +137,10 @@ pub async fn list_low_stock_items(
 pub async fn scan_inventory(
     State(client): State<TypedServiceClient<WmsApi>>,
     Query(params): Query<ScanInventoryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let barcode = params.barcode.unwrap_or_default();
     if barcode.is_empty() {
-        return Json(ApiResponse::bad_request("缺少条码参数"));
+        return ApiResponse::bad_request("缺少条码参数");
     }
 
     match client.list_inventory_items(1, 100).await {
@@ -165,16 +162,13 @@ pub async fn scan_inventory(
                 })
             });
             match found {
-                Some(item) => Json(ApiResponse::success(item.clone(), "扫码查询成功")),
-                None => Json(ApiResponse::success(
-                    serde_json::Value::Null,
-                    "未找到对应库存",
-                )),
+                Some(item) => ApiResponse::success(item.clone(), "扫码查询成功"),
+                None => ApiResponse::success(serde_json::Value::Null, "未找到对应库存"),
             }
         }
         Err(e) => {
             tracing::error!("调用WMS服务扫码查询失败: {}", e);
-            Json(ApiResponse::server_error("扫码查询失败"))
+            ApiResponse::server_error("扫码查询失败")
         }
     }
 }
@@ -191,19 +185,19 @@ pub async fn scan_inventory(
 )]
 pub async fn list_stocktake_tasks(
     State(client): State<TypedServiceClient<WmsApi>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match client.list_stocktake_tasks(1, 100).await {
-        Ok(data) => Json(ApiResponse::success(
+        Ok(data) => ApiResponse::success(
             serde_json::json!({ "items": data, "total": data.len() }),
             "获取盘点任务列表成功",
-        )),
+        ),
         Err(e) => {
             // WMS 上游暂未实现盘点任务端点（探测 404），轻量兜底返回空列表，待上游支持。
             tracing::error!("调用WMS服务获取盘点任务失败（兜底空列表）: {}", e);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "items": [], "total": 0 }),
                 "获取盘点任务列表成功（待上游支持）",
-            ))
+            )
         }
     }
 }
@@ -225,17 +219,17 @@ pub async fn create_stocktake_record(
     State(client): State<TypedServiceClient<WmsApi>>,
     axum::extract::Path(task_id): axum::extract::Path<String>,
     Json(payload): Json<CreateStocktakeRecordRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let data = serde_json::json!({
         "item_id": payload.item_id,
         "actual_quantity": payload.actual_quantity,
     });
 
     match client.create_stocktake_record(&task_id, &data).await {
-        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "创建盘点记录成功")),
+        Ok(data) => ApiResponse::success(unwrap_data(data), "创建盘点记录成功"),
         Err(e) => {
             tracing::error!("调用WMS服务创建盘点记录失败: {}", e);
-            Json(ApiResponse::server_error("创建盘点记录失败"))
+            ApiResponse::server_error("创建盘点记录失败")
         }
     }
 }
@@ -252,19 +246,19 @@ pub async fn create_stocktake_record(
 )]
 pub async fn list_inbound_orders(
     State(client): State<TypedServiceClient<WmsApi>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match client.list_inbound_orders(1, 100).await {
-        Ok(items) => Json(ApiResponse::success(
+        Ok(items) => ApiResponse::success(
             serde_json::json!({ "items": items, "total": items.len() }),
             "获取入库单列表成功",
-        )),
+        ),
         Err(e) => {
             // WMS 上游入库单响应暂无法解码，轻量兜底返回空列表，待上游支持。
             tracing::error!("调用WMS服务获取入库单列表失败（兜底空列表）: {}", e);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "items": [], "total": 0 }),
                 "获取入库单列表成功（待上游支持）",
-            ))
+            )
         }
     }
 }
@@ -281,19 +275,19 @@ pub async fn list_inbound_orders(
 )]
 pub async fn list_outbound_orders(
     State(client): State<TypedServiceClient<WmsApi>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match client.list_outbound_orders(1, 100).await {
-        Ok(items) => Json(ApiResponse::success(
+        Ok(items) => ApiResponse::success(
             serde_json::json!({ "items": items, "total": items.len() }),
             "获取出库单列表成功",
-        )),
+        ),
         Err(e) => {
             // WMS 上游出库单响应暂无法解码，轻量兜底返回空列表，待上游支持。
             tracing::error!("调用WMS服务获取出库单列表失败（兜底空列表）: {}", e);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "items": [], "total": 0 }),
                 "获取出库单列表成功（待上游支持）",
-            ))
+            )
         }
     }
 }

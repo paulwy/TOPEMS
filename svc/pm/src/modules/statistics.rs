@@ -1,7 +1,7 @@
 use axum::{
     extract::{Query, State},
     routing::get,
-    Json, Router,
+    Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -1030,9 +1030,9 @@ async fn build_task_statistics(db: &PgPool) -> TaskStatistics {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn get_statistics(State(db): State<PgPool>) -> Json<ApiResponse<PmStatistics>> {
+async fn get_statistics(State(db): State<PgPool>) -> ApiResponse<PmStatistics> {
     let stats = build_pm_statistics(&db).await;
-    Json(ApiResponse::success(stats, "统计数据获取成功"))
+    ApiResponse::success(stats, "统计数据获取成功")
 }
 
 #[utoipa::path(
@@ -1054,9 +1054,9 @@ async fn get_statistics(State(db): State<PgPool>) -> Json<ApiResponse<PmStatisti
 async fn get_project_statistics(
     State(db): State<PgPool>,
     Query(_params): Query<StatsQuery>,
-) -> Json<ApiResponse<ProjectStatistics>> {
+) -> ApiResponse<ProjectStatistics> {
     let stats = build_project_statistics(&db).await;
-    Json(ApiResponse::success(stats, "项目统计数据获取成功"))
+    ApiResponse::success(stats, "项目统计数据获取成功")
 }
 
 #[utoipa::path(
@@ -1078,9 +1078,9 @@ async fn get_project_statistics(
 async fn get_contract_statistics(
     State(db): State<PgPool>,
     Query(_params): Query<StatsQuery>,
-) -> Json<ApiResponse<ContractStatistics>> {
+) -> ApiResponse<ContractStatistics> {
     let stats = build_contract_statistics(&db).await;
-    Json(ApiResponse::success(stats, "合同统计数据获取成功"))
+    ApiResponse::success(stats, "合同统计数据获取成功")
 }
 
 #[utoipa::path(
@@ -1102,9 +1102,9 @@ async fn get_contract_statistics(
 async fn get_budget_statistics(
     State(db): State<PgPool>,
     Query(_params): Query<StatsQuery>,
-) -> Json<ApiResponse<BudgetStatistics>> {
+) -> ApiResponse<BudgetStatistics> {
     let stats = build_budget_statistics(&db).await;
-    Json(ApiResponse::success(stats, "预算统计数据获取成功"))
+    ApiResponse::success(stats, "预算统计数据获取成功")
 }
 
 #[utoipa::path(
@@ -1126,9 +1126,9 @@ async fn get_budget_statistics(
 async fn get_risk_statistics(
     State(db): State<PgPool>,
     Query(_params): Query<StatsQuery>,
-) -> Json<ApiResponse<RiskStatistics>> {
+) -> ApiResponse<RiskStatistics> {
     let stats = build_risk_statistics(&db).await;
-    Json(ApiResponse::success(stats, "风险统计数据获取成功"))
+    ApiResponse::success(stats, "风险统计数据获取成功")
 }
 
 #[utoipa::path(
@@ -1150,9 +1150,9 @@ async fn get_risk_statistics(
 async fn get_task_statistics(
     State(db): State<PgPool>,
     Query(_params): Query<StatsQuery>,
-) -> Json<ApiResponse<TaskStatistics>> {
+) -> ApiResponse<TaskStatistics> {
     let stats = build_task_statistics(&db).await;
-    Json(ApiResponse::success(stats, "任务统计数据获取成功"))
+    ApiResponse::success(stats, "任务统计数据获取成功")
 }
 
 #[utoipa::path(
@@ -1165,7 +1165,7 @@ async fn get_task_statistics(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn get_dashboard(State(db): State<PgPool>) -> Json<ApiResponse<DashboardOverview>> {
+async fn get_dashboard(State(db): State<PgPool>) -> ApiResponse<DashboardOverview> {
     let projects = build_project_statistics(&db).await;
     let contracts = build_contract_statistics(&db).await;
     let budget = build_budget_statistics(&db).await;
@@ -1180,7 +1180,7 @@ async fn get_dashboard(State(db): State<PgPool>) -> Json<ApiResponse<DashboardOv
         tasks,
     };
 
-    Json(ApiResponse::success(dashboard, "仪表板数据获取成功"))
+    ApiResponse::success(dashboard, "仪表板数据获取成功")
 }
 
 // ============ 辅助函数 ============

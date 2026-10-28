@@ -13,7 +13,7 @@
 //! 每个数据源独立降级，单一服务故障不影响整体搜索。
 
 use axum::{
-    extract::{Extension, Json, State},
+    extract::{Extension, State},
     http::HeaderMap,
 };
 use serde::{Deserialize, Serialize};
@@ -111,12 +111,12 @@ pub async fn global_search(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
-) -> Json<ApiResponse<SearchResponse>> {
+) -> ApiResponse<SearchResponse> {
     let start = std::time::Instant::now();
     let query = params.get("q").cloned().unwrap_or_default();
 
     if query.trim().is_empty() {
-        return Json(ApiResponse::success(
+        return ApiResponse::success(
             SearchResponse {
                 total: 0,
                 by_service: std::collections::HashMap::new(),
@@ -124,7 +124,7 @@ pub async fn global_search(
                 duration_ms: 0,
             },
             "搜索成功",
-        ));
+        );
     }
 
     let token = extract_bearer_token(&headers);
@@ -154,7 +154,7 @@ pub async fn global_search(
     let duration_ms = start.elapsed().as_millis() as u64;
 
     let _ = claims;
-    Json(ApiResponse::success(
+    ApiResponse::success(
         SearchResponse {
             total,
             by_service,
@@ -162,7 +162,7 @@ pub async fn global_search(
             duration_ms,
         },
         "搜索成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -180,16 +180,16 @@ pub async fn search_suggestions(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
-) -> Json<ApiResponse<SearchSuggestionsResponse>> {
+) -> ApiResponse<SearchSuggestionsResponse> {
     let query = params.get("q").cloned().unwrap_or_default();
 
     if query.trim().is_empty() {
-        return Json(ApiResponse::success(
+        return ApiResponse::success(
             SearchSuggestionsResponse {
                 suggestions: vec![],
             },
             "搜索建议获取成功",
-        ));
+        );
     }
 
     let token = extract_bearer_token(&headers);
@@ -210,12 +210,12 @@ pub async fn search_suggestions(
     all_titles.truncate(10);
 
     let _ = claims;
-    Json(ApiResponse::success(
+    ApiResponse::success(
         SearchSuggestionsResponse {
             suggestions: all_titles,
         },
         "搜索建议获取成功",
-    ))
+    )
 }
 
 async fn search_notifications(

@@ -19,7 +19,7 @@ use super::models::{CreateParseRuleRequest, ParseRule, ParseRuleQuery, UpdatePar
 pub async fn list_parse_rules(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<ParseRuleQuery>,
-) -> Json<ApiResponse<Vec<ParseRule>>> {
+) -> ApiResponse<Vec<ParseRule>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -96,10 +96,10 @@ pub async fn list_parse_rules(
     });
 
     match rules {
-        Ok(data) => Json(ApiResponse::success(data, "获取解析规则列表成功")),
+        Ok(data) => ApiResponse::success(data, "获取解析规则列表成功"),
         Err(e) => {
             tracing::error!("Failed to fetch parse rules: {}", e);
-            Json(ApiResponse::server_error("获取解析规则列表失败"))
+            ApiResponse::server_error("获取解析规则列表失败")
         }
     }
 }
@@ -120,10 +120,10 @@ pub async fn list_parse_rules(
 pub async fn get_parse_rule(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<ParseRule>> {
+) -> ApiResponse<ParseRule> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的规则ID")),
+        Err(_) => return ApiResponse::bad_request("无效的规则ID"),
     };
 
     let row = sqlx::query(
@@ -140,7 +140,7 @@ pub async fn get_parse_rule(
     .await;
 
     match row {
-        Ok(Some(r)) => Json(ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             ParseRule {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -158,11 +158,11 @@ pub async fn get_parse_rule(
                 updated_at: r.get("updated_at"),
             },
             "获取解析规则成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("解析规则不存在")),
+        ),
+        Ok(None) => ApiResponse::not_found("解析规则不存在"),
         Err(e) => {
             tracing::error!("Failed to fetch parse rule: {}", e);
-            Json(ApiResponse::server_error("获取解析规则失败"))
+            ApiResponse::server_error("获取解析规则失败")
         }
     }
 }
@@ -171,7 +171,7 @@ pub async fn create_parse_rule(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateParseRuleRequest>,
-) -> Json<ApiResponse<ParseRule>> {
+) -> ApiResponse<ParseRule> {
     let rule_id = Uuid::new_v4();
     let rule_no = format!("PR-{}", chrono::Utc::now().format("%Y%m%d%H%M%S"));
 
@@ -199,7 +199,7 @@ pub async fn create_parse_rule(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             ParseRule {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -217,10 +217,10 @@ pub async fn create_parse_rule(
                 updated_at: r.get("updated_at"),
             },
             "解析规则创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create parse rule: {}", e);
-            Json(ApiResponse::server_error("创建解析规则失败"))
+            ApiResponse::server_error("创建解析规则失败")
         }
     }
 }
@@ -229,10 +229,10 @@ pub async fn update_parse_rule(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateParseRuleRequest>,
-) -> Json<ApiResponse<ParseRule>> {
+) -> ApiResponse<ParseRule> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的规则ID")),
+        Err(_) => return ApiResponse::bad_request("无效的规则ID"),
     };
 
     let row = sqlx::query(
@@ -261,7 +261,7 @@ pub async fn update_parse_rule(
     .await;
 
     match row {
-        Ok(Some(r)) => Json(ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             ParseRule {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -279,11 +279,11 @@ pub async fn update_parse_rule(
                 updated_at: r.get("updated_at"),
             },
             "解析规则更新成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("解析规则不存在")),
+        ),
+        Ok(None) => ApiResponse::not_found("解析规则不存在"),
         Err(e) => {
             tracing::error!("Failed to update parse rule: {}", e);
-            Json(ApiResponse::server_error("更新解析规则失败"))
+            ApiResponse::server_error("更新解析规则失败")
         }
     }
 }
@@ -291,10 +291,10 @@ pub async fn update_parse_rule(
 pub async fn delete_parse_rule(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的规则ID")),
+        Err(_) => return ApiResponse::bad_request("无效的规则ID"),
     };
 
     let result = sqlx::query("UPDATE qa_lims_parse_rules SET deleted_at = NOW() WHERE id = $1")
@@ -303,10 +303,10 @@ pub async fn delete_parse_rule(
         .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "解析规则删除成功")),
+        Ok(_) => ApiResponse::success(true, "解析规则删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete parse rule: {}", e);
-            Json(ApiResponse::server_error("删除解析规则失败"))
+            ApiResponse::server_error("删除解析规则失败")
         }
     }
 }

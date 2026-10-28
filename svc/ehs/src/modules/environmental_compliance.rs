@@ -433,7 +433,7 @@ pub async fn list_regulations(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(q): Query<RegulationQuery>,
-) -> Json<ApiResponse<Vec<EnvironmentalRegulation>>> {
+) -> ApiResponse<Vec<EnvironmentalRegulation>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -485,13 +485,13 @@ pub async fn list_regulations(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list environmental regulations: {}", e);
-            return Json(ApiResponse::server_error("获取环保法规列表失败"));
+            return ApiResponse::server_error("获取环保法规列表失败");
         }
     };
 
     let list: Vec<EnvironmentalRegulation> =
         rows.iter().map(environmental_regulation_from_row).collect();
-    Json(ApiResponse::success(list, "获取环保法规列表成功"))
+    ApiResponse::success(list, "获取环保法规列表成功")
 }
 
 #[utoipa::path(
@@ -507,7 +507,7 @@ pub async fn create_regulation(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateRegulationRequest>,
-) -> Json<ApiResponse<EnvironmentalRegulation>> {
+) -> ApiResponse<EnvironmentalRegulation> {
     let tenant_id = resolve_tenant_id(&claims);
     let reg_no = format!("ER-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let keywords: serde_json::Value = req
@@ -558,11 +558,11 @@ pub async fn create_regulation(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create environmental regulation: {}", e);
-            return Json(ApiResponse::server_error("环保法规创建失败"));
+            return ApiResponse::server_error("环保法规创建失败");
         }
     };
     let regulation = environmental_regulation_from_row(&row);
-    Json(ApiResponse::success(regulation, "环保法规创建成功"))
+    ApiResponse::success(regulation, "环保法规创建成功")
 }
 
 #[utoipa::path(
@@ -578,7 +578,7 @@ pub async fn get_regulation(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<EnvironmentalRegulation>> {
+) -> ApiResponse<EnvironmentalRegulation> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let sql = r#"
         SELECT id::text AS id, reg_no AS regulation_no, title, category, regulation_type,
@@ -599,14 +599,14 @@ pub async fn get_regulation(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("环保法规不存在")),
+        Ok(None) => return ApiResponse::not_found("环保法规不存在"),
         Err(e) => {
             tracing::error!("Failed to get environmental regulation: {}", e);
-            return Json(ApiResponse::server_error("获取环保法规失败"));
+            return ApiResponse::server_error("获取环保法规失败");
         }
     };
     let regulation = environmental_regulation_from_row(&row);
-    Json(ApiResponse::success(regulation, "获取环保法规成功"))
+    ApiResponse::success(regulation, "获取环保法规成功")
 }
 
 #[utoipa::path(
@@ -624,7 +624,7 @@ pub async fn update_regulation(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateRegulationRequest>,
-) -> Json<ApiResponse<EnvironmentalRegulation>> {
+) -> ApiResponse<EnvironmentalRegulation> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -710,14 +710,14 @@ pub async fn update_regulation(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("环保法规不存在")),
+        Ok(None) => return ApiResponse::not_found("环保法规不存在"),
         Err(e) => {
             tracing::error!("Failed to update environmental regulation: {}", e);
-            return Json(ApiResponse::server_error("环保法规更新失败"));
+            return ApiResponse::server_error("环保法规更新失败");
         }
     };
     let regulation = environmental_regulation_from_row(&row);
-    Json(ApiResponse::success(regulation, "环保法规更新成功"))
+    ApiResponse::success(regulation, "环保法规更新成功")
 }
 
 #[utoipa::path(
@@ -733,7 +733,7 @@ pub async fn delete_regulation(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let sql = r#"
         UPDATE ehs.qa_ehs_environmental_regulations
@@ -751,13 +751,13 @@ pub async fn delete_regulation(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete environmental regulation: {}", e);
-            return Json(ApiResponse::server_error("环保法规删除失败"));
+            return ApiResponse::server_error("环保法规删除失败");
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("环保法规不存在"));
+        return ApiResponse::not_found("环保法规不存在");
     }
-    Json(ApiResponse::success((), "环保法规删除成功"))
+    ApiResponse::success((), "环保法规删除成功")
 }
 
 #[utoipa::path(
@@ -775,7 +775,7 @@ pub async fn update_monitor_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateMonitorRecordRequest>,
-) -> Json<ApiResponse<EnvironmentMonitor>> {
+) -> ApiResponse<EnvironmentMonitor> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -806,7 +806,7 @@ pub async fn update_monitor_record(
     add("remarks", req.remarks);
 
     if sets.is_empty() {
-        return Json(ApiResponse::bad_request("无更新字段"));
+        return ApiResponse::bad_request("无更新字段");
     }
     sets.push(format!("updated_at = ${}", params.len() + 1));
     params.push(chrono::Utc::now().to_rfc3339());
@@ -837,13 +837,10 @@ pub async fn update_monitor_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update monitor record: {}", e);
-            return Json(ApiResponse::not_found("监测记录不存在或更新失败"));
+            return ApiResponse::not_found("监测记录不存在或更新失败");
         }
     };
-    Json(ApiResponse::success(
-        monitor_record_from_row(&row),
-        "更新监测记录成功",
-    ))
+    ApiResponse::success(monitor_record_from_row(&row), "更新监测记录成功")
 }
 #[utoipa::path(
     get,
@@ -858,7 +855,7 @@ pub async fn get_permit(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<DischargePermit>> {
+) -> ApiResponse<DischargePermit> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let sql = r#"
         SELECT id::text AS id, permit_no, permit_name AS title, permit_type, permit_category,
@@ -879,14 +876,14 @@ pub async fn get_permit(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("排污许可不存在")),
+        Ok(None) => return ApiResponse::not_found("排污许可不存在"),
         Err(e) => {
             tracing::error!("Failed to get discharge permit: {}", e);
-            return Json(ApiResponse::server_error("获取排污许可失败"));
+            return ApiResponse::server_error("获取排污许可失败");
         }
     };
     let permit = discharge_permit_from_row(&row);
-    Json(ApiResponse::success(permit, "获取排污许可成功"))
+    ApiResponse::success(permit, "获取排污许可成功")
 }
 
 #[utoipa::path(
@@ -904,7 +901,7 @@ pub async fn update_permit(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdatePermitRequest>,
-) -> Json<ApiResponse<DischargePermit>> {
+) -> ApiResponse<DischargePermit> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -994,14 +991,14 @@ pub async fn update_permit(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("排污许可不存在")),
+        Ok(None) => return ApiResponse::not_found("排污许可不存在"),
         Err(e) => {
             tracing::error!("Failed to update discharge permit: {}", e);
-            return Json(ApiResponse::server_error("排污许可更新失败"));
+            return ApiResponse::server_error("排污许可更新失败");
         }
     };
     let permit = discharge_permit_from_row(&row);
-    Json(ApiResponse::success(permit, "排污许可更新成功"))
+    ApiResponse::success(permit, "排污许可更新成功")
 }
 
 #[utoipa::path(
@@ -1017,7 +1014,7 @@ pub async fn delete_permit(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let sql = r#"
         UPDATE ehs.qa_ehs_discharge_permits
@@ -1035,13 +1032,13 @@ pub async fn delete_permit(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete discharge permit: {}", e);
-            return Json(ApiResponse::server_error("排污许可删除失败"));
+            return ApiResponse::server_error("排污许可删除失败");
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("排污许可不存在"));
+        return ApiResponse::not_found("排污许可不存在");
     }
-    Json(ApiResponse::success((), "排污许可删除成功"))
+    ApiResponse::success((), "排污许可删除成功")
 }
 
 #[derive(Debug, Deserialize)]
@@ -1066,7 +1063,7 @@ pub async fn list_evaluations(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(q): Query<AssessmentQuery>,
-) -> Json<ApiResponse<Vec<ComplianceAssessment>>> {
+) -> ApiResponse<Vec<ComplianceAssessment>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -1122,11 +1119,11 @@ pub async fn list_evaluations(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list compliance assessments: {}", e);
-            return Json(ApiResponse::server_error("获取合规性评价列表失败"));
+            return ApiResponse::server_error("获取合规性评价列表失败");
         }
     };
     let list: Vec<ComplianceAssessment> = rows.iter().map(compliance_assessment_from_row).collect();
-    Json(ApiResponse::success(list, "获取合规性评价列表成功"))
+    ApiResponse::success(list, "获取合规性评价列表成功")
 }
 
 #[utoipa::path(
@@ -1142,7 +1139,7 @@ pub async fn create_evaluation(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateEvaluationRequest>,
-) -> Json<ApiResponse<ComplianceAssessment>> {
+) -> ApiResponse<ComplianceAssessment> {
     let tenant_id = resolve_tenant_id(&claims);
     let eval_no = format!("CE-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let non_complianceitems: serde_json::Value = req
@@ -1191,11 +1188,11 @@ pub async fn create_evaluation(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create compliance assessment: {}", e);
-            return Json(ApiResponse::server_error("合规性评价创建失败"));
+            return ApiResponse::server_error("合规性评价创建失败");
         }
     };
     let assessment = compliance_assessment_from_row(&row);
-    Json(ApiResponse::success(assessment, "合规性评价创建成功"))
+    ApiResponse::success(assessment, "合规性评价创建成功")
 }
 
 #[utoipa::path(
@@ -1214,7 +1211,7 @@ pub async fn get_evaluation(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<ComplianceAssessment>> {
+) -> ApiResponse<ComplianceAssessment> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let sql = r#"
         SELECT id::text AS id, eval_no AS assessment_no, title, eval_type AS assessment_type,
@@ -1236,14 +1233,14 @@ pub async fn get_evaluation(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("合规性评价不存在")),
+        Ok(None) => return ApiResponse::not_found("合规性评价不存在"),
         Err(e) => {
             tracing::error!("Failed to get compliance assessment: {}", e);
-            return Json(ApiResponse::server_error("获取评价详情失败"));
+            return ApiResponse::server_error("获取评价详情失败");
         }
     };
     let assessment = compliance_assessment_from_row(&row);
-    Json(ApiResponse::success(assessment, "获取评价详情成功"))
+    ApiResponse::success(assessment, "获取评价详情成功")
 }
 
 #[utoipa::path(
@@ -1264,7 +1261,7 @@ pub async fn update_evaluation(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateEvaluationRequest>,
-) -> Json<ApiResponse<ComplianceAssessment>> {
+) -> ApiResponse<ComplianceAssessment> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -1355,14 +1352,14 @@ pub async fn update_evaluation(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("合规性评价不存在")),
+        Ok(None) => return ApiResponse::not_found("合规性评价不存在"),
         Err(e) => {
             tracing::error!("Failed to update compliance assessment: {}", e);
-            return Json(ApiResponse::server_error("评价更新失败"));
+            return ApiResponse::server_error("评价更新失败");
         }
     };
     let assessment = compliance_assessment_from_row(&row);
-    Json(ApiResponse::success(assessment, "评价更新成功"))
+    ApiResponse::success(assessment, "评价更新成功")
 }
 
 #[utoipa::path(
@@ -1381,7 +1378,7 @@ pub async fn delete_evaluation(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let sql = r#"
         UPDATE ehs.qa_ehs_compliance_evaluations
@@ -1399,13 +1396,13 @@ pub async fn delete_evaluation(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete compliance assessment: {}", e);
-            return Json(ApiResponse::server_error("评价删除失败"));
+            return ApiResponse::server_error("评价删除失败");
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("合规性评价不存在"));
+        return ApiResponse::not_found("合规性评价不存在");
     }
-    Json(ApiResponse::success((), "评价删除成功"))
+    ApiResponse::success((), "评价删除成功")
 }
 
 #[utoipa::path(
@@ -1420,7 +1417,7 @@ pub async fn list_monitor_records(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Query(q): axum::extract::Query<ComplianceQuery>,
-) -> Json<ApiResponse<Vec<EnvironmentMonitor>>> {
+) -> ApiResponse<Vec<EnvironmentMonitor>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -1459,11 +1456,11 @@ pub async fn list_monitor_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list monitor records: {}", e);
-            return Json(ApiResponse::server_error("获取环境监测记录列表失败"));
+            return ApiResponse::server_error("获取环境监测记录列表失败");
         }
     };
     let records: Vec<EnvironmentMonitor> = rows.iter().map(monitor_record_from_row).collect();
-    Json(ApiResponse::success(records, "获取环境监测记录列表成功"))
+    ApiResponse::success(records, "获取环境监测记录列表成功")
 }
 #[utoipa::path(
     post,
@@ -1478,7 +1475,7 @@ pub async fn create_monitor_record(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateMonitorRecordRequest>,
-) -> Json<ApiResponse<EnvironmentMonitor>> {
+) -> ApiResponse<EnvironmentMonitor> {
     let tenant_id = resolve_tenant_id(&claims);
     let now = chrono::Utc::now();
     let record_no = format!(
@@ -1524,13 +1521,10 @@ pub async fn create_monitor_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create monitor record: {}", e);
-            return Json(ApiResponse::server_error("创建环境监测记录失败"));
+            return ApiResponse::server_error("创建环境监测记录失败");
         }
     };
-    Json(ApiResponse::success(
-        monitor_record_from_row(&row),
-        "监测记录创建成功",
-    ))
+    ApiResponse::success(monitor_record_from_row(&row), "监测记录创建成功")
 }
 #[derive(Debug, Deserialize)]
 pub struct PermitQuery {
@@ -1554,7 +1548,7 @@ pub async fn list_permits(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(q): Query<PermitQuery>,
-) -> Json<ApiResponse<Vec<DischargePermit>>> {
+) -> ApiResponse<Vec<DischargePermit>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -1609,11 +1603,11 @@ pub async fn list_permits(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list discharge permits: {}", e);
-            return Json(ApiResponse::server_error("获取排污许可列表失败"));
+            return ApiResponse::server_error("获取排污许可列表失败");
         }
     };
     let list: Vec<DischargePermit> = rows.iter().map(discharge_permit_from_row).collect();
-    Json(ApiResponse::success(list, "获取排污许可列表成功"))
+    ApiResponse::success(list, "获取排污许可列表成功")
 }
 
 // gate: admin-only
@@ -1630,7 +1624,7 @@ pub async fn create_permit(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreatePermitRequest>,
-) -> Json<ApiResponse<DischargePermit>> {
+) -> ApiResponse<DischargePermit> {
     let tenant_id = resolve_tenant_id(&claims);
     let permit_no = format!("DP-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let discharge_limits: serde_json::Value = req
@@ -1678,11 +1672,11 @@ pub async fn create_permit(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create discharge permit: {}", e);
-            return Json(ApiResponse::server_error("排污许可创建失败"));
+            return ApiResponse::server_error("排污许可创建失败");
         }
     };
     let permit = discharge_permit_from_row(&row);
-    Json(ApiResponse::success(permit, "排污许可创建成功"))
+    ApiResponse::success(permit, "排污许可创建成功")
 }
 
 #[utoipa::path(
@@ -1697,7 +1691,7 @@ pub async fn list_incidents(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Query(q): axum::extract::Query<ComplianceQuery>,
-) -> Json<ApiResponse<Vec<EnvironmentIncident>>> {
+) -> ApiResponse<Vec<EnvironmentIncident>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -1745,11 +1739,11 @@ pub async fn list_incidents(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list incidents: {}", e);
-            return Json(ApiResponse::server_error("获取环境事件列表失败"));
+            return ApiResponse::server_error("获取环境事件列表失败");
         }
     };
     let records: Vec<EnvironmentIncident> = rows.iter().map(incident_from_row).collect();
-    Json(ApiResponse::success(records, "获取环境事件列表成功"))
+    ApiResponse::success(records, "获取环境事件列表成功")
 }
 #[utoipa::path(
     post,
@@ -1764,7 +1758,7 @@ pub async fn create_incident(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateIncidentRequest>,
-) -> Json<ApiResponse<EnvironmentIncident>> {
+) -> ApiResponse<EnvironmentIncident> {
     let tenant_id = resolve_tenant_id(&claims);
     let now = chrono::Utc::now();
     let incident_no = format!(
@@ -1809,13 +1803,10 @@ pub async fn create_incident(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create incident: {}", e);
-            return Json(ApiResponse::server_error("创建环境事件失败"));
+            return ApiResponse::server_error("创建环境事件失败");
         }
     };
-    Json(ApiResponse::success(
-        incident_from_row(&row),
-        "环境事件创建成功",
-    ))
+    ApiResponse::success(incident_from_row(&row), "环境事件创建成功")
 }
 #[utoipa::path(
     get,
@@ -1833,7 +1824,7 @@ pub async fn get_incident(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<EnvironmentIncident>> {
+) -> ApiResponse<EnvironmentIncident> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let result = sqlx::query(
         r#"
@@ -1858,13 +1849,10 @@ pub async fn get_incident(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to get incident: {}", e);
-            return Json(ApiResponse::not_found("环境事件不存在"));
+            return ApiResponse::not_found("环境事件不存在");
         }
     };
-    Json(ApiResponse::success(
-        incident_from_row(&row),
-        "获取环境事件成功",
-    ))
+    ApiResponse::success(incident_from_row(&row), "获取环境事件成功")
 }
 #[utoipa::path(
     put,
@@ -1884,7 +1872,7 @@ pub async fn update_incident(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateIncidentRequest>,
-) -> Json<ApiResponse<EnvironmentIncident>> {
+) -> ApiResponse<EnvironmentIncident> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -1903,7 +1891,7 @@ pub async fn update_incident(
     add("preventive_measures", req.preventive_measures);
 
     if sets.is_empty() {
-        return Json(ApiResponse::bad_request("无更新字段"));
+        return ApiResponse::bad_request("无更新字段");
     }
     sets.push(format!("updated_at = ${}", params.len() + 1));
     params.push(chrono::Utc::now().to_rfc3339());
@@ -1936,13 +1924,10 @@ pub async fn update_incident(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update incident: {}", e);
-            return Json(ApiResponse::not_found("环境事件不存在或更新失败"));
+            return ApiResponse::not_found("环境事件不存在或更新失败");
         }
     };
-    Json(ApiResponse::success(
-        incident_from_row(&row),
-        "更新环境事件成功",
-    ))
+    ApiResponse::success(incident_from_row(&row), "更新环境事件成功")
 }
 #[utoipa::path(
     delete,
@@ -1960,7 +1945,7 @@ pub async fn delete_incident(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let result = sqlx::query(
         r#"
@@ -1977,11 +1962,11 @@ pub async fn delete_incident(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "环境事件删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("环境事件不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "环境事件删除成功"),
+        Ok(_) => ApiResponse::not_found("环境事件不存在"),
         Err(e) => {
             tracing::error!("Failed to delete incident: {}", e);
-            Json(ApiResponse::server_error("删除环境事件失败"))
+            ApiResponse::server_error("删除环境事件失败")
         }
     }
 }
@@ -1996,7 +1981,7 @@ pub async fn get_compliance_statistics(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<ComplianceStatistics>> {
+) -> ApiResponse<ComplianceStatistics> {
     let tenant_id = resolve_tenant_id(&claims);
     let tenant_bind = tenant_id.to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
@@ -2086,7 +2071,7 @@ pub async fn get_compliance_statistics(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         ComplianceStatistics {
             total_regulations: i32::try_from(total_regulations).unwrap_or(i32::MAX),
             active_regulations: i32::try_from(active_regulations).unwrap_or(i32::MAX),
@@ -2104,7 +2089,7 @@ pub async fn get_compliance_statistics(
             tenant_id,
         },
         "获取环保合规统计成功",
-    ))
+    )
 }
 #[utoipa::path(
     get,
@@ -2117,9 +2102,9 @@ pub async fn list_regulation_categories(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     tracing::warn!("Environmental regulation categories data source not yet enabled");
-    Json(ApiResponse::not_implemented("法规分类数据源尚未启用"))
+    ApiResponse::not_implemented("法规分类数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -2133,9 +2118,9 @@ pub async fn list_monitor_types(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     tracing::warn!("Environmental monitor types data source not yet enabled");
-    Json(ApiResponse::not_implemented("监测类型数据源尚未启用"))
+    ApiResponse::not_implemented("监测类型数据源尚未启用")
 }
 
 /// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。

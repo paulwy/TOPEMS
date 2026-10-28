@@ -50,15 +50,15 @@ pub async fn list_orders(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
@@ -106,7 +106,7 @@ pub async fn list_orders(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": orders,
                     "total": total,
@@ -114,13 +114,11 @@ pub async fn list_orders(
                     "page_size": page_size
                 }),
                 "获取采购订单列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取采购订单列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取采购订单列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取采购订单列表失败".to_string()))
         }
     }
 }
@@ -143,15 +141,15 @@ pub async fn create_order(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreatePurchaseOrderRequest>,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
@@ -183,11 +181,11 @@ pub async fn create_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(order.clone(), "采购订单创建成功")),
+                ApiResponse::success(order.clone(), "采购订单创建成功"),
                 "success",
                 None,
             )
@@ -195,9 +193,7 @@ pub async fn create_order(
         Err(e) => {
             tracing::error!("创建采购订单失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "采购订单创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("采购订单创建失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -249,15 +245,15 @@ pub async fn get_order(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query_as::<_, PurchaseOrder>(
@@ -272,15 +268,11 @@ pub async fn get_order(
     .await;
 
     match result {
-        Ok(Some(order)) => Json(ApiResponse::success(order, "获取采购订单成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "采购订单不存在".to_string(),
-        ))),
+        Ok(Some(order)) => ApiResponse::success(order, "获取采购订单成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("采购订单不存在".to_string())),
         Err(e) => {
             tracing::error!("获取采购订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取采购订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取采购订单失败".to_string()))
         }
     }
 }
@@ -308,15 +300,15 @@ pub async fn update_order(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdatePurchaseOrderRequest>,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
@@ -332,16 +324,9 @@ pub async fn update_order(
     let existing = match existing {
         Ok(Some(o)) => o,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "采购订单不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("采购订单不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询采购订单失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询采购订单失败", e)),
     };
 
     let supplier_id = req.supplier_id.or(existing.supplier_id);
@@ -375,11 +360,11 @@ pub async fn update_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(order.clone(), "采购订单更新成功")),
+                ApiResponse::success(order.clone(), "采购订单更新成功"),
                 "success",
                 None,
             )
@@ -387,9 +372,7 @@ pub async fn update_order(
         Err(e) => {
             tracing::error!("更新采购订单失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "采购订单更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("采购订单更新失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -442,15 +425,15 @@ pub async fn delete_order(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
@@ -467,28 +450,24 @@ pub async fn delete_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success("".to_string(), "采购订单删除成功")),
+                ApiResponse::success("".to_string(), "采购订单删除成功"),
                 "success",
                 None,
             )
         }
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "采购订单不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("采购订单不存在".to_string())),
             "error",
             Some("采购订单不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除采购订单失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "采购订单删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("采购订单删除失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -550,15 +529,15 @@ pub async fn approve_order(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderApprove).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -573,23 +552,16 @@ pub async fn approve_order(
     let existing = match existing {
         Ok(Some(o)) => o,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "采购订单不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("采购订单不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询采购订单失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询采购订单失败", e)),
     };
 
     if existing.status != "pending" {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "采购订单当前状态为{}，无法审批",
             existing.status
-        ))));
+        )));
     }
 
     let approver_name = req.approver_name.clone().or(Some(claims.username.clone()));
@@ -643,7 +615,7 @@ pub async fn approve_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
             if let Some(ref publisher) = state.event_publisher {
@@ -685,22 +657,20 @@ pub async fn approve_order(
             }
 
             (
-                Json(ApiResponse::success(order.clone(), "采购订单审批通过")),
+                ApiResponse::success(order.clone(), "采购订单审批通过"),
                 "success",
                 None,
             )
         }
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::conflict("采购订单当前状态不允许审批")),
+            ApiResponse::conflict("采购订单当前状态不允许审批"),
             "conflict",
             Some("状态冲突：仅 pending 可审批".to_string()),
         ),
         Err(e) => {
             tracing::error!("审批采购订单失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "审批采购订单失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("审批采购订单失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -756,15 +726,15 @@ pub async fn reject_order(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderApprove).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -779,23 +749,16 @@ pub async fn reject_order(
     let existing = match existing {
         Ok(Some(o)) => o,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "采购订单不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("采购订单不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询采购订单失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询采购订单失败", e)),
     };
 
     if existing.status != "pending" {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "采购订单当前状态为{}，无法驳回",
             existing.status
-        ))));
+        )));
     }
 
     let approver_name = req.approver_name.clone().or(Some(claims.username.clone()));
@@ -837,26 +800,24 @@ pub async fn reject_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(order.clone(), "采购订单已驳回")),
+                ApiResponse::success(order.clone(), "采购订单已驳回"),
                 "success",
                 None,
             )
         }
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::conflict("采购订单当前状态不允许驳回")),
+            ApiResponse::conflict("采购订单当前状态不允许驳回"),
             "conflict",
             Some("状态冲突：仅 pending 可驳回".to_string()),
         ),
         Err(e) => {
             tracing::error!("驳回采购订单失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "驳回采购订单失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("驳回采购订单失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -901,15 +862,15 @@ async fn transition_order(
     target_status: &'static str,
     success_msg: &'static str,
     audit_action: &'static str,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderApprove).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -924,23 +885,16 @@ async fn transition_order(
     let existing = match existing {
         Ok(Some(o)) => o,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "采购订单不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("采购订单不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询采购订单失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询采购订单失败", e)),
     };
 
     if !allowed_states.contains(&existing.status.as_str()) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "采购订单当前状态为{}，无法{}",
             existing.status, success_msg
-        ))));
+        )));
     }
 
     let operator_name = req.approver_name.clone().or(Some(claims.username.clone()));
@@ -981,20 +935,17 @@ async fn transition_order(
 
     let (response, status_str, error_msg) = match &result {
         Ok(order) => (
-            Json(ApiResponse::success(
-                order.clone(),
-                &format!("采购订单已{}", success_msg),
-            )),
+            ApiResponse::success(order.clone(), &format!("采购订单已{}", success_msg)),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("{}采购订单失败: {}", success_msg, e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(format!(
+                ApiResponse::from(TopemsError::Internal(format!(
                     "{}采购订单失败",
                     success_msg
-                )))),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -1045,7 +996,7 @@ pub async fn confirm_order(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     transition_order(
         state,
         claims,
@@ -1079,7 +1030,7 @@ pub async fn cancel_order(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     transition_order(
         state,
         claims,
@@ -1113,7 +1064,7 @@ pub async fn close_order(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     transition_order(
         state,
         claims,

@@ -81,7 +81,7 @@ pub async fn list_risks(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(query): Query<RiskQuery>,
-) -> Json<ApiResponse<Vec<Risk>>> {
+) -> ApiResponse<Vec<Risk>> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -154,7 +154,7 @@ pub async fn list_risks(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list risks: {}", e);
-            return Json(ApiResponse::server_error("获取风险列表失败"));
+            return ApiResponse::server_error("获取风险列表失败");
         }
     };
 
@@ -186,7 +186,7 @@ pub async fn list_risks(
         })
         .collect();
 
-    Json(ApiResponse::success(risks, "获取风险列表成功"))
+    ApiResponse::success(risks, "获取风险列表成功")
 }
 #[utoipa::path(
     post,
@@ -202,7 +202,7 @@ pub async fn create_risk(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<Risk>> {
+) -> ApiResponse<Risk> {
     let _tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
@@ -253,7 +253,7 @@ pub async fn create_risk(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin risk txn: {}", e);
-            return Json(ApiResponse::server_error("创建风险失败"));
+            return ApiResponse::server_error("创建风险失败");
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -262,7 +262,7 @@ pub async fn create_risk(
         .await
     {
         tracing::error!("Failed to set RLS context for risk create: {}", e);
-        return Json(ApiResponse::server_error("创建风险失败"));
+        return ApiResponse::server_error("创建风险失败");
     }
     let result = sqlx::query(
         r#"
@@ -293,15 +293,15 @@ pub async fn create_risk(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create risk: {}", e);
-            return Json(ApiResponse::server_error("创建风险失败"));
+            return ApiResponse::server_error("创建风险失败");
         }
     };
     if let Err(e) = txn.commit().await {
         tracing::error!("Failed to commit risk create: {}", e);
-        return Json(ApiResponse::server_error("创建风险失败"));
+        return ApiResponse::server_error("创建风险失败");
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         Risk {
             id: row.try_get::<String, _>("id").unwrap_or_default(),
             risk_no: row.try_get::<String, _>("risk_no").unwrap_or_default(),
@@ -333,7 +333,7 @@ pub async fn create_risk(
             tenant_id: uuid::Uuid::nil(),
         },
         "风险创建成功",
-    ))
+    )
 }
 #[utoipa::path(
     get,
@@ -351,7 +351,7 @@ pub async fn get_risk(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Risk>> {
+) -> ApiResponse<Risk> {
     let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
@@ -406,15 +406,15 @@ pub async fn get_risk(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to get risk: {}", e);
-            return Json(ApiResponse::server_error("获取风险详情失败"));
+            return ApiResponse::server_error("获取风险详情失败");
         }
     };
     let row = match row {
         Some(r) => r,
-        None => return Json(ApiResponse::not_found("风险不存在")),
+        None => return ApiResponse::not_found("风险不存在"),
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         Risk {
             id: row.try_get::<String, _>("id").unwrap_or_default(),
             risk_no: row.try_get::<String, _>("risk_no").unwrap_or_default(),
@@ -446,7 +446,7 @@ pub async fn get_risk(
             tenant_id: uuid::Uuid::nil(),
         },
         "获取风险成功",
-    ))
+    )
 }
 #[utoipa::path(
     put,
@@ -467,7 +467,7 @@ pub async fn update_risk(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<Risk>> {
+) -> ApiResponse<Risk> {
     let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
@@ -506,7 +506,7 @@ pub async fn update_risk(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin risk txn: {}", e);
-            return Json(ApiResponse::server_error("风险操作失败"));
+            return ApiResponse::server_error("风险操作失败");
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -515,7 +515,7 @@ pub async fn update_risk(
         .await
     {
         tracing::error!("Failed to set RLS context for risk op: {}", e);
-        return Json(ApiResponse::server_error("风险操作失败"));
+        return ApiResponse::server_error("风险操作失败");
     }
     let result = sqlx::query(
         r#"
@@ -554,19 +554,19 @@ pub async fn update_risk(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update risk: {}", e);
-            return Json(ApiResponse::server_error("更新风险失败"));
+            return ApiResponse::server_error("更新风险失败");
         }
     };
     let row = match row {
         Some(r) => r,
-        None => return Json(ApiResponse::not_found("风险不存在或无权访问")),
+        None => return ApiResponse::not_found("风险不存在或无权访问"),
     };
     if let Err(e) = txn.commit().await {
         tracing::error!("Failed to commit risk update: {}", e);
-        return Json(ApiResponse::server_error("更新风险失败"));
+        return ApiResponse::server_error("更新风险失败");
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         Risk {
             id: row.try_get::<String, _>("id").unwrap_or_default(),
             risk_no: row.try_get::<String, _>("risk_no").unwrap_or_default(),
@@ -598,7 +598,7 @@ pub async fn update_risk(
             tenant_id: uuid::Uuid::nil(),
         },
         "风险更新成功",
-    ))
+    )
 }
 #[utoipa::path(
     post,
@@ -619,7 +619,7 @@ pub async fn assess_risk(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<Risk>> {
+) -> ApiResponse<Risk> {
     let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
@@ -659,7 +659,7 @@ pub async fn assess_risk(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin risk txn: {}", e);
-            return Json(ApiResponse::server_error("风险操作失败"));
+            return ApiResponse::server_error("风险操作失败");
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -668,7 +668,7 @@ pub async fn assess_risk(
         .await
     {
         tracing::error!("Failed to set RLS context for risk op: {}", e);
-        return Json(ApiResponse::server_error("风险操作失败"));
+        return ApiResponse::server_error("风险操作失败");
     }
     let result = sqlx::query(
         r#"
@@ -703,19 +703,19 @@ pub async fn assess_risk(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to assess risk: {}", e);
-            return Json(ApiResponse::server_error("风险评估失败"));
+            return ApiResponse::server_error("风险评估失败");
         }
     };
     let row = match row {
         Some(r) => r,
-        None => return Json(ApiResponse::not_found("风险不存在或无权访问")),
+        None => return ApiResponse::not_found("风险不存在或无权访问"),
     };
     if let Err(e) = txn.commit().await {
         tracing::error!("Failed to commit risk assess: {}", e);
-        return Json(ApiResponse::server_error("风险评估失败"));
+        return ApiResponse::server_error("风险评估失败");
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         Risk {
             id: row.try_get::<String, _>("id").unwrap_or_default(),
             risk_no: row.try_get::<String, _>("risk_no").unwrap_or_default(),
@@ -747,7 +747,7 @@ pub async fn assess_risk(
             tenant_id: uuid::Uuid::nil(),
         },
         "风险评估成功",
-    ))
+    )
 }
 
 /// PUT /hazards/{id}/assessments/{assessment_id}
@@ -759,7 +759,7 @@ pub async fn update_assessment(
     headers: HeaderMap,
     axum::extract::Path((id, _assessment_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<Risk>> {
+) -> ApiResponse<Risk> {
     assess_risk(
         State(state),
         Extension(claims),
@@ -785,7 +785,7 @@ pub async fn delete_risk(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
@@ -824,7 +824,7 @@ pub async fn delete_risk(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin risk txn: {}", e);
-            return Json(ApiResponse::server_error("风险操作失败"));
+            return ApiResponse::server_error("风险操作失败");
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -833,7 +833,7 @@ pub async fn delete_risk(
         .await
     {
         tracing::error!("Failed to set RLS context for risk op: {}", e);
-        return Json(ApiResponse::server_error("风险操作失败"));
+        return ApiResponse::server_error("风险操作失败");
     }
     let result = sqlx::query(
         r#"
@@ -849,18 +849,18 @@ pub async fn delete_risk(
 
     match result {
         Ok(Some(_)) => {}
-        Ok(None) => return Json(ApiResponse::not_found("风险不存在或无权访问")),
+        Ok(None) => return ApiResponse::not_found("风险不存在或无权访问"),
         Err(e) => {
             tracing::error!("Failed to delete risk: {}", e);
-            return Json(ApiResponse::server_error("删除风险失败"));
+            return ApiResponse::server_error("删除风险失败");
         }
     }
     if let Err(e) = txn.commit().await {
         tracing::error!("Failed to commit risk delete: {}", e);
-        return Json(ApiResponse::server_error("删除风险失败"));
+        return ApiResponse::server_error("删除风险失败");
     }
 
-    Json(ApiResponse::success((), "风险删除成功"))
+    ApiResponse::success((), "风险删除成功")
 }
 #[utoipa::path(
     get,
@@ -878,7 +878,7 @@ pub async fn list_control_measures(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<RiskControlMeasure>>> {
+) -> ApiResponse<Vec<RiskControlMeasure>> {
     let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
@@ -923,7 +923,7 @@ pub async fn list_control_measures(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list control measures: {}", e);
-            return Json(ApiResponse::server_error("获取控制措施列表失败"));
+            return ApiResponse::server_error("获取控制措施列表失败");
         }
     };
     let measures = rows
@@ -951,7 +951,7 @@ pub async fn list_control_measures(
         })
         .collect();
 
-    Json(ApiResponse::success(measures, "获取控制措施列表成功"))
+    ApiResponse::success(measures, "获取控制措施列表成功")
 }
 
 #[utoipa::path(
@@ -972,7 +972,7 @@ pub async fn create_control_measure(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<RiskControlMeasure>> {
+) -> ApiResponse<RiskControlMeasure> {
     let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
@@ -1012,7 +1012,7 @@ pub async fn create_control_measure(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin control measure txn: {}", e);
-            return Json(ApiResponse::server_error("创建控制措施失败"));
+            return ApiResponse::server_error("创建控制措施失败");
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -1021,7 +1021,7 @@ pub async fn create_control_measure(
         .await
     {
         tracing::error!("Failed to set RLS context for control create: {}", e);
-        return Json(ApiResponse::server_error("创建控制措施失败"));
+        return ApiResponse::server_error("创建控制措施失败");
     }
 
     let owned = sqlx::query_as::<_, (String,)>(
@@ -1040,11 +1040,11 @@ pub async fn create_control_measure(
         Ok(o) => o,
         Err(e) => {
             tracing::error!("Failed to verify risk ownership: {}", e);
-            return Json(ApiResponse::server_error("创建控制措施失败"));
+            return ApiResponse::server_error("创建控制措施失败");
         }
     };
     if owned.is_none() {
-        return Json(ApiResponse::not_found("风险不存在或无权访问"));
+        return ApiResponse::not_found("风险不存在或无权访问");
     }
 
     let result = sqlx::query(
@@ -1067,19 +1067,19 @@ pub async fn create_control_measure(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create control measure: {}", e);
-            return Json(ApiResponse::server_error("创建控制措施失败"));
+            return ApiResponse::server_error("创建控制措施失败");
         }
     };
     let row = match row {
         Some(r) => r,
-        None => return Json(ApiResponse::server_error("创建控制措施失败")),
+        None => return ApiResponse::server_error("创建控制措施失败"),
     };
     if let Err(e) = txn.commit().await {
         tracing::error!("Failed to commit control create: {}", e);
-        return Json(ApiResponse::server_error("创建控制措施失败"));
+        return ApiResponse::server_error("创建控制措施失败");
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         RiskControlMeasure {
             id: row.try_get::<String, _>("id").unwrap_or_default(),
             risk_id: row.try_get::<String, _>("risk_id").unwrap_or_default(),
@@ -1105,7 +1105,7 @@ pub async fn create_control_measure(
             tenant_id,
         },
         "控制措施创建成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1127,7 +1127,7 @@ pub async fn update_control_measure(
     _headers: HeaderMap,
     axum::extract::Path((id, measure_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<RiskControlMeasure>> {
+) -> ApiResponse<RiskControlMeasure> {
     let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
@@ -1163,7 +1163,7 @@ pub async fn update_control_measure(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin control update txn: {}", e);
-            return Json(ApiResponse::server_error("更新控制措施失败"));
+            return ApiResponse::server_error("更新控制措施失败");
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -1172,7 +1172,7 @@ pub async fn update_control_measure(
         .await
     {
         tracing::error!("Failed to set RLS context for control update: {}", e);
-        return Json(ApiResponse::server_error("更新控制措施失败"));
+        return ApiResponse::server_error("更新控制措施失败");
     }
 
     let result = sqlx::query(
@@ -1202,19 +1202,19 @@ pub async fn update_control_measure(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update control measure: {}", e);
-            return Json(ApiResponse::server_error("更新控制措施失败"));
+            return ApiResponse::server_error("更新控制措施失败");
         }
     };
     let row = match row {
         Some(r) => r,
-        None => return Json(ApiResponse::not_found("控制措施不存在或无权访问")),
+        None => return ApiResponse::not_found("控制措施不存在或无权访问"),
     };
     if let Err(e) = txn.commit().await {
         tracing::error!("Failed to commit control update: {}", e);
-        return Json(ApiResponse::server_error("更新控制措施失败"));
+        return ApiResponse::server_error("更新控制措施失败");
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         RiskControlMeasure {
             id: row.try_get::<String, _>("id").unwrap_or_default(),
             risk_id: row.try_get::<String, _>("risk_id").unwrap_or_default(),
@@ -1240,7 +1240,7 @@ pub async fn update_control_measure(
             tenant_id,
         },
         "控制措施更新成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1260,7 +1260,7 @@ pub async fn delete_control_measure(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path((id, measure_id)): axum::extract::Path<(String, String)>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
@@ -1291,7 +1291,7 @@ pub async fn delete_control_measure(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("Failed to begin control delete txn: {}", e);
-            return Json(ApiResponse::server_error("删除控制措施失败"));
+            return ApiResponse::server_error("删除控制措施失败");
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -1300,7 +1300,7 @@ pub async fn delete_control_measure(
         .await
     {
         tracing::error!("Failed to set RLS context for control delete: {}", e);
-        return Json(ApiResponse::server_error("删除控制措施失败"));
+        return ApiResponse::server_error("删除控制措施失败");
     }
 
     let result = sqlx::query(
@@ -1319,18 +1319,18 @@ pub async fn delete_control_measure(
 
     match result {
         Ok(Some(_)) => {}
-        Ok(None) => return Json(ApiResponse::not_found("控制措施不存在或无权访问")),
+        Ok(None) => return ApiResponse::not_found("控制措施不存在或无权访问"),
         Err(e) => {
             tracing::error!("Failed to delete control measure: {}", e);
-            return Json(ApiResponse::server_error("删除控制措施失败"));
+            return ApiResponse::server_error("删除控制措施失败");
         }
     }
     if let Err(e) = txn.commit().await {
         tracing::error!("Failed to commit control delete: {}", e);
-        return Json(ApiResponse::server_error("删除控制措施失败"));
+        return ApiResponse::server_error("删除控制措施失败");
     }
 
-    Json(ApiResponse::success((), "控制措施删除成功"))
+    ApiResponse::success((), "控制措施删除成功")
 }
 
 pub fn risk_matrix_score(likelihood: u8, severity: u8) -> u8 {

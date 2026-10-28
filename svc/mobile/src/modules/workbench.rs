@@ -2,7 +2,6 @@ use axum::{
     extract::{Extension, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
-    Json,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
@@ -76,7 +75,7 @@ pub async fn get_workbench_data(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -138,7 +137,7 @@ pub async fn get_workbench_data(
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(workbench_data, "获取工作台数据成功")),
+        ApiResponse::success(workbench_data, "获取工作台数据成功"),
     )
 }
 

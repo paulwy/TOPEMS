@@ -94,22 +94,19 @@ pub async fn get_user_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-) -> Json<ApiResponse<UserSettings>> {
+) -> ApiResponse<UserSettings> {
     let user_id = &claims.sub;
     let client = build_iam_client(&state.iam_client, &headers);
 
     match client.get_user_preferences().await {
         Ok(prefs) => {
             let settings = map_iam_prefs_to_settings(&prefs, user_id);
-            Json(ApiResponse::success(settings, "用户设置获取成功"))
+            ApiResponse::success(settings, "用户设置获取成功")
         }
         Err(e) => {
             tracing::warn!("IAM preferences unavailable, returning defaults: {}", e);
             let settings = default_settings(user_id);
-            Json(ApiResponse::success(
-                settings,
-                "IAM 服务暂不可用，已降级为默认设置",
-            ))
+            ApiResponse::success(settings, "IAM 服务暂不可用，已降级为默认设置")
         }
     }
 }
@@ -129,7 +126,7 @@ pub async fn update_user_settings(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(data): Json<UpdateUserSettings>,
-) -> Json<ApiResponse<UserSettings>> {
+) -> ApiResponse<UserSettings> {
     let user_id = &claims.sub;
     let client = build_iam_client(&state.iam_client, &headers);
 
@@ -168,13 +165,10 @@ pub async fn update_user_settings(
     // 代理到 IAM 更新
     let iam_body = map_settings_to_iam_prefs(&settings);
     match client.update_user_preferences(&iam_body).await {
-        Ok(_) => Json(ApiResponse::success(settings, "用户设置更新成功")),
+        Ok(_) => ApiResponse::success(settings, "用户设置更新成功"),
         Err(e) => {
             tracing::warn!("Failed to update settings via IAM: {}", e);
-            Json(ApiResponse::success(
-                settings,
-                "设置已更新（IAM 同步失败，仅本地生效）",
-            ))
+            ApiResponse::success(settings, "设置已更新（IAM 同步失败，仅本地生效）")
         }
     }
 }
@@ -193,17 +187,17 @@ pub async fn reset_user_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-) -> Json<ApiResponse<UserSettings>> {
+) -> ApiResponse<UserSettings> {
     let user_id = &claims.sub;
     let client = build_iam_client(&state.iam_client, &headers);
     let settings = default_settings(user_id);
 
     let iam_body = map_settings_to_iam_prefs(&settings);
     match client.update_user_preferences(&iam_body).await {
-        Ok(_) => Json(ApiResponse::success(settings, "用户设置已重置")),
+        Ok(_) => ApiResponse::success(settings, "用户设置已重置"),
         Err(e) => {
             tracing::warn!("Failed to reset settings via IAM: {}", e);
-            Json(ApiResponse::success(settings, "设置已重置（IAM 同步失败）"))
+            ApiResponse::success(settings, "设置已重置（IAM 同步失败）")
         }
     }
 }
@@ -218,14 +212,14 @@ pub async fn reset_user_settings(
     ),
     tag = "Settings"
 )]
-pub async fn get_available_themes() -> Json<ApiResponse<Vec<String>>> {
+pub async fn get_available_themes() -> ApiResponse<Vec<String>> {
     let themes = vec![
         "light".to_string(),
         "dark".to_string(),
         "system".to_string(),
         "contrast".to_string(),
     ];
-    Json(ApiResponse::success(themes, "可用主题列表获取成功"))
+    ApiResponse::success(themes, "可用主题列表获取成功")
 }
 
 #[utoipa::path(
@@ -238,12 +232,12 @@ pub async fn get_available_themes() -> Json<ApiResponse<Vec<String>>> {
     ),
     tag = "Settings"
 )]
-pub async fn get_available_languages() -> Json<ApiResponse<Vec<(String, String)>>> {
+pub async fn get_available_languages() -> ApiResponse<Vec<(String, String)>> {
     let languages = vec![
         ("zh-CN".to_string(), "简体中文".to_string()),
         ("zh-TW".to_string(), "繁体中文".to_string()),
         ("en-US".to_string(), "English".to_string()),
         ("ja-JP".to_string(), "日本語".to_string()),
     ];
-    Json(ApiResponse::success(languages, "可用语言列表获取成功"))
+    ApiResponse::success(languages, "可用语言列表获取成功")
 }

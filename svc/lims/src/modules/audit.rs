@@ -3,7 +3,7 @@ use axum::{
     http::{HeaderMap, HeaderValue},
     response::IntoResponse,
     routing::get,
-    Json, Router,
+    Router,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -84,24 +84,20 @@ pub fn create_routes() -> Router<AppState> {
 pub async fn list_audit_logs(
     State(state): State<AppState>,
     axum::extract::Query(params): axum::extract::Query<ListAuditLogsQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
     if let Some(ref start_date) = params.start_date {
         if !validate_date_format(start_date) {
-            return Json(ApiResponse::bad_request(
-                "开始日期格式不正确，请使用 ISO 8601 格式",
-            ));
+            return ApiResponse::bad_request("开始日期格式不正确，请使用 ISO 8601 格式");
         }
     }
 
     if let Some(ref end_date) = params.end_date {
         if !validate_date_format(end_date) {
-            return Json(ApiResponse::bad_request(
-                "结束日期格式不正确，请使用 ISO 8601 格式",
-            ));
+            return ApiResponse::bad_request("结束日期格式不正确，请使用 ISO 8601 格式");
         }
     }
 
@@ -177,7 +173,7 @@ pub async fn list_audit_logs(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "audit_logs": logs,
                     "total": total,
@@ -185,11 +181,11 @@ pub async fn list_audit_logs(
                     "page_size": page_size
                 }),
                 "获取审计日志成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(ApiResponse::server_error("获取审计日志失败"))
+            ApiResponse::server_error("获取审计日志失败")
         }
     }
 }
@@ -210,7 +206,7 @@ pub async fn list_audit_logs(
 pub async fn get_audit_log(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<AuditLog>> {
+) -> ApiResponse<AuditLog> {
     let result = sqlx::query(
         r#"
         SELECT id::TEXT, action, entity_type, entity_id, entity_ids,
@@ -242,12 +238,12 @@ pub async fn get_audit_log(
                 user_agent: row.get("user_agent"),
                 created_at: row.get("created_at"),
             };
-            Json(ApiResponse::success(log, "获取审计日志成功"))
+            ApiResponse::success(log, "获取审计日志成功")
         }
-        Ok(None) => Json(ApiResponse::not_found("审计日志不存在")),
+        Ok(None) => ApiResponse::not_found("审计日志不存在"),
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(ApiResponse::server_error("获取审计日志失败"))
+            ApiResponse::server_error("获取审计日志失败")
         }
     }
 }
@@ -268,18 +264,18 @@ pub async fn export_audit_logs(
 ) -> impl IntoResponse {
     if let Some(ref start_date) = params.start_date {
         if !validate_date_format(start_date) {
-            return Json(ApiResponse::<serde_json::Value>::bad_request(
+            return ApiResponse::<serde_json::Value>::bad_request(
                 "开始日期格式不正确，请使用 ISO 8601 格式",
-            ))
+            )
             .into_response();
         }
     }
 
     if let Some(ref end_date) = params.end_date {
         if !validate_date_format(end_date) {
-            return Json(ApiResponse::<serde_json::Value>::bad_request(
+            return ApiResponse::<serde_json::Value>::bad_request(
                 "结束日期格式不正确，请使用 ISO 8601 格式",
-            ))
+            )
             .into_response();
         }
     }
@@ -354,10 +350,7 @@ pub async fn export_audit_logs(
         }
         Err(e) => {
             tracing::error!("导出审计日志失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "导出审计日志失败",
-            ))
-            .into_response()
+            ApiResponse::<serde_json::Value>::server_error("导出审计日志失败").into_response()
         }
     }
 }

@@ -56,7 +56,7 @@ pub async fn get_dashboard_stats(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-) -> Json<ApiResponse<crate::models::DashboardStats>> {
+) -> ApiResponse<crate::models::DashboardStats> {
     let public_stats = get_public_stats(&state).await;
 
     let (notif_unread, pending_approvals, local_pending, mes_stats) = tokio::join!(
@@ -81,7 +81,7 @@ pub async fn get_dashboard_stats(
         system_uptime: public_stats.system_uptime,
     };
 
-    Json(ApiResponse::success(stats, "仪表盘统计获取成功"))
+    ApiResponse::success(stats, "仪表盘统计获取成功")
 }
 
 async fn get_public_stats(state: &AppState) -> PublicDashboardStats {
@@ -144,11 +144,9 @@ async fn fetch_public_stats(state: &AppState) -> PublicDashboardStats {
         (status = 500, description = "Internal server error")
     )
 )]
-pub async fn get_cache_stats(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<CacheStatsResponse>> {
+pub async fn get_cache_stats(State(state): State<AppState>) -> ApiResponse<CacheStatsResponse> {
     let stats = state.dashboard_cache.get_statistics();
-    Json(ApiResponse::success(
+    ApiResponse::success(
         CacheStatsResponse {
             total_entries: stats.total_entries,
             hit_count: stats.hit_count,
@@ -157,7 +155,7 @@ pub async fn get_cache_stats(
             evictions: stats.evictions,
         },
         "缓存统计获取成功",
-    ))
+    )
 }
 
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
@@ -314,7 +312,7 @@ async fn fetch_service_counts(state: &AppState) -> (u64, u64) {
 )]
 pub async fn get_quick_access(
     State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<crate::models::QuickAccess>>> {
+) -> ApiResponse<Vec<crate::models::QuickAccess>> {
     let services = state.service_registry.list_all().await;
     let access_list: Vec<crate::models::QuickAccess> = services
         .into_iter()
@@ -329,7 +327,7 @@ pub async fn get_quick_access(
         })
         .collect();
 
-    Json(ApiResponse::success(access_list, "快捷访问列表获取成功"))
+    ApiResponse::success(access_list, "快捷访问列表获取成功")
 }
 
 #[utoipa::path(
@@ -344,8 +342,8 @@ pub async fn get_quick_access(
 )]
 pub async fn add_quick_access(
     Json(access): Json<crate::models::QuickAccess>,
-) -> Json<ApiResponse<crate::models::QuickAccess>> {
-    Json(ApiResponse::success(access, "快捷访问添加成功"))
+) -> ApiResponse<crate::models::QuickAccess> {
+    ApiResponse::success(access, "快捷访问添加成功")
 }
 
 #[utoipa::path(
@@ -360,11 +358,11 @@ pub async fn add_quick_access(
 )]
 pub async fn remove_quick_access(
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
+) -> ApiResponse<serde_json::Value> {
+    ApiResponse::success(
         serde_json::json!({ "id": id, "success": true, "message": "快捷访问已移除" }),
         "快捷访问移除成功",
-    ))
+    )
 }
 
 #[allow(dead_code)]

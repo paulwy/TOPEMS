@@ -97,15 +97,15 @@ pub async fn list_wave_picks(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<WavePick>>> {
+) -> ApiResponse<PaginatedResponse<WavePick>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -155,7 +155,7 @@ pub async fn list_wave_picks(
 
             let total_pages = topems_shared_core::response::total_pages_of(total, page_size);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse {
                     items: wave_picks,
                     total,
@@ -164,13 +164,11 @@ pub async fn list_wave_picks(
                     total_pages,
                 },
                 "获取波次拣货列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取波次拣货列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取波次拣货列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取波次拣货列表失败".to_string()))
         }
     }
 }
@@ -190,15 +188,15 @@ pub async fn create_wave_pick(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateWavePickRequest>,
-) -> Json<ApiResponse<WavePick>> {
+) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
@@ -243,7 +241,7 @@ pub async fn create_wave_pick(
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(wave_pick) => (
-            Json(ApiResponse::success(wave_pick.clone(), "波次拣货创建成功")),
+            ApiResponse::success(wave_pick.clone(), "波次拣货创建成功"),
             "success",
             None,
             serde_json::to_value(wave_pick).ok(),
@@ -251,9 +249,7 @@ pub async fn create_wave_pick(
         Err(e) => {
             tracing::error!("创建波次拣货失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "波次拣货创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("波次拣货创建失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -281,7 +277,7 @@ pub async fn create_wave_pick(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -303,15 +299,15 @@ pub async fn get_wave_pick(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<WavePick>> {
+) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let result = sqlx::query_as::<_, WavePick>(only_own_schema_query!(
@@ -330,15 +326,11 @@ pub async fn get_wave_pick(
     .await;
 
     match result {
-        Ok(Some(wave_pick)) => Json(ApiResponse::success(wave_pick, "获取波次拣货成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "波次拣货不存在".to_string(),
-        ))),
+        Ok(Some(wave_pick)) => ApiResponse::success(wave_pick, "获取波次拣货成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("波次拣货不存在".to_string())),
         Err(e) => {
             tracing::error!("获取波次拣货失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取波次拣货失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取波次拣货失败".to_string()))
         }
     }
 }
@@ -359,15 +351,15 @@ pub async fn update_wave_pick(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<WavePick>> {
+) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let request_data = Some(req.clone());
     let now = Utc::now();
@@ -413,15 +405,13 @@ pub async fn update_wave_pick(
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(wave_pick) => (
-            Json(ApiResponse::success(wave_pick.clone(), "波次拣货更新成功")),
+            ApiResponse::success(wave_pick.clone(), "波次拣货更新成功"),
             "success",
             None,
             serde_json::to_value(wave_pick).ok(),
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "波次拣货不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("波次拣货不存在".to_string())),
             "error",
             Some("波次拣货不存在".to_string()),
             None,
@@ -429,9 +419,7 @@ pub async fn update_wave_pick(
         Err(e) => {
             tracing::error!("更新波次拣货失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "更新波次拣货失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("更新波次拣货失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -459,7 +447,7 @@ pub async fn update_wave_pick(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -482,15 +470,15 @@ pub async fn delete_wave_pick(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -515,20 +503,18 @@ pub async fn delete_wave_pick(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success("".to_string(), "波次拣货删除成功")),
+                ApiResponse::success("".to_string(), "波次拣货删除成功"),
                 "success",
                 None,
                 Some(serde_json::json!({ "rows_affected": r.rows_affected() })),
             )
         }
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "波次拣货不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("波次拣货不存在".to_string())),
             "error",
             Some("波次拣货不存在".to_string()),
             None,
@@ -536,9 +522,7 @@ pub async fn delete_wave_pick(
         Err(e) => {
             tracing::error!("删除波次拣货失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "删除波次拣货失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("删除波次拣货失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -598,15 +582,15 @@ pub async fn list_wave_pick_items(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let result = sqlx::query_as::<_, WavePickItem>(only_own_schema_query!(
@@ -628,19 +612,17 @@ pub async fn list_wave_pick_items(
     match result {
         Ok(items) => {
             let total = items.len() as i64;
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total
                 }),
                 "获取波次拣货明细成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取波次拣货明细失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取波次拣货明细失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取波次拣货明细失败".to_string()))
         }
     }
 }
@@ -661,15 +643,15 @@ pub async fn assign_wave_pick(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<AssignWavePickRequest>,
-) -> Json<ApiResponse<WavePick>> {
+) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
@@ -704,15 +686,13 @@ pub async fn assign_wave_pick(
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(wave_pick) => (
-            Json(ApiResponse::success(wave_pick.clone(), "波次拣货分配成功")),
+            ApiResponse::success(wave_pick.clone(), "波次拣货分配成功"),
             "success",
             None,
             serde_json::to_value(wave_pick).ok(),
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "波次拣货不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("波次拣货不存在".to_string())),
             "error",
             Some("波次拣货不存在".to_string()),
             None,
@@ -720,9 +700,7 @@ pub async fn assign_wave_pick(
         Err(e) => {
             tracing::error!("分配波次拣货失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "分配波次拣货失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("分配波次拣货失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -750,7 +728,7 @@ pub async fn assign_wave_pick(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -773,15 +751,15 @@ pub async fn start_wave_pick(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<WavePick>> {
+) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -817,15 +795,15 @@ pub async fn start_wave_pick(
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(wave_pick) => (
-            Json(ApiResponse::success(wave_pick.clone(), "波次拣货已开始")),
+            ApiResponse::success(wave_pick.clone(), "波次拣货已开始"),
             "success",
             None,
             serde_json::to_value(wave_pick).ok(),
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::from(TopemsError::ValidationFailed(
+            ApiResponse::from(TopemsError::ValidationFailed(
                 "波次拣货不存在或状态不允许开始".to_string(),
-            ))),
+            )),
             "error",
             Some("波次拣货不存在或状态不允许开始".to_string()),
             None,
@@ -833,9 +811,7 @@ pub async fn start_wave_pick(
         Err(e) => {
             tracing::error!("开始波次拣货失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "开始波次拣货失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("开始波次拣货失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -863,7 +839,7 @@ pub async fn start_wave_pick(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -886,15 +862,15 @@ pub async fn complete_wave_pick(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<WavePick>> {
+) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -930,15 +906,15 @@ pub async fn complete_wave_pick(
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(wave_pick) => (
-            Json(ApiResponse::success(wave_pick.clone(), "波次拣货已完成")),
+            ApiResponse::success(wave_pick.clone(), "波次拣货已完成"),
             "success",
             None,
             serde_json::to_value(wave_pick).ok(),
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::from(TopemsError::ValidationFailed(
+            ApiResponse::from(TopemsError::ValidationFailed(
                 "波次拣货不存在或状态不允许完成".to_string(),
-            ))),
+            )),
             "error",
             Some("波次拣货不存在或状态不允许完成".to_string()),
             None,
@@ -946,9 +922,7 @@ pub async fn complete_wave_pick(
         Err(e) => {
             tracing::error!("完成波次拣货失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "完成波次拣货失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("完成波次拣货失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -976,7 +950,7 @@ pub async fn complete_wave_pick(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -999,15 +973,15 @@ pub async fn cancel_wave_pick(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<WavePick>> {
+) -> ApiResponse<WavePick> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -1041,15 +1015,15 @@ pub async fn cancel_wave_pick(
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(wave_pick) => (
-            Json(ApiResponse::success(wave_pick.clone(), "波次拣货已取消")),
+            ApiResponse::success(wave_pick.clone(), "波次拣货已取消"),
             "success",
             None,
             serde_json::to_value(wave_pick).ok(),
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::from(TopemsError::ValidationFailed(
+            ApiResponse::from(TopemsError::ValidationFailed(
                 "波次拣货不存在或状态不允许取消".to_string(),
-            ))),
+            )),
             "error",
             Some("波次拣货不存在或状态不允许取消".to_string()),
             None,
@@ -1057,9 +1031,7 @@ pub async fn cancel_wave_pick(
         Err(e) => {
             tracing::error!("取消波次拣货失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "取消波次拣货失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("取消波次拣货失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1087,7 +1059,7 @@ pub async fn cancel_wave_pick(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -1115,15 +1087,15 @@ pub async fn pick_line(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<PickLineRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WavePickWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let now = Utc::now();
 
@@ -1171,21 +1143,15 @@ pub async fn pick_line(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "拣货提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("拣货提交失败".to_string()));
                 }
             }
-            Json(ApiResponse::success(value, "拣货完成"))
+            ApiResponse::success(value, "拣货完成")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "拣货明细不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("拣货明细不存在".to_string())),
         Err(e) => {
             tracing::error!("拣货失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "拣货失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("拣货失败".to_string()))
         }
     }
 }
@@ -1199,15 +1165,15 @@ pub async fn short_pick_line(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<PickLineRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WavePickWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let now = Utc::now();
 
@@ -1255,21 +1221,17 @@ pub async fn short_pick_line(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
+                    return ApiResponse::from(TopemsError::Internal(
                         "缺量拣货提交失败".to_string(),
-                    )));
+                    ));
                 }
             }
-            Json(ApiResponse::success(value, "缺量拣货完成"))
+            ApiResponse::success(value, "缺量拣货完成")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "拣货明细不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("拣货明细不存在".to_string())),
         Err(e) => {
             tracing::error!("缺量拣货失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "缺量拣货失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("缺量拣货失败".to_string()))
         }
     }
 }

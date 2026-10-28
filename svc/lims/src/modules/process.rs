@@ -59,7 +59,7 @@ pub struct UpdateProcessRequest {
 pub async fn list_processes(
     State(state): State<AppState>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<InspectionProcess>>> {
+) -> ApiResponse<Vec<InspectionProcess>> {
     let locale = Locale::from_headers(&headers).as_sql();
     let rows = sqlx::query(
         "SELECT id::TEXT, CASE WHEN $1 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lab_processes ORDER BY created_at DESC",
@@ -89,11 +89,11 @@ pub async fn list_processes(
                     }
                 })
                 .collect();
-            Json(ApiResponse::success(items, "OK"))
+            ApiResponse::success(items, "OK")
         }
         Err(e) => {
             tracing::error!("Failed to list processes: {}", e);
-            Json(ApiResponse::server_error("加载检验流程失败"))
+            ApiResponse::server_error("加载检验流程失败")
         }
     }
 }
@@ -115,10 +115,10 @@ pub async fn get_process(
     State(state): State<AppState>,
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<InspectionProcess>> {
+) -> ApiResponse<InspectionProcess> {
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("Invalid process ID")),
+        Err(_) => return ApiResponse::bad_request("Invalid process ID"),
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
@@ -146,12 +146,12 @@ pub async fn get_process(
                 created_at: data.get("created_at"),
                 updated_at: data.get("updated_at"),
             };
-            Json(ApiResponse::success(process, "OK"))
+            ApiResponse::success(process, "OK")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("Process not found")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("Process not found"),
         Err(e) => {
             tracing::error!("Failed to get process: {}", e);
-            Json(ApiResponse::server_error("获取检验流程失败"))
+            ApiResponse::server_error("获取检验流程失败")
         }
     }
 }
@@ -160,7 +160,7 @@ pub async fn create_process(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateProcessRequest>,
-) -> Json<ApiResponse<InspectionProcess>> {
+) -> ApiResponse<InspectionProcess> {
     let row = sqlx::query(
         "INSERT INTO qa_lab_processes (process_name, description, steps, is_active, created_at, updated_at, tenant_id) VALUES ($1, $2, $3, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $4) RETURNING id::TEXT, tenant_id::TEXT, process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT",
     )
@@ -187,14 +187,11 @@ pub async fn create_process(
                 created_at: data.get("created_at"),
                 updated_at: data.get("updated_at"),
             };
-            Json(ApiResponse::success(
-                process,
-                "Process created successfully",
-            ))
+            ApiResponse::success(process, "Process created successfully")
         }
         Err(e) => {
             tracing::error!("Failed to create process: {}", e);
-            Json(ApiResponse::server_error("创建检验流程失败"))
+            ApiResponse::server_error("创建检验流程失败")
         }
     }
 }
@@ -203,10 +200,10 @@ pub async fn update_process(
     State(state): State<AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateProcessRequest>,
-) -> Json<ApiResponse<InspectionProcess>> {
+) -> ApiResponse<InspectionProcess> {
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("Invalid process ID")),
+        Err(_) => return ApiResponse::bad_request("Invalid process ID"),
     };
 
     let is_active: Option<bool> = req.status.as_ref().map(|s| s == "active");
@@ -238,15 +235,12 @@ pub async fn update_process(
                 created_at: data.get("created_at"),
                 updated_at: data.get("updated_at"),
             };
-            Json(ApiResponse::success(
-                process,
-                "Process updated successfully",
-            ))
+            ApiResponse::success(process, "Process updated successfully")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("Process not found")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("Process not found"),
         Err(e) => {
             tracing::error!("Failed to update process: {}", e);
-            Json(ApiResponse::server_error("更新检验流程失败"))
+            ApiResponse::server_error("更新检验流程失败")
         }
     }
 }
@@ -254,10 +248,10 @@ pub async fn update_process(
 pub async fn delete_process(
     State(state): State<AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("Invalid process ID")),
+        Err(_) => return ApiResponse::bad_request("Invalid process ID"),
     };
 
     let result = sqlx::query("UPDATE qa_lab_processes SET deleted_at = NOW() WHERE id = $1")
@@ -268,16 +262,13 @@ pub async fn delete_process(
     match result {
         Ok(data) => {
             if data.rows_affected() == 0 {
-                return Json(ApiResponse::not_found("Process not found"));
+                return ApiResponse::not_found("Process not found");
             }
-            Json(ApiResponse::success(
-                "OK".to_string(),
-                "Process deleted successfully",
-            ))
+            ApiResponse::success("OK".to_string(), "Process deleted successfully")
         }
         Err(e) => {
             tracing::error!("Failed to delete process: {}", e);
-            Json(ApiResponse::server_error("删除检验流程失败"))
+            ApiResponse::server_error("删除检验流程失败")
         }
     }
 }

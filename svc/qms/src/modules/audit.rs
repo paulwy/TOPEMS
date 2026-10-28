@@ -27,7 +27,7 @@ pub async fn list_audit_plans(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<AuditPlanQuery>,
-) -> Json<ApiResponse<Vec<AuditPlan>>> {
+) -> ApiResponse<Vec<AuditPlan>> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -57,10 +57,10 @@ pub async fn list_audit_plans(
     };
 
     match plans {
-        Ok(data) => Json(ApiResponse::success(data, "获取审核计划列表成功")),
+        Ok(data) => ApiResponse::success(data, "获取审核计划列表成功"),
         Err(e) => {
             tracing::error!("Failed to fetch audit plans: {}", e);
-            Json(ApiResponse::server_error("获取审核计划列表失败"))
+            ApiResponse::server_error("获取审核计划列表失败")
         }
     }
 }
@@ -80,7 +80,7 @@ pub async fn create_audit_plan(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateAuditPlanRequest>,
-) -> Json<ApiResponse<AuditPlan>> {
+) -> ApiResponse<AuditPlan> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let plan_no = format!(
         "AP-{}",
@@ -96,10 +96,10 @@ pub async fn create_audit_plan(
     .await;
 
     match plan {
-        Ok(data) => Json(ApiResponse::success(data, "审核计划创建成功")),
+        Ok(data) => ApiResponse::success(data, "审核计划创建成功"),
         Err(e) => {
             tracing::error!("Failed to create audit plan: {}", e);
-            Json(ApiResponse::server_error("审核计划创建失败"))
+            ApiResponse::server_error("审核计划创建失败")
         }
     }
 }
@@ -122,7 +122,7 @@ pub async fn get_audit_plan(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<AuditPlan>> {
+) -> ApiResponse<AuditPlan> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -134,7 +134,7 @@ pub async fn get_audit_plan(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的计划ID")),
+        Err(_) => return ApiResponse::bad_request("无效的计划ID"),
     };
 
     let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at FROM qms.qa_audit_plans WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
@@ -142,12 +142,12 @@ pub async fn get_audit_plan(
     .await;
 
     match plan {
-        Ok(data) => Json(ApiResponse::success(data, "获取审核计划成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "获取审核计划成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to fetch audit plan: {}", e);
-            Json(ApiResponse::server_error("获取审核计划失败"))
+            ApiResponse::server_error("获取审核计划失败")
         }
     }
 }
@@ -170,11 +170,11 @@ pub async fn start_audit_plan(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<AuditPlan>> {
+) -> ApiResponse<AuditPlan> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的计划ID")),
+        Err(_) => return ApiResponse::bad_request("无效的计划ID"),
     };
 
     let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_plans SET status = 'in_progress', actual_start = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at"#)).bind(id).bind(tenant_id)
@@ -182,11 +182,11 @@ pub async fn start_audit_plan(
     .await;
 
     match plan {
-        Ok(data) => Json(ApiResponse::success(data, "审核计划已启动")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "审核计划已启动"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to start audit plan: {}", e);
-            Json(ApiResponse::server_error("审核计划启动失败"))
+            ApiResponse::server_error("审核计划启动失败")
         }
     }
 }
@@ -209,11 +209,11 @@ pub async fn complete_audit_plan(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<AuditPlan>> {
+) -> ApiResponse<AuditPlan> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的计划ID")),
+        Err(_) => return ApiResponse::bad_request("无效的计划ID"),
     };
 
     let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_plans SET status = 'completed', actual_end = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at, updated_at"#)).bind(id).bind(tenant_id)
@@ -221,11 +221,11 @@ pub async fn complete_audit_plan(
     .await;
 
     match plan {
-        Ok(data) => Json(ApiResponse::success(data, "审核计划已完成")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "审核计划已完成"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to complete audit plan: {}", e);
-            Json(ApiResponse::server_error("审核计划完成失败"))
+            ApiResponse::server_error("审核计划完成失败")
         }
     }
 }
@@ -245,7 +245,7 @@ pub async fn list_audit_tasks(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<AuditTaskQuery>,
-) -> Json<ApiResponse<Vec<AuditTask>>> {
+) -> ApiResponse<Vec<AuditTask>> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -277,10 +277,10 @@ pub async fn list_audit_tasks(
     };
 
     match tasks {
-        Ok(data) => Json(ApiResponse::success(data, "获取审核任务列表成功")),
+        Ok(data) => ApiResponse::success(data, "获取审核任务列表成功"),
         Err(e) => {
             tracing::error!("Failed to fetch audit tasks: {}", e);
-            Json(ApiResponse::server_error("获取审核任务列表失败"))
+            ApiResponse::server_error("获取审核任务列表失败")
         }
     }
 }
@@ -304,11 +304,11 @@ pub async fn create_audit_task(
     headers: axum::http::HeaderMap,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
     Json(req): Json<CreateAuditTaskRequest>,
-) -> Json<ApiResponse<AuditTask>> {
+) -> ApiResponse<AuditTask> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let plan_id = match Uuid::parse_str(&plan_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的计划ID")),
+        Err(_) => return ApiResponse::bad_request("无效的计划ID"),
     };
 
     let task_no = format!(
@@ -321,10 +321,10 @@ pub async fn create_audit_task(
     .await;
 
     match task {
-        Ok(data) => Json(ApiResponse::success(data, "审核任务创建成功")),
+        Ok(data) => ApiResponse::success(data, "审核任务创建成功"),
         Err(e) => {
             tracing::error!("Failed to create audit task: {}", e);
-            Json(ApiResponse::server_error("审核任务创建失败"))
+            ApiResponse::server_error("审核任务创建失败")
         }
     }
 }
@@ -347,11 +347,11 @@ pub async fn complete_audit_task(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<AuditTask>> {
+) -> ApiResponse<AuditTask> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
+        Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
     let task = sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at, finding_count, created_at, updated_at"#)).bind(id).bind(tenant_id)
@@ -359,11 +359,11 @@ pub async fn complete_audit_task(
     .await;
 
     match task {
-        Ok(data) => Json(ApiResponse::success(data, "审核任务已完成")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "审核任务已完成"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to complete audit task: {}", e);
-            Json(ApiResponse::server_error("审核任务完成失败"))
+            ApiResponse::server_error("审核任务完成失败")
         }
     }
 }
@@ -383,7 +383,7 @@ pub async fn list_audit_findings(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<AuditFindingQuery>,
-) -> Json<ApiResponse<Vec<AuditFinding>>> {
+) -> ApiResponse<Vec<AuditFinding>> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -427,10 +427,10 @@ pub async fn list_audit_findings(
     };
 
     match findings {
-        Ok(data) => Json(ApiResponse::success(data, "获取审核发现列表成功")),
+        Ok(data) => ApiResponse::success(data, "获取审核发现列表成功"),
         Err(e) => {
             tracing::error!("Failed to fetch audit findings: {}", e);
-            Json(ApiResponse::server_error("获取审核发现列表失败"))
+            ApiResponse::server_error("获取审核发现列表失败")
         }
     }
 }
@@ -454,7 +454,7 @@ pub async fn create_audit_finding(
     headers: axum::http::HeaderMap,
     axum::extract::Path(task_id): axum::extract::Path<String>,
     Json(req): Json<CreateAuditFindingRequest>,
-) -> Json<ApiResponse<AuditFinding>> {
+) -> ApiResponse<AuditFinding> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -466,7 +466,7 @@ pub async fn create_audit_finding(
     let tenant_id = get_tenant_id(&claims, &headers);
     let task_id = match Uuid::parse_str(&task_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
+        Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
     let finding_no = format!(
@@ -488,7 +488,7 @@ pub async fn create_audit_finding(
         Ok(row) => row.get::<Uuid, _>("plan_id"),
         Err(_) => {
             tracing::error!("Task not found");
-            return Json(ApiResponse::not_found("审核任务不存在"));
+            return ApiResponse::not_found("审核任务不存在");
         }
     };
 
@@ -505,11 +505,11 @@ pub async fn create_audit_finding(
             .bind(tenant_id)
             .execute(&state.pool)
             .await;
-            Json(ApiResponse::success(data, "审核发现创建成功"))
+            ApiResponse::success(data, "审核发现创建成功")
         }
         Err(e) => {
             tracing::error!("Failed to create audit finding: {}", e);
-            Json(ApiResponse::server_error("审核发现创建失败"))
+            ApiResponse::server_error("审核发现创建失败")
         }
     }
 }
@@ -532,11 +532,11 @@ pub async fn verify_audit_finding(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<AuditFinding>> {
+) -> ApiResponse<AuditFinding> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的发现ID")),
+        Err(_) => return ApiResponse::bad_request("无效的发现ID"),
     };
 
     let finding = sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"UPDATE qms.qa_audit_findings SET status = 'verified', verified_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date, verified_at, created_by, created_at, updated_at"#)).bind(id).bind(tenant_id)
@@ -544,11 +544,11 @@ pub async fn verify_audit_finding(
     .await;
 
     match finding {
-        Ok(data) => Json(ApiResponse::success(data, "审核发现已验证")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "审核发现已验证"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to verify audit finding: {}", e);
-            Json(ApiResponse::server_error("审核发现验证失败"))
+            ApiResponse::server_error("审核发现验证失败")
         }
     }
 }

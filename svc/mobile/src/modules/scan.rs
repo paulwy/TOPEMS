@@ -206,7 +206,7 @@ pub async fn scan_barcode(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -228,7 +228,7 @@ pub async fn scan_barcode(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::bad_request("无效的用户ID")),
+                ApiResponse::bad_request("无效的用户ID"),
             );
         }
     };
@@ -246,7 +246,7 @@ pub async fn scan_barcode(
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(response, "条形码扫描成功")),
+        ApiResponse::success(response, "条形码扫描成功"),
     )
 }
 #[utoipa::path(
@@ -268,7 +268,7 @@ pub async fn scan_qrcode(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -293,7 +293,7 @@ pub async fn scan_qrcode(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::bad_request("无效的用户ID")),
+                ApiResponse::bad_request("无效的用户ID"),
             );
         }
     };
@@ -311,7 +311,7 @@ pub async fn scan_qrcode(
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(response, "二维码扫描成功")),
+        ApiResponse::success(response, "二维码扫描成功"),
     )
 }
 
@@ -336,7 +336,7 @@ pub async fn image_ocr(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -366,7 +366,7 @@ pub async fn image_ocr(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::bad_request("无效的用户ID")),
+                ApiResponse::bad_request("无效的用户ID"),
             );
         }
     };
@@ -384,7 +384,7 @@ pub async fn image_ocr(
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(response, "OCR识别成功")),
+        ApiResponse::success(response, "OCR识别成功"),
     )
 }
 

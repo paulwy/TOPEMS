@@ -22,7 +22,7 @@ pub async fn list_instrument_data(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<InstrumentDataQuery>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<InstrumentData>>> {
+) -> ApiResponse<Vec<InstrumentData>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -96,10 +96,10 @@ pub async fn list_instrument_data(
         });
 
     match data {
-        Ok(data) => Json(ApiResponse::success(data, "获取仪器数据列表成功")),
+        Ok(data) => ApiResponse::success(data, "获取仪器数据列表成功"),
         Err(e) => {
             tracing::error!("Failed to fetch instrument data: {}", e);
-            Json(ApiResponse::server_error("获取仪器数据列表失败"))
+            ApiResponse::server_error("获取仪器数据列表失败")
         }
     }
 }
@@ -121,10 +121,10 @@ pub async fn get_instrument_data(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: HeaderMap,
-) -> Json<ApiResponse<InstrumentData>> {
+) -> ApiResponse<InstrumentData> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的数据ID")),
+        Err(_) => return ApiResponse::bad_request("无效的数据ID"),
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
@@ -146,7 +146,7 @@ pub async fn get_instrument_data(
     .await;
 
     match row {
-        Ok(Some(r)) => Json(ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             InstrumentData {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -168,11 +168,11 @@ pub async fn get_instrument_data(
                 updated_at: r.get("updated_at"),
             },
             "获取仪器数据成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("仪器数据不存在")),
+        ),
+        Ok(None) => ApiResponse::not_found("仪器数据不存在"),
         Err(e) => {
             tracing::error!("Failed to fetch instrument data: {}", e);
-            Json(ApiResponse::server_error("获取仪器数据失败"))
+            ApiResponse::server_error("获取仪器数据失败")
         }
     }
 }
@@ -181,7 +181,7 @@ pub async fn create_instrument_data(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateInstrumentDataRequest>,
-) -> Json<ApiResponse<InstrumentData>> {
+) -> ApiResponse<InstrumentData> {
     let data_id = Uuid::new_v4();
     let data_no = format!("ID-{}", chrono::Utc::now().format("%Y%m%d%H%M%S"));
     let batch_no = req.batch_no.unwrap_or_else(|| {
@@ -194,7 +194,7 @@ pub async fn create_instrument_data(
     let instrument_uuid = match &req.instrument_id {
         Some(id) => match Uuid::parse_str(id) {
             Ok(u) => Some(u),
-            Err(_) => return Json(ApiResponse::bad_request("无效的仪器ID")),
+            Err(_) => return ApiResponse::bad_request("无效的仪器ID"),
         },
         None => None,
     };
@@ -221,7 +221,7 @@ pub async fn create_instrument_data(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             InstrumentData {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -243,10 +243,10 @@ pub async fn create_instrument_data(
                 updated_at: r.get("updated_at"),
             },
             "仪器数据创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create instrument data: {}", e);
-            Json(ApiResponse::server_error("创建仪器数据失败"))
+            ApiResponse::server_error("创建仪器数据失败")
         }
     }
 }
@@ -255,10 +255,10 @@ pub async fn update_instrument_data(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateInstrumentDataRequest>,
-) -> Json<ApiResponse<InstrumentData>> {
+) -> ApiResponse<InstrumentData> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的数据ID")),
+        Err(_) => return ApiResponse::bad_request("无效的数据ID"),
     };
 
     let row = sqlx::query(
@@ -283,7 +283,7 @@ pub async fn update_instrument_data(
     .await;
 
     match row {
-        Ok(Some(r)) => Json(ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             InstrumentData {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -305,11 +305,11 @@ pub async fn update_instrument_data(
                 updated_at: r.get("updated_at"),
             },
             "仪器数据更新成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("仪器数据不存在")),
+        ),
+        Ok(None) => ApiResponse::not_found("仪器数据不存在"),
         Err(e) => {
             tracing::error!("Failed to update instrument data: {}", e);
-            Json(ApiResponse::server_error("更新仪器数据失败"))
+            ApiResponse::server_error("更新仪器数据失败")
         }
     }
 }
@@ -317,10 +317,10 @@ pub async fn update_instrument_data(
 pub async fn delete_instrument_data(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的数据ID")),
+        Err(_) => return ApiResponse::bad_request("无效的数据ID"),
     };
 
     let result = sqlx::query("UPDATE qa_lims_instrument_data SET deleted_at = NOW() WHERE id = $1")
@@ -329,10 +329,10 @@ pub async fn delete_instrument_data(
         .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "仪器数据删除成功")),
+        Ok(_) => ApiResponse::success(true, "仪器数据删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete instrument data: {}", e);
-            Json(ApiResponse::server_error("删除仪器数据失败"))
+            ApiResponse::server_error("删除仪器数据失败")
         }
     }
 }

@@ -73,7 +73,7 @@ pub async fn get_shortcuts(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -83,7 +83,7 @@ pub async fn get_shortcuts(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::bad_request("无效的用户ID")),
+                ApiResponse::bad_request("无效的用户ID"),
             );
         }
     };
@@ -99,13 +99,13 @@ pub async fn get_shortcuts(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("查询快捷操作失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::server_error("内部服务器错误")));
+            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("内部服务器错误"));
         }
     };
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(shortcuts, "获取快捷操作列表成功")),
+        ApiResponse::success(shortcuts, "获取快捷操作列表成功"),
     )
 }
 
@@ -120,7 +120,7 @@ pub async fn create_shortcut(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -130,7 +130,7 @@ pub async fn create_shortcut(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::bad_request("无效的用户ID")),
+                ApiResponse::bad_request("无效的用户ID"),
             );
         }
     };
@@ -173,7 +173,7 @@ pub async fn create_shortcut(
         .await
     {
         tracing::error!("创建快捷操作失败: {}", e);
-        return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::server_error("创建快捷操作失败")));
+        return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("创建快捷操作失败"));
     }
 
     let shortcut = match sqlx::query_as::<_, Shortcut>(
@@ -187,13 +187,13 @@ pub async fn create_shortcut(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("查询创建的快捷操作失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::server_error("查询快捷操作失败")));
+            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("查询快捷操作失败"));
         }
     };
 
     (
         StatusCode::CREATED,
-        Json(ApiResponse::success(shortcut, "创建快捷操作成功")),
+        ApiResponse::success(shortcut, "创建快捷操作成功"),
     )
 }
 

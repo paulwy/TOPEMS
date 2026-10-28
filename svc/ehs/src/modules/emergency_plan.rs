@@ -208,7 +208,7 @@ pub async fn list_plans(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(q): Query<PlanQuery>,
-) -> Json<ApiResponse<Vec<EmergencyPlan>>> {
+) -> ApiResponse<Vec<EmergencyPlan>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -241,14 +241,11 @@ pub async fn list_plans(
     match qb.fetch_all(&state.pool).await {
         Ok(rows) => {
             let items: Vec<EmergencyPlan> = rows.iter().map(plan_from_row).collect();
-            Json(ApiResponse::success(items, "获取应急预案列表成功"))
+            ApiResponse::success(items, "获取应急预案列表成功")
         }
         Err(e) => {
             tracing::error!("list_plans error: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "查询应急预案列表失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("查询应急预案列表失败", e))
         }
     }
 }
@@ -266,7 +263,7 @@ pub async fn create_plan(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreatePlanRequest>,
-) -> Json<ApiResponse<EmergencyPlan>> {
+) -> ApiResponse<EmergencyPlan> {
     let tenant_id = resolve_tenant_id(&claims);
     let responsible_person = req
         .responsible_persons
@@ -304,13 +301,10 @@ pub async fn create_plan(
         .fetch_one(&state.pool)
         .await
     {
-        Ok(r) => Json(ApiResponse::success(plan_from_row(&r), "创建应急预案成功")),
+        Ok(r) => ApiResponse::success(plan_from_row(&r), "创建应急预案成功"),
         Err(e) => {
             tracing::error!("create_plan error: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "创建应急预案失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("创建应急预案失败", e))
         }
     }
 }
@@ -327,7 +321,7 @@ pub async fn get_plan(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<PlanDetail>> {
+) -> ApiResponse<PlanDetail> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let plan_sql = "SELECT id, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at::text, effective_date::text, expiry_date::text, created_at::text, updated_at::text, tenant_id::text FROM ehs.qa_ehs_emergency_plans WHERE id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL";
     let plan_row = match sqlx::query(plan_sql)
@@ -338,14 +332,11 @@ pub async fn get_plan(
     {
         Ok(Some(r)) => r,
         Ok(None) => {
-            return Json(ApiResponse::not_found("应急预案不存在"));
+            return ApiResponse::not_found("应急预案不存在");
         }
         Err(e) => {
             tracing::error!("get_plan error: {}", e);
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询应急预案失败",
-                e,
-            )));
+            return ApiResponse::from(TopemsError::internal("查询应急预案失败", e));
         }
     };
     let plan = plan_from_row(&plan_row);
@@ -402,7 +393,7 @@ pub async fn get_plan(
         approvals,
         tenant_id: uuid::Uuid::nil(),
     };
-    Json(ApiResponse::success(detail, "获取应急预案详情成功"))
+    ApiResponse::success(detail, "获取应急预案详情成功")
 }
 
 #[utoipa::path(
@@ -419,7 +410,7 @@ pub async fn update_plan(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdatePlanRequest>,
-) -> Json<ApiResponse<EmergencyPlan>> {
+) -> ApiResponse<EmergencyPlan> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let mut set_clauses: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -469,7 +460,7 @@ pub async fn update_plan(
         push(v, "expiry_date");
     }
     if set_clauses.is_empty() {
-        return Json(ApiResponse::bad_request("无更新字段"));
+        return ApiResponse::bad_request("无更新字段");
     }
     set_clauses.push("updated_at = NOW()".to_string());
     let id_param = params.len() + 1;
@@ -485,14 +476,11 @@ pub async fn update_plan(
     }
     qb = qb.bind(&tenant_bind);
     match qb.fetch_optional(&state.pool).await {
-        Ok(Some(r)) => Json(ApiResponse::success(plan_from_row(&r), "更新应急预案成功")),
-        Ok(None) => Json(ApiResponse::not_found("应急预案不存在")),
+        Ok(Some(r)) => ApiResponse::success(plan_from_row(&r), "更新应急预案成功"),
+        Ok(None) => ApiResponse::not_found("应急预案不存在"),
         Err(e) => {
             tracing::error!("update_plan error: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "更新应急预案失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("更新应急预案失败", e))
         }
     }
 }
@@ -509,7 +497,7 @@ pub async fn delete_plan(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let sql = "UPDATE ehs.qa_ehs_emergency_plans SET deleted_at = NOW() WHERE id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL";
     match sqlx::query(sql)
@@ -518,14 +506,11 @@ pub async fn delete_plan(
         .execute(&state.pool)
         .await
     {
-        Ok(res) if res.rows_affected() > 0 => Json(ApiResponse::success((), "删除应急预案成功")),
-        Ok(_) => Json(ApiResponse::not_found("应急预案不存在")),
+        Ok(res) if res.rows_affected() > 0 => ApiResponse::success((), "删除应急预案成功"),
+        Ok(_) => ApiResponse::not_found("应急预案不存在"),
         Err(e) => {
             tracing::error!("delete_plan error: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "删除应急预案失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("删除应急预案失败", e))
         }
     }
 }
@@ -542,7 +527,7 @@ pub async fn list_plan_versions(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<PlanVersion>>> {
+) -> ApiResponse<Vec<PlanVersion>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let sql = "SELECT id, plan_id::text, version, change_description, changed_by, changed_at::text, content, tenant_id::text FROM ehs.qa_ehs_emergency_plan_versions WHERE plan_id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL ORDER BY changed_at DESC";
     match sqlx::query(sql)
@@ -553,14 +538,11 @@ pub async fn list_plan_versions(
     {
         Ok(rows) => {
             let items: Vec<PlanVersion> = rows.iter().map(plan_version_from_row).collect();
-            Json(ApiResponse::success(items, "获取预案版本列表成功"))
+            ApiResponse::success(items, "获取预案版本列表成功")
         }
         Err(e) => {
             tracing::error!("list_plan_versions error: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "获取预案版本列表失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("获取预案版本列表失败", e))
         }
     }
 }
@@ -578,7 +560,7 @@ pub async fn create_new_version(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<PlanVersion>> {
+) -> ApiResponse<PlanVersion> {
     let tenant_id = resolve_tenant_id(&claims);
     let change_description = req
         .get("change_description")
@@ -598,16 +580,10 @@ pub async fn create_new_version(
         .fetch_one(&state.pool)
         .await
     {
-        Ok(r) => Json(ApiResponse::success(
-            plan_version_from_row(&r),
-            "创建预案版本成功",
-        )),
+        Ok(r) => ApiResponse::success(plan_version_from_row(&r), "创建预案版本成功"),
         Err(e) => {
             tracing::error!("create_new_version error: {}", e);
-            Json(ApiResponse::from(TopemsError::internal(
-                "创建预案版本失败",
-                e,
-            )))
+            ApiResponse::from(TopemsError::internal("创建预案版本失败", e))
         }
     }
 }
@@ -623,10 +599,10 @@ pub async fn list_plan_categories(
     State(_state): State<crate::shared::AppState>,
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     // 预案分类无持久化字典表，声明式 501。
     tracing::warn!("Emergency plan categories data source not yet enabled");
-    Json(ApiResponse::not_implemented("预案分类数据源尚未启用"))
+    ApiResponse::not_implemented("预案分类数据源尚未启用")
 }
 
 /// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。

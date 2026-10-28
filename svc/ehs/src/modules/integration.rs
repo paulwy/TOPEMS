@@ -66,7 +66,7 @@ pub struct CreateIntegrationHazardRequest {
 pub async fn create_integration_hazard(
     State(state): State<AppState>,
     Json(req): Json<CreateIntegrationHazardRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let category = req.category.unwrap_or_else(|| "通用".to_string());
     let level = req.level.unwrap_or_else(|| "medium".to_string());
     let status = req.status.unwrap_or_else(|| "reported".to_string());
@@ -95,7 +95,7 @@ pub async fn create_integration_hazard(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
+        Ok(row) => ApiResponse::success(
             serde_json::json!({
                 "id": row.try_get::<Uuid, _>("id").ok(),
                 "hazard_no": row.try_get::<String, _>("hazard_no").ok(),
@@ -103,10 +103,10 @@ pub async fn create_integration_hazard(
                 "status": row.try_get::<String, _>("status").ok(),
             }),
             "集成隐患创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("[integration] 创建隐患失败: {}", e);
-            Json(ApiResponse::server_error("集成隐患创建失败"))
+            ApiResponse::server_error("集成隐患创建失败")
         }
     }
 }
@@ -136,7 +136,7 @@ pub struct CreateIntegrationAlertRequest {
 pub async fn create_integration_alert(
     State(state): State<AppState>,
     Json(req): Json<CreateIntegrationAlertRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let alert_type = req.alert_type.unwrap_or_else(|| "其他告警".to_string());
     let severity = req.severity.unwrap_or_else(|| "medium".to_string());
     let status = req.status.unwrap_or_else(|| "active".to_string());
@@ -161,7 +161,7 @@ pub async fn create_integration_alert(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
+        Ok(row) => ApiResponse::success(
             serde_json::json!({
                 "id": row.try_get::<Uuid, _>("id").ok(),
                 "alert_no": row.try_get::<String, _>("alert_no").ok(),
@@ -169,10 +169,10 @@ pub async fn create_integration_alert(
                 "status": row.try_get::<String, _>("status").ok(),
             }),
             "集成告警创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("[integration] 创建告警失败: {}", e);
-            Json(ApiResponse::server_error("集成告警创建失败"))
+            ApiResponse::server_error("集成告警创建失败")
         }
     }
 }

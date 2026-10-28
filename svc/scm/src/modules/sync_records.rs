@@ -92,12 +92,12 @@ pub fn create_routes() -> Router<ApiState> {
 
 /// GET /health — 前端 scmApi.health() 探测服务存活。
 /// 轻量兜底：探一次 DB 连接，返回 ok 字符串。
-pub async fn scm_health(State(state): State<ApiState>) -> Json<ApiResponse<String>> {
+pub async fn scm_health(State(state): State<ApiState>) -> ApiResponse<String> {
     match sqlx::query("SELECT 1").execute(&state.db).await {
-        Ok(_) => Json(ApiResponse::success("ok".to_string(), "SCM 服务正常")),
+        Ok(_) => ApiResponse::success("ok".to_string(), "SCM 服务正常"),
         Err(e) => {
             tracing::error!("SCM health 检查失败: {}", e);
-            Json(ApiResponse::success("degraded".to_string(), "SCM 服务异常"))
+            ApiResponse::success("degraded".to_string(), "SCM 服务异常")
         }
     }
 }
@@ -123,7 +123,7 @@ pub async fn list_sync_records(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListSyncRecordParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -175,7 +175,7 @@ pub async fn list_sync_records(
             .await
             .unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -183,13 +183,11 @@ pub async fn list_sync_records(
                     "page_size": page_size,
                 }),
                 "同步记录列表获取成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取同步记录列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取同步记录列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取同步记录列表失败".to_string()))
         }
     }
 }
@@ -211,7 +209,7 @@ pub async fn get_sync_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<uuid::Uuid>,
-) -> Json<ApiResponse<SyncRecord>> {
+) -> ApiResponse<SyncRecord> {
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query_as::<_, SyncRecord>(
         r#"
@@ -228,15 +226,11 @@ pub async fn get_sync_record(
     .await;
 
     match result {
-        Ok(Some(record)) => Json(ApiResponse::success(record, "同步记录获取成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "同步记录不存在".to_string(),
-        ))),
+        Ok(Some(record)) => ApiResponse::success(record, "同步记录获取成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("同步记录不存在".to_string())),
         Err(e) => {
             tracing::error!("获取同步记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取同步记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取同步记录失败".to_string()))
         }
     }
 }
@@ -245,7 +239,7 @@ pub async fn create_sync_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSyncRecordRequest>,
-) -> Json<ApiResponse<SyncRecord>> {
+) -> ApiResponse<SyncRecord> {
     let tenant_id = tenant_bind_value(&claims);
     let sync_no = format!("SYNC-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
     let started = Utc::now();
@@ -292,13 +286,11 @@ pub async fn create_sync_record(
                 .execute(&db)
                 .await;
             });
-            Json(ApiResponse::success(record, "同步任务已创建"))
+            ApiResponse::success(record, "同步任务已创建")
         }
         Err(e) => {
             tracing::error!("创建同步记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建同步记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建同步记录失败".to_string()))
         }
     }
 }
@@ -320,7 +312,7 @@ pub async fn retry_sync_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<uuid::Uuid>,
-) -> Json<ApiResponse<SyncResult>> {
+) -> ApiResponse<SyncResult> {
     let tenant_bind = tenant_bind_value(&claims);
     let now = Utc::now();
     let updated = sqlx::query(
@@ -342,7 +334,7 @@ pub async fn retry_sync_record(
     match updated {
         Ok(Some(row)) => {
             let sync_id: uuid::Uuid = row.get(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 SyncResult {
                     sync_id,
                     status: "completed".to_string(),
@@ -353,16 +345,12 @@ pub async fn retry_sync_record(
                     started_at: now,
                 },
                 "同步记录重试成功",
-            ))
+            )
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "同步记录不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("同步记录不存在".to_string())),
         Err(e) => {
             tracing::error!("重试同步记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "重试同步记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("重试同步记录失败".to_string()))
         }
     }
 }
@@ -385,7 +373,7 @@ pub async fn list_sync_details(
     Extension(claims): Extension<Claims>,
     Path(sync_id): Path<uuid::Uuid>,
     Query(params): Query<ListSyncRecordParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -419,7 +407,7 @@ pub async fn list_sync_details(
             .await
             .unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -427,13 +415,11 @@ pub async fn list_sync_details(
                     "page_size": page_size,
                 }),
                 "同步明细获取成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取同步明细失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取同步明细失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取同步明细失败".to_string()))
         }
     }
 }
@@ -444,7 +430,7 @@ async fn trigger_sync(
     Path(sync_type): Path<String>,
     source: &str,
     target: &str,
-) -> Json<ApiResponse<SyncResult>> {
+) -> ApiResponse<SyncResult> {
     let tenant_id = tenant_bind_value(&claims);
     let now = Utc::now();
     let sync_no = format!("SYNC-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
@@ -468,7 +454,7 @@ async fn trigger_sync(
     .await;
 
     match result {
-        Ok((sync_id,)) => Json(ApiResponse::success(
+        Ok((sync_id,)) => ApiResponse::success(
             SyncResult {
                 sync_id,
                 status: "completed".to_string(),
@@ -479,12 +465,10 @@ async fn trigger_sync(
                 started_at: now,
             },
             "同步触发成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("触发同步失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "触发同步失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("触发同步失败".to_string()))
         }
     }
 }
@@ -506,7 +490,7 @@ pub async fn trigger_wms_sync(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(sync_type): Path<String>,
-) -> Json<ApiResponse<SyncResult>> {
+) -> ApiResponse<SyncResult> {
     trigger_sync(
         State(state),
         Extension(claims),
@@ -534,7 +518,7 @@ pub async fn trigger_srm_sync(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(sync_type): Path<String>,
-) -> Json<ApiResponse<SyncResult>> {
+) -> ApiResponse<SyncResult> {
     trigger_sync(
         State(state),
         Extension(claims),

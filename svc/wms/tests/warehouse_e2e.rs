@@ -67,9 +67,8 @@ async fn list_empty_returns_zero(pool: sqlx::PgPool) {
     )
     .await;
     let body = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert_eq!(body["total"].as_i64().unwrap(), 0);
 }
 
@@ -94,8 +93,8 @@ async fn create_then_list_and_get(pool: sqlx::PgPool) {
         axum::Json(req),
     )
     .await;
-    assert!(created.0.success, "create failed: {:?}", created.0.message);
-    let wh = created.0.data.as_ref().unwrap();
+    assert!(created.success, "create failed: {:?}", created.message);
+    let wh = created.data.as_ref().unwrap();
     assert_eq!(wh.name, "石家庄一号仓");
     let id = wh.id;
 
@@ -107,7 +106,7 @@ async fn create_then_list_and_get(pool: sqlx::PgPool) {
         Extension(fresh_txn(&pool).await),
     )
     .await;
-    let body: Value = listed.0.data.expect("list failed");
+    let body: Value = listed.data.expect("list failed");
     assert_eq!(body["total"].as_i64().unwrap(), 1);
 
     let got = get_warehouse(
@@ -118,8 +117,8 @@ async fn create_then_list_and_get(pool: sqlx::PgPool) {
         Extension(fresh_txn(&pool).await),
     )
     .await;
-    assert!(got.0.success, "get failed: {:?}", got.0.message);
-    assert_eq!(got.0.data.as_ref().unwrap().name, "石家庄一号仓");
+    assert!(got.success, "get failed: {:?}", got.message);
+    assert_eq!(got.data.as_ref().unwrap().name, "石家庄一号仓");
 }
 
 #[sqlx::test(migrations = false)]
@@ -143,8 +142,8 @@ async fn update_warehouse_changes_name(pool: sqlx::PgPool) {
         axum::Json(req),
     )
     .await;
-    assert!(created.0.success);
-    let id = created.0.data.as_ref().unwrap().id;
+    assert!(created.success);
+    let id = created.data.as_ref().unwrap().id;
 
     let upd = UpdateWarehouseRequest {
         name: Some("新仓".to_string()),
@@ -164,8 +163,8 @@ async fn update_warehouse_changes_name(pool: sqlx::PgPool) {
         axum::Json(upd),
     )
     .await;
-    assert!(updated.0.success, "update failed: {:?}", updated.0.message);
-    assert_eq!(updated.0.data.as_ref().unwrap().name, "新仓");
+    assert!(updated.success, "update failed: {:?}", updated.message);
+    assert_eq!(updated.data.as_ref().unwrap().name, "新仓");
 
     let got = get_warehouse(
         State(state.clone()),
@@ -175,9 +174,9 @@ async fn update_warehouse_changes_name(pool: sqlx::PgPool) {
         Extension(fresh_txn(&pool).await),
     )
     .await;
-    assert_eq!(got.0.data.as_ref().unwrap().name, "新仓");
+    assert_eq!(got.data.as_ref().unwrap().name, "新仓");
     assert_eq!(
-        got.0.data.as_ref().unwrap().address.as_deref(),
+        got.data.as_ref().unwrap().address.as_deref(),
         Some("新址")
     );
 }
@@ -203,8 +202,8 @@ async fn delete_warehouse_removes(pool: sqlx::PgPool) {
         axum::Json(req),
     )
     .await;
-    assert!(created.0.success);
-    let id = created.0.data.as_ref().unwrap().id;
+    assert!(created.success);
+    let id = created.data.as_ref().unwrap().id;
 
     let del = delete_warehouse(
         State(state.clone()),
@@ -214,7 +213,7 @@ async fn delete_warehouse_removes(pool: sqlx::PgPool) {
         Extension(fresh_txn(&pool).await),
     )
     .await;
-    assert!(del.0.success, "delete failed: {:?}", del.0.message);
+    assert!(del.success, "delete failed: {:?}", del.message);
 
     let got = get_warehouse(
         State(state),
@@ -224,5 +223,5 @@ async fn delete_warehouse_removes(pool: sqlx::PgPool) {
         Extension(fresh_txn(&pool).await),
     )
     .await;
-    assert!(!got.0.success, "deleted warehouse should not be found");
+    assert!(!got.success, "deleted warehouse should not be found");
 }

@@ -2,7 +2,7 @@
 //! 提供项目创建趋势等聚合查询
 //! 路径前缀: /pm/analytics
 
-use axum::{extract::Extension, routing::get, Json, Router};
+use axum::{extract::Extension, routing::get, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use sqlx::PgPool;
@@ -51,11 +51,11 @@ pub struct ProjectStatusItem {
 pub async fn get_project_trend(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ProjectTrendItem>>> {
+) -> ApiResponse<Vec<ProjectTrendItem>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
 
     tracing::info!("获取PM项目创建趋势数据");
@@ -87,7 +87,7 @@ pub async fn get_project_trend(
         })
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 /// 获取项目状态分布
@@ -105,11 +105,11 @@ pub async fn get_project_trend(
 pub async fn get_project_status(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<ProjectStatusItem>>> {
+) -> ApiResponse<Vec<ProjectStatusItem>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
 
     tracing::info!("获取PM项目状态分布");
@@ -152,7 +152,7 @@ pub async fn get_project_status(
         })
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 // ===== 路由注册 =====

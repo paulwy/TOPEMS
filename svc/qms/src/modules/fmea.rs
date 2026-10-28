@@ -28,7 +28,7 @@ pub async fn list_fmea_analyses(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<FmeaQuery>,
-) -> Json<ApiResponse<Vec<FmeaAnalysis>>> {
+) -> ApiResponse<Vec<FmeaAnalysis>> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -58,10 +58,10 @@ pub async fn list_fmea_analyses(
     };
 
     match analyses {
-        Ok(data) => Json(ApiResponse::success(data, "获取FMEA分析列表成功")),
+        Ok(data) => ApiResponse::success(data, "获取FMEA分析列表成功"),
         Err(e) => {
             tracing::error!("Failed to fetch FMEA analyses: {}", e);
-            Json(ApiResponse::server_error("获取FMEA分析列表失败"))
+            ApiResponse::server_error("获取FMEA分析列表失败")
         }
     }
 }
@@ -81,7 +81,7 @@ pub async fn create_fmea_analysis(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateFmeaRequest>,
-) -> Json<ApiResponse<FmeaAnalysis>> {
+) -> ApiResponse<FmeaAnalysis> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let fmea_no = format!(
         "FMEA-{}",
@@ -102,10 +102,10 @@ pub async fn create_fmea_analysis(
     .await;
 
     match fmea {
-        Ok(data) => Json(ApiResponse::success(data, "FMEA分析创建成功")),
+        Ok(data) => ApiResponse::success(data, "FMEA分析创建成功"),
         Err(e) => {
             tracing::error!("Failed to create FMEA analysis: {}", e);
-            Json(ApiResponse::server_error("FMEA分析创建失败"))
+            ApiResponse::server_error("FMEA分析创建失败")
         }
     }
 }
@@ -128,7 +128,7 @@ pub async fn get_fmea_analysis(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<FmeaAnalysis>> {
+) -> ApiResponse<FmeaAnalysis> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -140,7 +140,7 @@ pub async fn get_fmea_analysis(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的FMEA分析ID")),
+        Err(_) => return ApiResponse::bad_request("无效的FMEA分析ID"),
     };
 
     let fmea = sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at, updated_at FROM qms.qa_fmea_analyses WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
@@ -148,12 +148,12 @@ pub async fn get_fmea_analysis(
     .await;
 
     match fmea {
-        Ok(data) => Json(ApiResponse::success(data, "获取FMEA分析成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "获取FMEA分析成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to fetch FMEA analysis: {}", e);
-            Json(ApiResponse::server_error("获取FMEA分析失败"))
+            ApiResponse::server_error("获取FMEA分析失败")
         }
     }
 }
@@ -177,11 +177,11 @@ pub async fn update_fmea_analysis(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateFmeaRequest>,
-) -> Json<ApiResponse<FmeaAnalysis>> {
+) -> ApiResponse<FmeaAnalysis> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的FMEA分析ID")),
+        Err(_) => return ApiResponse::bad_request("无效的FMEA分析ID"),
     };
 
     let fmea = sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"UPDATE qms.qa_fmea_analyses SET title = COALESCE($2, title), fmea_type = COALESCE($3, fmea_type), scope = COALESCE($4, scope), status = COALESCE($5, status), revision = COALESCE($6, revision), team = COALESCE($7, team), leader = COALESCE($8, leader), description = COALESCE($9, description), updated_at = NOW() WHERE id = $1 AND tenant_id = $10 RETURNING id::TEXT, tenant_id::TEXT, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at, updated_at"#)).bind(id).bind(req.title).bind(req.fmea_type).bind(req.scope).bind(req.status).bind(req.revision).bind(req.team).bind(req.leader).bind(req.description).bind(tenant_id)
@@ -189,11 +189,11 @@ pub async fn update_fmea_analysis(
     .await;
 
     match fmea {
-        Ok(data) => Json(ApiResponse::success(data, "FMEA分析更新成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "FMEA分析更新成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update FMEA analysis: {}", e);
-            Json(ApiResponse::server_error("FMEA分析更新失败"))
+            ApiResponse::server_error("FMEA分析更新失败")
         }
     }
 }
@@ -216,11 +216,11 @@ pub async fn delete_fmea_analysis(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的FMEA分析ID")),
+        Err(_) => return ApiResponse::bad_request("无效的FMEA分析ID"),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -233,10 +233,10 @@ pub async fn delete_fmea_analysis(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "FMEA分析删除成功")),
+        Ok(_) => ApiResponse::success(true, "FMEA分析删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete FMEA analysis: {}", e);
-            Json(ApiResponse::server_error("FMEA分析删除失败"))
+            ApiResponse::server_error("FMEA分析删除失败")
         }
     }
 }
@@ -256,7 +256,7 @@ pub async fn list_fmea_items(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<FmeaItemQuery>,
-) -> Json<ApiResponse<Vec<FmeaItem>>> {
+) -> ApiResponse<Vec<FmeaItem>> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -269,7 +269,7 @@ pub async fn list_fmea_items(
     let fmea_id = match query.fmea_id.as_ref() {
         Some(id) => match Uuid::parse_str(id) {
             Ok(u) => Some(u),
-            Err(_) => return Json(ApiResponse::bad_request("无效的FMEA分析ID")),
+            Err(_) => return ApiResponse::bad_request("无效的FMEA分析ID"),
         },
         None => None,
     };
@@ -285,10 +285,10 @@ pub async fn list_fmea_items(
     };
 
     match items {
-        Ok(data) => Json(ApiResponse::success(data, "获取FMEA条目列表成功")),
+        Ok(data) => ApiResponse::success(data, "获取FMEA条目列表成功"),
         Err(e) => {
             tracing::error!("Failed to fetch FMEA items: {}", e);
-            Json(ApiResponse::server_error("获取FMEA条目列表失败"))
+            ApiResponse::server_error("获取FMEA条目列表失败")
         }
     }
 }
@@ -308,11 +308,11 @@ pub async fn create_fmea_item(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateFmeaItemRequest>,
-) -> Json<ApiResponse<FmeaItem>> {
+) -> ApiResponse<FmeaItem> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let fmea_id = match Uuid::parse_str(&req.fmea_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的FMEA分析ID")),
+        Err(_) => return ApiResponse::bad_request("无效的FMEA分析ID"),
     };
 
     let rpn = req.severity * req.occurrence * req.detection;
@@ -325,10 +325,10 @@ pub async fn create_fmea_item(
     .await;
 
     match item {
-        Ok(data) => Json(ApiResponse::success(data, "FMEA条目创建成功")),
+        Ok(data) => ApiResponse::success(data, "FMEA条目创建成功"),
         Err(e) => {
             tracing::error!("Failed to create FMEA item: {}", e);
-            Json(ApiResponse::server_error("FMEA条目创建失败"))
+            ApiResponse::server_error("FMEA条目创建失败")
         }
     }
 }
@@ -351,7 +351,7 @@ pub async fn get_fmea_item(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<FmeaItem>> {
+) -> ApiResponse<FmeaItem> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -363,7 +363,7 @@ pub async fn get_fmea_item(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的FMEA条目ID")),
+        Err(_) => return ApiResponse::bad_request("无效的FMEA条目ID"),
     };
 
     let item = sqlx::query_as::<_, FmeaItem>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_id, component, function, failure_mode, failure_effect, failure_cause, severity, occurrence, detection, rpn, current_controls, recommended_actions, responsible, target_date, action_status, revised_severity, revised_occurrence, revised_detection, revised_rpn, sort_order, created_at, updated_at FROM qms.qa_fmea_items WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
@@ -371,12 +371,12 @@ pub async fn get_fmea_item(
     .await;
 
     match item {
-        Ok(data) => Json(ApiResponse::success(data, "获取FMEA条目成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "获取FMEA条目成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to fetch FMEA item: {}", e);
-            Json(ApiResponse::server_error("获取FMEA条目失败"))
+            ApiResponse::server_error("获取FMEA条目失败")
         }
     }
 }
@@ -400,11 +400,11 @@ pub async fn update_fmea_item(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateFmeaItemRequest>,
-) -> Json<ApiResponse<FmeaItem>> {
+) -> ApiResponse<FmeaItem> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的FMEA条目ID")),
+        Err(_) => return ApiResponse::bad_request("无效的FMEA条目ID"),
     };
 
     let revised_rpn = match (
@@ -425,11 +425,11 @@ pub async fn update_fmea_item(
     .await;
 
     match item {
-        Ok(data) => Json(ApiResponse::success(data, "FMEA条目更新成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "FMEA条目更新成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update FMEA item: {}", e);
-            Json(ApiResponse::server_error("FMEA条目更新失败"))
+            ApiResponse::server_error("FMEA条目更新失败")
         }
     }
 }
@@ -452,11 +452,11 @@ pub async fn delete_fmea_item(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的FMEA条目ID")),
+        Err(_) => return ApiResponse::bad_request("无效的FMEA条目ID"),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -469,10 +469,10 @@ pub async fn delete_fmea_item(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "FMEA条目删除成功")),
+        Ok(_) => ApiResponse::success(true, "FMEA条目删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete FMEA item: {}", e);
-            Json(ApiResponse::server_error("FMEA条目删除失败"))
+            ApiResponse::server_error("FMEA条目删除失败")
         }
     }
 }
@@ -496,7 +496,7 @@ pub async fn get_fmea_statistics(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<FmeaStatistics>> {
+) -> ApiResponse<FmeaStatistics> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -508,7 +508,7 @@ pub async fn get_fmea_statistics(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的FMEA分析ID")),
+        Err(_) => return ApiResponse::bad_request("无效的FMEA分析ID"),
     };
 
     let total: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
@@ -592,7 +592,7 @@ pub async fn get_fmea_statistics(
         min_rpn,
     };
 
-    Json(ApiResponse::success(stats, "获取FMEA统计成功"))
+    ApiResponse::success(stats, "获取FMEA统计成功")
 }
 
 pub fn create_routes() -> Router<crate::AppState> {

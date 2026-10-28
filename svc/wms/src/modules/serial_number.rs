@@ -65,15 +65,15 @@ pub async fn list_serial_numbers(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -131,7 +131,7 @@ pub async fn list_serial_numbers(
             .await
             .unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": serials,
                     "total": total,
@@ -139,13 +139,11 @@ pub async fn list_serial_numbers(
                     "page_size": page_size
                 }),
                 "获取序列号列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取序列号列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取序列号列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取序列号列表失败".to_string()))
         }
     }
 }
@@ -169,15 +167,15 @@ pub async fn create_serial_number(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateSerialNumberRequest>,
-) -> Json<ApiResponse<SerialNumber>> {
+) -> ApiResponse<SerialNumber> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -224,16 +222,14 @@ pub async fn create_serial_number(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(serial, "创建序列号成功"))
+            ApiResponse::success(serial, "创建序列号成功")
         }
         Err(e) => {
             tracing::error!("创建序列号失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建序列号失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建序列号失败".to_string()))
         }
     }
 }
@@ -257,15 +253,15 @@ pub async fn bulk_create_serial_numbers(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<Vec<CreateSerialNumberRequest>>,
-) -> Json<ApiResponse<Vec<SerialNumber>>> {
+) -> ApiResponse<Vec<SerialNumber>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let mut created_serials = Vec::new();
@@ -323,10 +319,10 @@ pub async fn bulk_create_serial_numbers(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
-    Json(ApiResponse::success(created_serials, "批量创建序列号成功"))
+    ApiResponse::success(created_serials, "批量创建序列号成功")
 }
 
 #[utoipa::path(
@@ -343,23 +339,21 @@ pub async fn get_serial_number(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<SerialNumber>> {
+) -> ApiResponse<SerialNumber> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let serial_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的序列号ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的序列号ID".to_string()))
         }
     };
 
@@ -371,15 +365,11 @@ pub async fn get_serial_number(
     .await;
 
     match result {
-        Ok(Some(serial)) => Json(ApiResponse::success(serial, "获取序列号成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "序列号不存在".to_string(),
-        ))),
+        Ok(Some(serial)) => ApiResponse::success(serial, "获取序列号成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("序列号不存在".to_string())),
         Err(e) => {
             tracing::error!("获取序列号失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取序列号失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取序列号失败".to_string()))
         }
     }
 }
@@ -401,15 +391,15 @@ pub async fn get_by_serial_no(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<SerialNumber>> {
+) -> ApiResponse<SerialNumber> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let result = sqlx::query_as::<_, SerialNumber>(
@@ -420,15 +410,11 @@ pub async fn get_by_serial_no(
     .await;
 
     match result {
-        Ok(Some(serial)) => Json(ApiResponse::success(serial, "获取序列号成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "序列号不存在".to_string(),
-        ))),
+        Ok(Some(serial)) => ApiResponse::success(serial, "获取序列号成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("序列号不存在".to_string())),
         Err(e) => {
             tracing::error!("获取序列号失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取序列号失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取序列号失败".to_string()))
         }
     }
 }
@@ -450,15 +436,15 @@ pub async fn get_by_batch(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<SerialNumber>>> {
+) -> ApiResponse<Vec<SerialNumber>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let result = sqlx::query_as::<_, SerialNumber>(
@@ -469,12 +455,10 @@ pub async fn get_by_batch(
     .await;
 
     match result {
-        Ok(serials) => Json(ApiResponse::success(serials, "获取批次序列号成功")),
+        Ok(serials) => ApiResponse::success(serials, "获取批次序列号成功"),
         Err(e) => {
             tracing::error!("获取批次序列号失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取批次序列号失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取批次序列号失败".to_string()))
         }
     }
 }
@@ -497,18 +481,16 @@ pub async fn update_serial_number(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<UpdateSerialNumberRequest>,
-) -> Json<ApiResponse<SerialNumber>> {
+) -> ApiResponse<SerialNumber> {
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let serial_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的序列号ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的序列号ID".to_string()))
         }
     };
 
@@ -565,15 +547,13 @@ pub async fn update_serial_number(
     .await;
 
     match result {
-        Ok(serial) => Json(ApiResponse::success(serial, "更新序列号成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "序列号不存在".to_string(),
-        ))),
+        Ok(serial) => ApiResponse::success(serial, "更新序列号成功"),
+        Err(sqlx::Error::RowNotFound) => {
+            ApiResponse::from(TopemsError::ResourceNotFound("序列号不存在".to_string()))
+        }
         Err(e) => {
             tracing::error!("更新序列号失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新序列号失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新序列号失败".to_string()))
         }
     }
 }
@@ -597,23 +577,21 @@ pub async fn delete_serial_number(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let serial_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的序列号ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的序列号ID".to_string()))
         }
     };
 
@@ -630,19 +608,15 @@ pub async fn delete_serial_number(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success("".to_string(), "删除序列号成功"))
+            ApiResponse::success("".to_string(), "删除序列号成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "序列号不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("序列号不存在".to_string())),
         Err(e) => {
             tracing::error!("删除序列号失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除序列号失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除序列号失败".to_string()))
         }
     }
 }
@@ -661,15 +635,15 @@ pub async fn get_serial_number_statistics(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<SerialNumberStatistics>> {
+) -> ApiResponse<SerialNumberStatistics> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let warehouse_id = params
@@ -704,13 +678,11 @@ pub async fn get_serial_number_statistics(
                     .try_get::<i64, _>("warranty_expiring_soon_count")
                     .unwrap_or(0),
             };
-            Json(ApiResponse::success(statistics, "获取序列号统计成功"))
+            ApiResponse::success(statistics, "获取序列号统计成功")
         }
         Err(e) => {
             tracing::error!("获取序列号统计失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取序列号统计失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取序列号统计失败".to_string()))
         }
     }
 }
@@ -733,23 +705,21 @@ pub async fn transfer_location(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(data): Json<serde_json::Value>,
-) -> Json<ApiResponse<SerialNumber>> {
+) -> ApiResponse<SerialNumber> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let serial_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的序列号ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的序列号ID".to_string()))
         }
     };
 
@@ -778,19 +748,17 @@ pub async fn transfer_location(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(serial, "转移库位成功"))
+            ApiResponse::success(serial, "转移库位成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "序列号不存在".to_string(),
-        ))),
+        Err(sqlx::Error::RowNotFound) => {
+            ApiResponse::from(TopemsError::ResourceNotFound("序列号不存在".to_string()))
+        }
         Err(e) => {
             tracing::error!("转移库位失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "转移库位失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("转移库位失败".to_string()))
         }
     }
 }
@@ -812,23 +780,21 @@ pub async fn get_trace(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let _txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let serial_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的序列号ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的序列号ID".to_string()))
         }
     };
 
@@ -855,9 +821,9 @@ pub async fn get_trace(
                 "updated_at": r.get::<chrono::DateTime<Utc>, _>("updated_at"),
                 "event_type": "lifecycle",
             });
-            Json(ApiResponse::success(vec![record], "获取序列号追踪成功"))
+            ApiResponse::success(vec![record], "获取序列号追踪成功")
         }
-        Ok(None) => Json(ApiResponse::success(vec![], "序列号不存在")),
-        Err(e) => Json(ApiResponse::server_error(&format!("查询失败: {e}"))),
+        Ok(None) => ApiResponse::success(vec![], "序列号不存在"),
+        Err(e) => ApiResponse::server_error(&format!("查询失败: {e}")),
     }
 }

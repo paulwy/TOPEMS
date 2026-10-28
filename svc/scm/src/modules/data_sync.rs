@@ -108,17 +108,17 @@ pub async fn purchase_to_inbound(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<PurchaseToInboundRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let purchase_order_id = match Uuid::parse_str(&req.purchase_order_id) {
         Ok(id) => id,
         Err(_) => {
-            return Json(ApiResponse::success(
+            return ApiResponse::success(
                 serde_json::json!({
                     "success": false,
                     "message": "采购订单ID格式错误".to_string(),
@@ -127,7 +127,7 @@ pub async fn purchase_to_inbound(
                     "inbound_order_number": null,
                 }),
                 "采购订单ID格式错误",
-            ));
+            );
         }
     };
 
@@ -148,9 +148,7 @@ pub async fn purchase_to_inbound(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "提交事务失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("提交事务失败".to_string()));
         }
     }
     emit_inbound_after_commit(&state, to_emit).await;
@@ -177,11 +175,11 @@ pub async fn create_inbound_from_purchase(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let (result, to_emit) =
@@ -189,9 +187,7 @@ pub async fn create_inbound_from_purchase(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "提交事务失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("提交事务失败".to_string()));
         }
     }
     emit_inbound_after_commit(&state, to_emit).await;
@@ -234,7 +230,7 @@ pub async fn create_inbound_from_purchase_internal(
     tenant_bind: Uuid,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
 ) -> (
-    Json<ApiResponse<serde_json::Value>>,
+    ApiResponse<serde_json::Value>,
     Option<InboundOrderRequestedPayload>,
 ) {
     let purchase_order = sqlx::query_as::<_, PurchaseOrder>(
@@ -270,7 +266,7 @@ pub async fn create_inbound_from_purchase_internal(
             )
             .await;
             return (
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     serde_json::json!({
                         "success": false,
                         "message": "采购订单不存在或状态不是已批准".to_string(),
@@ -279,7 +275,7 @@ pub async fn create_inbound_from_purchase_internal(
                         "inbound_order_number": null,
                     }),
                     "采购订单不存在或状态不是已批准",
-                )),
+                ),
                 None,
             );
         }
@@ -303,9 +299,7 @@ pub async fn create_inbound_from_purchase_internal(
             )
             .await;
             return (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "查询采购订单失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("查询采购订单失败".to_string())),
                 None,
             );
         }
@@ -342,7 +336,7 @@ pub async fn create_inbound_from_purchase_internal(
         )
         .await;
         return (
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "success": false,
                     "message": "该采购订单已创建入库单".to_string(),
@@ -351,7 +345,7 @@ pub async fn create_inbound_from_purchase_internal(
                     "inbound_order_number": null,
                 }),
                 "该采购订单已创建入库单",
-            )),
+            ),
             None,
         );
     }
@@ -441,7 +435,7 @@ pub async fn create_inbound_from_purchase_internal(
             .await;
 
             (
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     serde_json::json!({
                         "success": true,
                         "message": "入库单创建成功".to_string(),
@@ -450,7 +444,7 @@ pub async fn create_inbound_from_purchase_internal(
                         "inbound_order_number": inbound_order_number,
                     }),
                     "采购订单转入库单成功",
-                )),
+                ),
                 to_emit,
             )
         }
@@ -511,7 +505,7 @@ pub async fn create_inbound_from_purchase_internal(
 
             if new_retry_count < max_retries {
                 (
-                    Json(ApiResponse::success(
+                    ApiResponse::success(
                         serde_json::json!({
                             "success": false,
                             "message": format!("创建入库单失败，将在 {} 秒后重试 (第 {} 次)", new_retry_count * 120, new_retry_count),
@@ -522,14 +516,14 @@ pub async fn create_inbound_from_purchase_internal(
                             "next_retry_at": next_retry_at,
                         }),
                         "创建入库单失败，将重试",
-                    )),
+                    ),
                     None,
                 )
             } else {
                 (
-                    Json(ApiResponse::from(TopemsError::Internal(
+                    ApiResponse::from(TopemsError::Internal(
                         "创建入库单失败，已达到最大重试次数".to_string(),
-                    ))),
+                    )),
                     None,
                 )
             }
@@ -571,17 +565,17 @@ pub async fn sync_supplier_from_srm(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<SyncSupplierRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(id) => id,
         Err(_) => {
-            return Json(ApiResponse::success(
+            return ApiResponse::success(
                 serde_json::json!({
                     "success": false,
                     "message": "供应商ID格式错误".to_string(),
@@ -589,7 +583,7 @@ pub async fn sync_supplier_from_srm(
                     "action": "none",
                 }),
                 "供应商ID格式错误",
-            ));
+            );
         }
     };
 
@@ -626,10 +620,10 @@ pub async fn sync_supplier_from_srm(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("rls commit failed: {}", e);
-                        return Json(ApiResponse::server_error("提交事务失败"));
+                        return ApiResponse::server_error("提交事务失败");
                     }
                 }
-                return Json(ApiResponse::success(
+                return ApiResponse::success(
                     serde_json::json!({
                         "success": false,
                         "message": "SRM供应商不存在".to_string(),
@@ -637,13 +631,11 @@ pub async fn sync_supplier_from_srm(
                         "action": "none",
                     }),
                     "SRM供应商不存在",
-                ));
+                );
             }
             Err(e) => {
                 tracing::error!("查询SRM供应商失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "查询SRM供应商失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("查询SRM供应商失败".to_string()));
             }
         };
 
@@ -713,12 +705,12 @@ pub async fn sync_supplier_from_srm(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("rls commit failed: {}", e);
-                        return Json(ApiResponse::from(TopemsError::Internal(
+                        return ApiResponse::from(TopemsError::Internal(
                             "提交事务失败".to_string(),
-                        )));
+                        ));
                     }
                 }
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     serde_json::json!({
                         "success": true,
                         "message": "供应商信息更新成功".to_string(),
@@ -726,7 +718,7 @@ pub async fn sync_supplier_from_srm(
                         "action": "updated",
                     }),
                     "供应商同步成功",
-                ))
+                )
             }
             Err(e) => {
                 tracing::error!("更新供应商失败: {}", e);
@@ -747,9 +739,7 @@ pub async fn sync_supplier_from_srm(
                     tenant_bind,
                 )
                 .await;
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "更新供应商失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("更新供应商失败".to_string()))
             }
         }
     } else {
@@ -802,12 +792,12 @@ pub async fn sync_supplier_from_srm(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("rls commit failed: {}", e);
-                        return Json(ApiResponse::from(TopemsError::Internal(
+                        return ApiResponse::from(TopemsError::Internal(
                             "提交事务失败".to_string(),
-                        )));
+                        ));
                     }
                 }
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     serde_json::json!({
                         "success": true,
                         "message": "供应商创建成功".to_string(),
@@ -815,7 +805,7 @@ pub async fn sync_supplier_from_srm(
                         "action": "created",
                     }),
                     "供应商同步成功",
-                ))
+                )
             }
             Err(e) => {
                 tracing::error!("创建供应商失败: {}", e);
@@ -836,9 +826,7 @@ pub async fn sync_supplier_from_srm(
                     tenant_bind,
                 )
                 .await;
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "创建供应商失败".to_string(),
-                )))
+                ApiResponse::from(TopemsError::Internal("创建供应商失败".to_string()))
             }
         }
     }
@@ -860,11 +848,11 @@ pub async fn sync_all_suppliers_from_srm(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let srm_suppliers = sqlx::query_as::<
@@ -896,9 +884,7 @@ pub async fn sync_all_suppliers_from_srm(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("查询SRM供应商列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询SRM供应商列表失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询SRM供应商列表失败".to_string()));
         }
     };
 
@@ -1001,13 +987,11 @@ pub async fn sync_all_suppliers_from_srm(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "提交事务失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("提交事务失败".to_string()));
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "total_processed": total_count,
             "created": created_count,
@@ -1015,7 +999,7 @@ pub async fn sync_all_suppliers_from_srm(
             "failed": failed_count
         }),
         "供应商批量同步完成",
-    ))
+    )
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -1044,11 +1028,11 @@ pub async fn get_sync_logs(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<SyncLogsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let page = req.page.unwrap_or(1).max(1);
@@ -1105,16 +1089,11 @@ pub async fn get_sync_logs(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(
-                serde_json::json!({ "logs": logs }),
-                "同步日志查询成功",
-            ))
+            ApiResponse::success(serde_json::json!({ "logs": logs }), "同步日志查询成功")
         }
         Err(e) => {
             tracing::error!("查询同步日志失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询同步日志失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询同步日志失败".to_string()))
         }
     }
 }
@@ -1137,11 +1116,11 @@ pub async fn retry_failed_syncs(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<RetryFailedRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let sync_type_filter = req.sync_type.clone();
@@ -1226,13 +1205,11 @@ pub async fn retry_failed_syncs(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "提交事务失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("提交事务失败".to_string()));
                 }
             }
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "total_failed": total_count,
                     "retried": retried_count,
@@ -1240,13 +1217,11 @@ pub async fn retry_failed_syncs(
                     "max_retries": max_retries,
                 }),
                 "重试操作完成",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询失败同步记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询失败同步记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询失败同步记录失败".to_string()))
         }
     }
 }
@@ -1267,11 +1242,11 @@ pub async fn get_sync_statistics(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<SyncStatistics>> {
+) -> ApiResponse<SyncStatistics> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let total_syncs: i64 = sqlx::query_scalar(only_own_schema_query!(
@@ -1341,7 +1316,7 @@ pub async fn get_sync_statistics(
         retry_needed_count,
     };
 
-    Json(ApiResponse::success(statistics, "获取同步统计成功"))
+    ApiResponse::success(statistics, "获取同步统计成功")
 }
 
 #[utoipa::path(
@@ -1360,11 +1335,11 @@ pub async fn batch_sync_purchase_to_wms(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<BatchSyncResult>> {
+) -> ApiResponse<BatchSyncResult> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let approved_po = sqlx::query_as::<_, PurchaseOrder>(
@@ -1578,9 +1553,7 @@ pub async fn batch_sync_purchase_to_wms(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "提交事务失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("提交事务失败".to_string()));
                 }
             }
 
@@ -1589,7 +1562,7 @@ pub async fn batch_sync_purchase_to_wms(
                 emit_inbound_after_commit(&state, Some(payload)).await;
             }
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 BatchSyncResult {
                     total_count,
                     success_count,
@@ -1598,13 +1571,11 @@ pub async fn batch_sync_purchase_to_wms(
                     errors,
                 },
                 "批量同步完成",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询待同步采购订单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询待同步采购订单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询待同步采购订单失败".to_string()))
         }
     }
 }
@@ -1644,11 +1615,11 @@ pub async fn check_consistency(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<ConsistencyCheckResult>>> {
+) -> ApiResponse<Vec<ConsistencyCheckResult>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_bind = tenant_bind_value(&claims);
     let mut results: Vec<ConsistencyCheckResult> = Vec::new();
@@ -1659,7 +1630,7 @@ pub async fn check_consistency(
     let supplier_sync_result = check_supplier_sync_consistency(&mut *txn, tenant_bind).await;
     results.push(supplier_sync_result);
 
-    Json(ApiResponse::success(results, "一致性检查完成"))
+    ApiResponse::success(results, "一致性检查完成")
 }
 
 pub async fn check_purchase_inbound_consistency(

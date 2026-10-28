@@ -2,7 +2,6 @@ use axum::{
     extract::{Extension, Query, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
-    Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -128,7 +127,7 @@ pub async fn get_dashboard_stats(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -183,7 +182,7 @@ pub async fn get_dashboard_stats(
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(stats, "获取统计数据成功")),
+        ApiResponse::success(stats, "获取统计数据成功"),
     )
 }
 
@@ -208,7 +207,7 @@ pub async fn get_patrol_stats(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -275,7 +274,7 @@ pub async fn get_patrol_stats(
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(stats, "获取巡逻统计数据成功")),
+        ApiResponse::success(stats, "获取巡逻统计数据成功"),
     )
 }
 
@@ -300,7 +299,7 @@ pub async fn get_task_stats(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -356,7 +355,7 @@ pub async fn get_task_stats(
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(stats, "获取任务统计数据成功")),
+        ApiResponse::success(stats, "获取任务统计数据成功"),
     )
 }
 
@@ -373,7 +372,7 @@ pub async fn get_recent_activities(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -406,14 +405,14 @@ pub async fn get_recent_activities(
             tracing::error!("查询最近动态失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("获取最近动态失败")),
+                ApiResponse::server_error("获取最近动态失败"),
             );
         }
     };
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(activities, "获取最近动态成功")),
+        ApiResponse::success(activities, "获取最近动态成功"),
     )
 }
 
@@ -431,7 +430,7 @@ pub async fn get_quick_actions() -> impl IntoResponse {
     ]);
     (
         StatusCode::OK,
-        Json(ApiResponse::success(actions, "获取快捷操作成功")),
+        ApiResponse::success(actions, "获取快捷操作成功"),
     )
 }
 
@@ -453,7 +452,7 @@ pub async fn get_dashboard_kpis(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -494,10 +493,7 @@ pub async fn get_dashboard_kpis(
         "scans": { "value": today_scans, "previousValue": 0, "trend": "stable", "trendValue": 0, "label": "今日扫码" },
         "patrols": { "value": today_patrols, "previousValue": 0, "trend": "stable", "trendValue": 0, "label": "今日巡检" }
     });
-    (
-        StatusCode::OK,
-        Json(ApiResponse::success(kpis, "获取KPI成功")),
-    )
+    (StatusCode::OK, ApiResponse::success(kpis, "获取KPI成功"))
 }
 
 #[derive(Debug, Deserialize)]
@@ -553,7 +549,7 @@ pub async fn get_dashboard_charts(
     });
     (
         StatusCode::OK,
-        Json(ApiResponse::success(chart, "获取图表数据成功")),
+        ApiResponse::success(chart, "获取图表数据成功"),
     )
 }
 
@@ -561,10 +557,7 @@ pub async fn get_dashboard_charts(
 pub async fn get_dashboard_alerts() -> impl IntoResponse {
     (
         StatusCode::OK,
-        Json(ApiResponse::success(
-            serde_json::json!([]),
-            "获取告警列表成功",
-        )),
+        ApiResponse::success(serde_json::json!([]), "获取告警列表成功"),
     )
 }
 
@@ -579,16 +572,13 @@ pub async fn acknowledge_alert(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
     (
         StatusCode::OK,
-        Json(ApiResponse::success(
-            (),
-            "告警已确认（占位实现，待告警中心接入）",
-        )),
+        ApiResponse::success((), "告警已确认（占位实现，待告警中心接入）"),
     )
 }
 

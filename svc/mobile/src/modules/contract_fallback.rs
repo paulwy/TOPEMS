@@ -14,7 +14,7 @@
 use axum::{
     http::StatusCode,
     routing::{delete, get, post, put},
-    Json, Router,
+    Router,
 };
 use serde_json::{json, Value};
 
@@ -23,27 +23,24 @@ use topems_shared_core::response::ApiResponse;
 use crate::shared::AppState;
 
 /// 集合类 GET → 空列表。
-async fn list_empty() -> Json<ApiResponse<Value>> {
-    Json(ApiResponse::success(
+async fn list_empty() -> ApiResponse<Value> {
+    ApiResponse::success(
         json!({ "items": [], "total": 0 }),
         "接口待上游支持（轻量兜底）",
-    ))
+    )
 }
 
 /// 详情类 GET → HTTP 200 + 内层 code 404（资源不存在语义）。
-async fn detail_missing() -> (StatusCode, Json<ApiResponse<Value>>) {
+async fn detail_missing() -> (StatusCode, ApiResponse<Value>) {
     (
         StatusCode::OK,
-        Json(ApiResponse::not_found("资源不存在（待上游支持）")),
+        ApiResponse::not_found("资源不存在（待上游支持）"),
     )
 }
 
 /// 写操作（POST/PUT/DELETE）→ 成功空数据。
-async fn mutate_ok() -> Json<ApiResponse<Value>> {
-    Json(ApiResponse::success(
-        json!(null),
-        "操作成功（轻量兜底，待上游支持）",
-    ))
+async fn mutate_ok() -> ApiResponse<Value> {
+    ApiResponse::success(json!(null), "操作成功（轻量兜底，待上游支持）")
 }
 
 /// 组装兜底路由表（与 `build_protected_routes` 相同的 `AppState` 类型，供 .merge）。

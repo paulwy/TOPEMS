@@ -110,7 +110,7 @@ pub async fn list_instruments(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Query(query): axum::extract::Query<InstrumentQuery>,
-) -> Json<ApiResponse<Vec<Instrument>>> {
+) -> ApiResponse<Vec<Instrument>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -177,10 +177,10 @@ pub async fn list_instruments(
     });
 
     match instruments {
-        Ok(data) => Json(ApiResponse::success(data, "获取仪器列表成功")),
+        Ok(data) => ApiResponse::success(data, "获取仪器列表成功"),
         Err(e) => {
             tracing::error!("Failed to fetch instruments: {}", e);
-            Json(ApiResponse::server_error("获取仪器列表失败"))
+            ApiResponse::server_error("获取仪器列表失败")
         }
     }
 }
@@ -200,7 +200,7 @@ pub async fn create_instrument(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateInstrumentRequest>,
-) -> Json<ApiResponse<Instrument>> {
+) -> ApiResponse<Instrument> {
     let instrument_no = format!(
         "INS-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
@@ -220,7 +220,7 @@ pub async fn create_instrument(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             Instrument {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -236,10 +236,10 @@ pub async fn create_instrument(
                 updated_at: r.get("updated_at"),
             },
             "仪器创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create instrument: {}", e);
-            Json(ApiResponse::server_error("仪器创建失败"))
+            ApiResponse::server_error("仪器创建失败")
         }
     }
 }
@@ -263,10 +263,10 @@ pub async fn get_instrument(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Instrument>> {
+) -> ApiResponse<Instrument> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的仪器ID")),
+        Err(_) => return ApiResponse::bad_request("无效的仪器ID"),
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -285,7 +285,7 @@ pub async fn get_instrument(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             Instrument {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -301,12 +301,12 @@ pub async fn get_instrument(
                 updated_at: r.get("updated_at"),
             },
             "获取仪器成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to fetch instrument: {}", e);
-            Json(ApiResponse::server_error("获取仪器失败"))
+            ApiResponse::server_error("获取仪器失败")
         }
     }
 }
@@ -316,10 +316,10 @@ pub async fn update_instrument(
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateInstrumentRequest>,
-) -> Json<ApiResponse<Instrument>> {
+) -> ApiResponse<Instrument> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的仪器ID")),
+        Err(_) => return ApiResponse::bad_request("无效的仪器ID"),
     };
     let tenant_id = ctx.tenant_id;
 
@@ -338,7 +338,7 @@ pub async fn update_instrument(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             Instrument {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -354,12 +354,12 @@ pub async fn update_instrument(
                 updated_at: r.get("updated_at"),
             },
             "仪器更新成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to update instrument: {}", e);
-            Json(ApiResponse::server_error("仪器更新失败"))
+            ApiResponse::server_error("仪器更新失败")
         }
     }
 }
@@ -382,10 +382,10 @@ pub async fn calibrate(
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CalibrationRequest>,
-) -> Json<ApiResponse<Instrument>> {
+) -> ApiResponse<Instrument> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的仪器ID")),
+        Err(_) => return ApiResponse::bad_request("无效的仪器ID"),
     };
     let tenant_id = ctx.tenant_id;
 
@@ -399,7 +399,7 @@ pub async fn calibrate(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             Instrument {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -415,10 +415,10 @@ pub async fn calibrate(
                 updated_at: r.get("updated_at"),
             },
             "仪器校准成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to calibrate instrument: {}", e);
-            Json(ApiResponse::server_error("仪器校准失败"))
+            ApiResponse::server_error("仪器校准失败")
         }
     }
 }
@@ -427,10 +427,10 @@ pub async fn delete_instrument(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的仪器ID")),
+        Err(_) => return ApiResponse::bad_request("无效的仪器ID"),
     };
     let tenant_id = ctx.tenant_id;
 
@@ -443,10 +443,10 @@ pub async fn delete_instrument(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "仪器删除成功")),
+        Ok(_) => ApiResponse::success(true, "仪器删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete instrument: {}", e);
-            Json(ApiResponse::server_error("仪器删除失败"))
+            ApiResponse::server_error("仪器删除失败")
         }
     }
 }
@@ -520,10 +520,10 @@ pub struct CreateCalibrationScheduleRequest {
 pub async fn get_calibration_history(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(instrument_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<CalibrationRecord>>> {
+) -> ApiResponse<Vec<CalibrationRecord>> {
     let id = match Uuid::parse_str(&instrument_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的仪器ID")),
+        Err(_) => return ApiResponse::bad_request("无效的仪器ID"),
     };
 
     let rows = sqlx::query(
@@ -561,11 +561,11 @@ pub async fn get_calibration_history(
                     created_at: row.get("created_at"),
                 })
                 .collect();
-            Json(ApiResponse::success(records, "获取校准历史成功"))
+            ApiResponse::success(records, "获取校准历史成功")
         }
         Err(e) => {
             tracing::error!("Failed to fetch calibration history: {}", e);
-            Json(ApiResponse::server_error("获取校准历史失败"))
+            ApiResponse::server_error("获取校准历史失败")
         }
     }
 }
@@ -575,10 +575,10 @@ pub async fn create_calibration_record(
     Extension(ctx): Extension<TenantContext>,
     headers: HeaderMap,
     Json(req): Json<CreateCalibrationRecordRequest>,
-) -> Json<ApiResponse<CalibrationRecord>> {
+) -> ApiResponse<CalibrationRecord> {
     let instrument_id = match Uuid::parse_str(&req.instrument_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的仪器ID")),
+        Err(_) => return ApiResponse::bad_request("无效的仪器ID"),
     };
     let locale = Locale::from_headers(&headers).as_sql();
 
@@ -596,8 +596,8 @@ pub async fn create_calibration_record(
             row.get::<String, _>("instrument_no"),
             row.get::<String, _>("name"),
         ),
-        Ok(None) => return Json(ApiResponse::not_found("仪器不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询仪器失败", e))),
+        Ok(None) => return ApiResponse::not_found("仪器不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询仪器失败", e)),
     };
 
     let record_id = Uuid::new_v4();
@@ -644,7 +644,7 @@ pub async fn create_calibration_record(
             .execute(&state.pool)
             .await;
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 CalibrationRecord {
                     id: r.get("id"),
                     instrument_id: r.get("instrument_id"),
@@ -660,18 +660,18 @@ pub async fn create_calibration_record(
                     created_at: r.get("created_at"),
                 },
                 "校准记录创建成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("Failed to create calibration record: {}", e);
-            Json(ApiResponse::server_error("创建校准记录失败"))
+            ApiResponse::server_error("创建校准记录失败")
         }
     }
 }
 
 pub async fn get_calibration_schedule(
     State(state): State<crate::shared::AppState>,
-) -> Json<ApiResponse<Vec<CalibrationSchedule>>> {
+) -> ApiResponse<Vec<CalibrationSchedule>> {
     let rows = sqlx::query(
         r#"
         SELECT 
@@ -729,18 +729,18 @@ pub async fn get_calibration_schedule(
                     status: row.get("status"),
                 })
                 .collect();
-            Json(ApiResponse::success(schedules, "获取校准计划成功"))
+            ApiResponse::success(schedules, "获取校准计划成功")
         }
         Err(e) => {
             tracing::error!("Failed to fetch calibration schedule: {}", e);
-            Json(ApiResponse::server_error("获取校准计划失败"))
+            ApiResponse::server_error("获取校准计划失败")
         }
     }
 }
 
 pub async fn get_overdue_calibrations(
     State(state): State<crate::shared::AppState>,
-) -> Json<ApiResponse<Vec<CalibrationSchedule>>> {
+) -> ApiResponse<Vec<CalibrationSchedule>> {
     let rows = sqlx::query(
         r#"
         SELECT 
@@ -785,11 +785,11 @@ pub async fn get_overdue_calibrations(
                     status: row.get("status"),
                 })
                 .collect();
-            Json(ApiResponse::success(schedules, "获取过期校准成功"))
+            ApiResponse::success(schedules, "获取过期校准成功")
         }
         Err(e) => {
             tracing::error!("Failed to fetch overdue calibrations: {}", e);
-            Json(ApiResponse::server_error("获取过期校准失败"))
+            ApiResponse::server_error("获取过期校准失败")
         }
     }
 }
@@ -851,10 +851,10 @@ pub async fn list_maintenance(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(instrument_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<MaintenanceRecord>>> {
+) -> ApiResponse<Vec<MaintenanceRecord>> {
     let id = match Uuid::parse_str(&instrument_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的仪器ID")),
+        Err(_) => return ApiResponse::bad_request("无效的仪器ID"),
     };
     let _tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -887,11 +887,11 @@ pub async fn list_maintenance(
                     created_at: row.get("created_at"),
                 })
                 .collect();
-            Json(ApiResponse::success(records, "获取维护记录成功"))
+            ApiResponse::success(records, "获取维护记录成功")
         }
         Err(e) => {
             tracing::error!("Failed to fetch maintenance records: {}", e);
-            Json(ApiResponse::server_error("获取维护记录失败"))
+            ApiResponse::server_error("获取维护记录失败")
         }
     }
 }
@@ -910,7 +910,7 @@ pub async fn create_maintenance(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateMaintenanceRequest>,
-) -> Json<ApiResponse<MaintenanceRecord>> {
+) -> ApiResponse<MaintenanceRecord> {
     let row = sqlx::query(
         "INSERT INTO lims.maintenance_records (tenant_id, organization_id, instrument_id, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost, notes) VALUES ($1, $1, $2, $3, $4, $5, $6::TIMESTAMPTZ, $7::TIMESTAMPTZ, $8, $9) RETURNING id::TEXT, instrument_id::TEXT, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost AS cost, notes, created_at",
     )
@@ -926,7 +926,7 @@ pub async fn create_maintenance(
     .fetch_one(&state.pool)
     .await;
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             MaintenanceRecord {
                 id: r.get("id"),
                 instrument_id: r.get("instrument_id"),
@@ -940,10 +940,10 @@ pub async fn create_maintenance(
                 created_at: r.get("created_at"),
             },
             "维护记录创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create maintenance record: {}", e);
-            Json(ApiResponse::server_error("创建维护记录失败"))
+            ApiResponse::server_error("创建维护记录失败")
         }
     }
 }
@@ -966,10 +966,10 @@ pub async fn update_maintenance(
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateMaintenanceRequest>,
-) -> Json<ApiResponse<MaintenanceRecord>> {
+) -> ApiResponse<MaintenanceRecord> {
     let record_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的维护记录ID")),
+        Err(_) => return ApiResponse::bad_request("无效的维护记录ID"),
     };
     let row = sqlx::query(
         "UPDATE lims.maintenance_records SET maintenance_type = COALESCE($3, maintenance_type), description = COALESCE($4, description), performed_by = COALESCE($5::uuid, performed_by), performed_at = COALESCE($6::TIMESTAMPTZ, performed_at), next_maintenance_date = COALESCE($7::TIMESTAMPTZ, next_maintenance_date), cost = COALESCE($8, cost), notes = COALESCE($9, notes) WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL RETURNING id::TEXT, instrument_id::TEXT, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost AS cost, notes, created_at",
@@ -986,7 +986,7 @@ pub async fn update_maintenance(
     .fetch_optional(&state.pool)
     .await;
     match row {
-        Ok(Some(r)) => Json(ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             MaintenanceRecord {
                 id: r.get("id"),
                 instrument_id: r.get("instrument_id"),
@@ -1000,11 +1000,11 @@ pub async fn update_maintenance(
                 created_at: r.get("created_at"),
             },
             "维护记录更新成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("维护记录不存在")),
+        ),
+        Ok(None) => ApiResponse::not_found("维护记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update maintenance record: {}", e);
-            Json(ApiResponse::server_error("更新维护记录失败"))
+            ApiResponse::server_error("更新维护记录失败")
         }
     }
 }
@@ -1013,10 +1013,10 @@ pub async fn delete_maintenance(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let record_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的维护记录ID")),
+        Err(_) => return ApiResponse::bad_request("无效的维护记录ID"),
     };
     let result = sqlx::query(
         "UPDATE lims.maintenance_records SET deleted_at = now() WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL",
@@ -1026,11 +1026,11 @@ pub async fn delete_maintenance(
     .execute(&state.pool)
     .await;
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "维护记录删除成功")),
-        Ok(_) => Json(ApiResponse::not_found("维护记录不存在")),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success(true, "维护记录删除成功"),
+        Ok(_) => ApiResponse::not_found("维护记录不存在"),
         Err(e) => {
             tracing::error!("Failed to delete maintenance record: {}", e);
-            Json(ApiResponse::server_error("删除维护记录失败"))
+            ApiResponse::server_error("删除维护记录失败")
         }
     }
 }

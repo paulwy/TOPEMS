@@ -52,10 +52,9 @@ async fn body_of(pool: sqlx::PgPool, page_size: Option<i64>) -> Value {
     )
     .await;
     let body = resp
-        .0
         .data
         .clone()
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     body
 }
 

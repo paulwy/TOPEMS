@@ -63,15 +63,15 @@ pub async fn list_cycle_count_configs(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -118,7 +118,7 @@ pub async fn list_cycle_count_configs(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "configs": configs,
                     "total": total,
@@ -126,13 +126,13 @@ pub async fn list_cycle_count_configs(
                     "page_size": page_size
                 }),
                 "获取循环盘点配置列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取循环盘点配置列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
+            ApiResponse::from(TopemsError::Internal(
                 "获取循环盘点配置列表失败".to_string(),
-            )))
+            ))
         }
     }
 }
@@ -146,15 +146,15 @@ pub async fn create_cycle_count_config(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateCycleCountConfigRequest>,
-) -> Json<ApiResponse<CycleCountConfig>> {
+) -> ApiResponse<CycleCountConfig> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let request_data = serde_json::to_value(&req).ok();
@@ -201,16 +201,14 @@ pub async fn create_cycle_count_config(
 
     let (response, status, error_msg) = match &result {
         Ok(config) => (
-            Json(ApiResponse::success(config.clone(), "循环盘点配置创建成功")),
+            ApiResponse::success(config.clone(), "循环盘点配置创建成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("创建循环盘点配置失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "循环盘点配置创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("循环盘点配置创建失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -243,7 +241,7 @@ pub async fn create_cycle_count_config(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -272,15 +270,15 @@ pub async fn get_cycle_count_config(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<CycleCountConfig>> {
+) -> ApiResponse<CycleCountConfig> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let result = sqlx::query_as::<_, CycleCountConfig>(only_own_schema_query!(
@@ -297,15 +295,13 @@ pub async fn get_cycle_count_config(
     .await;
 
     match result {
-        Ok(Some(config)) => Json(ApiResponse::success(config, "获取循环盘点配置成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(Some(config)) => ApiResponse::success(config, "获取循环盘点配置成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
             "循环盘点配置不存在".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("获取循环盘点配置失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取循环盘点配置失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取循环盘点配置失败".to_string()))
         }
     }
 }
@@ -320,15 +316,15 @@ pub async fn update_cycle_count_config(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateCycleCountConfigRequest>,
-) -> Json<ApiResponse<CycleCountConfig>> {
+) -> ApiResponse<CycleCountConfig> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let request_data = serde_json::to_value(&req).ok();
@@ -375,16 +371,14 @@ pub async fn update_cycle_count_config(
 
     let (response, status, error_msg) = match &result {
         Ok(config) => (
-            Json(ApiResponse::success(config.clone(), "循环盘点配置更新成功")),
+            ApiResponse::success(config.clone(), "循环盘点配置更新成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("更新循环盘点配置失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "循环盘点配置更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("循环盘点配置更新失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -417,7 +411,7 @@ pub async fn update_cycle_count_config(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -434,15 +428,15 @@ pub async fn delete_cycle_count_config(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -471,28 +465,26 @@ pub async fn delete_cycle_count_config(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success("".to_string(), "循环盘点配置删除成功")),
+                ApiResponse::success("".to_string(), "循环盘点配置删除成功"),
                 "success",
                 None,
             )
         }
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            ApiResponse::from(TopemsError::ResourceNotFound(
                 "循环盘点配置不存在".to_string(),
-            ))),
+            )),
             "error",
             Some("不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除循环盘点配置失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "循环盘点配置删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("循环盘点配置删除失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -540,15 +532,15 @@ pub async fn generate_cycle_count(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     // 获取配置
@@ -568,11 +560,11 @@ pub async fn generate_cycle_count(
     let config = match config {
         Ok(Some(c)) => c,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            return ApiResponse::from(TopemsError::ResourceNotFound(
                 "循环盘点配置不存在或已停用".to_string(),
-            )))
+            ))
         }
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询配置失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询配置失败", e)),
     };
 
     // 生成盘点单号
@@ -616,12 +608,7 @@ pub async fn generate_cycle_count(
 
     let new_stock_take_id = match result {
         Ok(r) => r.id,
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "创建盘点单失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("创建盘点单失败", e)),
     };
 
     // 更新配置的最后盘点日期和下次盘点日期
@@ -666,16 +653,16 @@ pub async fn generate_cycle_count(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "stock_take_id": new_stock_take_id,
             "stock_take_number": stock_take_number
         }),
         "循环盘点生成成功",
-    ))
+    )
 }
 
 /// 生成所有到期的循环盘点
@@ -696,15 +683,15 @@ pub async fn generate_all_cycle_counts(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let now = Utc::now();
@@ -735,7 +722,7 @@ pub async fn generate_all_cycle_counts(
 
     let configs = match configs {
         Ok(c) => c,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询配置失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询配置失败", e)),
     };
 
     let mut generated_count = 0;
@@ -819,16 +806,16 @@ pub async fn generate_all_cycle_counts(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "generated_count": generated_count,
             "results": results
         }),
         &format!("成功生成 {} 个循环盘点", generated_count),
-    ))
+    )
 }
 
 #[cfg(test)]

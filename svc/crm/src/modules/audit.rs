@@ -2,7 +2,7 @@ use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::get,
-    Json, Router,
+    Router,
 };
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
@@ -66,15 +66,15 @@ pub async fn list_audit_logs(
     >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListAuditLogsQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::All).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -136,7 +136,7 @@ pub async fn list_audit_logs(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": logs,
                     "total": total,
@@ -144,13 +144,11 @@ pub async fn list_audit_logs(
                     "page_size": page_size
                 }),
                 "获取审计日志成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取审计日志失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取审计日志失败".to_string()))
         }
     }
 }
@@ -175,15 +173,15 @@ pub async fn get_audit_log(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<i64>,
-) -> Json<ApiResponse<AuditLog>> {
+) -> ApiResponse<AuditLog> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::All).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let result = sqlx::query_as::<_, AuditLog>(
@@ -200,15 +198,11 @@ pub async fn get_audit_log(
     .await;
 
     match result {
-        Ok(Some(log)) => Json(ApiResponse::success(log, "获取审计日志成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "审计日志不存在".to_string(),
-        ))),
+        Ok(Some(log)) => ApiResponse::success(log, "获取审计日志成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("审计日志不存在".to_string())),
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取审计日志失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取审计日志失败".to_string()))
         }
     }
 }

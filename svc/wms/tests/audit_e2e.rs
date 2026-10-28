@@ -119,9 +119,8 @@ async fn list_body(pool: sqlx::PgPool) -> Value {
     let state = api_state(pool);
     let resp = list_audit_logs(State(state), Query(empty_params()), Extension(txn_arc)).await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     serde_json::to_value(data).unwrap()
 }
 
@@ -153,9 +152,8 @@ async fn get_returns_log(pool: sqlx::PgPool) {
     let state = api_state(pool);
     let resp = get_audit_log(State(state), Path(id), Extension(txn_arc)).await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     let log = serde_json::to_value(data).unwrap();
     assert_eq!(log["action"], "update");
     assert_eq!(log["status"], "SUCCESS");

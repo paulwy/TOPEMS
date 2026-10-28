@@ -1473,7 +1473,7 @@ pub struct ConfigureAutoRollbackRequest {
 pub async fn create_deployment_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateDeploymentRequest>,
-) -> Json<ApiResponse<Deployment>> {
+) -> ApiResponse<Deployment> {
     let environment = req
         .environment
         .as_deref()
@@ -1487,8 +1487,8 @@ pub async fn create_deployment_handler(
         .unwrap_or(DeploymentStrategy::Rolling);
 
     match DeploymentManager::create_deployment(req.version, environment, strategy).await {
-        Ok(deployment) => Json(ApiResponse::success(deployment, "部署创建成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(deployment) => ApiResponse::success(deployment, "部署创建成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1508,10 +1508,10 @@ pub async fn create_deployment_handler(
 pub async fn get_deployment_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Deployment>> {
+) -> ApiResponse<Deployment> {
     match DeploymentManager::get_deployment(&id).await {
-        Ok(deployment) => Json(ApiResponse::success(deployment, "部署详情")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(deployment) => ApiResponse::success(deployment, "部署详情"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1528,7 +1528,7 @@ pub async fn get_deployment_handler(
 pub async fn list_deployments_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListDeploymentsQuery>,
-) -> Json<ApiResponse<DeploymentList>> {
+) -> ApiResponse<DeploymentList> {
     let environment = params
         .environment
         .as_deref()
@@ -1539,7 +1539,7 @@ pub async fn list_deployments_handler(
         .and_then(DeploymentStatus::from_str);
 
     let list = DeploymentManager::list_deployments(environment, status, params.limit).await;
-    Json(ApiResponse::success(list, "部署列表"))
+    ApiResponse::success(list, "部署列表")
 }
 
 #[utoipa::path(
@@ -1558,10 +1558,10 @@ pub async fn list_deployments_handler(
 pub async fn start_deployment_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Deployment>> {
+) -> ApiResponse<Deployment> {
     match DeploymentManager::start_deployment(&id).await {
-        Ok(deployment) => Json(ApiResponse::success(deployment, "部署已启动")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(deployment) => ApiResponse::success(deployment, "部署已启动"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1581,10 +1581,10 @@ pub async fn start_deployment_handler(
 pub async fn cancel_deployment_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Deployment>> {
+) -> ApiResponse<Deployment> {
     match DeploymentManager::cancel_deployment(&id).await {
-        Ok(deployment) => Json(ApiResponse::success(deployment, "部署已取消")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(deployment) => ApiResponse::success(deployment, "部署已取消"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1604,10 +1604,10 @@ pub async fn cancel_deployment_handler(
 pub async fn get_deployment_status_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<DeploymentStatusInfo>> {
+) -> ApiResponse<DeploymentStatusInfo> {
     match DeploymentManager::get_deployment_status(&id).await {
-        Ok(info) => Json(ApiResponse::success(info, "部署状态")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(info) => ApiResponse::success(info, "部署状态"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1615,10 +1615,10 @@ pub async fn promote_canary_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<PromoteCanaryRequest>,
-) -> Json<ApiResponse<DeploymentRollout>> {
+) -> ApiResponse<DeploymentRollout> {
     match DeploymentManager::promote_canary(&id, req.percentage).await {
-        Ok(rollout) => Json(ApiResponse::success(rollout, "灰度推广成功")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(rollout) => ApiResponse::success(rollout, "灰度推广成功"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1638,10 +1638,10 @@ pub async fn promote_canary_handler(
 pub async fn rollback_deployment_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Deployment>> {
+) -> ApiResponse<Deployment> {
     match DeploymentManager::rollback_deployment(&id).await {
-        Ok(deployment) => Json(ApiResponse::success(deployment, "部署已回滚")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(deployment) => ApiResponse::success(deployment, "部署已回滚"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1658,13 +1658,13 @@ pub async fn rollback_deployment_handler(
 pub async fn get_deployment_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<DeploymentHistoryQuery>,
-) -> Json<ApiResponse<Vec<Deployment>>> {
+) -> ApiResponse<Vec<Deployment>> {
     let environment = params
         .environment
         .as_deref()
         .and_then(Environment::from_str);
     let history = DeploymentManager::get_deployment_history(environment, params.limit).await;
-    Json(ApiResponse::success(history, "部署历史"))
+    ApiResponse::success(history, "部署历史")
 }
 
 // ==================== API 处理器: 配置管理 ====================
@@ -1682,7 +1682,7 @@ pub async fn get_deployment_history_handler(
 pub async fn create_config_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateConfigRequest>,
-) -> Json<ApiResponse<GatewayConfig>> {
+) -> ApiResponse<GatewayConfig> {
     let environment = req
         .environment
         .as_deref()
@@ -1692,8 +1692,8 @@ pub async fn create_config_handler(
     let settings = req.settings.unwrap_or_else(|| serde_json::json!({}));
 
     match ConfigurationManager::create_config(req.name, req.version, environment, settings).await {
-        Ok(config) => Json(ApiResponse::success(config, "配置创建成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(config) => ApiResponse::success(config, "配置创建成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1713,10 +1713,10 @@ pub async fn create_config_handler(
 pub async fn get_config_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<GatewayConfig>> {
+) -> ApiResponse<GatewayConfig> {
     match ConfigurationManager::get_config(&id).await {
-        Ok(config) => Json(ApiResponse::success(config, "配置详情")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(config) => ApiResponse::success(config, "配置详情"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1733,14 +1733,14 @@ pub async fn get_config_handler(
 pub async fn list_configs_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListConfigsQuery>,
-) -> Json<ApiResponse<ConfigList>> {
+) -> ApiResponse<ConfigList> {
     let environment = params
         .environment
         .as_deref()
         .and_then(Environment::from_str);
 
     let list = ConfigurationManager::list_configs(environment, params.is_active).await;
-    Json(ApiResponse::success(list, "配置列表"))
+    ApiResponse::success(list, "配置列表")
 }
 
 #[utoipa::path(
@@ -1760,10 +1760,10 @@ pub async fn update_config_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateConfigRequest>,
-) -> Json<ApiResponse<GatewayConfig>> {
+) -> ApiResponse<GatewayConfig> {
     match ConfigurationManager::update_config(&id, req.settings, req.name).await {
-        Ok(config) => Json(ApiResponse::success(config, "配置更新成功")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(config) => ApiResponse::success(config, "配置更新成功"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1783,10 +1783,10 @@ pub async fn update_config_handler(
 pub async fn activate_config_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<GatewayConfig>> {
+) -> ApiResponse<GatewayConfig> {
     match ConfigurationManager::activate_config(&id).await {
-        Ok(config) => Json(ApiResponse::success(config, "配置已激活")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(config) => ApiResponse::success(config, "配置已激活"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1807,9 +1807,9 @@ pub async fn get_config_diff_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Query(params): Query<ConfigDiffQuery>,
-) -> Json<ApiResponse<Vec<ConfigDiff>>> {
+) -> ApiResponse<Vec<ConfigDiff>> {
     let diffs = ConfigurationManager::get_config_diff(&id, params.limit).await;
-    Json(ApiResponse::success(diffs, "配置差异"))
+    ApiResponse::success(diffs, "配置差异")
 }
 
 #[utoipa::path(
@@ -1828,14 +1828,14 @@ pub async fn get_config_diff_handler(
 pub async fn get_config_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<ConfigHistoryQuery>,
-) -> Json<ApiResponse<Vec<GatewayConfig>>> {
+) -> ApiResponse<Vec<GatewayConfig>> {
     let environment = params
         .environment
         .as_deref()
         .and_then(Environment::from_str);
 
     let history = ConfigurationManager::get_config_history(environment, params.limit).await;
-    Json(ApiResponse::success(history, "配置历史"))
+    ApiResponse::success(history, "配置历史")
 }
 
 #[utoipa::path(
@@ -1855,10 +1855,10 @@ pub async fn rollback_config_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<RollbackConfigRequest>,
-) -> Json<ApiResponse<GatewayConfig>> {
+) -> ApiResponse<GatewayConfig> {
     match ConfigurationManager::rollback_config(&id, req.diff_id.as_deref()).await {
-        Ok(config) => Json(ApiResponse::success(config, "配置已回滚")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(config) => ApiResponse::success(config, "配置已回滚"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1875,7 +1875,7 @@ pub async fn rollback_config_handler(
 pub async fn create_environment_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateEnvironmentRequest>,
-) -> Json<ApiResponse<ConfigEnvironment>> {
+) -> ApiResponse<ConfigEnvironment> {
     match ConfigurationManager::create_environment(
         req.name,
         req.env_type,
@@ -1885,8 +1885,8 @@ pub async fn create_environment_handler(
     )
     .await
     {
-        Ok(env) => Json(ApiResponse::success(env, "环境创建成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(env) => ApiResponse::success(env, "环境创建成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1905,7 +1905,7 @@ pub async fn create_environment_handler(
 pub async fn create_rollback_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateRollbackPolicyRequest>,
-) -> Json<ApiResponse<RollbackPolicy>> {
+) -> ApiResponse<RollbackPolicy> {
     let trigger = req
         .trigger
         .as_deref()
@@ -1921,8 +1921,8 @@ pub async fn create_rollback_policy_handler(
     )
     .await
     {
-        Ok(policy) => Json(ApiResponse::success(policy, "回滚策略创建成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(policy) => ApiResponse::success(policy, "回滚策略创建成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1939,14 +1939,14 @@ pub async fn create_rollback_policy_handler(
 pub async fn get_rollback_policies_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListRollbackPoliciesQuery>,
-) -> Json<ApiResponse<Vec<RollbackPolicy>>> {
+) -> ApiResponse<Vec<RollbackPolicy>> {
     let trigger = params
         .trigger
         .as_deref()
         .and_then(RollbackTrigger::from_str);
 
     let list = RollbackManager::get_rollback_policies(trigger, params.enabled_only).await;
-    Json(ApiResponse::success(list, "回滚策略列表"))
+    ApiResponse::success(list, "回滚策略列表")
 }
 
 #[utoipa::path(
@@ -1962,7 +1962,7 @@ pub async fn get_rollback_policies_handler(
 pub async fn execute_rollback_handler(
     State(_state): State<AppState>,
     Json(req): Json<ExecuteRollbackRequest>,
-) -> Json<ApiResponse<RollbackAction>> {
+) -> ApiResponse<RollbackAction> {
     let policy_id = req
         .reason
         .as_deref()
@@ -1976,8 +1976,8 @@ pub async fn execute_rollback_handler(
         .unwrap_or(RollbackActionType::RevertConfig);
 
     match RollbackManager::execute_rollback(&policy_id, action_type, req.reason).await {
-        Ok(action) => Json(ApiResponse::success(action, "回滚执行成功")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(action) => ApiResponse::success(action, "回滚执行成功"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1994,10 +1994,10 @@ pub async fn execute_rollback_handler(
 pub async fn get_rollback_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<RollbackHistoryQuery>,
-) -> Json<ApiResponse<Vec<RollbackHistoryEntry>>> {
+) -> ApiResponse<Vec<RollbackHistoryEntry>> {
     let history =
         RollbackManager::get_rollback_history(params.policy_id.as_deref(), params.limit).await;
-    Json(ApiResponse::success(history, "回滚历史"))
+    ApiResponse::success(history, "回滚历史")
 }
 
 #[utoipa::path(
@@ -2016,10 +2016,10 @@ pub async fn get_rollback_history_handler(
 pub async fn test_rollback_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<RollbackAction>> {
+) -> ApiResponse<RollbackAction> {
     match RollbackManager::test_rollback(&id).await {
-        Ok(action) => Json(ApiResponse::success(action, "回滚测试成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(action) => ApiResponse::success(action, "回滚测试成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -2040,12 +2040,12 @@ pub async fn configure_auto_rollback_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<ConfigureAutoRollbackRequest>,
-) -> Json<ApiResponse<RollbackPolicy>> {
+) -> ApiResponse<RollbackPolicy> {
     let enabled = req.enabled.unwrap_or(true);
 
     match RollbackManager::configure_auto_rollback(&id, enabled, req.condition).await {
-        Ok(policy) => Json(ApiResponse::success(policy, "自动回滚配置成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(policy) => ApiResponse::success(policy, "自动回滚配置成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -2065,10 +2065,10 @@ pub async fn configure_auto_rollback_handler(
 pub async fn disable_rollback_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<RollbackPolicy>> {
+) -> ApiResponse<RollbackPolicy> {
     match RollbackManager::disable_rollback(&id).await {
-        Ok(policy) => Json(ApiResponse::success(policy, "回滚策略已禁用")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(policy) => ApiResponse::success(policy, "回滚策略已禁用"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -2085,10 +2085,10 @@ pub async fn disable_rollback_handler(
 pub async fn get_rollback_status_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListRollbackPoliciesQuery>,
-) -> Json<ApiResponse<Vec<RollbackStatus>>> {
+) -> ApiResponse<Vec<RollbackStatus>> {
     let status = RollbackManager::get_rollback_status(None).await;
     let _ = params;
-    Json(ApiResponse::success(status, "回滚状态"))
+    ApiResponse::success(status, "回滚状态")
 }
 
 #[cfg(test)]

@@ -43,11 +43,11 @@ pub fn create_routes(pool: PgPool) -> Router {
 async fn list_members(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<ProjectMember>>> {
+) -> ApiResponse<Vec<ProjectMember>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, ProjectMember>(
         only_own_schema_query!("pm", "SELECT id, project_id, user_id, role, responsibilities, start_date, end_date, created_at, updated_at FROM pm.project_members WHERE project_id = $1 ORDER BY role ASC"),
@@ -57,10 +57,10 @@ async fn list_members(
     .await;
 
     match result {
-        Ok(members) => Json(ApiResponse::success(members, "获取项目成员列表成功")),
+        Ok(members) => ApiResponse::success(members, "获取项目成员列表成功"),
         Err(e) => {
             tracing::error!("获取项目成员列表失败: {}", e);
-            Json(ApiResponse::server_error("获取项目成员列表失败"))
+            ApiResponse::server_error("获取项目成员列表失败")
         }
     }
 }
@@ -87,11 +87,11 @@ async fn create_member(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMemberRequest>,
-) -> Json<ApiResponse<ProjectMember>> {
+) -> ApiResponse<ProjectMember> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -122,11 +122,11 @@ async fn create_member(
     .await;
 
     match result {
-        Ok(Some(member)) => Json(ApiResponse::success(member, "添加项目成员成功")),
-        Ok(None) => Json(ApiResponse::conflict("成员已存在")),
+        Ok(Some(member)) => ApiResponse::success(member, "添加项目成员成功"),
+        Ok(None) => ApiResponse::conflict("成员已存在"),
         Err(e) => {
             tracing::error!("添加项目成员失败: {}", e);
-            Json(ApiResponse::server_error("添加项目成员失败"))
+            ApiResponse::server_error("添加项目成员失败")
         }
     }
 }
@@ -150,11 +150,11 @@ async fn create_member(
 async fn get_member(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<ProjectMember>> {
+) -> ApiResponse<ProjectMember> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, ProjectMember>(
         only_own_schema_query!("pm", "SELECT id, project_id, user_id, role, responsibilities, start_date, end_date, created_at, updated_at FROM pm.project_members WHERE project_id = $1 AND id = $2"),
@@ -165,11 +165,11 @@ async fn get_member(
     .await;
 
     match result {
-        Ok(Some(member)) => Json(ApiResponse::success(member, "获取项目成员成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目成员不存在")),
+        Ok(Some(member)) => ApiResponse::success(member, "获取项目成员成功"),
+        Ok(None) => ApiResponse::not_found("项目成员不存在"),
         Err(e) => {
             tracing::error!("获取项目成员失败: {}", e);
-            Json(ApiResponse::server_error("获取项目成员失败"))
+            ApiResponse::server_error("获取项目成员失败")
         }
     }
 }
@@ -195,11 +195,11 @@ async fn update_member(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateMemberRequest>,
-) -> Json<ApiResponse<ProjectMember>> {
+) -> ApiResponse<ProjectMember> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
 
@@ -227,11 +227,11 @@ async fn update_member(
     .await;
 
     match result {
-        Ok(Some(member)) => Json(ApiResponse::success(member, "更新项目成员成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目成员不存在")),
+        Ok(Some(member)) => ApiResponse::success(member, "更新项目成员成功"),
+        Ok(None) => ApiResponse::not_found("项目成员不存在"),
         Err(e) => {
             tracing::error!("更新项目成员失败: {}", e);
-            Json(ApiResponse::server_error("更新项目成员失败"))
+            ApiResponse::server_error("更新项目成员失败")
         }
     }
 }
@@ -255,11 +255,11 @@ async fn update_member(
 async fn delete_member(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
@@ -271,13 +271,11 @@ async fn delete_member(
     .await;
 
     match result {
-        Ok(result) if result.rows_affected() > 0 => {
-            Json(ApiResponse::success(true, "删除项目成员成功"))
-        }
-        Ok(_) => Json(ApiResponse::not_found("项目成员不存在")),
+        Ok(result) if result.rows_affected() > 0 => ApiResponse::success(true, "删除项目成员成功"),
+        Ok(_) => ApiResponse::not_found("项目成员不存在"),
         Err(e) => {
             tracing::error!("删除项目成员失败: {}", e);
-            Json(ApiResponse::server_error("删除项目成员失败"))
+            ApiResponse::server_error("删除项目成员失败")
         }
     }
 }

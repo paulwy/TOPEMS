@@ -110,7 +110,7 @@ pub async fn list_documents(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -149,17 +149,17 @@ pub async fn list_documents(
             tracing::error!("查询文档列表失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("查询文档列表失败")),
+                ApiResponse::server_error("查询文档列表失败"),
             );
         }
     };
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(
+        ApiResponse::success(
             serde_json::json!({ "items": documents, "total": documents.len() }),
             "获取文档列表成功",
-        )),
+        ),
     )
 }
 
@@ -175,7 +175,7 @@ pub async fn get_document_categories() -> impl IntoResponse {
     ]);
     (
         StatusCode::OK,
-        Json(ApiResponse::success(categories, "获取文档分类成功")),
+        ApiResponse::success(categories, "获取文档分类成功"),
     )
 }
 
@@ -192,7 +192,7 @@ pub async fn get_document(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -211,20 +211,17 @@ pub async fn get_document(
     .await;
 
     match document {
-        Ok(Some(d)) => (
-            StatusCode::OK,
-            Json(ApiResponse::success(d, "获取文档详情成功")),
-        ),
+        Ok(Some(d)) => (StatusCode::OK, ApiResponse::success(d, "获取文档详情成功")),
         Ok(None) => (
             // 数据不存在语义：HTTP 200 + 内层 code 404，避免裸 404 被前端契约探测判为路由缺失。
             StatusCode::OK,
-            Json(ApiResponse::not_found("文档不存在")),
+            ApiResponse::not_found("文档不存在"),
         ),
         Err(e) => {
             tracing::error!("查询文档详情失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("查询文档详情失败")),
+                ApiResponse::server_error("查询文档详情失败"),
             )
         }
     }
@@ -243,7 +240,7 @@ pub async fn create_document(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -274,16 +271,13 @@ pub async fn create_document(
     match result {
         Ok(_) => (
             StatusCode::OK,
-            Json(ApiResponse::success(
-                serde_json::json!({ "id": id }),
-                "创建文档成功",
-            )),
+            ApiResponse::success(serde_json::json!({ "id": id }), "创建文档成功"),
         ),
         Err(e) => {
             tracing::error!("创建文档失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("创建文档失败")),
+                ApiResponse::server_error("创建文档失败"),
             )
         }
     }
@@ -303,7 +297,7 @@ pub async fn update_document(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -329,16 +323,15 @@ pub async fn update_document(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => (
-            StatusCode::OK,
-            Json(ApiResponse::success((), "更新文档成功")),
-        ),
-        Ok(_) => (StatusCode::OK, Json(ApiResponse::not_found("文档不存在"))),
+        Ok(r) if r.rows_affected() > 0 => {
+            (StatusCode::OK, ApiResponse::success((), "更新文档成功"))
+        }
+        Ok(_) => (StatusCode::OK, ApiResponse::not_found("文档不存在")),
         Err(e) => {
             tracing::error!("更新文档失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("更新文档失败")),
+                ApiResponse::server_error("更新文档失败"),
             )
         }
     }
@@ -357,7 +350,7 @@ pub async fn delete_document(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -373,16 +366,15 @@ pub async fn delete_document(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => (
-            StatusCode::OK,
-            Json(ApiResponse::success((), "删除文档成功")),
-        ),
-        Ok(_) => (StatusCode::OK, Json(ApiResponse::not_found("文档不存在"))),
+        Ok(r) if r.rows_affected() > 0 => {
+            (StatusCode::OK, ApiResponse::success((), "删除文档成功"))
+        }
+        Ok(_) => (StatusCode::OK, ApiResponse::not_found("文档不存在")),
         Err(e) => {
             tracing::error!("删除文档失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("删除文档失败")),
+                ApiResponse::server_error("删除文档失败"),
             )
         }
     }

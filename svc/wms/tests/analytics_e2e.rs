@@ -90,9 +90,8 @@ async fn dashboard_aggregates_core_metrics(pool: sqlx::PgPool) {
     let claims = super_claims();
     let resp = get_dashboard_summary(State(state), Extension(claims)).await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     let summary: Value = serde_json::to_value(data).unwrap();
     assert_eq!(summary["warehouse_count"], 1);
     assert_eq!(summary["inventory_total"], 150.0);

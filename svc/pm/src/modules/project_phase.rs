@@ -62,11 +62,11 @@ pub fn create_routes(pool: PgPool) -> Router {
 async fn list_phases(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<ProjectPhase>>> {
+) -> ApiResponse<Vec<ProjectPhase>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, ProjectPhase>(
         only_own_schema_query!("pm", "SELECT id, project_id, name, description, sequence_number, start_date, end_date, progress, status, predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC"),
@@ -76,10 +76,10 @@ async fn list_phases(
     .await;
 
     match result {
-        Ok(phases) => Json(ApiResponse::success(phases, "获取项目阶段列表成功")),
+        Ok(phases) => ApiResponse::success(phases, "获取项目阶段列表成功"),
         Err(e) => {
             tracing::error!("获取项目阶段列表失败: {}", e);
-            Json(ApiResponse::server_error("获取项目阶段列表失败"))
+            ApiResponse::server_error("获取项目阶段列表失败")
         }
     }
 }
@@ -106,11 +106,11 @@ async fn create_phase(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePhaseRequest>,
-) -> Json<ApiResponse<ProjectPhase>> {
+) -> ApiResponse<ProjectPhase> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -157,10 +157,10 @@ async fn create_phase(
     .await;
 
     match result {
-        Ok(phase) => Json(ApiResponse::success(phase, "创建项目阶段成功")),
+        Ok(phase) => ApiResponse::success(phase, "创建项目阶段成功"),
         Err(e) => {
             tracing::error!("创建项目阶段失败: {}", e);
-            Json(ApiResponse::server_error("创建项目阶段失败"))
+            ApiResponse::server_error("创建项目阶段失败")
         }
     }
 }
@@ -184,11 +184,11 @@ async fn create_phase(
 async fn get_phase(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<ProjectPhase>> {
+) -> ApiResponse<ProjectPhase> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, ProjectPhase>(
         only_own_schema_query!("pm", "SELECT id, project_id, name, description, sequence_number, start_date, end_date, progress, status, predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1 AND id = $2"),
@@ -199,11 +199,11 @@ async fn get_phase(
     .await;
 
     match result {
-        Ok(Some(phase)) => Json(ApiResponse::success(phase, "获取项目阶段成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目阶段不存在")),
+        Ok(Some(phase)) => ApiResponse::success(phase, "获取项目阶段成功"),
+        Ok(None) => ApiResponse::not_found("项目阶段不存在"),
         Err(e) => {
             tracing::error!("获取项目阶段失败: {}", e);
-            Json(ApiResponse::server_error("获取项目阶段失败"))
+            ApiResponse::server_error("获取项目阶段失败")
         }
     }
 }
@@ -229,11 +229,11 @@ async fn update_phase(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdatePhaseRequest>,
-) -> Json<ApiResponse<ProjectPhase>> {
+) -> ApiResponse<ProjectPhase> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
 
@@ -269,11 +269,11 @@ async fn update_phase(
     .await;
 
     match result {
-        Ok(Some(phase)) => Json(ApiResponse::success(phase, "更新项目阶段成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目阶段不存在")),
+        Ok(Some(phase)) => ApiResponse::success(phase, "更新项目阶段成功"),
+        Ok(None) => ApiResponse::not_found("项目阶段不存在"),
         Err(e) => {
             tracing::error!("更新项目阶段失败: {}", e);
-            Json(ApiResponse::server_error("更新项目阶段失败"))
+            ApiResponse::server_error("更新项目阶段失败")
         }
     }
 }
@@ -297,11 +297,11 @@ async fn update_phase(
 async fn delete_phase(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
@@ -313,13 +313,11 @@ async fn delete_phase(
     .await;
 
     match result {
-        Ok(result) if result.rows_affected() > 0 => {
-            Json(ApiResponse::success(true, "删除项目阶段成功"))
-        }
-        Ok(_) => Json(ApiResponse::not_found("项目阶段不存在")),
+        Ok(result) if result.rows_affected() > 0 => ApiResponse::success(true, "删除项目阶段成功"),
+        Ok(_) => ApiResponse::not_found("项目阶段不存在"),
         Err(e) => {
             tracing::error!("删除项目阶段失败: {}", e);
-            Json(ApiResponse::server_error("删除项目阶段失败"))
+            ApiResponse::server_error("删除项目阶段失败")
         }
     }
 }

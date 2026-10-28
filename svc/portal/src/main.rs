@@ -6,7 +6,7 @@
 //! 本文件仅保留独立部署特有的部分：bootstrap / Prometheus 指标 / public 入口路由 /
 //! portal 插件自注册 / 运行。
 
-use axum::{routing::get, Json, Router};
+use axum::{routing::get, Router};
 use std::time::Instant;
 
 use axum_prometheus::PrometheusMetricLayer;
@@ -136,7 +136,7 @@ async fn health_check() -> ServiceHealth {
     build_health_response("topems-portal", true)
 }
 
-async fn health_check_detailed() -> Json<ApiResponse<topems_portal::models::DetailedHealth>> {
+async fn health_check_detailed() -> ApiResponse<topems_portal::models::DetailedHealth> {
     let ws_connections = topems_portal::embedded::get_ws_connection_count();
     let active_subscriptions = topems_portal::modules::graphql_schema::get_active_subscriptions();
     let health = topems_portal::models::DetailedHealth {
@@ -164,11 +164,11 @@ async fn health_check_detailed() -> Json<ApiResponse<topems_portal::models::Deta
         last_check: Some(chrono::Utc::now().to_rfc3339()),
     };
 
-    Json(ApiResponse::success(health, "健康检查完成"))
+    ApiResponse::success(health, "健康检查完成")
 }
 
-async fn home() -> Json<ApiResponse<&'static str>> {
-    Json(ApiResponse::success(
+async fn home() -> ApiResponse<&'static str> {
+    ApiResponse::success(
         "TOPEMS Unified Portal API
 
 Public Endpoints:
@@ -242,5 +242,5 @@ Protected Endpoints (require JWT token):
     PUT  /api/core/portal/navigation/pinned/reorder - Reorder pinned apps
 ",
         "首页",
-    ))
+    )
 }

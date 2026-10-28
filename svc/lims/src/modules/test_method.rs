@@ -214,7 +214,7 @@ pub async fn list_methods(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<TestMethodQuery>,
-) -> Json<ApiResponse<Vec<TestMethod>>> {
+) -> ApiResponse<Vec<TestMethod>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -303,10 +303,10 @@ pub async fn list_methods(
     });
 
     match methods {
-        Ok(data) => Json(ApiResponse::success(data, "获取检测方法列表成功")),
+        Ok(data) => ApiResponse::success(data, "获取检测方法列表成功"),
         Err(e) => {
             tracing::error!("Failed to fetch test methods: {}", e);
-            Json(ApiResponse::server_error("获取检测方法列表失败"))
+            ApiResponse::server_error("获取检测方法列表失败")
         }
     }
 }
@@ -315,7 +315,7 @@ pub async fn create_method(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateTestMethodRequest>,
-) -> Json<ApiResponse<TestMethod>> {
+) -> ApiResponse<TestMethod> {
     let version = "1.0".to_string();
 
     let row = sqlx::query(
@@ -354,7 +354,7 @@ pub async fn create_method(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             TestMethod {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -381,10 +381,10 @@ pub async fn create_method(
                 updated_at: r.get("updated_at"),
             },
             "检测方法创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create test method: {}", e);
-            Json(ApiResponse::server_error("检测方法创建失败"))
+            ApiResponse::server_error("检测方法创建失败")
         }
     }
 }
@@ -407,10 +407,10 @@ pub async fn get_method(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<TestMethod>> {
+) -> ApiResponse<TestMethod> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的方法ID")),
+        Err(_) => return ApiResponse::bad_request("无效的方法ID"),
     };
 
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -421,7 +421,7 @@ pub async fn get_method(
     let cache_key = test_method_cache_key(&tenant_id, &id.to_string());
 
     if let Some(cached) = state.test_method_cache.get(&cache_key).await {
-        return Json(ApiResponse::success(cached, "从内存缓存获取检测方法成功"));
+        return ApiResponse::success(cached, "从内存缓存获取检测方法成功");
     }
 
     let row = sqlx::query(&format!(
@@ -466,13 +466,13 @@ pub async fn get_method(
                 updated_at: r.get("updated_at"),
             };
             state.test_method_cache.set(cache_key, method.clone()).await;
-            Json(ApiResponse::success(method, "获取检测方法成功"))
+            ApiResponse::success(method, "获取检测方法成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to fetch test method: {}", e);
-            Json(ApiResponse::server_error("获取检测方法失败"))
+            ApiResponse::server_error("获取检测方法失败")
         }
     }
 }
@@ -482,10 +482,10 @@ pub async fn update_method(
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateTestMethodRequest>,
-) -> Json<ApiResponse<TestMethod>> {
+) -> ApiResponse<TestMethod> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的方法ID")),
+        Err(_) => return ApiResponse::bad_request("无效的方法ID"),
     };
 
     let row = sqlx::query(
@@ -542,7 +542,7 @@ pub async fn update_method(
                     &id.to_string(),
                 ))
                 .await;
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 TestMethod {
                     id: r.get("id"),
                     tenant_id: r.get("tenant_id"),
@@ -569,13 +569,13 @@ pub async fn update_method(
                     updated_at: r.get("updated_at"),
                 },
                 "检测方法更新成功",
-            ))
+            )
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to update test method: {}", e);
-            Json(ApiResponse::server_error("检测方法更新失败"))
+            ApiResponse::server_error("检测方法更新失败")
         }
     }
 }
@@ -584,10 +584,10 @@ pub async fn delete_method(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的方法ID")),
+        Err(_) => return ApiResponse::bad_request("无效的方法ID"),
     };
 
     let result = sqlx::query(
@@ -607,11 +607,11 @@ pub async fn delete_method(
                     &id.to_string(),
                 ))
                 .await;
-            Json(ApiResponse::success(true, "检测方法删除成功"))
+            ApiResponse::success(true, "检测方法删除成功")
         }
         Err(e) => {
             tracing::error!("Failed to delete test method: {}", e);
-            Json(ApiResponse::server_error("检测方法删除失败"))
+            ApiResponse::server_error("检测方法删除失败")
         }
     }
 }
@@ -631,7 +631,7 @@ pub async fn list_categories(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<MethodCategoryQuery>,
-) -> Json<ApiResponse<Vec<MethodCategory>>> {
+) -> ApiResponse<Vec<MethodCategory>> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -666,10 +666,10 @@ pub async fn list_categories(
     });
 
     match categories {
-        Ok(data) => Json(ApiResponse::success(data, "获取方法分类列表成功")),
+        Ok(data) => ApiResponse::success(data, "获取方法分类列表成功"),
         Err(e) => {
             tracing::error!("Failed to fetch method categories: {}", e);
-            Json(ApiResponse::server_error("获取方法分类列表失败"))
+            ApiResponse::server_error("获取方法分类列表失败")
         }
     }
 }
@@ -678,7 +678,7 @@ pub async fn create_category(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateMethodCategoryRequest>,
-) -> Json<ApiResponse<MethodCategory>> {
+) -> ApiResponse<MethodCategory> {
     let sort_order = req.sort_order.unwrap_or(0);
 
     let row = sqlx::query(
@@ -698,7 +698,7 @@ pub async fn create_category(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             MethodCategory {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -712,10 +712,10 @@ pub async fn create_category(
                 updated_at: r.get("updated_at"),
             },
             "方法分类创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create method category: {}", e);
-            Json(ApiResponse::server_error("方法分类创建失败"))
+            ApiResponse::server_error("方法分类创建失败")
         }
     }
 }
@@ -738,10 +738,10 @@ pub async fn update_category(
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateMethodCategoryRequest>,
-) -> Json<ApiResponse<MethodCategory>> {
+) -> ApiResponse<MethodCategory> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的分类ID")),
+        Err(_) => return ApiResponse::bad_request("无效的分类ID"),
     };
 
     let row = sqlx::query(
@@ -768,7 +768,7 @@ pub async fn update_category(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             MethodCategory {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -782,12 +782,12 @@ pub async fn update_category(
                 updated_at: r.get("updated_at"),
             },
             "方法分类更新成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to update method category: {}", e);
-            Json(ApiResponse::server_error("方法分类更新失败"))
+            ApiResponse::server_error("方法分类更新失败")
         }
     }
 }
@@ -796,10 +796,10 @@ pub async fn delete_category(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的分类ID")),
+        Err(_) => return ApiResponse::bad_request("无效的分类ID"),
     };
 
     let result = sqlx::query(
@@ -811,10 +811,10 @@ pub async fn delete_category(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "方法分类删除成功")),
+        Ok(_) => ApiResponse::success(true, "方法分类删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete method category: {}", e);
-            Json(ApiResponse::server_error("方法分类删除失败"))
+            ApiResponse::server_error("方法分类删除失败")
         }
     }
 }
@@ -834,7 +834,7 @@ pub async fn list_validations(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<MethodValidationQuery>,
-) -> Json<ApiResponse<Vec<MethodValidationRecord>>> {
+) -> ApiResponse<Vec<MethodValidationRecord>> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -874,10 +874,10 @@ pub async fn list_validations(
     });
 
     match records {
-        Ok(data) => Json(ApiResponse::success(data, "获取方法验证记录列表成功")),
+        Ok(data) => ApiResponse::success(data, "获取方法验证记录列表成功"),
         Err(e) => {
             tracing::error!("Failed to fetch method validations: {}", e);
-            Json(ApiResponse::server_error("获取方法验证记录列表失败"))
+            ApiResponse::server_error("获取方法验证记录列表失败")
         }
     }
 }
@@ -886,10 +886,10 @@ pub async fn create_validation(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateMethodValidationRequest>,
-) -> Json<ApiResponse<MethodValidationRecord>> {
+) -> ApiResponse<MethodValidationRecord> {
     let method_id = match Uuid::parse_str(&req.method_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的方法ID")),
+        Err(_) => return ApiResponse::bad_request("无效的方法ID"),
     };
 
     let method_row = sqlx::query(
@@ -906,13 +906,8 @@ pub async fn create_validation(
             row.get::<String, _>("method_name"),
             row.get::<String, _>("version"),
         ),
-        Ok(None) => return Json(ApiResponse::not_found("检测方法不存在")),
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询检测方法失败",
-                e,
-            )))
-        }
+        Ok(None) => return ApiResponse::not_found("检测方法不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询检测方法失败", e)),
     };
 
     let validation_date = req
@@ -958,7 +953,7 @@ pub async fn create_validation(
     }
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             MethodValidationRecord {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -977,10 +972,10 @@ pub async fn create_validation(
                 created_at: r.get("created_at"),
             },
             "方法验证记录创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create method validation: {}", e);
-            Json(ApiResponse::server_error("方法验证记录创建失败"))
+            ApiResponse::server_error("方法验证记录创建失败")
         }
     }
 }
@@ -1003,10 +998,10 @@ pub async fn list_method_versions(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(method_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<MethodVersion>>> {
+) -> ApiResponse<Vec<MethodVersion>> {
     let id = match Uuid::parse_str(&method_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的方法ID")),
+        Err(_) => return ApiResponse::bad_request("无效的方法ID"),
     };
 
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -1044,11 +1039,11 @@ pub async fn list_method_versions(
                     created_at: row.get("created_at"),
                 })
                 .collect();
-            Json(ApiResponse::success(versions, "获取方法版本列表成功"))
+            ApiResponse::success(versions, "获取方法版本列表成功")
         }
         Err(e) => {
             tracing::error!("Failed to fetch method versions: {}", e);
-            Json(ApiResponse::server_error("获取方法版本列表失败"))
+            ApiResponse::server_error("获取方法版本列表失败")
         }
     }
 }
@@ -1071,10 +1066,10 @@ pub async fn create_new_version(
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(method_id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<TestMethod>> {
+) -> ApiResponse<TestMethod> {
     let id = match Uuid::parse_str(&method_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的方法ID")),
+        Err(_) => return ApiResponse::bad_request("无效的方法ID"),
     };
 
     let method_row = sqlx::query(
@@ -1091,13 +1086,8 @@ pub async fn create_new_version(
             row.get::<String, _>("method_name"),
             row.get::<String, _>("version"),
         ),
-        Ok(None) => return Json(ApiResponse::not_found("检测方法不存在")),
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询检测方法失败",
-                e,
-            )))
-        }
+        Ok(None) => return ApiResponse::not_found("检测方法不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询检测方法失败", e)),
     };
 
     let version_parts: Vec<&str> = current_version.split('.').collect();
@@ -1144,7 +1134,7 @@ pub async fn create_new_version(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             TestMethod {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -1171,10 +1161,10 @@ pub async fn create_new_version(
                 updated_at: r.get("updated_at"),
             },
             &format!("方法版本更新成功，新版本: {}", new_version),
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create new method version: {}", e);
-            Json(ApiResponse::server_error("方法版本更新失败"))
+            ApiResponse::server_error("方法版本更新失败")
         }
     }
 }

@@ -58,7 +58,7 @@ pub struct ReportQuery {
 pub async fn list_reports(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<ReportQuery>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -104,11 +104,11 @@ pub async fn list_reports(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(reports, "获取检测报告列表成功"))
+            ApiResponse::success(reports, "获取检测报告列表成功")
         }
         Err(e) => {
             tracing::error!("Failed to fetch reports: {}", e);
-            Json(ApiResponse::server_error("获取检测报告列表失败"))
+            ApiResponse::server_error("获取检测报告列表失败")
         }
     }
 }
@@ -116,10 +116,10 @@ pub async fn list_reports(
 pub async fn get_report(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的报告ID"),
     };
 
     let row = sqlx::query(
@@ -150,12 +150,12 @@ pub async fn get_report(
                 "status": r.get::<Option<String>, _>("status"),
                 "created_at": r.get::<Option<String>, _>("created_at"),
             });
-            Json(ApiResponse::success(report, "获取检测报告成功"))
+            ApiResponse::success(report, "获取检测报告成功")
         }
-        Ok(None) => Json(ApiResponse::not_found("报告不存在")),
+        Ok(None) => ApiResponse::not_found("报告不存在"),
         Err(e) => {
             tracing::error!("Failed to fetch report: {}", e);
-            Json(ApiResponse::server_error("获取检测报告失败"))
+            ApiResponse::server_error("获取检测报告失败")
         }
     }
 }
@@ -177,10 +177,10 @@ pub async fn generate_report(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<GenerateReportRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let sample_id = match Uuid::parse_str(&req.sample_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的样品ID")),
+        Err(_) => return ApiResponse::bad_request("无效的样品ID"),
     };
 
     // Get sample info
@@ -201,8 +201,8 @@ pub async fn generate_report(
             row.get::<Option<String>, _>("sample_type"),
             row.get::<Option<String>, _>("source"),
         ),
-        Ok(None) => return Json(ApiResponse::not_found("样品不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
+        Ok(None) => return ApiResponse::not_found("样品不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询样品失败", e)),
     };
 
     // Determine conclusion based on inspection results
@@ -285,11 +285,11 @@ pub async fn generate_report(
                 "status": r.get::<Option<String>, _>("status"),
                 "created_at": r.get::<Option<String>, _>("created_at"),
             });
-            Json(ApiResponse::success(report, "检测报告生成成功"))
+            ApiResponse::success(report, "检测报告生成成功")
         }
         Err(e) => {
             tracing::error!("Failed to generate report: {}", e);
-            Json(ApiResponse::server_error("生成检测报告失败"))
+            ApiResponse::server_error("生成检测报告失败")
         }
     }
 }
@@ -346,10 +346,10 @@ fn is_result_conforming(result: &str, standard: &str) -> bool {
 pub async fn approve_report(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的报告ID"),
     };
 
     let row = sqlx::query(
@@ -382,12 +382,12 @@ pub async fn approve_report(
                 "status": r.get::<Option<String>, _>("status"),
                 "created_at": r.get::<Option<String>, _>("created_at"),
             });
-            Json(ApiResponse::success(report, "报告审核通过"))
+            ApiResponse::success(report, "报告审核通过")
         }
-        Ok(None) => Json(ApiResponse::not_found("报告不存在或状态不允许审核")),
+        Ok(None) => ApiResponse::not_found("报告不存在或状态不允许审核"),
         Err(e) => {
             tracing::error!("Failed to approve report: {}", e);
-            Json(ApiResponse::server_error("审核报告失败"))
+            ApiResponse::server_error("审核报告失败")
         }
     }
 }
@@ -395,10 +395,10 @@ pub async fn approve_report(
 pub async fn export_report_pdf(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的报告ID")),
+        Err(_) => return ApiResponse::bad_request("无效的报告ID"),
     };
 
     let row = sqlx::query(
@@ -429,7 +429,7 @@ pub async fn export_report_pdf(
                 "conclusion": r.get::<Option<String>, _>("conclusion"),
             });
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "format": "json_placeholder",
                     "pdf_url": serde_json::Value::Null,
@@ -439,12 +439,12 @@ pub async fn export_report_pdf(
                     "report_data": report_data,
                 }),
                 "PDF 预览（JSON 占位，degraded）",
-            ))
+            )
         }
-        Ok(None) => Json(ApiResponse::not_found("报告不存在")),
+        Ok(None) => ApiResponse::not_found("报告不存在"),
         Err(e) => {
             tracing::error!("Failed to export report: {}", e);
-            Json(ApiResponse::server_error("导出报告失败"))
+            ApiResponse::server_error("导出报告失败")
         }
     }
 }

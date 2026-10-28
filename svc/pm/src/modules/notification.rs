@@ -51,11 +51,11 @@ pub fn create_routes(pool: PgPool) -> Router {
 async fn get_project_notifications(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<Notification>>> {
+) -> ApiResponse<Vec<Notification>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let notifications = sqlx::query_as::<_, Notification>(
         only_own_schema_query!("pm", "SELECT id, project_id, recipient AS user_id, notification_type, title, content AS message, status, priority, metadata, due_date, sent_at AS delivered_at, NULL::timestamptz AS read_at, created_at, updated_at FROM pm.notifications WHERE project_id = $1 ORDER BY created_at DESC"),
@@ -65,10 +65,10 @@ async fn get_project_notifications(
     .await;
 
     match notifications {
-        Ok(n) => Json(ApiResponse::success(n, "获取通知列表成功")),
+        Ok(n) => ApiResponse::success(n, "获取通知列表成功"),
         Err(e) => {
             tracing::error!("获取通知失败: {}", e);
-            Json(ApiResponse::server_error("获取通知失败"))
+            ApiResponse::server_error("获取通知失败")
         }
     }
 }
@@ -78,11 +78,11 @@ async fn create_notification(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateNotificationRequest>,
-) -> Json<ApiResponse<Notification>> {
+) -> ApiResponse<Notification> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -108,10 +108,10 @@ async fn create_notification(
     .await;
 
     match notification {
-        Ok(n) => Json(ApiResponse::success(n, "创建通知成功")),
+        Ok(n) => ApiResponse::success(n, "创建通知成功"),
         Err(e) => {
             tracing::error!("创建通知失败: {}", e);
-            Json(ApiResponse::server_error("创建通知失败"))
+            ApiResponse::server_error("创建通知失败")
         }
     }
 }
@@ -132,11 +132,11 @@ async fn create_notification(
 async fn get_project_settings(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<NotificationSetting>>> {
+) -> ApiResponse<Vec<NotificationSetting>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let settings = sqlx::query_as::<_, NotificationSetting>(
         only_own_schema_query!("pm", "SELECT id, project_id, notification_type, enabled, notify_before_days, preferred_channel, created_at, updated_at FROM pm.notification_settings WHERE project_id = $1"),
@@ -146,10 +146,10 @@ async fn get_project_settings(
     .await;
 
     match settings {
-        Ok(s) => Json(ApiResponse::success(s, "获取通知设置成功")),
+        Ok(s) => ApiResponse::success(s, "获取通知设置成功"),
         Err(e) => {
             tracing::error!("获取通知设置失败: {}", e);
-            Json(ApiResponse::server_error("获取通知设置失败"))
+            ApiResponse::server_error("获取通知设置失败")
         }
     }
 }
@@ -160,11 +160,11 @@ async fn create_setting(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateNotificationSettingRequest>,
-) -> Json<ApiResponse<NotificationSetting>> {
+) -> ApiResponse<NotificationSetting> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -186,10 +186,10 @@ async fn create_setting(
     .await;
 
     match setting {
-        Ok(s) => Json(ApiResponse::success(s, "创建通知设置成功")),
+        Ok(s) => ApiResponse::success(s, "创建通知设置成功"),
         Err(e) => {
             tracing::error!("创建通知设置失败: {}", e);
-            Json(ApiResponse::server_error("创建通知设置失败"))
+            ApiResponse::server_error("创建通知设置失败")
         }
     }
 }
@@ -211,11 +211,11 @@ async fn update_setting(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateNotificationSettingRequest>,
-) -> Json<ApiResponse<NotificationSetting>> {
+) -> ApiResponse<NotificationSetting> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let setting = sqlx::query_as::<_, NotificationSetting>(only_own_schema_query!(
         "pm",
@@ -235,11 +235,11 @@ async fn update_setting(
     .await;
 
     match setting {
-        Ok(s) => Json(ApiResponse::success(s, "更新通知设置成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("通知设置不存在")),
+        Ok(s) => ApiResponse::success(s, "更新通知设置成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("通知设置不存在"),
         Err(e) => {
             tracing::error!("更新通知设置失败: {}", e);
-            Json(ApiResponse::server_error("更新通知设置失败"))
+            ApiResponse::server_error("更新通知设置失败")
         }
     }
 }
@@ -254,7 +254,7 @@ async fn update_setting(
     ),
     tag = "notification"
 )]
-async fn list_notification_types() -> Json<ApiResponse<Vec<NotificationType>>> {
+async fn list_notification_types() -> ApiResponse<Vec<NotificationType>> {
     let types = vec![
         NotificationType {
             code: "milestone_reminder".to_string(),
@@ -314,7 +314,7 @@ async fn list_notification_types() -> Json<ApiResponse<Vec<NotificationType>>> {
         },
     ];
 
-    Json(ApiResponse::success(types, "获取通知类型列表成功"))
+    ApiResponse::success(types, "获取通知类型列表成功")
 }
 
 fn parse_date_opt(date_str: &Option<String>) -> Option<chrono::DateTime<chrono::Utc>> {

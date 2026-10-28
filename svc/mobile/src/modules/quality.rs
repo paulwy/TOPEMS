@@ -33,19 +33,19 @@ pub struct UpdateTaskStatusRequest {
 )]
 pub async fn list_quality_tasks(
     State(client): State<TypedServiceClient<QmsApi>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match client.list_quality_tasks(1, 100).await {
-        Ok(items) => Json(ApiResponse::success(
+        Ok(items) => ApiResponse::success(
             serde_json::json!({ "items": items, "total": items.len() }),
             "获取质检任务列表成功",
-        )),
+        ),
         Err(e) => {
             // QMS 上游暂未实现质检任务端点（探测 404），轻量兜底返回空列表，待上游支持。
             tracing::error!("调用QMS服务获取质检任务列表失败（兜底空列表）: {}", e);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "items": [], "total": 0 }),
                 "获取质检任务列表成功（待上游支持）",
-            ))
+            )
         }
     }
 }
@@ -66,21 +66,18 @@ pub async fn list_quality_tasks(
 pub async fn get_quality_task(
     State(client): State<TypedServiceClient<QmsApi>>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
+) -> (StatusCode, ApiResponse<serde_json::Value>) {
     match client.get_quality_task(&id).await {
         Ok(data) => (
             StatusCode::OK,
-            Json(ApiResponse::success(
-                unwrap_data(data),
-                "获取质检任务详情成功",
-            )),
+            ApiResponse::success(unwrap_data(data), "获取质检任务详情成功"),
         ),
         Err(e) => {
             // QMS 上游暂未实现任务详情端点（探测 404），HTTP 200 + 内层 404，待上游支持。
             tracing::error!("调用QMS服务获取质检任务详情失败（兜底404）: {}", e);
             (
                 StatusCode::OK,
-                Json(ApiResponse::not_found("质检任务不存在（待上游支持）")),
+                ApiResponse::not_found("质检任务不存在（待上游支持）"),
             )
         }
     }
@@ -98,19 +95,19 @@ pub async fn get_quality_task(
 )]
 pub async fn list_defect_records(
     State(client): State<TypedServiceClient<QmsApi>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match client.list_defect_records(1, 100).await {
-        Ok(items) => Json(ApiResponse::success(
+        Ok(items) => ApiResponse::success(
             serde_json::json!({ "items": items, "total": items.len() }),
             "获取缺陷记录列表成功",
-        )),
+        ),
         Err(e) => {
             // QMS 上游暂未实现缺陷记录端点（探测 404），轻量兜底返回空列表，待上游支持。
             tracing::error!("调用QMS服务获取缺陷记录列表失败（兜底空列表）: {}", e);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "items": [], "total": 0 }),
                 "获取缺陷记录列表成功（待上游支持）",
-            ))
+            )
         }
     }
 }
@@ -118,7 +115,7 @@ pub async fn list_defect_records(
 pub async fn report_defect(
     State(client): State<TypedServiceClient<QmsApi>>,
     Json(payload): Json<CreateDefectRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let data = serde_json::json!({
         "task_id": payload.task_id,
         "defect_type": payload.defect_type,
@@ -129,10 +126,10 @@ pub async fn report_defect(
     });
 
     match client.report_defect(&data).await {
-        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "上报缺陷成功")),
+        Ok(data) => ApiResponse::success(unwrap_data(data), "上报缺陷成功"),
         Err(e) => {
             tracing::error!("调用QMS服务上报缺陷失败: {}", e);
-            Json(ApiResponse::server_error("上报缺陷失败"))
+            ApiResponse::server_error("上报缺陷失败")
         }
     }
 }
@@ -154,20 +151,17 @@ pub async fn update_quality_task_status(
     State(client): State<TypedServiceClient<QmsApi>>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(payload): Json<UpdateTaskStatusRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let data = serde_json::json!({
         "status": payload.status,
         "result": payload.result,
     });
 
     match client.update_quality_task_status(&id, &data).await {
-        Ok(data) => Json(ApiResponse::success(
-            unwrap_data(data),
-            "更新质检任务状态成功",
-        )),
+        Ok(data) => ApiResponse::success(unwrap_data(data), "更新质检任务状态成功"),
         Err(e) => {
             tracing::error!("调用QMS服务更新质检任务状态失败: {}", e);
-            Json(ApiResponse::server_error("更新质检任务状态失败"))
+            ApiResponse::server_error("更新质检任务状态失败")
         }
     }
 }

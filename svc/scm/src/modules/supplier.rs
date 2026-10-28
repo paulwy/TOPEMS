@@ -149,15 +149,15 @@ pub async fn list_suppliers(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
@@ -184,7 +184,7 @@ pub async fn list_suppliers(
     if let Some(cached) = state.supplier_cache.get(&cache_key).await {
         record_cache_hit("scm", "supplier", "list");
         tracing::debug!("📋 内存缓存命中: {}", cache_key);
-        return Json(ApiResponse::success(cached, "获取供应商列表成功"));
+        return ApiResponse::success(cached, "获取供应商列表成功");
     }
 
     // 缓存未命中，记录指标
@@ -198,7 +198,7 @@ pub async fn list_suppliers(
                     .supplier_cache
                     .set(cache_key.clone(), data.clone())
                     .await;
-                return Json(ApiResponse::success(data, "获取供应商列表成功"));
+                return ApiResponse::success(data, "获取供应商列表成功");
             }
         }
     }
@@ -261,13 +261,11 @@ pub async fn list_suppliers(
                 }
             }
 
-            Json(ApiResponse::success(response_data, "获取供应商列表成功"))
+            ApiResponse::success(response_data, "获取供应商列表成功")
         }
         Err(e) => {
             tracing::error!("获取供应商列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取供应商列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取供应商列表失败".to_string()))
         }
     }
 }
@@ -290,20 +288,20 @@ pub async fn create_supplier(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateSupplierRequest>,
-) -> Json<ApiResponse<Supplier>> {
+) -> ApiResponse<Supplier> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     // 超管落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400，禁止落全零
     let tenant_opt = match resolve_create_tenant(&claims) {
         Ok(t) => t,
-        Err((code, msg)) => return Json(ApiResponse::error(code, &msg)),
+        Err((code, msg)) => return ApiResponse::error(code, &msg),
     };
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
@@ -336,16 +334,14 @@ pub async fn create_supplier(
 
     let (response, status, error_msg) = match &result {
         Ok(supplier) => (
-            Json(ApiResponse::success(supplier.clone(), "供应商创建成功")),
+            ApiResponse::success(supplier.clone(), "供应商创建成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("创建供应商失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "供应商创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("供应商创建失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -362,7 +358,7 @@ pub async fn create_supplier(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
         state.supplier_cache.clear_all().await;
@@ -478,15 +474,15 @@ pub async fn get_supplier(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Supplier>> {
+) -> ApiResponse<Supplier> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -505,7 +501,7 @@ pub async fn get_supplier(
         record_cache_hit("scm", "supplier", "get");
         tracing::debug!("📋 内存缓存命中: {}", cache_key);
         if let Ok(supplier) = serde_json::from_value::<Supplier>(cached) {
-            return Json(ApiResponse::success(supplier, "获取供应商成功"));
+            return ApiResponse::success(supplier, "获取供应商成功");
         }
     }
 
@@ -519,7 +515,7 @@ pub async fn get_supplier(
                 if let Ok(value) = serde_json::to_value(&supplier) {
                     state.supplier_cache.set(cache_key.clone(), value).await;
                 }
-                return Json(ApiResponse::success(supplier, "获取供应商成功"));
+                return ApiResponse::success(supplier, "获取供应商成功");
             }
         }
     }
@@ -548,16 +544,12 @@ pub async fn get_supplier(
                         .await;
                 }
             }
-            Json(ApiResponse::success(supplier, "获取供应商成功"))
+            ApiResponse::success(supplier, "获取供应商成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "供应商不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("供应商不存在".to_string())),
         Err(e) => {
             tracing::error!("获取供应商失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取供应商失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取供应商失败".to_string()))
         }
     }
 }
@@ -585,15 +577,15 @@ pub async fn update_supplier(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateSupplierRequest>,
-) -> Json<ApiResponse<Supplier>> {
+) -> ApiResponse<Supplier> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
@@ -609,16 +601,9 @@ pub async fn update_supplier(
     let existing = match existing {
         Ok(Some(s)) => s,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "供应商不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("供应商不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询供应商失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询供应商失败", e)),
     };
 
     let name = req.name.unwrap_or(existing.name);
@@ -659,16 +644,14 @@ pub async fn update_supplier(
 
     let (response, status_str, error_msg) = match &result {
         Ok(supplier) => (
-            Json(ApiResponse::success(supplier.clone(), "供应商更新成功")),
+            ApiResponse::success(supplier.clone(), "供应商更新成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("更新供应商失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "供应商更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("供应商更新失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -685,7 +668,7 @@ pub async fn update_supplier(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
         // 从 claims 中获取 tenant_id，用于多租户缓存隔离
@@ -808,15 +791,15 @@ pub async fn delete_supplier(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
@@ -830,23 +813,19 @@ pub async fn delete_supplier(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "供应商删除成功")),
+            ApiResponse::success("".to_string(), "供应商删除成功"),
             "success",
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "供应商不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("供应商不存在".to_string())),
             "error",
             Some("供应商不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除供应商失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "供应商删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("供应商删除失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -863,7 +842,7 @@ pub async fn delete_supplier(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
         // 从 claims 中获取 tenant_id，用于多租户缓存隔离

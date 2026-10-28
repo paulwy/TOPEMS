@@ -145,14 +145,14 @@ pub async fn list_sync_records(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Query(params): Query<ListSyncParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncRead).await {
-        return e;
+        return e.0;
     }
     let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
@@ -207,7 +207,7 @@ pub async fn list_sync_records(
             .await
             .unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -215,13 +215,11 @@ pub async fn list_sync_records(
                     "page_size": page_size,
                 }),
                 "同步记录列表获取成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取同步记录列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取同步记录列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取同步记录列表失败".to_string()))
         }
     }
 }
@@ -234,14 +232,14 @@ pub async fn get_sync_record(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<SyncRecord>> {
+) -> ApiResponse<SyncRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncRead).await {
-        return e;
+        return e.0;
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -261,15 +259,11 @@ pub async fn get_sync_record(
     .await;
 
     match result {
-        Ok(Some(record)) => Json(ApiResponse::success(record, "同步记录获取成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "同步记录不存在".to_string(),
-        ))),
+        Ok(Some(record)) => ApiResponse::success(record, "同步记录获取成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("同步记录不存在".to_string())),
         Err(e) => {
             tracing::error!("获取同步记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取同步记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取同步记录失败".to_string()))
         }
     }
 }
@@ -282,14 +276,14 @@ pub async fn create_sync_record(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateSyncRequest>,
-) -> Json<ApiResponse<SyncRecord>> {
+) -> ApiResponse<SyncRecord> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_id = tenant_bind_value(&claims);
     let sync_no = format!("SYNC-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
@@ -337,18 +331,16 @@ pub async fn create_sync_record(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
+                    return ApiResponse::from(TopemsError::Internal(
                         "同步任务提交失败".to_string(),
-                    )));
+                    ));
                 }
             }
-            Json(ApiResponse::success(record, "同步任务已创建"))
+            ApiResponse::success(record, "同步任务已创建")
         }
         Err(e) => {
             tracing::error!("创建同步记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建同步记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建同步记录失败".to_string()))
         }
     }
 }
@@ -362,14 +354,14 @@ pub async fn list_sync_items(
     >,
     Path(sync_id): Path<Uuid>,
     Query(params): Query<ListSyncParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncRead).await {
-        return e;
+        return e.0;
     }
     let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
@@ -407,7 +399,7 @@ pub async fn list_sync_items(
             .await
             .unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -415,13 +407,11 @@ pub async fn list_sync_items(
                     "page_size": page_size,
                 }),
                 "同步明细获取成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取同步明细失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取同步明细失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取同步明细失败".to_string()))
         }
     }
 }
@@ -434,14 +424,14 @@ pub async fn retry_sync_record(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<SyncResult>> {
+) -> ApiResponse<SyncResult> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_bind = tenant_bind_value(&claims);
     let now = Utc::now();
@@ -469,12 +459,10 @@ pub async fn retry_sync_record(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "重试提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("重试提交失败".to_string()));
                 }
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 SyncResult {
                     sync_id,
                     status: "success".to_string(),
@@ -485,16 +473,12 @@ pub async fn retry_sync_record(
                     started_at: now,
                 },
                 "同步记录重试成功",
-            ))
+            )
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "同步记录不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("同步记录不存在".to_string())),
         Err(e) => {
             tracing::error!("重试同步记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "重试同步记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("重试同步记录失败".to_string()))
         }
     }
 }
@@ -508,14 +492,14 @@ pub async fn retry_failed_items(
     >,
     Path(id): Path<Uuid>,
     Json(req): Json<RetryItemsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_bind = tenant_bind_value(&claims);
     #[allow(
@@ -543,24 +527,20 @@ pub async fn retry_failed_items(
 
         if let Err(e) = result {
             tracing::error!("重试同步明细失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "重试同步明细失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("重试同步明细失败".to_string()));
         }
     }
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "重试明细提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("重试明细提交失败".to_string()));
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({ "retried_count": retried }),
         "同步明细重试成功",
-    ))
+    )
 }
 
 /// GET /sync-records/statistics —— 同步统计
@@ -570,14 +550,14 @@ pub async fn get_sync_statistics(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<SyncStatistics>> {
+) -> ApiResponse<SyncStatistics> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncRead).await {
-        return e;
+        return e.0;
     }
     let tenant_bind = tenant_bind_value(&claims);
     let tb = tenant_bind;
@@ -652,12 +632,10 @@ pub async fn get_sync_statistics(
     .await;
 
     match result {
-        Ok(stats) => Json(ApiResponse::success(stats, "同步统计获取成功")),
+        Ok(stats) => ApiResponse::success(stats, "同步统计获取成功"),
         Err(e) => {
             tracing::error!("获取同步统计失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取同步统计失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取同步统计失败".to_string()))
         }
     }
 }
@@ -670,14 +648,14 @@ async fn trigger_sync(
     >,
     sync_type: String,
     payload: serde_json::Value,
-) -> Json<ApiResponse<SyncResult>> {
+) -> ApiResponse<SyncResult> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::SyncWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_id = tenant_bind_value(&claims);
     let now = Utc::now();
@@ -707,12 +685,12 @@ async fn trigger_sync(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
+                    return ApiResponse::from(TopemsError::Internal(
                         "同步触发提交失败".to_string(),
-                    )));
+                    ));
                 }
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 SyncResult {
                     sync_id,
                     status: "success".to_string(),
@@ -723,13 +701,11 @@ async fn trigger_sync(
                     started_at: now,
                 },
                 "同步触发成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("触发同步失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "触发同步失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("触发同步失败".to_string()))
         }
     }
 }
@@ -742,7 +718,7 @@ pub async fn trigger_scm_sync(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(payload): Json<serde_json::Value>,
-) -> Json<ApiResponse<SyncResult>> {
+) -> ApiResponse<SyncResult> {
     let sync_type = payload
         .get("sync_type")
         .and_then(|v| v.as_str())
@@ -766,7 +742,7 @@ pub async fn trigger_scm_inventory(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(payload): Json<serde_json::Value>,
-) -> Json<ApiResponse<SyncResult>> {
+) -> ApiResponse<SyncResult> {
     trigger_sync(
         State(state),
         Extension(claims),
@@ -785,7 +761,7 @@ pub async fn trigger_scm_orders(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(payload): Json<serde_json::Value>,
-) -> Json<ApiResponse<SyncResult>> {
+) -> ApiResponse<SyncResult> {
     trigger_sync(
         State(state),
         Extension(claims),

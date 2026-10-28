@@ -56,15 +56,15 @@ pub async fn list_rules(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -105,7 +105,7 @@ pub async fn list_rules(
             let total = count_result.unwrap_or(0);
             let items_json: Vec<serde_json::Value> = items.iter().map(rule_row_to_json).collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "rules": items_json,
                     "total": total,
@@ -113,13 +113,11 @@ pub async fn list_rules(
                     "page_size": page_size
                 }),
                 "获取补货规则列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取补货规则列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取补货规则列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取补货规则列表失败".to_string()))
         }
     }
 }
@@ -142,15 +140,15 @@ pub async fn create_rule(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateReplenishmentRuleRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
@@ -196,10 +194,7 @@ pub async fn create_rule(
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(row) => (
-            Json(ApiResponse::success(
-                rule_row_to_json(row),
-                "补货规则创建成功",
-            )),
+            ApiResponse::success(rule_row_to_json(row), "补货规则创建成功"),
             "success",
             None,
             Some(rule_row_to_json(row)),
@@ -207,9 +202,7 @@ pub async fn create_rule(
         Err(e) => {
             tracing::error!("创建补货规则失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "创建补货规则失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("创建补货规则失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -237,7 +230,7 @@ pub async fn create_rule(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -262,15 +255,15 @@ pub async fn get_rule(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let result = sqlx::query(
         r#"
@@ -286,18 +279,11 @@ pub async fn get_rule(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(
-            rule_row_to_json(&row),
-            "获取补货规则详情成功",
-        )),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "补货规则不存在".to_string(),
-        ))),
+        Ok(Some(row)) => ApiResponse::success(rule_row_to_json(&row), "获取补货规则详情成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("补货规则不存在".to_string())),
         Err(e) => {
             tracing::error!("获取补货规则详情失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取补货规则详情失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取补货规则详情失败".to_string()))
         }
     }
 }
@@ -321,15 +307,15 @@ pub async fn update_rule(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateReplenishmentRuleRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
@@ -343,15 +329,9 @@ pub async fn update_rule(
     match existing {
         Ok(Some(_)) => (),
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "补货规则不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("补货规则不存在".to_string()))
         }
-        Err(_) => {
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询补货规则失败".to_string(),
-            )))
-        }
+        Err(_) => return ApiResponse::from(TopemsError::Internal("查询补货规则失败".to_string())),
     };
 
     let result = sqlx::query(
@@ -397,10 +377,7 @@ pub async fn update_rule(
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(row) => (
-            Json(ApiResponse::success(
-                rule_row_to_json(row),
-                "补货规则更新成功",
-            )),
+            ApiResponse::success(rule_row_to_json(row), "补货规则更新成功"),
             "success",
             None,
             Some(rule_row_to_json(row)),
@@ -408,9 +385,7 @@ pub async fn update_rule(
         Err(e) => {
             tracing::error!("更新补货规则失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "更新补货规则失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("更新补货规则失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -438,7 +413,7 @@ pub async fn update_rule(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -464,15 +439,15 @@ pub async fn delete_rule(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let result = sqlx::query("UPDATE wms.replenishment_rules SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
@@ -484,20 +459,18 @@ pub async fn delete_rule(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success("".to_string(), "补货规则删除成功")),
+                ApiResponse::success("".to_string(), "补货规则删除成功"),
                 "success",
                 None,
                 Some(serde_json::json!({ "rows_affected": r.rows_affected() })),
             )
         }
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "补货规则不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("补货规则不存在".to_string())),
             "error",
             Some("补货规则不存在".to_string()),
             None,
@@ -505,9 +478,7 @@ pub async fn delete_rule(
         Err(e) => {
             tracing::error!("删除补货规则失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "删除补货规则失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("删除补货规则失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,

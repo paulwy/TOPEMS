@@ -1303,7 +1303,7 @@ impl AutoSchemaStitcher {
 pub async fn route_query_handler(
     State(_state): State<AppState>,
     Json(req): Json<RouteQueryRequest>,
-) -> Json<ApiResponse<RoutingDecision>> {
+) -> ApiResponse<RoutingDecision> {
     ensure_initialized().await;
 
     let ab_test = req.ab_test_enabled.unwrap_or(false);
@@ -1311,8 +1311,8 @@ pub async fn route_query_handler(
 
     match AIQueryRouter::route_query(req.query, entity_types, req.preferred_service, ab_test).await
     {
-        Ok(decision) => Json(ApiResponse::success(decision, "查询路由决策")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(decision) => ApiResponse::success(decision, "查询路由决策"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1329,7 +1329,7 @@ pub async fn route_query_handler(
 pub async fn get_routing_table_handler(
     State(_state): State<AppState>,
     Query(params): Query<RoutingTableQuery>,
-) -> Json<ApiResponse<PaginatedResponse<RoutingTableEntry>>> {
+) -> ApiResponse<PaginatedResponse<RoutingTableEntry>> {
     ensure_initialized().await;
 
     let page = params.page.unwrap_or(1).max(1);
@@ -1338,7 +1338,7 @@ pub async fn get_routing_table_handler(
     let (items, total) =
         AIQueryRouter::get_routing_table(params.intent, params.service_id, page, page_size).await;
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -1347,7 +1347,7 @@ pub async fn get_routing_table_handler(
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "路由表",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1366,12 +1366,12 @@ pub async fn get_routing_table_handler(
 pub async fn get_affinity_handler(
     State(_state): State<AppState>,
     Path(service_id): Path<String>,
-) -> Json<ApiResponse<ServiceAffinity>> {
+) -> ApiResponse<ServiceAffinity> {
     ensure_initialized().await;
 
     match AIQueryRouter::get_service_score(&service_id).await {
-        Ok(affinity) => Json(ApiResponse::success(affinity, "服务亲和度")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(affinity) => ApiResponse::success(affinity, "服务亲和度"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1392,12 +1392,12 @@ pub async fn update_affinity_handler(
     State(_state): State<AppState>,
     Path(service_id): Path<String>,
     Json(req): Json<UpdateAffinityRequest>,
-) -> Json<ApiResponse<ServiceAffinity>> {
+) -> ApiResponse<ServiceAffinity> {
     ensure_initialized().await;
 
     match AIQueryRouter::update_affinity(&service_id, req.entity_types, req.score).await {
-        Ok(affinity) => Json(ApiResponse::success(affinity, "亲和度已更新")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(affinity) => ApiResponse::success(affinity, "亲和度已更新"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1414,7 +1414,7 @@ pub async fn update_affinity_handler(
 pub async fn warm_up_routing_handler(
     State(_state): State<AppState>,
     Json(req): Json<WarmupRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     ensure_initialized().await;
 
     let entity_types = req.entity_types.unwrap_or_else(|| {
@@ -1434,8 +1434,8 @@ pub async fn warm_up_routing_handler(
     });
 
     match AIQueryRouter::warm_up_routing(entity_types, target_services).await {
-        Ok(result) => Json(ApiResponse::success(result, "路由预热完成")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(result) => ApiResponse::success(result, "路由预热完成"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1454,12 +1454,12 @@ pub async fn warm_up_routing_handler(
 pub async fn discover_subgraphs_handler(
     State(_state): State<AppState>,
     Json(req): Json<DiscoverSubgraphsRequest>,
-) -> Json<ApiResponse<Vec<SubgraphInfo>>> {
+) -> ApiResponse<Vec<SubgraphInfo>> {
     ensure_initialized().await;
 
     match AutoSchemaStitcher::discover_subgraphs(req.subgraph_urls).await {
-        Ok(subgraphs) => Json(ApiResponse::success(subgraphs, "子图发现完成")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(subgraphs) => ApiResponse::success(subgraphs, "子图发现完成"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1476,13 +1476,13 @@ pub async fn discover_subgraphs_handler(
 pub async fn generate_stitch_plan_handler(
     State(_state): State<AppState>,
     Json(req): Json<GenerateStitchPlanRequest>,
-) -> Json<ApiResponse<StitchPlan>> {
+) -> ApiResponse<StitchPlan> {
     ensure_initialized().await;
 
     match AutoSchemaStitcher::generate_stitch_plan(req.subgraph_ids, req.resolution_strategy).await
     {
-        Ok(plan) => Json(ApiResponse::success(plan, "Stitch 计划已生成")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(plan) => ApiResponse::success(plan, "Stitch 计划已生成"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1499,12 +1499,12 @@ pub async fn generate_stitch_plan_handler(
 pub async fn execute_stitch_handler(
     State(_state): State<AppState>,
     Json(req): Json<ExecuteStitchRequest>,
-) -> Json<ApiResponse<StitchPlan>> {
+) -> ApiResponse<StitchPlan> {
     ensure_initialized().await;
 
     match AutoSchemaStitcher::execute_stitch(&req.plan_id, req.force.unwrap_or(false)).await {
-        Ok(plan) => Json(ApiResponse::success(plan, "Stitch 执行完成")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(plan) => ApiResponse::success(plan, "Stitch 执行完成"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1524,12 +1524,12 @@ pub async fn execute_stitch_handler(
 pub async fn get_stitch_status_handler(
     State(_state): State<AppState>,
     Path(plan_id): Path<String>,
-) -> Json<ApiResponse<StitchStatusReport>> {
+) -> ApiResponse<StitchStatusReport> {
     ensure_initialized().await;
 
     match AutoSchemaStitcher::get_stitch_status(&plan_id).await {
-        Ok(report) => Json(ApiResponse::success(report, "Stitch 状态")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(report) => ApiResponse::success(report, "Stitch 状态"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1549,12 +1549,12 @@ pub async fn get_stitch_status_handler(
 pub async fn validate_stitch_handler(
     State(_state): State<AppState>,
     Path(plan_id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     ensure_initialized().await;
 
     match AutoSchemaStitcher::validate_stitch(&plan_id).await {
-        Ok(result) => Json(ApiResponse::success(result, "Stitch 验证结果")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(result) => ApiResponse::success(result, "Stitch 验证结果"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1571,12 +1571,12 @@ pub async fn validate_stitch_handler(
 pub async fn rollback_stitch_handler(
     State(_state): State<AppState>,
     Json(req): Json<RollbackStitchRequest>,
-) -> Json<ApiResponse<StitchPlan>> {
+) -> ApiResponse<StitchPlan> {
     ensure_initialized().await;
 
     match AutoSchemaStitcher::rollback_stitch(&req.plan_id).await {
-        Ok(plan) => Json(ApiResponse::success(plan, "Stitch 已回滚")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(plan) => ApiResponse::success(plan, "Stitch 已回滚"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1593,7 +1593,7 @@ pub async fn rollback_stitch_handler(
 pub async fn list_conflicts_handler(
     State(_state): State<AppState>,
     Query(params): Query<ConflictListQuery>,
-) -> Json<ApiResponse<PaginatedResponse<TypeConflict>>> {
+) -> ApiResponse<PaginatedResponse<TypeConflict>> {
     ensure_initialized().await;
 
     let page = params.page.unwrap_or(1).max(1);
@@ -1602,7 +1602,7 @@ pub async fn list_conflicts_handler(
     let (items, total) =
         AutoSchemaStitcher::list_conflicts(params.status, params.type_name, page, page_size).await;
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -1611,7 +1611,7 @@ pub async fn list_conflicts_handler(
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "类型冲突列表",
-    ))
+    )
 }
 
 #[cfg(test)]

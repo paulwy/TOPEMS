@@ -63,11 +63,11 @@ pub async fn list_biddings(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -119,7 +119,7 @@ pub async fn list_biddings(
                 .await
                 .unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": biddings,
                     "total": total,
@@ -127,13 +127,11 @@ pub async fn list_biddings(
                     "page_size": page_size
                 }),
                 "获取招标列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取招标列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取招标列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取招标列表失败")
         }
     }
 }
@@ -145,16 +143,14 @@ pub async fn create_bidding(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateBiddingRequest>,
-) -> Json<ApiResponse<Bidding>> {
+) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if req.bidding_no.is_empty() || req.title.is_empty() {
-        return Json(ApiResponse::<Bidding>::bad_request(
-            "招标编号和标题不能为空",
-        ));
+        return ApiResponse::<Bidding>::bad_request("招标编号和标题不能为空");
     }
 
     let existing = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -168,7 +164,7 @@ pub async fn create_bidding(
     .unwrap_or(0);
 
     if existing > 0 {
-        return Json(ApiResponse::<Bidding>::bad_request("招标编号已存在"));
+        return ApiResponse::<Bidding>::bad_request("招标编号已存在");
     }
 
     let id = Uuid::new_v4();
@@ -218,14 +214,14 @@ pub async fn create_bidding(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(bidding, "招标创建成功"))
+            ApiResponse::success(bidding, "招标创建成功")
         }
         Err(e) => {
             tracing::error!("创建招标失败: {}", e);
-            Json(ApiResponse::<Bidding>::server_error("招标创建失败"))
+            ApiResponse::<Bidding>::server_error("招标创建失败")
         }
     }
 }
@@ -249,11 +245,11 @@ pub async fn get_bidding(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Bidding>> {
+) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, Bidding>(
         only_own_schema_query!("srm", r#"
@@ -268,11 +264,11 @@ pub async fn get_bidding(
     .await;
 
     match result {
-        Ok(Some(bidding)) => Json(ApiResponse::success(bidding, "获取招标成功")),
-        Ok(None) => Json(ApiResponse::<Bidding>::not_found("招标不存在")),
+        Ok(Some(bidding)) => ApiResponse::success(bidding, "获取招标成功"),
+        Ok(None) => ApiResponse::<Bidding>::not_found("招标不存在"),
         Err(e) => {
             tracing::error!("获取招标失败: {}", e);
-            Json(ApiResponse::<Bidding>::server_error("获取招标失败"))
+            ApiResponse::<Bidding>::server_error("获取招标失败")
         }
     }
 }
@@ -285,11 +281,11 @@ pub async fn update_bidding(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateBiddingRequest>,
-) -> Json<ApiResponse<Bidding>> {
+) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -353,15 +349,15 @@ pub async fn update_bidding(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(bidding, "招标更新成功"))
+            ApiResponse::success(bidding, "招标更新成功")
         }
-        Ok(None) => Json(ApiResponse::<Bidding>::not_found("招标不存在")),
+        Ok(None) => ApiResponse::<Bidding>::not_found("招标不存在"),
         Err(e) => {
             tracing::error!("更新招标失败: {}", e);
-            Json(ApiResponse::<Bidding>::server_error("更新招标失败"))
+            ApiResponse::<Bidding>::server_error("更新招标失败")
         }
     }
 }
@@ -373,11 +369,11 @@ pub async fn delete_bidding(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -403,15 +399,15 @@ pub async fn delete_bidding(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(true, "招标删除成功"))
+            ApiResponse::success(true, "招标删除成功")
         }
-        Ok(_) => Json(ApiResponse::<bool>::not_found("招标不存在")),
+        Ok(_) => ApiResponse::<bool>::not_found("招标不存在"),
         Err(e) => {
             tracing::error!("删除招标失败: {}", e);
-            Json(ApiResponse::<bool>::server_error("删除招标失败"))
+            ApiResponse::<bool>::server_error("删除招标失败")
         }
     }
 }
@@ -436,11 +432,11 @@ pub async fn publish_bidding(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Bidding>> {
+) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -473,17 +469,15 @@ pub async fn publish_bidding(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(bidding, "招标发布成功"))
+            ApiResponse::success(bidding, "招标发布成功")
         }
-        Ok(None) => Json(ApiResponse::<Bidding>::not_found(
-            "招标不存在或当前状态不允许发布",
-        )),
+        Ok(None) => ApiResponse::<Bidding>::not_found("招标不存在或当前状态不允许发布"),
         Err(e) => {
             tracing::error!("发布招标失败: {}", e);
-            Json(ApiResponse::<Bidding>::server_error("发布招标失败"))
+            ApiResponse::<Bidding>::server_error("发布招标失败")
         }
     }
 }
@@ -508,11 +502,11 @@ pub async fn open_bidding(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Bidding>> {
+) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -545,17 +539,15 @@ pub async fn open_bidding(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(bidding, "开标成功"))
+            ApiResponse::success(bidding, "开标成功")
         }
-        Ok(None) => Json(ApiResponse::<Bidding>::not_found(
-            "招标不存在或当前状态不允许开标",
-        )),
+        Ok(None) => ApiResponse::<Bidding>::not_found("招标不存在或当前状态不允许开标"),
         Err(e) => {
             tracing::error!("开标失败: {}", e);
-            Json(ApiResponse::<Bidding>::server_error("开标失败"))
+            ApiResponse::<Bidding>::server_error("开标失败")
         }
     }
 }
@@ -580,11 +572,11 @@ pub async fn evaluate_bidding(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Bidding>> {
+) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -616,17 +608,15 @@ pub async fn evaluate_bidding(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(bidding, "评标完成"))
+            ApiResponse::success(bidding, "评标完成")
         }
-        Ok(None) => Json(ApiResponse::<Bidding>::not_found(
-            "招标不存在或当前状态不允许评标",
-        )),
+        Ok(None) => ApiResponse::<Bidding>::not_found("招标不存在或当前状态不允许评标"),
         Err(e) => {
             tracing::error!("评标失败: {}", e);
-            Json(ApiResponse::<Bidding>::server_error("评标失败"))
+            ApiResponse::<Bidding>::server_error("评标失败")
         }
     }
 }
@@ -652,11 +642,11 @@ pub async fn award_bidding(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<AwardBiddingRequest>,
-) -> Json<ApiResponse<Bidding>> {
+) -> ApiResponse<Bidding> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -670,7 +660,7 @@ pub async fn award_bidding(
 
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::<Bidding>::bad_request("供应商ID格式错误")),
+        Err(_) => return ApiResponse::<Bidding>::bad_request("供应商ID格式错误"),
     };
 
     let supplier_name: Option<String> = sqlx::query_scalar(only_own_schema_query!(
@@ -706,14 +696,14 @@ pub async fn award_bidding(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(bidding, "中标结果已确定"))
+            ApiResponse::success(bidding, "中标结果已确定")
         }
         Err(e) => {
             tracing::error!("确定中标结果失败: {}", e);
-            Json(ApiResponse::<Bidding>::server_error("确定中标结果失败"))
+            ApiResponse::<Bidding>::server_error("确定中标结果失败")
         }
     }
 }
@@ -737,11 +727,11 @@ pub async fn list_bidding_suppliers(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, (Uuid, String)>(only_own_schema_query!(
         "srm",
@@ -767,16 +757,14 @@ pub async fn list_bidding_suppliers(
                     })
                 })
                 .collect::<Vec<_>>();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({"items": supplier_list}),
                 "获取参与供应商成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取参与供应商失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取参与供应商失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取参与供应商失败")
         }
     }
 }

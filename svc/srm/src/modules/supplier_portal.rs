@@ -1,7 +1,7 @@
 use axum::{
     extract::{Extension, Path, State},
     routing::get,
-    Json, Router,
+    Router,
 };
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
@@ -68,23 +68,21 @@ pub async fn get_supplier_portal_stats(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let supplier_uuid = match Uuid::parse_str(&supplier_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::bad_request(
-                "供应商ID格式错误",
-            ));
+            return ApiResponse::<serde_json::Value>::bad_request("供应商ID格式错误");
         }
     };
 
@@ -108,9 +106,7 @@ pub async fn get_supplier_portal_stats(
     .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
-        return Json(ApiResponse::<serde_json::Value>::not_found(
-            "供应商不存在或已删除",
-        ));
+        return ApiResponse::<serde_json::Value>::not_found("供应商不存在或已删除");
     }
 
     let total_orders = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -187,7 +183,7 @@ pub async fn get_supplier_portal_stats(
         "quality_score": avg_score
     });
 
-    Json(ApiResponse::success(stats, "获取供应商门户统计成功"))
+    ApiResponse::success(stats, "获取供应商门户统计成功")
 }
 
 #[utoipa::path(
@@ -211,24 +207,21 @@ pub async fn get_supplier_portal_orders(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<PurchaseOrder>>> {
+) -> ApiResponse<Vec<PurchaseOrder>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let supplier_uuid = match Uuid::parse_str(&supplier_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<Vec<PurchaseOrder>>::error(
-                400,
-                "供应商ID格式错误",
-            ));
+            return ApiResponse::<Vec<PurchaseOrder>>::error(400, "供应商ID格式错误");
         }
     };
 
@@ -257,13 +250,10 @@ pub async fn get_supplier_portal_orders(
     .await;
 
     match result {
-        Ok(orders) => Json(ApiResponse::success(orders, "获取供应商订单成功")),
+        Ok(orders) => ApiResponse::success(orders, "获取供应商订单成功"),
         Err(e) => {
             tracing::error!("获取供应商订单失败: {}", e);
-            Json(ApiResponse::<Vec<PurchaseOrder>>::error(
-                500,
-                "获取供应商订单失败",
-            ))
+            ApiResponse::<Vec<PurchaseOrder>>::error(500, "获取供应商订单失败")
         }
     }
 }
@@ -289,15 +279,15 @@ pub async fn get_supplier_portal_invoices(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let _txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let invoices = vec![
@@ -330,7 +320,7 @@ pub async fn get_supplier_portal_invoices(
         }),
     ];
 
-    Json(ApiResponse::success(invoices, "获取供应商发票成功"))
+    ApiResponse::success(invoices, "获取供应商发票成功")
 }
 
 #[utoipa::path(
@@ -354,15 +344,15 @@ pub async fn get_supplier_portal_deliveries(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let _txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let deliveries = vec![
@@ -398,7 +388,7 @@ pub async fn get_supplier_portal_deliveries(
         }),
     ];
 
-    Json(ApiResponse::success(deliveries, "获取供应商交货信息成功"))
+    ApiResponse::success(deliveries, "获取供应商交货信息成功")
 }
 
 #[utoipa::path(
@@ -418,15 +408,15 @@ pub async fn get_supplier_portal_announcements(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let _txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let announcements = vec![
@@ -456,5 +446,5 @@ pub async fn get_supplier_portal_announcements(
         }),
     ];
 
-    Json(ApiResponse::success(announcements, "获取供应商公告成功"))
+    ApiResponse::success(announcements, "获取供应商公告成功")
 }

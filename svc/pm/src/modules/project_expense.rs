@@ -63,11 +63,11 @@ pub fn create_routes(pool: PgPool) -> Router {
 async fn list_expenses(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<ProjectExpense>>> {
+) -> ApiResponse<Vec<ProjectExpense>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, ProjectExpense>(
         only_own_schema_query!("pm", "SELECT id, project_id, phase_id, expense_type, description, amount, currency, expense_date, approved_date, budget_item_id, resource_id, expense_ref_id, status, approval_workflow_id, attachment_ids, created_by, approver, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) ORDER BY expense_date DESC"),
@@ -77,10 +77,10 @@ async fn list_expenses(
     .await;
 
     match result {
-        Ok(expenses) => Json(ApiResponse::success(expenses, "获取项目费用列表成功")),
+        Ok(expenses) => ApiResponse::success(expenses, "获取项目费用列表成功"),
         Err(e) => {
             tracing::error!("获取项目费用列表失败: {}", e);
-            Json(ApiResponse::server_error("获取项目费用列表失败"))
+            ApiResponse::server_error("获取项目费用列表失败")
         }
     }
 }
@@ -106,11 +106,11 @@ async fn add_expense(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateExpenseRequest>,
-) -> Json<ApiResponse<ProjectExpense>> {
+) -> ApiResponse<ProjectExpense> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -153,10 +153,10 @@ async fn add_expense(
     .await;
 
     match result {
-        Ok(expense) => Json(ApiResponse::success(expense, "添加项目费用成功")),
+        Ok(expense) => ApiResponse::success(expense, "添加项目费用成功"),
         Err(e) => {
             tracing::error!("添加项目费用失败: {}", e);
-            Json(ApiResponse::server_error("添加项目费用失败"))
+            ApiResponse::server_error("添加项目费用失败")
         }
     }
 }
@@ -180,11 +180,11 @@ async fn add_expense(
 async fn get_expense(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<ProjectExpense>> {
+) -> ApiResponse<ProjectExpense> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, ProjectExpense>(
         only_own_schema_query!("pm", "SELECT id, project_id, phase_id, expense_type, description, amount, currency, expense_date, approved_date, budget_item_id, resource_id, expense_ref_id, status, approval_workflow_id, attachment_ids, created_by, approver, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 AND id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"),
@@ -195,11 +195,11 @@ async fn get_expense(
     .await;
 
     match result {
-        Ok(Some(expense)) => Json(ApiResponse::success(expense, "获取项目费用成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目费用不存在")),
+        Ok(Some(expense)) => ApiResponse::success(expense, "获取项目费用成功"),
+        Ok(None) => ApiResponse::not_found("项目费用不存在"),
         Err(e) => {
             tracing::error!("获取项目费用失败: {}", e);
-            Json(ApiResponse::server_error("获取项目费用失败"))
+            ApiResponse::server_error("获取项目费用失败")
         }
     }
 }
@@ -225,11 +225,11 @@ async fn update_expense(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateExpenseRequest>,
-) -> Json<ApiResponse<ProjectExpense>> {
+) -> ApiResponse<ProjectExpense> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
 
@@ -262,11 +262,11 @@ async fn update_expense(
     .await;
 
     match result {
-        Ok(Some(expense)) => Json(ApiResponse::success(expense, "更新项目费用成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目费用不存在")),
+        Ok(Some(expense)) => ApiResponse::success(expense, "更新项目费用成功"),
+        Ok(None) => ApiResponse::not_found("项目费用不存在"),
         Err(e) => {
             tracing::error!("更新项目费用失败: {}", e);
-            Json(ApiResponse::server_error("更新项目费用失败"))
+            ApiResponse::server_error("更新项目费用失败")
         }
     }
 }
@@ -290,11 +290,11 @@ async fn update_expense(
 async fn remove_expense(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
@@ -306,13 +306,11 @@ async fn remove_expense(
     .await;
 
     match result {
-        Ok(result) if result.rows_affected() > 0 => {
-            Json(ApiResponse::success(true, "删除项目费用成功"))
-        }
-        Ok(_) => Json(ApiResponse::not_found("项目费用不存在")),
+        Ok(result) if result.rows_affected() > 0 => ApiResponse::success(true, "删除项目费用成功"),
+        Ok(_) => ApiResponse::not_found("项目费用不存在"),
         Err(e) => {
             tracing::error!("删除项目费用失败: {}", e);
-            Json(ApiResponse::server_error("删除项目费用失败"))
+            ApiResponse::server_error("删除项目费用失败")
         }
     }
 }

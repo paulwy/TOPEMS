@@ -27,10 +27,10 @@ pub async fn trigger_collection(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(task_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<InstrumentData>> {
+) -> ApiResponse<InstrumentData> {
     let task_id = match Uuid::parse_str(&task_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
+        Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
     let task_row = sqlx::query(
@@ -46,10 +46,10 @@ pub async fn trigger_collection(
             row.get::<String, _>("protocol"),
             row.get::<String, _>("task_no"),
         ),
-        Ok(None) => return Json(ApiResponse::not_found("采集任务不存在")),
+        Ok(None) => return ApiResponse::not_found("采集任务不存在"),
         Err(e) => {
             tracing::error!("Failed to fetch collection task: {}", e);
-            return Json(ApiResponse::server_error("获取采集任务失败"));
+            return ApiResponse::server_error("获取采集任务失败");
         }
     };
 
@@ -133,7 +133,7 @@ pub async fn trigger_collection(
             .execute(&state.pool)
             .await;
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 InstrumentData {
                     id: r.get("id"),
                     tenant_id: r.get("tenant_id"),
@@ -155,11 +155,11 @@ pub async fn trigger_collection(
                     updated_at: r.get("updated_at"),
                 },
                 "数据采集触发成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("Failed to trigger collection: {}", e);
-            Json(ApiResponse::server_error("触发数据采集失败"))
+            ApiResponse::server_error("触发数据采集失败")
         }
     }
 }
@@ -178,7 +178,7 @@ pub async fn list_collection_tasks(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<CollectionTaskQuery>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<Vec<CollectionTask>>> {
+) -> ApiResponse<Vec<CollectionTask>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -253,10 +253,10 @@ pub async fn list_collection_tasks(
     });
 
     match tasks {
-        Ok(data) => Json(ApiResponse::success(data, "获取采集任务列表成功")),
+        Ok(data) => ApiResponse::success(data, "获取采集任务列表成功"),
         Err(e) => {
             tracing::error!("Failed to fetch collection tasks: {}", e);
-            Json(ApiResponse::server_error("获取采集任务列表失败"))
+            ApiResponse::server_error("获取采集任务列表失败")
         }
     }
 }
@@ -278,10 +278,10 @@ pub async fn get_collection_task(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<CollectionTask>> {
+) -> ApiResponse<CollectionTask> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
+        Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
     let locale = Locale::from_headers(&headers).as_sql();
 
@@ -304,7 +304,7 @@ pub async fn get_collection_task(
     .await;
 
     match row {
-        Ok(Some(r)) => Json(ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             CollectionTask {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -329,11 +329,11 @@ pub async fn get_collection_task(
                 updated_at: r.get("updated_at"),
             },
             "获取采集任务成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("采集任务不存在")),
+        ),
+        Ok(None) => ApiResponse::not_found("采集任务不存在"),
         Err(e) => {
             tracing::error!("Failed to fetch collection task: {}", e);
-            Json(ApiResponse::server_error("获取采集任务失败"))
+            ApiResponse::server_error("获取采集任务失败")
         }
     }
 }
@@ -342,14 +342,14 @@ pub async fn create_collection_task(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateCollectionTaskRequest>,
-) -> Json<ApiResponse<CollectionTask>> {
+) -> ApiResponse<CollectionTask> {
     let task_id = Uuid::new_v4();
     let task_no = format!("CT-{}", chrono::Utc::now().format("%Y%m%d%H%M%S"));
 
     let instrument_uuid = match &req.instrument_id {
         Some(id) => match Uuid::parse_str(id) {
             Ok(u) => Some(u),
-            Err(_) => return Json(ApiResponse::bad_request("无效的仪器ID")),
+            Err(_) => return ApiResponse::bad_request("无效的仪器ID"),
         },
         None => None,
     };
@@ -381,7 +381,7 @@ pub async fn create_collection_task(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             CollectionTask {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -406,10 +406,10 @@ pub async fn create_collection_task(
                 updated_at: r.get("updated_at"),
             },
             "采集任务创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to create collection task: {}", e);
-            Json(ApiResponse::server_error("创建采集任务失败"))
+            ApiResponse::server_error("创建采集任务失败")
         }
     }
 }
@@ -418,10 +418,10 @@ pub async fn update_collection_task(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateCollectionTaskRequest>,
-) -> Json<ApiResponse<CollectionTask>> {
+) -> ApiResponse<CollectionTask> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
+        Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
     let row = sqlx::query(
@@ -451,7 +451,7 @@ pub async fn update_collection_task(
     .await;
 
     match row {
-        Ok(Some(r)) => Json(ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             CollectionTask {
                 id: r.get("id"),
                 tenant_id: r.get("tenant_id"),
@@ -476,11 +476,11 @@ pub async fn update_collection_task(
                 updated_at: r.get("updated_at"),
             },
             "采集任务更新成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("采集任务不存在")),
+        ),
+        Ok(None) => ApiResponse::not_found("采集任务不存在"),
         Err(e) => {
             tracing::error!("Failed to update collection task: {}", e);
-            Json(ApiResponse::server_error("更新采集任务失败"))
+            ApiResponse::server_error("更新采集任务失败")
         }
     }
 }
@@ -488,10 +488,10 @@ pub async fn update_collection_task(
 pub async fn delete_collection_task(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
+        Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
     let result =
@@ -501,10 +501,10 @@ pub async fn delete_collection_task(
             .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "采集任务删除成功")),
+        Ok(_) => ApiResponse::success(true, "采集任务删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete collection task: {}", e);
-            Json(ApiResponse::server_error("删除采集任务失败"))
+            ApiResponse::server_error("删除采集任务失败")
         }
     }
 }

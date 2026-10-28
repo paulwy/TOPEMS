@@ -1242,7 +1242,7 @@ pub struct GetBackpressureStatsQuery {
 pub async fn create_stream_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateStreamRequest>,
-) -> Json<ApiResponse<Stream>> {
+) -> ApiResponse<Stream> {
     let stream_type = req
         .stream_type
         .as_deref()
@@ -1250,30 +1250,30 @@ pub async fn create_stream_handler(
         .unwrap_or(StreamType::EventStream);
 
     match StreamManagerV2::create_stream(req.topic, stream_type, req.filter, req.batch_size).await {
-        Ok(stream) => Json(ApiResponse::success(stream, "流创建成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(stream) => ApiResponse::success(stream, "流创建成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
 pub async fn get_stream_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Stream>> {
+) -> ApiResponse<Stream> {
     match StreamManagerV2::get_stream(&id).await {
-        Ok(stream) => Json(ApiResponse::success(stream, "流详情")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(stream) => ApiResponse::success(stream, "流详情"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
 pub async fn list_streams_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListStreamsQuery>,
-) -> Json<ApiResponse<Vec<Stream>>> {
+) -> ApiResponse<Vec<Stream>> {
     let stream_type = params.stream_type.as_deref().map(StreamType::from_str);
     let status = params.status.as_deref().map(StreamStatus::from_str);
 
     let list = StreamManagerV2::list_streams(params.topic.as_deref(), stream_type, status).await;
-    Json(ApiResponse::success(list, "流列表"))
+    ApiResponse::success(list, "流列表")
 }
 
 #[utoipa::path(
@@ -1293,10 +1293,10 @@ pub async fn publish_event_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<PublishEventRequest>,
-) -> Json<ApiResponse<StreamEvent>> {
+) -> ApiResponse<StreamEvent> {
     match StreamManagerV2::publish_event(&id, req.event_type, req.payload).await {
-        Ok(event) => Json(ApiResponse::success(event, "事件发布成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(event) => ApiResponse::success(event, "事件发布成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1304,11 +1304,11 @@ pub async fn subscribe_stream_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<SubscribeStreamRequest>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     match StreamManagerV2::subscribe_stream(&id, req.subscriber_id).await {
-        Ok(true) => Json(ApiResponse::success(true, "订阅成功")),
-        Ok(false) => Json(ApiResponse::bad_request("订阅失败")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(true) => ApiResponse::success(true, "订阅成功"),
+        Ok(false) => ApiResponse::bad_request("订阅失败"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1316,11 +1316,11 @@ pub async fn unsubscribe_stream_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<SubscribeStreamRequest>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     match StreamManagerV2::unsubscribe_stream(&id, &req.subscriber_id).await {
-        Ok(true) => Json(ApiResponse::success(true, "取消订阅成功")),
-        Ok(false) => Json(ApiResponse::not_found("订阅者不存在")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(true) => ApiResponse::success(true, "取消订阅成功"),
+        Ok(false) => ApiResponse::not_found("订阅者不存在"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1341,9 +1341,9 @@ pub async fn get_stream_events_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Query(params): Query<GetEventsQuery>,
-) -> Json<ApiResponse<StreamEventList>> {
+) -> ApiResponse<StreamEventList> {
     let list = StreamManagerV2::get_stream_events(&id, params.limit, params.from_sequence).await;
-    Json(ApiResponse::success(list, "流事件列表"))
+    ApiResponse::success(list, "流事件列表")
 }
 
 #[utoipa::path(
@@ -1362,11 +1362,11 @@ pub async fn get_stream_events_handler(
 pub async fn delete_stream_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     match StreamManagerV2::delete_stream(&id).await {
-        Ok(true) => Json(ApiResponse::success(true, "流已删除")),
-        Ok(false) => Json(ApiResponse::not_found("流不存在")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(true) => ApiResponse::success(true, "流已删除"),
+        Ok(false) => ApiResponse::not_found("流不存在"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1385,7 +1385,7 @@ pub async fn delete_stream_handler(
 pub async fn create_dedup_rule_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateDedupRuleRequest>,
-) -> Json<ApiResponse<DedupRule>> {
+) -> ApiResponse<DedupRule> {
     let strategy = req.strategy.as_deref().map(DedupStrategy::from_str);
 
     match DeduplicationEngine::create_dedup_rule(
@@ -1396,8 +1396,8 @@ pub async fn create_dedup_rule_handler(
     )
     .await
     {
-        Ok(rule) => Json(ApiResponse::success(rule, "去重规则创建成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(rule) => ApiResponse::success(rule, "去重规则创建成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1414,11 +1414,11 @@ pub async fn create_dedup_rule_handler(
 pub async fn get_dedup_rules_handler(
     State(_state): State<AppState>,
     Query(params): Query<GetDedupRulesQuery>,
-) -> Json<ApiResponse<Vec<DedupRule>>> {
+) -> ApiResponse<Vec<DedupRule>> {
     let list =
         DeduplicationEngine::get_dedup_rules(params.stream_id.as_deref(), params.enabled_only)
             .await;
-    Json(ApiResponse::success(list, "去重规则列表"))
+    ApiResponse::success(list, "去重规则列表")
 }
 
 #[utoipa::path(
@@ -1434,7 +1434,7 @@ pub async fn get_dedup_rules_handler(
 pub async fn check_duplicate_handler(
     State(_state): State<AppState>,
     Json(req): Json<CheckDuplicateRequest>,
-) -> Json<ApiResponse<DedupResult>> {
+) -> ApiResponse<DedupResult> {
     let result = DeduplicationEngine::check_duplicate(
         &req.stream_id,
         req.event_id,
@@ -1442,7 +1442,7 @@ pub async fn check_duplicate_handler(
         req.payload,
     )
     .await;
-    Json(ApiResponse::success(result, "去重检查完成"))
+    ApiResponse::success(result, "去重检查完成")
 }
 
 #[utoipa::path(
@@ -1458,9 +1458,9 @@ pub async fn check_duplicate_handler(
 pub async fn get_dedup_stats_handler(
     State(_state): State<AppState>,
     Query(params): Query<GetDedupStatsQuery>,
-) -> Json<ApiResponse<Vec<DedupStats>>> {
+) -> ApiResponse<Vec<DedupStats>> {
     let stats = DeduplicationEngine::get_dedup_stats(params.rule_id.as_deref()).await;
-    Json(ApiResponse::success(stats, "去重统计"))
+    ApiResponse::success(stats, "去重统计")
 }
 
 #[utoipa::path(
@@ -1476,10 +1476,10 @@ pub async fn get_dedup_stats_handler(
 pub async fn get_dedup_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<GetDedupHistoryQuery>,
-) -> Json<ApiResponse<Vec<DedupHistoryEntry>>> {
+) -> ApiResponse<Vec<DedupHistoryEntry>> {
     let history =
         DeduplicationEngine::get_dedup_history(params.rule_id.as_deref(), params.limit).await;
-    Json(ApiResponse::success(history, "去重历史"))
+    ApiResponse::success(history, "去重历史")
 }
 
 #[utoipa::path(
@@ -1498,10 +1498,10 @@ pub async fn get_dedup_history_handler(
 pub async fn enable_rule_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<DedupRule>> {
+) -> ApiResponse<DedupRule> {
     match DeduplicationEngine::enable_rule(&id).await {
-        Ok(rule) => Json(ApiResponse::success(rule, "规则已启用")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(rule) => ApiResponse::success(rule, "规则已启用"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1521,10 +1521,10 @@ pub async fn enable_rule_handler(
 pub async fn disable_rule_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<DedupRule>> {
+) -> ApiResponse<DedupRule> {
     match DeduplicationEngine::disable_rule(&id).await {
-        Ok(rule) => Json(ApiResponse::success(rule, "规则已禁用")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(rule) => ApiResponse::success(rule, "规则已禁用"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1547,7 +1547,7 @@ pub async fn set_backpressure_config_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<SetBackpressureConfigRequest>,
-) -> Json<ApiResponse<BackpressureConfig>> {
+) -> ApiResponse<BackpressureConfig> {
     let strategy = req
         .overflow_strategy
         .as_deref()
@@ -1562,8 +1562,8 @@ pub async fn set_backpressure_config_handler(
     )
     .await
     {
-        Ok(config) => Json(ApiResponse::success(config, "背压配置已更新")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(config) => ApiResponse::success(config, "背压配置已更新"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1583,10 +1583,10 @@ pub async fn set_backpressure_config_handler(
 pub async fn get_backpressure_config_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<BackpressureConfig>> {
+) -> ApiResponse<BackpressureConfig> {
     match BackpressureController::get_config(&id).await {
-        Ok(config) => Json(ApiResponse::success(config, "背压配置")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(config) => ApiResponse::success(config, "背压配置"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1606,10 +1606,10 @@ pub async fn get_backpressure_config_handler(
 pub async fn get_backpressure_state_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<BackpressureState>> {
+) -> ApiResponse<BackpressureState> {
     match BackpressureController::get_state(&id).await {
-        Ok(state) => Json(ApiResponse::success(state, "背压状态")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(state) => ApiResponse::success(state, "背压状态"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1630,11 +1630,11 @@ pub async fn apply_backpressure_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<ApplyBackpressureRequest>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     match BackpressureController::apply_backpressure(&id, req.event_id).await {
-        Ok(true) => Json(ApiResponse::success(true, "事件已接收")),
-        Ok(false) => Json(ApiResponse::success(false, "事件已丢弃（背压）")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(true) => ApiResponse::success(true, "事件已接收"),
+        Ok(false) => ApiResponse::success(false, "事件已丢弃（背压）"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1654,10 +1654,10 @@ pub async fn apply_backpressure_handler(
 pub async fn drain_queue_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<u32>> {
+) -> ApiResponse<u32> {
     match BackpressureController::drain_queue(&id).await {
-        Ok(count) => Json(ApiResponse::success(count, "队列已排空")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(count) => ApiResponse::success(count, "队列已排空"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1674,10 +1674,10 @@ pub async fn drain_queue_handler(
 pub async fn get_dropped_events_handler(
     State(_state): State<AppState>,
     Query(params): Query<GetDroppedEventsQuery>,
-) -> Json<ApiResponse<Vec<DroppedEvent>>> {
+) -> ApiResponse<Vec<DroppedEvent>> {
     let events =
         BackpressureController::get_dropped_events(params.stream_id.as_deref(), params.limit).await;
-    Json(ApiResponse::success(events, "丢弃事件列表"))
+    ApiResponse::success(events, "丢弃事件列表")
 }
 
 #[utoipa::path(
@@ -1693,9 +1693,9 @@ pub async fn get_dropped_events_handler(
 pub async fn get_backpressure_stats_handler(
     State(_state): State<AppState>,
     Query(params): Query<GetBackpressureStatsQuery>,
-) -> Json<ApiResponse<Vec<BackpressureStats>>> {
+) -> ApiResponse<Vec<BackpressureStats>> {
     let stats = BackpressureController::get_backpressure_stats(params.stream_id.as_deref()).await;
-    Json(ApiResponse::success(stats, "背压统计"))
+    ApiResponse::success(stats, "背压统计")
 }
 
 #[utoipa::path(
@@ -1714,11 +1714,11 @@ pub async fn get_backpressure_stats_handler(
 pub async fn reset_counter_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     match BackpressureController::reset_counter(&id).await {
-        Ok(true) => Json(ApiResponse::success(true, "计数器已重置")),
-        Ok(false) => Json(ApiResponse::not_found("计数器不存在")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(true) => ApiResponse::success(true, "计数器已重置"),
+        Ok(false) => ApiResponse::not_found("计数器不存在"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 

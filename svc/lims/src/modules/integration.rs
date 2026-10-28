@@ -40,7 +40,7 @@ pub struct CreateIntegrationSampleRequest {
 pub async fn create_integration_sample(
     State(state): State<AppState>,
     Json(req): Json<CreateIntegrationSampleRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let sample_type = req.sample_type.unwrap_or_else(|| "通用".to_string());
     let source = req.source.unwrap_or_else(|| "系统集成".to_string());
     let status = req.status.unwrap_or_else(|| "registered".to_string());
@@ -61,7 +61,7 @@ pub async fn create_integration_sample(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
+        Ok(row) => ApiResponse::success(
             serde_json::json!({
                 "id": row.try_get::<Uuid, _>("id").ok(),
                 "sample_no": row.try_get::<String, _>("sample_no").ok(),
@@ -69,10 +69,10 @@ pub async fn create_integration_sample(
                 "status": row.try_get::<String, _>("status").ok(),
             }),
             "集成样本创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("[integration] 创建样本失败: {}", e);
-            Json(ApiResponse::server_error("集成样本创建失败"))
+            ApiResponse::server_error("集成样本创建失败")
         }
     }
 }
@@ -90,7 +90,7 @@ pub struct CreateIntegrationTaskRequest {
 pub async fn create_integration_task(
     State(state): State<AppState>,
     Json(req): Json<CreateIntegrationTaskRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // qa_lab_tasks.sample_id 为 NOT NULL：按 sample_no 关联解析样本（integration 仅提供 sample_no）
     let sample_id: Option<Uuid> = sqlx::query_scalar(
         "SELECT id FROM public.qa_lab_samples WHERE sample_no = $1 AND deleted_at IS NULL",
@@ -101,7 +101,7 @@ pub async fn create_integration_task(
     .unwrap_or(None);
 
     let Some(sample_id) = sample_id else {
-        return Json(ApiResponse::not_found("关联样本不存在，无法创建集成任务"));
+        return ApiResponse::not_found("关联样本不存在，无法创建集成任务");
     };
 
     let status = req.status.unwrap_or_else(|| "pending".to_string());
@@ -123,7 +123,7 @@ pub async fn create_integration_task(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
+        Ok(row) => ApiResponse::success(
             serde_json::json!({
                 "id": row.try_get::<Uuid, _>("id").ok(),
                 "task_no": row.try_get::<String, _>("task_no").ok(),
@@ -131,10 +131,10 @@ pub async fn create_integration_task(
                 "status": row.try_get::<String, _>("status").ok(),
             }),
             "集成任务创建成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("[integration] 创建任务失败: {}", e);
-            Json(ApiResponse::server_error("集成任务创建失败"))
+            ApiResponse::server_error("集成任务创建失败")
         }
     }
 }

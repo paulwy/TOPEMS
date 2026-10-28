@@ -15,7 +15,7 @@ mod event_handlers;
 use axum::{
     extract::State,
     routing::{get, post, put},
-    Json, Router,
+    Router,
 };
 use utoipa::OpenApi;
 
@@ -433,7 +433,7 @@ async fn health(State(state): State<AppState>) -> ServiceHealth {
     simple_health_check(&state.health_config).await
 }
 
-async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn detailed_health(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
     use topems_shared_bootstrap::build_detailed_health_response;
     let modules = serde_json::json!({ "qms": "active", "lims": "active", "ehs": "active" });
     let resp = build_detailed_health_response(
@@ -444,5 +444,5 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
         serde_json::json!({}),
     )
     .await;
-    Json(ApiResponse::success(resp, "Detailed health check"))
+    ApiResponse::success(resp, "Detailed health check")
 }

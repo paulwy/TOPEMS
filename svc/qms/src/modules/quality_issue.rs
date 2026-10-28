@@ -45,7 +45,7 @@ pub async fn list_issues(
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<IssueQuery>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<Vec<QualityIssue>>> {
+) -> ApiResponse<Vec<QualityIssue>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -125,10 +125,10 @@ pub async fn list_issues(
     };
 
     match issues {
-        Ok(data) => Json(ApiResponse::success(data, "获取质量问题列表成功")),
+        Ok(data) => ApiResponse::success(data, "获取质量问题列表成功"),
         Err(e) => {
             tracing::error!("Failed to fetch issues: {}", e);
-            Json(ApiResponse::server_error("获取质量问题列表失败"))
+            ApiResponse::server_error("获取质量问题列表失败")
         }
     }
 }
@@ -149,7 +149,7 @@ pub async fn create_issue(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateIssueRequest>,
-) -> Json<ApiResponse<QualityIssue>> {
+) -> ApiResponse<QualityIssue> {
     let issue_no = format!(
         "QI-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
@@ -211,11 +211,11 @@ pub async fn create_issue(
                 });
             }
 
-            Json(ApiResponse::success(data, "质量问题创建成功"))
+            ApiResponse::success(data, "质量问题创建成功")
         }
         Err(e) => {
             tracing::error!("Failed to create issue: {}", e);
-            Json(ApiResponse::server_error("质量问题创建失败"))
+            ApiResponse::server_error("质量问题创建失败")
         }
     }
 }
@@ -238,7 +238,7 @@ pub async fn get_issue(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<QualityIssue>> {
+) -> ApiResponse<QualityIssue> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -249,7 +249,7 @@ pub async fn get_issue(
     };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
+        Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let locale = Locale::from_headers(&headers).as_sql();
@@ -263,12 +263,12 @@ pub async fn get_issue(
     .await;
 
     match issue {
-        Ok(data) => Json(ApiResponse::success(data, "获取质量问题成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "获取质量问题成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to fetch issue: {}", e);
-            Json(ApiResponse::server_error("获取质量问题失败"))
+            ApiResponse::server_error("获取质量问题失败")
         }
     }
 }
@@ -293,10 +293,10 @@ pub async fn update_issue(
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateIssueRequest>,
-) -> Json<ApiResponse<QualityIssue>> {
+) -> ApiResponse<QualityIssue> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
+        Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let locale = Locale::from_headers(&headers).as_sql();
@@ -310,11 +310,11 @@ pub async fn update_issue(
     .await;
 
     match issue {
-        Ok(data) => Json(ApiResponse::success(data, "质量问题更新成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "质量问题更新成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update issue: {}", e);
-            Json(ApiResponse::server_error("质量问题更新失败"))
+            ApiResponse::server_error("质量问题更新失败")
         }
     }
 }
@@ -335,10 +335,10 @@ pub async fn resolve_issue(
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
     Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<QualityIssue>> {
+) -> ApiResponse<QualityIssue> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
+        Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let locale = Locale::from_headers(&headers).as_sql();
@@ -352,10 +352,10 @@ pub async fn resolve_issue(
     .await;
 
     match issue {
-        Ok(data) => Json(ApiResponse::success(data, "质量问题已解决")),
+        Ok(data) => ApiResponse::success(data, "质量问题已解决"),
         Err(e) => {
             tracing::error!("Failed to resolve issue: {}", e);
-            Json(ApiResponse::server_error("质量问题解决失败"))
+            ApiResponse::server_error("质量问题解决失败")
         }
     }
 }
@@ -378,10 +378,10 @@ pub async fn delete_issue(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
+        Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
@@ -395,10 +395,10 @@ pub async fn delete_issue(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "质量问题删除成功")),
+        Ok(_) => ApiResponse::success(true, "质量问题删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete issue: {}", e);
-            Json(ApiResponse::server_error("质量问题删除失败"))
+            ApiResponse::server_error("质量问题删除失败")
         }
     }
 }
@@ -430,7 +430,7 @@ pub async fn start_issue_approval(
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
     Json(req): Json<StartApprovalRequest>,
-) -> Json<ApiResponse<QualityIssueWithWorkflow>> {
+) -> ApiResponse<QualityIssueWithWorkflow> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -442,7 +442,7 @@ pub async fn start_issue_approval(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let issue_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
+        Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
 
     tracing::info!(
@@ -487,17 +487,17 @@ pub async fn start_issue_approval(
         .await;
 
     match issue {
-        Ok(data) => Json(ApiResponse::success(
+        Ok(data) => ApiResponse::success(
             QualityIssueWithWorkflow {
                 issue: data,
                 approval_workflow_id: Some(req.workflow_id.to_string()),
                 approval_status: Some("pending".to_string()),
             },
             "质量问题审批流程已启动",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to fetch issue: {}", e);
-            Json(ApiResponse::server_error("获取质量问题失败"))
+            ApiResponse::server_error("获取质量问题失败")
         }
     }
 }
@@ -521,11 +521,11 @@ pub async fn approve_issue(
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
     Json(_req): Json<ApprovalActionRequest>,
-) -> Json<ApiResponse<QualityIssueWithWorkflow>> {
+) -> ApiResponse<QualityIssueWithWorkflow> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let issue_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
+        Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
 
     tracing::info!("Approving issue {}", id);
@@ -543,17 +543,17 @@ pub async fn approve_issue(
         .await;
 
     match result {
-        Ok(data) => Json(ApiResponse::success(
+        Ok(data) => ApiResponse::success(
             QualityIssueWithWorkflow {
                 issue: data,
                 approval_workflow_id: None,
                 approval_status: Some("approved".to_string()),
             },
             "质量问题审批通过",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to approve issue: {}", e);
-            Json(ApiResponse::server_error("质量问题审批失败"))
+            ApiResponse::server_error("质量问题审批失败")
         }
     }
 }
@@ -577,11 +577,11 @@ pub async fn reject_issue(
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
     Json(_req): Json<ApprovalActionRequest>,
-) -> Json<ApiResponse<QualityIssueWithWorkflow>> {
+) -> ApiResponse<QualityIssueWithWorkflow> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let issue_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
+        Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
 
     tracing::info!("Rejecting issue {}", id);
@@ -599,17 +599,17 @@ pub async fn reject_issue(
         .await;
 
     match result {
-        Ok(data) => Json(ApiResponse::success(
+        Ok(data) => ApiResponse::success(
             QualityIssueWithWorkflow {
                 issue: data,
                 approval_workflow_id: None,
                 approval_status: Some("rejected".to_string()),
             },
             "质量问题审批已驳回",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to reject issue: {}", e);
-            Json(ApiResponse::server_error("质量问题审批驳回失败"))
+            ApiResponse::server_error("质量问题审批驳回失败")
         }
     }
 }
@@ -650,7 +650,7 @@ pub async fn approve_issue_status(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<IssueApprovalRequest>,
-) -> Json<ApiResponse<QualityIssue>> {
+) -> ApiResponse<QualityIssue> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -662,7 +662,7 @@ pub async fn approve_issue_status(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
+        Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
@@ -674,10 +674,10 @@ pub async fn approve_issue_status(
             if issue_requires_approval(&current_status, STATUS_CLOSED)
                 && !crate::shared::permission::has_qms_permission(&claims, "issue.approve")
             {
-                return Json(ApiResponse::forbidden("无审批权限"));
+                return ApiResponse::forbidden("无审批权限");
             }
             if issue_can_transition(&current_status, STATUS_CLOSED).is_err() {
-                return Json(ApiResponse::bad_request("当前状态不允许审批通过"));
+                return ApiResponse::bad_request("当前状态不允许审批通过");
             }
             let locale = Locale::from_headers(&headers).as_sql();
             let issue = sqlx::query_as::<_, QualityIssue>(
@@ -697,17 +697,17 @@ pub async fn approve_issue_status(
                         req.comment.as_deref(),
                     )
                     .await;
-                    Json(ApiResponse::success(data, "审批通过"))
+                    ApiResponse::success(data, "审批通过")
                 }
                 Err(e) => {
                     tracing::error!("Failed to approve issue: {}", e);
-                    Json(ApiResponse::server_error("审批失败"))
+                    ApiResponse::server_error("审批失败")
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find issue: {}", e);
-            Json(ApiResponse::not_found("质量问题不存在"))
+            ApiResponse::not_found("质量问题不存在")
         }
     }
 }
@@ -732,7 +732,7 @@ pub async fn reject_issue_status(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<IssueApprovalRequest>,
-) -> Json<ApiResponse<QualityIssue>> {
+) -> ApiResponse<QualityIssue> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -744,7 +744,7 @@ pub async fn reject_issue_status(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
+        Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
@@ -754,7 +754,7 @@ pub async fn reject_issue_status(
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
             if issue_can_transition(&current_status, STATUS_IN_PROGRESS).is_err() {
-                return Json(ApiResponse::bad_request("当前状态不允许驳回"));
+                return ApiResponse::bad_request("当前状态不允许驳回");
             }
             let locale = Locale::from_headers(&headers).as_sql();
             let issue = sqlx::query_as::<_, QualityIssue>(
@@ -774,17 +774,17 @@ pub async fn reject_issue_status(
                         req.comment.as_deref(),
                     )
                     .await;
-                    Json(ApiResponse::success(data, "审批驳回"))
+                    ApiResponse::success(data, "审批驳回")
                 }
                 Err(e) => {
                     tracing::error!("Failed to reject issue: {}", e);
-                    Json(ApiResponse::server_error("驳回失败"))
+                    ApiResponse::server_error("驳回失败")
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find issue: {}", e);
-            Json(ApiResponse::not_found("质量问题不存在"))
+            ApiResponse::not_found("质量问题不存在")
         }
     }
 }
@@ -809,7 +809,7 @@ pub async fn cancel_issue(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<IssueApprovalRequest>,
-) -> Json<ApiResponse<QualityIssue>> {
+) -> ApiResponse<QualityIssue> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -821,7 +821,7 @@ pub async fn cancel_issue(
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的问题ID")),
+        Err(_) => return ApiResponse::bad_request("无效的问题ID"),
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
@@ -831,7 +831,7 @@ pub async fn cancel_issue(
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
             if issue_can_transition(&current_status, STATUS_CANCELLED).is_err() {
-                return Json(ApiResponse::bad_request("当前状态不允许取消"));
+                return ApiResponse::bad_request("当前状态不允许取消");
             }
             let locale = Locale::from_headers(&headers).as_sql();
             let issue = sqlx::query_as::<_, QualityIssue>(
@@ -851,17 +851,17 @@ pub async fn cancel_issue(
                         req.comment.as_deref(),
                     )
                     .await;
-                    Json(ApiResponse::success(data, "质量问题已取消"))
+                    ApiResponse::success(data, "质量问题已取消")
                 }
                 Err(e) => {
                     tracing::error!("Failed to cancel issue: {}", e);
-                    Json(ApiResponse::server_error("取消失败"))
+                    ApiResponse::server_error("取消失败")
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find issue: {}", e);
-            Json(ApiResponse::not_found("质量问题不存在"))
+            ApiResponse::not_found("质量问题不存在")
         }
     }
 }

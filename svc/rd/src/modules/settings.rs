@@ -47,7 +47,7 @@ pub async fn get_settings(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(category): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -73,19 +73,17 @@ pub async fn get_settings(
                 let value: String = row.try_get("value").unwrap_or_default();
                 settings.insert(key, value);
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "category": category,
                     "settings": settings,
                 }),
                 "获取模块设置成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取RD模块设置失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取模块设置失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取模块设置失败".to_string()))
         }
     }
 }
@@ -95,7 +93,7 @@ pub async fn update_settings(
     Extension(claims): Extension<Claims>,
     Path(category): Path<String>,
     Json(req): Json<UpdateSettingsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -130,19 +128,17 @@ pub async fn update_settings(
             Ok(_) => updated += 1,
             Err(e) => {
                 tracing::error!("更新RD模块设置失败 (key={}): {}", key, e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "更新设置项失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("更新设置项失败".to_string()));
             }
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "category": category,
             "updated_count": updated,
             "settings": req.settings,
         }),
         "模块设置更新成功",
-    ))
+    )
 }

@@ -165,11 +165,11 @@ pub async fn list_patents(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
@@ -215,7 +215,7 @@ pub async fn list_patents(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "patents": patents,
                     "total": total,
@@ -223,11 +223,11 @@ pub async fn list_patents(
                     "page_size": page_size
                 }),
                 "获取专利列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取专利列表失败: {}", e);
-            Json(ApiResponse::server_error("获取专利列表失败"))
+            ApiResponse::server_error("获取专利列表失败")
         }
     }
 }
@@ -251,11 +251,11 @@ pub async fn list_patents_by_project(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<Patent>>> {
+) -> ApiResponse<Vec<Patent>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query(
         r#"
@@ -274,11 +274,11 @@ pub async fn list_patents_by_project(
     match result {
         Ok(rows) => {
             let patents: Vec<Patent> = rows.into_iter().map(row_to_patent).collect();
-            Json(ApiResponse::success(patents, "获取项目专利列表成功"))
+            ApiResponse::success(patents, "获取项目专利列表成功")
         }
         Err(e) => {
             tracing::error!("获取项目专利列表失败: {}", e);
-            Json(ApiResponse::server_error("获取项目专利列表失败"))
+            ApiResponse::server_error("获取项目专利列表失败")
         }
     }
 }
@@ -289,11 +289,11 @@ pub async fn create_patent(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreatePatentRequest>,
-) -> Json<ApiResponse<Patent>> {
+) -> ApiResponse<Patent> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -333,14 +333,14 @@ pub async fn create_patent(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(patent, "专利创建成功"))
+            ApiResponse::success(patent, "专利创建成功")
         }
         Err(e) => {
             tracing::error!("创建专利失败: {}", e);
-            Json(ApiResponse::server_error("专利创建失败"))
+            ApiResponse::server_error("专利创建失败")
         }
     }
 }
@@ -364,11 +364,11 @@ pub async fn get_patent(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Patent>> {
+) -> ApiResponse<Patent> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query(
         r#"
@@ -383,11 +383,11 @@ pub async fn get_patent(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(row_to_patent(row), "获取专利成功")),
-        Ok(None) => Json(ApiResponse::not_found("专利不存在")),
+        Ok(Some(row)) => ApiResponse::success(row_to_patent(row), "获取专利成功"),
+        Ok(None) => ApiResponse::not_found("专利不存在"),
         Err(e) => {
             tracing::error!("获取专利失败: {}", e);
-            Json(ApiResponse::server_error("获取专利失败"))
+            ApiResponse::server_error("获取专利失败")
         }
     }
 }
@@ -400,11 +400,11 @@ pub async fn update_patent(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdatePatentRequest>,
-) -> Json<ApiResponse<Patent>> {
+) -> ApiResponse<Patent> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let existing_result = sqlx::query(
         "SELECT id, name, patent_number, application_date, grant_date, status, type, inventors, assignee, description, abstract, created_by, created_at, updated_at FROM rs.patents WHERE deleted_at IS NULL AND id = $1",
@@ -415,8 +415,8 @@ pub async fn update_patent(
 
     let existing = match existing_result {
         Ok(Some(r)) => row_to_patent(r),
-        Ok(None) => return Json(ApiResponse::not_found("专利不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询专利失败", e))),
+        Ok(None) => return ApiResponse::not_found("专利不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询专利失败", e)),
     };
 
     let name = req.name.unwrap_or(existing.name);
@@ -461,15 +461,15 @@ pub async fn update_patent(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(row_to_patent(row), "专利更新成功"))
+            ApiResponse::success(row_to_patent(row), "专利更新成功")
         }
 
         Err(e) => {
             tracing::error!("更新专利失败: {}", e);
-            Json(ApiResponse::server_error("专利更新失败"))
+            ApiResponse::server_error("专利更新失败")
         }
     }
 }
@@ -480,11 +480,11 @@ pub async fn delete_patent(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query("UPDATE rs.patents SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
@@ -492,22 +492,20 @@ pub async fn delete_patent(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("".to_string(), "专利删除成功"))
-        }
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "专利删除成功"),
         Ok(_) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::not_found("专利不存在"))
+            ApiResponse::not_found("专利不存在")
         }
 
         Err(e) => {
             tracing::error!("删除专利失败: {}", e);
-            Json(ApiResponse::server_error("专利删除失败"))
+            ApiResponse::server_error("专利删除失败")
         }
     }
 }

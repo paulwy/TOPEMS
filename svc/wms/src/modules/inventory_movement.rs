@@ -74,14 +74,14 @@ async fn list_inventory_movements(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Query(params): Query<InventoryMovementQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
-        return e;
+        return e.0;
     }
 
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -91,15 +91,15 @@ async fn list_inventory_movements(
             Some(id) => match Uuid::parse_str(id) {
                 Ok(id) => id,
                 Err(_) => {
-                    return Json(ApiResponse::from(TopemsError::AuthenticationFailed(
+                    return ApiResponse::from(TopemsError::AuthenticationFailed(
                         "无效的租户ID".to_string(),
-                    )))
+                    ))
                 }
             },
             None => {
-                return Json(ApiResponse::from(TopemsError::AuthenticationFailed(
+                return ApiResponse::from(TopemsError::AuthenticationFailed(
                     "缺少租户ID".to_string(),
-                )))
+                ))
             }
         })
     };
@@ -165,7 +165,7 @@ async fn list_inventory_movements(
             .await
             .unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": records,
                     "total": total,
@@ -173,13 +173,13 @@ async fn list_inventory_movements(
                     "page_size": page_size,
                 }),
                 "获取库存移动记录列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取库存移动记录列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
+            ApiResponse::from(TopemsError::Internal(
                 "获取库存移动记录列表失败".to_string(),
-            )))
+            ))
         }
     }
 }
@@ -202,29 +202,27 @@ async fn create_inventory_movement(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateInventoryMovementRequest>,
-) -> Json<ApiResponse<InventoryMovement>> {
+) -> ApiResponse<InventoryMovement> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        return e;
+        return e.0;
     }
 
     let tenant_id = match &claims.tenant_id {
         Some(id) => match Uuid::parse_str(id) {
             Ok(id) => id,
             Err(_) => {
-                return Json(ApiResponse::from(TopemsError::AuthenticationFailed(
+                return ApiResponse::from(TopemsError::AuthenticationFailed(
                     "无效的租户ID".to_string(),
-                )))
+                ))
             }
         },
         None => {
-            return Json(ApiResponse::from(TopemsError::AuthenticationFailed(
-                "缺少租户ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::AuthenticationFailed("缺少租户ID".to_string()))
         }
     };
 
@@ -279,16 +277,14 @@ async fn create_inventory_movement(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(record, "创建库存移动记录成功"))
+            ApiResponse::success(record, "创建库存移动记录成功")
         }
         Err(e) => {
             tracing::error!("创建库存移动记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建库存移动记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建库存移动记录失败".to_string()))
         }
     }
 }
@@ -311,14 +307,14 @@ async fn get_inventory_movement(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     _headers: HeaderMap,
-) -> Json<ApiResponse<InventoryMovement>> {
+) -> ApiResponse<InventoryMovement> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
-        return e;
+        return e.0;
     }
 
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -328,15 +324,15 @@ async fn get_inventory_movement(
             Some(id) => match Uuid::parse_str(id) {
                 Ok(id) => id,
                 Err(_) => {
-                    return Json(ApiResponse::from(TopemsError::AuthenticationFailed(
+                    return ApiResponse::from(TopemsError::AuthenticationFailed(
                         "无效的租户ID".to_string(),
-                    )))
+                    ))
                 }
             },
             None => {
-                return Json(ApiResponse::from(TopemsError::AuthenticationFailed(
+                return ApiResponse::from(TopemsError::AuthenticationFailed(
                     "缺少租户ID".to_string(),
-                )))
+                ))
             }
         })
     };
@@ -358,15 +354,13 @@ async fn get_inventory_movement(
     .await;
 
     match result {
-        Ok(Some(record)) => Json(ApiResponse::success(record, "获取库存移动记录成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(Some(record)) => ApiResponse::success(record, "获取库存移动记录成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
             "库存移动记录不存在".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("获取库存移动记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取库存移动记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取库存移动记录失败".to_string()))
         }
     }
 }

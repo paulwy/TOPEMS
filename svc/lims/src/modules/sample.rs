@@ -124,7 +124,7 @@ pub async fn list_samples(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<SampleQuery>,
-) -> Json<ApiResponse<Vec<Sample>>> {
+) -> ApiResponse<Vec<Sample>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -138,7 +138,7 @@ pub async fn list_samples(
     let list_key = sample_list_key(&tenant_id, &query);
     if let Some(cached) = state.sample_cache.get(&list_key).await {
         match serde_json::from_value::<Vec<Sample>>(cached) {
-            Ok(data) => return Json(ApiResponse::success(data, "从缓存获取样品列表成功")),
+            Ok(data) => return ApiResponse::success(data, "从缓存获取样品列表成功"),
             Err(e) => tracing::warn!("样品列表缓存反序列化失败，回源: {}", e),
         }
     }
@@ -151,7 +151,7 @@ pub async fn list_samples(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin tx for list_samples: {}", e);
-            return Json(ApiResponse::server_error("获取样品列表失败"));
+            return ApiResponse::server_error("获取样品列表失败");
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -160,7 +160,7 @@ pub async fn list_samples(
         .await
     {
         tracing::error!("Failed to set RLS context for list_samples: {}", e);
-        return Json(ApiResponse::server_error("获取样品列表失败"));
+        return ApiResponse::server_error("获取样品列表失败");
     }
 
     let sql = match (query.status.as_ref(), query.sample_no.as_ref(), query.sample_name.as_ref()) {
@@ -255,11 +255,11 @@ pub async fn list_samples(
             if let Ok(v) = serde_json::to_value(&data) {
                 state.sample_cache.set(list_key, v).await;
             }
-            Json(ApiResponse::success(data, "获取样品列表成功"))
+            ApiResponse::success(data, "获取样品列表成功")
         }
         Err(e) => {
             tracing::error!("Failed to fetch samples: {}", e);
-            Json(ApiResponse::server_error("获取样品列表失败"))
+            ApiResponse::server_error("获取样品列表失败")
         }
     }
 }
@@ -279,7 +279,7 @@ pub async fn register_sample(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateSampleRequest>,
-) -> Json<ApiResponse<Sample>> {
+) -> ApiResponse<Sample> {
     let sample_no = format!(
         "SMP-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
@@ -292,7 +292,7 @@ pub async fn register_sample(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin tx for register_sample: {}", e);
-            return Json(ApiResponse::server_error("样品登记失败"));
+            return ApiResponse::server_error("样品登记失败");
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -301,7 +301,7 @@ pub async fn register_sample(
         .await
     {
         tracing::error!("Failed to set RLS context for register_sample: {}", e);
-        return Json(ApiResponse::server_error("样品登记失败"));
+        return ApiResponse::server_error("样品登记失败");
     }
 
     let row = sqlx::query(
@@ -321,13 +321,13 @@ pub async fn register_sample(
         Ok(r) => {
             if let Err(e) = tx.commit().await {
                 tracing::error!("Failed to commit tx for register_sample: {}", e);
-                return Json(ApiResponse::server_error("样品登记失败"));
+                return ApiResponse::server_error("样品登记失败");
             }
             r
         }
         Err(e) => {
             tracing::error!("Failed to create sample: {}", e);
-            return Json(ApiResponse::server_error("样品登记失败"));
+            return ApiResponse::server_error("样品登记失败");
         }
     };
 
@@ -361,7 +361,7 @@ pub async fn register_sample(
                     .await;
             });
         }
-        Json(ApiResponse::success(sample, "样品登记成功"))
+        ApiResponse::success(sample, "样品登记成功")
     }
 }
 
@@ -384,10 +384,10 @@ pub async fn get_sample(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Sample>> {
+) -> ApiResponse<Sample> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的样品ID")),
+        Err(_) => return ApiResponse::bad_request("无效的样品ID"),
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -399,7 +399,7 @@ pub async fn get_sample(
     // 缓存读取
     if let Some(cached) = state.sample_cache.get(&cache_key).await {
         match serde_json::from_value::<Sample>(cached) {
-            Ok(sample) => return Json(ApiResponse::success(sample, "从缓存获取样品成功")),
+            Ok(sample) => return ApiResponse::success(sample, "从缓存获取样品成功"),
             Err(e) => tracing::warn!("样品详情缓存反序列化失败，回源: {}", e),
         }
     }
@@ -412,7 +412,7 @@ pub async fn get_sample(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin tx for get_sample: {}", e);
-            return Json(ApiResponse::server_error("获取样品失败"));
+            return ApiResponse::server_error("获取样品失败");
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -421,7 +421,7 @@ pub async fn get_sample(
         .await
     {
         tracing::error!("Failed to set RLS context for get_sample: {}", e);
-        return Json(ApiResponse::server_error("获取样品失败"));
+        return ApiResponse::server_error("获取样品失败");
     }
 
     let row = sqlx::query(
@@ -453,13 +453,13 @@ pub async fn get_sample(
             if let Ok(v) = serde_json::to_value(&sample) {
                 state.sample_cache.set(cache_key, v).await;
             }
-            Json(ApiResponse::success(sample, "获取样品成功"))
+            ApiResponse::success(sample, "获取样品成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to fetch sample: {}", e);
-            Json(ApiResponse::server_error("获取样品失败"))
+            ApiResponse::server_error("获取样品失败")
         }
     }
 }
@@ -470,10 +470,10 @@ pub async fn update_sample(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateSampleRequest>,
-) -> Json<ApiResponse<Sample>> {
+) -> ApiResponse<Sample> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的样品ID")),
+        Err(_) => return ApiResponse::bad_request("无效的样品ID"),
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -488,7 +488,7 @@ pub async fn update_sample(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin tx for update_sample: {}", e);
-            return Json(ApiResponse::server_error("样品更新失败"));
+            return ApiResponse::server_error("样品更新失败");
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -497,7 +497,7 @@ pub async fn update_sample(
         .await
     {
         tracing::error!("Failed to set RLS context for update_sample: {}", e);
-        return Json(ApiResponse::server_error("样品更新失败"));
+        return ApiResponse::server_error("样品更新失败");
     }
 
     let row = sqlx::query(
@@ -519,15 +519,15 @@ pub async fn update_sample(
         Ok(r) => {
             if let Err(e) = tx.commit().await {
                 tracing::error!("Failed to commit tx for update_sample: {}", e);
-                return Json(ApiResponse::server_error("样品更新失败"));
+                return ApiResponse::server_error("样品更新失败");
             }
             r
         }
-        Err(sqlx::Error::RowNotFound) => return Json(ApiResponse::not_found("记录不存在")),
+        Err(sqlx::Error::RowNotFound) => return ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to update sample: {}", e);
-            return Json(ApiResponse::server_error("样品更新失败"));
+            return ApiResponse::server_error("样品更新失败");
         }
     };
 
@@ -566,7 +566,7 @@ pub async fn update_sample(
                 .await;
         });
     }
-    Json(ApiResponse::success(sample, "样品更新成功"))
+    ApiResponse::success(sample, "样品更新成功")
 }
 
 pub async fn delete_sample(
@@ -574,10 +574,10 @@ pub async fn delete_sample(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的样品ID")),
+        Err(_) => return ApiResponse::bad_request("无效的样品ID"),
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -592,7 +592,7 @@ pub async fn delete_sample(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin tx for delete_sample: {}", e);
-            return Json(ApiResponse::server_error("样品删除失败"));
+            return ApiResponse::server_error("样品删除失败");
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -601,7 +601,7 @@ pub async fn delete_sample(
         .await
     {
         tracing::error!("Failed to set RLS context for delete_sample: {}", e);
-        return Json(ApiResponse::server_error("样品删除失败"));
+        return ApiResponse::server_error("样品删除失败");
     }
 
     let result = sqlx::query(
@@ -616,7 +616,7 @@ pub async fn delete_sample(
         Ok(_) => {
             if let Err(e) = tx.commit().await {
                 tracing::error!("Failed to commit tx for delete_sample: {}", e);
-                return Json(ApiResponse::server_error("样品删除失败"));
+                return ApiResponse::server_error("样品删除失败");
             }
             // 失效详情缓存并广播列表失效
             let detail_key = sample_detail_key(&tenant_id, &id.to_string());
@@ -638,11 +638,11 @@ pub async fn delete_sample(
                         .await;
                 });
             }
-            Json(ApiResponse::success(true, "样品删除成功"))
+            ApiResponse::success(true, "样品删除成功")
         }
         Err(e) => {
             tracing::error!("Failed to delete sample: {}", e);
-            Json(ApiResponse::server_error("样品删除失败"))
+            ApiResponse::server_error("样品删除失败")
         }
     }
 }
@@ -723,10 +723,10 @@ pub async fn get_sample_lifecycle(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(sample_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<SampleLifecycleRecord>>> {
+) -> ApiResponse<Vec<SampleLifecycleRecord>> {
     let id = match Uuid::parse_str(&sample_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的样品ID")),
+        Err(_) => return ApiResponse::bad_request("无效的样品ID"),
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -765,11 +765,11 @@ pub async fn get_sample_lifecycle(
                     created_at: row.get("created_at"),
                 })
                 .collect();
-            Json(ApiResponse::success(records, "获取样品生命周期记录成功"))
+            ApiResponse::success(records, "获取样品生命周期记录成功")
         }
         Err(e) => {
             tracing::error!("Failed to fetch lifecycle records: {}", e);
-            Json(ApiResponse::server_error("获取样品生命周期记录失败"))
+            ApiResponse::server_error("获取样品生命周期记录失败")
         }
     }
 }
@@ -789,10 +789,10 @@ pub async fn record_lifecycle_event(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateLifecycleRecordRequest>,
-) -> Json<ApiResponse<SampleLifecycleRecord>> {
+) -> ApiResponse<SampleLifecycleRecord> {
     let sample_id = match Uuid::parse_str(&req.sample_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的样品ID")),
+        Err(_) => return ApiResponse::bad_request("无效的样品ID"),
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -807,7 +807,7 @@ pub async fn record_lifecycle_event(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin tx for record_lifecycle_event: {}", e);
-            return Json(ApiResponse::server_error("记录生命周期事件失败"));
+            return ApiResponse::server_error("记录生命周期事件失败");
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -819,7 +819,7 @@ pub async fn record_lifecycle_event(
             "Failed to set RLS context for record_lifecycle_event: {}",
             e
         );
-        return Json(ApiResponse::server_error("记录生命周期事件失败"));
+        return ApiResponse::server_error("记录生命周期事件失败");
     }
 
     let sample_row =
@@ -831,8 +831,8 @@ pub async fn record_lifecycle_event(
 
     let sample_no = match sample_row {
         Ok(Some(row)) => row.get::<String, _>("sample_no"),
-        Ok(None) => return Json(ApiResponse::not_found("样品不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
+        Ok(None) => return ApiResponse::not_found("样品不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询样品失败", e)),
     };
 
     let valid_stage = LIFECYCLE_STAGES
@@ -840,7 +840,7 @@ pub async fn record_lifecycle_event(
         .any(|(stage, _)| *stage == req.lifecycle_stage);
 
     if !valid_stage {
-        return Json(ApiResponse::bad_request("无效的生命周期阶段"));
+        return ApiResponse::bad_request("无效的生命周期阶段");
     }
 
     let record_id = Uuid::new_v4();
@@ -880,10 +880,10 @@ pub async fn record_lifecycle_event(
 
             if let Err(e) = tx.commit().await {
                 tracing::error!("Failed to commit tx for record_lifecycle_event: {}", e);
-                return Json(ApiResponse::server_error("记录生命周期事件失败"));
+                return ApiResponse::server_error("记录生命周期事件失败");
             }
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 SampleLifecycleRecord {
                     id: r.get("id"),
                     tenant_id: r.get("tenant_id"),
@@ -897,11 +897,11 @@ pub async fn record_lifecycle_event(
                     created_at: r.get("created_at"),
                 },
                 "生命周期事件记录成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("Failed to record lifecycle event: {}", e);
-            Json(ApiResponse::server_error("记录生命周期事件失败"))
+            ApiResponse::server_error("记录生命周期事件失败")
         }
     }
 }
@@ -926,10 +926,10 @@ pub async fn transition_sample_stage(
     Extension(claims): Extension<Claims>,
     axum::extract::Path((sample_id, to_stage)): axum::extract::Path<(String, String)>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<SampleLifecycleRecord>> {
+) -> ApiResponse<SampleLifecycleRecord> {
     let sample_uuid = match Uuid::parse_str(&sample_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的样品ID")),
+        Err(_) => return ApiResponse::bad_request("无效的样品ID"),
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -940,7 +940,7 @@ pub async fn transition_sample_stage(
     let valid_stage = LIFECYCLE_STAGES.iter().any(|(stage, _)| *stage == to_stage);
 
     if !valid_stage {
-        return Json(ApiResponse::bad_request("无效的目标阶段"));
+        return ApiResponse::bad_request("无效的目标阶段");
     }
 
     // RLS 连接级隔离：事务内设置租户上下文，确保 set_config 与 INSERT/UPDATE 同连接
@@ -950,7 +950,7 @@ pub async fn transition_sample_stage(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("Failed to begin tx for transition_sample_stage: {}", e);
-            return Json(ApiResponse::server_error("样品阶段转换失败"));
+            return ApiResponse::server_error("样品阶段转换失败");
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -962,7 +962,7 @@ pub async fn transition_sample_stage(
             "Failed to set RLS context for transition_sample_stage: {}",
             e
         );
-        return Json(ApiResponse::server_error("样品阶段转换失败"));
+        return ApiResponse::server_error("样品阶段转换失败");
     }
 
     let current_row = sqlx::query(
@@ -978,8 +978,8 @@ pub async fn transition_sample_stage(
             row.get::<String, _>("sample_no"),
             row.get::<String, _>("status"),
         ),
-        Ok(None) => return Json(ApiResponse::not_found("样品不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
+        Ok(None) => return ApiResponse::not_found("样品不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询样品失败", e)),
     };
 
     // FSM 边校验（P2 制造域 B 审计）：当前阶段属于生命周期枚举时，目标阶段必须落在
@@ -990,11 +990,11 @@ pub async fn transition_sample_stage(
         .any(|(stage, _)| *stage == current_stage)
     {
         if !SAMPLE_STAGE_EDGES.contains(&(&current_stage.as_str(), to_stage.as_str())) {
-            return Json(ApiResponse::conflict(&format!(
+            return ApiResponse::conflict(&format!(
                 "样品阶段非法转移：不能从[{}]转到[{}]",
                 get_stage_name(&current_stage),
                 get_stage_name(&to_stage)
-            )));
+            ));
         }
     } else {
         tracing::warn!(
@@ -1051,10 +1051,10 @@ pub async fn transition_sample_stage(
 
             if let Err(e) = tx.commit().await {
                 tracing::error!("Failed to commit tx for transition_sample_stage: {}", e);
-                return Json(ApiResponse::server_error("样品阶段转换失败"));
+                return ApiResponse::server_error("样品阶段转换失败");
             }
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 SampleLifecycleRecord {
                     id: r.get("id"),
                     tenant_id: r.get("tenant_id"),
@@ -1068,11 +1068,11 @@ pub async fn transition_sample_stage(
                     created_at: r.get("created_at"),
                 },
                 "样品阶段转换成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("Failed to transition sample stage: {}", e);
-            Json(ApiResponse::server_error("样品阶段转换失败"))
+            ApiResponse::server_error("样品阶段转换失败")
         }
     }
 }
@@ -1095,7 +1095,7 @@ pub fn get_stage_name(stage: &str) -> String {
     ),
     tag = "sample"
 )]
-pub async fn get_lifecycle_stages() -> Json<ApiResponse<Vec<serde_json::Value>>> {
+pub async fn get_lifecycle_stages() -> ApiResponse<Vec<serde_json::Value>> {
     let stages: Vec<serde_json::Value> = LIFECYCLE_STAGES
         .iter()
         .map(|(code, name)| {
@@ -1106,7 +1106,7 @@ pub async fn get_lifecycle_stages() -> Json<ApiResponse<Vec<serde_json::Value>>>
         })
         .collect();
 
-    Json(ApiResponse::success(stages, "获取生命周期阶段列表成功"))
+    ApiResponse::success(stages, "获取生命周期阶段列表成功")
 }
 
 #[utoipa::path(
@@ -1124,14 +1124,14 @@ pub async fn get_lifecycle_stages() -> Json<ApiResponse<Vec<serde_json::Value>>>
 )]
 pub async fn get_lifecycle_stage(
     axum::extract::Path(code): axum::extract::Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let found = LIFECYCLE_STAGES
         .iter()
         .find(|(c, _)| *c == code)
         .map(|(code, name)| serde_json::json!({ "code": code, "name": name }));
     match found {
-        Some(v) => Json(ApiResponse::success(v, "获取生命周期阶段成功")),
-        None => Json(ApiResponse::not_found("生命周期阶段不存在")),
+        Some(v) => ApiResponse::success(v, "获取生命周期阶段成功"),
+        None => ApiResponse::not_found("生命周期阶段不存在"),
     }
 }
 
@@ -1153,10 +1153,10 @@ pub async fn get_sample_traceability(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(sample_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let id = match Uuid::parse_str(&sample_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的样品ID")),
+        Err(_) => return ApiResponse::bad_request("无效的样品ID"),
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -1192,8 +1192,8 @@ pub async fn get_sample_traceability(
             "created_at": row.get::<Option<String>, _>("created_at"),
             "updated_at": row.get::<Option<String>, _>("updated_at"),
         }),
-        Ok(None) => return Json(ApiResponse::not_found("样品不存在")),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
+        Ok(None) => return ApiResponse::not_found("样品不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询样品失败", e)),
     };
 
     let lifecycle_rows = sqlx::query(
@@ -1224,12 +1224,7 @@ pub async fn get_sample_traceability(
                 })
             })
             .collect(),
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询生命周期记录失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询生命周期记录失败", e)),
     };
 
     let current_status = sample
@@ -1246,7 +1241,7 @@ pub async fn get_sample_traceability(
         })
         .unwrap_or(false);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "sample": sample,
             "lifecycle_history": lifecycle_history,
@@ -1258,7 +1253,7 @@ pub async fn get_sample_traceability(
             }
         }),
         "获取样品追溯信息成功",
-    ))
+    )
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]

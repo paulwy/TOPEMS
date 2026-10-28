@@ -43,11 +43,11 @@ pub async fn create_phase(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(payload): Json<CreatePhaseRequest>,
-) -> Json<ApiResponse<ProjectPhase>> {
+) -> ApiResponse<ProjectPhase> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -86,7 +86,7 @@ pub async fn create_phase(
             request_id = %request_id,
             "创建项目阶段失败: 阶段名称不能为空"
         );
-        return Json(ApiResponse::bad_request("阶段名称不能为空"));
+        return ApiResponse::bad_request("阶段名称不能为空");
     }
 
     let id = Uuid::new_v4();
@@ -138,10 +138,10 @@ pub async fn create_phase(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(phase, "项目阶段创建成功"))
+            ApiResponse::success(phase, "项目阶段创建成功")
         }
         Err(SqlxError::Database(db_err)) => {
             tracing::error!(
@@ -151,9 +151,9 @@ pub async fn create_phase(
                 "创建项目阶段数据库错误"
             );
             if db_err.code().map(|c| c == "23503").unwrap_or(false) {
-                Json(ApiResponse::bad_request("关联的项目不存在"))
+                ApiResponse::bad_request("关联的项目不存在")
             } else {
-                Json(ApiResponse::server_error("数据库操作失败"))
+                ApiResponse::server_error("数据库操作失败")
             }
         }
         Err(e) => {
@@ -163,7 +163,7 @@ pub async fn create_phase(
                 duration_ms = duration.num_milliseconds(),
                 "创建项目阶段失败"
             );
-            Json(ApiResponse::server_error("创建项目阶段失败"))
+            ApiResponse::server_error("创建项目阶段失败")
         }
     }
 }
@@ -188,11 +188,11 @@ pub async fn get_project_phases(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<ProjectPhase>>> {
+) -> ApiResponse<Vec<ProjectPhase>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -219,7 +219,7 @@ pub async fn get_project_phases(
     );
 
     if let Some(cached) = cache_get(&cache_key).await {
-        return Json(ApiResponse::success(cached, "获取项目阶段列表成功"));
+        return ApiResponse::success(cached, "获取项目阶段列表成功");
     }
 
     let result = sqlx::query_as::<_, ProjectPhase>(
@@ -249,7 +249,7 @@ pub async fn get_project_phases(
                 duration_ms = duration.num_milliseconds(),
                 "获取项目阶段列表成功"
             );
-            Json(ApiResponse::success(phases, "获取项目阶段列表成功"))
+            ApiResponse::success(phases, "获取项目阶段列表成功")
         }
         Err(e) => {
             tracing::error!(
@@ -259,7 +259,7 @@ pub async fn get_project_phases(
                 duration_ms = duration.num_milliseconds(),
                 "获取项目阶段列表失败"
             );
-            Json(ApiResponse::server_error("获取项目阶段列表失败"))
+            ApiResponse::server_error("获取项目阶段列表失败")
         }
     }
 }
@@ -285,11 +285,11 @@ pub async fn update_phase(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(payload): Json<UpdatePhaseRequest>,
-) -> Json<ApiResponse<ProjectPhase>> {
+) -> ApiResponse<ProjectPhase> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -308,10 +308,10 @@ pub async fn update_phase(
     .await
     {
         Ok(Some(pid)) => pid,
-        Ok(None) => return Json(ApiResponse::not_found("阶段不存在")),
+        Ok(None) => return ApiResponse::not_found("阶段不存在"),
         Err(e) => {
             tracing::error!("查询阶段所属项目失败: {}", e);
-            return Json(ApiResponse::server_error("查询阶段失败"));
+            return ApiResponse::server_error("查询阶段失败");
         }
     };
 
@@ -343,7 +343,7 @@ pub async fn update_phase(
                 phase_id = %id,
                 "更新项目阶段失败: 阶段名称不能为空"
             );
-            return Json(ApiResponse::bad_request("阶段名称不能为空"));
+            return ApiResponse::bad_request("阶段名称不能为空");
         }
     }
 
@@ -395,10 +395,10 @@ pub async fn update_phase(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(phase, "项目阶段更新成功"))
+            ApiResponse::success(phase, "项目阶段更新成功")
         }
         Err(SqlxError::RowNotFound) => {
             tracing::warn!(
@@ -407,7 +407,7 @@ pub async fn update_phase(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目阶段失败: 阶段不存在"
             );
-            Json(ApiResponse::not_found("阶段不存在"))
+            ApiResponse::not_found("阶段不存在")
         }
         Err(SqlxError::Database(db_err)) => {
             tracing::error!(
@@ -417,7 +417,7 @@ pub async fn update_phase(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目阶段数据库错误"
             );
-            Json(ApiResponse::server_error("数据库操作失败"))
+            ApiResponse::server_error("数据库操作失败")
         }
         Err(e) => {
             tracing::error!(
@@ -427,7 +427,7 @@ pub async fn update_phase(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目阶段失败"
             );
-            Json(ApiResponse::server_error("更新项目阶段失败"))
+            ApiResponse::server_error("更新项目阶段失败")
         }
     }
 }
@@ -452,11 +452,11 @@ pub async fn delete_phase(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -488,15 +488,15 @@ pub async fn delete_phase(
             if let Some(t) = guard.take() {
                         if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
-            return Json(ApiResponse::not_found("阶段不存在"))
+            return ApiResponse::not_found("阶段不存在")
         }
 
         Err(e) => {
             tracing::error!("查询阶段所属项目失败: {}", e);
-            return Json(ApiResponse::server_error("查询阶段失败"));
+            return ApiResponse::server_error("查询阶段失败");
         }
     };
 
@@ -531,7 +531,7 @@ pub async fn delete_phase(
                 error = %e,
                 "获取项目阶段项目ID失败"
             );
-            return Json(ApiResponse::server_error("数据库操作失败"));
+            return ApiResponse::server_error("数据库操作失败");
         }
     };
 
@@ -560,7 +560,7 @@ pub async fn delete_phase(
                 duration_ms = duration.num_milliseconds(),
                 "删除项目阶段成功"
             );
-            Json(ApiResponse::success((), "项目阶段删除成功"))
+            ApiResponse::success((), "项目阶段删除成功")
         }
         Ok(_) => {
             tracing::warn!(
@@ -569,7 +569,7 @@ pub async fn delete_phase(
                 duration_ms = duration.num_milliseconds(),
                 "删除项目阶段失败: 阶段不存在"
             );
-            Json(ApiResponse::not_found("阶段不存在"))
+            ApiResponse::not_found("阶段不存在")
         }
         Err(e) => {
             tracing::error!(
@@ -579,7 +579,7 @@ pub async fn delete_phase(
                 duration_ms = duration.num_milliseconds(),
                 "删除项目阶段失败"
             );
-            Json(ApiResponse::server_error("删除项目阶段失败"))
+            ApiResponse::server_error("删除项目阶段失败")
         }
     }
 }

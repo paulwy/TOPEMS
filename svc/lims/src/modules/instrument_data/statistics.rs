@@ -1,4 +1,4 @@
-use axum::{extract::State, Json};
+use axum::extract::State;
 use sqlx::Row;
 use topems_shared_core::response::ApiResponse;
 
@@ -16,7 +16,7 @@ use super::models::{InstrumentDataStatistics, ProtocolStat};
 )]
 pub async fn get_instrument_data_statistics(
     State(state): State<crate::shared::AppState>,
-) -> Json<ApiResponse<InstrumentDataStatistics>> {
+) -> ApiResponse<InstrumentDataStatistics> {
     let total_data: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM qa_lims_instrument_data")
         .fetch_one(&state.pool)
         .await
@@ -98,7 +98,7 @@ pub async fn get_instrument_data_statistics(
         instrument_distribution: None,
     };
 
-    Json(ApiResponse::success(stats, "获取统计数据成功"))
+    ApiResponse::success(stats, "获取统计数据成功")
 }
 
 // ============================================================================

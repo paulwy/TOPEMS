@@ -97,15 +97,15 @@ pub async fn list_bid_requests(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -150,14 +150,11 @@ pub async fn list_bid_requests(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(results, "获取询价请求列表成功"))
+            ApiResponse::success(results, "获取询价请求列表成功")
         }
         Err(e) => {
             tracing::error!("获取询价请求列表失败: {}", e);
-            Json(ApiResponse::<Vec<serde_json::Value>>::error(
-                500,
-                "获取询价请求列表失败",
-            ))
+            ApiResponse::<Vec<serde_json::Value>>::error(500, "获取询价请求列表失败")
         }
     }
 }
@@ -170,15 +167,15 @@ pub async fn create_bid_request(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let title = body.get("title").and_then(|v| v.as_str()).unwrap_or("");
@@ -193,9 +190,7 @@ pub async fn create_bid_request(
     });
 
     if title.is_empty() {
-        return Json(ApiResponse::<serde_json::Value>::bad_request(
-            "询价标题不能为空",
-        ));
+        return ApiResponse::<serde_json::Value>::bad_request("询价标题不能为空");
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -231,7 +226,7 @@ pub async fn create_bid_request(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
             let data = serde_json::json!({
@@ -246,13 +241,11 @@ pub async fn create_bid_request(
                 "created_at": row.created_at.to_string(),
                 "updated_at": row.updated_at.to_string()
             });
-            Json(ApiResponse::success(data, "创建询价请求成功"))
+            ApiResponse::success(data, "创建询价请求成功")
         }
         Err(e) => {
             tracing::error!("创建询价请求失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "创建询价请求失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("创建询价请求失败")
         }
     }
 }
@@ -278,23 +271,21 @@ pub async fn get_bid_request(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::bad_request(
-                "询价请求ID格式错误",
-            ));
+            return ApiResponse::<serde_json::Value>::bad_request("询价请求ID格式错误");
         }
     };
 
@@ -335,16 +326,14 @@ pub async fn get_bid_request(
                 "created_at": row.created_at.to_string(),
                 "updated_at": row.updated_at.to_string()
             });
-            Json(ApiResponse::success(data, "获取询价请求成功"))
+            ApiResponse::success(data, "获取询价请求成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<serde_json::Value>::not_found(
-            "询价请求不存在或已删除",
-        )),
+        Err(sqlx::Error::RowNotFound) => {
+            ApiResponse::<serde_json::Value>::not_found("询价请求不存在或已删除")
+        }
         Err(e) => {
             tracing::error!("获取询价请求失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取询价请求失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取询价请求失败")
         }
     }
 }
@@ -358,23 +347,21 @@ pub async fn update_bid_request(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::bad_request(
-                "询价请求ID格式错误",
-            ));
+            return ApiResponse::<serde_json::Value>::bad_request("询价请求ID格式错误");
         }
     };
 
@@ -423,7 +410,7 @@ pub async fn update_bid_request(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             let data = serde_json::json!({
@@ -438,16 +425,14 @@ pub async fn update_bid_request(
                 "created_at": row.created_at.to_string(),
                 "updated_at": row.updated_at.to_string()
             });
-            Json(ApiResponse::success(data, "更新询价请求成功"))
+            ApiResponse::success(data, "更新询价请求成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<serde_json::Value>::not_found(
-            "询价请求不存在或已删除",
-        )),
+        Err(sqlx::Error::RowNotFound) => {
+            ApiResponse::<serde_json::Value>::not_found("询价请求不存在或已删除")
+        }
         Err(e) => {
             tracing::error!("更新询价请求失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "更新询价请求失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("更新询价请求失败")
         }
     }
 }
@@ -460,23 +445,21 @@ pub async fn delete_bid_request(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::bad_request(
-                "询价请求ID格式错误",
-            ));
+            return ApiResponse::<serde_json::Value>::bad_request("询价请求ID格式错误");
         }
     };
 
@@ -504,22 +487,15 @@ pub async fn delete_bid_request(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
-                serde_json::json!({}),
-                "删除询价请求成功",
-            ))
+            ApiResponse::success(serde_json::json!({}), "删除询价请求成功")
         }
-        Ok(_) => Json(ApiResponse::<serde_json::Value>::not_found(
-            "询价请求不存在或已删除",
-        )),
+        Ok(_) => ApiResponse::<serde_json::Value>::not_found("询价请求不存在或已删除"),
         Err(e) => {
             tracing::error!("删除询价请求失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "删除询价请求失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("删除询价请求失败")
         }
     }
 }
@@ -545,24 +521,21 @@ pub async fn get_bid_request_bids(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let request_uuid = match Uuid::parse_str(&request_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<Vec<serde_json::Value>>::error(
-                400,
-                "询价请求ID格式错误",
-            ));
+            return ApiResponse::<Vec<serde_json::Value>>::error(400, "询价请求ID格式错误");
         }
     };
 
@@ -612,14 +585,11 @@ pub async fn get_bid_request_bids(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(results, "获取报价列表成功"))
+            ApiResponse::success(results, "获取报价列表成功")
         }
         Err(e) => {
             tracing::error!("获取报价列表失败: {}", e);
-            Json(ApiResponse::<Vec<serde_json::Value>>::error(
-                500,
-                "获取报价列表失败",
-            ))
+            ApiResponse::<Vec<serde_json::Value>>::error(500, "获取报价列表失败")
         }
     }
 }
@@ -633,23 +603,21 @@ pub async fn create_bid(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let request_uuid = match Uuid::parse_str(&request_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::bad_request(
-                "询价请求ID格式错误",
-            ));
+            return ApiResponse::<serde_json::Value>::bad_request("询价请求ID格式错误");
         }
     };
 
@@ -682,17 +650,13 @@ pub async fn create_bid(
         .unwrap_or("CNY");
 
     if supplier_id.is_empty() {
-        return Json(ApiResponse::<serde_json::Value>::bad_request(
-            "供应商ID不能为空",
-        ));
+        return ApiResponse::<serde_json::Value>::bad_request("供应商ID不能为空");
     }
 
     let supplier_uuid = match Uuid::parse_str(&supplier_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::bad_request(
-                "供应商ID格式错误",
-            ));
+            return ApiResponse::<serde_json::Value>::bad_request("供应商ID格式错误");
         }
     };
 
@@ -719,7 +683,7 @@ pub async fn create_bid(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             let data = serde_json::json!({
@@ -737,13 +701,11 @@ pub async fn create_bid(
                 "created_at": row.created_at.to_string(),
                 "updated_at": row.updated_at.to_string()
             });
-            Json(ApiResponse::success(data, "创建报价成功"))
+            ApiResponse::success(data, "创建报价成功")
         }
         Err(e) => {
             tracing::error!("创建报价失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "创建报价失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("创建报价失败")
         }
     }
 }
@@ -769,23 +731,21 @@ pub async fn get_bid(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::bad_request(
-                "报价ID格式错误",
-            ));
+            return ApiResponse::<serde_json::Value>::bad_request("报价ID格式错误");
         }
     };
 
@@ -829,16 +789,14 @@ pub async fn get_bid(
                 "created_at": row.created_at.to_string(),
                 "updated_at": row.updated_at.to_string()
             });
-            Json(ApiResponse::success(data, "获取报价成功"))
+            ApiResponse::success(data, "获取报价成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<serde_json::Value>::not_found(
-            "报价不存在或已删除",
-        )),
+        Err(sqlx::Error::RowNotFound) => {
+            ApiResponse::<serde_json::Value>::not_found("报价不存在或已删除")
+        }
         Err(e) => {
             tracing::error!("获取报价失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取报价失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取报价失败")
         }
     }
 }
@@ -852,23 +810,21 @@ pub async fn update_bid(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(body): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::bad_request(
-                "报价ID格式错误",
-            ));
+            return ApiResponse::<serde_json::Value>::bad_request("报价ID格式错误");
         }
     };
 
@@ -916,7 +872,7 @@ pub async fn update_bid(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             let data = serde_json::json!({
@@ -934,16 +890,14 @@ pub async fn update_bid(
                 "created_at": row.created_at.to_string(),
                 "updated_at": row.updated_at.to_string()
             });
-            Json(ApiResponse::success(data, "更新报价成功"))
+            ApiResponse::success(data, "更新报价成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::<serde_json::Value>::not_found(
-            "报价不存在或已删除",
-        )),
+        Err(sqlx::Error::RowNotFound) => {
+            ApiResponse::<serde_json::Value>::not_found("报价不存在或已删除")
+        }
         Err(e) => {
             tracing::error!("更新报价失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "更新报价失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("更新报价失败")
         }
     }
 }
@@ -956,23 +910,21 @@ pub async fn delete_bid(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::bad_request(
-                "报价ID格式错误",
-            ));
+            return ApiResponse::<serde_json::Value>::bad_request("报价ID格式错误");
         }
     };
 
@@ -1000,20 +952,16 @@ pub async fn delete_bid(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
 
-            Json(ApiResponse::success(serde_json::json!({}), "删除报价成功"))
+            ApiResponse::success(serde_json::json!({}), "删除报价成功")
         }
-        Ok(_) => Json(ApiResponse::<serde_json::Value>::not_found(
-            "报价不存在或已删除",
-        )),
+        Ok(_) => ApiResponse::<serde_json::Value>::not_found("报价不存在或已删除"),
         Err(e) => {
             tracing::error!("删除报价失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "删除报价失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("删除报价失败")
         }
     }
 }
@@ -1040,23 +988,21 @@ pub async fn get_bid_comparison(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let request_uuid = match Uuid::parse_str(&request_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::bad_request(
-                "询价请求ID格式错误",
-            ));
+            return ApiResponse::<serde_json::Value>::bad_request("询价请求ID格式错误");
         }
     };
 
@@ -1131,13 +1077,11 @@ pub async fn get_bid_comparison(
                 "comparisons": comparisons
             });
 
-            Json(ApiResponse::success(data, "获取报价对比成功"))
+            ApiResponse::success(data, "获取报价对比成功")
         }
         Err(e) => {
             tracing::error!("获取报价对比失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取报价对比失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取报价对比失败")
         }
     }
 }

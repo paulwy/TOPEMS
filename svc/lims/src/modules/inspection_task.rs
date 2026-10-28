@@ -139,10 +139,10 @@ pub async fn list_tasks_by_sample(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(sample_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<InspectionTask>>> {
+) -> ApiResponse<Vec<InspectionTask>> {
     let sample_uuid = match Uuid::parse_str(&sample_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的样品ID")),
+        Err(_) => return ApiResponse::bad_request("无效的样品ID"),
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -162,11 +162,11 @@ pub async fn list_tasks_by_sample(
     match rows {
         Ok(data) => {
             let tasks = data.iter().map(task_from_row).collect::<Vec<_>>();
-            Json(ApiResponse::success(tasks, "获取样品检测任务成功"))
+            ApiResponse::success(tasks, "获取样品检测任务成功")
         }
         Err(e) => {
             tracing::error!("Failed to list tasks by sample: {}", e);
-            Json(ApiResponse::server_error("获取样品检测任务失败"))
+            ApiResponse::server_error("获取样品检测任务失败")
         }
     }
 }
@@ -189,10 +189,10 @@ pub async fn complete_step(
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CompleteStepRequest>,
-) -> Json<ApiResponse<InspectionTask>> {
+) -> ApiResponse<InspectionTask> {
     let task_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
+        Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
     // 校验任务存在
@@ -205,10 +205,10 @@ pub async fn complete_step(
     .await;
 
     match task_row {
-        Ok(None) => return Json(ApiResponse::not_found("任务不存在")),
+        Ok(None) => return ApiResponse::not_found("任务不存在"),
         Err(e) => {
             tracing::error!("Failed to query task: {}", e);
-            return Json(ApiResponse::server_error("查询任务失败"));
+            return ApiResponse::server_error("查询任务失败");
         }
         Ok(Some(_)) => {}
     }
@@ -238,7 +238,7 @@ pub async fn complete_step(
 
     if let Err(e) = insert_res {
         tracing::error!("Failed to insert step record: {}", e);
-        return Json(ApiResponse::server_error("步骤记录写入失败"));
+        return ApiResponse::server_error("步骤记录写入失败");
     }
 
     // 2) 更新任务结果
@@ -255,13 +255,10 @@ pub async fn complete_step(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
-            task_from_row(&r),
-            "步骤完成，检验记录已保存",
-        )),
+        Ok(r) => ApiResponse::success(task_from_row(&r), "步骤完成，检验记录已保存"),
         Err(e) => {
             tracing::error!("Failed to update task after step: {}", e);
-            Json(ApiResponse::server_error("任务更新失败"))
+            ApiResponse::server_error("任务更新失败")
         }
     }
 }
@@ -280,7 +277,7 @@ pub async fn list_tasks(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<InspectionTask>>> {
+) -> ApiResponse<Vec<InspectionTask>> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -291,7 +288,7 @@ pub async fn list_tasks(
     // 缓存读取
     if let Some(cached) = state.task_cache.get(&list_key).await {
         match serde_json::from_value::<Vec<InspectionTask>>(cached) {
-            Ok(data) => return Json(ApiResponse::success(data, "从缓存获取检测任务列表成功")),
+            Ok(data) => return ApiResponse::success(data, "从缓存获取检测任务列表成功"),
             Err(e) => tracing::warn!("任务列表缓存反序列化失败，回源: {}", e),
         }
     }
@@ -332,11 +329,11 @@ pub async fn list_tasks(
             if let Ok(v) = serde_json::to_value(&tasks) {
                 state.task_cache.set(list_key, v).await;
             }
-            Json(ApiResponse::success(tasks, "获取检测任务列表成功"))
+            ApiResponse::success(tasks, "获取检测任务列表成功")
         }
         Err(e) => {
             tracing::error!("Failed to fetch tasks: {}", e);
-            Json(ApiResponse::server_error("获取检测任务列表失败"))
+            ApiResponse::server_error("获取检测任务列表失败")
         }
     }
 }
@@ -356,10 +353,10 @@ pub async fn create_task(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateTaskRequest>,
-) -> Json<ApiResponse<InspectionTask>> {
+) -> ApiResponse<InspectionTask> {
     let sample_id = match Uuid::parse_str(&req.sample_id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的样品ID")),
+        Err(_) => return ApiResponse::bad_request("无效的样品ID"),
     };
 
     let row = sqlx::query("SELECT id, sample_no FROM public.qa_lab_samples WHERE id = $1")
@@ -371,7 +368,7 @@ pub async fn create_task(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to fetch sample: {}", e);
-            return Json(ApiResponse::not_found("样品不存在"));
+            return ApiResponse::not_found("样品不存在");
         }
     };
 
@@ -436,11 +433,11 @@ pub async fn create_task(
                         .await;
                 });
             }
-            Json(ApiResponse::success(task, "检测任务创建成功"))
+            ApiResponse::success(task, "检测任务创建成功")
         }
         Err(e) => {
             tracing::error!("Failed to create task: {}", e);
-            Json(ApiResponse::server_error("检测任务创建失败"))
+            ApiResponse::server_error("检测任务创建失败")
         }
     }
 }
@@ -464,10 +461,10 @@ pub async fn get_task(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<InspectionTask>> {
+) -> ApiResponse<InspectionTask> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
+        Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -479,7 +476,7 @@ pub async fn get_task(
     // 缓存读取
     if let Some(cached) = state.task_cache.get(&cache_key).await {
         match serde_json::from_value::<InspectionTask>(cached) {
-            Ok(task) => return Json(ApiResponse::success(task, "从缓存获取检测任务成功")),
+            Ok(task) => return ApiResponse::success(task, "从缓存获取检测任务成功"),
             Err(e) => tracing::warn!("任务详情缓存反序列化失败，回源: {}", e),
         }
     }
@@ -518,13 +515,13 @@ pub async fn get_task(
             if let Ok(v) = serde_json::to_value(&task) {
                 state.task_cache.set(cache_key, v).await;
             }
-            Json(ApiResponse::success(task, "获取检测任务成功"))
+            ApiResponse::success(task, "获取检测任务成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to fetch task: {}", e);
-            Json(ApiResponse::server_error("获取检测任务失败"))
+            ApiResponse::server_error("获取检测任务失败")
         }
     }
 }
@@ -534,10 +531,10 @@ pub async fn update_task(
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateTaskRequest>,
-) -> Json<ApiResponse<InspectionTask>> {
+) -> ApiResponse<InspectionTask> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
+        Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
     let instrument_id = req
@@ -600,13 +597,13 @@ pub async fn update_task(
                         .await;
                 });
             }
-            Json(ApiResponse::success(task, "检测任务更新成功"))
+            ApiResponse::success(task, "检测任务更新成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to update task: {}", e);
-            Json(ApiResponse::server_error("检测任务更新失败"))
+            ApiResponse::server_error("检测任务更新失败")
         }
     }
 }
@@ -629,10 +626,10 @@ pub async fn submit_result(
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<SubmitResultRequest>,
-) -> Json<ApiResponse<InspectionTask>> {
+) -> ApiResponse<InspectionTask> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
+        Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
     let row = sqlx::query(&format!(
@@ -753,11 +750,11 @@ pub async fn submit_result(
                 });
             }
 
-            Json(ApiResponse::success(task, "检测结果提交成功"))
+            ApiResponse::success(task, "检测结果提交成功")
         }
         Err(e) => {
             tracing::error!("Failed to submit result: {}", e);
-            Json(ApiResponse::server_error("检测结果提交失败"))
+            ApiResponse::server_error("检测结果提交失败")
         }
     }
 }
@@ -766,10 +763,10 @@ pub async fn delete_task(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的任务ID")),
+        Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
     let result = sqlx::query(
@@ -802,11 +799,11 @@ pub async fn delete_task(
                         .await;
                 });
             }
-            Json(ApiResponse::success(true, "检测任务删除成功"))
+            ApiResponse::success(true, "检测任务删除成功")
         }
         Err(e) => {
             tracing::error!("Failed to delete task: {}", e);
-            Json(ApiResponse::server_error("检测任务删除失败"))
+            ApiResponse::server_error("检测任务删除失败")
         }
     }
 }

@@ -1,7 +1,7 @@
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
-    Json, Router,
+    Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
@@ -262,15 +262,15 @@ pub async fn calculate_turnover(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let page = pagination.page.unwrap_or(1).max(1);
     let page_size = pagination.page_size.unwrap_or(20).min(100);
@@ -406,7 +406,7 @@ pub async fn calculate_turnover(
                 })
                 .collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -416,13 +416,11 @@ pub async fn calculate_turnover(
                     "end_date": end_date
                 }),
                 "库存周转率计算成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("计算库存周转率失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "计算库存周转率失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("计算库存周转率失败".to_string()))
         }
     }
 }
@@ -444,15 +442,15 @@ pub async fn turnover_days(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let start_date = params.start_date.unwrap_or_else(|| {
@@ -521,7 +519,7 @@ pub async fn turnover_days(
             let overall_turnover_days: f64 = row.try_get("overall_turnover_days").unwrap_or(0.0);
             let overall_turnover_rate: f64 = row.try_get("overall_turnover_rate").unwrap_or(0.0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "overall_turnover_rate": overall_turnover_rate,
                     "overall_turnover_days": overall_turnover_days,
@@ -533,16 +531,12 @@ pub async fn turnover_days(
                     "end_date": end_date
                 }),
                 "库存周转天数查询成功",
-            ))
+            )
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "暂无数据".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("暂无数据".to_string())),
         Err(e) => {
             tracing::error!("查询库存周转天数失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询库存周转天数失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询库存周转天数失败".to_string()))
         }
     }
 }
@@ -575,15 +569,15 @@ pub async fn abc_analysis(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let start_date = params.start_date.unwrap_or_else(|| {
@@ -676,20 +670,18 @@ pub async fn abc_analysis(
                 })
                 .collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "abc_analysis": results,
                     "start_date": start_date,
                     "end_date": end_date
                 }),
                 "ABC分类分析成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("ABC分类分析失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "ABC分类分析失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("ABC分类分析失败".to_string()))
         }
     }
 }
@@ -711,15 +703,15 @@ pub async fn turnover_trend(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let start_date = params.start_date.unwrap_or_else(|| {
@@ -800,20 +792,18 @@ pub async fn turnover_trend(
                 })
                 .collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "trend": trend_data,
                     "start_date": start_date,
                     "end_date": end_date
                 }),
                 "库存周转率趋势查询成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("查询库存周转率趋势失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "查询库存周转率趋势失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("查询库存周转率趋势失败".to_string()))
         }
     }
 }
@@ -828,15 +818,15 @@ pub async fn get_turnover_detail(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -932,16 +922,14 @@ pub async fn get_turnover_detail(
                 "inventory_value": row.try_get::<f64, _>("inventory_value").unwrap_or(0.0),
                 "calculated_at": chrono::Utc::now().to_rfc3339(),
             });
-            Json(ApiResponse::success(stat, "获取单物料周转统计成功"))
+            ApiResponse::success(stat, "获取单物料周转统计成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
             "未找到该物料的库存周转数据".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("获取单物料周转统计失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取单物料周转统计失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取单物料周转统计失败".to_string()))
         }
     }
 }

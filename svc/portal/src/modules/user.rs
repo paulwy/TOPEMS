@@ -6,7 +6,6 @@
 use axum::{
     extract::{Extension, State},
     http::HeaderMap,
-    Json,
 };
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
@@ -30,11 +29,11 @@ pub async fn get_user_info(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
-) -> Json<ApiResponse<UserInfo>> {
+) -> ApiResponse<UserInfo> {
     let user_id = match claims.user_id() {
         Ok(uid) => uid,
         Err(_) => {
-            return Json(ApiResponse::unauthorized("无效的用户身份"));
+            return ApiResponse::unauthorized("无效的用户身份");
         }
     };
 
@@ -70,7 +69,7 @@ pub async fn get_user_info(
                 },
                 last_login: "".to_string(),
             };
-            Json(ApiResponse::success(user_info, "用户信息获取成功"))
+            ApiResponse::success(user_info, "用户信息获取成功")
         }
         Err(e) => {
             tracing::error!("Failed to fetch user info: {}", e);
@@ -83,7 +82,7 @@ pub async fn get_user_info(
                 role: claims.role.clone(),
                 last_login: "".to_string(),
             };
-            Json(ApiResponse::success(fallback, "用户信息获取成功"))
+            ApiResponse::success(fallback, "用户信息获取成功")
         }
     }
 }

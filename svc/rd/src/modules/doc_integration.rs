@@ -88,10 +88,10 @@ pub async fn list_documents(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<PaginatedResponse<DocumentRelation>>::error(
+                ApiResponse::<PaginatedResponse<DocumentRelation>>::error(
                     500,
                     "rls transaction unavailable",
-                )),
+                ),
             )
         }
     };
@@ -121,14 +121,14 @@ pub async fn list_documents(
                 PaginatedResponse::new(items, total_count, page as i64, page_size as i64),
                 "文档关联列表获取成功",
             );
-            (StatusCode::OK, Json(response))
+            (StatusCode::OK, response)
         }
         (_, Err(e)) | (Err(e), _) => {
             let response = ApiResponse::<PaginatedResponse<DocumentRelation>>::error(
                 500,
                 &format!("获取文档关联列表失败: {}", e),
             );
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
+            (StatusCode::INTERNAL_SERVER_ERROR, response)
         }
     }
 }
@@ -156,9 +156,7 @@ pub async fn create_document_relation(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<DocumentRelation>::server_error(
-                    "rls transaction unavailable",
-                )),
+                ApiResponse::<DocumentRelation>::server_error("rls transaction unavailable"),
             )
         }
     };
@@ -194,17 +192,17 @@ pub async fn create_document_relation(
                     tracing::error!("rls commit failed: {}", e);
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::server_error("提交事务失败")),
+                        ApiResponse::server_error("提交事务失败"),
                     );
                 }
             }
             let response = ApiResponse::success(document, "文档关联创建成功");
-            (StatusCode::CREATED, Json(response))
+            (StatusCode::CREATED, response)
         }
         Err(e) => {
             let response =
                 ApiResponse::<DocumentRelation>::from(TopemsError::internal("创建文档关联失败", e));
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
+            (StatusCode::INTERNAL_SERVER_ERROR, response)
         }
     }
 }
@@ -235,9 +233,7 @@ pub async fn get_document_relation(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<DocumentRelation>::server_error(
-                    "rls transaction unavailable",
-                )),
+                ApiResponse::<DocumentRelation>::server_error("rls transaction unavailable"),
             )
         }
     };
@@ -252,16 +248,16 @@ pub async fn get_document_relation(
     match result {
         Ok(Some(document)) => {
             let response = ApiResponse::success(document, "获取文档关联成功");
-            (StatusCode::OK, Json(response))
+            (StatusCode::OK, response)
         }
         Ok(None) => {
             let response = ApiResponse::<DocumentRelation>::not_found("文档关联不存在");
-            (StatusCode::NOT_FOUND, Json(response))
+            (StatusCode::NOT_FOUND, response)
         }
         Err(e) => {
             let response =
                 ApiResponse::<DocumentRelation>::from(TopemsError::internal("获取文档关联失败", e));
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
+            (StatusCode::INTERNAL_SERVER_ERROR, response)
         }
     }
 }
@@ -292,9 +288,7 @@ pub async fn delete_document_relation(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<()>::server_error(
-                    "rls transaction unavailable",
-                )),
+                ApiResponse::<()>::server_error("rls transaction unavailable"),
             )
         }
     };
@@ -311,20 +305,20 @@ pub async fn delete_document_relation(
                     tracing::error!("事务提交失败: {}", e);
                     return (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(ApiResponse::server_error("事务提交失败")),
+                        ApiResponse::server_error("事务提交失败"),
                     );
                 }
             }
             let response: ApiResponse<()> = ApiResponse::success((), "删除文档关联成功");
-            (StatusCode::OK, Json(response))
+            (StatusCode::OK, response)
         }
         Ok(_) => {
             let response = ApiResponse::<()>::not_found("文档关联不存在");
-            (StatusCode::NOT_FOUND, Json(response))
+            (StatusCode::NOT_FOUND, response)
         }
         Err(e) => {
             let response = ApiResponse::<()>::from(TopemsError::internal("删除文档关联失败", e));
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
+            (StatusCode::INTERNAL_SERVER_ERROR, response)
         }
     }
 }
@@ -356,10 +350,7 @@ pub async fn get_entity_documents(
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<Vec<DocumentRelation>>::error(
-                    500,
-                    "rls transaction unavailable",
-                )),
+                ApiResponse::<Vec<DocumentRelation>>::error(500, "rls transaction unavailable"),
             )
         }
     };
@@ -377,14 +368,14 @@ pub async fn get_entity_documents(
     match result {
         Ok(documents) => {
             let response = ApiResponse::success(documents, "获取实体文档列表成功");
-            (StatusCode::OK, Json(response))
+            (StatusCode::OK, response)
         }
         Err(e) => {
             let response = ApiResponse::<Vec<DocumentRelation>>::error(
                 500,
                 &format!("获取实体文档列表失败: {}", e),
             );
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
+            (StatusCode::INTERNAL_SERVER_ERROR, response)
         }
     }
 }

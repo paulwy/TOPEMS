@@ -2,7 +2,6 @@ use axum::{
     extract::{Extension, Multipart, Path, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
-    Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -57,7 +56,7 @@ pub async fn get_photos(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -84,14 +83,11 @@ pub async fn get_photos(
         Ok(p) => p,
         Err(e) => {
             tracing::error!("查询照片失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::server_error("查询失败")));
+            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("查询失败"));
         }
     };
 
-    (
-        StatusCode::OK,
-        Json(ApiResponse::success(photos, "获取照片成功")),
-    )
+    (StatusCode::OK, ApiResponse::success(photos, "获取照片成功"))
 }
 
 #[utoipa::path(
@@ -115,7 +111,7 @@ pub async fn get_audio(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -142,13 +138,13 @@ pub async fn get_audio(
         Ok(a) => a,
         Err(e) => {
             tracing::error!("查询音频失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::server_error("查询失败")));
+            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("查询失败"));
         }
     };
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(audio_files, "获取音频成功")),
+        ApiResponse::success(audio_files, "获取音频成功"),
     )
 }
 
@@ -173,7 +169,7 @@ pub async fn get_video(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -200,14 +196,11 @@ pub async fn get_video(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询视频失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::server_error("查询失败")));
+            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("查询失败"));
         }
     };
 
-    (
-        StatusCode::OK,
-        Json(ApiResponse::success(videos, "获取视频成功")),
-    )
+    (StatusCode::OK, ApiResponse::success(videos, "获取视频成功"))
 }
 
 #[utoipa::path(
@@ -237,7 +230,7 @@ pub async fn upload_media(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -254,7 +247,7 @@ pub async fn upload_media(
     if !valid_types.contains(&file_type.as_str()) {
         return (
             StatusCode::BAD_REQUEST,
-            Json(ApiResponse::bad_request("无效的文件类型")),
+            ApiResponse::bad_request("无效的文件类型"),
         );
     }
 
@@ -282,7 +275,7 @@ pub async fn upload_media(
                             tracing::error!("读取文件失败: {}", e);
                             return (
                                 StatusCode::BAD_REQUEST,
-                                Json(ApiResponse::bad_request("读取文件失败")),
+                                ApiResponse::bad_request("读取文件失败"),
                             );
                         }
                     }
@@ -297,7 +290,7 @@ pub async fn upload_media(
                 tracing::error!("解析上传数据失败: {}", e);
                 return (
                     StatusCode::BAD_REQUEST,
-                    Json(ApiResponse::bad_request("解析上传数据失败")),
+                    ApiResponse::bad_request("解析上传数据失败"),
                 );
             }
         }
@@ -306,7 +299,7 @@ pub async fn upload_media(
     if !has_file {
         return (
             StatusCode::BAD_REQUEST,
-            Json(ApiResponse::bad_request("请上传文件")),
+            ApiResponse::bad_request("请上传文件"),
         );
     }
 
@@ -331,7 +324,7 @@ pub async fn upload_media(
     .await
     {
         tracing::error!("上传媒体文件失败: {}", e);
-        return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::server_error("上传失败")));
+        return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("上传失败"));
     }
 
     let media_file = MediaFile {
@@ -350,7 +343,7 @@ pub async fn upload_media(
 
     (
         StatusCode::CREATED,
-        Json(ApiResponse::success(media_file, "上传成功")),
+        ApiResponse::success(media_file, "上传成功"),
     )
 }
 
@@ -379,7 +372,7 @@ pub async fn delete_media(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -394,19 +387,17 @@ pub async fn delete_media(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            (StatusCode::OK, Json(ApiResponse::success((), "删除成功")))
-        }
+        Ok(r) if r.rows_affected() > 0 => (StatusCode::OK, ApiResponse::success((), "删除成功")),
         Ok(_) => (
             // 数据不存在语义：HTTP 200 + 内层 code 404。
             StatusCode::OK,
-            Json(ApiResponse::not_found("文件不存在或无权删除")),
+            ApiResponse::not_found("文件不存在或无权删除"),
         ),
         Err(e) => {
             tracing::error!("删除媒体文件失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("删除失败")),
+                ApiResponse::server_error("删除失败"),
             )
         }
     }

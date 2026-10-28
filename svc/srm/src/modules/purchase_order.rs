@@ -70,15 +70,15 @@ pub async fn list_purchase_orders(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -145,7 +145,7 @@ pub async fn list_purchase_orders(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "purchase_orders": orders,
                     "total": total,
@@ -153,13 +153,11 @@ pub async fn list_purchase_orders(
                     "page_size": page_size
                 }),
                 "获取采购订单列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取采购订单列表失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::server_error(
-                "获取采购订单列表失败",
-            ))
+            ApiResponse::<serde_json::Value>::server_error("获取采购订单列表失败")
         }
     }
 }
@@ -172,15 +170,15 @@ pub async fn create_purchase_order(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreatePurchaseOrderRequest>,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -195,17 +193,13 @@ pub async fn create_purchase_order(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.po_no.is_empty() {
-        return Json(ApiResponse::<PurchaseOrder>::bad_request(
-            "采购订单编号不能为空",
-        ));
+        return ApiResponse::<PurchaseOrder>::bad_request("采购订单编号不能为空");
     }
 
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::<PurchaseOrder>::bad_request(
-                "供应商ID格式错误",
-            ));
+            return ApiResponse::<PurchaseOrder>::bad_request("供应商ID格式错误");
         }
     };
 
@@ -218,9 +212,7 @@ pub async fn create_purchase_order(
     .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
-        return Json(ApiResponse::<PurchaseOrder>::bad_request(
-            "供应商不存在或已删除",
-        ));
+        return ApiResponse::<PurchaseOrder>::bad_request("供应商不存在或已删除");
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
@@ -232,16 +224,12 @@ pub async fn create_purchase_order(
     .await;
 
     if existing.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<PurchaseOrder>::bad_request(
-            "采购订单编号已存在",
-        ));
+        return ApiResponse::<PurchaseOrder>::bad_request("采购订单编号已存在");
     }
 
     if let Some(amount) = req.total_amount {
         if amount < Decimal::ZERO {
-            return Json(ApiResponse::<PurchaseOrder>::bad_request(
-                "订单金额不能为负数",
-            ));
+            return ApiResponse::<PurchaseOrder>::bad_request("订单金额不能为负数");
         }
     }
 
@@ -284,16 +272,14 @@ pub async fn create_purchase_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(order, "采购订单创建成功"))
+            ApiResponse::success(order, "采购订单创建成功")
         }
         Err(e) => {
             tracing::error!("创建采购订单失败: {}", e);
-            Json(ApiResponse::<PurchaseOrder>::server_error(
-                "采购订单创建失败",
-            ))
+            ApiResponse::<PurchaseOrder>::server_error("采购订单创建失败")
         }
     }
 }
@@ -319,15 +305,15 @@ pub async fn get_purchase_order(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -353,13 +339,11 @@ pub async fn get_purchase_order(
     .await;
 
     match result {
-        Ok(Some(order)) => Json(ApiResponse::success(order, "获取采购订单成功")),
-        Ok(None) => Json(ApiResponse::<PurchaseOrder>::not_found("采购订单不存在")),
+        Ok(Some(order)) => ApiResponse::success(order, "获取采购订单成功"),
+        Ok(None) => ApiResponse::<PurchaseOrder>::not_found("采购订单不存在"),
         Err(e) => {
             tracing::error!("获取采购订单失败: {}", e);
-            Json(ApiResponse::<PurchaseOrder>::server_error(
-                "获取采购订单失败",
-            ))
+            ApiResponse::<PurchaseOrder>::server_error("获取采购订单失败")
         }
     }
 }
@@ -373,15 +357,15 @@ pub async fn update_purchase_order(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdatePurchaseOrderRequest>,
-) -> Json<ApiResponse<PurchaseOrder>> {
+) -> ApiResponse<PurchaseOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -405,23 +389,16 @@ pub async fn update_purchase_order(
 
     let existing = match existing {
         Ok(Some(o)) => o,
-        Ok(None) => return Json(ApiResponse::<PurchaseOrder>::not_found("采购订单不存在")),
+        Ok(None) => return ApiResponse::<PurchaseOrder>::not_found("采购订单不存在"),
         Err(e) => {
-            return Json(ApiResponse::<PurchaseOrder>::from(TopemsError::internal(
-                "查询采购订单失败",
-                e,
-            )))
+            return ApiResponse::<PurchaseOrder>::from(TopemsError::internal("查询采购订单失败", e))
         }
     };
 
     let supplier_id = if let Some(supplier_id_str) = &req.supplier_id {
         let supplier_uuid_val = match Uuid::parse_str(supplier_id_str) {
             Ok(uuid) => uuid,
-            Err(_) => {
-                return Json(ApiResponse::<PurchaseOrder>::bad_request(
-                    "供应商ID格式错误",
-                ))
-            }
+            Err(_) => return ApiResponse::<PurchaseOrder>::bad_request("供应商ID格式错误"),
         };
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
@@ -433,9 +410,7 @@ pub async fn update_purchase_order(
         .await;
 
         if supplier_exists.unwrap_or(0) == 0 {
-            return Json(ApiResponse::<PurchaseOrder>::bad_request(
-                "供应商不存在或已删除",
-            ));
+            return ApiResponse::<PurchaseOrder>::bad_request("供应商不存在或已删除");
         }
 
         supplier_uuid_val
@@ -445,9 +420,7 @@ pub async fn update_purchase_order(
 
     if let Some(amount) = req.total_amount {
         if amount < Decimal::ZERO {
-            return Json(ApiResponse::<PurchaseOrder>::bad_request(
-                "订单金额不能为负数",
-            ));
+            return ApiResponse::<PurchaseOrder>::bad_request("订单金额不能为负数");
         }
     }
 
@@ -487,16 +460,14 @@ pub async fn update_purchase_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(order, "采购订单更新成功"))
+            ApiResponse::success(order, "采购订单更新成功")
         }
         Err(e) => {
             tracing::error!("更新采购订单失败: {}", e);
-            Json(ApiResponse::<PurchaseOrder>::server_error(
-                "采购订单更新失败",
-            ))
+            ApiResponse::<PurchaseOrder>::server_error("采购订单更新失败")
         }
     }
 }
@@ -509,15 +480,15 @@ pub async fn delete_purchase_order(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -547,15 +518,15 @@ pub async fn delete_purchase_order(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(true, "采购订单删除成功"))
+            ApiResponse::success(true, "采购订单删除成功")
         }
-        Ok(_) => Json(ApiResponse::<bool>::not_found("采购订单不存在")),
+        Ok(_) => ApiResponse::<bool>::not_found("采购订单不存在"),
         Err(e) => {
             tracing::error!("删除采购订单失败: {}", e);
-            Json(ApiResponse::<bool>::server_error("采购订单删除失败"))
+            ApiResponse::<bool>::server_error("采购订单删除失败")
         }
     }
 }

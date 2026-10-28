@@ -435,10 +435,10 @@ pub struct BulkTransitionRequest {
 pub async fn create_metadata(
     State(state): State<AppState>,
     Json(req): Json<CreateMetadataRequest>,
-) -> Json<ApiResponse<MetadataObject>> {
+) -> ApiResponse<MetadataObject> {
     let object_type = match parse_metadata_type(&req.object_type) {
         Some(t) => t,
-        None => return Json(ApiResponse::bad_request("无效的元数据对象类型")),
+        None => return ApiResponse::bad_request("无效的元数据对象类型"),
     };
 
     let now = chrono::Utc::now().to_rfc3339();
@@ -472,10 +472,10 @@ pub async fn create_metadata(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("写入元数据对象失败: {e}")));
+        return ApiResponse::server_error(&format!("写入元数据对象失败: {e}"));
     }
 
-    Json(ApiResponse::success(obj, "元数据对象已创建"))
+    ApiResponse::success(obj, "元数据对象已创建")
 }
 
 #[utoipa::path(
@@ -494,7 +494,7 @@ pub async fn create_metadata(
 pub async fn get_metadata(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<MetadataObject>> {
+) -> ApiResponse<MetadataObject> {
     // K1：真表读取。
     let row = sqlx::query(&format!(
         "SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects WHERE id = $1 LIMIT 1"
@@ -505,8 +505,8 @@ pub async fn get_metadata(
     .unwrap_or(None);
 
     match row {
-        Some(r) => Json(ApiResponse::success(metadata_from_row(&r), "元数据对象")),
-        None => Json(ApiResponse::not_found("未找到元数据对象")),
+        Some(r) => ApiResponse::success(metadata_from_row(&r), "元数据对象"),
+        None => ApiResponse::not_found("未找到元数据对象"),
     }
 }
 
@@ -523,7 +523,7 @@ pub async fn get_metadata(
 pub async fn list_metadata(
     State(state): State<AppState>,
     Query(params): Query<ListMetadataQuery>,
-) -> Json<ApiResponse<Vec<MetadataObject>>> {
+) -> ApiResponse<Vec<MetadataObject>> {
     // K1：真表读取，可选 object_type 过滤。
     let rows = sqlx::query(&format!(
         "SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects
@@ -535,7 +535,7 @@ pub async fn list_metadata(
     .await
     .unwrap_or_default();
     let list: Vec<MetadataObject> = rows.iter().map(metadata_from_row).collect();
-    Json(ApiResponse::success(list, "元数据对象列表"))
+    ApiResponse::success(list, "元数据对象列表")
 }
 
 #[utoipa::path(
@@ -551,7 +551,7 @@ pub async fn list_metadata(
 pub async fn search_metadata(
     State(state): State<AppState>,
     Query(params): Query<SearchMetadataQuery>,
-) -> Json<ApiResponse<Vec<MetadataObject>>> {
+) -> ApiResponse<Vec<MetadataObject>> {
     // K1：真表 LIKE 搜索。
     let pattern = format!("%{}%", params.q);
     let rows = sqlx::query(&format!(
@@ -564,10 +564,10 @@ pub async fn search_metadata(
     .await;
     let results: Vec<MetadataObject> = match rows {
         Ok(r) => r.iter().map(metadata_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("搜索元数据失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("搜索元数据失败: {e}")),
     };
 
-    Json(ApiResponse::success(results, "元数据搜索结果"))
+    ApiResponse::success(results, "元数据搜索结果")
 }
 
 #[utoipa::path(
@@ -587,7 +587,7 @@ pub async fn update_metadata(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateMetadataRequest>,
-) -> Json<ApiResponse<MetadataObject>> {
+) -> ApiResponse<MetadataObject> {
     // K1：真表更新（COALESCE 仅覆盖传入字段），updated_at 刷新。
     let tags_json = req
         .tags
@@ -615,12 +615,8 @@ pub async fn update_metadata(
 
     match res {
         Ok(r) if r.rows_affected() > 0 => {}
-        Ok(_) => return Json(ApiResponse::not_found("未找到元数据对象")),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "更新元数据对象失败: {e}"
-            )))
-        }
+        Ok(_) => return ApiResponse::not_found("未找到元数据对象"),
+        Err(e) => return ApiResponse::server_error(&format!("更新元数据对象失败: {e}")),
     }
 
     let row = sqlx::query(&format!(
@@ -632,11 +628,8 @@ pub async fn update_metadata(
     .unwrap_or(None);
 
     match row {
-        Some(r) => Json(ApiResponse::success(
-            metadata_from_row(&r),
-            "元数据对象已更新",
-        )),
-        None => Json(ApiResponse::not_found("未找到元数据对象")),
+        Some(r) => ApiResponse::success(metadata_from_row(&r), "元数据对象已更新"),
+        None => ApiResponse::not_found("未找到元数据对象"),
     }
 }
 
@@ -656,7 +649,7 @@ pub async fn update_metadata(
 pub async fn delete_metadata(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     // K1：真表删除。
     let res = sqlx::query("DELETE FROM master_data.mdm_metadata_objects WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))")
         .bind(&id)
@@ -664,11 +657,9 @@ pub async fn delete_metadata(
         .await;
 
     match res {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "元数据对象已删除")),
-        Ok(_) => Json(ApiResponse::not_found("未找到元数据对象")),
-        Err(e) => Json(ApiResponse::server_error(&format!(
-            "删除元数据对象失败: {e}"
-        ))),
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "元数据对象已删除"),
+        Ok(_) => ApiResponse::not_found("未找到元数据对象"),
+        Err(e) => ApiResponse::server_error(&format!("删除元数据对象失败: {e}")),
     }
 }
 
@@ -689,7 +680,7 @@ pub async fn add_attribute(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<AddAttributeRequest>,
-) -> Json<ApiResponse<MetadataAttribute>> {
+) -> ApiResponse<MetadataAttribute> {
     // K1：写真表 master_data.mdm_metadata_attributes。
     let attr = MetadataAttribute {
         id: uuid::Uuid::new_v4().to_string(),
@@ -714,10 +705,10 @@ pub async fn add_attribute(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("添加属性失败: {e}")));
+        return ApiResponse::server_error(&format!("添加属性失败: {e}"));
     }
 
-    Json(ApiResponse::success(attr, "属性已添加"))
+    ApiResponse::success(attr, "属性已添加")
 }
 #[utoipa::path(
     post,
@@ -739,7 +730,7 @@ pub async fn add_attribute(
 pub async fn add_tag(
     State(state): State<AppState>,
     Json(req): Json<AddTagRequest>,
-) -> Json<ApiResponse<MetadataTag>> {
+) -> ApiResponse<MetadataTag> {
     // K1：写真表 master_data.mdm_metadata_tags。
     let tag = MetadataTag {
         id: uuid::Uuid::new_v4().to_string(),
@@ -762,10 +753,10 @@ pub async fn add_tag(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("添加标签失败: {e}")));
+        return ApiResponse::server_error(&format!("添加标签失败: {e}"));
     }
 
-    Json(ApiResponse::success(tag, "标签已添加"))
+    ApiResponse::success(tag, "标签已添加")
 }
 #[utoipa::path(
     get,
@@ -784,7 +775,7 @@ pub async fn add_tag(
     clippy::cast_sign_loss,
     clippy::cast_possible_truncation
 )]
-pub async fn get_metadata_stats(State(state): State<AppState>) -> Json<ApiResponse<MetadataStats>> {
+pub async fn get_metadata_stats(State(state): State<AppState>) -> ApiResponse<MetadataStats> {
     // K1：数据源改真表（objects/attributes/tags），聚合逻辑保留。
     let obj_rows = sqlx::query(&format!(
         r#"SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects ORDER BY created_at DESC"#,
@@ -793,7 +784,7 @@ pub async fn get_metadata_stats(State(state): State<AppState>) -> Json<ApiRespon
     .await;
     let objects: Vec<MetadataObject> = match obj_rows {
         Ok(r) => r.iter().map(metadata_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询元数据失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询元数据失败: {e}")),
     };
 
     let attr_count =
@@ -818,7 +809,7 @@ pub async fn get_metadata_stats(State(state): State<AppState>) -> Json<ApiRespon
     recent_created.sort_by(|a, b| b.created_at.cmp(&a.created_at));
     recent_created.truncate(10);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         MetadataStats {
             total_objects: objects.len(),
             total_attributes: total_attributes as usize,
@@ -827,7 +818,7 @@ pub async fn get_metadata_stats(State(state): State<AppState>) -> Json<ApiRespon
             recent_created,
         },
         "元数据统计",
-    ))
+    )
 }
 #[utoipa::path(
     post,
@@ -843,7 +834,7 @@ pub async fn get_metadata_stats(State(state): State<AppState>) -> Json<ApiRespon
 pub async fn build_lineage_graph(
     State(state): State<AppState>,
     Json(req): Json<BuildLineageGraphRequest>,
-) -> Json<ApiResponse<LineageGraph>> {
+) -> ApiResponse<LineageGraph> {
     // K1：算法照搬，写入真表（nodes/edges/graphs）。
     let now = chrono::Utc::now().to_rfc3339();
     let graph_id = uuid::Uuid::new_v4().to_string();
@@ -910,7 +901,7 @@ pub async fn build_lineage_graph(
         .execute(&state.db)
         .await
         {
-            return Json(ApiResponse::server_error(&format!("写入血缘节点失败: {e}")));
+            return ApiResponse::server_error(&format!("写入血缘节点失败: {e}"));
         }
     }
     for edge in edges.iter() {
@@ -928,7 +919,7 @@ pub async fn build_lineage_graph(
         .execute(&state.db)
         .await
         {
-            return Json(ApiResponse::server_error(&format!("写入血缘边失败: {e}")));
+            return ApiResponse::server_error(&format!("写入血缘边失败: {e}"));
         }
     }
 
@@ -945,10 +936,10 @@ pub async fn build_lineage_graph(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("写入血缘图谱失败: {e}")));
+        return ApiResponse::server_error(&format!("写入血缘图谱失败: {e}"));
     }
 
-    Json(ApiResponse::success(graph, "血缘图谱已构建"))
+    ApiResponse::success(graph, "血缘图谱已构建")
 }
 #[utoipa::path(
     get,
@@ -964,7 +955,7 @@ pub async fn build_lineage_graph(
 pub async fn get_lineage_graph(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<LineageGraph>> {
+) -> ApiResponse<LineageGraph> {
     // K1：读真表。
     let row = sqlx::query(&format!(
         r#"SELECT {GRAPH_COLS} FROM master_data.mdm_v60_lineage_graphs WHERE id = $1 LIMIT 1"#,
@@ -973,9 +964,9 @@ pub async fn get_lineage_graph(
     .fetch_optional(&state.db)
     .await;
     match row {
-        Ok(Some(r)) => Json(ApiResponse::success(lineage_graph_from_row(&r), "血缘图谱")),
-        Ok(None) => Json(ApiResponse::not_found("未找到血缘图谱")),
-        Err(e) => Json(ApiResponse::server_error(&format!("查询血缘图谱失败: {e}"))),
+        Ok(Some(r)) => ApiResponse::success(lineage_graph_from_row(&r), "血缘图谱"),
+        Ok(None) => ApiResponse::not_found("未找到血缘图谱"),
+        Err(e) => ApiResponse::server_error(&format!("查询血缘图谱失败: {e}")),
     }
 }
 #[utoipa::path(
@@ -992,12 +983,12 @@ pub async fn get_lineage_graph(
 pub async fn get_upstream(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Vec<LineageNodeV60>>> {
+) -> ApiResponse<Vec<LineageNodeV60>> {
     // K1：真表全量加载 + 内存 BFS（逻辑保留）。
     let result = upstream_downstream(&state, &id, true).await;
     match result {
-        Ok(nodes) => Json(ApiResponse::success(nodes, "上游血缘节点")),
-        Err(e) => Json(ApiResponse::server_error(&format!("查询上游血缘失败: {e}"))),
+        Ok(nodes) => ApiResponse::success(nodes, "上游血缘节点"),
+        Err(e) => ApiResponse::server_error(&format!("查询上游血缘失败: {e}")),
     }
 }
 #[utoipa::path(
@@ -1014,12 +1005,12 @@ pub async fn get_upstream(
 pub async fn get_downstream(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Vec<LineageNodeV60>>> {
+) -> ApiResponse<Vec<LineageNodeV60>> {
     // K1：真表全量加载 + 内存 BFS（逻辑保留）。
     let result = upstream_downstream(&state, &id, false).await;
     match result {
-        Ok(nodes) => Json(ApiResponse::success(nodes, "下游血缘节点")),
-        Err(e) => Json(ApiResponse::server_error(&format!("查询下游血缘失败: {e}"))),
+        Ok(nodes) => ApiResponse::success(nodes, "下游血缘节点"),
+        Err(e) => ApiResponse::server_error(&format!("查询下游血缘失败: {e}")),
     }
 }
 #[utoipa::path(
@@ -1035,7 +1026,7 @@ pub async fn get_downstream(
 pub async fn get_path(
     State(state): State<AppState>,
     Json(req): Json<GetPathRequest>,
-) -> Json<ApiResponse<Vec<LineageEdgeV60>>> {
+) -> ApiResponse<Vec<LineageEdgeV60>> {
     // K1：真表全量加载 + 内存 BFS（逻辑保留）。
     let edge_rows = sqlx::query(&format!(
         r#"SELECT {EDGE_COLS} FROM master_data.mdm_v60_lineage_edges ORDER BY id"#,
@@ -1044,7 +1035,7 @@ pub async fn get_path(
     .await;
     let edges: Vec<LineageEdgeV60> = match edge_rows {
         Ok(r) => r.iter().map(lineage_edge_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询血缘边失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询血缘边失败: {e}")),
     };
 
     let mut adjacency: HashMap<String, Vec<LineageEdgeV60>> = HashMap::new();
@@ -1060,7 +1051,7 @@ pub async fn get_path(
 
     while let Some((current, path)) = queue.pop() {
         if current == req.target_id {
-            return Json(ApiResponse::success(path, "血缘路径"));
+            return ApiResponse::success(path, "血缘路径");
         }
 
         if !visited.insert(current.clone()) {
@@ -1076,7 +1067,7 @@ pub async fn get_path(
         }
     }
 
-    Json(ApiResponse::not_found("未找到血缘路径"))
+    ApiResponse::not_found("未找到血缘路径")
 }
 #[utoipa::path(
     get,
@@ -1095,15 +1086,15 @@ pub async fn get_path(
 pub async fn get_lineage_impact(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<LineageImpact>> {
+) -> ApiResponse<LineageImpact> {
     // K1：真表 + 复用 upstream/downstream 逻辑。
     let downstream = match upstream_downstream(&state, &id, false).await {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询下游血缘失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询下游血缘失败: {e}")),
     };
     let upstream = match upstream_downstream(&state, &id, true).await {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询上游血缘失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询上游血缘失败: {e}")),
     };
 
     let affected_downstream = downstream.len();
@@ -1111,7 +1102,7 @@ pub async fn get_lineage_impact(
     let confidence = if downstream.is_empty() { 0.5 } else { 0.9 };
     let impact_score = (affected_downstream as f64 * 0.3 + affected_nodes as f64 * 0.1).min(1.0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         LineageImpact {
             entity_id: id,
             entity_type: "entity".to_string(),
@@ -1121,7 +1112,7 @@ pub async fn get_lineage_impact(
             impact_score,
         },
         "血缘影响分析",
-    ))
+    )
 }
 #[utoipa::path(
     get,
@@ -1134,9 +1125,7 @@ pub async fn get_lineage_impact(
     tag = "metadata_v60"
 )]
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-pub async fn get_lineage_dashboard(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<LineageDashboard>> {
+pub async fn get_lineage_dashboard(State(state): State<AppState>) -> ApiResponse<LineageDashboard> {
     // K1：真表全量加载 + 聚合逻辑保留。
     let graph_rows = sqlx::query(&format!(
         r#"SELECT {GRAPH_COLS} FROM master_data.mdm_v60_lineage_graphs ORDER BY id"#,
@@ -1145,7 +1134,7 @@ pub async fn get_lineage_dashboard(
     .await;
     let graphs: Vec<LineageGraph> = match graph_rows {
         Ok(r) => r.iter().map(lineage_graph_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询血缘图谱失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询血缘图谱失败: {e}")),
     };
 
     let node_rows = sqlx::query(&format!(
@@ -1155,7 +1144,7 @@ pub async fn get_lineage_dashboard(
     .await;
     let nodes: Vec<LineageNodeV60> = match node_rows {
         Ok(r) => r.iter().map(lineage_node_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询血缘节点失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询血缘节点失败: {e}")),
     };
 
     let edge_rows = sqlx::query(&format!(
@@ -1165,7 +1154,7 @@ pub async fn get_lineage_dashboard(
     .await;
     let edges: Vec<LineageEdgeV60> = match edge_rows {
         Ok(r) => r.iter().map(lineage_edge_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询血缘边失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询血缘边失败: {e}")),
     };
 
     let entity_types: Vec<String> = nodes
@@ -1183,7 +1172,7 @@ pub async fn get_lineage_dashboard(
 
     let deepest_level = nodes.iter().map(|n| n.level).max().unwrap_or(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         LineageDashboard {
             total_graphs: graphs.len(),
             total_nodes: nodes.len(),
@@ -1193,7 +1182,7 @@ pub async fn get_lineage_dashboard(
             deepest_level,
         },
         "血缘看板",
-    ))
+    )
 }
 #[utoipa::path(
     get,
@@ -1206,7 +1195,7 @@ pub async fn get_lineage_dashboard(
 pub async fn export_lineage(
     State(state): State<AppState>,
     Query(params): Query<ExportLineageQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // K1：真表全量导出。
     let graph_rows = sqlx::query(&format!(
         r#"SELECT {GRAPH_COLS} FROM master_data.mdm_v60_lineage_graphs ORDER BY id"#,
@@ -1215,7 +1204,7 @@ pub async fn export_lineage(
     .await;
     let graphs: Vec<LineageGraph> = match graph_rows {
         Ok(r) => r.iter().map(lineage_graph_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询血缘图谱失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询血缘图谱失败: {e}")),
     };
 
     let node_rows = sqlx::query(&format!(
@@ -1225,7 +1214,7 @@ pub async fn export_lineage(
     .await;
     let nodes: Vec<LineageNodeV60> = match node_rows {
         Ok(r) => r.iter().map(lineage_node_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询血缘节点失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询血缘节点失败: {e}")),
     };
 
     let edge_rows = sqlx::query(&format!(
@@ -1235,10 +1224,10 @@ pub async fn export_lineage(
     .await;
     let edges: Vec<LineageEdgeV60> = match edge_rows {
         Ok(r) => r.iter().map(lineage_edge_from_row).collect(),
-        Err(e) => return Json(ApiResponse::server_error(&format!("查询血缘边失败: {e}"))),
+        Err(e) => return ApiResponse::server_error(&format!("查询血缘边失败: {e}")),
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "graphs": graphs,
             "nodes": nodes,
@@ -1247,7 +1236,7 @@ pub async fn export_lineage(
             "format": params.format.unwrap_or_else(|| "json".to_string()),
         }),
         "血缘导出",
-    ))
+    )
 }
 #[utoipa::path(
     get,
@@ -1265,7 +1254,7 @@ pub async fn export_lineage(
 pub async fn get_current_stage(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     // K1：读真表 mdm_lifecycle_stages。
     let row = sqlx::query(
         "SELECT stage FROM master_data.mdm_lifecycle_stages WHERE entity_id = $1 LIMIT 1",
@@ -1276,15 +1265,10 @@ pub async fn get_current_stage(
     match row {
         Ok(Some(r)) => {
             let stage = r.get::<String, _>("stage");
-            Json(ApiResponse::success(
-                serde_json::json!({"stage": stage}),
-                "当前生命周期阶段",
-            ))
+            ApiResponse::success(serde_json::json!({"stage": stage}), "当前生命周期阶段")
         }
-        Ok(None) => Json(ApiResponse::not_found("未找到实体的生命周期信息")),
-        Err(e) => Json(ApiResponse::server_error(&format!(
-            "查询生命周期阶段失败: {e}"
-        ))),
+        Ok(None) => ApiResponse::not_found("未找到实体的生命周期信息"),
+        Err(e) => ApiResponse::server_error(&format!("查询生命周期阶段失败: {e}")),
     }
 }
 #[utoipa::path(
@@ -1304,7 +1288,7 @@ pub async fn transition_stage(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<TransitionRequest>,
-) -> Json<ApiResponse<LifecycleHistory>> {
+) -> ApiResponse<LifecycleHistory> {
     // K1：写真表（UPSERT stages + INSERT history）。
     let new_stage = parse_lifecycle_stage(&req.new_stage).unwrap_or(LifecycleStage::Created);
     let now = chrono::Utc::now().to_rfc3339();
@@ -1318,11 +1302,7 @@ pub async fn transition_stage(
     let from_stage = match from_row {
         Ok(Some(r)) => parse_lifecycle_stage(&r.get::<String, _>("stage")),
         Ok(None) => None,
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询生命周期阶段失败: {e}"
-            )))
-        }
+        Err(e) => return ApiResponse::server_error(&format!("查询生命周期阶段失败: {e}")),
     };
 
     let history = LifecycleHistory {
@@ -1345,9 +1325,7 @@ pub async fn transition_stage(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!(
-            "更新生命周期阶段失败: {e}"
-        )));
+        return ApiResponse::server_error(&format!("更新生命周期阶段失败: {e}"));
     }
 
     if let Err(e) = sqlx::query(
@@ -1365,12 +1343,10 @@ pub async fn transition_stage(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!(
-            "写入生命周期历史失败: {e}"
-        )));
+        return ApiResponse::server_error(&format!("写入生命周期历史失败: {e}"));
     }
 
-    Json(ApiResponse::success(history, "生命周期阶段已变更"))
+    ApiResponse::success(history, "生命周期阶段已变更")
 }
 #[utoipa::path(
     get,
@@ -1388,7 +1364,7 @@ pub async fn transition_stage(
 pub async fn get_lifecycle_history(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Vec<LifecycleHistory>>> {
+) -> ApiResponse<Vec<LifecycleHistory>> {
     // K1：读真表。
     let rows = sqlx::query(&format!(
         r#"SELECT {HISTORY_COLS} FROM master_data.mdm_lifecycle_history
@@ -1399,14 +1375,10 @@ pub async fn get_lifecycle_history(
     .await;
     let history: Vec<LifecycleHistory> = match rows {
         Ok(r) => r.iter().map(lifecycle_history_from_row).collect(),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询生命周期历史失败: {e}"
-            )))
-        }
+        Err(e) => return ApiResponse::server_error(&format!("查询生命周期历史失败: {e}")),
     };
 
-    Json(ApiResponse::success(history, "生命周期历史"))
+    ApiResponse::success(history, "生命周期历史")
 }
 #[utoipa::path(
     post,
@@ -1428,7 +1400,7 @@ pub async fn get_lifecycle_history(
 pub async fn create_policy(
     State(state): State<AppState>,
     Json(req): Json<CreatePolicyRequest>,
-) -> Json<ApiResponse<LifecyclePolicy>> {
+) -> ApiResponse<LifecyclePolicy> {
     // K1：写真表 master_data.mdm_lifecycle_policies。
     let policy = LifecyclePolicy {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1451,12 +1423,10 @@ pub async fn create_policy(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!(
-            "创建生命周期策略失败: {e}"
-        )));
+        return ApiResponse::server_error(&format!("创建生命周期策略失败: {e}"));
     }
 
-    Json(ApiResponse::success(policy, "生命周期策略已创建"))
+    ApiResponse::success(policy, "生命周期策略已创建")
 }
 #[utoipa::path(
     get,
@@ -1471,7 +1441,7 @@ pub async fn create_policy(
 pub async fn get_policies(
     State(state): State<AppState>,
     Query(params): Query<GetPoliciesQuery>,
-) -> Json<ApiResponse<Vec<LifecyclePolicy>>> {
+) -> ApiResponse<Vec<LifecyclePolicy>> {
     // K1：真表 COALESCE 过滤。
     let rows = sqlx::query(&format!(
         r#"SELECT {POLICY_COLS} FROM master_data.mdm_lifecycle_policies
@@ -1482,14 +1452,10 @@ pub async fn get_policies(
     .await;
     let policies: Vec<LifecyclePolicy> = match rows {
         Ok(r) => r.iter().map(lifecycle_policy_from_row).collect(),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询生命周期策略失败: {e}"
-            )))
-        }
+        Err(e) => return ApiResponse::server_error(&format!("查询生命周期策略失败: {e}")),
     };
 
-    Json(ApiResponse::success(policies, "生命周期策略列表"))
+    ApiResponse::success(policies, "生命周期策略列表")
 }
 #[utoipa::path(
     post,
@@ -1501,9 +1467,7 @@ pub async fn get_policies(
     ),
     tag = "metadata_v60"
 )]
-pub async fn auto_transition(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<LifecycleHistory>>> {
+pub async fn auto_transition(State(state): State<AppState>) -> ApiResponse<Vec<LifecycleHistory>> {
     // K1：读真表 policies + stages，逐 transition 执行（逻辑保留）。
     let policy_rows = sqlx::query(&format!(
         r#"SELECT {POLICY_COLS} FROM master_data.mdm_lifecycle_policies ORDER BY entity_type"#,
@@ -1512,11 +1476,7 @@ pub async fn auto_transition(
     .await;
     let policies: Vec<LifecyclePolicy> = match policy_rows {
         Ok(r) => r.iter().map(lifecycle_policy_from_row).collect(),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询生命周期策略失败: {e}"
-            )))
-        }
+        Err(e) => return ApiResponse::server_error(&format!("查询生命周期策略失败: {e}")),
     };
 
     let stage_rows = sqlx::query(
@@ -1535,11 +1495,7 @@ pub async fn auto_transition(
                 )
             })
             .collect(),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询生命周期阶段失败: {e}"
-            )))
-        }
+        Err(e) => return ApiResponse::server_error(&format!("查询生命周期阶段失败: {e}")),
     };
 
     let mut results = Vec::new();
@@ -1582,9 +1538,9 @@ pub async fn auto_transition(
                             .execute(&state.db)
                             .await
                             {
-                                return Json(ApiResponse::server_error(&format!(
+                                return ApiResponse::server_error(&format!(
                                     "更新生命周期阶段失败: {e}"
-                                )));
+                                ));
                             }
 
                             if let Err(e) = sqlx::query(
@@ -1602,9 +1558,9 @@ pub async fn auto_transition(
                             .execute(&state.db)
                             .await
                             {
-                                return Json(ApiResponse::server_error(
+                                return ApiResponse::server_error(
                                     &format!("写入生命周期历史失败: {e}"),
-                                ));
+                                );
                             }
 
                             current.insert(entity_id.clone(), to_stage);
@@ -1616,7 +1572,7 @@ pub async fn auto_transition(
         }
     }
 
-    Json(ApiResponse::success(results, "自动生命周期流转完成"))
+    ApiResponse::success(results, "自动生命周期流转完成")
 }
 #[utoipa::path(
     get,
@@ -1637,7 +1593,7 @@ pub async fn auto_transition(
 )]
 pub async fn get_lifecycle_dashboard(
     State(state): State<AppState>,
-) -> Json<ApiResponse<LifecycleDashboard>> {
+) -> ApiResponse<LifecycleDashboard> {
     // K1：真表全量加载 + 聚合逻辑保留。
     let stage_rows = sqlx::query(
         "SELECT entity_id, stage FROM master_data.mdm_lifecycle_stages ORDER BY entity_id",
@@ -1655,11 +1611,7 @@ pub async fn get_lifecycle_dashboard(
                 )
             })
             .collect(),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询生命周期阶段失败: {e}"
-            )))
-        }
+        Err(e) => return ApiResponse::server_error(&format!("查询生命周期阶段失败: {e}")),
     };
 
     let policy_count =
@@ -1674,11 +1626,7 @@ pub async fn get_lifecycle_dashboard(
     .await;
     let history: Vec<LifecycleHistory> = match hist_rows {
         Ok(r) => r.iter().map(lifecycle_history_from_row).collect(),
-        Err(e) => {
-            return Json(ApiResponse::server_error(&format!(
-                "查询生命周期历史失败: {e}"
-            )))
-        }
+        Err(e) => return ApiResponse::server_error(&format!("查询生命周期历史失败: {e}")),
     };
 
     let policies_count = match policy_count {
@@ -1696,7 +1644,7 @@ pub async fn get_lifecycle_dashboard(
     recent_transitions.sort_by(|a, b| b.changed_at.cmp(&a.changed_at));
     recent_transitions.truncate(10);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         LifecycleDashboard {
             total_entities: stages.len(),
             by_stage,
@@ -1704,7 +1652,7 @@ pub async fn get_lifecycle_dashboard(
             recent_transitions,
         },
         "生命周期看板",
-    ))
+    )
 }
 #[utoipa::path(
     post,
@@ -1719,7 +1667,7 @@ pub async fn get_lifecycle_dashboard(
 pub async fn bulk_transition(
     State(state): State<AppState>,
     Json(req): Json<BulkTransitionRequest>,
-) -> Json<ApiResponse<Vec<LifecycleHistory>>> {
+) -> ApiResponse<Vec<LifecycleHistory>> {
     // K1：循环执行生命周期流转（真表 UPSERT + history）。
     let target_stage = parse_lifecycle_stage(&req.target_stage).unwrap_or(LifecycleStage::Created);
     let reason = req.reason.unwrap_or_default();
@@ -1738,11 +1686,7 @@ pub async fn bulk_transition(
         let from_stage = match from_row {
             Ok(Some(r)) => parse_lifecycle_stage(&r.get::<String, _>("stage")),
             Ok(None) => None,
-            Err(e) => {
-                return Json(ApiResponse::server_error(&format!(
-                    "查询生命周期阶段失败: {e}"
-                )))
-            }
+            Err(e) => return ApiResponse::server_error(&format!("查询生命周期阶段失败: {e}")),
         };
 
         let history = LifecycleHistory {
@@ -1765,9 +1709,7 @@ pub async fn bulk_transition(
         .execute(&state.db)
         .await
         {
-            return Json(ApiResponse::server_error(&format!(
-                "更新生命周期阶段失败: {e}"
-            )));
+            return ApiResponse::server_error(&format!("更新生命周期阶段失败: {e}"));
         }
 
         if let Err(e) = sqlx::query(
@@ -1785,15 +1727,13 @@ pub async fn bulk_transition(
         .execute(&state.db)
         .await
         {
-            return Json(ApiResponse::server_error(&format!(
-                "写入生命周期历史失败: {e}"
-            )));
+            return ApiResponse::server_error(&format!("写入生命周期历史失败: {e}"));
         }
 
         results.push(history);
     }
 
-    Json(ApiResponse::success(results, "批量生命周期流转完成"))
+    ApiResponse::success(results, "批量生命周期流转完成")
 }
 async fn upstream_downstream(
     state: &AppState,

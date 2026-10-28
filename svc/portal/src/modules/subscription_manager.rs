@@ -817,7 +817,7 @@ pub struct SubscribeQuery {
 pub async fn subscribe_handler(
     State(_state): State<AppState>,
     Json(req): Json<SubscribeRequest>,
-) -> Json<ApiResponse<Subscriber>> {
+) -> ApiResponse<Subscriber> {
     let channels: Vec<SubscriptionChannel> = req
         .channels
         .iter()
@@ -825,12 +825,12 @@ pub async fn subscribe_handler(
         .collect();
 
     if channels.is_empty() {
-        return Json(ApiResponse::bad_request("至少需要订阅一个有效频道"));
+        return ApiResponse::bad_request("至少需要订阅一个有效频道");
     }
 
     match SubscriptionGateway::subscribe(req.client_id, channels).await {
-        Ok(subscriber) => Json(ApiResponse::success(subscriber, "订阅成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(subscriber) => ApiResponse::success(subscriber, "订阅成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -850,11 +850,11 @@ pub async fn subscribe_handler(
 pub async fn unsubscribe_handler(
     State(_state): State<AppState>,
     Path(subscriber_id): Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     match SubscriptionGateway::unsubscribe(&subscriber_id).await {
-        Ok(true) => Json(ApiResponse::success(true, "取消订阅成功")),
-        Ok(false) => Json(ApiResponse::not_found("订阅者不存在")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(true) => ApiResponse::success(true, "取消订阅成功"),
+        Ok(false) => ApiResponse::not_found("订阅者不存在"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -870,9 +870,9 @@ pub async fn unsubscribe_handler(
 )]
 pub async fn get_subscribers_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<Subscriber>>> {
+) -> ApiResponse<Vec<Subscriber>> {
     let subscribers = SubscriptionGateway::get_active_subscribers().await;
-    Json(ApiResponse::success(subscribers, "活跃订阅者列表"))
+    ApiResponse::success(subscribers, "活跃订阅者列表")
 }
 
 #[utoipa::path(
@@ -887,9 +887,9 @@ pub async fn get_subscribers_handler(
 )]
 pub async fn get_channels_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<ChannelStats>>> {
+) -> ApiResponse<Vec<ChannelStats>> {
     let stats = SubscriptionGateway::get_channel_stats().await;
-    Json(ApiResponse::success(stats, "频道统计"))
+    ApiResponse::success(stats, "频道统计")
 }
 
 #[utoipa::path(
@@ -905,15 +905,15 @@ pub async fn get_channels_handler(
 pub async fn publish_handler(
     State(_state): State<AppState>,
     Json(req): Json<PublishRequest>,
-) -> Json<ApiResponse<SubscriptionMessage>> {
+) -> ApiResponse<SubscriptionMessage> {
     let channel = match SubscriptionChannel::from_str(&req.channel) {
         Some(ch) => ch,
-        None => return Json(ApiResponse::bad_request("无效的频道名称")),
+        None => return ApiResponse::bad_request("无效的频道名称"),
     };
 
     match SubscriptionGateway::publish(channel, req.payload).await {
-        Ok(msg) => Json(ApiResponse::success(msg, "消息发布成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(msg) => ApiResponse::success(msg, "消息发布成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -932,7 +932,7 @@ pub async fn publish_handler(
 pub async fn publish_to_queue_handler(
     State(_state): State<AppState>,
     Json(req): Json<PublishToQueueRequest>,
-) -> Json<ApiResponse<QueueMessage>> {
+) -> ApiResponse<QueueMessage> {
     match MessageQueueBridge::publish_to_queue(
         &req.queue_name,
         &req.topic,
@@ -942,8 +942,8 @@ pub async fn publish_to_queue_handler(
     )
     .await
     {
-        Ok(msg) => Json(ApiResponse::success(msg, "消息已发布到队列")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(msg) => ApiResponse::success(msg, "消息已发布到队列"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -960,9 +960,9 @@ pub async fn publish_to_queue_handler(
 pub async fn get_queue_stats_handler(
     State(_state): State<AppState>,
     Query(params): Query<QueueStatsQuery>,
-) -> Json<ApiResponse<Vec<QueueStats>>> {
+) -> ApiResponse<Vec<QueueStats>> {
     let stats = MessageQueueBridge::get_queue_stats(params.queue_name.as_deref()).await;
-    Json(ApiResponse::success(stats, "队列统计"))
+    ApiResponse::success(stats, "队列统计")
 }
 
 #[utoipa::path(
@@ -978,7 +978,7 @@ pub async fn get_queue_stats_handler(
 pub async fn create_queue_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateQueueRequest>,
-) -> Json<ApiResponse<QueueConfig>> {
+) -> ApiResponse<QueueConfig> {
     let provider = req
         .provider
         .as_deref()
@@ -993,8 +993,8 @@ pub async fn create_queue_handler(
     };
 
     match MessageQueueBridge::create_queue(config).await {
-        Ok(cfg) => Json(ApiResponse::success(cfg, "队列创建成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(cfg) => ApiResponse::success(cfg, "队列创建成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1011,10 +1011,10 @@ pub async fn create_queue_handler(
 pub async fn purge_queue_handler(
     State(_state): State<AppState>,
     Json(req): Json<PurgeQueueRequest>,
-) -> Json<ApiResponse<u64>> {
+) -> ApiResponse<u64> {
     match MessageQueueBridge::purge_queue(&req.queue_name).await {
-        Ok(count) => Json(ApiResponse::success(count, "队列已清空")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(count) => ApiResponse::success(count, "队列已清空"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1028,11 +1028,9 @@ pub async fn purge_queue_handler(
     ),
     tag = "SubscriptionManager"
 )]
-pub async fn get_dlq_handler(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<DeadLetterEntry>>> {
+pub async fn get_dlq_handler(State(_state): State<AppState>) -> ApiResponse<Vec<DeadLetterEntry>> {
     let dlq = MessageQueueBridge::get_dead_letter_queue().await;
-    Json(ApiResponse::success(dlq, "死信队列"))
+    ApiResponse::success(dlq, "死信队列")
 }
 
 // ==================== API 处理器: 推送优化 ====================
@@ -1047,11 +1045,9 @@ pub async fn get_dlq_handler(
     ),
     tag = "SubscriptionManager"
 )]
-pub async fn get_push_stats_handler(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<PushStats>> {
+pub async fn get_push_stats_handler(State(_state): State<AppState>) -> ApiResponse<PushStats> {
     let stats = PushOptimizer::get_push_stats().await;
-    Json(ApiResponse::success(stats, "推送统计"))
+    ApiResponse::success(stats, "推送统计")
 }
 
 #[utoipa::path(
@@ -1067,10 +1063,10 @@ pub async fn get_push_stats_handler(
 pub async fn set_batch_window_handler(
     State(_state): State<AppState>,
     Json(req): Json<SetBatchWindowRequest>,
-) -> Json<ApiResponse<PushStats>> {
+) -> ApiResponse<PushStats> {
     match PushOptimizer::set_batch_window(req.batch_window_ms).await {
-        Ok(stats) => Json(ApiResponse::success(stats, "批量窗口已更新")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(stats) => ApiResponse::success(stats, "批量窗口已更新"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1084,11 +1080,9 @@ pub async fn set_batch_window_handler(
     ),
     tag = "SubscriptionManager"
 )]
-pub async fn get_push_queue_length_handler(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<usize>> {
+pub async fn get_push_queue_length_handler(State(_state): State<AppState>) -> ApiResponse<usize> {
     let length = PushOptimizer::get_queue_length().await;
-    Json(ApiResponse::success(length, "推送队列长度"))
+    ApiResponse::success(length, "推送队列长度")
 }
 
 #[cfg(test)]

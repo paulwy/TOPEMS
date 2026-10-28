@@ -1,4 +1,4 @@
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Router};
 use serde::{Deserialize, Serialize};
 
 use crate::shared::AppState;
@@ -35,7 +35,7 @@ pub struct PermissionDef {
     tag = "master_plugin"
 )]
 
-pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
     let runtime_url =
         std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8090".to_string());
 
@@ -104,7 +104,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         ])),
         category: Some("system".to_string()),
     };
-    Json(ApiResponse::success(info, "Plugin info"))
+    ApiResponse::success(info, "Plugin info")
 }
 #[utoipa::path(
     get,
@@ -114,13 +114,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     tag = "master_plugin"
 )]
 
-pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<()>> {
+pub async fn plugin_health_check(State(state): State<AppState>) -> ApiResponse<()> {
     match sqlx::query("SELECT 1").fetch_one(&state.db).await {
-        Ok(_) => Json(ApiResponse::success((), "Healthy")),
-        Err(e) => Json(ApiResponse::from({
+        Ok(_) => ApiResponse::success((), "Healthy"),
+        Err(e) => ApiResponse::from({
             tracing::warn!("Database error: {}", e);
             TopemsError::ServiceUnavailable("Database error".to_string())
-        })),
+        }),
     }
 }
 

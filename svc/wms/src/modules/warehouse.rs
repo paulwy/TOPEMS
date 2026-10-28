@@ -2,7 +2,7 @@ use axum::{
     extract::{Extension, FromRef},
     http::HeaderMap,
     routing::get,
-    Json, Router,
+    Router,
 };
 use chrono::Utc;
 use topems_shared_boundary::only_own_schema_query;
@@ -107,11 +107,11 @@ pub async fn list_warehouses(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -137,7 +137,7 @@ pub async fn list_warehouses(
 
     if let Some(cached) = state.warehouse_cache.get(&cache_key).await {
         tracing::debug!("📋 仓库列表缓存命中: {}", cache_key);
-        return Json(ApiResponse::success(cached, "获取仓库列表成功"));
+        return ApiResponse::success(cached, "获取仓库列表成功");
     }
 
     let result = sqlx::query_as::<_, Warehouse>(
@@ -194,13 +194,11 @@ pub async fn list_warehouses(
                 .set(cache_key, response_data.clone())
                 .await;
 
-            Json(ApiResponse::success(response_data, "获取仓库列表成功"))
+            ApiResponse::success(response_data, "获取仓库列表成功")
         }
         Err(e) => {
             tracing::error!("获取仓库列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取仓库列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取仓库列表失败".to_string()))
         }
     }
 }
@@ -225,11 +223,11 @@ pub async fn create_warehouse(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     axum::extract::Json(req): axum::extract::Json<CreateWarehouseRequest>,
-) -> Json<ApiResponse<Warehouse>> {
+) -> ApiResponse<Warehouse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
@@ -266,16 +264,14 @@ pub async fn create_warehouse(
 
     let (response, status, error_msg) = match &result {
         Ok(warehouse) => (
-            Json(ApiResponse::success(warehouse.clone(), "仓库创建成功")),
+            ApiResponse::success(warehouse.clone(), "仓库创建成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("创建仓库失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "仓库创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("仓库创建失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -292,7 +288,7 @@ pub async fn create_warehouse(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
         state.warehouse_cache.clear_l1();
@@ -350,11 +346,11 @@ pub async fn get_warehouse(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Warehouse>> {
+) -> ApiResponse<Warehouse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -370,7 +366,7 @@ pub async fn get_warehouse(
     if let Some(cached) = state.warehouse_cache.get(&cache_key).await {
         tracing::debug!("📋 仓库缓存命中: {}", cache_key);
         if let Ok(warehouse) = serde_json::from_value::<Warehouse>(cached) {
-            return Json(ApiResponse::success(warehouse, "获取仓库成功"));
+            return ApiResponse::success(warehouse, "获取仓库成功");
         }
     }
 
@@ -391,16 +387,12 @@ pub async fn get_warehouse(
             if let Ok(value) = serde_json::to_value(&warehouse) {
                 state.warehouse_cache.set(cache_key, value).await;
             }
-            Json(ApiResponse::success(warehouse, "获取仓库成功"))
+            ApiResponse::success(warehouse, "获取仓库成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "仓库不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("仓库不存在".to_string())),
         Err(e) => {
             tracing::error!("获取仓库失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取仓库失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取仓库失败".to_string()))
         }
     }
 }
@@ -430,11 +422,11 @@ pub async fn update_warehouse(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     axum::extract::Json(req): axum::extract::Json<UpdateWarehouseRequest>,
-) -> Json<ApiResponse<Warehouse>> {
+) -> ApiResponse<Warehouse> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let request_data = serde_json::to_value(&req).ok();
     // 超管→None（SQL NULL，匹配 RLS 公共行）；普通用户→claims.tenant_id，与 get/list 对齐
@@ -458,11 +450,9 @@ pub async fn update_warehouse(
     let existing = match existing {
         Ok(Some(w)) => w,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "仓库不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("仓库不存在".to_string()))
         }
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询仓库失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询仓库失败", e)),
     };
 
     let name = req.name.unwrap_or(existing.name);
@@ -497,16 +487,14 @@ pub async fn update_warehouse(
 
     let (response, status_str, error_msg) = match &result {
         Ok(warehouse) => (
-            Json(ApiResponse::success(warehouse.clone(), "仓库更新成功")),
+            ApiResponse::success(warehouse.clone(), "仓库更新成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("更新仓库失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "仓库更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("仓库更新失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -523,7 +511,7 @@ pub async fn update_warehouse(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
         let cache_key = warehouse_cache_key(&tenant_id, id, None);
@@ -583,11 +571,11 @@ pub async fn delete_warehouse(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     // 超管→None（SQL NULL，匹配 RLS 公共行）；普通用户→claims.tenant_id，与 get/list 对齐
     let tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -609,28 +597,24 @@ pub async fn delete_warehouse(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success("".to_string(), "仓库删除成功")),
+                ApiResponse::success("".to_string(), "仓库删除成功"),
                 "success",
                 None,
             )
         }
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "仓库不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("仓库不存在".to_string())),
             "error",
             Some("仓库不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除仓库失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "仓库删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("仓库删除失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )

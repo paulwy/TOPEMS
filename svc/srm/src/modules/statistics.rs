@@ -1,4 +1,4 @@
-use axum::{extract::State, routing::get, Extension, Json, Router};
+use axum::{extract::State, routing::get, Extension, Router};
 use sqlx::postgres::PgPool;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -185,11 +185,11 @@ pub async fn get_statistics(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -281,7 +281,7 @@ pub async fn get_statistics(
         "total_products": total_products,
     });
 
-    Json(ApiResponse::success(stats, "获取统计数据成功"))
+    ApiResponse::success(stats, "获取统计数据成功")
 }
 
 #[utoipa::path(
@@ -301,11 +301,11 @@ pub async fn get_detailed_statistics(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -549,7 +549,7 @@ pub async fn get_detailed_statistics(
         "contract_by_status": contract_by_status,
     });
 
-    Json(ApiResponse::success(detailed_stats, "获取详细统计数据成功"))
+    ApiResponse::success(detailed_stats, "获取详细统计数据成功")
 }
 
 #[utoipa::path(
@@ -569,11 +569,11 @@ pub async fn get_suppliers_with_stats(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+) -> ApiResponse<Vec<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -645,14 +645,11 @@ pub async fn get_suppliers_with_stats(
                 result.push(stats);
             }
 
-            Json(ApiResponse::success(result, "获取供应商统计数据成功"))
+            ApiResponse::success(result, "获取供应商统计数据成功")
         }
         Err(e) => {
             tracing::error!("获取供应商统计数据失败: {}", e);
-            Json(ApiResponse::<Vec<serde_json::Value>>::error(
-                500,
-                "获取供应商统计数据失败",
-            ))
+            ApiResponse::<Vec<serde_json::Value>>::error(500, "获取供应商统计数据失败")
         }
     }
 }

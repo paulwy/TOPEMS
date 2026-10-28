@@ -445,7 +445,7 @@ fn compute_score(checks: &[QualityCheckV51]) -> f64 {
 pub async fn run_quality_check(
     State(state): State<AppState>,
     Json(req): Json<RunQualityCheckRequest>,
-) -> Json<ApiResponse<Vec<QualityCheckV51>>> {
+) -> ApiResponse<Vec<QualityCheckV51>> {
     let rows = sqlx::query(
         "SELECT id, name, entity_type, rule_type, description, severity, parameters, enabled, created_at, updated_at
          FROM master_data.mdm_quality_rules
@@ -513,11 +513,11 @@ pub async fn run_quality_check(
         .execute(&state.db)
         .await
         {
-            return Json(ApiResponse::server_error(&format!("写入质量检查失败: {e}")));
+            return ApiResponse::server_error(&format!("写入质量检查失败: {e}"));
         }
     }
 
-    Json(ApiResponse::success(results, "质量检查完成"))
+    ApiResponse::success(results, "质量检查完成")
 }
 
 #[utoipa::path(
@@ -546,7 +546,7 @@ pub async fn run_quality_check(
 pub async fn list_quality_checks(
     State(state): State<AppState>,
     Query(params): Query<QualityCheckQuery>,
-) -> Json<ApiResponse<PaginatedResponse<QualityCheckV51>>> {
+) -> ApiResponse<PaginatedResponse<QualityCheckV51>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -586,7 +586,7 @@ pub async fn list_quality_checks(
     .await
     .unwrap_or(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -595,7 +595,7 @@ pub async fn list_quality_checks(
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "质量检查列表",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -615,7 +615,7 @@ pub async fn list_quality_checks(
 pub async fn get_quality_check_results(
     State(state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
-) -> Json<ApiResponse<Vec<QualityCheckV51>>> {
+) -> ApiResponse<Vec<QualityCheckV51>> {
     let rows = sqlx::query(&format!(
         "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks
          WHERE entity_type = $1 AND entity_id = $2 ORDER BY checked_at DESC"
@@ -627,7 +627,7 @@ pub async fn get_quality_check_results(
     .unwrap_or_default();
     let items: Vec<QualityCheckV51> = rows.iter().map(quality_check_from_row).collect();
 
-    Json(ApiResponse::success(items, "质量检查结果"))
+    ApiResponse::success(items, "质量检查结果")
 }
 
 // ==================== 处理器：质量规则 ====================
@@ -641,9 +641,7 @@ pub async fn get_quality_check_results(
         (status = 200, description = "质量规则列表", body = ApiResponse<Vec<QualityRule>>),
     ),
 )]
-pub async fn list_quality_rules(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<QualityRule>>> {
+pub async fn list_quality_rules(State(state): State<AppState>) -> ApiResponse<Vec<QualityRule>> {
     // A 试点：直查关系表 master_data.mdm_quality_rules（不再走内存集合快照）。
     match sqlx::query(
         r#"SELECT id, name, entity_type, rule_type, description, severity,
@@ -654,13 +652,12 @@ pub async fn list_quality_rules(
     .fetch_all(&state.db)
     .await
     {
-        Ok(rows) => Json(ApiResponse::success(
-            rows.iter().map(rule_row_to_api).collect(),
-            "质量规则列表",
-        )),
+        Ok(rows) => {
+            ApiResponse::success(rows.iter().map(rule_row_to_api).collect(), "质量规则列表")
+        }
         Err(e) => {
             tracing::error!("查询质量规则失败: {e}");
-            Json(ApiResponse::server_error("查询质量规则失败"))
+            ApiResponse::server_error("查询质量规则失败")
         }
     }
 }
@@ -678,7 +675,7 @@ pub async fn list_quality_rules(
 pub async fn create_quality_rule(
     State(state): State<AppState>,
     Json(req): Json<CreateQualityRuleRequest>,
-) -> Json<ApiResponse<QualityRule>> {
+) -> ApiResponse<QualityRule> {
     let id = uuid::Uuid::new_v4();
     let severity = req.severity.unwrap_or_else(|| "warning".to_string());
     let parameters = req.parameters.unwrap_or_default();
@@ -699,13 +696,10 @@ pub async fn create_quality_rule(
     .fetch_one(&state.db)
     .await
     {
-        Ok(row) => Json(ApiResponse::success(
-            rule_row_to_api(&row),
-            "质量规则已创建",
-        )),
+        Ok(row) => ApiResponse::success(rule_row_to_api(&row), "质量规则已创建"),
         Err(e) => {
             tracing::error!("创建质量规则失败: {e}");
-            Json(ApiResponse::server_error("创建质量规则失败"))
+            ApiResponse::server_error("创建质量规则失败")
         }
     }
 }
@@ -723,9 +717,9 @@ pub async fn create_quality_rule(
 pub async fn get_quality_rule(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<QualityRule>> {
+) -> ApiResponse<QualityRule> {
     let Ok(id) = uuid::Uuid::parse_str(&id) else {
-        return Json(ApiResponse::not_found("未找到质量规则"));
+        return ApiResponse::not_found("未找到质量规则");
     };
     match sqlx::query(
         r#"SELECT id, name, entity_type, rule_type, description, severity,
@@ -736,11 +730,11 @@ pub async fn get_quality_rule(
     .fetch_optional(&state.db)
     .await
     {
-        Ok(Some(row)) => Json(ApiResponse::success(rule_row_to_api(&row), "质量规则详情")),
-        Ok(None) => Json(ApiResponse::not_found("未找到质量规则")),
+        Ok(Some(row)) => ApiResponse::success(rule_row_to_api(&row), "质量规则详情"),
+        Ok(None) => ApiResponse::not_found("未找到质量规则"),
         Err(e) => {
             tracing::error!("查询质量规则详情失败: {e}");
-            Json(ApiResponse::server_error("查询质量规则详情失败"))
+            ApiResponse::server_error("查询质量规则详情失败")
         }
     }
 }
@@ -759,9 +753,9 @@ pub async fn update_quality_rule(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateQualityRuleRequest>,
-) -> Json<ApiResponse<QualityRule>> {
+) -> ApiResponse<QualityRule> {
     let Ok(id) = uuid::Uuid::parse_str(&id) else {
-        return Json(ApiResponse::not_found("未找到质量规则"));
+        return ApiResponse::not_found("未找到质量规则");
     };
     match sqlx::query(
         r#"UPDATE master_data.mdm_quality_rules SET
@@ -784,14 +778,11 @@ pub async fn update_quality_rule(
     .fetch_optional(&state.db)
     .await
     {
-        Ok(Some(row)) => Json(ApiResponse::success(
-            rule_row_to_api(&row),
-            "质量规则已更新",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("未找到质量规则")),
+        Ok(Some(row)) => ApiResponse::success(rule_row_to_api(&row), "质量规则已更新"),
+        Ok(None) => ApiResponse::not_found("未找到质量规则"),
         Err(e) => {
             tracing::error!("更新质量规则失败: {e}");
-            Json(ApiResponse::server_error("更新质量规则失败"))
+            ApiResponse::server_error("更新质量规则失败")
         }
     }
 }
@@ -812,20 +803,20 @@ pub async fn update_quality_rule(
 pub async fn delete_quality_rule(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let Ok(id) = uuid::Uuid::parse_str(&id) else {
-        return Json(ApiResponse::not_found("未找到质量规则"));
+        return ApiResponse::not_found("未找到质量规则");
     };
     match sqlx::query("DELETE FROM master_data.mdm_quality_rules WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await
     {
-        Ok(res) if res.rows_affected() > 0 => Json(ApiResponse::success_no_data("质量规则已删除")),
-        Ok(_) => Json(ApiResponse::not_found("未找到质量规则")),
+        Ok(res) if res.rows_affected() > 0 => ApiResponse::success_no_data("质量规则已删除"),
+        Ok(_) => ApiResponse::not_found("未找到质量规则"),
         Err(e) => {
             tracing::error!("删除质量规则失败: {e}");
-            Json(ApiResponse::server_error("删除质量规则失败"))
+            ApiResponse::server_error("删除质量规则失败")
         }
     }
 }
@@ -842,7 +833,7 @@ pub async fn delete_quality_rule(
     ),
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn get_quality_score(State(state): State<AppState>) -> Json<ApiResponse<QualityScore>> {
+pub async fn get_quality_score(State(state): State<AppState>) -> ApiResponse<QualityScore> {
     let rows = sqlx::query(&format!(
         "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks ORDER BY checked_at DESC"
     ))
@@ -887,7 +878,7 @@ pub async fn get_quality_score(State(state): State<AppState>) -> Json<ApiRespons
 
     let overall = compute_score(&checks);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         QualityScore {
             overall_score: overall,
             by_entity_type,
@@ -898,7 +889,7 @@ pub async fn get_quality_score(State(state): State<AppState>) -> Json<ApiRespons
             warning_checks: warning,
         },
         "质量评分",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -911,9 +902,7 @@ pub async fn get_quality_score(State(state): State<AppState>) -> Json<ApiRespons
     ),
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn get_quality_dashboard(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<QualityDashboard>> {
+pub async fn get_quality_dashboard(State(state): State<AppState>) -> ApiResponse<QualityDashboard> {
     let check_rows = sqlx::query(&format!(
         "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks ORDER BY checked_at DESC"
     ))
@@ -972,7 +961,7 @@ pub async fn get_quality_dashboard(
 
     let total_entities: i64 = entity_type_distribution.values().sum();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         QualityDashboard {
             total_entities,
             quality_score: score,
@@ -984,7 +973,7 @@ pub async fn get_quality_dashboard(
             entity_type_distribution,
         },
         "质量仪表盘",
-    ))
+    )
 }
 
 // ==================== 处理器：自动修复 ====================
@@ -1002,7 +991,7 @@ pub async fn get_quality_dashboard(
 pub async fn apply_auto_fix(
     State(state): State<AppState>,
     Json(req): Json<AutoFixRequest>,
-) -> Json<ApiResponse<AutoFixAction>> {
+) -> ApiResponse<AutoFixAction> {
     let strategy = req.strategy.as_deref().unwrap_or("normalize_text");
     let action_type = action_type_from_str(strategy);
 
@@ -1038,10 +1027,10 @@ pub async fn apply_auto_fix(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::server_error(&format!("自动修复失败: {e}")));
+        return ApiResponse::server_error(&format!("自动修复失败: {e}"));
     }
 
-    Json(ApiResponse::success(action, "自动修复已应用"))
+    ApiResponse::success(action, "自动修复已应用")
 }
 #[utoipa::path(
     get,
@@ -1059,7 +1048,7 @@ pub async fn apply_auto_fix(
 pub async fn get_fix_actions(
     State(state): State<AppState>,
     Query(params): Query<FixActionQuery>,
-) -> Json<ApiResponse<PaginatedResponse<AutoFixAction>>> {
+) -> ApiResponse<PaginatedResponse<AutoFixAction>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1095,7 +1084,7 @@ pub async fn get_fix_actions(
     .await
     .unwrap_or(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -1104,7 +1093,7 @@ pub async fn get_fix_actions(
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "自动修复操作",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1124,7 +1113,7 @@ pub async fn revert_fix_action(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(_req): Json<RevertFixRequest>,
-) -> Json<ApiResponse<AutoFixAction>> {
+) -> ApiResponse<AutoFixAction> {
     let current: Option<String> =
         sqlx::query_scalar("SELECT status FROM master_data.mdm_auto_fix_actions WHERE id = $1")
             .bind(&id)
@@ -1133,11 +1122,11 @@ pub async fn revert_fix_action(
             .unwrap_or(None);
 
     let Some(status) = current else {
-        return Json(ApiResponse::not_found("未找到修复操作"));
+        return ApiResponse::not_found("未找到修复操作");
     };
 
     if !matches!(status.as_str(), "applied" | "verified") {
-        return Json(ApiResponse::bad_request("当前状态不可回滚"));
+        return ApiResponse::bad_request("当前状态不可回滚");
     }
 
     let row = sqlx::query(&format!(
@@ -1152,11 +1141,11 @@ pub async fn revert_fix_action(
     .unwrap_or(None);
 
     let Some(row) = row else {
-        return Json(ApiResponse::not_found("未找到修复操作"));
+        return ApiResponse::not_found("未找到修复操作");
     };
     let action = auto_fix_from_row(&row);
 
-    Json(ApiResponse::success(action, "修复操作已回滚"))
+    ApiResponse::success(action, "修复操作已回滚")
 }
 
 #[utoipa::path(
@@ -1169,9 +1158,7 @@ pub async fn revert_fix_action(
     ),
     tag = "quality_v51"
 )]
-pub async fn get_fix_history(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<FixHistoryEntry>>> {
+pub async fn get_fix_history(State(state): State<AppState>) -> ApiResponse<Vec<FixHistoryEntry>> {
     let rows = sqlx::query(&format!(
         "SELECT {AUTO_FIX_COLS} FROM master_data.mdm_auto_fix_actions ORDER BY applied_at DESC"
     ))
@@ -1196,7 +1183,7 @@ pub async fn get_fix_history(
         })
         .collect();
 
-    Json(ApiResponse::success(history, "修复历史记录"))
+    ApiResponse::success(history, "修复历史记录")
 }
 
 #[utoipa::path(
@@ -1212,7 +1199,7 @@ pub async fn get_fix_history(
 pub async fn run_fix_workflow(
     State(state): State<AppState>,
     Json(req): Json<RunFixWorkflowRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let now = chrono::Utc::now().to_rfc3339();
 
     let strategies = req.strategies.unwrap_or_else(|| {
@@ -1262,11 +1249,11 @@ pub async fn run_fix_workflow(
         .execute(&state.db)
         .await
         {
-            return Json(ApiResponse::server_error(&format!("执行修复工作流失败: {e}")));
+            return ApiResponse::server_error(&format!("执行修复工作流失败: {e}"));
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "entity_type": req.entity_type,
             "entity_id": req.entity_id,
@@ -1276,7 +1263,7 @@ pub async fn run_fix_workflow(
             "timestamp": now,
         }),
         "修复工作流完成",
-    ))
+    )
 }
 
 // ==================== 处理器：数据治理 AI ====================
@@ -1294,7 +1281,7 @@ pub async fn run_fix_workflow(
 pub async fn generate_suggestions(
     State(state): State<AppState>,
     Json(req): Json<GenerateSuggestionsRequest>,
-) -> Json<ApiResponse<Vec<GovernanceSuggestion>>> {
+) -> ApiResponse<Vec<GovernanceSuggestion>> {
     let now = chrono::Utc::now().to_rfc3339();
     let types = req
         .suggestion_types
@@ -1338,11 +1325,11 @@ pub async fn generate_suggestions(
         .execute(&state.db)
         .await
         {
-            return Json(ApiResponse::server_error(&format!("生成治理建议失败: {e}")));
+            return ApiResponse::server_error(&format!("生成治理建议失败: {e}"));
         }
     }
 
-    Json(ApiResponse::success(suggestions, "治理建议已生成"))
+    ApiResponse::success(suggestions, "治理建议已生成")
 }
 #[utoipa::path(
     get,
@@ -1360,7 +1347,7 @@ pub async fn generate_suggestions(
 pub async fn get_suggestions(
     State(state): State<AppState>,
     Query(params): Query<SuggestionQuery>,
-) -> Json<ApiResponse<PaginatedResponse<GovernanceSuggestion>>> {
+) -> ApiResponse<PaginatedResponse<GovernanceSuggestion>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -1400,7 +1387,7 @@ pub async fn get_suggestions(
     .await
     .unwrap_or(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -1409,7 +1396,7 @@ pub async fn get_suggestions(
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "治理建议列表",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1429,7 +1416,7 @@ pub async fn approve_suggestion(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(_req): Json<ApproveSuggestionRequest>,
-) -> Json<ApiResponse<GovernanceSuggestion>> {
+) -> ApiResponse<GovernanceSuggestion> {
     let current: Option<String> = sqlx::query_scalar(
         "SELECT status FROM master_data.mdm_governance_suggestions WHERE id = $1",
     )
@@ -1439,10 +1426,10 @@ pub async fn approve_suggestion(
     .unwrap_or(None);
 
     let Some(status) = current else {
-        return Json(ApiResponse::not_found("未找到治理建议"));
+        return ApiResponse::not_found("未找到治理建议");
     };
     if status != "pending" {
-        return Json(ApiResponse::bad_request("建议已处理"));
+        return ApiResponse::bad_request("建议已处理");
     }
 
     let row = sqlx::query(&format!(
@@ -1457,11 +1444,11 @@ pub async fn approve_suggestion(
     .unwrap_or(None);
 
     let Some(row) = row else {
-        return Json(ApiResponse::not_found("未找到治理建议"));
+        return ApiResponse::not_found("未找到治理建议");
     };
     let suggestion = suggestion_from_row(&row);
 
-    Json(ApiResponse::success(suggestion, "治理建议已批准"))
+    ApiResponse::success(suggestion, "治理建议已批准")
 }
 
 #[utoipa::path(
@@ -1481,7 +1468,7 @@ pub async fn reject_suggestion(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(_req): Json<RejectSuggestionRequest>,
-) -> Json<ApiResponse<GovernanceSuggestion>> {
+) -> ApiResponse<GovernanceSuggestion> {
     let current: Option<String> = sqlx::query_scalar(
         "SELECT status FROM master_data.mdm_governance_suggestions WHERE id = $1",
     )
@@ -1491,10 +1478,10 @@ pub async fn reject_suggestion(
     .unwrap_or(None);
 
     let Some(status) = current else {
-        return Json(ApiResponse::not_found("未找到治理建议"));
+        return ApiResponse::not_found("未找到治理建议");
     };
     if status != "pending" {
-        return Json(ApiResponse::bad_request("建议已处理"));
+        return ApiResponse::bad_request("建议已处理");
     }
 
     let row = sqlx::query(&format!(
@@ -1509,11 +1496,11 @@ pub async fn reject_suggestion(
     .unwrap_or(None);
 
     let Some(row) = row else {
-        return Json(ApiResponse::not_found("未找到治理建议"));
+        return ApiResponse::not_found("未找到治理建议");
     };
     let suggestion = suggestion_from_row(&row);
 
-    Json(ApiResponse::success(suggestion, "治理建议已拒绝"))
+    ApiResponse::success(suggestion, "治理建议已拒绝")
 }
 
 #[utoipa::path(
@@ -1528,7 +1515,7 @@ pub async fn reject_suggestion(
 )]
 pub async fn get_governance_insights(
     State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<GovernanceInsight>>> {
+) -> ApiResponse<Vec<GovernanceInsight>> {
     let rows = sqlx::query(&format!(
         "SELECT {INSIGHT_COLS} FROM master_data.mdm_governance_insights ORDER BY affected_records DESC"
     ))
@@ -1537,7 +1524,7 @@ pub async fn get_governance_insights(
     .unwrap_or_default();
     let items: Vec<GovernanceInsight> = rows.iter().map(insight_from_row).collect();
 
-    Json(ApiResponse::success(items, "治理洞察列表"))
+    ApiResponse::success(items, "治理洞察列表")
 }
 
 #[utoipa::path(
@@ -1558,7 +1545,7 @@ pub async fn get_governance_insights(
 pub async fn predict_quality_trend(
     State(state): State<AppState>,
     Json(req): Json<PredictTrendRequest>,
-) -> Json<ApiResponse<Vec<QualityTrendPoint>>> {
+) -> ApiResponse<Vec<QualityTrendPoint>> {
     let rows = sqlx::query(&format!(
         "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks WHERE entity_type = $1"
     ))
@@ -1593,7 +1580,7 @@ pub async fn predict_quality_trend(
         });
     }
 
-    Json(ApiResponse::success(trend, "质量趋势预测"))
+    ApiResponse::success(trend, "质量趋势预测")
 }
 
 // ==================== K1：真表映射层（quality_v51 剩余 6 实体） ====================

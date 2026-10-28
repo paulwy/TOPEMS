@@ -103,15 +103,15 @@ pub async fn list_segments(
     Extension(claims): Extension<Claims>,
     Query(params): Query<SegmentQueryParams>,
     headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -145,7 +145,7 @@ pub async fn list_segments(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": segments,
                     "total": total,
@@ -153,13 +153,11 @@ pub async fn list_segments(
                     "page_size": page_size
                 }),
                 "获取客户分群列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取客户分群列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取客户分群列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取客户分群列表失败".to_string()))
         }
     }
 }
@@ -185,15 +183,15 @@ pub async fn get_segment(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: HeaderMap,
-) -> Json<ApiResponse<CustomerSegment>> {
+) -> ApiResponse<CustomerSegment> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let result = sqlx::query_as::<_, CustomerSegment>(
@@ -210,15 +208,11 @@ pub async fn get_segment(
     .await;
 
     match result {
-        Ok(Some(segment)) => Json(ApiResponse::success(segment, "获取客户分群成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "客户分群不存在".to_string(),
-        ))),
+        Ok(Some(segment)) => ApiResponse::success(segment, "获取客户分群成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("客户分群不存在".to_string())),
         Err(e) => {
             tracing::error!("获取客户分群失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取客户分群失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取客户分群失败".to_string()))
         }
     }
 }
@@ -231,21 +225,21 @@ async fn create_segment(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateSegmentRequest>,
-) -> Json<ApiResponse<CustomerSegment>> {
+) -> ApiResponse<CustomerSegment> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     if req.name.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "分群名称不能为空".to_string(),
-        )));
+        ));
     }
 
     let id = Uuid::new_v4();
@@ -280,18 +274,14 @@ async fn create_segment(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
-            Json(ApiResponse::success(segment, "客户分群创建成功"))
+            ApiResponse::success(segment, "客户分群创建成功")
         }
         Err(e) => {
             tracing::error!("创建客户分群失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建客户分群失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建客户分群失败".to_string()))
         }
     }
 }
@@ -316,15 +306,15 @@ pub async fn delete_segment(
     >,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let result = sqlx::query("UPDATE crm.customer_segments SET deleted_at = NOW() WHERE id = $1")
@@ -333,27 +323,19 @@ pub async fn delete_segment(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            Json(ApiResponse::success("".to_string(), "客户分群删除成功"))
-        }
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "客户分群删除成功"),
         Ok(_r) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "客户分群不存在".to_string(),
-            )))
+            ApiResponse::from(TopemsError::ResourceNotFound("客户分群不存在".to_string()))
         }
         Err(e) => {
             tracing::error!("删除客户分群失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除客户分群失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除客户分群失败".to_string()))
         }
     }
 }
@@ -379,15 +361,15 @@ pub async fn get_segment_customers(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Query(params): Query<SegmentQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -404,15 +386,11 @@ pub async fn get_segment_customers(
     let (segment_name, criteria) = match segment_result {
         Ok(Some(s)) => (s.get::<String, _>(0), s.get::<serde_json::Value, _>(1)),
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "客户分群不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("客户分群不存在".to_string()))
         }
         Err(e) => {
             tracing::error!("获取客户分群失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "获取客户分群失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("获取客户分群失败".to_string()));
         }
     };
 
@@ -422,7 +400,7 @@ pub async fn get_segment_customers(
 
     let total = count_matching_customers(txn, &criteria).await;
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "segment_name": segment_name,
             "items": customers,
@@ -431,7 +409,7 @@ pub async fn get_segment_customers(
             "page_size": page_size
         }),
         "获取分群客户列表成功",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -450,15 +428,15 @@ pub async fn auto_segment(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let segments = vec![
@@ -531,10 +509,7 @@ pub async fn auto_segment(
         }));
     }
 
-    Json(ApiResponse::success(
-        serde_json::json!({ "segments": results }),
-        "自动分群完成",
-    ))
+    ApiResponse::success(serde_json::json!({ "segments": results }), "自动分群完成")
 }
 
 async fn count_matching_customers(

@@ -77,7 +77,7 @@ async fn create_via_handler(pool: &sqlx::PgPool, code: &str, name: &str) -> uuid
     let data = resp
         .0
         .data
-        .unwrap_or_else(|| panic!("create_tenant error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("create_tenant error: {:?}", resp.message));
     serde_json::to_value(data).unwrap()["id"]
         .as_str()
         .unwrap()
@@ -92,7 +92,7 @@ async fn list_empty(pool: sqlx::PgPool) {
     let data = resp
         .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     let value: Value = serde_json::to_value(data).unwrap();
     assert_eq!(value["total"], 0);
 }
@@ -106,7 +106,7 @@ async fn create_and_list(pool: sqlx::PgPool) {
     let data = resp
         .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     let value: Value = serde_json::to_value(data).unwrap();
     assert_eq!(value["total"], 1);
     assert_eq!(value["items"][0]["id"].as_str().unwrap(), id.to_string());
@@ -122,7 +122,7 @@ async fn get_by_id(pool: sqlx::PgPool) {
     let data = resp
         .0
         .data
-        .unwrap_or_else(|| panic!("get_tenant error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("get_tenant error: {:?}", resp.message));
     let value: Value = serde_json::to_value(data).unwrap();
     assert_eq!(value["name"], "贝塔租户");
     assert_eq!(value["plan"], "pro");
@@ -137,7 +137,7 @@ async fn get_by_code(pool: sqlx::PgPool) {
     let data = resp
         .0
         .data
-        .unwrap_or_else(|| panic!("get_tenant_by_code error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("get_tenant_by_code error: {:?}", resp.message));
     let value: Value = serde_json::to_value(data).unwrap();
     assert_eq!(value["code"], "ten-gamma");
 }
@@ -154,7 +154,7 @@ async fn delete_removes(pool: sqlx::PgPool) {
     let data = resp
         .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     let value: Value = serde_json::to_value(data).unwrap();
     assert_eq!(value["total"], 0);
 }

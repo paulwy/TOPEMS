@@ -1,4 +1,4 @@
-use axum::{extract::FromRef, extract::State, routing::get, Json, Router};
+use axum::{extract::FromRef, extract::State, routing::get, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
@@ -74,11 +74,11 @@ pub fn create_routes() -> Router<ApiState> {
 }
 
 /// RD 模块健康检查（业务面）：返回 ok + 数据库探活。
-async fn rd_health(State(state): State<ApiState>) -> Json<ApiResponse<String>> {
+async fn rd_health(State(state): State<ApiState>) -> ApiResponse<String> {
     let db_ok = sqlx::query("SELECT 1").fetch_one(&state.db).await.is_ok();
     if db_ok {
-        Json(ApiResponse::success("ok".to_string(), "rd 服务健康"))
+        ApiResponse::success("ok".to_string(), "rd 服务健康")
     } else {
-        Json(ApiResponse::server_error("rd 数据库探活失败"))
+        ApiResponse::server_error("rd 数据库探活失败")
     }
 }

@@ -355,11 +355,11 @@ pub async fn list_appointments(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -369,7 +369,7 @@ pub async fn list_appointments(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
@@ -426,7 +426,7 @@ pub async fn list_appointments(
                 .await;
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -435,13 +435,13 @@ pub async fn list_appointments(
                     "total_pages": topems_shared_core::response::total_pages_of(total, page_size),
                 }),
                 "获取供应商送货预约列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取供应商送货预约列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
+            ApiResponse::from(TopemsError::Internal(
                 "获取供应商送货预约列表失败".to_string(),
-            )))
+            ))
         }
     }
 }
@@ -459,11 +459,11 @@ pub async fn create_appointment(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateSupplierDeliveryAppointmentRequest>,
-) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
+) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -473,14 +473,14 @@ pub async fn create_appointment(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
     if req.delivery_method.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "送货方式不能为空".to_string(),
-        )));
+        ));
     }
 
     let request_data = serde_json::to_value(&req).ok();
@@ -531,16 +531,14 @@ pub async fn create_appointment(
 
     let (response, status_str, error_msg) = match &result {
         Ok(apt) => (
-            Json(ApiResponse::success(apt.clone(), "供应商送货预约创建成功")),
+            ApiResponse::success(apt.clone(), "供应商送货预约创建成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("创建供应商送货预约失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "供应商送货预约创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("供应商送货预约创建失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -572,7 +570,7 @@ pub async fn create_appointment(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
@@ -599,11 +597,11 @@ pub async fn get_appointment(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
+) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -613,7 +611,7 @@ pub async fn get_appointment(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -626,15 +624,13 @@ pub async fn get_appointment(
         .await;
 
     match result {
-        Ok(Some(apt)) => Json(ApiResponse::success(apt, "获取供应商送货预约成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(Some(apt)) => ApiResponse::success(apt, "获取供应商送货预约成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
             "供应商送货预约不存在".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("获取供应商送货预约失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取供应商送货预约失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取供应商送货预约失败".to_string()))
         }
     }
 }
@@ -648,11 +644,11 @@ pub async fn update_appointment(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateSupplierDeliveryAppointmentRequest>,
-) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
+) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -662,7 +658,7 @@ pub async fn update_appointment(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
@@ -677,23 +673,18 @@ pub async fn update_appointment(
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            return ApiResponse::from(TopemsError::ResourceNotFound(
                 "供应商送货预约不存在".to_string(),
-            )))
+            ))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询供应商送货预约失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询供应商送货预约失败", e)),
     };
 
     if !matches!(existing.status.as_str(), "pending" | "rejected") {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "当前状态为 {}，仅待审批或已驳回状态可修改",
             existing.status
-        ))));
+        )));
     }
 
     let purchase_order_id = req.purchase_order_id.or(existing.purchase_order_id);
@@ -752,16 +743,14 @@ pub async fn update_appointment(
 
     let (response, status_str, error_msg) = match &result {
         Ok(apt) => (
-            Json(ApiResponse::success(apt.clone(), "供应商送货预约更新成功")),
+            ApiResponse::success(apt.clone(), "供应商送货预约更新成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("更新供应商送货预约失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "供应商送货预约更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("供应商送货预约更新失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -793,7 +782,7 @@ pub async fn update_appointment(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
@@ -808,11 +797,11 @@ pub async fn delete_appointment(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -822,7 +811,7 @@ pub async fn delete_appointment(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -837,26 +826,21 @@ pub async fn delete_appointment(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success(
-                "".to_string(),
-                "供应商送货预约删除成功",
-            )),
+            ApiResponse::success("".to_string(), "供应商送货预约删除成功"),
             "success",
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            ApiResponse::from(TopemsError::ResourceNotFound(
                 "供应商送货预约不存在".to_string(),
-            ))),
+            )),
             "error",
             Some("供应商送货预约不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除供应商送货预约失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "供应商送货预约删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("供应商送货预约删除失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -888,7 +872,7 @@ pub async fn delete_appointment(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
@@ -923,11 +907,11 @@ pub async fn approve_appointment(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApprovalBody>,
-) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
+) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -937,7 +921,7 @@ pub async fn approve_appointment(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -951,23 +935,18 @@ pub async fn approve_appointment(
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            return ApiResponse::from(TopemsError::ResourceNotFound(
                 "供应商送货预约不存在".to_string(),
-            )))
+            ))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询供应商送货预约失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询供应商送货预约失败", e)),
     };
 
     if existing.status != "pending" {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "当前状态为{}，无法审批",
             existing.status
-        ))));
+        )));
     }
 
     let approver = req
@@ -1004,21 +983,19 @@ pub async fn approve_appointment(
 
     let (response, status_str, error_msg) = match &result {
         Ok(apt) => (
-            Json(ApiResponse::success(apt.clone(), "供应商送货预约审批通过")),
+            ApiResponse::success(apt.clone(), "供应商送货预约审批通过"),
             "success",
             None,
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::conflict("送货预约当前状态不允许审批")),
+            ApiResponse::conflict("送货预约当前状态不允许审批"),
             "conflict",
             Some("状态冲突：仅 pending 可审批".to_string()),
         ),
         Err(e) => {
             tracing::error!("审批供应商送货预约失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "审批供应商送货预约失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("审批供应商送货预约失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -1051,7 +1028,7 @@ pub async fn approve_appointment(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
@@ -1080,11 +1057,11 @@ pub async fn reject_appointment(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApprovalBody>,
-) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
+) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -1094,7 +1071,7 @@ pub async fn reject_appointment(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -1108,23 +1085,18 @@ pub async fn reject_appointment(
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            return ApiResponse::from(TopemsError::ResourceNotFound(
                 "供应商送货预约不存在".to_string(),
-            )))
+            ))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询供应商送货预约失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询供应商送货预约失败", e)),
     };
 
     if existing.status != "pending" {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "当前状态为{}，无法驳回",
             existing.status
-        ))));
+        )));
     }
 
     let approver = req
@@ -1164,21 +1136,19 @@ pub async fn reject_appointment(
 
     let (response, status_str, error_msg) = match &result {
         Ok(apt) => (
-            Json(ApiResponse::success(apt.clone(), "供应商送货预约已驳回")),
+            ApiResponse::success(apt.clone(), "供应商送货预约已驳回"),
             "success",
             None,
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::conflict("送货预约当前状态不允许驳回")),
+            ApiResponse::conflict("送货预约当前状态不允许驳回"),
             "conflict",
             Some("状态冲突：仅 pending 可驳回".to_string()),
         ),
         Err(e) => {
             tracing::error!("驳回供应商送货预约失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "驳回供应商送货预约失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("驳回供应商送货预约失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -1211,7 +1181,7 @@ pub async fn reject_appointment(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
@@ -1240,11 +1210,11 @@ pub async fn confirm_arrival(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ArrivalConfirmRequest>,
-) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
+) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -1254,7 +1224,7 @@ pub async fn confirm_arrival(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -1268,23 +1238,18 @@ pub async fn confirm_arrival(
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            return ApiResponse::from(TopemsError::ResourceNotFound(
                 "供应商送货预约不存在".to_string(),
-            )))
+            ))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询供应商送货预约失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询供应商送货预约失败", e)),
     };
 
     if existing.status != "approved" {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "当前状态为{}，仅已审批通过的预约可确认到货",
             existing.status
-        ))));
+        )));
     }
 
     let actual_arrival = req.actual_arrival_time.unwrap_or_else(Utc::now);
@@ -1316,16 +1281,14 @@ pub async fn confirm_arrival(
 
     let (response, status_str, error_msg) = match &result {
         Ok(apt) => (
-            Json(ApiResponse::success(apt.clone(), "到货确认成功")),
+            ApiResponse::success(apt.clone(), "到货确认成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("到货确认失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "到货确认失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("到货确认失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -1358,7 +1321,7 @@ pub async fn confirm_arrival(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
@@ -1387,11 +1350,11 @@ pub async fn complete_appointment(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CompleteRequest>,
-) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
+) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -1401,7 +1364,7 @@ pub async fn complete_appointment(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -1415,23 +1378,18 @@ pub async fn complete_appointment(
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            return ApiResponse::from(TopemsError::ResourceNotFound(
                 "供应商送货预约不存在".to_string(),
-            )))
+            ))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询供应商送货预约失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询供应商送货预约失败", e)),
     };
 
     if existing.status != "arrived" {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "当前状态为{}，仅已到货确认的预约可标记完成",
             existing.status
-        ))));
+        )));
     }
 
     let new_remarks = match (existing.remarks.clone(), req.remarks.clone()) {
@@ -1460,16 +1418,14 @@ pub async fn complete_appointment(
 
     let (response, status_str, error_msg) = match &result {
         Ok(apt) => (
-            Json(ApiResponse::success(apt.clone(), "预约已完成")),
+            ApiResponse::success(apt.clone(), "预约已完成"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("完成供应商送货预约失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "完成供应商送货预约失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("完成供应商送货预约失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -1502,7 +1458,7 @@ pub async fn complete_appointment(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
@@ -1531,11 +1487,11 @@ pub async fn cancel_appointment(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CancelRequest>,
-) -> Json<ApiResponse<SupplierDeliveryAppointment>> {
+) -> ApiResponse<SupplierDeliveryAppointment> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -1545,7 +1501,7 @@ pub async fn cancel_appointment(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -1559,23 +1515,18 @@ pub async fn cancel_appointment(
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            return ApiResponse::from(TopemsError::ResourceNotFound(
                 "供应商送货预约不存在".to_string(),
-            )))
+            ))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询供应商送货预约失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询供应商送货预约失败", e)),
     };
 
     if matches!(existing.status.as_str(), "completed" | "cancelled") {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "当前状态为{}，无法取消",
             existing.status
-        ))));
+        )));
     }
 
     let reason = req.reason.clone().unwrap_or_default();
@@ -1604,16 +1555,14 @@ pub async fn cancel_appointment(
 
     let (response, status_str, error_msg) = match &result {
         Ok(apt) => (
-            Json(ApiResponse::success(apt.clone(), "预约已取消")),
+            ApiResponse::success(apt.clone(), "预约已取消"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("取消供应商送货预约失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "取消供应商送货预约失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("取消供应商送货预约失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -1646,7 +1595,7 @@ pub async fn cancel_appointment(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
@@ -1670,11 +1619,11 @@ pub async fn appointment_stats(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -1684,7 +1633,7 @@ pub async fn appointment_stats(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let _ = params; // 当前未使用
@@ -1747,7 +1696,7 @@ pub async fn appointment_stats(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "total": total,
             "upcoming": upcoming,
@@ -1755,5 +1704,5 @@ pub async fn appointment_stats(
             "by_status": by_status_map,
         }),
         "获取供应商送货预约统计成功",
-    ))
+    )
 }

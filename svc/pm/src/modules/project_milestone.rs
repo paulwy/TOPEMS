@@ -73,11 +73,11 @@ pub fn create_routes(pool: PgPool) -> Router {
 async fn list_milestones(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
-) -> Json<ApiResponse<Vec<ProjectMilestone>>> {
+) -> ApiResponse<Vec<ProjectMilestone>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, ProjectMilestone>(
         only_own_schema_query!("pm", "SELECT id, project_id, name, description, date, status, phase_id, acceptance_criteria, created_at, updated_at FROM pm.project_milestones WHERE project_id = $1 ORDER BY date ASC"),
@@ -87,10 +87,10 @@ async fn list_milestones(
     .await;
 
     match result {
-        Ok(milestones) => Json(ApiResponse::success(milestones, "获取项目里程碑列表成功")),
+        Ok(milestones) => ApiResponse::success(milestones, "获取项目里程碑列表成功"),
         Err(e) => {
             tracing::error!("获取项目里程碑列表失败: {}", e);
-            Json(ApiResponse::server_error("获取项目里程碑列表失败"))
+            ApiResponse::server_error("获取项目里程碑列表失败")
         }
     }
 }
@@ -116,11 +116,11 @@ async fn create_milestone(
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMilestoneRequest>,
-) -> Json<ApiResponse<ProjectMilestone>> {
+) -> ApiResponse<ProjectMilestone> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -151,10 +151,10 @@ async fn create_milestone(
     .await;
 
     match result {
-        Ok(milestone) => Json(ApiResponse::success(milestone, "创建项目里程碑成功")),
+        Ok(milestone) => ApiResponse::success(milestone, "创建项目里程碑成功"),
         Err(e) => {
             tracing::error!("创建项目里程碑失败: {}", e);
-            Json(ApiResponse::server_error("创建项目里程碑失败"))
+            ApiResponse::server_error("创建项目里程碑失败")
         }
     }
 }
@@ -178,11 +178,11 @@ async fn create_milestone(
 async fn get_milestone(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<ProjectMilestone>> {
+) -> ApiResponse<ProjectMilestone> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, ProjectMilestone>(
         only_own_schema_query!("pm", "SELECT id, project_id, name, description, date, status, phase_id, acceptance_criteria, created_at, updated_at FROM pm.project_milestones WHERE project_id = $1 AND id = $2"),
@@ -193,11 +193,11 @@ async fn get_milestone(
     .await;
 
     match result {
-        Ok(Some(milestone)) => Json(ApiResponse::success(milestone, "获取项目里程碑成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目里程碑不存在")),
+        Ok(Some(milestone)) => ApiResponse::success(milestone, "获取项目里程碑成功"),
+        Ok(None) => ApiResponse::not_found("项目里程碑不存在"),
         Err(e) => {
             tracing::error!("获取项目里程碑失败: {}", e);
-            Json(ApiResponse::server_error("获取项目里程碑失败"))
+            ApiResponse::server_error("获取项目里程碑失败")
         }
     }
 }
@@ -223,11 +223,11 @@ async fn update_milestone(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateMilestoneRequest>,
-) -> Json<ApiResponse<ProjectMilestone>> {
+) -> ApiResponse<ProjectMilestone> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
 
@@ -259,11 +259,11 @@ async fn update_milestone(
     .await;
 
     match result {
-        Ok(Some(milestone)) => Json(ApiResponse::success(milestone, "更新项目里程碑成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目里程碑不存在")),
+        Ok(Some(milestone)) => ApiResponse::success(milestone, "更新项目里程碑成功"),
+        Ok(None) => ApiResponse::not_found("项目里程碑不存在"),
         Err(e) => {
             tracing::error!("更新项目里程碑失败: {}", e);
-            Json(ApiResponse::server_error("更新项目里程碑失败"))
+            ApiResponse::server_error("更新项目里程碑失败")
         }
     }
 }
@@ -287,11 +287,11 @@ async fn update_milestone(
 async fn delete_milestone(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
@@ -304,12 +304,12 @@ async fn delete_milestone(
 
     match result {
         Ok(result) if result.rows_affected() > 0 => {
-            Json(ApiResponse::success(true, "删除项目里程碑成功"))
+            ApiResponse::success(true, "删除项目里程碑成功")
         }
-        Ok(_) => Json(ApiResponse::not_found("项目里程碑不存在")),
+        Ok(_) => ApiResponse::not_found("项目里程碑不存在"),
         Err(e) => {
             tracing::error!("删除项目里程碑失败: {}", e);
-            Json(ApiResponse::server_error("删除项目里程碑失败"))
+            ApiResponse::server_error("删除项目里程碑失败")
         }
     }
 }

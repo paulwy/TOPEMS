@@ -27,7 +27,7 @@ pub async fn list_actions(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<ActionQuery>,
-) -> Json<ApiResponse<ListActionsResponse>> {
+) -> ApiResponse<ListActionsResponse> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
@@ -89,7 +89,7 @@ pub async fn list_actions(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count actions: {}", e);
-            return Json(ApiResponse::server_error("获取整改措施列表失败"));
+            return ApiResponse::server_error("获取整改措施列表失败");
         }
     };
 
@@ -113,7 +113,7 @@ pub async fn list_actions(
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
     match fetch_query.fetch_all(&state.pool).await {
-        Ok(data) => Json(ApiResponse::success(
+        Ok(data) => ApiResponse::success(
             ListActionsResponse {
                 actions: data,
                 total: total.unwrap_or(0),
@@ -121,10 +121,10 @@ pub async fn list_actions(
                 page_size,
             },
             "获取整改措施列表成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to fetch actions: {}", e);
-            Json(ApiResponse::server_error("获取整改措施列表失败"))
+            ApiResponse::server_error("获取整改措施列表失败")
         }
     }
 }
@@ -144,7 +144,7 @@ pub async fn create_action(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateActionRequest>,
-) -> Json<ApiResponse<CorrectiveAction>> {
+) -> ApiResponse<CorrectiveAction> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let action_no = format!(
         "CA-{}",
@@ -155,7 +155,7 @@ pub async fn create_action(
 
     // 先校验后写入：标题为空直接拒绝，不落任何数据。
     if req.title.trim().is_empty() {
-        return Json(ApiResponse::bad_request("措施标题不能为空"));
+        return ApiResponse::bad_request("措施标题不能为空");
     }
 
     // 事务化：主记录与明细项同进同出，任何一步失败整体回滚，
@@ -164,7 +164,7 @@ pub async fn create_action(
         Ok(txn) => txn,
         Err(e) => {
             tracing::error!("开启创建事务失败: {}", e);
-            return Json(ApiResponse::server_error("整改措施创建失败"));
+            return ApiResponse::server_error("整改措施创建失败");
         }
     };
 
@@ -177,7 +177,7 @@ pub async fn create_action(
         Err(e) => {
             tracing::error!("Failed to create action: {}", e);
             let _ = txn.rollback().await;
-            return Json(ApiResponse::server_error("整改措施创建失败"));
+            return ApiResponse::server_error("整改措施创建失败");
         }
     };
 
@@ -190,7 +190,7 @@ pub async fn create_action(
                 if let Err(e) = item_result {
                     tracing::error!("写入措施明细失败，整体回滚: {}", e);
                     let _ = txn.rollback().await;
-                    return Json(ApiResponse::server_error("整改措施创建失败"));
+                    return ApiResponse::server_error("整改措施创建失败");
                 }
             }
         }
@@ -198,10 +198,10 @@ pub async fn create_action(
 
     if let Err(e) = txn.commit().await {
         tracing::error!("提交创建事务失败: {}", e);
-        return Json(ApiResponse::server_error("整改措施创建失败"));
+        return ApiResponse::server_error("整改措施创建失败");
     }
 
-    Json(ApiResponse::success(action, "整改措施创建成功"))
+    ApiResponse::success(action, "整改措施创建成功")
 }
 
 #[utoipa::path(
@@ -222,7 +222,7 @@ pub async fn get_action(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<CorrectiveAction>> {
+) -> ApiResponse<CorrectiveAction> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -234,7 +234,7 @@ pub async fn get_action(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的措施ID")),
+        Err(_) => return ApiResponse::bad_request("无效的措施ID"),
     };
 
     let action = sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date, completed_at, created_by, created_at, updated_at FROM qms.qa_corrective_actions WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
@@ -242,12 +242,12 @@ pub async fn get_action(
     .await;
 
     match action {
-        Ok(data) => Json(ApiResponse::success(data, "获取整改措施成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "获取整改措施成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to fetch action: {}", e);
-            Json(ApiResponse::server_error("获取整改措施失败"))
+            ApiResponse::server_error("获取整改措施失败")
         }
     }
 }
@@ -270,7 +270,7 @@ pub async fn get_action_items(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<ActionItem>>> {
+) -> ApiResponse<Vec<ActionItem>> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -282,7 +282,7 @@ pub async fn get_action_items(
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的措施ID")),
+        Err(_) => return ApiResponse::bad_request("无效的措施ID"),
     };
 
     let items = sqlx::query_as::<_, ActionItem>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, action_id::TEXT, item_name, responsible, due_date, status, completed_at, remark, created_at FROM qms.qa_corrective_action_items WHERE action_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"#)).bind(id).bind(tenant_opt)
@@ -290,10 +290,10 @@ pub async fn get_action_items(
     .await;
 
     match items {
-        Ok(data) => Json(ApiResponse::success(data, "获取措施明细成功")),
+        Ok(data) => ApiResponse::success(data, "获取措施明细成功"),
         Err(e) => {
             tracing::error!("Failed to fetch action items: {}", e);
-            Json(ApiResponse::server_error("获取措施明细失败"))
+            ApiResponse::server_error("获取措施明细失败")
         }
     }
 }
@@ -317,11 +317,11 @@ pub async fn update_action(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateActionRequest>,
-) -> Json<ApiResponse<CorrectiveAction>> {
+) -> ApiResponse<CorrectiveAction> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的措施ID")),
+        Err(_) => return ApiResponse::bad_request("无效的措施ID"),
     };
 
     let action = sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"UPDATE qms.qa_corrective_actions SET title = COALESCE($2, title), description = COALESCE($3, description), root_cause = COALESCE($4, root_cause), action_type = COALESCE($5, action_type), status = COALESCE($6, status), priority = COALESCE($7, priority), assignee = COALESCE($8, assignee), target_date = COALESCE($9, target_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $10 RETURNING id::TEXT, tenant_id::TEXT, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date, completed_at, created_by, created_at, updated_at"#)).bind(id).bind(req.title).bind(req.description).bind(req.root_cause).bind(req.action_type).bind(req.status).bind(req.priority).bind(req.assignee).bind(req.target_date).bind(tenant_id)
@@ -329,11 +329,11 @@ pub async fn update_action(
     .await;
 
     match action {
-        Ok(data) => Json(ApiResponse::success(data, "整改措施更新成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "整改措施更新成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update action: {}", e);
-            Json(ApiResponse::server_error("整改措施更新失败"))
+            ApiResponse::server_error("整改措施更新失败")
         }
     }
 }
@@ -356,11 +356,11 @@ pub async fn complete_action(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<CorrectiveAction>> {
+) -> ApiResponse<CorrectiveAction> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的措施ID")),
+        Err(_) => return ApiResponse::bad_request("无效的措施ID"),
     };
 
     let action = sqlx::query_as::<_, CorrectiveAction>(only_own_schema_query!("qms", r#"UPDATE qms.qa_corrective_actions SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date, completed_at, created_by, created_at, updated_at"#)).bind(id).bind(tenant_id)
@@ -368,11 +368,11 @@ pub async fn complete_action(
     .await;
 
     match action {
-        Ok(data) => Json(ApiResponse::success(data, "整改措施已完成")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "整改措施已完成"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to complete action: {}", e);
-            Json(ApiResponse::server_error("整改措施完成失败"))
+            ApiResponse::server_error("整改措施完成失败")
         }
     }
 }
@@ -395,11 +395,11 @@ pub async fn delete_action(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的措施ID")),
+        Err(_) => return ApiResponse::bad_request("无效的措施ID"),
     };
 
     let result = sqlx::query(
@@ -411,10 +411,10 @@ pub async fn delete_action(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "整改措施删除成功")),
+        Ok(_) => ApiResponse::success(true, "整改措施删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete action: {}", e);
-            Json(ApiResponse::server_error("整改措施删除失败"))
+            ApiResponse::server_error("整改措施删除失败")
         }
     }
 }

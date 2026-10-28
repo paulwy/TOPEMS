@@ -1,5 +1,5 @@
 use crate::modules::ApiState;
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Router};
 use serde::{Deserialize, Serialize};
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
@@ -37,7 +37,7 @@ pub struct PermissionDef {
     responses((status = 200, description = "get_plugin_info OK")),
     tag = "scm_plugin"
 )]
-pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
     let runtime_url =
         std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8040".to_string());
 
@@ -118,7 +118,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         ])),
         category: Some("supply".to_string()),
     };
-    Json(ApiResponse::success(info, "Plugin info"))
+    ApiResponse::success(info, "Plugin info")
 }
 
 /// 插件健康检查
@@ -129,13 +129,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     responses((status = 200, description = "plugin_health_check OK")),
     tag = "scm_plugin"
 )]
-pub async fn plugin_health_check(State(state): State<ApiState>) -> Json<ApiResponse<()>> {
+pub async fn plugin_health_check(State(state): State<ApiState>) -> ApiResponse<()> {
     match sqlx::query("SELECT 1").fetch_one(&state.db).await {
-        Ok(_) => Json(ApiResponse::success((), "Healthy")),
-        Err(e) => Json(ApiResponse::from({
+        Ok(_) => ApiResponse::success((), "Healthy"),
+        Err(e) => ApiResponse::from({
             tracing::warn!("Database error: {}", e);
             TopemsError::ServiceUnavailable("Database error".to_string())
-        })),
+        }),
     }
 }
 
@@ -288,7 +288,7 @@ mod tests {
     #[tokio::test]
     async fn get_plugin_info_returns_scm_metadata() {
         let response = get_plugin_info().await;
-        let body = response.0;
+        let body = response;
         assert!(body.success, "response should be successful");
         let data = body.data.expect("data should be present");
         assert_eq!(data.code, "scm");

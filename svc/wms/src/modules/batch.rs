@@ -48,15 +48,15 @@ pub async fn list_batches(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -110,7 +110,7 @@ pub async fn list_batches(
             .await
             .unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": batches,
                     "total": total,
@@ -118,13 +118,11 @@ pub async fn list_batches(
                     "page_size": page_size
                 }),
                 "获取批次列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取批次列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取批次列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取批次列表失败".to_string()))
         }
     }
 }
@@ -148,15 +146,15 @@ pub async fn create_batch(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateBatchRequest>,
-) -> Json<ApiResponse<Batch>> {
+) -> ApiResponse<Batch> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -220,16 +218,14 @@ pub async fn create_batch(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(batch, "创建批次成功"))
+            ApiResponse::success(batch, "创建批次成功")
         }
         Err(e) => {
             tracing::error!("创建批次失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建批次失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建批次失败".to_string()))
         }
     }
 }
@@ -253,23 +249,21 @@ pub async fn get_batch(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Batch>> {
+) -> ApiResponse<Batch> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let batch_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的批次ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的批次ID".to_string()))
         }
     };
 
@@ -281,15 +275,11 @@ pub async fn get_batch(
     .await;
 
     match result {
-        Ok(Some(batch)) => Json(ApiResponse::success(batch, "获取批次成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "批次不存在".to_string(),
-        ))),
+        Ok(Some(batch)) => ApiResponse::success(batch, "获取批次成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("批次不存在".to_string())),
         Err(e) => {
             tracing::error!("获取批次失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取批次失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取批次失败".to_string()))
         }
     }
 }
@@ -315,23 +305,21 @@ pub async fn update_batch(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateBatchRequest>,
-) -> Json<ApiResponse<Batch>> {
+) -> ApiResponse<Batch> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let batch_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的批次ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的批次ID".to_string()))
         }
     };
 
@@ -399,19 +387,17 @@ pub async fn update_batch(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(batch, "更新批次成功"))
+            ApiResponse::success(batch, "更新批次成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "批次不存在".to_string(),
-        ))),
+        Err(sqlx::Error::RowNotFound) => {
+            ApiResponse::from(TopemsError::ResourceNotFound("批次不存在".to_string()))
+        }
         Err(e) => {
             tracing::error!("更新批次失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新批次失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新批次失败".to_string()))
         }
     }
 }
@@ -435,23 +421,21 @@ pub async fn delete_batch(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let batch_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的批次ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的批次ID".to_string()))
         }
     };
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -477,19 +461,15 @@ pub async fn delete_batch(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success("".to_string(), "删除批次成功"))
+            ApiResponse::success("".to_string(), "删除批次成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "批次不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("批次不存在".to_string())),
         Err(e) => {
             tracing::error!("删除批次失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除批次失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除批次失败".to_string()))
         }
     }
 }
@@ -508,15 +488,15 @@ pub async fn get_batch_statistics(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<BatchStatistics>> {
+) -> ApiResponse<BatchStatistics> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let warehouse_id = params
@@ -557,13 +537,11 @@ pub async fn get_batch_statistics(
                 expired_count: row.expired_count.unwrap_or(0),
                 quality_pending_count: row.quality_pending_count.unwrap_or(0),
             };
-            Json(ApiResponse::success(statistics, "获取批次统计成功"))
+            ApiResponse::success(statistics, "获取批次统计成功")
         }
         Err(e) => {
             tracing::error!("获取批次统计失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取批次统计失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取批次统计失败".to_string()))
         }
     }
 }
@@ -586,15 +564,15 @@ pub async fn get_expiring_soon(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<Batch>>> {
+) -> ApiResponse<Vec<Batch>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let days: i32 = params.get("days").and_then(|v| v.as_i64()).unwrap_or(30) as i32;
@@ -617,12 +595,10 @@ pub async fn get_expiring_soon(
     .await;
 
     match result {
-        Ok(batches) => Json(ApiResponse::success(batches, "获取即将过期批次成功")),
+        Ok(batches) => ApiResponse::success(batches, "获取即将过期批次成功"),
         Err(e) => {
             tracing::error!("获取即将过期批次失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取即将过期批次失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取即将过期批次失败".to_string()))
         }
     }
 }
@@ -644,15 +620,15 @@ pub async fn get_expired(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<Batch>>> {
+) -> ApiResponse<Vec<Batch>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let warehouse_id = params
@@ -673,12 +649,10 @@ pub async fn get_expired(
     .await;
 
     match result {
-        Ok(batches) => Json(ApiResponse::success(batches, "获取已过期批次成功")),
+        Ok(batches) => ApiResponse::success(batches, "获取已过期批次成功"),
         Err(e) => {
             tracing::error!("获取已过期批次失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取已过期批次失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取已过期批次失败".to_string()))
         }
     }
 }
@@ -701,23 +675,21 @@ pub async fn adjust_quantity(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(data): Json<serde_json::Value>,
-) -> Json<ApiResponse<Batch>> {
+) -> ApiResponse<Batch> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let batch_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的批次ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的批次ID".to_string()))
         }
     };
 
@@ -753,19 +725,17 @@ pub async fn adjust_quantity(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(batch, "调整数量成功"))
+            ApiResponse::success(batch, "调整数量成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "批次不存在".to_string(),
-        ))),
+        Err(sqlx::Error::RowNotFound) => {
+            ApiResponse::from(TopemsError::ResourceNotFound("批次不存在".to_string()))
+        }
         Err(e) => {
             tracing::error!("调整数量失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "调整数量失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("调整数量失败".to_string()))
         }
     }
 }
@@ -788,23 +758,21 @@ pub async fn transfer_location(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(data): Json<serde_json::Value>,
-) -> Json<ApiResponse<Batch>> {
+) -> ApiResponse<Batch> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let batch_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的批次ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的批次ID".to_string()))
         }
     };
 
@@ -813,9 +781,7 @@ pub async fn transfer_location(
         Some(s) if !s.trim().is_empty() => match Uuid::parse_str(s.trim()) {
             Ok(uuid) => Some(uuid),
             Err(_) => {
-                return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                    "无效的库位ID".to_string(),
-                )))
+                return ApiResponse::from(TopemsError::ValidationFailed("无效的库位ID".to_string()))
             }
         },
         _ => None,
@@ -850,19 +816,17 @@ pub async fn transfer_location(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(batch, "转移库位成功"))
+            ApiResponse::success(batch, "转移库位成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "批次不存在".to_string(),
-        ))),
+        Err(sqlx::Error::RowNotFound) => {
+            ApiResponse::from(TopemsError::ResourceNotFound("批次不存在".to_string()))
+        }
         Err(e) => {
             tracing::error!("转移库位失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "转移库位失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("转移库位失败".to_string()))
         }
     }
 }

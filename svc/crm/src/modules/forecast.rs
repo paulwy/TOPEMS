@@ -458,20 +458,20 @@ pub fn create_routes() -> Router<ApiState> {
     ),
     tag = "forecast"
 )]
-pub async fn predict_handler(Json(req): Json<ForecastConfig>) -> Json<ApiResponse<ForecastResult>> {
+pub async fn predict_handler(Json(req): Json<ForecastConfig>) -> ApiResponse<ForecastResult> {
     if req.history_data.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "历史数据不能为空".to_string(),
-        )));
+        ));
     }
     if req.forecast_periods == 0 {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "预测周期数必须大于 0".to_string(),
-        )));
+        ));
     }
 
     let result = predict(&req);
-    Json(ApiResponse::success(result, "预测完成"))
+    ApiResponse::success(result, "预测完成")
 }
 
 /// GET /forecast/methods — 获取支持的预测方法列表
@@ -485,7 +485,7 @@ pub async fn predict_handler(Json(req): Json<ForecastConfig>) -> Json<ApiRespons
     ),
     tag = "forecast"
 )]
-pub async fn get_methods() -> Json<ApiResponse<Vec<ForecastMethodInfo>>> {
+pub async fn get_methods() -> ApiResponse<Vec<ForecastMethodInfo>> {
     let methods: Vec<ForecastMethodInfo> = ForecastMethod::all()
         .iter()
         .map(|&m| ForecastMethodInfo {
@@ -494,7 +494,7 @@ pub async fn get_methods() -> Json<ApiResponse<Vec<ForecastMethodInfo>>> {
             description: m.description().to_string(),
         })
         .collect();
-    Json(ApiResponse::success(methods, "获取预测方法列表成功"))
+    ApiResponse::success(methods, "获取预测方法列表成功")
 }
 
 /// POST /forecast/evaluate — 评估多个方法的预测效果
@@ -508,15 +508,15 @@ pub async fn get_methods() -> Json<ApiResponse<Vec<ForecastMethodInfo>>> {
     ),
     tag = "forecast"
 )]
-async fn evaluate(Json(req): Json<ForecastConfig>) -> Json<ApiResponse<ForecastEvaluation>> {
+async fn evaluate(Json(req): Json<ForecastConfig>) -> ApiResponse<ForecastEvaluation> {
     if req.history_data.len() < 3 {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "评估至少需要 3 个历史数据点".to_string(),
-        )));
+        ));
     }
 
     let evaluation = evaluate_all(&req);
-    Json(ApiResponse::success(evaluation, "预测评估完成"))
+    ApiResponse::success(evaluation, "预测评估完成")
 }
 
 // ---------------------------------------------------------------------------

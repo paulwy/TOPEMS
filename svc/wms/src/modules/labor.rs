@@ -127,14 +127,14 @@ pub async fn list_labor_efficiency(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<LaborEfficiencyRow>>> {
+) -> ApiResponse<Vec<LaborEfficiencyRow>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
-        return e;
+        return e.0;
     }
     match efficiency_query(
         &mut **txn,
@@ -145,12 +145,10 @@ pub async fn list_labor_efficiency(
     )
     .await
     {
-        Ok(rows) => Json(ApiResponse::success(rows, "劳动效率获取成功")),
+        Ok(rows) => ApiResponse::success(rows, "劳动效率获取成功"),
         Err(e) => {
             tracing::error!("获取劳动效率失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取劳动效率失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取劳动效率失败".to_string()))
         }
     }
 }
@@ -163,14 +161,14 @@ pub async fn user_labor_efficiency(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<LaborEfficiencyRow>>> {
+) -> ApiResponse<Vec<LaborEfficiencyRow>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
-        return e;
+        return e.0;
     }
     match efficiency_query(
         &mut **txn,
@@ -181,12 +179,10 @@ pub async fn user_labor_efficiency(
     )
     .await
     {
-        Ok(rows) => Json(ApiResponse::success(rows, "员工劳动效率获取成功")),
+        Ok(rows) => ApiResponse::success(rows, "员工劳动效率获取成功"),
         Err(e) => {
             tracing::error!("获取员工劳动效率失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取员工劳动效率失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取员工劳动效率失败".to_string()))
         }
     }
 }
@@ -220,14 +216,14 @@ pub async fn labor_productivity(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ProductivityStats>> {
+) -> ApiResponse<ProductivityStats> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
-        return e;
+        return e.0;
     }
 
     let row = sqlx::query(only_own_schema_query!(
@@ -258,7 +254,7 @@ pub async fn labor_productivity(
             let completed_lists: i64 = row.get(2);
             let total_items: i64 = row.get(3);
             let picked_items: i64 = row.get(4);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 ProductivityStats {
                     total_workers,
                     total_lists,
@@ -282,13 +278,11 @@ pub async fn labor_productivity(
                     },
                 },
                 "生产率获取成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取生产率失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取生产率失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取生产率失败".to_string()))
         }
     }
 }
@@ -322,14 +316,14 @@ pub async fn labor_workload(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<WorkloadItem>>> {
+) -> ApiResponse<Vec<WorkloadItem>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
-        return e;
+        return e.0;
     }
 
     let rows = sqlx::query(only_own_schema_query!(
@@ -370,13 +364,11 @@ pub async fn labor_workload(
                     active_workers: row.get("active_workers"),
                 })
                 .collect();
-            Json(ApiResponse::success(items, "工作量分布获取成功"))
+            ApiResponse::success(items, "工作量分布获取成功")
         }
         Err(e) => {
             tracing::error!("获取工作量分布失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取工作量分布失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取工作量分布失败".to_string()))
         }
     }
 }
@@ -414,14 +406,14 @@ pub async fn labor_performance_dashboard(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PerformanceDashboard>> {
+) -> ApiResponse<PerformanceDashboard> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
-        return e;
+        return e.0;
     }
 
     let agg = sqlx::query(only_own_schema_query!(
@@ -484,7 +476,7 @@ pub async fn labor_performance_dashboard(
         0.0
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PerformanceDashboard {
             total_workers,
             total_lists,
@@ -497,7 +489,7 @@ pub async fn labor_performance_dashboard(
             top_workers,
         },
         "绩效仪表盘获取成功",
-    ))
+    )
 }
 
 // ==================== 班次管理 ====================
@@ -549,14 +541,14 @@ pub async fn list_labor_shifts(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PaginatedResponse<LaborShift>>> {
+) -> ApiResponse<PaginatedResponse<LaborShift>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickRead).await {
-        return e;
+        return e.0;
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -590,7 +582,7 @@ pub async fn list_labor_shifts(
             .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 PaginatedResponse {
                     items,
                     total,
@@ -599,13 +591,11 @@ pub async fn list_labor_shifts(
                     total_pages: topems_shared_core::response::total_pages_of(total, page_size),
                 },
                 "班次列表获取成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取班次列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取班次列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取班次列表失败".to_string()))
         }
     }
 }
@@ -617,14 +607,14 @@ pub async fn create_labor_shift(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateShiftRequest>,
-) -> Json<ApiResponse<LaborShift>> {
+) -> ApiResponse<LaborShift> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickWrite).await {
-        return e;
+        return e.0;
     }
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
@@ -661,18 +651,14 @@ pub async fn create_labor_shift(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("班次事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "班次创建失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("班次创建失败".to_string()));
                 }
             }
-            Json(ApiResponse::success(shift, "班次创建成功"))
+            ApiResponse::success(shift, "班次创建成功")
         }
         Err(e) => {
             tracing::error!("创建班次失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建班次失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建班次失败".to_string()))
         }
     }
 }

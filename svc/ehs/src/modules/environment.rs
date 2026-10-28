@@ -79,7 +79,7 @@ pub async fn list_records(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<EnvironmentMonitor>>> {
+) -> ApiResponse<Vec<EnvironmentMonitor>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let rows = sqlx::query(
         r#"SELECT id::text AS id, monitor_no, name, monitor_type, location, status,
@@ -149,11 +149,11 @@ pub async fn list_records(
                         .flatten(),
                 })
                 .collect();
-            Json(ApiResponse::success(list, "获取环境监测点列表成功"))
+            ApiResponse::success(list, "获取环境监测点列表成功")
         }
         Err(e) => {
             tracing::error!("Failed to list environment monitors: {}", e);
-            Json(ApiResponse::server_error("获取环境监测点列表失败"))
+            ApiResponse::server_error("获取环境监测点列表失败")
         }
     }
 }
@@ -171,7 +171,7 @@ pub async fn create_record(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<EnvironmentMonitor>> {
+) -> ApiResponse<EnvironmentMonitor> {
     let tenant_id = resolve_tenant_id(&claims);
     let id = uuid::Uuid::new_v4();
     let monitor_no = req
@@ -245,9 +245,9 @@ pub async fn create_record(
     .await;
     if let Err(e) = res {
         tracing::error!("Failed to insert environment monitor: {}", e);
-        return Json(ApiResponse::server_error("环境监测点创建失败"));
+        return ApiResponse::server_error("环境监测点创建失败");
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         EnvironmentMonitor {
             id: id.to_string(),
             monitor_no: Some(monitor_no),
@@ -266,7 +266,7 @@ pub async fn create_record(
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
         },
         "环境监测点创建成功",
-    ))
+    )
 }
 
 pub async fn get_record(
@@ -274,7 +274,7 @@ pub async fn get_record(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<EnvironmentMonitor>> {
+) -> ApiResponse<EnvironmentMonitor> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let row = sqlx::query(
         r#"SELECT id::text AS id, monitor_no, name, monitor_type, location, status,
@@ -292,7 +292,7 @@ pub async fn get_record(
     .fetch_optional(&state.pool)
     .await;
     match row {
-        Ok(Some(r)) => Json(ApiResponse::success(
+        Ok(Some(r)) => ApiResponse::success(
             EnvironmentMonitor {
                 id: r.try_get::<String, _>("id").unwrap_or_default(),
                 monitor_no: r.try_get::<Option<String>, _>("monitor_no").ok().flatten(),
@@ -327,11 +327,11 @@ pub async fn get_record(
                 updated_at: r.try_get::<Option<String>, _>("updated_at").ok().flatten(),
             },
             "获取环境监测点成功",
-        )),
-        Ok(None) => Json(ApiResponse::not_found("环境监测点不存在")),
+        ),
+        Ok(None) => ApiResponse::not_found("环境监测点不存在"),
         Err(e) => {
             tracing::error!("Failed to get environment monitor: {}", e);
-            Json(ApiResponse::server_error("获取环境监测点失败"))
+            ApiResponse::server_error("获取环境监测点失败")
         }
     }
 }
@@ -342,7 +342,7 @@ pub async fn update_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<EnvironmentMonitor>> {
+) -> ApiResponse<EnvironmentMonitor> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     // 先取现有行，再按请求字段 COALESCE 保留原值。
     let existing = sqlx::query(
@@ -358,10 +358,10 @@ pub async fn update_record(
     .await;
     let _existing = match existing {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("环境监测点不存在")),
+        Ok(None) => return ApiResponse::not_found("环境监测点不存在"),
         Err(e) => {
             tracing::error!("Failed to load environment monitor for update: {}", e);
-            return Json(ApiResponse::server_error("更新环境监测点失败"));
+            return ApiResponse::server_error("更新环境监测点失败");
         }
     };
 
@@ -408,9 +408,9 @@ pub async fn update_record(
     .await;
     if let Err(e) = r {
         tracing::error!("Failed to update environment monitor: {}", e);
-        return Json(ApiResponse::server_error("更新环境监测点失败"));
+        return ApiResponse::server_error("更新环境监测点失败");
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         EnvironmentMonitor {
             id,
             monitor_no: None,
@@ -429,7 +429,7 @@ pub async fn update_record(
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
         },
         "环境监测点更新成功",
-    ))
+    )
 }
 
 pub async fn delete_record(
@@ -437,7 +437,7 @@ pub async fn delete_record(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let r = sqlx::query(
         "UPDATE ehs.qa_ehs_environment_monitors SET deleted_at = now() \
@@ -449,10 +449,10 @@ pub async fn delete_record(
     .execute(&state.pool)
     .await;
     match r {
-        Ok(_) => Json(ApiResponse::success((), "环境监测点删除成功")),
+        Ok(_) => ApiResponse::success((), "环境监测点删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete environment monitor: {}", e);
-            Json(ApiResponse::server_error("环境监测点删除失败"))
+            ApiResponse::server_error("环境监测点删除失败")
         }
     }
 }

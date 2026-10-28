@@ -38,11 +38,11 @@ pub async fn create_member(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(payload): Json<CreateMemberRequest>,
-) -> Json<ApiResponse<ProjectMember>> {
+) -> ApiResponse<ProjectMember> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -71,7 +71,7 @@ pub async fn create_member(
             request_id = %request_id,
             "创建项目成员失败: 分配比例必须在0到1之间"
         );
-        return Json(ApiResponse::bad_request("分配比例必须在0到1之间"));
+        return ApiResponse::bad_request("分配比例必须在0到1之间");
     }
 
     let id = Uuid::new_v4();
@@ -109,7 +109,7 @@ pub async fn create_member(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
             tracing::info!(
@@ -118,7 +118,7 @@ pub async fn create_member(
                 duration_ms = duration.num_milliseconds(),
                 "创建项目成员成功"
             );
-            Json(ApiResponse::success(member, "项目成员创建成功"))
+            ApiResponse::success(member, "项目成员创建成功")
         }
         Err(SqlxError::Database(db_err)) => {
             tracing::error!(
@@ -128,11 +128,11 @@ pub async fn create_member(
                 "创建项目成员数据库错误"
             );
             if db_err.code().map(|c| c == "23503").unwrap_or(false) {
-                Json(ApiResponse::bad_request("关联的项目不存在"))
+                ApiResponse::bad_request("关联的项目不存在")
             } else if db_err.code().map(|c| c == "23505").unwrap_or(false) {
-                Json(ApiResponse::bad_request("该成员已加入此项目"))
+                ApiResponse::bad_request("该成员已加入此项目")
             } else {
-                Json(ApiResponse::server_error("数据库操作失败"))
+                ApiResponse::server_error("数据库操作失败")
             }
         }
         Err(e) => {
@@ -142,7 +142,7 @@ pub async fn create_member(
                 duration_ms = duration.num_milliseconds(),
                 "创建项目成员失败"
             );
-            Json(ApiResponse::server_error("创建项目成员失败"))
+            ApiResponse::server_error("创建项目成员失败")
         }
     }
 }
@@ -167,11 +167,11 @@ pub async fn get_project_members(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<ProjectMember>>> {
+) -> ApiResponse<Vec<ProjectMember>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -210,7 +210,7 @@ pub async fn get_project_members(
                 duration_ms = duration.num_milliseconds(),
                 "获取项目成员列表成功"
             );
-            Json(ApiResponse::success(members, "获取项目成员列表成功"))
+            ApiResponse::success(members, "获取项目成员列表成功")
         }
         Err(e) => {
             tracing::error!(
@@ -220,7 +220,7 @@ pub async fn get_project_members(
                 duration_ms = duration.num_milliseconds(),
                 "获取项目成员列表失败"
             );
-            Json(ApiResponse::server_error("获取项目成员列表失败"))
+            ApiResponse::server_error("获取项目成员列表失败")
         }
     }
 }
@@ -246,11 +246,11 @@ pub async fn update_member(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(payload): Json<UpdateMemberRequest>,
-) -> Json<ApiResponse<ProjectMember>> {
+) -> ApiResponse<ProjectMember> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -276,7 +276,7 @@ pub async fn update_member(
                 member_id = %id,
                 "更新项目成员失败: 分配比例必须在0到1之间"
             );
-            return Json(ApiResponse::bad_request("分配比例必须在0到1之间"));
+            return ApiResponse::bad_request("分配比例必须在0到1之间");
         }
     }
 
@@ -319,7 +319,7 @@ pub async fn update_member(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
             tracing::info!(
@@ -328,7 +328,7 @@ pub async fn update_member(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目成员成功"
             );
-            Json(ApiResponse::success(member, "项目成员更新成功"))
+            ApiResponse::success(member, "项目成员更新成功")
         }
         Err(SqlxError::RowNotFound) => {
             tracing::warn!(
@@ -337,7 +337,7 @@ pub async fn update_member(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目成员失败: 成员不存在"
             );
-            Json(ApiResponse::not_found("成员不存在"))
+            ApiResponse::not_found("成员不存在")
         }
         Err(SqlxError::Database(db_err)) => {
             tracing::error!(
@@ -347,7 +347,7 @@ pub async fn update_member(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目成员数据库错误"
             );
-            Json(ApiResponse::server_error("数据库操作失败"))
+            ApiResponse::server_error("数据库操作失败")
         }
         Err(e) => {
             tracing::error!(
@@ -357,7 +357,7 @@ pub async fn update_member(
                 duration_ms = duration.num_milliseconds(),
                 "更新项目成员失败"
             );
-            Json(ApiResponse::server_error("更新项目成员失败"))
+            ApiResponse::server_error("更新项目成员失败")
         }
     }
 }
@@ -382,11 +382,11 @@ pub async fn delete_member(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
@@ -420,7 +420,7 @@ pub async fn delete_member(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             tracing::info!(
@@ -429,7 +429,7 @@ pub async fn delete_member(
                 duration_ms = duration.num_milliseconds(),
                 "删除项目成员成功"
             );
-            Json(ApiResponse::success((), "项目成员删除成功"))
+            ApiResponse::success((), "项目成员删除成功")
         }
         Ok(_) => {
             tracing::warn!(
@@ -438,7 +438,7 @@ pub async fn delete_member(
                 duration_ms = duration.num_milliseconds(),
                 "删除项目成员失败: 成员不存在"
             );
-            Json(ApiResponse::not_found("成员不存在"))
+            ApiResponse::not_found("成员不存在")
         }
         Err(e) => {
             tracing::error!(
@@ -448,7 +448,7 @@ pub async fn delete_member(
                 duration_ms = duration.num_milliseconds(),
                 "删除项目成员失败"
             );
-            Json(ApiResponse::server_error("删除项目成员失败"))
+            ApiResponse::server_error("删除项目成员失败")
         }
     }
 }

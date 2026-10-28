@@ -136,7 +136,7 @@ pub async fn register_device(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -146,7 +146,7 @@ pub async fn register_device(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::bad_request("无效的用户ID")),
+                ApiResponse::bad_request("无效的用户ID"),
             );
         }
     };
@@ -178,7 +178,7 @@ pub async fn register_device(
             tracing::error!("查询设备失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("内部服务器错误")),
+                ApiResponse::server_error("内部服务器错误"),
             );
         }
     };
@@ -198,12 +198,9 @@ pub async fn register_device(
             .await
         {
             tracing::error!("更新设备信息失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::server_error("更新设备信息失败")));
+            return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("更新设备信息失败"));
         }
-        return (
-            StatusCode::OK,
-            Json(ApiResponse::success((), "设备更新成功")),
-        );
+        return (StatusCode::OK, ApiResponse::success((), "设备更新成功"));
     }
 
     let device_id = Uuid::new_v4();
@@ -223,12 +220,12 @@ pub async fn register_device(
         .await
     {
         tracing::error!("创建设备失败: {}", e);
-        return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::server_error("创建设备失败")));
+        return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("创建设备失败"));
     }
 
     (
         StatusCode::CREATED,
-        Json(ApiResponse::success((), "设备注册成功")),
+        ApiResponse::success((), "设备注册成功"),
     )
 }
 
@@ -254,7 +251,7 @@ pub async fn update_push_token(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -264,7 +261,7 @@ pub async fn update_push_token(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::bad_request("无效的用户ID")),
+                ApiResponse::bad_request("无效的用户ID"),
             );
         }
     };
@@ -290,20 +287,17 @@ pub async fn update_push_token(
             if r.rows_affected() > 0 {
                 (
                     StatusCode::OK,
-                    Json(ApiResponse::success((), "推送Token更新成功")),
+                    ApiResponse::success((), "推送Token更新成功"),
                 )
             } else {
-                (
-                    StatusCode::NOT_FOUND,
-                    Json(ApiResponse::not_found("设备不存在")),
-                )
+                (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在"))
             }
         }
         Err(e) => {
             tracing::error!("更新推送Token失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("更新推送Token失败")),
+                ApiResponse::server_error("更新推送Token失败"),
             )
         }
     }
@@ -321,7 +315,7 @@ pub async fn list_my_devices(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -348,17 +342,17 @@ pub async fn list_my_devices(
             tracing::error!("查询设备列表失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("查询设备列表失败")),
+                ApiResponse::server_error("查询设备列表失败"),
             );
         }
     };
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(
+        ApiResponse::success(
             serde_json::json!({ "items": devices, "total": devices.len() }),
             "获取设备列表成功",
-        )),
+        ),
     )
 }
 
@@ -377,7 +371,7 @@ pub async fn get_device_by_id(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -401,27 +395,21 @@ pub async fn get_device_by_id(
 
     match device {
         Ok(Some(row)) => match Device::from_row(&row) {
-            Ok(d) => (
-                StatusCode::OK,
-                Json(ApiResponse::success(d, "获取设备详情成功")),
-            ),
+            Ok(d) => (StatusCode::OK, ApiResponse::success(d, "获取设备详情成功")),
             Err(e) => {
                 tracing::error!("解析设备详情失败: {}", e);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ApiResponse::server_error("解析设备详情失败")),
+                    ApiResponse::server_error("解析设备详情失败"),
                 )
             }
         },
-        Ok(None) => (
-            StatusCode::NOT_FOUND,
-            Json(ApiResponse::not_found("设备不存在")),
-        ),
+        Ok(None) => (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在")),
         Err(e) => {
             tracing::error!("查询设备详情失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("查询设备详情失败")),
+                ApiResponse::server_error("查询设备详情失败"),
             )
         }
     }
@@ -441,7 +429,7 @@ pub async fn update_device(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -473,19 +461,15 @@ pub async fn update_device(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => (
-            StatusCode::OK,
-            Json(ApiResponse::success((), "更新设备成功")),
-        ),
-        Ok(_) => (
-            StatusCode::NOT_FOUND,
-            Json(ApiResponse::not_found("设备不存在")),
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            (StatusCode::OK, ApiResponse::success((), "更新设备成功"))
+        }
+        Ok(_) => (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在")),
         Err(e) => {
             tracing::error!("更新设备失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("更新设备失败")),
+                ApiResponse::server_error("更新设备失败"),
             )
         }
     }
@@ -504,7 +488,7 @@ pub async fn unregister_device(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -527,18 +511,13 @@ pub async fn unregister_device(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            (StatusCode::OK, Json(ApiResponse::success((), "设备已注销")))
-        }
-        Ok(_) => (
-            StatusCode::NOT_FOUND,
-            Json(ApiResponse::not_found("设备不存在")),
-        ),
+        Ok(r) if r.rows_affected() > 0 => (StatusCode::OK, ApiResponse::success((), "设备已注销")),
+        Ok(_) => (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在")),
         Err(e) => {
             tracing::error!("注销设备失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("注销设备失败")),
+                ApiResponse::server_error("注销设备失败"),
             )
         }
     }
@@ -557,7 +536,7 @@ pub async fn activate_device(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -580,18 +559,13 @@ pub async fn activate_device(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            (StatusCode::OK, Json(ApiResponse::success((), "设备已激活")))
-        }
-        Ok(_) => (
-            StatusCode::NOT_FOUND,
-            Json(ApiResponse::not_found("设备不存在")),
-        ),
+        Ok(r) if r.rows_affected() > 0 => (StatusCode::OK, ApiResponse::success((), "设备已激活")),
+        Ok(_) => (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在")),
         Err(e) => {
             tracing::error!("激活设备失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("激活设备失败")),
+                ApiResponse::server_error("激活设备失败"),
             )
         }
     }
@@ -610,7 +584,7 @@ pub async fn disable_device(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -633,18 +607,13 @@ pub async fn disable_device(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            (StatusCode::OK, Json(ApiResponse::success((), "设备已停用")))
-        }
-        Ok(_) => (
-            StatusCode::NOT_FOUND,
-            Json(ApiResponse::not_found("设备不存在")),
-        ),
+        Ok(r) if r.rows_affected() > 0 => (StatusCode::OK, ApiResponse::success((), "设备已停用")),
+        Ok(_) => (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在")),
         Err(e) => {
             tracing::error!("停用设备失败: {}", e);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::server_error("停用设备失败")),
+                ApiResponse::server_error("停用设备失败"),
             )
         }
     }
@@ -664,7 +633,7 @@ pub async fn test_push_device(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -688,10 +657,10 @@ pub async fn test_push_device(
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(
+        ApiResponse::success(
             serde_json::json!({ "success": true }),
             "测试推送已发送（占位实现，待推送网关接入）",
-        )),
+        ),
     )
 }
 
@@ -707,7 +676,7 @@ pub async fn get_device_stats(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -744,10 +713,10 @@ pub async fn get_device_stats(
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(
+        ApiResponse::success(
             serde_json::json!({ "total": total, "active": active, "inactive": total - active }),
             "获取设备统计成功",
-        )),
+        ),
     )
 }
 

@@ -53,15 +53,15 @@ pub async fn list_items(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseItemRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
@@ -108,7 +108,7 @@ pub async fn list_items(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": items,
                     "total": total,
@@ -116,13 +116,11 @@ pub async fn list_items(
                     "page_size": page_size
                 }),
                 "获取采购明细列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取采购明细列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取采购明细列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取采购明细列表失败".to_string()))
         }
     }
 }
@@ -135,15 +133,15 @@ pub async fn create_item(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreatePurchaseItemRequest>,
-) -> Json<ApiResponse<PurchaseItem>> {
+) -> ApiResponse<PurchaseItem> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseItemWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
@@ -177,11 +175,11 @@ pub async fn create_item(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(item.clone(), "采购明细创建成功")),
+                ApiResponse::success(item.clone(), "采购明细创建成功"),
                 "success",
                 None,
             )
@@ -189,9 +187,7 @@ pub async fn create_item(
         Err(e) => {
             tracing::error!("创建采购明细失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "采购明细创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("采购明细创建失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -243,15 +239,15 @@ pub async fn get_item(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<PurchaseItem>> {
+) -> ApiResponse<PurchaseItem> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseItemRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query_as::<_, PurchaseItem>(
@@ -266,15 +262,11 @@ pub async fn get_item(
     .await;
 
     match result {
-        Ok(Some(item)) => Json(ApiResponse::success(item, "获取采购明细成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "采购明细不存在".to_string(),
-        ))),
+        Ok(Some(item)) => ApiResponse::success(item, "获取采购明细成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("采购明细不存在".to_string())),
         Err(e) => {
             tracing::error!("获取采购明细失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取采购明细失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取采购明细失败".to_string()))
         }
     }
 }
@@ -288,15 +280,15 @@ pub async fn update_item(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdatePurchaseItemRequest>,
-) -> Json<ApiResponse<PurchaseItem>> {
+) -> ApiResponse<PurchaseItem> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseItemWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
@@ -312,16 +304,9 @@ pub async fn update_item(
     let existing = match existing {
         Ok(Some(i)) => i,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "采购明细不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("采购明细不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询采购明细失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询采购明细失败", e)),
     };
 
     let product_code = req.product_code.or(existing.product_code);
@@ -359,11 +344,11 @@ pub async fn update_item(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(item.clone(), "采购明细更新成功")),
+                ApiResponse::success(item.clone(), "采购明细更新成功"),
                 "success",
                 None,
             )
@@ -371,9 +356,7 @@ pub async fn update_item(
         Err(e) => {
             tracing::error!("更新采购明细失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "采购明细更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("采购明细更新失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -413,15 +396,15 @@ pub async fn delete_item(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseItemWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
@@ -438,28 +421,24 @@ pub async fn delete_item(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success("".to_string(), "采购明细删除成功")),
+                ApiResponse::success("".to_string(), "采购明细删除成功"),
                 "success",
                 None,
             )
         }
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "采购明细不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("采购明细不存在".to_string())),
             "error",
             Some("采购明细不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除采购明细失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "采购明细删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("采购明细删除失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )

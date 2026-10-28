@@ -84,15 +84,15 @@ pub async fn list_recommendations(
     >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<RecommendationQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -151,7 +151,7 @@ pub async fn list_recommendations(
                 })
                 .collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": recommendations,
                     "total": total,
@@ -159,13 +159,11 @@ pub async fn list_recommendations(
                     "page_size": page_size
                 }),
                 "获取推荐列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取推荐列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取推荐列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取推荐列表失败".to_string()))
         }
     }
 }
@@ -190,15 +188,15 @@ pub async fn get_recommendation(
     >,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
-) -> Json<ApiResponse<RecommendationResult>> {
+) -> ApiResponse<RecommendationResult> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let result = sqlx::query(
@@ -215,7 +213,7 @@ pub async fn get_recommendation(
         Ok(Some(r)) => {
             let items: Vec<RecommendationItem> =
                 serde_json::from_value(r.get(3)).unwrap_or_default();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 RecommendationResult {
                     customer_id: r.get(1),
                     customer_name: r.get(2),
@@ -226,16 +224,12 @@ pub async fn get_recommendation(
                     created_at: r.get(7),
                 },
                 "获取推荐成功",
-            ))
+            )
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "推荐记录不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("推荐记录不存在".to_string())),
         Err(e) => {
             tracing::error!("获取推荐失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取推荐失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取推荐失败".to_string()))
         }
     }
 }
@@ -248,15 +242,15 @@ async fn create_recommendation(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<RecommendationRequest>,
-) -> Json<ApiResponse<RecommendationResult>> {
+) -> ApiResponse<RecommendationResult> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let locale = Locale::from_headers(&headers).as_sql();
@@ -270,11 +264,9 @@ async fn create_recommendation(
     let customer_name = match customer_name_result {
         Ok(Some(name)) => name,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "客户不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("客户不存在".to_string()))
         }
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询客户失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询客户失败", e)),
     };
 
     let top_k = req.top_k.unwrap_or(10);
@@ -318,14 +310,12 @@ async fn create_recommendation(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             let items: Vec<RecommendationItem> =
                 serde_json::from_value(r.get(3)).unwrap_or_default();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 RecommendationResult {
                     customer_id: r.get(1),
                     customer_name: r.get(2),
@@ -336,13 +326,11 @@ async fn create_recommendation(
                     created_at: r.get(7),
                 },
                 "推荐生成成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("创建推荐失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建推荐失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建推荐失败".to_string()))
         }
     }
 }
@@ -370,15 +358,15 @@ pub async fn get_customer_recommendations(
     headers: HeaderMap,
     Path(id): Path<Uuid>,
     Query(params): Query<RecommendationQueryParams>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let locale = Locale::from_headers(&headers).as_sql();
@@ -392,11 +380,9 @@ pub async fn get_customer_recommendations(
     let customer_name = match customer_name_result {
         Ok(Some(name)) => name,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "客户不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("客户不存在".to_string()))
         }
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询客户失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询客户失败", e)),
     };
 
     let rec_type = params.recommendation_type.as_deref().unwrap_or("product");
@@ -405,7 +391,7 @@ pub async fn get_customer_recommendations(
     let recommendations = generate_recommendations(&state, txn, &id, rec_type, top_k).await;
     let confidence = calculate_overall_confidence(&recommendations);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "customer_id": id,
             "customer_name": customer_name,
@@ -416,7 +402,7 @@ pub async fn get_customer_recommendations(
             "created_at": Utc::now()
         }),
         "获取客户推荐成功",
-    ))
+    )
 }
 
 async fn generate_recommendations(

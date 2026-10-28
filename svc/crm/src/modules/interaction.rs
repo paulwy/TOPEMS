@@ -63,15 +63,15 @@ pub async fn list_interactions(
     Extension(claims): Extension<Claims>,
     Query(params): Query<InteractionPaginationParams>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<ListResponse<Interaction>>> {
+) -> ApiResponse<ListResponse<Interaction>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InteractionRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1).min(1000);
@@ -142,16 +142,14 @@ pub async fn list_interactions(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 ListResponse::with_pagination(interactions, total, page, page_size),
                 "获取交互记录列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取交互记录列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取交互记录列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取交互记录列表失败".to_string()))
         }
     }
 }
@@ -177,15 +175,15 @@ pub async fn get_interaction(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Interaction>> {
+) -> ApiResponse<Interaction> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InteractionRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -211,15 +209,11 @@ pub async fn get_interaction(
     .await;
 
     match result {
-        Ok(Some(interaction)) => Json(ApiResponse::success(interaction, "获取交互记录成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "交互记录不存在".to_string(),
-        ))),
+        Ok(Some(interaction)) => ApiResponse::success(interaction, "获取交互记录成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("交互记录不存在".to_string())),
         Err(e) => {
             tracing::error!("获取交互记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取交互记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取交互记录失败".to_string()))
         }
     }
 }
@@ -232,15 +226,15 @@ async fn create_interaction(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateInteractionRequest>,
-) -> Json<ApiResponse<Interaction>> {
+) -> ApiResponse<Interaction> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InteractionWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -255,9 +249,9 @@ async fn create_interaction(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let now = chrono::Utc::now();
     let type_ = if req.type_.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "交互类型 type 不能为空".to_string(),
-        )));
+        ));
     } else {
         req.type_
     };
@@ -290,16 +284,14 @@ async fn create_interaction(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(record, "创建交互记录成功"))
+            ApiResponse::success(record, "创建交互记录成功")
         }
         Err(e) => {
             tracing::error!("创建交互记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建交互记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建交互记录失败".to_string()))
         }
     }
 }
@@ -313,15 +305,15 @@ async fn update_interaction(
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
     Json(req): Json<UpdateInteractionRequest>,
-) -> Json<ApiResponse<Interaction>> {
+) -> ApiResponse<Interaction> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InteractionWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -376,19 +368,15 @@ async fn update_interaction(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(record, "更新交互记录成功"))
+            ApiResponse::success(record, "更新交互记录成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "交互记录不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("交互记录不存在".to_string())),
         Err(e) => {
             tracing::error!("更新交互记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新交互记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新交互记录失败".to_string()))
         }
     }
 }
@@ -401,15 +389,15 @@ async fn delete_interaction(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InteractionWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -436,22 +424,15 @@ async fn delete_interaction(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
-                serde_json::json!({ "deleted": true }),
-                "删除交互记录成功",
-            ))
+            ApiResponse::success(serde_json::json!({ "deleted": true }), "删除交互记录成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "交互记录不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("交互记录不存在".to_string())),
         Err(e) => {
             tracing::error!("删除交互记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除交互记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除交互记录失败".to_string()))
         }
     }
 }
@@ -474,15 +455,15 @@ pub async fn batch_delete_interactions(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::InteractionWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -508,10 +489,7 @@ pub async fn batch_delete_interactions(
         .unwrap_or_default();
 
     if ids.is_empty() {
-        return Json(ApiResponse::success(
-            serde_json::json!({ "deleted": 0 }),
-            "批量删除成功",
-        ));
+        return ApiResponse::success(serde_json::json!({ "deleted": 0 }), "批量删除成功");
     }
 
     let result = sqlx::query(
@@ -528,19 +506,17 @@ pub async fn batch_delete_interactions(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "deleted": r.rows_affected() }),
                 "批量删除成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("批量删除交互记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "批量删除交互记录失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("批量删除交互记录失败".to_string()))
         }
     }
 }

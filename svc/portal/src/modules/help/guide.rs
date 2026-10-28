@@ -107,7 +107,7 @@ pub struct CompleteLessonRequest {
 pub async fn list_guides(
     State(state): State<AppState>,
     Query(query): Query<GuideQuery>,
-) -> Json<ApiResponse<GuideListResponse>> {
+) -> ApiResponse<GuideListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -129,7 +129,7 @@ pub async fn list_guides(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询指南总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询指南总数失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询指南总数失败".to_string()));
         }
     };
 
@@ -152,16 +152,16 @@ pub async fn list_guides(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询指南列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询指南列表失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询指南列表失败".to_string()));
         }
     };
 
-    Json(api_success(GuideListResponse {
+    api_success(GuideListResponse {
         items,
         total,
         page,
         page_size,
-    }))
+    })
 }
 
 #[utoipa::path(
@@ -180,7 +180,7 @@ pub async fn list_guides(
 pub async fn get_guide(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<GuideDetailResponse>> {
+) -> ApiResponse<GuideDetailResponse> {
     let guide: Option<Guide> = match sqlx::query_as(
         r#"SELECT id, title, description, category, duration, lessons_count, is_active, sort_order, created_at, updated_at
            FROM core_guides WHERE id = $1 AND is_active = true"#,
@@ -192,17 +192,13 @@ pub async fn get_guide(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询指南详情失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询指南详情失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询指南详情失败".to_string()));
         }
     };
 
     let guide = match guide {
         Some(g) => g,
-        None => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "指南不存在".to_string(),
-            )))
-        }
+        None => return ApiResponse::from(TopemsError::ResourceNotFound("指南不存在".to_string())),
     };
 
     let lessons: Vec<GuideLesson> = match sqlx::query_as(
@@ -216,15 +212,15 @@ pub async fn get_guide(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询指南课程失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询指南课程失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("查询指南课程失败".to_string()));
         }
     };
 
-    Json(api_success(GuideDetailResponse {
+    api_success(GuideDetailResponse {
         guide,
         lessons,
         progress: None,
-    }))
+    })
 }
 
 #[utoipa::path(
@@ -240,11 +236,9 @@ pub async fn get_guide(
 pub async fn create_guide(
     State(state): State<AppState>,
     Json(req): Json<CreateGuideRequest>,
-) -> Json<ApiResponse<Guide>> {
+) -> ApiResponse<Guide> {
     if req.title.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
-            "标题不能为空".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ValidationFailed("标题不能为空".to_string()));
     }
 
     let id = Uuid::new_v4();
@@ -271,11 +265,11 @@ pub async fn create_guide(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建指南失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("创建指南失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("创建指南失败".to_string()));
         }
     };
 
-    Json(api_success(guide))
+    api_success(guide)
 }
 
 #[utoipa::path(
@@ -295,11 +289,11 @@ pub async fn add_lesson(
     State(state): State<AppState>,
     Path(guide_id): Path<Uuid>,
     Json(req): Json<CreateLessonRequest>,
-) -> Json<ApiResponse<GuideLesson>> {
+) -> ApiResponse<GuideLesson> {
     if req.title.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "课程标题不能为空".to_string(),
-        )));
+        ));
     }
 
     let id = Uuid::new_v4();
@@ -324,7 +318,7 @@ pub async fn add_lesson(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("添加课程失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("添加课程失败".to_string())));
+            return ApiResponse::from(TopemsError::Internal("添加课程失败".to_string()));
         }
     };
 
@@ -335,7 +329,7 @@ pub async fn add_lesson(
     .execute(&state.pool)
     .await;
 
-    Json(api_success(lesson))
+    api_success(lesson)
 }
 
 #[utoipa::path(
@@ -348,7 +342,7 @@ pub async fn add_lesson(
     ),
     tag = "Guide"
 )]
-pub async fn get_guide_categories(State(state): State<AppState>) -> Json<ApiResponse<Vec<String>>> {
+pub async fn get_guide_categories(State(state): State<AppState>) -> ApiResponse<Vec<String>> {
     let categories: Vec<String> = match sqlx::query_scalar(
         r#"SELECT DISTINCT category FROM core_guides WHERE is_active = true ORDER BY category"#,
     )
@@ -358,13 +352,11 @@ pub async fn get_guide_categories(State(state): State<AppState>) -> Json<ApiResp
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询指南分类失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询指南分类失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("查询指南分类失败".to_string()));
         }
     };
 
-    Json(api_success(categories))
+    api_success(categories)
 }
 
 #[cfg(test)]

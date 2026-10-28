@@ -128,11 +128,11 @@ pub async fn list_material_tests(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
@@ -176,7 +176,7 @@ pub async fn list_material_tests(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "material_tests": records,
                     "total": total,
@@ -184,11 +184,11 @@ pub async fn list_material_tests(
                     "page_size": page_size
                 }),
                 "获取原料试验记录成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取原料试验记录失败: {}", e);
-            Json(ApiResponse::server_error("获取原料试验记录失败"))
+            ApiResponse::server_error("获取原料试验记录失败")
         }
     }
 }
@@ -212,11 +212,11 @@ pub async fn list_by_project(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<MaterialTest>>> {
+) -> ApiResponse<Vec<MaterialTest>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, MaterialTest>(
         r#"
@@ -232,10 +232,10 @@ pub async fn list_by_project(
     .await;
 
     match result {
-        Ok(records) => Json(ApiResponse::success(records, "获取项目原料试验记录成功")),
+        Ok(records) => ApiResponse::success(records, "获取项目原料试验记录成功"),
         Err(e) => {
             tracing::error!("获取项目原料试验记录失败: {}", e);
-            Json(ApiResponse::server_error("获取项目原料试验记录失败"))
+            ApiResponse::server_error("获取项目原料试验记录失败")
         }
     }
 }
@@ -259,11 +259,11 @@ pub async fn list_by_experiment(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<MaterialTest>>> {
+) -> ApiResponse<Vec<MaterialTest>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, MaterialTest>(
         r#"
@@ -279,10 +279,10 @@ pub async fn list_by_experiment(
     .await;
 
     match result {
-        Ok(records) => Json(ApiResponse::success(records, "获取试验原料试验记录成功")),
+        Ok(records) => ApiResponse::success(records, "获取试验原料试验记录成功"),
         Err(e) => {
             tracing::error!("获取试验原料试验记录失败: {}", e);
-            Json(ApiResponse::server_error("获取试验原料试验记录失败"))
+            ApiResponse::server_error("获取试验原料试验记录失败")
         }
     }
 }
@@ -294,18 +294,18 @@ pub async fn create_material_test(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateMaterialTestRequest>,
-) -> Json<ApiResponse<MaterialTest>> {
+) -> ApiResponse<MaterialTest> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     if req.material_name.is_empty() {
-        return Json(ApiResponse::bad_request("原料名称不能为空"));
+        return ApiResponse::bad_request("原料名称不能为空");
     }
 
     if req.tested_by.is_empty() {
-        return Json(ApiResponse::bad_request("测试人员不能为空"));
+        return ApiResponse::bad_request("测试人员不能为空");
     }
 
     let id = Uuid::new_v4();
@@ -345,7 +345,7 @@ pub async fn create_material_test(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
             let response_data = serde_json::to_value(&record).ok();
@@ -364,7 +364,7 @@ pub async fn create_material_test(
                 &headers,
             )
             .await;
-            Json(ApiResponse::success(record, "原料试验记录创建成功"))
+            ApiResponse::success(record, "原料试验记录创建成功")
         }
         Err(e) => {
             tracing::error!("创建原料试验记录失败: {}", e);
@@ -383,7 +383,7 @@ pub async fn create_material_test(
                 &headers,
             )
             .await;
-            Json(ApiResponse::server_error("原料试验记录创建失败"))
+            ApiResponse::server_error("原料试验记录创建失败")
         }
     }
 }
@@ -407,11 +407,11 @@ pub async fn get_material_test(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<MaterialTest>> {
+) -> ApiResponse<MaterialTest> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, MaterialTest>(
         r#"
@@ -425,11 +425,11 @@ pub async fn get_material_test(
     .await;
 
     match result {
-        Ok(Some(record)) => Json(ApiResponse::success(record, "获取原料试验记录成功")),
-        Ok(None) => Json(ApiResponse::not_found("原料试验记录不存在")),
+        Ok(Some(record)) => ApiResponse::success(record, "获取原料试验记录成功"),
+        Ok(None) => ApiResponse::not_found("原料试验记录不存在"),
         Err(e) => {
             tracing::error!("获取原料试验记录失败: {}", e);
-            Json(ApiResponse::server_error("获取原料试验记录失败"))
+            ApiResponse::server_error("获取原料试验记录失败")
         }
     }
 }
@@ -442,11 +442,11 @@ pub async fn update_material_test(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateMaterialTestRequest>,
-) -> Json<ApiResponse<MaterialTest>> {
+) -> ApiResponse<MaterialTest> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let existing = sqlx::query_as::<_, MaterialTest>(
         "SELECT id, project_id, experiment_id, material_name, supplier, batch_number, test_results, conclusion, tested_by, tested_at, created_at FROM rs.material_tests WHERE deleted_at IS NULL AND id = $1",
@@ -457,13 +457,8 @@ pub async fn update_material_test(
 
     let existing = match existing {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("原料试验记录不存在")),
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询原料试验记录失败",
-                e,
-            )))
-        }
+        Ok(None) => return ApiResponse::not_found("原料试验记录不存在"),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询原料试验记录失败", e)),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -498,7 +493,7 @@ pub async fn update_material_test(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
             let response_data = serde_json::to_value(&record).ok();
@@ -517,7 +512,7 @@ pub async fn update_material_test(
                 &headers,
             )
             .await;
-            Json(ApiResponse::success(record, "原料试验记录更新成功"))
+            ApiResponse::success(record, "原料试验记录更新成功")
         }
         Err(e) => {
             tracing::error!("更新原料试验记录失败: {}", e);
@@ -536,7 +531,7 @@ pub async fn update_material_test(
                 &headers,
             )
             .await;
-            Json(ApiResponse::server_error("原料试验记录更新失败"))
+            ApiResponse::server_error("原料试验记录更新失败")
         }
     }
 }
@@ -548,11 +543,11 @@ pub async fn delete_material_test(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query("UPDATE rs.material_tests SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
@@ -561,7 +556,7 @@ pub async fn delete_material_test(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "原料试验记录删除成功")),
+            ApiResponse::success("".to_string(), "原料试验记录删除成功"),
             "success".to_string(),
             None,
         ),
@@ -569,11 +564,11 @@ pub async fn delete_material_test(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::not_found("原料试验记录不存在")),
+                ApiResponse::not_found("原料试验记录不存在"),
                 "error".to_string(),
                 Some("原料试验记录不存在".to_string()),
             )
@@ -581,7 +576,7 @@ pub async fn delete_material_test(
         Err(e) => {
             tracing::error!("删除原料试验记录失败: {}", e);
             (
-                Json(ApiResponse::server_error("原料试验记录删除失败")),
+                ApiResponse::server_error("原料试验记录删除失败"),
                 "error".to_string(),
                 Some(e.to_string()),
             )

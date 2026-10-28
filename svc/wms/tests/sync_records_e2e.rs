@@ -70,10 +70,10 @@ async fn body_of(pool: sqlx::PgPool, status: Option<String>) -> Value {
         Query(params),
     )
     .await;
-    resp.0
+    resp
         .data
         .clone()
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message))
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message))
 }
 
 async fn insert_record(pool: &sqlx::PgPool, source_system: &str, status: &str) {

@@ -6,7 +6,6 @@
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
-    Json,
 };
 use topems_shared_core::response::ApiResponse;
 use topems_shared_service_client::service_client::api::monitor_api::MonitorApi;
@@ -44,16 +43,16 @@ fn build_client(
 pub async fn get_monitoring_services(
     State(state): State<AppState>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<MonitoringServiceModel>>> {
+) -> ApiResponse<Vec<MonitoringServiceModel>> {
     let client = build_client(&state.monitor_client, &state);
     match client.get_service_status().await {
         Ok(resp) => {
             let services = parse_service_status(Some(resp));
-            Json(ApiResponse::success(services, "监控服务状态获取成功"))
+            ApiResponse::success(services, "监控服务状态获取成功")
         }
         Err(e) => {
             tracing::warn!("Monitor service unavailable, returning empty list: {}", e);
-            Json(ApiResponse::success(vec![], "监控服务暂不可用，已降级"))
+            ApiResponse::success(vec![], "监控服务暂不可用，已降级")
         }
     }
 }
@@ -99,22 +98,19 @@ fn parse_service_status(data: Option<serde_json::Value>) -> Vec<MonitoringServic
 pub async fn get_monitoring_metrics(
     State(state): State<AppState>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<MonitoringMetrics>> {
+) -> ApiResponse<MonitoringMetrics> {
     let client = build_client(&state.monitor_client, &state);
     match client.list_metrics().await {
         Ok(resp) => {
             let metrics = parse_metrics(Some(resp));
-            Json(ApiResponse::success(metrics, "监控指标获取成功"))
+            ApiResponse::success(metrics, "监控指标获取成功")
         }
         Err(e) => {
             tracing::warn!(
                 "Monitor service unavailable, returning default metrics: {}",
                 e
             );
-            Json(ApiResponse::success(
-                MonitoringMetrics::default(),
-                "监控服务暂不可用，已降级",
-            ))
+            ApiResponse::success(MonitoringMetrics::default(), "监控服务暂不可用，已降级")
         }
     }
 }
@@ -172,16 +168,16 @@ fn parse_metrics(data: Option<Vec<serde_json::Value>>) -> MonitoringMetrics {
 pub async fn get_monitoring_alerts(
     State(state): State<AppState>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<Alert>>> {
+) -> ApiResponse<Vec<Alert>> {
     let client = build_client(&state.monitor_client, &state);
     match client.list_alerts(1, 50).await {
         Ok(resp) => {
             let alerts = parse_alerts(Some(resp));
-            Json(ApiResponse::success(alerts, "告警列表获取成功"))
+            ApiResponse::success(alerts, "告警列表获取成功")
         }
         Err(e) => {
             tracing::warn!("Monitor service unavailable, returning empty alerts: {}", e);
-            Json(ApiResponse::success(vec![], "监控服务暂不可用，已降级"))
+            ApiResponse::success(vec![], "监控服务暂不可用，已降级")
         }
     }
 }
@@ -226,13 +222,13 @@ pub async fn acknowledge_alert(
     State(state): State<AppState>,
     Path(id): Path<String>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let client = build_client(&state.monitor_client, &state);
     match client.acknowledge_alert(&id, &serde_json::json!({})).await {
-        Ok(resp) => Json(ApiResponse::success(resp, "告警已确认")),
+        Ok(resp) => ApiResponse::success(resp, "告警已确认"),
         Err(e) => {
             tracing::warn!("Failed to acknowledge alert via monitor service: {}", e);
-            Json(ApiResponse::bad_gateway("监控服务暂不可用，告警确认失败"))
+            ApiResponse::bad_gateway("监控服务暂不可用，告警确认失败")
         }
     }
 }
@@ -240,16 +236,16 @@ pub async fn acknowledge_alert(
 pub async fn get_monitoring_logs(
     State(state): State<AppState>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<LogEntry>>> {
+) -> ApiResponse<Vec<LogEntry>> {
     let client = build_client(&state.monitor_client, &state);
     match client.list_logs(1, 50).await {
         Ok(resp) => {
             let logs = parse_logs(Some(resp));
-            Json(ApiResponse::success(logs, "日志列表获取成功"))
+            ApiResponse::success(logs, "日志列表获取成功")
         }
         Err(e) => {
             tracing::warn!("Monitor service unavailable, returning empty logs: {}", e);
-            Json(ApiResponse::success(vec![], "监控服务暂不可用，已降级"))
+            ApiResponse::success(vec![], "监控服务暂不可用，已降级")
         }
     }
 }

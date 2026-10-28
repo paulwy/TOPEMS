@@ -55,15 +55,15 @@ pub async fn list_admissions(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -90,7 +90,7 @@ pub async fn list_admissions(
     .unwrap_or(0);
 
     match admissions {
-        Ok(items) => Json(ApiResponse::success(
+        Ok(items) => ApiResponse::success(
             serde_json::json!({
                 "items": items,
                 "total": total,
@@ -98,12 +98,10 @@ pub async fn list_admissions(
                 "page_size": page_size,
             }),
             "获取供应商准入列表成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("获取供应商准入列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取供应商准入列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取供应商准入列表失败".to_string()))
         }
     }
 }
@@ -115,15 +113,15 @@ pub async fn create_admission(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(data): Json<CreateSupplierAdmissionRequest>,
-) -> Json<ApiResponse<SupplierAdmission>> {
+) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -165,16 +163,14 @@ pub async fn create_admission(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(item, "创建供应商准入成功"))
+            ApiResponse::success(item, "创建供应商准入成功")
         }
         Err(e) => {
             tracing::error!("创建供应商准入失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建供应商准入失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建供应商准入失败".to_string()))
         }
     }
 }
@@ -199,24 +195,24 @@ pub async fn get_admission(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<SupplierAdmission>> {
+) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "无效的供应商准入ID".to_string(),
-            )))
+            ))
         }
     };
 
@@ -229,15 +225,13 @@ pub async fn get_admission(
     .await;
 
     match admission {
-        Ok(item) => Json(ApiResponse::success(item, "获取供应商准入成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(item) => ApiResponse::success(item, "获取供应商准入成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ResourceNotFound(
             "供应商准入不存在".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("获取供应商准入失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取供应商准入失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取供应商准入失败".to_string()))
         }
     }
 }
@@ -250,24 +244,24 @@ pub async fn update_admission(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(data): Json<UpdateSupplierAdmissionRequest>,
-) -> Json<ApiResponse<SupplierAdmission>> {
+) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "无效的供应商准入ID".to_string(),
-            )))
+            ))
         }
     };
 
@@ -324,19 +318,17 @@ pub async fn update_admission(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(item, "更新供应商准入成功"))
+            ApiResponse::success(item, "更新供应商准入成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ResourceNotFound(
             "供应商准入不存在".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("更新供应商准入失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新供应商准入失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新供应商准入失败".to_string()))
         }
     }
 }
@@ -348,24 +340,24 @@ pub async fn delete_admission(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "无效的供应商准入ID".to_string(),
-            )))
+            ))
         }
     };
 
@@ -382,19 +374,17 @@ pub async fn delete_admission(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success("".to_string(), "删除供应商准入成功"))
+            ApiResponse::success("".to_string(), "删除供应商准入成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound(
             "供应商准入不存在".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("删除供应商准入失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除供应商准入失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除供应商准入失败".to_string()))
         }
     }
 }
@@ -420,24 +410,24 @@ pub async fn submit_admission(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(data): Json<serde_json::Value>,
-) -> Json<ApiResponse<SupplierAdmission>> {
+) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "无效的供应商准入ID".to_string(),
-            )))
+            ))
         }
     };
 
@@ -460,19 +450,17 @@ pub async fn submit_admission(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(item, "提交供应商准入成功"))
+            ApiResponse::success(item, "提交供应商准入成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ValidationFailed(
             "供应商准入状态不正确，无法提交".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("提交供应商准入失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "提交供应商准入失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("提交供应商准入失败".to_string()))
         }
     }
 }
@@ -498,24 +486,24 @@ pub async fn approve_admission(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(data): Json<serde_json::Value>,
-) -> Json<ApiResponse<SupplierAdmission>> {
+) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "无效的供应商准入ID".to_string(),
-            )))
+            ))
         }
     };
 
@@ -547,19 +535,17 @@ pub async fn approve_admission(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(item, "审批通过供应商准入成功"))
+            ApiResponse::success(item, "审批通过供应商准入成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ValidationFailed(
             "供应商准入状态不正确，无法审批".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("审批供应商准入失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "审批供应商准入失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("审批供应商准入失败".to_string()))
         }
     }
 }
@@ -585,24 +571,24 @@ pub async fn reject_admission(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(data): Json<serde_json::Value>,
-) -> Json<ApiResponse<SupplierAdmission>> {
+) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "无效的供应商准入ID".to_string(),
-            )))
+            ))
         }
     };
 
@@ -634,19 +620,17 @@ pub async fn reject_admission(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(item, "拒绝供应商准入成功"))
+            ApiResponse::success(item, "拒绝供应商准入成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ValidationFailed(
             "供应商准入状态不正确，无法拒绝".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("拒绝供应商准入失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "拒绝供应商准入失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("拒绝供应商准入失败".to_string()))
         }
     }
 }
@@ -672,24 +656,24 @@ pub async fn audit_admission(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(data): Json<AuditRequest>,
-) -> Json<ApiResponse<SupplierAdmission>> {
+) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "无效的供应商准入ID".to_string(),
-            )))
+            ))
         }
     };
 
@@ -740,19 +724,17 @@ pub async fn audit_admission(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(item, "审核供应商准入成功"))
+            ApiResponse::success(item, "审核供应商准入成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ResourceNotFound(
             "供应商准入不存在".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("审核供应商准入失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "审核供应商准入失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("审核供应商准入失败".to_string()))
         }
     }
 }
@@ -777,24 +759,24 @@ pub async fn activate_supplier(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<SupplierAdmission>> {
+) -> ApiResponse<SupplierAdmission> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "无效的供应商准入ID".to_string(),
-            )))
+            ))
         }
     };
 
@@ -811,19 +793,17 @@ pub async fn activate_supplier(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(item, "激活供应商成功"))
+            ApiResponse::success(item, "激活供应商成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ValidationFailed(
             "供应商准入状态不正确，无法激活".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("激活供应商失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "激活供应商失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("激活供应商失败".to_string()))
         }
     }
 }

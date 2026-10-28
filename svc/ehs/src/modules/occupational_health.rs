@@ -382,7 +382,7 @@ pub async fn list_exam_plans(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<HealthExamPlan>>> {
+) -> ApiResponse<Vec<HealthExamPlan>> {
     let tenant_filter = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -405,7 +405,7 @@ pub async fn list_exam_plans(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list exam plans: {}", e);
-            return Json(ApiResponse::server_error("体检计划列表获取失败"));
+            return ApiResponse::server_error("体检计划列表获取失败");
         }
     };
     let list: Vec<HealthExamPlan> = rows
@@ -432,7 +432,7 @@ pub async fn list_exam_plans(
         })
         .collect();
     tracing::debug!("Listed {} exam plans (real DB)", list.len());
-    Json(ApiResponse::success(list, "获取体检计划列表成功"))
+    ApiResponse::success(list, "获取体检计划列表成功")
 }
 
 #[utoipa::path(
@@ -448,12 +448,10 @@ pub async fn create_exam_plan(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(_req): Json<CreateExamPlanRequest>,
-) -> Json<ApiResponse<HealthExamPlan>> {
+) -> ApiResponse<HealthExamPlan> {
     // 真表 ehs.qa_ehs_health_exam_plans 当前空表，写接口假装成功会制造假数据。
     tracing::warn!("Exam plan create called but data source not yet enabled");
-    Json(ApiResponse::not_implemented(
-        "体检计划数据源尚未启用，写入操作暂不可用",
-    ))
+    ApiResponse::not_implemented("体检计划数据源尚未启用，写入操作暂不可用")
 }
 
 #[utoipa::path(
@@ -472,7 +470,7 @@ pub async fn get_exam_plan(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<HealthExamPlan>> {
+) -> ApiResponse<HealthExamPlan> {
     let tenant_clause = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -497,10 +495,10 @@ pub async fn get_exam_plan(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("体检计划不存在")),
+        Ok(None) => return ApiResponse::not_found("体检计划不存在"),
         Err(e) => {
             tracing::error!("Failed to get exam plan {}: {}", id, e);
-            return Json(ApiResponse::server_error("体检计划获取失败"));
+            return ApiResponse::server_error("体检计划获取失败");
         }
     };
     let plan = HealthExamPlan {
@@ -524,7 +522,7 @@ pub async fn get_exam_plan(
             .unwrap_or_default(),
     };
     tracing::debug!("Got exam plan from real DB: {}", id);
-    Json(ApiResponse::success(plan, "获取体检计划详情成功"))
+    ApiResponse::success(plan, "获取体检计划详情成功")
 }
 
 #[utoipa::path(
@@ -545,11 +543,9 @@ pub async fn update_exam_plan(
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
     Json(_req): Json<UpdateExamPlanRequest>,
-) -> Json<ApiResponse<HealthExamPlan>> {
+) -> ApiResponse<HealthExamPlan> {
     tracing::warn!("Exam plan update called but data source not yet enabled");
-    Json(ApiResponse::not_implemented(
-        "体检计划数据源尚未启用，更新操作暂不可用",
-    ))
+    ApiResponse::not_implemented("体检计划数据源尚未启用，更新操作暂不可用")
 }
 
 #[utoipa::path(
@@ -568,11 +564,9 @@ pub async fn delete_exam_plan(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     tracing::warn!("Exam plan delete called but data source not yet enabled");
-    Json(ApiResponse::not_implemented(
-        "体检计划数据源尚未启用，删除操作暂不可用",
-    ))
+    ApiResponse::not_implemented("体检计划数据源尚未启用，删除操作暂不可用")
 }
 
 #[utoipa::path(
@@ -586,7 +580,7 @@ pub async fn list_exam_records(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<HealthExamRecord>>> {
+) -> ApiResponse<Vec<HealthExamRecord>> {
     let tenant_filter = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -611,7 +605,7 @@ pub async fn list_exam_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list exam records: {}", e);
-            return Json(ApiResponse::server_error("体检记录列表获取失败"));
+            return ApiResponse::server_error("体检记录列表获取失败");
         }
     };
     let list: Vec<HealthExamRecord> = rows
@@ -654,7 +648,7 @@ pub async fn list_exam_records(
         })
         .collect();
     tracing::debug!("Listed {} exam records (real DB)", list.len());
-    Json(ApiResponse::success(list, "获取体检记录列表成功"))
+    ApiResponse::success(list, "获取体检记录列表成功")
 }
 
 #[utoipa::path(
@@ -670,11 +664,9 @@ pub async fn create_exam_record(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(_req): Json<CreateExamRecordRequest>,
-) -> Json<ApiResponse<HealthExamRecord>> {
+) -> ApiResponse<HealthExamRecord> {
     tracing::warn!("Exam record create called but data source not yet enabled");
-    Json(ApiResponse::not_implemented(
-        "体检记录数据源尚未启用，写入操作暂不可用",
-    ))
+    ApiResponse::not_implemented("体检记录数据源尚未启用，写入操作暂不可用")
 }
 
 #[utoipa::path(
@@ -693,7 +685,7 @@ pub async fn get_exam_record(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<HealthExamRecord>> {
+) -> ApiResponse<HealthExamRecord> {
     let tenant_clause = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -720,10 +712,10 @@ pub async fn get_exam_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("体检记录不存在")),
+        Ok(None) => return ApiResponse::not_found("体检记录不存在"),
         Err(e) => {
             tracing::error!("Failed to get exam record {}: {}", id, e);
-            return Json(ApiResponse::server_error("体检记录获取失败"));
+            return ApiResponse::server_error("体检记录获取失败");
         }
     };
     let rec = HealthExamRecord {
@@ -763,7 +755,7 @@ pub async fn get_exam_record(
             .unwrap_or_default(),
     };
     tracing::debug!("Got exam record from real DB: {}", id);
-    Json(ApiResponse::success(rec, "获取体检记录详情成功"))
+    ApiResponse::success(rec, "获取体检记录详情成功")
 }
 
 #[utoipa::path(
@@ -784,11 +776,9 @@ pub async fn update_exam_record(
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
     Json(_req): Json<UpdateExamRecordRequest>,
-) -> Json<ApiResponse<HealthExamRecord>> {
+) -> ApiResponse<HealthExamRecord> {
     tracing::warn!("Exam record update called but data source not yet enabled");
-    Json(ApiResponse::not_implemented(
-        "体检记录数据源尚未启用，更新操作暂不可用",
-    ))
+    ApiResponse::not_implemented("体检记录数据源尚未启用，更新操作暂不可用")
 }
 
 #[utoipa::path(
@@ -807,11 +797,9 @@ pub async fn delete_exam_record(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     tracing::warn!("Exam record delete called but data source not yet enabled");
-    Json(ApiResponse::not_implemented(
-        "体检记录数据源尚未启用，删除操作暂不可用",
-    ))
+    ApiResponse::not_implemented("体检记录数据源尚未启用，删除操作暂不可用")
 }
 
 #[utoipa::path(
@@ -825,7 +813,7 @@ pub async fn list_contraindications(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<Contraindication>>> {
+) -> ApiResponse<Vec<Contraindication>> {
     let tenant_filter = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -849,7 +837,7 @@ pub async fn list_contraindications(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list contraindications: {}", e);
-            return Json(ApiResponse::server_error("职业禁忌症列表获取失败"));
+            return ApiResponse::server_error("职业禁忌症列表获取失败");
         }
     };
     let list: Vec<Contraindication> = rows
@@ -876,7 +864,7 @@ pub async fn list_contraindications(
         })
         .collect();
     tracing::debug!("Listed {} contraindications (real DB)", list.len());
-    Json(ApiResponse::success(list, "获取职业禁忌症列表成功"))
+    ApiResponse::success(list, "获取职业禁忌症列表成功")
 }
 
 #[utoipa::path(
@@ -892,12 +880,10 @@ pub async fn create_contraindication(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(_req): Json<CreateContraindicationRequest>,
-) -> Json<ApiResponse<Contraindication>> {
+) -> ApiResponse<Contraindication> {
     // ehs.qa_ehs_contraindications 为空表，写接口假装成功会制造假数据；诚实返回 501。
     tracing::warn!("Contraindication create called but data source not yet enabled");
-    Json(ApiResponse::not_implemented(
-        "职业禁忌症数据源尚未启用，写入操作暂不可用",
-    ))
+    ApiResponse::not_implemented("职业禁忌症数据源尚未启用，写入操作暂不可用")
 }
 
 #[utoipa::path(
@@ -913,7 +899,7 @@ pub async fn get_contraindication(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Contraindication>> {
+) -> ApiResponse<Contraindication> {
     let tenant_clause = if claims.is_superuser {
         String::from("deleted_at IS NULL")
     } else {
@@ -939,10 +925,10 @@ pub async fn get_contraindication(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("职业禁忌症不存在")),
+        Ok(None) => return ApiResponse::not_found("职业禁忌症不存在"),
         Err(e) => {
             tracing::error!("Failed to get contraindication {}: {}", id, e);
-            return Json(ApiResponse::server_error("职业禁忌症获取失败"));
+            return ApiResponse::server_error("职业禁忌症获取失败");
         }
     };
     let contra = Contraindication {
@@ -968,7 +954,7 @@ pub async fn get_contraindication(
             .unwrap_or_default(),
     };
     tracing::debug!("Got contraindication from real DB: {}", id);
-    Json(ApiResponse::success(contra, "获取职业禁忌症成功"))
+    ApiResponse::success(contra, "获取职业禁忌症成功")
 }
 
 #[utoipa::path(
@@ -986,11 +972,9 @@ pub async fn update_contraindication(
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
     Json(_req): Json<CreateContraindicationRequest>,
-) -> Json<ApiResponse<Contraindication>> {
+) -> ApiResponse<Contraindication> {
     tracing::warn!("Contraindication update called but data source not yet enabled");
-    Json(ApiResponse::not_implemented(
-        "职业禁忌症数据源尚未启用，更新操作暂不可用",
-    ))
+    ApiResponse::not_implemented("职业禁忌症数据源尚未启用，更新操作暂不可用")
 }
 
 #[utoipa::path(
@@ -1006,11 +990,9 @@ pub async fn delete_contraindication(
     Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     tracing::warn!("Contraindication delete called but data source not yet enabled");
-    Json(ApiResponse::not_implemented(
-        "职业禁忌症数据源尚未启用，删除操作暂不可用",
-    ))
+    ApiResponse::not_implemented("职业禁忌症数据源尚未启用，删除操作暂不可用")
 }
 
 #[utoipa::path(
@@ -1025,7 +1007,7 @@ pub async fn get_health_statistics(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<HealthStatistics>> {
+) -> ApiResponse<HealthStatistics> {
     let tenant_bind = resolve_health_tenant(&claims).to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
@@ -1083,7 +1065,7 @@ pub async fn get_health_statistics(
         total_employees, exam_planned, exam_completed, normal_count, abnormal_count, contraindication_count
     );
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         HealthStatistics {
             total_employees: total_employees as i32,
             exam_planned: exam_planned as i32,
@@ -1097,7 +1079,7 @@ pub async fn get_health_statistics(
             tenant_id: resolve_health_tenant(&claims),
         },
         "获取健康统计成功",
-    ))
+    )
 }
 
 // ---- health records（/occupational-health/records，接 ehs.health_records）----
@@ -1114,7 +1096,7 @@ pub async fn list_health_records(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(q): Query<HealthQuery>,
-) -> Json<ApiResponse<Vec<HealthRecord>>> {
+) -> ApiResponse<Vec<HealthRecord>> {
     let tenant_bind = resolve_health_tenant(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -1172,11 +1154,11 @@ pub async fn list_health_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list health records: {}", e);
-            return Json(ApiResponse::server_error("获取健康档案列表失败"));
+            return ApiResponse::server_error("获取健康档案列表失败");
         }
     };
     let list: Vec<HealthRecord> = rows.iter().map(health_record_from_row).collect();
-    Json(ApiResponse::success(list, "获取健康档案列表成功"))
+    ApiResponse::success(list, "获取健康档案列表成功")
 }
 
 #[utoipa::path(
@@ -1192,7 +1174,7 @@ pub async fn create_health_record(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateHealthRecordRequest>,
-) -> Json<ApiResponse<HealthRecord>> {
+) -> ApiResponse<HealthRecord> {
     let tenant_id = resolve_health_tenant(&claims);
     let record_no = format!("HR-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let hazard_factors: serde_json::Value = req
@@ -1235,11 +1217,11 @@ pub async fn create_health_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create health record: {}", e);
-            return Json(ApiResponse::server_error("健康档案创建失败"));
+            return ApiResponse::server_error("健康档案创建失败");
         }
     };
     let record = health_record_from_row(&row);
-    Json(ApiResponse::success(record, "健康档案创建成功"))
+    ApiResponse::success(record, "健康档案创建成功")
 }
 
 #[utoipa::path(
@@ -1255,7 +1237,7 @@ pub async fn get_health_record(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<HealthRecord>> {
+) -> ApiResponse<HealthRecord> {
     let tenant_bind = resolve_health_tenant(&claims).to_string();
     let sql = r#"
         SELECT id::text AS id, record_no, employee_id, employee_name, gender,
@@ -1275,14 +1257,14 @@ pub async fn get_health_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("健康档案不存在")),
+        Ok(None) => return ApiResponse::not_found("健康档案不存在"),
         Err(e) => {
             tracing::error!("Failed to get health record: {}", e);
-            return Json(ApiResponse::server_error("获取健康档案失败"));
+            return ApiResponse::server_error("获取健康档案失败");
         }
     };
     let record = health_record_from_row(&row);
-    Json(ApiResponse::success(record, "获取健康档案成功"))
+    ApiResponse::success(record, "获取健康档案成功")
 }
 
 #[utoipa::path(
@@ -1300,7 +1282,7 @@ pub async fn update_health_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateHealthRecordRequest>,
-) -> Json<ApiResponse<HealthRecord>> {
+) -> ApiResponse<HealthRecord> {
     let tenant_bind = resolve_health_tenant(&claims).to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -1381,14 +1363,14 @@ pub async fn update_health_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("健康档案不存在")),
+        Ok(None) => return ApiResponse::not_found("健康档案不存在"),
         Err(e) => {
             tracing::error!("Failed to update health record: {}", e);
-            return Json(ApiResponse::server_error("健康档案更新失败"));
+            return ApiResponse::server_error("健康档案更新失败");
         }
     };
     let record = health_record_from_row(&row);
-    Json(ApiResponse::success(record, "健康档案更新成功"))
+    ApiResponse::success(record, "健康档案更新成功")
 }
 
 #[utoipa::path(
@@ -1404,7 +1386,7 @@ pub async fn delete_health_record(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_health_tenant(&claims).to_string();
     let sql = r#"
         UPDATE ehs.health_records
@@ -1422,13 +1404,13 @@ pub async fn delete_health_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete health record: {}", e);
-            return Json(ApiResponse::server_error("健康档案删除失败"));
+            return ApiResponse::server_error("健康档案删除失败");
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("健康档案不存在"));
+        return ApiResponse::not_found("健康档案不存在");
     }
-    Json(ApiResponse::success((), "健康档案删除成功"))
+    ApiResponse::success((), "健康档案删除成功")
 }
 
 /// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。

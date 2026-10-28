@@ -35,7 +35,7 @@ pub struct PermissionDef {
     pub code: String,
 }
 
-pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
     let runtime_url = get_runtime_url();
     let plugin_info = PluginInfo {
         code: "portal".to_string(),
@@ -66,7 +66,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         category: Some("other".to_string()),
     };
 
-    Json(ApiResponse::success(plugin_info, "获取插件信息成功"))
+    ApiResponse::success(plugin_info, "获取插件信息成功")
 }
 
 #[utoipa::path(

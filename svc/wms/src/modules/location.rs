@@ -81,15 +81,15 @@ pub async fn list_locations(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -137,7 +137,7 @@ pub async fn list_locations(
 
             let total = count_result.unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": locations,
                     "total": total,
@@ -145,13 +145,11 @@ pub async fn list_locations(
                     "page_size": page_size
                 }),
                 "获取库位列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取库位列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取库位列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取库位列表失败".to_string()))
         }
     }
 }
@@ -176,15 +174,15 @@ pub async fn create_location(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateLocationRequest>,
-) -> Json<ApiResponse<Location>> {
+) -> ApiResponse<Location> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
@@ -221,16 +219,14 @@ pub async fn create_location(
 
     let (response, status, error_msg) = match &result {
         Ok(location) => (
-            Json(ApiResponse::success(location.clone(), "库位创建成功")),
+            ApiResponse::success(location.clone(), "库位创建成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("创建库位失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "库位创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("库位创建失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -263,7 +259,7 @@ pub async fn create_location(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -285,23 +281,21 @@ pub async fn get_location(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Location>> {
+) -> ApiResponse<Location> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let location_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的库位ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的库位ID".to_string()))
         }
     };
 
@@ -316,15 +310,11 @@ pub async fn get_location(
     .await;
 
     match result {
-        Ok(Some(location)) => Json(ApiResponse::success(location, "获取库位成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "库位不存在".to_string(),
-        ))),
+        Ok(Some(location)) => ApiResponse::success(location, "获取库位成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("库位不存在".to_string())),
         Err(e) => {
             tracing::error!("获取库位失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取库位失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取库位失败".to_string()))
         }
     }
 }
@@ -351,23 +341,21 @@ pub async fn update_location(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateLocationRequest>,
-) -> Json<ApiResponse<Location>> {
+) -> ApiResponse<Location> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let location_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的库位ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的库位ID".to_string()))
         }
     };
 
@@ -395,11 +383,9 @@ pub async fn update_location(
     let existing = match existing {
         Ok(Some(l)) => l,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "库位不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("库位不存在".to_string()))
         }
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询库位失败", e))),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询库位失败", e)),
     };
 
     let warehouse_id = req.warehouse_id.or(existing.warehouse_id);
@@ -441,16 +427,14 @@ pub async fn update_location(
 
     let (response, status_str, error_msg) = match &result {
         Ok(location) => (
-            Json(ApiResponse::success(location.clone(), "库位更新成功")),
+            ApiResponse::success(location.clone(), "库位更新成功"),
             "success",
             None,
         ),
         Err(e) => {
             tracing::error!("更新库位失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "库位更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("库位更新失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -483,7 +467,7 @@ pub async fn update_location(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::server_error("事务提交失败"));
+                return ApiResponse::server_error("事务提交失败");
             }
         }
     }
@@ -507,23 +491,21 @@ pub async fn delete_location(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let location_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的库位ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的库位ID".to_string()))
         }
     };
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -549,28 +531,24 @@ pub async fn delete_location(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success("".to_string(), "库位删除成功")),
+                ApiResponse::success("".to_string(), "库位删除成功"),
                 "success",
                 None,
             )
         }
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "库位不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("库位不存在".to_string())),
             "error",
             Some("库位不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除库位失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "库位删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("库位删除失败".to_string())),
                 "error",
                 Some(e.to_string()),
             )
@@ -621,15 +599,15 @@ pub async fn get_location_status(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<LocationStatusSummary>> {
+) -> ApiResponse<LocationStatusSummary> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let warehouse_id: Option<Uuid> = params.warehouse_id.and_then(|s| Uuid::parse_str(&s).ok());
@@ -660,13 +638,11 @@ pub async fn get_location_status(
                 full_locations: row.full_locations.unwrap_or(0),
                 inactive_locations: row.inactive_locations.unwrap_or(0),
             };
-            Json(ApiResponse::success(summary, "获取库位状态统计成功"))
+            ApiResponse::success(summary, "获取库位状态统计成功")
         }
         Err(e) => {
             tracing::error!("获取库位状态统计失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取库位状态统计失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取库位状态统计失败".to_string()))
         }
     }
 }
@@ -690,15 +666,15 @@ pub async fn batch_create_locations(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<Vec<CreateLocationRequest>>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let mut created_locations = Vec::new();
@@ -742,16 +718,16 @@ pub async fn batch_create_locations(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "created_count": created_locations.len(),
             "locations": created_locations
         }),
         "批量创建库位成功",
-    ))
+    )
 }
 
 // gate: admin-only
@@ -769,15 +745,15 @@ pub async fn batch_update_locations(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<BatchUpdateRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let ids: Vec<Uuid> = req
@@ -787,9 +763,9 @@ pub async fn batch_update_locations(
         .collect();
 
     if ids.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "无效的库位ID列表".to_string(),
-        )));
+        ));
     }
 
     let now = Utc::now();
@@ -833,19 +809,17 @@ pub async fn batch_update_locations(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "updated_count": r.rows_affected() }),
                 "批量更新库位成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("批量更新库位失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "批量更新库位失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("批量更新库位失败".to_string()))
         }
     }
 }
@@ -869,15 +843,15 @@ pub async fn batch_delete_locations(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let ids: Vec<Uuid> = req
@@ -891,9 +865,9 @@ pub async fn batch_delete_locations(
         .unwrap_or_default();
 
     if ids.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "无效的库位ID列表".to_string(),
-        )));
+        ));
     }
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -918,19 +892,17 @@ pub async fn batch_delete_locations(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "deleted_count": r.rows_affected() }),
                 "批量删除库位成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("批量删除库位失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "批量删除库位失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("批量删除库位失败".to_string()))
         }
     }
 }

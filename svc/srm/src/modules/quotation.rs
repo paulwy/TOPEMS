@@ -58,11 +58,11 @@ pub async fn list_quotations(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<Quotation>>> {
+) -> ApiResponse<Vec<Quotation>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let inquiry_id = params.inquiry_id.and_then(|s| Uuid::parse_str(&s).ok());
 
@@ -100,13 +100,10 @@ pub async fn list_quotations(
     };
 
     match result {
-        Ok(quotations) => Json(ApiResponse::success(quotations, "获取报价列表成功")),
+        Ok(quotations) => ApiResponse::success(quotations, "获取报价列表成功"),
         Err(e) => {
             tracing::error!("获取报价列表失败: {}", e);
-            Json(ApiResponse::<Vec<Quotation>>::error(
-                500,
-                "获取报价列表失败",
-            ))
+            ApiResponse::<Vec<Quotation>>::error(500, "获取报价列表失败")
         }
     }
 }
@@ -118,24 +115,24 @@ pub async fn create_quotation(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateQuotationRequest>,
-) -> Json<ApiResponse<Quotation>> {
+) -> ApiResponse<Quotation> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let inquiry_id = match Uuid::parse_str(&req.inquiry_id) {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::<Quotation>::bad_request("无效的询价ID")),
+        Err(_) => return ApiResponse::<Quotation>::bad_request("无效的询价ID"),
     };
 
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(id) => id,
-        Err(_) => return Json(ApiResponse::<Quotation>::bad_request("无效的供应商ID")),
+        Err(_) => return ApiResponse::<Quotation>::bad_request("无效的供应商ID"),
     };
 
     if !req.total_amount.is_finite() || req.total_amount < 0.0 {
-        return Json(ApiResponse::<Quotation>::bad_request("报价金额不能为负数"));
+        return ApiResponse::<Quotation>::bad_request("报价金额不能为负数");
     }
 
     let inquiry = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
@@ -148,10 +145,10 @@ pub async fn create_quotation(
     .await
     {
         Ok(Some(i)) => i,
-        Ok(None) => return Json(ApiResponse::<Quotation>::bad_request("询价不存在")),
+        Ok(None) => return ApiResponse::<Quotation>::bad_request("询价不存在"),
         Err(e) => {
             tracing::error!("查询询价失败: {}", e);
-            return Json(ApiResponse::<Quotation>::server_error("查询询价失败"));
+            return ApiResponse::<Quotation>::server_error("查询询价失败");
         }
     };
 
@@ -167,7 +164,7 @@ pub async fn create_quotation(
         Ok(n) => n,
         Err(e) => {
             tracing::error!("查询供应商失败: {}", e);
-            return Json(ApiResponse::<Quotation>::server_error("查询供应商失败"));
+            return ApiResponse::<Quotation>::server_error("查询供应商失败");
         }
     };
 
@@ -216,14 +213,14 @@ pub async fn create_quotation(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(quotation, "报价创建成功"))
+            ApiResponse::success(quotation, "报价创建成功")
         }
         Err(e) => {
             tracing::error!("创建报价失败: {}", e);
-            Json(ApiResponse::<Quotation>::server_error("报价创建失败"))
+            ApiResponse::<Quotation>::server_error("报价创建失败")
         }
     }
 }
@@ -247,11 +244,11 @@ pub async fn get_quotation(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Quotation>> {
+) -> ApiResponse<Quotation> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let result = sqlx::query_as::<_, Quotation>(
         only_own_schema_query!("srm", r#"
@@ -269,11 +266,11 @@ pub async fn get_quotation(
     .await;
 
     match result {
-        Ok(Some(quotation)) => Json(ApiResponse::success(quotation, "获取报价成功")),
-        Ok(None) => Json(ApiResponse::<Quotation>::not_found("报价不存在")),
+        Ok(Some(quotation)) => ApiResponse::success(quotation, "获取报价成功"),
+        Ok(None) => ApiResponse::<Quotation>::not_found("报价不存在"),
         Err(e) => {
             tracing::error!("获取报价失败: {}", e);
-            Json(ApiResponse::<Quotation>::server_error("获取报价失败"))
+            ApiResponse::<Quotation>::server_error("获取报价失败")
         }
     }
 }
@@ -286,11 +283,11 @@ pub async fn update_quotation(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateQuotationRequest>,
-) -> Json<ApiResponse<Quotation>> {
+) -> ApiResponse<Quotation> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -310,7 +307,7 @@ pub async fn update_quotation(
 
     if let Some(amount) = req.total_amount {
         if !amount.is_finite() || amount < 0.0 {
-            return Json(ApiResponse::<Quotation>::bad_request("报价金额不能为负数"));
+            return ApiResponse::<Quotation>::bad_request("报价金额不能为负数");
         }
     }
 
@@ -351,15 +348,15 @@ pub async fn update_quotation(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(quotation, "报价更新成功"))
+            ApiResponse::success(quotation, "报价更新成功")
         }
-        Ok(None) => Json(ApiResponse::<Quotation>::bad_request("报价状态不允许修改")),
+        Ok(None) => ApiResponse::<Quotation>::bad_request("报价状态不允许修改"),
         Err(e) => {
             tracing::error!("更新报价失败: {}", e);
-            Json(ApiResponse::<Quotation>::server_error("报价更新失败"))
+            ApiResponse::<Quotation>::server_error("报价更新失败")
         }
     }
 }
@@ -371,11 +368,11 @@ pub async fn delete_quotation(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -401,15 +398,15 @@ pub async fn delete_quotation(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(true, "报价删除成功"))
+            ApiResponse::success(true, "报价删除成功")
         }
-        Ok(_) => Json(ApiResponse::<bool>::not_found("报价不存在")),
+        Ok(_) => ApiResponse::<bool>::not_found("报价不存在"),
         Err(e) => {
             tracing::error!("删除报价失败: {}", e);
-            Json(ApiResponse::<bool>::server_error("报价删除失败"))
+            ApiResponse::<bool>::server_error("报价删除失败")
         }
     }
 }
@@ -434,11 +431,11 @@ pub async fn award_quotation(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Quotation>> {
+) -> ApiResponse<Quotation> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -472,15 +469,15 @@ pub async fn award_quotation(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(quotation, "报价已中标"))
+            ApiResponse::success(quotation, "报价已中标")
         }
-        Ok(None) => Json(ApiResponse::<Quotation>::bad_request("报价状态不允许中标")),
+        Ok(None) => ApiResponse::<Quotation>::bad_request("报价状态不允许中标"),
         Err(e) => {
             tracing::error!("中标报价失败: {}", e);
-            Json(ApiResponse::<Quotation>::server_error("中标报价失败"))
+            ApiResponse::<Quotation>::server_error("中标报价失败")
         }
     }
 }
@@ -505,11 +502,11 @@ pub async fn reject_quotation(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Quotation>> {
+) -> ApiResponse<Quotation> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let now = Utc::now();
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -543,15 +540,15 @@ pub async fn reject_quotation(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(quotation, "报价已拒绝"))
+            ApiResponse::success(quotation, "报价已拒绝")
         }
-        Ok(None) => Json(ApiResponse::<Quotation>::bad_request("报价状态不允许拒绝")),
+        Ok(None) => ApiResponse::<Quotation>::bad_request("报价状态不允许拒绝"),
         Err(e) => {
             tracing::error!("拒绝报价失败: {}", e);
-            Json(ApiResponse::<Quotation>::server_error("拒绝报价失败"))
+            ApiResponse::<Quotation>::server_error("拒绝报价失败")
         }
     }
 }

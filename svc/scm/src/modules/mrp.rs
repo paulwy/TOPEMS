@@ -261,15 +261,15 @@ pub async fn list_suggestions(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
@@ -323,7 +323,7 @@ pub async fn list_suggestions(
             let items_json: Vec<serde_json::Value> =
                 items.iter().map(mrp_suggestion_row_to_json).collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "suggestions": items_json,
                     "total": total,
@@ -331,13 +331,11 @@ pub async fn list_suggestions(
                     "page_size": page_size
                 }),
                 "获取MRP建议列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取MRP建议列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取MRP建议列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取MRP建议列表失败".to_string()))
         }
     }
 }
@@ -362,15 +360,15 @@ pub async fn get_suggestion(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
@@ -389,18 +387,13 @@ pub async fn get_suggestion(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(
-            mrp_suggestion_row_to_json(&row),
-            "获取MRP建议详情成功",
-        )),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "MRP建议不存在".to_string(),
-        ))),
+        Ok(Some(row)) => {
+            ApiResponse::success(mrp_suggestion_row_to_json(&row), "获取MRP建议详情成功")
+        }
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("MRP建议不存在".to_string())),
         Err(e) => {
             tracing::error!("获取MRP建议详情失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取MRP建议详情失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取MRP建议详情失败".to_string()))
         }
     }
 }
@@ -413,15 +406,15 @@ pub async fn update_suggestion(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateMrpSuggestionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let now = Utc::now();
@@ -457,22 +450,16 @@ pub async fn update_suggestion(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"id": id}),
-            "MRP 建议已更新",
-        )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "MRP 建议不存在".to_string(),
-        ))),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "更新 MRP 建议失败",
-            e,
-        ))),
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"id": id}), "MRP 建议已更新")
+        }
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("MRP 建议不存在".to_string())),
+        Err(e) => ApiResponse::from(TopemsError::internal("更新 MRP 建议失败", e)),
     }
 }
 
@@ -483,15 +470,15 @@ pub async fn delete_suggestion(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -510,22 +497,16 @@ pub async fn delete_suggestion(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(ApiResponse::server_error("提交事务失败"));
+            return ApiResponse::server_error("提交事务失败");
         }
     }
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({"id": id}),
-            "MRP 建议已删除",
-        )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "MRP 建议不存在".to_string(),
-        ))),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal(
-            "删除 MRP 建议失败",
-            e,
-        ))),
+        Ok(r) if r.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::json!({"id": id}), "MRP 建议已删除")
+        }
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("MRP 建议不存在".to_string())),
+        Err(e) => ApiResponse::from(TopemsError::internal("删除 MRP 建议失败", e)),
     }
 }
 
@@ -538,15 +519,15 @@ pub async fn compute_mrp(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<MrpComputeRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let _txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
@@ -560,9 +541,7 @@ pub async fn compute_mrp(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("开启事务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "MRP计算失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("MRP计算失败".to_string()));
         }
     };
 
@@ -579,9 +558,7 @@ pub async fn compute_mrp(
         tx.rollback()
             .await
             .unwrap_or_else(|e| tracing::warn!("事务回滚失败: {}", e));
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "MRP计算失败".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("MRP计算失败".to_string()));
     }
 
     let now = Utc::now();
@@ -698,17 +675,13 @@ pub async fn compute_mrp(
                 &headers,
             )
             .await;
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "MRP计算失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("MRP计算失败".to_string()));
         }
     };
 
     if let Err(e) = tx.commit().await {
         tracing::error!("提交事务失败: {}", e);
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "MRP计算失败".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("MRP计算失败".to_string()));
     }
 
     let items_json: Vec<serde_json::Value> = items.iter().map(mrp_suggestion_row_to_json).collect();
@@ -719,11 +692,11 @@ pub async fn compute_mrp(
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
 
-            return Json(ApiResponse::server_error("事务提交失败"));
+            return ApiResponse::server_error("事务提交失败");
         }
     }
 
-    let response = Json(ApiResponse::success(
+    let response = ApiResponse::success(
         serde_json::json!({
             "suggestions": items_json,
             "total": count,
@@ -731,7 +704,7 @@ pub async fn compute_mrp(
             "safety_stock_factor": safety_factor
         }),
         &format!("MRP计算完成，生成{}条建议", count),
-    ));
+    );
 
     log_audit_event(
         &state.db,
@@ -768,15 +741,15 @@ pub async fn confirm_suggestion(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ConfirmSuggestionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
@@ -800,24 +773,17 @@ pub async fn confirm_suggestion(
     let existing = match existing {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "MRP建议不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("MRP建议不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询MRP建议失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询MRP建议失败", e)),
     };
 
     let status: String = existing.try_get("status").unwrap_or_default();
     if status != "draft" {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+        return ApiResponse::from(TopemsError::ValidationFailed(format!(
             "MRP建议当前状态为{}，无法确认",
             status
-        ))));
+        )));
     }
 
     let confirmed_qty = req
@@ -858,14 +824,11 @@ pub async fn confirm_suggestion(
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
 
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
             (
-                Json(ApiResponse::success(
-                    mrp_suggestion_row_to_json(row),
-                    "MRP建议确认成功",
-                )),
+                ApiResponse::success(mrp_suggestion_row_to_json(row), "MRP建议确认成功"),
                 "success",
                 None,
                 Some(mrp_suggestion_row_to_json(row)),
@@ -874,9 +837,7 @@ pub async fn confirm_suggestion(
         Err(e) => {
             tracing::error!("确认MRP建议失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "确认MRP建议失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("确认MRP建议失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -920,15 +881,15 @@ pub async fn material_requirement_summary(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
@@ -999,7 +960,7 @@ pub async fn material_requirement_summary(
                 })
                 .collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "summaries": summaries,
                     "total": total,
@@ -1007,13 +968,11 @@ pub async fn material_requirement_summary(
                     "page_size": page_size
                 }),
                 "获取物料需求汇总成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取物料需求汇总失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取物料需求汇总失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取物料需求汇总失败".to_string()))
         }
     }
 }

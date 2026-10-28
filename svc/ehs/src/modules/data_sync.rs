@@ -91,7 +91,7 @@ pub struct SyncAccidentToLimsRequest {
 pub async fn list_sync_records(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<SyncQuery>,
-) -> Json<ApiResponse<Vec<SyncRecord>>> {
+) -> ApiResponse<Vec<SyncRecord>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -147,10 +147,10 @@ pub async fn list_sync_records(
     });
 
     match records {
-        Ok(data) => Json(ApiResponse::success(data, "获取同步记录列表成功")),
+        Ok(data) => ApiResponse::success(data, "获取同步记录列表成功"),
         Err(e) => {
             tracing::error!("Failed to fetch sync records: {}", e);
-            Json(ApiResponse::server_error("获取同步记录列表失败"))
+            ApiResponse::server_error("获取同步记录列表失败")
         }
     }
 }
@@ -169,10 +169,10 @@ pub async fn list_sync_records(
 pub async fn get_sync_record(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<SyncRecord>> {
+) -> ApiResponse<SyncRecord> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的同步记录ID")),
+        Err(_) => return ApiResponse::bad_request("无效的同步记录ID"),
     };
 
     let row = sqlx::query(
@@ -183,7 +183,7 @@ pub async fn get_sync_record(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             SyncRecord {
                 id: r.get("id"),
                 sync_no: r.get("sync_no"),
@@ -199,11 +199,11 @@ pub async fn get_sync_record(
                 updated_at: r.get("updated_at"),
             },
             "获取同步记录成功",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("同步记录不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("同步记录不存在"),
         Err(e) => {
             tracing::error!("Failed to fetch sync record: {}", e);
-            Json(ApiResponse::server_error("获取同步记录失败"))
+            ApiResponse::server_error("获取同步记录失败")
         }
     }
 }
@@ -220,9 +220,9 @@ pub async fn get_sync_record(
 pub async fn sync_hazard_to_qms(
     State(_state): State<crate::shared::AppState>,
     Json(_req): Json<SyncHazardToQmsRequest>,
-) -> Json<ApiResponse<SyncRecord>> {
+) -> ApiResponse<SyncRecord> {
     tracing::warn!("Data sync module not yet enabled");
-    Json(ApiResponse::not_implemented("数据同步数据源尚未启用"))
+    ApiResponse::not_implemented("数据同步数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -236,9 +236,9 @@ pub async fn sync_hazard_to_qms(
 pub async fn sync_accident_to_lims(
     State(_state): State<crate::shared::AppState>,
     Json(_req): Json<SyncAccidentToLimsRequest>,
-) -> Json<ApiResponse<SyncRecord>> {
+) -> ApiResponse<SyncRecord> {
     tracing::warn!("Data sync module not yet enabled");
-    Json(ApiResponse::not_implemented("数据同步数据源尚未启用"))
+    ApiResponse::not_implemented("数据同步数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -255,10 +255,10 @@ pub async fn sync_accident_to_lims(
 pub async fn retry_sync(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<SyncRecord>> {
+) -> ApiResponse<SyncRecord> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的同步记录ID")),
+        Err(_) => return ApiResponse::bad_request("无效的同步记录ID"),
     };
 
     let row = sqlx::query(
@@ -269,7 +269,7 @@ pub async fn retry_sync(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(
+        Ok(r) => ApiResponse::success(
             SyncRecord {
                 id: r.get("id"),
                 sync_no: r.get("sync_no"),
@@ -285,11 +285,11 @@ pub async fn retry_sync(
                 updated_at: r.get("updated_at"),
             },
             "同步记录已重置为待处理",
-        )),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("同步记录不存在")),
+        ),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("同步记录不存在"),
         Err(e) => {
             tracing::error!("Failed to retry sync: {}", e);
-            Json(ApiResponse::server_error("同步重试失败"))
+            ApiResponse::server_error("同步重试失败")
         }
     }
 }
@@ -308,10 +308,10 @@ pub async fn retry_sync(
 pub async fn delete_sync_record(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的同步记录ID")),
+        Err(_) => return ApiResponse::bad_request("无效的同步记录ID"),
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -323,10 +323,10 @@ pub async fn delete_sync_record(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "同步记录删除成功")),
+        Ok(_) => ApiResponse::success(true, "同步记录删除成功"),
         Err(e) => {
             tracing::error!("Failed to delete sync record: {}", e);
-            Json(ApiResponse::server_error("同步记录删除失败"))
+            ApiResponse::server_error("同步记录删除失败")
         }
     }
 }
@@ -351,9 +351,9 @@ pub struct SyncConfig {
 )]
 pub async fn list_sync_configs(
     State(_state): State<crate::shared::AppState>,
-) -> Json<ApiResponse<SyncConfig>> {
+) -> ApiResponse<SyncConfig> {
     tracing::warn!("Data sync module not yet enabled");
-    Json(ApiResponse::not_implemented("数据同步数据源尚未启用"))
+    ApiResponse::not_implemented("数据同步数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -367,9 +367,9 @@ pub async fn list_sync_configs(
 pub async fn update_sync_configs(
     State(_state): State<crate::shared::AppState>,
     Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<SyncConfig>> {
+) -> ApiResponse<SyncConfig> {
     tracing::warn!("Data sync module not yet enabled");
-    Json(ApiResponse::not_implemented("数据同步数据源尚未启用"))
+    ApiResponse::not_implemented("数据同步数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -383,9 +383,9 @@ pub async fn update_sync_configs(
 pub async fn get_sync_config(
     State(_state): State<crate::shared::AppState>,
     axum::extract::Path(_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<SyncConfig>> {
+) -> ApiResponse<SyncConfig> {
     tracing::warn!("Data sync module not yet enabled");
-    Json(ApiResponse::not_implemented("数据同步数据源尚未启用"))
+    ApiResponse::not_implemented("数据同步数据源尚未启用")
 }
 
 #[utoipa::path(
@@ -399,7 +399,7 @@ pub async fn get_sync_config(
 pub async fn batch_retry_sync(
     State(_state): State<crate::shared::AppState>,
     Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     tracing::warn!("Data sync module not yet enabled");
-    Json(ApiResponse::not_implemented("数据同步数据源尚未启用"))
+    ApiResponse::not_implemented("数据同步数据源尚未启用")
 }

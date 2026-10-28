@@ -6,7 +6,7 @@ use axum::{
     extract::{Extension, FromRef, Query, State},
     http::HeaderMap,
     routing::get,
-    Json, Router,
+    Router,
 };
 use chrono::{Datelike, NaiveDate};
 use serde::{Deserialize, Serialize};
@@ -138,13 +138,13 @@ async fn get_inventory_turnover(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AnalyticsQueryParams>,
-) -> Json<ApiResponse<InventoryTurnoverResponse>> {
+) -> ApiResponse<InventoryTurnoverResponse> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(match resolve_tenant_id(&claims) {
             Ok(id) => id,
-            Err(e) => return Json(ApiResponse::unauthorized(&e.classify().1)),
+            Err(e) => return ApiResponse::unauthorized(&e.classify().1),
         })
     };
 
@@ -189,7 +189,7 @@ async fn get_inventory_turnover(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("inventory_turnover query error: {}", e);
-            return Json(ApiResponse::from(TopemsError::internal("查询失败", e)));
+            return ApiResponse::from(TopemsError::internal("查询失败", e));
         }
     };
 
@@ -242,7 +242,7 @@ async fn get_inventory_turnover(
         0.0
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         InventoryTurnoverResponse {
             data,
             summary: InventoryTurnoverSummary {
@@ -253,7 +253,7 @@ async fn get_inventory_turnover(
             },
         },
         "库存周转率查询成功",
-    ))
+    )
 }
 
 // ===== 订单履约率 =====
@@ -273,10 +273,10 @@ async fn get_order_fulfillment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AnalyticsQueryParams>,
-) -> Json<ApiResponse<OrderFulfillmentResponse>> {
+) -> ApiResponse<OrderFulfillmentResponse> {
     let tenant_id = match resolve_tenant_id(&claims) {
         Ok(id) => id,
-        Err(e) => return Json(ApiResponse::unauthorized(&e.classify().1)),
+        Err(e) => return ApiResponse::unauthorized(&e.classify().1),
     };
 
     let (start, end) = parse_date_range(&params);
@@ -328,7 +328,7 @@ async fn get_order_fulfillment(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("order_fulfillment query error: {}", e);
-            return Json(ApiResponse::from(TopemsError::internal("查询失败", e)));
+            return ApiResponse::from(TopemsError::internal("查询失败", e));
         }
     };
 
@@ -394,7 +394,7 @@ async fn get_order_fulfillment(
         0.0
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         OrderFulfillmentResponse {
             data,
             summary: OrderFulfillmentSummary {
@@ -406,7 +406,7 @@ async fn get_order_fulfillment(
             },
         },
         "订单履约率查询成功",
-    ))
+    )
 }
 
 // ===== 流量趋势 =====
@@ -454,7 +454,7 @@ pub async fn get_flow_trend(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<AnalyticsQueryParams>,
-) -> Json<ApiResponse<FlowTrendResponse>> {
+) -> ApiResponse<FlowTrendResponse> {
     let group_by = params.group_by.as_deref().unwrap_or("month");
     let date_trunc = match group_by {
         "day" => "day",
@@ -577,7 +577,7 @@ pub async fn get_flow_trend(
 
     let period_count = data.len() as i64;
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         FlowTrendResponse {
             data,
             summary: FlowTrendSummary {
@@ -589,7 +589,7 @@ pub async fn get_flow_trend(
             },
         },
         "流量趋势查询成功",
-    ))
+    )
 }
 
 // ===== ABC分析 =====
@@ -630,7 +630,7 @@ pub async fn get_abc_analysis(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<AnalyticsQueryParams>,
-) -> Json<ApiResponse<AbcAnalysisResponse>> {
+) -> ApiResponse<AbcAnalysisResponse> {
     // 按物料汇总价值
     let result = sqlx::query(
         r#"
@@ -741,14 +741,14 @@ pub async fn get_abc_analysis(
         },
     ];
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         AbcAnalysisResponse {
             data,
             total_materials: total_count,
             total_value: (total_value * 100.0).round() / 100.0,
         },
         "ABC分析查询成功",
-    ))
+    )
 }
 
 // ===== 库龄帕累托 =====
@@ -783,7 +783,7 @@ pub async fn get_age_pareto(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<AnalyticsQueryParams>,
-) -> Json<ApiResponse<AgeParetoResponse>> {
+) -> ApiResponse<AgeParetoResponse> {
     let result = sqlx::query(
         r#"
         SELECT
@@ -860,14 +860,14 @@ pub async fn get_age_pareto(
         });
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         AgeParetoResponse {
             data,
             total_materials: total_count,
             total_value: (total_value * 100.0).round() / 100.0,
         },
         "库龄帕累托查询成功",
-    ))
+    )
 }
 
 // ===== 库位利用率 =====
@@ -907,7 +907,7 @@ pub async fn get_location_utilization(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<AnalyticsQueryParams>,
-) -> Json<ApiResponse<LocationUtilizationResponse>> {
+) -> ApiResponse<LocationUtilizationResponse> {
     let result = sqlx::query(
         r#"
         SELECT
@@ -972,7 +972,7 @@ pub async fn get_location_utilization(
         0.0
     };
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         LocationUtilizationResponse {
             data,
             total_locations,
@@ -980,7 +980,7 @@ pub async fn get_location_utilization(
             overall_utilization,
         },
         "库位利用率查询成功",
-    ))
+    )
 }
 
 // ===== 辅助函数 =====
@@ -1019,7 +1019,7 @@ pub struct DashboardSummary {
 pub async fn get_dashboard_summary(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<DashboardSummary>> {
+) -> ApiResponse<DashboardSummary> {
     tracing::info!("获取WMS Dashboard汇总数据");
 
     // 仓库数
@@ -1080,7 +1080,7 @@ pub async fn get_dashboard_summary(
         location_utilization: location_util,
     };
 
-    Json(ApiResponse::success(summary, "获取成功"))
+    ApiResponse::success(summary, "获取成功")
 }
 
 // ===== Dashboard 图表数据 =====
@@ -1121,7 +1121,7 @@ pub async fn get_inventory_distribution(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<InventoryDistributionItem>>> {
+) -> ApiResponse<Vec<InventoryDistributionItem>> {
     tracing::info!("获取WMS库存分布数据");
 
     let locale = Locale::from_headers(&headers).as_sql();
@@ -1154,7 +1154,7 @@ pub async fn get_inventory_distribution(
         )
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 /// 获取库存类型分布（按物料类型）
@@ -1170,7 +1170,7 @@ pub async fn get_inventory_distribution(
 pub async fn get_inventory_types(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<InventoryTypeItem>>> {
+) -> ApiResponse<Vec<InventoryTypeItem>> {
     tracing::info!("获取WMS库存类型分布");
 
     let total: f64 = sqlx::query_scalar(
@@ -1210,7 +1210,7 @@ pub async fn get_inventory_types(
         })
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 /// 获取每日出入库趋势（最近7天）
@@ -1226,7 +1226,7 @@ pub async fn get_inventory_types(
 pub async fn get_daily_trend(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<DailyTrendItem>>> {
+) -> ApiResponse<Vec<DailyTrendItem>> {
     tracing::info!("获取WMS每日出入库趋势");
 
     let rows: Vec<(Option<String>, Option<i64>, Option<i64>)> = sqlx::query_as(
@@ -1264,7 +1264,7 @@ pub async fn get_daily_trend(
         })
         .collect();
 
-    Json(ApiResponse::success(items, "获取成功"))
+    ApiResponse::success(items, "获取成功")
 }
 
 // ===== 路由注册 =====

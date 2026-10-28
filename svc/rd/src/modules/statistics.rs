@@ -1,7 +1,7 @@
 use axum::{
     extract::{Extension, State},
     routing::get,
-    Json, Router,
+    Router,
 };
 use serde::{Deserialize, Serialize};
 
@@ -46,11 +46,11 @@ pub async fn get_statistics(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<RsStatistics>> {
+) -> ApiResponse<RsStatistics> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     let total_projects: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM rs_projects")
         .fetch_one(&mut **txn)
@@ -137,5 +137,5 @@ pub async fn get_statistics(
         total_tasks: 0,
     };
 
-    Json(ApiResponse::success(stats, "统计数据获取成功"))
+    ApiResponse::success(stats, "统计数据获取成功")
 }

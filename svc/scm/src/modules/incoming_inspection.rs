@@ -262,15 +262,15 @@ pub async fn list_notices(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
@@ -323,7 +323,7 @@ pub async fn list_notices(
             let total = count_result.unwrap_or(0);
             let items_json: Vec<serde_json::Value> = items.iter().map(notice_row_to_json).collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "notices": items_json,
                     "total": total,
@@ -331,13 +331,11 @@ pub async fn list_notices(
                     "page_size": page_size
                 }),
                 "获取到货通知单列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取到货通知单列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取到货通知单列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取到货通知单列表失败".to_string()))
         }
     }
 }
@@ -364,15 +362,15 @@ pub async fn create_notice(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateIncomingNoticeRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
@@ -416,10 +414,7 @@ pub async fn create_notice(
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(row) => (
-            Json(ApiResponse::success(
-                notice_row_to_json(row),
-                "到货通知单创建成功",
-            )),
+            ApiResponse::success(notice_row_to_json(row), "到货通知单创建成功"),
             "success",
             None,
             Some(notice_row_to_json(row)),
@@ -427,9 +422,7 @@ pub async fn create_notice(
         Err(e) => {
             tracing::error!("创建到货通知单失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "创建到货通知单失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("创建到货通知单失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -480,15 +473,15 @@ pub async fn get_notice(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
@@ -507,18 +500,13 @@ pub async fn get_notice(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(
-            notice_row_to_json(&row),
-            "获取到货通知单详情成功",
-        )),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(Some(row)) => ApiResponse::success(notice_row_to_json(&row), "获取到货通知单详情成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
             "到货通知单不存在".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("获取到货通知单详情失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取到货通知单详情失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取到货通知单详情失败".to_string()))
         }
     }
 }
@@ -539,15 +527,15 @@ pub async fn update_notice(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateIncomingNoticeRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
@@ -568,15 +556,13 @@ pub async fn update_notice(
     let existing = match existing {
         Ok(e) => e,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询到货通知单失败".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::Internal("查询到货通知单失败".to_string()))
         }
     };
     if existing.is_none() {
-        return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        return ApiResponse::from(TopemsError::ResourceNotFound(
             "到货通知单不存在".to_string(),
-        )));
+        ));
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -608,10 +594,7 @@ pub async fn update_notice(
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(row) => (
-            Json(ApiResponse::success(
-                notice_row_to_json(row),
-                "到货通知单更新成功",
-            )),
+            ApiResponse::success(notice_row_to_json(row), "到货通知单更新成功"),
             "success",
             None,
             Some(notice_row_to_json(row)),
@@ -619,9 +602,7 @@ pub async fn update_notice(
         Err(e) => {
             tracing::error!("更新到货通知单失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "更新到货通知单失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("更新到货通知单失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -669,15 +650,15 @@ pub async fn list_inspections(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
@@ -730,7 +711,7 @@ pub async fn list_inspections(
             let items_json: Vec<serde_json::Value> =
                 items.iter().map(inspection_row_to_json).collect();
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "inspections": items_json,
                     "total": total,
@@ -738,13 +719,11 @@ pub async fn list_inspections(
                     "page_size": page_size
                 }),
                 "获取检验记录列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取检验记录列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取检验记录列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取检验记录列表失败".to_string()))
         }
     }
 }
@@ -771,15 +750,15 @@ pub async fn create_inspection(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateInspectionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
@@ -838,10 +817,7 @@ pub async fn create_inspection(
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(row) => (
-            Json(ApiResponse::success(
-                inspection_row_to_json(row),
-                "检验记录创建成功",
-            )),
+            ApiResponse::success(inspection_row_to_json(row), "检验记录创建成功"),
             "success",
             None,
             Some(inspection_row_to_json(row)),
@@ -849,9 +825,7 @@ pub async fn create_inspection(
         Err(e) => {
             tracing::error!("创建检验记录失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "创建检验记录失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("创建检验记录失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -902,15 +876,15 @@ pub async fn get_inspection(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
@@ -930,18 +904,11 @@ pub async fn get_inspection(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(
-            inspection_row_to_json(&row),
-            "获取检验记录详情成功",
-        )),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "检验记录不存在".to_string(),
-        ))),
+        Ok(Some(row)) => ApiResponse::success(inspection_row_to_json(&row), "获取检验记录详情成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("检验记录不存在".to_string())),
         Err(e) => {
             tracing::error!("获取检验记录详情失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取检验记录详情失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取检验记录详情失败".to_string()))
         }
     }
 }
@@ -963,15 +930,15 @@ pub async fn update_inspection(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateInspectionRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
@@ -988,16 +955,10 @@ pub async fn update_inspection(
 
     let existing = match existing {
         Ok(e) => e,
-        Err(_) => {
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "查询检验记录失败".to_string(),
-            )))
-        }
+        Err(_) => return ApiResponse::from(TopemsError::Internal("查询检验记录失败".to_string())),
     };
     if existing.is_none() {
-        return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "检验记录不存在".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::ResourceNotFound("检验记录不存在".to_string()));
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -1032,10 +993,7 @@ pub async fn update_inspection(
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(row) => (
-            Json(ApiResponse::success(
-                inspection_row_to_json(row),
-                "检验记录更新成功",
-            )),
+            ApiResponse::success(inspection_row_to_json(row), "检验记录更新成功"),
             "success",
             None,
             Some(inspection_row_to_json(row)),
@@ -1043,9 +1001,7 @@ pub async fn update_inspection(
         Err(e) => {
             tracing::error!("更新检验记录失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "更新检验记录失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("更新检验记录失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1106,15 +1062,15 @@ pub async fn inspection_pass(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<InspectionResultRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
@@ -1132,23 +1088,16 @@ pub async fn inspection_pass(
     let existing = match existing {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "检验记录不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("检验记录不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询检验记录失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询检验记录失败", e)),
     };
 
     let status: String = existing.try_get("status").unwrap_or_default();
     if status == "passed" || status == "failed" {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "检验记录已完成，无法重复操作".to_string(),
-        )));
+        ));
     }
 
     let failed_qty = req.failed_quantity.unwrap_or_else(|| {
@@ -1188,10 +1137,7 @@ pub async fn inspection_pass(
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(row) => (
-            Json(ApiResponse::success(
-                inspection_row_to_json(row),
-                "检验合格处理成功",
-            )),
+            ApiResponse::success(inspection_row_to_json(row), "检验合格处理成功"),
             "success",
             None,
             Some(inspection_row_to_json(row)),
@@ -1199,9 +1145,7 @@ pub async fn inspection_pass(
         Err(e) => {
             tracing::error!("检验合格处理失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "检验合格处理失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("检验合格处理失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1254,15 +1198,15 @@ pub async fn inspection_fail(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<InspectionResultRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
@@ -1280,23 +1224,16 @@ pub async fn inspection_fail(
     let existing = match existing {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "检验记录不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("检验记录不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询检验记录失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询检验记录失败", e)),
     };
 
     let status: String = existing.try_get("status").unwrap_or_default();
     if status == "passed" || status == "failed" {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "检验记录已完成，无法重复操作".to_string(),
-        )));
+        ));
     }
 
     let passed_qty = req.passed_quantity;
@@ -1337,10 +1274,7 @@ pub async fn inspection_fail(
 
     let (response, status_str, error_msg, response_data) = match &result {
         Ok(row) => (
-            Json(ApiResponse::success(
-                inspection_row_to_json(row),
-                "检验不合格处理成功",
-            )),
+            ApiResponse::success(inspection_row_to_json(row), "检验不合格处理成功"),
             "success",
             None,
             Some(inspection_row_to_json(row)),
@@ -1348,9 +1282,7 @@ pub async fn inspection_fail(
         Err(e) => {
             tracing::error!("检验不合格处理失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "检验不合格处理失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("检验不合格处理失败".to_string())),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1444,15 +1376,15 @@ pub async fn list_inspection_records(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -1476,20 +1408,18 @@ pub async fn list_inspection_records(
         Ok(rows) => {
             let records: Vec<serde_json::Value> =
                 rows.iter().map(inspection_record_row_to_json).collect();
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "inspection_id": id,
                     "records": records,
                     "total": records.len(),
                 }),
                 "获取检验记录明细成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取检验记录明细失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取检验记录明细失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取检验记录明细失败".to_string()))
         }
     }
 }
@@ -1503,15 +1433,15 @@ pub async fn create_inspection_record(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateInspectionRecordRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -1553,13 +1483,11 @@ pub async fn create_inspection_record(
                 let _ = t.commit().await;
             }
             let record = inspection_record_row_to_json(&row);
-            Json(ApiResponse::success(record, "创建检验记录明细成功"))
+            ApiResponse::success(record, "创建检验记录明细成功")
         }
         Err(e) => {
             tracing::error!("创建检验记录明细失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建检验记录明细失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建检验记录明细失败".to_string()))
         }
     }
 }
@@ -1588,15 +1516,15 @@ pub async fn get_inspection_record(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -1616,18 +1544,15 @@ pub async fn get_inspection_record(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(
-            inspection_record_row_to_json(&row),
-            "获取检验记录明细成功",
-        )),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(Some(row)) => {
+            ApiResponse::success(inspection_record_row_to_json(&row), "获取检验记录明细成功")
+        }
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
             "检验记录明细不存在".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("获取检验记录明细失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取检验记录明细失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取检验记录明细失败".to_string()))
         }
     }
 }
@@ -1641,15 +1566,15 @@ pub async fn update_inspection_record(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateInspectionRecordRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -1698,19 +1623,14 @@ pub async fn update_inspection_record(
             if let Some(t) = guard.take() {
                 let _ = t.commit().await;
             }
-            Json(ApiResponse::success(
-                inspection_record_row_to_json(&row),
-                "更新检验记录明细成功",
-            ))
+            ApiResponse::success(inspection_record_row_to_json(&row), "更新检验记录明细成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound(
             "检验记录明细不存在".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("更新检验记录明细失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新检验记录明细失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新检验记录明细失败".to_string()))
         }
     }
 }
@@ -1723,15 +1643,15 @@ pub async fn delete_inspection_record(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -1752,19 +1672,14 @@ pub async fn delete_inspection_record(
             if let Some(t) = guard.take() {
                 let _ = t.commit().await;
             }
-            Json(ApiResponse::success(
-                serde_json::json!({"id": id}),
-                "删除检验记录明细成功",
-            ))
+            ApiResponse::success(serde_json::json!({"id": id}), "删除检验记录明细成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound(
             "检验记录明细不存在".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("删除检验记录明细失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除检验记录明细失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除检验记录明细失败".to_string()))
         }
     }
 }

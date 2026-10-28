@@ -60,15 +60,15 @@ pub async fn list_dimensions(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<ScoringDimension>>> {
+) -> ApiResponse<Vec<ScoringDimension>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -99,13 +99,10 @@ pub async fn list_dimensions(
     .await;
 
     match result {
-        Ok(dimensions) => Json(ApiResponse::success(dimensions, "获取评分维度列表成功")),
+        Ok(dimensions) => ApiResponse::success(dimensions, "获取评分维度列表成功"),
         Err(e) => {
             tracing::error!("获取评分维度列表失败: {}", e);
-            Json(ApiResponse::<Vec<ScoringDimension>>::error(
-                500,
-                "获取评分维度列表失败",
-            ))
+            ApiResponse::<Vec<ScoringDimension>>::error(500, "获取评分维度列表失败")
         }
     }
 }
@@ -127,15 +124,15 @@ pub async fn list_active_dimensions(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<Vec<ScoringDimension>>> {
+) -> ApiResponse<Vec<ScoringDimension>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -166,13 +163,10 @@ pub async fn list_active_dimensions(
     .await;
 
     match result {
-        Ok(dimensions) => Json(ApiResponse::success(dimensions, "获取活跃评分维度成功")),
+        Ok(dimensions) => ApiResponse::success(dimensions, "获取活跃评分维度成功"),
         Err(e) => {
             tracing::error!("获取活跃评分维度失败: {}", e);
-            Json(ApiResponse::<Vec<ScoringDimension>>::error(
-                500,
-                "获取活跃评分维度失败",
-            ))
+            ApiResponse::<Vec<ScoringDimension>>::error(500, "获取活跃评分维度失败")
         }
     }
 }
@@ -198,15 +192,15 @@ pub async fn get_dimension(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<ScoringDimension>> {
+) -> ApiResponse<ScoringDimension> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -236,13 +230,11 @@ pub async fn get_dimension(
     .await;
 
     match result {
-        Ok(Some(dimension)) => Json(ApiResponse::success(dimension, "获取评分维度成功")),
-        Ok(None) => Json(ApiResponse::<ScoringDimension>::not_found("评分维度不存在")),
+        Ok(Some(dimension)) => ApiResponse::success(dimension, "获取评分维度成功"),
+        Ok(None) => ApiResponse::<ScoringDimension>::not_found("评分维度不存在"),
         Err(e) => {
             tracing::error!("获取评分维度失败: {}", e);
-            Json(ApiResponse::<ScoringDimension>::server_error(
-                "获取评分维度失败",
-            ))
+            ApiResponse::<ScoringDimension>::server_error("获取评分维度失败")
         }
     }
 }
@@ -255,39 +247,31 @@ pub async fn create_dimension(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateScoringDimensionRequest>,
-) -> Json<ApiResponse<ScoringDimension>> {
+) -> ApiResponse<ScoringDimension> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     if req.name.is_empty() {
-        return Json(ApiResponse::<ScoringDimension>::bad_request(
-            "维度名称不能为空",
-        ));
+        return ApiResponse::<ScoringDimension>::bad_request("维度名称不能为空");
     }
 
     if req.code.is_empty() {
-        return Json(ApiResponse::<ScoringDimension>::bad_request(
-            "维度代码不能为空",
-        ));
+        return ApiResponse::<ScoringDimension>::bad_request("维度代码不能为空");
     }
 
     if req.weight <= 0.0 || req.weight > 1.0 {
-        return Json(ApiResponse::<ScoringDimension>::bad_request(
-            "权重必须在0-1之间",
-        ));
+        return ApiResponse::<ScoringDimension>::bad_request("权重必须在0-1之间");
     }
 
     if req.min_score >= req.max_score {
-        return Json(ApiResponse::<ScoringDimension>::bad_request(
-            "最小分数必须小于最大分数",
-        ));
+        return ApiResponse::<ScoringDimension>::bad_request("最小分数必须小于最大分数");
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -310,9 +294,7 @@ pub async fn create_dimension(
     .await;
 
     if existing.unwrap_or(0) > 0 {
-        return Json(ApiResponse::<ScoringDimension>::bad_request(
-            "维度代码已存在",
-        ));
+        return ApiResponse::<ScoringDimension>::bad_request("维度代码已存在");
     }
 
     let id = Uuid::new_v4();
@@ -347,16 +329,14 @@ pub async fn create_dimension(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(dimension, "评分维度创建成功"))
+            ApiResponse::success(dimension, "评分维度创建成功")
         }
         Err(e) => {
             tracing::error!("创建评分维度失败: {}", e);
-            Json(ApiResponse::<ScoringDimension>::server_error(
-                "评分维度创建失败",
-            ))
+            ApiResponse::<ScoringDimension>::server_error("评分维度创建失败")
         }
     }
 }
@@ -370,15 +350,15 @@ pub async fn update_dimension(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<UpdateScoringDimensionRequest>,
-) -> Json<ApiResponse<ScoringDimension>> {
+) -> ApiResponse<ScoringDimension> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -402,19 +382,18 @@ pub async fn update_dimension(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => return Json(ApiResponse::<ScoringDimension>::not_found("评分维度不存在")),
+        Ok(None) => return ApiResponse::<ScoringDimension>::not_found("评分维度不存在"),
         Err(e) => {
-            return Json(ApiResponse::<ScoringDimension>::from(
-                TopemsError::internal("查询评分维度失败", e),
+            return ApiResponse::<ScoringDimension>::from(TopemsError::internal(
+                "查询评分维度失败",
+                e,
             ))
         }
     };
 
     if let Some(code) = &req.code {
         if code.is_empty() {
-            return Json(ApiResponse::<ScoringDimension>::bad_request(
-                "维度代码不能为空",
-            ));
+            return ApiResponse::<ScoringDimension>::bad_request("维度代码不能为空");
         }
 
         if code != &existing.code {
@@ -428,26 +407,20 @@ pub async fn update_dimension(
             .await;
 
             if exists.unwrap_or(0) > 0 {
-                return Json(ApiResponse::<ScoringDimension>::bad_request(
-                    "维度代码已存在",
-                ));
+                return ApiResponse::<ScoringDimension>::bad_request("维度代码已存在");
             }
         }
     }
 
     if let Some(weight) = req.weight {
         if weight <= 0.0 || weight > 1.0 {
-            return Json(ApiResponse::<ScoringDimension>::bad_request(
-                "权重必须在0-1之间",
-            ));
+            return ApiResponse::<ScoringDimension>::bad_request("权重必须在0-1之间");
         }
     }
 
     if let (Some(min_score), Some(max_score)) = (req.min_score, req.max_score) {
         if min_score >= max_score {
-            return Json(ApiResponse::<ScoringDimension>::bad_request(
-                "最小分数必须小于最大分数",
-            ));
+            return ApiResponse::<ScoringDimension>::bad_request("最小分数必须小于最大分数");
         }
     }
 
@@ -488,16 +461,14 @@ pub async fn update_dimension(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(ApiResponse::server_error("提交事务失败"));
+                    return ApiResponse::server_error("提交事务失败");
                 }
             }
-            Json(ApiResponse::success(dimension, "评分维度更新成功"))
+            ApiResponse::success(dimension, "评分维度更新成功")
         }
         Err(e) => {
             tracing::error!("更新评分维度失败: {}", e);
-            Json(ApiResponse::<ScoringDimension>::server_error(
-                "评分维度更新失败",
-            ))
+            ApiResponse::<ScoringDimension>::server_error("评分维度更新失败")
         }
     }
 }
@@ -510,15 +481,15 @@ pub async fn delete_dimension(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -547,15 +518,15 @@ pub async fn delete_dimension(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success("".to_string(), "评分维度删除成功"))
+            ApiResponse::success("".to_string(), "评分维度删除成功")
         }
-        Ok(_) => Json(ApiResponse::<String>::not_found("评分维度不存在")),
+        Ok(_) => ApiResponse::<String>::not_found("评分维度不存在"),
         Err(e) => {
             tracing::error!("删除评分维度失败: {}", e);
-            Json(ApiResponse::<String>::server_error("评分维度删除失败"))
+            ApiResponse::<String>::server_error("评分维度删除失败")
         }
     }
 }

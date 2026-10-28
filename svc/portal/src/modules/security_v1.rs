@@ -1093,7 +1093,7 @@ pub struct FieldRulesQuery {
 pub async fn validate_query_handler(
     State(_state): State<AppState>,
     Json(req): Json<ValidateQueryRequest>,
-) -> Json<ApiResponse<ValidationResult>> {
+) -> ApiResponse<ValidationResult> {
     match SecurityGateway::validate_query(
         &req.query,
         req.client_ip.as_deref(),
@@ -1103,14 +1103,12 @@ pub async fn validate_query_handler(
     {
         Ok(result) => {
             if result.valid {
-                Json(ApiResponse::success(result, "查询验证通过"))
+                ApiResponse::success(result, "查询验证通过")
             } else {
-                Json(ApiResponse::bad_request(
-                    result.reason.as_deref().unwrap_or("查询验证失败"),
-                ))
+                ApiResponse::bad_request(result.reason.as_deref().unwrap_or("查询验证失败"))
             }
         }
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1127,13 +1125,13 @@ pub async fn validate_query_handler(
 pub async fn get_security_events_handler(
     State(_state): State<AppState>,
     Query(params): Query<SecurityEventsQuery>,
-) -> Json<ApiResponse<Vec<SecurityEvent>>> {
+) -> ApiResponse<Vec<SecurityEvent>> {
     let event_type = params
         .event_type
         .as_deref()
         .and_then(SecurityEventType::from_str);
     let events = SecurityGateway::get_security_events(event_type, params.limit).await;
-    Json(ApiResponse::success(events, "安全事件列表"))
+    ApiResponse::success(events, "安全事件列表")
 }
 
 #[utoipa::path(
@@ -1149,7 +1147,7 @@ pub async fn get_security_events_handler(
 pub async fn create_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreatePolicyRequest>,
-) -> Json<ApiResponse<SecurityPolicy>> {
+) -> ApiResponse<SecurityPolicy> {
     let policy = SecurityPolicy {
         id: uuid::Uuid::new_v4().to_string(),
         name: req.name,
@@ -1164,8 +1162,8 @@ pub async fn create_policy_handler(
     };
 
     match SecurityGateway::create_policy(policy).await {
-        Ok(p) => Json(ApiResponse::success(p, "安全策略创建成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(p) => ApiResponse::success(p, "安全策略创建成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1181,9 +1179,9 @@ pub async fn create_policy_handler(
 )]
 pub async fn list_policies_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<SecurityPolicy>>> {
+) -> ApiResponse<Vec<SecurityPolicy>> {
     let policies = SecurityGateway::list_policies().await;
-    Json(ApiResponse::success(policies, "安全策略列表"))
+    ApiResponse::success(policies, "安全策略列表")
 }
 
 #[utoipa::path(
@@ -1203,10 +1201,10 @@ pub async fn update_policy_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdatePolicyRequest>,
-) -> Json<ApiResponse<SecurityPolicy>> {
+) -> ApiResponse<SecurityPolicy> {
     let existing = match SecurityGateway::get_policy_by_id(&id).await {
         Some(p) => p,
-        None => return Json(ApiResponse::not_found("策略不存在")),
+        None => return ApiResponse::not_found("策略不存在"),
     };
 
     let updates = SecurityPolicy {
@@ -1225,8 +1223,8 @@ pub async fn update_policy_handler(
     };
 
     match SecurityGateway::update_policy(&id, updates).await {
-        Ok(p) => Json(ApiResponse::success(p, "安全策略更新成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(p) => ApiResponse::success(p, "安全策略更新成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1245,12 +1243,12 @@ pub async fn update_policy_handler(
 pub async fn evaluate_trust_handler(
     State(_state): State<AppState>,
     Json(req): Json<EvaluateTrustRequest>,
-) -> Json<ApiResponse<TrustDecision>> {
+) -> ApiResponse<TrustDecision> {
     let context = req.context.unwrap_or_default();
 
     match ZeroTrustEngine::evaluate_trust(&req.identity, context).await {
-        Ok(decision) => Json(ApiResponse::success(decision, "信任评估完成")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(decision) => ApiResponse::success(decision, "信任评估完成"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1270,10 +1268,10 @@ pub async fn evaluate_trust_handler(
 pub async fn get_trust_score_handler(
     State(_state): State<AppState>,
     Path(identity): Path<String>,
-) -> Json<ApiResponse<f64>> {
+) -> ApiResponse<f64> {
     match ZeroTrustEngine::get_trust_score(&identity).await {
-        Ok(score) => Json(ApiResponse::success(score, "信任分数")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(score) => ApiResponse::success(score, "信任分数"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1290,7 +1288,7 @@ pub async fn get_trust_score_handler(
 pub async fn create_identity_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateIdentityPolicyRequest>,
-) -> Json<ApiResponse<IdentityPolicy>> {
+) -> ApiResponse<IdentityPolicy> {
     let policy = IdentityPolicy {
         id: uuid::Uuid::new_v4().to_string(),
         name: req.name,
@@ -1303,8 +1301,8 @@ pub async fn create_identity_policy_handler(
     };
 
     match ZeroTrustEngine::create_identity_policy(policy).await {
-        Ok(p) => Json(ApiResponse::success(p, "身份策略创建成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(p) => ApiResponse::success(p, "身份策略创建成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1320,9 +1318,9 @@ pub async fn create_identity_policy_handler(
 )]
 pub async fn list_identity_policies_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<IdentityPolicy>>> {
+) -> ApiResponse<Vec<IdentityPolicy>> {
     let policies = ZeroTrustEngine::list_identity_policies().await;
-    Json(ApiResponse::success(policies, "身份策略列表"))
+    ApiResponse::success(policies, "身份策略列表")
 }
 
 #[utoipa::path(
@@ -1341,10 +1339,10 @@ pub async fn list_identity_policies_handler(
 pub async fn get_session_trust_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<SessionTrust>> {
+) -> ApiResponse<SessionTrust> {
     match ZeroTrustEngine::get_session_trust(&id).await {
-        Some(trust) => Json(ApiResponse::success(trust, "会话信任状态")),
-        None => Json(ApiResponse::not_found("会话信任记录不存在")),
+        Some(trust) => ApiResponse::success(trust, "会话信任状态"),
+        None => ApiResponse::not_found("会话信任记录不存在"),
     }
 }
 
@@ -1363,12 +1361,12 @@ pub async fn get_session_trust_handler(
 pub async fn mask_response_handler(
     State(_state): State<AppState>,
     Json(req): Json<MaskResponseRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let roles = req.user_roles.unwrap_or_default();
 
     match DataMasker::mask_response(req.data, roles).await {
-        Ok(masked) => Json(ApiResponse::success(masked, "数据脱敏完成")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(masked) => ApiResponse::success(masked, "数据脱敏完成"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1385,10 +1383,10 @@ pub async fn mask_response_handler(
 pub async fn add_masking_rule_handler(
     State(_state): State<AppState>,
     Json(req): Json<AddMaskingRuleRequest>,
-) -> Json<ApiResponse<MaskingRule>> {
+) -> ApiResponse<MaskingRule> {
     let mask_type = match MaskType::from_str(&req.mask_type) {
         Some(mt) => mt,
-        None => return Json(ApiResponse::bad_request("无效的脱敏类型")),
+        None => return ApiResponse::bad_request("无效的脱敏类型"),
     };
 
     let rule = MaskingRule {
@@ -1401,8 +1399,8 @@ pub async fn add_masking_rule_handler(
     };
 
     match DataMasker::add_masking_rule(rule).await {
-        Ok(r) => Json(ApiResponse::success(r, "脱敏规则创建成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(r) => ApiResponse::success(r, "脱敏规则创建成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1418,9 +1416,9 @@ pub async fn add_masking_rule_handler(
 )]
 pub async fn list_masking_rules_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<MaskingRule>>> {
+) -> ApiResponse<Vec<MaskingRule>> {
     let rules = DataMasker::list_masking_rules().await;
-    Json(ApiResponse::success(rules, "脱敏规则列表"))
+    ApiResponse::success(rules, "脱敏规则列表")
 }
 
 #[utoipa::path(
@@ -1439,11 +1437,11 @@ pub async fn list_masking_rules_handler(
 pub async fn remove_masking_rule_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     match DataMasker::remove_masking_rule(&id).await {
-        Ok(true) => Json(ApiResponse::success(true, "脱敏规则删除成功")),
-        Ok(false) => Json(ApiResponse::not_found("脱敏规则不存在")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(true) => ApiResponse::success(true, "脱敏规则删除成功"),
+        Ok(false) => ApiResponse::not_found("脱敏规则不存在"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1460,10 +1458,10 @@ pub async fn remove_masking_rule_handler(
 pub async fn preview_masking_handler(
     State(_state): State<AppState>,
     Json(req): Json<PreviewMaskingRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match DataMasker::preview_masking(req.data, req.rule_ids).await {
-        Ok(preview) => Json(ApiResponse::success(preview, "脱敏预览")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(preview) => ApiResponse::success(preview, "脱敏预览"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1480,10 +1478,10 @@ pub async fn preview_masking_handler(
 pub async fn get_field_rules_handler(
     State(_state): State<AppState>,
     Query(params): Query<FieldRulesQuery>,
-) -> Json<ApiResponse<Vec<MaskingRule>>> {
+) -> ApiResponse<Vec<MaskingRule>> {
     let field_path = params.field_path.unwrap_or_default();
     let rules = DataMasker::get_field_rules(&field_path).await;
-    Json(ApiResponse::success(rules, "字段脱敏规则"))
+    ApiResponse::success(rules, "字段脱敏规则")
 }
 
 #[cfg(test)]

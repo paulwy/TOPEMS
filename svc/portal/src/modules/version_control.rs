@@ -1131,11 +1131,11 @@ pub struct CompatibilityStatusQuery {
 pub async fn register_version_handler(
     State(_state): State<AppState>,
     Json(req): Json<RegisterVersionRequest>,
-) -> Json<ApiResponse<APIVersion>> {
+) -> ApiResponse<APIVersion> {
     let breaking = req.breaking_changes.unwrap_or_default();
     match APIVersionManager::register_version(req.version, req.changelog, breaking).await {
-        Ok(v) => Json(ApiResponse::success(v, "版本注册成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(v) => ApiResponse::success(v, "版本注册成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1152,10 +1152,10 @@ pub async fn register_version_handler(
 pub async fn list_versions_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListVersionsQuery>,
-) -> Json<ApiResponse<Vec<APIVersion>>> {
+) -> ApiResponse<Vec<APIVersion>> {
     let status = params.status.as_deref().map(APIVersionStatus::from_str);
     let versions = APIVersionManager::list_versions(status).await;
-    Json(ApiResponse::success(versions, "API 版本列表"))
+    ApiResponse::success(versions, "API 版本列表")
 }
 
 #[utoipa::path(
@@ -1174,10 +1174,10 @@ pub async fn list_versions_handler(
 pub async fn get_version_handler(
     State(_state): State<AppState>,
     Path(version): Path<String>,
-) -> Json<ApiResponse<APIVersion>> {
+) -> ApiResponse<APIVersion> {
     match APIVersionManager::get_version(&version).await {
-        Some(v) => Json(ApiResponse::success(v, "版本详情")),
-        None => Json(ApiResponse::not_found("版本不存在")),
+        Some(v) => ApiResponse::success(v, "版本详情"),
+        None => ApiResponse::not_found("版本不存在"),
     }
 }
 
@@ -1198,20 +1198,20 @@ pub async fn update_version_handler(
     State(_state): State<AppState>,
     Path(version): Path<String>,
     Json(req): Json<UpdateVersionRequest>,
-) -> Json<ApiResponse<APIVersion>> {
+) -> ApiResponse<APIVersion> {
     match APIVersionManager::update_version(&version, req.changelog, req.breaking_changes).await {
-        Ok(v) => Json(ApiResponse::success(v, "版本更新成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(v) => ApiResponse::success(v, "版本更新成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
 pub async fn deprecate_version_handler(
     State(_state): State<AppState>,
     Path(version): Path<String>,
-) -> Json<ApiResponse<APIVersion>> {
+) -> ApiResponse<APIVersion> {
     match APIVersionManager::deprecate_version(&version).await {
-        Ok(v) => Json(ApiResponse::success(v, "版本已废弃")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(v) => ApiResponse::success(v, "版本已废弃"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1231,10 +1231,10 @@ pub async fn deprecate_version_handler(
 pub async fn sunset_version_handler(
     State(_state): State<AppState>,
     Path(version): Path<String>,
-) -> Json<ApiResponse<APIVersion>> {
+) -> ApiResponse<APIVersion> {
     match APIVersionManager::sunset_version(&version).await {
-        Ok(v) => Json(ApiResponse::success(v, "版本已 Sunset")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(v) => ApiResponse::success(v, "版本已 Sunset"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1251,12 +1251,12 @@ pub async fn sunset_version_handler(
 pub async fn check_compatibility_handler(
     State(_state): State<AppState>,
     Query(params): Query<CheckCompatibilityQuery>,
-) -> Json<ApiResponse<VersionMapping>> {
+) -> ApiResponse<VersionMapping> {
     match APIVersionManager::check_compatibility(&params.client_version, &params.server_version)
         .await
     {
-        Ok(m) => Json(ApiResponse::success(m, "兼容性检查完成")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(m) => ApiResponse::success(m, "兼容性检查完成"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1275,7 +1275,7 @@ pub async fn check_compatibility_handler(
 pub async fn create_canary_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateCanaryRequest>,
-) -> Json<ApiResponse<CanaryConfig>> {
+) -> ApiResponse<CanaryConfig> {
     let conditions = req.conditions.unwrap_or_default();
     match CanaryManager::create_canary(
         req.version,
@@ -1286,8 +1286,8 @@ pub async fn create_canary_handler(
     )
     .await
     {
-        Ok(c) => Json(ApiResponse::success(c, "灰度配置创建成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(c) => ApiResponse::success(c, "灰度配置创建成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1308,10 +1308,10 @@ pub async fn update_canary_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateCanaryRequest>,
-) -> Json<ApiResponse<CanaryConfig>> {
+) -> ApiResponse<CanaryConfig> {
     let current = match CanaryManager::get_canary_status(&id).await {
         Some(c) => c,
-        None => return Json(ApiResponse::not_found("灰度配置不存在")),
+        None => return ApiResponse::not_found("灰度配置不存在"),
     };
 
     let updated = CanaryConfig {
@@ -1325,8 +1325,8 @@ pub async fn update_canary_handler(
     };
 
     match CanaryManager::update_canary(&id, updated).await {
-        Ok(c) => Json(ApiResponse::success(c, "灰度配置更新成功")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(c) => ApiResponse::success(c, "灰度配置更新成功"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1346,10 +1346,10 @@ pub async fn update_canary_handler(
 pub async fn start_canary_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<CanaryConfig>> {
+) -> ApiResponse<CanaryConfig> {
     match CanaryManager::start_canary(&id).await {
-        Ok(c) => Json(ApiResponse::success(c, "灰度已启动")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(c) => ApiResponse::success(c, "灰度已启动"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1369,10 +1369,10 @@ pub async fn start_canary_handler(
 pub async fn stop_canary_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<CanaryConfig>> {
+) -> ApiResponse<CanaryConfig> {
     match CanaryManager::stop_canary(&id).await {
-        Ok(c) => Json(ApiResponse::success(c, "灰度已停止")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(c) => ApiResponse::success(c, "灰度已停止"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1392,10 +1392,10 @@ pub async fn stop_canary_handler(
 pub async fn get_canary_status_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<CanaryConfig>> {
+) -> ApiResponse<CanaryConfig> {
     match CanaryManager::get_canary_status(&id).await {
-        Some(c) => Json(ApiResponse::success(c, "灰度配置状态")),
-        None => Json(ApiResponse::not_found("灰度配置不存在")),
+        Some(c) => ApiResponse::success(c, "灰度配置状态"),
+        None => ApiResponse::not_found("灰度配置不存在"),
     }
 }
 
@@ -1415,9 +1415,9 @@ pub async fn get_canary_status_handler(
 pub async fn get_canary_results_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<Vec<CanaryResult>>> {
+) -> ApiResponse<Vec<CanaryResult>> {
     let results = CanaryManager::get_canary_results(&id).await;
-    Json(ApiResponse::success(results, "灰度结果列表"))
+    ApiResponse::success(results, "灰度结果列表")
 }
 
 #[utoipa::path(
@@ -1433,19 +1433,19 @@ pub async fn get_canary_results_handler(
 pub async fn list_canaries_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListCanariesQuery>,
-) -> Json<ApiResponse<Vec<CanaryConfig>>> {
+) -> ApiResponse<Vec<CanaryConfig>> {
     let status = params.status.as_deref().map(CanaryStatus::from_str);
     let list = CanaryManager::list_canaries(status).await;
-    Json(ApiResponse::success(list, "灰度配置列表"))
+    ApiResponse::success(list, "灰度配置列表")
 }
 
 pub async fn promote_canary_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<CanaryConfig>> {
+) -> ApiResponse<CanaryConfig> {
     match CanaryManager::promote_canary(&id).await {
-        Ok(c) => Json(ApiResponse::success(c, "灰度已推广")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(c) => ApiResponse::success(c, "灰度已推广"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1465,10 +1465,10 @@ pub async fn promote_canary_handler(
 pub async fn rollback_canary_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<CanaryConfig>> {
+) -> ApiResponse<CanaryConfig> {
     match CanaryManager::rollback_canary(&id).await {
-        Ok(c) => Json(ApiResponse::success(c, "灰度已回滚")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(c) => ApiResponse::success(c, "灰度已回滚"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1487,10 +1487,10 @@ pub async fn rollback_canary_handler(
 pub async fn check_compatibility_report_handler(
     State(_state): State<AppState>,
     Json(req): Json<GenerateReportRequest>,
-) -> Json<ApiResponse<CompatibilityReport>> {
+) -> ApiResponse<CompatibilityReport> {
     match CompatibilityChecker::check_compatibility(&req.from_version, &req.to_version).await {
-        Ok(r) => Json(ApiResponse::success(r, "兼容性检查完成")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(r) => ApiResponse::success(r, "兼容性检查完成"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1507,10 +1507,10 @@ pub async fn check_compatibility_report_handler(
 pub async fn get_compatibility_report_handler(
     State(_state): State<AppState>,
     Query(params): Query<CompatibilityReportQuery>,
-) -> Json<ApiResponse<CompatibilityReport>> {
+) -> ApiResponse<CompatibilityReport> {
     match CompatibilityChecker::generate_report(&params.from_version, &params.to_version).await {
-        Ok(r) => Json(ApiResponse::success(r, "兼容性报告")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(r) => ApiResponse::success(r, "兼容性报告"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1527,10 +1527,10 @@ pub async fn get_compatibility_report_handler(
 pub async fn get_migration_path_handler(
     State(_state): State<AppState>,
     Query(params): Query<MigrationPathQuery>,
-) -> Json<ApiResponse<Vec<String>>> {
+) -> ApiResponse<Vec<String>> {
     match CompatibilityChecker::get_migration_path(&params.from_version, &params.to_version).await {
-        Ok(path) => Json(ApiResponse::success(path, "迁移路径")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(path) => ApiResponse::success(path, "迁移路径"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1547,7 +1547,7 @@ pub async fn get_migration_path_handler(
 pub async fn create_compatibility_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateCompatibilityPolicyRequest>,
-) -> Json<ApiResponse<CompatibilityPolicy>> {
+) -> ApiResponse<CompatibilityPolicy> {
     let level = req
         .min_compatibility_level
         .as_deref()
@@ -1561,8 +1561,8 @@ pub async fn create_compatibility_policy_handler(
     )
     .await
     {
-        Ok(p) => Json(ApiResponse::success(p, "兼容性策略创建成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(p) => ApiResponse::success(p, "兼容性策略创建成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1579,15 +1579,15 @@ pub async fn create_compatibility_policy_handler(
 pub async fn get_compatibility_status_handler(
     State(_state): State<AppState>,
     Query(params): Query<CompatibilityStatusQuery>,
-) -> Json<ApiResponse<CompatibilityStatus>> {
+) -> ApiResponse<CompatibilityStatus> {
     match CompatibilityChecker::get_compatibility_status(
         &params.client_version,
         &params.server_version,
     )
     .await
     {
-        Ok(s) => Json(ApiResponse::success(s, "兼容性状态")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(s) => ApiResponse::success(s, "兼容性状态"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 

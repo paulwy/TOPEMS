@@ -50,7 +50,7 @@ pub async fn list_standards(
     Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<StandardQuery>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<ListStandardsResponse>> {
+) -> ApiResponse<ListStandardsResponse> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -85,7 +85,7 @@ pub async fn list_standards(
         );
         // 将缓存的 serde_json::Value 转换为具体类型
         if let Ok(response) = serde_json::from_value::<ListStandardsResponse>(cached) {
-            return Json(ApiResponse::success(response, "获取质量标准列表成功"));
+            return ApiResponse::success(response, "获取质量标准列表成功");
         }
         // 转换失败时继续查询数据库
     }
@@ -107,7 +107,7 @@ pub async fn list_standards(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("Failed to count standards: {}", e);
-            return Json(ApiResponse::server_error("获取质量标准列表失败"));
+            return ApiResponse::server_error("获取质量标准列表失败");
         }
     };
 
@@ -150,11 +150,11 @@ pub async fn list_standards(
                     "质量标准列表缓存写入"
                 );
             }
-            Json(ApiResponse::success(response, "获取质量标准列表成功"))
+            ApiResponse::success(response, "获取质量标准列表成功")
         }
         Err(e) => {
             tracing::error!("Failed to fetch standards: {}", e);
-            Json(ApiResponse::server_error("获取质量标准列表失败"))
+            ApiResponse::server_error("获取质量标准列表失败")
         }
     }
 }
@@ -175,7 +175,7 @@ pub async fn create_standard(
     Extension(claims): Extension<Claims>,
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateStandardRequest>,
-) -> Json<ApiResponse<QualityStandard>> {
+) -> ApiResponse<QualityStandard> {
     let code = format!(
         "QS-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
@@ -215,11 +215,11 @@ pub async fn create_standard(
                 });
             }
 
-            Json(ApiResponse::success(data, "质量标准创建成功"))
+            ApiResponse::success(data, "质量标准创建成功")
         }
         Err(e) => {
             tracing::error!("Failed to create standard: {}", e);
-            Json(ApiResponse::server_error("质量标准创建失败"))
+            ApiResponse::server_error("质量标准创建失败")
         }
     }
 }
@@ -243,7 +243,7 @@ pub async fn get_standard(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<QualityStandard>> {
+) -> ApiResponse<QualityStandard> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -254,7 +254,7 @@ pub async fn get_standard(
     };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的标准ID")),
+        Err(_) => return ApiResponse::bad_request("无效的标准ID"),
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
 
@@ -263,12 +263,12 @@ pub async fn get_standard(
     .await;
 
     match standard {
-        Ok(data) => Json(ApiResponse::success(data, "获取质量标准成功")),
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Ok(data) => ApiResponse::success(data, "获取质量标准成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
 
         Err(e) => {
             tracing::error!("Failed to fetch standard: {}", e);
-            Json(ApiResponse::server_error("获取质量标准失败"))
+            ApiResponse::server_error("获取质量标准失败")
         }
     }
 }
@@ -294,7 +294,7 @@ pub async fn update_standard(
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateStandardRequest>,
-) -> Json<ApiResponse<QualityStandard>> {
+) -> ApiResponse<QualityStandard> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -305,7 +305,7 @@ pub async fn update_standard(
     };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的标准ID")),
+        Err(_) => return ApiResponse::bad_request("无效的标准ID"),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
@@ -347,12 +347,12 @@ pub async fn update_standard(
                 });
             }
 
-            Json(ApiResponse::success(data, "质量标准更新成功"))
+            ApiResponse::success(data, "质量标准更新成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::not_found("记录不存在")),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update standard: {}", e);
-            Json(ApiResponse::server_error("质量标准更新失败"))
+            ApiResponse::server_error("质量标准更新失败")
         }
     }
 }
@@ -376,10 +376,10 @@ pub async fn delete_standard(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<bool>> {
+) -> ApiResponse<bool> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的标准ID")),
+        Err(_) => return ApiResponse::bad_request("无效的标准ID"),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
@@ -414,11 +414,11 @@ pub async fn delete_standard(
                 });
             }
 
-            Json(ApiResponse::success(true, "质量标准删除成功"))
+            ApiResponse::success(true, "质量标准删除成功")
         }
         Err(e) => {
             tracing::error!("Failed to delete standard: {}", e);
-            Json(ApiResponse::server_error("质量标准删除失败"))
+            ApiResponse::server_error("质量标准删除失败")
         }
     }
 }
@@ -441,7 +441,7 @@ pub async fn list_revisions(
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
-) -> Json<ApiResponse<Vec<StandardRevision>>> {
+) -> ApiResponse<Vec<StandardRevision>> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -452,7 +452,7 @@ pub async fn list_revisions(
     };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的标准ID")),
+        Err(_) => return ApiResponse::bad_request("无效的标准ID"),
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
 
@@ -461,10 +461,10 @@ pub async fn list_revisions(
     .await;
 
     match revisions {
-        Ok(data) => Json(ApiResponse::success(data, "获取质量标准修订记录成功")),
+        Ok(data) => ApiResponse::success(data, "获取质量标准修订记录成功"),
         Err(e) => {
             tracing::error!("Failed to fetch revisions: {}", e);
-            Json(ApiResponse::server_error("获取质量标准修订记录失败"))
+            ApiResponse::server_error("获取质量标准修订记录失败")
         }
     }
 }
@@ -488,7 +488,7 @@ pub async fn create_revision(
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateStandardRequest>,
-) -> Json<ApiResponse<QualityStandard>> {
+) -> ApiResponse<QualityStandard> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -499,7 +499,7 @@ pub async fn create_revision(
     };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
-        Err(_) => return Json(ApiResponse::bad_request("无效的标准ID")),
+        Err(_) => return ApiResponse::bad_request("无效的标准ID"),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
@@ -543,16 +543,16 @@ pub async fn create_revision(
             .await;
 
             match standard {
-                Ok(data) => Json(ApiResponse::success(data, "质量标准版本创建成功")),
+                Ok(data) => ApiResponse::success(data, "质量标准版本创建成功"),
                 Err(e) => {
                     tracing::error!("Failed to create revision: {}", e);
-                    Json(ApiResponse::server_error("质量标准版本创建失败"))
+                    ApiResponse::server_error("质量标准版本创建失败")
                 }
             }
         }
         Err(e) => {
             tracing::error!("Failed to find standard: {}", e);
-            Json(ApiResponse::not_found("质量标准不存在"))
+            ApiResponse::not_found("质量标准不存在")
         }
     }
 }

@@ -83,9 +83,8 @@ async fn list_body(pool: sqlx::PgPool, status: Option<String>) -> Value {
     )
     .await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     serde_json::to_value(data).unwrap()
 }
 
@@ -123,9 +122,8 @@ async fn get_returns_pick(pool: sqlx::PgPool) {
     )
     .await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     assert_eq!(data["pick"]["wave_pick_number"], "PK-20261018-002");
     assert_eq!(data["pick"]["status"], "in_progress");
 }
@@ -143,9 +141,8 @@ async fn statistics_counts_statuses(pool: sqlx::PgPool) {
     let claims = super_claims();
     let resp = picking_statistics(State(state), Extension(claims), Extension(txn_arc)).await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     let stats = serde_json::to_value(data).unwrap();
     assert_eq!(stats["total_lists"], 3);
     assert_eq!(stats["pending"], 2);
@@ -160,9 +157,8 @@ async fn strategies_returns_defaults(pool: sqlx::PgPool) {
     let claims = super_claims();
     let resp = picking_strategies(State(state), Extension(claims)).await;
     let data = resp
-        .0
         .data
-        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.message));
     let strategies = serde_json::to_value(data).unwrap();
     let codes: Vec<&str> = strategies
         .as_array()

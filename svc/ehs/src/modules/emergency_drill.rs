@@ -291,7 +291,7 @@ pub async fn list_drill_plans(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(q): Query<DrillPlanQuery>,
-) -> Json<ApiResponse<Vec<DrillPlan>>> {
+) -> ApiResponse<Vec<DrillPlan>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -348,7 +348,7 @@ pub async fn list_drill_plans(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list drill plans: {}", e);
-            return Json(ApiResponse::server_error("获取演练计划列表失败"));
+            return ApiResponse::server_error("获取演练计划列表失败");
         }
     };
 
@@ -386,7 +386,7 @@ pub async fn list_drill_plans(
         })
         .collect();
 
-    Json(ApiResponse::success(plans, "获取演练计划列表成功"))
+    ApiResponse::success(plans, "获取演练计划列表成功")
 }
 #[utoipa::path(
     post,
@@ -401,7 +401,7 @@ pub async fn create_drill_plan(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateDrillPlanRequest>,
-) -> Json<ApiResponse<DrillPlan>> {
+) -> ApiResponse<DrillPlan> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -453,7 +453,7 @@ pub async fn create_drill_plan(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create drill plan: {}", e);
-            return Json(ApiResponse::server_error("创建演练计划失败"));
+            return ApiResponse::server_error("创建演练计划失败");
         }
     };
 
@@ -497,7 +497,7 @@ pub async fn create_drill_plan(
             .unwrap_or_default(),
     };
 
-    Json(ApiResponse::success(plan, "创建演练计划成功"))
+    ApiResponse::success(plan, "创建演练计划成功")
 }
 pub async fn submit_drill_evaluation(
     State(state): State<crate::shared::AppState>,
@@ -505,7 +505,7 @@ pub async fn submit_drill_evaluation(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateDrillEvaluationRequest>,
-) -> Json<ApiResponse<DrillEvaluation>> {
+) -> ApiResponse<DrillEvaluation> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -525,10 +525,10 @@ pub async fn submit_drill_evaluation(
     .await
     {
         Ok(Some(_)) => {}
-        Ok(None) => return Json(ApiResponse::not_found("演练记录不存在")),
+        Ok(None) => return ApiResponse::not_found("演练记录不存在"),
         Err(e) => {
             tracing::error!("Failed to check drill record: {}", e);
-            return Json(ApiResponse::server_error("提交演练评估失败"));
+            return ApiResponse::server_error("提交演练评估失败");
         }
     }
 
@@ -563,7 +563,7 @@ pub async fn submit_drill_evaluation(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to submit drill evaluation: {}", e);
-            return Json(ApiResponse::server_error("提交演练评估失败"));
+            return ApiResponse::server_error("提交演练评估失败");
         }
     };
 
@@ -614,7 +614,7 @@ pub async fn submit_drill_evaluation(
             .unwrap_or_default(),
     };
 
-    Json(ApiResponse::success(eval, "提交演练评估成功"))
+    ApiResponse::success(eval, "提交演练评估成功")
 }
 #[utoipa::path(
     get,
@@ -628,7 +628,7 @@ pub async fn list_drill_records(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Query(q): Query<DrillQuery>,
-) -> Json<ApiResponse<Vec<DrillRecord>>> {
+) -> ApiResponse<Vec<DrillRecord>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).min(100);
@@ -679,11 +679,11 @@ pub async fn list_drill_records(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list drill records: {}", e);
-            return Json(ApiResponse::server_error("获取演练记录列表失败"));
+            return ApiResponse::server_error("获取演练记录列表失败");
         }
     };
     let list: Vec<DrillRecord> = rows.iter().map(drill_record_from_row).collect();
-    Json(ApiResponse::success(list, "获取演练记录列表成功"))
+    ApiResponse::success(list, "获取演练记录列表成功")
 }
 
 #[utoipa::path(
@@ -699,7 +699,7 @@ pub async fn create_drill_record(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateDrillRecordRequest>,
-) -> Json<ApiResponse<DrillRecord>> {
+) -> ApiResponse<DrillRecord> {
     let tenant_id = resolve_tenant_id(&claims);
     let record_no = format!("DR-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let participants: serde_json::Value = req
@@ -746,11 +746,11 @@ pub async fn create_drill_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create drill record: {}", e);
-            return Json(ApiResponse::server_error("演练记录创建失败"));
+            return ApiResponse::server_error("演练记录创建失败");
         }
     };
     let record = drill_record_from_row(&row);
-    Json(ApiResponse::success(record, "演练记录创建成功"))
+    ApiResponse::success(record, "演练记录创建成功")
 }
 
 #[utoipa::path(
@@ -769,7 +769,7 @@ pub async fn get_drill_record(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<DrillRecord>> {
+) -> ApiResponse<DrillRecord> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let sql = r#"
         SELECT id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
@@ -790,14 +790,14 @@ pub async fn get_drill_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("演练记录不存在")),
+        Ok(None) => return ApiResponse::not_found("演练记录不存在"),
         Err(e) => {
             tracing::error!("Failed to get drill record: {}", e);
-            return Json(ApiResponse::server_error("获取演练详情失败"));
+            return ApiResponse::server_error("获取演练详情失败");
         }
     };
     let record = drill_record_from_row(&row);
-    Json(ApiResponse::success(record, "获取演练详情成功"))
+    ApiResponse::success(record, "获取演练详情成功")
 }
 
 #[utoipa::path(
@@ -818,7 +818,7 @@ pub async fn update_drill_record(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateDrillRecordRequest>,
-) -> Json<ApiResponse<DrillRecord>> {
+) -> ApiResponse<DrillRecord> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let mut sets: Vec<String> = Vec::new();
     let mut params: Vec<String> = Vec::new();
@@ -893,14 +893,14 @@ pub async fn update_drill_record(
         .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(ApiResponse::not_found("演练记录不存在")),
+        Ok(None) => return ApiResponse::not_found("演练记录不存在"),
         Err(e) => {
             tracing::error!("Failed to update drill record: {}", e);
-            return Json(ApiResponse::server_error("演练记录更新失败"));
+            return ApiResponse::server_error("演练记录更新失败");
         }
     };
     let record = drill_record_from_row(&row);
-    Json(ApiResponse::success(record, "演练记录更新成功"))
+    ApiResponse::success(record, "演练记录更新成功")
 }
 
 #[utoipa::path(
@@ -919,7 +919,7 @@ pub async fn delete_drill_record(
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let sql = r#"
         UPDATE ehs.qa_ehs_drill_records
@@ -937,13 +937,13 @@ pub async fn delete_drill_record(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete drill record: {}", e);
-            return Json(ApiResponse::server_error("演练记录删除失败"));
+            return ApiResponse::server_error("演练记录删除失败");
         }
     };
     if result.rows_affected() == 0 {
-        return Json(ApiResponse::not_found("演练记录不存在"));
+        return ApiResponse::not_found("演练记录不存在");
     }
-    Json(ApiResponse::success((), "演练记录删除成功"))
+    ApiResponse::success((), "演练记录删除成功")
 }
 
 #[utoipa::path(
@@ -957,7 +957,7 @@ pub async fn get_drill_statistics(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<DrillStatistics>> {
+) -> ApiResponse<DrillStatistics> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
@@ -1045,7 +1045,7 @@ pub async fn get_drill_statistics(
         }
     }
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         DrillStatistics {
             total_drills: i32::try_from(total_drills).unwrap_or(i32::MAX),
             planned_count: i32::try_from(planned_count).unwrap_or(i32::MAX),
@@ -1059,7 +1059,7 @@ pub async fn get_drill_statistics(
             tenant_id: tenant_bind.parse().unwrap_or_default(),
         },
         "获取演练统计成功",
-    ))
+    )
 }
 #[utoipa::path(
     get,
@@ -1072,7 +1072,7 @@ pub async fn list_drill_types(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<DrillType>>> {
+) -> ApiResponse<Vec<DrillType>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
@@ -1094,7 +1094,7 @@ pub async fn list_drill_types(
         }
     }
 
-    Json(ApiResponse::success(types, "获取演练类型成功"))
+    ApiResponse::success(types, "获取演练类型成功")
 }
 
 fn resolve_tenant_id(claims: &Claims) -> uuid::Uuid {

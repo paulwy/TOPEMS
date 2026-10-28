@@ -83,11 +83,11 @@ pub fn create_routes(pool: PgPool) -> Router {
 async fn list_types(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Query(query): Query<ListTypesQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
 
     let page = query.page.unwrap_or(1).max(1);
@@ -130,14 +130,14 @@ async fn list_types(
             .fetch_one(&mut **txn)
             .await;
             let total = count_result.unwrap_or(0);
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
                 "获取项目类型列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取项目类型列表失败: {e}");
-            Json(ApiResponse::server_error("获取项目类型列表失败"))
+            ApiResponse::server_error("获取项目类型列表失败")
         }
     }
 }
@@ -145,15 +145,15 @@ async fn list_types(
 async fn create_type(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Json(req): Json<CreateTypeRequest>,
-) -> Json<ApiResponse<ProjectTypeConfig>> {
+) -> ApiResponse<ProjectTypeConfig> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
 
     if req.type_code.trim().is_empty() || req.type_name.trim().is_empty() {
-        return Json(ApiResponse::bad_request("类型编码与名称不能为空"));
+        return ApiResponse::bad_request("类型编码与名称不能为空");
     }
 
     let sql = format!(
@@ -181,10 +181,10 @@ async fn create_type(
         .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(row, "创建项目类型成功")),
+        Ok(row) => ApiResponse::success(row, "创建项目类型成功"),
         Err(e) => {
             tracing::error!("创建项目类型失败: {e}");
-            Json(ApiResponse::server_error("创建项目类型失败"))
+            ApiResponse::server_error("创建项目类型失败")
         }
     }
 }
@@ -205,11 +205,11 @@ async fn create_type(
 async fn get_type(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<ProjectTypeConfig>> {
+) -> ApiResponse<ProjectTypeConfig> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
 
     let result = sqlx::query_as::<_, ProjectTypeConfig>(
@@ -226,11 +226,11 @@ async fn get_type(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(row, "获取项目类型成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目类型不存在")),
+        Ok(Some(row)) => ApiResponse::success(row, "获取项目类型成功"),
+        Ok(None) => ApiResponse::not_found("项目类型不存在"),
         Err(e) => {
             tracing::error!("获取项目类型失败: {e}");
-            Json(ApiResponse::server_error("获取项目类型失败"))
+            ApiResponse::server_error("获取项目类型失败")
         }
     }
 }
@@ -239,11 +239,11 @@ async fn update_type(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTypeRequest>,
-) -> Json<ApiResponse<ProjectTypeConfig>> {
+) -> ApiResponse<ProjectTypeConfig> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
 
     let result = sqlx::query_as::<_, ProjectTypeConfig>(
@@ -275,11 +275,11 @@ async fn update_type(
     .await;
 
     match result {
-        Ok(Some(row)) => Json(ApiResponse::success(row, "更新项目类型成功")),
-        Ok(None) => Json(ApiResponse::not_found("项目类型不存在")),
+        Ok(Some(row)) => ApiResponse::success(row, "更新项目类型成功"),
+        Ok(None) => ApiResponse::not_found("项目类型不存在"),
         Err(e) => {
             tracing::error!("更新项目类型失败: {e}");
-            Json(ApiResponse::server_error("更新项目类型失败"))
+            ApiResponse::server_error("更新项目类型失败")
         }
     }
 }
@@ -287,11 +287,11 @@ async fn update_type(
 async fn delete_type(
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
 
     let result = sqlx::query(
@@ -305,14 +305,13 @@ async fn delete_type(
     .await;
 
     match result {
-        Ok(res) if res.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::Value::Null,
-            "删除项目类型成功",
-        )),
-        Ok(_) => Json(ApiResponse::not_found("项目类型不存在")),
+        Ok(res) if res.rows_affected() > 0 => {
+            ApiResponse::success(serde_json::Value::Null, "删除项目类型成功")
+        }
+        Ok(_) => ApiResponse::not_found("项目类型不存在"),
         Err(e) => {
             tracing::error!("删除项目类型失败: {e}");
-            Json(ApiResponse::server_error("删除项目类型失败"))
+            ApiResponse::server_error("删除项目类型失败")
         }
     }
 }

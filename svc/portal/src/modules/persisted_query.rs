@@ -1015,11 +1015,11 @@ pub struct EdgePolicyRequest {
 pub async fn register_query_handler(
     State(_state): State<AppState>,
     Json(req): Json<RegisterQueryRequest>,
-) -> Json<ApiResponse<PersistedEntryV2>> {
+) -> ApiResponse<PersistedEntryV2> {
     match PersistedQueryV2::register_query(req.query_text, req.operation_name, req.created_by).await
     {
-        Ok(entry) => Json(ApiResponse::success(entry, "查询注册成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(entry) => ApiResponse::success(entry, "查询注册成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1039,10 +1039,10 @@ pub async fn register_query_handler(
 pub async fn get_query_handler(
     State(_state): State<AppState>,
     Path(hash): Path<String>,
-) -> Json<ApiResponse<PersistedEntryV2>> {
+) -> ApiResponse<PersistedEntryV2> {
     match PersistedQueryV2::get_query(&hash).await {
-        Some(entry) => Json(ApiResponse::success(entry, "查询详情")),
-        None => Json(ApiResponse::not_found("查询不存在")),
+        Some(entry) => ApiResponse::success(entry, "查询详情"),
+        None => ApiResponse::not_found("查询不存在"),
     }
 }
 
@@ -1063,10 +1063,10 @@ pub async fn execute_query_handler(
     State(_state): State<AppState>,
     Path(hash): Path<String>,
     Json(_req): Json<ExecuteQueryRequest>,
-) -> Json<ApiResponse<PersistedEntryV2>> {
+) -> ApiResponse<PersistedEntryV2> {
     match PersistedQueryV2::execute_query(&hash).await {
-        Ok(entry) => Json(ApiResponse::success(entry, "查询执行成功")),
-        Err(e) => Json(ApiResponse::bad_request(&e.classify().1)),
+        Ok(entry) => ApiResponse::success(entry, "查询执行成功"),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
@@ -1083,13 +1083,13 @@ pub async fn execute_query_handler(
 pub async fn list_queries_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListQueriesQuery>,
-) -> Json<ApiResponse<PersistedList>> {
+) -> ApiResponse<PersistedList> {
     let page = params.page.unwrap_or(1).max(1);
     let per_page = params.per_page.unwrap_or(20).min(100);
     let status = params.status.as_deref().map(QueryStatus::from_str);
 
     let list = PersistedQueryV2::list_queries(page, per_page, status).await;
-    Json(ApiResponse::success(list, "持久化查询列表"))
+    ApiResponse::success(list, "持久化查询列表")
 }
 
 #[utoipa::path(
@@ -1109,10 +1109,10 @@ pub async fn update_query_handler(
     State(_state): State<AppState>,
     Path(hash): Path<String>,
     Json(req): Json<UpdateQueryRequest>,
-) -> Json<ApiResponse<PersistedEntryV2>> {
+) -> ApiResponse<PersistedEntryV2> {
     match PersistedQueryV2::update_query(&hash, req.query_text, req.created_by).await {
-        Ok(entry) => Json(ApiResponse::success(entry, "查询更新成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(entry) => ApiResponse::success(entry, "查询更新成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1133,7 +1133,7 @@ pub async fn deprecate_query_handler(
     State(_state): State<AppState>,
     Path(hash): Path<String>,
     Json(req): Json<DeprecateQueryRequest>,
-) -> Json<ApiResponse<PersistedEntryV2>> {
+) -> ApiResponse<PersistedEntryV2> {
     let status = req
         .status
         .as_deref()
@@ -1141,8 +1141,8 @@ pub async fn deprecate_query_handler(
         .unwrap_or(QueryStatus::Deprecated);
 
     match PersistedQueryV2::deprecate_query(&hash, status).await {
-        Ok(entry) => Json(ApiResponse::success(entry, "查询状态已更新")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(entry) => ApiResponse::success(entry, "查询状态已更新"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1162,9 +1162,9 @@ pub async fn deprecate_query_handler(
 pub async fn get_query_versions_handler(
     State(_state): State<AppState>,
     Path(hash): Path<String>,
-) -> Json<ApiResponse<Vec<PersistedVersionInfo>>> {
+) -> ApiResponse<Vec<PersistedVersionInfo>> {
     let versions = PersistedQueryV2::get_query_versions(&hash).await;
-    Json(ApiResponse::success(versions, "查询版本列表"))
+    ApiResponse::success(versions, "查询版本列表")
 }
 
 // ==================== API 处理器: 版本化缓存 ====================
@@ -1185,10 +1185,10 @@ pub async fn get_query_versions_handler(
 pub async fn cache_get_handler(
     State(_state): State<AppState>,
     Path(key): Path<String>,
-) -> Json<ApiResponse<CacheEntryV2>> {
+) -> ApiResponse<CacheEntryV2> {
     match VersionedCache::get(&key).await {
-        Some(entry) => Json(ApiResponse::success(entry, "缓存命中")),
-        None => Json(ApiResponse::not_found("缓存未命中")),
+        Some(entry) => ApiResponse::success(entry, "缓存命中"),
+        None => ApiResponse::not_found("缓存未命中"),
     }
 }
 
@@ -1205,10 +1205,10 @@ pub async fn cache_get_handler(
 pub async fn cache_set_handler(
     State(_state): State<AppState>,
     Json(req): Json<CacheSetRequest>,
-) -> Json<ApiResponse<CacheEntryV2>> {
+) -> ApiResponse<CacheEntryV2> {
     match VersionedCache::set(req.key, req.value, req.tags, req.ttl_seconds).await {
-        Ok(entry) => Json(ApiResponse::success(entry, "缓存写入成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(entry) => ApiResponse::success(entry, "缓存写入成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1228,10 +1228,10 @@ pub async fn cache_set_handler(
 pub async fn cache_invalidate_handler(
     State(_state): State<AppState>,
     Path(version): Path<String>,
-) -> Json<ApiResponse<u64>> {
+) -> ApiResponse<u64> {
     match VersionedCache::invalidate_version(&version).await {
-        Ok(count) => Json(ApiResponse::success(count, "版本缓存已失效")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(count) => ApiResponse::success(count, "版本缓存已失效"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1248,10 +1248,10 @@ pub async fn cache_invalidate_handler(
 pub async fn cache_create_version_handler(
     State(_state): State<AppState>,
     Json(req): Json<CacheVersionRequest>,
-) -> Json<ApiResponse<CacheVersion>> {
+) -> ApiResponse<CacheVersion> {
     match VersionedCache::create_version(req.description).await {
-        Ok(version) => Json(ApiResponse::success(version, "缓存版本创建成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(version) => ApiResponse::success(version, "缓存版本创建成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1267,9 +1267,9 @@ pub async fn cache_create_version_handler(
 )]
 pub async fn cache_list_versions_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<CacheVersion>>> {
+) -> ApiResponse<Vec<CacheVersion>> {
     let versions = VersionedCache::list_versions().await;
-    Json(ApiResponse::success(versions, "缓存版本列表"))
+    ApiResponse::success(versions, "缓存版本列表")
 }
 
 #[utoipa::path(
@@ -1282,9 +1282,9 @@ pub async fn cache_list_versions_handler(
     ),
     tag = "PersistedQuery"
 )]
-pub async fn cache_stats_handler(State(_state): State<AppState>) -> Json<ApiResponse<CacheStats>> {
+pub async fn cache_stats_handler(State(_state): State<AppState>) -> ApiResponse<CacheStats> {
     let stats = VersionedCache::get_cache_stats().await;
-    Json(ApiResponse::success(stats, "缓存统计"))
+    ApiResponse::success(stats, "缓存统计")
 }
 
 #[utoipa::path(
@@ -1297,9 +1297,9 @@ pub async fn cache_stats_handler(State(_state): State<AppState>) -> Json<ApiResp
     ),
     tag = "PersistedQuery"
 )]
-pub async fn cache_purge_expired_handler(State(_state): State<AppState>) -> Json<ApiResponse<u64>> {
+pub async fn cache_purge_expired_handler(State(_state): State<AppState>) -> ApiResponse<u64> {
     let purged = VersionedCache::purge_expired().await;
-    Json(ApiResponse::success(purged, "过期缓存已清理"))
+    ApiResponse::success(purged, "过期缓存已清理")
 }
 
 // ==================== API 处理器: 边缘持久化 ====================
@@ -1317,7 +1317,7 @@ pub async fn cache_purge_expired_handler(State(_state): State<AppState>) -> Json
 pub async fn edge_store_handler(
     State(_state): State<AppState>,
     Json(req): Json<EdgeStoreRequest>,
-) -> Json<ApiResponse<EdgeEntry>> {
+) -> ApiResponse<EdgeEntry> {
     let location = req
         .location
         .as_deref()
@@ -1325,8 +1325,8 @@ pub async fn edge_store_handler(
         .unwrap_or(EdgeCacheLocation::EdgeNode);
 
     match EdgePersistence::store_at_edge(req.key, req.value, location, req.ttl_ms).await {
-        Ok(entry) => Json(ApiResponse::success(entry, "边缘存储成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(entry) => ApiResponse::success(entry, "边缘存储成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1347,12 +1347,12 @@ pub async fn edge_read_handler(
     State(_state): State<AppState>,
     Path(key): Path<String>,
     Query(params): Query<EdgeReadQuery>,
-) -> Json<ApiResponse<EdgeEntry>> {
+) -> ApiResponse<EdgeEntry> {
     let location = params.location.as_deref().map(EdgeCacheLocation::from_str);
 
     match EdgePersistence::read_from_edge(&key, location).await {
-        Some(entry) => Json(ApiResponse::success(entry, "边缘读取成功")),
-        None => Json(ApiResponse::not_found("边缘缓存未命中")),
+        Some(entry) => ApiResponse::success(entry, "边缘读取成功"),
+        None => ApiResponse::not_found("边缘缓存未命中"),
     }
 }
 
@@ -1369,7 +1369,7 @@ pub async fn edge_read_handler(
 pub async fn edge_sync_handler(
     State(_state): State<AppState>,
     Json(req): Json<EdgeSyncRequest>,
-) -> Json<ApiResponse<u64>> {
+) -> ApiResponse<u64> {
     let target_locations = req
         .target_locations
         .unwrap_or_else(|| {
@@ -1384,8 +1384,8 @@ pub async fn edge_sync_handler(
         .collect();
 
     match EdgePersistence::sync_to_regions(&req.key, target_locations).await {
-        Ok(count) => Json(ApiResponse::success(count, "边缘同步完成")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(count) => ApiResponse::success(count, "边缘同步完成"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1401,9 +1401,9 @@ pub async fn edge_sync_handler(
 )]
 pub async fn edge_status_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<EdgeStatusInfo>>> {
+) -> ApiResponse<Vec<EdgeStatusInfo>> {
     let statuses = EdgePersistence::get_edge_status().await;
-    Json(ApiResponse::success(statuses, "边缘节点状态"))
+    ApiResponse::success(statuses, "边缘节点状态")
 }
 
 #[utoipa::path(
@@ -1419,12 +1419,12 @@ pub async fn edge_status_handler(
 pub async fn edge_invalidate_handler(
     State(_state): State<AppState>,
     Json(req): Json<EdgeInvalidateRequest>,
-) -> Json<ApiResponse<u64>> {
+) -> ApiResponse<u64> {
     let location = req.location.as_deref().map(EdgeCacheLocation::from_str);
 
     match EdgePersistence::invalidate_edge(req.key, location).await {
-        Ok(count) => Json(ApiResponse::success(count, "边缘缓存已失效")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(count) => ApiResponse::success(count, "边缘缓存已失效"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1440,9 +1440,9 @@ pub async fn edge_invalidate_handler(
 )]
 pub async fn edge_replication_stats_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<EdgeReplicationStats>> {
+) -> ApiResponse<EdgeReplicationStats> {
     let stats = EdgePersistence::get_edge_replication_stats().await;
-    Json(ApiResponse::success(stats, "边缘复制统计"))
+    ApiResponse::success(stats, "边缘复制统计")
 }
 
 #[utoipa::path(
@@ -1458,7 +1458,7 @@ pub async fn edge_replication_stats_handler(
 pub async fn edge_set_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<EdgePolicyRequest>,
-) -> Json<ApiResponse<EdgeReplicationPolicy>> {
+) -> ApiResponse<EdgeReplicationPolicy> {
     let target_locations = req
         .target_locations
         .unwrap_or_else(|| {
@@ -1480,8 +1480,8 @@ pub async fn edge_set_policy_handler(
     };
 
     match EdgePersistence::set_replication_policy(policy).await {
-        Ok(p) => Json(ApiResponse::success(p, "复制策略已更新")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(p) => ApiResponse::success(p, "复制策略已更新"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 

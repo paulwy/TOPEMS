@@ -2,7 +2,7 @@ use axum::{
     extract::{Extension, Query, State},
     http::HeaderMap,
     routing::get,
-    Json, Router,
+    Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
@@ -51,15 +51,15 @@ pub async fn overview(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let start_date = params.start_date.unwrap_or_else(|| {
@@ -218,10 +218,7 @@ pub async fn overview(
         });
     }
 
-    Json(ApiResponse::success(
-        overview_data,
-        "获取供应链概览数据成功",
-    ))
+    ApiResponse::success(overview_data, "获取供应链概览数据成功")
 }
 
 #[utoipa::path(
@@ -241,15 +238,15 @@ pub async fn purchase_inbound_outbound_stats(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let start_date = params.start_date.unwrap_or_else(|| {
@@ -358,7 +355,7 @@ pub async fn purchase_inbound_outbound_stats(
     let inbound_data = format_trend(inbound_trend, "total_quantity");
     let outbound_data = format_trend(outbound_trend, "total_quantity");
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "period": {
                 "start_date": start_date,
@@ -369,7 +366,7 @@ pub async fn purchase_inbound_outbound_stats(
             "outbound_trend": outbound_data,
         }),
         "获取采购-入库-出库全链路统计成功",
-    ))
+    )
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -405,11 +402,11 @@ pub async fn supplier_performance(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(
         &state.db,
@@ -419,7 +416,7 @@ pub async fn supplier_performance(
     .await
     {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
@@ -565,7 +562,7 @@ pub async fn supplier_performance(
                 }
             };
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "period": {
                         "start_date": start_date,
@@ -575,13 +572,11 @@ pub async fn supplier_performance(
                     "category_distribution": category_stats,
                 }),
                 "获取供应商绩效概览成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取供应商绩效概览失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取供应商绩效概览失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取供应商绩效概览失败".to_string()))
         }
     }
 }
@@ -603,15 +598,15 @@ pub async fn real_time_status(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -704,7 +699,7 @@ pub async fn real_time_status(
     .await
     .unwrap_or(0);
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         serde_json::json!({
             "pending_purchase_orders": pending_purchase,
             "pending_inbound_orders": pending_inbound,
@@ -716,7 +711,7 @@ pub async fn real_time_status(
             "timestamp": chrono::Utc::now().to_rfc3339(),
         }),
         "获取实时状态成功",
-    ))
+    )
 }
 
 #[cfg(test)]

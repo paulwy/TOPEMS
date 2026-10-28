@@ -240,15 +240,15 @@ pub async fn list_opportunities(
     Extension(claims): Extension<Claims>,
     Query(params): Query<OpportunityPaginationParams>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let page = params.page.unwrap_or(1).max(1);
@@ -281,7 +281,7 @@ pub async fn list_opportunities(
     );
     if let Some(cached) = state.opportunity_cache.get(&list_cache_key).await {
         tracing::debug!("📋 商机列表缓存命中: {}", list_cache_key);
-        return Json(ApiResponse::success(cached, "获取销售机会列表成功"));
+        return ApiResponse::success(cached, "获取销售机会列表成功");
     }
 
     let result = sqlx::query_as::<_, Opportunity>(
@@ -340,13 +340,11 @@ pub async fn list_opportunities(
                 .set(list_cache_key, data.clone())
                 .await;
 
-            Json(ApiResponse::success(data, "获取销售机会列表成功"))
+            ApiResponse::success(data, "获取销售机会列表成功")
         }
         Err(e) => {
             tracing::error!("获取销售机会列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取销售机会列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取销售机会列表失败".to_string()))
         }
     }
 }
@@ -371,21 +369,21 @@ pub async fn create_opportunity(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateOpportunityRequest>,
-) -> Json<ApiResponse<Opportunity>> {
+) -> ApiResponse<Opportunity> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     if req.name.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "销售机会名称不能为空".to_string(),
-        )));
+        ));
     }
 
     let id = Uuid::new_v4();
@@ -444,19 +442,14 @@ pub async fn create_opportunity(
 
     let (response, status_str, error_msg) = match &result {
         Ok(opportunity) => (
-            Json(ApiResponse::success(
-                opportunity.clone(),
-                "销售机会创建成功",
-            )),
+            ApiResponse::success(opportunity.clone(), "销售机会创建成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("创建销售机会失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "销售机会创建失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("销售机会创建失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -466,9 +459,7 @@ pub async fn create_opportunity(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
         // 创建商机后失效商机列表缓存
@@ -524,15 +515,15 @@ pub async fn get_opportunity(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Opportunity>> {
+) -> ApiResponse<Opportunity> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -553,7 +544,7 @@ pub async fn get_opportunity(
         match serde_json::from_value::<Opportunity>(cached) {
             Ok(opportunity) => {
                 tracing::debug!("📋 商机详情缓存命中: {}", detail_key);
-                return Json(ApiResponse::success(opportunity, "获取销售机会成功"));
+                return ApiResponse::success(opportunity, "获取销售机会成功");
             }
             Err(_) => {
                 tracing::warn!("商机详情缓存反序列化失败，回源查询");
@@ -580,16 +571,12 @@ pub async fn get_opportunity(
             if let Ok(value) = serde_json::to_value(&opportunity) {
                 state.opportunity_cache.set(detail_key, value).await;
             }
-            Json(ApiResponse::success(opportunity, "获取销售机会成功"))
+            ApiResponse::success(opportunity, "获取销售机会成功")
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "销售机会不存在".to_string(),
-        ))),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("销售机会不存在".to_string())),
         Err(e) => {
             tracing::error!("获取销售机会失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取销售机会失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取销售机会失败".to_string()))
         }
     }
 }
@@ -603,15 +590,15 @@ async fn update_opportunity(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateOpportunityRequest>,
-) -> Json<ApiResponse<Opportunity>> {
+) -> ApiResponse<Opportunity> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -638,16 +625,9 @@ async fn update_opportunity(
     let existing = match existing {
         Ok(Some(o)) => o,
         Ok(None) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "销售机会不存在".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ResourceNotFound("销售机会不存在".to_string()))
         }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal(
-                "查询销售机会失败",
-                e,
-            )))
-        }
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询销售机会失败", e)),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -698,19 +678,14 @@ async fn update_opportunity(
 
     let (response, status_str, error_msg) = match &result {
         Ok(opportunity) => (
-            Json(ApiResponse::success(
-                opportunity.clone(),
-                "销售机会更新成功",
-            )),
+            ApiResponse::success(opportunity.clone(), "销售机会更新成功"),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("更新销售机会失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "销售机会更新失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("销售机会更新失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -720,9 +695,7 @@ async fn update_opportunity(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal(
-                    "事务提交失败".to_string(),
-                )));
+                return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
             }
         }
         // 更新商机后失效商机详情与列表缓存
@@ -764,15 +737,15 @@ async fn delete_opportunity(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -797,9 +770,7 @@ async fn delete_opportunity(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
 
@@ -810,23 +781,19 @@ async fn delete_opportunity(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "销售机会删除成功")),
+            ApiResponse::success("".to_string(), "销售机会删除成功"),
             "success".to_string(),
             None,
         ),
         Ok(_) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound(
-                "销售机会不存在".to_string(),
-            ))),
+            ApiResponse::from(TopemsError::ResourceNotFound("销售机会不存在".to_string())),
             "error".to_string(),
             Some("销售机会不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除销售机会失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "销售机会删除失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("销售机会删除失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -878,21 +845,21 @@ pub async fn batch_delete_opportunities(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<BatchDeleteRequest>,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     if req.ids.is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+        return ApiResponse::from(TopemsError::ValidationFailed(
             "请选择要删除的销售机会".to_string(),
-        )));
+        ));
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -917,9 +884,7 @@ pub async fn batch_delete_opportunities(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
         }
     }
 
@@ -930,19 +895,17 @@ pub async fn batch_delete_opportunities(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) => (
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 "".to_string(),
                 &format!("成功删除 {} 个销售机会", r.rows_affected()),
-            )),
+            ),
             "success".to_string(),
             None,
         ),
         Err(e) => {
             tracing::error!("批量删除销售机会失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "批量删除销售机会失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("批量删除销售机会失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -983,15 +946,15 @@ async fn get_sales_funnel(
     >,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<FunnelStage>>> {
+) -> ApiResponse<Vec<FunnelStage>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -1053,7 +1016,7 @@ async fn get_sales_funnel(
         });
     }
 
-    Json(ApiResponse::success(funnel_stages, "获取销售漏斗成功"))
+    ApiResponse::success(funnel_stages, "获取销售漏斗成功")
 }
 
 #[utoipa::path(
@@ -1073,15 +1036,15 @@ pub async fn get_opportunity_stats(
     >,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<OpportunityStats>> {
+) -> ApiResponse<OpportunityStats> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -1161,7 +1124,7 @@ pub async fn get_opportunity_stats(
         lost_value,
     };
 
-    Json(ApiResponse::success(stats, "获取商机统计成功"))
+    ApiResponse::success(stats, "获取商机统计成功")
 }
 
 #[utoipa::path(
@@ -1187,15 +1150,15 @@ pub async fn get_opportunity_forecast(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ForecastParams>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<OpportunityForecast>>> {
+) -> ApiResponse<Vec<OpportunityForecast>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -1278,7 +1241,7 @@ pub async fn get_opportunity_forecast(
         });
     }
 
-    Json(ApiResponse::success(forecasts, "获取商机预测成功"))
+    ApiResponse::success(forecasts, "获取商机预测成功")
 }
 
 #[utoipa::path(
@@ -1298,15 +1261,15 @@ pub async fn get_stage_transitions(
     >,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<StageTransition>>> {
+) -> ApiResponse<Vec<StageTransition>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -1334,7 +1297,7 @@ pub async fn get_stage_transitions(
     .await
     .unwrap_or_default();
 
-    Json(ApiResponse::success(transitions, "获取阶段转换统计成功"))
+    ApiResponse::success(transitions, "获取阶段转换统计成功")
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -1394,15 +1357,15 @@ pub async fn advance_opportunity(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<AdvanceOpportunityRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -1428,8 +1391,8 @@ pub async fn advance_opportunity(
     .await
     {
         Ok(Some(o)) => o,
-        Ok(None) => return Json(ApiResponse::from(TopemsError::ResourceNotFound("商机不存在".to_string()))),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询商机失败", e))),
+        Ok(None) => return ApiResponse::from(TopemsError::ResourceNotFound("商机不存在".to_string())),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询商机失败", e)),
     };
 
     let is_owner_or_admin = true;
@@ -1437,10 +1400,10 @@ pub async fn advance_opportunity(
     let from_stage = match OppStage::from_str(&existing.stage) {
         Some(s) => s,
         None => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
                 "未知商机阶段: {}",
                 existing.stage
-            ))))
+            )))
         }
     };
     let to_stage = next_advance_stage(from_stage);
@@ -1448,27 +1411,23 @@ pub async fn advance_opportunity(
     match can_transition(from_stage, to_stage, is_owner_or_admin) {
         Ok(_) => {}
         Err(TopemsError::OperationNotAllowed(_)) => {
-            return Json(ApiResponse::from(TopemsError::ForbiddenStr(
+            return ApiResponse::from(TopemsError::ForbiddenStr(
                 "仅负责人或管理员可推进阶段".to_string(),
-            )))
+            ))
         }
         Err(TopemsError::BusinessLogic(_)) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "终态商机不可推进".to_string(),
-            )))
+            ))
         }
         Err(TopemsError::ValidationFailed(_)) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
                 "无效推进: {} → {}",
                 from_stage.as_str(),
                 to_stage.as_str()
-            ))))
-        }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                e.to_string(),
             )))
         }
+        Err(e) => return ApiResponse::from(TopemsError::ValidationFailed(e.to_string())),
     }
 
     let now = Utc::now();
@@ -1502,9 +1461,7 @@ pub async fn advance_opportunity(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             // 阶段推进后失效商机详情与列表缓存
@@ -1517,10 +1474,10 @@ pub async fn advance_opportunity(
                 "toStage": to_s,
             });
             (
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     response_payload,
                     &format!("商机阶段已推进: {} → {}", from_s, to_s),
-                )),
+                ),
                 "success".to_string(),
                 None,
             )
@@ -1528,9 +1485,7 @@ pub async fn advance_opportunity(
         Err(e) => {
             tracing::error!("推进商机阶段失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "推进商机阶段失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("推进商机阶段失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -1595,15 +1550,15 @@ pub async fn rollback_opportunity(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<RollbackOpportunityRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -1629,8 +1584,8 @@ pub async fn rollback_opportunity(
     .await
     {
         Ok(Some(o)) => o,
-        Ok(None) => return Json(ApiResponse::from(TopemsError::ResourceNotFound("商机不存在".to_string()))),
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询商机失败", e))),
+        Ok(None) => return ApiResponse::from(TopemsError::ResourceNotFound("商机不存在".to_string())),
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询商机失败", e)),
     };
 
     let is_owner_or_admin = true;
@@ -1638,10 +1593,10 @@ pub async fn rollback_opportunity(
     let from_stage = match OppStage::from_str(&existing.stage) {
         Some(s) => s,
         None => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
                 "未知商机阶段: {}",
                 existing.stage
-            ))))
+            )))
         }
     };
     let to_stage = prev_stage(from_stage);
@@ -1649,27 +1604,23 @@ pub async fn rollback_opportunity(
     match can_transition(from_stage, to_stage, is_owner_or_admin) {
         Ok(_) => {}
         Err(TopemsError::OperationNotAllowed(_)) => {
-            return Json(ApiResponse::from(TopemsError::ForbiddenStr(
+            return ApiResponse::from(TopemsError::ForbiddenStr(
                 "仅负责人或管理员可回退阶段".to_string(),
-            )))
+            ))
         }
         Err(TopemsError::BusinessLogic(_)) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            return ApiResponse::from(TopemsError::ValidationFailed(
                 "终态商机不可回退".to_string(),
-            )))
+            ))
         }
         Err(TopemsError::ValidationFailed(_)) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            return ApiResponse::from(TopemsError::ValidationFailed(format!(
                 "无效回退(仅相邻阶段允许): {} → {}",
                 from_stage.as_str(),
                 to_stage.as_str()
-            ))))
-        }
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                e.to_string(),
             )))
         }
+        Err(e) => return ApiResponse::from(TopemsError::ValidationFailed(e.to_string())),
     }
 
     let now = Utc::now();
@@ -1713,9 +1664,7 @@ pub async fn rollback_opportunity(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
             // 阶段回退后失效商机详情与列表缓存
@@ -1728,10 +1677,10 @@ pub async fn rollback_opportunity(
                 "toStage": to_s,
             });
             (
-                Json(ApiResponse::success(
+                ApiResponse::success(
                     response_payload,
                     &format!("商机阶段已回退: {} → {}", from_s, to_s),
-                )),
+                ),
                 "success".to_string(),
                 None,
             )
@@ -1739,9 +1688,7 @@ pub async fn rollback_opportunity(
         Err(e) => {
             tracing::error!("回退商机阶段失败: {}", e);
             (
-                Json(ApiResponse::from(TopemsError::Internal(
-                    "回退商机阶段失败".to_string(),
-                ))),
+                ApiResponse::from(TopemsError::Internal("回退商机阶段失败".to_string())),
                 "error".to_string(),
                 Some(e.to_string()),
             )

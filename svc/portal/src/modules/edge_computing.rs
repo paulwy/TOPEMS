@@ -989,7 +989,7 @@ pub struct LatencyBudgetQuery {
 pub async fn render_at_edge_handler(
     State(_state): State<AppState>,
     Json(req): Json<RenderAtEdgeRequest>,
-) -> Json<ApiResponse<RenderResult>> {
+) -> ApiResponse<RenderResult> {
     let preferred = req
         .preferred_location
         .as_deref()
@@ -1004,8 +1004,8 @@ pub async fn render_at_edge_handler(
     };
 
     match EdgeRenderer::render_at_edge(render_req).await {
-        Ok(result) => Json(ApiResponse::success(result, "边缘渲染完成")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(result) => ApiResponse::success(result, "边缘渲染完成"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1021,20 +1021,20 @@ pub async fn render_at_edge_handler(
 )]
 pub async fn get_edge_status_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<Vec<EdgeStatus>>> {
+) -> ApiResponse<Vec<EdgeStatus>> {
     let statuses = EdgeRenderer::get_edge_status().await;
-    Json(ApiResponse::success(statuses, "边缘节点状态"))
+    ApiResponse::success(statuses, "边缘节点状态")
 }
 
 pub async fn invalidate_cache_handler(
     State(_state): State<AppState>,
     Json(req): Json<InvalidateCacheRequest>,
-) -> Json<ApiResponse<u64>> {
+) -> ApiResponse<u64> {
     let location = req.location.as_deref().map(EdgeLocation::from_str);
 
     match EdgeRenderer::invalidate_edge_cache(location, req.cache_key).await {
-        Ok(count) => Json(ApiResponse::success(count, "缓存已失效")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(count) => ApiResponse::success(count, "缓存已失效"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1051,10 +1051,10 @@ pub async fn invalidate_cache_handler(
 pub async fn get_render_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<RenderHistoryQuery>,
-) -> Json<ApiResponse<Vec<RenderHistoryEntry>>> {
+) -> ApiResponse<Vec<RenderHistoryEntry>> {
     let limit = params.limit.unwrap_or(50).min(500);
     let history = EdgeRenderer::get_render_history(limit).await;
-    Json(ApiResponse::success(history, "渲染历史"))
+    ApiResponse::success(history, "渲染历史")
 }
 
 #[utoipa::path(
@@ -1070,7 +1070,7 @@ pub async fn get_render_history_handler(
 pub async fn deploy_function_handler(
     State(_state): State<AppState>,
     Json(req): Json<DeployFunctionRequest>,
-) -> Json<ApiResponse<EdgeFunction>> {
+) -> ApiResponse<EdgeFunction> {
     let location = req
         .location
         .as_deref()
@@ -1087,8 +1087,8 @@ pub async fn deploy_function_handler(
     };
 
     match EdgeRenderer::deploy_edge_function(function).await {
-        Ok(f) => Json(ApiResponse::success(f, "边缘函数部署成功")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(f) => ApiResponse::success(f, "边缘函数部署成功"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1107,14 +1107,14 @@ pub async fn deploy_function_handler(
 pub async fn accelerate_request_handler(
     State(_state): State<AppState>,
     Json(req): Json<AccelerateRequest>,
-) -> Json<ApiResponse<AcceleratedResponse>> {
+) -> ApiResponse<AcceleratedResponse> {
     let client_loc = req.client_location.as_deref().map(EdgeLocation::from_str);
 
     match GlobalAccelerator::accelerate_request(req.data, req.config_name.as_deref(), client_loc)
         .await
     {
-        Ok(resp) => Json(ApiResponse::success(resp, "加速请求完成")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(resp) => ApiResponse::success(resp, "加速请求完成"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1131,15 +1131,15 @@ pub async fn accelerate_request_handler(
 pub async fn get_optimal_location_handler(
     State(_state): State<AppState>,
     Query(params): Query<OptimalLocationQuery>,
-) -> Json<ApiResponse<EdgeLocation>> {
+) -> ApiResponse<EdgeLocation> {
     let client_loc = params
         .client_location
         .as_deref()
         .map(EdgeLocation::from_str);
 
     match GlobalAccelerator::get_optimal_location(params.config_name.as_deref(), client_loc).await {
-        Ok(loc) => Json(ApiResponse::success(loc, "最优节点位置")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(loc) => ApiResponse::success(loc, "最优节点位置"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1156,7 +1156,7 @@ pub async fn get_optimal_location_handler(
 pub async fn sync_config_handler(
     State(_state): State<AppState>,
     Json(req): Json<SyncConfigRequest>,
-) -> Json<ApiResponse<AccelConfig>> {
+) -> ApiResponse<AccelConfig> {
     let locations = req
         .locations
         .unwrap_or_else(|| vec!["apac".to_string(), "emea".to_string(), "amer".to_string()])
@@ -1177,8 +1177,8 @@ pub async fn sync_config_handler(
     };
 
     match GlobalAccelerator::sync_config(config).await {
-        Ok(cfg) => Json(ApiResponse::success(cfg, "配置同步成功")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(cfg) => ApiResponse::success(cfg, "配置同步成功"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1192,11 +1192,9 @@ pub async fn sync_config_handler(
     ),
     tag = "EdgeComputing"
 )]
-pub async fn get_accel_stats_handler(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<AccelStats>> {
+pub async fn get_accel_stats_handler(State(_state): State<AppState>) -> ApiResponse<AccelStats> {
     let stats = GlobalAccelerator::get_accel_stats().await;
-    Json(ApiResponse::success(stats, "加速统计"))
+    ApiResponse::success(stats, "加速统计")
 }
 
 // ==================== API 处理器: 低延迟响应 ====================
@@ -1214,10 +1212,10 @@ pub async fn get_accel_stats_handler(
 pub async fn optimize_response_handler(
     State(_state): State<AppState>,
     Json(req): Json<OptimizeRequest>,
-) -> Json<ApiResponse<OptimizedResponse>> {
+) -> ApiResponse<OptimizedResponse> {
     match LatencyOptimizer::optimize_response(req.data, req.budget_name.as_deref()).await {
-        Ok(resp) => Json(ApiResponse::success(resp, "响应优化完成")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(resp) => ApiResponse::success(resp, "响应优化完成"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1234,9 +1232,9 @@ pub async fn optimize_response_handler(
 pub async fn get_latency_budget_handler(
     State(_state): State<AppState>,
     Query(params): Query<LatencyBudgetQuery>,
-) -> Json<ApiResponse<LatencyBudget>> {
+) -> ApiResponse<LatencyBudget> {
     let budget = LatencyOptimizer::get_latency_budget(params.budget_name.as_deref()).await;
-    Json(ApiResponse::success(budget, "延迟预算"))
+    ApiResponse::success(budget, "延迟预算")
 }
 
 #[utoipa::path(
@@ -1252,11 +1250,11 @@ pub async fn get_latency_budget_handler(
 pub async fn precompute_handler(
     State(_state): State<AppState>,
     Json(req): Json<PrecomputeRequest>,
-) -> Json<ApiResponse<PrecomputedResponse>> {
+) -> ApiResponse<PrecomputedResponse> {
     let ttl = req.ttl_seconds.unwrap_or(300);
     match LatencyOptimizer::precompute_response(req.template_id, req.data, ttl).await {
-        Ok(resp) => Json(ApiResponse::success(resp, "预计算完成")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(resp) => ApiResponse::success(resp, "预计算完成"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1273,10 +1271,10 @@ pub async fn precompute_handler(
 pub async fn coalesce_requests_handler(
     State(_state): State<AppState>,
     Json(req): Json<CoalesceRequest>,
-) -> Json<ApiResponse<CoalescedRequest>> {
+) -> ApiResponse<CoalescedRequest> {
     match LatencyOptimizer::coalesce_requests(req.request_ids, &req.query).await {
-        Ok(resp) => Json(ApiResponse::success(resp, "请求合并完成")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(resp) => ApiResponse::success(resp, "请求合并完成"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1292,9 +1290,9 @@ pub async fn coalesce_requests_handler(
 )]
 pub async fn get_latency_stats_handler(
     State(_state): State<AppState>,
-) -> Json<ApiResponse<LatencyStats>> {
+) -> ApiResponse<LatencyStats> {
     let stats = LatencyOptimizer::get_latency_stats().await;
-    Json(ApiResponse::success(stats, "延迟统计"))
+    ApiResponse::success(stats, "延迟统计")
 }
 
 #[cfg(test)]

@@ -90,7 +90,7 @@ pub async fn sync_offline_data(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -100,7 +100,7 @@ pub async fn sync_offline_data(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::bad_request("无效的用户ID")),
+                ApiResponse::bad_request("无效的用户ID"),
             );
         }
     };
@@ -120,7 +120,7 @@ pub async fn sync_offline_data(
         .await
     {
         tracing::error!("创建同步记录失败: {}", e);
-        return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::server_error("创建同步记录失败")));
+        return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("创建同步记录失败"));
     }
 
     let synced_count = payload.records_count;
@@ -149,7 +149,7 @@ pub async fn sync_offline_data(
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(response, "离线数据同步成功")),
+        ApiResponse::success(response, "离线数据同步成功"),
     )
 }
 
@@ -174,7 +174,7 @@ pub async fn get_offline_status(
         Err(_) => {
             return (
                 StatusCode::UNAUTHORIZED,
-                Json(ApiResponse::unauthorized("未授权")),
+                ApiResponse::unauthorized("未授权"),
             );
         }
     };
@@ -184,7 +184,7 @@ pub async fn get_offline_status(
         Err(_) => {
             return (
                 StatusCode::BAD_REQUEST,
-                Json(ApiResponse::bad_request("无效的用户ID")),
+                ApiResponse::bad_request("无效的用户ID"),
             );
         }
     };
@@ -230,7 +230,7 @@ pub async fn get_offline_status(
 
     (
         StatusCode::OK,
-        Json(ApiResponse::success(response, "获取离线状态成功")),
+        ApiResponse::success(response, "获取离线状态成功"),
     )
 }
 

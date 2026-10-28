@@ -59,15 +59,15 @@ pub async fn list_transfers(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -113,7 +113,7 @@ pub async fn list_transfers(
             .await
             .unwrap_or(0);
 
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "items": transfers,
                     "total": total,
@@ -121,13 +121,11 @@ pub async fn list_transfers(
                     "page_size": page_size
                 }),
                 "获取调拨单列表成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("获取调拨单列表失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取调拨单列表失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取调拨单列表失败".to_string()))
         }
     }
 }
@@ -147,15 +145,15 @@ pub async fn create_transfer(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<CreateTransferOrderRequest>,
-) -> Json<ApiResponse<TransferOrder>> {
+) -> ApiResponse<TransferOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let id = Uuid::new_v4();
     let order_number = format!("TF{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
@@ -254,16 +252,14 @@ pub async fn create_transfer(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(transfer, "创建调拨单成功"))
+            ApiResponse::success(transfer, "创建调拨单成功")
         }
         Err(e) => {
             tracing::error!("创建调拨单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "创建调拨单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("创建调拨单失败".to_string()))
         }
     }
 }
@@ -282,23 +278,21 @@ pub async fn get_transfer(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<TransferOrder>> {
+) -> ApiResponse<TransferOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的调拨单ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的调拨单ID".to_string()))
         }
     };
 
@@ -310,15 +304,11 @@ pub async fn get_transfer(
     .await;
 
     match result {
-        Ok(Some(transfer)) => Json(ApiResponse::success(transfer, "获取调拨单成功")),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "调拨单不存在".to_string(),
-        ))),
+        Ok(Some(transfer)) => ApiResponse::success(transfer, "获取调拨单成功"),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("调拨单不存在".to_string())),
         Err(e) => {
             tracing::error!("获取调拨单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取调拨单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取调拨单失败".to_string()))
         }
     }
 }
@@ -337,23 +327,21 @@ pub async fn list_transfer_items(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的调拨单ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的调拨单ID".to_string()))
         }
     };
 
@@ -365,18 +353,16 @@ pub async fn list_transfer_items(
     .await;
 
     match result {
-        Ok(items) => Json(ApiResponse::success(
+        Ok(items) => ApiResponse::success(
             serde_json::json!({
                 "items": items,
                 "total": items.len()
             }),
             "获取调拨单明细成功",
-        )),
+        ),
         Err(e) => {
             tracing::error!("获取调拨单明细失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "获取调拨单明细失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("获取调拨单明细失败".to_string()))
         }
     }
 }
@@ -396,23 +382,21 @@ pub async fn update_transfer(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<TransferOrder>> {
+) -> ApiResponse<TransferOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的调拨单ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的调拨单ID".to_string()))
         }
     };
 
@@ -482,19 +466,17 @@ pub async fn update_transfer(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(transfer, "更新调拨单成功"))
+            ApiResponse::success(transfer, "更新调拨单成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "调拨单不存在".to_string(),
-        ))),
+        Err(sqlx::Error::RowNotFound) => {
+            ApiResponse::from(TopemsError::ResourceNotFound("调拨单不存在".to_string()))
+        }
         Err(e) => {
             tracing::error!("更新调拨单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "更新调拨单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("更新调拨单失败".to_string()))
         }
     }
 }
@@ -513,23 +495,21 @@ pub async fn delete_transfer(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<String>> {
+) -> ApiResponse<String> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的调拨单ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的调拨单ID".to_string()))
         }
     };
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -551,9 +531,7 @@ pub async fn delete_transfer(
 
     if let Err(e) = result {
         tracing::error!("删除调拨单明细失败: {}", e);
-        return Json(ApiResponse::from(TopemsError::Internal(
-            "删除调拨单失败".to_string(),
-        )));
+        return ApiResponse::from(TopemsError::Internal("删除调拨单失败".to_string()));
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -570,19 +548,15 @@ pub async fn delete_transfer(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success("".to_string(), "删除调拨单成功"))
+            ApiResponse::success("".to_string(), "删除调拨单成功")
         }
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
-            "调拨单不存在".to_string(),
-        ))),
+        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("调拨单不存在".to_string())),
         Err(e) => {
             tracing::error!("删除调拨单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "删除调拨单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("删除调拨单失败".to_string()))
         }
     }
 }
@@ -601,23 +575,21 @@ pub async fn confirm_transfer(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<TransferOrder>> {
+) -> ApiResponse<TransferOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的调拨单ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的调拨单ID".to_string()))
         }
     };
 
@@ -654,19 +626,17 @@ pub async fn confirm_transfer(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(transfer, "确认调拨单成功"))
+            ApiResponse::success(transfer, "确认调拨单成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ResourceNotFound(
             "调拨单不存在或状态不正确".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("确认调拨单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "确认调拨单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("确认调拨单失败".to_string()))
         }
     }
 }
@@ -685,23 +655,21 @@ pub async fn ship_transfer(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<TransferOrder>> {
+) -> ApiResponse<TransferOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的调拨单ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的调拨单ID".to_string()))
         }
     };
 
@@ -738,19 +706,17 @@ pub async fn ship_transfer(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(transfer, "发货成功"))
+            ApiResponse::success(transfer, "发货成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ResourceNotFound(
             "调拨单不存在或状态不正确".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("发货失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "发货失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("发货失败".to_string()))
         }
     }
 }
@@ -770,23 +736,21 @@ pub async fn receive_transfer(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(data): Json<serde_json::Value>,
-) -> Json<ApiResponse<TransferOrder>> {
+) -> ApiResponse<TransferOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的调拨单ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的调拨单ID".to_string()))
         }
     };
 
@@ -853,19 +817,17 @@ pub async fn receive_transfer(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::server_error("事务提交失败"));
+                    return ApiResponse::server_error("事务提交失败");
                 }
             }
-            Json(ApiResponse::success(transfer, "收货成功"))
+            ApiResponse::success(transfer, "收货成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ResourceNotFound(
             "调拨单不存在或状态不正确".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("收货失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "收货失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("收货失败".to_string()))
         }
     }
 }
@@ -885,23 +847,21 @@ pub async fn complete_transfer(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
-) -> Json<ApiResponse<TransferOrder>> {
+) -> ApiResponse<TransferOrder> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
 
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "无效的调拨单ID".to_string(),
-            )))
+            return ApiResponse::from(TopemsError::ValidationFailed("无效的调拨单ID".to_string()))
         }
     };
 
@@ -939,9 +899,7 @@ pub async fn complete_transfer(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("完成调拨事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "完成调拨单失败".to_string(),
-                    )));
+                    return ApiResponse::from(TopemsError::Internal("完成调拨单失败".to_string()));
                 }
             }
             // P3 事件驱动规范化：调拨完成时发布 WmsWarehouseTransferCompleted 事件，
@@ -1000,16 +958,14 @@ pub async fn complete_transfer(
                 });
             }
 
-            Json(ApiResponse::success(transfer, "完成调拨单成功"))
+            ApiResponse::success(transfer, "完成调拨单成功")
         }
-        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+        Err(sqlx::Error::RowNotFound) => ApiResponse::from(TopemsError::ResourceNotFound(
             "调拨单不存在或状态不正确".to_string(),
-        ))),
+        )),
         Err(e) => {
             tracing::error!("完成调拨单失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal(
-                "完成调拨单失败".to_string(),
-            )))
+            ApiResponse::from(TopemsError::Internal("完成调拨单失败".to_string()))
         }
     }
 }
@@ -1037,19 +993,19 @@ pub async fn start_transfer_approval(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::TransferApprove).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(ApiResponse::bad_request("无效的调拨单ID")),
+        Err(_) => return ApiResponse::bad_request("无效的调拨单ID"),
     };
     let tenant_id = get_tenant_id_or_new(&claims, &headers);
 
@@ -1066,7 +1022,7 @@ pub async fn start_transfer_approval(
         Ok(row) => {
             let current_status = row.get::<Option<String>, _>("status").unwrap_or_default();
             if !crate::shared::fsm::transfer_order_requires_approval(&current_status, "shipped") {
-                return Json(ApiResponse::bad_request("当前状态无需审批"));
+                return ApiResponse::bad_request("当前状态无需审批");
             }
             let _ = crate::models::audit_log::log_approval_event(
                 &mut **txn,
@@ -1080,14 +1036,14 @@ pub async fn start_transfer_approval(
                 req.comment.as_deref(),
             )
             .await;
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({"status": current_status, "approval_started": true}),
                 "审批启动成功",
-            ))
+            )
         }
         Err(e) => {
             tracing::error!("找不到调拨单: {}", e);
-            Json(ApiResponse::not_found("调拨单不存在"))
+            ApiResponse::not_found("调拨单不存在")
         }
     }
 }
@@ -1109,19 +1065,19 @@ pub async fn approve_transfer(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::TransferApprove).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(ApiResponse::bad_request("无效的调拨单ID")),
+        Err(_) => return ApiResponse::bad_request("无效的调拨单ID"),
     };
     let tenant_id = get_tenant_id_or_new(&claims, &headers);
 
@@ -1141,7 +1097,7 @@ pub async fn approve_transfer(
                 && crate::shared::fsm::transfer_order_can_transition(&current_status, "shipped")
                     .is_err()
             {
-                return Json(ApiResponse::bad_request("当前状态不允许审批通过"));
+                return ApiResponse::bad_request("当前状态不允许审批通过");
             }
             let result = sqlx::query(
                 only_own_schema_query!("wms", "UPDATE wms.transfer_orders SET status = 'shipped', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *"),
@@ -1167,23 +1123,23 @@ pub async fn approve_transfer(
                     if let Some(t) = guard.take() {
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
-                            return Json(ApiResponse::server_error("事务提交失败"));
+                            return ApiResponse::server_error("事务提交失败");
                         }
                     }
-                    Json(ApiResponse::success(
+                    ApiResponse::success(
                         serde_json::json!({"id": transfer_id, "status": "shipped"}),
                         "审批通过",
-                    ))
+                    )
                 }
                 Err(e) => {
                     tracing::error!("审批调拨单失败: {}", e);
-                    Json(ApiResponse::server_error("审批失败"))
+                    ApiResponse::server_error("审批失败")
                 }
             }
         }
         Err(e) => {
             tracing::error!("找不到调拨单: {}", e);
-            Json(ApiResponse::not_found("调拨单不存在"))
+            ApiResponse::not_found("调拨单不存在")
         }
     }
 }
@@ -1205,19 +1161,19 @@ pub async fn reject_transfer(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Json(req): Json<ApprovalRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
         Some(txn) => txn,
-        None => return axum::Json(ApiResponse::server_error("rls transaction unavailable")),
+        None => return ApiResponse::server_error("rls transaction unavailable"),
     };
     match check_permission(&state.db, &claims, &ModulePermission::TransferApprove).await {
         Ok(_) => {}
-        Err(e) => return e,
+        Err(e) => return e.0,
     }
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(ApiResponse::bad_request("无效的调拨单ID")),
+        Err(_) => return ApiResponse::bad_request("无效的调拨单ID"),
     };
     let tenant_id = get_tenant_id_or_new(&claims, &headers);
 
@@ -1236,7 +1192,7 @@ pub async fn reject_transfer(
             if crate::shared::fsm::transfer_order_can_transition(&current_status, "pending")
                 .is_err()
             {
-                return Json(ApiResponse::bad_request("当前状态不允许驳回回流"));
+                return ApiResponse::bad_request("当前状态不允许驳回回流");
             }
             let result = sqlx::query(
                 only_own_schema_query!("wms", "UPDATE wms.transfer_orders SET status = 'pending', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING *"),
@@ -1262,23 +1218,23 @@ pub async fn reject_transfer(
                     if let Some(t) = guard.take() {
                         if let Err(e) = t.commit().await {
                             tracing::error!("事务提交失败: {}", e);
-                            return Json(ApiResponse::server_error("事务提交失败"));
+                            return ApiResponse::server_error("事务提交失败");
                         }
                     }
-                    Json(ApiResponse::success(
+                    ApiResponse::success(
                         serde_json::json!({"id": transfer_id, "status": "pending"}),
                         "审批驳回，回流至 pending",
-                    ))
+                    )
                 }
                 Err(e) => {
                     tracing::error!("驳回调拨单失败: {}", e);
-                    Json(ApiResponse::server_error("驳回失败"))
+                    ApiResponse::server_error("驳回失败")
                 }
             }
         }
         Err(e) => {
             tracing::error!("找不到调拨单: {}", e);
-            Json(ApiResponse::not_found("调拨单不存在"))
+            ApiResponse::not_found("调拨单不存在")
         }
     }
 }

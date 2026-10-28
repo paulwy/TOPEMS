@@ -6,7 +6,6 @@
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
-    Json,
 };
 use topems_shared_core::response::ApiResponse;
 use topems_shared_service_client::service_client::{
@@ -40,7 +39,7 @@ fn format_service_name(notification_type: &str) -> String {
 pub async fn get_notifications(
     State(state): State<AppState>,
     headers: HeaderMap,
-) -> Json<ApiResponse<Vec<Notification>>> {
+) -> ApiResponse<Vec<Notification>> {
     let client = build_client(&state.notification_client, &headers);
     match client.list_notifications(1, 50, None).await {
         Ok(resp) => {
@@ -70,11 +69,11 @@ pub async fn get_notifications(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(notifications, "通知列表获取成功"))
+            ApiResponse::success(notifications, "通知列表获取成功")
         }
         Err(e) => {
             tracing::error!("Failed to fetch notifications: {}", e);
-            Json(ApiResponse::server_error("获取通知列表失败"))
+            ApiResponse::server_error("获取通知列表失败")
         }
     }
 }
@@ -93,16 +92,16 @@ pub async fn mark_notification_read(
     State(state): State<AppState>,
     Path(id): Path<String>,
     headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let client = build_client(&state.notification_client, &headers);
     match client.mark_as_read(&id).await {
-        Ok(_) => Json(ApiResponse::success(
+        Ok(_) => ApiResponse::success(
             serde_json::json!({ "id": id, "read": true }),
             "通知已标记为已读",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to mark notification as read: {}", e);
-            Json(ApiResponse::server_error("标记通知已读失败"))
+            ApiResponse::server_error("标记通知已读失败")
         }
     }
 }
@@ -120,16 +119,16 @@ pub async fn mark_notification_read(
 pub async fn mark_all_notifications_read(
     State(state): State<AppState>,
     headers: HeaderMap,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let client = build_client(&state.notification_client, &headers);
     match client.mark_all_as_read().await {
-        Ok(count) => Json(ApiResponse::success(
+        Ok(count) => ApiResponse::success(
             serde_json::json!({ "count": count }),
             "所有通知已标记为已读",
-        )),
+        ),
         Err(e) => {
             tracing::error!("Failed to mark all notifications as read: {}", e);
-            Json(ApiResponse::server_error("标记全部已读失败"))
+            ApiResponse::server_error("标记全部已读失败")
         }
     }
 }

@@ -1239,7 +1239,7 @@ pub struct RollbackPropagationRequest {
 pub async fn register_lineage(
     State(state): State<AppState>,
     Json(req): Json<RegisterLineageRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let edge_type = edge_type_from_str(&req.edge_type);
 
     match LineageTracker::register(
@@ -1253,15 +1253,15 @@ pub async fn register_lineage(
     )
     .await
     {
-        Ok((from_node, to_node, edge)) => Json(ApiResponse::success(
+        Ok((from_node, to_node, edge)) => ApiResponse::success(
             serde_json::json!({
                 "from_node": from_node,
                 "to_node": to_node,
                 "edge": edge,
             }),
             "血缘关系已注册",
-        )),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        ),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 #[utoipa::path(
@@ -1272,9 +1272,9 @@ pub async fn register_lineage(
     tag = "lineage_v52"
 )]
 
-pub async fn get_lineage_graph(State(state): State<AppState>) -> Json<ApiResponse<LineageGraph>> {
+pub async fn get_lineage_graph(State(state): State<AppState>) -> ApiResponse<LineageGraph> {
     let graph = LineageTracker::get_graph(&state.db).await;
-    Json(ApiResponse::success(graph, "血缘图谱"))
+    ApiResponse::success(graph, "血缘图谱")
 }
 #[utoipa::path(
     get,
@@ -1292,7 +1292,7 @@ pub async fn get_upstream(
     State(state): State<AppState>,
     Path((entity_type, id)): Path<(String, String)>,
     Query(params): Query<LineageQuery>,
-) -> Json<ApiResponse<Vec<LineageNode>>> {
+) -> ApiResponse<Vec<LineageNode>> {
     // K1：目标节点从真表查询。
     let target = sqlx::query(&format!(
         "SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes
@@ -1308,11 +1308,11 @@ pub async fn get_upstream(
 
     let target = match target {
         Some(t) => t,
-        None => return Json(ApiResponse::not_found("未找到实体")),
+        None => return ApiResponse::not_found("未找到实体"),
     };
 
     let upstream = LineageTracker::get_upstream(&state.db, &target.id, params.depth).await;
-    Json(ApiResponse::success(upstream, "上游血缘节点"))
+    ApiResponse::success(upstream, "上游血缘节点")
 }
 #[utoipa::path(
     get,
@@ -1330,7 +1330,7 @@ pub async fn get_downstream(
     State(state): State<AppState>,
     Path((entity_type, id)): Path<(String, String)>,
     Query(params): Query<LineageQuery>,
-) -> Json<ApiResponse<Vec<LineageNode>>> {
+) -> ApiResponse<Vec<LineageNode>> {
     // K1：目标节点从真表查询。
     let target = sqlx::query(&format!(
         "SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes
@@ -1346,11 +1346,11 @@ pub async fn get_downstream(
 
     let target = match target {
         Some(t) => t,
-        None => return Json(ApiResponse::not_found("未找到实体")),
+        None => return ApiResponse::not_found("未找到实体"),
     };
 
     let downstream = LineageTracker::get_downstream(&state.db, &target.id, params.depth).await;
-    Json(ApiResponse::success(downstream, "下游血缘节点"))
+    ApiResponse::success(downstream, "下游血缘节点")
 }
 #[utoipa::path(
     get,
@@ -1363,7 +1363,7 @@ pub async fn get_downstream(
 pub async fn export_lineage(
     State(state): State<AppState>,
     Query(params): Query<ExportQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let format = params.format.unwrap_or_else(|| "json".to_string());
     match LineageTracker::export_graph(&state.db, &format).await {
         Ok(content) => {
@@ -1371,16 +1371,16 @@ pub async fn export_lineage(
                 "dot" => "text/vnd.graphviz",
                 _ => "application/json",
             };
-            Json(ApiResponse::success(
+            ApiResponse::success(
                 serde_json::json!({
                     "format": format,
                     "content": content,
                     "content_type": content_type,
                 }),
                 "血缘图谱导出成功",
-            ))
+            )
         }
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1397,10 +1397,10 @@ pub async fn export_lineage(
 pub async fn delete_lineage(
     State(state): State<AppState>,
     Json(req): Json<DeleteLineageRequest>,
-) -> Json<ApiResponse<()>> {
+) -> ApiResponse<()> {
     match LineageTracker::delete_node(&state.db, &req.node_id).await {
-        Ok(()) => Json(ApiResponse::success_no_data("血缘节点已删除")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(()) => ApiResponse::success_no_data("血缘节点已删除"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1419,7 +1419,7 @@ pub async fn delete_lineage(
 pub async fn analyze_impact(
     State(state): State<AppState>,
     Json(req): Json<AnalyzeImpactRequest>,
-) -> Json<ApiResponse<ImpactAnalysisResult>> {
+) -> ApiResponse<ImpactAnalysisResult> {
     let change_type = change_type_from_str(&req.change_type);
     let analysis_req = ImpactAnalysisRequest {
         target_entity_id: req.target_entity_id,
@@ -1429,8 +1429,8 @@ pub async fn analyze_impact(
     };
 
     match ImpactAnalyzer::analyze(&state.db, &analysis_req).await {
-        Ok(result) => Json(ApiResponse::success(result, "影响分析完成")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(result) => ApiResponse::success(result, "影响分析完成"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1450,10 +1450,10 @@ pub async fn analyze_impact(
 pub async fn get_impact_report(
     State(state): State<AppState>,
     Path(id): Path<String>,
-) -> Json<ApiResponse<ImpactAnalysisResult>> {
+) -> ApiResponse<ImpactAnalysisResult> {
     match ImpactAnalyzer::get_report(&state.db, &id).await {
-        Ok(report) => Json(ApiResponse::success(report, "影响分析报告")),
-        Err(e) => Json(ApiResponse::from(e)),
+        Ok(report) => ApiResponse::success(report, "影响分析报告"),
+        Err(e) => ApiResponse::from(e),
     }
 }
 
@@ -1470,11 +1470,11 @@ pub async fn get_impact_report(
 pub async fn simulate_change(
     State(state): State<AppState>,
     Json(req): Json<SimulateChangeRequest>,
-) -> Json<ApiResponse<ImpactSimulation>> {
+) -> ApiResponse<ImpactSimulation> {
     let change_type = change_type_from_str(&req.change_type);
     match ImpactAnalyzer::simulate(&state.db, req.entity_type, req.entity_id, change_type).await {
-        Ok(simulation) => Json(ApiResponse::success(simulation, "变更模拟完成")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(simulation) => ApiResponse::success(simulation, "变更模拟完成"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1491,11 +1491,11 @@ pub async fn simulate_change(
 pub async fn get_affected_scope(
     State(state): State<AppState>,
     Query(params): Query<AffectedScopeQuery>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     match ImpactAnalyzer::get_affected_scope(&state.db, params.entity_type, params.entity_id).await
     {
-        Ok(scope) => Json(ApiResponse::success(scope, "受影响范围")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(scope) => ApiResponse::success(scope, "受影响范围"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
@@ -1514,7 +1514,7 @@ pub async fn get_affected_scope(
 pub async fn propagate_change(
     State(state): State<AppState>,
     Json(req): Json<PropagateChangeRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> ApiResponse<serde_json::Value> {
     let change_type = change_type_from_str(&req.change_type);
     match ChangePropagator::propagate(
         &state.db,
@@ -1526,15 +1526,15 @@ pub async fn propagate_change(
     )
     .await
     {
-        Ok((event, logs)) => Json(ApiResponse::success(
+        Ok((event, logs)) => ApiResponse::success(
             serde_json::json!({
                 "change_event": event,
                 "propagation_logs": logs,
                 "propagated": true,
             }),
             "变更传播完成",
-        )),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        ),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1550,9 +1550,9 @@ pub async fn propagate_change(
 )]
 pub async fn get_propagation_rules(
     State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<PropagationRule>>> {
+) -> ApiResponse<Vec<PropagationRule>> {
     let rules = ChangePropagator::get_rules(&state.db).await;
-    Json(ApiResponse::success(rules, "传播规则列表"))
+    ApiResponse::success(rules, "传播规则列表")
 }
 
 #[utoipa::path(
@@ -1568,7 +1568,7 @@ pub async fn get_propagation_rules(
 pub async fn add_propagation_rule(
     State(state): State<AppState>,
     Json(req): Json<AddPropagationRuleRequest>,
-) -> Json<ApiResponse<PropagationRule>> {
+) -> ApiResponse<PropagationRule> {
     let action = propagation_action_from_str(&req.action);
     match ChangePropagator::add_rule(
         &state.db,
@@ -1579,8 +1579,8 @@ pub async fn add_propagation_rule(
     )
     .await
     {
-        Ok(rule) => Json(ApiResponse::success(rule, "传播规则已添加")),
-        Err(e) => Json(ApiResponse::server_error(&e.classify().1)),
+        Ok(rule) => ApiResponse::success(rule, "传播规则已添加"),
+        Err(e) => ApiResponse::server_error(&e.classify().1),
     }
 }
 
@@ -1603,7 +1603,7 @@ pub async fn add_propagation_rule(
 pub async fn get_propagation_log(
     State(state): State<AppState>,
     Query(params): Query<PropagationLogQuery>,
-) -> Json<ApiResponse<PaginatedResponse<PropagationLog>>> {
+) -> ApiResponse<PaginatedResponse<PropagationLog>> {
     let logs = ChangePropagator::get_log(&state.db, params.entity_type, params.entity_id).await;
 
     let page = params.page.unwrap_or(1).max(1);
@@ -1616,7 +1616,7 @@ pub async fn get_propagation_log(
         .take(page_size as usize)
         .collect();
 
-    Json(ApiResponse::success(
+    ApiResponse::success(
         PaginatedResponse {
             items,
             total,
@@ -1625,7 +1625,7 @@ pub async fn get_propagation_log(
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
         "传播日志",
-    ))
+    )
 }
 
 #[utoipa::path(
@@ -1641,10 +1641,10 @@ pub async fn get_propagation_log(
 pub async fn rollback_propagation(
     State(state): State<AppState>,
     Json(req): Json<RollbackPropagationRequest>,
-) -> Json<ApiResponse<PropagationLog>> {
+) -> ApiResponse<PropagationLog> {
     match ChangePropagator::rollback(&state.db, &req.propagation_id).await {
-        Ok(log) => Json(ApiResponse::success(log, "传播已回滚")),
-        Err(e) => Json(ApiResponse::not_found(&e.classify().1)),
+        Ok(log) => ApiResponse::success(log, "传播已回滚"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
     }
 }
 
