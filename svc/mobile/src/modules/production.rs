@@ -3,7 +3,28 @@ use serde::{Deserialize, Serialize};
 use topems_shared_service_client::service_client::{api::mes_api::MesApi, TypedServiceClient};
 
 use crate::modules::contract_util::unwrap_data;
+use topems_shared_core::error::TopemsError;
+use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
+
+/// 下游服务调用错误 → 业务信封：4xx（下游业务错误信封，S25 后映射为 HTTP 4xx）
+/// 解析并透传；其余错误降级为 500。
+fn downstream_error(e: &TopemsError, fallback: &str) -> ApiResponse<serde_json::Value> {
+    if let TopemsError::ServiceError {
+        status_code,
+        message,
+    } = e
+    {
+        if (400..500).contains(status_code) {
+            let msg = serde_json::from_str::<serde_json::Value>(message)
+                .ok()
+                .and_then(|v| v.get("message").and_then(|m| m.as_str()).map(String::from))
+                .unwrap_or_else(|| format!("下游服务返回错误 ({})", status_code));
+            return api_error::<serde_json::Value>(*status_code, &msg);
+        }
+    }
+    ApiResponse::server_error(fallback)
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateWorkReportRequest {
@@ -66,7 +87,7 @@ pub async fn get_production_order(
         )),
         Err(e) => {
             tracing::error!("调用MES服务获取生产订单详情失败: {}", e);
-            Json(ApiResponse::server_error("获取生产订单详情失败"))
+            Json(downstream_error(&e, "获取生产订单详情失败"))
         }
     }
 }
@@ -123,7 +144,7 @@ pub async fn start_production_order(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "开始生产订单成功")),
         Err(e) => {
             tracing::error!("调用MES服务开始生产订单失败: {}", e);
-            Json(ApiResponse::server_error("开始生产订单失败"))
+            Json(downstream_error(&e, "开始生产订单失败"))
         }
     }
 }
@@ -137,7 +158,7 @@ pub async fn complete_production_order(
         Ok(data) => Json(ApiResponse::success(unwrap_data(data), "完成生产订单成功")),
         Err(e) => {
             tracing::error!("调用MES服务完成生产订单失败: {}", e);
-            Json(ApiResponse::server_error("完成生产订单失败"))
+            Json(downstream_error(&e, "完成生产订单失败"))
         }
     }
 }
