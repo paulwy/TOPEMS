@@ -160,36 +160,9 @@ export async function getAllRoutes(): Promise<RouteConfigV2[]> {
   return allRoutes;
 }
 
-export async function getActiveRoutes(): Promise<RouteConfigV2[]> {
-  const allRoutes: RouteConfigV2[] = [];
-
-  try {
-    await pluginManager.initialize();
-    const activePlugins = pluginManager.getActivePlugins();
-
-    for (const plugin of activePlugins) {
-      try {
-        const moduleConfig = await loadModuleConfig(plugin.code);
-        allRoutes.push(...flattenRoutes(moduleConfig.routes));
-      } catch (e) {
-        apiLogger.warn(`Failed to load routes for active plugin: ${plugin.code}`, e);
-      }
-    }
-  } catch (e) {
-    apiLogger.warn('Failed to get active routes from pluginManager', e);
-  }
-
-  return allRoutes;
-}
-
 export async function getModuleRoutes(moduleCode: string): Promise<RouteConfigV2[]> {
   const moduleConfig = await loadModuleConfig(moduleCode);
   return flattenRoutes(moduleConfig.routes);
-}
-
-export async function findRouteByPath(path: string): Promise<RouteConfigV2 | undefined> {
-  const allRoutes = await getAllRoutes();
-  return allRoutes.find((r) => r.path === path);
 }
 
 export function findRouteByPathSync(path: string): RouteConfigV2 | undefined {
@@ -199,15 +172,6 @@ export function findRouteByPathSync(path: string): RouteConfigV2 | undefined {
     if (found) return found;
   }
   return undefined;
-}
-
-export async function getActiveModuleCodes(): Promise<string[]> {
-  try {
-    await pluginManager.initialize();
-    return pluginManager.getActivePlugins().map((p) => p.code);
-  } catch {
-    return Object.keys(moduleImports);
-  }
 }
 
 export async function getActiveModuleConfigs(): Promise<RouteModuleConfig[]> {
@@ -230,11 +194,6 @@ export async function getActiveModuleConfigs(): Promise<RouteModuleConfig[]> {
   }
 
   return configs;
-}
-
-export async function getActiveRouteConfigs(): Promise<RouteConfig[]> {
-  const configs = await getActiveModuleConfigs();
-  return toFlatRouteConfig(configs);
 }
 
 export const coreModuleCodes = Object.keys(moduleImports) as Array<keyof typeof moduleImports>;

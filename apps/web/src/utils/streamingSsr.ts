@@ -457,17 +457,5 @@ export async function createSSRStream(
  * @param stream 可读流
  * @returns 完整 HTML 字符串
  */
-export async function collectSSRStream(stream: ReadableStream<Uint8Array>): Promise<string> {
-  const reader = stream.getReader();
-  const decoder = new TextDecoder();
-  let result = '';
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    if (value) result += decoder.decode(value, { stream: true });
-  }
-  result += decoder.decode();
-  return result;
-}
 
 export default StreamingSSRManager;

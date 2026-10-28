@@ -329,19 +329,4 @@ export function usePerformanceMonitor() {
   };
 }
 
-export async function measureApiCall<T>(endpoint: string, apiCall: () => Promise<T>): Promise<T> {
-  const startTime = performance.now();
-
-  try {
-    const result = await apiCall();
-    const duration = performance.now() - startTime;
-    performanceMonitor.recordApiCall(endpoint, duration, 'success');
-    return result;
-  } catch (error: unknown) {
-    const duration = performance.now() - startTime;
-    performanceMonitor.recordApiCall(endpoint, duration, 'error');
-    throw error;
-  }
-}
-
 export default performanceMonitor;

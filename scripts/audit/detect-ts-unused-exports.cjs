@@ -337,6 +337,33 @@ function main() {
     }
   }
 
+  // [v9] 修复盲区⑧前置：文件 → 引用方 索引（import from / export from 路径解析）。
+  // extractExports 跳过 default → 纯默认导出文件在 fileToExports 中 names 为空，
+  // 旧 isOrphanFile 一律保守返回 false → 默认导出型死文件永远绕开 L3Dead。
+  // 此处按路径（非按名）收集谁引用该文件：'@/' 映射 apps/web/src，'./../' 相对解析，包名导入忽略。
+  const fileRefs = new Map(); // relPath -> Set<importerRel>
+  const ALIAS_SRC = path.join(ROOT, 'apps', 'web', 'src');
+  for (const f of indexFiles) {
+    let src;
+    try { src = fs.readFileSync(f, 'utf8'); } catch { continue; }
+    const rel = path.relative(ROOT, f);
+    const fromRe = /(?:import|export)\s*[^'"]*?from\s*['"]([^'"]+)['"]/g;
+    let fm;
+    while ((fm = fromRe.exec(src)) !== null) {
+      let target = fm[1];
+      if (target.startsWith('@/')) {
+        target = path.join(ALIAS_SRC, target.slice(2));
+      } else if (target.startsWith('.')) {
+        target = path.resolve(path.dirname(f), target);
+      } else {
+        continue; // 包名导入（node_modules / workspace 别名）不跟踪
+      }
+      const trel = path.relative(ROOT, target);
+      if (!fileRefs.has(trel)) fileRefs.set(trel, new Set());
+      fileRefs.get(trel).add(rel);
+    }
+  }
+
   // phase 3：分级输出
   console.log('\n📦 阶段 3/3  分级中...');
   const L1 = []; // SAFE: 仅自身文件有引用 → 0 处引用
@@ -458,7 +485,17 @@ function main() {
         }
         const isOrphanFile = (f) => {
           const names = fileToExports.get(f);
-          if (!names || names.size === 0) return false; // 纯 side-effect 文件，保守不判
+          if (!names || names.size === 0) {
+            // [v9] 修复盲区⑧：纯默认导出（或零命名导出）文件的孤儿判定。
+            // extractExports 跳过 default → names 空；旧逻辑保守返回 false，使默认导出型
+            // 死文件永远绕过 L3Dead。现改为：文件含 export default 且全仓零路径引用
+            // （无任何 import/export from 指向它）→ 判孤儿。仍有路径引用（含 barrel 转发）
+            // 或纯 side-effect（无 default）→ 保守不判。
+            let src;
+            try { src = fs.readFileSync(path.join(ROOT, f), 'utf8'); } catch { return false; }
+            if (!/export\s+default\b/.test(src)) return false;
+            return (fileRefs.get(f) || new Set()).size === 0;
+          }
           for (const n of names) {
             const direct = new Set(
               [...(reverseIndex.get(n) || [])].filter((rf) => rf !== f && !defFiles.has(rf) && !isSpecial(rf))
@@ -497,7 +534,9 @@ function main() {
         const re = new RegExp('\\b' + name + '\\b', 'g');
         let total = 0, m;
         while ((m = re.exec(bSrc)) !== null) total++;
-        const defRe = new RegExp('^export\\s+(?:default\\s+)?(?:const|function|class|interface|type|enum)\\s+' + name + '\\b', 'gm');
+        // [v9] 修复盲区⑦：defRe 补 async/declare/abstract 分支——export async function X 此前不命中
+        // → defs=0 → sameFile 消费判定失效 → 零消费 async 导出被抬入 L3 假活（约 340 处幽灵项）。
+        const defRe = new RegExp('^export\\s+(?:default\\s+)?(?:declare\\s+)?(?:abstract\\s+)?(?:async\\s+)?(?:const|function|class|interface|type|enum)\\s+' + name + '\\b', 'gm');
         let defs = 0;
         while (defRe.exec(bSrc)) defs++;
         const blkRe = new RegExp('export\\s*\\{[^}]*\\b' + name + '\\b[^}]*\\}', 'g');

@@ -301,17 +301,3 @@ export function getPerformanceMetrics(): PerformanceMetrics | null {
       (navEntry as unknown as { firstContentfulPaint?: number }).firstContentfulPaint || 0,
   };
 }
-
-export async function measurePerformanceAsync<T>(name: string, fn: () => Promise<T>): Promise<T> {
-  const start = performance.now();
-  try {
-    const result = await fn();
-    const duration = performance.now() - start;
-    logger.info(`[Performance] ${name}: ${duration.toFixed(2)}ms`);
-    return result;
-  } catch (error) {
-    const duration = performance.now() - start;
-    logger.error(`[Performance] ${name} failed after ${duration.toFixed(2)}ms`, error);
-    throw error;
-  }
-}
