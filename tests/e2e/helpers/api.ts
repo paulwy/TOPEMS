@@ -1,6 +1,6 @@
 import { APIRequestContext, request, expect } from '@playwright/test';
 
-const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:8080';
+const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:8099';
 const DEFAULT_USERNAME = process.env.E2E_USERNAME ?? 'admin';
 const DEFAULT_PASSWORD = process.env.E2E_PASSWORD ?? 'admin123';
 

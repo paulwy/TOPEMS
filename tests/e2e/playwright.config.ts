@@ -11,8 +11,8 @@ import { defineConfig } from '@playwright/test';
  *   CI               - Set to "true" on CI to enable retries, single worker.
  *   PW_TEST_TIMEOUT  - Per-test timeout override (ms).
  */
-const BASE_URL = process.env.BASE_URL ?? 'http://localhost:8063';
-const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:8080';
+const BASE_URL = process.env.BASE_URL ?? 'http://localhost:5199';
+const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:8099';
 const IS_CI = !!process.env.CI;
 const DISABLE_ARTIFACTS = process.env.E2E_DISABLE_ARTIFACTS === 'true';
 const BROWSER_CHANNEL = process.env.E2E_BROWSER_CHANNEL;
