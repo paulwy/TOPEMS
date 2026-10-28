@@ -8,7 +8,7 @@ CREATE SCHEMA IF NOT EXISTS ai;
 -- 建 ai.vectors（结构与 hrm.vectors 一致：key 主键 + pgvector vector 类型）
 CREATE TABLE IF NOT EXISTS ai.vectors (
     key TEXT PRIMARY KEY,
-    embedding vector,
+    embedding ai.vector,
     metadata JSONB,
     deleted_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW()

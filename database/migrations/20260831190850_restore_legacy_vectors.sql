@@ -12,7 +12,7 @@
 
 CREATE TABLE IF NOT EXISTS hrm.vectors (
     key TEXT PRIMARY KEY,
-    embedding vector,
+    embedding ai.vector,
     metadata JSONB,
     deleted_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW()

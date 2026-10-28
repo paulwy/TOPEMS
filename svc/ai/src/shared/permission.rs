@@ -1,5 +1,5 @@
 // AI 服务权限定义
-use axum::{extract::Request, http::header::AUTHORIZATION, http::StatusCode};
+use axum::{extract::Request, http::header::AUTHORIZATION, http::StatusCode, Json};
 use sqlx::PgPool;
 use topems_shared_auth::auth::{verify_jwt_token, Claims};
 use topems_shared_auth::permission::{
@@ -100,7 +100,7 @@ pub type ModulePermission = AiPermission;
 #[allow(dead_code)]
 pub async fn check_request_permission(
     req: Request,
-) -> Result<(Claims, Request), (StatusCode, axum::Json<ApiResponse<()>>)> {
+) -> Result<(Claims, Request), (StatusCode, ApiResponse<()>)> {
     let auth_header = req
         .headers()
         .get(AUTHORIZATION)
@@ -111,7 +111,7 @@ pub async fn check_request_permission(
         _ => {
             return Err((
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::unauthorized("缺少认证信息")),
+                ApiResponse::unauthorized("缺少认证信息"),
             ));
         }
     };
@@ -119,7 +119,7 @@ pub async fn check_request_permission(
     let secret = std::env::var("JWT_SECRET").map_err(|_| {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            axum::Json(ApiResponse::server_error("服务未配置 JWT_SECRET 环境变量")),
+            ApiResponse::server_error("服务未配置 JWT_SECRET 环境变量"),
         )
     })?;
     let claims = match verify_jwt_token(token, &secret) {
@@ -127,7 +127,7 @@ pub async fn check_request_permission(
         Err(_) => {
             return Err((
                 StatusCode::UNAUTHORIZED,
-                axum::Json(ApiResponse::unauthorized("无效的认证信息")),
+                ApiResponse::unauthorized("无效的认证信息"),
             ));
         }
     };
@@ -140,7 +140,7 @@ pub async fn check_ai_permission<T>(
     db: &PgPool,
     claims: &Claims,
     permission: &AiPermission,
-) -> Result<(), axum::Json<ApiResponse<T>>> {
+) -> Result<(), Json<ApiResponse<T>>> {
     let shared_perm = permission.to_shared();
     check_module_permission(db, claims, &shared_perm).await
 }

@@ -64,7 +64,7 @@
 3. Rust：rsproxy.cn 镜像装 nightly-2026-07-01；补 `protobuf-compiler`
 4. `cargo build --release`：18m37s 全绿（日志 `/root/build.log`）
 5. 前端：pnpm 9.15.9（npmmirror），`--frozen-lockfile` 构建成功
-6. 数据库：建用户/库/扩展；`unified-core-service --init-db` 建 19 schemas / 568 表
+6. 数据库：建用户/库/扩展后，**统一执行 `bash scripts/migrate.sh run`（499 个迁移）** 建出权威表结构（19 schemas / 568 表）；**禁止以 `unified-core-service --init-db` 或服务启动自建（try_init / schema_defense）作为权威表结构来源**（自建 DDL 为过时/不完整版本，会缺列，见 §五 问题 8 与 §八 整改）
 7. `install.sh` 部署 + systemd 注册 + `topems.target` enable
 8. 启动验证 + 浏览器首登
 
@@ -85,6 +85,8 @@
 | 9 | unified-core / topems-server 应用日志静默（journal 只有 systemd 消息） | 待排查（tracing 输出未进入 journal；topems-ai 等日志正常） | 已记录，见「遗留问题」 |
 
 > 注：问题 8 为**源码缺陷**（`svc/unified-core/src/modules/iam/mod.rs` init_database 建表 SQL 与 `auth.rs` 查询列不一致；且注释称 iam.users 为历史兼容副本但 auth 仍查询），建议主开发者在代码层修复（建表 SQL 补全 4 列），生产库已用 ALTER 对齐。
+>
+> **补充（2026-10-28，B 类清单更正，供主开发）**：问题 8 与 B 类 8 处缺列页面（wms/srm/pm/crm）**同根因**——初始化路径自建 DDL 过时缺列（schema_defense TABLE_DEFS / try_init / --init-db 产出），服务 handler/模型代码与权威迁移 DDL 一致、**并非代码缺陷**。2026-10-28 已在 WSL 模拟生产机验证：停服 → 备份 → 建全新空库 → `scripts/migrate.sh run`（499 个迁移）→ 数据回灌 → 启动服务，原 B 类 8 处页面全部正常（含 srm 供应商 20 条列表展示）。**结论：表结构以 `database/migrations` 迁移为唯一权威；不再按原 B 类清单修改 handler/模型代码。** 详见《TOPEMS-20261028-B类清单更正说明-供主开发.md》。
 
 ---
 
@@ -140,7 +142,7 @@ Start-Process wsl.exe -ArgumentList "-d","Ubuntu","-u","root","--","sleep","8640
 
 ## 八、遗留问题与建议（主开发者）
 
-1. **代码缺陷（优先级高）**：`svc/unified-core/src/modules/iam/mod.rs` 的 `init_database` 建表 SQL 缺少 `roles / permissions / full_name_en / must_change_password` 列，与 `modules/iam/auth.rs` 查询不一致；全新库自举必现登录 500。建议建表 SQL 补齐 4 列（本次部署已在库内 ALTER 对齐）。
+1. **初始化路径整改（优先级高，防复发）**：`svc/unified-core/src/modules/iam/mod.rs` 的 `init_database` 建表 SQL 曾缺 `roles / permissions / full_name_en / must_change_password` 列（当前源码已加 ALTER 兜底补齐；auth.rs 查询列一致）。该现象与 B 类 8 处缺列页面同根因：**schema_defense TABLE_DEFS / try_init / --init-db 自建 DDL 为过时/不完整版本**（wms inbound_orders 缺 order_date/approved_by/approved_at、srm suppliers 与 pm projects 缺 name_en、pm projects 缺 cost_center_id、crm customers 缺 organization_id 等，均已从源码实锤）。整改：① 各服务 schema_defense TABLE_DEFS 与 `database/migrations` 权威 DDL 做差异对齐校验（或校验失败 fail-fast）；② 部署统一 `scripts/migrate.sh run`，不再以自建路径为权威；③ try_init / default_init_db 对建表失败目前仅 warn 吞错，建议提升为严格模式（SCHEMA_DEFENSE_STRICT=1）或在关键表校验失败时 fail-fast。
 2. **日志静默**：`topems-unified-core`、`topems-server` 应用日志未进入 journal（`topems-ai` 等正常），影响线上诊断，需排查其日志初始化（LOG_LEVEL=info 已设但无输出）。
 3. **锁文件**：pnpm-lock.yaml 曾含重复键（已删行修复），需在源码侧清理，避免 pnpm10 无法安装。
 4. **topems.target 周期停启**：日志可见 target 反复 Stopped/Started（服务均 running，未发现实际影响），疑为某服务 auto-restart 联动，建议观察。
