@@ -317,8 +317,8 @@ pub async fn create_process(
         INSERT INTO mes.production_processes (
             process_code, process_name, description, version, status,
             sequence, equipment_required, standard_time_minutes, work_station_id,
-            organization_id, tenant_id, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, 'active', $5, $6, CAST($7 AS NUMERIC), NULLIF($8, '')::uuid, $9, $9, $10, $10)
+            tenant_id, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, 'active', $5, $6, CAST($7 AS NUMERIC), NULLIF($8, '')::uuid, $9, $10, $10)
         RETURNING
             id, process_code AS process_no, process_name AS name, description, version,
             status, sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
