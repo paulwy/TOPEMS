@@ -3,8 +3,8 @@ import { Box, Paper, Typography, CardContent, CardHeader, useTheme } from '@mui/
 import { Server, Database, Code } from 'lucide-react';
 import config from '../../config/runtime';
 import { SettingsPageTemplate, type SettingSection } from '@/components/templates';
-import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+
 const ConfigDebugPage: React.FC = () => {
   const theme = useTheme();
   const sections: SettingSection[] = [

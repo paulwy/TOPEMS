@@ -17,11 +17,11 @@ import i18n from '@/i18n';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { designTokens } from '@/theme/tokens';
 import { RD_PATHS } from '@/modules/rd/config';
 import { LazyChart } from '@/components/charts';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTheme } from '@mui/material';
+
 const projectStatusData = [
   { name: i18n.t('rd.rs_overview_page.k12'), value: 12 },
   { name: i18n.t('rd.rs_overview_page.k13'), value: 8 },

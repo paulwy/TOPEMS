@@ -7,8 +7,8 @@ import {
   Layout as LayoutIcon,
 } from 'lucide-react';
 import i18n from '@/i18n';
-import { designTokens } from '@/theme/tokens';
 import { DesignerTemplate } from '@/components/templates/DesignerTemplate';
+
 const ReportDesignPage: React.FC = () => {
   const theme = useTheme();
   return (

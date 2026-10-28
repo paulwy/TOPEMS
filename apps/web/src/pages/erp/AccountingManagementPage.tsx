@@ -24,7 +24,7 @@ import {
 } from '@/api/erp';
 import i18n from '@/i18n';
 import { accountingSubjectSchema, openingBalanceSchema } from '@/schemas/finance';
-import { designTokens } from '@/theme/tokens';
+
 const AccountingManagementPage: React.FC = () => {
   const theme = useTheme();
   const [activeTab, setActiveTab] = React.useState(0);

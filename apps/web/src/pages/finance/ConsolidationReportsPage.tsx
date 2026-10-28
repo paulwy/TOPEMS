@@ -444,8 +444,7 @@ export default function ConsolidationReportsPage() {
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Box>
                 <Typography variant='h6'>
-                  {reportTypeConfig[selectedReport.report_type]?.name ||
-                    selectedReport.report_type}
+                  {reportTypeConfig[selectedReport.report_type]?.name || selectedReport.report_type}
                 </Typography>
                 <Typography
                   variant='body2'

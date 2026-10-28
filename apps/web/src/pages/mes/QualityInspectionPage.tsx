@@ -8,8 +8,8 @@ import { useNotificationStore } from '@/store';
 import { qualitySchema } from '@/schemas/mes';
 import { qualityApi } from '@/api/mes/quality';
 import type { QualityInspection } from '@/api/mes/quality';
-import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+
 const qualityApiAdapter: CrudApiAdapter<QualityInspection> = {
   list: async (params) => {
     const response = await qualityApi.listInspections({
@@ -105,7 +105,10 @@ const QualityInspectionPage: React.FC = () => {
         const worksheet = XLSX.utils.json_to_sheet(exportData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, i18n.t('mes.quality_inspection_page.k4'));
-        XLSX.writeFile(workbook, `${i18n.t('pages.quality_inspection_page.__0')}${new Date().toISOString().split('T')[0]}.xlsx`);
+        XLSX.writeFile(
+          workbook,
+          `${i18n.t('pages.quality_inspection_page.__0')}${new Date().toISOString().split('T')[0]}.xlsx`
+        );
         addNotification({
           type: 'success',
           title: i18n.t('mes.quality_inspection_page.export'),

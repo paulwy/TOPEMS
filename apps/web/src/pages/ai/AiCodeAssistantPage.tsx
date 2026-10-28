@@ -40,8 +40,8 @@ import { useTranslation } from 'react-i18next';
 import { Grid } from '@/components/common';
 import { AiToolPageTemplate } from '@/components/templates';
 import { useNotificationStore } from '@/store';
-import { designTokens } from '@/theme/tokens';
 import { aiApi } from '@/api/ai';
+
 type CodeTab = 'generate' | 'explain' | 'fix' | 'optimize' | 'review';
 
 const codeTemplateKeys = [

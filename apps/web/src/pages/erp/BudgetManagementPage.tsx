@@ -7,8 +7,8 @@ import { budgetSchema, expenseSchema } from '@/schemas/erp';
 import { budgetApi, expenseApi } from '@/api/finance';
 import type { Budget } from '@/api/finance';
 import type { Expense } from '@/api/finance/expense';
-import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+
 const budgetAdapter = {
   list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {
     const response = await budgetApi.list({

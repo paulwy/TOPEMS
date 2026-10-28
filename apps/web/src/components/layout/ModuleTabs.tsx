@@ -498,11 +498,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
       >
         <MenuItem onClick={() => contextMenu && handleTogglePin(contextMenu.tab)}>
           <ListItemIcon>
-            {contextMenu?.tab.pinned ? (
-              <PinOff size={18} />
-            ) : (
-              <Pin size={18} />
-            )}
+            {contextMenu?.tab.pinned ? <PinOff size={18} /> : <Pin size={18} />}
           </ListItemIcon>
           <ListItemText>
             {contextMenu?.tab.pinned

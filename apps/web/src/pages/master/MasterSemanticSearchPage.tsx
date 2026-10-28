@@ -27,6 +27,7 @@ import { semanticSearchApi } from '@/api/master/semanticSearch';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+
 const MasterSemanticSearchPage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();

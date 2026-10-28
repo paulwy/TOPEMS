@@ -8,6 +8,7 @@ import { qualityCostApi } from '@/api/qms';
 import type { QualityCost } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+
 const apiAdapter = createCrudPageAdapter<QualityCost>({
   list: qualityCostApi.listQualityCosts as unknown as CrudApi<QualityCost>['list'],
   create: qualityCostApi.createQualityCost as unknown as CrudApi<QualityCost>['create'],

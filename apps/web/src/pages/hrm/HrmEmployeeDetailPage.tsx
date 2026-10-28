@@ -10,10 +10,10 @@ import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { StatusBadge } from '@topems/shared-components';
 import { Dialog } from '@/components/common/Dialog';
 import { PageContainer } from '@/components/common';
-import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+
 const HrmEmployeeDetailPage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();

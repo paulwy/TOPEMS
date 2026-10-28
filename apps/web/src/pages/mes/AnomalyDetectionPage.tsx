@@ -79,27 +79,26 @@ const getAnomalyTypeLabels = (): Record<string, string> => ({
 });
 
 const getTrendIcon = (trend: string) => {
-  const theme = useTheme();
   switch (trend) {
     case 'rising':
       return (
         <TrendingUp
           size={14}
-          color={theme.palette.error.main}
+          color='var(--mui-palette-error-main)'
         />
       );
     case 'falling':
       return (
         <TrendingDown
           size={14}
-          color={theme.palette.success.main}
+          color='var(--mui-palette-success-main)'
         />
       );
     default:
       return (
         <Minus
           size={14}
-          color={theme.palette.grey[500]}
+          color='var(--mui-palette-grey-500)'
         />
       );
   }

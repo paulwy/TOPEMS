@@ -9,7 +9,6 @@ import { useTranslation } from 'react-i18next';
 import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/common/DataTable';
 import { calculateRiskLevel } from '@/components/ehs';
-import { designTokens } from '@/theme/tokens';
 import type { RiskAssessment } from '@/api/ehs';
 
 interface EhsHazardAssessmentsSectionProps {

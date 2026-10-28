@@ -4,7 +4,6 @@ import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { departmentApi, employeeApi, type Department, type Employee } from '@/api/hrm';
-import { designTokens } from '@/theme/tokens';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -25,6 +24,7 @@ import { EmptyState } from '@/components';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+
 const HrmDepartmentPage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation('hrm');

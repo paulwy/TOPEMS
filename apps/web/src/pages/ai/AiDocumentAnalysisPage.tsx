@@ -48,6 +48,7 @@ import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 import { aiApi } from '@/api/ai';
+
 type AnalysisTab = 'summary' | 'translate' | 'qa' | 'extract' | 'ocr';
 
 const recentDocuments = [

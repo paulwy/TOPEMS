@@ -6,7 +6,6 @@ import React, { useMemo } from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
 import { Shield, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { designTokens } from '@/theme/tokens';
 import { calculateRiskLevel } from '@/components/ehs';
 import type { Hazard } from '@/api/ehs';
 

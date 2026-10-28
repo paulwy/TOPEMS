@@ -6,10 +6,10 @@ import { wmsApi } from '@/api/wms';
 import { useQuery } from '@tanstack/react-query';
 import { Box, Typography, Card, CardContent, Stack, useTheme } from '@mui/material';
 import { Package, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
-import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 const InventoryStats: React.FC = () => {
   const theme = useTheme();
   const { data: stats } = useQuery({

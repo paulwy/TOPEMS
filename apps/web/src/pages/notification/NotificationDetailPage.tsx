@@ -12,6 +12,7 @@ import { designTokens } from '@/theme/tokens';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 const NotificationDetailPage: React.FC = () => {
   const theme = useTheme();
   const { id } = useParams<{ id: string }>();

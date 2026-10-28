@@ -18,9 +18,9 @@ import { PageContainer } from '@/components/common';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { mesApi } from '@/api/mes';
 import type { ProductionOrder, QualityRecord } from '@/api/mes';
-import { designTokens } from '@/theme/tokens';
 import { MES_PATHS } from '@/modules/mes/config';
 import { getChipStatusColor } from '@/utils/status';
+
 const ProductionOrderDetailPage: React.FC = () => {
   const theme = useTheme();
   const { id } = useParams<{ id: string }>();

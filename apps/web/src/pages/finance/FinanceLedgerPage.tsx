@@ -12,6 +12,7 @@ import type { Account } from '@/types/finance';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+
 const ledgerApiAdapter: CrudApiAdapter = {
   list: async (params) => {
     const search = params?.search?.toLowerCase() || '';

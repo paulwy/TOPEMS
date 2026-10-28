@@ -47,7 +47,6 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { gisApi } from '@/api/gis';
 import fenceApi, { type GeoFenceRecord, type CreateGeoFenceRequest } from '@/api/gis/fence';
-import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';

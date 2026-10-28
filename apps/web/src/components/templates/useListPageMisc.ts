@@ -12,7 +12,9 @@ export interface UseListPageMiscOptions {
   resolvedColumns?: Array<{ id: string; visible?: boolean; order?: number }>;
   defaultColumnConfig?: Array<{ id: string; visible: boolean; order?: number; label?: string }>;
   persistColumnConfig?: boolean;
-  loadColumnConfig?: (key: string) => Array<{ id: string; visible: boolean; order?: number; label?: string }>;
+  loadColumnConfig?: (
+    key: string
+  ) => Array<{ id: string; visible: boolean; order?: number; label?: string }>;
 }
 
 /**
@@ -31,7 +33,9 @@ export function useListPageMisc<T = unknown>(options: UseListPageMiscOptions = {
   } = options;
 
   // ============ 列配置状态 ============
-  const [columnConfig, setColumnConfig] = useState<Array<{ id: string; visible: boolean; label?: string; order?: number }>>([]);
+  const [columnConfig, setColumnConfig] = useState<
+    Array<{ id: string; visible: boolean; label?: string; order?: number }>
+  >([]);
   const columnConfigInitialized = useRef(false);
 
   // 初始化 columnConfig（使用 resolvedColumns，支持 crud 自动生成的列）
@@ -66,7 +70,14 @@ export function useListPageMisc<T = unknown>(options: UseListPageMiscOptions = {
       }))
     );
     columnConfigInitialized.current = true;
-  }, [columnConfigurable, defaultColumnConfig, persistColumnConfig, loadColumnConfig, columnConfigStorageKey, resolvedColumns]);
+  }, [
+    columnConfigurable,
+    defaultColumnConfig,
+    persistColumnConfig,
+    loadColumnConfig,
+    columnConfigStorageKey,
+    resolvedColumns,
+  ]);
 
   // ============ 确认对话框 ============
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -87,9 +98,7 @@ export function useListPageMisc<T = unknown>(options: UseListPageMiscOptions = {
   }, []);
 
   const toggleExpand = useCallback((id: string | number) => {
-    setExpandedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+    setExpandedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }, []);
 
   const toggleColumnVisibility = useCallback(

@@ -53,6 +53,7 @@ import { useNotificationStore } from '../../store';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { monitorApi, type SystemMetrics, type DatabaseMetrics } from '@/api/monitor';
+
 type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
 const timeRangeOptions: { value: TimeRange; label: string }[] = [
   { value: '1h', label: i18n.t('monitor.monitor_dashboard_page.1_0') },

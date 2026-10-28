@@ -50,6 +50,7 @@ import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 type PromptCategory = 'all' | 'writing' | 'code' | 'business' | 'analysis' | 'creative';
 
 interface PromptTemplate {
@@ -169,8 +170,7 @@ const getCategoryIcon = (category: string) => {
   return map[category] || <Tag size={20} />;
 };
 
-const getCategoryColor = (category: string) => {
-  const theme = useTheme();
+const getCategoryColor = (category: string, theme: Theme) => {
   const map: Record<string, string> = {
     writing: 'primary.main',
     code: 'secondary.main',
@@ -466,7 +466,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                         width: 40,
                         height: 40,
                         bgcolor: getCategoryBg(prompt.category, theme),
-                        color: getCategoryColor(prompt.category),
+                        color: getCategoryColor(prompt.category, theme),
                       }}
                     >
                       {getCategoryIcon(prompt.category)}

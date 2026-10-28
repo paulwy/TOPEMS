@@ -39,7 +39,6 @@ import {
   type RecentItem,
 } from '@/components/templates';
 import { useNotificationStore } from '../../store';
-import { designTokens } from '@/theme/tokens';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery } from '@tanstack/react-query';
 import type { StatisticsResponse } from '@/api/workflow';
@@ -48,6 +47,7 @@ import { apiLogger } from '@/utils/logger';
 import { LazyChart } from '@/components/charts';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 type TimeRange = 'today' | 'week' | 'month' | 'quarter' | 'year';
 
 const timeRangeOptions: { value: TimeRange; label: string }[] = [

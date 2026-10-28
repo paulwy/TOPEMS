@@ -39,6 +39,7 @@ import { useQuery } from '@tanstack/react-query';
 import { formatDate } from '@/utils/date';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const CustomerDetailPage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();

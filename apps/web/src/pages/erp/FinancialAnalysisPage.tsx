@@ -14,9 +14,9 @@ import { financeReportApi } from '@/api/finance';
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/api/erp/types';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
-import { designTokens } from '@/theme/tokens';
 import { BarChart3, TrendingUp, PieChart, FileText } from 'lucide-react';
 import { useTheme } from '@mui/material';
+
 type TabValue =
   'balanceSheet' | 'incomeStatement' | 'cashFlow' | 'agingAnalysis' | 'budgetAnalysis';
 

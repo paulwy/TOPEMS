@@ -11,10 +11,10 @@ import { FormBuilder } from '@/components/common';
 import { outboundOrderSchema } from '@/schemas/wms';
 import { wmsApi } from '@/api/wms';
 import type { OutboundOrder, PaginationParams } from '@/api/wms';
-import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 const outboundCrudApi: CrudOperations<OutboundOrder> = {
   list: (params) =>
     wmsApi.outboundOrders.list(params as PaginationParams) as ReturnType<

@@ -35,19 +35,24 @@ interface LimsListResponse<T> {
   instruments?: T[];
 }
 function getStatusBadge(status: string) {
-  const theme = useTheme();
   const statusColorMap: Record<string, { bg: string; color: string }> = {
-    [i18n.t('pages.lims_instrument_detail_page.k0')]: { bg: 'success.lighter', color: 'success.700' },
+    [i18n.t('pages.lims_instrument_detail_page.k0')]: {
+      bg: 'success.lighter',
+      color: 'success.dark',
+    },
     [i18n.t('pages.lims_instrument_detail_page.k1')]: { bg: 'primary.100', color: 'primary.dark' },
-    [i18n.t('pages.lims_instrument_detail_page.k2')]: { bg: theme.palette.error[50], color: 'error.700' },
+    [i18n.t('pages.lims_instrument_detail_page.k2')]: {
+      bg: 'error.lighter',
+      color: 'error.dark',
+    },
     [i18n.t('pages.lims_instrument_detail_page.k3')]: { bg: 'grey.100', color: 'grey.600' },
     [i18n.t('pages.lims_instrument_detail_page.k4')]: { bg: 'grey.100', color: 'grey.600' },
-    normal: { bg: 'success.lighter', color: 'success.700' },
+    normal: { bg: 'success.lighter', color: 'success.dark' },
     calibration: { bg: 'primary.100', color: 'primary.dark' },
-    maintenance: { bg: theme.palette.error[50], color: 'error.700' },
+    maintenance: { bg: 'error.lighter', color: 'error.dark' },
     disabled: { bg: 'grey.100', color: 'grey.600' },
   };
-  const colors = statusColorMap[status] || { bg: 'grey.100', color: theme.palette.grey[600] };
+  const colors = statusColorMap[status] || { bg: 'grey.100', color: 'grey.600' };
   return (
     <Chip
       label={status}

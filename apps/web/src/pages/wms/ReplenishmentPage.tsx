@@ -7,7 +7,6 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { designTokens } from '@/theme/tokens';
 import { wmsApi } from '@/api/wms';
 import type {
   ReplenishmentSuggestion,
@@ -20,6 +19,7 @@ import { replenishmentSchema } from '@/schemas/wms/replenishment';
 import { suggestionSchema } from '@/schemas/wms/suggestion';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 type TabValue = 'suggestions' | 'orders';
 
 const ReplenishmentPage: React.FC = () => {

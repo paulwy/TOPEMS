@@ -30,7 +30,6 @@ import { useNotification } from '@/hooks/useNotification';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
-import { designTokens } from '@/theme/tokens';
 import { EHS_PATHS } from '@/modules/ehs/config';
 
 import { useTranslation } from 'react-i18next';
@@ -71,7 +70,6 @@ const assessmentColumns: ColumnDef<RiskAssessment>[] = [
     accessorKey: 'risklevel',
     header: i18n.t('ehs.ehs_hazard_detail_page.risk_level'),
     cell: ({ row }) => {
-      const theme = useTheme();
       const riskResult = calculateRiskLevel(
         row.original.severity || 'medium',
         row.original.likelihood || 'medium'
@@ -80,7 +78,7 @@ const assessmentColumns: ColumnDef<RiskAssessment>[] = [
         [i18n.t('pages.ehs_hazard_detail_page.k0')]: { bg: 'error.lighter', color: 'error.dark' },
         [i18n.t('pages.ehs_hazard_detail_page.k1')]: {
           bg: 'warning.100',
-          color: theme.palette.yellow[600],
+          color: '#f9a825',
         },
         [i18n.t('pages.ehs_hazard_detail_page.k2')]: {
           bg: 'success.lighter',

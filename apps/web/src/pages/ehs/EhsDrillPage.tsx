@@ -14,6 +14,7 @@ import { designTokens } from '@/theme/tokens';
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 const drillApi = {
   list: ehsApi.listDrillRecords,
   create: ehsApi.createDrillRecord,

@@ -25,10 +25,10 @@ import { DashboardTemplate, ListPageTemplate, type ColumnDef } from '@/component
 import { ChartComponent } from '@/components/bi/ChartLibrary';
 import { FilterBar } from '@/components/bi/FilterBar';
 import type { FilterConfig } from '@/api/bi';
-import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+
 const filters: FilterConfig[] = [
   {
     id: 'timeRange',

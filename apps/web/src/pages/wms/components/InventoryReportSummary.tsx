@@ -14,7 +14,6 @@ import {
   Clock,
   Warehouse as WarehouseIcon,
 } from 'lucide-react';
-import { designTokens } from '@/theme/tokens';
 import type { InventoryStatistics } from '@/api/wms';
 
 interface InventoryReportSummaryProps {

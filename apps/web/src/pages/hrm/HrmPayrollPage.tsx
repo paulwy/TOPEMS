@@ -21,12 +21,12 @@ import { MuiStatCard as StatCard } from '@/components';
 import { StatsChart } from '@/components/bi/StatsChart';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
-import { designTokens } from '@/theme/tokens';
 import { payrollApi, salaryAdjustmentApi, type PayrollRun, type SalaryAdjustment } from '@/api/hrm';
 import { payrollSchema, salaryAdjustmentSchema } from '@/schemas/hrm';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 const HrmPayrollPage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();

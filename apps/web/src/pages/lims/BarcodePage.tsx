@@ -16,6 +16,7 @@ import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useNotificationStore } from '@/store';
+
 const BarcodePage: React.FC = () => {
   const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);

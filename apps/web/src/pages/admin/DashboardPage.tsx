@@ -7,11 +7,11 @@ import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/
 import { PageContainer } from '@/components/common';
 import { IAM_PATHS } from '@/modules/iam/config';
 import { ADMIN_PATHS } from '@/modules/admin/config';
-import { designTokens } from '@/theme/tokens';
 import { LazyChart } from '@/components/charts';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 import { useTheme } from '@mui/material';
+
 const iconMap: Record<string, React.ReactNode> = {
   Users: <Users size={24} />,
   Shield: <Shield size={24} />,

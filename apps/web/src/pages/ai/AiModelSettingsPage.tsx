@@ -47,7 +47,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Grid } from '@/components/common';
 import { useNotificationStore } from '@/store';
-import { designTokens } from '@/theme/tokens';
 import { LazyChart } from '@/components/charts';
 import i18n from '@/i18n';
 import { aiApi } from '@/api/ai';

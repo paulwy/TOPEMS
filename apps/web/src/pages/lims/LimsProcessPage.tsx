@@ -23,10 +23,10 @@ import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { processSchema } from '@/schemas/lims';
 import { MetricCard } from '@/components/bi/MetricCard';
-import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const processAdapter: CrudApiAdapter<InspectionProcess> = {
   list: async (params) => {
     const response = await limsApi.processes.list({

@@ -18,6 +18,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
+
 const planApi = {
   list: ehsApi.listInspectionPlans,
   create: ehsApi.createInspectionPlan,

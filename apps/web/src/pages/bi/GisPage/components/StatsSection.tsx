@@ -3,7 +3,6 @@ import { Grid } from '@/components';
 import MetricCard from '@/components/bi/MetricCard';
 import StatsChart from '@/components/bi/StatsChart';
 import { MapPin, ArrowRight, Warehouse, Camera, Map, Building2 } from 'lucide-react';
-import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 import { useTheme } from '@mui/material';
 

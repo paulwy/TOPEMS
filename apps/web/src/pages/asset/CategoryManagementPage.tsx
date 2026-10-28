@@ -25,6 +25,7 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const baseAdapter = createCrudPageAdapter<AssetCategory, CreateAssetCategoryRequest>({
   list: assetCategoryApi.list,
   create: assetCategoryApi.create,

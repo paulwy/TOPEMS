@@ -15,7 +15,6 @@ import { navigationRegistryV2, type ModuleCardConfig } from '@/lib/navigation';
 import { gradients } from '@/theme';
 import { DashboardTemplate } from '@/components/templates';
 import { lucideIcons } from '@/lib/iconMapping';
-import { designTokens } from '@/theme/tokens';
 import i18n, { ensureNamespacesLoaded } from '@/i18n';
 /* ------------------------------------------------------------------ */
 /*  Icon name -> component mapping                                     */
@@ -24,14 +23,13 @@ import i18n, { ensureNamespacesLoaded } from '@/i18n';
 const iconMap = lucideIcons;
 
 const renderIcon = (iconName?: string, size = 26): React.ReactNode => {
-  const theme = useTheme();
   if (!iconName) return null;
   const Icon = iconMap[iconName];
   if (!Icon) return null;
   return (
     <Icon
       size={size}
-      style={{ color: theme.palette.background.paper }}
+      style={{ color: 'var(--mui-palette-background-paper)' }}
     />
   );
 };

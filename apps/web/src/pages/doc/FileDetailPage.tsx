@@ -14,6 +14,7 @@ import { DOC_PATHS } from '@/modules/doc/config';
 
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 const DocsFileDetailPage: React.FC = () => {
   const theme = useTheme();
   const { id } = useParams<{ id: string }>();

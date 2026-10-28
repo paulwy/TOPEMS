@@ -27,6 +27,7 @@ import { knowledgeGraphApi } from '@/api/master/knowledgeGraph';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+
 const MasterKnowledgeGraphPage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();

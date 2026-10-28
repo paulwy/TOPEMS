@@ -21,12 +21,13 @@ import {
   TableHead,
   TableRow,
   TableCell,
-  TableBody, useTheme } from '@mui/material';
+  TableBody,
+  useTheme,
+} from '@mui/material';
 import i18n from '@/i18n';
 import { Grid } from '@/components';
 import type { ParseDataRequest, ParseResult } from '@/api/lims';
 import { formatJson, parseJsonInput } from '../utils';
-import { designTokens } from '@/theme/tokens';
 
 interface ParseTestDialogProps {
   open: boolean;
@@ -47,7 +48,7 @@ const ParseTestDialog: React.FC<ParseTestDialogProps> = ({
   onParseTestDataChange,
   onTestParse,
 }) => {
-    const theme = useTheme();
+  const theme = useTheme();
   return (
     <Dialog
       open={open}

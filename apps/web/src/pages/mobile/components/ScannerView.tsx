@@ -2,7 +2,6 @@ import React from 'react';
 import { Box, Typography, Button, Paper, IconButton, useTheme } from '@mui/material';
 import { Flashlight, Image, Barcode, Package, CheckSquare, ArrowRight } from 'lucide-react';
 import { MobileButton } from '@/components/mobile';
-import { designTokens } from '@/theme/tokens';
 import { alpha } from '@mui/material/styles';
 import { sizeTokens } from '@/theme';
 import i18n from '@/i18n';

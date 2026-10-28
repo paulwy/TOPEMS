@@ -26,6 +26,7 @@ import { useCrudMutations } from '@/hooks';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { QMS_PATHS } from '@/modules/qms/config';
+
 const QmsStandardDetailPage: React.FC = () => {
   const theme = useTheme();
   const { id } = useParams<{ id: string }>();

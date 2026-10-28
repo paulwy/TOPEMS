@@ -14,7 +14,6 @@ import { apiLogger } from '@/utils/logger';
 import { useNotification } from '@/hooks/useNotification';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
-import { designTokens } from '@/theme/tokens';
 import apiClient from '@/api/client';
 
 import { useTranslation } from 'react-i18next';

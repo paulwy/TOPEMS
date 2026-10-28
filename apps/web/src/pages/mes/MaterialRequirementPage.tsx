@@ -7,8 +7,8 @@ import { materialRequirementSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { MaterialRequirement } from '@/api/mes';
 import { Calculator } from 'lucide-react';
-import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+
 const apiAdapter = createCrudPageAdapter(mesApi.materialRequirements, {
   itemsField: 'requirements',
 });

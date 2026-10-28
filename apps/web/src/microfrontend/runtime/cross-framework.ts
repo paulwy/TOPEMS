@@ -33,14 +33,16 @@ function escapeHtml(value: unknown): string {
     return '';
   }
   const str = String(value);
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    // &#039; is an HTML entity for apostrophe (XSS prevention), NOT a hardcoded color.
-    // This file is a microfrontend runtime module and cannot use useTheme.
-    .replace(/'/g, '&#039;');
+  return (
+    str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      // &#039; is an HTML entity for apostrophe (XSS prevention), NOT a hardcoded color.
+      // This file is a microfrontend runtime module and cannot use useTheme.
+      .replace(/'/g, '&#039;')
+  );
 }
 
 // ==================== 类型定义 ====================

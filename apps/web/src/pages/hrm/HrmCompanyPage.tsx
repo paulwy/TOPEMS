@@ -16,13 +16,13 @@ import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
-import { designTokens } from '@/theme/tokens';
 import { companyApi, departmentApi, employeeApi, type Company } from '@/api/hrm';
 import { companySchema } from '@/schemas/hrm';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+
 const HrmCompanyPage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation('hrm');

@@ -13,7 +13,6 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import i18n from '@/i18n';
-import { designTokens } from '@/theme/tokens';
 import { IM_PATHS } from '@/modules/im/config';
 
 interface ActivityItem {

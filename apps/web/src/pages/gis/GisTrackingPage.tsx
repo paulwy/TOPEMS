@@ -35,6 +35,7 @@ import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
+
 export const GisTrackingPage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation('gis');

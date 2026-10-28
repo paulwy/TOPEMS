@@ -25,13 +25,13 @@ import type {
 import { Box, Paper, Tabs, Tab, Snackbar, Alert, CircularProgress, useTheme } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { GisMapTemplate, type MapMarker, type GeoFence } from '@/components/templates';
-import { designTokens } from '@/theme/tokens';
 import type { TabType, ModalType, FormErrors, GisEntity } from './types';
 import { PageHeader } from './components/PageHeader';
 import { StatsSection } from './components/StatsSection';
 import { DataTableSection } from './components/DataTableSection';
 import { EntityFormModal } from './components/EntityFormModal';
 import { ImportModal } from './components/ImportModal';
+
 const GisContent: React.FC = () => {
   const theme = useTheme();
   const {

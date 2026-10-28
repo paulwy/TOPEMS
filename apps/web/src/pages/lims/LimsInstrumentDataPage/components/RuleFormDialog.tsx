@@ -13,12 +13,13 @@ import {
   Box,
   Typography,
   TextareaAutosize,
-  Button, useTheme } from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import i18n from '@/i18n';
 import { Grid } from '@/components';
 import type { CreateParseRuleRequest } from '@/api/lims';
 import { formatJson, parseJsonInput } from '../utils';
-import { designTokens } from '@/theme/tokens';
 
 interface RuleFormDialogProps {
   open: boolean;
@@ -38,7 +39,7 @@ const RuleFormDialog: React.FC<RuleFormDialogProps> = ({
   onFormDataChange,
   onSave,
 }) => {
-    const theme = useTheme();
+  const theme = useTheme();
   return (
     <Dialog
       open={open}

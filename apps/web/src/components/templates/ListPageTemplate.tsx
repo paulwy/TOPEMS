@@ -3205,7 +3205,11 @@ export function ListPageTemplate<
               gap: 2,
             }}
           >
-            <ListPageHeader backButton={backButton} title={title} subtitle={subtitle} />
+            <ListPageHeader
+              backButton={backButton}
+              title={title}
+              subtitle={subtitle}
+            />
 
             {/* 操作按钮 */}
             {(primaryActionButton ||

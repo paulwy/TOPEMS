@@ -19,9 +19,9 @@ import type { Instrument, MaintenanceRecord, CreateMaintenanceRecordRequest } fr
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { PageContainer } from '@/components/common';
-import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { getInstrumentMaintenanceSchema } from '@/schemas/lims';
+
 const LimsInstrumentMaintenancePage: React.FC = () => {
   const theme = useTheme();
   const { id } = useParams<{ id: string }>();

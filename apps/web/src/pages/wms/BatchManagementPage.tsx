@@ -12,6 +12,7 @@ import { wmsApi } from '@/api/wms';
 import type { Batch } from '@/api/wms';
 import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+
 const BatchManagementPage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();

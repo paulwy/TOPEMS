@@ -38,7 +38,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SettingsPageTemplate } from '@/components/templates';
 import type { SettingSection } from '@/components/templates/SettingsPageTemplate';
 import { apiClient } from '@/api/client';
-import { designTokens } from '@/theme/tokens';
 import { extractErrorMessage } from '@/utils/errors';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';

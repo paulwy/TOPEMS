@@ -22,7 +22,7 @@ import { teamSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import type { Team, TeamMember, CreateTeamRequest, UpdateTeamRequest } from '@/api/mes/types';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
-import { designTokens } from '@/theme/tokens';
+
 const apiAdapter = createCrudPageAdapter<Team, CreateTeamRequest, UpdateTeamRequest>(
   {
     list: mesApi.teams.list,

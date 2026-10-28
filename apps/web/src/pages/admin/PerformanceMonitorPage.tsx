@@ -24,6 +24,7 @@ import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { adminApi } from '@/api/admin';
 import { useTheme } from '@mui/material';
+
 const PerformanceMonitorPage: React.FC = () => {
   const theme = useTheme();
   const {} = useQuery({

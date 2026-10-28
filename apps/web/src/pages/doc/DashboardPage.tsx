@@ -17,13 +17,13 @@ import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
-import { designTokens } from '@/theme/tokens';
 import { docApi } from '@/api/doc';
 import type { DocDashboardStats } from '@/api/doc';
 import { LazyChart } from '@/components/charts';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTheme } from '@mui/material';
+
 const iconMap: Record<string, React.ReactNode> = {
   FileText: <FileText size={24} />,
   FolderOpen: <FolderOpen size={24} />,

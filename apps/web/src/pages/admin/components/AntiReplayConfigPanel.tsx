@@ -14,7 +14,6 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import { AlertCircle, Save } from 'lucide-react';
-import { designTokens } from '@/theme/tokens';
 import type { AntiReplayConfig } from '../hooks/UseRateLimitConfig';
 
 interface AntiReplayConfigPanelProps {

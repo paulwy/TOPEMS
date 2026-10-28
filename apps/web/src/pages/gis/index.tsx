@@ -36,6 +36,7 @@ import type {
 } from '../../api/gis';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
+
 type TabType =
   | 'map'
   | 'devicePoints'

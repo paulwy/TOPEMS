@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
-import { designTokens } from '@/theme/tokens';
 import {
   TrendingUp,
   TrendingDown,
@@ -31,6 +30,7 @@ import type { ChartConfig, DataTable, TableColumn } from '@/components/templates
 import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';
+
 const FinanceReportsPage: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();

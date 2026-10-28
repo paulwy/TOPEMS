@@ -3,7 +3,6 @@ import { Box, Typography, Stack, Paper, Avatar, Chip } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import { FileText, CheckCircle2, XCircle, User, Clock, PlayCircle, GitBranch } from 'lucide-react';
 import type { Approval, ApprovalRecord } from '@/api/workflow';
-import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 
 interface ApprovalTimelineProps {

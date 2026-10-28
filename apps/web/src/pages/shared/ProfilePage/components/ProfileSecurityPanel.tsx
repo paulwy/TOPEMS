@@ -12,7 +12,6 @@ import {
 } from '@mui/material';
 import i18n from '@/i18n';
 import { Shield, Mail, Settings, CheckCircle2, Save } from 'lucide-react';
-import { designTokens } from '@/theme/tokens';
 import { AUTH_PATHS } from '@/routes/auth';
 import type { UseFormReturn } from 'react-hook-form';
 import type { User as UserType } from '@/api/iam';

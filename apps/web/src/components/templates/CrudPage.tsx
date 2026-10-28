@@ -227,17 +227,9 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   const effectiveTreeAdapter = hasTree ? treeDataAdapter : undefined;
 
   // ── 状态 ──
-  const {
-    page,
-    setPage,
-    pageSize,
-    setPageSize,
-    search,
-    setSearch,
-    handlePageChange,
-    handlePageSizeChange,
-    handleSearchChange,
-  } = useCrudPagination({ defaultPageSize: schema.list?.pageSize ?? 10 });
+  const { page, setPage, pageSize, setPageSize, search, setSearch } = useCrudPagination({
+    defaultPageSize: schema.list?.pageSize ?? 10,
+  });
   const [viewMode, setViewMode] = useState<'list' | 'tree'>(hasTree ? 'tree' : 'list');
   const [filterValues, setFilterValues] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};

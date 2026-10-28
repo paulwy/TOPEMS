@@ -29,7 +29,7 @@ import type {
   TabItem,
   TimeRangeOption,
 } from '@/components/templates/StatsPageTemplate';
-import { designTokens } from '@topems/tokens';
+
 type TabValue = 'period' | 'trend' | 'forecast' | 'work-order';
 
 const ProductionCostPage: React.FC = () => {

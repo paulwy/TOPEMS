@@ -23,7 +23,6 @@ import { equipmentSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Wrench, Power, Monitor, AlertTriangle } from 'lucide-react';
-import { designTokens } from '@/theme/tokens';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import type { Equipment, MaintenanceEquipmentRequest } from '@/api/mes';

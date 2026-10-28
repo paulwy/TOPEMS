@@ -5,7 +5,6 @@ import { Users, ShoppingCart, Clock, Calculator, Award, Truck, Star } from 'luci
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { designTokens } from '@/theme/tokens';
 import { SCM_PATHS } from '@/modules/scm/config';
 import { LazyChart } from '@/components/charts';
 
@@ -13,6 +12,7 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { useTheme } from '@mui/material';
+
 const orderTrendData = [
   { name: i18n.t('scm.scm_overview_page.m2'), value: 32 },
   { name: i18n.t('scm.scm_overview_page.m3'), value: 28 },

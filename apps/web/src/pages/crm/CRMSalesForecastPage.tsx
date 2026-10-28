@@ -14,10 +14,10 @@ import type {
 } from '@/components/templates/StatsPageTemplate';
 import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
-import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
+
 const tableColumns: TableColumn[] = [
   { id: 'period', label: i18n.t('crm.salesForecast.col_period'), field: 'period' },
   {

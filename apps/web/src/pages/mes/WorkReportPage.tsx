@@ -7,10 +7,10 @@ import { workReportSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import { useNotificationStore } from '@/store';
 import { FileText, CheckCircle, XCircle } from 'lucide-react';
-import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+
 const apiAdapter = createCrudPageAdapter(mesApi.workReports, {
   itemsField: 'reports',
 });

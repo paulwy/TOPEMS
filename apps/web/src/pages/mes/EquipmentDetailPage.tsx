@@ -15,6 +15,7 @@ import { PageContainer } from '@/components/common';
 import { MES_PATHS } from '@/modules/mes/config';
 import i18n from '@/i18n';
 import { getChipStatusColor as getStatusColor } from '@/utils/status';
+
 const EquipmentDetailPage: React.FC = () => {
   const theme = useTheme();
   const { id } = useParams<{ id: string }>();

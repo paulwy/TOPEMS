@@ -26,10 +26,10 @@ import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/t
 import { LazyChart } from '@/components/charts';
 import { useNotificationStore } from '@/store';
 import { getErrorMessage } from '@/utils/errors';
-import { designTokens } from '@/theme/tokens';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { monitorApi } from '@/api/monitor';
+
 type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
 type MetricCategory = 'host' | 'service' | 'database' | 'middleware';
 type ServiceType = 'all' | 'user' | 'order' | 'payment' | 'inventory' | 'gateway';

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
 import { Loader2 } from 'lucide-react';
-import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+
 const LoadingState: React.FC = () => {
   const theme = useTheme();
   return (

@@ -46,6 +46,7 @@ import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+
 type SyncStatus = 'success' | 'syncing' | 'error' | 'pending';
 
 interface SyncTask {
@@ -155,20 +156,19 @@ const MOCK_SYNC_LOGS: SyncLog[] = [
 ];
 
 const getStatusIcon = (status: SyncStatus) => {
-  const theme = useTheme();
   switch (status) {
     case 'success':
       return (
         <CheckCircle2
           size={16}
-          color={theme.palette.success.main}
+          color='#2e7d32'
         />
       );
     case 'syncing':
       return (
         <RefreshCw
           size={16}
-          color={theme.palette.primary.dark}
+          color='#1976d2'
           className='spin'
         />
       );
@@ -176,14 +176,14 @@ const getStatusIcon = (status: SyncStatus) => {
       return (
         <AlertCircle
           size={16}
-          color={theme.palette.error.main}
+          color='#d32f2f'
         />
       );
     case 'pending':
       return (
         <Clock
           size={16}
-          color={theme.palette.grey[400]}
+          color='#bdbdbd'
         />
       );
   }

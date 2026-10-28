@@ -12,7 +12,7 @@ import { TenantSwitcher } from '@/components/TenantSwitcher/TenantSwitcher';
 
 // 通知铃铛懒加载（点击才加载面板，减少首屏 bundle）
 const HeaderNotifications = lazy(() =>
-  import('./HeaderNotifications').then(m => ({ default: m.HeaderNotifications }))
+  import('./HeaderNotifications').then((m) => ({ default: m.HeaderNotifications }))
 );
 
 interface AppHeaderProps {

@@ -17,7 +17,6 @@ import ReportBuilder from '../ReportBuilder';
 import { ReportViewer } from '../ReportViewer';
 import { ExportModal } from '@/components/export';
 import { apiLogger } from '@/utils/logger';
-import { designTokens } from '@/theme/tokens';
 
 import ReportHeader from './components/ReportHeader';
 import NotificationToast from './components/NotificationToast';
@@ -30,6 +29,7 @@ import TemplateFormDialog from './components/TemplateFormDialog';
 import { getModuleFromReportType } from '@/components/report/ReportPageUtils';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const ReportPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();

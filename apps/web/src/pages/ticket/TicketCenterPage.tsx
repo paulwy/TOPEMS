@@ -25,7 +25,6 @@ import type { TFunction } from 'i18next';
 import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
-import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 import { ticketApi } from '@/api/ticket';
 import type {
@@ -38,6 +37,7 @@ import type {
 import { ticketSchema } from '@/schemas/ticket';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const STATUS_COLORS: Record<string, 'error' | 'warning' | 'info' | 'success' | 'default'> = {
   open: 'error',
   in_progress: 'warning',

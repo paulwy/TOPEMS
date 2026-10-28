@@ -51,8 +51,8 @@ import {
   type SqlTestResult,
 } from '@/api/bi';
 import { logger } from '@/utils/logger';
-import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 type ViewMode = 'list' | 'editor';
 const DatasetPage = () => {
   const theme = useTheme();

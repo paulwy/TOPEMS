@@ -9,8 +9,8 @@ import type { OeeRecord } from '@/api/mes';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Gauge, Activity, TrendingUp, CheckCircle2 } from 'lucide-react';
-import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+
 const apiAdapter = createCrudPageAdapter(mesApi.equipmentOee, {
   itemsField: 'records',
 });

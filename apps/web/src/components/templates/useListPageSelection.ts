@@ -60,46 +60,52 @@ export function useListPageSelection<T>(options: UseListPageSelectionOptions = {
     setSelectedRow(null);
   }, []);
 
-  const toggleSelectAll = useCallback((ids: Array<string | number>, select: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (select) {
-        ids.forEach((id) => next.add(id));
-      } else {
-        ids.forEach((id) => next.delete(id));
-      }
-      // 持久化
-      if (persistSelection) {
-        const key = filterStorageKey || window.location.pathname;
-        try {
-          localStorage.setItem(`listpage:selectedIds:${key}`, JSON.stringify(Array.from(next)));
-        } catch {
-          // ignore
+  const toggleSelectAll = useCallback(
+    (ids: Array<string | number>, select: boolean) => {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (select) {
+          ids.forEach((id) => next.add(id));
+        } else {
+          ids.forEach((id) => next.delete(id));
         }
-      }
-      return next;
-    });
-  }, [persistSelection, filterStorageKey]);
+        // 持久化
+        if (persistSelection) {
+          const key = filterStorageKey || window.location.pathname;
+          try {
+            localStorage.setItem(`listpage:selectedIds:${key}`, JSON.stringify(Array.from(next)));
+          } catch {
+            // ignore
+          }
+        }
+        return next;
+      });
+    },
+    [persistSelection, filterStorageKey]
+  );
 
-  const toggleSelectRow = useCallback((id: string | number) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      if (persistSelection) {
-        const key = filterStorageKey || window.location.pathname;
-        try {
-          localStorage.setItem(`listpage:selectedIds:${key}`, JSON.stringify(Array.from(next)));
-        } catch {
-          // ignore
+  const toggleSelectRow = useCallback(
+    (id: string | number) => {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) {
+          next.delete(id);
+        } else {
+          next.add(id);
         }
-      }
-      return next;
-    });
-  }, [persistSelection, filterStorageKey]);
+        if (persistSelection) {
+          const key = filterStorageKey || window.location.pathname;
+          try {
+            localStorage.setItem(`listpage:selectedIds:${key}`, JSON.stringify(Array.from(next)));
+          } catch {
+            // ignore
+          }
+        }
+        return next;
+      });
+    },
+    [persistSelection, filterStorageKey]
+  );
 
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());

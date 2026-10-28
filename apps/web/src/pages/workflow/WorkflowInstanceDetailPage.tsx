@@ -22,7 +22,6 @@ import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate } from '@/components/templates/DetailPageTemplate';
 import type { TabConfig } from '@/components/templates/DetailPageTemplate';
 import { PageContainer } from '@/components/common';
-import { designTokens } from '@/theme/tokens';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';

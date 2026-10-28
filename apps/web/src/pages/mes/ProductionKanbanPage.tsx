@@ -34,7 +34,7 @@ import {
   Monitor,
   Wrench,
 } from 'lucide-react';
-import { designTokens } from '@/theme/tokens';
+
 const ProductionKanbanPage: React.FC = () => {
   const theme = useTheme();
   const {

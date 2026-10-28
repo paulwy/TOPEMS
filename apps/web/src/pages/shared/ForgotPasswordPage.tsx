@@ -27,6 +27,7 @@ import { AUTH_PATHS } from '@/routes/auth';
 import { AuthPageTemplate } from '@/components/templates';
 
 import { queryClient, QUERY_KEYS } from '@/lib/reactQuery';
+
 const requestResetSchema = z.object({
   email: z.string().email({ message: i18n.t('pages.forgot_password_page.k0') }),
 });

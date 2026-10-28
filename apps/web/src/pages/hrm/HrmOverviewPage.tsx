@@ -15,7 +15,6 @@ import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { HRM_PATHS } from '@/modules/hrm/config';
-import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
 import { LazyChart } from '@/components/charts';
@@ -23,6 +22,7 @@ import { LazyChart } from '@/components/charts';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 import { useTheme } from '@mui/material';
+
 const departmentData = [
   { name: i18n.t('hrm.hrm_overview_page.tech_dept'), value: 85 },
   { name: i18n.t('hrm.hrm_overview_page.product'), value: 42 },

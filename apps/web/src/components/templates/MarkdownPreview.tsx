@@ -33,7 +33,7 @@ const CodeBlock = lazy(() =>
     await import('prismjs/themes/prism-okaidia.css');
 
     return {
-      default: ({ language, children }: { language: string; children: string }) => {
+      default: function CodeBlock({ language, children }: { language: string; children: string }) {
         const codeRef = useRef<HTMLElement>(null);
         useEffect(() => {
           if (codeRef.current && Prism.languages[language]) {
@@ -42,14 +42,17 @@ const CodeBlock = lazy(() =>
         }, [language, children]);
         return (
           <pre style={{ margin: '1rem 0', padding: '1rem', borderRadius: '4px', overflow: 'auto' }}>
-            <code ref={codeRef} className={`language-${language}`}>
+            <code
+              ref={codeRef}
+              className={`language-${language}`}
+            >
               {children}
             </code>
           </pre>
         );
       },
     };
-  }),
+  })
 );
 
 export interface MarkdownPreviewProps {
@@ -72,10 +75,14 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
             const match = /language-(\w+)/.exec(className || '');
             const isInline = (props as unknown as Record<string, unknown>).inline;
             return !isInline && match ? (
-              <Suspense fallback={<pre><code className={className}>{children}</code></pre>}>
-                <CodeBlock language={match[1]}>
-                  {String(children).replace(/\n$/, '')}
-                </CodeBlock>
+              <Suspense
+                fallback={
+                  <pre>
+                    <code className={className}>{children}</code>
+                  </pre>
+                }
+              >
+                <CodeBlock language={match[1]}>{String(children).replace(/\n$/, '')}</CodeBlock>
               </Suspense>
             ) : (
               <code

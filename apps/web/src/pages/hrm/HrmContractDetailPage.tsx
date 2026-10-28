@@ -23,6 +23,7 @@ import { designTokens } from '@/theme/tokens';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+
 const HrmContractDetailPage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();

@@ -24,6 +24,7 @@ import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+
 const apiAdapter = createCrudPageAdapter<HealthRecord, CreateHealthRecordRequest>({
   list: ehsApi.listHealthRecords,
   create: ehsApi.createHealthRecord,

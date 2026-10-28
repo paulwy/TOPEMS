@@ -13,11 +13,12 @@ import {
   Box,
   Typography,
   TextareaAutosize,
-  Button, useTheme } from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import i18n from '@/i18n';
 import type { CreateInstrumentDataRequest } from '@/api/lims';
 import { formatJson, parseJsonInput } from '../utils';
-import { designTokens } from '@/theme/tokens';
 
 interface DataFormDialogProps {
   open: boolean;
@@ -37,7 +38,7 @@ const DataFormDialog: React.FC<DataFormDialogProps> = ({
   onFormDataChange,
   onSave,
 }) => {
-    const theme = useTheme();
+  const theme = useTheme();
   return (
     <Dialog
       open={open}

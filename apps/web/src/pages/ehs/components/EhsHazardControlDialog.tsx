@@ -19,7 +19,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { designTokens } from '@/theme/tokens';
 import type { ControlFormData } from '../hooks/useEhsHazardDetail';
 
 interface EhsHazardControlDialogProps {

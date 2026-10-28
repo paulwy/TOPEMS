@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { designTokens } from '@/theme/tokens';
 import { useNavigate } from 'react-router-dom';
 import { FINANCE_PATHS } from '@/modules/finance/paths';
 import { financeApi } from '@/api/finance';
@@ -28,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
 import { useTheme } from '@mui/material';
+
 const FinanceDashboardPage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();

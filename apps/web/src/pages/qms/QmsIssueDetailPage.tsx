@@ -35,7 +35,6 @@ import {
   type TabConfig,
   type DetailField,
 } from '@/components/templates/DetailPageTemplate';
-import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
 function getSeverityLabels(): Record<string, string> {

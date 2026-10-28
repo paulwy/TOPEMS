@@ -20,6 +20,7 @@ import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { getStatusColor } from '@/utils/status';
 import i18n from '@/i18n';
+
 const getWorkflowSteps = () => [
   i18n.t('lims.sample_receive_page.k4'),
   i18n.t('lims.sample_receive_page.k3'),

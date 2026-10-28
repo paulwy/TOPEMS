@@ -5,8 +5,8 @@ import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { receivableSchema, payableSchema } from '@/schemas/finance';
 import { receivableApi, payableApi, type Receivable, type Payable } from '@/api/finance';
-import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+
 const ReceivablePayablePage: React.FC = () => {
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);

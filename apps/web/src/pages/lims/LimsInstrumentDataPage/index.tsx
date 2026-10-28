@@ -25,7 +25,6 @@ import type {
 } from '@/api/lims';
 import i18n from '@/i18n';
 import { instrumentDataApi, collectionTaskApi, parseRuleApi } from '@/api/lims';
-import { designTokens } from '@/theme/tokens';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import StatisticsCards from './components/StatisticsCards';
@@ -36,6 +35,7 @@ import TaskFormDialog from './components/TaskFormDialog';
 import RuleFormDialog from './components/RuleFormDialog';
 import ParseTestDialog from './components/ParseTestDialog';
 import { getStatusColor, getStatusLabel, type ChipColor } from './utils';
+
 const LimsInstrumentDataPage: React.FC = () => {
   const theme = useTheme();
   const queryClient = useQueryClient();

@@ -6,8 +6,8 @@ import CrudPage from '@/components/templates/CrudPage';
 import { ptPlanSchema } from '@/schemas/lims';
 import { ptPlanApi } from '@/api/lims/proficiencyTesting';
 import type { PtPlan } from '@/api/lims/types';
-import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
+
 const ptPlanAdapter = {
   list: async (params?: {
     page?: number;

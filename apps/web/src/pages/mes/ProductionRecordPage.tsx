@@ -5,9 +5,9 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { productionRecordSchema } from '@/schemas/mes';
 import { mesApi } from '@/api/mes';
 import { Activity } from 'lucide-react';
-import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
 import i18n from '@/i18n';
+
 const apiAdapter = createCrudPageAdapter(mesApi.records, {
   itemsField: 'records',
 });

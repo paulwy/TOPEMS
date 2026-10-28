@@ -28,9 +28,9 @@ import { wmsApi } from '@/api/wms';
 import type { StockTake, StockTakeItem, CountItemRequest, CreateStockTakeRequest } from '@/api/wms';
 import { WMS_PATHS } from '@/modules/wms/config';
 import { apiLogger } from '@/utils/logger';
-import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 const StockTakePage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();

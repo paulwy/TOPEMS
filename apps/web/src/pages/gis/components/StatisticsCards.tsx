@@ -2,7 +2,6 @@ import React from 'react';
 import { Box, Paper, Typography, useTheme } from '@mui/material';
 import { MapPin, ArrowRight, Warehouse, Camera, Map, Building2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { designTokens } from '@/theme/tokens';
 
 interface StatisticsCardsProps {
   statistics?: {

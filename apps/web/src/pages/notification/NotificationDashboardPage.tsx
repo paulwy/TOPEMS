@@ -30,8 +30,8 @@ import {
   type RecentItem,
 } from '@/components/templates';
 import { useNotificationStore } from '@/store';
-import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
+
 export const NotificationDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);

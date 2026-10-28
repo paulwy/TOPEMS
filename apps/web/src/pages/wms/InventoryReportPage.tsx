@@ -6,7 +6,6 @@ import { StatsPageTemplate, type TabItem } from '@/components/templates/StatsPag
 import { wmsApi } from '@/api/wms';
 import type { InventoryStatistics, Warehouse } from '@/api/wms';
 import { apiLogger } from '@/utils/logger';
-import { designTokens } from '@/theme/tokens';
 import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +24,7 @@ import {
   InventoryReportTurnoverTable,
   InventoryReportValueByWarehouseTable,
 } from './components/InventoryReportTable';
+
 const TAB_VALUES = {
   statistics: 'statistics',
   abc: 'abc',

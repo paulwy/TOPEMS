@@ -5,7 +5,6 @@ import { CrudPage, type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { formulaSchema } from '@/schemas/pdm';
 import { pdmApi, type ProductionFormula } from '@/api/pdm';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 
 export default function PdmFormulaPage() {

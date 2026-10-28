@@ -25,7 +25,7 @@ import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
 import { productionScheduleSchema } from '@/schemas/mes';
 import { Calendar, GanttChart, RefreshCw } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
-import { designTokens } from '@/theme/tokens';
+
 const apiAdapter = createCrudPageAdapter(mesApi.schedules, {
   itemsField: 'schedules',
 });

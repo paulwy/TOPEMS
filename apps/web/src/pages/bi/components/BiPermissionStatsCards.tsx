@@ -5,7 +5,6 @@
 import React from 'react';
 import { Box, Card, CardContent, Typography, Grid, useTheme } from '@mui/material';
 import { Shield, Database, CheckCircle2, Users } from 'lucide-react';
-import { designTokens } from '@/theme/tokens';
 import i18n from '@/i18n';
 
 interface BiPermissionStatsCardsProps {

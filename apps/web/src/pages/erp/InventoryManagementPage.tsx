@@ -68,40 +68,42 @@ const StatCard: React.FC<{
 }> = ({ label, value, icon, bgColor, iconColor, gradient }) => {
   const theme = useTheme();
   return (
-  <Box sx={{ p: 2, bgcolor: bgColor, borderRadius: 3 }}>
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-      <Box
-        sx={{
-          width: 40,
-          height: 40,
-          bgcolor: gradient ? undefined : iconColor,
-          background: gradient
-            ? `linear-gradient(135deg, ${iconColor}, ${theme.palette.primary.dark})`
-            : undefined,
-          borderRadius: gradient ? '50%' : 3,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Box sx={{ color: gradient ? theme.palette.background.paper : iconColor, display: 'flex' }}>
-          {icon}
+    <Box sx={{ p: 2, bgcolor: bgColor, borderRadius: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            bgcolor: gradient ? undefined : iconColor,
+            background: gradient
+              ? `linear-gradient(135deg, ${iconColor}, ${theme.palette.primary.dark})`
+              : undefined,
+            borderRadius: gradient ? '50%' : 3,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Box
+            sx={{ color: gradient ? theme.palette.background.paper : iconColor, display: 'flex' }}
+          >
+            {icon}
+          </Box>
+        </Box>
+        <Box
+          component='span'
+          sx={{ color: 'text.secondary', fontSize: 14 }}
+        >
+          {label}
         </Box>
       </Box>
-      <Box
-        component='span'
-        sx={{ color: 'text.secondary', fontSize: 14 }}
+      <Typography
+        variant='h5'
+        sx={{ fontWeight: 700 }}
       >
-        {label}
-      </Box>
+        {value}
+      </Typography>
     </Box>
-    <Typography
-      variant='h5'
-      sx={{ fontWeight: 700 }}
-    >
-      {value}
-    </Typography>
-  </Box>
   );
 };
 const InventoryManagementPage: React.FC = () => {

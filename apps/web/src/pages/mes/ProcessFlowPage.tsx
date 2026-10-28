@@ -15,7 +15,7 @@ import {
 } from '@/api/mes/processFlow';
 import i18n from '@/i18n';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
-import { designTokens } from '@/theme/tokens';
+
 const apiAdapter = createCrudPageAdapter<
   ProcessFlow,
   CreateProcessFlowRequest,
