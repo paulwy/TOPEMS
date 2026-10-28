@@ -13,6 +13,18 @@
 - **观察项（如实登记）**：WCS 3 条 `?`（rd/experiment.ts:36/83/109 `unresolved arg=url`）；MCS 39 WARN（approval delegate/approve/reject、documents 写、inventory GET/{id}、production 单读等业务 404，非失败）；**前端契约错位待业务排期**：`apps/mobile/src/api/inventory.ts` createItem 用 `code/location`（字符串）而 WMS 需 `sku/warehouse_id/location_id`；`attendance.ts` checkIn/checkOut 用 `latitude/longitude` 而 HRM 需 `lat/lng` 且 `user_id/employee_id` 至少其一。
 - 活文档变更日志 v1.112 登记
 
+### 复核补充（同日）：WCS 3 条 `?` 闭环 → 4119/4119 全绿 ✅
+
+> 目标：人工复核 v1.112 登记的 3 条 `?`（rd/experiment.ts url 参数，静态解析盲区，非失败）。
+
+- **复核结论**：3 个端点（`/api/rd/experiments`、`/api/rd/experiments/phase/lab`、`/api/rd/experiments/phase/pilot`）curl 均 200——`?` 仅因 `const url = queryParams ? '/experiments?${queryParams}' : '/experiments'` 三元动态拼接超出静态解析（`unresolved arg=url`）。
+- **脚本增强**：`scripts/web_contract_smoke.py` `resolve_arg` 新增构建器变量（url/endpoint/requestPath/path）三元表达式解析（取无参分支 `: 'B'`），消除该类盲区。
+- **增强后暴露 2 个被盲区掩盖的真实缺口（已修复）**：
+  - **`GET /api/erp/materials` 500**：测试行 `category/unit/safety_stock/unit_price/tax_rate` 为 NULL，撞模型 `Material` 非 Option（`String/f64/Decimal`）→ decode 失败。修复：`svc/erp/src/modules/material.rs` 查询面（list×2/get/create RETURNING/update RETURNING）批量 `COALESCE`（category→`''`、unit→`''`、safety_stock→0、unit_price→0、tax_rate→0，均带 `AS` 保列名；INSERT 列名不受影响）。复验 200。
+  - **`GET /api/core/flow/variables/global` 404（契约错位）**：前端 `getGlobalVariables(workflowId?)` 无参分支 `/variables/global` 不存在（后端仅 `/variables/global/{workflow_id}`），且前端无实际调用方（死路径）。修复：`apps/web/src/api/workflow/variable.ts` 收紧契约为 `workflowId: string` 必带（与后端一致）。复验 225/225。
+- **验证**：WCS **4119/4119 PASS 0 FAIL**（较收口前 4105 多 14 条端点，解析增强全部实跑）；MCS 复跑 **114/114 0 FAIL**（无回归）。
+- 观察项：MCS 39 WARN 与前端契约错位（mobile inventory/attendance 字段）维持 v1.112 登记，待业务排期。
+
 ## S25 语义治理闭环：flow 表前缀 + mobile 4xx 透传（第 55 轮，2026-10-28）✅ 已完成
 
 > 目标：清零 `docs/web_contract_gap_list.md` 剩余 42 条 KNOWN（workflow 39 + mobile 3）。

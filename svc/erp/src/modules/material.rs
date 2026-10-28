@@ -128,7 +128,7 @@ pub async fn list_materials(
         let category = category_filter.clone();
 
         sqlx::query_as::<_, Material>(
-            only_own_schema_query!("erp", r#"SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at
+            only_own_schema_query!("erp", r#"SELECT id, code, name, specification, COALESCE(unit, '') AS unit, COALESCE(category, '') AS category, brand, model, barcode, COALESCE(safety_stock, 0)::float8 AS safety_stock, COALESCE(unit_price, 0) AS unit_price, COALESCE(tax_rate, 0)::float8 AS tax_rate, description, status, created_at, updated_at
                FROM erp.materials
                WHERE deleted_at IS NULL
                  AND (code ILIKE $1 OR name ILIKE $1 OR specification ILIKE $1)
@@ -145,7 +145,7 @@ pub async fn list_materials(
         .await
     } else {
         sqlx::query_as::<_, Material>(
-            only_own_schema_query!("erp", "SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at FROM erp.materials WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2")
+            only_own_schema_query!("erp", "SELECT id, code, name, specification, COALESCE(unit, '') AS unit, COALESCE(category, '') AS category, brand, model, barcode, COALESCE(safety_stock, 0)::float8 AS safety_stock, COALESCE(unit_price, 0) AS unit_price, COALESCE(tax_rate, 0)::float8 AS tax_rate, description, status, created_at, updated_at FROM erp.materials WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)
@@ -209,7 +209,7 @@ pub async fn get_material(
     }
 
     let result = sqlx::query_as::<_, Material>(
-        only_own_schema_query!("erp", "SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at FROM erp.materials WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("erp", "SELECT id, code, name, specification, COALESCE(unit, '') AS unit, COALESCE(category, '') AS category, brand, model, barcode, COALESCE(safety_stock, 0)::float8 AS safety_stock, COALESCE(unit_price, 0) AS unit_price, COALESCE(tax_rate, 0)::float8 AS tax_rate, description, status, created_at, updated_at FROM erp.materials WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_optional(&mut **txn)
@@ -261,7 +261,7 @@ pub async fn create_material(
     };
 
     let result = sqlx::query_as::<_, Material>(
-        only_own_schema_query!("erp", "INSERT INTO erp.materials (code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at"),
+        only_own_schema_query!("erp", "INSERT INTO erp.materials (code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id, code, name, specification, COALESCE(unit, '') AS unit, COALESCE(category, '') AS category, brand, model, barcode, COALESCE(safety_stock, 0)::float8 AS safety_stock, COALESCE(unit_price, 0) AS unit_price, COALESCE(tax_rate, 0)::float8 AS tax_rate, description, status, created_at, updated_at"),
     )
     .bind(body.code)
     .bind(body.name)
@@ -327,7 +327,7 @@ pub async fn update_material(
     }
 
     let result = sqlx::query_as::<_, Material>(
-        only_own_schema_query!("erp", "UPDATE erp.materials SET name = COALESCE($1, name), specification = COALESCE($2, specification), unit = COALESCE($3, unit), category = COALESCE($4, category), brand = COALESCE($5, brand), model = COALESCE($6, model), barcode = COALESCE($7, barcode), safety_stock = COALESCE($8, safety_stock), unit_price = COALESCE($9, unit_price), tax_rate = COALESCE($10, tax_rate), description = COALESCE($11, description), status = COALESCE($12, status), updated_at = NOW() WHERE id = $13 RETURNING id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at"),
+        only_own_schema_query!("erp", "UPDATE erp.materials SET name = COALESCE($1, name), specification = COALESCE($2, specification), unit = COALESCE($3, unit), category = COALESCE($4, category), brand = COALESCE($5, brand), model = COALESCE($6, model), barcode = COALESCE($7, barcode), safety_stock = COALESCE($8, safety_stock), unit_price = COALESCE($9, unit_price), tax_rate = COALESCE($10, tax_rate), description = COALESCE($11, description), status = COALESCE($12, status), updated_at = NOW() WHERE id = $13 RETURNING id, code, name, specification, COALESCE(unit, '') AS unit, COALESCE(category, '') AS category, brand, model, barcode, COALESCE(safety_stock, 0)::float8 AS safety_stock, COALESCE(unit_price, 0) AS unit_price, COALESCE(tax_rate, 0)::float8 AS tax_rate, description, status, created_at, updated_at"),
     )
     .bind(body.name)
     .bind(body.specification)

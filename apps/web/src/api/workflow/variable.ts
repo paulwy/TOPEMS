@@ -55,8 +55,8 @@ export const variableApi = {
     });
   },
 
-  getGlobalVariables: (workflowId?: string, params?: ListParams) => {
-    const endpoint = workflowId ? `/variables/global/${workflowId}` : '/variables/global';
+  getGlobalVariables: (workflowId: string, params?: ListParams) => {
+    const endpoint = `/variables/global/${workflowId}`;
     return apiClient.workflow.get(endpoint, { params });
   },
 

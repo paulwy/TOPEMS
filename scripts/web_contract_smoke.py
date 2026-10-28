@@ -304,6 +304,21 @@ def extract_endpoints():
                 val, _ = parse_literal(prefix_lines, pos)
                 if val is not None:
                     last = val
+                    continue
+            # 三元表达式 `cond ? 'A' : 'B'`：取无参分支 'B'（基础契约路径），
+            # 消除 rd/experiment.ts 等动态 url 的静态解析盲区（unresolved arg=url）
+            tm = re.match(
+                r"[A-Za-z_][A-Za-z0-9_]*\s*\?\s*(?:'[^']*'|\"[^\"]*\"|`[^`]*`)\s*:\s*"
+                r"(?:'[^']*'|\"[^\"]*\"|`[^`]*`)",
+                prefix_lines[pos:],
+            )
+            if tm:
+                branches = re.findall(
+                    r"('(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"|`(?:[^`\\]|\\.)*`)",
+                    tm.group(0),
+                )
+                if len(branches) >= 2:
+                    last = branches[-1].strip("'\"`")
         if last is not None:
             t = normalize_tmpl(last)
             b = "" if t.startswith("/api/") else services.get(svc, "")
