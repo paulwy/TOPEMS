@@ -72,43 +72,6 @@ async fn build_router_inner(
     );
 
     // Initialize databases for all modules
-    async fn try_init<F, Fut>(name: &str, f: F)
-    where
-        F: FnOnce() -> Fut,
-        Fut: std::future::Future<Output = Result<(), sqlx::Error>>,
-    {
-        match f().await {
-            Ok(()) => tracing::info!("init_database {}: ok", name),
-            Err(e) => panic!(
-                "init_database {} failed: {} (自建 DDL 执行失败必须显式暴露，禁止静默跳过——失败可能表示库结构异常)",
-                name,
-                e
-            ),
-        }
-    }
-
-    try_init("iam", || crate::modules::iam::init_database(&ctx.db)).await;
-    try_init("flow", || crate::modules::flow::init_database(&ctx.db)).await;
-    try_init("file", || crate::modules::file::init_database(&ctx.db)).await;
-    try_init("tenant", || crate::modules::tenant::init_database(&ctx.db)).await;
-    try_init("migration", || {
-        crate::modules::migration::init_database(&ctx.db)
-    })
-    .await;
-    try_init("master", || {
-        crate::modules::master::handlers::init_mdm_tables(&ctx.db)
-    })
-    .await;
-    try_init("menu", || crate::modules::menu::init_database(&ctx.db)).await;
-    try_init("engagement", || {
-        crate::modules::engagement::init_database(&ctx.db)
-    })
-    .await;
-    try_init("audit", || crate::modules::audit::init_database(&ctx.db)).await;
-    try_init("doc", || {
-        crate::modules::doc::services::init_database(&ctx.db)
-    })
-    .await;
 
     // Schema 防御：增量迁移 + 一致性自检
     if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(&ctx.db).await {

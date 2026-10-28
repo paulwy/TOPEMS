@@ -299,40 +299,12 @@ async fn main() -> anyhow::Result<()> {
     );
 
     // Initialize databases for all modules
-    async fn try_init<F, Fut>(name: &str, f: F)
-    where
-        F: FnOnce() -> Fut,
-        Fut: std::future::Future<Output = Result<(), sqlx::Error>>,
-    {
-        match f().await {
-            Ok(()) => tracing::info!("init_database {}: ok", name),
-            Err(e) => panic!(
-                "init_database {} failed: {} (自建 DDL 执行失败必须显式暴露，禁止静默跳过——失败可能表示库结构异常)",
-                name,
-                e
-            ),
-        }
-    }
-
-    try_init("iam", || modules::iam::init_database(&ctx.db)).await;
-    try_init("flow", || modules::flow::init_database(&ctx.db)).await;
-    try_init("file", || modules::file::init_database(&ctx.db)).await;
-    try_init("tenant", || modules::tenant::init_database(&ctx.db)).await;
     // V68.1 A2.2: plugin init 迁移到 svc/plugin-registry main.rs（后续在其 bootstrap 后调用）
     // try_init("plugin", || modules::plugin::init_database(&ctx.db)).await;
-    try_init("migration", || modules::migration::init_database(&ctx.db)).await;
     // V68.1 A2.3: dict init/seed 迁移到 svc/master-data（主数据域）
     // try_init("dict", || modules::dict::init_database(&ctx.db)).await;
-    try_init("master", || {
-        modules::master::handlers::init_mdm_tables(&ctx.db)
-    })
-    .await;
-    try_init("menu", || modules::menu::init_database(&ctx.db)).await;
-    try_init("engagement", || modules::engagement::init_database(&ctx.db)).await;
     // V68.1 A2.4.2: help 模块已迁移至 svc/portal/src/modules/help/（Portal BFF，8063 端口启动）
     // V68.1 A2.4.1: login_log init 已合并到 audit::init_database（统一建表）
-    try_init("audit", || modules::audit::init_database(&ctx.db)).await;
-    try_init("doc", || modules::doc::services::init_database(&ctx.db)).await;
 
     // V69.3 Schema 防御：增量迁移 + 一致性自检（29 表）
     if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(&ctx.db).await {
