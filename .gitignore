@@ -11,6 +11,8 @@ $RECYCLE.BIN/
 *.swp
 *.swo
 *~
+# 编辑器崩溃临时文件（VSCode 崩溃恢复残留，.!NNNNN! 前缀；2026-10-28 曾 197 个误入库，防复发）
+.!*
 .project
 .classpath
 .settings/
