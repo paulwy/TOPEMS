@@ -212,7 +212,7 @@ pub async fn list_emails(
         "public",
         r#"
         SELECT id, from_email, to_email, subject, sent_at, is_read
-        FROM core_emails
+        FROM public.core_emails
         WHERE to_email IN (SELECT email FROM iam.users WHERE id = $1)
            OR from_email IN (SELECT email FROM iam.users WHERE id = $1)
         ORDER BY sent_at DESC
@@ -338,7 +338,7 @@ pub async fn send_email(
             };
             let _ = sqlx::query(
                 only_own_schema_query!("public", r#"
-                INSERT INTO core_emails (id, from_email, to_email, subject, body, html_body, tenant_id, sent_at)
+                INSERT INTO public.core_emails (id, from_email, to_email, subject, body, html_body, tenant_id, sent_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
                 "#),
             )
@@ -427,7 +427,7 @@ pub async fn get_email(
         r#"
         SELECT e.id, e.from_email, e.to_email, e.subject, e.body, e.html_body, e.sent_at, e.is_read,
                u_from.email as from_user_email, u_to.email as to_user_email
-        FROM core_emails e
+        FROM public.core_emails e
         LEFT JOIN iam.users u_from ON e.from_email = u_from.email
         LEFT JOIN iam.users u_to ON e.to_email = u_to.email
         WHERE e.id = $1
@@ -526,7 +526,7 @@ pub async fn delete_email(
             "public",
             r#"
             SELECT EXISTS(
-                SELECT 1 FROM core_emails e
+                SELECT 1 FROM public.core_emails e
                 LEFT JOIN iam.users u_from ON e.from_email = u_from.email
                 LEFT JOIN iam.users u_to ON e.to_email = u_to.email
                 WHERE e.id = $1 AND (u_from.id = $2 OR u_to.id = $2)
@@ -552,7 +552,7 @@ pub async fn delete_email(
 
     match sqlx::query(only_own_schema_query!(
         "public",
-        "UPDATE core_emails SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
+        "UPDATE public.core_emails SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
     ))
     .bind(email_id)
     .execute(&pool)
@@ -633,7 +633,7 @@ pub async fn mark_as_read(
         "public",
         r#"
         SELECT EXISTS(
-            SELECT 1 FROM core_emails e
+            SELECT 1 FROM public.core_emails e
             JOIN core_users u_to ON e.to_email = u_to.email
             WHERE e.id = $1 AND u_to.id = $2
         )
@@ -656,7 +656,7 @@ pub async fn mark_as_read(
 
     match sqlx::query(only_own_schema_query!(
         "public",
-        "UPDATE core_emails SET is_read = TRUE, read_at = NOW() WHERE id = $1"
+        "UPDATE public.core_emails SET is_read = TRUE, read_at = NOW() WHERE id = $1"
     ))
     .bind(email_id)
     .execute(&pool)
@@ -1731,32 +1731,32 @@ pub async fn get_stats(
     tracing::info!("mail get_stats by user: {}", claims.username);
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "public",
-        "SELECT COUNT(*) FROM core_emails WHERE deleted_at IS NULL"
+        "SELECT COUNT(*) FROM public.core_emails WHERE deleted_at IS NULL"
     ))
     .fetch_one(&pool)
     .await
     .unwrap_or(0);
     let sent_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "public",
-        "SELECT COUNT(*) FROM core_emails WHERE sent_at IS NOT NULL AND deleted_at IS NULL"
+        "SELECT COUNT(*) FROM public.core_emails WHERE sent_at IS NOT NULL AND deleted_at IS NULL"
     ))
     .fetch_one(&pool)
     .await
     .unwrap_or(0);
     let pending_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "public",
-        "SELECT COUNT(*) FROM core_emails WHERE sent_at IS NULL AND deleted_at IS NULL"
+        "SELECT COUNT(*) FROM public.core_emails WHERE sent_at IS NULL AND deleted_at IS NULL"
     ))
     .fetch_one(&pool)
     .await
     .unwrap_or(0);
     let today_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!("public",
-        "SELECT COUNT(*) FROM core_emails WHERE sent_at::date = CURRENT_DATE AND deleted_at IS NULL"))
+        "SELECT COUNT(*) FROM public.core_emails WHERE sent_at::date = CURRENT_DATE AND deleted_at IS NULL"))
         .fetch_one(&pool).await.unwrap_or(0);
     let last_sent_at: Option<chrono::DateTime<chrono::Utc>> =
         sqlx::query_scalar(only_own_schema_query!(
             "public",
-            "SELECT MAX(sent_at) FROM core_emails WHERE sent_at IS NOT NULL AND deleted_at IS NULL"
+            "SELECT MAX(sent_at) FROM public.core_emails WHERE sent_at IS NOT NULL AND deleted_at IS NULL"
         ))
         .fetch_optional(&pool)
         .await
@@ -1879,7 +1879,7 @@ pub async fn send_with_template_by_code(
                     .unwrap_or(Uuid::nil())
             };
             let _ = sqlx::query(only_own_schema_query!("public",
-                "INSERT INTO core_emails (id, from_email, to_email, subject, body, tenant_id, sent_at) VALUES ($1,$2,$3,$4,$5,$6,NOW())"))
+                "INSERT INTO public.core_emails (id, from_email, to_email, subject, body, tenant_id, sent_at) VALUES ($1,$2,$3,$4,$5,$6,NOW())"))
                 .bind(email_id).bind("system@topems.io").bind(&to).bind(&subject).bind(&body).bind(tenant_bind).execute(&pool).await;
             Json(
                 serde_json::json!({"success":true,"message":"模板邮件发送成功","code":200,
@@ -1936,7 +1936,7 @@ pub async fn resend_emails(
             }
         };
         match sqlx::query(only_own_schema_query!("public",
-            "SELECT from_email, to_email, subject, body FROM core_emails WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"))
+            "SELECT from_email, to_email, subject, body FROM public.core_emails WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"))
             .bind(email_id).bind(get_tenant_id(&claims)).fetch_optional(&pool).await
         {
             Ok(Some(row)) => {
@@ -1947,7 +1947,7 @@ pub async fn resend_emails(
                 match send_email_with_lettre(&from_email, &to_email, &subject, &body, None, None, None) {
                     Ok(_) => {
                         success += 1;
-                        let _ = sqlx::query(only_own_schema_query!("public","UPDATE core_emails SET sent_at = NOW() WHERE id = $1"))
+                        let _ = sqlx::query(only_own_schema_query!("public","UPDATE public.core_emails SET sent_at = NOW() WHERE id = $1"))
                             .bind(email_id).execute(&pool).await;
                     }
                     Err(_) => { failed += 1; failed_ids.push(id_str.clone()); }
