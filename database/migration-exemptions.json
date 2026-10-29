@@ -15,6 +15,17 @@
       ],
       "evidence": "WSL 模拟生产机 migrate.sh run 499 迁移全量通过、B 类页面全部正常；commit cf989a152；《TOPEMS-20261028-B类清单更正说明-供主开发.md》；[2026-10-29] 本地 topems_test 重建后 migrate.sh run 502 迁移全量（含 ai.vector→public.vector 二次修正）实测通过",
       "approved": true
+    },
+    {
+      "id": "B20261029-typealign-empty-db",
+      "date": "2026-10-29",
+      "committer": "paulwy",
+      "reason": "B 扩展 type_align 迁移（20261029200000）空库回归暴露的 schema 错配与转换语义缺陷受控修正：同名多 schema 表列归属修正 21 处（erp.customers→crm / erp.materials→master_data / gis.locations→wms / hrm.audit_logs→bi / public.ticket_knowledge_articles→ticket / public.core_plugins→core / public.finance_v5x→finance / doc_service.core_doc_documents 补列 tags）；projects.tags JSONB 转换补 DROP/SET DEFAULT；document_chunks.embedding 改安全 cast（已 vector(1536)，去掉 jsonb #>> 操作符）；补 mes.workshops/work_calendars 时间列族 TIMESTAMP→TIMESTAMPTZ（契约对齐）。迁移版本 20261029190000→185000 撞号修正为纯 rename 不计内容修改",
+      "files": [
+        "20261029200000_schema_defense_type_align.sql"
+      ],
+      "evidence": "topems_regression 空库 migrate.sh run 516 迁移全量通过（1485 表落库）+ 二次 run 幂等 0 应用 + unified-core 连回归库 /health healthy；validate.sh Checksum errors 0 / Schema drift 0 / Errors 0；门禁 schema-defense PASS errors=0 warnings=0（PASS 408）；commit 2f6c9672b",
+      "approved": true
     }
   ]
 }
