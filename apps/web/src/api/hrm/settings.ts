@@ -16,4 +16,11 @@ export const hrmSettingsApi = {
   ): Promise<ApiResponse<HrmSettingsResponse>> => {
     return apiClient.hrm.put(`/settings/${category}`, { settings });
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  createPosition: async (
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.hrm.post('/positions', data);
+  },
 };

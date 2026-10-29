@@ -62,7 +62,6 @@ ai,下线候选,GET,/api/core/ai-form/forms,list_forms,list_forms,read,none,待�
 ai,下线候选,GET,/api/core/ai-form/forms/{form_type},get_form,get_form,read,none,待定
 ai,下线候选,POST,/api/core/ai-form/forms/{form_type}/suggest,suggest_for_form,suggest_for_form,read,none,待定
 ai,下线候选,POST,/api/core/ai-form/forms/{form_type}/enhance,enhance_for_form,enhance_for_form,read,none,待定
-analytics,P0,GET,/api/bi/report,create_report,create_report,write,weak,保留
 analytics,P1,GET,/visualization/gauge,generate_gauge_chart,generate_gauge_chart,write,none,保留
 analytics,P1,GET,/drilldown/path,create_drilldown_path,create_drilldown_path,write,none,保留
 analytics,P1,GET,/drilldown/path/{id},get_drilldown_path,get_drilldown_path,write,none,保留
@@ -133,7 +132,6 @@ analytics,下线候选,GET,/permission/user/{user_id},get_user_permissions,get_u
 analytics,下线候选,GET,/reports/{id}/exports,list_export_jobs,list_export_jobs,read,none,待定
 analytics,下线候选,GET,/reports/exports/{job_id},get_export_job,get_export_job,read,none,待定
 communication,P0,GET,/notification/notifications,delete_all_notifications,delete_all_notifications,write,weak,保留
-communication,P0,GET,/notification/notifications/archive/run,run_auto_archive,run_auto_archive,write,weak,保留
 communication,P1,GET,/notification/notifications/{id}/unarchive,unarchive_notification,unarchive_notification,write,none,保留
 communication,P1,GET,/notification/notification-templates,create_template,create_template,write,none,保留
 communication,P1,GET,/mail/emails,send_email,send_email,write,none,保留
@@ -541,13 +539,11 @@ gis,下线候选,GET,/location-photos/map/{map_id},list_location_photos_by_map,l
 gis,下线候选,GET,/ws/gis/device/{device_code},websocket_device_handler,websocket_device_handler,read,none,待定
 gis,下线候选,GET,/ws/gis,websocket_handler,websocket_handler,read,none,待定
 gis,下线候选,GET,/api-docs/openapi.json,serve_openapi_json,serve_openapi_json,read,none,待定
-hrm,P0,GET,/positions,create_position,create_position,write,weak,保留
 hrm,P1,GET,/performance-reviews/{id},get_review,get_review,write,none,保留
 hrm,P1,GET,/performance-goals/{id},get_goal,get_goal,write,none,保留
 hrm,P1,GET,/payroll-details,list_payroll_details,list_payroll_details,write,none,保留
 hrm,P2,GET,/performance-reviews,list_reviews,list_reviews,read,weak,保留
 hrm,P2,GET,/performance-goals,list_goals,list_goals,read,weak,保留
-hrm,P2,GET,/positions,list_positions,list_positions,read,weak,保留
 hrm,下线候选,GET,/attendance/today-status,get_today_status,get_today_status,read,none,待定
 hrm,下线候选,GET,/training-courses/{id}/records,get_course_records,get_course_records,read,none,待定
 hrm,下线候选,GET,/employees/{id}/training-records,get_employee_records,get_employee_records,read,none,待定
@@ -1250,9 +1246,6 @@ qms,下线候选,GET,/inspection-plans/{id},get_inspection_plan,get_inspection_p
 qms,下线候选,GET,/inspection-plans/{id}/items,list_plan_items,list_plan_items,read,none,待定
 qms,下线候选,POST,/spc/calculate,calculate_control_limits,calculate_control_limits,read,none,待定
 qms,下线候选,GET,/quality-tasks/today-pass-rate,get_today_quality_pass_rate,get_today_quality_pass_rate,read,none,待定
-rd,P0,GET,/members,create_member,create_member,write,weak,保留
-rd,P0,GET,/milestones,create_milestone,create_milestone,write,weak,保留
-rd,P0,GET,/phases,create_phase,create_phase,write,weak,保留
 rd,P1,GET,/patents/project/{project_id},list_patents_by_project,list_patents_by_project,write,none,保留
 rd,P1,GET,/material-tests/experiment/{experiment_id},list_by_experiment,list_by_experiment,write,none,保留
 rd,P1,GET,/change-requests/{id},get_change_request,get_change_request,write,none,保留
@@ -1346,7 +1339,6 @@ unified-core,P2,GET,/automation/dashboard,get_dashboard_stats,get_dashboard_stat
 unified-core,P2,GET,/automation/rules,list_rules,list_rules,read,weak,保留
 unified-core,P2,GET,/automation/runs,list_runs,list_runs,read,weak,保留
 unified-core,P2,GET,/automation/variables,list_variables,list_variables,read,weak,保留
-unified-core,P2,GET,/positions,list_positions,list_positions,read,weak,保留
 unified-core,P2,GET,/system/audit-logs/export,export_audit_logs,export_audit_logs,read,weak,保留
 unified-core,P2,GET,/metrics,move,move,read,weak,保留
 unified-core,P2,GET,/ws/core/im,websocket_handler,websocket_handler,read,weak,保留

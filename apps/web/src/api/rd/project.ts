@@ -86,4 +86,23 @@ export const projectApi = {
   getProjectGantt: async (id: string): Promise<ApiResponse<ProjectGanttResponse>> => {
     return apiClient.rd.get(`/projects/${id}/gantt`);
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  createMember: async (
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.rd.post('/members', data);
+  },
+
+  createMilestone: async (
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.rd.post('/milestones', data);
+  },
+
+  createPhase: async (
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.rd.post('/phases', data);
+  },
 };

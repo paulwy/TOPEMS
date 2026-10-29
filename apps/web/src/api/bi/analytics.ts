@@ -132,3 +132,8 @@ export async function fetchPdmBatchStatusDistribution() {
 export async function fetchModuleDetailData(moduleId: string) {
   return await apiClient.bi.get(`/${moduleId}`);
 }
+
+// ── v74 to_bind 补绑（2026-10-29）──
+export async function createReport(data: Record<string, unknown>) {
+  return await apiClient.bi.post('/report', data);
+}

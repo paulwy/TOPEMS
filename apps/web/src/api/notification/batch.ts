@@ -152,6 +152,15 @@ export const batchApi = {
     return apiClient.notification.get(`/notifications/bulk-progress/${id}`);
   },
 
+  // ── v74 to_bind 补绑（2026-10-29）──
+  deleteAllNotifications: async (): Promise<ApiResponse<{ deleted: number }>> => {
+    return apiClient.notification.delete('/notifications');
+  },
+
+  runAutoArchive: async (): Promise<ApiResponse<{ archived: number }>> => {
+    return apiClient.notification.post('/notifications/archive/run');
+  },
+
   createNotification: async (data: CreateNotificationRequest): Promise<ApiResponse<SendResult>> => {
     return apiClient.notification.post('/notifications', data);
   },
