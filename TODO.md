@@ -1,3 +1,15 @@
+## v1.113 BFF WS 接线 P0 迷你试点（2026-10-29）⚠️
+
+> 承接 BFF WS 接线立项决策（全量缓立、P0 先行）：8099 落地 WS Hub 骨架端点。
+
+- **落地**（commit 8615aebc70）：
+  - `GET /ws/healthz`：非 Upgrade 状态端点（`{ok, version, clients, channels}`）——curl 200 验证。
+  - `GET /ws/{module}/{feature}`：通用路径，模块注册表白名单（iam/workflow/im/mes/wms/ai/notification/dashboard/ticket 9 项），未注册模块 Upgrade 返回 426——`/ws/foo/bar` 426 验证。
+  - 挂载：server unified_core_real_module 独立 `Router<Arc<WsState>>` with_state 后 merge（同 mes WS 接线模式），置于 auth layer 之后（healthz 公开；WS 升级由 handle_socket 内 verify_jwt_token 自验）。
+  - 升级握手验证：`/ws/notification/alerts?token=<MCS token>` → auth_success（JWT 通过）。
+- **遗留（P1，登记）**：既有 `handle_socket` 消息循环运行异常——客户端消息（ping/subscribe）无响应、30s 心跳 task 无输出（40s 无 heartbeat）；会话保持但双向业务帧不通。P0 端点层已验证，帧链路待 standalone/单测复现修复。
+- **待办**：① handle_socket 消息循环修复（订阅帧/心跳验证）；② 契约 JSON-RPC 2.0 化（现协议为 type/payload 自定义）；③ 安全配额表（6 连接/32 频道/64KB/广播频控）；④ 前端 useWebSocket + 试点页（全量触发条件达成时立项）。
+
 ## v1.112 WCS/MCS 契约冒烟收口：mobile service 写路径修复 + 4xx 透传（2026-10-29）✅
 
 > 目标：MCS（scripts/mobile_contract_smoke.py）9 FAIL → 0 FAIL；WCS 保持全绿。
