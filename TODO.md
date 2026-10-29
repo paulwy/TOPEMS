@@ -1,3 +1,17 @@
+## v1.116 BFF WS：契约 §6 每 token 6 并发连接落地（2026-10-29）✅
+
+> 承接 v1.114 待办② 安全配额表连接维度：connections 单键 HashMap 改多连接 Vec，全部收敛 + 编译/门禁/冒烟全通后推送（commit 4f292a344f）。
+
+- **结构改造**（svc/unified-core/src/modules/communication/ws.rs + embedded.rs + main.rs）：
+  - `ConnectionMap` 单键 `HashMap<String, Arc<WsConnection>>` → 多连接 `HashMap<String, Vec<Arc<WsConnection>>>`；`WsConnection` 新增 `conn_id: Uuid`；
+  - `MAX_CONNECTIONS_PER_USER = 6`；`add_connection` → bool（超限 warn+拒绝）；`remove_connection(user_id, conn_id)`（连接粒度清理 + 频道映射按 user 聚合）；
+  - send_to_user/broadcast_to_channel/broadcast 展开用户所有连接（任一成功 true）；`connection_count` 求和（healthz clients 口径更新）；cleanup_timeout_connections 按连接粒度清理（返回移除连接数，embedded.rs/main.rs 后台任务适配 usize）；
+  - `handle_socket` conn Option 化：add 失败发 `error 429` 帧后关闭；升级前预检（websocket_handler/_path）token 解出 user_id 查 `list.len()≥6` → HTTP 429；
+  - subscribe/unsubscribe 签名改连接级（`&Arc<WsConnection>`，pub(crate)）；32 频道配额改用当前连接 `get_channels().len()`。
+- **验证**：cargo build 无警告；BFF 重启；同一 token 开 7 连接 → 前 6 auth_success 全通、第 7 个 HTTP 429 拒绝；断开后 healthz clients 归零；回归 32 频道配额（第 33 次订阅 4202）+ ping/pong 心跳。
+- **签名实测（本轮确认）**：WS 消息签名 = HMAC-SHA256 **hex**（`sign_message` 用 `hex::encode`，非 base64）；帧签名置于**顶层** `signature` 键；正文序列化用 json.dumps 插入序（`separators=(",", ":")`，非 sort_keys）。
+- **遗留**：① Origin 生产白名单（部署项，Nginx/生产配置）；② 广播高频合并批处理（>10/s 目前 drop+warn 占位）；③ 前端 useWebSocket + 试点页（全量触发条件达成时立项）。
+
 ## v1.113 BFF WS 接线 P0 迷你试点（2026-10-29）⚠️
 
 > 承接 BFF WS 接线立项决策（全量缓立、P0 先行）：8099 落地 WS Hub 骨架端点。
