@@ -161,6 +161,7 @@ POST_BODIES = {
     "/approval/tasks/${id}/approve": {"comment": "smoke"},
     "/approval/tasks/${id}/reject": {"comment": "smoke"},
     "/user/change-password": {"old_password": "Test@123", "new_password": "Test@1234"},
+    "/device/register": {"device_id": "smoke-device-1", "device_name": "冒烟设备", "device_type": "android", "os_type": "Android", "os_version": "14", "app_version": "1.0.0", "push_token": "smoke-push-token"},
     "/push/devices/register": {"device_token": "smoke-push-token", "platform": "android", "device_model": "Pixel-7", "app_version": "1.0.0", "os_version": "14"},
     "/push/notifications": {"title": "冒烟通知", "body": "smoke", "notification_type": "general", "target_type": "all", "target_ids": []},
     "/push/notifications/broadcast": {"title": "冒烟广播", "body": "smoke", "notification_type": "general", "target_type": "all", "target_ids": []},
@@ -308,7 +309,12 @@ def call(method: str, path: str, tmpl: str, token: str):
     headers = {"Authorization": f"Bearer {token}"}
     data_bytes = None
     if method in ("POST", "PUT", "PATCH"):
-        body = POST_BODIES.get(tmpl, {})  # 最小 body：缺必填字段时上游返回 4xx 业务错误，可接受
+        # /task/batch/status：BatchStatusRequest{ids,status}，用预创建真任务 id（无真 id 时
+        # 回退 TEST_UUID，服务端返回 success0/failed1 而非 422）
+        if tmpl == "/task/batch/status":
+            body = {"ids": [REAL_IDS.get("task", TEST_UUID)], "status": "completed"}
+        else:
+            body = POST_BODIES.get(tmpl, {})  # 最小 body：缺必填字段时上游返回 4xx 业务错误，可接受
         data_bytes = json.dumps(body).encode()
         headers["Content-Type"] = "application/json"
     req = urllib.request.Request(url, data=data_bytes, headers=headers, method=method)

@@ -11,6 +11,19 @@
 - **签名注意**（实测）：WS 消息签名序列化用**插入序**（serde_json preserve_order 行为；服务端 `remove("signature")` 后按原插入序 to_string），客户端签名须用 json.dumps 默认插入序（`separators=(",", ":")`），**非** sort_keys 字母序。
 - **待办**：① 契约 JSON-RPC 2.0 化（现协议为 type/payload 自定义）；② 安全配额表（6 连接/32 频道/64KB/广播频控）；③ 前端 useWebSocket + 试点页（全量触发条件达成时立项）。
 
+## v1.115 MCS WARN 降噪复核 + mobile task 租户归属修复（2026-10-29）✅
+
+> 承接 MCS 21→12→11 WARN 复核：降噪 1 条（batch/status 422），其余 10 条业务 404/401 归因登记（契约正确语义，不降）。
+
+- **服务端修复（正确性，非降噪）**：`create_task` 原写 `tenant_id = Uuid::nil()` → 改 `claims.tenant_id`（super → NULL），与 complete_task/batch_update_status 一致；修复创建后按租户过滤不可见。手动验证 create→complete 200（commit 本次）。
+- **脚本**：POST_BODIES 补 `/device/register`（device.rs 载荷，写 mobile.devices 供 activate/disable 真 id）；`call()` 对 `/task/batch/status` 注入 `REAL_IDS["task"]`（原空 body → 422 → 200 success0/failed1）。
+- **WARN 归因（10 条，契约正确语义，不降）**：
+  - task complete/reopen ×2 + device activate/disable ×2：契约 TS 内 `DELETE /{id}` 先于写操作执行（真实前端顺序），资源已删 → 业务 404 合理；
+  - approval approve/reject/get/delegate ×4：approval/tasks/{id} 无创建端点，任务由工作流生成，假 id 业务 404（HTTP200+内层404 契约约定）；
+  - production start/complete ×2：MES 集成，start/complete 调 MES 侧订单状态机（创建后需 MES 状态推进，未深挖）；
+  - inventory PUT ×1：401 权限（测试用户缺 inventory 写权）。
+- 验证：cargo build 无警告；MCS 114/114 PASS 0 FAIL；手动 create→complete、register→activate 均 200。
+
 ## v1.114 BFF WS 第三批：JSON-RPC 2.0 帧协议化 + 安全配额表（2026-10-29）✅
 
 > 承接 v1.113 待办①②：契约 P32-6 §3/§6 对齐，代码改造 + 编译 + BFF 重启 + websockets 冒烟全通后推送（commit 9f8550fd82）。

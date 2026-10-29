@@ -213,6 +213,7 @@ pub async fn get_task(
 
 pub async fn create_task(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Json(payload): Json<CreateTaskRequest>,
@@ -225,6 +226,18 @@ pub async fn create_task(
                 ApiResponse::unauthorized("未授权"),
             );
         }
+    };
+
+    // 租户归属：与 complete_task/batch_update_status 一致
+    // （super → NULL，普通用户 → claims.tenant_id；修复原 Uuid::nil() 导致
+    //  创建后按租户过滤查询/更新不可见的 404 问题）
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let task_id = Uuid::new_v4();
@@ -248,7 +261,7 @@ pub async fn create_task(
     .bind(&payload.due_date)
     .bind(Utc::now())
     .bind(Utc::now())
-    .bind(Uuid::nil())
+    .bind(tenant_filter)
     .execute(&pool)
     .await
     {
