@@ -97,3 +97,29 @@ init_database 自建 = **冗余双源**：迁移权威建库后，运行时 `CRE
 **里程碑达成：全仓运行时自建 DDL 清零，双源根除**——迁移 DDL（1012 表）为唯一权威，门禁 `scripts/migration/check-schema-defense.mjs`（errors=0 warnings=0）唯一仲裁；有意保留项仅 `inquiries`（1 列，ALTER/索引口径已由门禁证覆盖）与 `schema_defense_ledger`（台账白名单）。
 
 **收尾挂账**：① WSL/协作机拉取后空库四步回归（建库 → migrate.sh run → 启动冒烟 → 授权基线第④步）复核；② 初始化路径远期项 C（废弃自建 DDL 路径、根除双源，需先做依赖面清单评估再排期；本轮 B 列级校验门禁已先行兜底）；③ dependabot 28 漏洞（1 critical/9 high）另排。
+
+## 5f. 远期 C 项评估结论（2026-10-29 拍板：关闭）
+
+> 依据：全仓依赖面清单盘点（实测）。C 项原目标"废弃自建 DDL 路径、根除双源"经评估后**判定为误靶**——CREATE TABLE 双源已由 §5c/§5d 根除，剩余 TABLE_DEFS 防御体系**不是 DDL 双源**。
+
+### 依赖面清单（实测）
+
+| 层 | 量 | 明细 |
+|---|---|---|
+| TABLE_DEFS 运行时列校验定义 | 26 文件 / **771 表** | finance 127 · portal 123 · wms 56 · lims 44 · ehs 44（含 models/mod.rs 重复定义）· hrm 31 · erp 31 · unified-core 30 · qms 30 · gis 28 · scm 27 … |
+| 防御调用点 | **98 处** | server 18 处聚合 + 各 crate 入口（lims/integration/qms/finance/analytics 等） |
+| 共享引擎 | 1 | `lib/shared-db/src/schema.rs`：`schema_defense_ledger` 台账（建表/INSERT/SELECT）——全仓唯一剩余自建表（有意保留） |
+| 启动入口 | 1 | `lib/shared-bootstrap/src/lib.rs` bootstrap() |
+
+### 判定：TABLE_DEFS 防御 = 运行时契约校验，与迁移权威互补
+
+- 迁移 DDL = 建库事实源（CI 侧由 B 门禁 checkNoModify + schema-defense 兜底）；
+- TABLE_DEFS = **实际库结构运行时自检**（裸库漏跑迁移、人为 DDL 漂移、增量补列即时暴露），不建表（仅 `ALTER ADD COLUMN IF NOT EXISTS` + `information_schema` 自检 + 台账）。
+
+### 决策
+
+- **C 项关闭**：不废弃 TABLE_DEFS 防御体系（收益：-数万行代码；成本：失去运行时自检 + 26×98 改造面 + 台账追踪缺失，得不偿失）。
+- **漂移治理改走 B 门禁扩展（排期，下一迭代）**：TABLE_DEFS 定义 ↔ 迁移 DDL **列级一致性校验**（生成期静态比对，防两权威源漂移），替代"删除"作为治理手段：
+  - 目标：TABLE_DEFS 每表每列须在迁移 DDL 中找到一致定义（列名/类型/默认值语义一致）；不一致即门禁红。
+  - 验收：门禁新增列级比对输出（diff 明细）；全仓 771 表首轮对齐（预期存量无差异，新增表强约束）。
+  - 实施方式：扩展 `scripts/migration/check-schema-defense.mjs`（提取迁移 DDL 列定义 ↔ 解析各 crate TABLE_DEFS 数组）。
