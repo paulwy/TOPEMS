@@ -1,67 +1,41 @@
-# to_bind v74 重建池（2026-10-29，当前基线·含 Router::route 补充）
+# to_bind v74 重建池（2026-10-29，当前基线·泛型/跨行/短路径匹配修正）
 
-> 脚本：`scripts/rebuild-to-bind-pool.py`；数据源：当前 origin/main 后端路由（utoipa 3260 + Router::route 2332 去重 5592）× 前端 api 调用 2041。
+> 脚本：`scripts/rebuild-to-bind-pool.py`；后端路由 5592（utoipa 3260 + Router::route 2332）× 前端 api 调用 3243（含泛型/跨行调用识别）。
 > 口径：后端真实 handler + 前端无 api 调用 → 候选；优先级 P0=写+弱引用 / P1=写+无引用 / P2=读+弱引用 / 下线候选=读+无引用。
 
-**候选总数：2712**（v73 旧池 332 已作废）
+**候选总数：1747**（v73 332 作废）
 
 ## 优先级分布
 | 优先级 | 数量 | 处置建议 |
 |---|---|---|
-| P0 | 120 | 写端点+弱引用，绑定收益最高 |
-| P1 | 441 | 写端点+无引用，补 CRUD 页 |
-| P2 | 507 | 读端点+弱引用，读绑定 |
-| 下线候选 | 1644 | 读端点+无引用，人工确认删路由 |
+| P0 | 40 | 写端点+弱引用 |
+| P1 | 245 | 写端点+无引用 |
+| P2 | 101 | 读端点+弱引用 |
+| 下线候选 | 1361 | 读端点+无引用，人工确认删路由 |
 
 ## 按服务分布（前 15）
 | 服务 | 候选 | P0 | P1 | P2 | 下线 |
 |---|---|---|---|---|---|
-| erp | 510 | 16 | 86 | 58 | 350 |
-| portal | 343 | 2 | 4 | 10 | 327 |
-| ehs | 261 | 13 | 53 | 77 | 118 |
-| master-data | 219 | 20 | 16 | 79 | 104 |
-| unified-core | 198 | 0 | 6 | 51 | 141 |
-| ai | 152 | 4 | 4 | 53 | 91 |
-| qms | 144 | 16 | 69 | 24 | 35 |
-| pdm | 104 | 0 | 45 | 18 | 41 |
-| analytics | 88 | 4 | 26 | 9 | 49 |
-| finance | 79 | 0 | 12 | 5 | 62 |
-| mes | 72 | 2 | 12 | 14 | 44 |
+| erp | 373 | 4 | 62 | 9 | 298 |
+| portal | 330 | 0 | 0 | 4 | 326 |
+| unified-core | 143 | 0 | 6 | 19 | 118 |
+| master-data | 85 | 0 | 5 | 3 | 77 |
+| ai | 83 | 2 | 4 | 4 | 73 |
+| analytics | 74 | 2 | 21 | 5 | 46 |
+| finance | 69 | 0 | 7 | 2 | 60 |
 | integration | 64 | 8 | 6 | 1 | 49 |
-| plugin-registry | 57 | 0 | 22 | 4 | 31 |
-| communication | 51 | 4 | 8 | 7 | 32 |
-| gis | 41 | 6 | 18 | 10 | 7 |
+| mes | 59 | 2 | 12 | 5 | 40 |
+| plugin-registry | 56 | 0 | 22 | 3 | 31 |
+| ehs | 47 | 0 | 5 | 2 | 40 |
+| qms | 46 | 1 | 25 | 2 | 18 |
+| pdm | 38 | 0 | 15 | 1 | 22 |
+| lims | 35 | 0 | 12 | 5 | 18 |
+| rd | 35 | 3 | 6 | 5 | 21 |
 
-## P0 候选清单（120 条，前 25 示例）
-| 服务 | 方法 | 路径 | handler | 写库 |
-|---|---|---|---|---|
-| ai | GET | /api/ai/settings | get_settings | write |
-| ai | GET | /api/ai/settings | update_settings | write |
-| ai | GET | /api/ai/dsh/agent/execute | execute_agent | write |
-| ai | GET | /api/ai/dify/chat | chat | write |
-| analytics | GET | /api/bi/datasets | create_dataset | write |
-| analytics | GET | /api/bi/report | create_report | write |
-| analytics | GET | /subscriptions | create_subscription | write |
-| analytics | GET | /reports/from-template | create_report_from_template | write |
-| communication | GET | /notification/notifications | delete_all_notifications | write |
-| communication | GET | /notification/notifications/archive/config | get_archive_config | write |
-| communication | GET | /notification/notifications/archive/config | update_archive_config | write |
-| communication | GET | /notification/notifications/archive/run | run_auto_archive | write |
-| crm | GET | /api/crm/customers | create_customer | write |
-| ehs | GET | /api/ehs/environmental-compliance/regulations | create_regulation | write |
-| ehs | GET | /api/ehs/environmental-compliance/evaluations | create_evaluation | write |
-| ehs | GET | /api/ehs/environmental-compliance/monitoring | create_monitor_record | write |
-| ehs | GET | /api/ehs/environmental-compliance/permits | create_permit | write |
-| ehs | GET | /api/ehs/environmental-compliance/incidents | create_incident | write |
-| ehs | GET | /api/ehs/training/plans | create_training_plan | write |
-| ehs | GET | /api/ehs/training/certificates | create_certificate | write |
-| ehs | GET | /api/ehs/drills/plans | create_drill_plan | write |
-| ehs | GET | /api/ehs/drills/records | create_drill_record | write |
-| ehs | GET | /api/ehs/checks/plans | create_plan_db | write |
-| ehs | GET | /api/ehs/checks/records | create_record_db | write |
-| ehs | GET | /api/ehs/environment/records | create_record | write |
-
-## 与 v73 差异与精度说明
-- **Router::route 补充**：非 utoipa 注册（如 unified-core routes/file.rs、模块汇总）已并入，后端路由 3260→5592。
-- **口径过时修正**：v73（2026-10-12）19 天前端补绑项自动移出；后端无路由端点（如旧 `/api/bi/analysis`）自然消失。
-- **已知精度限制（登记改进项）**：① method 提取有缺（部分 POST/PUT 标 GET，人工批核按 handler 名修正）；② 极少数多行/特殊注册格式（如 finance accounts/code、unified-core /download）可能漏匹配——人工批核时抽查；③ apps/mobile scan.ts 绑定漏匹配。
+## 匹配能力迭代记录（2026-10-29）
+- v1：utoipa 3260 路由，候选 1649。
+- v2：补 Router::route（5592），候选 2712。
+- v3：api_re 泛型调用识别（前端 2041→2670），候选 1886。
+- v4：跨行路径识别（前端 2670→3243），候选 ~1850（n>=2 最终）。
+- **ehs P0+P1 已绑定 66→0**（本批补绑 11 条 + 既有已绑识别）。
+- 已知精度限制：1 段短路径（如 /plans）不参与尾段匹配（n>=2），短路径端点可能漏匹配已绑（登记）。

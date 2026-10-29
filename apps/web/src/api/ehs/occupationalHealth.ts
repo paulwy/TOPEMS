@@ -173,6 +173,27 @@ export const occupationalHealthApi = {
   deleteContraindication: async (id: string): Promise<ApiResponse<void>> => {
     return apiClient.ehs.delete<void>(`/occupational-health/contraindications/${id}`);
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  updateExamPlan: async (
+    id: string,
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.ehs.put<Record<string, unknown>>(
+      `/occupational-health/exam-plans/${id}`,
+      data
+    );
+  },
+
+  updateExamRecord: async (
+    id: string,
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.ehs.put<Record<string, unknown>>(
+      `/occupational-health/exam-records/${id}`,
+      data
+    );
+  },
 };
 
 export default occupationalHealthApi;

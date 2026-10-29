@@ -83,6 +83,31 @@ export const syncApi = {
   getSyncConfig: async (id: string): Promise<ApiResponse<SyncConfig>> => {
     return apiClient.ehs.get<SyncConfig>(`/sync/configs/${id}`);
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  syncHazardToQMS: async (
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.ehs.post<Record<string, unknown>>('/sync/hazard-to-qms', data);
+  },
+
+  syncAccidentToLIMS: async (
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.ehs.post<Record<string, unknown>>('/sync/accident-to-lims', data);
+  },
+
+  createIntegrationHazard: async (
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.ehs.post<Record<string, unknown>>('/internal/ehs/hazards/integration', data);
+  },
+
+  createIntegrationAlert: async (
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.ehs.post<Record<string, unknown>>('/internal/ehs/alerts/integration', data);
+  },
 };
 
 export default syncApi;

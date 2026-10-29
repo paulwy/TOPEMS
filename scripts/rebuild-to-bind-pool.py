@@ -149,9 +149,10 @@ def extract_backend_routes():
 def extract_frontend_refs():
     """扫描前端提取 api 调用路径。返回 {norm_path: [(verb, raw, file)]}"""
     refs = defaultdict(list)
-    # apiClient.<svc>.<verb>('<path>' | `path`)
+    # apiClient.<svc>.<verb>[<泛型嵌套>]('<path>' | `path`)——泛型可嵌套、路径可跨行
     api_re = re.compile(
-        r"apiClient\.(?P<svc>[a-zA-Z0-9_]+)\.(?P<verb>get|post|put|patch|delete)\("
+        r"apiClient\.(?P<svc>[a-zA-Z0-9_]+)\.(?P<verb>get|post|put|patch|delete)"
+        r"[^`'\"(]*\(\s*"
         r"[`'\"]?(?P<path>[^`'\")\s]+)",
         re.I,
     )

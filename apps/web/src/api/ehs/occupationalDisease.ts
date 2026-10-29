@@ -185,6 +185,17 @@ export const occupationalDiseaseApi = {
   deleteProtectionMeasure: async (id: string): Promise<ApiResponse<void>> => {
     return apiClient.ehs.delete<void>(`/occupational-diseases/protection-measures/${id}`);
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  createDiseaseCase: async (
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.ehs.post<Record<string, unknown>>('/occupational-disease/cases', data);
+  },
+
+  deleteDiseaseCase: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.ehs.delete<void>(`/occupational-disease/cases/${id}`);
+  },
 };
 
 export default occupationalDiseaseApi;

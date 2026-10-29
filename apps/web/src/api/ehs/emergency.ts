@@ -70,6 +70,20 @@ export const emergencyApi = {
   deleteDrill: async (id: string): Promise<ApiResponse<void>> => {
     return apiClient.ehs.delete<void>(`/drills/${id}`);
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  listPlanVersions: async (
+    id: string
+  ): Promise<ApiResponse<Record<string, unknown>[]>> => {
+    return apiClient.ehs.get<Record<string, unknown>[]>(`/emergency-plans/${id}/versions`);
+  },
+
+  createNewVersion: async (
+    id: string,
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.ehs.post<Record<string, unknown>>(`/emergency-plans/${id}/versions`, data);
+  },
 };
 
 export default emergencyApi;

@@ -336,6 +336,17 @@ export const environmentalComplianceApi = {
     return apiClient.ehs.post<EnvironmentMonitor>('/environmental-compliance/monitoring', data);
   },
 
+  // v74 to_bind 补绑（2026-10-29）
+  async updateMonitorRecord(
+    id: string,
+    data: Partial<CreateMonitorRecordRequest>
+  ): Promise<ApiResponse<EnvironmentMonitor>> {
+    return apiClient.ehs.put<EnvironmentMonitor>(
+      `/environmental-compliance/monitoring/${id}`,
+      data
+    );
+  },
+
   async listMonitorTypes(): Promise<ApiResponse<Record<string, unknown>[]>> {
     return apiClient.ehs.get<Record<string, unknown>[]>(
       '/environmental-compliance/monitoring/types'
