@@ -7,7 +7,8 @@
 
 | 包 | 版本 | 严重度 | 来源 | 暴露面 | 无法修复原因 | 收敛路径 | 复核触发 |
 |---|---|---|---|---|---|---|---|
-| node-forge | 1.4.0 | high（GHSA-86w9-cpqp-85rv：RSA PKCS#1 v1.5 签名验证接受多余嵌套 DigestAlgorithm） | apps/mobile → expo → @expo/code-signing-certificates | **构建期**（expo 签名/证书流程），不随 App 运行时发布 | npm 最后发布版即 1.4.0（漏洞版），上游停更无修复版；expo 57.0.31 peerDependencies **pin 死 node-forge 1.4.0** | expo 58 大版本升级（依赖链可能换库）；或上游发布 1.4.1+ | expo 发布新版本时 |
+| node-forge | 1.4.0 | high（GHSA-86w9-cpqp-85rv：RSA PKCS#1 v1.5 签名验证接受多余嵌套 DigestAlgorithm） | apps/mobile → expo 58 → @expo/cli → @expo/code-signing-certificates | **构建期**（expo 签名/证书流程），不随 App 运行时发布 | npm 最后发布版即 1.4.0（漏洞版），上游停更无修复版；expo 58 升级后链仍残留（@expo/code-signing-certificates@0.0.7 依赖 node-forge） | 上游发布 1.4.1+；或 @expo/code-signing-certificates 移除依赖 | @expo/code-signing-certificates 或 expo 发布新版本时 |
+| deepmerge | 4.3.1 | low（GHSA-gcqx-w48m-w2h4：mergeObject 原型污染返回对象） | apps/mobile → expo 58 → @expo/config 等（expo CLI 配置合并链） | **构建期**（expo prebuild 配置合并） | npm 最新发布版即 4.3.1（漏洞版），无修复版 | 上游发布 4.3.2+；或 expo 换依赖 | deepmerge 上游发布时 |
 | deepmerge | 4.3.1 | low（GHSA-gcqx-w48m-w2h4：mergeObject 原型污染返回对象） | apps/mobile → expo → @expo/config 等（62 条路径） | **构建期**（expo prebuild 配置合并） | npm 最新发布版即 4.3.1（漏洞版），无修复版 | 上游发布 4.3.2+；或 expo 换依赖 | deepmerge 上游发布时 |
 
 ## 已执行的处置（历史基线）
@@ -19,16 +20,25 @@
   - qs 6.16.0 → 6.16.1（override，GHSA-6pq8-jhm2-2vcw 消除）。
 - expo 补丁升级：57.0.28 → 57.0.31（commit `a0d4118f3`）。
 
+## 2026-10-29 复核与收敛（expo 58 升级批次）
+
+- **expo 58 升级**（commit `f2438b583`）：57.0.31 → 58.0.21 + RN 0.88 + react 19.3；**node-forge 链残留确认**（expo-server 已移除依赖，但 @expo/code-signing-certificates 仍依赖 node-forge 1.4.0）——挂账维持
+- **pnpm overrides 根因修复**（commit `ede14836b`）：根 package.json 两个重复 `pnpm` 键合并（后段覆盖前段致 overrides 静默失效）——25 条 advisory → 2 条（仅 node-forge / deepmerge）
+- **cargo audit 复核**：0 vulnerability 维持（654 包，3 unmaintained 非漏洞）
+- **dependabot 本地覆盖面**：npm 收敛 23 + Rust 0 = 28 项闭环 26（详见 `docs/security/dependabot-local-audit-20261029.md`）
+
 ## 复核命令
 
 ```bash
-# Rust
-cargo audit
+# Rust（镜像环境需本地 advisory-db：git clone https://github.com/RustSec/advisory-db.git 后）
+cargo audit --db /path/to/advisory-db
+
 # 前端（镜像 registry 不支持 audit 端点，需显式官方 registry）
-pnpm audit --registry https://registry.npmjs.org --audit-level=low
+npm_config_registry=https://registry.npmjs.org pnpm audit --json
 ```
 
 ## 状态
 
 - [x] 2026-10-29 登记
-- [ ] 复核（触发条件：expo 58 发布 / node-forge / deepmerge 上游发布新版本）
+- [x] 2026-10-29 复核（expo 58 已升级、overrides 根因已修、收敛至极限 2 条）
+- [ ] 复核（触发条件：@expo/code-signing-certificates 更新 / node-forge 1.4.1+ / deepmerge 4.3.2+ 发布）
