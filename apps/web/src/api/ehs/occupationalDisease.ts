@@ -190,11 +190,11 @@ export const occupationalDiseaseApi = {
   createDiseaseCase: async (
     data: Record<string, unknown>
   ): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.ehs.post<Record<string, unknown>>('/occupational-disease/cases', data);
+    return apiClient.ehs.post<Record<string, unknown>>('/occupational-diseases/cases', data);
   },
 
   deleteDiseaseCase: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/occupational-disease/cases/${id}`);
+    return apiClient.ehs.delete<void>(`/occupational-diseases/cases/${id}`);
   },
 };
 

@@ -29,6 +29,7 @@ const path = require('node:path');
 
 const REPO_ROOT = path.join(__dirname, '..', '..');
 const WEB_SRC = path.join(REPO_ROOT, 'apps', 'web', 'src');
+const WEB_API = path.join(WEB_SRC, 'api');
 const SVC_DIR = path.join(REPO_ROOT, 'svc');
 const ALLOWLIST_PATH = path.join(__dirname, 'api-boundary-allowlist.json');
 
@@ -115,6 +116,24 @@ function frontendCalls() {
   return calls;
 }
 
+// ---------- 1.5 调用面过滤（与 contract-gate 同口径） ----------
+// 协作机并行开发批量预生成的 api-client 封装（readOps*/writeOps* 等）无业务
+// import 时是死封装，不构成真实契约需求——整文件豁免；被业务 import 的文件
+// 仍全量比对，不漏真缺口。
+function collectBusinessImports() {
+  const imported = new Set();
+  const apiRe = /from\s+['"]([^'"]+)['"]/g;
+  for (const f of walk(WEB_SRC, '.ts').concat(walk(WEB_SRC, '.tsx'))) {
+    if (f.startsWith(WEB_API + path.sep)) continue;
+    const src = fs.readFileSync(f, 'utf8');
+    let m;
+    while ((m = apiRe.exec(src)) !== null) {
+      imported.add(m[1].split('/').pop().replace(/\.[^.]+$/, ''));
+    }
+  }
+  return imported;
+}
+
 // ---------- 2. backend: full route segments per frontend svc ----------
 function backendSegs() {
   // api_prefix per svc dir (main.rs), default /api/<dir>
@@ -167,7 +186,9 @@ function main() {
   const allow = new Map(); // key -> type
   for (const e of allowlistRaw.entries) allow.set(`${e.svc}|${e.verb}|${e.path}`, e.type || 'prebuilt');
 
-  const calls = frontendCalls();
+  const imported = collectBusinessImports();
+  const calls = frontendCalls()
+    .filter((c) => imported.has(path.basename(c.file).replace(/\.[^.]+$/, '')));
   const backend = backendSegs();
   const violations = [];
   let matched = 0, allowPrebuilt = 0, allowGap = 0;
