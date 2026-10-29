@@ -251,9 +251,221 @@ function main() {
     }
   }
 
+  // ---- B 扩展：TABLE_DEFS（Rust 运行时列契约）↔ 迁移 DDL 列级一致性校验 ----
+  const tableDefs = collectTableDefs();
+  lines.push(`\nTABLE_DEFS 契约表数: ${tableDefs.size}`);
+  let tdPass = 0;
+  let tdTypeWarn = 0;
+  for (const [table, cols] of [...tableDefs.entries()].sort()) {
+    const migColsTyped = collectMigrationsTyped().get(table);
+    if (!migColsTyped) {
+      warnings++;
+      lines.push(`WARN  TABLE_DEFS 契约表「${table}」在迁移 DDL 中无此表——需核对（或补迁移）`);
+      continue;
+    }
+    const missingCol = [...cols.keys()].filter((c) => !migColsTyped.has(c)).sort();
+    if (missingCol.length > 0) {
+      errors++;
+      lines.push(`FAIL  TABLE_DEFS「${table}」缺列(相对迁移 DDL): ${missingCol.join(", ")}`);
+      continue;
+    }
+    const typeMismatch = [];
+    for (const [c, ty] of cols) {
+      const mty = migColsTyped.get(c);
+      const n1 = normalizeType(ty), n2 = normalizeType(mty);
+      if (n1 && n2 && n1 !== n2) typeMismatch.push(`${c}: ${ty} → ${mty}`);
+    }
+    if (typeMismatch.length > 0) {
+      warnings++;
+      tdTypeWarn++;
+      lines.push(`WARN  TABLE_DEFS「${table}」类型不一致(${typeMismatch.length}) → ${typeMismatch.slice(0, 3).join(" | ")}${typeMismatch.length > 3 ? ` …(+${typeMismatch.length - 3})` : ""}`);
+    } else {
+      tdPass++;
+      lines.push(`PASS  TABLE_DEFS「${table}」（${cols.size} 列对齐，类型一致）`);
+    }
+  }
+  lines.push(`TABLE_DEFS 校验: PASS ${tdPass} | 类型差异 ${tdTypeWarn}`);
+
   console.log(lines.join("\n"));
   console.log(`\nschema-defense: ${errors === 0 ? "PASS" : "FAIL"}（errors=${errors} warnings=${warnings}）`);
   process.exit(errors === 0 ? 0 : 1);
+}
+
+// ---- B 扩展辅助：TABLE_DEFS 解析 + 迁移类型提取 + 类型归一化 ----
+
+/** 解析 TABLE_DEFS 数组体 → Map(table -> Map(col -> type))
+ *  形态兼容：表名行独立（后接 &[）｜单行列对 ("col","type")｜跨行列对（"col" 行 + "type" 行） */
+function parseTableDefsArray(body) {
+  const tables = new Map();
+  let cur = null;
+  let pendingCol = null;
+  const lines = body.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const next = lines[i + 1] ?? "";
+    let m = /^\s*"([a-z0-9_]+)",\s*$/.exec(line);
+    if (m && /^\s*&\[/.test(next)) {
+      cur = m[1];
+      if (!tables.has(cur)) tables.set(cur, new Map());
+      pendingCol = null;
+      continue;
+    }
+    m = /^\s*\(\s*"([^"]+)"\s*,\s*"([^"]*)"\s*\)\s*,?\s*$/.exec(line);
+    if (m && cur) {
+      tables.get(cur).set(m[1].toLowerCase(), m[2]);
+      pendingCol = null;
+      continue;
+    }
+    if (!cur) continue;
+    m = /^\s*"([^"]+)"\s*,?\s*$/.exec(line);
+    if (m && /^\s*"/.test(next)) {
+      pendingCol = m[1];
+      continue;
+    }
+    m = /^\s*"([^"]*)"\s*,?\s*$/.exec(line);
+    if (m && pendingCol) {
+      tables.get(cur).set(pendingCol.toLowerCase(), m[1]);
+      pendingCol = null;
+    }
+  }
+  return tables;
+}
+
+/** 收集全仓 TABLE_DEFS → Map(table -> Map(col -> type)) */
+function collectTableDefs() {
+  const defs = new Map();
+  const files = SELF_BUILT_DIRS.flatMap((d) => walkRs(d, []));
+  for (const f of files) {
+    const src = fs.readFileSync(f, "utf8");
+    const idx = src.indexOf("pub const TABLE_DEFS");
+    if (idx < 0) continue;
+    const arrStart = src.indexOf("= &[", idx);
+    if (arrStart < 0) continue;
+    const open = src.indexOf("[", arrStart);
+    let depth = 0, close = -1;
+    for (let i = open; i < src.length; i++) {
+      if (src[i] === "[") depth++;
+      else if (src[i] === "]") { depth--; if (depth === 0) { close = i; break; } }
+    }
+    if (close < 0) continue;
+    const parsed = parseTableDefsArray(src.slice(open + 1, close));
+    for (const [t, cols] of parsed) {
+      if (!defs.has(t)) defs.set(t, new Map());
+      for (const [c, ty] of cols) if (!defs.get(t).has(c)) defs.get(t).set(c, ty);
+    }
+  }
+  return defs;
+}
+
+/** 迁移 DDL：Map(table -> Map(col -> type))——CREATE TABLE 顶层列 + ALTER ADD */
+const TD_LEVEL_KEYWORDS = new Set(["primary", "unique", "foreign", "check", "constraint", "key", "index", "exclude", "like"]);
+
+function extractTablesTyped(sqlText) {
+  const tables = new Map();
+  const ensure = (t) => {
+    const k = t.toLowerCase();
+    if (!tables.has(k)) tables.set(k, new Map());
+    return tables.get(k);
+  };
+  const ctRe = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:"?[A-Za-z0-9_]+"?(?:\.(?:"?[A-Za-z0-9_]+"?)|\.[A-Za-z0-9_.]+)?)\s*\(/gi;
+  let m;
+  while ((m = ctRe.exec(sqlText)) !== null) {
+    const raw = m[0].replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?/i, "");
+    const parts = raw.slice(0, raw.lastIndexOf("(")).split(".").map((s) => s.replace(/"/g, "").trim());
+    const table = parts[parts.length - 1].toLowerCase();
+    const open = m.index + m[0].length - 1;
+    let depth = 0, close = -1;
+    for (let i = open; i < sqlText.length; i++) {
+      const ch = sqlText[i];
+      if (ch === "(") depth++;
+      else if (ch === ")") { depth--; if (depth === 0) { close = i; break; } }
+    }
+    if (close < 0) continue;
+    const inner = sqlText.slice(open + 1, close);
+    const fields = [];
+    let d = 0, start = 0;
+    for (let i = 0; i < inner.length; i++) {
+      const ch = inner[i];
+      if (ch === "(") d++;
+      else if (ch === ")") d--;
+      else if (ch === "," && d === 0) { fields.push(inner.slice(start, i)); start = i + 1; }
+    }
+    fields.push(inner.slice(start));
+    const cols = ensure(table);
+    for (const f of fields) {
+      const cm = /^\s*(?:"([^"]+)"|`([^`]+)`|([A-Za-z_][A-Za-z0-9_]*))\s+([A-Za-z_][A-Za-z0-9_]*(?:\s+[A-Za-z_][A-Za-z0-9_]*)*(?:\s*\([^)]*\))?)/i.exec(f);
+      if (!cm) continue;
+      const name = (cm[1] ?? cm[2] ?? cm[3]).toLowerCase();
+      if (TD_LEVEL_KEYWORDS.has(name)) continue;
+      cols.set(name, cm[4].trim());
+    }
+  }
+  const altRe = /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:"?[A-Za-z0-9_]+"?(?:\.(?:"?[A-Za-z0-9_]+"?)|\.[A-Za-z0-9_.]+)?)\s+ADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?(?:"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))\s+([A-Za-z_][A-Za-z0-9_]*(?:\s+[A-Za-z_][A-Za-z0-9_]*)*(?:\s*\([^)]*\))?)/gi;
+  while ((m = altRe.exec(sqlText)) !== null) {
+    const rawTable = m[0].replace(/ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?/i, "").replace(/\s+ADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?.*/i, "").replace(/"/g, "");
+    const table = rawTable.split(".").pop().toLowerCase();
+    ensure(table).set((m[1] ?? m[2]).toLowerCase(), m[3]?.toLowerCase() ?? "");
+  }
+  return tables;
+}
+
+const MIGRATIONS_TYPED_CACHE = (() => {
+  const tables = new Map();
+  const dirs = [MIGRATION_DIR];
+  for (const svc of fs.readdirSync(path.join(REPO_ROOT, "svc"), { withFileTypes: true })) {
+    if (!svc.isDirectory()) continue;
+    const d = path.join(REPO_ROOT, "svc", svc.name, "migrations");
+    if (fs.existsSync(d)) dirs.push(d);
+  }
+  for (const dir of dirs) {
+    for (const f of fs.readdirSync(dir)) {
+      if (!f.endsWith(".sql")) continue;
+      const src = fs.readFileSync(path.join(dir, f), "utf8");
+      for (const [t, cols] of extractTablesTyped(src)) {
+        if (!tables.has(t)) tables.set(t, new Map());
+        for (const [c, ty] of cols) if (!tables.get(t).has(c)) tables.get(t).set(c, ty);
+      }
+    }
+  }
+  return tables;
+})();
+
+function collectMigrationsTyped() {
+  return MIGRATIONS_TYPED_CACHE;
+}
+
+/** 类型归一化（基类型语义）：去参数/尾缀，合并同义类型 */
+function normalizeType(t) {
+  let s = (t ?? "").toLowerCase().replace(/"/g, "").trim();
+  if (!s) return "";
+  s = s.replace(/\s+default\b.*$/i, "").replace(/\s+references\b.*$/i, "").replace(/\s+generated\b.*$/i, "").trim();
+  s = s.replace(/\s+not\s+null\b/i, "").replace(/\s+null\b/i, "").replace(/\s+unique\b/i, "").replace(/\s+primary\s+key\b/i, "").replace(/,\s*check\s*\([^)]*\)/i, "").replace(/\s+check\s*\([^)]*\)/i, "").trim();
+  s = s.replace(/\([^)]*\)/g, "").trim();
+  s = s.replace(/\s+/g, " ").trim();
+  const exact = {
+    "timestamp with time zone": "timestamptz",
+    "timestamp without time zone": "timestamp",
+    "time with time zone": "timetz",
+    "character varying": "varchar",
+    "double precision": "float8",
+    "bit varying": "varbit",
+  };
+  if (exact[s]) return exact[s];
+  const map = {
+    int: "int", integer: "int", int4: "int",
+    bigint: "bigint", int8: "bigint",
+    smallint: "smallint", int2: "smallint",
+    bool: "boolean", boolean: "boolean",
+    float8: "float8", real: "float4", float4: "float4", float: "float4",
+    decimal: "numeric", numeric: "numeric",
+    varchar: "varchar", char: "char", character: "char", bpchar: "char",
+    serial: "serial", bigserial: "bigserial", smallserial: "smallserial",
+    timestamptz: "timestamptz", timestamp: "timestamp",
+    time: "time", timetz: "timetz", date: "date", interval: "interval",
+    uuid: "uuid", json: "json", jsonb: "jsonb", bytea: "bytea", inet: "inet",
+    vector: "vector", text: "text", citext: "citext",
+  };
+  return map[s] ?? s;
 }
 
 main();
