@@ -58,6 +58,15 @@
 
 - 提交：本批 config 清理 + 2 份文档 + 登记（待推送）。
 
+### to_bind 332 前端绑定池（2026-10-29）✅ 清单已产出
+
+> 推进「批 0 基线留痕」的 to_bind 332 条（已注册 real handler、前端未绑定）。
+
+- **产出**：`docs/design/fe-bind-pool-to-bind-332.md`（24 服务全量端点表 + 优先级 + 排期建议）
+- **优先级分布**：P0 98（写+weak，核心 CRUD 绑定）/ P1 101（写+none，前端补页）/ P2 10（读+weak，读接线）/ 管理端绑定池 123（reason 明确建议管理端：平台/集成类，含 ai connectors 等）
+- **排期**：P0 按服务分批前端接线（每服务 1 批 + 独立 commit + typecheck + WCS）；管理端池待 AI 平台管理页立项；绑定进度回填文档
+
+
 ## S25 语义治理闭环：flow 表前缀 + mobile 4xx 透传（第 55 轮，2026-10-28）✅ 已完成
 
 > 目标：清零 `docs/web_contract_gap_list.md` 剩余 42 条 KNOWN（workflow 39 + mobile 3）。
