@@ -1,0 +1,8 @@
+svc,priority,method,path,operation_id,handler,write,frontend,v74_tend
+erp,下线候选,GET,/vehicles/{id}/requests/{rid},stub,stub,read,none,下线-真占位
+erp,下线候选,GET,/db/changes/{id},stub,stub,read,none,下线-真占位
+erp,下线候选,GET,/master-data-refs/archived/{id},stub,stub,read,none,下线-真占位
+erp,下线候选,GET,/master-data-refs/pending-destruction/{id},stub,stub,read,none,下线-真占位
+mes,下线候选,GET,/equipment-oee/{equipment_id}/efficiency/{rid},stub_efficiency_detail,stub_efficiency_detail,read,none,下线-真占位
+unified-core,下线候选,GET,/form-definitions/{id},stub_detail,stub_detail,read,none,下线-真占位
+unified-core,下线候选,GET,/form-instances/{id},stub_detail,stub_detail,read,none,下线-真占位

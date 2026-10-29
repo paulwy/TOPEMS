@@ -421,10 +421,10 @@ erp,下线候选,POST,/master-data-refs/audit/findings/{finding_id}/resolve,reso
 erp,下线候选,GET,/master-data-refs/audit/report,generate_audit_report_handler,generate_audit_report_handler,read,none,待定
 erp,下线候选,GET,/master-data-refs/audit/scorecard,get_audit_scorecard_handler,get_audit_scorecard_handler,read,none,待定
 erp,下线候选,GET,/master-data-refs/audit/stats,get_compliance_audit_stats_handler,get_compliance_audit_stats_handler,read,none,待定
-erp,下线候选,GET,/vehicles/{id}/requests/{rid},stub,stub,read,none,待定
-erp,下线候选,GET,/db/changes/{id},stub,stub,read,none,待定
-erp,下线候选,GET,/master-data-refs/archived/{id},stub,stub,read,none,待定
-erp,下线候选,GET,/master-data-refs/pending-destruction/{id},stub,stub,read,none,待定
+erp,下线候选,GET,/vehicles/{id}/requests/{rid},stub,stub,read,none,下线-真占位
+erp,下线候选,GET,/db/changes/{id},stub,stub,read,none,下线-真占位
+erp,下线候选,GET,/master-data-refs/archived/{id},stub,stub,read,none,下线-真占位
+erp,下线候选,GET,/master-data-refs/pending-destruction/{id},stub,stub,read,none,下线-真占位
 erp,下线候选,GET,/internal/searchable-snapshot,searchable_snapshot,searchable_snapshot,read,none,待定
 erp,下线候选,GET,/hr/employees,proxy_list_employees,proxy_list_employees,read,none,待定
 erp,下线候选,GET,/hr/departments,proxy_list_departments,proxy_list_departments,read,none,待定
@@ -687,7 +687,7 @@ mes,下线候选,GET,/api/mes/kanban/quality-trend,get_quality_trend,get_quality
 mes,下线候选,GET,/aps/schedule/bottleneck-analysis,get_bottleneck_analysis,get_bottleneck_analysis,read,none,待定
 mes,下线候选,GET,/aps/schedule/bottleneck-analysis/{_id},get_bottleneck_analysis,get_bottleneck_analysis,read,none,待定
 mes,下线候选,GET,/equipment-oee/{equipment_id}/efficiency,get_equipment_efficiency_analysis,get_equipment_efficiency_analysis,read,none,待定
-mes,下线候选,GET,/equipment-oee/{equipment_id}/efficiency/{rid},stub_efficiency_detail,stub_efficiency_detail,read,none,待定
+mes,下线候选,GET,/equipment-oee/{equipment_id}/efficiency/{rid},stub_efficiency_detail,stub_efficiency_detail,read,none,下线-真占位
 mes,下线候选,ANY,/forecasts/{id}/adopt,redirect_forecasts,redirect_forecasts,read,none,待定
 mes,下线候选,GET,/maintenances/{_id},list_maintenances,list_maintenances,read,none,待定
 mes,下线候选,GET,/work-reports/today-output,get_today_production_output,get_today_production_output,read,none,待定
@@ -1279,8 +1279,8 @@ unified-core,下线候选,GET,/monitor/logs/node/{id},get_logs_by_node,get_logs_
 unified-core,下线候选,GET,/monitor/sla,get_sla_compliance,get_sla_compliance,read,none,待定
 unified-core,下线候选,GET,/variables/global/{workflow_id},get_global_variables,get_global_variables,read,none,待定
 unified-core,下线候选,GET,/delegates/{id},get_delegate,get_delegate,read,none,待定
-unified-core,下线候选,GET,/form-definitions/{id},stub_detail,stub_detail,read,none,待定
-unified-core,下线候选,GET,/form-instances/{id},stub_detail,stub_detail,read,none,待定
+unified-core,下线候选,GET,/form-definitions/{id},stub_detail,stub_detail,read,none,下线-真占位
+unified-core,下线候选,GET,/form-instances/{id},stub_detail,stub_detail,read,none,下线-真占位
 unified-core,下线候选,POST,/rules/batch-update,batch_update_rules,batch_update_rules,read,none,待定
 unified-core,下线候选,POST,/workflows/{id}/publish,publish_workflow,publish_workflow,read,none,待定
 unified-core,下线候选,POST,/workflows/{id}/unpublish,unpublish_workflow,unpublish_workflow,read,none,待定

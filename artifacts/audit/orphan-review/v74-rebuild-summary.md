@@ -56,3 +56,10 @@
 - **P2 qms+portal+master-data 批**（3 补绑；6 已绑登记；1367→1364，P2 54→51）。
 - **P2 扫尾批（16 条）**（补绑 4：analytics visualization list/create + ehs environment list + plugin navigation-config；其余 12 条已绑/剔除登记（ai dsh stream×2、communication notifications×2、finance exports×2、hrm reviews/goals、plugin marketplace summary、pm project-types、gis ws/map WS 端点）；候选 1364→1361，P2 51→48。**P2 实质全部清零**（剩余 48 均为脚本无法核销的已绑登记项）。
 - 已知精度限制：1 段短路径（如 /plans）不参与尾段匹配（n>=2），短路径端点可能漏匹配已绑（登记）。
+
+## 下线候选分流（2026-10-29）
+
+- 分层抽样 24 条：handler 存在率 ~90%，缺陷 2 类（method 误标写端点 GET 化 ~15%、handler 泛化名 stub/ok/s ~15%）
+- 发现 erp `smoke_false_positive_stub_routes()` 冒烟占位路由（业务无实现）
+- 分流：**stub-cleanup 7 条**（下线-真占位，池已标记 v74_tend）；**method-mislabel 213 条**（写端点误标 GET，归前端接入 P1 通道，portal 82 最大）；**read-endpoints 990 条**（真实读端点待人工评估，portal 240/erp 181/unified-core 110 最大）
+- 清单落盘 `artifacts/audit/orphan-review/offline-review/{stub-cleanup,method-mislabel,read-endpoints}.csv` + README.md（评估维度 4 条）
