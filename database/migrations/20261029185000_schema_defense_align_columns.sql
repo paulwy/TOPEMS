@@ -31,8 +31,8 @@ ALTER TABLE "pm"."project_resources" ADD COLUMN IF NOT EXISTS "deleted_at" TIMES
 ALTER TABLE "pm"."project_type_configs" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
 ALTER TABLE "scm"."purchase_items" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
 ALTER TABLE "erp"."purchase_orders" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
-ALTER TABLE "public"."qa_sampling_plans" ADD COLUMN IF NOT EXISTS "inspection_level" VARCHAR(32);
-ALTER TABLE "public"."qa_sampling_plans" ADD COLUMN IF NOT EXISTS "sample_size" INTEGER;
+ALTER TABLE "mes"."qa_sampling_plans" ADD COLUMN IF NOT EXISTS "inspection_level" VARCHAR(32);
+ALTER TABLE "mes"."qa_sampling_plans" ADD COLUMN IF NOT EXISTS "sample_size" INTEGER;
 ALTER TABLE "pm"."quality_checks" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
 ALTER TABLE "pm"."risks" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
 ALTER TABLE "wms"."stock_take_items" ADD COLUMN IF NOT EXISTS "deleted_at" TIMESTAMPTZ;
