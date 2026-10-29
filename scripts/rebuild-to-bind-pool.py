@@ -43,14 +43,26 @@ METHOD_RE = re.compile(r'method\s*=\s*"([A-Z]+)"')
 OPID_RE = re.compile(r'operation_id\s*=\s*"([^"]+)"')
 
 
+# 已知服务名（后端 path 首段若为服务名，前端 apiClient.<svc> 相对路径不含该段）
+SVC_NAMES = {
+    "erp", "ehs", "qms", "wms", "scm", "srm", "crm", "mes", "lims", "rd", "ai",
+    "dsh", "pm", "tms", "gis", "mobile", "finance", "hrm", "portal", "search",
+    "aps", "bi", "admin", "consolidation", "unified-core", "integration", "bff",
+    "master-data", "master-data-refs",
+}
+
+
 def normalize(p: str) -> str:
-    """路径归一化：去 /api 前缀、去参数占位符，转小写。"""
+    """路径归一化：去 /api 前缀、去服务名前段、去参数占位符，转小写。"""
     p = p.strip()
     p = re.sub(r"^/api/", "", p)
     p = re.sub(r"\{(?:[^}]*)\}", "{}", p)
     p = re.sub(r"\$\{(?:[^}]*)\}", "{}", p)
     p = p.lower().strip("/")
-    return p
+    segs = p.split("/")
+    if segs and segs[0] in SVC_NAMES:
+        segs = segs[1:]
+    return "/".join(segs)
 
 
 def tail_segments(p: str) -> list:

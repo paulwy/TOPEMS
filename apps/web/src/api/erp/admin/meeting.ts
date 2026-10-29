@@ -33,4 +33,20 @@ export const meetingRoomApi = {
   async getBookings(id: string): Promise<ApiResponse<MeetingBooking[]>> {
     return apiClient.erp.get(`/meeting-rooms/${id}/bookings`);
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  async createBooking(data: Record<string, unknown>): Promise<ApiResponse<MeetingBooking>> {
+    return apiClient.erp.post('/meeting-bookings', data);
+  },
+
+  async updateBooking(
+    id: string,
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<MeetingBooking>> {
+    return apiClient.erp.put(`/meeting-bookings/${id}`, data);
+  },
+
+  async deleteBooking(id: string): Promise<ApiResponse<string>> {
+    return apiClient.erp.delete(`/meeting-bookings/${id}`);
+  },
 };
