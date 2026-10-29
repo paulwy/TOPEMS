@@ -1,3 +1,10 @@
+## v1.120 BFF WS：mes 双实现差异核查（2026-10-29）✅
+
+- **差异定稿**：mes `dashboard_ws.rs` 为**纯骨架**（连接+心跳+认证，**零推送数据源**、mes 业务零广播调用）；unified-core 通用通道为**完整模型**（subscribe/broadcast 配额+合并，ws_event_bridge 广播 notification 事件系）
+- **前端消费确认**：`ProductionDashboardPage` 用 `useDashboardWebSocket`（映射 `/ws/mes/dashboard` → nginx /ws/ → 8099 unified-core 白名单命中）——**mes 独立挂载（main.rs:262）已无任何前端/移动端直连消费**（mobile 全走 8099）
+- **观察项（新增）**：**dashboard 频道无广播源**——ws_event_bridge/ws.rs 仅广播 notifications/告警频道，无人向 dashboard 频道广播 → 看板 WS 仅连接/心跳正常，业务数据靠 REST 轮询兜底（无故障、缺实时性）；若需实时需 MES 业务事件接入 ws_event_bridge
+- **收敛建议**：① mes `dashboard_ws.rs` 标记**下线候选**（无消费无推送源，保守保留、注释登记）；② dashboard 实时推送待业务确认后接入事件桥（W4 范畴）
+
 ## v1.119 BFF WS：前端接线全量触发条件核查（2026-10-29）✅
 
 - **核查结论**：全量触发条件**基本达成**——后端 WS Hub 全绿（v1.113/116/117 + 426 实测）；nginx /ws/ 反代已入库（部署 reload 生效即链路通）；前端接线**已存在**：`useWebSocket.ts`（service，/ws/core）+ 4 消费 hook（useNotificationWebSocket→通知铃铛实连 / useDashboardWebSocket / useImWebSocket / features/websocket 统一出口）+ authStore 生命周期管理
