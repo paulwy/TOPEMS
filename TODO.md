@@ -25,6 +25,20 @@
 - **验证**：WCS **4119/4119 PASS 0 FAIL**（较收口前 4105 多 14 条端点，解析增强全部实跑）；MCS 复跑 **114/114 0 FAIL**（无回归）。
 - 观察项：MCS 39 WARN 与前端契约错位（mobile inventory/attendance 字段）维持 v1.112 登记，待业务排期。
 
+### 复核补充（同日）：MCS 39 WARN 分类处置 → 37 WARN（attendance 打卡链路 2 条真 bug 修复）✅
+
+> 目标：复核 v1.112 登记的 39 条业务性非 2xx WARN，分类处置。
+
+- **分类结论**：15 条唯一 WARN 中 13 条为 `${id}` 假 id 业务 404（approval approve/reject/get/delegate、customer get/put/delete、device get/put/delete/activate/disable、documents get/put/delete——任务/客户/设备/文档不存在，语义正确，保留）；**attendance check-in/check-out 400 为真缺口**，已修复。
+- **attendance 打卡链路 4 处真 bug（均已修）**：
+  1. **INSERT 列值错位**：`VALUES ($1, $2, $2, ...)`（12 值 vs 11 列，employee_id 位置误绑 org_id）→ 对齐 `($1, $2, $3, ...)`（`svc/hrm/src/modules/attendance.rs` check_in + create_record 2 处）。
+  2. **INSERT 缺 `organization_id`**（NOT NULL 无默认）→ 补列（org=tenant 惯例，复用 `$2`）。
+  3. **status 'present' 违反表 check 约束** `ck_attendance_records_status_standard`（仅 active/inactive/archived）→ 改 `'active'`（INSERT + UPDATE COALESCE 2 处）。
+  4. **测试数据语义**：MCS token 用户（`TEST_UID`）无员工档案 → HRM `resolve_employee_id` 400「员工ID不能为空」→ `mobile_contract_smoke.py` prepare_data 绑定一个 MCP 端到端测试员工 `user_id=TEST_UID`（幂等）。
+- **前端契约修正**：`apps/mobile/src/api/attendance.ts` checkIn/checkOut 字段 `latitude/longitude` → `lat/lng`（对齐 mobile 后端 `MobileCheckInRequest`；HRM 侧 `CheckRequest` 实际只需 `employee_id/user_id`，mobile 层已从 token 注入 `user_id`，前端无需传）。
+- **验证**：MCS **114/114 PASS 0 FAIL**，WARN **39 → 37**（剩余 37 全为 `${id}` 假 id 业务 404，保留登记）；attendance 9/9 全绿。
+- 观察项更新：v1.112 的「attendance.ts latitude/longitude vs HRM lat/lng」已闭环（字段对齐 + user_id 由 mobile 层注入）；剩余 37 WARN 待业务排期（如需冒烟覆盖真实 id 可注入种子数据）。
+
 ## S25 语义治理闭环：flow 表前缀 + mobile 4xx 透传（第 55 轮，2026-10-28）✅ 已完成
 
 > 目标：清零 `docs/web_contract_gap_list.md` 剩余 42 条 KNOWN（workflow 39 + mobile 3）。

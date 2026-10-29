@@ -20,15 +20,15 @@ export const attendanceApi = {
   },
 
   checkIn: async (data?: {
-    latitude?: number;
-    longitude?: number;
+    lat?: number;
+    lng?: number;
   }): Promise<ApiResponse<AttendanceRecord>> => {
     return apiClient.post('/attendance/check-in', data);
   },
 
   checkOut: async (data?: {
-    latitude?: number;
-    longitude?: number;
+    lat?: number;
+    lng?: number;
   }): Promise<ApiResponse<AttendanceRecord>> => {
     return apiClient.post('/attendance/check-out', data);
   },

@@ -97,6 +97,16 @@ def prepare_data() -> None:
             TEST_WAREHOUSE_ID = wid
             POST_BODIES["/inventory"]["warehouse_id"] = wid
             print(f"[prepare] 注入 WMS 仓库 id: {wid}")
+        # HRM attendance check-in/out 以 token user_id 解析员工：绑定一个测试员工（无 user_id 的 MCP 端到端员工）
+        r2 = subprocess.run(
+            ["psql", db, "-tAc",
+             f"UPDATE hrm.employees SET user_id = '{TEST_UID}' WHERE id = (SELECT id FROM hrm.employees WHERE user_id IS NULL AND name LIKE 'MCP端到端员工%' ORDER BY name LIMIT 1) RETURNING name"],
+            capture_output=True, timeout=15,
+            check=False,
+        )
+        ename = r2.stdout.decode().strip() if r2.stdout else ""
+        if ename:
+            print(f"[prepare] 绑定打卡员工 user_id={TEST_UID[:8]}… → {ename}")
     except Exception as e:
         print(f"[prepare] 准备测试数据失败（非阻塞）: {e}")
 
