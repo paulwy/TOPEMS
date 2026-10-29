@@ -14,8 +14,8 @@ mod tests {
 
     async fn setup_test_pool() -> Result<PgPool, sqlx::Error> {
         let pool = PgPool::connect(TEST_DATABASE_URL).await?;
-        // 防御：若迁移链未覆盖，由应用同源 init_database 补齐表结构（幂等）
-        models::init_database(&pool).await.ok();
+        // 防御：运行时 schema 一致性自检（建表 DDL 已收敛至迁移链，D7）
+        models::run_schema_defense(&pool).await.ok();
         Ok(pool)
     }
 

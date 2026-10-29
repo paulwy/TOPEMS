@@ -88,8 +88,8 @@ async fn main() -> anyhow::Result<()> {
 
     let ctx = bootstrap_service(&config).await?;
 
-    if let Err(e) = models::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
-        tracing::warn!("LIMS module database init warning: {}", e);
+    if let Err(e) = models::run_schema_defense(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
+        tracing::warn!("LIMS schema defense warning: {}", e);
     }
 
     if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {

@@ -71,12 +71,7 @@ pub async fn build_router(
 
     let app_state = AppState::new(db.clone(), event_publisher.clone()).await;
 
-    // V68.1 A2.4.2: 帮助中心数据表初始化（DDL 走 MIGRATE_URL owner 池）
-    if let Err(e) = modules::help::init_database(&migrate_pool).await {
-        tracing::warn!("help center tables skipped: {}", e);
-    } else {
-        tracing::info!("✅ 帮助中心模块已初始化（Portal BFF）");
-    }
+    // V68.1 A2.4.2: 帮助中心数据表 DDL 已收敛至迁移链（D7 双源消除），不再运行时自建
 
     // Portal 全模块增量迁移 + schema 自检（115 表 / 728 列，DDL 走 owner 池）
     if let Err(e) = models::schema_defense::run_schema_migration_and_verify(&migrate_pool).await {
