@@ -706,7 +706,9 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         .route("/task", axum::routing::get(get_all_tasks).post(create_task))
         .route(
             "/task/{id}",
-            axum::routing::get(get_task).put(update_task).delete(delete_task),
+            axum::routing::get(get_task)
+                .put(update_task)
+                .delete(delete_task),
         )
         .route("/task/my", axum::routing::get(get_my_tasks))
         .route("/task/pending", axum::routing::get(get_pending_tasks))
