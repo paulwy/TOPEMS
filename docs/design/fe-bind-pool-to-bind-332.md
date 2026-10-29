@@ -1,5 +1,11 @@
 # 前端绑定池：to_bind 332 条可执行清单（v73 重建基线）
 
+> ⚠️ **v73 已作废（2026-10-29）**：抽验 10 条确认口径过时（19 天前端大量补绑 + 路径失实）。当前基线 = **v74 重建池**（1649 候选，P0 119/P1 420/P2 202/下线 908）：
+> - CSV：`artifacts/audit/orphan-review/v74-rebuild-master.csv`
+> - 摘要：`artifacts/audit/orphan-review/v74-rebuild-summary.md`
+> - 脚本：`scripts/rebuild-to-bind-pool.py`（后端 utoipa 路由 × 前端 api 调用差集，可随时重跑刷新）
+> - 下文 v73 明细保留作历史参考（抽验结论见「抽验 10 条」段）。
+
 > 来源：`artifacts/audit/orphan-review/v73-rebuild-master.csv`（2026-10-12 重建，to_bind 332 条 = 已注册 real handler、前端未绑定）。
 > 处置规则（沿用批 0 建议）：**保留（前端绑定）** / **下线（无业务价值删路由）** / **重构**。优先级自动判定：
 > - **P0**：写端点 + 前端弱引用（绑定收益最高，CRUD 补全核心）
