@@ -80,8 +80,8 @@ const AttendancePage: React.FC = () => {
     setCheckInLoading(true);
     try {
       const response = await attendanceApi.checkIn({
-        latitude: location?.lat || 0,
-        longitude: location?.lng || 0,
+        lat: location?.lat || 0,
+        lng: location?.lng || 0,
       });
       if (response.success) {
         setTodayRecord(response.data);
@@ -98,8 +98,8 @@ const AttendancePage: React.FC = () => {
     setCheckOutLoading(true);
     try {
       const response = await attendanceApi.checkOut({
-        latitude: location?.lat || 0,
-        longitude: location?.lng || 0,
+        lat: location?.lat || 0,
+        lng: location?.lng || 0,
       });
       if (response.success) {
         setTodayRecord(response.data);
