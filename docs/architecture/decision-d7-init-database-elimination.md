@@ -42,7 +42,7 @@ init_database 自建 = **冗余双源**：迁移权威建库后，运行时 `CRE
 - **删除建表（无防御）**：ai_knowledge（5 表 17 索引）、chat_conversations（1 表）、ehs（43 表 45 索引）、finance compliance_v51（5 表 12 索引，**死代码**）、finance settlement_center（3 表 10 索引，**死代码**）、finance database.rs（6 表 15 索引 + init_aux_tables）、mes modules（27 表 42 索引）+ production_plan / demand_forecast / capacity（各 1 表）。
 - **改造保活防御（建表删除）**：analytics bi（13 表 36 索引）/ report（6 表 3 索引）、finance services 聚合（66 表/563 列自检保留）、qms（26 表 55 索引，TABLE_DEFS 参数化防御保留）。
 - **调用点同步**：6 个服务 main.rs + server 6 个模块（ai/analytics/ehs/finance/mes/qms）；ehs_tests 清理。
-- **验证**：cargo check --workspace --all-targets PASS；schema-defense PASS（自建表数 306→180）；fmt 全绿。剩余自建 180 表为迁移权威覆盖的运行时 TABLE_DEFS 等（远期 C 项评估范围）。
+- **验证**：cargo check --workspace --all-targets PASS；schema-defense PASS（自建表数 306→180）；fmt 全绿。剩余自建 180 表经盘点修正为各 crate schema 防御/ensure 路径内 **r# 字面量 CREATE TABLE**（非 TABLE_DEFS 结构体；C-1/C-2 章节处置，见 §5c/§5d）。
 
 ### 前置条件（已满足/执行中）
 
@@ -62,3 +62,38 @@ init_database 自建 = **冗余双源**：迁移权威建库后，运行时 `CRE
 - [x] `node scripts/migration/check-schema-defense.mjs`：PASS（errors=0 warnings=0；自建表数 317→306）
 - [x] rustfmt：无额外改动
 - [x] 提交推送远端
+
+## 5c. 验证记录（C-1：非 portal 79 张 r# 字面量建表）
+
+> 承接顺延批次后剩余 180 张 r# 字面量建表（门禁口径提取：`sed 's/[（(].*//'` 处理全角括号误报后修正）。来源映射：portal 98 张（留 C-2）+ 非 portal 79 张分布于 22 个 .rs 文件。决策：门禁为唯一仲裁，逐 crate 删除；各 crate 防御函数（TABLE_DEFS / schema_defense）保留。
+
+- **整删纯建表函数（含调用点）**：pdm/plugin-registry/mobile(unified-core) `init_database`、ticket `init_ticket_tables`/`init_sla_tables`、unified-core `init_mdm_tables`/`init_audit_logs_table`/`init_version_config_table`/`ensure_preferences_table`、communication `register_geofence_tables`、erp `ensure_event_idempotency_table`/`ensure_table`（9 处调用）、master-data `dict::init_database`。
+- **改造保活防御（删建表留校验）**：gis `init_tables`、pdm/plugin-registry `init_database`、ai `run_migrations`（保留 schema/extension/vector 分支与索引/触发器）、communication main 防御。
+- **语句级删建表（保留业务逻辑）**：qms/wms `log_approval_event`、server `cancel_subscription`、mobile `push_config`（const+2 调用）、erp 幂等账本。
+- **编译修复链（3 轮）**：server `ticket_real_module.rs` E0425（删已删函数调用段）、erp leave_request unused variable×2、server unused import。
+- **验证**：cargo check --workspace PASS；门禁自建表 180→100；fmt 全绿；commit `74340b86c`（25 文件 +38/-2578）。
+- **推送**：首推被 pre-push cargo-fmt-check 拦截——根因为协作机 commit 引入 ws.rs `WS_MODULE_WHITELIST` 长数组未分行（非本次改动），独立 fmt commit `f87a2eaa0` 后推送成功。
+
+## 5d. 验证记录（C-2：portal 98 张 r# 字面量建表）
+
+> portal 依赖面前置核查（2026-10-29）：`svc/portal/src/models/schema_defense.rs`（1444 行）机制——事实源 `TABLE_DEFS` 结构体常量、增量迁移 `ensure_table_columns`→`ALTER TABLE ADD COLUMN IF NOT EXISTS`、自检 `verify_table_columns`→`information_schema.columns`、骨架兜底为阶段 0 模板字符串（`CREATE TABLE IF NOT EXISTS "{schema}"."{tbl}" (id …)`，非 r# 字面量、门禁不计数）。**结论：C-2 可行且无防御风险**——98 表全为模块级 `pub const CREATE_XXX_TABLE: &str = r#"…"#` + `sqlx::query(CONST)` 调用，删除后防御环不受影响。
+
+- **删除范围**：17 个模块文件 98 个建表 const（ai_ops 9 / adaptive_execution 7 / deployment_manager 7 / query_optimizer 6 / gateway_security 6 / realtime_processing 6 / subscription_manager 6 / streaming_processing 6 / persisted_query 6 / gateway_monitoring 6 / orchestration 6 / deep_federation 6 / version_control 6 / security_v1 5 / intelligent_gateway 5 / edge_computing 5 / schema_versioning/types.rs 3）+ 7 处调用语句 + 空壳 `ensure_*_tables_exist` 函数（adaptive_execution）+ 跨文件调用 `schema_versioning/handlers.rs::ensure_tables_exist`（整函数删除）。
+- **脚本缺陷修正**：初版批量脚本仅遍历 const 定义所在文件，漏删跨文件调用点（schema_versioning/types.rs 定义 → handlers.rs 调用），编译 E0425 定位后补删。
+- **验证**：cargo check --workspace --all-targets PASS（0 error）；**门禁自建表 100→2**（仅剩 `inquiries`（1 列 ALTER 口径，PASS）+ `schema_defense_ledger` 台账白名单（INFO））；fmt 全绿。commit `d1a39fdb7`（18 文件，-1495 行）。
+- **推送（2 轮挫败后成功）**：第 1 轮被 pre-push cargo-clippy-workspace 拦（协作机 8c28fa45d 引入 ws.rs:479 换行 fmt + ws.rs:108 `broadcast_quota.lock().unwrap()` 触发 `-D clippy::unwrap-used`）→ rustfmt 修复 ws.rs + unwrap 改 `let Ok(mut q) = … else { return false; }`，独立 commit `cd52870db` → 第 2 轮 push 被远端并发拒绝（cannot lock ref，协作机已推进至 4e68f9aa9）→ fetch+rebase（2/2 无冲突）+ 本地 fmt/check 复绿 → 第 3 轮推送成功 `4e68f9aa9..cd52870db`。
+
+## 5e. 最终战果（D7 全链）
+
+| 阶段 | commit | 自建表数 |
+|---|---|---|
+| 基线 | — | 352 |
+| D7 第一批 lims/portal | 8a383e4fc | 352→317 |
+| D7 第二批 integration | 43fef2f72 | 317→306 |
+| D7 顺延 7 crate | a6c63d41d | 306→180 |
+| C-1 非 portal 79 张 | 74340b86c | 180→100 |
+| **C-2 portal 98 张** | **d1a39fdb7** | **100→2** |
+
+**里程碑达成：全仓运行时自建 DDL 清零，双源根除**——迁移 DDL（1012 表）为唯一权威，门禁 `scripts/migration/check-schema-defense.mjs`（errors=0 warnings=0）唯一仲裁；有意保留项仅 `inquiries`（1 列，ALTER/索引口径已由门禁证覆盖）与 `schema_defense_ledger`（台账白名单）。
+
+**收尾挂账**：① WSL/协作机拉取后空库四步回归（建库 → migrate.sh run → 启动冒烟 → 授权基线第④步）复核；② 初始化路径远期项 C（废弃自建 DDL 路径、根除双源，需先做依赖面清单评估再排期；本轮 B 列级校验门禁已先行兜底）；③ dependabot 28 漏洞（1 critical/9 high）另排。
