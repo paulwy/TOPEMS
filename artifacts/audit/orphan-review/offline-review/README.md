@@ -49,3 +49,8 @@
 - **样例包** `sample-review.csv`（48 条，覆盖 25 svc，分层抽样 seed 7）：backend BE 47/48（唯一 NO=erp addressbook share handler=s）+ biz_sug 列示范业务侧确认节奏
 - **21 条占位已处置**：erp addressbook 16（handler=`s`，路由 `post(s)/get(s)` 冒烟占位确认）+ master-data lineage 5（handler=`ok`，`contract_fallbacks::ok` 契约 fallback，待路由核实）→ 池标记 `下线-真占位/契约fallback`（不删后端）
 - **业务侧收窄路径**：人工评审范围 375→229（待甄别）+124（疑似接入，可参照样例包快速确认）
+
+### 待甄别 229 二次预筛（2026-10-29）
+
+- `prescan2` 列回填（biz-review.csv 全量 749 行）：疑似接入候选(二次) 15 / 疑似动作·任务端点 18 / 疑似内部·系统端点 10 / **仍待甄别 186**（业务人工范围 229→186）
+- 15 疑似接入可转补绑；10 疑似内部可核实下线；18 动作类需业务确认（execute/run/send/sync 等）
