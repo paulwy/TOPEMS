@@ -40,6 +40,48 @@
 | **B（中期）erp/ehs 契约对齐** | 以 axum 实际挂载为权威：修正 utoipa 文档路径（hr-proxy `/hr/...`）或修正前端封装（`/api/erp/hr/...`）；ehs 单复数统一；补挂纯缺 6 条 | 中（动后端路由/文档，需 e2e 回归） | 排期专项，可分段（先 erp 后 ehs） |
 | **C（兜底）豁免登记** | 63 条登记 KNOWN 豁免清单（同 web_contract_gap_list 机制） | 低但掩盖债务 | 仅作 A/B 未决期的过渡 |
 
+## 六、方案 A 执行结果（2026-10-29，commit 949ef11db → 68f03cd8b）
+
+- **P2a（contract-gate.py）**：新增调用面过滤（`collect_business_imports` + `filter_dead_wrappers`）——
+  只比对被业务 import 的封装端点；1686 条死封装端点整文件豁免。**63 GAP → 0**。
+- **P2b（check-api-boundary.cjs）**：同步同口径调用面过滤（web 全量扫描场景）——**44 violations → 0**（PASS，2074 calls / matched 2056 / prebuilt 18）。
+- **新增 `KNOWN_UNMOUNTED_ENDPOINTS`**（开发缺口登记，对称 KNOWN_MOUNTED_ENDPOINTS）：
+  登记 erp `POST /api/erp/consolidation/reports/submit-report`（后端仅 `/approve` 无 submit，
+  协作机开发中，实现后须移除登记）。
+- **ehs 单复数修复**：`apps/web/src/api/ehs/occupationalDisease.ts` v74 补绑段
+  `createDiseaseCase/deleteDiseaseCase` 单数 `occupational-disease/cases` → 复数
+  `occupational-diseases/cases`（对齐后端 axum 实际挂载）。
+- 验证：P2a 0 GAP / P2b PASS / web tsc 0 error / commit 全门禁链通过（含 frontend-lint、frontend-typecheck）。
+
+## 七、方案 B 执行清单（erp/ehs 契约对齐专项，排期用）
+
+### B1 段 — erp hr-proxy 文档与挂载统一（后端优先）
+- 文件：`svc/erp/src/modules/hr_proxy.rs`（utoipa path）+ `proxy_routes()`（axum .route）
+- 动作：以 axum 实际挂载为权威（`/hr/dashboard`、`/hr/employees`、`/hr/employees/{id}`、`/hr/departments`、
+  `/hr/departments/tree`、`/hr/departments/{id}`、`/hr/positions`、`/hr/positions/{id}`、`/hr/attendances`、
+  `/hr/attendances/{id}` 等）——**统一 utoipa `path` 为 `/hr/...`**，使 OpenAPI 文档与挂载一致
+- 前端：`apps/web/src/api/erp/readOps*.ts` 中 `hr-proxy/*` 封装改为实际挂载路径（或删除死封装）
+- 验证：P2a/P2b 0 GAP；erp hr-proxy 接口实跑 200/401
+
+### B2 段 — ehs 单复数统一（后端文档 + 前端封装）
+- 文件：`svc/ehs/src/modules/occupational_disease.rs`（utoipa path 单数→复数）+ `apps/web/src/api/ehs/*`
+- 动作：后端 utoipa path 统一为 `occupational-diseases/*`（复数，与 axum .route 一致）；前端已复数
+  （v74 段修复完成）——核对其余单数残留
+- 验证：ehs cases/detections/protection-measures 实跑 200/401
+
+### B3 段 — 纯缺 6 条（前端已封装且被使用、后端无任何匹配）
+- 清单（诊断 §一 ehs 纯缺候选）：`DELETE /api/ehs/occupational-disease/cases/{id}`（已随单复数修复消除）等
+- 动作：核对协作机后端是否已实现；未实现则补挂或从封装中移除
+- 验证：逐条接口实跑
+
+> 执行前提：协作机 erp/ehs 并行开发推进中——后端改动需与协作机协调（避免冲突）；每段独立可交付。
+
+## 八、当前门禁状态（2026-10-29 终态）
+
+- P2a contract-gate：**0 GAP**（死封装豁免 1686 条）
+- P2b api-boundary：**PASS**（violations 0）
+- 挂账：erp submit-report（KNOWN_UNMOUNTED，后端实现后移除）
+
 ## 五、验证口径（B 方案执行后）
 
 - `python3 scripts/dev/contract-gate.py` → 0 GAP（或仅白名单豁免）
