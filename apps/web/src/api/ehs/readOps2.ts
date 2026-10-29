@@ -1,16 +1,8 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-// ── v74 待确认-疑似接入 ehs 5 条（2026-10-29）──
+// ── v74 待确认-疑似接入 ehs 1 条（2026-10-30：单数 occupational-disease 4 条随 B2 清理，主封装已复数覆盖）──
 export const ehsReadOps2 = {
-  listHazardFactors: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ehs.get('/api/ehs/occupational-disease/factors'),
-  listDetectionRecords: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ehs.get('/api/ehs/occupational-disease/detections'),
-  getDetectionRecord: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ehs.get('/api/ehs/occupational-disease/detections/{id}'),
-  listProtectionMeasures: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ehs.get('/api/ehs/occupational-disease/protection-measures'),
   listAccidents: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ehs.get('/accidents'),
 };

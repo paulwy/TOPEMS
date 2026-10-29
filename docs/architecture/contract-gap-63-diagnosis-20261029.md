@@ -90,11 +90,19 @@
 > 基于文档路径生成——统一后按挂载路径修正或随死封装清理处置。
 > 前端若已用 /erp/hr-proxy/* 语义且需保留，也可反向统一挂载（二选一，与协作机定）。
 
-### B2 段 — ehs 单复数统一（后端文档 + 前端封装）
+### B2 段 — ehs 单复数统一（✅ 已执行 2026-10-30，方向已定夺）
 - 文件：`svc/ehs/src/modules/occupational_disease.rs`（utoipa path 单数→复数）+ `apps/web/src/api/ehs/*`
 - 动作：后端 utoipa path 统一为 `occupational-diseases/*`（复数，与 axum .route 一致）；前端已复数
   （v74 段修复完成）——核对其余单数残留
-- 验证：ehs cases/detections/protection-measures 实跑 200/401
+- **执行结果（方向定夺）**：
+  - utoipa path **19 条**单数→复数（cases/factors/protection-measures/detections 系）
+  - **detections → detection-records**（命名统一，以挂载为权威）
+  - **statistics 保留单数**（集合名词例外，文档/挂载一致）——共 1 条
+  - **删除单数 factors 双挂**（/occupational-disease/factors[/{id}] 2 条挂载）——保留复数挂载
+  - 前端：readOps2 4 条 + writeOps 8 条单数系死封装清理（主封装 occupationalDisease.ts 已复数覆盖）
+- **验证**：cargo check topems-ehs ✓（4s）；P2a 0 GAP（豁免 1673→1661 = 删除 12 条，自洽）；
+  P2b PASS；web tsc 0 error
+- 接口实跑（200/401 冒烟）——待协作机/联调环境执行
 
 **B2 对照表（utoipa 文档 path → axum 实际挂载，2026-10-30 解析）**：
 

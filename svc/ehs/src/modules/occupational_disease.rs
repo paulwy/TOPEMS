@@ -17,8 +17,6 @@ use uuid::Uuid;
 use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/occupational-disease/factors", get(list_hazard_factors))
-        .route("/occupational-disease/factors/{id}", get(get_hazard_factor))
         .route(
             "/occupational-disease/statistics",
             get(get_disease_statistics),
@@ -329,7 +327,7 @@ pub struct CreateHealthTrainingRequest {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:hazard:read"])),
-    path = "/api/ehs/occupational-disease/factors",
+    path = "/api/ehs/occupational-diseases/factors",
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -429,7 +427,7 @@ pub async fn list_hazard_factors(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:hazard:admin"])),
-    path = "/api/ehs/occupational-disease/factors",
+    path = "/api/ehs/occupational-diseases/factors",
     request_body = CreateHazardFactorRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -447,7 +445,7 @@ pub async fn create_hazard_factor(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:hazard:read"])),
-    path = "/api/ehs/occupational-disease/factors/{id}",
+    path = "/api/ehs/occupational-diseases/factors/{id}",
     tag = "ehs",
     params(
         ("id" = String, Path, description = "id")
@@ -561,7 +559,7 @@ pub async fn get_hazard_factor(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["ehs:hazard:admin"])),
-    path = "/api/ehs/occupational-disease/factors/{id}",
+    path = "/api/ehs/occupational-diseases/factors/{id}",
     request_body = UpdateHazardFactorRequest,
     tag = "ehs",
     params(
@@ -585,7 +583,7 @@ pub async fn update_hazard_factor(
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["ehs:hazard:admin"])),
-    path = "/api/ehs/occupational-disease/factors/{id}",
+    path = "/api/ehs/occupational-diseases/factors/{id}",
     tag = "ehs",
     params(
         ("id" = String, Path, description = "id")
@@ -606,7 +604,7 @@ pub async fn delete_hazard_factor(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
-    path = "/api/ehs/occupational-disease/detections",
+    path = "/api/ehs/occupational-diseases/detection-records",
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -622,7 +620,7 @@ pub async fn list_detection_records(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:write"])),
-    path = "/api/ehs/occupational-disease/detections",
+    path = "/api/ehs/occupational-diseases/detection-records",
     request_body = CreateDetectionRecordRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -640,7 +638,7 @@ pub async fn create_detection_record(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
-    path = "/api/ehs/occupational-disease/detections/{id}",
+    path = "/api/ehs/occupational-diseases/detection-records/{id}",
     tag = "ehs",
     params(
         ("id" = String, Path, description = "id")
@@ -661,7 +659,7 @@ pub async fn get_detection_record(
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["ehs:delete"])),
-    path = "/api/ehs/occupational-disease/detections/{id}",
+    path = "/api/ehs/occupational-diseases/detection-records/{id}",
     tag = "ehs",
     params(
         ("id" = String, Path, description = "id")
@@ -692,7 +690,7 @@ pub struct DiseaseCaseQuery {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:disease:read"])),
-    path = "/api/ehs/occupational-disease/cases",
+    path = "/api/ehs/occupational-diseases/cases",
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -768,7 +766,7 @@ pub async fn list_disease_cases(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:disease:write"])),
-    path = "/api/ehs/occupational-disease/cases",
+    path = "/api/ehs/occupational-diseases/cases",
     request_body = CreateDiseaseCaseRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -847,7 +845,7 @@ pub async fn create_disease_case(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:disease:read"])),
-    path = "/api/ehs/occupational-disease/cases/{id}",
+    path = "/api/ehs/occupational-diseases/cases/{id}",
     tag = "ehs",
     params(
         ("id" = String, Path, description = "id")
@@ -894,7 +892,7 @@ pub async fn get_disease_case(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["ehs:disease:write"])),
-    path = "/api/ehs/occupational-disease/cases/{id}",
+    path = "/api/ehs/occupational-diseases/cases/{id}",
     request_body = UpdateDiseaseCaseRequest,
     tag = "ehs",
     params(
@@ -1025,7 +1023,7 @@ pub async fn update_disease_case(
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["ehs:disease:write"])),
-    path = "/api/ehs/occupational-disease/cases/{id}",
+    path = "/api/ehs/occupational-diseases/cases/{id}",
     tag = "ehs",
     params(
         ("id" = String, Path, description = "id")
@@ -1067,7 +1065,7 @@ pub async fn delete_disease_case(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
-    path = "/api/ehs/occupational-disease/protection-measures",
+    path = "/api/ehs/occupational-diseases/protection-measures",
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
@@ -1083,7 +1081,7 @@ pub async fn list_protection_measures(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:write"])),
-    path = "/api/ehs/occupational-disease/protection-measures",
+    path = "/api/ehs/occupational-diseases/protection-measures",
     request_body = CreateProtectionMeasureRequest,
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -1101,7 +1099,7 @@ pub async fn create_protection_measure(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
-    path = "/api/ehs/occupational-disease/protection-measures/{id}",
+    path = "/api/ehs/occupational-diseases/protection-measures/{id}",
     tag = "ehs",
     params(
         ("id" = String, Path, description = "id")
@@ -1122,7 +1120,7 @@ pub async fn get_protection_measure(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["ehs:update"])),
-    path = "/api/ehs/occupational-disease/protection-measures/{id}",
+    path = "/api/ehs/occupational-diseases/protection-measures/{id}",
     request_body = serde_json::Value,
     tag = "ehs",
     params(
@@ -1145,7 +1143,7 @@ pub async fn update_protection_measure(
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["ehs:delete"])),
-    path = "/api/ehs/occupational-disease/protection-measures/{id}",
+    path = "/api/ehs/occupational-diseases/protection-measures/{id}",
     tag = "ehs",
     params(
         ("id" = String, Path, description = "id")
