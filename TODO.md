@@ -1,3 +1,9 @@
+## v1.119 BFF WS：前端接线全量触发条件核查（2026-10-29）✅
+
+- **核查结论**：全量触发条件**基本达成**——后端 WS Hub 全绿（v1.113/116/117 + 426 实测）；nginx /ws/ 反代已入库（部署 reload 生效即链路通）；前端接线**已存在**：`useWebSocket.ts`（service，/ws/core）+ 4 消费 hook（useNotificationWebSocket→通知铃铛实连 / useDashboardWebSocket / useImWebSocket / features/websocket 统一出口）+ authStore 生命周期管理
+- **决策**：v1.117 遗留 ③「前端 useWebSocket + 试点页」——**前端接线无需新立项（已存在），试点页不立项**（纯验证资产价值低；生产 reload 后通知铃铛即 E2E 链路验证）
+- **部署项（唯一硬依赖）**：生产 `nginx -s reload` + 可选 `WS_ALLOWED_ORIGINS`（v1.117 Origin 白名单，未配置放行开发默认）
+
 ## v1.118 BFF WS：W1 nginx /ws/ 反代 + W2 实测 + W3 双入口结论（2026-10-29）✅
 
 - **W1**：`deploy/nginx/topems.conf:157-166` 新增 `location /ws/` → server_service(:8099) + `Upgrade $http_upgrade`/`Connection "upgrade"` + `proxy_read_timeout 60s`。前端 `ws://{host}/ws/core` 链路在 nginx 层即通（此前落静态服务 404）
