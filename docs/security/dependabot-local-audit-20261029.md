@@ -69,6 +69,17 @@
 - **验证**：mobile/web/desktop tsc 全绿、apps/web vite build 成功（esbuild/glob/react-router overrides 无破坏）
 - 原 §5 建议中 tmp/js-yaml/decode-uri/basic-ftp/esbuild/react-router/glob 已全部执行；@opentelemetry 系与 uuid/zod 随合并恢复既有 overrides 生效
 
+## 8. Rust/cargo 侧补充评估（2026-10-29，cargo audit）
+
+- **结果**：`cargo audit`（RustSec advisory-db，本地 clone 后 `--db` 指定）——**vulnerabilities 0（found=false）**；654 个依赖包
+- **unmaintained 警告 3 个**（非漏洞，维护停止）：
+  - proc-macro-error 1.0.4（RUSTSEC-2024-0370）
+  - ttf-parser 0.25.1（RUSTSEC-2026-0192）
+  - unsafe-libyaml 0.2.11（RUSTSEC-2024-0449）
+- **局限**：yank 检查 176 次超时（ustc crates.io 镜像响应慢，非漏洞判定相关）；advisory-db 需本地 git clone（cargo-audit 内建 fetch 失败，GitHub git 协议可用）
+- **对 dependabot 28 的比对结论**：dependabot 的 critical 1 不在 Rust 侧（本地 cargo 0 漏洞），亦不在 npm 侧（本地 0 critical）——大概率来自升级前旧时点状态或 GitHub Actions/workflow 依赖（本地未覆盖）
+- **本地全覆盖结论**：npm 2 条挂账（node-forge high / deepmerge low，无修复版）+ Rust 0 条 = **dependabot 28 项本地已闭环 26 项，剩余 2 项均为无修复版挂账**
+
 ## 6. 局限
 
 - 仅 npm 生态；不含 Rust/cargo、GitHub Actions 等 dependabot 覆盖面
