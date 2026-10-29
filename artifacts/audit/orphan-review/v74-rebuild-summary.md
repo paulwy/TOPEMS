@@ -74,7 +74,7 @@
 - **v74 池全链路完结**：P0/P1/P2 清零 + 批2 213 全处置 + 批3 990 全评估
 - **BIZ 749 评审决策包产出**（`offline-review/biz-review.csv`）：前端接入候选 361/待业务确认 375/保留后端 13；抽样 9/9 BE；待业务侧按 svc 分批确认
 - **保留 13 条确认下线** ✅：池标记 `下线-内部保留` 12 条；mdm deregister 已批2移出
-- **接入候选试点（portal 20 条）** ✅ + **portal 全量 164**（readOps.ts 20/readOps2.ts 72/readOps3.ts 71）✅ + **erp 50**（readOps.ts；剔除 addressbook 冒烟 stub handler=`s` 10 条登记）；候选 1091→919
+- **接入候选 361 全量完成** ✅：portal 164 + erp 50 + unified-core 26 + master-data 16 + 扫尾 17 svc 89 = 345 补绑（readOps.ts×21 新建）；剔除登记 16（erp addressbook stub 10 / unified-core openapi 3 / gis openapi 1 / plugin-registry 待 pluginAxios 2）；候选 1091→778；BIZ 749 三路全处置（保留 13 下线 + 接入 345 + 待确认 375 待业务拍板）
 
 ## 批2 method 复核（写端点补绑，2026-10-29 起）
 
