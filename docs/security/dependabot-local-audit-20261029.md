@@ -61,6 +61,14 @@
 3. **挂账**：node-forge / extract-zip / deepmerge（无修复版）；uuid / zod（breaking）；@vitest/mocker（测试链）
 4. **Rust/cargo 侧**：dependabot 的 critical/high 可能含 cargo 依赖，另行 `cargo audit` 扫描（本评估未覆盖）
 
+## 7. 收敛执行结果（2026-10-29，ede14836b）
+
+- **根因发现**：根 package.json 存在**两个重复 `pnpm` 键**（JSON 后段覆盖前段），既有 overrides 静默失效——已合并为一段
+- **7 包收敛**：tmp 0.2.7 / js-yaml 4.3.2 / decode-uri-component 0.5.1 / basic-ftp 6.2.3 / esbuild 0.28.2 / react-router 7.18.5 / glob 10.5.0（选择性覆盖 10.x）
+- **效果**：`pnpm audit` **25 条 advisory → 2 条**（仅 node-forge high / deepmerge low，均无修复版，挂账等上游）
+- **验证**：mobile/web/desktop tsc 全绿、apps/web vite build 成功（esbuild/glob/react-router overrides 无破坏）
+- 原 §5 建议中 tmp/js-yaml/decode-uri/basic-ftp/esbuild/react-router/glob 已全部执行；@opentelemetry 系与 uuid/zod 随合并恢复既有 overrides 生效
+
 ## 6. 局限
 
 - 仅 npm 生态；不含 Rust/cargo、GitHub Actions 等 dependabot 覆盖面
