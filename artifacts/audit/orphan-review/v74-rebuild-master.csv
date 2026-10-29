@@ -839,9 +839,6 @@ pm,P1,GET,/project-types/{id},get_type,get_type,write,none,保留
 pm,P2,GET,/project-types,list_types,list_types,read,weak,保留
 pm,下线候选,GET,/service-integrations,list_integrations,list_integrations,read,none,待定
 pm,下线候选,GET,/service-integrations/{id},get_integration,get_integration,read,none,待定
-portal,P2,GET,/api/portal/gateway-security/audit/export,export_audit_handler,export_audit_handler,read,weak,保留
-portal,P2,GET,/api/portal/ai-ops/recovery/plan,create_recovery_plan_handler,create_recovery_plan_handler,read,weak,保留
-portal,P2,GET,/user,get_user_info,get_user_info,read,weak,保留
 portal,下线候选,GET,/api/portal/adaptive-execution/execute,execute_adaptive_query_handler,execute_adaptive_query_handler,read,none,待定
 portal,下线候选,GET,/api/portal/adaptive-execution/execution/profile/{hash},get_execution_profile_handler,get_execution_profile_handler,read,none,待定
 portal,下线候选,GET,/api/portal/adaptive-execution/execution/metrics,get_execution_metrics_handler,get_execution_metrics_handler,read,none,待定
