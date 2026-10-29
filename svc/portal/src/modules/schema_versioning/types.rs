@@ -196,52 +196,6 @@ pub struct DeprecateVersionRequest {
 
 // ==================== 数据库表结构 ====================
 
-#[allow(dead_code)]
-pub const CREATE_GRAPHL_SCHEMA_VERSIONS_TABLE: &str = r#"
-CREATE TABLE IF NOT EXISTS portal.graphql_schema_versions (
-    id VARCHAR(64) PRIMARY KEY,
-    version VARCHAR(32) NOT NULL,
-    schema_definition TEXT NOT NULL,
-    change_type VARCHAR(64) NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    change_description TEXT,
-    approved_by VARCHAR(128),
-    is_current BOOLEAN NOT NULL DEFAULT FALSE
-);
-CREATE INDEX IF NOT EXISTS idx_schema_versions_version ON portal.graphql_schema_versions(version);
-CREATE INDEX IF NOT EXISTS idx_schema_versions_created_at ON portal.graphql_schema_versions(created_at DESC);
-"#;
-
-#[allow(dead_code)]
-pub const CREATE_GRAPHL_BREAKING_CHANGES_TABLE: &str = r#"
-CREATE TABLE IF NOT EXISTS portal.graphql_breaking_changes (
-    id VARCHAR(64) PRIMARY KEY,
-    version_id VARCHAR(64) NOT NULL REFERENCES portal.graphql_schema_versions(id),
-    change_type VARCHAR(64) NOT NULL,
-    path VARCHAR(512) NOT NULL,
-    description TEXT NOT NULL,
-    affected_queries JSONB NOT NULL DEFAULT '[]',
-    severity VARCHAR(16) NOT NULL,
-    detected_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-CREATE INDEX IF NOT EXISTS idx_breaking_changes_version_id ON portal.graphql_breaking_changes(version_id);
-CREATE INDEX IF NOT EXISTS idx_breaking_changes_type ON portal.graphql_breaking_changes(change_type);
-"#;
-
-#[allow(dead_code)]
-pub const CREATE_GRAPHL_VERSION_NEGOTIATIONS_TABLE: &str = r#"
-CREATE TABLE IF NOT EXISTS portal.graphql_version_negotiations (
-    id VARCHAR(64) PRIMARY KEY,
-    requested_version VARCHAR(32) NOT NULL,
-    matched_version VARCHAR(32),
-    fallback_used BOOLEAN NOT NULL DEFAULT FALSE,
-    strategy_used VARCHAR(64) NOT NULL,
-    negotiated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-CREATE INDEX IF NOT EXISTS idx_negotiations_requested ON portal.graphql_version_negotiations(requested_version);
-CREATE INDEX IF NOT EXISTS idx_negotiations_negotiated_at ON portal.graphql_version_negotiations(negotiated_at DESC);
-"#;
-
 // ==================== 辅助函数 ====================
 
 pub fn generate_id() -> String {

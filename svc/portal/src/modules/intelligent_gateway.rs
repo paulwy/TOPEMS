@@ -27,63 +27,6 @@ use crate::shared::AppState;
 
 // ==================== 数据库表定义 ====================
 
-pub const CREATE_INTELLIGENT_GW_V53_ROUTING_TABLE: &str = r#"
-CREATE TABLE IF NOT EXISTS intelligent_gw_routing_table (
-    id VARCHAR(64) PRIMARY KEY,
-    query_hash VARCHAR(128) NOT NULL,
-    intent VARCHAR(32) NOT NULL,
-    target_service VARCHAR(128) NOT NULL,
-    confidence DOUBLE PRECISION NOT NULL DEFAULT 0,
-    reason TEXT,
-    alternatives JSONB NOT NULL DEFAULT '[]',
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-"#;
-
-pub const CREATE_INTELLIGENT_GW_V53_AFFINITIES_TABLE: &str = r#"
-CREATE TABLE IF NOT EXISTS intelligent_gw_affinities (
-    id VARCHAR(64) PRIMARY KEY,
-    service_id VARCHAR(128) NOT NULL,
-    entity_types JSONB NOT NULL DEFAULT '[]',
-    score DOUBLE PRECISION NOT NULL DEFAULT 0,
-    last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-"#;
-
-pub const CREATE_INTELLIGENT_GW_V53_STITCH_PLANS_TABLE: &str = r#"
-CREATE TABLE IF NOT EXISTS intelligent_gw_stitch_plans (
-    id VARCHAR(64) PRIMARY KEY,
-    subgraphs JSONB NOT NULL DEFAULT '[]',
-    merged_types JSONB NOT NULL DEFAULT '[]',
-    conflicts JSONB NOT NULL DEFAULT '[]',
-    resolution_strategy VARCHAR(64) NOT NULL,
-    status VARCHAR(32) NOT NULL DEFAULT 'pending',
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-"#;
-
-pub const CREATE_INTELLIGENT_GW_V53_STITCH_LOGS_TABLE: &str = r#"
-CREATE TABLE IF NOT EXISTS intelligent_gw_stitch_logs (
-    id VARCHAR(64) PRIMARY KEY,
-    plan_id VARCHAR(64) NOT NULL,
-    action VARCHAR(64) NOT NULL,
-    status VARCHAR(32) NOT NULL,
-    details JSONB,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-"#;
-
-pub const CREATE_INTELLIGENT_GW_V53_CONFLICTS_TABLE: &str = r#"
-CREATE TABLE IF NOT EXISTS intelligent_gw_conflicts (
-    id VARCHAR(64) PRIMARY KEY,
-    type_name VARCHAR(128) NOT NULL,
-    conflicting_fields JSONB NOT NULL DEFAULT '[]',
-    resolution VARCHAR(64) NOT NULL,
-    status VARCHAR(32) NOT NULL DEFAULT 'pending',
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-"#;
-
 // ==================== 枚举类型 ====================
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]

@@ -217,21 +217,6 @@ pub async fn get_current_schema_handler() -> Result<Json<Value>, (StatusCode, Js
     }
 }
 
-// ==================== 数据库初始化 ====================
-
-pub async fn ensure_tables_exist(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(CREATE_GRAPHL_SCHEMA_VERSIONS_TABLE)
-        .execute(pool)
-        .await?;
-    sqlx::query(CREATE_GRAPHL_BREAKING_CHANGES_TABLE)
-        .execute(pool)
-        .await?;
-    sqlx::query(CREATE_GRAPHL_VERSION_NEGOTIATIONS_TABLE)
-        .execute(pool)
-        .await?;
-    Ok(())
-}
-
 // ==================== 初始化入口 ====================
 
 pub fn init_schema_versioning() {
