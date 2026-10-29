@@ -86,7 +86,7 @@ async fn proxy_hrm_get(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/hr-proxy/proxy-list-employees",
+    path = "/hr/employees",
     tag = "HrProxy",
     operation_id = "proxy_list_employees",
     responses(
@@ -110,7 +110,7 @@ pub async fn proxy_list_employees(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/hr-proxy/proxy-get-employee",
+    path = "/hr/employees/{id}",
     tag = "HrProxy",
     operation_id = "proxy_get_employee",
     responses(
@@ -129,7 +129,7 @@ pub async fn proxy_get_employee(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/hr-proxy/proxy-get-employee-by-user",
+    path = "/hr/employees/by-user/{user_id}",
     tag = "HrProxy",
     operation_id = "proxy_get_employee_by_user",
     responses(
@@ -150,7 +150,7 @@ pub async fn proxy_get_employee_by_user(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/hr-proxy/proxy-list-departments",
+    path = "/hr/departments",
     tag = "HrProxy",
     operation_id = "proxy_list_departments",
     responses(
@@ -174,7 +174,7 @@ pub async fn proxy_list_departments(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/hr-proxy/proxy-get-department",
+    path = "/hr/departments/{id}",
     tag = "HrProxy",
     operation_id = "proxy_get_department",
     responses(
@@ -193,7 +193,7 @@ pub async fn proxy_get_department(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/hr-proxy/proxy-get-department-tree",
+    path = "/hr/departments/tree",
     tag = "HrProxy",
     operation_id = "proxy_get_department_tree",
     responses(
@@ -218,7 +218,7 @@ pub async fn proxy_get_department_tree(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/hr-proxy/proxy-list-companies",
+    path = "/hr/companies",
     tag = "HrProxy",
     operation_id = "proxy_list_companies",
     responses(
@@ -242,7 +242,7 @@ pub async fn proxy_list_companies(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/hr-proxy/proxy-get-company",
+    path = "/hr/companies/{id}",
     tag = "HrProxy",
     operation_id = "proxy_get_company",
     responses(
@@ -263,7 +263,7 @@ pub async fn proxy_get_company(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/hr-proxy/proxy-list-positions",
+    path = "/hr/positions",
     tag = "HrProxy",
     operation_id = "proxy_list_positions",
     responses(
@@ -287,7 +287,7 @@ pub async fn proxy_list_positions(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/hr-proxy/proxy-get-position",
+    path = "/hr/positions/{id}",
     tag = "HrProxy",
     operation_id = "proxy_get_position",
     responses(
@@ -308,7 +308,7 @@ pub async fn proxy_get_position(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/hr-proxy/proxy-list-payrolls",
+    path = "/hr/payrolls",
     tag = "HrProxy",
     operation_id = "proxy_list_payrolls",
     responses(
@@ -326,7 +326,7 @@ pub async fn proxy_list_payrolls(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/hr-proxy/proxy-get-payroll",
+    path = "/hr/payrolls/{id}",
     tag = "HrProxy",
     operation_id = "proxy_get_payroll",
     responses(
@@ -347,7 +347,7 @@ pub async fn proxy_get_payroll(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/hr-proxy/proxy-list-attendances",
+    path = "/hr/attendances",
     tag = "HrProxy",
     operation_id = "proxy_list_attendances",
     responses(
@@ -371,7 +371,7 @@ pub async fn proxy_list_attendances(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/hr-proxy/proxy-get-attendance",
+    path = "/hr/attendances/{id}",
     tag = "HrProxy",
     operation_id = "proxy_get_attendance",
     responses(
@@ -423,7 +423,7 @@ pub fn proxy_routes() -> axum::Router<ApiState> {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["erp:read"])),
-    path = "/erp/hr-proxy/proxy-hrm-dashboard",
+    path = "/hr/dashboard",
     tag = "HrProxy",
     operation_id = "proxy_hrm_dashboard",
     responses(

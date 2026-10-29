@@ -29,22 +29,6 @@ export const erpReadApi = {
     apiClient.erp.get('/customers/recent'),
   getLifecycleDashboard: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/mdm-v49/get-lifecycle-dashboard'),
-  proxyListEmployees: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/hr-proxy/proxy-list-employees'),
-  proxyGetEmployee: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/hr-proxy/proxy-get-employee'),
-  proxyGetEmployeeByUser: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/hr-proxy/proxy-get-employee-by-user'),
-  proxyListPositions: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/hr-proxy/proxy-list-positions'),
-  proxyGetPosition: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/hr-proxy/proxy-get-position'),
-  proxyListAttendances: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/hr-proxy/proxy-list-attendances'),
-  proxyGetAttendance: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/hr-proxy/proxy-get-attendance'),
-  proxyHrmDashboard: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/hr-proxy/proxy-hrm-dashboard'),
   listEmployeesFromHrm: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/hrm-integration-example/list-employees-from-hrm'),
   getEmployeeFromHrm: async (): Promise<ApiResponse<Record<string, unknown>>> =>
@@ -61,31 +45,51 @@ export const erpReadApi = {
     apiClient.erp.get('/consolidation/scopes'),
   getQualityTrend: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/master-data-refs/governance/quality-trend'),
-  startQualityTicket: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  startQualityTicket: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.post('/master-data/quality/tickets/{id}/start', data ?? {}),
-  submitQualityTicket: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  submitQualityTicket: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.post('/master-data/quality/tickets/{id}/submit', data ?? {}),
-  verifyQualityTicket: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  verifyQualityTicket: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.post('/master-data/quality/tickets/{id}/verify', data ?? {}),
-  rejectQualityTicket: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  rejectQualityTicket: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.post('/master-data/quality/tickets/{id}/reject', data ?? {}),
-  escalateTicket: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  escalateTicket: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.post('/master-data/quality/tickets/{id}/escalate', data ?? {}),
-  createRepairWorkflow: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  createRepairWorkflow: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.post('/master-data/quality/repair-workflows', data ?? {}),
   getRepairWorkflow2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/master-data/quality/repair-workflows/{id}'),
-  approveRepairWorkflow: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  approveRepairWorkflow: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.post('/master-data/quality/repair-workflows/{id}/approve', data ?? {}),
-  verifyRepair: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  verifyRepair: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.post('/master-data/quality/repair-workflows/{id}/verify', data ?? {}),
   getAssociationRecommendations2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/master-data/recommendations/associations'),
-  mdmGatewayBatch: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  mdmGatewayBatch: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.post('/master-data/gateway/batch', data ?? {}),
   qualityAiGetAnomalies: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/master-data/quality-ai/anomalies'),
-  qualityAiPredictQuality2: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  qualityAiPredictQuality2: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.post('/master-data/quality-ai/predict/{id}', data ?? {}),
   qualityAiGetStats: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/master-data/quality-ai/stats'),

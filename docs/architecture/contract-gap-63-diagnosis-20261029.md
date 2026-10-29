@@ -55,13 +55,16 @@
 
 ## 七、方案 B 执行清单（erp/ehs 契约对齐专项，排期用）
 
-### B1 段 — erp hr-proxy 文档与挂载统一（后端优先）
+### B1 段 — erp hr-proxy 文档与挂载统一（✅ 已执行 2026-10-30）
 - 文件：`svc/erp/src/modules/hr_proxy.rs`（utoipa path）+ `proxy_routes()`（axum .route）
 - 动作：以 axum 实际挂载为权威（`/hr/dashboard`、`/hr/employees`、`/hr/employees/{id}`、`/hr/departments`、
   `/hr/departments/tree`、`/hr/departments/{id}`、`/hr/positions`、`/hr/positions/{id}`、`/hr/attendances`、
   `/hr/attendances/{id}` 等）——**统一 utoipa `path` 为 `/hr/...`**，使 OpenAPI 文档与挂载一致
-- 前端：`apps/web/src/api/erp/readOps*.ts` 中 `hr-proxy/*` 封装改为实际挂载路径（或删除死封装）
-- 验证：P2a/P2b 0 GAP；erp hr-proxy 接口实跑 200/401
+- **执行结果**：hr_proxy.rs 15 处 utoipa path 已统一（对照表逐条映射，含 {id}/{user_id} 变体）；
+  前端 readOps/readOps2/readOps3 共 13 条 hr-proxy 死封装清理（无任何业务引用）
+- **验证**：cargo check topems-erp ✓（9s）；P2a 0 GAP（豁免 1686→1673 = 删除 13 条死封装，自洽）；
+  P2b PASS；web tsc 0 error
+- 接口实跑（200/401 冒烟）——待协作机/联调环境执行
 
 **B1 对照表（utoipa 文档 path → axum 实际挂载，2026-10-29 解析）**：
 

@@ -15,12 +15,6 @@ export const erpReadOps2 = {
     apiClient.erp.get('/erp/master-data/knowledge/inference-rules'),
   listDictItems: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/system/dict-types/{id}/items'),
-  proxyListDepartments: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/erp/hr-proxy/proxy-list-departments'),
-  proxyListCompanies: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/erp/hr-proxy/proxy-list-companies'),
-  proxyListPayrolls: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/erp/hr-proxy/proxy-list-payrolls'),
   mdmServiceList: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/erp/master-data/services'),
   listComplianceRules: async (): Promise<ApiResponse<Record<string, unknown>>> =>
