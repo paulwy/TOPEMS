@@ -49,6 +49,7 @@ const TABLE_LEVEL_KEYWORDS = new Set([
  */
 function extractTables(sqlText) {
   const tables = new Map(); // lower table -> Set(lower column)
+  const likeDeps = []; // { target, src }：LIKE 拷贝依赖（列闭包传播）
 
   const ensure = (t) => {
     const key = t.toLowerCase();
@@ -95,20 +96,46 @@ function extractTables(sqlText) {
       if (!colName) continue;
       const name = (colName[1] ?? colName[2] ?? colName[3]).toLowerCase();
       if (TABLE_LEVEL_KEYWORDS.has(name)) continue; // 表级约束行
+      if (name === "like") {
+        // CREATE TABLE t (LIKE src [INCLUDING ALL])：拷贝源表列（闭包解析见下）
+        const srcM = /LIKE\s+("?[A-Za-z0-9_]+"?)(?:\.("?[A-Za-z0-9_]+"?))?/i.exec(f);
+        if (srcM) {
+          const srcName = (srcM[2] ?? srcM[1]).replace(/"/g, "").toLowerCase();
+          likeDeps.push({ target: table, src: srcName });
+        }
+        continue;
+      }
       cols.add(name);
     }
   }
 
-  // ALTER TABLE name ADD [COLUMN] [IF NOT EXISTS] col ...
-  const altRe = /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:"?[A-Za-z0-9_]+"?(?:\.(?:"?[A-Za-z0-9_]+"?)|\.[A-Za-z0-9_.]+)?)\s+ADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?([A-Za-z_][A-Za-z0-9_]*)/gi;
+  // ALTER TABLE name ADD [COLUMN] [IF NOT EXISTS] col ...（列名支持引号与非引号形式）
+  const altRe = /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:"?[A-Za-z0-9_]+"?(?:\.(?:"?[A-Za-z0-9_]+"?)|\.[A-Za-z0-9_.]+)?)\s+ADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?(?:"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))/gi;
   while ((m = altRe.exec(sqlText)) !== null) {
     const rawTable = m[0]
       .replace(/ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?/i, "")
-      .replace(/\s+ADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?[A-Za-z_][A-Za-z0-9_]*.*/i, "")
+      .replace(/\s+ADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?.*/i, "")
       .replace(/"/g, "");
     const table = rawTable.split(".").pop().toLowerCase();
-    const col = m[1].toLowerCase();
+    const col = (m[1] ?? m[2]).toLowerCase();
     ensure(table).add(col);
+  }
+
+  // LIKE 拷贝闭包：src 表列并入 target（迭代至稳定；src 不存在时跳过）
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const { target, src } of likeDeps) {
+      const srcCols = tables.get(src);
+      if (!srcCols) continue;
+      const tCols = ensure(target);
+      for (const c of srcCols) {
+        if (!tCols.has(c)) {
+          tCols.add(c);
+          changed = true;
+        }
+      }
+    }
   }
 
   return tables;
