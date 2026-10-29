@@ -8,7 +8,7 @@ use axum::{
     Json,
 };
 use futures_util::{stream::SplitSink, SinkExt, StreamExt};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -83,6 +83,8 @@ pub struct WsState {
     connections: ConnectionMap,
     channels: ChannelMap,
     auth_state: Arc<AuthState>,
+    /// global 广播频控：每秒 ≤10 条（契约 §6，超限合并批处理推送留 TODO）
+    broadcast_quota: std::sync::Mutex<(i64, u32)>,
 }
 
 impl WsState {
@@ -93,11 +95,27 @@ impl WsState {
             connections,
             channels,
             auth_state,
+            broadcast_quota: std::sync::Mutex::new((0, 0)),
         }
     }
 
     pub fn auth_state(&self) -> &Arc<AuthState> {
         &self.auth_state
+    }
+
+    /// 检查 global 广播频控（每秒 ≤10 条，契约 §6）
+    pub fn broadcast_quota_ok(&self) -> bool {
+        let mut q = self.broadcast_quota.lock().unwrap();
+        let now = chrono::Utc::now().timestamp();
+        if q.0 != now {
+            q.0 = now;
+            q.1 = 0;
+        }
+        if q.1 >= 10 {
+            return false;
+        }
+        q.1 += 1;
+        true
     }
 
     /// 添加连接
@@ -208,6 +226,10 @@ impl WsState {
 
     /// 广播消息给所有用户
     pub async fn broadcast(&self, message: Message) {
+        if !self.broadcast_quota_ok() {
+            warn!("Global broadcast rate limit exceeded (>10/s), frame dropped");
+            return;
+        }
         let connections = self.connections.read().await;
         for conn in connections.values() {
             let mut sender = conn.sender.write().await;
@@ -245,14 +267,6 @@ impl WsState {
 #[derive(Debug, Deserialize)]
 pub struct WsQueryParams {
     pub token: Option<String>,
-}
-
-/// 心跳消息
-#[derive(Debug, Serialize)]
-struct HeartbeatMessage {
-    #[serde(rename = "type")]
-    msg_type: &'static str,
-    timestamp: i64,
 }
 
 async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Option<String>) {
@@ -310,13 +324,16 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
     // Spawn heartbeat task
     let heartbeat_handle = tokio::spawn(async move {
         let mut ticker = interval(Duration::from_secs(30));
+        // tokio interval 首次 tick 立即完成，跳过（契约 §4.1：连接建立 30s 后才开始心跳）
+        ticker.tick().await;
         loop {
             ticker.tick().await;
 
+            // 契约 P32-6 §3.1/§4.1：心跳帧统一 JSON-RPC 2.0（method=ping，客户端回 pong 保活）
             let msg = Message::Text(
-                json!(HeartbeatMessage {
-                    msg_type: "heartbeat",
-                    timestamp: chrono::Utc::now().timestamp(),
+                json!({
+                    "jsonrpc": "2.0",
+                    "method": "ping"
                 })
                 .to_string()
                 .into(),
@@ -362,76 +379,40 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
                     text
                 );
 
+                // 契约 P32-6 §3：JSON-RPC 2.0 帧协议；§6 配额：单消息 ≤ 64KB
+                if text.len() > 64 * 1024 {
+                    warn!(
+                        "Message too large ({} bytes) from user {}",
+                        text.len(),
+                        user_id.as_deref().unwrap_or("unknown")
+                    );
+                    let err = json!({
+                        "jsonrpc": "2.0",
+                        "id": Value::Null,
+                        "error": { "code": 4203, "message": "message too large (>64KB)" }
+                    });
+                    let mut tx = tx_shared.write().await;
+                    let _ = tx.send(Message::Text(err.to_string().into())).await;
+                    continue;
+                }
+
                 if let Ok(parsed) = serde_json::from_str::<Value>(&text) {
-                    let msg_type = parsed.get("type").and_then(|v| v.as_str());
-                    let payload = parsed.get("payload");
+                    let rpc_id = parsed.get("id").cloned();
+                    let method = parsed.get("method").and_then(|v| v.as_str());
+                    let params = parsed.get("params");
                     let signature = parsed.get("signature").and_then(|v| v.as_str());
 
-                    if msg_type != Some("ping")
-                        && msg_type != Some("pong")
-                        && msg_type != Some("heartbeat_response")
-                    {
-                        if let Some(sig) = signature {
-                            let mut cloned = parsed.clone();
-                            cloned.as_object_mut().and_then(|o| o.remove("signature"));
-                            let original_message =
-                                serde_json::to_string(&cloned).unwrap_or_else(|_| text.to_string());
-
-                            if !verify_message_signature(
-                                &original_message,
-                                sig,
-                                &state.auth_state().jwt_secret,
-                            ) {
-                                warn!(
-                                    "Message signature verification failed for user {}",
-                                    user_id.as_deref().unwrap_or("unknown")
-                                );
-                                let mut tx = tx_shared.write().await;
-                                let _ = tx
-                                    .send(Message::Text(
-                                        json!({
-                                            "type": "signature_error",
-                                            "payload": { "error": "Invalid message signature" }
-                                        })
-                                        .to_string()
-                                        .into(),
-                                    ))
-                                    .await;
-                                continue;
-                            }
-                        } else {
-                            warn!(
-                                "Message without signature from user {}",
-                                user_id.as_deref().unwrap_or("unknown")
-                            );
-                        }
-                    }
-
-                    match msg_type {
-                        Some("subscribe") => {
-                            if let Some(p) = payload {
-                                let channel = p.get("channel").and_then(|v| v.as_str());
-
-                                if let Some(id) = &user_id {
-                                    // 订阅指定频道
-                                    if let Some(ch) = channel {
-                                        state.subscribe_to_channel(id, ch.to_string()).await;
-                                    }
-
-                                    // 发送确认消息
-                                    let confirm = json!({
-                                        "type": "subscribed",
-                                        "payload": {
-                                            "channel": channel.unwrap_or("default"),
-                                            "user_id": id
-                                        }
-                                    });
-                                    let mut tx = tx_shared.write().await;
-                                    let _ =
-                                        tx.send(Message::Text(confirm.to_string().into())).await;
-                                    info!("User {} subscribed to channel: {:?}", id, channel);
-                                }
-                            }
+                    // 心跳 method 免签名（契约 §3.1：ping/pong 双向，30s ping / 90s 断）
+                    match method {
+                        Some("ping") => {
+                            let resp = json!({
+                                "jsonrpc": "2.0",
+                                "id": rpc_id,
+                                "result": { "status": "pong" }
+                            });
+                            let mut tx = tx_shared.write().await;
+                            let _ = tx.send(Message::Text(resp.to_string().into())).await;
+                            continue;
                         }
                         Some("pong") | Some("heartbeat_response") => {
                             if let Some(id) = &user_id {
@@ -439,27 +420,127 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
                                     conn.update_pong_time();
                                 }
                             }
+                            continue;
                         }
-                        Some("ping") => {
+                        _ => {}
+                    }
+
+                    // 签名验证（subscribe/unsubscribe/authenticate 等写操作）
+                    let sig_ok = match signature {
+                        Some(sig) => {
+                            let mut cloned = parsed.clone();
+                            cloned.as_object_mut().and_then(|o| o.remove("signature"));
+                            let original_message =
+                                serde_json::to_string(&cloned).unwrap_or_else(|_| text.to_string());
+                            verify_message_signature(
+                                &original_message,
+                                sig,
+                                &state.auth_state().jwt_secret,
+                            )
+                        }
+                        None => false,
+                    };
+                    if !sig_ok {
+                        warn!(
+                            "Message signature verification failed for user {}",
+                            user_id.as_deref().unwrap_or("unknown")
+                        );
+                        if rpc_id.is_some() {
+                            let err = json!({
+                                "jsonrpc": "2.0",
+                                "id": rpc_id,
+                                "error": { "code": -32001, "message": "invalid message signature" }
+                            });
                             let mut tx = tx_shared.write().await;
-                            let _ = tx
-                                .send(Message::Text(json!({"type": "pong"}).to_string().into()))
-                                .await;
+                            let _ = tx.send(Message::Text(err.to_string().into())).await;
                         }
-                        Some("unsubscribe") => {
-                            if let Some(p) = payload {
-                                if let Some(ch) = p.get("channel").and_then(|v| v.as_str()) {
-                                    if let Some(id) = &user_id {
-                                        state.unsubscribe_from_channel(id, ch).await;
+                        continue;
+                    }
+
+                    match method {
+                        Some("subscribe") => {
+                            let channel = params
+                                .and_then(|p| p.get("channel"))
+                                .and_then(|v| v.as_str());
+                            match (&user_id, channel) {
+                                (Some(id), Some(ch)) => {
+                                    // 配额：每连接最多 32 频道（契约 §6，超限 4202）
+                                    let too_many = {
+                                        let conn_guard = state.connections.read().await;
+                                        match conn_guard.get(id) {
+                                            Some(c) => c.get_channels().await.len() >= 32,
+                                            None => false,
+                                        }
+                                    };
+                                    if too_many {
+                                        let err = json!({
+                                            "jsonrpc": "2.0",
+                                            "id": rpc_id,
+                                            "error": { "code": 4202, "message": "too many channels" }
+                                        });
+                                        let mut tx = tx_shared.write().await;
+                                        let _ = tx.send(Message::Text(err.to_string().into())).await;
+                                        continue;
                                     }
-                                } else if let Some(id) = &user_id {
-                                    state.remove_connection(id).await;
-                                    info!("User {} unsubscribed from all channels", id);
+                                    state.subscribe_to_channel(id, ch.to_string()).await;
+                                    let resp = json!({
+                                        "jsonrpc": "2.0",
+                                        "id": rpc_id,
+                                        "result": { "status": "subscribed", "channel": ch }
+                                    });
+                                    let mut tx = tx_shared.write().await;
+                                    let _ = tx.send(Message::Text(resp.to_string().into())).await;
+                                    info!("User {} subscribed to channel: {}", id, ch);
+                                }
+                                _ => {
+                                    warn!(
+                                        "subscribe without channel/user from {}",
+                                        user_id.as_deref().unwrap_or("unknown")
+                                    );
                                 }
                             }
                         }
+                        Some("unsubscribe") => {
+                            let channel = params
+                                .and_then(|p| p.get("channel"))
+                                .and_then(|v| v.as_str());
+                            match (&user_id, channel) {
+                                (Some(id), Some(ch)) => {
+                                    state.unsubscribe_from_channel(id, ch).await;
+                                    let resp = json!({
+                                        "jsonrpc": "2.0",
+                                        "id": rpc_id,
+                                        "result": { "status": "unsubscribed", "channel": ch }
+                                    });
+                                    let mut tx = tx_shared.write().await;
+                                    let _ = tx.send(Message::Text(resp.to_string().into())).await;
+                                }
+                                (Some(id), None) => {
+                                    state.remove_connection(id).await;
+                                    let resp = json!({
+                                        "jsonrpc": "2.0",
+                                        "id": rpc_id,
+                                        "result": { "status": "unsubscribed_all" }
+                                    });
+                                    let mut tx = tx_shared.write().await;
+                                    let _ = tx.send(Message::Text(resp.to_string().into())).await;
+                                    info!("User {} unsubscribed from all channels", id);
+                                }
+                                _ => {}
+                            }
+                        }
+                        Some("authenticate") => {
+                            // 契约 §3.1：token 过期后 JWT 刷新（刷新逻辑后续实现，占位 OK）
+                            let resp = json!({
+                                "jsonrpc": "2.0",
+                                "id": rpc_id,
+                                "result": { "status": "ok", "message": "authenticate stub" }
+                            });
+                            let mut tx = tx_shared.write().await;
+                            let _ = tx.send(Message::Text(resp.to_string().into())).await;
+                        }
                         _ => {
-                            info!("Unknown message type: {:?}", msg_type);
+                            info!("Unknown WS method: {:?}", method);
                         }
                     }
                 }
@@ -508,11 +589,17 @@ pub async fn websocket_handler(
     ws.on_upgrade(move |socket| handle_socket(socket, state, params.token))
 }
 
-/// 通过用户 ID 发送通知
+/// 通过用户 ID 发送通知（契约 P32-6 §3：JSON-RPC 2.0 event 帧）
 pub async fn broadcast_notification(state: &Arc<WsState>, user_id: &str, notification: Value) {
     let msg = json!({
-        "type": "notification",
-        "payload": notification
+        "jsonrpc": "2.0",
+        "method": "event",
+        "params": {
+            "channel": format!("user:{}", user_id),
+            "event": "notification",
+            "data": notification,
+            "ts": chrono::Utc::now().timestamp_millis()
+        }
     });
 
     if state
@@ -531,8 +618,14 @@ pub async fn broadcast_notification(state: &Arc<WsState>, user_id: &str, notific
 /// 向通知频道广播
 pub async fn broadcast_to_notifications(state: &Arc<WsState>, notification: Value) {
     let msg = json!({
-        "type": "notification",
-        "payload": notification
+        "jsonrpc": "2.0",
+        "method": "event",
+        "params": {
+            "channel": "notifications",
+            "event": "notification",
+            "data": notification,
+            "ts": chrono::Utc::now().timestamp_millis()
+        }
     });
     state
         .broadcast_to_channel("notifications", Message::Text(msg.to_string().into()))
@@ -542,8 +635,14 @@ pub async fn broadcast_to_notifications(state: &Arc<WsState>, notification: Valu
 /// 更新用户未读计数
 pub async fn update_unread_count(state: &Arc<WsState>, user_id: &str, count: i32) {
     let msg = json!({
-        "type": "unread_count",
-        "payload": { "count": count }
+        "jsonrpc": "2.0",
+        "method": "event",
+        "params": {
+            "channel": format!("user:{}", user_id),
+            "event": "unread_count",
+            "data": { "count": count },
+            "ts": chrono::Utc::now().timestamp_millis()
+        }
     });
 
     if state
@@ -558,8 +657,14 @@ pub async fn update_unread_count(state: &Arc<WsState>, user_id: &str, count: i32
 pub async fn broadcast_to_all(state: &Arc<WsState>, msg_type: &str, payload: Value) {
     let msg = Message::Text(
         json!({
-            "type": msg_type,
-            "payload": payload
+            "jsonrpc": "2.0",
+            "method": "event",
+            "params": {
+                "channel": "global",
+                "event": msg_type,
+                "data": payload,
+                "ts": chrono::Utc::now().timestamp_millis()
+            }
         })
         .to_string()
         .into(),
