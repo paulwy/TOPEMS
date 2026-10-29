@@ -29,3 +29,15 @@
 - erp addressbook 33 条 handler=s 为脚本提取缺陷（真实端点存在），归入 read-endpoints 评估，勿误删
 - master-data 18 条 handler=list/ok 同为泛化名缺陷，归入 read-endpoints
 - 池 `v74-rebuild-master.csv` 已对 7 条 stub 标记 `v74_tend=下线-真占位`
+
+
+## BIZ 749 业务评审决策包（2026-10-29）
+
+- `biz-review.csv`（749 条）：svc/method/path/operation_id/handler + **review 列**（AI 侧推荐处置）
+- **细分**：前端接入候选 361（核心业务查询：customer/order/material/contract/invoice/dashboard/quality/inspection 等）+ 待业务确认 375（无明确业务特征）+ 保留后端-前端不接入 13（openapi/schema/registry/webhook/swagger 等内部）
+- **抽样 9 条全 BE**（handler 真实存在）
+- **业务侧确认方式**（按 svc 分批）：对 review 列确认/否决——
+  1. 前端接入候选 → 立项前端补页（复用 P 方法论：typecheck+核销+独立 commit）
+  2. 待业务确认 → 逐 svc 人工过（portal 12/erp 94/ai 34 最大）
+  3. 保留后端-前端不接入 → 确认后从池下线（不删后端，仅标记）
+- **备注**：个别写语义残留（如 master-data /delete delete_lineage）已在 review 标记，业务确认时优先复核
