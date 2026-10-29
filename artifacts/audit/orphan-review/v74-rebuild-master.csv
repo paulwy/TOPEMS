@@ -15,7 +15,6 @@ ai,下线候选,GET,/multimodal/video/analyze,analyze_video,analyze_video,read,n
 ai,下线候选,GET,/multimodal/video/summary,summarize_video,summarize_video,read,none,待定
 ai,下线候选,GET,/vectors/store,store,store,read,none,待定
 ai,下线候选,GET,/vectors/clear,clear_all,clear_all,read,none,待定
-ai,下线候选,GET,/api/ai/agent/run,agent_run,agent_run,read,none,待定
 ai,下线候选,GET,/documents/{id}/process,process,process,read,none,待定
 ai,下线候选,GET,/documents/vectorize-from-file,vectorize_from_file,vectorize_from_file,read,none,待定
 ai,下线候选,GET,/recommend,recommend,recommend,read,none,待定
@@ -23,7 +22,6 @@ ai,下线候选,GET,/profile/get,get_user_profile,get_user_profile,read,none,待
 ai,下线候选,GET,/recommend/documents,recommend_documents,recommend_documents,read,none,待定
 ai,下线候选,GET,/recommend/opportunities,recommend_opportunities,recommend_opportunities,read,none,待定
 ai,下线候选,GET,/recommend/knowledge,recommend_knowledge,recommend_knowledge,read,none,待定
-ai,下线候选,GET,/workflows/execute,execute_workflow,execute_workflow,read,none,待定
 ai,下线候选,GET,/dashboard/activity-trend,get_activity_trend,get_activity_trend,read,none,待定
 ai,下线候选,GET,/models/usage,get_model_usage,get_model_usage,read,none,待定
 ai,下线候选,GET,/api/ai/dify/parameters,parameters,parameters,read,none,待定
@@ -161,7 +159,6 @@ erp,下线候选,GET,/api/erp/master-data-refs/dashboard,create_dashboard_handle
 erp,下线候选,GET,/api/erp/master-data-refs/dashboard/{dashboard_id}/data,get_dashboard_data_handler,get_dashboard_data_handler,read,none,待定
 erp,下线候选,GET,/api/erp/master-data-refs/dashboard/kpi/summary,get_kpi_summary_handler,get_kpi_summary_handler,read,none,待定
 erp,下线候选,GET,/erp/master-data/quality/tickets/{id}/history,get_quality_ticket_history,get_quality_ticket_history,read,none,待定
-erp,下线候选,GET,/erp/master-data/quality/repair-workflows/{id}/execute,execute_repair_workflow,execute_repair_workflow,read,none,待定
 erp,下线候选,GET,/erp/master-data/quality/repair-workflows/{id},get_repair_workflow,get_repair_workflow,read,none,待定
 erp,下线候选,GET,/erp/master-data/domains,create_data_domain,create_data_domain,read,none,待定
 erp,下线候选,GET,/erp/master-data/domains,list_data_domains,list_data_domains,read,none,待定
@@ -169,8 +166,6 @@ erp,下线候选,GET,/erp/master-data/domains/{id},get_data_domain,get_data_doma
 erp,下线候选,GET,/erp/master-data/entities/{entityType}/owner,get_entity_owner,get_entity_owner,read,none,待定
 erp,下线候选,GET,/erp/health/check-database,check_database,check_database,read,none,待定
 erp,下线候选,GET,/api/erp/master-data-refs/{master_data_id},get_master_data_ref,get_master_data_ref,read,none,待定
-erp,下线候选,GET,/erp/db-structure/execute-modify-column,execute_modify_column,execute_modify_column,read,none,待定
-erp,下线候选,GET,/erp/db-structure/execute-drop-column,execute_drop_column,execute_drop_column,read,none,待定
 erp,下线候选,GET,/api/erp/master-data-refs/conflicts/{conflict_id},get_conflict,get_conflict,read,none,待定
 erp,下线候选,GET,/erp/audit/log-audit-event,log_audit_event,log_audit_event,read,none,待定
 erp,下线候选,GET,/erp/mdm-v49/get-archive-policy,get_archive_policy,get_archive_policy,read,none,待定
@@ -203,7 +198,6 @@ erp,下线候选,GET,/erp/master-data/recommendations/associations,get_associati
 erp,下线候选,GET,/erp/master-data/recommendations/completions,get_completion_suggestions,get_completion_suggestions,read,none,待定
 erp,下线候选,GET,/system/dict-types/{id}/items,list_dict_items,list_dict_items,read,none,待定
 erp,下线候选,GET,/erp/customers/recent,list_recent_customers,list_recent_customers,read,none,待定
-erp,下线候选,GET,/erp/mdm-v49/run-sla-check,run_sla_check,run_sla_check,read,none,待定
 erp,下线候选,GET,/erp/mdm-v49/get-lifecycle-dashboard,get_lifecycle_dashboard,get_lifecycle_dashboard,read,none,待定
 erp,下线候选,GET,/erp/master-data-refs/trace-lineage-handler,trace_lineage_handler,trace_lineage_handler,read,none,待定
 erp,下线候选,GET,/erp/master-data-refs/trace-upstream-handler,trace_upstream_handler,trace_upstream_handler,read,none,待定
@@ -234,7 +228,6 @@ erp,下线候选,GET,/erp/master-data/services,mdm_service_list,mdm_service_list
 erp,下线候选,GET,/erp/master-data/services/{serviceId}/health,mdm_service_health,mdm_service_health,read,none,待定
 erp,下线候选,GET,/erp/vehicles/{id}/requests,get_vehicle_requests,get_vehicle_requests,read,none,待定
 erp,下线候选,GET,/erp/master-data-refs/list-compliance-rules-handler,list_compliance_rules_handler,list_compliance_rules_handler,read,none,待定
-erp,下线候选,GET,/api/erp/master-data-refs/audit/check,run_compliance_check_handler,run_compliance_check_handler,read,none,待定
 erp,下线候选,GET,/erp/master-data-refs/get-audit-findings-handler,get_audit_findings_handler,get_audit_findings_handler,read,none,待定
 erp,下线候选,GET,/api/erp/master-data-refs/audit/findings/{finding_id}/resolve,resolve_finding_handler,resolve_finding_handler,read,none,待定
 erp,下线候选,GET,/erp/master-data-refs/generate-audit-report-handler,generate_audit_report_handler,generate_audit_report_handler,read,none,待定
@@ -274,7 +267,6 @@ erp,下线候选,POST,/addressbook/groups/{id}/copy,s,s,read,none,待定
 erp,下线候选,POST,/addressbook/groups/move,s,s,read,none,待定
 erp,下线候选,GET,/addressbook/import/template,s,s,read,none,待定
 erp,下线候选,POST,/addressbook/import/validate,s,s,read,none,待定
-erp,下线候选,POST,/addressbook/import/execute,s,s,read,none,待定
 erp,下线候选,GET,/addressbook/import/tasks,s,s,read,none,待定
 erp,下线候选,POST,/addressbook/export/contacts,s,s,read,none,待定
 erp,下线候选,GET,/addressbook/export/tasks,s,s,read,none,待定
@@ -293,7 +285,6 @@ erp,下线候选,GET,/master-data-refs/pending-destruction,list_pending_destruct
 erp,下线候选,GET,/master-data-refs/quality-report,get_quality_report,get_quality_report,read,none,待定
 erp,下线候选,GET,/master-data-refs/governance/assets,list_data_assets,list_data_assets,read,none,待定
 erp,下线候选,GET,/master-data-refs/governance/quality-trend,get_quality_trend,get_quality_trend,read,none,待定
-erp,下线候选,POST,/master-data/sync/jobs/{id}/compensate,trigger_compensation,trigger_compensation,read,none,待定
 erp,下线候选,GET,/master-data/sync/dead-letters,list_dead_letters,list_dead_letters,read,none,待定
 erp,下线候选,POST,/master-data/sync/dead-letters/{id}/replay,replay_dead_letter,replay_dead_letter,read,none,待定
 erp,下线候选,POST,/master-data/sync/dead-letters/batch-replay,batch_replay_dead_letters,batch_replay_dead_letters,read,none,待定
@@ -304,10 +295,8 @@ erp,下线候选,POST,/master-data/quality/tickets/{id}/reject,reject_quality_ti
 erp,下线候选,GET,/master-data/quality/tickets/{id}/history,get_quality_ticket_history,get_quality_ticket_history,read,none,待定
 erp,下线候选,POST,/master-data/quality/tickets/{id}/escalate,escalate_ticket,escalate_ticket,read,none,待定
 erp,下线候选,GET,/master-data/quality/repair-workflows/{id},get_repair_workflow,get_repair_workflow,read,none,待定
-erp,下线候选,POST,/master-data/quality/repair-workflows/{id}/execute,execute_repair_workflow,execute_repair_workflow,read,none,待定
 erp,下线候选,POST,/master-data/quality/repair-workflows/{id}/approve,approve_repair_workflow,approve_repair_workflow,read,none,待定
 erp,下线候选,POST,/master-data/quality/repair-workflows/{id}/verify,verify_repair,verify_repair,read,none,待定
-erp,下线候选,POST,/master-data/quality/repair-workflows/{id}/steps/{step_index}/execute,execute_repair_step,execute_repair_step,read,none,待定
 erp,下线候选,GET,/master-data/entities/{entity_type}/owner,get_entity_owner,get_entity_owner,read,none,待定
 erp,下线候选,GET,/master-data/graph,get_master_data_graph,get_master_data_graph,read,none,待定
 erp,下线候选,GET,/master-data/graph/nodes/{node_id},get_graph_node,get_graph_node,read,none,待定
@@ -345,7 +334,6 @@ erp,下线候选,GET,/master-data-refs/dashboard/{dashboard_id}/data,get_dashboa
 erp,下线候选,POST,/master-data-refs/reports/schedule,schedule_report_handler,schedule_report_handler,read,none,待定
 erp,下线候选,GET,/master-data-refs/reports/schedule/{template_id},get_report_schedule_handler,get_report_schedule_handler,read,none,待定
 erp,下线候选,GET,/master-data-refs/reports/stats,get_report_automation_stats_handler,get_report_automation_stats_handler,read,none,待定
-erp,下线候选,POST,/master-data-refs/audit/check,run_compliance_check_handler,run_compliance_check_handler,read,none,待定
 erp,下线候选,GET,/master-data-refs/audit/findings,get_audit_findings_handler,get_audit_findings_handler,read,none,待定
 erp,下线候选,POST,/master-data-refs/audit/findings/{finding_id}/resolve,resolve_finding_handler,resolve_finding_handler,read,none,待定
 erp,下线候选,GET,/master-data-refs/audit/scorecard,get_audit_scorecard_handler,get_audit_scorecard_handler,read,none,待定
@@ -408,7 +396,6 @@ finance,下线候选,POST,/events/route,route_event,route_event,read,none,待定
 finance,下线候选,POST,/events/process,process_events,process_events,read,none,待定
 finance,下线候选,GET,/sagas,list_sagas,list_sagas,read,none,待定
 finance,下线候选,GET,/sagas/stats,saga_stats,saga_stats,read,none,待定
-finance,下线候选,POST,/sagas/start,start_saga,start_saga,read,none,待定
 finance,下线候选,POST,/sagas/{saga_id}/compensate,compensate_saga,compensate_saga,read,none,待定
 finance,下线候选,POST,/api/core/settlement-center/reconciliations/{id}/approve,approve_reconciliation,approve_reconciliation,read,none,待定
 gis,P1,GET,/locations/create,create_location,create_location,write,none,保留
@@ -450,7 +437,6 @@ integration,P1,GET,/api/integration/erp/mappings,create_mapping,create_mapping,w
 integration,下线候选,GET,/api/integration/erp/connections,list_connections,list_connections,read,none,待定
 integration,下线候选,GET,/api/integration/sync/pending,get_pending,get_pending,read,none,待定
 integration,下线候选,GET,/api/integration/mes-qms/stats,get_mes_qms_stats_api,get_mes_qms_stats_api,read,none,待定
-integration,下线候选,GET,/api/integration/mes-qms/trigger-inspection,trigger_qms_inspection_api,trigger_qms_inspection_api,read,none,待定
 integration,下线候选,GET,/api/integration/mes-qms/defect-handling,defect_handling_api,defect_handling_api,read,none,待定
 integration,下线候选,GET,/api/integration/erp/mappings,list_mappings,list_mappings,read,none,待定
 integration,下线候选,POST,/batch,batch_entity_mappings,batch_entity_mappings,read,none,待定
@@ -524,7 +510,6 @@ master-data,下线候选,GET,/graph/subgraph,get_subgraph,get_subgraph,read,none
 master-data,下线候选,GET,/graph/subgraph/{tail},ok,ok,read,none,待定
 master-data,下线候选,POST,/search/semantic,search_semantic_handler,search_semantic_handler,read,none,待定
 master-data,下线候选,POST,/search/hybrid,search_hybrid_handler,search_hybrid_handler,read,none,待定
-master-data,下线候选,POST,/search/reindex,reindex_all,reindex_all,read,none,待定
 master-data,下线候选,GET,/entities/tag/{tag},get_entities_by_tag,get_entities_by_tag,read,none,待定
 master-data,下线候选,GET,/tags/suggest,suggest_tags,suggest_tags,read,none,待定
 master-data,下线候选,POST,/data-product,create_data_product,create_data_product,read,none,待定
@@ -547,8 +532,6 @@ master-data,下线候选,POST,/dict-items,create_dict_item,create_dict_item,read
 master-data,下线候选,GET,/assets/export,ok,ok,read,none,待定
 master-data,下线候选,GET,/lineage,ok,ok,read,none,待定
 master-data,下线候选,GET,/lineage/column,ok,ok,read,none,待定
-master-data,下线候选,POST,/lineage/refresh,ok,ok,read,none,待定
-master-data,下线候选,POST,/lineage/refresh/{id},ok,ok,read,none,待定
 master-data,下线候选,GET,/maps/{id}/export,ok,ok,read,none,待定
 master-data,下线候选,GET,/search/suggestions,array,array,read,none,待定
 master-data,下线候选,GET,/dashboard/recent,array,array,read,none,待定
@@ -718,7 +701,6 @@ pm,P1,GET,/project-types/{id},get_type,get_type,write,none,保留
 pm,P2,GET,/project-types,list_types,list_types,read,weak,保留
 pm,下线候选,GET,/service-integrations,list_integrations,list_integrations,read,none,待定
 pm,下线候选,GET,/service-integrations/{id},get_integration,get_integration,read,none,待定
-portal,下线候选,GET,/api/portal/adaptive-execution/execute,execute_adaptive_query_handler,execute_adaptive_query_handler,read,none,待定
 portal,下线候选,GET,/api/portal/adaptive-execution/execution/profile/{hash},get_execution_profile_handler,get_execution_profile_handler,read,none,待定
 portal,下线候选,GET,/api/portal/adaptive-execution/execution/metrics,get_execution_metrics_handler,get_execution_metrics_handler,read,none,待定
 portal,下线候选,GET,/api/portal/adaptive-execution/optimize,optimize_query_handler,optimize_query_handler,read,none,待定
@@ -782,8 +764,6 @@ portal,下线候选,GET,/api/portal/ai-ops/cache/cleanup,cleanup_cache_handler,c
 portal,下线候选,GET,/api/portal/ai-ops/cache/hit-rate,get_cache_hit_rate_handler,get_cache_hit_rate_handler,read,none,待定
 portal,下线候选,GET,/api/portal/ai-ops/cache/evict,evict_cache_handler,evict_cache_handler,read,none,待定
 portal,下线候选,GET,/api/portal/ai-ops/health/checks,get_health_checks_handler,get_health_checks_handler,read,none,待定
-portal,下线候选,GET,/api/portal/ai-ops/health/run,run_health_check_handler,run_health_check_handler,read,none,待定
-portal,下线候选,GET,/api/portal/ai-ops/healing/execute,execute_healing_handler,execute_healing_handler,read,none,待定
 portal,下线候选,GET,/api/portal/ai-ops/healing/history,get_healing_history_handler,get_healing_history_handler,read,none,待定
 portal,下线候选,GET,/api/portal/ai-ops/recovery/status/{id},get_recovery_status_handler,get_recovery_status_handler,read,none,待定
 portal,下线候选,GET,/api/portal/ai-ops/health/summary,get_health_summary_handler,get_health_summary_handler,read,none,待定
@@ -795,7 +775,6 @@ portal,下线候选,GET,/api/portal/realtime-processing/subscription/{id}/resume
 portal,下线候选,GET,/api/portal/realtime-processing/subscription/{id},cancel_subscription_handler,cancel_subscription_handler,read,none,待定
 portal,下线候选,GET,/api/portal/realtime-processing/subscription/{id}/pending,get_pending_events_handler,get_pending_events_handler,read,none,待定
 portal,下线候选,GET,/api/portal/realtime-processing/replay/request,request_replay_handler,request_replay_handler,read,none,待定
-portal,下线候选,GET,/api/portal/realtime-processing/replay/execute/{id},execute_replay_handler,execute_replay_handler,read,none,待定
 portal,下线候选,GET,/api/portal/realtime-processing/replay/{id}/status,get_replay_status_handler,get_replay_status_handler,read,none,待定
 portal,下线候选,GET,/api/portal/realtime-processing/replay/{id}/cancel,cancel_replay_handler,cancel_replay_handler,read,none,待定
 portal,下线候选,GET,/api/portal/realtime-processing/replay/history,get_replay_history_handler,get_replay_history_handler,read,none,待定
@@ -815,7 +794,6 @@ portal,下线候选,GET,/api/portal/subscription-manager/push/queue-length,get_p
 portal,下线候选,GET,/api/portal/intelligent-gateway/routing/table,get_routing_table_handler,get_routing_table_handler,read,none,待定
 portal,下线候选,GET,/api/portal/intelligent-gateway/routing/warmup,warm_up_routing_handler,warm_up_routing_handler,read,none,待定
 portal,下线候选,GET,/api/portal/intelligent-gateway/stitch/discover,discover_subgraphs_handler,discover_subgraphs_handler,read,none,待定
-portal,下线候选,GET,/api/portal/intelligent-gateway/stitch/execute,execute_stitch_handler,execute_stitch_handler,read,none,待定
 portal,下线候选,GET,/api/portal/intelligent-gateway/stitch/status/{plan_id},get_stitch_status_handler,get_stitch_status_handler,read,none,待定
 portal,下线候选,GET,/api/portal/intelligent-gateway/stitch/validate/{plan_id},validate_stitch_handler,validate_stitch_handler,read,none,待定
 portal,下线候选,GET,/api/portal/intelligent-gateway/stitch/conflicts,list_conflicts_handler,list_conflicts_handler,read,none,待定
@@ -833,10 +811,8 @@ portal,下线候选,GET,/api/portal/streaming-processing/backpressure/dropped,ge
 portal,下线候选,GET,/api/portal/streaming-processing/backpressure/stats,get_backpressure_stats_handler,get_backpressure_stats_handler,read,none,待定
 portal,下线候选,GET,/quick-actions/favorites,get_favorite_actions,get_favorite_actions,read,none,待定
 portal,下线候选,GET,/quick-actions/{id}/favorite,toggle_favorite_action,toggle_favorite_action,read,none,待定
-portal,下线候选,GET,/quick-actions/{id}/execute,execute_quick_action,execute_quick_action,read,none,待定
 portal,下线候选,GET,/navigation/pinned,add_pinned_app,add_pinned_app,read,none,待定
 portal,下线候选,GET,/navigation/pinned/{id},remove_pinned_app,remove_pinned_app,read,none,待定
-portal,下线候选,GET,/api/portal/persisted-query/{hash}/execute,execute_query_handler,execute_query_handler,read,none,待定
 portal,下线候选,GET,/api/portal/persisted-query/list,list_queries_handler,list_queries_handler,read,none,待定
 portal,下线候选,GET,/api/portal/persisted-query/cache/get/{key},cache_get_handler,cache_get_handler,read,none,待定
 portal,下线候选,GET,/api/portal/persisted-query/cache/set,cache_set_handler,cache_set_handler,read,none,待定
@@ -873,7 +849,6 @@ portal,下线候选,GET,/dashboard/cache/stats,get_cache_stats,get_cache_stats,r
 portal,下线候选,GET,/dashboard/quick-access,get_quick_access,get_quick_access,read,none,待定
 portal,下线候选,GET,/dashboard/quick-access,add_quick_access,add_quick_access,read,none,待定
 portal,下线候选,GET,/dashboard/quick-access/{id},remove_quick_access,remove_quick_access,read,none,待定
-portal,下线候选,GET,/api/portal/orchestration/plan/{id}/execute,execute_plan_handler,execute_plan_handler,read,none,待定
 portal,下线候选,GET,/api/portal/orchestration/plan/{id}/status,get_plan_status_handler,get_plan_status_handler,read,none,待定
 portal,下线候选,GET,/api/portal/orchestration/plan/{id}/cancel,cancel_plan_handler,cancel_plan_handler,read,none,待定
 portal,下线候选,GET,/api/portal/orchestration/history,get_execution_history_handler,get_execution_history_handler,read,none,待定
@@ -890,7 +865,6 @@ portal,下线候选,GET,/api/portal/deep-federation/consistency/detect,detect_co
 portal,下线候选,GET,/api/portal/deep-federation/consistency/resolve/{id},resolve_conflict_handler,resolve_conflict_handler,read,none,待定
 portal,下线候选,GET,/api/portal/deep-federation/consistency/vector/{id},get_version_vector_handler,get_version_vector_handler,read,none,待定
 portal,下线候选,GET,/api/portal/deep-federation/consistency/report,get_consistency_report_handler,get_consistency_report_handler,read,none,待定
-portal,下线候选,GET,/api/portal/deep-federation/distributed/query/{id}/execute,execute_distributed_query_handler,execute_distributed_query_handler,read,none,待定
 portal,下线候选,GET,/api/portal/deep-federation/distributed/query/{id}/status,get_query_status_handler,get_query_status_handler,read,none,待定
 portal,下线候选,GET,/api/portal/deep-federation/distributed/query/{id}/cancel,cancel_query_handler,cancel_query_handler,read,none,待定
 portal,下线候选,GET,/api/portal/deep-federation/distributed/query/history,get_query_history_handler,get_query_history_handler,read,none,待定
@@ -1022,7 +996,6 @@ ticket,下线候选,POST,/feedbacks,create_feedback,create_feedback,read,none,�
 ticket,下线候选,GET,/feedbacks/{id},get_feedback,get_feedback,read,none,待定
 ticket,下线候选,GET,/tickets/{id}/attachments/type/{file_type},get_attachments_by_type,get_attachments_by_type,read,none,待定
 unified-core,P1,GET,/iam/positions,list_positions,list_positions,write,none,保留
-unified-core,P1,GET,/api/core/flow/instances/{id}/start,start_instance,start_instance,write,none,保留
 unified-core,P1,GET,/api/core/flow/instances/{id}/approve,approve_instance,approve_instance,write,none,保留
 unified-core,P1,GET,/api/core/flow/instances/{id}/reject,reject_instance,reject_instance,write,none,保留
 unified-core,P1,GET,/api/core/flow/workflows/{id}/publish,publish_workflow,publish_workflow,write,none,保留
@@ -1067,7 +1040,6 @@ unified-core,下线候选,GET,/form-instances/{id},stub_detail,stub_detail,read,
 unified-core,下线候选,POST,/rules/batch-update,batch_update_rules,batch_update_rules,read,none,待定
 unified-core,下线候选,POST,/workflows/{id}/publish,publish_workflow,publish_workflow,read,none,待定
 unified-core,下线候选,POST,/workflows/{id}/unpublish,unpublish_workflow,unpublish_workflow,read,none,待定
-unified-core,下线候选,POST,/instances/{id}/start,start_instance,start_instance,read,none,待定
 unified-core,下线候选,POST,/instances/{id}/approve,approve_instance,approve_instance,read,none,待定
 unified-core,下线候选,POST,/instances/{id}/reject,reject_instance,reject_instance,read,none,待定
 unified-core,下线候选,POST,/monitor/instances/{id}/complete,force_complete,force_complete,read,none,待定
@@ -1085,9 +1057,6 @@ unified-core,下线候选,POST,/automation/designer/canvas/{rule_id}/validate,va
 unified-core,下线候选,POST,/automation/designer/canvas/{rule_id}/sync-to-rule,sync_to_rule,sync_to_rule,read,none,待定
 unified-core,下线候选,POST,/automation/designer/canvas/{rule_id}/sync-from-rule,sync_from_rule,sync_from_rule,read,none,待定
 unified-core,下线候选,GET,/automation/rules/by-code/{code},get_rule_by_code,get_rule_by_code,read,none,待定
-unified-core,下线候选,GET,/automation/runs/{id}/steps,get_run_steps,get_run_steps,read,none,待定
-unified-core,下线候选,GET,/automation/runs/{id}/logs,get_run_logs,get_run_logs,read,none,待定
-unified-core,下线候选,GET,/automation/runs/{id}/logs/{log_id},get_run_log_by_id,get_run_log_by_id,read,none,待定
 unified-core,下线候选,GET,/automation/variables/{key},get_variable,get_variable,read,none,待定
 unified-core,下线候选,GET,/automation/variables/{key}/reveal,reveal_variable,reveal_variable,read,none,待定
 unified-core,下线候选,GET,/users/{user_id}/login-history,get_login_history,get_login_history,read,none,待定
