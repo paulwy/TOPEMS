@@ -14,6 +14,11 @@ export const changeNoticeActionApi = {
   reject: (id: string, data?: { reason?: string }): Promise<ApiResponse<ChangeOrder>> => {
     return apiClient.pdm.post(`/change-notices/${id}/reject`, data || {});
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  create: (data: Record<string, unknown>): Promise<ApiResponse<ChangeOrder>> => {
+    return apiClient.pdm.post('/change-notices', data);
+  },
 };
 
 export default changeNoticeActionApi;

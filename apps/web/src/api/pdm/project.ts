@@ -140,4 +140,11 @@ export const projectApi = {
   deletePhase: async (projectId: string, phaseId: string): Promise<ApiResponse<boolean>> => {
     return apiClient.pdm.delete<boolean>(`/projects/${projectId}/phases/${phaseId}`);
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  createProject: async (
+    data: CreatePdmProjectRequest
+  ): Promise<ApiResponse<PdmProject>> => {
+    return apiClient.pdm.post<PdmProject>('/projects', data);
+  },
 };

@@ -161,4 +161,11 @@ export const documentApi = {
   downloadVersion: async (documentId: string, versionId: string): Promise<ApiResponse<string>> => {
     return apiClient.pdm.get<string>(`/documents/${documentId}/versions/${versionId}/download`);
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  createDocument: async (
+    data: CreatePdmDocumentRequest
+  ): Promise<ApiResponse<PdmDocument>> => {
+    return apiClient.pdm.post<PdmDocument>('/documents', data);
+  },
 };
