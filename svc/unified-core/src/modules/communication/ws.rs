@@ -3,7 +3,7 @@
 use axum::{
     extract::ws::{Message, WebSocket},
     extract::{Path, Query, State, WebSocketUpgrade},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     response::IntoResponse,
     Json,
 };
@@ -90,8 +90,10 @@ pub struct WsState {
     connections: ConnectionMap,
     channels: ChannelMap,
     auth_state: Arc<AuthState>,
-    /// global 广播频控：每秒 ≤10 条（契约 §6，超限合并批处理推送留 TODO）
+    /// global 广播频控：每秒 ≤10 条（契约 §6，超限进入合并队列）
     broadcast_quota: std::sync::Mutex<(i64, u32)>,
+    /// 超频广播合并队列（契约 §6：>10/s 合并批处理推送，由后台 flush task 每 100ms 冲刷）
+    pending_broadcasts: std::sync::Mutex<Vec<Value>>,
 }
 
 impl WsState {
@@ -103,6 +105,7 @@ impl WsState {
             channels,
             auth_state,
             broadcast_quota: std::sync::Mutex::new((0, 0)),
+            pending_broadcasts: std::sync::Mutex::new(Vec::new()),
         }
     }
 
@@ -275,12 +278,31 @@ impl WsState {
         }
     }
 
-    /// 广播消息给所有用户（所有连接）
+    /// 广播消息给所有用户（所有连接；契约 §6：>10/s 超频转入合并队列，不丢弃）
     pub async fn broadcast(&self, message: Message) {
-        if !self.broadcast_quota_ok() {
-            warn!("Global broadcast rate limit exceeded (>10/s), frame dropped");
+        if self.broadcast_quota_ok() {
+            self.broadcast_raw(message).await;
             return;
         }
+        // 超频：解析 event 帧并入合并队列（flush task 每 100ms 合并发送）
+        if let Message::Text(text) = message {
+            if let Ok(v) = serde_json::from_str::<Value>(&text.to_string()) {
+                let event = v
+                    .pointer("/params/event")
+                    .and_then(|e| e.as_str())
+                    .unwrap_or("event")
+                    .to_string();
+                let data = v.pointer("/params/data").cloned().unwrap_or(Value::Null);
+                self.enqueue_broadcast(event, data);
+                return;
+            }
+        }
+        // 非 event 帧或解析失败：限速占位（契约 §6 兜底）
+        warn!("Global broadcast rate limit exceeded (>10/s), non-event frame dropped");
+    }
+
+    /// 直接广播（不含频控检查，供 flush 合并帧与正常路径使用）
+    async fn broadcast_raw(&self, message: Message) {
         let connections = self.connections.read().await;
         for list in connections.values() {
             for conn in list {
@@ -290,6 +312,44 @@ impl WsState {
                 }
             }
         }
+    }
+
+    /// 超频广播入队（契约 §6 合并批处理）
+    pub fn enqueue_broadcast(&self, event: String, data: Value) {
+        self.pending_broadcasts
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .push(json!({ "event": event, "data": data }));
+        info!("Global broadcast >10/s: frame {} merged into batch", event);
+    }
+
+    /// 冲刷合并队列：构造单条合并帧广播（返回合并条数；空队列返回 0）
+    pub async fn flush_pending_broadcasts(&self) -> usize {
+        let batch: Vec<Value> = {
+            let mut pending = self
+                .pending_broadcasts
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
+            pending.drain(..).collect()
+        };
+        if batch.is_empty() {
+            return 0;
+        }
+        let msg = Message::Text(
+            json!({
+                "jsonrpc": "2.0",
+                "method": "event",
+                "params": {
+                    "channel": "global",
+                    "batch": batch,
+                    "ts": chrono::Utc::now().timestamp_millis()
+                }
+            })
+            .to_string()
+            .into(),
+        );
+        self.broadcast_raw(msg).await;
+        batch.len()
     }
 
     /// 检查并清理超时连接（按连接粒度；返回移除的连接数）
@@ -651,15 +711,54 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
     info!("WebSocket connection closed");
 }
 
+/// Origin 白名单校验（契约 §6：生产部署配置 `WS_ALLOWED_ORIGINS`（逗号分隔）后严格校验；
+/// 未配置时放行——开发环境默认；配置后无 Origin 请求拒绝 403）
+fn origin_allowed(headers: &HeaderMap) -> bool {
+    match std::env::var("WS_ALLOWED_ORIGINS") {
+        Ok(list) if !list.trim().is_empty() => {
+            let list = list
+                .split(',')
+                .map(|o| o.trim())
+                .filter(|o| !o.is_empty())
+                .collect::<Vec<_>>();
+            if list.is_empty() {
+                return true;
+            }
+            match headers.get(axum::http::header::ORIGIN) {
+                Some(origin) => {
+                    let origin = origin.to_str().unwrap_or_default();
+                    list.iter().any(|o| *o == origin)
+                }
+                None => false,
+            }
+        }
+        _ => true,
+    }
+}
+
 pub async fn websocket_handler(
     State(state): State<Arc<WsState>>,
     Query(params): Query<WsQueryParams>,
+    headers: HeaderMap,
     ws: WebSocketUpgrade,
 ) -> impl IntoResponse {
     info!(
         "WebSocket upgrade requested, token present: {}",
         params.token.is_some()
     );
+
+    // 契约 §6：Origin 生产白名单（WS_ALLOWED_ORIGINS 配置后严格校验，未配置放行）
+    if !origin_allowed(&headers) {
+        warn!("WS upgrade rejected: origin not in whitelist");
+        return (
+            StatusCode::FORBIDDEN,
+            Json(json!({
+                "code": 403,
+                "message": "origin not allowed"
+            })),
+        )
+            .into_response();
+    }
 
     // 契约 §6：每 token 最多 6 并发连接（升级前预检，超限返回 429；
     // handle_socket 内 add_connection 为权威二次检查）
@@ -810,6 +909,7 @@ pub async fn websocket_handler_path(
     Path((module, feature)): Path<(String, String)>,
     State(state): State<Arc<WsState>>,
     Query(params): Query<WsQueryParams>,
+    headers: HeaderMap,
     ws: WebSocketUpgrade,
 ) -> impl IntoResponse {
     if !WS_MODULE_WHITELIST.contains(&module.as_str()) {
@@ -821,6 +921,22 @@ pub async fn websocket_handler_path(
         feature,
         params.token.is_some()
     );
+
+    // 契约 §6：Origin 生产白名单（WS_ALLOWED_ORIGINS 配置后严格校验，未配置放行）
+    if !origin_allowed(&headers) {
+        warn!(
+            "WS upgrade rejected module={}: origin not in whitelist",
+            module
+        );
+        return (
+            StatusCode::FORBIDDEN,
+            Json(json!({
+                "code": 403,
+                "message": "origin not allowed"
+            })),
+        )
+            .into_response();
+    }
 
     // 契约 §6：每 token 最多 6 并发连接（升级前预检，超限 429；add_connection 权威复查）
     if let Some(token) = &params.token {
@@ -847,4 +963,40 @@ pub async fn websocket_handler_path(
     }
 
     ws.on_upgrade(move |socket| handle_socket(socket, state, params.token))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_state() -> Arc<WsState> {
+        let auth_state = Arc::new(AuthState::new(
+            "test-secret-0123456789abcdef0123456789abcdef".into(),
+            "test-refresh-0123456789abcdef0123456789abcdef".into(),
+            1,
+        ));
+        WsState::new(auth_state).into()
+    }
+
+    #[tokio::test]
+    async fn broadcast_overflow_merges_into_batch() {
+        let state = test_state();
+        // 每秒 ≤10 条直发（契约 §6），第 11+ 条进入合并队列
+        for i in 0..15 {
+            let msg = json!({
+                "jsonrpc": "2.0",
+                "method": "event",
+                "params": { "channel": "global", "event": format!("e{}", i), "data": { "i": i }, "ts": 0 }
+            });
+            state.broadcast(Message::Text(msg.to_string().into())).await;
+        }
+        let merged = state.flush_pending_broadcasts().await;
+        assert_eq!(merged, 5, "第 11-15 条应合并为 5 条");
+    }
+
+    #[tokio::test]
+    async fn flush_empty_queue_returns_zero() {
+        let state = test_state();
+        assert_eq!(state.flush_pending_broadcasts().await, 0);
+    }
 }

@@ -1,3 +1,12 @@
+## v1.117 BFF WS：契约 §6 Origin 白名单 + 广播合并批处理落地（2026-10-29）✅
+
+> 承接 v1.116 遗留①②：Origin 生产白名单（env 可配置）+ global 广播 >10/s 合并批处理，消除 drop（commit 本次）。
+
+- **Origin 白名单**（部署项，`svc/unified-core/src/modules/communication/ws.rs`）：env `WS_ALLOWED_ORIGINS`（逗号分隔）配置后严格校验——Origin 不匹配或缺失 → HTTP 403；未配置放行（开发默认）。websocket_handler / websocket_handler_path 升级前统一校验（`origin_allowed()`）。
+- **广播合并批处理**：`broadcast()` 超频（>10/s）不再 drop——解析 event 帧入 `pending_broadcasts` 队列（`enqueue_broadcast`）；新增 `flush_pending_broadcasts()`（100ms 窗口合并为单条 batch 帧 `params.batch=[{event,data},...]` 广播）；`embedded.rs` 后台 task 每 100ms 冲刷。正常路径 quota_ok 直发不变。
+- **验证**：cargo build 无警告；单测 2 项（15 条广播 → 10 直发 + 5 合并；空队列 flush=0）+ lib 540 全过；Origin 实测（配置后：白名单 auth_success / 错误 Origin 403 / 无 Origin 403；恢复默认：无 Origin 放行）+ 6 连接 429 回归。
+- **遗留**：③ 前端 useWebSocket + 试点页（全量触发条件达成时立项）——契约 §6 配额表服务端项全部落地（6 连接/32 频道/64KB/广播频控+合并/Origin 白名单）。
+
 ## v1.116 BFF WS：契约 §6 每 token 6 并发连接落地（2026-10-29）✅
 
 > 承接 v1.114 待办② 安全配额表连接维度：connections 单键 HashMap 改多连接 Vec，全部收敛 + 编译/门禁/冒烟全通后推送（commit 4f292a344f）。
