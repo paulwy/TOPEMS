@@ -549,11 +549,6 @@ hrm,下线候选,GET,/reports/attendance-summary/{tail},summary_tail,summary_tai
 hrm,下线候选,GET,/reports/payroll-summary/{tail},summary_tail,summary_tail,read,none,待定
 hrm,下线候选,POST,/employees/export,export_employees,export_employees,read,none,待定
 integration,P1,GET,/api/integration/erp/connections,create_connection,create_connection,write,none,保留
-integration,P1,GET,/api/integration/sync/tasks,create_task,create_task,write,none,保留
-integration,P1,GET,/api/integration/sync/retry-failed,retry_failed,retry_failed,write,none,保留
-integration,P1,GET,/api/integration/sync/trigger/scm-to-wms,trigger_scm_wms,trigger_scm_wms,write,none,保留
-integration,P1,GET,/api/integration/sync/trigger/wms-to-crm,trigger_wms_crm,trigger_wms_crm,write,none,保留
-integration,P1,GET,/api/integration/sync/trigger/srm-to-scm,trigger_srm_scm,trigger_srm_scm,write,none,保留
 integration,P1,GET,/api/integration/erp/mappings,create_mapping,create_mapping,write,none,保留
 integration,P2,GET,/metrics,move,move,read,weak,保留
 integration,下线候选,GET,/api/integration/erp/connections,list_connections,list_connections,read,none,待定
@@ -1234,7 +1229,6 @@ scm,下线候选,GET,/sync/supplier-from-srm,sync_supplier_from_srm,sync_supplie
 scm,下线候选,GET,/sync/sync-logs,get_sync_logs,get_sync_logs,read,none,待定
 scm,下线候选,GET,/sync/statistics,get_sync_statistics,get_sync_statistics,read,none,待定
 scm,下线候选,GET,/sync/consistency-check,check_consistency,check_consistency,read,none,待定
-scm,下线候选,POST,/sync/retry-failed,retry_failed_syncs,retry_failed_syncs,read,none,待定
 search,下线候选,GET,/suggestions,suggestions_handler,suggestions_handler,read,none,待定
 search,下线候选,POST,/mcp,handle_mcp,handle_mcp,read,none,待定
 srm,下线候选,GET,/supplier-contracts/{id}/terms,get_contract_terms,get_contract_terms,read,none,待定

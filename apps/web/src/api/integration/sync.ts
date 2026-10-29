@@ -94,6 +94,31 @@ export const syncApi = {
   }): Promise<ApiResponse<SyncHistoryItem[]>> => {
     return apiClient.integration.get('/sync-stats/history', { params });
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  createTask: async (
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.integration.post('/sync/tasks', data);
+  },
+
+  retryFailed: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.integration.post('/sync/retry-failed', data);
+  },
+
+  triggerScmToWms: async (): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.integration.post('/sync/trigger/scm-to-wms');
+  },
+
+  triggerWmsToCrm: async (): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.integration.post('/sync/trigger/wms-to-crm');
+  },
+
+  triggerSrmToScm: async (): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.integration.post('/sync/trigger/srm-to-scm');
+  },
 };
 
 export default syncApi;
