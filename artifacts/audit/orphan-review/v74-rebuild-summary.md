@@ -66,7 +66,8 @@
 
 ## 批3 read-endpoints 评估（2026-10-29 起）
 
-- **portal 240 条已评估**（`offline-review/portal-eval.csv`）：OPS-运维保留 55（monitoring/trace/metrics/audit 等）、BIZ-业务待确认 176、批2复核-写语义 9（execute/run/trigger 类，后续补绑）；抽样 8 条 handler 全 BE 确认
+- **portal 240 条已评估**（`offline-review/portal-eval.csv`）：OPS 55/BIZ 176/批2复核 9；抽样 8 条全 BE
+- **erp 181 条已评估**（`offline-review/erp-eval.csv`）：OPS 43/BIZ 157/批2复核 10；抽样 9 条全 BE
 
 ## 批2 method 复核（写端点补绑，2026-10-29 起）
 
