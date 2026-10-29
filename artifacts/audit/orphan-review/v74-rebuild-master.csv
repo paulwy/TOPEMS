@@ -1257,16 +1257,6 @@ srm,下线候选,GET,/performance/trend/{id},get_performance_trend,get_performan
 srm,下线候选,GET,/suppliers/{id}/performance-summary,get_performance_summary,get_performance_summary,read,none,待定
 srm,下线候选,GET,/evaluations/statistics,get_evaluation_statistics,get_evaluation_statistics,read,none,待定
 srm,下线候选,GET,/tender-awards/{id},list_tender_awards,list_tender_awards,read,none,待定
-ticket,P1,GET,/automation-rules,create_automation_rule_handler,create_automation_rule_handler,write,none,保留
-ticket,P1,GET,/automation-rules/{id},get_automation_rule_handler,get_automation_rule_handler,write,none,保留
-ticket,P1,GET,/automation-rules/{id},update_automation_rule_handler,update_automation_rule_handler,write,none,保留
-ticket,P1,GET,/automation-rules/{id},delete_automation_rule_handler,delete_automation_rule_handler,write,none,保留
-ticket,P1,GET,/knowledge-articles,create_knowledge_article_handler,create_knowledge_article_handler,write,none,保留
-ticket,P1,GET,/knowledge-articles/{id},get_knowledge_article_handler,get_knowledge_article_handler,write,none,保留
-ticket,P1,GET,/knowledge-articles/{id},update_knowledge_article_handler,update_knowledge_article_handler,write,none,保留
-ticket,P1,GET,/knowledge-articles/{id},delete_knowledge_article_handler,delete_knowledge_article_handler,write,none,保留
-ticket,下线候选,GET,/automation-rules,list_automation_rules_handler,list_automation_rules_handler,read,none,待定
-ticket,下线候选,GET,/knowledge-articles,list_knowledge_articles_handler,list_knowledge_articles_handler,read,none,待定
 ticket,下线候选,GET,/api/ticket/feedbacks/{id},get_feedback,get_feedback,read,none,待定
 ticket,下线候选,GET,/api/ticket/workflows,get_workflows,get_workflows,read,none,待定
 ticket,下线候选,GET,/api/ticket/ticket-tags,list_tag_directory,list_tag_directory,read,none,待定

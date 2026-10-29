@@ -3,13 +3,13 @@
 > 脚本：`scripts/rebuild-to-bind-pool.py`；后端路由 5592（utoipa 3260 + Router::route 2332）× 前端 api 调用 3243（含泛型/跨行调用识别）。
 > 口径：后端真实 handler + 前端无 api 调用 → 候选；优先级 P0=写+弱引用 / P1=写+无引用 / P2=读+弱引用 / 下线候选=读+无引用。
 
-**候选总数：1421**（v73 332 作废）
+**候选总数：1411**（v73 332 作废）
 
 ## 优先级分布
 | 优先级 | 数量 | 处置建议 |
 |---|---|---|
 | P0 | 3（短路径误报登记，实质 0） | 写端点+弱引用 |
-| P1 | 118 | 写端点+无引用 |
+| P1 | 110 | 写端点+无引用 |
 | P2 | 101 | 读端点+弱引用 |
 | 下线候选 | 1361 | 读端点+无引用，人工确认删路由 |
 
@@ -45,5 +45,6 @@
 - **pdm 批 15→0**（补绑 4 条；另 11 条已绑。method 误标登记）。
 - **analytics 批 14→0**（补绑 14 条；脚本核销成功 1446→1429）。
 - **rd 批 6→0**（补绑 6 条；候选 1429→1423）。
-- **lims 批 9→2**（补绑 2 条：createIntegrationSample/createIntegrationTask(sync.ts)；其余 7 条已绑登记（getBarcode/printBarcode(/barcodes/print)/assignRfidTag(/rfid-tags/assign)/getReagent/getPtPlan(ptPlanApi)/getInstrument/recordLifecycleEvent(/samples/lifecycle-event)——脚本路径差异仍报，候选 1423→1421）。
+- **lims 批 9→2**（补绑 2 条；7 条已绑登记；1423→1421）。
+- **ticket 批 8→0**（补绑 8 条：automation-rules CRUD 4 + knowledge-articles CRUD 4；新建 automationRule.ts/knowledgeArticle.ts；候选 1421→1411）。
 - 已知精度限制：1 段短路径（如 /plans）不参与尾段匹配（n>=2），短路径端点可能漏匹配已绑（登记）。
