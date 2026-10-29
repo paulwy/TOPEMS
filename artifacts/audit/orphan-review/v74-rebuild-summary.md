@@ -3,7 +3,7 @@
 > 脚本：`scripts/rebuild-to-bind-pool.py`；后端路由 5592（utoipa 3260 + Router::route 2332）× 前端 api 调用 3243（含泛型/跨行调用识别）。
 > 口径：后端真实 handler + 前端无 api 调用 → 候选；优先级 P0=写+弱引用 / P1=写+无引用 / P2=读+弱引用 / 下线候选=读+无引用。
 
-**候选总数：1275**（v73 332 作废）
+**候选总数：1222**（v73 332 作废）
 
 ## 优先级分布
 | 优先级 | 数量 | 处置建议 |
@@ -67,4 +67,4 @@
 ## 批2 method 复核（写端点补绑，2026-10-29 起）
 
 - **portal 批（75 条）**：补绑 `apps/web/src/api/portal/writeOps.ts`（新建，post 53/put 11/get 7/delete 4），method 由 operation_id/handler 语义推导；根路径 7 条（/todos×2、/navigation/pinned×2、/settings/reset、/dashboard/quick-access×2）登记不补（portal 根路由无 /api/portal 前缀，与 apiClient.portal baseURL 不匹配）；候选 1361→1275，portal 下线候选 322→236
-- 批2 剩余：erp 31/finance 20/integration 15/ehs 10/analytics 9/ai 7 等共 138 条待同类处理
+- **erp+finance 批（51 条）**：补绑 erp/writeOps.ts（post 19/put 1/delete 3/get 8）+ finance/writeOps.ts（get 4/post 14/put 2）；候选 1275→1222；批2 剩余：integration 15/ehs 10/analytics 9/ai 7 等共 87 条
