@@ -41,3 +41,11 @@
   2. 待业务确认 → 逐 svc 人工过（portal 12/erp 94/ai 34 最大）
   3. 保留后端-前端不接入 → 确认后从池下线（不删后端，仅标记）
 - **备注**：个别写语义残留（如 master-data /delete delete_lineage）已在 review 标记，业务确认时优先复核
+
+
+## 待确认 375 抽样评审（2026-10-29）
+
+- **预筛**（`prescan` 列全量回填 biz-review.csv）：疑似接入候选 124 / 待业务甄别 229 / 死代码候选(stub) 21 / 内部端点候选 1
+- **样例包** `sample-review.csv`（48 条，覆盖 25 svc，分层抽样 seed 7）：backend BE 47/48（唯一 NO=erp addressbook share handler=s）+ biz_sug 列示范业务侧确认节奏
+- **21 条占位已处置**：erp addressbook 16（handler=`s`，路由 `post(s)/get(s)` 冒烟占位确认）+ master-data lineage 5（handler=`ok`，`contract_fallbacks::ok` 契约 fallback，待路由核实）→ 池标记 `下线-真占位/契约fallback`（不删后端）
+- **业务侧收窄路径**：人工评审范围 375→229（待甄别）+124（疑似接入，可参照样例包快速确认）
