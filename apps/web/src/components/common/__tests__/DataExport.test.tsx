@@ -6,19 +6,20 @@ import { renderWithProviders } from '@/__tests__/test-utils';
 import DataExport, { ExportField } from '../DataExport';
 
 const excelMocks = vi.hoisted(() => ({
-  writeBuffer: vi.fn(() => Promise.resolve(new ArrayBuffer(8))),
-  addRows: vi.fn(),
+  writeFile: vi.fn(),
+  json_to_sheet: vi.fn(() => ({})),
+  book_new: vi.fn(() => ({})),
+  book_append_sheet: vi.fn(),
 }));
 
-vi.mock('exceljs', () => {
-  class MockWorkbook {
-    xlsx = { writeBuffer: excelMocks.writeBuffer };
-    addWorksheet() {
-      return { addRows: excelMocks.addRows, columns: [] };
-    }
-  }
-  return { Workbook: MockWorkbook };
-});
+vi.mock('xlsx', () => ({
+  utils: {
+    json_to_sheet: excelMocks.json_to_sheet,
+    book_new: excelMocks.book_new,
+    book_append_sheet: excelMocks.book_append_sheet,
+  },
+  writeFile: excelMocks.writeFile,
+}));
 
 const sampleData: Record<string, unknown>[] = [
   { name: '张三', department: '技术部' },
@@ -80,10 +81,8 @@ describe('DataExport', () => {
     fireEvent.click(screen.getByRole('button', { name: /导出/ }));
     fireEvent.click(screen.getByText('导出 Excel'));
 
-    await waitFor(() => expect(excelMocks.writeBuffer).toHaveBeenCalledTimes(1), { timeout: 2000 });
-    const links = appendSpy.mock.calls.map((c) => c[0] as HTMLAnchorElement);
-    const anchor = links[links.length - 1];
-    expect(anchor.download).toBe('export.xlsx');
+    await waitFor(() => expect(excelMocks.writeFile).toHaveBeenCalledTimes(1), { timeout: 2000 });
+    expect(excelMocks.writeFile).toHaveBeenCalledWith(expect.anything(), 'export.xlsx');
     appendSpy.mockRestore();
   });
 
@@ -153,10 +152,8 @@ describe('DataExport', () => {
     fireEvent.click(screen.getByRole('button', { name: /导出/ }));
     fireEvent.click(screen.getByText('导出 Excel'));
 
-    await waitFor(() => expect(excelMocks.writeBuffer).toHaveBeenCalledTimes(1), { timeout: 2000 });
-    const links = appendSpy.mock.calls.map((c) => c[0] as HTMLAnchorElement);
-    const anchor = links[links.length - 1];
-    expect(anchor.download).toBe('员工列表.xlsx');
+    await waitFor(() => expect(excelMocks.writeFile).toHaveBeenCalledTimes(1), { timeout: 2000 });
+    expect(excelMocks.writeFile).toHaveBeenCalledWith(expect.anything(), '员工列表.xlsx');
     appendSpy.mockRestore();
   });
 });

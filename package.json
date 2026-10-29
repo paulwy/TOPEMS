@@ -103,7 +103,7 @@
       "ip-address": "10.7.4",
       "vitest": "4.1.11",
       "@vitest/mocker": "4.1.12",
-      "qs": "6.16.0",
+      "qs": "6.16.1",
       "tmp": "0.2.7",
       "esbuild": "0.28.1",
       "@puppeteer/browsers": "3.2.3",
