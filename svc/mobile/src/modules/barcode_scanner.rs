@@ -426,7 +426,7 @@ pub async fn get_scan_by_id(
             .and_then(|s| Uuid::parse_str(s).ok())
     };
 
-    let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, barcode, barcode_type, decoded_data, scanned_at FROM mobile.barcode_scans WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"))
+    let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, result_action, result_data, scanned_at, created_at FROM mobile.barcode_scans WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"))
         .bind(id)
         .bind(tenant_filter)
         .fetch_optional(&pool)
@@ -546,10 +546,11 @@ pub async fn delete_scan_record(
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "DELETE FROM mobile.barcode_scans WHERE id = $1 AND user_id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+        "DELETE FROM mobile.barcode_scans WHERE id = $1 AND user_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"
     ))
     .bind(id)
     .bind(user_id)
+    .bind(Option::<Uuid>::None)
     .execute(&pool)
     .await;
 

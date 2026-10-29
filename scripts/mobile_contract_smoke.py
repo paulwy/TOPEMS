@@ -14,6 +14,7 @@ import json
 import os
 import re
 import subprocess
+import bcrypt
 import sys
 import time
 import urllib.error
@@ -86,6 +87,19 @@ def prepare_data() -> None:
             capture_output=True, timeout=15,
             check=False,
         )
+        # iam.users 测试用户档案：change-password 转发 unified-core /iam/users/{id}/password，
+        # 用户不存在时上游 404（契约 WARN）。预创建幂等 upsert，密码哈希 = 脚本载荷 old_password(Test@123)。
+        pw_hash = bcrypt.hashpw(b"Test@123", bcrypt.gensalt(rounds=12)).decode()
+        subprocess.run(
+            ["psql", db, "-c",
+             f"INSERT INTO iam.users (id, username, email, password_hash, status, email_verified, phone_verified) "
+             f"VALUES ('{TEST_UID}', 'smoke_user', 'smoke.user@test.local', '{pw_hash}', 'active', true, false) "
+             f"ON CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash, status = 'active'"],
+            capture_output=True, timeout=15,
+            check=False,
+        )
+        REAL_IDS["user"] = TEST_UID
+        print(f"[prepare] iam.users 测试用户就绪: {TEST_UID}")
         # WMS inventory.warehouse_id NOT NULL：取一个真实仓库 id 供 POST /inventory 使用
         global TEST_WAREHOUSE_ID
         r = subprocess.run(
@@ -146,11 +160,12 @@ POST_BODIES = {
     "/production/orders": {"product_name": "冒烟订单", "product_code": "SMOKE-001", "quantity": 10},
     "/approval/tasks/${id}/approve": {"comment": "smoke"},
     "/approval/tasks/${id}/reject": {"comment": "smoke"},
-    "/user/change-password": {"oldPassword": "Test@123", "newPassword": "Test@1234"},
+    "/user/change-password": {"old_password": "Test@123", "new_password": "Test@1234"},
     "/push/devices/register": {"device_token": "smoke-push-token", "platform": "android", "device_model": "Pixel-7", "app_version": "1.0.0", "os_version": "14"},
     "/push/notifications": {"title": "冒烟通知", "body": "smoke", "notification_type": "general", "target_type": "all", "target_ids": []},
     "/push/notifications/broadcast": {"title": "冒烟广播", "body": "smoke", "notification_type": "general", "target_type": "all", "target_ids": []},
     "/push/templates": {"name": f"冒烟模板-{int(time.time())}", "title_template": "通知", "body_template": "内容", "notification_type": "general"},
+    "/barcode/scan": {"barcode": "SMOKE-BARCODE-001", "barcode_type": "code128"},
     "/scan/barcode": {"barcode": "SMOKE-001"},
     "/scan/qrcode": {"qr_data": "SMOKE-001"},
 }
@@ -227,6 +242,7 @@ def pre_create(token: str) -> None:
         ("inventory", "/inventory"), ("production/orders", "/production/orders"),
         ("push/notifications", "/push/notifications"), ("schedule/events", "/schedule/events"),
         ("task", "/task"),
+        ("barcode/history", "/barcode/scan"),
     ]
     for prefix, tmpl in creates:
         body = POST_BODIES.get(tmpl)
@@ -244,12 +260,12 @@ def pre_create(token: str) -> None:
             d = raw.get("data") if isinstance(raw, dict) else raw
             cand = None
             if isinstance(d, dict):
-                for k in ("id", "customer_id", "device_id", "document_id", "order_id", "notification_id"):
+                for k in ("id", "customer_id", "device_id", "document_id", "order_id", "notification_id", "scan_id"):
                     if d.get(k):
                         cand = d[k]
                         break
                 if not cand and isinstance(d.get("data"), dict):
-                    for k in ("id", "customer_id", "device_id", "document_id", "order_id", "notification_id"):
+                    for k in ("id", "customer_id", "device_id", "document_id", "order_id", "notification_id", "scan_id"):
                         if d["data"].get(k):
                             cand = d["data"][k]
                             break

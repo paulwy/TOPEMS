@@ -88,6 +88,14 @@
 - **push GET 500（真 FAIL → 0）✅**：list/单条两处 SELECT 只取 7 列（id/user_id/title/body/notification_type/read_at/created_at）而 `PushNotification::from_row` 需 14 列（tenant_id/data/target_type/target_ids/status/sent_count/delivered_count/clicked_count/sent_at）→ list 的 filter_map 静默吞失败（items 空但 total 129）、单条显式 500「解析推送通知失败」；已对齐 14 列 + `COALESCE(tenant_id, 零 UUID)` 兜底（表列 nullable 而 struct 非 Option）
 - **验证**：MCS **114/114 PASS 0 FAIL**；WARN 21 → 17（剩余 15 唯一全业务语义：approval 4 / device 2 / inventory PUT 401 / production 2 / barcode 2 / task complete・reopen 状态机 / task batch/status 422 载荷 / user change-password 404 测试用户无密码记录）
 
+### MCS WARN 残余降噪（2026-10-29）✅ 17→12（测试数据层）
+
+> 纯测试数据/契约载荷层降噪，不动业务语义。消 5 条：barcode 2 + user 3（change-password + GET/PUT /user/${id}）。
+
+- **barcode 2 ✅**：pre_create 加 POST /barcode/scan（SMOKE-BARCODE-001/code128）捕获 scan_id；同时修 GET /barcode/history/{id} SELECT 缺列（6 列 vs BarcodeScan::from_row 12 列，list 早已对齐、单条漏修）与 DELETE 租户条件参数化（current_setting 连接残留 vs 绑定 NULL，对齐 GET）
+- **user 3 ✅**：prepare_data 幂等 upsert iam.users 测试用户（TEST_UID + bcrypt(Test@123)），REAL_IDS["user"]=TEST_UID 供 GET/PUT /user/${id}；change-password 载荷对齐 unified-core snake_case 契约（oldPassword→old_password / newPassword→new_password，之前 camelCase 字段不匹配）
+- **验证**：MCS **114/114 PASS 0 FAIL**；WARN 17 → 12（剩余 12 唯一全契约语义：approval 4 流程状态机 / device 2 状态动作 / inventory PUT 401 权限 / production 2 状态机 / task 3 状态机+载荷，保留登记）
+
 
 > 推进「批 0 基线留痕」的 to_bind 332 条（已注册 real handler、前端未绑定）。
 
