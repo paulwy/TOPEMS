@@ -11,6 +11,19 @@
 - **签名注意**（实测）：WS 消息签名序列化用**插入序**（serde_json preserve_order 行为；服务端 `remove("signature")` 后按原插入序 to_string），客户端签名须用 json.dumps 默认插入序（`separators=(",", ":")`），**非** sort_keys 字母序。
 - **待办**：① 契约 JSON-RPC 2.0 化（现协议为 type/payload 自定义）；② 安全配额表（6 连接/32 频道/64KB/广播频控）；③ 前端 useWebSocket + 试点页（全量触发条件达成时立项）。
 
+## v1.114 BFF WS 第三批：JSON-RPC 2.0 帧协议化 + 安全配额表（2026-10-29）✅
+
+> 承接 v1.113 待办①②：契约 P32-6 §3/§6 对齐，代码改造 + 编译 + BFF 重启 + websockets 冒烟全通后推送（commit 9f8550fd82）。
+
+- **帧协议切换**：`{"type","payload"}` 自定义帧 → JSON-RPC 2.0。请求 `{"jsonrpc":"2.0","id","method","params"}`；响应 `{"jsonrpc":"2.0","id","result"|"error":{code,message}}`；服务端通知（广播）`{"jsonrpc":"2.0","method":"event","params":{channel,event,data,ts}}`。
+- **消息循环重写**（handle_socket）：64KB 超限 → error 4203（契约 §6）；ping/pong 心跳 method 免签名；subscribe/unsubscribe/authenticate 需签名（失败 `code:-32001`）；subscribe → `{status:"subscribed",channel}`；unsubscribe → `{status:"unsubscribed"}`/`unsubscribed_all`；authenticate 占位 stub OK。
+- **32 频道配额**：每连接超 32 频道 → error 4202（冒烟实测第 33 频道返回 4202）。
+- **广播频控**：WsState 新增 `broadcast_quota`（std::sync::Mutex，每秒 ≤10 条）；`broadcast()` 超频 drop+warn（合并批处理推送留 TODO）。
+- **广播 event 化**：4 个 helper（broadcast_notification / broadcast_to_notifications / update_unread_count / broadcast_to_all）全部转 JSON-RPC 2.0 event 帧，channel 用 `user:{id}`/`notifications`/`global`，事件名 `notification`/`unread_count`/msg_type，带 ts=毫秒时间戳。
+- **心跳对齐**：服务端 30s 心跳帧 `HeartbeatMessage{type:"heartbeat",timestamp}`（已删 struct + 无用 Serialize import）→ `{"jsonrpc":"2.0","method":"ping"}`；客户端回 `{"jsonrpc":"2.0","method":"pong"}` 保活；首次 tick 跳过（连接建立 30s 后才起心跳，契约 §4.1；tokio interval 首次 tick 立即完成）。**客户端注意**：心跳帧与 RPC 响应并发到达，前端 recv 须跳过 method=ping 帧（勿按 id 硬匹配错位）。
+- **验证**：cargo build -p topems-server 无 warning；BFF 重启 up@3；冒烟全通 auth_success → `{"jsonrpc":"2.0","id":1,"result":{"status":"pong"}}` → subscribe（插入序签名）→ `{status:"subscribed",channel:"notification:broadcasts"}` → 30s 心跳 ping → 回 pong；第 33 频道 4202 通过。
+- **新增遗留（未实施，登记）**：① 契约 §6「每 token 最大 6 并发连接」未实施（connections 为 user_id 单键 HashMap，多连接需结构改造）；② Origin 生产白名单未实施（部署项）；③ 广播高频合并批处理（>10/s 目前 drop+warn 占位）；④ 前端 useWebSocket.ts/试点页在全量触发条件达成前不立项（v1.113 待办③）。
+
 ## v1.112 WCS/MCS 契约冒烟收口：mobile service 写路径修复 + 4xx 透传（2026-10-29）✅
 
 > 目标：MCS（scripts/mobile_contract_smoke.py）9 FAIL → 0 FAIL；WCS 保持全绿。
