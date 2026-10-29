@@ -68,6 +68,53 @@ def write_marker(fn_src: str) -> bool:
     return bool(pat.search(fn_src))
 
 
+# Router::route 注册（非 utoipa，如 unified-core file/download）
+# 严格：必须 axum 风格 .route("/path", get(handler))——method 包装器必填
+ROUTE_RE = re.compile(
+    r"\.route\(\s*[\`'\"]?(?P<path>/[^\`'\")\s]+)[\`'\"]?\s*,\s*(?P<wrap>get|post|put|delete|patch|any)\s*\(\s*(?P<fn>[a-zA-Z0-9_:]+)",
+    re.I,
+)
+
+
+def extract_router_routes():
+    """扫描 svc/*/src 提取 Router::route 注册（补充非 utoipa 路由）。"""
+    routes = []
+    seen = set()
+    for svc_dir in sorted(os.listdir(SVC_DIR)):
+        if svc_dir == "server":
+            continue  # 聚合挂载层，非业务端点
+        base = os.path.join(SVC_DIR, svc_dir)
+        if not os.path.isdir(base):
+            continue
+        for root, _, files in os.walk(os.path.join(base, "src")):
+            for f in files:
+                if not f.endswith(".rs"):
+                    continue
+                fp = os.path.join(root, f)
+                try:
+                    text = open(fp, encoding="utf-8", errors="replace").read()
+                except Exception:
+                    continue
+                for m in ROUTE_RE.finditer(text):
+                    # 排除注释行
+                    line_start = text.rfind("\n", 0, m.start()) + 1
+                    line = text[line_start:m.start()]
+                    if line.lstrip().startswith("//") or line.lstrip().startswith("///") or line.lstrip().startswith("/*"):
+                        continue
+                    path = m.group("path")
+                    wrap = m.group("wrap")
+                    fn = m.group("fn").split("::")[-1]  # 取模块路径最后段
+                    method = wrap.upper()
+                    key = (svc_dir, path)
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    fn_src = text[m.end(): m.end() + 2500]
+                    is_write = write_marker(fn_src)
+                    routes.append((svc_dir, method, path, fn, fn, is_write, fn_src))
+    return routes
+
+
 def extract_backend_routes():
     """扫描 svc/*/src 提取 utoipa 路由。返回 [(svc, method, raw_path, opid, fn, is_write, fn_src)]"""
     routes = []
@@ -163,10 +210,15 @@ def extract_weak_refs():
 
 def main():
     routes = extract_backend_routes()
+    # 补充 Router::route（非 utoipa），按 (svc, path) 去重——utoipa 优先
+    utoipa_paths = {(r[0], normalize(r[2])) for r in routes}
+    for rr in extract_router_routes():
+        if (rr[0], normalize(rr[2])) not in utoipa_paths:
+            routes.append(rr)
     refs = extract_frontend_refs()
     weak = extract_weak_refs()
 
-    print(f"后端 utoipa 路由: {len(routes)} | 前端 api 调用路径: {len(refs)} | 弱引用片段: {len(weak)}")
+    print(f"后端路由（utoipa+Router::route）: {len(routes)} | 前端 api 调用路径: {len(refs)} | 弱引用片段: {len(weak)}")
 
     out = []
     stats = defaultdict(int)
