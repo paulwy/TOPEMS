@@ -28,4 +28,17 @@ export const syncRecordApi = {
   syncReagentToEhs: async (reagentId: string): Promise<ApiResponse<SyncRecord>> => {
     return apiClient.lims.post('/sync/reagent-to-ehs', { reagent_id: reagentId });
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  createIntegrationSample: async (
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.lims.post('/internal/lims/samples/integration', data);
+  },
+
+  createIntegrationTask: async (
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.lims.post('/internal/lims/tasks/integration', data);
+  },
 };

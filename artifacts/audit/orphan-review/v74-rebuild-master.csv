@@ -589,8 +589,6 @@ lims,P1,GET,/lims/reagents/{id},get_reagent,get_reagent,write,none,保留
 lims,P1,GET,/pt-plans/{id},get_plan,get_plan,write,none,保留
 lims,P1,GET,/lims/instruments/{id},get_instrument,get_instrument,write,none,保留
 lims,P1,GET,/lims/samples/lifecycle,record_lifecycle_event,record_lifecycle_event,write,none,保留
-lims,P1,POST,/api/internal/lims/samples/integration,create_integration_sample,create_integration_sample,write,none,保留
-lims,P1,POST,/api/internal/lims/tasks/integration,create_integration_task,create_integration_task,write,none,保留
 lims,P2,GET,/barcodes,list_barcodes,list_barcodes,read,weak,保留
 lims,P2,GET,/pt-plans,list_plans,list_plans,read,weak,保留
 lims,P2,GET,/uncertainty-projects,list_projects,list_projects,read,weak,保留
