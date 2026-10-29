@@ -3653,6 +3653,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **mobile 透传解包**：新增 `svc/mobile/src/modules/contract_util.rs::unwrap_data`，批量应用到 approval/attendance/customer/inventory/notifications/production/quality 共 30 处透传 handler，消除 `ApiResponse` 双层嵌套（实测 inventory/attendance 的 `data` 已直出业务字段）
 
 ### 遗留 2 实施记录
+- **✅ 后续根治确认（2026-10-29）**：`a6c63d41db`（D7 顺延批次）已消除 7 crate `init_database` 双源——`fn init_database` 全局已不存在，启动期 DDL 权限降级 warn 路径消失；知识库对象（idx_kc_embedding/idx_qa_*×4/trg_kb/trg_kd/函数）由 migration `20261015000078_ai_knowledge_objects.sql` 幂等管理（8 个 CREATE 覆盖 D3 记录缺失项）。静态核实确认告警根治；如需实测可在重启 server 后查日志确认 0 WARN。
 - `svc/ai/src/modules/ai_knowledge/mod.rs` `init_database` 全面改为存在性守卫：
   - 4 张表（knowledge_bases/documents/chunks/qa_history）→ `pg_tables` 检查，已存在跳过
   - 17 个索引（idx_kb_*/idx_kd_*/idx_kc_*/idx_qa_*）→ `pg_indexes` 检查；创建失败降级 warn（非关键）
