@@ -10,7 +10,7 @@
 | URL 分布 | `apps/mobile/src/api/*.ts` 18 文件全部相对路径（/push、/task、/schedule、/dashboard、/attendance、/inventory 等），无绝对 URL | 无直连 |
 | 硬编码端口 | api/*.ts 中 8000/8070/8080 等端口零命中 | 无直连 |
 | nginx | `deploy/nginx/*.conf` 90 行注释「/api/* 不再按前缀分发，统一由 location /api/ 直代 server_service(:8099)」；139 行 `location /api/` → proxy_pass server_service | 入口收敛 |
-| 历史规则 | 154-181 行存在旧 `~ ^/api/(erp|...|mobile|...)/v1/(.*)$` 正则块（nginx 正则优先于前缀匹配）——mobile 前端路径无 v1 段，实际走 139 前缀规则；正则块为历史遗留，**可选清理**（低优先级，不影响路由正确性） | 登记可选清理 |
+| 历史规则 | 旧 v1 正则块（/api/{svc}/v1 与 /api/v1/* legacy rewrite）已核实无活调用（全仓前端零 v1 前缀引用），**2026-10-29 已整体删除**（9 个 location） | ✅ 已清理 |
 
 ## 盘点口径
 
@@ -19,4 +19,4 @@
 
 ## 遗留登记
 
-- nginx v1 正则块（154-181）为旧前缀直连时代的残留，未影响现状（mobile/web 均无 v1 路径调用），并入 deploy 清理候选，无行为风险
+- nginx v1 正则块（旧 /api/{svc}/v1 与 /api/v1/* legacy rewrite 共 9 个 location）已核实无活调用并整体删除（2026-10-29）；删除后 location 清单：/、/assets/、/api/、/ws/、/health、/metrics、静态正则
