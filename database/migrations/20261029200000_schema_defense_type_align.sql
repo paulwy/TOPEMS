@@ -1,0 +1,125 @@
+-- B 扩展真实类型差异对齐（契约优先）：数组族/数值族/文本化，存量数据无损转换
+-- 自动生成 86 条；待人工核 9 处（JSONB/生成列/uuid-inet）
+
+ALTER TABLE "mobile"."documents" ALTER COLUMN "file_size" TYPE INTEGER USING ROUND("file_size")::integer;
+ALTER TABLE "public"."core_tenants" ALTER COLUMN "quota_plugins" DROP DEFAULT;
+ALTER TABLE "public"."core_tenants" ALTER COLUMN "quota_plugins" TYPE text[] USING CASE WHEN "quota_plugins" IS NULL THEN NULL ELSE ARRAY["quota_plugins"] END;
+ALTER TABLE "doc_service"."core_doc_documents" ALTER COLUMN "tags" DROP DEFAULT;
+ALTER TABLE "doc_service"."core_doc_documents" ALTER COLUMN "tags" TYPE text[] USING CASE WHEN "tags" IS NULL THEN NULL ELSE ARRAY["tags"] END;
+ALTER TABLE "gis"."locations" ALTER COLUMN "capacity" TYPE numeric(15,2) USING "capacity"::numeric;
+ALTER TABLE "wms"."inventory" ALTER COLUMN "quantity" TYPE numeric(15,2) USING "quantity"::numeric;
+ALTER TABLE "wms"."inventory" ALTER COLUMN "available_quantity" TYPE numeric(15,2) USING "available_quantity"::numeric;
+ALTER TABLE "wms"."inventory" ALTER COLUMN "reserved_quantity" TYPE numeric(15,2) USING "reserved_quantity"::numeric;
+ALTER TABLE "wms"."stock_takes" ALTER COLUMN "total_quantity" TYPE numeric(15,2) USING "total_quantity"::numeric;
+ALTER TABLE "wms"."stock_takes" ALTER COLUMN "counted_quantity" TYPE numeric(15,2) USING "counted_quantity"::numeric;
+ALTER TABLE "wms"."stock_takes" ALTER COLUMN "discrepancy_quantity" TYPE numeric(15,2) USING "discrepancy_quantity"::numeric;
+ALTER TABLE "wms"."stock_takes" ALTER COLUMN "accuracy_rate" TYPE numeric(5,2) USING "accuracy_rate"::numeric;
+ALTER TABLE "wms"."stock_take_items" ALTER COLUMN "system_quantity" TYPE numeric(15,2) USING "system_quantity"::numeric;
+ALTER TABLE "wms"."stock_take_items" ALTER COLUMN "counted_quantity" TYPE numeric(15,2) USING "counted_quantity"::numeric;
+ALTER TABLE "wms"."stock_take_items" ALTER COLUMN "discrepancy_quantity" TYPE numeric(15,2) USING "discrepancy_quantity"::numeric;
+ALTER TABLE "wms"."stock_take_items" ALTER COLUMN "unit_price" TYPE numeric(15,2) USING "unit_price"::numeric;
+ALTER TABLE "wms"."stock_take_items" ALTER COLUMN "discrepancy_value" TYPE numeric(15,2) USING "discrepancy_value"::numeric;
+ALTER TABLE "wms"."discrepancy_records" ALTER COLUMN "system_quantity" TYPE numeric(15,2) USING "system_quantity"::numeric;
+ALTER TABLE "wms"."discrepancy_records" ALTER COLUMN "counted_quantity" TYPE numeric(15,2) USING "counted_quantity"::numeric;
+ALTER TABLE "wms"."discrepancy_records" ALTER COLUMN "discrepancy_quantity" TYPE numeric(15,2) USING "discrepancy_quantity"::numeric;
+ALTER TABLE "wms"."discrepancy_records" ALTER COLUMN "adjustment_quantity" TYPE numeric(15,2) USING "adjustment_quantity"::numeric;
+ALTER TABLE "wms"."batches" ALTER COLUMN "quantity" TYPE numeric(18,4) USING "quantity"::numeric;
+ALTER TABLE "wms"."batches" ALTER COLUMN "available_quantity" TYPE numeric(18,4) USING "available_quantity"::numeric;
+ALTER TABLE "wms"."batches" ALTER COLUMN "unit_price" TYPE numeric(18,4) USING "unit_price"::numeric;
+ALTER TABLE "wms"."batches" ALTER COLUMN "total_value" TYPE numeric(18,2) USING "total_value"::numeric;
+ALTER TABLE "wms"."replenishment_suggestions" ALTER COLUMN "current_stock" TYPE numeric(18,4) USING "current_stock"::numeric;
+ALTER TABLE "wms"."replenishment_suggestions" ALTER COLUMN "available_stock" TYPE numeric(18,4) USING "available_stock"::numeric;
+ALTER TABLE "wms"."replenishment_suggestions" ALTER COLUMN "safety_stock" TYPE numeric(18,4) USING "safety_stock"::numeric;
+ALTER TABLE "wms"."replenishment_suggestions" ALTER COLUMN "reorder_point" TYPE numeric(18,4) USING "reorder_point"::numeric;
+ALTER TABLE "wms"."replenishment_suggestions" ALTER COLUMN "max_stock" TYPE numeric(18,4) USING "max_stock"::numeric;
+ALTER TABLE "wms"."replenishment_suggestions" ALTER COLUMN "consumption_rate" TYPE numeric(18,4) USING "consumption_rate"::numeric;
+ALTER TABLE "wms"."replenishment_suggestions" ALTER COLUMN "suggested_quantity" TYPE numeric(18,4) USING "suggested_quantity"::numeric;
+ALTER TABLE "public"."core_guide_progress" ALTER COLUMN "completed_lessons" DROP DEFAULT;
+ALTER TABLE "public"."core_guide_progress" ALTER COLUMN "completed_lessons" TYPE uuid[] USING CASE WHEN "completed_lessons" IS NULL THEN NULL ELSE ARRAY["completed_lessons"] END;
+ALTER TABLE "public"."core_guide_progress" ALTER COLUMN "completed_lessons" SET DEFAULT '{}';
+ALTER TABLE "erp"."customers" ALTER COLUMN "tags" DROP DEFAULT;
+ALTER TABLE "erp"."customers" ALTER COLUMN "tags" TYPE text[] USING CASE WHEN "tags" IS NULL THEN NULL ELSE ARRAY["tags"] END;
+ALTER TABLE "erp"."customers" ALTER COLUMN "tags" SET DEFAULT '{}';
+ALTER TABLE "erp"."customers" ALTER COLUMN "revenue" TYPE numeric(15,2) USING "revenue"::numeric;
+ALTER TABLE "crm"."rfm_results" ALTER COLUMN "recency_days" TYPE INTEGER USING ROUND("recency_days")::integer;
+ALTER TABLE "crm"."rfm_results" ALTER COLUMN "frequency" TYPE INTEGER USING ROUND("frequency")::integer;
+ALTER TABLE "crm"."rfm_results" ALTER COLUMN "monetary" TYPE numeric(15,2) USING "monetary"::numeric;
+ALTER TABLE "crm"."rfm_results" ALTER COLUMN "rfm_score" TYPE numeric(10,2) USING "rfm_score"::numeric;
+ALTER TABLE "mobile"."push_notifications" ALTER COLUMN "target_ids" DROP DEFAULT;
+ALTER TABLE "mobile"."push_notifications" ALTER COLUMN "target_ids" TYPE text[] USING CASE WHEN "target_ids" IS NULL THEN NULL ELSE ARRAY["target_ids"] END;
+ALTER TABLE "mobile"."media_files" ALTER COLUMN "tags" DROP DEFAULT;
+ALTER TABLE "mobile"."media_files" ALTER COLUMN "tags" TYPE text[] USING CASE WHEN "tags" IS NULL THEN NULL ELSE ARRAY["tags"] END;
+ALTER TABLE "mobile"."documents" ALTER COLUMN "tags" DROP DEFAULT;
+ALTER TABLE "mobile"."documents" ALTER COLUMN "tags" TYPE text[] USING CASE WHEN "tags" IS NULL THEN NULL ELSE ARRAY["tags"] END;
+ALTER TABLE "public"."core_tickets" ALTER COLUMN "tags" DROP DEFAULT;
+ALTER TABLE "public"."core_tickets" ALTER COLUMN "tags" TYPE text[] USING CASE WHEN "tags" IS NULL THEN NULL ELSE ARRAY["tags"] END;
+ALTER TABLE "public"."ticket_knowledge_articles" ALTER COLUMN "keywords" DROP DEFAULT;
+ALTER TABLE "public"."ticket_knowledge_articles" ALTER COLUMN "keywords" TYPE text[] USING CASE WHEN "keywords" IS NULL THEN NULL ELSE ARRAY["keywords"] END;
+ALTER TABLE "public"."ticket_knowledge_articles" ALTER COLUMN "keywords" SET DEFAULT '{}';
+ALTER TABLE "public"."finance_v58_cash_pools" ALTER COLUMN "entities" DROP DEFAULT;
+ALTER TABLE "public"."finance_v58_cash_pools" ALTER COLUMN "entities" TYPE text[] USING CASE WHEN "entities" IS NULL THEN NULL ELSE ARRAY["entities"] END;
+ALTER TABLE "public"."finance_v58_cash_pools" ALTER COLUMN "entities" SET DEFAULT '{}';
+ALTER TABLE "public"."finance_v56_tax_suggestions" ALTER COLUMN "action_items" DROP DEFAULT;
+ALTER TABLE "public"."finance_v56_tax_suggestions" ALTER COLUMN "action_items" TYPE text[] USING CASE WHEN "action_items" IS NULL THEN NULL ELSE ARRAY["action_items"] END;
+ALTER TABLE "public"."finance_v57_analysis_dimensions" ALTER COLUMN "hierarchy" DROP DEFAULT;
+ALTER TABLE "public"."finance_v57_analysis_dimensions" ALTER COLUMN "hierarchy" TYPE text[] USING CASE WHEN "hierarchy" IS NULL THEN NULL ELSE ARRAY["hierarchy"] END;
+ALTER TABLE "public"."finance_v57_analysis_results" ALTER COLUMN "dimensions" DROP DEFAULT;
+ALTER TABLE "public"."finance_v57_analysis_results" ALTER COLUMN "dimensions" TYPE text[] USING CASE WHEN "dimensions" IS NULL THEN NULL ELSE ARRAY["dimensions"] END;
+ALTER TABLE "public"."finance_v57_analysis_results" ALTER COLUMN "measures" DROP DEFAULT;
+ALTER TABLE "public"."finance_v57_analysis_results" ALTER COLUMN "measures" TYPE text[] USING CASE WHEN "measures" IS NULL THEN NULL ELSE ARRAY["measures"] END;
+ALTER TABLE "public"."finance_v57_forecast_models" ALTER COLUMN "features" DROP DEFAULT;
+ALTER TABLE "public"."finance_v57_forecast_models" ALTER COLUMN "features" TYPE text[] USING CASE WHEN "features" IS NULL THEN NULL ELSE ARRAY["features"] END;
+ALTER TABLE "finance"."reconciliation_settlement_links" ALTER COLUMN "amount" TYPE numeric(15,2) USING "amount"::numeric;
+ALTER TABLE "finance"."difference_adjustments" ALTER COLUMN "difference_amount" TYPE numeric(15,2) USING "difference_amount"::numeric;
+ALTER TABLE "finance"."difference_adjustments" ALTER COLUMN "adjustment_amount" TYPE numeric(15,2) USING "adjustment_amount"::numeric;
+ALTER TABLE "erp"."bank_accounts" ALTER COLUMN "balance" TYPE numeric(20,4) USING "balance"::numeric;
+ALTER TABLE "public"."core_plugins" ALTER COLUMN "tags" DROP DEFAULT;
+ALTER TABLE "public"."core_plugins" ALTER COLUMN "tags" TYPE text[] USING CASE WHEN "tags" IS NULL THEN NULL ELSE ARRAY["tags"] END;
+ALTER TABLE "rs"."project_members" ALTER COLUMN "allocation" TYPE DOUBLE PRECISION USING "allocation"::double precision;
+ALTER TABLE "rs"."project_members" ALTER COLUMN "hourly_rate" TYPE DOUBLE PRECISION USING "hourly_rate"::double precision;
+ALTER TABLE "rs"."project_members" ALTER COLUMN "cost_rate" TYPE DOUBLE PRECISION USING "cost_rate"::double precision;
+ALTER TABLE "rs"."project_members" ALTER COLUMN "budgeted_hours" TYPE DOUBLE PRECISION USING "budgeted_hours"::double precision;
+ALTER TABLE "rs"."project_members" ALTER COLUMN "actual_hours" TYPE DOUBLE PRECISION USING "actual_hours"::double precision;
+ALTER TABLE "scm"."supplier_products" ALTER COLUMN "min_order_qty" TYPE INTEGER USING ROUND("min_order_qty")::integer;
+ALTER TABLE "pdm"."pdm_document_versions" ALTER COLUMN "changes" DROP DEFAULT;
+ALTER TABLE "pdm"."pdm_document_versions" ALTER COLUMN "changes" TYPE text[] USING CASE WHEN "changes" IS NULL THEN NULL ELSE ARRAY["changes"] END;
+ALTER TABLE "pdm"."pdm_document_versions" ALTER COLUMN "changes" SET DEFAULT '{}';
+ALTER TABLE "pdm"."pdm_project_phases" ALTER COLUMN "deliverables" DROP DEFAULT;
+ALTER TABLE "pdm"."pdm_project_phases" ALTER COLUMN "deliverables" TYPE text[] USING CASE WHEN "deliverables" IS NULL THEN NULL ELSE ARRAY["deliverables"] END;
+ALTER TABLE "pdm"."pdm_project_phases" ALTER COLUMN "deliverables" SET DEFAULT '{}';
+-- B 扩展类型对齐第二批（drift-json 唯一仲裁，契约优先）：
+-- 回改旧视图误向 + 补齐数值/文本/vector/jsonb 安全互转
+ALTER TABLE "public"."core_workflow_tasks" ALTER COLUMN "priority" TYPE TEXT USING "priority"::text;
+ALTER TABLE "ai"."documents" ALTER COLUMN "file_size" TYPE BIGINT USING "file_size"::bigint;
+ALTER TABLE "wms"."inbound_orders" ALTER COLUMN "total_quantity" TYPE numeric(15,2) USING "total_quantity"::numeric;
+ALTER TABLE "wms"."inbound_orders" ALTER COLUMN "received_quantity" TYPE numeric(15,2) USING "received_quantity"::numeric;
+ALTER TABLE "wms"."inbound_orders" ALTER COLUMN "rejected_quantity" TYPE numeric(15,2) USING "rejected_quantity"::numeric;
+ALTER TABLE "wms"."inbound_orders" ALTER COLUMN "total_weight" TYPE numeric(15,2) USING "total_weight"::numeric;
+ALTER TABLE "wms"."inbound_orders" ALTER COLUMN "total_volume" TYPE numeric(15,2) USING "total_volume"::numeric;
+ALTER TABLE "wms"."inbound_orders" ALTER COLUMN "total_value" TYPE numeric(15,2) USING "total_value"::numeric;
+ALTER TABLE "erp"."inventory" ALTER COLUMN "quantity" TYPE DOUBLE PRECISION USING "quantity"::double precision;
+ALTER TABLE "erp"."inventory" ALTER COLUMN "available_quantity" TYPE DOUBLE PRECISION USING "available_quantity"::double precision;
+ALTER TABLE "erp"."inventory" ALTER COLUMN "reserved_quantity" TYPE DOUBLE PRECISION USING "reserved_quantity"::double precision;
+ALTER TABLE "mes"."production_orders" ALTER COLUMN "quantity" TYPE INTEGER USING ROUND("quantity"::numeric)::integer;
+ALTER TABLE "mes"."production_orders" ALTER COLUMN "completed_quantity" TYPE INTEGER USING ROUND("completed_quantity"::numeric)::integer;
+ALTER TABLE "mes"."production_records" ALTER COLUMN "completed_quantity" TYPE INTEGER USING ROUND("completed_quantity"::numeric)::integer;
+ALTER TABLE "pm"."projects" ALTER COLUMN "tags" TYPE JSONB USING to_jsonb("tags");
+ALTER TABLE "scm"."supplier_admissions" ALTER COLUMN "registered_capital" TYPE varchar(50) USING "registered_capital"::text;
+-- B 扩展类型对齐第二批（drift-json 唯一仲裁，契约优先）：
+-- 回改旧视图误向 + 补齐数值/文本/vector/jsonb 安全互转
+ALTER TABLE "ai"."document_chunks" ALTER COLUMN "embedding" TYPE vector(1536) USING ("embedding" #>> '{}')::vector(1536);
+-- B 扩展类型对齐第三批（引用族/A 正向 + JSONB 收敛）：
+-- 契约 UUID、迁移 varchar 5 列改迁移（USING ::uuid，存量需合法 UUID 格式）
+ALTER TABLE "hrm"."audit_logs" ALTER COLUMN "resource_id" TYPE UUID USING "resource_id"::uuid;
+ALTER TABLE "hrm"."contracts" ALTER COLUMN "created_by" TYPE UUID USING "created_by"::uuid;
+ALTER TABLE "erp"."materials" ALTER COLUMN "created_by" TYPE UUID USING "created_by"::uuid;
+ALTER TABLE "bi"."reports" ALTER COLUMN "created_by" TYPE UUID USING "created_by"::uuid;
+ALTER TABLE "hrm"."training_records" ALTER COLUMN "employee_id" TYPE UUID USING "employee_id"::uuid;
+-- 契约 TEXT、迁移 jsonb 2 列改迁移（USING ::text，jsonb 序列化文本）
+ALTER TABLE "qms"."qa_eightd_reports" ALTER COLUMN "d1_team" TYPE TEXT USING "d1_team"::text;
+ALTER TABLE "qms"."qa_eightd_reports" ALTER COLUMN "d4_root_cause" TYPE TEXT USING "d4_root_cause"::text;
+-- B 扩展类型对齐第四批（fixed_assets 生成列重建：float8 → NUMERIC(20,4)，契约财务精度）：
+ALTER TABLE "erp"."fixed_assets" DROP COLUMN IF EXISTS "net_value";
+ALTER TABLE "erp"."fixed_assets" ADD COLUMN "net_value" NUMERIC(20,4) GENERATED ALWAYS AS (original_value - accumulated_depreciation) STORED;
+ALTER TABLE "erp"."fixed_assets" DROP COLUMN IF EXISTS "monthly_depreciation";
+ALTER TABLE "erp"."fixed_assets" ADD COLUMN "monthly_depreciation" NUMERIC(20,4) GENERATED ALWAYS AS (((original_value - salvage_value) / (expected_life)::float8)) STORED;

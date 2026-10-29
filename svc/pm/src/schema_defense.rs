@@ -263,7 +263,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("currency", "VARCHAR(10) NOT NULL DEFAULT 'CNY'"),
             ("status", "VARCHAR(20) NOT NULL DEFAULT 'pending'"),
             ("remarks", "TEXT"),
-            ("created_by", "VARCHAR(100)"),
+            ("created_by", "UUID"),
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
             ("deleted_at", "TIMESTAMPTZ"),

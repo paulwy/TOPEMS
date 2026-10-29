@@ -221,6 +221,49 @@ function collectMigrations() {
 }
 
 function main() {
+  // --drift-json <path>：导出 TABLE_DEFS↔迁移 DDL 列级类型差异（唯一仲裁数据源，供自动修复生成）
+  if (process.argv.includes("--drift-json")) {
+    const tableDefs = collectTableDefs();
+    const mig = collectMigrationsTyped();
+    const schemaOf = new Map();
+    for (const dir of [MIGRATION_DIR, ...Array.from({ length: 0 })]) {
+      // noop
+    }
+    const dirs = [MIGRATION_DIR];
+    for (const svc of fs.readdirSync(path.join(REPO_ROOT, "svc"), { withFileTypes: true })) {
+      if (!svc.isDirectory()) continue;
+      const d = path.join(REPO_ROOT, "svc", svc.name, "migrations");
+      if (fs.existsSync(d)) dirs.push(d);
+    }
+    for (const dir of dirs) {
+      for (const f of fs.readdirSync(dir)) {
+        if (!f.endsWith(".sql")) continue;
+        const sql = fs.readFileSync(path.join(dir, f), "utf8");
+        const cre = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:("?[A-Za-z0-9_]+"?)\s*\.\s*)?("?[A-Za-z0-9_]+"?)\s*\(/gi;
+        let cm;
+        while ((cm = cre.exec(sql)) !== null) {
+          const sch = (cm[1] ?? "").replace(/"/g, "").trim().toLowerCase() || "public";
+          const tbl = cm[2].replace(/"/g, "").trim().toLowerCase();
+          if (!schemaOf.has(tbl)) schemaOf.set(tbl, sch);
+        }
+      }
+    }
+    const out = [];
+    for (const [table, cols] of [...tableDefs.entries()].sort()) {
+      const mcols = mig.get(table);
+      if (!mcols) continue;
+      for (const [c, ty] of cols) {
+        const mty = mcols.get(c);
+        const n1 = normalizeType(ty), n2 = normalizeType(mty);
+        if (!n1 || !n2 || n1 === n2) continue;
+        out.push({ t: table, c, td: ty, m: mty ?? "", n1, n2, fam1: typeFamily(n1), fam2: typeFamily(n2), schema: schemaOf.get(table) ?? "public" });
+      }
+    }
+    const target = process.argv[process.argv.indexOf("--drift-json") + 1];
+    fs.writeFileSync(target, JSON.stringify(out, null, 1));
+    process.exit(0);
+  }
+
   const selfBuilt = collectSelfBuilt();
   const migrations = collectMigrations();
 
@@ -402,38 +445,48 @@ function extractTablesTyped(sqlText) {
     fields.push(inner.slice(start));
     const cols = ensure(table);
     for (const f of fields) {
-      const cm = /^\s*(?:"([^"]+)"|`([^`]+)`|([A-Za-z_][A-Za-z0-9_]*))\s+((?:[A-Za-z_][A-Za-z0-9_]*\.)?[A-Za-z_][A-Za-z0-9_]*(?:\s+[A-Za-z_][A-Za-z0-9_]*)*(?:\s*\([^)]*\))?)/i.exec(f);
+      const cm = /^\s*(?:"([^"]+)"|`([^`]+)`|([A-Za-z_][A-Za-z0-9_]*))\s+((?:[A-Za-z_][A-Za-z0-9_]*\.)?[A-Za-z_][A-Za-z0-9_]*(?:\s+[A-Za-z_][A-Za-z0-9_]*)*(?:\s*\([^)]*\))?(?:\[\])?)/i.exec(f);
       if (!cm) continue;
       const name = (cm[1] ?? cm[2] ?? cm[3]).toLowerCase();
       if (TD_LEVEL_KEYWORDS.has(name)) continue;
-      // 类型：完整短语（多 token + 参数 + schema 限定），如 public.vector(1536) / character varying(255)
+      // 类型：完整短语（多 token + 参数 + schema 限定 + 数组），如 public.vector(1536) / TEXT[] / character varying(255)
       cols.set(name, cm[4].trim());
     }
   }
-  const altRe = /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:"?[A-Za-z0-9_]+"?(?:\.(?:"?[A-Za-z0-9_]+"?)|\.[A-Za-z0-9_.]+)?)\s+ADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?(?:"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))\s+((?:[A-Za-z_][A-Za-z0-9_]*\.)?[A-Za-z_][A-Za-z0-9_]*(?:\s+[A-Za-z_][A-Za-z0-9_]*)*(?:\s*\([^)]*\))?)/gi;
+  const altRe = /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:"?[A-Za-z0-9_]+"?(?:\.(?:"?[A-Za-z0-9_]+"?)|\.[A-Za-z0-9_.]+)?)\s+ADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?(?:"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))\s+((?:[A-Za-z_][A-Za-z0-9_]*\.)?[A-Za-z_][A-Za-z0-9_]*(?:\s+[A-Za-z_][A-Za-z0-9_]*)*(?:\s*\([^)]*\))?(?:\[\])?)/gi;
   while ((m = altRe.exec(sqlText)) !== null) {
     const rawTable = m[0].replace(/ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?/i, "").replace(/\s+ADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?.*/i, "").replace(/"/g, "");
     const table = rawTable.split(".").pop().toLowerCase();
     ensure(table).set((m[1] ?? m[2]).toLowerCase(), m[3]?.toLowerCase() ?? "");
+  }
+  // ALTER COLUMN ... TYPE ...（列类型变更，覆盖既有定义——迁移顺序后者生效）
+  const altTypeRe = /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:"?[A-Za-z0-9_]+"?(?:\.(?:"?[A-Za-z0-9_]+"?)|\.[A-Za-z0-9_.]+)?)\s+ALTER\s+(?:COLUMN\s+)?(?:"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))\s+TYPE\s+((?:[A-Za-z_][A-Za-z0-9_]*\.)?[A-Za-z_][A-Za-z0-9_]*(?:\s+[A-Za-z_][A-Za-z0-9_]*)*(?:\s*\([^)]*\))?(?:\[\])?)/gi;
+  while ((m = altTypeRe.exec(sqlText)) !== null) {
+    const rawTable = m[0].replace(/ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?/i, "").replace(/\s+ALTER\s+(?:COLUMN\s+)?.*/i, "").replace(/"/g, "");
+    const table = rawTable.split(".").pop().toLowerCase();
+    const ty = (m[3] ?? "").replace(/\s+using\b.*$/i, "").trim(); // 去 USING 转换表达式
+    ensure(table).set((m[1] ?? m[2]).toLowerCase(), ty.toLowerCase());
   }
   return tables;
 }
 
 const MIGRATIONS_TYPED_CACHE = (() => {
   const tables = new Map();
-  const dirs = [MIGRATION_DIR];
+  // 主权威 database/migrations 最后遍历（覆盖 svc 迁移的早期定义；同目录内按文件名时间戳序，ALTER TYPE 后写覆盖）
+  const dirs = [];
   for (const svc of fs.readdirSync(path.join(REPO_ROOT, "svc"), { withFileTypes: true })) {
     if (!svc.isDirectory()) continue;
     const d = path.join(REPO_ROOT, "svc", svc.name, "migrations");
     if (fs.existsSync(d)) dirs.push(d);
   }
+  dirs.push(MIGRATION_DIR);
   for (const dir of dirs) {
-    for (const f of fs.readdirSync(dir)) {
-      if (!f.endsWith(".sql")) continue;
+    const files = fs.readdirSync(dir).filter((f) => f.endsWith(".sql")).sort();
+    for (const f of files) {
       const src = fs.readFileSync(path.join(dir, f), "utf8");
       for (const [t, cols] of extractTablesTyped(src)) {
         if (!tables.has(t)) tables.set(t, new Map());
-        for (const [c, ty] of cols) if (!tables.get(t).has(c)) tables.get(t).set(c, ty);
+        for (const [c, ty] of cols) tables.get(t).set(c, ty); // 后写覆盖（ADD 早期定义 + ALTER TYPE 新类型）
       }
     }
   }
@@ -469,6 +522,7 @@ function normalizeType(t) {
     "timestamp with time zone": "timestamptz",
     "timestamp without time zone": "timestamp",
     "time with time zone": "timetz",
+    "time without time zone": "time",
     "character varying": "varchar",
     "double precision": "float8",
     "bit varying": "varbit",

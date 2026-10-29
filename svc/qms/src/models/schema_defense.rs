@@ -268,7 +268,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("d8_closed_at", "TIMESTAMP"),
             ("assignee", "VARCHAR(64)"),
             ("due_date", "TIMESTAMP"),
-            ("created_by", "VARCHAR(64)"),
+            ("created_by", "UUID"),
             ("created_at", "TIMESTAMP DEFAULT NOW()"),
             ("updated_at", "TIMESTAMP DEFAULT NOW()"),
             ("deleted_at", "TIMESTAMP"),

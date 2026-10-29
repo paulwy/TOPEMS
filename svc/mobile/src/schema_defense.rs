@@ -24,7 +24,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("address", "VARCHAR(500)"),
             ("patrol_type", "VARCHAR(50) NOT NULL"),
             ("status", "VARCHAR(20) NOT NULL DEFAULT 'pending'"),
-            ("checked_by", "VARCHAR(100) NOT NULL"),
+            ("checked_by", "UUID NOT NULL"),
             ("checked_at", "TIMESTAMPTZ NOT NULL"),
             ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
             ("tenant_id", "UUID NOT NULL"),

@@ -105,7 +105,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("level", "VARCHAR(32)"),
             ("source", "VARCHAR(64)"),
             ("location", "VARCHAR(128)"),
-            ("reported_by", "VARCHAR(64)"),
+            ("reported_by", "UUID"),
             ("reported_at", "TIMESTAMP"),
             ("status", "VARCHAR(32) DEFAULT 'reported'"),
             ("inspection_id", "UUID"),

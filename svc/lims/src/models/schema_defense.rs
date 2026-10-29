@@ -706,7 +706,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("code", "VARCHAR(64)"),
             ("status", "VARCHAR(32)"),
             ("received_date", "DATE"),
-            ("created_by", "VARCHAR(64)"),
+            ("created_by", "UUID"),
             ("created_at", "TIMESTAMPTZ DEFAULT now()"),
             ("updated_at", "TIMESTAMPTZ DEFAULT now()"),
             ("deleted_at", "TIMESTAMPTZ"),
