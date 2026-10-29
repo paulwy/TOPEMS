@@ -330,8 +330,8 @@ interface CreateAxiosClientOptions {
   withCsrf?: boolean;
   returnData?: boolean;
   /**
-   * FE-18：query 键名 camelCase→snake_case 转换（pageSize→page_size）。
-   * 默认 false=原样透传。按服务显式开启做灰度（当前仅 wms）。
+   * FE-17 阶段 2（FE-18 收敛）：query 键名 camelCase→snake_case 转换（pageSize→page_size）。
+   * 已全量放开（后端 serde 契约全 snake_case）。回滚：改回 false 或按服务白名单。
    */
   snakeCaseParams?: boolean;
 }
@@ -341,7 +341,7 @@ const createAxiosClient = ({
   timeout = config.api.timeout,
   withCsrf = true,
   returnData = true,
-  snakeCaseParams = false,
+  snakeCaseParams = true,
 }: CreateAxiosClientOptions): AxiosInstance => {
   const client = axios.create({
     baseURL,
@@ -786,6 +786,7 @@ class ApiClient {
     // 或同时接受 page_size/pageSize 别名），开启后 pageSize→page_size 才能命中分页参数。
     // Kept off: gis (TrackingQuery uses limit, no page_size); plugin-registry (filter
     // structs unverified for camelCase keys); migration/aps/jaeger are not frontend services.
+    // FE-17 阶段 2：已全量放开（836 行 snakeCaseParams: true），本集合保留作灰度历史与回滚名单。
     const SNAKE_CASE_SERVICES = new Set([
       // 第一梯队（FE-18 已上线验证）
       'wms',
@@ -833,7 +834,9 @@ class ApiClient {
       const client = createAxiosClient({
         baseURL,
         timeout,
-        snakeCaseParams: SNAKE_CASE_SERVICES.has(name),
+        // FE-17 阶段 2：全量放开 snakeCaseParams（后端 serde 契约全 snake_case）。
+        // 回滚预案：改回 SNAKE_CASE_SERVICES.has(name) 并按服务白名单恢复灰度。
+        snakeCaseParams: true,
       }) as unknown as TypedAxiosInstance;
       this.clients[name] = client;
     });

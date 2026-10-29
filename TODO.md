@@ -62,6 +62,17 @@
 
 ### MCS 37 WARN 处置（2026-10-29）✅ 37→21（假 id 404 全消除）
 
+### FE-17 阶段 2-5：snakeCase 请求层全量收敛（2026-10-29）✅ 阶段 2/3/4 实施 + 阶段 5 登记
+
+> 阶段 0+1（7f68d169f：factory 升级/死代码删/401 接线/authClient 修正）完成后，推进阶段 2-5。
+
+- **阶段 2（web 全量放开）✅**：apps/web/src/api/client.ts snakeCaseParams 默认 true + 836 行全量 true（SNAKE_CASE_SERVICES 集合保留作灰度历史/回滚名单）；typecheck PASS
+- **阶段 3（desktop/mobile 收敛 factory）✅**：packages/api-client/src/factory.ts serializeParams + createApiClient 默认 snakeCaseParams true（desktop/mobile 仅 2 个消费者，自动继承）；api-client tsc build PASS
+- **阶段 4（shared-utils 残余）✅**：request.ts 已删（阶段 0+1），剩余 clone/date/function/i18n/id/number/storage/string/validate 均有引用，无死代码
+- **阶段 5（灰度观察 + 回滚预案）📋 登记**：后端 serde 契约全 snake_case（wms page_size 等抽样确认），放开方向正确；回滚预案 = web 836 行改回 SNAKE_CASE_SERVICES.has(name)、factory 传参 false
+- **验证**：WCS 4119/4119 PASS（0 FAIL）；desktop typecheck 受 app-shell react 依赖缺失阻塞（环境基线问题，非本次改动，待 pnpm install 补装）
+
+
 > mobile_contract_smoke.py 预创建真记录捕获 id，替换假 id（00000000-…-0099）业务 404。
 
 - **处置**：pre_create() 预创建 customer/documents/inventory/production/orders/push/notifications/schedule/events（device 为 upsert 响应 data:null，register 后 DB 回查 mobile.devices id）；fill_vars 真 id 优先（修 `${id}` 小写匹配 + VAR_DEFAULTS 提前返回两处 bug）；schedule/events 载荷按后端 snake_case 契约补齐（start_time/end_time/event_type）

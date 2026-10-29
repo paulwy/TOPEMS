@@ -43,8 +43,8 @@ function snakeCaseKeys(value: unknown): unknown {
 export interface SerializeParamsOptions {
   /**
    * 是否把 query 键名从 camelCase 转为 snake_case（pageSize→page_size）。
-   * 默认 **false** = 原样透传（与历史行为完全一致，回滚安全）。
-   * 开启时值不转换；嵌套对象/数组的键名会递归转换。
+   * 默认 **true**（FE-17 阶段 3 收敛：与 web 行为一致，后端 serde 契约全 snake_case）。
+   * 回滚：按 client 显式传 false 恢复原样透传。
    */
   snakeCaseParams?: boolean;
 }
@@ -54,13 +54,13 @@ export interface SerializeParamsOptions {
  * web 端原内联实现，抽到共享包供各端复用。
  *
  * @param params 参数对象
- * @param options.snakeCaseParams camelCase→snake_case 键名转换开关（默认 false）
+ * @param options.snakeCaseParams camelCase→snake_case 键名转换开关（默认 true，FE-17 阶段 3）
  */
 export function serializeParams(
   params: Record<string, unknown>,
   options: SerializeParamsOptions = {},
 ): string {
-  const { snakeCaseParams = false } = options;
+  const { snakeCaseParams = true } = options;
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
@@ -152,7 +152,7 @@ export function createApiClient(options: ApiClientOptions): AxiosInstance {
       options.paramsSerializer ?? {
         serialize: (params) =>
           serializeParams(params as Record<string, unknown>, {
-            snakeCaseParams: options.snakeCaseParams ?? false,
+            snakeCaseParams: options.snakeCaseParams ?? true,
           }),
       },
   });
