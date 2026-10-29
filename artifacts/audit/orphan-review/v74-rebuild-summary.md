@@ -68,6 +68,8 @@
 
 - **portal 240 条已评估**（`offline-review/portal-eval.csv`）：OPS 55/BIZ 176/批2复核 9；抽样 8 条全 BE
 - **erp 181 条已评估**（`offline-review/erp-eval.csv`）：OPS 43/BIZ 157/批2复核 10；抽样 9 条全 BE
+- **剩余 569 条已评估**（`offline-review/eval-rest.csv`，24 svc）：OPS 111/BIZ 416/批2复核 13；抽样 12 条 11 BE（rd get_material_test 待核）；批2复核含误标（run 匹配 runtime/list 类）后续补绑时甄别
+- **批3 全量 990 完成**：OPS 209/BIZ 749/批2复核 32；评估表全部落盘 offline-review/
 
 ## 批2 method 复核（写端点补绑，2026-10-29 起）
 
