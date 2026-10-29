@@ -64,6 +64,10 @@
 - 分流：**stub-cleanup 7 条**（下线-真占位，池已标记 v74_tend）；**method-mislabel 213 条**（写端点误标 GET，归前端接入 P1 通道，portal 82 最大）；**read-endpoints 990 条**（真实读端点待人工评估，portal 240/erp 181/unified-core 110 最大）
 - 清单落盘 `artifacts/audit/orphan-review/offline-review/{stub-cleanup,method-mislabel,read-endpoints}.csv` + README.md（评估维度 4 条）
 
+## 批3 read-endpoints 评估（2026-10-29 起）
+
+- **portal 240 条已评估**（`offline-review/portal-eval.csv`）：OPS-运维保留 55（monitoring/trace/metrics/audit 等）、BIZ-业务待确认 176、批2复核-写语义 9（execute/run/trigger 类，后续补绑）；抽样 8 条 handler 全 BE 确认
+
 ## 批2 method 复核（写端点补绑，2026-10-29 起）
 
 - **portal 批（75 条）**：补绑 `apps/web/src/api/portal/writeOps.ts`（新建，post 53/put 11/get 7/delete 4），method 由 operation_id/handler 语义推导；根路径 7 条（/todos×2、/navigation/pinned×2、/settings/reset、/dashboard/quick-access×2）登记不补（portal 根路由无 /api/portal 前缀，与 apiClient.portal baseURL 不匹配）；候选 1361→1275，portal 下线候选 322→236
