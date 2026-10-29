@@ -63,6 +63,30 @@
 - 前端：`apps/web/src/api/erp/readOps*.ts` 中 `hr-proxy/*` 封装改为实际挂载路径（或删除死封装）
 - 验证：P2a/P2b 0 GAP；erp hr-proxy 接口实跑 200/401
 
+**B1 对照表（utoipa 文档 path → axum 实际挂载，2026-10-29 解析）**：
+
+| # | utoipa 文档 path（现） | axum 挂载（权威） | 需改 |
+|---|---|---|---|
+| 1 | /erp/hr-proxy/proxy-hrm-dashboard | /hr/dashboard | doc → /hr/dashboard |
+| 2 | /erp/hr-proxy/proxy-list-employees | /hr/employees | doc → /hr/employees |
+| 3 | /erp/hr-proxy/proxy-get-employee | /hr/employees/{id} | doc → /hr/employees/{id} |
+| 4 | /erp/hr-proxy/proxy-get-employee-by-user | /hr/employees/by-user/{user_id} | doc → /hr/employees/by-user/{user_id} |
+| 5 | /erp/hr-proxy/proxy-list-departments | /hr/departments | doc → /hr/departments |
+| 6 | /erp/hr-proxy/proxy-get-department | /hr/departments/{id} | doc → /hr/departments/{id} |
+| 7 | /erp/hr-proxy/proxy-get-department-tree | /hr/departments/tree | doc → /hr/departments/tree |
+| 8 | /erp/hr-proxy/proxy-list-companies | /hr/companies | doc → /hr/companies |
+| 9 | /erp/hr-proxy/proxy-get-company | /hr/companies/{id} | doc → /hr/companies/{id} |
+| 10 | /erp/hr-proxy/proxy-list-positions | /hr/positions | doc → /hr/positions |
+| 11 | /erp/hr-proxy/proxy-get-position | /hr/positions/{id} | doc → /hr/positions/{id} |
+| 12 | /erp/hr-proxy/proxy-list-payrolls | /hr/payrolls | doc → /hr/payrolls |
+| 13 | /erp/hr-proxy/proxy-get-payroll | /hr/payrolls/{id} | doc → /hr/payrolls/{id} |
+| 14 | /erp/hr-proxy/proxy-list-attendances | /hr/attendances | doc → /hr/attendances |
+| 15 | /erp/hr-proxy/proxy-get-attendance | /hr/attendances/{id} | doc → /hr/attendances/{id} |
+
+> 15 handler 语义一一映射（handler 名 ↔ 挂载路径）；前端封装（erp/readOps*.ts hr-proxy 系）
+> 基于文档路径生成——统一后按挂载路径修正或随死封装清理处置。
+> 前端若已用 /erp/hr-proxy/* 语义且需保留，也可反向统一挂载（二选一，与协作机定）。
+
 ### B2 段 — ehs 单复数统一（后端文档 + 前端封装）
 - 文件：`svc/ehs/src/modules/occupational_disease.rs`（utoipa path 单数→复数）+ `apps/web/src/api/ehs/*`
 - 动作：后端 utoipa path 统一为 `occupational-diseases/*`（复数，与 axum .route 一致）；前端已复数
