@@ -150,12 +150,44 @@ function walkRs(dir, acc) {
   return acc;
 }
 
+// 有意自建白名单（迁移 DDL 权威之外，经确认保留的自建表，不报 WARN）：
+// - schema_defense_ledger：运行时 schema-defense 门控台账，shared-db 注释明确"不在 sqlx
+//   迁移链内，CREATE IF NOT EXISTS 自建"（lib/shared-db/src/schema.rs，2026-09 schema 门控设计）
+const SELF_BUILT_ALLOWLIST = new Set(["schema_defense_ledger"]);
+
+// 剔除测试代码：扫描目标是运行时自建 DDL，#[cfg(test)] 测试断言中的 SQL 字面量
+// （如 shared-db build_add_column_sql 的 "t"/"employee" 样例）非真实建表，须排除。
+// 用括号配对扫描 mod tests { ... }（任意嵌套深度），再删孤立 #[cfg(test)] 属性行。
+function stripTestCode(src) {
+  let out = src;
+  const modRe = /mod\s+tests\s*\{/g;
+  let m;
+  while ((m = modRe.exec(out)) !== null) {
+    const open = out.indexOf("{", m.index);
+    let depth = 0;
+    let close = -1;
+    for (let i = open; i < out.length; i++) {
+      const ch = out[i];
+      if (ch === "{") depth++;
+      else if (ch === "}") {
+        depth--;
+        if (depth === 0) { close = i; break; }
+      }
+    }
+    if (close < 0) break;
+    out = out.slice(0, m.index) + out.slice(close + 1);
+    modRe.lastIndex = m.index;
+  }
+  out = out.replace(/^\s*#\[cfg\(test\)\]\s*$/gm, "");
+  return out;
+}
+
 function collectSelfBuilt() {
   const files = SELF_BUILT_DIRS.flatMap((d) => walkRs(d, []));
   const tables = new Map();
   const rawRe = /r#"(.*?)"#/gs;
   for (const f of files) {
-    const src = fs.readFileSync(f, "utf8");
+    const src = stripTestCode(fs.readFileSync(f, "utf8"));
     for (const lit of src.matchAll(rawRe)) {
       for (const [t, cols] of extractTables(lit[1])) {
         if (!tables.has(t)) tables.set(t, new Set());
@@ -200,6 +232,10 @@ function main() {
   for (const [table, selfCols] of [...selfBuilt.entries()].sort()) {
     const migCols = migrations.get(table);
     if (!migCols) {
+      if (SELF_BUILT_ALLOWLIST.has(table)) {
+        lines.push(`INFO  ${table}（有意自建白名单，核对通过）`);
+        continue;
+      }
       warnings++;
       lines.push(`WARN  自建表「${table}」在迁移 DDL 中不存在——如为有意自建请核对；否则需补迁移 DDL`);
       continue;
