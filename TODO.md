@@ -7,8 +7,9 @@
   - `GET /ws/{module}/{feature}`：通用路径，模块注册表白名单（iam/workflow/im/mes/wms/ai/notification/dashboard/ticket 9 项），未注册模块 Upgrade 返回 426——`/ws/foo/bar` 426 验证。
   - 挂载：server unified_core_real_module 独立 `Router<Arc<WsState>>` with_state 后 merge（同 mes WS 接线模式），置于 auth layer 之后（healthz 公开；WS 升级由 handle_socket 内 verify_jwt_token 自验）。
   - 升级握手验证：`/ws/notification/alerts?token=<MCS token>` → auth_success（JWT 通过）。
-- **遗留（P1，登记）**：既有 `handle_socket` 消息循环运行异常——客户端消息（ping/subscribe）无响应、30s 心跳 task 无输出（40s 无 heartbeat）；会话保持但双向业务帧不通。P0 端点层已验证，帧链路待 standalone/单测复现修复。
-- **待办**：① handle_socket 消息循环修复（订阅帧/心跳验证）；② 契约 JSON-RPC 2.0 化（现协议为 type/payload 自定义）；③ 安全配额表（6 连接/32 频道/64KB/广播频控）；④ 前端 useWebSocket + 试点页（全量触发条件达成时立项）。
+- **P1 已闭环（commit 待推）**：根因= `ws.rs` auth_success 发送的 `tx_shared` 写锁 guard 为函数级变量（Rust Drop 类型在词法作用域末尾释放），发送后锁被持续持有 → 主循环各分支与心跳 task 再取写锁死锁（tokio RwLock 不可重入）。修复= 发送包进块作用域立即释放锁。全链路验证：auth_success → ping/pong → subscribe/subscribed（channel: notification:broadcasts）→ 31s 周期心跳 全通。
+- **签名注意**（实测）：WS 消息签名序列化用**插入序**（serde_json preserve_order 行为；服务端 `remove("signature")` 后按原插入序 to_string），客户端签名须用 json.dumps 默认插入序（`separators=(",", ":")`），**非** sort_keys 字母序。
+- **待办**：① 契约 JSON-RPC 2.0 化（现协议为 type/payload 自定义）；② 安全配额表（6 连接/32 频道/64KB/广播频控）；③ 前端 useWebSocket + 试点页（全量触发条件达成时立项）。
 
 ## v1.112 WCS/MCS 契约冒烟收口：mobile service 写路径修复 + 4xx 透传（2026-10-29）✅
 

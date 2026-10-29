@@ -336,7 +336,8 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
         state.add_connection(id.to_string(), conn).await;
     }
 
-    // 发送认证成功消息
+    // 发送认证成功消息（块作用域：发送后立即释放写锁，否则 guard 在函数末尾才 drop，
+    // 主循环各分支与心跳 task 再取写锁将死锁——tokio RwLock 写锁不可重入）
     let auth_success = json!({
         "type": "auth_success",
         "payload": {
@@ -345,10 +346,12 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
             "role": claims.as_ref().map(|c| c.role.clone()).unwrap_or_default(),
         }
     });
-    let mut tx = tx_shared.write().await;
-    let _ = tx
-        .send(Message::Text(auth_success.to_string().into()))
-        .await;
+    {
+        let mut tx = tx_shared.write().await;
+        let _ = tx
+            .send(Message::Text(auth_success.to_string().into()))
+            .await;
+    }
 
     while let Some(msg) = rx.next().await {
         match msg {
