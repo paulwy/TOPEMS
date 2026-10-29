@@ -40,5 +40,6 @@
 - **ehs P0+P1 已绑定 66→0**（本批补绑 11 条 + 既有已绑识别）。
 - **erp P0+P1 66→48→13**（svc 前缀归一修正；批2 补绑 4 条：meeting-bookings 3 + consolidation submit-report 1；批1 MDM 补绑 33 条；剩余 13 条全为误报/下线候选——登记）。
 - **P0 批 9→3**（补绑 9 条；剩余 3 条短路径误报登记）。
-- **qms 批 22→2**（补绑 20 条：checks approve/reject + alert-rules 4 + alert-messages 2 + issues 4 + eightd 3 + apqp 3 + internal integration 2；剩余 2 条（audit task/finding）前端已绑——脚本路径差异登记）。
+- **qms 批 22→2**（补绑 20 条；剩余 2 条已绑登记）。
+- **plugin-registry 批 21→0**（补绑 17 条：runtime register/status×2/unregister + updates/rollback/check-all + simple install/uninstall/enable/disable + tenant 显式 uninstall/activate + dev upload/publish/unpublish/update；另 4 条已绑确认。**精度限制登记**：plugin/ 前端使用 createBaseAxiosClient 非泛型调用（pluginAxios.get/post 无 <T>），脚本 api_re 无法识别，21 条重跑后仍显示候选——实际已全绑，以 typecheck + 方法名 grep 为准）。
 - 已知精度限制：1 段短路径（如 /plans）不参与尾段匹配（n>=2），短路径端点可能漏匹配已绑（登记）。
