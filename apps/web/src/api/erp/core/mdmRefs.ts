@@ -641,4 +641,13 @@ export const mdmRefsApi = {
   async getCatalogEntry(entryId: string): Promise<ApiResponse<Record<string, unknown>>> {
     return apiClient.erp.get<Record<string, unknown>>(`/master-data-refs/catalog/${entryId}`);
   },
+
+  // ── v74 to_bind 补绑（2026-10-29，P2）──
+  async getMetadataStats(): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.get<Record<string, unknown>>('/master-data-refs/metadata/stats');
+  },
+
+  async getGraphStats(): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.get<Record<string, unknown>>('/master-data/graph/stats');
+  },
 };

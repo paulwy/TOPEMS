@@ -197,10 +197,6 @@ erp,P1,GET,/erp/consolidation/company-relations,create_company_relation,create_c
 erp,P1,GET,/erp/consolidation/elimination-rules,create_elimination_rule,create_elimination_rule,write,none,保留
 erp,P1,GET,/erp/consolidation/scopes,create_scope,create_scope,write,none,保留
 erp,P1,GET,/erp/consolidation/reports/generate-report,generate_report,generate_report,write,none,保留
-erp,P2,GET,/erp/addressbook/export,export_contacts,export_contacts,read,weak,保留
-erp,P2,GET,/api/erp/master-data-refs/metadata/stats,get_metadata_stats_handler,get_metadata_stats_handler,read,weak,保留
-erp,P2,GET,/erp/master-data/graph/stats,get_graph_stats,get_graph_stats,read,weak,保留
-erp,P2,POST,/addressbook/batch/delete,s,s,read,weak,保留
 erp,P2,GET,/dictionaries,list_dictionaries,list_dictionaries,read,weak,保留
 erp,下线候选,GET,/api/erp/master-data-refs/dashboard,create_dashboard_handler,create_dashboard_handler,read,none,待定
 erp,下线候选,GET,/api/erp/master-data-refs/dashboard/{dashboard_id}/data,get_dashboard_data_handler,get_dashboard_data_handler,read,none,待定
