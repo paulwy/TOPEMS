@@ -26,7 +26,9 @@ const getApiBaseUrl = (): string => {
     }
   }
 
-  return `${url.protocol}//${targetHost}:${url.port}`;
+  // url.port 在默认端口（80/443）或未显式端口时为空——避免悬空冒号
+  const portPart = url.port ? `:${url.port}` : '';
+  return `${url.protocol}//${targetHost}${portPart}`;
 };
 
 const getMobileApiUrl = (): string => {

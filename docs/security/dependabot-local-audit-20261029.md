@@ -80,6 +80,12 @@
 - **对 dependabot 28 的比对结论**：dependabot 的 critical 1 不在 Rust 侧（本地 cargo 0 漏洞），亦不在 npm 侧（本地 0 critical）——大概率来自升级前旧时点状态或 GitHub Actions/workflow 依赖（本地未覆盖）
 - **本地全覆盖结论**：npm 2 条挂账（node-forge high / deepmerge low，无修复版）+ Rust 0 条 = **dependabot 28 项本地已闭环 26 项，剩余 2 项均为无修复版挂账**
 
+### 8.1 unmaintained 3 项处置决策（2026-10-30 拍板）
+
+- **忽略 + 上游复核**（unmaintained ≠ 漏洞；cargo audit 已确认 0 vulnerability）
+- 使用面（依赖路径）：proc-macro-error ← utoipa-gen（OpenAPI 宏，全服务）；ttf-parser ← lopdf → pdf-extract（svc/ai PDF 解析）；unsafe-libyaml ← serde_yaml_ng → shared-core（YAML）
+- 均无本项目直改点（上游维护）——复核触发：utoipa / lopdf / serde_yaml_ng 更新时
+
 ## 6. 局限
 
 - 仅 npm 生态；不含 Rust/cargo、GitHub Actions 等 dependabot 覆盖面
