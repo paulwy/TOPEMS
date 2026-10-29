@@ -8,7 +8,7 @@ use axum::{
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::FromRow;
 use uuid::Uuid;
 
 use crate::shared::aps_fsm::production_plan_can_transition;
@@ -95,33 +95,6 @@ pub struct ApprovalRequest {
 }
 
 // ==================== Database Init ====================
-
-pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS production_plans (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            plan_no VARCHAR(64) NOT NULL,
-            plan_name VARCHAR(256) NOT NULL,
-            plan_type VARCHAR(32) DEFAULT 'monthly',
-            start_date DATE,
-            end_date DATE,
-            status VARCHAR(32) DEFAULT 'draft',
-            product_id UUID,
-            product_name VARCHAR(256),
-            target_quantity DECIMAL(14,2),
-            notes TEXT,
-            tenant_id UUID,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW(),
-            UNIQUE(tenant_id, plan_no)
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-    Ok(())
-}
 
 // ==================== Helpers ====================
 

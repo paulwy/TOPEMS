@@ -68,16 +68,6 @@ impl AiRealModule {
         {
             tracing::error!("[ai] Schema 防御检查失败: {:?}", e);
         }
-        if let Err(e) = topems_ai::modules::ai_knowledge::init_database(db.ddl_pool()).await {
-            tracing::error!("[ai] ai_knowledge 初始化失败（知识库表未就绪）: {:?}", e);
-        }
-        // 2026-10-03：AI 对话会话自有存储表（chat.ts 契约 /conversations 的存储）
-        if let Err(e) = topems_ai::modules::chat_conversations::init_database(db.ddl_pool()).await {
-            tracing::error!(
-                "[ai] chat_conversations 初始化失败（会话表未就绪）: {:?}",
-                e
-            );
-        }
 
         // 读取 AI 配置
         let api_key = std::env::var("OLLAMA_API_KEY")

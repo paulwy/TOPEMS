@@ -37,9 +37,12 @@ init_database 自建 = **冗余双源**：迁移权威建库后，运行时 `CRE
 - **模块文件**：删 6 个 init_*（conversion_rules / mes_qms / crm_erp / erp_wms / crm_scm / hrm_finance）。其中 crm_erp / erp_wms / crm_scm / hrm_finance 的 init 为**无调用点死代码**（D3 改造遗留），一并清除。
 - **验证**：cargo check topems-integration PASS；门禁 PASS（自建表 317→306）；rustfmt 无额外改动。
 
-### 顺延批次（另排，按 crate 逐批）
+### 顺延批次（本次实施）：ehs / finance / mes / qms / bi / report / ai（7 crate）
 
-- ehs / finance / mes / qms / bi / report / ai 的 init_database（server 聚合调用 8 处中的其余）。
+- **删除建表（无防御）**：ai_knowledge（5 表 17 索引）、chat_conversations（1 表）、ehs（43 表 45 索引）、finance compliance_v51（5 表 12 索引，**死代码**）、finance settlement_center（3 表 10 索引，**死代码**）、finance database.rs（6 表 15 索引 + init_aux_tables）、mes modules（27 表 42 索引）+ production_plan / demand_forecast / capacity（各 1 表）。
+- **改造保活防御（建表删除）**：analytics bi（13 表 36 索引）/ report（6 表 3 索引）、finance services 聚合（66 表/563 列自检保留）、qms（26 表 55 索引，TABLE_DEFS 参数化防御保留）。
+- **调用点同步**：6 个服务 main.rs + server 6 个模块（ai/analytics/ehs/finance/mes/qms）；ehs_tests 清理。
+- **验证**：cargo check --workspace --all-targets PASS；schema-defense PASS（自建表数 306→180）；fmt 全绿。剩余自建 180 表为迁移权威覆盖的运行时 TABLE_DEFS 等（远期 C 项评估范围）。
 
 ### 前置条件（已满足/执行中）
 

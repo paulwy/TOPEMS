@@ -21,24 +21,6 @@ use topems_shared_core::response::ApiResponse;
 use crate::shared::AppState;
 
 /// 初始化会话表（幂等）
-pub async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(only_own_schema_query!(
-        "ai",
-        r#"CREATE TABLE IF NOT EXISTS core.ai_conversations (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            tenant_id UUID NOT NULL,
-            user_id VARCHAR(128) NOT NULL,
-            title VARCHAR(200) NOT NULL DEFAULT '新对话',
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )"#,
-        "core"
-    ))
-    .execute(pool)
-    .await?;
-    tracing::info!("ai_conversations 表已就绪");
-    Ok(())
-}
 
 #[derive(serde::Serialize)]
 pub struct ConversationDto {

@@ -8,7 +8,7 @@ use axum::{
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::FromRow;
 use uuid::Uuid;
 
 use crate::shared::aps_fsm::capacity_can_transition;
@@ -84,30 +84,6 @@ pub struct AllocateRequest {
 }
 
 // ==================== Database Init ====================
-
-pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS capacities (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            work_center_id UUID NOT NULL,
-            work_center_name VARCHAR(256),
-            capacity_date DATE,
-            available_hours DECIMAL(10,2),
-            used_hours DECIMAL(10,2) DEFAULT 0,
-            utilization_rate DECIMAL(5,2),
-            status VARCHAR(32) DEFAULT 'available',
-            tenant_id UUID,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW(),
-            UNIQUE(tenant_id, work_center_id, capacity_date)
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-    Ok(())
-}
 
 // ==================== Helpers ====================
 

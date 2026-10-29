@@ -2,7 +2,6 @@
 use chrono::Utc;
 use sqlx::postgres::PgPool;
 use sqlx::postgres::PgPoolOptions;
-use topems_ehs::models;
 use uuid::Uuid;
 
 async fn create_test_pool() -> PgPool {
@@ -23,8 +22,7 @@ async fn create_test_pool() -> PgPool {
         .await
         .expect("Failed to connect to test database");
 
-    // 防御：若迁移链未覆盖，由应用同源 init_database 补齐表结构（幂等）
-    models::init_database(&pool).await.ok();
+    // 防御：建表 DDL 已收敛至迁移链（D7），schema 防御由服务内 schema_defense::run 承担
 
     pool
 }

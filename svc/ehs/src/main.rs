@@ -50,10 +50,7 @@ async fn main() -> anyhow::Result<()> {
 
     let ctx = bootstrap_service(&config).await?;
 
-    if let Err(e) = models::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
-        tracing::warn!("EHS database init warning: {}", e);
-    }
-    // Schema 防御：增量补列 + 一致性校验（失败不阻塞启动）
+    // Schema 防御：增量补列 + 一致性校验（失败不阻塞启动；建表 DDL 已收敛至迁移链，D7）
     if let Err(e) = schema_defense::run(&ctx.db).await {
         tracing::warn!("EHS schema defense 失败（不阻塞启动）: {}", e);
     }

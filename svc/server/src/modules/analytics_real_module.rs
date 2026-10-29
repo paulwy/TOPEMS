@@ -50,12 +50,12 @@ impl AnalyticsRealModule {
         // 立即建立连接，固化本连接池的 search_path
         let _conn = ctx.db.acquire().await?;
 
-        // 2. 模块级数据库初始化（与独立部署 main.rs 一致）
-        if let Err(e) = modules::bi::init_database(&ctx.db).await {
-            tracing::warn!("BI module database init warning: {}", e);
+        // 2. 模块级运行时 schema 一致性自检（建表 DDL 已收敛至迁移链，D7）
+        if let Err(e) = modules::bi::run_schema_defense(&ctx.db).await {
+            tracing::warn!("BI schema defense warning: {}", e);
         }
-        if let Err(e) = modules::report::init_database(&ctx.db).await {
-            tracing::warn!("Report module database init warning: {}", e);
+        if let Err(e) = modules::report::run_schema_defense(&ctx.db).await {
+            tracing::warn!("Report schema defense warning: {}", e);
         }
 
         // 3. Report Scheduler（后台定时任务，start() 内部 spawn 不阻塞）

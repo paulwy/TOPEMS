@@ -40,5 +40,3 @@ impl FinanceService {
         }
     }
 }
-
-pub use database::{init_aux_tables, init_database};

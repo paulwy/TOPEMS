@@ -74,9 +74,10 @@ async fn main() -> anyhow::Result<()> {
 
     let ctx = bootstrap_service(&config).await?;
 
-    // QMS 模块 DB 初始化
-    if let Err(e) = modules::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
-        tracing::warn!("QMS module database init warning: {}", e);
+    // QMS 运行时 schema 一致性自检（建表 DDL 已收敛至迁移链，D7）
+    if let Err(e) = modules::run_schema_defense(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await
+    {
+        tracing::warn!("QMS schema defense warning: {}", e);
     }
 
     let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")

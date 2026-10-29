@@ -173,8 +173,8 @@ async fn main() -> anyhow::Result<()> {
         );
         None
     });
-    if let Err(e) = services::init_database(migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
-        tracing::warn!("⚠️ Finance 初始化失败: {}", e);
+    if let Err(e) = services::run_schema_defense(migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
+        tracing::warn!("⚠️ Finance schema 防御检查失败: {}", e);
     }
 
     if let Err(e) =

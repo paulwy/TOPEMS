@@ -8,7 +8,7 @@ use axum::{
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::FromRow;
 use uuid::Uuid;
 
 use crate::shared::aps_fsm::demand_forecast_can_transition;
@@ -99,35 +99,6 @@ pub struct UpdateForecastRequest {
 }
 
 // ==================== Database Init ====================
-
-pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS demand_forecasts (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            forecast_no VARCHAR(64) NOT NULL,
-            product_id UUID,
-            product_name VARCHAR(256),
-            forecast_period VARCHAR(32),
-            forecast_date DATE,
-            forecast_quantity DECIMAL(14,2),
-            actual_quantity DECIMAL(14,2),
-            accuracy_rate DECIMAL(5,2),
-            method VARCHAR(64) DEFAULT 'moving_average',
-            confidence_level DECIMAL(5,2),
-            notes TEXT,
-            status VARCHAR(32) DEFAULT 'draft',
-            tenant_id UUID,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW(),
-            UNIQUE(tenant_id, forecast_no)
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-    Ok(())
-}
 
 // ==================== Helpers ====================
 

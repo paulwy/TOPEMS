@@ -105,20 +105,7 @@ async fn main() -> anyhow::Result<()> {
         tracing::error!("[ai] Schema 防御检查失败: {:?}", e);
     }
 
-    // 遗留⑩闭环（2026-09-08）：挂载 ai_knowledge 模块——初始化 core.knowledge_bases / documents /
-    // chunks / qa_history 表与 pgvector 扩展（幂等；知识库功能此前因模块未挂载而断裂，现接线上线）
-    if let Err(e) = crate::modules::ai_knowledge::init_database(db.ddl_pool()).await {
-        tracing::error!("[ai] ai_knowledge 初始化失败（知识库表未就绪）: {:?}", e);
-    }
-
-    // 2026-10-03：AI 对话会话自有存储——初始化 core.ai_conversations 表（幂等；chat.ts 契约
-    // GET/POST/DELETE /conversations 此前 404，AiChatPage 会话列表打不开，现补挂接线上线）
-    if let Err(e) = crate::modules::chat_conversations::init_database(db.ddl_pool()).await {
-        tracing::error!(
-            "[ai] chat_conversations 初始化失败（会话表未就绪）: {:?}",
-            e
-        );
-    }
+    // 遗留⑩/会话存储闭环：建表 DDL 已收敛至迁移链（D7 双源消除），schema 防御见上
 
     // 读取 AI 配置
     let api_key = std::env::var("OLLAMA_API_KEY")

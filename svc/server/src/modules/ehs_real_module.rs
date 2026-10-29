@@ -56,10 +56,7 @@ impl EhsRealModule {
         // 立即建立连接，固化本连接池的 search_path
         let _conn = ctx.db.acquire().await?;
 
-        // 2. EHS 数据库初始化（失败不阻塞）
-        if let Err(e) = topems_ehs::models::init_database(&ctx.db).await {
-            tracing::warn!("EHS 数据库初始化警告（不阻塞）: {}", e);
-        }
+        // 2. EHS 建表 DDL 已收敛至迁移链（D7），schema 防御由服务内 schema_defense::run 承担
 
         // 3. 事件订阅者：ehs 的 event_handlers 为 bin-only（main.rs 内 mod），lib 不暴露，跳过
 

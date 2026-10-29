@@ -54,10 +54,7 @@ impl MesRealModule {
         // 立即建立连接，固化本连接池的 search_path
         let _conn = ctx.db.acquire().await?;
 
-        // 2. MES 数据库初始化（增量迁移，失败不阻塞）
-        if let Err(e) = modules::init_database(&ctx.db).await {
-            tracing::warn!("MES 数据库初始化警告（不阻塞）: {}", e);
-        }
+        // 2. MES 建表 DDL 已收敛至迁移链（D7）；Schema 防御见下（增量迁移 + 一致性自检）
 
         // 3. Schema 防御：增量迁移 + 一致性自检（失败不阻塞）
         if let Err(e) = topems_shared_db::schema::run_schema_defense(

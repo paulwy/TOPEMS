@@ -58,10 +58,10 @@ impl FinanceRealModule {
         // 立即建立连接，确保本连接池的 search_path 固化（防止其他模块覆盖全局 SEARCH_PATH）
         let _conn = ctx.db.acquire().await?;
 
-        // 2. 初始化财务数据库（建表，幂等）
-        if let Err(e) = topems_finance::services::init_database(&ctx.db).await {
-            tracing::error!("Failed to init finance database: {}", e);
-            return Err(TopemsError::internal("finance 数据库初始化失败", e));
+        // 2. 运行时 schema 一致性自检（建表 DDL 已收敛至迁移链，D7）
+        if let Err(e) = topems_finance::services::run_schema_defense(&ctx.db).await {
+            tracing::error!("Failed to run finance schema defense: {}", e);
+            return Err(TopemsError::internal("finance schema 防御检查失败", e));
         }
 
         // 3. 工作流服务客户端
