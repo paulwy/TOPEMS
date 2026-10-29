@@ -96,4 +96,11 @@ export const materialApi = {
     const baseURL = config.services.erp; // @deprecated 页面未用，erp 无 /materials/export 路由
     return downloadBlob(baseURL, '/materials/export');
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  listByExperiment: async (
+    experimentId: string
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.rd.get(`/material-tests/experiment/${experimentId}`);
+  },
 };

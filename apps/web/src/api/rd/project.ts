@@ -105,4 +105,11 @@ export const projectApi = {
   ): Promise<ApiResponse<Record<string, unknown>>> => {
     return apiClient.rd.post('/phases', data);
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  listPatentsByProject: async (
+    projectId: string
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.rd.get(`/patents/project/${projectId}`);
+  },
 };

@@ -1207,12 +1207,6 @@ qms,下线候选,GET,/inspection-plans/{id},get_inspection_plan,get_inspection_p
 qms,下线候选,GET,/inspection-plans/{id}/items,list_plan_items,list_plan_items,read,none,待定
 qms,下线候选,POST,/spc/calculate,calculate_control_limits,calculate_control_limits,read,none,待定
 qms,下线候选,GET,/quality-tasks/today-pass-rate,get_today_quality_pass_rate,get_today_quality_pass_rate,read,none,待定
-rd,P1,GET,/patents/project/{project_id},list_patents_by_project,list_patents_by_project,write,none,保留
-rd,P1,GET,/material-tests/experiment/{experiment_id},list_by_experiment,list_by_experiment,write,none,保留
-rd,P1,GET,/change-requests/{id},get_change_request,get_change_request,write,none,保留
-rd,P1,GET,/change-requests/{id}/transition,transition_change_request,transition_change_request,write,none,保留
-rd,P1,GET,/change-requests/{id}/change-orders,create_change_order,create_change_order,write,none,保留
-rd,P1,GET,/ai/analyses,create_analysis,create_analysis,write,none,保留
 rd,P2,GET,/projects/export,export_projects,export_projects,read,weak,保留
 rd,P2,GET,/experiments/phase/lab,list_lab_experiments,list_lab_experiments,read,weak,保留
 rd,P2,GET,/experiments/phase/pilot,list_pilot_experiments,list_pilot_experiments,read,weak,保留
