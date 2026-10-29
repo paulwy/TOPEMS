@@ -62,20 +62,6 @@ ai,下线候选,GET,/api/core/ai-form/forms,list_forms,list_forms,read,none,待�
 ai,下线候选,GET,/api/core/ai-form/forms/{form_type},get_form,get_form,read,none,待定
 ai,下线候选,POST,/api/core/ai-form/forms/{form_type}/suggest,suggest_for_form,suggest_for_form,read,none,待定
 ai,下线候选,POST,/api/core/ai-form/forms/{form_type}/enhance,enhance_for_form,enhance_for_form,read,none,待定
-analytics,P1,GET,/visualization/gauge,generate_gauge_chart,generate_gauge_chart,write,none,保留
-analytics,P1,GET,/drilldown/path,create_drilldown_path,create_drilldown_path,write,none,保留
-analytics,P1,GET,/drilldown/path/{id},get_drilldown_path,get_drilldown_path,write,none,保留
-analytics,P1,GET,/drilldown/path/{id},update_drilldown_path,update_drilldown_path,write,none,保留
-analytics,P1,GET,/drilldown/path/{id},delete_drilldown_path,delete_drilldown_path,write,none,保留
-analytics,P1,GET,/drilldown/roll-up,roll_up,roll_up,write,none,保留
-analytics,P1,GET,/dashboard/{id}/refresh,refresh_dashboard_data,refresh_dashboard_data,write,none,保留
-analytics,P1,GET,/dashboard/{id}/auto-refresh,set_auto_refresh,set_auto_refresh,write,none,保留
-analytics,P1,GET,/dashboard/import,import_dashboard,import_dashboard,write,none,保留
-analytics,P1,GET,/dashboard/{id}/share,create_share_link,create_share_link,write,none,保留
-analytics,P1,GET,/dashboard/{id}/shares,list_share_links,list_share_links,write,none,保留
-analytics,P1,GET,/dashboard/share/{share_id},delete_share_link,delete_share_link,write,none,保留
-analytics,P1,GET,/api/bi/reports/exports/{job_id}/download,download_export,download_export,write,none,保留
-analytics,P1,GET,/api/bi/schedules/{id}/toggle,toggle_schedule,toggle_schedule,write,none,保留
 analytics,P2,GET,/visualization,list_visualizations,list_visualizations,read,weak,保留
 analytics,P2,GET,/visualization,create_visualization,create_visualization,read,weak,保留
 analytics,P2,GET,/metrics,prometheus_metrics_handler,prometheus_metrics_handler,read,weak,保留
@@ -109,7 +95,6 @@ analytics,下线候选,GET,/report/{id}/export,export_report,export_report,read,
 analytics,下线候选,GET,/dashboard/{id}/export,export_dashboard,export_dashboard,read,none,待定
 analytics,下线候选,GET,/dashboard/{id}/export/pdf,export_dashboard_pdf,export_dashboard_pdf,read,none,待定
 analytics,下线候选,GET,/dashboard/{id}/export/excel,export_dashboard_excel,export_dashboard_excel,read,none,待定
-analytics,下线候选,GET,/dashboard/share/{share_id},get_shared_dashboard,get_shared_dashboard,read,none,待定
 analytics,下线候选,GET,/dashboard/{id}/realtime,query_dashboard_realtime_data,query_dashboard_realtime_data,read,none,待定
 analytics,下线候选,GET,/widget/{id}/data/realtime,get_widget_data_realtime,get_widget_data_realtime,read,none,待定
 analytics,下线候选,POST,/widget/{id}/cache/invalidate,invalidate_widget_cache,invalidate_widget_cache,read,none,待定
@@ -223,7 +208,6 @@ erp,P2,GET,/dictionaries,list_dictionaries,list_dictionaries,read,weak,保留
 erp,下线候选,GET,/api/erp/master-data-refs/dashboard,create_dashboard_handler,create_dashboard_handler,read,none,待定
 erp,下线候选,GET,/api/erp/master-data-refs/dashboard/{dashboard_id}/data,get_dashboard_data_handler,get_dashboard_data_handler,read,none,待定
 erp,下线候选,GET,/api/erp/master-data-refs/dashboard/kpi/summary,get_kpi_summary_handler,get_kpi_summary_handler,read,none,待定
-erp,下线候选,GET,/api/erp/master-data-refs/dashboard/{dashboard_id}/refresh,refresh_dashboard_handler,refresh_dashboard_handler,read,none,待定
 erp,下线候选,GET,/erp/master-data/quality/tickets/{id}/history,get_quality_ticket_history,get_quality_ticket_history,read,none,待定
 erp,下线候选,GET,/erp/master-data/quality/repair-workflows,create_repair_workflow,create_repair_workflow,read,none,待定
 erp,下线候选,GET,/erp/master-data/quality/repair-workflows/{id}/execute,execute_repair_workflow,execute_repair_workflow,read,none,待定
@@ -434,7 +418,6 @@ erp,下线候选,GET,/master-data-refs/lineage/origin/{id},find_data_origin_hand
 erp,下线候选,POST,/master-data-refs/metadata/relations,create_relation_handler,create_relation_handler,read,none,待定
 erp,下线候选,GET,/master-data-refs/dashboard/kpi/summary,get_kpi_summary_handler,get_kpi_summary_handler,read,none,待定
 erp,下线候选,GET,/master-data-refs/dashboard/{dashboard_id}/data,get_dashboard_data_handler,get_dashboard_data_handler,read,none,待定
-erp,下线候选,POST,/master-data-refs/dashboard/{dashboard_id}/refresh,refresh_dashboard_handler,refresh_dashboard_handler,read,none,待定
 erp,下线候选,GET,/master-data-refs/reports/templates,list_report_templates_handler,list_report_templates_handler,read,none,待定
 erp,下线候选,GET,/master-data-refs/reports/generated,list_generated_reports_handler,list_generated_reports_handler,read,none,待定
 erp,下线候选,GET,/master-data-refs/reports/generated/{report_id},get_generated_report_handler,get_generated_report_handler,read,none,待定

@@ -55,3 +55,28 @@ export async function exportChart(widgetId: string, format: 'png' | 'svg' | 'pdf
 export async function getFullscreenChart(widgetId: string) {
   return await apiClient.bi.get(`/widgets/${widgetId}/fullscreen`);
 }
+
+// ── v74 to_bind 补绑（2026-10-29）──
+export async function generateGaugeChart(data: Record<string, unknown>) {
+  return await apiClient.bi.post('/visualization/gauge', data);
+}
+
+export async function createDrilldownPath(data: Record<string, unknown>) {
+  return await apiClient.bi.post('/drilldown/path', data);
+}
+
+export async function getDrilldownPath(id: string) {
+  return await apiClient.bi.get(`/drilldown/path/${id}`);
+}
+
+export async function updateDrilldownPath(id: string, data: Record<string, unknown>) {
+  return await apiClient.bi.put(`/drilldown/path/${id}`, data);
+}
+
+export async function deleteDrilldownPath(id: string) {
+  return await apiClient.bi.delete(`/drilldown/path/${id}`);
+}
+
+export async function rollUp(data: Record<string, unknown>) {
+  return await apiClient.bi.post('/drilldown/roll-up', data);
+}

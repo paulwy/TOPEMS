@@ -137,3 +137,11 @@ export async function fetchModuleDetailData(moduleId: string) {
 export async function createReport(data: Record<string, unknown>) {
   return await apiClient.bi.post('/report', data);
 }
+
+export async function downloadExport(jobId: string) {
+  return await apiClient.bi.get(`/reports/exports/${jobId}/download`);
+}
+
+export async function toggleSchedule(id: string) {
+  return await apiClient.bi.post(`/schedules/${id}/toggle`);
+}

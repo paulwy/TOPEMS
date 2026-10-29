@@ -56,3 +56,28 @@ export async function deleteDashboardTemplate(id: string) {
 export async function createDashboardFromTemplate(templateId: string, data: Partial<Dashboard>) {
   return await apiClient.bi.post(`/dashboard/template/${templateId}/create`, data);
 }
+
+// ── v74 to_bind 补绑（2026-10-29）──
+export async function refreshDashboardData(id: string) {
+  return await apiClient.bi.post(`/dashboard/${id}/refresh`);
+}
+
+export async function setAutoRefresh(id: string, data: Record<string, unknown>) {
+  return await apiClient.bi.post(`/dashboard/${id}/auto-refresh`, data);
+}
+
+export async function importDashboard(data: Record<string, unknown>) {
+  return await apiClient.bi.post('/dashboard/import', data);
+}
+
+export async function createShareLink(id: string, data: Record<string, unknown>) {
+  return await apiClient.bi.post(`/dashboard/${id}/share`, data);
+}
+
+export async function listShareLinks(id: string) {
+  return await apiClient.bi.get(`/dashboard/${id}/shares`);
+}
+
+export async function deleteShareLink(shareId: string) {
+  return await apiClient.bi.delete(`/dashboard/share/${shareId}`);
+}
