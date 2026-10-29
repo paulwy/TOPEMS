@@ -687,13 +687,8 @@ master-data,下线候选,GET,/dashboard/recent/{id},array,array,read,none,待定
 master-data,下线候选,GET,/uoms,list_uoms,list_uoms,read,none,待定
 master-data,下线候选,GET,/uoms/{id},get_uom,get_uom,read,none,待定
 master-data,下线候选,GET,/samples/{id},get_sample,get_sample,read,none,待定
-mes,P1,GET,/demand-forecasts/{id},get_forecast,get_forecast,write,none,保留
-mes,P1,GET,/demand-forecasts/{id}/calculate,calculate_forecast,calculate_forecast,write,none,保留
-mes,P1,GET,/demand-forecasts/{id}/validate,validate_forecast,validate_forecast,write,none,保留
-mes,P1,GET,/demand-forecasts/{id}/adopt,adopt_forecast,adopt_forecast,write,none,保留
 mes,P1,GET,/capacities/{id}/maintenance,maintenance_capacity,maintenance_capacity,write,none,保留
 mes,P1,GET,/api/mes/schedules/gantt,get_gantt_data,get_gantt_data,write,none,保留
-mes,P1,GET,/quality/patrol-items/{id},update_patrol_item,update_patrol_item,write,none,保留
 mes,P2,GET,/api/mes/equipment-oee/statistics,get_oee_statistics,get_oee_statistics,read,weak,保留
 mes,P2,GET,/analytics/capacity-utilization,get_capacity_utilization,get_capacity_utilization,read,weak,保留
 mes,P2,GET,/analytics/oee-dashboard,get_oee_dashboard,get_oee_dashboard,read,weak,保留

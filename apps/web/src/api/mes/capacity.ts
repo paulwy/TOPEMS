@@ -37,4 +37,11 @@ export const capacityApi = {
   update: (id: string, data: Partial<CreateCapacityRequest>) =>
     apiClient.put<ApiResponse<{ id: string }>>(`/api/mes/capacities/${id}`, data),
   remove: (id: string) => apiClient.delete<ApiResponse<string>>(`/api/mes/capacities/${id}`),
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  maintenance: (id: string, data?: Record<string, unknown>) =>
+    apiClient.post<ApiResponse<Record<string, unknown>>>(
+      `/api/mes/capacities/${id}/maintenance`,
+      data
+    ),
 };

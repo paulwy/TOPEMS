@@ -275,4 +275,12 @@ export const qualityApi = {
   async deleteStandard(id: string): Promise<ApiResponse<string>> {
     return apiClient.mes.delete(`/quality/standards/${id}`);
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  async updatePatrolItem(
+    id: string,
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.mes.put(`/quality/patrol-items/${id}`, data);
+  },
 };
