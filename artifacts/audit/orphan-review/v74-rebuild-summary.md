@@ -3,7 +3,7 @@
 > 脚本：`scripts/rebuild-to-bind-pool.py`；后端路由 5592（utoipa 3260 + Router::route 2332）× 前端 api 调用 3243（含泛型/跨行调用识别）。
 > 口径：后端真实 handler + 前端无 api 调用 → 候选；优先级 P0=写+弱引用 / P1=写+无引用 / P2=读+弱引用 / 下线候选=读+无引用。
 
-**候选总数：1361**（v73 332 作废）
+**候选总数：1275**（v73 332 作废）
 
 ## 优先级分布
 | 优先级 | 数量 | 处置建议 |
@@ -63,3 +63,8 @@
 - 发现 erp `smoke_false_positive_stub_routes()` 冒烟占位路由（业务无实现）
 - 分流：**stub-cleanup 7 条**（下线-真占位，池已标记 v74_tend）；**method-mislabel 213 条**（写端点误标 GET，归前端接入 P1 通道，portal 82 最大）；**read-endpoints 990 条**（真实读端点待人工评估，portal 240/erp 181/unified-core 110 最大）
 - 清单落盘 `artifacts/audit/orphan-review/offline-review/{stub-cleanup,method-mislabel,read-endpoints}.csv` + README.md（评估维度 4 条）
+
+## 批2 method 复核（写端点补绑，2026-10-29 起）
+
+- **portal 批（75 条）**：补绑 `apps/web/src/api/portal/writeOps.ts`（新建，post 53/put 11/get 7/delete 4），method 由 operation_id/handler 语义推导；根路径 7 条（/todos×2、/navigation/pinned×2、/settings/reset、/dashboard/quick-access×2）登记不补（portal 根路由无 /api/portal 前缀，与 apiClient.portal baseURL 不匹配）；候选 1361→1275，portal 下线候选 322→236
+- 批2 剩余：erp 31/finance 20/integration 15/ehs 10/analytics 9/ai 7 等共 138 条待同类处理
