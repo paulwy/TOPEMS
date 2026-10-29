@@ -91,3 +91,16 @@
 ## 说明
 - 自动检测仅覆盖常见守卫形态，**待人工确认**行需打开文件确认是否有其他空态处理（如子表仅在有父记录时渲染、`items?.map` 空数组渲染空容器）。
 - 有守卫行也建议抽查确认守卫覆盖的是表格主体（而非仅弹窗/头部）。
+
+---
+
+## 预筛结论（2026-10-29 追加）
+
+对 82 文件二次扫描（数据数组 map + 守卫形态），**10 个"待人工确认"实际均有兜底或非空态场景**，**无真缺空态缺口**：
+
+| 类型 | 文件 | 结论 |
+|---|---|---|
+| 列表页 CRUD（8） | lims/MethodCategoryPage、lims/AnalytePage、crm/TagPage、mes/CapacityPage、mes/MesMasterDataPage、qms/InspectionStandardPage、erp/DictionaryPage、gis/DevicePage | `items ?? []` 兜底 → 空数组渲染空表体（无「暂无数据」文案行）；轻微 P2，不阻塞 |
+| 表单内表格（2） | finance/VoucherCreatePage（凭证分录行）、bi/DataAnalysisPage | 行编辑/图表数据表，用户自增行/图表空态无意义，**非空态场景** |
+
+> 结论：MUI 手写 Table 项**核销**（66→82 口径下无系统性空态缺口）；如需统一空表体文案行（MUI `<TableRow>` 空态），另行 P2 排期，不机械铺改。
