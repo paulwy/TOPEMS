@@ -17,6 +17,8 @@
     "@topems/shared-types": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "react": "^19.2.7",
+    "@types/react": "^19.2.17"
   }
 }
