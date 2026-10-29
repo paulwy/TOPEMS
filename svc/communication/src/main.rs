@@ -1,7 +1,6 @@
 use axum::{routing::delete, routing::get, routing::post, routing::put, Router};
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
-use topems_shared_boundary::only_own_schema_query;
 
 mod im;
 mod im_location;
@@ -30,14 +29,13 @@ async fn main() -> anyhow::Result<()> {
 
     let ctx = bootstrap_service(&config).await?;
 
-    // 初始化数据库表
-    if let Err(e) = init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
-        tracing::warn!("Database initialization warning: {}", e);
-    }
-
-    // 初始化位置与地理围栏表
-    if let Err(e) = im_location::register_geofence_tables(&ctx.db).await {
-        tracing::warn!("Geofence table initialization warning: {}", e);
+    // C-1：自建 DDL 已移除（迁移权威唯一仲裁）；Schema 防御保留
+    if let Err(e) = schema_defense::run_schema_migration_and_verify(
+        ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),
+    )
+    .await
+    {
+        tracing::error!("[communication] Schema 防御检查失败: {:?}", e);
     }
 
     // ===== 通知读取路由（需要认证） =====
@@ -288,142 +286,4 @@ async fn main() -> anyhow::Result<()> {
 
 async fn health_handler() -> &'static str {
     "ok"
-}
-
-/// 初始化数据库表
-async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
-    // 通知表
-    sqlx::query(only_own_schema_query!(
-        "communication",
-        r#"
-        CREATE TABLE IF NOT EXISTS core_notifications (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            user_id UUID NOT NULL,
-            title VARCHAR(256) NOT NULL,
-            content TEXT,
-            notification_type VARCHAR(64) DEFAULT 'info',
-            is_read BOOLEAN DEFAULT FALSE,
-            priority INTEGER DEFAULT 0,
-            data JSONB,
-            created_at TIMESTAMP DEFAULT NOW(),
-            read_at TIMESTAMP,
-            is_archived BOOLEAN DEFAULT FALSE,
-                deleted_at TIMESTAMP
-        )
-        "#
-    ))
-    .execute(pool)
-    .await?;
-
-    // 通知模板表
-    sqlx::query(only_own_schema_query!(
-        "communication",
-        r#"
-        CREATE TABLE IF NOT EXISTS core_notification_templates (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            name VARCHAR(128) NOT NULL,
-            title_template VARCHAR(256) NOT NULL,
-            content_template TEXT NOT NULL,
-            notification_type VARCHAR(64) DEFAULT 'info',
-            description TEXT,
-            created_by UUID,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW(),
-            deleted_at TIMESTAMP
-        )
-        "#
-    ))
-    .execute(pool)
-    .await?;
-
-    // 邮件表
-    sqlx::query(only_own_schema_query!(
-        "communication",
-        r#"
-        CREATE TABLE IF NOT EXISTS core_emails (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            from_email TEXT NOT NULL,
-            to_email TEXT NOT NULL,
-            subject VARCHAR(512),
-            body TEXT,
-            html_body TEXT,
-            cc TEXT[],
-            bcc TEXT[],
-            is_read BOOLEAN DEFAULT FALSE,
-            sent_at TIMESTAMP,
-            read_at TIMESTAMP,
-            deleted_at TIMESTAMP,
-            created_at TIMESTAMP DEFAULT NOW()
-        )
-        "#
-    ))
-    .execute(pool)
-    .await?;
-
-    // 邮件模板表
-    sqlx::query(only_own_schema_query!(
-        "communication",
-        r#"
-        CREATE TABLE IF NOT EXISTS core_email_templates (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            name VARCHAR(128) NOT NULL,
-            subject_template VARCHAR(512) NOT NULL,
-            body_template TEXT NOT NULL,
-            description TEXT,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW(),
-            deleted_at TIMESTAMP
-        )
-        "#
-    ))
-    .execute(pool)
-    .await?;
-
-    // 通知渠道表
-    sqlx::query(only_own_schema_query!(
-        "communication",
-        r#"
-        CREATE TABLE IF NOT EXISTS notification_channels (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            tenant_id VARCHAR(128) NOT NULL DEFAULT 'default',
-            name VARCHAR(128) NOT NULL,
-            type VARCHAR(32) NOT NULL,
-            status VARCHAR(32) NOT NULL DEFAULT 'active',
-            provider_id UUID,
-            is_default BOOLEAN NOT NULL DEFAULT FALSE,
-            config JSONB NOT NULL DEFAULT '{}',
-            rate_limit_per_minute INTEGER,
-            retry_count INTEGER DEFAULT 3,
-            description TEXT,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        )
-        "#
-    ))
-    .execute(pool)
-    .await?;
-
-    sqlx::query(only_own_schema_query!(
-        "communication",
-        "CREATE INDEX IF NOT EXISTS idx_notification_channels_tenant ON notification_channels(tenant_id)"
-    ))
-    .execute(pool)
-    .await?;
-
-    // 创建索引
-    sqlx::query(only_own_schema_query!(
-        "communication",
-        "CREATE INDEX IF NOT EXISTS idx_core_notifications_user ON core_notifications(user_id)"
-    ))
-    .execute(pool)
-    .await?;
-
-    tracing::info!("Communication database tables initialized");
-
-    // V69.3 Schema 防御：增量迁移 + 一致性自检（9 表）
-    if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
-        tracing::error!("[communication] Schema 防御检查失败: {:?}", e);
-    }
-
-    Ok(())
 }

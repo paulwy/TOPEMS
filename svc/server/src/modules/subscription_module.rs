@@ -221,21 +221,7 @@ impl SubscriptionModule {
         let ctx = bootstrap_service(&config).await?;
         let _conn = ctx.db.acquire().await?;
 
-        // 建表（tenant 唯一）
-        sqlx::query(
-            r#"CREATE TABLE IF NOT EXISTS public.subscriptions (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                tenant_id UUID NOT NULL UNIQUE,
-                tier TEXT NOT NULL DEFAULT 'free',
-                status TEXT NOT NULL DEFAULT 'trial',
-                started_at TIMESTAMPTZ,
-                expires_at TIMESTAMPTZ,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-            )"#,
-        )
-        .execute(&ctx.db)
-        .await?;
+        // C-1：subscriptions 表由迁移链权威创建（运行时自建表已移除）
 
         let state = SubscriptionState {
             pool: ctx.db.clone(),

@@ -2180,24 +2180,6 @@ impl ErpEventHandlers {
         Ok(())
     }
 
-    /// 确保事件幂等账本表存在（自包含建表，免迁移文件；重复执行 IF NOT EXISTS 为 no-op）。
-    /// 键 = 事件业务主键（如 payroll_run_id / work_report_id），天然支持 at-least-once 重放去重。
-    async fn ensure_event_idempotency_table(&self) -> HandlerResult {
-        sqlx::query(
-            r#"CREATE TABLE IF NOT EXISTS erp.event_idempotency (
-                   idempotency_key TEXT PRIMARY KEY,
-                   event_type TEXT NOT NULL,
-                   processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-               )"#,
-        )
-        .execute(&self.db)
-        .await
-        .map_err(|e| {
-            TopemsError::DatabaseQuery(format!("创建 erp.event_idempotency 失败: {}", e))
-        })?;
-        Ok(())
-    }
-
     /// MesWorkReportSubmitted → 更新生产订单进度（D2 U2 环2：mes→erp 报工回传事件化）
     /// 幂等键 = work_report_id；同 work_report_id 重放只更新一次。
     /// DLQ 兜底由 shared-event 订阅器统一提供（handler 返回 Err 即入 topems:dlq，retry_count 累加）。
@@ -2218,7 +2200,7 @@ impl ErpEventHandlers {
             event.trace_id
         );
 
-        self.ensure_event_idempotency_table().await?;
+        // C-1：幂等账本表由迁移链权威创建（运行时自建表已移除），直接进入幂等写入
 
         // 幂等：账本插入冲突 = 已处理过，直接收敛返回
         let key = format!("mes_work_report:{}", payload.work_report_id);

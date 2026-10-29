@@ -127,42 +127,6 @@ pub struct LeaveRequestQueryParams {
     pub employee_id: Option<Uuid>,
 }
 
-// ============ 表初始化 ============
-
-/// 确保 leave_requests 表存在（幂等操作）
-/// 表结构在 handler 中用 CREATE TABLE IF NOT EXISTS 创建，不依赖迁移文件
-async fn ensure_table(state: &ApiState) {
-    sqlx::query(only_own_schema_query!(
-        "erp",
-        r#"
-        CREATE TABLE IF NOT EXISTS leave_requests (
-            id              UUID PRIMARY KEY,
-            employee_id     UUID NOT NULL,
-            employee_name   VARCHAR(128) NOT NULL,
-            leave_type      VARCHAR(32) NOT NULL,
-            start_date      DATE NOT NULL,
-            end_date        DATE NOT NULL,
-            start_half_day  BOOLEAN NOT NULL DEFAULT FALSE,
-            end_half_day    BOOLEAN NOT NULL DEFAULT FALSE,
-            days            DOUBLE PRECISION NOT NULL,
-            reason          TEXT NOT NULL,
-            status          VARCHAR(16) NOT NULL DEFAULT 'draft',
-            approved_by     VARCHAR(128),
-            approved_at     TIMESTAMPTZ,
-            rejected_reason TEXT,
-            tenant_id       UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
-            created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            deleted_at TIMESTAMP
-        )
-        "#
-    ))
-    .execute(&state.db)
-    .await
-    .map(|_| ())
-    .unwrap_or_else(|e| tracing::warn!("创建 leave_requests 表失败（可能已存在）: {}", e));
-}
-
 /// 从 Claims 提取 tenant_id
 fn tenant_id_from_claims(claims: &Claims) -> &str {
     claims
@@ -194,7 +158,7 @@ pub fn create_routes() -> Router<ApiState> {
 // ============ Handler ============
 
 pub async fn list_leave_requests(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<LeaveRequestQueryParams>,
     Extension(txn_arc): Extension<
@@ -206,7 +170,6 @@ pub async fn list_leave_requests(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    ensure_table(&state).await;
 
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -307,7 +270,6 @@ pub async fn create_leave_request(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    ensure_table(&state).await;
 
     if let Err(e) = validate_required_field("申请人姓名", &req.employee_name) {
         return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
@@ -424,7 +386,7 @@ pub async fn create_leave_request(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_leave_request(
-    State(state): State<ApiState>,
+    State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
@@ -436,7 +398,6 @@ pub async fn get_leave_request(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    ensure_table(&state).await;
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -495,7 +456,6 @@ pub async fn update_leave_request(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    ensure_table(&state).await;
 
     let tenant = tenant_id_from_claims(&claims);
 
@@ -648,7 +608,6 @@ pub async fn delete_leave_request(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    ensure_table(&state).await;
 
     let tenant = tenant_id_from_claims(&claims);
 
@@ -741,7 +700,6 @@ pub async fn submit_leave_request(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    ensure_table(&state).await;
 
     let tenant = tenant_id_from_claims(&claims);
     let now = Utc::now();
@@ -845,7 +803,6 @@ pub async fn approve_leave_request(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    ensure_table(&state).await;
 
     if let Err(e) = validate_required_field("审批人", &req.approved_by) {
         return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
@@ -957,7 +914,6 @@ pub async fn reject_leave_request(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    ensure_table(&state).await;
 
     if let Err(e) = validate_required_field("审批人", &req.approved_by) {
         return ApiResponse::from(TopemsError::ValidationFailed(e.to_string()));
@@ -1072,7 +1028,6 @@ pub async fn cancel_leave_request(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    ensure_table(&state).await;
 
     let tenant = tenant_id_from_claims(&claims);
     let now = Utc::now();

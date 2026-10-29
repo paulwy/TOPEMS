@@ -259,56 +259,6 @@ pub struct VersionStatistics {
     pub newest_version: Option<String>,
 }
 
-pub async fn init_version_config_table(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS public.core_api_version_configs (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            version VARCHAR(50) NOT NULL UNIQUE,
-            status VARCHAR(20) NOT NULL DEFAULT 'active',
-            deprecated_since DATE,
-            sunset_date DATE,
-            message TEXT,
-            migration_guide TEXT,
-            changes TEXT,
-            is_current BOOLEAN NOT NULL DEFAULT false,
-            is_default BOOLEAN NOT NULL DEFAULT false,
-            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                deleted_at TIMESTAMP
-        );
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_api_version_configs_status ON core_api_version_configs(status);")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_api_version_configs_version ON core_api_version_configs(version);")
-        .execute(pool)
-        .await?;
-
-    let count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_api_version_configs WHERE deleted_at IS NULL",
-    )
-    .fetch_one(pool)
-    .await?;
-
-    if count == 0 {
-        sqlx::query(
-            r#"
-            INSERT INTO core_api_version_configs (version, status, is_current, is_default)
-            VALUES ('v1', 'active', true, true);
-            "#,
-        )
-        .execute(pool)
-        .await?;
-    }
-
-    Ok(())
-}
-
 const ACCEPT_VERSION_HEADER: &str = "accept-version";
 const API_VERSION_HEADER: &str = "api-version";
 const DEPRECATION_HEADER: &str = "deprecation";

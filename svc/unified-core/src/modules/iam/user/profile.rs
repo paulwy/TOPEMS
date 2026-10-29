@@ -11,27 +11,7 @@ use super::models::{resolve_user_grants, UserResponse, UserRow};
 /// 的偏好读写依赖 portal 在线，与 portal→unified-core 的 IAM 聚合构成双向 HTTP 环。
 /// 本地化后：偏好读写直读本库，**停掉 portal 不影响偏好接口**（无任何对 portal 的运行时调用）；
 /// portal 侧偏好接口改为只读代理本服务（见 svc/portal/src/modules/preferences.rs）。
-/// 表自包含建表（CREATE TABLE IF NOT EXISTS，免迁移文件），键结构与旧 portal.user_preferences 对齐。
-async fn ensure_preferences_table(pool: &sqlx::PgPool) {
-    let result = sqlx::query(
-        r#"CREATE TABLE IF NOT EXISTS core.user_preferences (
-               id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-               user_id UUID NOT NULL,
-               preference_key TEXT NOT NULL,
-               preference_value JSONB NOT NULL,
-               updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-               tenant_id UUID,
-               deleted_at TIMESTAMPTZ,
-               UNIQUE (user_id, preference_key)
-           )"#,
-    )
-    .execute(pool)
-    .await;
-    if let Err(e) = result {
-        tracing::error!("ensure core.user_preferences failed: {}", e);
-    }
-}
-
+/// 表结构由迁移链权威创建（C-1 已移除运行时自建表，迁移权威唯一仲裁）。
 pub async fn get_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -53,7 +33,6 @@ pub async fn get_preferences(
     let mut timezone = serde_json::Value::String("Asia/Shanghai".into());
 
     if let Ok(user_id) = uuid::Uuid::parse_str(&claims.sub) {
-        ensure_preferences_table(&state.pool).await;
         let rows: Vec<(String, serde_json::Value)> = sqlx::query_as(
             "SELECT preference_key, preference_value FROM core.user_preferences \
              WHERE user_id = $1 AND deleted_at IS NULL",
@@ -110,8 +89,6 @@ pub async fn update_preferences(
             ));
         }
     };
-
-    ensure_preferences_table(&state.pool).await;
 
     const KEYS: [&str; 4] = ["shortcuts", "notification_settings", "language", "timezone"];
     for key in KEYS {

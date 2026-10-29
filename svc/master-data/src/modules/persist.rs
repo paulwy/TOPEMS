@@ -23,22 +23,16 @@ use std::sync::OnceLock;
 static POOL: OnceLock<PgPool> = OnceLock::new();
 
 /// 注入服务唯一连接池。重复调用会被忽略（OnceLock）。
-/// 同时确保 `master_data.mdm_collections` 表存在（与迁移文件等价的幂等 bootstrap）。
+/// 同时确保 `master_data` schema 存在（表结构由迁移链权威创建，此处仅幂等兜底）。
 pub async fn init(pool: PgPool) {
     if POOL.set(pool.clone()).is_err() {
         return;
     }
     // sqlx prepare 不支持一条语句多个命令，逐条执行（B10 修复 bootstrap 报错；
     // 迁移链 20261003000010_u4_master_data_collections.sql 为权威 DDL，此处为兜底）。
+    // C-1：建表语句已移除（迁移权威唯一仲裁）；保留 schema/索引幂等兜底。
     for ddl in [
         "CREATE SCHEMA IF NOT EXISTS master_data",
-        r#"CREATE TABLE IF NOT EXISTS master_data.mdm_collections (
-            module      TEXT        NOT NULL,
-            entity      TEXT        NOT NULL,
-            data        JSONB       NOT NULL,
-            updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-            PRIMARY KEY (module, entity)
-        )"#,
         "CREATE INDEX IF NOT EXISTS mdm_collections_module_idx
             ON master_data.mdm_collections (module)",
     ] {

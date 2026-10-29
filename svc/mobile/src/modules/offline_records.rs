@@ -222,43 +222,6 @@ pub async fn clear_synced(State(pool): State<PgPool>) -> ApiResponse<()> {
     }
 }
 
-/// 初始化离线记录表（从 unified-core 迁移）
-pub async fn init_database(pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(only_own_schema_query!(
-        "mobile",
-        r#"
-        CREATE TABLE IF NOT EXISTS core_mobile_offline_records (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            tenant_id UUID NOT NULL,
-            user_id UUID NOT NULL,
-            module VARCHAR(64) NOT NULL,
-            action VARCHAR(64) NOT NULL,
-            data JSONB NOT NULL,
-            status VARCHAR(32) DEFAULT 'pending',
-            retry_count INTEGER DEFAULT 0,
-            max_retries INTEGER DEFAULT 3,
-            error_message TEXT,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        )
-        "#
-    ))
-    .execute(pool)
-    .await?;
-
-    sqlx::query(only_own_schema_query!("mobile", "CREATE INDEX IF NOT EXISTS idx_mobile_offline_status ON core_mobile_offline_records(status)"))
-        .execute(pool)
-        .await?;
-    sqlx::query(only_own_schema_query!("mobile", "CREATE INDEX IF NOT EXISTS idx_mobile_offline_user ON core_mobile_offline_records(user_id)"))
-        .execute(pool)
-        .await?;
-    sqlx::query(only_own_schema_query!("mobile", "CREATE INDEX IF NOT EXISTS idx_mobile_offline_module ON core_mobile_offline_records(module)"))
-        .execute(pool)
-        .await?;
-
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

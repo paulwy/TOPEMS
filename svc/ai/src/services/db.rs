@@ -114,39 +114,7 @@ impl Database {
         .execute(self.ddl_pool())
         .await?;
 
-        // 创建文档表
-        sqlx::query(only_own_schema_query!(
-            "ai",
-            r#"
-            CREATE TABLE IF NOT EXISTS ai.documents (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                tenant_id UUID NOT NULL DEFAULT gen_random_uuid(),
-                knowledge_base_id UUID,
-                title VARCHAR(500) NOT NULL,
-                file_name VARCHAR(500) NOT NULL,
-                file_path TEXT NOT NULL,
-                file_size BIGINT,
-                mime_type VARCHAR(100),
-                content_hash VARCHAR(64),
-                category VARCHAR(100),
-                tags TEXT[],
-                description TEXT,
-                chunk_count INTEGER DEFAULT 0,
-                status VARCHAR(50) NOT NULL DEFAULT 'pending',
-                error_message TEXT,
-                processed_at TIMESTAMP WITH TIME ZONE,
-                created_by UUID,
-                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                deleted_at TIMESTAMP WITH TIME ZONE
-            );
-            "#,
-            "plugin_ai"
-        ))
-        .execute(self.ddl_pool())
-        .await?;
-
-        // 创建文档表索引
+        // 文档表由迁移链权威创建（C-1：运行时建表已移除），此处保留索引兜底
         sqlx::query(only_own_schema_query!(
             "ai",
             r#"CREATE INDEX IF NOT EXISTS idx_documents_tenant_id ON ai.documents(tenant_id);"#,
@@ -191,62 +159,7 @@ impl Database {
         .execute(self.ddl_pool())
         .await?;
 
-        // 创建文档块表（pgvector 可用时含 embedding 向量列，否则降级为 JSONB 存储）
-        if vector_available {
-            sqlx::query(only_own_schema_query!(
-                "ai",
-                r#"
-                CREATE TABLE IF NOT EXISTS ai.document_chunks (
-                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    tenant_id UUID NOT NULL DEFAULT gen_random_uuid(),
-                    document_id UUID NOT NULL REFERENCES ai.documents(id) ON DELETE CASCADE,
-                    knowledge_base_id UUID,
-                    chunk_index INTEGER NOT NULL DEFAULT 0,
-                    content TEXT NOT NULL,
-                    content_hash VARCHAR(64),
-                    embedding vector(1536) NOT NULL,
-                    vector_dimensions INTEGER DEFAULT 1536,
-                    token_count INTEGER DEFAULT 0,
-                    embedding_status VARCHAR(50) DEFAULT 'pending',
-                    embedding_model VARCHAR(255),
-                    metadata JSONB DEFAULT '{}',
-                    created_by UUID,
-                    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    deleted_at TIMESTAMP WITH TIME ZONE
-                );
-                "#,
-                "plugin_ai"
-            ))
-            .execute(self.ddl_pool())
-            .await?;
-        } else {
-            sqlx::query(only_own_schema_query!(
-                "ai",
-                r#"
-                CREATE TABLE IF NOT EXISTS ai.document_chunks (
-                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                    tenant_id UUID NOT NULL DEFAULT gen_random_uuid(),
-                    document_id UUID NOT NULL REFERENCES ai.documents(id) ON DELETE CASCADE,
-                    knowledge_base_id UUID,
-                    chunk_index INTEGER NOT NULL DEFAULT 0,
-                    content TEXT NOT NULL,
-                    content_hash VARCHAR(64),
-                    embedding JSONB NOT NULL DEFAULT '[]',
-                    vector_dimensions INTEGER DEFAULT 1536,
-                    token_count INTEGER DEFAULT 0,
-                    embedding_status VARCHAR(50) DEFAULT 'pending',
-                    embedding_model VARCHAR(255),
-                    metadata JSONB DEFAULT '{}',
-                    created_by UUID,
-                    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    deleted_at TIMESTAMP WITH TIME ZONE
-                );
-                "#,
-                "plugin_ai"
-            ))
-            .execute(self.ddl_pool())
-            .await?;
-        }
+        // 文档块表由迁移链权威创建（C-1：运行时建表已移除，含 pgvector 分支）
 
         sqlx::query(only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_document_chunks_tenant_id ON ai.document_chunks(tenant_id);"#, "plugin_ai"))
             .execute(self.ddl_pool())
@@ -312,28 +225,7 @@ impl Database {
         .execute(self.ddl_pool())
         .await?;
 
-        // 创建问答历史表
-        sqlx::query(only_own_schema_query!(
-            "ai",
-            r#"
-            CREATE TABLE IF NOT EXISTS ai.qa_history (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                tenant_id UUID NOT NULL DEFAULT gen_random_uuid(),
-                question TEXT NOT NULL,
-                answer TEXT NOT NULL,
-                context JSONB DEFAULT '{}',
-                sources JSONB DEFAULT '[]',
-                feedback TEXT,
-                rating INTEGER,
-                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                deleted_at TIMESTAMP WITH TIME ZONE
-            );
-            "#,
-            "plugin_ai"
-        ))
-        .execute(self.ddl_pool())
-        .await?;
-
+        // 问答历史表由迁移链权威创建（C-1：运行时建表已移除），此处保留索引兜底
         sqlx::query(only_own_schema_query!(
             "ai",
             r#"CREATE INDEX IF NOT EXISTS idx_qa_history_tenant_id ON ai.qa_history(tenant_id);"#,
@@ -362,26 +254,7 @@ impl Database {
         .execute(self.ddl_pool())
         .await?;
 
-        // 创建分析结果表
-        sqlx::query(only_own_schema_query!(
-            "ai",
-            r#"
-            CREATE TABLE IF NOT EXISTS ai.analysis_results (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                tenant_id UUID NOT NULL DEFAULT gen_random_uuid(),
-                analysis_type VARCHAR(50) NOT NULL,
-                input_text TEXT NOT NULL,
-                result JSONB NOT NULL,
-                confidence DOUBLE PRECISION,
-                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                deleted_at TIMESTAMP WITH TIME ZONE
-            );
-            "#,
-            "plugin_ai"
-        ))
-        .execute(self.ddl_pool())
-        .await?;
-
+        // 分析结果表由迁移链权威创建（C-1：运行时建表已移除），此处保留索引兜底
         sqlx::query(only_own_schema_query!("ai", r#"CREATE INDEX IF NOT EXISTS idx_analysis_results_tenant_id ON ai.analysis_results(tenant_id);"#, "plugin_ai"))
             .execute(self.ddl_pool())
             .await?;
@@ -398,30 +271,7 @@ impl Database {
             .execute(self.ddl_pool())
             .await?;
 
-        // ai_training_samples：事件处理器（event_handlers）写入的训练样本表
-        sqlx::query(only_own_schema_query!(
-            "ai",
-            r#"
-            CREATE TABLE IF NOT EXISTS ai.ai_training_samples (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                model_type VARCHAR(100),
-                sample_type VARCHAR(100),
-                label TEXT,
-                source_type VARCHAR(100) NOT NULL,
-                source_id VARCHAR(255) NOT NULL,
-                features_json JSONB,
-                quality_score DOUBLE PRECISION,
-                is_used BOOLEAN NOT NULL DEFAULT false,
-                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                tenant_id UUID NOT NULL,
-                UNIQUE (source_type, source_id)
-            );
-            "#,
-            "plugin_ai"
-        ))
-        .execute(self.ddl_pool())
-        .await?;
+        // ai_training_samples 由迁移链权威创建（C-1：运行时建表已移除）
 
         tracing::info!("✅ 数据库迁移完成");
         Ok(())

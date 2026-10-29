@@ -37,15 +37,8 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("🚀 TOPEMS Ticket Service starting...");
 
     // ── 模块级数据库初始化（DDL 走 owner 迁移连接池，受限业务用户无表 owner 权限）────
-    // U10：DDL 失败属启动必需（无表则服务不可用），保留 fail-fast，但由 panic 改为带上下文的
-    // 错误传播（main 返回 anyhow::Result），退出更干净、无 panic 堆栈噪音。
+    // C-1：自建 DDL 已移除（迁移权威唯一仲裁）；Schema 防御保留
     let ddl_pool = ctx.migrate_pool.as_ref().unwrap_or(&ctx.db);
-    handlers::init_ticket_tables(ddl_pool)
-        .await
-        .map_err(|e| anyhow::anyhow!("ticket 数据库表初始化失败（启动必需，fail-fast）: {e}"))?;
-    handlers::init_sla_tables(ddl_pool)
-        .await
-        .map_err(|e| anyhow::anyhow!("SLA 数据库表初始化失败（启动必需，fail-fast）: {e}"))?;
 
     // ── Schema 防御：增量迁移 + 列一致性校验（7 张 ticket 表）──
     if let Err(e) = schema_defense::run_schema_migration_and_verify(ddl_pool).await {

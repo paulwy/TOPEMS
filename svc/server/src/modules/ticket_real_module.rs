@@ -13,7 +13,7 @@ use axum::Router;
 use std::sync::Arc;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
-use topems_shared_core::error::{Result, TopemsError};
+use topems_shared_core::error::Result;
 use topems_shared_event::event::EventPublisher;
 use topems_ticket::feedback_compat;
 use topems_ticket::handlers;
@@ -54,18 +54,8 @@ impl TicketRealModule {
         // 立即建立连接，固化本连接池的 search_path
         let _conn = ctx.db.acquire().await?;
 
-        // 2. Ticket 数据库初始化（与独立部署 main.rs 一致：ticket + SLA 建表）
-        //    DDL 走 MIGRATE_URL owner 迁移池（受限业务用户 topems_app 非表 owner，
-        //    CREATE INDEX IF NOT EXISTS 会被 PG 拒绝 → 原实现用 ctx.db 导致构建失败降级，
-        //    整个 /api/ticket/* 404；与独立部署 main.rs 的 ddl_pool 模式对齐）
-        let ddl_pool = ctx.migrate_pool.as_ref().unwrap_or(&ctx.db);
-        handlers::init_ticket_tables(ddl_pool)
-            .await
-            .map_err(|e| TopemsError::internal("初始化 ticket 表失败", e))?;
-        handlers::init_sla_tables(ddl_pool)
-            .await
-            .map_err(|e| TopemsError::internal("初始化 SLA 表失败", e))?;
-
+        // 2. Ticket 数据库初始化（C-1：自建 DDL 已移除，迁移权威唯一仲裁；
+        //    与独立部署 main.rs 一致，Schema 防御由宿主统一路径保障）
         // 3. 业务路由（权限中间件 + tier 治理 + 开发验证模拟认证）
         let tier_gate_config = Arc::new(TierGateConfig::new("ticket", PlanTier::Free));
         let protected_routes = handlers::ticket_routes()

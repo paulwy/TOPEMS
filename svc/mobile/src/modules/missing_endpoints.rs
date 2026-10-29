@@ -22,15 +22,6 @@ use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
 use topems_shared_auth::auth::verify_jwt_token;
 use topems_shared_core::response::ApiResponse;
 
-const PUSH_CONFIG_TABLE_SQL: &str = r#"
-CREATE TABLE IF NOT EXISTS mobile.push_config (
-    tenant_id UUID NOT NULL DEFAULT gen_random_uuid(),
-    user_id UUID,
-    channel_config JSONB NOT NULL DEFAULT '{}'::jsonb,
-    updated_at TIMESTAMP DEFAULT NOW(),
-    PRIMARY KEY (tenant_id, user_id)
-)"#;
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["mobile:inspection:read"])),
@@ -169,13 +160,6 @@ pub async fn get_push_config(
     State(pool): State<Pool<Postgres>>,
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
-    if let Err(e) = sqlx::query(PUSH_CONFIG_TABLE_SQL).execute(&pool).await {
-        tracing::error!("初始化 push_config 表失败: {}", e);
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            ApiResponse::<Value>::server_error("初始化失败"),
-        );
-    }
     let row = sqlx::query(r#"SELECT channel_config FROM mobile.push_config LIMIT 1"#)
         .fetch_optional(&pool)
         .await;
@@ -217,13 +201,6 @@ pub async fn update_push_config(
             );
         }
     };
-    if let Err(e) = sqlx::query(PUSH_CONFIG_TABLE_SQL).execute(&pool).await {
-        tracing::error!("初始化 push_config 表失败: {}", e);
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            ApiResponse::<Value>::server_error("初始化失败"),
-        );
-    }
     // 租户取自 token claims，去掉硬编码 '...0001' 字面量。
     // 注意与 offline_sync（sync_policies 可空 + RLS 含 tenant_id IS NULL 分支）不同：
     // 本表 mobile.push_config.tenant_id 为 NOT NULL 且未启用 RLS，故不做超管→SQL NULL 特判，

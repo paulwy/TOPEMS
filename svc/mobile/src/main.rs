@@ -11,7 +11,6 @@ use anyhow::Result;
 use axum::{extract::State, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use serde_json::json;
-use sqlx::PgPool;
 use std::sync::Arc;
 use utoipa::OpenApi;
 
@@ -31,18 +30,6 @@ use db::repository::*;
 use modules::mobile_plugin::create_routes;
 use shared::AppState;
 
-async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
-    let sql_statements = include_str!("../init.sql");
-    for stmt in sql_statements.split(';').filter(|s| !s.trim().is_empty()) {
-        sqlx::query(stmt.trim()).execute(pool).await?;
-    }
-
-    if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(pool).await {
-        tracing::error!("[mobile] Schema 防御检查失败: {:?}", e);
-    }
-    Ok(())
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
     std::env::set_var("SEARCH_PATH", "mobile, public, shared");
@@ -61,21 +48,13 @@ async fn main() -> Result<()> {
     };
     let ctx = bootstrap_service(&config).await?;
 
-    // Mobile 专属初始化：建表 + 离线记录表
-    if let Err(e) = init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
-        tracing::warn!("数据库初始化警告: {}", e);
-    } else {
-        tracing::info!("✅ 数据库表初始化完成");
-    }
-    if let Err(e) =
-        modules::offline_records::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await
+    // Mobile 专属初始化：Schema 防御（C-1：自建 DDL 已移除，迁移权威唯一仲裁）
+    if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(
+        ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),
+    )
+    .await
     {
-        tracing::warn!("离线记录表初始化警告: {}", e);
-    }
-    if let Err(e) =
-        modules::document::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await
-    {
-        tracing::warn!("文档表初始化警告: {}", e);
+        tracing::error!("[mobile] Schema 防御检查失败: {:?}", e);
     }
 
     if let Err(e) =

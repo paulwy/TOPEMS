@@ -43,47 +43,6 @@ pub struct MobileDocument {
     pub updated_at: DateTime<Utc>,
 }
 
-/// 初始化 documents 表（main.rs 启动时调用）
-pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(only_own_schema_query!(
-        "mobile",
-        r#"
-        CREATE TABLE IF NOT EXISTS mobile.documents (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            title TEXT NOT NULL,
-            description TEXT,
-            category VARCHAR(64) NOT NULL DEFAULT 'general',
-            file_name VARCHAR(255) NOT NULL DEFAULT '',
-            file_size BIGINT NOT NULL DEFAULT 0,
-            file_type VARCHAR(64) NOT NULL DEFAULT '',
-            url TEXT NOT NULL DEFAULT '',
-            status VARCHAR(32) NOT NULL DEFAULT 'draft',
-            author_id UUID,
-            tenant_id UUID,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            deleted_at TIMESTAMPTZ
-        )
-        "#
-    ))
-    .execute(pool)
-    .await?;
-    // 存量库自愈：早期建表语句缺 tenant_id（查询/写入均引用），补列对齐
-    sqlx::query(only_own_schema_query!(
-        "mobile",
-        "ALTER TABLE mobile.documents ADD COLUMN IF NOT EXISTS tenant_id UUID"
-    ))
-    .execute(pool)
-    .await?;
-    sqlx::query(only_own_schema_query!(
-        "mobile",
-        "CREATE INDEX IF NOT EXISTS idx_mobile_documents_category ON mobile.documents(category)"
-    ))
-    .execute(pool)
-    .await?;
-    Ok(())
-}
-
 #[derive(Debug, Clone, Deserialize)]
 pub struct DocumentListParams {
     pub page: Option<i64>,

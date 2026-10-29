@@ -41,11 +41,7 @@ async fn main() -> anyhow::Result<()> {
     // U4：注入持久化连接池（v51-v60 MDM 集合快照落库），幂等确保表存在。
     modules::persist::init(ctx.db.clone()).await;
 
-    // 初始化数据库表 + V69.3 Schema 防御
-    if let Err(e) = modules::dict::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await
-    {
-        tracing::warn!("dict::init_database warning: {}", e);
-    }
+    // 初始化数据库表 + V69.3 Schema 防御（C-1：dict 自建 DDL 已移除，迁移权威唯一仲裁）
     if let Err(e) = schema_defense::run_schema_migration_and_verify(
         ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),
     )
