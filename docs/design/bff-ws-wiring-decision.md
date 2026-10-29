@@ -25,6 +25,16 @@
 
 **立即立项 W1 + W2**（打通链路 + 验证，小改动高价值，预计 1 commit + 实测）；**W3 随 W2 验证一并评估**（确认 mes ws 入口收敛）；**W4 挂起**（业务侧需要时再开）。
 
+## 实施结果（W1+W2 已落地，2026-10-29）
+
+- **W1 ✅**：`deploy/nginx/topems.conf` 新增 `location /ws/`（157-166 行）：`proxy_pass http://server_service` + `proxy_http_version 1.1` + `Upgrade $http_upgrade` / `Connection "upgrade"` + `proxy_read_timeout 60s`。配置已入库（`epoll` 为部署目标 Linux 既有指令；macOS 本机 nginx -t 平台差异不影响）
+- **W2 ✅ 实测**（8099 在线）：
+  - `GET /ws/healthz` → **200**（内嵌 ws 路由树挂载确认）
+  - `GET /ws/core/notifications`（带 Upgrade 头）→ **426**（axum WebSocketUpgrade 提取器命中，路由已挂载）
+  - `GET /ws/core` → **404**（白名单通用路径格式校验，非 500）
+  - `GET :8000/ws/healthz` → **404**（独立 unified-core 无入向流量，8099 唯一入口佐证）
+- **W3 结论 ✅**：`WS_MODULE_WHITELIST`（ws.rs:880）含 iam/workflow/im/mes/wms/ai/notification/dashboard/ticket 9 模块——**8099 内嵌即可服务 `/ws/mes/dashboard` 等**；mes 独立挂载 `/ws/mes/dashboard`（main.rs:262）为兼容双入口。**建议前端统一走 8099**（nginx /ws/ 已配）；mes 独立实现与 unified-core 通用通道的行为差异（推送数据源）登记观察项，业务侧确认后收敛。
+
 ## 风险与回滚
 
 - W1 纯 nginx 配置：回滚 = 移除 location 块 + reload，零代码风险
