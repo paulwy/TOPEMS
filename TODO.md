@@ -80,6 +80,14 @@
 - **剩余 21 语义性/契约类（非假 id，已甄别）**：approval 4（流程状态机依赖，保留 404 语义）；device activate/disable 2（状态动作）；inventory PUT 1（401 权限）；production start/complete 2（状态机）；barcode history 2（扫描历史表为空）；task 4（POST/PUT/DELETE 405 = 后端 /task 缺写 handler，契约缺口待补 + GET ${id} 404）
 - **待办**：task 服务补 POST/PUT/DELETE handler（契约缺口，另批）
 
+### MCS task/push 收口：契约缺口挂载 + 读取修复（2026-10-29）✅ 114/114 0 FAIL
+
+> 承接上一段待办「task 补写 handler」+ 新暴露 push 读取 500，本批一并处理。
+
+- **task 契约缺口（21→17）✅**：`svc/mobile/src/shared/mod.rs` 给 /task 挂 post、/task/{id} 挂 put+delete（handler 早已实现未挂载）；POST 500 两因：① due_date `date` vs handler `DateTime<Utc>` → SQL `$10::date` cast；② `ck_mobile_tasks_status_standard` CHECK 约束（active/inactive/archived）与代码状态机（pending/in_progress/completed/cancelled/on_hold）冲突 → 新迁移 `database/migrations/20261029190000_mobile_tasks_status_constraint.sql` 对齐（已 psql 应用）
+- **push GET 500（真 FAIL → 0）✅**：list/单条两处 SELECT 只取 7 列（id/user_id/title/body/notification_type/read_at/created_at）而 `PushNotification::from_row` 需 14 列（tenant_id/data/target_type/target_ids/status/sent_count/delivered_count/clicked_count/sent_at）→ list 的 filter_map 静默吞失败（items 空但 total 129）、单条显式 500「解析推送通知失败」；已对齐 14 列 + `COALESCE(tenant_id, 零 UUID)` 兜底（表列 nullable 而 struct 非 Option）
+- **验证**：MCS **114/114 PASS 0 FAIL**；WARN 21 → 17（剩余 15 唯一全业务语义：approval 4 / device 2 / inventory PUT 401 / production 2 / barcode 2 / task complete・reopen 状态机 / task batch/status 422 载荷 / user change-password 404 测试用户无密码记录）
+
 
 > 推进「批 0 基线留痕」的 to_bind 332 条（已注册 real handler、前端未绑定）。
 

@@ -406,7 +406,7 @@ pub async fn get_notification_list(
     let offset = (page - 1) * size;
 
     let query =
-        sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, title, body, notification_type, read_at, created_at FROM mobile.push_notifications ORDER BY created_at DESC LIMIT $1 OFFSET $2"))
+        sqlx::query(only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000'::uuid) AS tenant_id, title, body, notification_type, data, target_type, target_ids, status, sent_count, delivered_count, clicked_count, created_at, sent_at FROM mobile.push_notifications ORDER BY created_at DESC LIMIT $1 OFFSET $2"))
             .bind(size)
             .bind(offset);
 
@@ -623,7 +623,7 @@ pub async fn get_notification_by_id(
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
-    let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, title, body, notification_type, read_at, created_at FROM mobile.push_notifications WHERE id = $1"))
+    let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000'::uuid) AS tenant_id, title, body, notification_type, data, target_type, target_ids, status, sent_count, delivered_count, clicked_count, created_at, sent_at FROM mobile.push_notifications WHERE id = $1"))
         .bind(id)
         .fetch_optional(&pool)
         .await

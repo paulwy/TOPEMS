@@ -141,6 +141,7 @@ POST_BODIES = {
     "/device/register": {"device_id": "smoke-device-1", "device_name": "冒烟设备", "device_type": "android", "os_type": "android", "os_version": "14", "app_version": "1.0.0", "push_token": "smoke-device-token"},
     "/documents": {"title": "冒烟测试文档", "category": "general", "content": "smoke"},
     "/schedule/events": {"title": "冒烟日程", "description": "smoke", "start_time": "2026-10-29T09:00:00+08:00", "end_time": "2026-10-29T10:00:00+08:00", "event_type": "meeting"},
+    "/task": {"title": "冒烟任务", "task_type": "general"},
     "/approval/tasks/${id}/delegate": {"userId": TEST_UUID, "reason": "冒烟委派"},
     "/production/orders": {"product_name": "冒烟订单", "product_code": "SMOKE-001", "quantity": 10},
     "/approval/tasks/${id}/approve": {"comment": "smoke"},
@@ -225,6 +226,7 @@ def pre_create(token: str) -> None:
         ("customer", "/customer"), ("documents", "/documents"),
         ("inventory", "/inventory"), ("production/orders", "/production/orders"),
         ("push/notifications", "/push/notifications"), ("schedule/events", "/schedule/events"),
+        ("task", "/task"),
     ]
     for prefix, tmpl in creates:
         body = POST_BODIES.get(tmpl)

@@ -703,8 +703,11 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             axum::routing::post(delegate_approval_task),
         )
         // task（前端 /task 单数 → task.rs 实现，原未挂载）
-        .route("/task", axum::routing::get(get_all_tasks))
-        .route("/task/{id}", axum::routing::get(get_task))
+        .route("/task", axum::routing::get(get_all_tasks).post(create_task))
+        .route(
+            "/task/{id}",
+            axum::routing::get(get_task).put(update_task).delete(delete_task),
+        )
         .route("/task/my", axum::routing::get(get_my_tasks))
         .route("/task/pending", axum::routing::get(get_pending_tasks))
         .route("/task/overdue", axum::routing::get(get_overdue_tasks))
