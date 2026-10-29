@@ -574,7 +574,15 @@ pub async fn broadcast_to_all(state: &Arc<WsState>, msg_type: &str, payload: Val
 
 /// P32-6 模块注册表（白名单；未注册模块 Upgrade 时拒绝 426）
 pub const WS_MODULE_WHITELIST: &[&str] = &[
-    "iam", "workflow", "im", "mes", "wms", "ai", "notification", "dashboard", "ticket",
+    "iam",
+    "workflow",
+    "im",
+    "mes",
+    "wms",
+    "ai",
+    "notification",
+    "dashboard",
+    "ticket",
 ];
 
 /// GET /ws/healthz —— 非 Upgrade HTTP 状态端点（规范 §7 自测）
