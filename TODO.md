@@ -39,6 +39,25 @@
 - **验证**：MCS **114/114 PASS 0 FAIL**，WARN **39 → 37**（剩余 37 全为 `${id}` 假 id 业务 404，保留登记）；attendance 9/9 全绿。
 - 观察项更新：v1.112 的「attendance.ts latitude/longitude vs HRM lat/lng」已闭环（字段对齐 + user_id 由 mobile 层注入）；剩余 37 WARN 待业务排期（如需冒烟覆盖真实 id 可注入种子数据）。
 
+### 长尾 10 项处置（2026-10-29 复核，部分未处理项收口）✅
+
+> 目标：逐一核实并处置收尾清单 10 项（wms 死代码 / RLS 旧 key / get_business_overview / config 悬空 / hrm MDM 设计 / pm report.rs / erp 甄别 / MUI 人工清单 / FE-17 排期 / 批 0 基线留痕）。
+
+| # | 项 | 结论 |
+|---|---|---|
+| ① | wms 死代码 | **核销**：早期 transfer.rs（单数）残留已随 BE-03 清理（文件不存在）；transfer_order 为活模块（后端 mod.rs:74 挂载 + 前端 api/wms/index.ts:207 壳），无死代码，入 to_bind 池 |
+| ② | RLS 旧 key | **核销**：DB 实测 `pg_policy` 0 条含 `app.current_tenant_id`（`20261015000082` key 统一迁移已生效）；migrations 历史 10 文件保留不改 |
+| ③ | config 悬空 | **已修**：CONSUL_URL/CONSUL_ENABLED/CONSUL_TOKEN 从 `.env.production.template`（3 行）+ `schema.json`（discovery.consul_url 块）删除；全仓代码零读取确认（rd project_member 命中为 CONSULTANT 误报） |
+| ④ | get_business_overview | **核销**：已接真（1733）+ 前端已消费（`reactQuery.ts:281` BUSINESS_OVERVIEW + `api/finance/report.ts:122`） |
+| ⑤ | pm report.rs | **核销**：Decimal 主批已修（1317）；f64 响应 DTO 遗留维持登记（1324，展示层口径） |
+| ⑥ | erp 甄别 | **核销**：已甄别零改动（1398/1512：consolidation/finance.rs 待核 query_as 已覆盖） |
+| ⑦ | MUI 人工清单 | **已产出**：`docs/design/mui-table-manual-checklist.md`（82 业务页 `<Table` + 守卫自动标注 EmptyState/!record/长度/空文案），人工核销待排期 |
+| ⑧ | 批 0 基线留痕 | **已产出**：`docs/reports/audit/批0-基线留痕-orphan-A级-2026-10-23.md`（原始 0[1-5]_*.csv 丢失声明 + v73 master 379 重建：to_bind 332 / probe_false_positive 47，处置规则三选一） |
+| ⑨ | hrm MDM 设计 | **方案登记（待立项）**：hrm 已发 MDM 事件（department.rs:215/402 发布 master_data stream）；建议以 master_data schema 为主数据权威，hrm 员工/部门/岗位为源发 → 下游幂等消费 + 补偿；当前消费侧未闭环，按 K1 方式冻结不扩做 |
+| ⑩ | FE-17 排期 | **排期登记**：阶段 0+1 已实施（`7f68d169f`）；阶段 2（web client 全量 snakeCase 开关放开）→ 3（desktop/mobile 收敛 factory）→ 4（shared-utils 死代码删除）→ 5（灰度观察 + 回滚预案），每阶段独立 commit + 门禁 |
+
+- 提交：本批 config 清理 + 2 份文档 + 登记（待推送）。
+
 ## S25 语义治理闭环：flow 表前缀 + mobile 4xx 透传（第 55 轮，2026-10-28）✅ 已完成
 
 > 目标：清零 `docs/web_contract_gap_list.md` 剩余 42 条 KNOWN（workflow 39 + mobile 3）。

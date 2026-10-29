@@ -210,18 +210,6 @@
       }
     },
     {
-      "name": "discovery.consul_url",
-      "description": "Consul 服务发现地址",
-      "config_type": "url",
-      "default_value": "http://localhost:8500",
-      "required": true,
-      "env_var": "CONSUL_URL",
-      "consul_key": "topems/discovery/consul_url",
-      "validation": {
-        "pattern": "^http(s)?://.+"
-      }
-    },
-    {
       "name": "discovery.health_check_interval",
       "description": "服务健康检查间隔（秒）",
       "config_type": "duration",
