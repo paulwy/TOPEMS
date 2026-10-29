@@ -460,4 +460,185 @@ export const mdmRefsApi = {
       '/master-data/quality/loop-stats'
     );
   },
+
+  // ===== v74 to_bind 补绑（2026-10-29）=====
+  async getLineageGraph(): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.get<Record<string, unknown>>('/master-data-refs/governance/lineage');
+  },
+
+  async getLineageUpstream(id: string): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.get<Record<string, unknown>>(
+      `/master-data-refs/governance/lineage/${id}/upstream`
+    );
+  },
+
+  async getLineageDownstream(id: string): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.get<Record<string, unknown>>(
+      `/master-data-refs/governance/lineage/${id}/downstream`
+    );
+  },
+
+  async getOwnershipMatrix(entityType: string): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.get<Record<string, unknown>>(
+      `/master-data/ownership-matrix/${entityType}`
+    );
+  },
+
+  async setOwnershipMatrix(
+    entityType: string,
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.put<Record<string, unknown>>(
+      `/master-data/ownership-matrix/${entityType}`,
+      data
+    );
+  },
+
+  async destroyMasterDataRef(masterDataId: string): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.delete<Record<string, unknown>>(
+      `/master-data-refs/${masterDataId}/destroy`
+    );
+  },
+
+  async resolveConflict(conflictId: string): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.post<Record<string, unknown>>(
+      `/master-data-refs/conflicts/${conflictId}/resolve`,
+      {}
+    );
+  },
+
+  async classifyEntity(id: string): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.post<Record<string, unknown>>(
+      `/master-data/classification/classify/${id}`,
+      {}
+    );
+  },
+
+  async batchClassify(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.post<Record<string, unknown>>(
+      '/master-data/classification/batch-classify',
+      data
+    );
+  },
+
+  async mdmGatewayAggregate(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.post<Record<string, unknown>>('/master-data/gateway/aggregate', data);
+  },
+
+  async getSchema(schemaId: string): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.get<Record<string, unknown>>(
+      `/master-data-refs/metadata/schemas/${schemaId}`
+    );
+  },
+
+  async createSchema(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.post<Record<string, unknown>>('/master-data-refs/metadata/schemas', data);
+  },
+
+  async updateSchema(
+    schemaId: string,
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.put<Record<string, unknown>>(
+      `/master-data-refs/metadata/schemas/${schemaId}`,
+      data
+    );
+  },
+
+  async validateRecord(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.post<Record<string, unknown>>('/master-data-refs/metadata/validate', data);
+  },
+
+  async upsertRecord(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.post<Record<string, unknown>>('/master-data-refs/metadata/records', data);
+  },
+
+  async qualityAiScore(id: string): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.post<Record<string, unknown>>(`/master-data/quality-ai/score/${id}`, {});
+  },
+
+  async batchQualityAiScore(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.post<Record<string, unknown>>(
+      '/master-data/quality-ai/batch-score',
+      data
+    );
+  },
+
+  async getShortestPath(params?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.get<Record<string, unknown>>('/master-data/graph/shortest-path', {
+      params,
+    });
+  },
+
+  async multiHopTraversal(nodeId: string): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.get<Record<string, unknown>>(
+      `/master-data/graph/nodes/${nodeId}/multi-hop`
+    );
+  },
+
+  async runInference(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.post<Record<string, unknown>>('/master-data/knowledge/inference', data);
+  },
+
+  async updateQualityRule(
+    ruleId: string,
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.put<Record<string, unknown>>(
+      `/master-data-refs/quality-rules/${ruleId}`,
+      data
+    );
+  },
+
+  async deleteQualityRule(ruleId: string): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.delete<Record<string, unknown>>(
+      `/master-data-refs/quality-rules/${ruleId}`
+    );
+  },
+
+  async mdmServiceRegister(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.post<Record<string, unknown>>('/master-data/services/register', data);
+  },
+
+  async createSyncJobV2(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.post<Record<string, unknown>>('/master-data/sync/v2/jobs', data);
+  },
+
+  async getLineageGraphStats(): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.get<Record<string, unknown>>('/master-data-refs/lineage/graph/stats');
+  },
+
+  async getCriticalPaths(): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.get<Record<string, unknown>>('/master-data-refs/lineage/critical-paths');
+  },
+
+  async detectCircularDeps(): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.get<Record<string, unknown>>('/master-data-refs/lineage/circular-deps');
+  },
+
+  async compareMaturity(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.post<Record<string, unknown>>('/master-data-refs/maturity/compare', data);
+  },
+
+  async searchCatalog(params?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.get<Record<string, unknown>>('/master-data-refs/catalog/search', {
+      params,
+    });
+  },
+
+  async getCatalogStats(): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.get<Record<string, unknown>>('/master-data-refs/catalog/stats');
+  },
+
+  async getPopularEntries(): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.get<Record<string, unknown>>('/master-data-refs/catalog/popular');
+  },
+
+  async createCatalogEntry(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.post<Record<string, unknown>>('/master-data-refs/catalog', data);
+  },
+
+  async getCatalogEntry(entryId: string): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.get<Record<string, unknown>>(`/master-data-refs/catalog/${entryId}`);
+  },
 };
