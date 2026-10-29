@@ -183,6 +183,12 @@ export const pluginApi = {
     const response = await pluginAxios.put(`${API_BASE}/dev/plugins/${code}`, data);
     return response.data;
   },
+
+  // ── v74 to_bind 补绑（2026-10-29，P2）──
+  getNavigationConfig: async (): Promise<ApiResponse<Record<string, unknown>>> => {
+    const response = await pluginAxios.get('/api/plugin/navigation-config');
+    return response.data;
+  },
 };
 
 export default pluginApi;

@@ -406,4 +406,9 @@ export const environmentalComplianceApi = {
   async getComplianceStatistics(): Promise<ApiResponse<ComplianceStatistics>> {
     return apiClient.ehs.get<ComplianceStatistics>('/environmental-compliance/statistics');
   },
+
+  // ── v74 to_bind 补绑（2026-10-29，P2）──
+  async listEnvironmentRecords(): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.ehs.get<Record<string, unknown>>('/environment');
+  },
 };

@@ -3,15 +3,15 @@
 > 脚本：`scripts/rebuild-to-bind-pool.py`；后端路由 5592（utoipa 3260 + Router::route 2332）× 前端 api 调用 3243（含泛型/跨行调用识别）。
 > 口径：后端真实 handler + 前端无 api 调用 → 候选；优先级 P0=写+弱引用 / P1=写+无引用 / P2=读+弱引用 / 下线候选=读+无引用。
 
-**候选总数：1364**（v73 332 作废）
+**候选总数：1361**（v73 332 作废）
 
 ## 优先级分布
 | 优先级 | 数量 | 处置建议 |
 |---|---|---|
 | P0 | 3（短路径误报登记，实质 0） | 写端点+弱引用 |
 | P1 | 100（剩余均为已绑登记项） | 写端点+无引用 |
-| P2 | 51 | 读端点+弱引用 |
-| P2 | 51 | 读端点+弱引用 |
+| P2 | 48（剩余均为已绑登记项） | 读端点+弱引用 |
+| P2 | 48（剩余均为已绑登记项） | 读端点+弱引用 |
 | 下线候选 | 1361 | 读端点+无引用，人工确认删路由 |
 
 ## 按服务分布（前 15）
@@ -53,5 +53,6 @@
 - **P2 unified-core 批 18→3**（补绑 15 条；3 条登记；1400→1385，P2 86→72）。
 - **P2 mes+monitor 批**（1 补绑 listMetrics；13 已绑登记；1385→1371，P2 72→58）。
 - **P2 crm+rd+lims+erp 批**（4 补绑；14 已绑登记；1371→1367，P2 58→54）。
-- **P2 qms+portal+master-data 批**（qms 3 全已绑（inspectionStandard.ts items/sampling-plans/inspection-plans）；master-data 3 全已绑（lineage /lineage-v52/register + search/index /mdm-v57 + workflow /mdm-v58——脚本报旧路径）；portal：补绑 3（gateway-security/audit/export + ai-ops/recovery/plan + /user——新建 portal.ts）；候选 1367→1364，P2 54→51）。
+- **P2 qms+portal+master-data 批**（3 补绑；6 已绑登记；1367→1364，P2 54→51）。
+- **P2 扫尾批（16 条）**（补绑 4：analytics visualization list/create + ehs environment list + plugin navigation-config；其余 12 条已绑/剔除登记（ai dsh stream×2、communication notifications×2、finance exports×2、hrm reviews/goals、plugin marketplace summary、pm project-types、gis ws/map WS 端点）；候选 1364→1361，P2 51→48。**P2 实质全部清零**（剩余 48 均为脚本无法核销的已绑登记项）。
 - 已知精度限制：1 段短路径（如 /plans）不参与尾段匹配（n>=2），短路径端点可能漏匹配已绑（登记）。

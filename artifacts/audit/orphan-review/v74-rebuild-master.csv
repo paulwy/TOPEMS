@@ -61,8 +61,6 @@ ai,下线候选,GET,/api/core/ai-form/forms,list_forms,list_forms,read,none,待�
 ai,下线候选,GET,/api/core/ai-form/forms/{form_type},get_form,get_form,read,none,待定
 ai,下线候选,POST,/api/core/ai-form/forms/{form_type}/suggest,suggest_for_form,suggest_for_form,read,none,待定
 ai,下线候选,POST,/api/core/ai-form/forms/{form_type}/enhance,enhance_for_form,enhance_for_form,read,none,待定
-analytics,P2,GET,/visualization,list_visualizations,list_visualizations,read,weak,保留
-analytics,P2,GET,/visualization,create_visualization,create_visualization,read,weak,保留
 analytics,下线候选,GET,/visualization/chart-types,get_chart_types,get_chart_types,read,none,待定
 analytics,下线候选,GET,/visualization/line,generate_line_chart,generate_line_chart,read,none,待定
 analytics,下线候选,GET,/visualization/bar,generate_bar_chart,generate_bar_chart,read,none,待定
@@ -157,7 +155,6 @@ crm,下线候选,GET,/sales-funnel/conversion/{tail},get_funnel_conversion,get_f
 crm,下线候选,GET,/sales-funnel/trend/{tail},get_funnel_trend,get_funnel_trend,read,none,待定
 crm,下线候选,GET,/sales-forecast/compare,compare_sales_forecasts,compare_sales_forecasts,read,none,待定
 crm,下线候选,GET,/sales-forecast/accuracy-report,get_accuracy_report,get_accuracy_report,read,none,待定
-ehs,P2,GET,/environment,list_records,list_records,read,weak,保留
 ehs,下线候选,GET,/api/ehs/emergency-plans/categories,list_plan_categories,list_plan_categories,read,none,待定
 ehs,下线候选,GET,/api/ehs/occupational-disease/factors,list_hazard_factors,list_hazard_factors,read,none,待定
 ehs,下线候选,GET,/api/ehs/occupational-disease/factors,create_hazard_factor,create_hazard_factor,read,none,待定

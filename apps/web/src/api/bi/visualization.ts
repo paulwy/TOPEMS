@@ -80,3 +80,12 @@ export async function deleteDrilldownPath(id: string) {
 export async function rollUp(data: Record<string, unknown>) {
   return await apiClient.bi.post('/drilldown/roll-up', data);
 }
+
+// ── v74 to_bind 补绑（2026-10-29，P2）──
+export async function listVisualizations() {
+  return await apiClient.bi.get('/visualization');
+}
+
+export async function createVisualization(data: Record<string, unknown>) {
+  return await apiClient.bi.post('/visualization', data);
+}
