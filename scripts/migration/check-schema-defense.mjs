@@ -270,15 +270,24 @@ function main() {
       continue;
     }
     const typeMismatch = [];
+    const typeInfo = [];
     for (const [c, ty] of cols) {
       const mty = migColsTyped.get(c);
       const n1 = normalizeType(ty), n2 = normalizeType(mty);
-      if (n1 && n2 && n1 !== n2) typeMismatch.push(`${c}: ${ty} → ${mty}`);
+      if (!n1 || !n2 || n1 === n2) continue;
+      if (typeFamily(n1) === typeFamily(n2)) {
+        // 同族差异（可接受）：时区列族 timestamp↔timestamptz、文本列族 TEXT↔VARCHAR(n)
+        typeInfo.push(`${c}: ${ty} → ${mty}`);
+      } else {
+        typeMismatch.push(`${c}: ${ty} → ${mty}`);
+      }
     }
     if (typeMismatch.length > 0) {
       warnings++;
       tdTypeWarn++;
       lines.push(`WARN  TABLE_DEFS「${table}」类型不一致(${typeMismatch.length}) → ${typeMismatch.slice(0, 3).join(" | ")}${typeMismatch.length > 3 ? ` …(+${typeMismatch.length - 3})` : ""}`);
+    } else if (typeInfo.length > 0) {
+      lines.push(`INFO  TABLE_DEFS「${table}」类型同族差异(${typeInfo.length}) → ${typeInfo.slice(0, 2).join(" | ")}${typeInfo.length > 2 ? ` …(+${typeInfo.length - 2})` : ""}`);
     } else {
       tdPass++;
       lines.push(`PASS  TABLE_DEFS「${table}」（${cols.size} 列对齐，类型一致）`);
@@ -393,14 +402,15 @@ function extractTablesTyped(sqlText) {
     fields.push(inner.slice(start));
     const cols = ensure(table);
     for (const f of fields) {
-      const cm = /^\s*(?:"([^"]+)"|`([^`]+)`|([A-Za-z_][A-Za-z0-9_]*))\s+([A-Za-z_][A-Za-z0-9_]*(?:\s+[A-Za-z_][A-Za-z0-9_]*)*(?:\s*\([^)]*\))?)/i.exec(f);
+      const cm = /^\s*(?:"([^"]+)"|`([^`]+)`|([A-Za-z_][A-Za-z0-9_]*))\s+((?:[A-Za-z_][A-Za-z0-9_]*\.)?[A-Za-z_][A-Za-z0-9_]*(?:\s+[A-Za-z_][A-Za-z0-9_]*)*(?:\s*\([^)]*\))?)/i.exec(f);
       if (!cm) continue;
       const name = (cm[1] ?? cm[2] ?? cm[3]).toLowerCase();
       if (TD_LEVEL_KEYWORDS.has(name)) continue;
+      // 类型：完整短语（多 token + 参数 + schema 限定），如 public.vector(1536) / character varying(255)
       cols.set(name, cm[4].trim());
     }
   }
-  const altRe = /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:"?[A-Za-z0-9_]+"?(?:\.(?:"?[A-Za-z0-9_]+"?)|\.[A-Za-z0-9_.]+)?)\s+ADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?(?:"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))\s+([A-Za-z_][A-Za-z0-9_]*(?:\s+[A-Za-z_][A-Za-z0-9_]*)*(?:\s*\([^)]*\))?)/gi;
+  const altRe = /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:"?[A-Za-z0-9_]+"?(?:\.(?:"?[A-Za-z0-9_]+"?)|\.[A-Za-z0-9_.]+)?)\s+ADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?(?:"([^"]+)"|([A-Za-z_][A-Za-z0-9_]*))\s+((?:[A-Za-z_][A-Za-z0-9_]*\.)?[A-Za-z_][A-Za-z0-9_]*(?:\s+[A-Za-z_][A-Za-z0-9_]*)*(?:\s*\([^)]*\))?)/gi;
   while ((m = altRe.exec(sqlText)) !== null) {
     const rawTable = m[0].replace(/ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?/i, "").replace(/\s+ADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?.*/i, "").replace(/"/g, "");
     const table = rawTable.split(".").pop().toLowerCase();
@@ -434,10 +444,23 @@ function collectMigrationsTyped() {
   return MIGRATIONS_TYPED_CACHE;
 }
 
+/** 类型族：跨族差异 = 真实漂移（WARN）；同族差异 = 可接受口径差异（INFO）
+ *  时区列族：timestamp/timestamptz/timetz/time/date/interval（时间语义近族）
+ *  文本列族：text/varchar/char（TEXT 无长度 vs VARCHAR(n) 有长度，存储一致）
+ *  其余族各自独立：uuid/numeric(int)/float/boolean/json/… */
+function typeFamily(t) {
+  const base = normalizeType(t);
+  if (!base) return "";
+  if (["timestamp", "timestamptz", "timetz", "time", "date", "interval"].includes(base)) return "time";
+  if (["text", "varchar", "char"].includes(base)) return "text";
+  return base; // 自身族：uuid→"uuid"、int→"int"、numeric→"numeric" 等
+}
+
 /** 类型归一化（基类型语义）：去参数/尾缀，合并同义类型 */
 function normalizeType(t) {
   let s = (t ?? "").toLowerCase().replace(/"/g, "").trim();
   if (!s) return "";
+  s = s.replace(/^[a-z_][a-z0-9_]*\./, "").trim(); // 去 schema 限定前缀（public.vector → vector）
   s = s.replace(/\s+default\b.*$/i, "").replace(/\s+references\b.*$/i, "").replace(/\s+generated\b.*$/i, "").trim();
   s = s.replace(/\s+not\s+null\b/i, "").replace(/\s+null\b/i, "").replace(/\s+unique\b/i, "").replace(/\s+primary\s+key\b/i, "").replace(/,\s*check\s*\([^)]*\)/i, "").replace(/\s+check\s*\([^)]*\)/i, "").trim();
   s = s.replace(/\([^)]*\)/g, "").trim();
