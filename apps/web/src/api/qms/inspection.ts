@@ -154,4 +154,13 @@ export const inspectionApi = {
     );
     return { ...response, data: response.data?.audits || [] };
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  approveInspection: async (id: string): Promise<ApiResponse<QualityCheck>> => {
+    return apiClient.qms.post<QualityCheck>(`/checks/${id}/approve`);
+  },
+
+  rejectInspection: async (id: string): Promise<ApiResponse<QualityCheck>> => {
+    return apiClient.qms.post<QualityCheck>(`/checks/${id}/reject`);
+  },
 };

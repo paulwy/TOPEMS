@@ -277,4 +277,17 @@ export const eightDApi = {
     const adaptedData = (response.data?.logs || []).map(adaptEightDAuditLogToFrontend);
     return { ...response, data: adaptedData };
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  approveEightd: async (id: string): Promise<ApiResponse<EightDReport>> => {
+    return apiClient.qms.post<EightDReport>(`/eightd/${id}/approve`);
+  },
+
+  closeEightdApproval: async (id: string): Promise<ApiResponse<EightDReport>> => {
+    return apiClient.qms.post<EightDReport>(`/eightd/${id}/close-approval`);
+  },
+
+  cancelEightd: async (id: string): Promise<ApiResponse<EightDReport>> => {
+    return apiClient.qms.post<EightDReport>(`/eightd/${id}/cancel`);
+  },
 };

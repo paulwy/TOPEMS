@@ -58,4 +58,21 @@ export const issueApi = {
   deleteIssue: async (id: string): Promise<ApiResponse<boolean>> => {
     return apiClient.qms.delete<boolean>(`/issues/${id}`);
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  resolveIssue: async (id: string): Promise<ApiResponse<QualityIssue>> => {
+    return apiClient.qms.post<QualityIssue>(`/issues/${id}/resolve`);
+  },
+
+  approveIssue: async (id: string): Promise<ApiResponse<QualityIssue>> => {
+    return apiClient.qms.post<QualityIssue>(`/issues/${id}/approve`);
+  },
+
+  rejectIssue: async (id: string): Promise<ApiResponse<QualityIssue>> => {
+    return apiClient.qms.post<QualityIssue>(`/issues/${id}/reject`);
+  },
+
+  cancelIssue: async (id: string): Promise<ApiResponse<QualityIssue>> => {
+    return apiClient.qms.post<QualityIssue>(`/issues/${id}/cancel`);
+  },
 };

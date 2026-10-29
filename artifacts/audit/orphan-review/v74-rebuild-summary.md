@@ -3,13 +3,13 @@
 > 脚本：`scripts/rebuild-to-bind-pool.py`；后端路由 5592（utoipa 3260 + Router::route 2332）× 前端 api 调用 3243（含泛型/跨行调用识别）。
 > 口径：后端真实 handler + 前端无 api 调用 → 候选；优先级 P0=写+弱引用 / P1=写+无引用 / P2=读+弱引用 / 下线候选=读+无引用。
 
-**候选总数：1468**（v73 332 作废）
+**候选总数：1446**（v73 332 作废）
 
 ## 优先级分布
 | 优先级 | 数量 | 处置建议 |
 |---|---|---|
 | P0 | 3（短路径误报登记，实质 0） | 写端点+弱引用 |
-| P1 | 160 | 写端点+无引用 |
+| P1 | 140 | 写端点+无引用 |
 | P2 | 101 | 读端点+弱引用 |
 | 下线候选 | 1361 | 读端点+无引用，人工确认删路由 |
 
@@ -39,5 +39,6 @@
 - v4：跨行路径识别（前端 2670→3243），候选 ~1850（n>=2 最终）。
 - **ehs P0+P1 已绑定 66→0**（本批补绑 11 条 + 既有已绑识别）。
 - **erp P0+P1 66→48→13**（svc 前缀归一修正；批2 补绑 4 条：meeting-bookings 3 + consolidation submit-report 1；批1 MDM 补绑 33 条；剩余 13 条全为误报/下线候选——登记）。
-- **P0 批 9→3**（补绑 9 条：bi createReport + notification deleteAll/autoArchive + hrm createPosition + monitor settings×2 + rd member/milestone/phase；剩余 3 条（notification deleteAll + monitor settings×2）为短路径误报——实已绑登记）。
+- **P0 批 9→3**（补绑 9 条；剩余 3 条短路径误报登记）。
+- **qms 批 22→2**（补绑 20 条：checks approve/reject + alert-rules 4 + alert-messages 2 + issues 4 + eightd 3 + apqp 3 + internal integration 2；剩余 2 条（audit task/finding）前端已绑——脚本路径差异登记）。
 - 已知精度限制：1 段短路径（如 /plans）不参与尾段匹配（n>=2），短路径端点可能漏匹配已绑（登记）。

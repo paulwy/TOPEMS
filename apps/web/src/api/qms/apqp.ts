@@ -179,4 +179,17 @@ export const apqpApi = {
   ): Promise<ApiResponse<ApqpApproval>> => {
     return apiClient.qms.post<ApqpApproval>(`/apqp/approvals/${id}/process`, data);
   },
+
+  // ── v74 to_bind 补绑（2026-10-29）──
+  approveApqp: async (id: string): Promise<ApiResponse<ApqpProject>> => {
+    return apiClient.qms.post<ApqpProject>(`/apqp/projects/${id}/approve`);
+  },
+
+  completeApqp: async (id: string): Promise<ApiResponse<ApqpProject>> => {
+    return apiClient.qms.post<ApqpProject>(`/apqp/projects/${id}/complete`);
+  },
+
+  cancelApqp: async (id: string): Promise<ApiResponse<ApqpProject>> => {
+    return apiClient.qms.post<ApqpProject>(`/apqp/projects/${id}/cancel`);
+  },
 };
