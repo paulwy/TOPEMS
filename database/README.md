@@ -124,6 +124,12 @@ MIGRATE_URL="$MIGRATE_URL" bash scripts/ensure-empty-db-prereqs.sh
 # 3) 三方核对：磁盘迁移文件 ↔ database/checksums.txt ↔ _sqlx_migrations 账本
 #    （即 checksums 核对；B4 修复的 validate.sh 根因：grep 无匹配在 set -euo pipefail 下崩溃）
 bash scripts/migration/validate.sh
+
+# 4) 授权基线（全新空库必做，缺则 pre-commit rls-permissions 门禁红）
+#    空库重建会清空 GRANT 与默认权限；lefthook 钩子从 .env MIGRATE_URL 派生
+#    DATABASE_URL 连库校验 iam/mes/wms/crm/erp 关键表授权，未授权即拦截提交。
+#    脚本幂等可重跑（建角色 → 全 schema USAGE → 1271 表 GRANT → 默认权限）
+psql "$MIGRATE_URL" -f scripts/db/grant-topems-app.sql
 ```
 
 | 步骤 | 脚本 | 作用 |
@@ -131,6 +137,7 @@ bash scripts/migration/validate.sh
 | ① 守卫 | `scripts/ensure-empty-db-prereqs.sh`（`MIGRATE_URL`） | 探活 + 全量应用 `database/migrations/` 顶层迁移链，断言 0 错误、`_sqlx_migrations` 全 success=true、记录数=迁移文件数 |
 | ② 迁移 | `sqlx migrate run`（由守卫内部执行） | 全新空库从零全量建链 |
 | ③ 三方核对 | `scripts/migration/validate.sh`（读 `database/checksums.txt`） | 文件名/顺序/幂等/down/**checksums** 校验；Checksum errors 须为 0 |
+| ④ 授权基线 | `psql "$MIGRATE_URL" -f scripts/db/grant-topems-app.sql` | 重建 topems_app 的 GRANT 与默认权限（幂等）；缺则 pre-commit `rls-permissions` 门禁红（2026-10-29 空库回归后实测拦截） |
 
 > 关联脚本：`scripts/migrate-verify-empty.sh`（`DATABASE_URL`，DROP/CREATE 验证库后全量重放并清理）用于"全新空库防遗留依赖"的强验证，与守卫互补——守卫在指定空库上跑，verify 脚本自建自毁临时库。
 
