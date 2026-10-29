@@ -9,9 +9,9 @@
  * 缺列 → FAIL（退出码 1）。自建表在迁移 DDL 中不存在 → WARN（提示核对是否为有意自建）。
  *
  * 解析范围：
- *  - 自建 DDL：svc/unified-core/src/**\/*.rs 内 raw string 字面量（r#"..."#）中的
- *    CREATE TABLE 与 ALTER TABLE ADD COLUMN 语句。
- *  - 迁移 DDL：database/migrations/*.sql 中的 CREATE TABLE 与 ALTER TABLE ADD COLUMN。
+ *  - 自建 DDL：svc 与 lib 下所有子目录的 src 中，所有 *.rs 内 raw string 字面量（r#"..."#）里的
+ *    CREATE TABLE 与 ALTER TABLE ADD COLUMN 语句（含 unified-core；动态建表模板 "{}.{}" 天然不匹配）。
+ *  - 迁移 DDL：database/migrations 下 *.sql 中的 CREATE TABLE 与 ALTER TABLE ADD COLUMN。
  *
  * 用法：node scripts/migration/check-schema-defense.mjs
  */
@@ -22,7 +22,21 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
 
-const SVC_SRC_DIR = path.join(REPO_ROOT, "svc/unified-core/src");
+// 自建 DDL 扫描根：svc/*/src 与 lib/*/src（服务级 + 库级全量；unified-core 已包含在内）
+function collectSelfBuiltDirs() {
+  const roots = [];
+  for (const top of ["svc", "lib"]) {
+    const base = path.join(REPO_ROOT, top);
+    for (const entry of fs.readdirSync(base, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const src = path.join(base, entry.name, "src");
+      if (fs.existsSync(src)) roots.push(src);
+    }
+  }
+  return roots;
+}
+
+const SELF_BUILT_DIRS = collectSelfBuiltDirs();
 const MIGRATION_DIR = path.join(REPO_ROOT, "database/migrations");
 
 const TABLE_LEVEL_KEYWORDS = new Set([
@@ -110,7 +124,7 @@ function walkRs(dir, acc) {
 }
 
 function collectSelfBuilt() {
-  const files = walkRs(SVC_SRC_DIR, []);
+  const files = SELF_BUILT_DIRS.flatMap((d) => walkRs(d, []));
   const tables = new Map();
   const rawRe = /r#"(.*?)"#/gs;
   for (const f of files) {
