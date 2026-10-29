@@ -165,6 +165,16 @@
 - **优先级分布**：P0 98（写+weak，核心 CRUD 绑定）/ P1 101（写+none，前端补页）/ P2 10（读+weak，读接线）/ 管理端绑定池 123（reason 明确建议管理端：平台/集成类，含 ai connectors 等）
 - **排期**：P0 按服务分批前端接线（每服务 1 批 + 独立 commit + typecheck + WCS）；管理端池待 AI 平台管理页立项；绑定进度回填文档
 
+### v74 to_bind 池全链路完结（2026-10-29）✅
+
+> v73 332 池抽验 10 条口径过时（~50% 前端已绑 + analytics 路径失实）→ 重建 v74 池（脚本 4 次精度迭代：Router::route/泛型/跨行/svc 前缀归一，1446 候选）。
+
+- **P0/P1/P2 实质清零** ✅：各服务批 100+ 补绑（新建 iam/doc/form/sse/automation/file/portal/addressbook/forecast/changeRequest/alertRule 等 + writeOps×15），候选 1446→1361→1141
+- **下线候选分流（1210 条）** ✅：stub 7 标记下线（erp smoke 占位 + unified-core/mes stub）+ method 复核 213（195 补绑 + 18 登记：portal 根 7/plugin 6/srm 5）+ read 评估 990（OPS-运维保留 209 / BIZ-业务待确认 749 / 批2复核-写语义 32）
+- **批2复核 32** ✅：31 真写补绑（writeOps2.ts×8：portal 9/erp 10/ai 2/finance 1/integration 1/master-data 3/unified-core 4）+ 1 误标剔除（plugin list_plugins_with_status 读）
+- **成果**：apps/web/src/api/ 新增 20+ 文件；全链路 typecheck PASS + 18 独立 commit 推送；评估表落盘 `artifacts/audit/orphan-review/offline-review/`（stub-cleanup/method-mislabel/read-endpoints/portal-eval/erp-eval/eval-rest + README）
+- **遗留（登记待办）**：BIZ 749 待业务/前端产品侧人工评审；plugin-registry register_plugin 待 pluginAxios 接线（无 apiClient.plugin）；rd get_material_test handler 待核
+
 
 ## S25 语义治理闭环：flow 表前缀 + mobile 4xx 透传（第 55 轮，2026-10-28）✅ 已完成
 
