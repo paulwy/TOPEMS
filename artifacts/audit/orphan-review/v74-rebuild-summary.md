@@ -3,15 +3,15 @@
 > 脚本：`scripts/rebuild-to-bind-pool.py`；后端路由 5592（utoipa 3260 + Router::route 2332）× 前端 api 调用 3243（含泛型/跨行调用识别）。
 > 口径：后端真实 handler + 前端无 api 调用 → 候选；优先级 P0=写+弱引用 / P1=写+无引用 / P2=读+弱引用 / 下线候选=读+无引用。
 
-**候选总数：1385**（v73 332 作废）
+**候选总数：1371**（v73 332 作废）
 
 ## 优先级分布
 | 优先级 | 数量 | 处置建议 |
 |---|---|---|
 | P0 | 3（短路径误报登记，实质 0） | 写端点+弱引用 |
 | P1 | 100（剩余均为已绑登记项） | 写端点+无引用 |
-| P2 | 72 | 读端点+弱引用 |
-| P2 | 101 | 读端点+弱引用 |
+| P2 | 58 | 读端点+弱引用 |
+| P2 | 58 | 读端点+弱引用 |
 | 下线候选 | 1361 | 读端点+无引用，人工确认删路由 |
 
 ## 按服务分布（前 15）
@@ -50,5 +50,6 @@
 - **ticket 批 8→0**（补绑 8 条；候选 1421→1411）。
 - **mes 批 7→2**（补绑 5 条；2 条已绑登记；1411→1406）。
 - **integration 批 7→2**（补绑 5 条；2 条已绑登记；1406→1400。**P0/P1 实质清零**）。
-- **P2 unified-core 批 18→3**（补绑 15 条：iam roles/permissions + doc documents/dashboard + form definitions/instances + sse connect + automation dashboard/rules/runs/variables + files/attachments；新建 iam/doc/form/sse/automation/file.ts；剩余 3 条登记（exportAuditLogs 已绑 + /metrics + /ws/core/im 运维/WS 端点不绑）；候选 1400→1385，P2 86→72）。
+- **P2 unified-core 批 18→3**（补绑 15 条；3 条登记；1400→1385，P2 86→72）。
+- **P2 mes+monitor 批**（mes 8 全已绑登记（equipment-oee/statistics + analytics×3 + workshops/production-lines/shifts/work-calendars——前端方法名差异）；monitor 6：补绑 1（listMetrics）+ 5 已绑登记（list_rules/create_rule/get_performance_report×2 + /metrics 运维端点）；候选 1385→1371，P2 72→58）。
 - 已知精度限制：1 段短路径（如 /plans）不参与尾段匹配（n>=2），短路径端点可能漏匹配已绑（登记）。

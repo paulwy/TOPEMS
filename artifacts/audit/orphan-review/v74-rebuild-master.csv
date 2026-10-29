@@ -4,7 +4,6 @@ ai,P1,GET,/dsh/copilot/admin/faqs,create_admin_faq,create_admin_faq,write,none,�
 ai,P1,GET,/dsh/copilot/admin/faqs/{id},delete_admin_faq,delete_admin_faq,write,none,保留
 ai,P1,GET,/dsh/copilot/admin/faqs/{id},update_admin_faq,update_admin_faq,write,none,保留
 ai,P2,GET,/api/ai/dsh/agent/stream,stream_agent,stream_agent,read,weak,保留
-ai,P2,GET,/metrics,move,move,read,weak,保留
 ai,P2,POST,/dsh/agent/stream,stream_agent,stream_agent,read,weak,保留
 ai,下线候选,GET,/mcp,handle_mcp_request,handle_mcp_request,read,none,待定
 ai,下线候选,GET,/mcp/sse,handle_mcp_sse,handle_mcp_sse,read,none,待定
@@ -64,7 +63,6 @@ ai,下线候选,POST,/api/core/ai-form/forms/{form_type}/suggest,suggest_for_for
 ai,下线候选,POST,/api/core/ai-form/forms/{form_type}/enhance,enhance_for_form,enhance_for_form,read,none,待定
 analytics,P2,GET,/visualization,list_visualizations,list_visualizations,read,weak,保留
 analytics,P2,GET,/visualization,create_visualization,create_visualization,read,weak,保留
-analytics,P2,GET,/metrics,prometheus_metrics_handler,prometheus_metrics_handler,read,weak,保留
 analytics,下线候选,GET,/visualization/chart-types,get_chart_types,get_chart_types,read,none,待定
 analytics,下线候选,GET,/visualization/line,generate_line_chart,generate_line_chart,read,none,待定
 analytics,下线候选,GET,/visualization/bar,generate_bar_chart,generate_bar_chart,read,none,待定
@@ -159,7 +157,6 @@ crm,下线候选,GET,/sales-funnel/conversion/{tail},get_funnel_conversion,get_f
 crm,下线候选,GET,/sales-funnel/trend/{tail},get_funnel_trend,get_funnel_trend,read,none,待定
 crm,下线候选,GET,/sales-forecast/compare,compare_sales_forecasts,compare_sales_forecasts,read,none,待定
 crm,下线候选,GET,/sales-forecast/accuracy-report,get_accuracy_report,get_accuracy_report,read,none,待定
-ehs,P2,GET,/metrics,prometheus_metrics_handler,prometheus_metrics_handler,read,weak,保留
 ehs,P2,GET,/environment,list_records,list_records,read,weak,保留
 ehs,下线候选,GET,/api/ehs/emergency-plans/categories,list_plan_categories,list_plan_categories,read,none,待定
 ehs,下线候选,GET,/api/ehs/occupational-disease/factors,list_hazard_factors,list_hazard_factors,read,none,待定
@@ -515,7 +512,6 @@ finance,下线候选,POST,/api/core/settlement-center/reconciliations/{id}/appro
 gis,P1,GET,/locations/create,create_location,create_location,write,none,保留
 gis,P1,GET,/maps/create,create_map,create_map,write,none,保留
 gis,P2,GET,/ws/gis/map,websocket_handler,websocket_handler,read,weak,保留
-gis,P2,GET,/metrics,move,move,read,weak,保留
 gis,下线候选,GET,/warehouse-locations/map/{map_id},list_warehouse_locations_by_map,list_warehouse_locations_by_map,read,none,待定
 gis,下线候选,GET,/pipelines/map/{map_id},list_pipelines_by_map,list_pipelines_by_map,read,none,待定
 gis,下线候选,GET,/location-photos/map/{map_id},list_location_photos_by_map,list_location_photos_by_map,read,none,待定
@@ -550,7 +546,6 @@ hrm,下线候选,GET,/reports/payroll-summary/{tail},summary_tail,summary_tail,r
 hrm,下线候选,POST,/employees/export,export_employees,export_employees,read,none,待定
 integration,P1,GET,/api/integration/erp/connections,create_connection,create_connection,write,none,保留
 integration,P1,GET,/api/integration/erp/mappings,create_mapping,create_mapping,write,none,保留
-integration,P2,GET,/metrics,move,move,read,weak,保留
 integration,下线候选,GET,/api/integration/erp/connections,list_connections,list_connections,read,none,待定
 integration,下线候选,GET,/api/integration/sync/pending,get_pending,get_pending,read,none,待定
 integration,下线候选,GET,/api/integration/sync/statistics,get_statistics,get_statistics,read,none,待定
@@ -587,7 +582,6 @@ lims,P1,GET,/lims/samples/lifecycle,record_lifecycle_event,record_lifecycle_even
 lims,P2,GET,/barcodes,list_barcodes,list_barcodes,read,weak,保留
 lims,P2,GET,/pt-plans,list_plans,list_plans,read,weak,保留
 lims,P2,GET,/uncertainty-projects,list_projects,list_projects,read,weak,保留
-lims,P2,GET,/metrics,prometheus_metrics_handler,prometheus_metrics_handler,read,weak,保留
 lims,P2,GET,/analytes,list_analytes,list_analytes,read,weak,保留
 lims,下线候选,GET,/lims/test-methods/{id},get_method,get_method,read,none,待定
 lims,下线候选,GET,/lims/samples/{id},get_sample,get_sample,read,none,待定
@@ -596,7 +590,6 @@ lims,下线候选,GET,/analytes/{id},get_analyte,get_analyte,read,none,待定
 master-data,P1,GET,/mdm-v56/dr/failover/history,get_failover_history,get_failover_history,write,none,保留
 master-data,P1,GET,/mdm-v60/metadata/search,search_metadata,search_metadata,write,none,保留
 master-data,P1,GET,/mdm-v54/permissions/resource,get_resource_permissions,get_resource_permissions,write,none,保留
-master-data,P2,GET,/metrics,move,move,read,weak,保留
 master-data,P2,POST,/register,register_lineage,register_lineage,read,weak,保留
 master-data,P2,POST,/search/index,index_entity,index_entity,read,weak,保留
 master-data,P2,POST,/workflow,create_workflow,create_workflow,read,weak,保留
@@ -741,7 +734,6 @@ monitor,P2,GET,/api/monitor/rules,list_rules,list_rules,read,weak,保留
 monitor,P2,GET,/api/monitor/rules,create_rule,create_rule,read,weak,保留
 monitor,P2,GET,/api/monitor/metrics,list_metrics,list_metrics,read,weak,保留
 monitor,P2,GET,/api/monitor/reports/performance,get_performance_report,get_performance_report,read,weak,保留
-monitor,P2,GET,/metrics,move,move,read,weak,保留
 monitor,P2,GET,/reports/performance,get_performance_report,get_performance_report,read,weak,保留
 monitor,下线候选,GET,/api/monitor/templates,list_templates,list_templates,read,none,待定
 monitor,下线候选,GET,/api/monitor/templates,create_template,create_template,read,none,待定
@@ -772,7 +764,6 @@ pdm,P1,GET,/api/pdm/bom-items,create_bom_item,create_bom_item,write,none,保留
 pdm,P1,GET,/api/pdm/production-steps,create_step,create_step,write,none,保留
 pdm,P1,GET,/api/pdm/products,create_product,create_product,write,none,保留
 pdm,P1,GET,/api/pdm/change-notices,create_change_notice,create_change_notice,write,none,保留
-pdm,P2,GET,/metrics,prometheus_metrics_handler,prometheus_metrics_handler,read,weak,保留
 pdm,下线候选,GET,/api/pdm/production-statistics,list_statistics,list_statistics,read,none,待定
 pdm,下线候选,GET,/api/pdm/statistics,get_statistics_summary,get_statistics_summary,read,none,待定
 pdm,下线候选,GET,/api/pdm/production-formulas,list_formulas,list_formulas,read,none,待定
@@ -817,7 +808,6 @@ plugin-registry,P1,GET,/api/plugin/dev/plugins/{code}/publish,publish_plugin,pub
 plugin-registry,P1,GET,/api/plugin/dev/plugins/{code}/unpublish,unpublish_plugin,unpublish_plugin,write,none,保留
 plugin-registry,P1,GET,/api/plugin/dev/plugins/{code},update_plugin,update_plugin,write,none,保留
 plugin-registry,P2,GET,/api/plugin/navigation-config,get_navigation_config,get_navigation_config,read,weak,保留
-plugin-registry,P2,GET,/metrics,move,move,read,weak,保留
 plugin-registry,P2,GET,/api/plugin/marketplace,get_marketplace_summary,get_marketplace_summary,read,weak,保留
 plugin-registry,下线候选,GET,/api/plugin/runtime/list,list_plugins_with_status,list_plugins_with_status,read,none,待定
 plugin-registry,下线候选,GET,/api/plugin/plugins/{plugin_code}/upgrade,start_plugin_upgrade,start_plugin_upgrade,read,none,待定
@@ -856,7 +846,6 @@ pm,下线候选,GET,/service-integrations/{id},get_integration,get_integration,r
 portal,P2,GET,/api/portal/gateway-security/audit/export,export_audit_handler,export_audit_handler,read,weak,保留
 portal,P2,GET,/api/portal/ai-ops/recovery/plan,create_recovery_plan_handler,create_recovery_plan_handler,read,weak,保留
 portal,P2,GET,/user,get_user_info,get_user_info,read,weak,保留
-portal,P2,GET,/metrics,move,move,read,weak,保留
 portal,下线候选,GET,/api/portal/adaptive-execution/execute,execute_adaptive_query_handler,execute_adaptive_query_handler,read,none,待定
 portal,下线候选,GET,/api/portal/adaptive-execution/execution/profile/{hash},get_execution_profile_handler,get_execution_profile_handler,read,none,待定
 portal,下线候选,GET,/api/portal/adaptive-execution/execution/metrics,get_execution_metrics_handler,get_execution_metrics_handler,read,none,待定
@@ -1181,7 +1170,6 @@ portal,下线候选,POST,/api/portal/ai-ops/cache/invalidate,invalidate_cache_ha
 portal,下线候选,POST,/api/portal/deployment-manager/deployment/{id}/promote,promote_canary_handler,promote_canary_handler,read,none,待定
 qms,P1,GET,/audit-plans/{plan_id}/tasks,create_audit_task,create_audit_task,write,none,保留
 qms,P1,GET,/audit-tasks/{task_id}/findings,create_audit_finding,create_audit_finding,write,none,保留
-qms,P2,GET,/metrics,prometheus_metrics_handler,prometheus_metrics_handler,read,weak,保留
 qms,P2,GET,/inspection-items,list_inspection_items,list_inspection_items,read,weak,保留
 qms,P2,GET,/sampling-plans,list_sampling_plans,list_sampling_plans,read,weak,保留
 qms,P2,GET,/inspection-plans,list_inspection_plans,list_inspection_plans,read,weak,保留
@@ -1199,7 +1187,6 @@ rd,P2,GET,/projects/export,export_projects,export_projects,read,weak,保留
 rd,P2,GET,/experiments/phase/lab,list_lab_experiments,list_lab_experiments,read,weak,保留
 rd,P2,GET,/experiments/phase/pilot,list_pilot_experiments,list_pilot_experiments,read,weak,保留
 rd,P2,GET,/experiments/phase/scaleup,list_scaleup_experiments,list_scaleup_experiments,read,weak,保留
-rd,P2,GET,/metrics,prometheus_metrics_handler,prometheus_metrics_handler,read,weak,保留
 rd,下线候选,GET,/metrics/json,get_metrics,get_metrics,read,none,待定
 rd,下线候选,GET,/patents,list_patents,list_patents,read,none,待定
 rd,下线候选,GET,/patents/{id},get_patent,get_patent,read,none,待定
@@ -1260,7 +1247,6 @@ unified-core,P1,GET,/api/core/flow/instances/{id}/reject,reject_instance,reject_
 unified-core,P1,GET,/api/core/flow/workflows/{id}/publish,publish_workflow,publish_workflow,write,none,保留
 unified-core,P1,GET,/api/core/flow/workflows/{id}/unpublish,unpublish_workflow,unpublish_workflow,write,none,保留
 unified-core,P2,GET,/system/audit-logs/export,export_audit_logs,export_audit_logs,read,weak,保留
-unified-core,P2,GET,/metrics,move,move,read,weak,保留
 unified-core,P2,GET,/ws/core/im,websocket_handler,websocket_handler,read,weak,保留
 unified-core,下线候选,GET,/iam/permissions/verify,verify_permission,verify_permission,read,none,待定
 unified-core,下线候选,GET,/iam/permissions/verify-multiple,verify_multiple_permissions,verify_multiple_permissions,read,none,待定

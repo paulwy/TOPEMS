@@ -325,6 +325,10 @@ const metricsApi = {
 
   disableAlertRule: (id: string): Promise<ApiResponse<AlertRuleRecord>> =>
     apiClient.monitor.post<AlertRuleRecord>(`/rules/${id}/disable`),
+
+  // ── v74 to_bind 补绑（2026-10-29，P2）──
+  listMetrics: (): Promise<ApiResponse<Record<string, unknown>>> =>
+    apiClient.monitor.get<Record<string, unknown>>('/metrics'),
 };
 
 export default metricsApi;
