@@ -73,6 +73,7 @@
 - **批2复核 32 条处置**：31 真写补绑（writeOps2.ts×8：portal 9/erp 10/ai 2/finance 1/integration 1/master-data 3/unified-core 4）+ 1 误标剔除（plugin list_plugins_with_status 读）+ plugin-registry register_plugin 1 条登记（无 apiClient.plugin，需 pluginAxios 手动接线）；候选 1141→1110
 - **v74 池全链路完结**：P0/P1/P2 清零 + 批2 213 全处置 + 批3 990 全评估
 - **BIZ 749 评审决策包产出**（`offline-review/biz-review.csv`）：前端接入候选 361/待业务确认 375/保留后端 13；抽样 9/9 BE；待业务侧按 svc 分批确认
+- **保留 13 条确认下线** ✅：池标记 `下线-内部保留` 12 条（test/swagger/migration/internal 类）；mdm_service_deregister 1 条已由批2 补绑移出池（写语义）；不删后端
 
 ## 批2 method 复核（写端点补绑，2026-10-29 起）
 
