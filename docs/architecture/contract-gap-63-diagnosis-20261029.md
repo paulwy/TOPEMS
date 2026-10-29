@@ -93,6 +93,24 @@
   （v74 段修复完成）——核对其余单数残留
 - 验证：ehs cases/detections/protection-measures 实跑 200/401
 
+**B2 对照表（utoipa 文档 path → axum 实际挂载，2026-10-30 解析）**：
+
+| utoipa 文档 path（现，全单数） | axum 挂载（实际） | 差异 |
+|---|---|---|
+| /api/ehs/occupational-disease/factors | /occupational-disease/factors（单）+ /occupational-diseases/factors（复） | **双挂**（需去重统一） |
+| /api/ehs/occupational-disease/factors/{id} | /occupational-disease/factors/{id} + /occupational-diseases/factors/{id} | **双挂**（需去重统一） |
+| /api/ehs/occupational-disease/cases | /occupational-diseases/cases | 文档单数→复数 |
+| /api/ehs/occupational-disease/cases/{id} | /occupational-diseases/cases/{id} | 文档单数→复数 |
+| /api/ehs/occupational-disease/detections | /occupational-diseases/**detection-records** | **路径名不一致**（detections vs detection-records） |
+| /api/ehs/occupational-disease/detections/{id} | /occupational-diseases/detection-records/{id} | 同上 |
+| /api/ehs/occupational-disease/protection-measures | /occupational-diseases/protection-measures | 文档单数→复数 |
+| /api/ehs/occupational-disease/protection-measures/{id} | /occupational-diseases/protection-measures/{id} | 文档单数→复数 |
+| /api/ehs/occupational-disease/statistics | /occupational-disease/statistics | 一致 ✓（唯一无需改） |
+
+> **决策点（与协作机定）**：统一复数 `occupational-diseases/*`——需：① factors 双挂清理（保留复数）；②
+> detections 文档与挂载命名对齐（建议统一为 detection-records）；③ statistics 文档单数→复数（或保留单数，
+> 与前端封装核对）；④ 前端 `occupationalDisease.ts` 核对 factors/statistics/detection-records 封装路径。
+
 ### B3 段 — 纯缺 6 条（前端已封装且被使用、后端无任何匹配）
 - 清单（诊断 §一 ehs 纯缺候选）：`DELETE /api/ehs/occupational-disease/cases/{id}`（已随单复数修复消除）等
 - 动作：核对协作机后端是否已实现；未实现则补挂或从封装中移除
