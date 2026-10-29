@@ -70,6 +70,11 @@ crm,下线候选,GET,/sales-funnel/{tail},get_funnel_data,get_funnel_data,read,n
 crm,下线候选,GET,/sales-funnel/metrics/{tail},get_funnel_metrics,get_funnel_metrics,read,none,待定
 crm,下线候选,GET,/sales-forecast/compare,compare_sales_forecasts,compare_sales_forecasts,read,none,待定
 crm,下线候选,GET,/sales-forecast/accuracy-report,get_accuracy_report,get_accuracy_report,read,none,待定
+ehs,P1,GET,/api/ehs/occupational-disease/cases,create_disease_case,create_disease_case,write,none,保留
+ehs,P1,GET,/api/ehs/occupational-disease/cases/{id},delete_disease_case,delete_disease_case,write,none,保留
+ehs,下线候选,GET,/api/ehs/occupational-disease/cases,list_disease_cases,list_disease_cases,read,none,待定
+ehs,下线候选,GET,/api/ehs/occupational-disease/cases/{id},get_disease_case,get_disease_case,read,none,待定
+ehs,下线候选,GET,/api/ehs/occupational-disease/cases/{id},update_disease_case,update_disease_case,read,none,待定
 ehs,下线候选,GET,/api/ehs/occupational-disease/statistics,get_disease_statistics,get_disease_statistics,read,none,待定
 ehs,下线候选,GET,/api/ehs/hazardous-materials/statistics,get_material_statistics,get_material_statistics,read,none,待定
 ehs,下线候选,GET,/occupational-health/statistics,get_health_statistics,get_health_statistics,read,none,待定
