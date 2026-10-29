@@ -31,9 +31,11 @@ init_database 自建 = **冗余双源**：迁移权威建库后，运行时 `CRE
 - **lims**：删 init_database 内 31 建表 + 63 建索引 SQL；函数改造为 `run_schema_defense(pool)`（仅保留 `schema_defense::run_schema_migration_and_verify` 调用，改名以消除"init"语义误导）。调用点：`svc/lims/src/main.rs:91`、`svc/server/src/modules/lims_real_module.rs:58`、`svc/lims/tests/integration_tests.rs:18` 改调 `run_schema_defense`。
 - **portal**：删 `svc/portal/src/modules/help/mod.rs` 的 init_database（4 表 11 索引，无防御逻辑，整体删除）；删 `svc/portal/src/embedded.rs:75` 调用与日志分支。
 
-### 第二批（另排）：integration
+### 第二批（本次实施）：integration
 
-- 删 init_database 编排 + 6 个辅助 `init_*` 函数；`schema_defense::run_schema_migration_and_verify` 按第一批同法保活；server 对应调用点随删。
+- **main.rs**：init_database 编排 → 改造为 `run_schema_defense`（保留 schema_defense 自检）；删 4 个辅助函数（init_sync_tables / init_erp_connections_table / init_external_erp_sync_logs_table / init_erp_mappings_table，11 建表 + 11 索引）；清理 use（only_own_schema_query / init_conversion_rules_table）。
+- **模块文件**：删 6 个 init_*（conversion_rules / mes_qms / crm_erp / erp_wms / crm_scm / hrm_finance）。其中 crm_erp / erp_wms / crm_scm / hrm_finance 的 init 为**无调用点死代码**（D3 改造遗留），一并清除。
+- **验证**：cargo check topems-integration PASS；门禁 PASS（自建表 317→306）；rustfmt 无额外改动。
 
 ### 顺延批次（另排，按 crate 逐批）
 
@@ -50,3 +52,10 @@ init_database 自建 = **冗余双源**：迁移权威建库后，运行时 `CRE
 - [x] `node scripts/migration/check-schema-defense.mjs`：PASS（errors=0 warnings=0；自建表数 352→317，恰移除 lims 31 + portal 4）
 - [x] `bash scripts/migration/validate.sh`：不涉及迁移文件改动，无需重跑
 - [x] 提交推送远端；协作机拉取后空库四步回归复核（待协作机执行）
+
+## 5b. 验证记录（第二批）
+
+- [x] SQLX_OFFLINE `cargo check -p topems-integration --all-targets`：PASS
+- [x] `node scripts/migration/check-schema-defense.mjs`：PASS（errors=0 warnings=0；自建表数 317→306）
+- [x] rustfmt：无额外改动
+- [x] 提交推送远端

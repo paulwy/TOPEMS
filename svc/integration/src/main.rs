@@ -1,5 +1,4 @@
 use sqlx::PgPool;
-use topems_shared_boundary::only_own_schema_query;
 
 mod conversion_rules;
 mod event_bus;
@@ -20,7 +19,6 @@ mod sync_retry;
 
 use axum::{routing::get, Router};
 use axum_prometheus::PrometheusMetricLayer;
-use conversion_rules::init_conversion_rules_table;
 use mes_erp_sync::MesErpSyncService;
 use models::AppState;
 use topems_integration::sync_scheduler;
@@ -46,9 +44,9 @@ async fn main() -> anyhow::Result<()> {
 
     let ctx = bootstrap_service(&config).await?;
 
-    // 业务初始化：表 + 事件订阅者
-    if let Err(e) = init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
-        tracing::warn!("⚠️ Database initialization warning: {}", e);
+    // 业务初始化：运行时 schema 一致性自检（建表 DDL 已收敛至迁移链，D7）+ 事件订阅者
+    if let Err(e) = run_schema_defense(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await {
+        tracing::warn!("⚠️ Schema defense warning: {}", e);
     }
     if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {
         tracing::warn!("⚠️ Integration 事件订阅者启动失败: {}", e);
@@ -123,200 +121,11 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
-    if let Err(e) = init_conversion_rules_table(pool).await {
-        tracing::warn!("init_conversion_rules_table warning: {}", e);
-    }
-    if let Err(e) = mes_qms_integration::init_mes_qms_tables(pool).await {
-        tracing::warn!("init_mes_qms_tables warning: {}", e);
-    }
-    if let Err(e) = init_sync_tables(pool).await {
-        tracing::warn!("init_sync_tables warning: {}", e);
-    }
-    if let Err(e) = init_erp_connections_table(pool).await {
-        tracing::warn!("init_erp_connections_table warning: {}", e);
-    }
-    if let Err(e) = init_erp_mappings_table(pool).await {
-        tracing::warn!("init_erp_mappings_table warning: {}", e);
-    }
-    if let Err(e) = init_external_erp_sync_logs_table(pool).await {
-        tracing::warn!("init_external_erp_sync_logs_table warning: {}", e);
-    }
-
-    // V69.3 Schema 防御：增量迁移 + 一致性自检（8 表）
+async fn run_schema_defense(pool: &PgPool) -> Result<(), sqlx::Error> {
+    // V69.3 Schema 防御：增量迁移 + 一致性自检（8 表；建表 DDL 已收敛至迁移链，D7）
     if let Err(e) = schema_defense::run_schema_migration_and_verify(pool).await {
         tracing::error!("[integration] Schema 防御检查失败: {:?}", e);
     }
-
-    Ok(())
-}
-
-/// 初始化通用跨服务同步任务表（从 unified-core 迁移而来）
-async fn init_sync_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(only_own_schema_query!(
-        "integration",
-        r#"
-        CREATE TABLE IF NOT EXISTS core_inter_module_sync (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            tenant_id UUID NOT NULL,
-            sync_type VARCHAR(64) NOT NULL,
-            source_module VARCHAR(64) NOT NULL,
-            target_module VARCHAR(64) NOT NULL,
-            source_entity VARCHAR(128) NOT NULL,
-            source_id UUID,
-            source_code VARCHAR(128),
-            status VARCHAR(32) DEFAULT 'pending',
-            retry_count INTEGER DEFAULT 0,
-            max_retries INTEGER DEFAULT 3,
-            error_message TEXT,
-            next_retry_at TIMESTAMP,
-            executed_at TIMESTAMP,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        )
-        "#
-    ))
-    .execute(pool)
-    .await?;
-
-    sqlx::query(only_own_schema_query!(
-        "integration",
-        "CREATE INDEX IF NOT EXISTS idx_inter_module_sync_status ON core_inter_module_sync(status)"
-    ))
-    .execute(pool)
-    .await?;
-    sqlx::query(
-        only_own_schema_query!("integration", "CREATE INDEX IF NOT EXISTS idx_inter_module_sync_tenant ON core_inter_module_sync(tenant_id)"),
-    )
-    .execute(pool)
-    .await?;
-    sqlx::query(
-        only_own_schema_query!("integration", "CREATE INDEX IF NOT EXISTS idx_inter_module_sync_source ON core_inter_module_sync(source_module)"),
-    )
-    .execute(pool)
-    .await?;
-
-    Ok(())
-}
-
-/// 初始化 ERP 连接表（缺口#11）
-async fn init_erp_connections_table(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(only_own_schema_query!(
-        "integration",
-        r#"
-        CREATE TABLE IF NOT EXISTS erp_connections (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            tenant_id VARCHAR(128) NOT NULL DEFAULT 'default',
-            name VARCHAR(128) NOT NULL,
-            type VARCHAR(32) NOT NULL DEFAULT 'custom',
-            api_url VARCHAR(512) NOT NULL,
-            api_version VARCHAR(32),
-            app_key VARCHAR(256),
-            app_secret VARCHAR(512),
-            sync_direction VARCHAR(32) DEFAULT 'bidirectional',
-            sync_mode VARCHAR(32) DEFAULT 'manual',
-            sync_interval INTEGER,
-            status VARCHAR(32) DEFAULT 'inactive',
-            isactive BOOLEAN DEFAULT TRUE,
-            last_sync_at TIMESTAMP,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        )
-        "#
-    ))
-    .execute(pool)
-    .await?;
-
-    sqlx::query(only_own_schema_query!(
-        "integration",
-        "CREATE INDEX IF NOT EXISTS idx_erp_connections_tenant ON erp_connections(tenant_id)"
-    ))
-    .execute(pool)
-    .await?;
-
-    Ok(())
-}
-
-/// 初始化外部 ERP 同步日志表（缺口#13 扩展）
-async fn init_external_erp_sync_logs_table(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(only_own_schema_query!(
-        "integration",
-        r#"
-        CREATE TABLE IF NOT EXISTS external_erp_sync_logs (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            tenant_id VARCHAR(128) NOT NULL DEFAULT 'default',
-            connection_id UUID REFERENCES erp_connections(id) ON DELETE SET NULL,
-            entity VARCHAR(64) NOT NULL,
-            direction VARCHAR(32) DEFAULT 'export',
-            status VARCHAR(32) DEFAULT 'pending',
-            total_records INTEGER DEFAULT 0,
-            success_count INTEGER DEFAULT 0,
-            failed_count INTEGER DEFAULT 0,
-            error_message TEXT,
-            started_at TIMESTAMP,
-            completed_at TIMESTAMP,
-            created_at TIMESTAMP DEFAULT NOW()
-        )
-        "#
-    ))
-    .execute(pool)
-    .await?;
-
-    sqlx::query(only_own_schema_query!(
-        "integration",
-        "CREATE INDEX IF NOT EXISTS idx_external_erp_sync_logs_tenant ON external_erp_sync_logs(tenant_id)"
-    ))
-    .execute(pool)
-    .await?;
-    sqlx::query(only_own_schema_query!(
-        "integration",
-        "CREATE INDEX IF NOT EXISTS idx_external_erp_sync_logs_connection ON external_erp_sync_logs(connection_id)"
-    ))
-    .execute(pool)
-    .await?;
-
-    Ok(())
-}
-
-/// 初始化 ERP 字段映射表（缺口#12）
-async fn init_erp_mappings_table(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(only_own_schema_query!(
-        "integration",
-        r#"
-        CREATE TABLE IF NOT EXISTS erp_mappings (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            tenant_id VARCHAR(128) NOT NULL DEFAULT 'default',
-            connection_id UUID,
-            mapping_type VARCHAR(32) NOT NULL DEFAULT 'account',
-            local_id VARCHAR(128),
-            local_code VARCHAR(128),
-            local_name VARCHAR(256),
-            external_code VARCHAR(128),
-            external_name VARCHAR(256),
-            direction VARCHAR(32) DEFAULT 'bidirectional',
-            isactive BOOLEAN DEFAULT TRUE,
-            priority INTEGER DEFAULT 0,
-            condition TEXT,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        )
-        "#
-    ))
-    .execute(pool)
-    .await?;
-
-    sqlx::query(only_own_schema_query!(
-        "integration",
-        "CREATE INDEX IF NOT EXISTS idx_erp_mappings_tenant ON erp_mappings(tenant_id)"
-    ))
-    .execute(pool)
-    .await?;
-    sqlx::query(only_own_schema_query!(
-        "integration",
-        "CREATE INDEX IF NOT EXISTS idx_erp_mappings_connection ON erp_mappings(connection_id)"
-    ))
-    .execute(pool)
-    .await?;
 
     Ok(())
 }
