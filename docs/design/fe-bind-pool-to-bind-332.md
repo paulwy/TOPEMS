@@ -8,6 +8,31 @@
 > - **管理端绑定池**：reason 明确建议进入管理端（ai 平台端点，保留绑定给管理端）
 > - **下线候选**：读端点 + 无引用（无绑定价值，人工确认后可删路由）
 
+## ⚠️ 抽验 10 条结论（2026-10-29，全量立项前必读）
+
+> 抽样 10 条跨 5 服务（mobile/unified-core/ai/analytics/ehs/finance/wms/integration），逐条核对后端 handler 真实性 + 前端绑定实际状态。
+
+| # | 端点 | 后端 | 前端实际 | 池子声称 | 判定 |
+|---|---|---|---|---|---|
+| 1 | GET /mobile-tasks | ✅ shared/mod.rs | ✅ **api + MobileTaskListPage 页面 + 2 测试已存在** | weak | **口径失实：已完整绑定，应移出池** |
+| 2 | POST /mobile/scan/barcode | ✅ 实际路由 **`/scan/barcode`**（scan.rs:189） | ✅ **apps/mobile scan.ts scanApi.scanBarcode 已绑** | weak | **路径列不准；已绑定** |
+| 3 | POST /api/core/doc/documents | ✅ modules/doc/handlers.rs | ⚠️ 仅菜单/配置/apiPath 测试引用，无真实 api 调用 | weak | 弱引用属实，**真待绑** |
+| 4 | GET /api/core/file/download/{id} | ✅ modules/file/download.rs download_file | ❌ 前端 0 引用 | weak | **weak 失实（实为无引用）；后端真实** |
+| 5 | GET /api/ai/agent/tools | ✅ routes.rs | ⚠️ 前端绑 **`/dsh/agent/tools`**（不同端点，dshAgent.ts:232） | none | **重复端点嫌疑，待定合理（建议合并/下线其一）** |
+| 6 | GET /api/bi/analysis | ❌ **后端无此路由**（实际 `/api/bi/report`，self_service_report.rs） | ⚠️ BiIndexPage 页面文件 | weak | **池子失实：analytics 段 4 条路径均不存在** |
+| 7 | PUT /api/ehs/hazardous-materials/{id}/msds | ✅ modules/hazardous_material.rs | ✅ **前端 hazardousMaterial.ts + reactQuery 已绑** | weak | **api 已存在，绑定状态存疑** |
+| 8 | GET /finance/accounts/code/{code} | ✅ modules/mod.rs | ❌ 前端 0 引用 | weak | **weak 失实（实为无引用）；后端真实** |
+| 9 | GET /api/wms/inventory-alerts | ✅ modules/inventory_alert.rs | ✅ **前端 inventoryAlert.ts 全套已绑 + 单测** | none | **口径失实：api 已完整绑定，应移出池** |
+| 10 | POST /api/integration/mes-erp/sync/erp-to-mes | ✅ routes.rs + handlers/mes_erp.rs | ⚠️ 前端绑 **`/mes-erp/{id}/sync`**（sync.ts:61，通用方向） | weak | **方向性端点未绑（api 有通用版）** |
+
+### 抽验结论：池子口径不可直接全量立项
+
+1. **后端 handler 真实性 9/10**：唯一例外 analytics 段 4 条 `/api/bi/analysis`（实际路由为 `/api/bi/report`）——池子该段基于过期契约，**路径整体失实**。
+2. **前端绑定状态偏差显著（~50%）**：3 条已完整绑定（mobile-tasks / wms inventory-alerts / mobile scan）应移出池；2 条实为无引用（weak 失实）；2 条为端点差异（ai 重复 / integration 方向性）；仅 2 条为真待绑（doc/documents、ehs 类弱引用待核）。
+3. **根因**：池子基于 **2026-10-12 v73 快照**，19 天来前端大量补绑（FE-17 阶段 2-4 + 各模块 api 收口）；源 CSV `artifacts/audit/orphan-review/v73-rebuild-master.csv` 现已丢失（批 0 留痕文档已声明原始 CSV 丢失）。
+4. **建议（不批量立项）**：① 抽验确认的真待绑项（doc/documents 等）**小批量试点绑定**验证价值；② 池子需**重新快照**（需重建审计脚本：后端 route 扫描 + 前端 api 引用扫描）方可全量立项；③ analytics 段路径修正为 `/api/bi/report`；ai `/api/ai/agent/tools` 与 `/dsh/agent/tools` 择一收敛。
+
+
 ## ai（10 条）
 
 | 优先级 | 方法 | 路径 | operationId | 前端引用 | 写库 | v73 倾向 |
