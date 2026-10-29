@@ -2,8 +2,10 @@
 
 use axum::{
     extract::ws::{Message, WebSocket},
-    extract::{Query, State, WebSocketUpgrade},
+    extract::{Path, Query, State, WebSocketUpgrade},
+    http::StatusCode,
     response::IntoResponse,
+    Json,
 };
 use futures_util::{stream::SplitSink, SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
@@ -561,4 +563,46 @@ pub async fn broadcast_to_all(state: &Arc<WsState>, msg_type: &str, payload: Val
     );
 
     state.broadcast(msg).await;
+}
+
+// ===== P0 迷你试点（2026-10-29）：对齐 docs/developer/standards/websocket-path-mapping.md =====
+// 增量：① /ws/healthz 状态端点；② 通用路径 /ws/{module}/{feature} + 模块注册表白名单（426）。
+// 复用现有 handle_socket（心跳 30s/超时清理/JWT 鉴权/Redis 订阅）。
+
+/// P32-6 模块注册表（白名单；未注册模块 Upgrade 时拒绝 426）
+pub const WS_MODULE_WHITELIST: &[&str] = &[
+    "iam", "workflow", "im", "mes", "wms", "ai", "notification", "dashboard", "ticket",
+];
+
+/// GET /ws/healthz —— 非 Upgrade HTTP 状态端点（规范 §7 自测）
+pub async fn healthz_handler(State(state): State<Arc<WsState>>) -> impl IntoResponse {
+    let clients = state.connections.read().await.len();
+    let chans = state.channels.read().await;
+    let channels: HashMap<String, usize> =
+        chans.iter().map(|(k, v)| (k.clone(), v.len())).collect();
+    Json(json!({
+        "ok": true,
+        "version": env!("CARGO_PKG_VERSION"),
+        "clients": clients,
+        "channels": channels,
+    }))
+}
+
+/// GET /ws/{module}/{feature} —— 通用路径（模块白名单校验后复用 handle_socket）
+pub async fn websocket_handler_path(
+    Path((module, feature)): Path<(String, String)>,
+    State(state): State<Arc<WsState>>,
+    Query(params): Query<WsQueryParams>,
+    ws: WebSocketUpgrade,
+) -> impl IntoResponse {
+    if !WS_MODULE_WHITELIST.contains(&module.as_str()) {
+        return StatusCode::UPGRADE_REQUIRED.into_response(); // 426
+    }
+    info!(
+        "WebSocket upgrade requested module={} feature={} token_present={}",
+        module,
+        feature,
+        params.token.is_some()
+    );
+    ws.on_upgrade(move |socket| handle_socket(socket, state, params.token))
 }

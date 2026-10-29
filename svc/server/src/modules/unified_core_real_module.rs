@@ -39,6 +39,29 @@ impl UnifiedCoreRealModule {
         let ctx = topems_shared_bootstrap::bootstrap_service(&config).await?;
         let _conn = ctx.db.acquire().await?;
 
+        // P0 迷你试点（2026-10-29）：/ws/healthz + /ws/{module}/{feature}（对齐 P32-6 websocket-path-mapping）。
+        // 复用 unified-core 的 WsState/handle_socket；独立 Router<Arc<WsState>> with_state 固化后 merge 进顶层，
+        // 规避 Module 契约 routes() -> Router<()> 的 E0308 限制（同 mes_real_module WS 接线模式）。
+        let ws_state = std::sync::Arc::new(
+            topems_unified_core::modules::communication::ws::WsState::new(std::sync::Arc::new(
+                ctx.auth_state.clone(),
+            )),
+        );
+        let ws_routes = axum::Router::new()
+            .route(
+                "/ws/healthz",
+                axum::routing::get(
+                    topems_unified_core::modules::communication::ws::healthz_handler,
+                ),
+            )
+            .route(
+                "/ws/{module}/{feature}",
+                axum::routing::get(
+                    topems_unified_core::modules::communication::ws::websocket_handler_path,
+                ),
+            )
+            .with_state(ws_state);
+
         // 嵌入模式（build_router_embedded）：core 业务路由挂根（/iam/* /flow/* 等），
         // 由本模块 nest /api/core 提供统一前缀；跳过 public 冲突路由（/、/health、/api、/metrics）
         // 与 wms/mes/scm（server 已有真实模块），避免双重 /api/core 前缀与 Overlapping route。
@@ -55,7 +78,10 @@ impl UnifiedCoreRealModule {
             .layer(axum::middleware::from_fn_with_state(
                 ctx.auth_state.clone(),
                 topems_shared_auth::auth::auth_middleware,
-            ));
+            ))
+            // P0：/ws/* 路由放 auth layer 之后 merge——healthz 公开（规范 §7 自测），
+            // WS 升级鉴权由 handle_socket 内 verify_jwt_token 自验（同 mes_real_module WS 接线）。
+            .merge(ws_routes);
 
         Ok(Self { routes, db: ctx.db })
     }

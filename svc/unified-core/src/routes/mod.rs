@@ -103,6 +103,15 @@ pub fn create_routes(
             "/ws/core/im",
             get(modules::communication::ws::websocket_handler),
         )
+        // P0 迷你试点（2026-10-29）：对齐 P32-6 websocket-path-mapping 契约
+        .route(
+            "/ws/healthz",
+            get(modules::communication::ws::healthz_handler),
+        )
+        .route(
+            "/ws/{module}/{feature}",
+            get(modules::communication::ws::websocket_handler_path),
+        )
         // U1-b1（D1 §5 选项C）：/ws/mes/dashboard 业务投影 WebSocket 随 mes 镜像模块下架移除。
         // 生产由独立 svc/mes（dashboard_ws.rs）提供；:8000 无入向流量。
         // V430: SSE (Server-Sent Events) 端点 - 公共路由, 支持实时通信
