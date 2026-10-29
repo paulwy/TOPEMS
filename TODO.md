@@ -60,6 +60,16 @@
 
 ### to_bind 332 前端绑定池（2026-10-29）✅ 清单已产出
 
+### MCS 37 WARN 处置（2026-10-29）✅ 37→21（假 id 404 全消除）
+
+> mobile_contract_smoke.py 预创建真记录捕获 id，替换假 id（00000000-…-0099）业务 404。
+
+- **处置**：pre_create() 预创建 customer/documents/inventory/production/orders/push/notifications/schedule/events（device 为 upsert 响应 data:null，register 后 DB 回查 mobile.devices id）；fill_vars 真 id 优先（修 `${id}` 小写匹配 + VAR_DEFAULTS 提前返回两处 bug）；schedule/events 载荷按后端 snake_case 契约补齐（start_time/end_time/event_type）
+- **效果**：WARN 37 → 21（customer/documents/inventory/production/push/schedule 真 id 路径全部 200；GET/DELETE 主路径消除）
+- **剩余 21 语义性/契约类（非假 id，已甄别）**：approval 4（流程状态机依赖，保留 404 语义）；device activate/disable 2（状态动作）；inventory PUT 1（401 权限）；production start/complete 2（状态机）；barcode history 2（扫描历史表为空）；task 4（POST/PUT/DELETE 405 = 后端 /task 缺写 handler，契约缺口待补 + GET ${id} 404）
+- **待办**：task 服务补 POST/PUT/DELETE handler（契约缺口，另批）
+
+
 > 推进「批 0 基线留痕」的 to_bind 332 条（已注册 real handler、前端未绑定）。
 
 - **产出**：`docs/design/fe-bind-pool-to-bind-332.md`（24 服务全量端点表 + 优先级 + 排期建议）

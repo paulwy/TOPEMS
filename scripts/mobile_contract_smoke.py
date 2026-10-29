@@ -39,6 +39,8 @@ def _probe_base() -> str:
 MOBILE_URL = _probe_base()
 TEST_UID = "e91e2228-ab9d-4ac3-99f4-fdcd9c723f21"
 TEST_UUID = "00000000-0000-0000-0000-000000000099"
+# 预创建捕获的真实 id（customer/documents/device），供 get/put/delete 消除假 id 业务 404
+REAL_IDS = {}
 # WMS inventory.warehouse_id NOT NULL：由 prepare_data 从真实库取一个仓库 id 注入载荷
 TEST_WAREHOUSE_ID = None
 
@@ -138,6 +140,7 @@ POST_BODIES = {
     "/attendance/check-out": {"lat": 38.04, "lng": 114.51},
     "/device/register": {"device_id": "smoke-device-1", "device_name": "冒烟设备", "device_type": "android", "os_type": "android", "os_version": "14", "app_version": "1.0.0", "push_token": "smoke-device-token"},
     "/documents": {"title": "冒烟测试文档", "category": "general", "content": "smoke"},
+    "/schedule/events": {"title": "冒烟日程", "description": "smoke", "start_time": "2026-10-29T09:00:00+08:00", "end_time": "2026-10-29T10:00:00+08:00", "event_type": "meeting"},
     "/approval/tasks/${id}/delegate": {"userId": TEST_UUID, "reason": "冒烟委派"},
     "/production/orders": {"product_name": "冒烟订单", "product_code": "SMOKE-001", "quantity": 10},
     "/approval/tasks/${id}/approve": {"comment": "smoke"},
@@ -200,12 +203,82 @@ def extract_endpoints():
 def fill_vars(path_tmpl: str) -> str:
     def repl(m):
         var = m.group(1).strip()
+        # 优先真实 id（预创建捕获），消除假 id 业务 404 WARN
+        if var == "id" or var.endswith("Id"):
+            for prefix, rid in REAL_IDS.items():
+                if f"/{prefix}/" in path_tmpl or path_tmpl.endswith(f"/{prefix}"):
+                    return rid
         if var in VAR_DEFAULTS:
             return str(VAR_DEFAULTS[var])
-        if var.endswith("Id"):
-            return TEST_UUID
         return TEST_UUID
     return re.sub(r"\$\{([^}]+)\}", repl, path_tmpl)
+
+
+def pre_create(token: str) -> None:
+    """预创建 customer/documents/inventory/production 记录，捕获真实 id 供 get/put/delete 使用。
+
+    device/register 为 upsert 语义（响应 data:null），预创建后从 mobile.devices 回查 id。
+    approval/tasks 依赖流程实例状态机，不预创建（保留假 id 404 语义，已登记）。
+    """
+    db = load_database_url()
+    creates = [
+        ("customer", "/customer"), ("documents", "/documents"),
+        ("inventory", "/inventory"), ("production/orders", "/production/orders"),
+        ("push/notifications", "/push/notifications"), ("schedule/events", "/schedule/events"),
+    ]
+    for prefix, tmpl in creates:
+        body = POST_BODIES.get(tmpl)
+        if body is None:
+            continue
+        try:
+            req = urllib.request.Request(
+                MOBILE_URL + tmpl,
+                data=json.dumps(body).encode(),
+                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                method="POST",
+            )
+            resp = urllib.request.urlopen(req, timeout=15)
+            raw = json.loads(resp.read().decode())
+            d = raw.get("data") if isinstance(raw, dict) else raw
+            cand = None
+            if isinstance(d, dict):
+                for k in ("id", "customer_id", "device_id", "document_id", "order_id", "notification_id"):
+                    if d.get(k):
+                        cand = d[k]
+                        break
+                if not cand and isinstance(d.get("data"), dict):
+                    for k in ("id", "customer_id", "device_id", "document_id", "order_id", "notification_id"):
+                        if d["data"].get(k):
+                            cand = d["data"][k]
+                            break
+            if cand:
+                REAL_IDS[prefix] = str(cand)
+                print(f"[prepare] 预创建 {prefix} 真 id: {cand}")
+        except Exception as e:
+            print(f"[prepare] 预创建 {prefix} 失败（保留假 id 404）: {e}")
+    # device：register 为 upsert（响应 data:null），从 mobile.devices 回查 id
+    try:
+        body = POST_BODIES.get("/device/register")
+        if body is not None:
+            req = urllib.request.Request(
+                MOBILE_URL + "/device/register",
+                data=json.dumps(body).encode(),
+                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                method="POST",
+            )
+            urllib.request.urlopen(req, timeout=15)
+        if db:
+            r = subprocess.run(
+                ["psql", db, "-tAc",
+                 "SELECT id FROM mobile.devices WHERE device_id='smoke-device-1' LIMIT 1"],
+                capture_output=True, timeout=15, check=False,
+            )
+            did = r.stdout.decode().strip() if r.stdout else ""
+            if did:
+                REAL_IDS["device"] = did
+                print(f"[prepare] 预创建 device 真 id: {did}")
+    except Exception as e:
+        print(f"[prepare] 预创建 device 失败（保留假 id 404）: {e}")
 
 
 def call(method: str, path: str, tmpl: str, token: str):
@@ -237,6 +310,7 @@ def main():
     eps = extract_endpoints()
     print(f"前端契约端点(去重后): {len(eps)}")
     token = issue_token()
+    pre_create(token)
     groups = {}
     for method, tmpl, fname in eps:
         path = fill_vars(tmpl)
