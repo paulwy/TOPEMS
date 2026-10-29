@@ -1,3 +1,11 @@
+## v1.118 BFF WS：W1 nginx /ws/ 反代 + W2 实测 + W3 双入口结论（2026-10-29）✅
+
+- **W1**：`deploy/nginx/topems.conf:157-166` 新增 `location /ws/` → server_service(:8099) + `Upgrade $http_upgrade`/`Connection "upgrade"` + `proxy_read_timeout 60s`。前端 `ws://{host}/ws/core` 链路在 nginx 层即通（此前落静态服务 404）
+- **W2 实测**（8099 在线直连）：`/ws/healthz`→200（内嵌路由树挂载）；`/ws/core/notifications`（Upgrade 头）→426（握手提取器命中）；`/ws/core`→404（白名单格式校验）；`:8000/ws/healthz`→404（8099 唯一入口佐证）
+- **W3**：`WS_MODULE_WHITELIST`（ws.rs:880）含 iam/workflow/im/mes/wms/ai/notification/dashboard/ticket 9 模块，8099 内嵌即可服务 `/ws/mes/dashboard`；mes 独立挂载为兼容双入口——**前端统一走 8099**，双实现推送数据源差异登记观察项
+- **部署项**：生产 nginx `nginx -s reload` 后 WS 链路生效（配置已入库，reload 无代码风险）
+- **挂起**：W4 业务模块实时通道（production/attendance 推送）待产品立项；v1.117 遗留 ③ 前端 useWebSocket + 试点页仍待全量触发
+
 ## v1.117 BFF WS：契约 §6 Origin 白名单 + 广播合并批处理落地（2026-10-29）✅
 
 > 承接 v1.116 遗留①②：Origin 生产白名单（env 可配置）+ global 广播 >10/s 合并批处理，消除 drop（commit 本次）。
