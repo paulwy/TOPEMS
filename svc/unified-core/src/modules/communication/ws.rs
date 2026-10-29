@@ -105,7 +105,9 @@ impl WsState {
 
     /// 检查 global 广播频控（每秒 ≤10 条，契约 §6）
     pub fn broadcast_quota_ok(&self) -> bool {
-        let mut q = self.broadcast_quota.lock().unwrap();
+        let Ok(mut q) = self.broadcast_quota.lock() else {
+            return false;
+        };
         let now = chrono::Utc::now().timestamp();
         if q.0 != now {
             q.0 = now;
@@ -479,7 +481,8 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
                                             "error": { "code": 4202, "message": "too many channels" }
                                         });
                                         let mut tx = tx_shared.write().await;
-                                        let _ = tx.send(Message::Text(err.to_string().into())).await;
+                                        let _ =
+                                            tx.send(Message::Text(err.to_string().into())).await;
                                         continue;
                                     }
                                     state.subscribe_to_channel(id, ch.to_string()).await;
