@@ -17,6 +17,7 @@ use tokio::sync::RwLock;
 use tokio::time::interval;
 use topems_shared_auth::auth::{verify_jwt_token, verify_message_signature, AuthState};
 use tracing::{error, info, warn};
+use uuid::Uuid;
 
 /// WebSocket 连接状态
 pub(crate) struct WsConnection {
@@ -26,6 +27,8 @@ pub(crate) struct WsConnection {
     last_pong: std::sync::atomic::AtomicI64,
     /// 用户订阅的频道集合
     channels: RwLock<HashSet<String>>,
+    /// 连接唯一标识（契约 §6：每 token 多并发连接，需按 conn 区分）
+    conn_id: Uuid,
 }
 
 impl WsConnection {
@@ -36,6 +39,7 @@ impl WsConnection {
             connected_at: chrono::Utc::now(),
             last_pong: std::sync::atomic::AtomicI64::new(chrono::Utc::now().timestamp()),
             channels: RwLock::new(HashSet::new()),
+            conn_id: Uuid::new_v4(),
         }
     }
 
@@ -75,9 +79,12 @@ impl WsConnection {
     }
 }
 
-type ConnectionMap = Arc<RwLock<HashMap<String, Arc<WsConnection>>>>;
+/// 连接映射: user_id -> [connection]（契约 §6：每 token 最多 6 并发连接）
+type ConnectionMap = Arc<RwLock<HashMap<String, Vec<Arc<WsConnection>>>>>;
 /// 频道订阅映射: channel -> [user_id]
 type ChannelMap = Arc<RwLock<HashMap<String, HashSet<String>>>>;
+/// 契约 §6：每 token 最大并发连接数
+pub const MAX_CONNECTIONS_PER_USER: usize = 6;
 
 pub struct WsState {
     connections: ConnectionMap,
@@ -120,23 +127,55 @@ impl WsState {
         true
     }
 
-    /// 添加连接
-    pub(crate) async fn add_connection(&self, user_id: String, connection: Arc<WsConnection>) {
-        let mut connections = self.connections.write().await;
-        connections.remove(&user_id);
-        connections.insert(user_id.clone(), connection);
+    /// 添加连接（契约 §6：每 token 最多 6 并发连接，超限拒绝返回 false）
+    pub(crate) async fn add_connection(
+        &self,
+        user_id: String,
+        connection: Arc<WsConnection>,
+    ) -> bool {
+        let list_len = {
+            let mut connections = self.connections.write().await;
+            let list = connections.entry(user_id.clone()).or_default();
+            if list.len() >= MAX_CONNECTIONS_PER_USER {
+                warn!(
+                    "User {} connection limit exceeded (max {}), rejected",
+                    user_id, MAX_CONNECTIONS_PER_USER
+                );
+                return false;
+            }
+            list.push(connection);
+            list.len()
+        };
+        let total = {
+            let connections = self.connections.read().await;
+            connections.values().map(|v| v.len()).sum::<usize>()
+        };
         info!(
-            "User {} connected, total connections: {}",
-            user_id,
-            connections.len()
+            "User {} connected (conn {}/{}), total connections: {}",
+            user_id, list_len, MAX_CONNECTIONS_PER_USER, total
         );
+        true
     }
 
-    /// 移除连接
-    pub async fn remove_connection(&self, user_id: &str) {
-        let mut connections = self.connections.write().await;
-        if let Some(conn) = connections.get(user_id) {
-            // 清理频道订阅
+    /// 移除指定连接（按 conn_id；该用户无剩余连接时删除键）
+    pub async fn remove_connection(&self, user_id: &str, conn_id: Uuid) {
+        // 块作用域：提取被移除连接后结束 connections 可变借用
+        let removed_conn: Option<Arc<WsConnection>> = {
+            let mut connections = self.connections.write().await;
+            let mut rc = None;
+            if let Some(list) = connections.get_mut(user_id) {
+                if let Some(idx) = list.iter().position(|c| c.conn_id == conn_id) {
+                    rc = list.remove(idx).into();
+                }
+                if list.is_empty() {
+                    connections.remove(user_id);
+                }
+            }
+            rc
+        };
+
+        // 清理频道订阅（该连接订阅的频道；全局映射按 user 聚合）
+        if let Some(conn) = &removed_conn {
             let subscribed = conn.get_channels().await;
             let mut channels = self.channels.write().await;
             for ch in subscribed {
@@ -148,37 +187,41 @@ impl WsState {
                 }
             }
         }
-        connections.remove(user_id);
+
+        let total = {
+            let connections = self.connections.read().await;
+            connections.values().map(|v| v.len()).sum::<usize>()
+        };
         info!(
-            "User {} disconnected, total connections: {}",
+            "User {} disconnected (removed={}), total connections: {}",
             user_id,
-            connections.len()
+            removed_conn.is_some(),
+            total
         );
     }
 
     /// 用户订阅频道
-    pub async fn subscribe_to_channel(&self, user_id: &str, channel: String) {
+    /// 用户订阅频道（作用于指定连接；全局映射按 user 聚合）
+    pub(crate) async fn subscribe_to_channel(&self, conn: &Arc<WsConnection>, channel: String) {
+        let user_id = conn.user_id.clone();
         // 更新连接层面的频道集合
-        if let Some(conn) = self.connections.read().await.get(user_id) {
-            conn.subscribe_channel(channel.clone()).await;
-        }
+        conn.subscribe_channel(channel.clone()).await;
         // 更新全局频道映射
         let mut channels = self.channels.write().await;
         channels
             .entry(channel.clone())
             .or_default()
-            .insert(user_id.to_string());
+            .insert(user_id.clone());
         info!("User {} subscribed to channel: {}", user_id, channel);
     }
 
-    /// 用户取消订阅频道
-    pub async fn unsubscribe_from_channel(&self, user_id: &str, channel: &str) {
-        if let Some(conn) = self.connections.read().await.get(user_id) {
-            conn.unsubscribe_channel(channel).await;
-        }
+    /// 用户取消订阅频道（作用于指定连接）
+    pub(crate) async fn unsubscribe_from_channel(&self, conn: &Arc<WsConnection>, channel: &str) {
+        let user_id = conn.user_id.clone();
+        conn.unsubscribe_channel(channel).await;
         let mut channels = self.channels.write().await;
         if let Some(users) = channels.get_mut(channel) {
-            users.remove(user_id);
+            users.remove(&user_id);
             if users.is_empty() {
                 channels.remove(channel);
             }
@@ -192,76 +235,86 @@ impl WsState {
         channels.get(channel).cloned().unwrap_or_default()
     }
 
-    /// 获取所有已连接用户数
+    /// 获取总连接数（含多连接）
     pub async fn connection_count(&self) -> usize {
-        self.connections.read().await.len()
+        let connections = self.connections.read().await;
+        connections.values().map(|v| v.len()).sum()
     }
 
-    /// 向指定用户发送消息
+    /// 向指定用户发送消息（该用户所有连接都发；任一成功返回 true）
     pub async fn send_to_user(&self, user_id: &str, message: Message) -> bool {
         let connections = self.connections.read().await;
-        if let Some(conn) = connections.get(user_id) {
-            let mut sender = conn.sender.write().await;
-            if sender.send(message).await.is_ok() {
-                return true;
+        let mut sent = false;
+        if let Some(list) = connections.get(user_id) {
+            for conn in list {
+                let mut sender = conn.sender.write().await;
+                if sender.send(message.clone()).await.is_ok() {
+                    sent = true;
+                }
             }
         }
-        false
+        sent
     }
 
-    /// 向指定频道广播消息
+    /// 向指定频道广播消息（订阅用户的所有连接都发）
     pub async fn broadcast_to_channel(&self, channel: &str, message: Message) {
         let subscribers = self.get_channel_subscribers(channel).await;
         let connections = self.connections.read().await;
         for user_id in subscribers {
-            if let Some(conn) = connections.get(&user_id) {
-                let mut sender = conn.sender.write().await;
-                if let Err(e) = sender.send(message.clone()).await {
-                    warn!(
-                        "Failed to send to user {} on channel {}: {}",
-                        user_id, channel, e
-                    );
+            if let Some(list) = connections.get(&user_id) {
+                for conn in list {
+                    let mut sender = conn.sender.write().await;
+                    if let Err(e) = sender.send(message.clone()).await {
+                        warn!(
+                            "Failed to send to user {} on channel {}: {}",
+                            user_id, channel, e
+                        );
+                    }
                 }
             }
         }
     }
 
-    /// 广播消息给所有用户
+    /// 广播消息给所有用户（所有连接）
     pub async fn broadcast(&self, message: Message) {
         if !self.broadcast_quota_ok() {
             warn!("Global broadcast rate limit exceeded (>10/s), frame dropped");
             return;
         }
         let connections = self.connections.read().await;
-        for conn in connections.values() {
-            let mut sender = conn.sender.write().await;
-            if let Err(e) = sender.send(message.clone()).await {
-                warn!("Failed to broadcast to user {}: {}", conn.user_id, e);
+        for list in connections.values() {
+            for conn in list {
+                let mut sender = conn.sender.write().await;
+                if let Err(e) = sender.send(message.clone()).await {
+                    warn!("Failed to broadcast to user {}: {}", conn.user_id, e);
+                }
             }
         }
     }
 
-    /// 检查并清理超时连接
-    pub async fn cleanup_timeout_connections(&self, timeout_secs: i64) -> Vec<String> {
+    /// 检查并清理超时连接（按连接粒度；返回移除的连接数）
+    pub async fn cleanup_timeout_connections(&self, timeout_secs: i64) -> usize {
         let mut connections = self.connections.write().await;
-        let mut removed_users = Vec::new();
+        let mut removed = 0usize;
+        let mut alive: HashMap<String, Vec<Arc<WsConnection>>> = HashMap::new();
+        for (uid, list) in connections.iter() {
+            let kept: Vec<Arc<WsConnection>> = list
+                .iter()
+                .filter(|c| c.seconds_since_pong() <= timeout_secs)
+                .cloned()
+                .collect();
+            removed += list.len() - kept.len();
+            if !kept.is_empty() {
+                alive.insert(uid.clone(), kept);
+            }
+        }
+        *connections = alive;
 
-        let timed_out: Vec<String> = connections
-            .iter()
-            .filter(|(_, conn)| conn.seconds_since_pong() > timeout_secs)
-            .map(|(user_id, _)| user_id.clone())
-            .collect();
-
-        for user_id in &timed_out {
-            connections.remove(user_id);
-            removed_users.push(user_id.clone());
+        if removed > 0 {
+            info!("Cleaned up {} timeout connections", removed);
         }
 
-        if !removed_users.is_empty() {
-            info!("Cleaned up {} timeout connections", removed_users.len());
-        }
-
-        removed_users
+        removed
     }
 }
 
@@ -349,10 +402,22 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
         }
     });
 
-    // 创建连接
+    // 创建连接（契约 §6：每 token 最多 6 并发连接，超限拒绝）
+    let mut conn: Option<Arc<WsConnection>> = None;
     if let Some(id) = &user_id {
-        let conn = Arc::new(WsConnection::new(id.to_string(), tx_shared.clone()));
-        state.add_connection(id.to_string(), conn).await;
+        let new_conn = Arc::new(WsConnection::new(id.to_string(), tx_shared.clone()));
+        if state.add_connection(id.to_string(), new_conn.clone()).await {
+            conn = Some(new_conn);
+        } else {
+            warn!("Connection rejected: user {} exceeds max connections", id);
+            let err = json!({
+                "jsonrpc": "2.0",
+                "error": { "code": 429, "message": "too many connections" }
+            });
+            let mut tx = tx_shared.write().await;
+            let _ = tx.send(Message::Text(err.to_string().into())).await;
+            return;
+        }
     }
 
     // 发送认证成功消息（块作用域：发送后立即释放写锁，否则 guard 在函数末尾才 drop，
@@ -417,10 +482,9 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
                             continue;
                         }
                         Some("pong") | Some("heartbeat_response") => {
-                            if let Some(id) = &user_id {
-                                if let Some(conn) = state.connections.read().await.get(id) {
-                                    conn.update_pong_time();
-                                }
+                            // 心跳保活：更新当前连接 last_pong
+                            if let Some(conn) = &conn {
+                                conn.update_pong_time();
                             }
                             continue;
                         }
@@ -466,34 +530,33 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
                                 .and_then(|v| v.as_str());
                             match (&user_id, channel) {
                                 (Some(id), Some(ch)) => {
-                                    // 配额：每连接最多 32 频道（契约 §6，超限 4202）
-                                    let too_many = {
-                                        let conn_guard = state.connections.read().await;
-                                        match conn_guard.get(id) {
-                                            Some(c) => c.get_channels().await.len() >= 32,
-                                            None => false,
+                                    if let Some(conn) = &conn {
+                                        // 配额：每连接最多 32 频道（契约 §6，超限 4202）
+                                        if conn.get_channels().await.len() >= 32 {
+                                            let err = json!({
+                                                "jsonrpc": "2.0",
+                                                "id": rpc_id,
+                                                "error": { "code": 4202, "message": "too many channels" }
+                                            });
+                                            let mut tx = tx_shared.write().await;
+                                            let _ = tx
+                                                .send(Message::Text(err.to_string().into()))
+                                                .await;
+                                            continue;
                                         }
-                                    };
-                                    if too_many {
-                                        let err = json!({
+                                        state.subscribe_to_channel(conn, ch.to_string()).await;
+                                        let resp = json!({
                                             "jsonrpc": "2.0",
                                             "id": rpc_id,
-                                            "error": { "code": 4202, "message": "too many channels" }
+                                            "result": { "status": "subscribed", "channel": ch }
                                         });
                                         let mut tx = tx_shared.write().await;
                                         let _ =
-                                            tx.send(Message::Text(err.to_string().into())).await;
-                                        continue;
+                                            tx.send(Message::Text(resp.to_string().into())).await;
+                                        info!("User {} subscribed to channel: {}", id, ch);
+                                    } else {
+                                        warn!("subscribe without active connection from {}", id);
                                     }
-                                    state.subscribe_to_channel(id, ch.to_string()).await;
-                                    let resp = json!({
-                                        "jsonrpc": "2.0",
-                                        "id": rpc_id,
-                                        "result": { "status": "subscribed", "channel": ch }
-                                    });
-                                    let mut tx = tx_shared.write().await;
-                                    let _ = tx.send(Message::Text(resp.to_string().into())).await;
-                                    info!("User {} subscribed to channel: {}", id, ch);
                                 }
                                 _ => {
                                     warn!(
@@ -509,17 +572,24 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
                                 .and_then(|v| v.as_str());
                             match (&user_id, channel) {
                                 (Some(id), Some(ch)) => {
-                                    state.unsubscribe_from_channel(id, ch).await;
-                                    let resp = json!({
-                                        "jsonrpc": "2.0",
-                                        "id": rpc_id,
-                                        "result": { "status": "unsubscribed", "channel": ch }
-                                    });
-                                    let mut tx = tx_shared.write().await;
-                                    let _ = tx.send(Message::Text(resp.to_string().into())).await;
+                                    if let Some(conn) = &conn {
+                                        state.unsubscribe_from_channel(conn, ch).await;
+                                        let resp = json!({
+                                            "jsonrpc": "2.0",
+                                            "id": rpc_id,
+                                            "result": { "status": "unsubscribed", "channel": ch }
+                                        });
+                                        let mut tx = tx_shared.write().await;
+                                        let _ =
+                                            tx.send(Message::Text(resp.to_string().into())).await;
+                                    } else {
+                                        warn!("unsubscribe without active connection from {}", id);
+                                    }
                                 }
                                 (Some(id), None) => {
-                                    state.remove_connection(id).await;
+                                    if let Some(conn) = &conn {
+                                        state.remove_connection(id, conn.conn_id).await;
+                                    }
                                     let resp = json!({
                                         "jsonrpc": "2.0",
                                         "id": rpc_id,
@@ -572,7 +642,9 @@ async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Optio
     heartbeat_handle.abort();
 
     if let Some(id) = &user_id {
-        state.remove_connection(id).await;
+        if let Some(conn) = &conn {
+            state.remove_connection(id, conn.conn_id).await;
+        }
         info!("User {} disconnected", id);
     }
 
@@ -588,6 +660,31 @@ pub async fn websocket_handler(
         "WebSocket upgrade requested, token present: {}",
         params.token.is_some()
     );
+
+    // 契约 §6：每 token 最多 6 并发连接（升级前预检，超限返回 429；
+    // handle_socket 内 add_connection 为权威二次检查）
+    if let Some(token) = &params.token {
+        if let Ok(claims) = verify_jwt_token(token, &state.auth_state().jwt_secret) {
+            let user_id = claims.sub.clone();
+            let conns = state.connections.read().await;
+            if let Some(list) = conns.get(&user_id) {
+                if list.len() >= MAX_CONNECTIONS_PER_USER {
+                    warn!(
+                        "WS upgrade rejected for user {}: connection limit exceeded",
+                        user_id
+                    );
+                    return (
+                        StatusCode::TOO_MANY_REQUESTS,
+                        Json(json!({
+                            "code": 429,
+                            "message": "too many connections"
+                        })),
+                    )
+                        .into_response();
+                }
+            }
+        }
+    }
 
     ws.on_upgrade(move |socket| handle_socket(socket, state, params.token))
 }
@@ -695,7 +792,8 @@ pub const WS_MODULE_WHITELIST: &[&str] = &[
 
 /// GET /ws/healthz —— 非 Upgrade HTTP 状态端点（规范 §7 自测）
 pub async fn healthz_handler(State(state): State<Arc<WsState>>) -> impl IntoResponse {
-    let clients = state.connections.read().await.len();
+    // 总连接数（含多连接，契约 §6）
+    let clients = state.connection_count().await;
     let chans = state.channels.read().await;
     let channels: HashMap<String, usize> =
         chans.iter().map(|(k, v)| (k.clone(), v.len())).collect();
@@ -723,5 +821,30 @@ pub async fn websocket_handler_path(
         feature,
         params.token.is_some()
     );
+
+    // 契约 §6：每 token 最多 6 并发连接（升级前预检，超限 429；add_connection 权威复查）
+    if let Some(token) = &params.token {
+        if let Ok(claims) = verify_jwt_token(token, &state.auth_state().jwt_secret) {
+            let user_id = claims.sub.clone();
+            let conns = state.connections.read().await;
+            if let Some(list) = conns.get(&user_id) {
+                if list.len() >= MAX_CONNECTIONS_PER_USER {
+                    warn!(
+                        "WS upgrade rejected for user {}: connection limit exceeded",
+                        user_id
+                    );
+                    return (
+                        StatusCode::TOO_MANY_REQUESTS,
+                        Json(json!({
+                            "code": 429,
+                            "message": "too many connections"
+                        })),
+                    )
+                        .into_response();
+                }
+            }
+        }
+    }
+
     ws.on_upgrade(move |socket| handle_socket(socket, state, params.token))
 }

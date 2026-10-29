@@ -538,11 +538,8 @@ async fn main() -> anyhow::Result<()> {
         loop {
             interval.tick().await;
             let removed = ws_state_cleanup.cleanup_timeout_connections(90).await;
-            if !removed.is_empty() {
-                tracing::info!(
-                    "WebSocket cleanup: removed {} timeout connections",
-                    removed.len()
-                );
+            if removed > 0 {
+                tracing::info!("WebSocket cleanup: removed {} timeout connections", removed);
             }
         }
     });
