@@ -6,13 +6,13 @@ export const aiReadOps2 = {
   summarizeVideo: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ai.get('/multimodal/video/summary'),
   listConversations: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ai.get('/api/ai/dify/conversations'),
+    apiClient.ai.get('/dify/conversations'),
   listMessages: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ai.get('/api/ai/dify/messages'),
+    apiClient.ai.get('/dify/messages'),
   listConnectors: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ai.get('/api/ai/connectors'),
+    apiClient.ai.get('/connectors'),
   listAdminFaqs: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ai.get('/dsh/copilot/admin/faqs'),
   listForms: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ai.get('/api/core/ai-form/forms'),
+    apiClient.core.get('/ai-form/forms'),
 };

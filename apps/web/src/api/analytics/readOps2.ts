@@ -12,15 +12,15 @@ export const analyticsReadOps2 = {
   getLaboratoryAnalytics: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.bi.get('/analytics/laboratory'),
   getSrmAnalytics: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.bi.get('/api/bi/srm/summary'),
+    apiClient.bi.get('/srm/summary'),
   getEhsAnalytics: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.bi.get('/api/bi/ehs/summary'),
+    apiClient.bi.get('/ehs/summary'),
   getLimsSummary: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.bi.get('/api/bi/lims/summary'),
+    apiClient.bi.get('/lims/summary'),
   getQmsSummary: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.bi.get('/api/bi/qms/summary'),
+    apiClient.bi.get('/qms/summary'),
   getEhsIncidentTrend: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.bi.get('/api/bi/ehs/incident-trend'),
+    apiClient.bi.get('/ehs/incident-trend'),
   trendAnalysis: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.bi.post('/prediction/trend', data ?? {}),
 };

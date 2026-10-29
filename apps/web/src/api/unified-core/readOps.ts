@@ -10,9 +10,9 @@ export const unifiedCoreReadApi = {
   getMyPermissions: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.get('/iam/permissions/my-permissions'),
   listTasks: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.core.get('/api/core/flow/tasks'),
+    apiClient.core.get('/flow/tasks'),
   listApprovalTasks: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.core.get('/api/core/flow/approval-tasks'),
+    apiClient.core.get('/flow/approval-tasks'),
   listPlans: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.get('/subscriptions/plans'),
   batchUpdateRules: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>

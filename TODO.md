@@ -5804,3 +5804,12 @@ P2（2-4 周后）
 
 ### 优先级
 P2（2-4 周后）
+
+## v1.121（2026-10-30）L2 冒烟回归：双前缀系统性 bug 修复 + 121 route_missing 登记
+
+- **背景**：WCS `scripts/web_contract_smoke.py`（8099）总 4593/4716 PASS / 123 FAIL。暴露 **49 条双前缀系统性 bug**（`baseURL /api/<svc>` + 路径 `/api/<svc>/...` = 双重前缀 404）：core 14 / pdm 15 / bi 10 / ai 3+1 跨 core / ehs 3 / integration 2 / mes 1 / master-data 1 / ticket 4。
+- **根因**：v74 BIZ 补绑生成器路径未剥离 svc 前缀（client.ts `${baseURL}${url}` 直拼；规范为相对路径不含 baseURL）。
+- **修复（14 文件 66 行）**：剥离 `/api/<svc>/` 前缀；`ai/readOps2.ts:17` 跨 svc 改 `apiClient.core.get('/ai-form/forms')`。`tsc --noEmit` 0 错。WCS 双前缀 FAIL **49→0**（123 总数 - 双前缀 0 = 剩余 121 route_missing）。
+- **遗留待下批（121 条 route_missing，非双前缀）**：erp 29 / core 27 / master-data 27 / communication 13 / integration 9 / qms 5 / lims 3 / ehs 2 / finance 2 / bi 1 / crm 1 / pdm 1 / portal 1——多为后端真缺路由（如 /api/core/files|attachments|form-definitions|form-instances、/api/core/rules/batch-update、/api/core/users/check-*）；部分与既有 stub 登记（form-definitions/form-instances = stub_detail）重叠。按「缺后端补后端、缺前端补前端」逐条核实。
+- **观察项**：`apps/web/src/api/finance/settlementCenter.ts` 11 处 `apiClient.finance.get('/api/core/settlement-center/*')` 跨 svc 调用（curl `/api/finance/api/core/settlement-center/reconciliations`=401、`/api/core/...`=404）——归属待核（应为 apiClient.core 或后端挂 core 路由），不在 WCS FAIL 集，未擅动。
+- **L3 部署包**：`docs/deploy/nginx-ws-2026-10.md`（/ws/ 反代 reload 步骤 + WS_ALLOWED_ORIGINS + 回滚 + 验证 curl），配置已入库（317cb2c458/65a23eeb74）。

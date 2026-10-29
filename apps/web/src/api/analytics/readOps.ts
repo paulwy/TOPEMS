@@ -12,13 +12,13 @@ export const analyticsReadApi = {
   getProductionAnalytics: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.bi.get('/analytics/production'),
   getLimsSampleTimeline: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.bi.get('/api/bi/lims/sample-timeline'),
+    apiClient.bi.get('/lims/sample-timeline'),
   getQmsQualityTrend: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.bi.get('/api/bi/qms/quality-trend'),
+    apiClient.bi.get('/qms/quality-trend'),
   getSrmSupplierRanking: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.bi.get('/api/bi/srm/supplier-ranking'),
+    apiClient.bi.get('/srm/supplier-ranking'),
   getSrmOrderTimeline: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.bi.get('/api/bi/srm/order-timeline'),
+    apiClient.bi.get('/srm/order-timeline'),
   queryDashboardRealtimeData: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.bi.get('/dashboard/{id}/realtime'),
   exponentialSmoothingForecast: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>

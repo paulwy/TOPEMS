@@ -6,7 +6,7 @@ export const masterdataReadOps2 = {
   getTrendingItems: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.master.get('/kg-v53/trending'),
   listDictItems: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.master.get('/api/master-data/dict/dict-types/{dict_type_id}/items'),
+    apiClient.master.get('/dict/dict-types/{dict_type_id}/items'),
   getTrendingItems2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.master.get('/trending'),
   list: async (): Promise<ApiResponse<Record<string, unknown>>> =>

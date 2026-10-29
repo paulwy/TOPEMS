@@ -4,19 +4,19 @@ import type { ApiResponse } from '../client';
 // ── v74 BIZ 接入候选 pdm 8 条（2026-10-29）──
 export const pdmReadApi = {
   listFormulas: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.pdm.get('/api/pdm/production-formulas'),
+    apiClient.pdm.get('/production-formulas'),
   listMaterials: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.pdm.get('/api/pdm/materials'),
+    apiClient.pdm.get('/materials'),
   listProjects: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.pdm.get('/api/pdm/projects'),
+    apiClient.pdm.get('/projects'),
   listProcesses: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.pdm.get('/api/pdm/production-processes'),
+    apiClient.pdm.get('/production-processes'),
   listDocuments: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.pdm.get('/api/pdm/documents'),
+    apiClient.pdm.get('/documents'),
   listBomComparisons: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.pdm.get('/api/pdm/bom-compare'),
+    apiClient.pdm.get('/bom-compare'),
   listSteps: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.pdm.get('/api/pdm/production-steps'),
+    apiClient.pdm.get('/production-steps'),
   listProducts: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.pdm.get('/api/pdm/products'),
+    apiClient.pdm.get('/products'),
 };

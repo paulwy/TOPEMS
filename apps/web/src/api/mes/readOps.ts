@@ -4,7 +4,7 @@ import type { ApiResponse } from '../client';
 // ── v74 BIZ 接入候选 mes 9 条（2026-10-29）──
 export const mesReadApi = {
   getQualityTrend: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.mes.get('/api/mes/kanban/quality-trend'),
+    apiClient.mes.get('/kanban/quality-trend'),
   getDeliveryAnalytics: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.mes.get('/analytics/delivery-analytics'),
   getDeliveryAnalytics2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
