@@ -15,7 +15,9 @@ export const unifiedCoreReadApi = {
     apiClient.core.get('/flow/approval-tasks'),
   listPlans: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.get('/subscriptions/plans'),
-  batchUpdateRules: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  batchUpdateRules: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.post('/flow/rules/batch-update', data ?? {}),
   getDesignerResources: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.get('/automation/designer/schema'),
@@ -25,30 +27,44 @@ export const unifiedCoreReadApi = {
     apiClient.core.get('/iam/users/check-username'),
   getUserPermissions: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.get('/iam/user-permissions/{user_id}'),
-  verifyPermission2: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  verifyPermission2: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.post('/iam/permissions/verify', data ?? {}),
-  verifyMultiplePermissions2: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  verifyMultiplePermissions2: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.post('/iam/permissions/verify-multiple', data ?? {}),
   getUserPositions: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.get('/iam/users/{user_id}/positions'),
   getPositionUsers: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.get('/iam/positions/{position_id}/users'),
-  disableUser: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  disableUser: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.post('/iam/users/{id}/disable', data ?? {}),
-  enableUser: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  enableUser: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.post('/iam/users/{id}/enable', data ?? {}),
-  changePassword: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  changePassword: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.put('/iam/users/{id}/password', data ?? {}),
-  checkResourcePermission: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  checkResourcePermission: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.post('/iam/permissions/check-resource', data ?? {}),
-  batchAssignPositions: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  batchAssignPositions: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.post('/iam/users/batch-positions', data ?? {}),
-  unassignPosition: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  unassignPosition: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.delete('/iam/users/{user_id}/positions/{position_id}', data ?? {}),
   getMyPermissions2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.get('/iam/permissions/my-permissions'),
-  websocket: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.core.get('/ws/core/notifications'),
   getPermissionMetadata: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.core.get('/iam/permissions/metadata'),
   downloadFile: async (): Promise<ApiResponse<Record<string, unknown>>> =>

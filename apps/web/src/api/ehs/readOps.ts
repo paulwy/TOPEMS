@@ -6,9 +6,9 @@ export const ehsReadApi = {
   listPlanCategories: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ehs.get('/emergency-plans/categories'),
   listStockRecords: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ehs.get('/hazardous-materials/stock-records'),
+    apiClient.ehs.get('/hazardous-materials/movements'),
   getStockRecord: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ehs.get('/hazardous-materials/stock-records/{id}'),
+    apiClient.ehs.get('/hazardous-materials/movements/{id}'),
   listPlans: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ehs.get('/emergency-plans'),
 };

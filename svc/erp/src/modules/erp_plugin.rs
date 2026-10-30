@@ -6,7 +6,7 @@
 
 use axum::{
     extract::{Extension, State},
-    routing::get,
+    routing::{get, post},
     Router,
 };
 use serde::{Deserialize, Serialize};
@@ -303,20 +303,20 @@ pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/plugins/info", get(get_plugin_info))
         .route("/api/plugins/health", get(plugin_health_check))
+        // 前端契约补绑：插件注册两条 POST（writeOps.ts 声明），共用下方注册实现。
+        .route(
+            "/erp-plugin/register-to-core",
+            post(register_to_core),
+        )
+        .route(
+            "/erp-plugin/auto-register-to-core",
+            post(auto_register_to_core),
+        )
 }
 
-/// 启动时自动注册到统一核心
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["erp:write"])),
-    path = "/erp/erp-plugin/auto-register-to-core",
-    tag = "ErpPlugin",
-    operation_id = "auto_register_to_core",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
-pub async fn auto_register_to_core(_core_url: Option<&str>) {
+/// 自动注册到统一核心的内部实现（启动后台任务与 HTTP handler 共用）。
+/// 返回 Ok(()) 表示下游注册成功；Err(msg) 表示下游拒绝或连接失败，由调用方决定 envelope 形态。
+pub async fn auto_register_to_core_internal(_core_url: Option<&str>) -> Result<(), String> {
     let core_url = std::env::var("PLUGIN_REGISTRY_URL")
         .unwrap_or_else(|_| "http://localhost:8096".to_string());
     let runtime_url =
@@ -353,11 +353,11 @@ pub async fn auto_register_to_core(_core_url: Option<&str>) {
                     "[ERP Plugin] Successfully registered to core at {}",
                     core_url
                 );
+                Ok(())
             } else {
-                tracing::warn!(
-                    "[ERP Plugin] Failed to register to core: {}",
-                    response.status()
-                );
+                let msg = format!("Failed to register: {}", response.status());
+                tracing::warn!("[ERP Plugin] Failed to register to core: {}", response.status());
+                Err(msg)
             }
         }
         Err(e) => {
@@ -366,7 +366,26 @@ pub async fn auto_register_to_core(_core_url: Option<&str>) {
                 core_url,
                 e
             );
+            Err(format!("Failed to connect to core: {}", e))
         }
+    }
+}
+
+/// 手动触发自动注册到统一核心（HTTP handler 形态，返回标准 envelope）。
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:write"])),
+    path = "/erp/erp-plugin/auto-register-to-core",
+    tag = "ErpPlugin",
+    operation_id = "auto_register_to_core",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
+pub async fn auto_register_to_core(State(_state): State<ApiState>) -> ApiResponse<()> {
+    match auto_register_to_core_internal(None).await {
+        Ok(()) => ApiResponse::success((), "已触发自动注册到核心平台"),
+        Err(msg) => ApiResponse::server_error(&msg),
     }
 }
 

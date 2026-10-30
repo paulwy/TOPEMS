@@ -68,13 +68,13 @@ export const syncApi = {
   createIntegrationAction: async (
     data: Record<string, unknown>
   ): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.qms.post('/internal/qms/actions/integration', data);
+    return apiClient.qms.post('/api/internal/qms/actions/integration', data);
   },
 
   updateIntegrationInspectionResult: async (
     inspectionNo: string,
     data: Record<string, unknown>
   ): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.qms.post(`/internal/qms/inspections/${inspectionNo}/result`, data);
+    return apiClient.qms.post(`/api/internal/qms/inspections/${inspectionNo}/result`, data);
   },
 };

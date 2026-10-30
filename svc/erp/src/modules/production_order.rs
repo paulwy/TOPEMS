@@ -49,6 +49,11 @@ pub fn create_routes() -> Router<ApiState> {
             "/production-orders/sync/mes-progress",
             post(receive_mes_progress),
         )
+        // 前端契约补绑：扁平动词路径（readOps.ts 声明），与 RESTful 列表端点共用同一处理器。
+        .route(
+            "/production-order/list-production-orders",
+            get(list_production_orders),
+        )
 }
 
 #[utoipa::path(

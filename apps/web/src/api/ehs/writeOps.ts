@@ -7,9 +7,9 @@ export const ehsWriteApi = {
   createExamPlan: async (
     data?: Record<string, unknown>
   ): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ehs.post('/occupational-health/exam-plans', data ?? {}),
+    apiClient.ehs.post('/occupational-health/check-plans', data ?? {}),
   createExamRecord: async (
     data?: Record<string, unknown>
   ): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.ehs.post('/occupational-health/exam-records', data ?? {}),
+    apiClient.ehs.post('/occupational-health/check-records', data ?? {}),
 };

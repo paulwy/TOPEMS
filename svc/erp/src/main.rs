@@ -252,7 +252,7 @@ async fn main() -> Result<()> {
     // 启动时自动注册到统一核心
     let core_url = env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        modules::erp_plugin::auto_register_to_core(core_url.as_deref()).await;
+        let _ = modules::erp_plugin::auto_register_to_core_internal(core_url.as_deref()).await;
     });
 
     // D6：事件发布重试后台任务——周期扫描 Redis ZSET 到期项重发，成功 ZREM。

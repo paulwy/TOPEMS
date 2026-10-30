@@ -13,6 +13,4 @@ export const aiReadOps2 = {
     apiClient.ai.get('/connectors'),
   listAdminFaqs: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ai.get('/dsh/copilot/admin/faqs'),
-  listForms: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.core.get('/ai-form/forms'),
 };

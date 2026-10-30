@@ -29,10 +29,6 @@ export const erpReadApi = {
     apiClient.erp.get('/customers/recent'),
   getLifecycleDashboard: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/mdm-v49/get-lifecycle-dashboard'),
-  listEmployeesFromHrm: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/hrm-integration-example/list-employees-from-hrm'),
-  getEmployeeFromHrm: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/hrm-integration-example/get-employee-from-hrm'),
   listCompanyRelations: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/consolidation/company-relations'),
   getCompanyTree: async (): Promise<ApiResponse<Record<string, unknown>>> =>

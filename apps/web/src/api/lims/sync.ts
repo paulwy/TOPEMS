@@ -33,12 +33,12 @@ export const syncRecordApi = {
   createIntegrationSample: async (
     data: Record<string, unknown>
   ): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.lims.post('/internal/lims/samples/integration', data);
+    return apiClient.lims.post('/api/internal/lims/samples/integration', data);
   },
 
   createIntegrationTask: async (
     data: Record<string, unknown>
   ): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.lims.post('/internal/lims/tasks/integration', data);
+    return apiClient.lims.post('/api/internal/lims/tasks/integration', data);
   },
 };

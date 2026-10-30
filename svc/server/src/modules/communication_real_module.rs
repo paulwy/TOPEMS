@@ -22,7 +22,7 @@
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::routing::{delete, get, post, put};
 use axum::{Json, Router};
-use topems_communication::{im, mail, notification};
+use topems_communication::{im, im_location, mail, notification};
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_core::error::Result;
 
@@ -480,12 +480,19 @@ impl CommunicationRealModule {
                 .route("/messages/{id}", put(im::update_message))
                 .route("/messages/{id}", delete(im::delete_message))
                 .route("/contacts", get(im::list_contacts))
+                .route("/contacts", post(im::add_contact))
                 .route("/contacts/{id}", get(im::get_contact))
                 .route("/contact-groups", get(im::list_contact_groups))
                 .route("/online-status/{id}", get(im::get_online_status))
                 .route("/notifications/{id}", get(im::list_im_notifications))
                 .route("/project-groups", get(im::list_project_groups))
-                .route("/project-groups", post(im::create_project_group));
+                .route("/project-groups", post(im::create_project_group))
+                // --- 会话已读回执（后端 handler 已存在，统一模块补挂） ---
+                .route("/rooms/{id}/read", post(im::mark_messages_read))
+                // --- 位置消息 / 地理围栏 / POI 统一搜索（im_location，前缀对齐独立 main.rs：/im/*） ---
+                .route("/locations/geofences", get(im_location::list_geofences))
+                .route("/locations/message", post(im_location::send_location_message))
+                .route("/pois/search", post(im_location::unified_search_pois));
             for p in IM_STUB_GET {
                 r = r.route(p, get(comm_stub));
             }
