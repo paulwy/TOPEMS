@@ -1293,14 +1293,14 @@ pub async fn list_apqp_approvals(
 
     let approvals = if let Some(pid) = project_id {
         sqlx::query_as::<_, ApqpApproval>(
-            only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at FROM qms.qa_apqp_approvals WHERE project_id = $1 ORDER BY created_at DESC"#),
+            only_own_schema_query!("qms", r#"SELECT id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at FROM qms.qa_apqp_approvals WHERE project_id = $1 ORDER BY created_at DESC"#),
         )
         .bind(pid)
         .fetch_all(&state.pool)
         .await
     } else {
         sqlx::query_as::<_, ApqpApproval>(
-            only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at FROM qms.qa_apqp_approvals ORDER BY created_at DESC LIMIT 100"#),
+            only_own_schema_query!("qms", r#"SELECT id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at FROM qms.qa_apqp_approvals ORDER BY created_at DESC LIMIT 100"#),
         )
         .fetch_all(&state.pool)
         .await
@@ -1335,13 +1335,12 @@ pub async fn create_apqp_approval(
     };
 
     let approval = sqlx::query_as::<_, ApqpApproval>(
-        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_approvals (project_id, approval_type, status, applicant, comment, tenant_id) VALUES ($1, $2, 'pending', $3, $4, $5) RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at"#),
+        only_own_schema_query!("qms", r#"INSERT INTO qms.qa_apqp_approvals (project_id, approval_type, status, applicant, comment) VALUES ($1, $2, 'pending', $3, $4) RETURNING id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at"#),
     )
     .bind(project_id)
     .bind(req.approval_type)
     .bind(req.applicant)
     .bind(req.comment)
-    .bind(Uuid::nil())
     .fetch_one(&state.pool)
     .await;
 
@@ -1380,7 +1379,7 @@ pub async fn process_apqp_approval(
     let status = if req.approved { "approved" } else { "rejected" };
 
     let approval = sqlx::query_as::<_, ApqpApproval>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_approvals SET status = $2, approver = $3, comment = COALESCE($4, comment), approved_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING id::TEXT, tenant_id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_approvals SET status = $2, approver = $3, comment = COALESCE($4, comment), approved_at = NOW() WHERE id = $1 RETURNING id::TEXT, project_id::TEXT, approval_type, status, applicant, approver, comment, submitted_at, approved_at, created_at"#),
     )
     .bind(id)
     .bind(status)

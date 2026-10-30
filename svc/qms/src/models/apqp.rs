@@ -251,7 +251,6 @@ pub struct StatusTransitionRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct ApqpApproval {
     pub id: String,
-    pub tenant_id: String,
     pub project_id: String,
     pub approval_type: String,
     pub status: Option<String>,

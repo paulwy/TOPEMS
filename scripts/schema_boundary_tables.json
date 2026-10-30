@@ -479,5 +479,9 @@
       "scm",
       "erp"
     ]
-  }
+  },
+  "qa_inspection_items": "qms",
+  "qa_sampling_plans": "qms",
+  "qa_inspection_plans": "qms",
+  "qa_inspection_plan_items": "qms"
 }

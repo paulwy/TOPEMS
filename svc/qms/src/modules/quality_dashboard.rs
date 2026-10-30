@@ -509,6 +509,7 @@ pub async fn update_alert_rule(
 
     match rule {
         Ok(data) => ApiResponse::success(data, "预警规则更新成功"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("预警规则不存在或已删除"),
         Err(e) => {
             tracing::error!("Failed to update alert rule: {}", e);
             ApiResponse::server_error("预警规则更新失败")
@@ -655,6 +656,7 @@ pub async fn acknowledge_alert(
 
     match message {
         Ok(data) => ApiResponse::success(data, "预警已确认"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("预警消息不存在或已确认"),
         Err(e) => {
             tracing::error!("Failed to acknowledge alert: {}", e);
             ApiResponse::server_error("预警确认失败")

@@ -250,7 +250,7 @@ async fn list_inspection_items(
             params.push(format!("%{search}%"));
         }
     }
-    let count_sql = format!("SELECT COUNT(*) FROM qa_inspection_items {where_sql}");
+    let count_sql = format!("SELECT COUNT(*) FROM qms.qa_inspection_items {where_sql}");
     let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
     for p in &params {
         count_query = count_query.bind(p);
@@ -264,7 +264,7 @@ async fn list_inspection_items(
     };
     let fetch_sql = format!(
         "SELECT id, code, name, category, specification, method, unit, standard_value, tolerance, status, description \
-         FROM qa_inspection_items {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
+         FROM qms.qa_inspection_items {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
         (page - 1) * page_size
     );
     let mut fetch_query = sqlx::query(&fetch_sql);
@@ -309,7 +309,7 @@ async fn get_inspection_item(
     let filter = tenant_filter(&claims, &headers);
     let mut sql = String::from(
         "SELECT id, code, name, category, specification, method, unit, standard_value, tolerance, status, description \
-         FROM qa_inspection_items WHERE id = $1 AND deleted_at IS NULL",
+         FROM qms.qa_inspection_items WHERE id = $1 AND deleted_at IS NULL",
     );
     let mut q = sqlx::query(&sql).bind(id);
     if let Some(t) = filter {
@@ -350,7 +350,7 @@ async fn create_inspection_item(
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query(
-        "INSERT INTO qa_inspection_items \
+        "INSERT INTO qms.qa_inspection_items \
          (tenant_id, code, name, category, specification, method, unit, standard_value, tolerance, status, description) \
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, 'active'), $11) RETURNING id",
     )
@@ -393,7 +393,7 @@ async fn update_inspection_item(
     let filter = tenant_filter(&claims, &headers);
     let result = if let Some(t) = filter {
         sqlx::query(
-            "UPDATE qa_inspection_items SET \
+            "UPDATE qms.qa_inspection_items SET \
              name = COALESCE($2, name), category = COALESCE($3, category), \
              specification = COALESCE($4, specification), method = COALESCE($5, method), \
              unit = COALESCE($6, unit), standard_value = COALESCE($7, standard_value), \
@@ -416,7 +416,7 @@ async fn update_inspection_item(
         .await
     } else {
         sqlx::query(
-            "UPDATE qa_inspection_items SET \
+            "UPDATE qms.qa_inspection_items SET \
              name = COALESCE($2, name), category = COALESCE($3, category), \
              specification = COALESCE($4, specification), method = COALESCE($5, method), \
              unit = COALESCE($6, unit), standard_value = COALESCE($7, standard_value), \
@@ -456,14 +456,14 @@ async fn delete_inspection_item(
     let filter = tenant_filter(&claims, &headers);
     let result = if let Some(t) = filter {
         sqlx::query(
-            "UPDATE qa_inspection_items SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+            "UPDATE qms.qa_inspection_items SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
         )
         .bind(id)
         .bind(t)
         .execute(&state.pool)
         .await
     } else {
-        sqlx::query("UPDATE qa_inspection_items SET deleted_at = NOW() WHERE id = $1")
+        sqlx::query("UPDATE qms.qa_inspection_items SET deleted_at = NOW() WHERE id = $1")
             .bind(id)
             .execute(&state.pool)
             .await
@@ -509,7 +509,7 @@ async fn list_sampling_plans(
             params.push(format!("%{search}%"));
         }
     }
-    let count_sql = format!("SELECT COUNT(*) FROM qa_sampling_plans {where_sql}");
+    let count_sql = format!("SELECT COUNT(*) FROM qms.qa_sampling_plans {where_sql}");
     let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
     for p in &params {
         count_query = count_query.bind(p);
@@ -523,7 +523,7 @@ async fn list_sampling_plans(
     };
     let fetch_sql = format!(
         "SELECT id, code, name, level, sample_size, aql, inspection_level, status, description \
-         FROM qa_sampling_plans {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
+         FROM qms.qa_sampling_plans {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
         (page - 1) * page_size
     );
     let mut fetch_query = sqlx::query(&fetch_sql);
@@ -566,7 +566,7 @@ async fn get_sampling_plan(
     let filter = tenant_filter(&claims, &headers);
     let mut sql = String::from(
         "SELECT id, code, name, level, sample_size, aql, inspection_level, status, description \
-         FROM qa_sampling_plans WHERE id = $1 AND deleted_at IS NULL",
+         FROM qms.qa_sampling_plans WHERE id = $1 AND deleted_at IS NULL",
     );
     let mut q = sqlx::query(&sql).bind(id);
     if let Some(t) = filter {
@@ -605,7 +605,7 @@ async fn create_sampling_plan(
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query(
-        "INSERT INTO qa_sampling_plans \
+        "INSERT INTO qms.qa_sampling_plans \
          (tenant_id, code, name, level, sample_size, aql, inspection_level, status, description) \
          VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, 'active'), $9) RETURNING id",
     )
@@ -644,7 +644,7 @@ async fn update_sampling_plan(
     Json(req): Json<UpdateSamplingPlanRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let filter = tenant_filter(&claims, &headers);
-    let base_sql = "UPDATE qa_sampling_plans SET \
+    let base_sql = "UPDATE qms.qa_sampling_plans SET \
         name = COALESCE($2, name), level = COALESCE($3, level), \
         sample_size = COALESCE($4, sample_size), aql = COALESCE($5, aql), \
         inspection_level = COALESCE($6, inspection_level), status = COALESCE($7, status), \
@@ -698,14 +698,14 @@ async fn delete_sampling_plan(
     let filter = tenant_filter(&claims, &headers);
     let result = if let Some(t) = filter {
         sqlx::query(
-            "UPDATE qa_sampling_plans SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+            "UPDATE qms.qa_sampling_plans SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
         )
         .bind(id)
         .bind(t)
         .execute(&state.pool)
         .await
     } else {
-        sqlx::query("UPDATE qa_sampling_plans SET deleted_at = NOW() WHERE id = $1")
+        sqlx::query("UPDATE qms.qa_sampling_plans SET deleted_at = NOW() WHERE id = $1")
             .bind(id)
             .execute(&state.pool)
             .await
@@ -753,7 +753,7 @@ async fn list_inspection_plans(
             params.push(format!("%{search}%"));
         }
     }
-    let count_sql = format!("SELECT COUNT(*) FROM qa_inspection_plans p {where_sql}");
+    let count_sql = format!("SELECT COUNT(*) FROM qms.qa_inspection_plans p {where_sql}");
     let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
     for p in &params {
         count_query = count_query.bind(p);
@@ -767,7 +767,7 @@ async fn list_inspection_plans(
     };
     let fetch_sql = format!(
         "SELECT p.id, p.code, p.name, p.product_code, p.product_name, p.sampling_plan_id, p.status, p.description \
-         FROM qa_inspection_plans p {where_sql} ORDER BY p.created_at DESC LIMIT {page_size} OFFSET {}",
+         FROM qms.qa_inspection_plans p {where_sql} ORDER BY p.created_at DESC LIMIT {page_size} OFFSET {}",
         (page - 1) * page_size
     );
     let mut fetch_query = sqlx::query(&fetch_sql);
@@ -809,7 +809,7 @@ async fn get_inspection_plan(
     let filter = tenant_filter(&claims, &headers);
     let mut sql = String::from(
         "SELECT id, code, name, product_code, product_name, sampling_plan_id, status, description \
-         FROM qa_inspection_plans WHERE id = $1 AND deleted_at IS NULL",
+         FROM qms.qa_inspection_plans WHERE id = $1 AND deleted_at IS NULL",
     );
     let mut q = sqlx::query(&sql).bind(id);
     if let Some(t) = filter {
@@ -847,7 +847,7 @@ async fn create_inspection_plan(
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query(
-        "INSERT INTO qa_inspection_plans \
+        "INSERT INTO qms.qa_inspection_plans \
          (tenant_id, code, name, product_code, product_name, sampling_plan_id, status, description) \
          VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 'active'), $8) RETURNING id",
     )
@@ -885,7 +885,7 @@ async fn update_inspection_plan(
     Json(req): Json<UpdateInspectionPlanRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let filter = tenant_filter(&claims, &headers);
-    let base_sql = "UPDATE qa_inspection_plans SET \
+    let base_sql = "UPDATE qms.qa_inspection_plans SET \
         name = COALESCE($2, name), product_code = COALESCE($3, product_code), \
         product_name = COALESCE($4, product_name), sampling_plan_id = COALESCE($5, sampling_plan_id), \
         status = COALESCE($6, status), description = COALESCE($7, description), \
@@ -936,14 +936,14 @@ async fn delete_inspection_plan(
     let filter = tenant_filter(&claims, &headers);
     let result = if let Some(t) = filter {
         sqlx::query(
-            "UPDATE qa_inspection_plans SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+            "UPDATE qms.qa_inspection_plans SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
         )
         .bind(id)
         .bind(t)
         .execute(&state.pool)
         .await
     } else {
-        sqlx::query("UPDATE qa_inspection_plans SET deleted_at = NOW() WHERE id = $1")
+        sqlx::query("UPDATE qms.qa_inspection_plans SET deleted_at = NOW() WHERE id = $1")
             .bind(id)
             .execute(&state.pool)
             .await
@@ -969,8 +969,8 @@ async fn list_plan_items(
     let filter = tenant_filter(&claims, &headers);
     let mut sql = String::from(
         "SELECT pi.id, pi.item_id, i.code AS item_code, i.name AS item_name, pi.sample_qty, pi.sort_order \
-         FROM qa_inspection_plan_items pi \
-         JOIN qa_inspection_items i ON i.id = pi.item_id AND i.deleted_at IS NULL \
+         FROM qms.qa_inspection_plan_items pi \
+         JOIN qms.qa_inspection_items i ON i.id = pi.item_id AND i.deleted_at IS NULL \
          WHERE pi.plan_id = $1",
     );
     let mut q = sqlx::query(&sql).bind(id);
@@ -1010,7 +1010,7 @@ async fn add_plan_item(
     // 校验方案与检验项归属（非超管按租户隔离）
     if let Some(t) = filter {
         let ok = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM qa_inspection_plans WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+            "SELECT COUNT(*) FROM qms.qa_inspection_plans WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
         )
         .bind(id)
         .bind(t)
@@ -1022,7 +1022,7 @@ async fn add_plan_item(
         }
     }
     let result = sqlx::query(
-        "INSERT INTO qa_inspection_plan_items (plan_id, item_id, sample_qty, sort_order) \
+        "INSERT INTO qms.qa_inspection_plan_items (plan_id, item_id, sample_qty, sort_order) \
          VALUES ($1, $2, COALESCE($3, 1), COALESCE($4, 0)) RETURNING id",
     )
     .bind(id)
@@ -1055,7 +1055,7 @@ async fn remove_plan_item(
 ) -> ApiResponse<String> {
     let _ = tenant_filter(&claims, &headers);
     let result =
-        sqlx::query("DELETE FROM qa_inspection_plan_items WHERE plan_id = $1 AND item_id = $2")
+        sqlx::query("DELETE FROM qms.qa_inspection_plan_items WHERE plan_id = $1 AND item_id = $2")
             .bind(id)
             .bind(item_id)
             .execute(&state.pool)

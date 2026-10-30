@@ -353,6 +353,7 @@ pub async fn resolve_issue(
 
     match issue {
         Ok(data) => ApiResponse::success(data, "质量问题已解决"),
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("质量问题不存在或已解决"),
         Err(e) => {
             tracing::error!("Failed to resolve issue: {}", e);
             ApiResponse::server_error("质量问题解决失败")
