@@ -1136,7 +1136,7 @@ pub async fn list_health_records(
         SELECT id::text AS id, record_no, employee_id, employee_name, gender,
                birth_date::text AS birthday, department, position, workplace,
                hazard_factors, blood_type,
-               COALESCE(allergy_history, allergies::text) AS allergy_history,
+               allergy_history AS allergy_history,
                medical_history, contact_info, status,
                created_at::text AS created_at, updated_at::text AS updated_at,
                tenant_id::text AS tenant_id
