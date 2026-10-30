@@ -349,3 +349,8 @@ config/keys/*.pem
 /shared/lib/Cargo.lock
 /svc/migration-sdk/Cargo.lock
 backups/
+
+# 生产构建产物（TOPEMS/bin 与部署目录 /Users/xingzhai/topems/bin 同一目录；releases/ 为构建包。
+# 防止 180MB 二进制与构建包误入库；2026-10-30 统一基线补充）
+/bin/
+/releases/

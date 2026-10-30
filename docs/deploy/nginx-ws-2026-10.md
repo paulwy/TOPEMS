@@ -8,6 +8,7 @@
 |---|---|---|
 | 新增 `location /ws/`（Upgrade/Connection upgrade + proxy_read_timeout 60s） | topems.conf:157-166 | `317cb2c458` |
 | 删除旧 v1 正则块（9 个 location：/api/{core/,}{svc}/v1 + /api/v1/*） | topems.conf（原 170-200 行） | `65a23eeb74` |
+| 补齐 443 location 级安全头（HSTS/CSP/X-Frame/nosniff/Referrer-Policy；修复 add_header 继承屏蔽，前端页面/资源缺失安全头） | topems.conf location /、/assets/、静态正则 | `e42c33206` |
 
 ## reload 步骤（生产）
 
