@@ -27,19 +27,17 @@
 > （2 路由缺失 + 30 handler 500，跨 12 模块：qms/ehs/pm/pdm/lims/mes/wms/finance/portal/
 > workflow/core-mdm/erp-plugin，多为表列漂移或未处理空查询）。已登记 KNOWN 豁免，
 > 按模块分批诊断核销（处置记录见 `docs/契约缺口阶段二核销处置记录-2026-10-30.md` 第 10 节）。
+> - **批一 qms 8 项**（提交 `c748db91a`）：qa 表漂移归位 + tenant_id/404 处理，已核销。
+> - **批二 10 项**（提交 `9c8670b94`/`89a572cb5`）：pdm/lims 表漂移归位、ehs 缺列、
+>   lims/mes/workflow/unified-core 列与类型修复，已核销。
+> - **批三 12 项**（提交 `xxxxxxx`）：core-mdm refs×2（默认表名落 public 真表）、
+>   finance cqrs×1（内嵌补 CQRS 初始化）、wms to-shipping×1（补 order_date 列 +
+>   契约路径已可达）、erp-plugin×2（失败分支改 501/404）、integration retry×3
+>   （retry-failed 去不存在的列 + mes-erp/mes-qms 记录缺失返业务 404）、
+>   route_missing×2（dead-letters DELETE 与 bi report export 404 补统一文案），已核销。
+> **批三后豁免仅剩 3 项（schema 从未建型，pm×2 / portal×1，待用户定向）**。
 ## KNOWN
 
-- DELETE /api/erp/master-data/sync/dead-letters/00000000-0000-0000-0000-000000000099
 - DELETE /api/portal/streaming-processing/stream/00000000-0000-0000-0000-000000000099
-- GET /api/bi/report/00000000-0000-0000-0000-000000000099/export
-- GET /api/core/mdm/refs
-- GET /api/core/mdm/refs/sync-status
-- GET /api/finance/cqrs/projection-progress
 - GET /api/pm/projects
-- POST /api/erp/erp-plugin/auto-register-to-core
-- POST /api/erp/erp-plugin/register-to-core
-- POST /api/integration/mes-erp/00000000-0000-0000-0000-000000000099/retry
-- POST /api/integration/mes-qms/00000000-0000-0000-0000-000000000099/retry
-- POST /api/integration/sync/retry-failed
-- POST /api/wms/sync/outbound-order/00000000-0000-0000-0000-000000000099/to-shipping
 - PUT /api/pm/projects/00000000-0000-0000-0000-000000000099

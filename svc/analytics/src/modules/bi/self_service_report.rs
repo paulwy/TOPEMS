@@ -649,7 +649,7 @@ pub async fn export_report(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Query(query): Query<ReportExportQuery>,
-) -> Result<impl IntoResponse, StatusCode> {
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     info!("Exporting report: {} format: {:?}", id, query.format);
 
     let report = match sqlx::query!(
@@ -664,10 +664,28 @@ pub async fn export_report(
     .await
     {
         Ok(Some(row)) => row,
-        Ok(None) => return Err(StatusCode::NOT_FOUND),
+        Ok(None) => {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({
+                    "code": 404,
+                    "success": false,
+                    "message": "报表不存在或已删除",
+                    "data": null,
+                })),
+            ))
+        }
         Err(e) => {
             warn!("Failed to get report for export: {}", e);
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "code": 500,
+                    "success": false,
+                    "message": "导出失败",
+                    "data": null,
+                })),
+            ));
         }
     };
 
@@ -707,7 +725,15 @@ pub async fn export_report(
         Ok(data) => data,
         Err(e) => {
             warn!("Failed to generate CSV: {}", e);
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "code": 500,
+                    "success": false,
+                    "message": "导出失败",
+                    "data": null,
+                })),
+            ));
         }
     };
 

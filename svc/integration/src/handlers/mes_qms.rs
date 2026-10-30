@@ -260,7 +260,7 @@ pub async fn retry_mes_qms_sync_api(
         Ok(sync) => ApiResponse::success(sync, "MES↔QMS sync retried successfully"),
         Err(e) => {
             tracing::error!("Failed to retry MES↔QMS sync: {}", e);
-            ApiResponse::from(TopemsError::internal("Failed to retry MES↔QMS sync", e))
+            ApiResponse::from(e)
         }
     }
 }

@@ -290,7 +290,7 @@ pub async fn retry_mes_erp_sync(
         Ok(result) => ApiResponse::success(result, "MES↔ERP 同步重试成功"),
         Err(e) => {
             tracing::error!("MES↔ERP sync retry failed: {}", e);
-            ApiResponse::from(TopemsError::internal("MES↔ERP 同步重试失败", e))
+            ApiResponse::from(e)
         }
     }
 }

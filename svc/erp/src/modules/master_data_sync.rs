@@ -903,14 +903,24 @@ pub async fn batch_replay_dead_letters(
 pub async fn delete_dead_letter(
     Path(id): Path<String>,
     State(state): State<ApiState>,
-) -> Result<StatusCode, StatusCode> {
+) -> Result<StatusCode, (StatusCode, Json<serde_json::Value>)> {
     let _ = &state;
     let store = get_sync_store();
     let mut dead_letters = store.dead_letters.lock().await;
 
     let pos = match dead_letters.iter().position(|d| d.id == id) {
         Some(p) => p,
-        None => return Err(StatusCode::NOT_FOUND),
+        None => {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(serde_json::json!({
+                    "code": 404,
+                    "success": false,
+                    "message": "死信记录不存在",
+                    "data": null,
+                })),
+            ))
+        }
     };
 
     dead_letters.remove(pos);

@@ -102,11 +102,11 @@ pub struct MasterDataRefService {
 }
 
 impl MasterDataRefService {
-    /// 创建服务实例（默认表名 `core_master_data_refs`，core schema）
+    /// 创建服务实例（默认表名 `core_master_data_refs`，public schema）
     pub fn new(pool: PgPool) -> Self {
         Self {
             pool,
-            table_name: "master_data.core_master_data_refs".to_string(),
+            table_name: "core_master_data_refs".to_string(),
         }
     }
 

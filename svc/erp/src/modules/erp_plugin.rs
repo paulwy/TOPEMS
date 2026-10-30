@@ -289,12 +289,18 @@ pub async fn register_to_core(State(_state): State<ApiState>) -> ApiResponse<()>
                     "[ERP Plugin] Failed to register to core: {}",
                     response.status()
                 );
-                ApiResponse::server_error(&format!("Failed to register: {}", response.status()))
+                ApiResponse::not_implemented(&format!(
+                    "核心注册服务未部署（CORE_URL={}），注册功能暂不可用: {}",
+                    core_url, response.status()
+                ))
             }
         }
         Err(e) => {
             tracing::warn!("[ERP Plugin] Failed to register to core: {}", e);
-            ApiResponse::from(TopemsError::internal("Failed to connect to core", e))
+            ApiResponse::not_implemented(&format!(
+                "核心注册服务未部署（CORE_URL={}），注册功能暂不可用: {}",
+                core_url, e
+            ))
         }
     }
 }
@@ -385,7 +391,7 @@ pub async fn auto_register_to_core_internal(_core_url: Option<&str>) -> Result<(
 pub async fn auto_register_to_core(State(_state): State<ApiState>) -> ApiResponse<()> {
     match auto_register_to_core_internal(None).await {
         Ok(()) => ApiResponse::success((), "已触发自动注册到核心平台"),
-        Err(msg) => ApiResponse::server_error(&msg),
+        Err(msg) => ApiResponse::not_implemented(&msg),
     }
 }
 

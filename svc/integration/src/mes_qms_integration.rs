@@ -1034,7 +1034,7 @@ pub async fn retry_failed_sync(
     let sync = get_mes_qms_sync(pool, sync_id)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("获取同步记录失败: {}", e)))?
-        .ok_or_else(|| "同步记录不存在".to_string())?;
+        .ok_or_else(|| TopemsError::ResourceNotFound("同步记录不存在".to_string()))?;
 
     if sync.retry_count >= sync.max_retries {
         return Err(TopemsError::ValidationFailed(

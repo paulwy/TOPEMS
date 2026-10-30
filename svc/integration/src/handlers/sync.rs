@@ -389,7 +389,7 @@ pub async fn retry_failed(
             "integration",
             r#"
             UPDATE integration.core_inter_module_sync
-            SET status = 'pending', retry_count = 0, next_retry_at = NULL, updated_at = $1
+            SET status = 'pending', updated_at = $1
             WHERE status = 'failed' AND sync_type = $2 AND source_module = $3 AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
             "#
         ))
@@ -404,7 +404,7 @@ pub async fn retry_failed(
             "integration",
             r#"
             UPDATE integration.core_inter_module_sync
-            SET status = 'pending', retry_count = 0, next_retry_at = NULL, updated_at = $1
+            SET status = 'pending', updated_at = $1
             WHERE status = 'failed' AND sync_type = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
             "#
         ))
@@ -418,7 +418,7 @@ pub async fn retry_failed(
             "integration",
             r#"
             UPDATE integration.core_inter_module_sync
-            SET status = 'pending', retry_count = 0, next_retry_at = NULL, updated_at = $1
+            SET status = 'pending', updated_at = $1
             WHERE status = 'failed' AND source_module = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
             "#
         ))
@@ -432,7 +432,7 @@ pub async fn retry_failed(
             "integration",
             r#"
             UPDATE integration.core_inter_module_sync
-            SET status = 'pending', retry_count = 0, next_retry_at = NULL, updated_at = $1
+            SET status = 'pending', updated_at = $1
             WHERE status = 'failed' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
             "#
         ))

@@ -64,6 +64,11 @@ impl FinanceRealModule {
             return Err(TopemsError::internal("finance schema 防御检查失败", e));
         }
 
+        // 2b. 初始化 CQRS PostgreSQL 事件存储与异步投影器（对齐独立 finance 部署 main.rs）
+        let pg_cqrs_ctx = topems_finance::domain::cqrs::init_pg_cqrs_context(ctx.db.clone());
+        pg_cqrs_ctx.start_async_projection().await;
+        tracing::info!("✅ [embedded] CQRS 事件存储与异步投影器已启动");
+
         // 3. 工作流服务客户端
         let jwt_secret = ctx.auth_state.jwt_secret.clone();
         let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
