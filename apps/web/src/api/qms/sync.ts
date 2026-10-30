@@ -63,18 +63,4 @@ export const syncApi = {
       data: response.data ? adaptSyncRecordToFrontend(response.data) : ({} as SyncRecord),
     };
   },
-
-  // ── v74 to_bind 补绑（2026-10-29）──
-  createIntegrationAction: async (
-    data: Record<string, unknown>
-  ): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.qms.post('/api/internal/qms/actions/integration', data);
-  },
-
-  updateIntegrationInspectionResult: async (
-    inspectionNo: string,
-    data: Record<string, unknown>
-  ): Promise<ApiResponse<Record<string, unknown>>> => {
-    return apiClient.qms.post(`/api/internal/qms/inspections/${inspectionNo}/result`, data);
-  },
 };
