@@ -288,12 +288,12 @@ pub async fn setup_company_info(
             website = COALESCE(EXCLUDED.website, companies.website),
             description = COALESCE(EXCLUDED.description, companies.description),
             updated_at = EXCLUDED.updated_at
-        RETURNING id, tenant_id, name, short_name, registration_number,
+        RETURNING id, tenant_id, organization_id, name, short_name, registration_number,
                   tax_number, address, contact_phone, contact_email, website, description,
                   status, created_at, updated_at
         "#
     ))
-    .bind(org_id)
+    .bind(Uuid::new_v4())
     .bind(&req.name)
     .bind(&req.short_name)
     .bind(&req.registration_number)
@@ -329,8 +329,8 @@ pub async fn setup_company_info(
             // 记录日志
             let _ = sqlx::query(
                 only_own_schema_query!("hrm", r#"
-                INSERT INTO hrm.initialization_logs (id, tenant_id, step_name, action, new_data, created_at, tenant_id)
-                VALUES ($1, $2, 'company_info', 'update', $3, $4, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+                INSERT INTO hrm.initialization_logs (id, organization_id, tenant_id, step_name, action, new_data, created_at)
+                VALUES ($1, $2, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'), 'company_info', 'update', $3, $4)
                 "#)
             )
             .bind(Uuid::new_v4())
