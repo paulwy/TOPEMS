@@ -495,7 +495,7 @@ impl StreamManagerV2 {
 
         let stream = streams
             .get_mut(stream_id)
-            .ok_or_else(|| format!("流不存在: {}", stream_id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("流不存在: {}", stream_id)))?;
 
         stream.status = StreamStatus::Completed;
         Ok(true)
@@ -1278,7 +1278,7 @@ pub async fn delete_stream_handler(
     match StreamManagerV2::delete_stream(&id).await {
         Ok(true) => ApiResponse::success(true, "流已删除"),
         Ok(false) => ApiResponse::not_found("流不存在"),
-        Err(e) => ApiResponse::server_error(&e.classify().1),
+        Err(e) => ApiResponse::from(e),
     }
 }
 

@@ -35,9 +35,12 @@
 >   契约路径已可达）、erp-plugin×2（失败分支改 501/404）、integration retry×3
 >   （retry-failed 去不存在的列 + mes-erp/mes-qms 记录缺失返业务 404）、
 >   route_missing×2（dead-letters DELETE 与 bi report export 404 补统一文案），已核销。
-> **批三后豁免仅剩 3 项（schema 从未建型，pm×2 / portal×1，待用户定向）**。
+> - **收尾 3 项**（提交 `xxxxxxx`）：pm×2（pm schema/表其实已在库，真实根因是 Project
+>   struct 对 jsonb tags 列缺 `#[sqlx(json)]` 解码标注 + UPDATE `$12::text[]` 与 jsonb 列
+>   类型不匹配，改 `to_jsonb($12::text[])`）、portal×1（DELETE stream 的 NotFound 错误被
+>   handler 包装成 500，改 `TopemsError::ResourceNotFound` + `ApiResponse::from(e)` 透传），
+>   已核销。
+> **32 项 FAIL 全部核销清零，KNOWN 集合为空**；后续任何 FAIL 一律阻断门禁。
 ## KNOWN
 
-- DELETE /api/portal/streaming-processing/stream/00000000-0000-0000-0000-000000000099
-- GET /api/pm/projects
-- PUT /api/pm/projects/00000000-0000-0000-0000-000000000099
+（空——32 项真实登录态复核 FAIL 已全部核销）
