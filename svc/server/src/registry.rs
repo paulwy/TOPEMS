@@ -123,6 +123,12 @@ impl ModuleRegistry {
                 axum::routing::get(openapi_json_handler),
             )
             .route("/api/docs", axum::routing::get(docs_handler))
+            // 微前端模块灰度配置下发端点（apps/web canary-release.ts syncFromServer 拉取）。
+            // 当前无灰度配置，返回空数组；注意前端期望裸数组 CanaryConfig[]，不能走 ApiResponse 包装。
+            .route(
+                "/api/canary/config",
+                axum::routing::get(|| async { axum::Json::<Vec<serde_json::Value>>(vec![]) }),
+            )
             // 通用模块级探活兜底：/api/{svc}/health（前端契约各服务客户端均声明 /health；
             // 已注册的静态 /api/{svc}/health 路由优先匹配，未注册的模块由参数路由兜底）
             .route(
