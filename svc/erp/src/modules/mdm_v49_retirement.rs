@@ -432,3 +432,95 @@ pub async fn cancel_retirement_plan(
     plan.status = RetirementStatus::Cancelled;
     ApiResponse::success(plan.clone(), "退役计划已取消")
 }
+
+// ==================== 动词式契约补绑 ====================
+// 前端 readOps.ts / writeOps.ts 声明的扁平动词路径（无 {id} 路径段），
+// 与上方 RESTful 同族处理器共用内存存储与状态机语义。
+
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+pub struct RetirementPlanVerbQuery {
+    pub plan_id: Option<String>,
+    pub id: Option<String>,
+}
+
+fn payload_first_str(v: &serde_json::Value, keys: &[&str]) -> Option<String> {
+    for k in keys {
+        if let Some(x) = v.get(*k).and_then(|x| x.as_str()) {
+            return Some(x.to_string());
+        }
+    }
+    None
+}
+
+/// GET /mdm-v49/cancel-retirement-plan
+pub async fn cancel_retirement_plan_verb(
+    State(_state): State<ApiState>,
+    Query(params): Query<RetirementPlanVerbQuery>,
+) -> ApiResponse<RetirementPlan> {
+    ensure_initialized().await;
+    let store = get_lifecycle_store();
+    let mut plans = store.retirement_plans.lock().await;
+
+    let Some(plan) = (match params.plan_id.or(params.id) {
+        Some(id) => plans.iter_mut().find(|p| p.id == id),
+        None => plans.first_mut(),
+    }) else {
+        return ApiResponse::not_found("未找到退役计划");
+    };
+
+    if matches!(plan.status, RetirementStatus::Completed) {
+        return ApiResponse::bad_request("已执行的退役计划不可取消");
+    }
+
+    plan.status = RetirementStatus::Cancelled;
+    ApiResponse::success(plan.clone(), "退役计划已取消")
+}
+
+/// POST /mdm-v49/rollback-retirement-plan
+pub async fn rollback_retirement_plan_verb(
+    State(_state): State<ApiState>,
+    Query(params): Query<RetirementPlanVerbQuery>,
+    Json(payload): Json<serde_json::Value>,
+) -> ApiResponse<RetirementPlan> {
+    ensure_initialized().await;
+    let store = get_lifecycle_store();
+
+    let id = payload_first_str(&payload, &["plan_id", "planId", "id"])
+        .or(params.plan_id)
+        .or(params.id);
+
+    let (plan_id, master_data_id) = {
+        let mut plans = store.retirement_plans.lock().await;
+        let Some(plan) = (match id {
+            Some(id) => plans.iter_mut().find(|p| p.id == id),
+            None => plans.first_mut(),
+        }) else {
+            return ApiResponse::not_found("未找到退役计划");
+        };
+
+        if !matches!(
+            plan.status,
+            RetirementStatus::Completed | RetirementStatus::Executing
+        ) {
+            return ApiResponse::bad_request("当前状态不支持回滚");
+        }
+
+        plan.status = RetirementStatus::RolledBack;
+        (plan.id.clone(), plan.master_data_id.clone())
+    };
+
+    // 回滚实体到 Operative（与 RESTful rollback 处理器一致）
+    let mut entities = store.entities.lock().await;
+    if let Some(entity) = entities.get_mut(&master_data_id) {
+        entity.stage = LifecycleStage::Operative;
+        entity.last_transition_at = chrono::Utc::now().to_rfc3339();
+        entity.transition_count += 1;
+    }
+
+    let plans = store.retirement_plans.lock().await;
+    let p = plans.iter().find(|x| x.id == plan_id).cloned();
+    match p {
+        Some(plan) => ApiResponse::success(plan, "已回滚"),
+        None => ApiResponse::server_error("回滚失败"),
+    }
+}

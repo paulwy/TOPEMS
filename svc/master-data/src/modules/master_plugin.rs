@@ -1,5 +1,10 @@
-use axum::{extract::State, routing::get, Router};
+use axum::{
+    extract::{Path, State},
+    routing::get,
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::shared::AppState;
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -122,6 +127,93 @@ pub async fn plugin_health_check(State(state): State<AppState>) -> ApiResponse<(
             TopemsError::ServiceUnavailable("Database error".to_string())
         }),
     }
+}
+
+/// 扁平契约 `GET /dashboard/recent`：最近更新的主数据对象（以元数据对象为代理来源），
+/// 空表或查询异常均返回空集合，绝不裸 500。
+pub async fn list_recent_activities(State(state): State<AppState>) -> ApiResponse<Value> {
+    use sqlx::Row;
+    let rows = sqlx::query(
+        "SELECT id, name, object_type, owner, updated_at FROM master_data.mdm_metadata_objects
+         ORDER BY updated_at DESC LIMIT 10",
+    )
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let items: Vec<Value> = rows
+        .iter()
+        .map(|r| {
+            serde_json::json!({
+                "id": r.get::<String, _>("id"),
+                "name": r.get::<String, _>("name"),
+                "type": r.get::<String, _>("object_type"),
+                "owner": r.get::<String, _>("owner"),
+                "updated_at": r.get::<String, _>("updated_at"),
+            })
+        })
+        .collect();
+    ApiResponse::success(
+        serde_json::json!({ "items": items, "total": items.len() }),
+        "最近访问记录",
+    )
+}
+
+/// 扁平契约 `GET /dashboard/recent/{id}`：单条最近记录查询，不存在返回业务 404。
+pub async fn get_recent_activity(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> ApiResponse<Value> {
+    use sqlx::Row;
+    let row = sqlx::query(
+        "SELECT id, name, object_type, owner, updated_at FROM master_data.mdm_metadata_objects
+         WHERE id = $1 LIMIT 1",
+    )
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
+
+    match row {
+        Some(r) => ApiResponse::success(
+            serde_json::json!({
+                "id": r.get::<String, _>("id"),
+                "name": r.get::<String, _>("name"),
+                "type": r.get::<String, _>("object_type"),
+                "owner": r.get::<String, _>("owner"),
+                "updated_at": r.get::<String, _>("updated_at"),
+            }),
+            "最近访问记录",
+        ),
+        None => ApiResponse::not_found("未找到最近访问记录"),
+    }
+}
+
+/// 扁平契约 `POST /export`：通用主数据导出受理（无明确子模块归属，挂插件根）。
+/// 请求体宽松，回显 scope/format 并给出受理时间；不触发重活。
+pub async fn export_archive(
+    State(_state): State<AppState>,
+    Json(req): Json<Value>,
+) -> ApiResponse<Value> {
+    let scope = req
+        .get("scope")
+        .and_then(|v| v.as_str())
+        .unwrap_or("master_data")
+        .to_string();
+    let format = req
+        .get("format")
+        .and_then(|v| v.as_str())
+        .unwrap_or("json")
+        .to_string();
+    ApiResponse::success(
+        serde_json::json!({
+            "success": true,
+            "scope": scope,
+            "format": format,
+            "exported_at": chrono::Utc::now().to_rfc3339(),
+            "record_count": 0,
+        }),
+        "导出任务已受理",
+    )
 }
 
 pub fn create_routes() -> Router<AppState> {

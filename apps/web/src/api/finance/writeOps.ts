@@ -8,42 +8,74 @@ import type { ApiResponse } from '../client';
 export const financeWriteApi = {
   generateConsolidatedReport: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.get('/reports/consolidated/generate'),
-  createConsolidationEntity: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  createConsolidationEntity: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.post('/reports/consolidated/entities', data ?? {}),
   exportConsolidatedReport: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.get('/reports/consolidated/{consolidation_id}/export'),
-  createReportSubscription: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  createReportSubscription: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.post('/reports/subscriptions', data ?? {}),
   exportReport: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.get('/reports/export'),
-  createAuditRule: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  createAuditRule: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.post('/audit-v52/rules', data ?? {}),
-  createAlertConfig: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  createAlertConfig: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.post('/audit-v52/alerts/config', data ?? {}),
-  createSession: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  createSession: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.post('/reconciliation/sessions', data ?? {}),
-  importItems: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  importItems: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.post('/reconciliation/sessions/{session_id}/items/import', data ?? {}),
-  updateDiff: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  updateDiff: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.put('/reconciliation/items/{item_id}/diff', data ?? {}),
-  batchUpdateDiff: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  batchUpdateDiff: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.put('/reconciliation/items/diff/batch', data ?? {}),
-  createAlertRule: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.finance.post('/-v60/alert/rule', data ?? {}),
+  createAlertRule: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
+    apiClient.finance.post('/forecasting/alerts/rules', data ?? {}),
   listPublishedEvents: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.get('/events/published'),
-  handleCreateVoucher: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  handleCreateVoucher: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.post('/cqrs/commands/create-voucher', data ?? {}),
-  approveApproval: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  approveApproval: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.post('/approvals/approve', data ?? {}),
-  exportTemplate: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  exportTemplate: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.post('/voucher-templates/{template_id}/export', data ?? {}),
-  importVouchers: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  importVouchers: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.post('/u8-import/import', data ?? {}),
-  batchWriteOffPayments: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  batchWriteOffPayments: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.post('/payment-records/batch-write-off', data ?? {}),
-  createControlPoint: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  createControlPoint: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.post('/compliance-v51/control-points', data ?? {}),
-  generateControlMatrix: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  generateControlMatrix: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.post('/compliance-v51/control-matrices/generate', data ?? {}),
 };

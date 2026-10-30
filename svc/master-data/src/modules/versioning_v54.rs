@@ -337,6 +337,15 @@ pub struct VersionDiffQuery {
     pub to_version: String,
 }
 
+/// 扁平契约 `/version/diff` 兼容查询：四个参数均可选；缺失时返回空差异（不抛 400）。
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct CompatVersionDiffQuery {
+    pub entity_type: Option<String>,
+    pub entity_id: Option<String>,
+    pub from_version: Option<String>,
+    pub to_version: Option<String>,
+}
+
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct RestoreVersionRequest {
     pub entity_type: String,
@@ -726,14 +735,57 @@ pub async fn diff_versions(
     State(state): State<AppState>,
     Query(params): Query<VersionDiffQuery>,
 ) -> ApiResponse<VersionDiff> {
+    run_version_diff(
+        &state,
+        &params.entity_type,
+        &params.entity_id,
+        &params.from_version,
+        &params.to_version,
+    )
+    .await
+}
+
+/// 扁平契约 `GET /version/diff`：查询参数全部可选；缺参时返回空差异，不抛 400。
+pub async fn diff_versions_compat(
+    State(state): State<AppState>,
+    Query(params): Query<CompatVersionDiffQuery>,
+) -> ApiResponse<VersionDiff> {
+    let (Some(entity_type), Some(entity_id), Some(from_version), Some(to_version)) = (
+        params.entity_type,
+        params.entity_id,
+        params.from_version,
+        params.to_version,
+    ) else {
+        return ApiResponse::success(
+            VersionDiff {
+                from_version: "-".to_string(),
+                to_version: "-".to_string(),
+                added_fields: Vec::new(),
+                removed_fields: Vec::new(),
+                changed_fields: Vec::new(),
+            },
+            "版本差异（参数缺失，返回空差异）",
+        );
+    };
+    run_version_diff(&state, &entity_type, &entity_id, &from_version, &to_version).await
+}
+
+/// 版本差异核心查询（严格参数版与扁平兼容版共用）。
+async fn run_version_diff(
+    state: &AppState,
+    entity_type: &str,
+    entity_id: &str,
+    from_version: &str,
+    to_version: &str,
+) -> ApiResponse<VersionDiff> {
     // K1：真表读取两个版本。
     let from_row = sqlx::query(&format!(
         "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
          WHERE entity_type = $1 AND entity_id = $2 AND version = $3 LIMIT 1"
     ))
-    .bind(&params.entity_type)
-    .bind(&params.entity_id)
-    .bind(&params.from_version)
+    .bind(entity_type)
+    .bind(entity_id)
+    .bind(from_version)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(None);
@@ -741,9 +793,9 @@ pub async fn diff_versions(
         "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
          WHERE entity_type = $1 AND entity_id = $2 AND version = $3 LIMIT 1"
     ))
-    .bind(&params.entity_type)
-    .bind(&params.entity_id)
-    .bind(&params.to_version)
+    .bind(entity_type)
+    .bind(entity_id)
+    .bind(to_version)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(None);
@@ -752,8 +804,8 @@ pub async fn diff_versions(
         (Some(from), Some(to)) => {
             let mut diff =
                 compute_diff(&snapshot_from_row(&from).data, &snapshot_from_row(&to).data);
-            diff.from_version = params.from_version.clone();
-            diff.to_version = params.to_version.clone();
+            diff.from_version = from_version.to_string();
+            diff.to_version = to_version.to_string();
             ApiResponse::success(diff, "版本差异")
         }
         _ => ApiResponse::not_found("未找到指定版本"),
@@ -1633,6 +1685,25 @@ pub async fn get_resource_permissions(
     let filtered: Vec<DataPermission> = rows.iter().map(data_permission_from_row).collect();
 
     ApiResponse::success(filtered, "资源权限列表")
+}
+
+/// 扁平契约 `GET /permissions/resource/{id}`：单条资源权限查询，不存在返回业务 404。
+pub async fn get_resource_permission(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> ApiResponse<DataPermission> {
+    let row = sqlx::query(&format!(
+        "SELECT {DATA_PERMISSION_COLS} FROM master_data.mdm_data_permissions WHERE id = $1 LIMIT 1"
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
+
+    match row {
+        Some(r) => ApiResponse::success(data_permission_from_row(&r), "资源权限"),
+        None => ApiResponse::not_found("未找到资源权限"),
+    }
 }
 
 #[utoipa::path(

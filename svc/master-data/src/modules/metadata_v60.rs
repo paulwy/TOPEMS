@@ -370,6 +370,12 @@ pub struct SearchMetadataQuery {
     pub q: String,
 }
 
+/// 扁平契约 `/metadata/search` 兼容查询：q 可选（缺失时按空串全量匹配）。
+#[derive(Debug, Deserialize)]
+pub struct CompatSearchMetadataQuery {
+    pub q: Option<String>,
+}
+
 // --- 数据血缘增强请求 ---
 
 #[derive(Debug, Deserialize)]
@@ -478,6 +484,80 @@ pub async fn create_metadata(
     ApiResponse::success(obj, "元数据对象已创建")
 }
 
+/// 扁平契约 `POST /metadata`：请求体宽松（空对象 `{}` 亦可），缺失字段给默认值后写真表，
+/// 与 mdm-v60/create_metadata 落库路径保持一致。
+pub async fn create_metadata_compat(
+    State(state): State<AppState>,
+    Json(req): Json<serde_json::Value>,
+) -> ApiResponse<MetadataObject> {
+    let object_type = match req
+        .get("object_type")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+    {
+        Some(t) => parse_metadata_type(&t).unwrap_or(MetadataObjectType::Table),
+        None => MetadataObjectType::Table,
+    };
+
+    let now = chrono::Utc::now().to_rfc3339();
+    let obj = MetadataObject {
+        id: uuid::Uuid::new_v4().to_string(),
+        name: req
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("未命名元数据")
+            .to_string(),
+        object_type,
+        description: req
+            .get("description")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .to_string(),
+        owner: req
+            .get("owner")
+            .and_then(|v| v.as_str())
+            .unwrap_or("system")
+            .to_string(),
+        tags: req
+            .get("tags")
+            .and_then(|v| v.as_array())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|t| t.as_str().map(|s| s.to_string()))
+                    .collect()
+            })
+            .unwrap_or_default(),
+        attributes: req
+            .get("attributes")
+            .cloned()
+            .unwrap_or_else(|| serde_json::json!({})),
+        created_at: now.clone(),
+        updated_at: now,
+    };
+
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_metadata_objects
+           (id, name, object_type, description, owner, tags, attributes, created_at, updated_at, tenant_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+    )
+    .bind(&obj.id)
+    .bind(&obj.name)
+    .bind(object_type_to_str(&obj.object_type))
+    .bind(&obj.description)
+    .bind(&obj.owner)
+    .bind(serde_json::to_value(&obj.tags).unwrap_or(serde_json::json!([])))
+    .bind(&obj.attributes)
+    .bind(&obj.created_at)
+    .bind(&obj.updated_at)
+    .execute(&state.db)
+    .await
+    {
+        return ApiResponse::server_error(&format!("写入元数据对象失败: {e}"));
+    }
+
+    ApiResponse::success(obj, "元数据对象已创建")
+}
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
@@ -554,6 +634,28 @@ pub async fn search_metadata(
 ) -> ApiResponse<Vec<MetadataObject>> {
     // K1：真表 LIKE 搜索。
     let pattern = format!("%{}%", params.q);
+    let rows = sqlx::query(&format!(
+        r#"SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects
+           WHERE name ILIKE $1 OR description ILIKE $1 OR owner ILIKE $1
+           ORDER BY created_at DESC"#,
+    ))
+    .bind(&pattern)
+    .fetch_all(&state.db)
+    .await;
+    let results: Vec<MetadataObject> = match rows {
+        Ok(r) => r.iter().map(metadata_from_row).collect(),
+        Err(e) => return ApiResponse::server_error(&format!("搜索元数据失败: {e}")),
+    };
+
+    ApiResponse::success(results, "元数据搜索结果")
+}
+
+/// 扁平契约 `GET /metadata/search`：查询词可选，缺失时按空串匹配全量（与 mdm-v60 真表一致）。
+pub async fn search_metadata_compat(
+    State(state): State<AppState>,
+    Query(params): Query<CompatSearchMetadataQuery>,
+) -> ApiResponse<Vec<MetadataObject>> {
+    let pattern = format!("%{}%", params.q.unwrap_or_default());
     let rows = sqlx::query(&format!(
         r#"SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects
            WHERE name ILIKE $1 OR description ILIKE $1 OR owner ILIKE $1
@@ -1457,6 +1559,26 @@ pub async fn get_policies(
 
     ApiResponse::success(policies, "生命周期策略列表")
 }
+
+/// 扁平契约 `GET /lifecycle/policies/{id}`：单条策略查询，不存在返回业务 404（非 catch-all）。
+pub async fn get_policy(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> ApiResponse<LifecyclePolicy> {
+    let row = sqlx::query(&format!(
+        "SELECT {POLICY_COLS} FROM master_data.mdm_lifecycle_policies WHERE id = $1 LIMIT 1"
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
+
+    match row {
+        Some(r) => ApiResponse::success(lifecycle_policy_from_row(&r), "生命周期策略"),
+        None => ApiResponse::not_found("未找到生命周期策略"),
+    }
+}
+
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),

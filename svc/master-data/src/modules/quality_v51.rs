@@ -1546,19 +1546,52 @@ pub async fn predict_quality_trend(
     State(state): State<AppState>,
     Json(req): Json<PredictTrendRequest>,
 ) -> ApiResponse<Vec<QualityTrendPoint>> {
+    let trend = build_quality_trend(&state, req.entity_type, req.days.unwrap_or(30)).await;
+    ApiResponse::success(trend, "质量趋势预测")
+}
+
+/// 扁平契约 `POST /ai/predict`：请求体宽松（空对象 `{}` 亦可），实体类型/天数给默认值后预测。
+pub async fn predict_quality_trend_compat(
+    State(state): State<AppState>,
+    Json(req): Json<serde_json::Value>,
+) -> ApiResponse<Vec<QualityTrendPoint>> {
+    let entity_type = req
+        .get("entity_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("table")
+        .to_string();
+    let days = req
+        .get("days")
+        .and_then(|v| v.as_i64())
+        .map(|d| d as i32)
+        .unwrap_or(30);
+    let trend = build_quality_trend(&state, entity_type, days).await;
+    ApiResponse::success(trend, "质量趋势预测")
+}
+
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
+/// 质量趋势预测核心逻辑（严格参数版与扁平兼容版共用）。
+async fn build_quality_trend(
+    state: &AppState,
+    entity_type: String,
+    days: i32,
+) -> Vec<QualityTrendPoint> {
     let rows = sqlx::query(&format!(
         "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks WHERE entity_type = $1"
     ))
-    .bind(&req.entity_type)
+    .bind(&entity_type)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
     let all_checks: Vec<QualityCheckV51> = rows.iter().map(quality_check_from_row).collect();
 
-    let days = req.days.unwrap_or(30);
     let entity_checks: Vec<QualityCheckV51> = all_checks
         .iter()
-        .filter(|c| c.entity_type == req.entity_type)
+        .filter(|c| c.entity_type == entity_type)
         .cloned()
         .collect();
     let mut trend = Vec::new();
@@ -1580,7 +1613,7 @@ pub async fn predict_quality_trend(
         });
     }
 
-    ApiResponse::success(trend, "质量趋势预测")
+    trend
 }
 
 // ==================== K1：真表映射层（quality_v51 剩余 6 实体） ====================

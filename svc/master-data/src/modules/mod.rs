@@ -748,6 +748,63 @@ pub fn create_routes() -> Router<AppState> {
                         .delete(master_data::delete_sample),
                 ),
         )
+        // ── v74 扁平契约补齐：前端 apiClient.master（base=/api/master-data）直接打的根路径 ──
+        // 这些路径不带 mdm-v5x/kg-v53 等版本前缀，与上面的 nest 互不重叠；handler 就近复用/新增，
+        // 与版本化兄弟端点共用同一真表与 envelope 语义。
+        .route("/continuity/plans", get(disaster_v56::list_plans))
+        .route("/dashboard/recent", get(master_plugin::list_recent_activities))
+        .route(
+            "/dashboard/recent/{id}",
+            get(master_plugin::get_recent_activity),
+        )
+        .route("/data-products", get(governance_v58::list_data_products))
+        .route("/dict-types", get(dict::list_dict_types))
+        .route(
+            "/dict-types/{dict_type_id}/items",
+            get(dict::list_dict_items),
+        )
+        .route("/lifecycle/policies", get(metadata_v60::get_policies))
+        .route(
+            "/lifecycle/policies/{id}",
+            get(metadata_v60::get_policy),
+        )
+        .route("/metadata/search", get(metadata_v60::search_metadata_compat))
+        .route("/metadata/search/{id}", get(metadata_v60::get_metadata))
+        .route(
+            "/permissions/resource",
+            get(versioning_v54::get_resource_permissions),
+        )
+        .route(
+            "/permissions/resource/{id}",
+            get(versioning_v54::get_resource_permission),
+        )
+        .route(
+            "/recovery/points",
+            get(disaster_v56::list_recovery_points),
+        )
+        .route(
+            "/recovery/points/{id}",
+            get(disaster_v56::get_recovery_point),
+        )
+        .route("/samples/{id}", get(master_data::get_sample))
+        .route("/score", get(quality_v51::get_quality_score))
+        .route("/trending", get(knowledge_v53::get_trending_items))
+        .route("/uoms", get(master_data::list_uoms))
+        .route("/version/diff", get(versioning_v54::diff_versions_compat))
+        .route("/ai/predict", post(quality_v51::predict_quality_trend_compat))
+        .route(
+            "/data-product",
+            post(governance_v58::create_data_product_compat),
+        )
+        .route("/export", post(master_plugin::export_archive))
+        .route("/lineage/export", post(lineage_v52::export_lineage_post))
+        .route("/lineage/refresh", post(lineage_v52::refresh_lineage))
+        .route(
+            "/lineage/refresh/{id}",
+            post(lineage_v52::refresh_lineage_by_id),
+        )
+        .route("/metadata", post(metadata_v60::create_metadata_compat))
+        .route("/search/reindex", post(semantic_v57::reindex_all))
         // B10：写请求后同步落库中间件（必须位于所有路由注册之后才生效）
         .layer(axum::middleware::from_fn(flush_on_write))
 }

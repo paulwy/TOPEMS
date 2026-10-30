@@ -1646,6 +1646,45 @@ pub async fn create_data_product(
     ApiResponse::success(product, "数据产品已创建")
 }
 
+/// 扁平契约 `POST /data-product`：请求体宽松（空对象 `{}` 亦可），缺失字段给默认值后落库，
+/// 与 mdm-v58/create_data_product 走同一管理器。
+pub async fn create_data_product_compat(
+    State(state): State<AppState>,
+    Json(req): Json<serde_json::Value>,
+) -> ApiResponse<DataProduct> {
+    let name = req
+        .get("name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("未命名数据产品")
+        .to_string();
+    let description = req
+        .get("description")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default()
+        .to_string();
+    let owner = req
+        .get("owner")
+        .and_then(|v| v.as_str())
+        .unwrap_or("system")
+        .to_string();
+    let domain = req
+        .get("domain")
+        .and_then(|v| v.as_str())
+        .unwrap_or("general")
+        .to_string();
+    let sla = req
+        .get("sla_level")
+        .and_then(|v| v.as_str())
+        .and_then(parse_sla_level)
+        .unwrap_or(SlaLevel::Silver);
+
+    let product = db_exec!(
+        DataProductManager::create_data_product(&state.db, name, description, owner, domain, sla)
+            .await
+    );
+    ApiResponse::success(product, "数据产品已创建")
+}
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:governance:read"])),

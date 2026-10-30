@@ -33,7 +33,7 @@ use mdm_v49_stats::*;
 // ==================== 路由注册 ====================
 
 pub fn create_routes() -> axum::Router<ApiState> {
-    use axum::routing::{get, post};
+    use axum::routing::{delete, get, post, put};
     axum::Router::new()
         // V49 AC-21: 生命周期实体
         .route(
@@ -112,6 +112,41 @@ pub fn create_routes() -> axum::Router<ApiState> {
         .route("/mdm-v49/stats/retirement", get(get_retirement_stats))
         .route("/mdm-v49/sla/check", post(run_sla_check))
         .route("/mdm-v49/dashboard", get(get_lifecycle_dashboard))
+        // V49 前端契约补绑：扁平动词路径（readOps.ts / writeOps.ts / writeOps2.ts 声明），
+        // 与上方 RESTful 同族处理器共用内存存储与 envelope 语义。
+        .route(
+            "/mdm-v49/get-archive-policy",
+            get(get_archive_policy_verb),
+        )
+        .route(
+            "/mdm-v49/create-archive-policy",
+            post(create_archive_policy_verb),
+        )
+        .route(
+            "/mdm-v49/update-archive-policy",
+            put(update_archive_policy_verb),
+        )
+        .route(
+            "/mdm-v49/delete-archive-policy",
+            delete(delete_archive_policy_verb),
+        )
+        .route(
+            "/mdm-v49/restore-archive-record",
+            post(restore_archive_record_verb),
+        )
+        .route(
+            "/mdm-v49/cancel-retirement-plan",
+            get(cancel_retirement_plan_verb),
+        )
+        .route(
+            "/mdm-v49/rollback-retirement-plan",
+            post(rollback_retirement_plan_verb),
+        )
+        .route("/mdm-v49/run-sla-check", post(run_sla_check_verb))
+        .route(
+            "/mdm-v49/get-lifecycle-dashboard",
+            get(get_lifecycle_dashboard_verb),
+        )
 }
 
 #[cfg(test)]

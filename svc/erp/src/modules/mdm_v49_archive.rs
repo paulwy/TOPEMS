@@ -547,3 +547,294 @@ pub async fn restore_archive_record(
         None => ApiResponse::server_error("恢复失败"),
     }
 }
+
+// ==================== 动词式契约补绑 ====================
+// 前端 readOps.ts / writeOps.ts 声明的扁平动词路径（无 {id} 路径段），
+// 与上方 RESTful 同族处理器共用内存存储；请求体宽松解析（空对象 -> 占位默认值），
+// 返回 payload 结构与兄弟端点（ArchivePolicy / ArchiveRecord）保持一致。
+
+fn json_first_str(v: &serde_json::Value, keys: &[&str]) -> Option<String> {
+    for k in keys {
+        if let Some(x) = v.get(*k).and_then(|x| x.as_str()) {
+            return Some(x.to_string());
+        }
+    }
+    None
+}
+
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+fn json_first_i32(v: &serde_json::Value, keys: &[&str]) -> Option<i32> {
+    for k in keys {
+        if let Some(x) = v.get(*k).and_then(|x| x.as_i64()) {
+            return Some(x as i32);
+        }
+    }
+    None
+}
+
+fn json_first_bool(v: &serde_json::Value, keys: &[&str]) -> Option<bool> {
+    for k in keys {
+        if let Some(x) = v.get(*k).and_then(|x| x.as_bool()) {
+            return Some(x);
+        }
+    }
+    None
+}
+
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+pub struct ArchivePolicyVerbQuery {
+    pub policy_id: Option<String>,
+    pub id: Option<String>,
+}
+
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+pub struct ArchiveRecordVerbQuery {
+    pub record_id: Option<String>,
+    pub id: Option<String>,
+}
+
+/// GET /mdm-v49/get-archive-policy
+pub async fn get_archive_policy_verb(
+    State(_state): State<ApiState>,
+    Query(params): Query<ArchivePolicyVerbQuery>,
+) -> ApiResponse<ArchivePolicy> {
+    ensure_initialized().await;
+    let store = get_lifecycle_store();
+    let policies = store.archive_policies.lock().await;
+
+    let found = match params.policy_id.or(params.id) {
+        Some(id) => policies.iter().find(|p| p.id == id).cloned(),
+        None => policies.first().cloned(),
+    };
+    match found {
+        Some(p) => ApiResponse::success(p, "归档策略"),
+        None => ApiResponse::not_found("未找到归档策略"),
+    }
+}
+
+/// POST /mdm-v49/create-archive-policy
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
+pub async fn create_archive_policy_verb(
+    State(_state): State<ApiState>,
+    Json(payload): Json<serde_json::Value>,
+) -> ApiResponse<ArchivePolicy> {
+    ensure_initialized().await;
+    let store = get_lifecycle_store();
+    let mut policies = store.archive_policies.lock().await;
+
+    let tier_str =
+        json_first_str(&payload, &["storage_tier", "archive_tier", "tier"]).unwrap_or_default();
+    let tier = match tier_str.as_str() {
+        "hot" => ArchiveTier::Hot,
+        "cold" => ArchiveTier::Cold,
+        "glacier" => ArchiveTier::Glacier,
+        _ => ArchiveTier::Warm,
+    };
+
+    let now = chrono::Utc::now().to_rfc3339();
+    let policy = ArchivePolicy {
+        id: uuid::Uuid::new_v4().to_string(),
+        domain: json_first_str(&payload, &["scope", "domain"])
+            .unwrap_or_else(|| "master_data".to_string()),
+        entity_type: json_first_str(&payload, &["entity_type"])
+            .unwrap_or_else(|| "customer".to_string()),
+        policy_name: json_first_str(&payload, &["name", "policy_name", "policyName"])
+            .unwrap_or_else(|| "默认归档策略".to_string()),
+        description: json_first_str(&payload, &["description"]).unwrap_or_default(),
+        archive_age_days: json_first_i32(
+            &payload,
+            &["age_threshold_days", "archive_age_days", "ageThresholdDays"],
+        )
+        .unwrap_or(365),
+        archive_tier: tier.clone(),
+        retention_days: json_first_i32(&payload, &["retention_days", "retentionDays"])
+            .unwrap_or_else(|| tier.retention_default_days()),
+        index_archived: json_first_bool(&payload, &["index_archived"]).unwrap_or(true),
+        restore_window_days: json_first_i32(&payload, &["restore_window_days"]).unwrap_or(30),
+        auto_archive: json_first_bool(&payload, &["auto_archive"]).unwrap_or(true),
+        notify_on_archive: json_first_bool(&payload, &["notify_on_archive"]).unwrap_or(true),
+        created_at: now.clone(),
+        updated_at: now,
+    };
+
+    policies.push(policy.clone());
+    ApiResponse::success(policy, "归档策略已创建")
+}
+
+/// PUT /mdm-v49/update-archive-policy
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
+pub async fn update_archive_policy_verb(
+    State(_state): State<ApiState>,
+    Query(params): Query<ArchivePolicyVerbQuery>,
+    Json(payload): Json<serde_json::Value>,
+) -> ApiResponse<ArchivePolicy> {
+    ensure_initialized().await;
+    let store = get_lifecycle_store();
+    let mut policies = store.archive_policies.lock().await;
+
+    let id = json_first_str(&payload, &["policy_id", "policyId", "id"])
+        .or(params.policy_id)
+        .or(params.id);
+
+    let Some(policy) = (match id {
+        Some(id) => policies.iter_mut().find(|p| p.id == id),
+        None => policies.first_mut(),
+    }) else {
+        return ApiResponse::not_found("未找到归档策略");
+    };
+
+    if let Some(name) = json_first_str(&payload, &["name", "policy_name", "policyName"]) {
+        policy.policy_name = name;
+    }
+    if let Some(desc) = json_first_str(&payload, &["description"]) {
+        policy.description = desc;
+    }
+    if let Some(domain) = json_first_str(&payload, &["scope", "domain"]) {
+        policy.domain = domain;
+    }
+    if let Some(et) = json_first_str(&payload, &["entity_type"]) {
+        policy.entity_type = et;
+    }
+    if let Some(age) =
+        json_first_i32(&payload, &["age_threshold_days", "archive_age_days", "ageThresholdDays"])
+    {
+        policy.archive_age_days = age;
+    }
+    if let Some(tier_str) = json_first_str(&payload, &["storage_tier", "archive_tier", "tier"]) {
+        policy.archive_tier = match tier_str.as_str() {
+            "hot" => ArchiveTier::Hot,
+            "cold" => ArchiveTier::Cold,
+            "glacier" => ArchiveTier::Glacier,
+            _ => ArchiveTier::Warm,
+        };
+    }
+    if let Some(ret) = json_first_i32(&payload, &["retention_days", "retentionDays"]) {
+        policy.retention_days = ret;
+    }
+    if let Some(i) = json_first_bool(&payload, &["index_archived"]) {
+        policy.index_archived = i;
+    }
+    if let Some(r) = json_first_i32(&payload, &["restore_window_days"]) {
+        policy.restore_window_days = r;
+    }
+    if let Some(a) = json_first_bool(&payload, &["auto_archive"]) {
+        policy.auto_archive = a;
+    }
+    if let Some(n) = json_first_bool(&payload, &["notify_on_archive"]) {
+        policy.notify_on_archive = n;
+    }
+    policy.updated_at = chrono::Utc::now().to_rfc3339();
+
+    ApiResponse::success(policy.clone(), "归档策略已更新")
+}
+
+/// DELETE /mdm-v49/delete-archive-policy
+pub async fn delete_archive_policy_verb(
+    State(_state): State<ApiState>,
+    Query(params): Query<ArchivePolicyVerbQuery>,
+) -> ApiResponse<serde_json::Value> {
+    ensure_initialized().await;
+    let store = get_lifecycle_store();
+    let mut policies = store.archive_policies.lock().await;
+
+    if policies.is_empty() {
+        return ApiResponse::not_found("未找到归档策略");
+    }
+
+    let removed_id: String = match params.policy_id.or(params.id) {
+        Some(id) => {
+            let before = policies.len();
+            policies.retain(|p| p.id != id);
+            if policies.len() == before {
+                return ApiResponse::not_found("未找到归档策略");
+            }
+            id
+        }
+        None => policies.remove(0).id,
+    };
+
+    ApiResponse::success(
+        serde_json::json!({ "success": true, "id": removed_id }),
+        "归档策略已删除",
+    )
+}
+
+/// POST /mdm-v49/restore-archive-record
+pub async fn restore_archive_record_verb(
+    State(_state): State<ApiState>,
+    Query(params): Query<ArchiveRecordVerbQuery>,
+    Json(payload): Json<serde_json::Value>,
+) -> ApiResponse<ArchiveRecord> {
+    ensure_initialized().await;
+    let store = get_lifecycle_store();
+
+    let record_id = json_first_str(&payload, &["record_id", "recordId", "id"])
+        .or(params.record_id)
+        .or(params.id);
+
+    let (restored_record_id, master_data_id, entity_type) = {
+        let mut records = store.archive_records.lock().await;
+        let Some(record) = (match record_id {
+            Some(id) => records.iter_mut().find(|r| r.id == id),
+            None => records.iter_mut().find(|r| r.status == "archived"),
+        }) else {
+            return ApiResponse::not_found("未找到归档记录");
+        };
+
+        if record.status != "archived" {
+            return ApiResponse::bad_request("记录状态不支持恢复");
+        }
+
+        record.restore_count += 1;
+        record.last_restored_at = Some(chrono::Utc::now().to_rfc3339());
+        record.status = "restored".to_string();
+
+        (
+            record.id.clone(),
+            record.master_data_id.clone(),
+            record.entity_type.clone(),
+        )
+    };
+
+    // 同步把实体恢复到 Operative（与 RESTful restore 处理器一致）
+    let mut entities = store.entities.lock().await;
+    if let Some(entity) = entities.get_mut(&master_data_id) {
+        entity.stage = LifecycleStage::Operative;
+        entity.last_transition_at = chrono::Utc::now().to_rfc3339();
+        entity.transition_count += 1;
+        entity.sla_breached = false;
+    }
+
+    let reason = json_first_str(&payload, &["restore_reason", "reason"])
+        .unwrap_or_else(|| "归档恢复（契约补绑）".to_string());
+    let restored_by =
+        json_first_str(&payload, &["restored_by", "restoredBy"]).unwrap_or_else(|| "system".to_string());
+
+    record_event(
+        master_data_id,
+        entity_type,
+        Some(LifecycleStage::Archived),
+        LifecycleStage::Operative,
+        format!("归档恢复: {}", reason),
+        restored_by,
+        "restore".to_string(),
+        None,
+    );
+
+    let records = store.archive_records.lock().await;
+    let r = records.iter().find(|x| x.id == restored_record_id).cloned();
+    match r {
+        Some(rec) => ApiResponse::success(rec, "已恢复归档记录"),
+        None => ApiResponse::server_error("恢复失败"),
+    }
+}

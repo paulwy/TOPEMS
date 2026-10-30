@@ -1164,6 +1164,12 @@ pub struct ExportQuery {
     pub format: Option<String>,
 }
 
+/// 扁平契约 `POST /lineage/export` 请求体：格式可选，空对象亦可。
+#[derive(Debug, Deserialize, Default)]
+pub struct LineageExportBody {
+    pub format: Option<String>,
+}
+
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct DeleteLineageRequest {
     pub node_id: String,
@@ -1382,6 +1388,71 @@ pub async fn export_lineage(
         }
         Err(e) => ApiResponse::server_error(&e.classify().1),
     }
+}
+
+/// 扁平契约 `POST /lineage/export`：与 GET export_lineage 同一导出管线，入参改为 JSON body。
+pub async fn export_lineage_post(
+    State(state): State<AppState>,
+    Json(req): Json<LineageExportBody>,
+) -> ApiResponse<serde_json::Value> {
+    let format = req.format.unwrap_or_else(|| "json".to_string());
+    match LineageTracker::export_graph(&state.db, &format).await {
+        Ok(content) => {
+            let content_type = match format.as_str() {
+                "dot" => "text/vnd.graphviz",
+                _ => "application/json",
+            };
+            ApiResponse::success(
+                serde_json::json!({
+                    "format": format,
+                    "content": content,
+                    "content_type": content_type,
+                }),
+                "血缘图谱导出成功",
+            )
+        }
+        Err(e) => ApiResponse::server_error(&e.classify().1),
+    }
+}
+
+/// 扁平契约 `POST /lineage/refresh`：全量重算血缘图谱快照（复用模块内 refresh_graph）。
+pub async fn refresh_lineage(
+    State(state): State<AppState>,
+    Json(_req): Json<serde_json::Value>,
+) -> ApiResponse<serde_json::Value> {
+    if let Err(e) = refresh_graph(&state.db).await {
+        return ApiResponse::server_error(&e.classify().1);
+    }
+    ApiResponse::success(
+        serde_json::json!({ "status": "refreshed" }),
+        "血缘图谱已刷新",
+    )
+}
+
+/// 扁平契约 `POST /lineage/refresh/{id}`：按节点 id 定向刷新；节点不存在返回业务 404。
+pub async fn refresh_lineage_by_id(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    Json(_req): Json<serde_json::Value>,
+) -> ApiResponse<serde_json::Value> {
+    let exists = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS (SELECT 1 FROM master_data.mdm_lineage_nodes WHERE id = $1)",
+    )
+    .bind(&id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(false);
+    if !exists {
+        return ApiResponse::not_found("未找到血缘节点");
+    }
+
+    if let Err(e) = refresh_graph(&state.db).await {
+        return ApiResponse::server_error(&e.classify().1);
+    }
+    ApiResponse::success(
+        serde_json::json!({ "node_id": id, "status": "refreshed" }),
+        "血缘节点已刷新",
+    )
 }
 
 #[utoipa::path(

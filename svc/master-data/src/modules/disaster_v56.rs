@@ -789,6 +789,25 @@ pub async fn list_recovery_points(
     )
 }
 
+/// 扁平契约 `GET /recovery/points/{id}`：单条恢复点查询，不存在返回业务 404。
+pub async fn get_recovery_point(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> ApiResponse<RecoveryPoint> {
+    let row = sqlx::query(&format!(
+        "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points WHERE id = $1 LIMIT 1"
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
+
+    match row {
+        Some(r) => ApiResponse::success(recovery_point_from_row(&r), "恢复点详情"),
+        None => ApiResponse::not_found("未找到恢复点"),
+    }
+}
+
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:disaster:write"])),

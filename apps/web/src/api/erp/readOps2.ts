@@ -4,25 +4,25 @@ import type { ApiResponse } from '../client';
 // ── v74 待确认-疑似接入 erp 28 条（2026-10-29）──
 export const erpReadOps2 = {
   listDataDomains: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/erp/master-data/domains'),
+    apiClient.erp.get('/master-data/domains'),
   getArchiveRecord: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/erp/mdm-v49/get-archive-record'),
+    apiClient.erp.get('/mdm-v49/archive/records'),
   classificationListCategories: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/erp/master-data/classification/categories'),
+    apiClient.erp.get('/master-data/classification/categories'),
   queryRecords: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/erp/master-data-refs/query-records-handler'),
+    apiClient.erp.get('/master-data-refs/query-records-handler'),
   listInferenceRules: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/erp/master-data/knowledge/inference-rules'),
+    apiClient.erp.get('/master-data/knowledge/inference-rules'),
   listDictItems: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/system/dict-types/{id}/items'),
   mdmServiceList: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/erp/master-data/services'),
+    apiClient.erp.get('/master-data/services'),
   listComplianceRules: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/erp/master-data-refs/list-compliance-rules-handler'),
+    apiClient.erp.get('/master-data-refs/list-compliance-rules-handler'),
   listDepartmentsFromHrm: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/erp/hrm-integration-example/list-departments-from-hrm'),
+    apiClient.erp.get('/example/departments'),
   listCompaniesFromHrm: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/erp/hrm-integration-example/list-companies-from-hrm'),
+    apiClient.erp.get('/example/companies'),
   listArchiveRecords: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/mdm-v49/archive/records'),
   listConflicts: async (): Promise<ApiResponse<Record<string, unknown>>> =>
