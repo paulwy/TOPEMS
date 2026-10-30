@@ -6,6 +6,7 @@
 
 use axum::extract::{Extension, Json, State};
 use serde::{Deserialize, Serialize};
+use serde_json::Value as JsonValue;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
@@ -77,36 +78,43 @@ struct SyncTaskRow {
     sync_type: String,
     source_module: String,
     target_module: String,
-    source_entity: String,
-    source_id: Option<Uuid>,
-    source_code: Option<String>,
+    operation: Option<String>,
+    entity_type: Option<String>,
+    entity_ids: Option<JsonValue>,
     status: String,
-    retry_count: i32,
-    max_retries: i32,
     error_message: Option<String>,
-    next_retry_at: Option<chrono::DateTime<chrono::Utc>>,
-    executed_at: Option<chrono::DateTime<chrono::Utc>>,
+    started_at: Option<chrono::DateTime<chrono::Utc>>,
+    finished_at: Option<chrono::DateTime<chrono::Utc>>,
     created_at: chrono::DateTime<chrono::Utc>,
     updated_at: chrono::DateTime<chrono::Utc>,
+    data: Option<JsonValue>,
 }
 
 impl From<SyncTaskRow> for SyncTask {
     fn from(row: SyncTaskRow) -> Self {
+        // 兼容映射：表新 schema（operation/entity_type/entity_ids/started_at/finished_at/data）
+        // → 旧 SyncTask DTO 形状（source_entity/source_id/retry 等保留默认值，避免破坏前端契约）
+        let source_id = row.entity_ids.as_ref().and_then(|v| {
+            v.as_array()
+                .and_then(|arr| arr.first())
+                .and_then(|f| f.as_str())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        });
         SyncTask {
             id: row.id,
             tenant_id: row.tenant_id,
             sync_type: row.sync_type,
             source_module: row.source_module,
             target_module: row.target_module,
-            source_entity: row.source_entity,
-            source_id: row.source_id,
-            source_code: row.source_code,
+            source_entity: row.entity_type.unwrap_or_default(),
+            source_id,
+            source_code: None,
             status: row.status,
-            retry_count: row.retry_count,
-            max_retries: row.max_retries,
+            retry_count: 0,
+            max_retries: 0,
             error_message: row.error_message,
-            next_retry_at: row.next_retry_at,
-            executed_at: row.executed_at,
+            next_retry_at: None,
+            executed_at: row.finished_at,
             created_at: row.created_at,
             updated_at: row.updated_at,
         }
@@ -128,7 +136,6 @@ pub async fn create_task(
     Json(req): Json<CreateSyncTaskRequest>,
 ) -> ApiResponse<SyncTask> {
     let tenant_id = Uuid::nil();
-    let source_id = req.source_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
     let now = chrono::Utc::now();
     let task_id = Uuid::new_v4();
 
@@ -136,10 +143,9 @@ pub async fn create_task(
         "integration",
         r#"
         INSERT INTO integration.core_inter_module_sync
-            (id, tenant_id, sync_type, source_module, target_module, source_entity,
-             source_id, source_code, status, retry_count, max_retries,
-             created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', 0, 3, $9, $10)
+            (id, tenant_id, sync_type, source_module, target_module, entity_type, entity_ids,
+             status, started_at, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10)
         RETURNING *
         "#
     ))
@@ -149,8 +155,10 @@ pub async fn create_task(
     .bind(&req.source_module)
     .bind(&req.target_module)
     .bind(&req.source_entity)
-    .bind(source_id)
-    .bind(&req.source_code)
+    .bind(req.source_id.as_deref().map(|s| {
+        serde_json::json!([s])
+    }))
+    .bind(now)
     .bind(now)
     .bind(now)
     .fetch_one(&state.pool)
@@ -184,7 +192,7 @@ pub async fn get_task(
     match Uuid::parse_str(&task_id) {
         Ok(id) => {
             let row = sqlx::query_as::<_, SyncTaskRow>(
-                only_own_schema_query!("integration", "SELECT id, tenant_id, sync_type, source_module, target_module, source_entity, source_id, source_code, status, retry_count, max_retries, error_message, next_retry_at, executed_at, created_at, updated_at FROM integration.core_inter_module_sync WHERE id = $1"),
+                only_own_schema_query!("integration", "SELECT id, tenant_id, sync_type, source_module, target_module, operation, entity_type, entity_ids, status, error_message, started_at, finished_at, created_at, updated_at, data FROM integration.core_inter_module_sync WHERE id = $1 AND deleted_at IS NULL"),
             )
             .bind(id)
             .fetch_optional(&state.pool)
@@ -237,8 +245,8 @@ pub async fn update_status(
                 "integration",
                 r#"
                 UPDATE integration.core_inter_module_sync
-                SET status = $2, error_message = $3, executed_at = $4, updated_at = $5
-                WHERE id = $1 AND ($6::uuid IS NULL OR tenant_id = $6::uuid)
+                SET status = $2, error_message = $3, finished_at = $4, updated_at = $5
+                WHERE id = $1 AND deleted_at IS NULL AND ($6::uuid IS NULL OR tenant_id = $6::uuid)
                 RETURNING *
                 "#
             ))
@@ -274,8 +282,8 @@ pub async fn update_status(
 pub async fn get_pending(State(state): State<AppState>) -> ApiResponse<Vec<SyncTask>> {
     match sqlx::query_as::<_, SyncTaskRow>(
         only_own_schema_query!("integration", r#"
-        SELECT id, tenant_id, sync_type, source_module, target_module, source_entity, source_id, source_code, status, retry_count, max_retries, error_message, next_retry_at, executed_at, created_at, updated_at FROM integration.core_inter_module_sync
-        WHERE status = 'pending' OR (status = 'failed' AND retry_count < max_retries AND next_retry_at <= NOW())
+        SELECT id, tenant_id, sync_type, source_module, target_module, operation, entity_type, entity_ids, status, error_message, started_at, finished_at, created_at, updated_at, data FROM integration.core_inter_module_sync
+        WHERE status = 'pending' AND deleted_at IS NULL
         ORDER BY created_at ASC
         "#),
     )
@@ -321,7 +329,7 @@ pub async fn get_statistics(State(state): State<AppState>) -> ApiResponse<SyncSt
         .await?;
 
         let failed_tasks = sqlx::query_scalar::<_, i64>(
-            only_own_schema_query!("integration", "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'failed' AND retry_count >= max_retries"),
+            only_own_schema_query!("integration", "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'failed'"),
         )
         .fetch_one(&state.pool)
         .await?;
@@ -468,15 +476,16 @@ pub async fn trigger_scm_wms(
             match sqlx::query_as::<_, SyncTaskRow>(
                 only_own_schema_query!("integration", r#"
                 INSERT INTO integration.core_inter_module_sync
-                    (id, tenant_id, sync_type, source_module, target_module, source_entity,
-                     source_id, status, retry_count, max_retries, created_at, updated_at)
-                VALUES ($1, $2, 'purchase_order_sync', 'scm', 'wms', 'purchase_order', $3, 'pending', 0, 3, $4, $5)
+                    (id, tenant_id, sync_type, source_module, target_module, entity_type, entity_ids,
+                     status, started_at, created_at, updated_at)
+                VALUES ($1, $2, 'purchase_order_sync', 'scm', 'wms', 'purchase_order', $3, 'pending', $4, $5, $6)
                 RETURNING *
                 "#),
             )
             .bind(task_id)
             .bind(Uuid::nil())
-            .bind(id)
+            .bind(serde_json::json!([id.to_string()]))
+            .bind(now)
             .bind(now)
             .bind(now)
             .fetch_one(&state.pool)
@@ -517,15 +526,16 @@ pub async fn trigger_wms_crm(
             match sqlx::query_as::<_, SyncTaskRow>(
                 only_own_schema_query!("integration", r#"
                 INSERT INTO integration.core_inter_module_sync
-                    (id, tenant_id, sync_type, source_module, target_module, source_entity,
-                     source_id, status, retry_count, max_retries, created_at, updated_at)
-                VALUES ($1, $2, 'outbound_order_sync', 'wms', 'crm', 'outbound_order', $3, 'pending', 0, 3, $4, $5)
+                    (id, tenant_id, sync_type, source_module, target_module, entity_type, entity_ids,
+                     status, started_at, created_at, updated_at)
+                VALUES ($1, $2, 'outbound_order_sync', 'wms', 'crm', 'outbound_order', $3, 'pending', $4, $5, $6)
                 RETURNING *
                 "#),
             )
             .bind(task_id)
             .bind(Uuid::nil())
-            .bind(id)
+            .bind(serde_json::json!([id.to_string()]))
+            .bind(now)
             .bind(now)
             .bind(now)
             .fetch_one(&state.pool)

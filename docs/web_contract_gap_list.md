@@ -20,6 +20,44 @@
 >     erp-plugin 2（后端补挂 POST 路由）；hrm 2（utoipa 注释过期，真实路由
 >     `/api/erp/example/*` 已在线，前端删除过期声明）。
 > - 豁免集合当前为空；后续任何 route_missing FAIL 一律阻断门禁。
+>
+> **2026-10-30 追加（真实登录态复核发现，待逐批核销）**：
+> 修复 JWT_SECRET 基线错位（.env 与 launchd 不一致，曾致 4657 项虚假 401 WARN）并部署
+> integration sync 表列漂移修复后，真实 token 暴露 32 项被掩盖的 FAIL
+> （2 路由缺失 + 30 handler 500，跨 12 模块：qms/ehs/pm/pdm/lims/mes/wms/finance/portal/
+> workflow/core-mdm/erp-plugin，多为表列漂移或未处理空查询）。已登记 KNOWN 豁免，
+> 按模块分批诊断核销（处置记录见 `docs/契约缺口阶段二核销处置记录-2026-10-30.md` 第 10 节）。
 ## KNOWN
 
-（空——全部豁免已核销，无 KNOWN 项）
+- DELETE /api/erp/master-data/sync/dead-letters/00000000-0000-0000-0000-000000000099
+- DELETE /api/portal/streaming-processing/stream/00000000-0000-0000-0000-000000000099
+- GET /api/bi/report/00000000-0000-0000-0000-000000000099/export
+- GET /api/core/flow/workflows/00000000-0000-0000-0000-000000000099/versions
+- GET /api/core/flow/workflows/00000000-0000-0000-0000-000000000099/versions/00000000-0000-0000-0000-000000000099
+- GET /api/core/mdm/refs
+- GET /api/core/mdm/refs/sync-status
+- GET /api/ehs/checks/00000000-0000-0000-0000-000000000099
+- GET /api/finance/cqrs/projection-progress
+- GET /api/lims/analytes/00000000-0000-0000-0000-000000000099
+- GET /api/pdm/drawings
+- GET /api/pm/projects
+- GET /api/qms/apqp/approvals
+- GET /api/qms/inspection-items/00000000-0000-0000-0000-000000000099
+- GET /api/qms/inspection-plans/00000000-0000-0000-0000-000000000099
+- GET /api/qms/inspection-plans/00000000-0000-0000-0000-000000000099/items
+- GET /api/qms/sampling-plans/00000000-0000-0000-0000-000000000099
+- POST /api/erp/erp-plugin/auto-register-to-core
+- POST /api/erp/erp-plugin/register-to-core
+- POST /api/integration/mes-erp/00000000-0000-0000-0000-000000000099/retry
+- POST /api/integration/mes-qms/00000000-0000-0000-0000-000000000099/retry
+- POST /api/integration/sync/retry-failed
+- POST /api/qms/alert-messages/00000000-0000-0000-0000-000000000099/acknowledge
+- POST /api/qms/issues/00000000-0000-0000-0000-000000000099/resolve
+- POST /api/wms/sync/outbound-order/00000000-0000-0000-0000-000000000099/to-shipping
+- PUT /api/ehs/checks/00000000-0000-0000-0000-000000000099
+- PUT /api/ehs/training/plans/00000000-0000-0000-0000-000000000099
+- PUT /api/lims/maintenance/00000000-0000-0000-0000-000000000099
+- PUT /api/mes/process-flows/00000000-0000-0000-0000-000000000099/steps/00000000-0000-0000-0000-000000000099
+- PUT /api/mes/teams/00000000-0000-0000-0000-000000000099
+- PUT /api/pm/projects/00000000-0000-0000-0000-000000000099
+- PUT /api/qms/alert-rules/00000000-0000-0000-0000-000000000099
