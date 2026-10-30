@@ -782,7 +782,7 @@ pub async fn add_flow_step(
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id, flow_id, process_id, sequence,
             work_station_id, equipment_ids,
-            standard_time, wait_time, transfer_time,
+            standard_time, wait_time, transfer_time::text AS transfer_time,
             quality_check_required, description, created_at
         "#,
         flow_uuid,
@@ -907,13 +907,13 @@ pub async fn update_flow_step(
             equipment_ids = COALESCE($3::uuid[], equipment_ids),
             standard_time = COALESCE($4::float8, standard_time),
             wait_time = COALESCE($5::float8, wait_time),
-            transfer_time = COALESCE(NULLIF($6, ''), transfer_time),
+            transfer_time = COALESCE(NULLIF($6, '')::int4, transfer_time),
             quality_check_required = COALESCE($7, quality_check_required),
             description = COALESCE($8, description)
         WHERE id = $9
         RETURNING id, flow_id, process_id, sequence,
             work_station_id, equipment_ids,
-            standard_time, wait_time, transfer_time,
+            standard_time, wait_time, transfer_time::text AS transfer_time,
             quality_check_required, description, created_at
         "#,
     )

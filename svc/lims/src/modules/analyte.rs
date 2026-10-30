@@ -111,7 +111,7 @@ async fn list_analytes(
             params.push(format!("%{search}%"));
         }
     }
-    let count_sql = format!("SELECT COUNT(*) FROM qa_lims_analytes {where_sql}");
+    let count_sql = format!("SELECT COUNT(*) FROM lims.qa_lims_analytes {where_sql}");
     let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
     for p in &params {
         count_query = count_query.bind(p);
@@ -125,7 +125,7 @@ async fn list_analytes(
     };
     let fetch_sql = format!(
         "SELECT id, analyte_code, analyte_name, category, unit, method_reference, limit_value, accuracy, status, description \
-         FROM qa_lims_analytes {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
+         FROM lims.qa_lims_analytes {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
         (page - 1) * page_size
     );
     let mut fetch_query = sqlx::query(&fetch_sql);
@@ -169,7 +169,7 @@ async fn get_analyte(
     let filter = resolve_tenant(&ctx, &claims);
     let mut sql = String::from(
         "SELECT id, analyte_code, analyte_name, category, unit, method_reference, limit_value, accuracy, status, description \
-         FROM qa_lims_analytes WHERE id = $1 AND deleted_at IS NULL",
+         FROM lims.qa_lims_analytes WHERE id = $1 AND deleted_at IS NULL",
     );
     let mut q = sqlx::query(&sql).bind(id);
     if let Some(t) = filter {
@@ -210,7 +210,7 @@ async fn create_analyte(
     let tenant_id = ctx.tenant_id;
     let _ = claims;
     let result = sqlx::query(
-        "INSERT INTO qa_lims_analytes \
+        "INSERT INTO lims.qa_lims_analytes \
          (tenant_id, analyte_code, analyte_name, category, unit, method_reference, limit_value, accuracy, status, description) \
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, 'active'), $10) RETURNING id",
     )
@@ -250,7 +250,7 @@ async fn update_analyte(
     Json(req): Json<UpdateAnalyteRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let filter = resolve_tenant(&ctx, &claims);
-    let base_sql = "UPDATE qa_lims_analytes SET \
+    let base_sql = "UPDATE lims.qa_lims_analytes SET \
         analyte_name = COALESCE($2, analyte_name), category = COALESCE($3, category), \
         unit = COALESCE($4, unit), method_reference = COALESCE($5, method_reference), \
         limit_value = COALESCE($6, limit_value), accuracy = COALESCE($7, accuracy), \
@@ -306,14 +306,14 @@ async fn delete_analyte(
     let filter = resolve_tenant(&ctx, &claims);
     let result = if let Some(t) = filter {
         sqlx::query(
-            "UPDATE qa_lims_analytes SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+            "UPDATE lims.qa_lims_analytes SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
         )
         .bind(id)
         .bind(t)
         .execute(&state.pool)
         .await
     } else {
-        sqlx::query("UPDATE qa_lims_analytes SET deleted_at = NOW() WHERE id = $1")
+        sqlx::query("UPDATE lims.qa_lims_analytes SET deleted_at = NOW() WHERE id = $1")
             .bind(id)
             .execute(&state.pool)
             .await

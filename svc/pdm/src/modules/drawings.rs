@@ -105,7 +105,7 @@ pub async fn list_drawings(
         SELECT id, tenant_id, drawing_no, name, name_en, description, drawing_type,
                product_id, version, status, file_path, file_size, created_by,
                created_at, updated_at
-        FROM pdm_drawings
+        FROM pdm.pdm_drawings
         WHERE deleted_at IS NULL
           AND ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR drawing_no ILIKE $2 OR name ILIKE $2 OR COALESCE(name_en, '') ILIKE $2)
@@ -128,7 +128,7 @@ pub async fn list_drawings(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM pdm_drawings
+                SELECT COUNT(*) FROM pdm.pdm_drawings
                 WHERE deleted_at IS NULL
                   AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR drawing_no ILIKE $2 OR name ILIKE $2 OR COALESCE(name_en, '') ILIKE $2)
@@ -172,7 +172,7 @@ pub async fn create_drawing(
 
     let result = sqlx::query_as::<_, Drawing>(
         r#"
-        INSERT INTO pdm_drawings (
+        INSERT INTO pdm.pdm_drawings (
             id, tenant_id, drawing_no, name, name_en, description, drawing_type,
             product_id, version, status, file_path, file_size, created_by,
             created_at, updated_at
@@ -220,7 +220,7 @@ pub async fn get_drawing(
         SELECT id, tenant_id, drawing_no, name, name_en, description, drawing_type,
                product_id, version, status, file_path, file_size, created_by,
                created_at, updated_at
-        FROM pdm_drawings
+        FROM pdm.pdm_drawings
         WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
@@ -248,7 +248,7 @@ pub async fn update_drawing(
     let tenant_id = tenant_opt_from_claims(&claims);
     let result = sqlx::query_as::<_, Drawing>(
         r#"
-        UPDATE pdm_drawings SET
+        UPDATE pdm.pdm_drawings SET
             name = COALESCE($3, name),
             name_en = COALESCE($4, name_en),
             description = COALESCE($5, description),
@@ -297,7 +297,7 @@ pub async fn delete_drawing(
     let tenant_id = tenant_opt_from_claims(&claims);
     let result = sqlx::query(
         r#"
-        UPDATE pdm_drawings SET deleted_at = now(), updated_at = now()
+        UPDATE pdm.pdm_drawings SET deleted_at = now(), updated_at = now()
         WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )

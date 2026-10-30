@@ -13,6 +13,7 @@ use std::time::{Duration, Instant};
 use async_trait::async_trait;
 use serde::Serialize;
 use sqlx::PgPool;
+use uuid::Uuid;
 use tokio::sync::RwLock;
 
 use super::permission_store::{PermissionStore, PermissionStoreError};
@@ -212,7 +213,7 @@ impl DatabasePermissionStore {
             VALUES ($1, $2, $3, $4)
             RETURNING id
             "#,
-            permission.tenant_id,
+            Uuid::parse_str(&permission.tenant_id).unwrap_or(Uuid::nil()),
             permission.user_id,
             permission.role.as_str(),
             permission.active,
@@ -276,7 +277,7 @@ impl DatabasePermissionStore {
             FROM tenant_permissions
             WHERE tenant_id = $1 AND user_id = $2 AND deleted_at IS NULL
             "#,
-            tenant_id,
+            Uuid::parse_str(tenant_id).unwrap_or(Uuid::nil()),
             user_id,
         )
         .fetch_optional(self.pool.as_ref())
@@ -330,7 +331,7 @@ impl DatabasePermissionStore {
             SET deleted_at = NOW(), active = FALSE
             WHERE tenant_id = $1 AND user_id = $2 AND deleted_at IS NULL
             "#,
-            tenant_id,
+            Uuid::parse_str(tenant_id).unwrap_or(Uuid::nil()),
             user_id,
         )
         .execute(self.pool.as_ref())
@@ -358,7 +359,7 @@ impl DatabasePermissionStore {
             WHERE tenant_id = $1 AND deleted_at IS NULL
             ORDER BY created_at DESC
             "#,
-            tenant_id,
+            Uuid::parse_str(tenant_id).unwrap_or(Uuid::nil()),
         )
         .fetch_all(self.pool.as_ref())
         .await?;
@@ -471,7 +472,7 @@ impl PermissionStore for DatabasePermissionStore {
             VALUES ($1, $2, $3, $4)
             RETURNING id
             "#,
-            permission.tenant_id,
+            Uuid::parse_str(&permission.tenant_id).unwrap_or(Uuid::nil()),
             permission.user_id,
             permission.role.as_str(),
             permission.active,
@@ -569,7 +570,7 @@ impl PermissionStore for DatabasePermissionStore {
             "#,
             permission.role.as_str(),
             permission.active,
-            permission.tenant_id,
+            Uuid::parse_str(&permission.tenant_id).unwrap_or(Uuid::nil()),
             permission.user_id,
         )
         .fetch_optional(&mut *tx)
