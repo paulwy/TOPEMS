@@ -1,8 +1,8 @@
 const CACHE_NAME = 'topems-cache-v3';
 const RUNTIME_CACHE = 'topems-runtime-v2';
 const API_CACHE = 'topems-api-v2';
-const IMAGE_CACHE = 'topems-images-v1';
-const FONT_CACHE = 'topems-fonts-v1';
+const IMAGE_CACHE = 'topems-images-v2';
+const FONT_CACHE = 'topems-fonts-v2';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -166,8 +166,14 @@ async function cacheFirstWithRuntime(request) {
 async function cacheFirstWithTTL(request, cacheName, maxSize, ttl) {
   const cachedResponse = await caches.match(request);
   if (cachedResponse) {
-    const cachedData = await cachedResponse.json().catch(() => ({ timestamp: 0 }));
-    if (!cachedData.timestamp || Date.now() - cachedData.timestamp < ttl) {
+    const metaCache = await caches.open(`${cacheName}-meta`);
+    const metaResponse = await metaCache.match(request.url);
+    let timestamp = 0;
+    if (metaResponse) {
+      const metaData = await metaResponse.json().catch(() => null);
+      timestamp = metaData && metaData.timestamp ? metaData.timestamp : 0;
+    }
+    if (!timestamp || Date.now() - timestamp < ttl) {
       return cachedResponse;
     }
   }
