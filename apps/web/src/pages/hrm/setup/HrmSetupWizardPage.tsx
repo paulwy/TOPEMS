@@ -186,10 +186,35 @@ const HrmSetupWizardPage: React.FC = () => {
           setActiveStep(step);
         }
         if (deptRes?.success && deptRes.data) {
-          setExistingDepts((deptRes.data.items || []).map((d) => ({ id: d.id, name: d.name })));
+          const deptItems = deptRes.data.items || [];
+          setExistingDepts(deptItems.map((d) => ({ id: d.id, name: d.name })));
+          // 回退到部门步时回显已录入数据；初始化（无数据）保持空表单
+          if (deptItems.length > 0) {
+            setDeptRows(
+              deptItems.map((d) => ({
+                name: d.name,
+                code: d.code || '',
+                parent_id: d.parentId || '',
+                description: d.description || '',
+              }))
+            );
+          }
         }
         if (posRes?.success && posRes.data) {
-          setExistingPositions((posRes.data.items || []).map((p) => ({ id: p.id, name: p.name })));
+          const posItems = posRes.data.items || [];
+          setExistingPositions(posItems.map((p) => ({ id: p.id, name: p.name })));
+          // 回退到岗位步时回显已录入数据；初始化（无数据）保持空表单
+          if (posItems.length > 0) {
+            setPosRows(
+              posItems.map((p) => ({
+                name: p.name,
+                code: p.code || '',
+                department_id: p.department_id || '',
+                level: p.level || '',
+                description: p.description || '',
+              }))
+            );
+          }
         }
       } catch {
         // 进度查询失败（未登录/接口暂缺）时按默认第 1 步继续，不硬阻塞
