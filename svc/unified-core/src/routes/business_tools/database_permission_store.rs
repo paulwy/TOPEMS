@@ -13,8 +13,8 @@ use std::time::{Duration, Instant};
 use async_trait::async_trait;
 use serde::Serialize;
 use sqlx::PgPool;
-use uuid::Uuid;
 use tokio::sync::RwLock;
+use uuid::Uuid;
 
 use super::permission_store::{PermissionStore, PermissionStoreError};
 use super::{TenantPermission, TenantRole, ToolPermission};

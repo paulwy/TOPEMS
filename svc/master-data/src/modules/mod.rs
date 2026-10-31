@@ -752,7 +752,10 @@ pub fn create_routes() -> Router<AppState> {
         // 这些路径不带 mdm-v5x/kg-v53 等版本前缀，与上面的 nest 互不重叠；handler 就近复用/新增，
         // 与版本化兄弟端点共用同一真表与 envelope 语义。
         .route("/continuity/plans", get(disaster_v56::list_plans))
-        .route("/dashboard/recent", get(master_plugin::list_recent_activities))
+        .route(
+            "/dashboard/recent",
+            get(master_plugin::list_recent_activities),
+        )
         .route(
             "/dashboard/recent/{id}",
             get(master_plugin::get_recent_activity),
@@ -764,11 +767,11 @@ pub fn create_routes() -> Router<AppState> {
             get(dict::list_dict_items),
         )
         .route("/lifecycle/policies", get(metadata_v60::get_policies))
+        .route("/lifecycle/policies/{id}", get(metadata_v60::get_policy))
         .route(
-            "/lifecycle/policies/{id}",
-            get(metadata_v60::get_policy),
+            "/metadata/search",
+            get(metadata_v60::search_metadata_compat),
         )
-        .route("/metadata/search", get(metadata_v60::search_metadata_compat))
         .route("/metadata/search/{id}", get(metadata_v60::get_metadata))
         .route(
             "/permissions/resource",
@@ -778,10 +781,7 @@ pub fn create_routes() -> Router<AppState> {
             "/permissions/resource/{id}",
             get(versioning_v54::get_resource_permission),
         )
-        .route(
-            "/recovery/points",
-            get(disaster_v56::list_recovery_points),
-        )
+        .route("/recovery/points", get(disaster_v56::list_recovery_points))
         .route(
             "/recovery/points/{id}",
             get(disaster_v56::get_recovery_point),
@@ -791,7 +791,10 @@ pub fn create_routes() -> Router<AppState> {
         .route("/trending", get(knowledge_v53::get_trending_items))
         .route("/uoms", get(master_data::list_uoms))
         .route("/version/diff", get(versioning_v54::diff_versions_compat))
-        .route("/ai/predict", post(quality_v51::predict_quality_trend_compat))
+        .route(
+            "/ai/predict",
+            post(quality_v51::predict_quality_trend_compat),
+        )
         .route(
             "/data-product",
             post(governance_v58::create_data_product_compat),

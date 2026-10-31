@@ -155,9 +155,7 @@ pub async fn create_task(
     .bind(&req.source_module)
     .bind(&req.target_module)
     .bind(&req.source_entity)
-    .bind(req.source_id.as_deref().map(|s| {
-        serde_json::json!([s])
-    }))
+    .bind(req.source_id.as_deref().map(|s| serde_json::json!([s])))
     .bind(now)
     .bind(now)
     .bind(now)
@@ -312,31 +310,38 @@ pub async fn get_pending(State(state): State<AppState>) -> ApiResponse<Vec<SyncT
 )]
 pub async fn get_statistics(State(state): State<AppState>) -> ApiResponse<SyncStatistics> {
     let result: Result<SyncStatistics, sqlx::Error> = async {
-        let total_tasks = sqlx::query_scalar::<_, i64>(only_own_schema_query!("integration", "SELECT COUNT(*) FROM integration.core_inter_module_sync"))
-            .fetch_one(&state.pool)
-            .await?;
-
-        let pending_tasks = sqlx::query_scalar::<_, i64>(
-            only_own_schema_query!("integration", "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'pending'"),
-        )
+        let total_tasks = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "integration",
+            "SELECT COUNT(*) FROM integration.core_inter_module_sync"
+        ))
         .fetch_one(&state.pool)
         .await?;
 
-        let success_tasks = sqlx::query_scalar::<_, i64>(
-            only_own_schema_query!("integration", "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'success'"),
-        )
+        let pending_tasks = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "integration",
+            "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'pending'"
+        ))
         .fetch_one(&state.pool)
         .await?;
 
-        let failed_tasks = sqlx::query_scalar::<_, i64>(
-            only_own_schema_query!("integration", "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'failed'"),
-        )
+        let success_tasks = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "integration",
+            "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'success'"
+        ))
         .fetch_one(&state.pool)
         .await?;
 
-        let in_progress_tasks = sqlx::query_scalar::<_, i64>(
-            only_own_schema_query!("integration", "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'in_progress'"),
-        )
+        let failed_tasks = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "integration",
+            "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'failed'"
+        ))
+        .fetch_one(&state.pool)
+        .await?;
+
+        let in_progress_tasks = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+            "integration",
+            "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'in_progress'"
+        ))
         .fetch_one(&state.pool)
         .await?;
 

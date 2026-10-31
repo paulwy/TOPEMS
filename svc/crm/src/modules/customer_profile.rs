@@ -530,9 +530,7 @@ pub async fn list_customer_profiles(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("获取客户画像列表失败: 事务开启失败 {}", e);
-            return ApiResponse::from(TopemsError::Internal(
-                "获取客户画像列表失败".to_string(),
-            ));
+            return ApiResponse::from(TopemsError::Internal("获取客户画像列表失败".to_string()));
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -541,9 +539,7 @@ pub async fn list_customer_profiles(
         .await
     {
         tracing::error!("获取客户画像列表失败: RLS 上下文设置失败 {}", e);
-        return ApiResponse::from(TopemsError::Internal(
-            "获取客户画像列表失败".to_string(),
-        ));
+        return ApiResponse::from(TopemsError::Internal("获取客户画像列表失败".to_string()));
     }
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}

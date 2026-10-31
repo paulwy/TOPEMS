@@ -1563,7 +1563,7 @@ pub async fn predict_quality_trend_compat(
     let days = req
         .get("days")
         .and_then(|v| v.as_i64())
-        .map(|d| d as i32)
+        .map(|d| i32::try_from(d).unwrap_or(36500))
         .unwrap_or(30);
     let trend = build_quality_trend(&state, entity_type, days).await;
     ApiResponse::success(trend, "质量趋势预测")

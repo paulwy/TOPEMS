@@ -491,7 +491,10 @@ impl CommunicationRealModule {
                 .route("/rooms/{id}/read", post(im::mark_messages_read))
                 // --- 位置消息 / 地理围栏 / POI 统一搜索（im_location，前缀对齐独立 main.rs：/im/*） ---
                 .route("/locations/geofences", get(im_location::list_geofences))
-                .route("/locations/message", post(im_location::send_location_message))
+                .route(
+                    "/locations/message",
+                    post(im_location::send_location_message),
+                )
                 .route("/pois/search", post(im_location::unified_search_pois));
             for p in IM_STUB_GET {
                 r = r.route(p, get(comm_stub));
