@@ -907,7 +907,7 @@ pub async fn update_flow_step(
             equipment_ids = COALESCE($3::uuid[], equipment_ids),
             standard_time = COALESCE($4::float8, standard_time),
             wait_time = COALESCE($5::float8, wait_time),
-            transfer_time = COALESCE(NULLIF($6, '')::int4, transfer_time),
+            transfer_time = COALESCE(NULLIF($6, ''), transfer_time),
             quality_check_required = COALESCE($7, quality_check_required),
             description = COALESCE($8, description)
         WHERE id = $9
@@ -926,11 +926,11 @@ pub async fn update_flow_step(
     .bind(body.quality_check_required)
     .bind(body.description)
     .bind(step_uuid)
-    .fetch_one(&state.pool)
+    .fetch_optional(&state.pool)
     .await;
 
     match result {
-        Ok(s) => {
+        Ok(Some(s)) => {
             let process_info = sqlx::query!(
                 r#"
                 SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1
@@ -972,6 +972,7 @@ pub async fn update_flow_step(
                 "更新工艺步骤成功",
             )
         }
+        Ok(None) => ApiResponse::not_found("工艺步骤不存在"),
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("工艺步骤不存在"),
         Err(e) => {
             tracing::error!("Failed to update flow step: {}", e);

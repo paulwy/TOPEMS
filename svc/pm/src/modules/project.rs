@@ -486,7 +486,7 @@ async fn update_project(
             benefit_target = COALESCE($9, benefit_target),
             risk_level = COALESCE($10, risk_level),
             priority = COALESCE($11, priority),
-            tags = COALESCE(to_jsonb($12::text[]), tags),
+            tags = COALESCE($12::text[], tags),
             parent_id = COALESCE($13, parent_id),
             workspace_id = COALESCE($14, workspace_id),
             name_en = COALESCE($15, name_en),

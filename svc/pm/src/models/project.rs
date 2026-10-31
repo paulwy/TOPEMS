@@ -45,7 +45,6 @@ pub struct Project {
     #[serde(alias = "risk_level", rename = "risklevel")]
     pub risk_level: Option<String>,
     pub priority: Option<i32>,
-    #[sqlx(json)]
     pub tags: Option<Vec<String>>,
     #[serde(alias = "parent_id", rename = "parentId")]
     pub parent_id: Option<Uuid>,

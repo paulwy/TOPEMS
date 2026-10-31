@@ -121,18 +121,25 @@ pub fn create_routes() -> Router<ApiState> {
 )]
 pub async fn get_customer_profile(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
-    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Query(params): Query<ProfileQueryParams>,
 ) -> ApiResponse<CustomerProfile> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => return ApiResponse::server_error("rls transaction unavailable"),
+    let mut txn = match state.db.begin().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("获取客户信息失败: 事务开启失败 {}", e);
+            return ApiResponse::from(TopemsError::Internal("获取客户信息失败".to_string()));
+        }
     };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(claims.tenant_id.clone().unwrap_or_default())
+        .execute(&mut *txn)
+        .await
+    {
+        tracing::error!("获取客户信息失败: RLS 上下文设置失败 {}", e);
+        return ApiResponse::from(TopemsError::Internal("获取客户信息失败".to_string()));
+    }
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e.0,
@@ -140,12 +147,12 @@ pub async fn get_customer_profile(
 
     let customer_result = sqlx::query_as::<_, Customer>(
         r#"
-        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, name, customer_type, industry, COALESCE(rating, '') AS rating, region, COALESCE(owner_id, '00000000-0000-0000-0000-000000000000') AS owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, created_at, updated_at, deleted_at
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, COALESCE(owner_id, '00000000-0000-0000-0000-000000000000') AS owner_id, tags, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, approval_status, created_at, updated_at, deleted_at
         FROM crm.customers WHERE id = $1
         "#,
     )
     .bind(id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut *txn)
     .await;
 
     let customer = match customer_result {
@@ -159,22 +166,22 @@ pub async fn get_customer_profile(
         }
     };
 
-    let score = fetch_customer_score(txn, id).await;
+    let score = fetch_customer_score(&mut txn, id).await;
 
     let opportunities = if params.include_opportunities.unwrap_or(true) {
-        fetch_customer_opportunities(txn, id).await
+        fetch_customer_opportunities(&mut txn, id).await
     } else {
         Vec::new()
     };
 
     let interactions = if params.include_interactions.unwrap_or(true) {
-        fetch_customer_interactions(txn, id).await
+        fetch_customer_interactions(&mut txn, id).await
     } else {
         Vec::new()
     };
 
     let contacts = if params.include_contacts.unwrap_or(true) {
-        fetch_customer_contacts(txn, id).await
+        fetch_customer_contacts(&mut txn, id).await
     } else {
         Vec::new()
     };
@@ -382,18 +389,25 @@ fn generate_profile_tags(
 )]
 pub async fn add_profile_tags(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
-    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<AddProfileTagRequest>,
 ) -> ApiResponse<String> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => return ApiResponse::server_error("rls transaction unavailable"),
+    let mut txn = match state.db.begin().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("添加客户标签失败: 事务开启失败 {}", e);
+            return ApiResponse::from(TopemsError::Internal("添加客户标签失败".to_string()));
+        }
     };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(claims.tenant_id.clone().unwrap_or_default())
+        .execute(&mut *txn)
+        .await
+    {
+        tracing::error!("添加客户标签失败: RLS 上下文设置失败 {}", e);
+        return ApiResponse::from(TopemsError::Internal("添加客户标签失败".to_string()));
+    }
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e.0,
@@ -411,7 +425,7 @@ pub async fn add_profile_tags(
         .bind(tag)
         .bind(Utc::now())
         .bind(topems_shared_auth::middleware::tenant::get_tenant_id_from_claims(&claims))
-        .execute(&mut **txn)
+        .execute(&mut *txn)
         .await;
 
         if let Err(e) = result {
@@ -420,11 +434,9 @@ pub async fn add_profile_tags(
         }
     }
 
-    if let Some(t) = guard.take() {
-        if let Err(e) = t.commit().await {
-            tracing::error!("事务提交失败: {}", e);
-            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
-        }
+    if let Err(e) = txn.commit().await {
+        tracing::error!("事务提交失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
     }
     ApiResponse::success("".to_string(), "标签添加成功")
 }
@@ -444,18 +456,25 @@ pub async fn add_profile_tags(
 )]
 pub async fn remove_profile_tags(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
-    >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<AddProfileTagRequest>,
 ) -> ApiResponse<String> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => return ApiResponse::server_error("rls transaction unavailable"),
+    let mut txn = match state.db.begin().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("移除客户标签失败: 事务开启失败 {}", e);
+            return ApiResponse::from(TopemsError::Internal("移除客户标签失败".to_string()));
+        }
     };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(claims.tenant_id.clone().unwrap_or_default())
+        .execute(&mut *txn)
+        .await
+    {
+        tracing::error!("移除客户标签失败: RLS 上下文设置失败 {}", e);
+        return ApiResponse::from(TopemsError::Internal("移除客户标签失败".to_string()));
+    }
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e.0,
@@ -476,7 +495,7 @@ pub async fn remove_profile_tags(
                 .bind(id)
                 .bind(tag)
                 .bind(tenant_filter)
-                .execute(&mut **txn)
+                .execute(&mut *txn)
                 .await;
 
         if let Err(e) = result {
@@ -485,11 +504,9 @@ pub async fn remove_profile_tags(
         }
     }
 
-    if let Some(t) = guard.take() {
-        if let Err(e) = t.commit().await {
-            tracing::error!("事务提交失败: {}", e);
-            return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
-        }
+    if let Err(e) = txn.commit().await {
+        tracing::error!("事务提交失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
     }
     ApiResponse::success("".to_string(), "标签删除成功")
 }
@@ -506,17 +523,28 @@ pub async fn remove_profile_tags(
 )]
 pub async fn list_customer_profiles(
     State(state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
-    >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CustomerPaginationParams>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => return ApiResponse::server_error("rls transaction unavailable"),
+    let mut txn = match state.db.begin().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("获取客户画像列表失败: 事务开启失败 {}", e);
+            return ApiResponse::from(TopemsError::Internal(
+                "获取客户画像列表失败".to_string(),
+            ));
+        }
     };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(claims.tenant_id.clone().unwrap_or_default())
+        .execute(&mut *txn)
+        .await
+    {
+        tracing::error!("获取客户画像列表失败: RLS 上下文设置失败 {}", e);
+        return ApiResponse::from(TopemsError::Internal(
+            "获取客户画像列表失败".to_string(),
+        ));
+    }
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e.0,
@@ -530,7 +558,7 @@ pub async fn list_customer_profiles(
 
     let customers_result = sqlx::query_as::<_, Customer>(
         r#"
-        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, name, customer_type, industry, COALESCE(rating, '') AS rating, region, COALESCE(owner_id, '00000000-0000-0000-0000-000000000000') AS owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, created_at, updated_at, deleted_at
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, COALESCE(owner_id, '00000000-0000-0000-0000-000000000000') AS owner_id, tags, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, approval_status, created_at, updated_at, deleted_at
         FROM crm.customers
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -544,7 +572,7 @@ pub async fn list_customer_profiles(
     .bind(&params.customer_type)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut *txn)
     .await;
 
     match customers_result {
@@ -560,17 +588,17 @@ pub async fn list_customer_profiles(
             .bind(&search_pattern)
             .bind(&params.status)
             .bind(&params.customer_type)
-            .fetch_one(&mut **txn)
+            .fetch_one(&mut *txn)
             .await;
 
             let total = count_result.unwrap_or(0);
 
             let mut profiles = Vec::new();
             for customer in customers {
-                let score = fetch_customer_score(txn, customer.id).await;
-                let opportunities = fetch_customer_opportunities(txn, customer.id).await;
-                let interactions = fetch_customer_interactions(txn, customer.id).await;
-                let contacts = fetch_customer_contacts(txn, customer.id).await;
+                let score = fetch_customer_score(&mut txn, customer.id).await;
+                let opportunities = fetch_customer_opportunities(&mut txn, customer.id).await;
+                let interactions = fetch_customer_interactions(&mut txn, customer.id).await;
+                let contacts = fetch_customer_contacts(&mut txn, customer.id).await;
                 let profile_tags = generate_profile_tags(&customer, &score, &opportunities);
 
                 profiles.push(CustomerProfile {

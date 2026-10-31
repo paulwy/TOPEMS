@@ -44,6 +44,7 @@ pub struct HrmDepartment {
 pub struct HrmCompany {
     pub id: Uuid,
     pub name: String,
+    #[serde(default)]
     pub code: String,
     pub description: Option<String>,
     pub created_at: chrono::DateTime<chrono::Utc>,
