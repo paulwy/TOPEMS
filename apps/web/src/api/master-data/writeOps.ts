@@ -5,10 +5,15 @@ import type { ApiResponse } from '../client';
 export const master_dataWriteApi = {
   exportKg: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.master.post('/kg-v53/export', data ?? {}),
-  exportLineage: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  exportLineage: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.master.post('/mdm-v60/lineage/export', data ?? {}),
-  exportLineage2: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.master.post('/export', data ?? {}),
-  exportLineage3: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  exportLineage2: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => apiClient.master.post('/export', data ?? {}),
+  exportLineage3: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.master.post('/lineage-v52/export', data ?? {}),
 };

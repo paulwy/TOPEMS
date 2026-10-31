@@ -142,9 +142,7 @@ export const projectApi = {
   },
 
   // ── v74 to_bind 补绑（2026-10-29）──
-  createProject: async (
-    data: CreatePdmProjectRequest
-  ): Promise<ApiResponse<PdmProject>> => {
+  createProject: async (data: CreatePdmProjectRequest): Promise<ApiResponse<PdmProject>> => {
     return apiClient.pdm.post<PdmProject>('/projects', data);
   },
 };

@@ -19,7 +19,9 @@ export const aiReadApi = {
     apiClient.ai.get('/dashboard/activity-trend/{tail}'),
   upload: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ai.post('/documents/upload', data ?? {}),
-  batchStore: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  batchStore: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ai.post('/vectors/batch-store', data ?? {}),
   personalized: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ai.get('/recommendations/personalized'),

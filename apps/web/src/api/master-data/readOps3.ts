@@ -7,7 +7,9 @@ export const masterdataReadOps3 = {
     apiClient.master.get('/mdm-v54/version/diff'),
   diffVersions2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.master.get('/mdm-v54/version/diff'),
-  createMetadata: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  createMetadata: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.master.post('/mdm-v60/metadata', data ?? {}),
   searchMetadata: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.master.get('/mdm-v60/metadata/search'),

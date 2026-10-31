@@ -21,6 +21,8 @@ export const analyticsReadOps2 = {
     apiClient.bi.get('/qms/summary'),
   getEhsIncidentTrend: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.bi.get('/ehs/incident-trend'),
-  trendAnalysis: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  trendAnalysis: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.bi.post('/prediction/trend', data ?? {}),
 };

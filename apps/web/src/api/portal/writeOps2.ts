@@ -3,22 +3,40 @@ import type { ApiResponse } from '../client';
 
 // ── v74 批2复核·写语义补绑（2026-10-29）──
 export const portalWriteOps2 = {
-  executeAdaptiveQuery: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  executeAdaptiveQuery: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.portal.post('/adaptive-execution/execute', data ?? {}),
-  runHealthCheck: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  runHealthCheck: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.portal.post('/ai-ops/health/run', data ?? {}),
-  executeHealing: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  executeHealing: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.portal.post('/ai-ops/healing/execute', data ?? {}),
-  executeReplay: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  executeReplay: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.portal.post('/realtime-processing/replay/execute/{id}', data ?? {}),
-  executeStitch: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  executeStitch: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.portal.post('/intelligent-gateway/stitch/execute', data ?? {}),
-  executeQuickAction: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  executeQuickAction: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.portal.post('/quick-actions/{id}/execute', data ?? {}),
-  executeQuery: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  executeQuery: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.portal.post('/persisted-query/{hash}/execute', data ?? {}),
-  executePlan: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  executePlan: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.portal.post('/orchestration/plan/{id}/execute', data ?? {}),
-  executeDistributedQuery: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  executeDistributedQuery: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.portal.post('/deep-federation/distributed/query/{id}/execute', data ?? {}),
 };

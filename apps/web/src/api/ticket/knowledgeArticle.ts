@@ -9,9 +9,7 @@ export const knowledgeArticleApi = {
     return apiClient.ticket.post('/knowledge-articles', data);
   },
 
-  getKnowledgeArticle: async (
-    id: string
-  ): Promise<ApiResponse<Record<string, unknown>>> => {
+  getKnowledgeArticle: async (id: string): Promise<ApiResponse<Record<string, unknown>>> => {
     return apiClient.ticket.get(`/knowledge-articles/${id}`);
   },
 
@@ -22,9 +20,7 @@ export const knowledgeArticleApi = {
     return apiClient.ticket.put(`/knowledge-articles/${id}`, data);
   },
 
-  deleteKnowledgeArticle: async (
-    id: string
-  ): Promise<ApiResponse<Record<string, unknown>>> => {
+  deleteKnowledgeArticle: async (id: string): Promise<ApiResponse<Record<string, unknown>>> => {
     return apiClient.ticket.delete(`/knowledge-articles/${id}`);
   },
 };

@@ -163,9 +163,7 @@ export const documentApi = {
   },
 
   // ── v74 to_bind 补绑（2026-10-29）──
-  createDocument: async (
-    data: CreatePdmDocumentRequest
-  ): Promise<ApiResponse<PdmDocument>> => {
+  createDocument: async (data: CreatePdmDocumentRequest): Promise<ApiResponse<PdmDocument>> => {
     return apiClient.pdm.post<PdmDocument>('/documents', data);
   },
 };

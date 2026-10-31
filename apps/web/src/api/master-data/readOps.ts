@@ -9,7 +9,9 @@ export const masterDataReadApi = {
     apiClient.master.get('/mdm-v60/lifecycle/policies'),
   getQualityScore: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.master.get('/quality-v51/score'),
-  predictQualityTrend: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  predictQualityTrend: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.master.post('/quality-v51/ai/predict', data ?? {}),
   getResourcePermissions: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.master.get('/mdm-v54/permissions/resource'),
@@ -21,7 +23,9 @@ export const masterDataReadApi = {
     apiClient.master.get('/mdm-v56/recovery/points/{id}'),
   listPlans2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.master.get('/mdm-v56/continuity/plans'),
-  createDataProduct: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  createDataProduct: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.master.post('/mdm-v58/data-product', data ?? {}),
   listDataProducts: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.master.get('/mdm-v58/data-products'),

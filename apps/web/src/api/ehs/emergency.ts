@@ -72,9 +72,7 @@ export const emergencyApi = {
   },
 
   // ── v74 to_bind 补绑（2026-10-29）──
-  listPlanVersions: async (
-    id: string
-  ): Promise<ApiResponse<Record<string, unknown>[]>> => {
+  listPlanVersions: async (id: string): Promise<ApiResponse<Record<string, unknown>[]>> => {
     return apiClient.ehs.get<Record<string, unknown>[]>(`/emergency-plans/${id}/versions`);
   },
 

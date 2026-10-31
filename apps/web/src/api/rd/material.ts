@@ -98,9 +98,7 @@ export const materialApi = {
   },
 
   // ── v74 to_bind 补绑（2026-10-29）──
-  listByExperiment: async (
-    experimentId: string
-  ): Promise<ApiResponse<Record<string, unknown>>> => {
+  listByExperiment: async (experimentId: string): Promise<ApiResponse<Record<string, unknown>>> => {
     return apiClient.rd.get(`/material-tests/experiment/${experimentId}`);
   },
 };

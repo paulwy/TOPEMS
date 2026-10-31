@@ -5,6 +5,8 @@ import type { ApiResponse } from '../client';
 export const aiWriteOps2 = {
   agentRun: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ai.post('/agent/run', data ?? {}),
-  executeWorkflow: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  executeWorkflow: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.ai.post('/workflows/execute', data ?? {}),
 };

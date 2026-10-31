@@ -5,6 +5,8 @@ import type { ApiResponse } from '../client';
 export const financeReadOps3 = {
   applyTemplate: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.get('/voucher-templates/apply'),
-  routeEvent: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  routeEvent: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.finance.post('/events/route', data ?? {}),
 };

@@ -9,9 +9,7 @@ export const automationRuleApi = {
     return apiClient.ticket.post('/automation-rules', data);
   },
 
-  getAutomationRule: async (
-    id: string
-  ): Promise<ApiResponse<Record<string, unknown>>> => {
+  getAutomationRule: async (id: string): Promise<ApiResponse<Record<string, unknown>>> => {
     return apiClient.ticket.get(`/automation-rules/${id}`);
   },
 
@@ -22,9 +20,7 @@ export const automationRuleApi = {
     return apiClient.ticket.put(`/automation-rules/${id}`, data);
   },
 
-  deleteAutomationRule: async (
-    id: string
-  ): Promise<ApiResponse<Record<string, unknown>>> => {
+  deleteAutomationRule: async (id: string): Promise<ApiResponse<Record<string, unknown>>> => {
     return apiClient.ticket.delete(`/automation-rules/${id}`);
   },
 };

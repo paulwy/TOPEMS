@@ -99,9 +99,7 @@ export const pluginApi = {
     return response.data;
   },
 
-  checkPluginUpdates: async (
-    pluginCode: string
-  ): Promise<ApiResponse<Record<string, unknown>>> => {
+  checkPluginUpdates: async (pluginCode: string): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await pluginAxios.get(`${API_BASE}/plugins/${pluginCode}/updates`);
     return response.data;
   },
@@ -161,7 +159,9 @@ export const pluginApi = {
     return response.data;
   },
 
-  uploadPlugin: async (data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> => {
+  uploadPlugin: async (
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await pluginAxios.post(`${API_BASE}/dev/plugins`, data);
     return response.data;
   },

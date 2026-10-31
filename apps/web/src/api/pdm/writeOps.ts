@@ -5,6 +5,7 @@ import type { ApiResponse } from '../client';
 export const pdmWriteApi = {
   listBatches: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.pdm.get('/production-batches'),
-  importData: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.pdm.post('/import', data ?? {}),
+  importData: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> => apiClient.pdm.post('/import', data ?? {}),
 };

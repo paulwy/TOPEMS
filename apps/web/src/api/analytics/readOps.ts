@@ -21,9 +21,13 @@ export const analyticsReadApi = {
     apiClient.bi.get('/srm/order-timeline'),
   queryDashboardRealtimeData: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.bi.get('/dashboard/{id}/realtime'),
-  exponentialSmoothingForecast: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  exponentialSmoothingForecast: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.bi.post('/prediction/exponential-smoothing', data ?? {}),
-  predictionComparison: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
+  predictionComparison: async (
+    data?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.bi.post('/prediction/compare', data ?? {}),
   listPermissionRules: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.bi.get('/permission/rule'),

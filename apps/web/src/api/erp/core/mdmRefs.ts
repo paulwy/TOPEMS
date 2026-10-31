@@ -514,14 +514,18 @@ export const mdmRefsApi = {
     );
   },
 
-  async batchClassify(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+  async batchClassify(
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> {
     return apiClient.erp.post<Record<string, unknown>>(
       '/master-data/classification/batch-classify',
       data
     );
   },
 
-  async mdmGatewayAggregate(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+  async mdmGatewayAggregate(
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> {
     return apiClient.erp.post<Record<string, unknown>>('/master-data/gateway/aggregate', data);
   },
 
@@ -545,7 +549,9 @@ export const mdmRefsApi = {
     );
   },
 
-  async validateRecord(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+  async validateRecord(
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> {
     return apiClient.erp.post<Record<string, unknown>>('/master-data-refs/metadata/validate', data);
   },
 
@@ -557,14 +563,15 @@ export const mdmRefsApi = {
     return apiClient.erp.post<Record<string, unknown>>(`/master-data/quality-ai/score/${id}`, {});
   },
 
-  async batchQualityAiScore(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
-    return apiClient.erp.post<Record<string, unknown>>(
-      '/master-data/quality-ai/batch-score',
-      data
-    );
+  async batchQualityAiScore(
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> {
+    return apiClient.erp.post<Record<string, unknown>>('/master-data/quality-ai/batch-score', data);
   },
 
-  async getShortestPath(params?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+  async getShortestPath(
+    params?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> {
     return apiClient.erp.get<Record<string, unknown>>('/master-data/graph/shortest-path', {
       params,
     });
@@ -596,11 +603,15 @@ export const mdmRefsApi = {
     );
   },
 
-  async mdmServiceRegister(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+  async mdmServiceRegister(
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> {
     return apiClient.erp.post<Record<string, unknown>>('/master-data/services/register', data);
   },
 
-  async createSyncJobV2(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+  async createSyncJobV2(
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> {
     return apiClient.erp.post<Record<string, unknown>>('/master-data/sync/v2/jobs', data);
   },
 
@@ -616,11 +627,15 @@ export const mdmRefsApi = {
     return apiClient.erp.get<Record<string, unknown>>('/master-data-refs/lineage/circular-deps');
   },
 
-  async compareMaturity(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+  async compareMaturity(
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> {
     return apiClient.erp.post<Record<string, unknown>>('/master-data-refs/maturity/compare', data);
   },
 
-  async searchCatalog(params?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+  async searchCatalog(
+    params?: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> {
     return apiClient.erp.get<Record<string, unknown>>('/master-data-refs/catalog/search', {
       params,
     });
@@ -634,7 +649,9 @@ export const mdmRefsApi = {
     return apiClient.erp.get<Record<string, unknown>>('/master-data-refs/catalog/popular');
   },
 
-  async createCatalogEntry(data: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+  async createCatalogEntry(
+    data: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> {
     return apiClient.erp.post<Record<string, unknown>>('/master-data-refs/catalog', data);
   },
 
