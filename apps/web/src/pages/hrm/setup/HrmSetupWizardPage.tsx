@@ -267,10 +267,23 @@ const HrmSetupWizardPage: React.FC = () => {
       }
       seen.add(key);
     }
+    // 跳过库中已存在/本次会话已创建的部门（与后端 LOWER(name) 校验对齐），
+    // 避免返回上一步再提交时撞"部门已存在"409。
+    const existingNames = new Set(
+      [...existingDepts, ...createdDepts].map((d) => d.name.trim().toLowerCase())
+    );
+    const toCreate = filled.filter((r) => !existingNames.has(r.name.trim().toLowerCase()));
+    if (toCreate.length === 0) {
+      setSummary((prev) => ({
+        ...prev,
+        deptCount: existingDepts.length + createdDepts.length,
+      }));
+      return true;
+    }
     setSubmitting(true);
     try {
       const res = await hrmSetupApi.setupDepartments({
-        departments: filled.map((r) => ({
+        departments: toCreate.map((r) => ({
           name: r.name.trim(),
           code: clean(r.code),
           parent_id: clean(r.parent_id),
@@ -286,7 +299,10 @@ const HrmSetupWizardPage: React.FC = () => {
         message: res.message || '',
       });
       setCreatedDepts((prev) => [...prev, ...(res.data?.departments || [])]);
-      setSummary((prev) => ({ ...prev, deptCount: res.data?.created_count ?? filled.length }));
+      setSummary((prev) => ({
+        ...prev,
+        deptCount: existingDepts.length + createdDepts.length + (res.data?.created_count ?? 0),
+      }));
       return true;
     } catch (error) {
       throw new Error(extractErrorMessage(error, t('hrm.setup_wizard.dept.create_failed')));
@@ -323,10 +339,23 @@ const HrmSetupWizardPage: React.FC = () => {
         seenCodes.add(ckey);
       }
     }
+    // 跳过库中已存在/本次会话已创建的岗位（与后端 LOWER(name) 校验对齐），
+    // 避免返回上一步再提交时撞"职位已存在"409。
+    const existingNames = new Set(
+      [...existingPositions, ...createdPositions].map((p) => p.name.trim().toLowerCase())
+    );
+    const toCreate = filled.filter((r) => !existingNames.has(r.name.trim().toLowerCase()));
+    if (toCreate.length === 0) {
+      setSummary((prev) => ({
+        ...prev,
+        posCount: existingPositions.length + createdPositions.length,
+      }));
+      return true;
+    }
     setSubmitting(true);
     try {
       const res = await hrmSetupApi.setupPositions({
-        positions: filled.map((r) => ({
+        positions: toCreate.map((r) => ({
           name: r.name.trim(),
           code: clean(r.code),
           department_id: clean(r.department_id),
@@ -343,7 +372,11 @@ const HrmSetupWizardPage: React.FC = () => {
         message: res.message || '',
       });
       setCreatedPositions((prev) => [...prev, ...(res.data?.positions || [])]);
-      setSummary((prev) => ({ ...prev, posCount: res.data?.created_count ?? filled.length }));
+      setSummary((prev) => ({
+        ...prev,
+        posCount:
+          existingPositions.length + createdPositions.length + (res.data?.created_count ?? 0),
+      }));
       return true;
     } catch (error) {
       throw new Error(extractErrorMessage(error, t('hrm.setup_wizard.pos.create_failed')));
