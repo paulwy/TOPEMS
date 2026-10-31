@@ -114,10 +114,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
         .route("/mdm-v49/dashboard", get(get_lifecycle_dashboard))
         // V49 前端契约补绑：扁平动词路径（readOps.ts / writeOps.ts / writeOps2.ts 声明），
         // 与上方 RESTful 同族处理器共用内存存储与 envelope 语义。
-        .route(
-            "/mdm-v49/get-archive-policy",
-            get(get_archive_policy_verb),
-        )
+        .route("/mdm-v49/get-archive-policy", get(get_archive_policy_verb))
         .route(
             "/mdm-v49/create-archive-policy",
             post(create_archive_policy_verb),

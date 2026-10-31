@@ -14,7 +14,7 @@ use std::env;
 use topems_shared_boundary::only_own_schema_query;
 
 use crate::ApiState;
-use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_core::response::ApiResponse;
 
 /// 插件信息
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -291,7 +291,8 @@ pub async fn register_to_core(State(_state): State<ApiState>) -> ApiResponse<()>
                 );
                 ApiResponse::not_implemented(&format!(
                     "核心注册服务未部署（CORE_URL={}），注册功能暂不可用: {}",
-                    core_url, response.status()
+                    core_url,
+                    response.status()
                 ))
             }
         }
@@ -310,10 +311,7 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/api/plugins/info", get(get_plugin_info))
         .route("/api/plugins/health", get(plugin_health_check))
         // 前端契约补绑：插件注册两条 POST（writeOps.ts 声明），共用下方注册实现。
-        .route(
-            "/erp-plugin/register-to-core",
-            post(register_to_core),
-        )
+        .route("/erp-plugin/register-to-core", post(register_to_core))
         .route(
             "/erp-plugin/auto-register-to-core",
             post(auto_register_to_core),
@@ -362,7 +360,10 @@ pub async fn auto_register_to_core_internal(_core_url: Option<&str>) -> Result<(
                 Ok(())
             } else {
                 let msg = format!("Failed to register: {}", response.status());
-                tracing::warn!("[ERP Plugin] Failed to register to core: {}", response.status());
+                tracing::warn!(
+                    "[ERP Plugin] Failed to register to core: {}",
+                    response.status()
+                );
                 Err(msg)
             }
         }

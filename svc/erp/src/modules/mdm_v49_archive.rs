@@ -562,7 +562,11 @@ fn json_first_str(v: &serde_json::Value, keys: &[&str]) -> Option<String> {
     None
 }
 
-#[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 fn json_first_i32(v: &serde_json::Value, keys: &[&str]) -> Option<i32> {
     for k in keys {
         if let Some(x) = v.get(*k).and_then(|x| x.as_i64()) {
@@ -705,9 +709,10 @@ pub async fn update_archive_policy_verb(
     if let Some(et) = json_first_str(&payload, &["entity_type"]) {
         policy.entity_type = et;
     }
-    if let Some(age) =
-        json_first_i32(&payload, &["age_threshold_days", "archive_age_days", "ageThresholdDays"])
-    {
+    if let Some(age) = json_first_i32(
+        &payload,
+        &["age_threshold_days", "archive_age_days", "ageThresholdDays"],
+    ) {
         policy.archive_age_days = age;
     }
     if let Some(tier_str) = json_first_str(&payload, &["storage_tier", "archive_tier", "tier"]) {
@@ -817,8 +822,8 @@ pub async fn restore_archive_record_verb(
 
     let reason = json_first_str(&payload, &["restore_reason", "reason"])
         .unwrap_or_else(|| "归档恢复（契约补绑）".to_string());
-    let restored_by =
-        json_first_str(&payload, &["restored_by", "restoredBy"]).unwrap_or_else(|| "system".to_string());
+    let restored_by = json_first_str(&payload, &["restored_by", "restoredBy"])
+        .unwrap_or_else(|| "system".to_string());
 
     record_event(
         master_data_id,
