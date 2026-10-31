@@ -1,3 +1,19 @@
+## v1.122 依赖漏洞专项：dependabot 6 漏洞核查与收敛（2026-10-31）✅
+
+> 承接 v1.121 登记观察项；push 时 GitHub dependabot 提示 default branch 6 vulnerabilities（1 critical/3 high/1 moderate/1 low）。本地双源核对：cargo-audit **0 漏洞**（仅 3 unmaintained warnings）；pnpm audit 实测 18 项 → 修后 15 项。commit 6c36af9a05 已推送。
+
+- **Rust 侧（cargo-audit v0.22.2）**：**0 vulnerabilities**；3 unmaintained warnings（proc-macro-error / ttf-parser / unsafe-libyaml）非漏洞，登记不处理。
+- **Node 侧（pnpm audit --prod）修 3 项（overrides 强制升级）**：
+  - `follow-redirects 1.16.1 → 1.16.2`（GHSA-mrwp-f3q8-3g9p，Cross-realm sensitiveHeaders，axios 运行时链 high）。
+  - `glob 13.0.6 → 14.0.3`（GHSA-3g3m-2fjr-6pw4，AbortSignal bypass，eslint 链 moderate）。
+  - `minimatch 10.2.5 → 11.0.3`（GHSA-g3hv-75wg-m249，globparts 放大 DoS，eslint 链 moderate）。
+  - 验证：`pnpm audit --prod` **18 → 15**（4 low/5 moderate/6 high）；`pnpm typecheck` 通过；pre-push 门禁全绿（lint/typecheck 为 staged-based，本提交无前端源文件）。
+- **不可修 13 项（分类登记，非本次范围）**：
+  - `node-forge ≤1.4.0` **12 条 advisory**（6 high/3 moderate/3 low）：expo→@expo/code-signing-certificates 内嵌，patched 无上游版本 → **待 expo 升级**（10-26 已登记，继续跟踪）。
+  - `deepmerge 4.3.1`（GHSA-gcqx-w48m-w2h4 原型污染 low）：**npm 最新即 4.3.1 仍命中**，无修复版 → 待上游。
+  - `minimatch 3.1.5`（GHSA-g3hv-75wg-m249）：eslint 10.8.0 peer 旧链，3.x 无补丁，强升 11 API 破坏风险高 → 待 eslint 依赖收敛。
+- **存量观察**：`pnpm lint` 全量 221 problems（192 errors 均为 apps/web AI API 新文件 prettier 格式，24 no-unused-vars）——staged-based 门禁不拦本类提交；前端格式清理另排批次。
+
 ## v1.121 WCS 4667 全 PASS：7 FAIL 逐服务核销（2026-10-31）✅
 
 > 目标：WCS smoke（scripts/web_contract_smoke.py，BFF 8099 嵌入态）4667 全 PASS；上段遗留 7 条 handler_error FAIL 清零。
