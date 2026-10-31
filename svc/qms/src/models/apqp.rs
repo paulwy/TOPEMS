@@ -569,7 +569,6 @@ mod tests {
     fn test_apqp_approval() {
         roundtrip(&ApqpApproval {
             id: "id".to_string(),
-            tenant_id: "t".to_string(),
             project_id: "p".to_string(),
             approval_type: "at".to_string(),
             status: None,

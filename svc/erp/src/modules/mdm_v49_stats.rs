@@ -243,6 +243,7 @@ pub async fn run_sla_check(State(_state): State<ApiState>) -> ApiResponse<serde_
         (status = 200, description = "操作成功"),
     ),
 )]
+#[allow(clippy::cast_possible_wrap, clippy::as_conversions)]
 pub async fn get_lifecycle_dashboard(
     State(_state): State<ApiState>,
 ) -> ApiResponse<serde_json::Value> {
@@ -299,8 +300,8 @@ pub async fn run_sla_check_verb(
         }
     }
 
-    let total = entities.len() as i64;
-    let failed = breached.len() as i64;
+    let total = i64::try_from(entities.len()).unwrap_or(i64::MAX);
+    let failed = i64::try_from(breached.len()).unwrap_or(i64::MAX);
     let passed = total - failed;
 
     ApiResponse::success(
@@ -321,7 +322,8 @@ pub async fn run_sla_check_verb(
     clippy::as_conversions,
     clippy::cast_possible_truncation,
     clippy::cast_possible_wrap,
-    clippy::cast_sign_loss
+    clippy::cast_sign_loss,
+    clippy::cast_precision_loss
 )]
 pub async fn get_lifecycle_dashboard_verb(
     State(_state): State<ApiState>,
@@ -349,7 +351,7 @@ pub async fn get_lifecycle_dashboard_verb(
                 serde_json::json!({ "stage": s.as_str(), "count": count })
             })
             .collect();
-        let total = entities.len() as i64;
+        let total = i64::try_from(entities.len()).unwrap_or(i64::MAX);
         let compliance: f64 = if total == 0 {
             1.0
         } else {
