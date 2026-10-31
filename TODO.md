@@ -1,3 +1,16 @@
+## v1.123 前端格式清理：lint 221 problems → 0 全量归零（2026-11-01）✅
+
+> 核销 v1.122 登记的存量观察（apps/web AI API 新文件 prettier 格式 + no-unused-vars）。两笔提交已推送：ddf407d651（192 errors 自动修复）、fda7237303（29 warnings 清零）。
+
+- **批 1 格式修复**（`pnpm lint --fix`，commit ddf407d651，60 files +458/-216）：192 prettier errors 全自动修复（writeOps/readOps 系列 `data?: Record<string, unknown>` 换行等）。
+- **批 2 warnings 清零**（commit fda7237303，18 files +27/-62）：
+  - 删未用 import/变量：BackButton/Tooltip/useTheme×4/ct/T×2/RouteConfig/toFlatRouteConfig 等。
+  - 模板 dead code：FormPageTemplate 模块级 saveDraft + 6 处解构、ListPageTemplate buildInitialFormData/localSearchInput。
+  - naming-convention 4 处：master_dataWriteApi→masterDataWriteApi、unified_coreWriteOps2→unifiedCoreWriteOps2 等（无外部引用）。
+  - hook 泛型收敛：UseCrudDialogsOptions/UseListPageFormOptions 去未用 <T>（函数泛型保留）。
+  - 保留项（eslint-disable + 注释）：EhsHazardDetailPage #f9a825 设计既定色；client.ts SNAKE_CASE_SERVICES 灰度回滚名单。
+- **验证**：`pnpm lint` 0 problems、`pnpm typecheck` 通过、pre-push 门禁全绿；前端 lint 回到 P3-3 基线 0 problems。
+
 ## v1.122 依赖漏洞专项：dependabot 6 漏洞核查与收敛（2026-10-31）✅
 
 > 承接 v1.121 登记观察项；push 时 GitHub dependabot 提示 default branch 6 vulnerabilities（1 critical/3 high/1 moderate/1 low）。本地双源核对：cargo-audit **0 漏洞**（仅 3 unmaintained warnings）；pnpm audit 实测 18 项 → 修后 15 项。commit 6c36af9a05 已推送。
