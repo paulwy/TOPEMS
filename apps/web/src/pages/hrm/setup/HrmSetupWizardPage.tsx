@@ -52,6 +52,8 @@ interface DeptRow {
   code: string;
   parent_id: string;
   description: string;
+  /** 已入库数据（只读回显，修改请到组织管理）；undefined=false 表示本次新增行 */
+  persisted?: boolean;
 }
 
 interface PosRow {
@@ -60,6 +62,8 @@ interface PosRow {
   department_id: string;
   level: string;
   description: string;
+  /** 已入库数据（只读回显，修改请到组织管理）；undefined=false 表示本次新增行 */
+  persisted?: boolean;
 }
 
 interface AdminForm {
@@ -196,6 +200,7 @@ const HrmSetupWizardPage: React.FC = () => {
                 code: d.code || '',
                 parent_id: d.parentId || '',
                 description: d.description || '',
+                persisted: true,
               }))
             );
           }
@@ -212,6 +217,7 @@ const HrmSetupWizardPage: React.FC = () => {
                 department_id: p.department_id || '',
                 level: p.level || '',
                 description: p.description || '',
+                persisted: true,
               }))
             );
           }
@@ -280,7 +286,7 @@ const HrmSetupWizardPage: React.FC = () => {
   };
 
   const submitDepartments = async (): Promise<boolean> => {
-    const filled = deptRows.filter((r) => r.name.trim());
+    const filled = deptRows.filter((r) => r.name.trim() && !r.persisted);
     if (filled.length === 0) {
       throw new Error(t('hrm.setup_wizard.dept.at_least_one'));
     }
@@ -343,7 +349,7 @@ const HrmSetupWizardPage: React.FC = () => {
   };
 
   const submitPositions = async (): Promise<boolean> => {
-    const filled = posRows.filter((r) => r.name.trim());
+    const filled = posRows.filter((r) => r.name.trim() && !r.persisted);
     if (filled.length === 0) {
       throw new Error(t('hrm.setup_wizard.pos.at_least_one'));
     }
@@ -612,12 +618,14 @@ const HrmSetupWizardPage: React.FC = () => {
                 required
                 sx={{ flex: '2 1 160px' }}
                 label={t('hrm.setup_wizard.dept.name')}
+                disabled={row.persisted}
                 value={row.name}
                 onChange={(e) => updateDeptRow(index, { name: e.target.value })}
               />
               <TextField
                 sx={{ flex: '1 1 120px' }}
                 label={t('hrm.setup_wizard.dept.code')}
+                disabled={row.persisted}
                 value={row.code}
                 onChange={(e) => updateDeptRow(index, { code: e.target.value })}
               />
@@ -625,6 +633,7 @@ const HrmSetupWizardPage: React.FC = () => {
                 <InputLabel>{t('hrm.setup_wizard.dept.parent')}</InputLabel>
                 <Select
                   label={t('hrm.setup_wizard.dept.parent')}
+                  disabled={row.persisted}
                   value={row.parent_id}
                   onChange={(e) => updateDeptRow(index, { parent_id: e.target.value })}
                 >
@@ -642,20 +651,23 @@ const HrmSetupWizardPage: React.FC = () => {
               <TextField
                 sx={{ flex: '1.5 1 180px' }}
                 label={t('hrm.setup_wizard.dept.description')}
+                disabled={row.persisted}
                 value={row.description}
                 onChange={(e) => updateDeptRow(index, { description: e.target.value })}
               />
-              <IconButton
-                color='error'
-                aria-label={t('hrm.setup_wizard.dept.remove_row')}
-                onClick={() =>
-                  setDeptRows((prev) =>
-                    prev.length > 1 ? prev.filter((_, i) => i !== index) : prev
-                  )
-                }
-              >
-                <Trash2 size={18} />
-              </IconButton>
+              {!row.persisted && (
+                <IconButton
+                  color='error'
+                  aria-label={t('hrm.setup_wizard.dept.remove_row')}
+                  onClick={() =>
+                    setDeptRows((prev) =>
+                      prev.length > 1 ? prev.filter((_, i) => i !== index) : prev
+                    )
+                  }
+                >
+                  <Trash2 size={18} />
+                </IconButton>
+              )}
             </Box>
           ))}
           <Button
@@ -695,12 +707,14 @@ const HrmSetupWizardPage: React.FC = () => {
                 required
                 sx={{ flex: '2 1 160px' }}
                 label={t('hrm.setup_wizard.pos.name')}
+                disabled={row.persisted}
                 value={row.name}
                 onChange={(e) => updatePosRow(index, { name: e.target.value })}
               />
               <TextField
                 sx={{ flex: '1 1 120px' }}
                 label={t('hrm.setup_wizard.pos.code')}
+                disabled={row.persisted}
                 value={row.code}
                 onChange={(e) => updatePosRow(index, { code: e.target.value })}
               />
@@ -708,6 +722,7 @@ const HrmSetupWizardPage: React.FC = () => {
                 <InputLabel>{t('hrm.setup_wizard.pos.department')}</InputLabel>
                 <Select
                   label={t('hrm.setup_wizard.pos.department')}
+                  disabled={row.persisted}
                   value={row.department_id}
                   onChange={(e) => updatePosRow(index, { department_id: e.target.value })}
                 >
@@ -726,26 +741,30 @@ const HrmSetupWizardPage: React.FC = () => {
                 type='number'
                 sx={{ flex: '1 1 110px' }}
                 label={t('hrm.setup_wizard.pos.level')}
+                disabled={row.persisted}
                 value={row.level}
                 onChange={(e) => updatePosRow(index, { level: e.target.value })}
               />
               <TextField
                 sx={{ flex: '1.5 1 180px' }}
                 label={t('hrm.setup_wizard.pos.description')}
+                disabled={row.persisted}
                 value={row.description}
                 onChange={(e) => updatePosRow(index, { description: e.target.value })}
               />
-              <IconButton
-                color='error'
-                aria-label={t('hrm.setup_wizard.pos.remove_row')}
-                onClick={() =>
-                  setPosRows((prev) =>
-                    prev.length > 1 ? prev.filter((_, i) => i !== index) : prev
-                  )
-                }
-              >
-                <Trash2 size={18} />
-              </IconButton>
+              {!row.persisted && (
+                <IconButton
+                  color='error'
+                  aria-label={t('hrm.setup_wizard.pos.remove_row')}
+                  onClick={() =>
+                    setPosRows((prev) =>
+                      prev.length > 1 ? prev.filter((_, i) => i !== index) : prev
+                    )
+                  }
+                >
+                  <Trash2 size={18} />
+                </IconButton>
+              )}
             </Box>
           ))}
           <Button
