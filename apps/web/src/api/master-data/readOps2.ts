@@ -8,13 +8,13 @@ export const masterdataReadOps2 = {
   listDictItems: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.master.get('/dict/dict-types/{dict_type_id}/items'),
   getTrendingItems2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.master.get('/trending'),
+    apiClient.master.get('/kg-v53/trending'),
   list: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.master.get('/metadata/search/{tail}'),
+    apiClient.master.get('/mdm-v60/metadata/search/{tail}'),
   listDictTypes: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.master.get('/dict-types'),
+    apiClient.master.get('/dict/dict-types'),
   listDictItems2: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.master.get('/dict-types/{dict_type_id}/items'),
+    apiClient.master.get('/dict/dict-types/{dict_type_id}/items'),
   listUoms: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.master.get('/uoms'),
+    apiClient.master.get('/master-data/uoms'),
 };

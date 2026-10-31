@@ -10,5 +10,5 @@ export const master_dataWriteApi = {
   exportLineage2: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.master.post('/export', data ?? {}),
   exportLineage3: async (data?: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.master.post('/lineage/export', data ?? {}),
+    apiClient.master.post('/lineage-v52/export', data ?? {}),
 };
