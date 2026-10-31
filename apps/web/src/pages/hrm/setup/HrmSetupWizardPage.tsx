@@ -307,12 +307,21 @@ const HrmSetupWizardPage: React.FC = () => {
       throw new Error(t('hrm.setup_wizard.pos.at_least_one'));
     }
     const seen = new Set<string>();
+    const seenCodes = new Set<string>();
     for (const row of filled) {
-      const key = row.name.trim();
+      const key = row.name.trim().toLowerCase();
       if (seen.has(key)) {
-        throw new Error(t('hrm.setup_wizard.pos.duplicate_name', { name: key }));
+        throw new Error(t('hrm.setup_wizard.pos.duplicate_name', { name: row.name.trim() }));
       }
       seen.add(key);
+      const code = row.code.trim();
+      if (code) {
+        const ckey = code.toLowerCase();
+        if (seenCodes.has(ckey)) {
+          throw new Error(t('hrm.setup_wizard.pos.duplicate_code', { code }));
+        }
+        seenCodes.add(ckey);
+      }
     }
     setSubmitting(true);
     try {

@@ -3658,5 +3658,6 @@
   "hrm.setup_wizard.checklist.step.departments": "Add departments",
   "hrm.setup_wizard.checklist.step.positions": "Add positions",
   "hrm.setup_wizard.checklist.step.admin_user": "Create admin account",
-  "hrm.setup_wizard.checklist.step.completion": "Complete and verify initialization"
+  "hrm.setup_wizard.checklist.step.completion": "Complete and verify initialization",
+  "hrm.setup_wizard.pos.duplicate_code": "Duplicate position code in batch: {{code}}"
 }

@@ -2664,5 +2664,6 @@
   "hrm.setup_wizard.checklist.step.departments": "录入部门",
   "hrm.setup_wizard.checklist.step.positions": "录入岗位",
   "hrm.setup_wizard.checklist.step.admin_user": "创建管理员账号",
-  "hrm.setup_wizard.checklist.step.completion": "完成初始化并核验"
+  "hrm.setup_wizard.checklist.step.completion": "完成初始化并核验",
+  "hrm.setup_wizard.pos.duplicate_code": "批次内岗位编码重复：{{code}}"
 }
