@@ -16,7 +16,7 @@ export const erpReadApi = {
   graphqlEndpoint: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/master-data/graphql'),
   listProductionOrders: async (): Promise<ApiResponse<Record<string, unknown>>> =>
-    apiClient.erp.get('/production-order/list-production-orders'),
+    apiClient.erp.get('/production-orders'),
   qualityAiPredictQuality: async (): Promise<ApiResponse<Record<string, unknown>>> =>
     apiClient.erp.get('/master-data/quality-ai/predict/{id}'),
   getImprovementPlan: async (): Promise<ApiResponse<Record<string, unknown>>> =>
