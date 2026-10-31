@@ -17,7 +17,6 @@ import {
   TextField,
   Tooltip,
   Typography,
-  useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
 import {

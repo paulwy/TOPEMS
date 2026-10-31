@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 
 export type FormMode = 'create' | 'edit' | 'view';
 
-export interface UseListPageFormOptions<T> {
+export interface UseListPageFormOptions {
   formFields?: Array<{
     key: string;
     hideInCreate?: boolean;
@@ -17,7 +17,7 @@ export interface UseListPageFormOptions<T> {
  * ListPage 表单状态管理 hook
  * 从 ListPageTemplate 抽出，保持 API 兼容
  */
-export function useListPageForm<T>(options: UseListPageFormOptions<T> = {}) {
+export function useListPageForm<T>(options: UseListPageFormOptions = {}) {
   const { formFields } = options;
 
   // ============ 表单状态 ============

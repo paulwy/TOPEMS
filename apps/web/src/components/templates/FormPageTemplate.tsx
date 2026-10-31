@@ -334,22 +334,6 @@ const loadDrafts = (key: string): Array<{ data: Record<string, unknown>; timesta
 };
 
 /**
- * 保存草稿到localStorage
- */
-const saveDraft = (key: string, data: Record<string, unknown>, maxDrafts: number = 5): void => {
-  try {
-    const drafts = loadDrafts(key);
-    drafts.unshift({ data, timestamp: Date.now() });
-    if (drafts.length > maxDrafts) {
-      drafts.pop();
-    }
-    localStorage.setItem(`form:draft:${key}`, JSON.stringify(drafts));
-  } catch {
-    // ignore
-  }
-};
-
-/**
  * 清除草稿
  */
 const clearDrafts = (key: string): void => {
@@ -433,14 +417,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   detailItemName,
   ...props
 }) => {
-  const {
-    expandedSections,
-    setExpandedSections,
-    toggleSection,
-    expandAll,
-    collapseAll,
-    isExpanded,
-  } = useFormSections({ sections });
+  const { expandedSections, toggleSection } = useFormSections({ sections });
 
   const {
     fieldVisibility,
@@ -460,14 +437,11 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     setValidationHint,
     showHint,
     setShowHint,
-    showValidationHint,
     drafts,
     setDrafts,
     showDraftDialog,
     setShowDraftDialog,
     saveDraft,
-    loadDraft,
-    deleteDraft,
     currentGroup,
     setCurrentGroup,
   } = useFormMisc();

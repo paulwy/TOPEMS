@@ -62,7 +62,7 @@ import {
   Edit,
   Trash2,
 } from 'lucide-react';
-import { EmptyState, ErrorEmptyState, BackButton } from '@topems/shared-components';
+import { EmptyState, ErrorEmptyState } from '@topems/shared-components';
 import {
   useListPageState,
   useUrlListState,
@@ -821,7 +821,6 @@ export function ListPageTemplate<
     openEditForm,
     openViewForm,
     closeForm,
-    buildInitialFormData,
   } = useListPageForm<T>({
     formFields: crud?.formFields,
   });
@@ -1512,22 +1511,15 @@ export function ListPageTemplate<
   );
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const {
-    sortBy,
-    sortOrder,
-    setSortBy,
-    setSortOrder,
-    searchInput,
-    localSearchInput,
-    setLocalSearchInput,
-  } = useListPageSortSearch({
-    defaultSortBy,
-    defaultSortOrder,
-    searchValue,
-    persistSearch,
-    filterStorageKey,
-    internalSearchQuery: internalListStateResult?.searchQuery,
-  });
+  const { sortBy, sortOrder, setSortBy, setSortOrder, searchInput, setLocalSearchInput } =
+    useListPageSortSearch({
+      defaultSortBy,
+      defaultSortOrder,
+      searchValue,
+      persistSearch,
+      filterStorageKey,
+      internalSearchQuery: internalListStateResult?.searchQuery,
+    });
   const {
     anchorEl,
     selectedRow,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Stack, useTheme } from '@mui/material';
+import { Box, Typography, Stack } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import { User, MessageSquare, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 import type { Approval } from '@/api/workflow';

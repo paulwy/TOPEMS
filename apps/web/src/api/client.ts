@@ -787,6 +787,7 @@ class ApiClient {
     // Kept off: gis (TrackingQuery uses limit, no page_size); plugin-registry (filter
     // structs unverified for camelCase keys); migration/aps/jaeger are not frontend services.
     // FE-17 阶段 2：已全量放开（836 行 snakeCaseParams: true），本集合保留作灰度历史与回滚名单。
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const SNAKE_CASE_SERVICES = new Set([
       // 第一梯队（FE-18 已上线验证）
       'wms',

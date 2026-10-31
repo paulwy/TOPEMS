@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Chip, Button, useTheme } from '@mui/material';
+import { Chip, Button } from '@mui/material';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Trash2, Building2 } from 'lucide-react';
 import { DataTable } from '@/components/common/DataTable';

@@ -12,7 +12,7 @@ import {
 import { alpha } from '@mui/material/styles';
 import { Calendar } from 'lucide-react';
 import type { ProductionSchedule } from '@/api/mes';
-import { ct, SCHEDULE_STATUS_META } from '@/components/mes/ProductionDashboardConstants';
+import { SCHEDULE_STATUS_META } from '@/components/mes/ProductionDashboardConstants';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 

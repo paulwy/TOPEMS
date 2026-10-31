@@ -20,7 +20,6 @@ import {
   ListItemText,
   Avatar,
   Divider,
-  useTheme,
 } from '@mui/material';
 import {
   Building2,

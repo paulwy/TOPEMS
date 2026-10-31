@@ -2,7 +2,7 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
 // ── v74 下线候选分流·批2（unified-core 写端点补绑，2026-10-29）──
-export const unified_coreWriteApi = {
+export const unifiedCoreWriteApi = {
   createTemplate: async (
     data?: Record<string, unknown>
   ): Promise<ApiResponse<Record<string, unknown>>> =>

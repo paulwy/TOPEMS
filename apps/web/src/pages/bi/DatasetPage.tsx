@@ -9,7 +9,6 @@ import {
   Chip,
   TextField,
   IconButton,
-  Tooltip,
   Tabs,
   Tab,
   Table,

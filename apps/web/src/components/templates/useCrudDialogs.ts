@@ -6,7 +6,7 @@ export interface ConfirmConfig {
   onConfirm: () => void;
 }
 
-export interface UseCrudDialogsOptions<T> {
+export interface UseCrudDialogsOptions {
   // 无
 }
 
@@ -14,7 +14,7 @@ export interface UseCrudDialogsOptions<T> {
  * CrudPage 对话框状态管理 hook
  * 管理创建 / 编辑 / 详情 / 删除 / 确认对话框
  */
-export function useCrudDialogs<T = unknown>(options: UseCrudDialogsOptions<T> = {}) {
+export function useCrudDialogs<T = unknown>(_options: UseCrudDialogsOptions = {}) {
   // 创建对话框
   const [createOpen, setCreateOpen] = useState(false);
   const [createFormValues, setCreateFormValues] = useState<Record<string, unknown>>({});

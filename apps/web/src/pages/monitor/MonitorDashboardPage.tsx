@@ -192,7 +192,6 @@ const MiniBarChart: React.FC<{
   color?: string;
   height?: number;
 }> = ({ data, color = designTokens.colors.primary.dark, height = 180 }) => {
-  const theme = useTheme();
   if (!data || data.length === 0) {
     return <Box sx={{ width: '100%', height }} />;
   }

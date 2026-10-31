@@ -78,6 +78,8 @@ const assessmentColumns: ColumnDef<RiskAssessment>[] = [
         [i18n.t('pages.ehs_hazard_detail_page.k0')]: { bg: 'error.lighter', color: 'error.dark' },
         [i18n.t('pages.ehs_hazard_detail_page.k1')]: {
           bg: 'warning.100',
+          // 设计既定 severity 色（warning 主色），非新增硬编码
+          // eslint-disable-next-line topems-design/no-hardcoded-hex
           color: '#f9a825',
         },
         [i18n.t('pages.ehs_hazard_detail_page.k2')]: {

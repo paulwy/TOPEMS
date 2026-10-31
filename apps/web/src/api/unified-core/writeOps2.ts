@@ -2,7 +2,7 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
 // ── v74 批2复核·写语义补绑（2026-10-29）──
-export const unified_coreWriteOps2 = {
+export const unifiedCoreWriteOps2 = {
   startInstance: async (
     data?: Record<string, unknown>
   ): Promise<ApiResponse<Record<string, unknown>>> =>
