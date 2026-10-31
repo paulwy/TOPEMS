@@ -1,3 +1,19 @@
+## v1.121 WCS 4667 全 PASS：7 FAIL 逐服务核销（2026-10-31）✅
+
+> 目标：WCS smoke（scripts/web_contract_smoke.py，BFF 8099 嵌入态）4667 全 PASS；上段遗留 7 条 handler_error FAIL 清零。
+> 结论：**总计 4667/4667 PASS, 0 FAIL**（/tmp/wcs_v11.txt）。
+
+- **crm customer-profiles（500）**：根因双段——①4 handler 声明 `Extension(txn_arc)` 但全仓无人注入（rls_middleware 仅 set_config 不注入事务）→ 改为 handler 自建事务 + 事务内 `set_config('app.tenant_id',…)` 绑定 claims.tenant_id；②SELECT 26 列与 Customer struct 30 字段错位（FromRow 运行时失败）→ 补 `name_en/fax/postal_code/notes` 对齐。
+- **mes teams PUT（500）**：`$5::text`→`$5::uuid`（上段已修，本轮复验）。
+- **mes process-flow-steps PUT（500）**：`transfer_time` 列实为 text，SQL `::int4` 强转执行期类型不匹配 → 去 cast → mes **217/217**。
+- **lims（500）**：qa_lims_analytes schema 归位 + RLS 双策略 DB 变更生效 → lims **143/143**（无代码改动）。
+- **pdm drawings（500）**：全库无 `pdm_drawings` DDL（schema_defense 缺、pg_tables 0 行）→ 按 handler 契约建 15 列表 + RLS 双策略 + FORCE → 200。
+- **erp example/companies（500）**：hrm 直调 200；erp 侧 `HrmCompany.code` 必填但 hrm 响应项无 `code` → 反序列化失败 → `#[serde(default)] code` → 200。
+- **DB 归档**：`database/migrations/20261031200000_pdm_drawings_create_lims_rls.sql`（pdm_drawings 建表 + lims RLS 双策略，幂等；schema-defense gate PASS）。
+- **提交**：0fd01697b0（7 文件）/ f119ed4129（clippy/fmt 核销，quality_v51 `as i32`→`try_from`）/ 997c0086a5（migration）/ 3361f55c07（checksums）；已推送 main。
+- **观察项（登记）**：push 时 GitHub dependabot 提示 default branch 6 vulnerabilities（1 critical/3 high/1 moderate/1 low）——依赖漏洞处理专项排期待办，未在本轮展开。
+- **门禁**：pre-push 全绿（cargo check/clippy/fmt/test + schema-defense + contract-gate）；lefthook pre-push 曾因 quality_v51 `d as i32` clippy error 拦截，已修。
+
 ## v1.120 BFF WS：mes 双实现差异核查（2026-10-29）✅
 
 - **差异定稿**：mes `dashboard_ws.rs` 为**纯骨架**（连接+心跳+认证，**零推送数据源**、mes 业务零广播调用）；unified-core 通用通道为**完整模型**（subscribe/broadcast 配额+合并，ws_event_bridge 广播 notification 事件系）
