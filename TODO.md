@@ -1,3 +1,11 @@
+## 批 4 第五批：物料×4 归属收敛（rd-material → pdm，1 项）（2026-11-02）✅
+
+> 目标：审计 L341 物料×4 重叠收敛。盘点结论：物料主数据域 = pdm（pdm.materials；DATA-01：master_data.materials 已建表待切流）；erp.materials 为冗余主数据源（第一批 erp-material-management 已收敛→pdm）；rd-material 页面实为调用 erp /materials（rd 后端 material.rs 实为 rs.material_tests 物料测试，RD 物料测试归口 rd-test 菜单）；mes/aps 为生产物料业务（mes.material_plans/material_bom/requirement/issue/return + aps 物料计划/短缺分析，业务特有非主数据副本）；wms-items 为库存管理（InventoryPage）非物料主数据。
+
+- **收敛 1 项（rd/config.ts）**：`rd-material` 加 `showInSidebar: false` + 归属注释（物料主数据归属 pdm；rd-material 页调 erp /materials 冗余接口；RD 物料测试走 rd-test；路由/权限/页签保留）。
+- **保留**：pdm-material（主域）、mes 物料需求/领料/退料/BOM、aps 物料计划/短缺分析、wms 库存（非主数据）。
+- **验证（全绿）**：① navigation 套件 29/29 PASS（edge-cases 22 用例，新增 rd-material 回归）；② `tsc --noEmit` EXIT 0；③ eslint 清零；④ 浏览器实测：研发管理子菜单"物料"消失（概览/配方/测试/缺陷/评审/部署/发布/项目/实验/代码/文档/报表/设置保留）。
+
 ## 批 4 第四批：供应商×4 归属收敛（scm-suppliers/wms-supplier-management → srm，2 项）（2026-11-02）✅
 
 > 目标：审计 S-2 供应商管理重叠（scm/srm/wms/erp）收敛。盘点结论：srm.suppliers 为供应商主数据源（srm 模块=供应商关系管理，bidding 等模块均引用）；scm 经 `/sync/suppliers-from-srm` 同步（scm.suppliers 为副本）；wms 无独立供应商后端（batches 仅存 supplier_id/name 快照，经 data_sync 消费）；erp-supplier-management 第一批已收敛→srm。scm 保留采购流程特有功能：供应商准入（scm.supplier_admissions）/评估（scm.supplier_evaluations）/送货预约/分级（scm 特有表，非主数据副本）。

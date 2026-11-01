@@ -573,6 +573,11 @@ export const rdNavConfig: ModuleNavConfig = {
       order: 10,
       group: 'master',
       showInTabs: true,
+      // P3 批4：物料主数据域唯一归属 pdm（master_data.materials 主表待切流）。
+      // rd-material 页面实为调用 erp /materials（erp.materials 冗余主数据源），
+      // 与 pdm 物料主数据同语义重复，侧边栏隐藏（路由/权限/页签保留）；
+      // RD 研发物料测试（rs.material_tests）走 rd-test 菜单。
+      showInSidebar: false,
       description: i18n.t('rd.nav.rd-material_desc'),
     },
     {

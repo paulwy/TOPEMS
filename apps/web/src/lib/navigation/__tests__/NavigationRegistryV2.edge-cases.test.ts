@@ -646,5 +646,35 @@ describe('NavigationRegistryV2 Edge Cases', () => {
       expect(wmsCodes).not.toContain('wms-supplier-management');
       expect(wmsCodes).toContain('wms-batches');
     });
+
+    it('getSidebarNavItems 应排除 rd-material（物料主数据域唯一归属 pdm，批4）', () => {
+      registry.registerModule({
+        code: 'test-rd-material-p3',
+        name: 'RD Material Test',
+        icon: 'Test',
+        path: '/test-rd-material',
+        source: 'core',
+        navItems: [
+          { code: 'rd-project', path: '/test-rd-material/projects', label: '项目', icon: 'Test' },
+          { code: 'rd-test', path: '/test-rd-material/tests', label: '测试', icon: 'Test' },
+          {
+            code: 'rd-material',
+            path: '/test-rd-material/materials',
+            label: '物料',
+            icon: 'Test',
+            showInTabs: true,
+            showInSidebar: false,
+          },
+        ],
+      });
+      registeredCodes.push('test-rd-material-p3');
+
+      const codes = registry
+        .getSidebarNavItems('test-rd-material-p3', () => true)
+        .map((item) => item.code);
+      expect(codes).not.toContain('rd-material');
+      expect(codes).toContain('rd-project');
+      expect(codes).toContain('rd-test');
+    });
   });
 });
