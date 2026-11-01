@@ -1,3 +1,16 @@
+## v1.126 审计整改第三批：P2 域裁剪（一）——死代码清理 + dashboard 下沉 + mobile 隐藏（2026-11-01）✅
+
+> 承接 v1.125 遗留（批 3：wms 孤儿组件死代码 + P2 域裁剪 dashboard/analytics/setting/mobile）。完成盘点与可安全执行部分，analytics/setting 折叠登记 UI 工程子任务。
+
+- **批 3-① wms 孤儿组件死代码清理** ✅：删除 `pages/wms/WmsInboundOrderPage.tsx`、`WmsOutboundOrderPage.tsx`、`WmsLocationPage.tsx`（批 2 删路由后无任何路由入口）；同步清理 `__tests__/core-pages-data.smoke.test.tsx`（WMS 入库单列表）、`form-open.smoke.test.tsx`、`extended-pages-data.smoke.test.tsx`（出库单/库位列表）的 import 与用例。
+- **批 3-② dashboard 下沉模块首页** ✅：GlobalLayoutV3 `buildSidebarItems` 侧边栏不再渲染 `*-dashboard` 子项（39 个 dashboard 冗余入口清零）；**路由与模块 Tab（showInTabs）保留**，`/<mod>/dashboard` 仍为 landing 页。核对无"仅 dashboard 模块"（各模块均含非 dashboard 业务项，无整组隐藏副作用）。
+- **批 3-③ mobile Web 侧隐藏** ✅：GlobalLayoutV3 侧边栏过滤 `mobile` 模块组（12 项）；移动端 `MobileNav.tsx` 独立渲染（同一 navigationRegistryV2 数据源但不受 GlobalLayoutV3 过滤影响），移动端入口完整。
+- **盘点结论（P2 域全景）**：dashboard 39 项（overview 37 + 代码级 2）= 全部冗余（审计口径"35 个 dashboard 冗余清零"）→ 下沉完成；mobile 12 项 = Web 侧无消费 → 隐藏完成；analytics 90 项 / setting 61 项 = **业务页面有路由有 API（非冗余）**，"折叠/合并"需要侧边栏 group 分组渲染工程——当前 `buildSidebarItems` 为平铺渲染（无 group 折叠机制），**登记为子任务 P2-2（批 4）**，本批不破坏功能入口；aps/asset/erp 业务域归属收敛 = 前端模块合并工程，另立专项。
+- **收敛策略说明**：dashboard/mobile 采用**渲染层收敛**（GlobalLayoutV3 过滤）而非数据层删除——navItems 与 DB 种子仍对账一致（450/dup 0/orphan_db 2 待批 2 迁移应用），无新增迁移文件；数据层删除（navItem+种子）留待 P5 DB 单一权威阶段统一。
+- **验证** ✅：tsc typecheck、eslint（smoke 文件为既有 ignore 配置，0 errors）、vitest smoke core-pages-data（4）/ extended+form-open（14）全过；对账脚本基线不变；pre-commit 17 钩子全绿。
+- **提交**：`edf5d14fa5` 已推送 main（8 files，+245/-3157，含 3 组件删除）。本条目（v1.126）为核销提交。
+- **遗留/观察项**：P2-2 子任务 = analytics 折叠 + setting 合并（需 GlobalLayoutV3 group 分组/手风琴渲染工程）→ 批 4；aps/asset/erp 业务域归属专项；dashboard 数据层删除与 DB 种子同步留待 P5；wms 侧边栏原有 4 个 analytics/setting navItem（wms-location-rule 等）不受影响。
+
 ## v1.125 审计整改第二批：同模块重复菜单项三端收敛（2026-11-01）✅
 
 > 承接 v1.124 遗留观察项（批 2：同模块重复 13 项删除）。对"13 项"逐项盘点（前端 navItems/路由、DB 种子、页面组件、git 首提交、引用面五维核实）→ **实测 6 处真删 + 1 处重命名 + 7 项核为非重复保留**，三端（前端 config / DB 种子 / 迁移）同步收敛，门禁全绿后提交推送 ✅。
