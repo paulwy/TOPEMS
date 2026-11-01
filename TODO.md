@@ -1,3 +1,12 @@
+## 批 4 第十二批：KNOWN 500 核销-1（mes material-plans 写操作 4 项，tenant cast 根因）（2026-11-02）✅
+
+> 目标：核销 p11 首次触发 smoke 门禁暴露的 19 项存量 handler 500 中的 mes material-plans 4 项（PUT /submit /requisition /cancel）。根因=`tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-...')` 缺 `::UUID` cast：COALESCE 产出 text，与 uuid 列比较无操作符 → SQL 报错 → 500（表空 + RLS 开启下手动 UPDATE 0 正常，仅类型比较失败）。
+
+- **修复**：`svc/mes/src/modules/material_plan.rs` L289（update_material_plan）、L356（transition_status，submit/requisition/cancel 共用）补 `::UUID` cast → 业务 404 计 PASS。
+- **同款存量**：mes 其余 6 处（production_process×3 / production_record×3）已有 cast；**erp + mobile 共 66 处同款缺 cast 模式**（后续批批量修复候选，对应剩余 erp 3 + mobile 12 KNOWN）。
+- **验证（全绿）**：cargo check `-p topems-mes` ✔；release 重建并重启 8099；curl 实测 PUT/submit/cancel → 404 "材料计划不存在"（业务 404 计 PASS）；smoke 重跑 **mes 217/217 PASS（4 项核销）**，总计 4667/4667（KNOWN 豁免降至 15）。
+- **备注**：gap_list 移除 mes 4 行；erp example 3 + mobile 12 仍 KNOWN 待后续批。
+
 ## 批 4 第十一批：LEGACY_DUP mes `/api/aps` 兼容层退役（aps 直连 /api/mes）（2026-11-02）✅
 
 > 目标：整改计划 P3 LEGACY_DUP 中 mes 的 `/api/aps` 兼容重定向层退役。aps 已并入 mes（无独立服务），前端 apiClient.aps 原经 `/api/aps`（svc/mes aps_compat 纯 307 重定向 → /api/mes），改为直连 `/api/mes` 并移除兼容层。

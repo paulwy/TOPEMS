@@ -45,18 +45,17 @@
 
 （空——32 项真实登录态复核 FAIL 已全部核销）
 
-**2026-11-02 追加（批 4 p11 首次触发 smoke 门禁暴露，待核销）**：
+**2026-11-02 追加（批 4 p11 首次触发 smoke 门禁暴露；mes 4 项已核销，剩 15）**：
 批 4 p11（/api/aps 兼容层退役、aps 直连 /api/mes）首次改动 `apps/web/src/api/*` 触发
 web-contract-smoke 门禁实跑，暴露 19 项存量 handler 500（此前批 4 p1-p10 均不涉及
-api 目录故门禁跳过）：mes material-plans 写操作 4（UPDATE/动作对假 UUID 记录触发 SQL
-层错误，handler 未改、路由路径不影响）、erp example 演示端点 3、mobile attendance/
-inventory/production 12（均为未处理空查询/表漂移类存量缺陷，与 p11 改动无关）。
-已登记 KNOWN 豁免，按模块分批诊断核销（候选：mes material_plans 先查 SQL 错误根因）。
+api 目录故门禁跳过）：mes material-plans 写操作 4、erp example 演示端点 3、mobile
+attendance/inventory/production 12。
+- 已核销：mes material-plans 4 项根因=`tenant_id = COALESCE(NULLIF(current_setting(
+  'app.tenant_id', true), ''), '00000000-...')` 缺 ::UUID cast（uuid=text 无操作符→SQL
+  报错→500），material_plan.rs L289/L356 补 cast 后业务 404 计 PASS（批 4 p12 随 commit 核销）。
+- 待核销：erp example 3 + mobile 12（候选：erp/mobile 共 66 处同款 tenant cast 缺陷，
+  后续批批量修复）。
 
-- PUT /api/mes/material-plans/00000000-0000-0000-0000-000000000099
-- POST /api/mes/material-plans/00000000-0000-0000-0000-000000000099/submit
-- POST /api/mes/material-plans/00000000-0000-0000-0000-000000000099/requisition
-- POST /api/mes/material-plans/00000000-0000-0000-0000-000000000099/cancel
 - GET /api/erp/example/employees
 - GET /api/erp/example/departments
 - GET /api/erp/example/companies

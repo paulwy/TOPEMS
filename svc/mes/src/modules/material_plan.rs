@@ -286,7 +286,7 @@ pub async fn update_material_plan(
          supply_type = COALESCE($9, supply_type), \
          status = COALESCE($10, status), \
          updated_at = NOW() \
-         WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') \
+         WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')::UUID \
          RETURNING id, plan_no, plan_id, material_id, material_code, material_name, \
                    required_quantity, available_quantity, shortfall_quantity, required_date, \
                    supply_type, status, tenant_id, created_at, updated_at",
@@ -353,7 +353,7 @@ async fn transition_status(
 ) -> Result<Option<sqlx::postgres::PgRow>, sqlx::Error> {
     sqlx::query(
         "UPDATE mes.material_plans SET status = $2, updated_at = NOW() \
-         WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') \
+         WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')::UUID \
          RETURNING id, plan_no, plan_id, material_id, material_code, material_name, \
                    required_quantity, available_quantity, shortfall_quantity, required_date, \
                    supply_type, status, tenant_id, created_at, updated_at",
