@@ -1,3 +1,12 @@
+## 批 4 第十五批：finance saga `/api/v1/*` 死路径元数据清理（2026-11-02）✅
+
+> 目标：清理 p13 保留项 finance saga `/api/v1/vouchers/*` 死路径。侦查确认 saga 为纯内存模拟（execute_saga 正向/补偿均不实际调用 HTTP，仅 force_fail 判断），endpoint 是纯元数据字符串 → p13 退役不影响功能，但残留 v1 需一致化。
+
+- **改动**：svc/finance/src/domain/saga.rs 全部 `/api/v1/*`→`/api/finance/*`（vouchers post/unpost、receivables settle/unsettle、collections ×2、payables settle/unsettle、payments ×2、periods carryforward 等）。
+- **保留**：master-data commercial_v55.rs:2262 `/api/v1/data` test fixture（p13 保留项，fixture 语义）。
+- **验证（全绿）**：cargo check finance / release 重建重启 8099（带 MES_SERVICE_URL/WMS_SERVICE_URL=:8099 env）/ smoke **4667/4667 PASS 0 FAIL**（豁免 0）。
+- **备注**：全仓库已无消费型 `/api/v1/` 路由引用（k8s/外部/核心 v1/fixture 除外）；erp 12 处"缺 cast"系辅助条件行误报（真比较行均带 ::uuid），全仓库真 tenant cast 缺陷 0。
+
 ## 批 4 第十四批：KNOWN 500 核销-3（mobile inventory 2 + production 4，部署 env 根因）（2026-11-02）✅
 
 > 目标：核销 p13 遗留的 mobile 剩 6 项 KNOWN（inventory GET /items + /items/{id}、production GET /orders + /orders/{id} + POST /start + /complete）。
