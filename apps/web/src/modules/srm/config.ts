@@ -395,6 +395,10 @@ export const srmNavConfig: ModuleNavConfig = {
       order: 4,
       group: 'business',
       showInTabs: true,
+      // P3 批4：合同域唯一归属 scm（scm.purchase_contracts 采购合同主流程）。
+      // srm 供应商合同（srm.supplier_contracts）为同语义冗余台账，侧边栏隐藏重复入口；
+      // 路由/权限/页签保留可直达；后端数据整合（合并至 scm 主表）见 TODO P4/P5。
+      showInSidebar: false,
       description: i18n.t('srm.nav.srm-contract_desc'),
     },
     {

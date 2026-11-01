@@ -530,5 +530,33 @@ describe('NavigationRegistryV2 Edge Cases', () => {
         .map((item) => item.code);
       expect(codes).toContain('keep-item');
     });
+
+    it('getSidebarNavItems 应排除 srm-contract（合同域唯一归属 scm，批4）', () => {
+      registry.registerModule({
+        code: 'test-srm-p3',
+        name: 'SRM Test',
+        icon: 'Test',
+        path: '/test-srm',
+        source: 'core',
+        navItems: [
+          { code: 'srm-dashboard', path: '/test-srm/dashboard', label: '供应商首页', icon: 'Test' },
+          { code: 'srm-supplier', path: '/test-srm/suppliers', label: '供应商', icon: 'Test' },
+          {
+            code: 'srm-contract',
+            path: '/test-srm/contract',
+            label: '合同',
+            icon: 'Test',
+            showInTabs: true,
+            showInSidebar: false,
+          },
+        ],
+      });
+      registeredCodes.push('test-srm-p3');
+
+      const codes = registry.getSidebarNavItems('test-srm-p3', () => true).map((item) => item.code);
+      expect(codes).not.toContain('srm-contract');
+      expect(codes).toContain('srm-dashboard');
+      expect(codes).toContain('srm-supplier');
+    });
   });
 });

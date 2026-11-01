@@ -1,3 +1,11 @@
+## 批 4 第二批：合同×4 归属盘点与收敛（srm-contract → scm 采购合同，1 项）（2026-11-02）✅
+
+> 目标：审计 S-2 合同管理重叠（scm×2/srm/pm/hrm）收敛。盘点结论：5 个合同入口各查数据实体后——scm.purchase_contracts（采购合同主流程，含 submit/approve/terminate）+ srm.supplier_contracts（供应商合同台账，字段同构）为**同语义双表**；pm/hrm/crm 合同均为独立业务实体（项目合同/劳动合同/客户合同），保留。scm 菜单合同入口实测仅 1 处（审计"scm×2 双入口"基线已变化）。
+
+- **收敛 1 项（srm/config.ts）**：`srm-contract` 加 `showInSidebar: false` + 归属注释（合同域唯一归属 scm，srm 为供应商视角冗余台账；路由/权限/showInTabs 保留可直达；后端数据整合合并至 scm 主表见 TODO P4/P5）。
+- **保留（独立实体，加注释说明）**：pm-contracts（项目合同 pm.contracts）、hrm-contracts（员工劳动合同）、crm-contracts（客户合同）。
+- **验证（全绿）**：① navigation 套件 26/26 PASS（新增 srm 收敛回归用例）；② `tsc --noEmit` EXIT 0；③ eslint 清零；④ `audit_menu_consistency.py` 无新增 orphan（orphan_DB 2 项 mes-work-orders/scm-contracts + path_mismatch mes-work-stations 均为 P5 存量，`verify_navigation --strict` 基线即 2 缺失，非本次引入）；⑤ 浏览器实测 admin 登录展开"供应商关系"：合同项消失，其余 13 项保留正常。
+
 ## 批 4 第一批：P3 跨模块归属收敛（erp → 各专属域，9 项）（2026-11-02）✅
 
 > 目标：审计整改批 4（P3 跨模块归属）第一批——erp 综合管理模块 9 个跨模块重复入口收敛为"域唯一归属 + 只读引用"（侧边栏隐藏重复入口，路由/权限/页面保留可直达）。收敛基准：审计报告 C1-C11 跨模块重叠 22 项（供应商×4/合同×4/采购×3/物料×4/财务×2/客户×2/资产×3/质量×2/报表×2/车辆×3）。
