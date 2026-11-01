@@ -181,7 +181,10 @@ export const oaNavConfig: ModuleNavConfig = {
       path: OA_PATHS.vehicles,
       permission: 'oa:vehicle:read',
       group: 'business',
-      showInSidebar: true,
+      // P3 批4：车辆域唯一归属 tms（tms.tms_vehicles 主数据源）。
+      // oa-vehicles 页面实为调用 erp vehicleApi（erp.vehicles 与 tms_vehicles 同语义双表），
+      // 车辆主数据入口侧边栏隐藏（路由/权限保留可直达）；用车申请（erp.vehicle_requests）走 erp-vehicle-request。
+      showInSidebar: false,
     },
   ],
 };

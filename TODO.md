@@ -1,6 +1,12 @@
-## 批 4 第七批：报表×2 归属收敛 + 客户/资产/质量盘点（report 5 项 → bi，2026-11-02）✅
+## 批 4 第八批：车辆×3 归属收敛（oa-vehicles → tms，1 项）（2026-11-02）✅
 
-> 目标：审计 L341 报表×2（report/bi）收敛；客户×2/资产×3/质量×2 盘点判定。报表盘点结论：report 前端模块全部 API 走 `apiClient.bi`（/reports /templates /report-types /schedules /subscriptions，同一 analytics 后端），report 与 bi 为同一后端两套前端入口；bi 为报表/BI 域唯一归属（数据源/数据集/可视化/报表构建/分析全链路）。客户×2：crm-customers 主域 + erp-customer-management 第一批已收敛→crm。资产×3：asset 模块（数据在 erp.assets，前端资产域唯一入口）+ erp-asset-management（第一批已收敛→asset）+ finance-assets（会计科目资产类，FinanceAssetPage 用 accountApi category=asset 计提折旧生成凭证，与 asset 实物折旧台账语义不同，保留）+ master-data-asset-catalog（主数据分类字典，保留）。质量×2：qms 体系域（qa_quality_inspections/issues + APQP/FMEA/8D/纠正）+ mes 生产质检域（quality_management 独立表 quality_standards/inspection/patrol，非 qms 副本）+ master-quality（数据质量规则引擎 quality-v51）+ mobile-quality（移动端），语义均独立，全部保留。
+> 目标：审计 L341 车辆×3（tms/erp/oa）收敛。盘点结论：tms.tms_vehicles 为车辆主数据源（tms_shipments 引用 vehicle_id）；erp.vehicles 与 tms_vehicles 同语义双表（erp 后端 vehicles.rs，仅 own-schema 查询）；oa-vehicles 页面（VehicleManagementPage）实为调用 erp vehicleApi（/vehicles）；erp-vehicle-management 第一批已收敛→tms；erp.vehicle_requests 用车申请为业务流（申请/审批，tms 无对应）。
+
+- **收敛 1 项（oa/config.ts）**：`oa-vehicles` 加 `showInSidebar: false` + 归属注释（车辆域唯一归属 tms；oa-vehicles 页调 erp vehicleApi 冗余数据；路由/权限保留）。
+- **保留**：tms-vehicles（主域）、erp-vehicle-request（用车申请业务流）、tms-vehicle-utilization（利用率分析）。
+- **验证（全绿）**：① navigation 套件 32/32 PASS（edge-cases 25 用例，新增 oa-vehicles 收敛回归）；② `tsc --noEmit` EXIT 0；③ eslint 清零；④ 浏览器实测：OA 办公子菜单"车辆"消失（概览/公告/会议/公文保留）。
+
+## 批 4 第七批：报表×2 归属收敛 + 客户/资产/质量盘点（report 5 项 → bi，2026-11-02）✅> 目标：审计 L341 报表×2（report/bi）收敛；客户×2/资产×3/质量×2 盘点判定。报表盘点结论：report 前端模块全部 API 走 `apiClient.bi`（/reports /templates /report-types /schedules /subscriptions，同一 analytics 后端），report 与 bi 为同一后端两套前端入口；bi 为报表/BI 域唯一归属（数据源/数据集/可视化/报表构建/分析全链路）。客户×2：crm-customers 主域 + erp-customer-management 第一批已收敛→crm。资产×3：asset 模块（数据在 erp.assets，前端资产域唯一入口）+ erp-asset-management（第一批已收敛→asset）+ finance-assets（会计科目资产类，FinanceAssetPage 用 accountApi category=asset 计提折旧生成凭证，与 asset 实物折旧台账语义不同，保留）+ master-data-asset-catalog（主数据分类字典，保留）。质量×2：qms 体系域（qa_quality_inspections/issues + APQP/FMEA/8D/纠正）+ mes 生产质检域（quality_management 独立表 quality_standards/inspection/patrol，非 qms 副本）+ master-quality（数据质量规则引擎 quality-v51）+ mobile-quality（移动端），语义均独立，全部保留。
 
 - **收敛 5 项（report/config.ts）**：`report-dashboard`/`report-list`/`report-design`/`report-builder`/`report-report` 各加 `showInSidebar: false` + 归属注释（报表域唯一归属 bi，同一 analytics 后端；路由/权限/页签保留）。
 - **保留**：report-schedule/subscription/template/viewer（bi 前端未覆盖的报表中心特有功能：调度/订阅/模板/查看器）。

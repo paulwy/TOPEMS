@@ -844,5 +844,52 @@ describe('NavigationRegistryV2 Edge Cases', () => {
       expect(codes).toContain('report-template');
       expect(codes).toContain('report-viewer');
     });
+
+    it('getSidebarNavItems 应排除 oa-vehicles（车辆域唯一归属 tms，批4）且保留用车申请', () => {
+      registry.registerModule({
+        code: 'test-oa-vehicle-p3',
+        name: 'OA Vehicle Test',
+        icon: 'Test',
+        path: '/test-oa-vehicle',
+        source: 'core',
+        navItems: [
+          { code: 'oa-announcement', path: '/test-oa-vehicle/news', label: '公告', icon: 'Test' },
+          {
+            code: 'oa-vehicles',
+            path: '/test-oa-vehicle/vehicles',
+            label: '车辆',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+        ],
+      });
+      registry.registerModule({
+        code: 'test-erp-vehicle-req-p3',
+        name: 'ERP Vehicle Request Test',
+        icon: 'Test',
+        path: '/test-erp-vehicle-req',
+        source: 'core',
+        navItems: [
+          {
+            code: 'erp-vehicle-request',
+            path: '/test-erp-vehicle-req/requests',
+            label: '用车申请',
+            icon: 'Test',
+          },
+        ],
+      });
+      registeredCodes.push('test-oa-vehicle-p3', 'test-erp-vehicle-req-p3');
+
+      const oaCodes = registry
+        .getSidebarNavItems('test-oa-vehicle-p3', () => true)
+        .map((item) => item.code);
+      expect(oaCodes).not.toContain('oa-vehicles');
+      expect(oaCodes).toContain('oa-announcement');
+
+      const erpCodes = registry
+        .getSidebarNavItems('test-erp-vehicle-req-p3', () => true)
+        .map((item) => item.code);
+      expect(erpCodes).toContain('erp-vehicle-request');
+    });
   });
 });
