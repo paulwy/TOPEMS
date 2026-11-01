@@ -113,11 +113,6 @@ impl MesRealModule {
 
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)
-            // APS API 兼容层：/api/aps/* → 转发 mes（与独立部署 main.rs 对齐）
-            .nest(
-                "/api/aps",
-                modules::aps_compat::create_routes().with_state(state),
-            )
             .merge(ws_routes)
             .layer(axum::middleware::from_fn_with_state(
                 ctx.auth_state.clone(),

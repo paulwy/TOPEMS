@@ -1,3 +1,12 @@
+## 批 4 第十一批：LEGACY_DUP mes `/api/aps` 兼容层退役（aps 直连 /api/mes）（2026-11-02）✅
+
+> 目标：整改计划 P3 LEGACY_DUP 中 mes 的 `/api/aps` 兼容重定向层退役。aps 已并入 mes（无独立服务），前端 apiClient.aps 原经 `/api/aps`（svc/mes aps_compat 纯 307 重定向 → /api/mes），改为直连 `/api/mes` 并移除兼容层。
+
+- **改动 4 文件**：① `apps/web/src/config/runtime.ts` aps baseURL `/api/aps`→`/api/mes`（**真正控制 apiClient.aps 的配置**；moduleMapping.ts 的 apiBasePath 不驱动 API，仅导航元信息，同步改为 /api/mes）；② `apps/web/src/api/aps/forecast.ts` `/forecasts`→`/demand-forecasts` 6 处（mes 原生路径，兼容层此前特殊处理该映射）；③ `svc/mes/src/main.rs` 删除 `.nest("/api/aps", aps_compat)`；④ `svc/server/src/modules/mes_real_module.rs` 删除同款 nest（8099 monolith 承载 mes）。
+- **路径核对**：/production-plans、/capacities、/material-plans（含 requisition）、/schedules（production_scheduling.rs）路径一致原生命中；唯一差异即 /forecasts→/demand-forecasts（demand_forecast.rs 原生含 calculate/validate/adopt）。
+- **验证（全绿）**：① cargo check `-p topems-mes` / `-p topems-server` 通过；② eslint 改动文件清零；③ vitest navigation 25/25 PASS；④ tsc EXIT 0；⑤ verify_navigation 总缺失 2（P5 存量，无新增）；⑥ perm-matrix 仅存量 R5/R7 WARN；⑦ 运行时：重启 8099（新 release 二进制），`/api/aps/*` → 404（兼容层已退役），aps 需求预测/产能/生产计划页面经 /api/mes 正常加载（无 404）。
+- **备注**：legacy `/api/v1` 前缀（wms/scm/crm/srm/mes + server pm/ticket）与 tests/integration 3 个 spec 仍引用 /api/v1，留待后续批（涉及测试同步修改，本轮未动）。
+
 ## 批 4 第十批：PERM_MISMATCH 延伸（B 类映射修正 + A 类 DB 菜单种子宽码对齐）（2026-11-02）✅
 
 > 目标：整改计划 L34-181 列出的 P3 PERM_MISMATCH 项。分两类：B 类（前端 menuPermissions.ts 菜单→权限映射与路由 requiredPermissions 不一致）、A 类（DB 菜单种子宽码 vs FE 路由细码）。

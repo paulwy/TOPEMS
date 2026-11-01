@@ -44,7 +44,7 @@ const SERVICES = {
   search: '/api/search', erp: '/api/erp', finance: '/api/finance',
   ai: '/api/ai', hrm: '/api/hrm', pm: '/api/pm', crm: '/api/crm',
   mes: '/api/mes', pdm: '/api/pdm', scm: '/api/scm', wms: '/api/wms',
-  tms: '/api/tms', aps: '/api/aps', srm: '/api/srm', qms: '/api/qms',
+  tms: '/api/tms', aps: '/api/mes', srm: '/api/srm', qms: '/api/qms',
   lims: '/api/lims', ehs: '/api/ehs', rd: '/api/rd', bi: '/api/bi',
   analytics: '/api/bi', monitor: '/api/monitor', portal: '/api/portal',
   mobile: '/api/mobile', gis: '/api/gis', integration: '/api/integration',
@@ -155,7 +155,7 @@ function backendSegs() {
       const svcDir = path.join(SVC_DIR, dir);
       if (!fs.existsSync(svcDir)) continue;
       // 收集该服务目录内全部 route 路径与 nest 前缀，再做笛卡尔拼接：
-      // 如 mes 服务 api_prefix /api/mes + nest("/api/aps") 挂 aps_compat → aps 路由对外为 /api/aps/*
+      // aps 已并入 mes：前端 baseURL /api/mes 直连，aps_compat 兼容层(/api/aps)已退役
       const routes = new Set();
       const nests = new Set([pre]);
       for (const f of walk(path.join(svcDir, 'src'), '.rs')) {

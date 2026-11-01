@@ -267,11 +267,11 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
     apiBasePath: '/api/ehs',
   },
 
-  // APS 高级排程（独立服务；api/aps 经 apiClient.aps → /api/aps）
+  // APS 高级排程（已并入 mes；api/aps 兼容层退役，apiClient.aps 直连 /api/mes）
   aps: {
     service: 'aps',
     module: 'aps',
-    apiBasePath: '/api/aps',
+    apiBasePath: '/api/mes',
   },
 
   // TMS 运输管理（独立服务，端口 8073；api/tms 经 apiClient.tms → /api/tms）
