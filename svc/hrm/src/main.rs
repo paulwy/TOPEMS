@@ -33,7 +33,7 @@ async fn main() -> Result<()> {
         max_db_connections: 10,
         enable_events: true,
         api_prefix: "/api/hrm",
-        legacy_prefixes: &["/api/v1/hrm", "/api/core/hrm/v1"],
+        legacy_prefixes: &["/api/core/hrm/v1"],
         ..Default::default()
     };
 

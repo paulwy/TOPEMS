@@ -33,7 +33,7 @@ impl SearchRealModule {
             enable_rls: true,
             enable_request_context: false,
             api_prefix: "/api/search",
-            legacy_prefixes: &["/api/v1/search"],
+            legacy_prefixes: &[],
             init_telemetry: false,
         };
 

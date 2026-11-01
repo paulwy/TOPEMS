@@ -305,18 +305,6 @@ fn test_portal_protected_routes_prefix() {
     }
 }
 
-#[test]
-fn test_portal_legacy_route_alias() {
-    // 验证 Portal BFF 的旧版路由别名
-    // register_routes_with_legacy_alias 会为 /api/portal 注册别名 /api/v1/portal
-    let canonical = "/api/portal";
-    let legacy_alias = "/api/v1/portal";
-
-    assert!(canonical.starts_with("/api/"));
-    assert!(legacy_alias.starts_with("/api/v1/"));
-    assert!(canonical != legacy_alias, "标准路由和旧版别名不应相同");
-}
-
 /// ============ EventPublisher 不可用降级测试 ============
 
 #[test]

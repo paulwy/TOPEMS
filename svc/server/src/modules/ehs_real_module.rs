@@ -45,7 +45,7 @@ impl EhsRealModule {
             enable_rls: true,
             enable_request_context: true,
             api_prefix: "/api/ehs",
-            legacy_prefixes: &["/api/v1/ehs"],
+            legacy_prefixes: &[],
             // 宿主进程统一初始化全局 telemetry
             init_telemetry: false,
         };

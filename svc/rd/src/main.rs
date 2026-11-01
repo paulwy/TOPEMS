@@ -43,7 +43,7 @@ async fn main() -> anyhow::Result<()> {
         enable_request_context: true,
         api_prefix: "/api/rd",
         // 兼容 V1 三层前缀：主路径 /api/rd + legacy /api/v1/rd + /api/core/rd/v1
-        legacy_prefixes: &["/api/v1/rd", "/api/core/rd/v1"],
+        legacy_prefixes: &["/api/core/rd/v1"],
         init_telemetry: true,
     };
 

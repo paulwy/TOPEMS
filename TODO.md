@@ -1,3 +1,12 @@
+## 批 4 第十三批：LEGACY_DUP `/api/v1` 前缀全面退役（39 文件 + 双轨/限流/集成测试同步）（2026-11-02）✅
+
+> 目标：清理 p11 遗留的 legacy `/api/v1/<svc>` 双轨别名（register_routes_with_legacy_alias 为 /api/<svc> 挂的旧版前缀），全仓库退役。前端已无 /api/v1 消费（4 处均为注释/废弃说明/外部示例）。
+
+- **改动 39+ 文件**：① 批量清空各服务 main.rs 与 server real_module 的 `legacy_prefixes` 数组 `/api/v1/<svc>` 项（单 v1 项→`&[]`，双项保留 `/api/core/<svc>/v1`）；② unified-core routes/mod.rs 双轨 `&["/api/v1/core"]`→`&[]`（仅 embed_mode=false 分支）；③ unified-core embedded.rs + main.rs 删 `/api/v1/core/iam/auth/` 限流规则 2 处（链尾补 `;`）；④ ai routes.rs `&["/api/v1/ai","/api/ai"]`→`&["/api/ai"]`；⑤ integration routes.rs `&["/api/v1/integration"]`→`&[]`；⑥ portal embedded.rs `&["/api/v1/portal"]`→`&[]`；⑦ portal 测试删 test_portal_legacy_route_alias（断言 v1 别名存在已过时）；⑧ tests/integration 5 文件路径 `/api/v1/<svc>`→`/api/<svc>`（auth-flow/cross-service 已过）；⑨ server 两处注释同步。
+- **保留（非 legacy）**：k8s_service_discovery `/api/v1/namespaces/*`（K8s API）、integration external_erp 外部 API、finance saga `/api/v1/vouchers/*`（死路径候选，独立缺陷留后续）、master-data test fixture `/api/v1/data`、`/api/core/<svc>/v1` 前缀（不同机制 RouteCompat，未动）、communication `/api/core/comm`。
+- **验证（全绿）**：cargo check --workspace 通过；release 重建重启 8099（pid 29281）/8000（29428）/8020（29453）；curl `/api/v1/{mes,core,hrm,pm}/health` 全 404、`/api/mes/health` `/api/core/health` 200；smoke **4667/4667 PASS**（KNOWN 豁免 19→**6**：erp example 3 + mobile attendance 6 随重启自动核销，mobile inventory 2 + production 4 保留）；tests/integration 改动前后均 29 存量红（环境依赖多服务 BASE_URL，非本次引入）。
+- **备注**：mobile 剩 6 项 KNOWN（候选：mobile tenant cast 同款缺陷）；tests/integration 29 存量红待后续批修（health-checks 打 8000 对非 core 服务 404 + openapi IAM api-docs 路径探测）。
+
 ## 批 4 第十二批：KNOWN 500 核销-1（mes material-plans 写操作 4 项，tenant cast 根因）（2026-11-02）✅
 
 > 目标：核销 p11 首次触发 smoke 门禁暴露的 19 项存量 handler 500 中的 mes material-plans 4 项（PUT /submit /requisition /cancel）。根因=`tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-...')` 缺 `::UUID` cast：COALESCE 产出 text，与 uuid 列比较无操作符 → SQL 报错 → 500（表空 + RLS 开启下手动 UPDATE 0 正常，仅类型比较失败）。

@@ -33,7 +33,7 @@ export async function getAuthToken(
 
   const candidates = [
     '/api/core/iam/auth/login',
-    '/api/v1/iam/auth/login',
+    '/api/iam/auth/login',
   ];
 
   let lastError: unknown;

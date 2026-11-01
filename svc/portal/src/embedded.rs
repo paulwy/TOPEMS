@@ -350,7 +350,7 @@ pub async fn build_router(
     let app = register_routes_with_legacy_alias(
         public_routes,
         "/api/portal",
-        &["/api/v1/portal"],
+        &[],
         protected_routes,
     )
     .merge(create_api_info_router("topems-portal"))

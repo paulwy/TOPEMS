@@ -33,7 +33,7 @@ impl UnifiedCoreRealModule {
             enable_rls: true,
             enable_request_context: false,
             api_prefix: "/api/core",
-            legacy_prefixes: &["/api/v1/core"],
+            legacy_prefixes: &[],
             init_telemetry: false,
         };
 
@@ -64,9 +64,9 @@ impl UnifiedCoreRealModule {
             .with_state(ws_state);
 
         // 嵌入模式（build_router_embedded）：core 业务路由挂根（/iam/* /flow/* 等），
-        // 由本模块双轨注册提供统一前缀（/api/core 新轨 + /api/v1/core legacy alias，
-        // 语义与独立模式 register_routes_with_legacy_alias 一致，亦与其它 real_module 的
-        // legacy_prefixes 配置对齐）；跳过 public 冲突路由（/、/health、/api、/metrics）
+        // 由本模块注册提供统一前缀 /api/core（
+        // 语义与独立模式 register_routes_with_legacy_alias 一致；v1 legacy 别名已随
+        // 批 4 p13 退役）；跳过 public 冲突路由（/、/health、/api、/metrics）
         // 与 wms/mes/scm（server 已有真实模块），避免双重 /api/core 前缀与 Overlapping route。
         let core_embedded = topems_unified_core::embedded::build_router_embedded(
             ctx.db.clone(),

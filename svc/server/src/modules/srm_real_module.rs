@@ -42,7 +42,7 @@ impl SrmRealModule {
             enable_rls: true,
             enable_request_context: true,
             api_prefix: "/api/srm",
-            legacy_prefixes: &["/api/v1/srm"],
+            legacy_prefixes: &[],
             init_telemetry: false,
         };
 

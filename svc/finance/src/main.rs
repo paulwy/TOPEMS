@@ -159,7 +159,7 @@ async fn main() -> anyhow::Result<()> {
         // 注：RLS 为纵深防御，主防线仍为业务 SQL 显式 tenant_id 过滤。
         enable_rls: true,
         api_prefix: "/api/finance",
-        legacy_prefixes: &["/api/v1/finance", "/api/core/finance/v1"],
+        legacy_prefixes: &["/api/core/finance/v1"],
         ..Default::default()
     };
 

@@ -41,7 +41,7 @@ impl PmRealModule {
             enable_rls: true,
             enable_request_context: true,
             api_prefix: "/api/pm",
-            legacy_prefixes: &["/api/v1/pm"],
+            legacy_prefixes: &[],
             // 宿主进程统一初始化全局 telemetry
             init_telemetry: false,
             ..Default::default()

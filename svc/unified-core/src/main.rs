@@ -322,9 +322,11 @@ async fn main() -> anyhow::Result<()> {
     ));
     let http_client = topems_shared_core::shared_http_client();
 
-    let rate_limit_config = middleware::rate_limit::RateLimitConfig::default()
-        .add_path_rule("/api/core/iam/auth/", 30, 60)
-        .add_path_rule("/api/v1/core/iam/auth/", 30, 60);
+    let rate_limit_config = middleware::rate_limit::RateLimitConfig::default().add_path_rule(
+        "/api/core/iam/auth/",
+        30,
+        60,
+    );
     let rate_limit_middleware = std::sync::Arc::new(
         middleware::rate_limit::RateLimitMiddleware::new(rate_limit_config),
     );

@@ -17,7 +17,7 @@ describe.skipIf(!apiReachable)('OpenAPI docs', () => {
     const candidates = [
       '/api-docs/openapi.json',
       '/api/core/api-docs/openapi.json',
-      '/api/v1/core/api-docs/openapi.json',
+      '/api/core/api-docs/openapi.json',
     ];
 
     let lastStatus = 0;
@@ -65,7 +65,7 @@ describe.skipIf(!apiReachable)('OpenAPI docs', () => {
     const candidates = [
       '/api/core/iam/api-docs/openapi.json',
       '/api/iam/api-docs/openapi.json',
-      '/api/v1/iam/api-docs/openapi.json',
+      '/api/iam/api-docs/openapi.json',
     ];
 
     let lastStatus = 0;

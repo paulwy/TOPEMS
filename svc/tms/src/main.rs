@@ -36,7 +36,7 @@ async fn main() -> Result<()> {
         max_db_connections: 10,
         enable_events: true,
         api_prefix: "/api/tms",
-        legacy_prefixes: &["/api/v1/tms"],
+        legacy_prefixes: &[],
         ..Default::default()
     };
 

@@ -24,7 +24,7 @@ async fn main() -> anyhow::Result<()> {
         enable_rls: true,
         enable_request_context: true,
         api_prefix: "/api/search",
-        legacy_prefixes: &["/api/v1/search"],
+        legacy_prefixes: &[],
         init_telemetry: true,
     };
 

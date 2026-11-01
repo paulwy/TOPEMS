@@ -43,7 +43,7 @@ impl TicketRealModule {
             enable_rls: true,
             enable_request_context: true,
             api_prefix: "/api/ticket",
-            legacy_prefixes: &["/api/v1/ticket"],
+            legacy_prefixes: &[],
             // 宿主进程统一初始化全局 telemetry
             init_telemetry: false,
         };

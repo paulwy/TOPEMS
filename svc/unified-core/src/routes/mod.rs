@@ -227,12 +227,7 @@ pub fn create_routes(
     let core_router = if embed_mode {
         core_routes
     } else {
-        register_routes_with_legacy_alias(
-            Router::new(),
-            "/api/core",
-            &["/api/v1/core"],
-            core_routes,
-        )
+        register_routes_with_legacy_alias(Router::new(), "/api/core", &[], core_routes)
     };
 
     // ===== V289: R4/R6 32 stub 路由删除 =====

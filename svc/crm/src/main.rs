@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
         max_db_connections: 10,
         enable_events: true,
         api_prefix: "/api/crm",
-        legacy_prefixes: &["/api/v1/crm"],
+        legacy_prefixes: &[],
         ..Default::default()
     };
 

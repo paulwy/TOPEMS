@@ -25,7 +25,7 @@ describe.skipIf(!apiReachable)('Auth flow', () => {
     async () => {
       const candidates = [
         '/api/core/iam/auth/login',
-        '/api/v1/iam/auth/login',
+        '/api/iam/auth/login',
       ];
 
       let lastStatus = 0;
@@ -60,7 +60,7 @@ describe.skipIf(!apiReachable)('Auth flow', () => {
     'can call a protected endpoint with the token',
     async () => {
       const headers = await getAuthHeaders();
-      const candidates = ['/api/core/iam/auth/me', '/api/v1/iam/auth/me'];
+      const candidates = ['/api/core/iam/auth/me'];
 
       let lastStatus = 0;
       let lastError: unknown;

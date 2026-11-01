@@ -37,7 +37,7 @@ impl GisRealModule {
             enable_rls: true,
             enable_request_context: false,
             api_prefix: "/api/gis",
-            legacy_prefixes: &["/api/v1/gis", "/api/core/gis/v1"],
+            legacy_prefixes: &["/api/core/gis/v1"],
             // 宿主进程统一初始化全局 telemetry
             init_telemetry: false,
         };

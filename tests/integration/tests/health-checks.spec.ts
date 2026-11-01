@@ -45,10 +45,10 @@ async function probeService(
       ? [
           '/api/core/health',
           '/api/iam/health',
-          '/api/v1/core/health',
-          '/api/v1/iam/health',
+          '/api/core/health',
+          '/api/iam/health',
         ]
-      : [`/api/${service}/health`, `/api/v1/${service}/health`];
+      : [`/api/${service}/health`];
 
   for (const path of paths) {
     try {

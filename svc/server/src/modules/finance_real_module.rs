@@ -45,7 +45,7 @@ impl FinanceRealModule {
             enable_events: true,
             enable_rls: true,
             api_prefix: "/api/finance",
-            legacy_prefixes: &["/api/v1/finance", "/api/core/finance/v1"],
+            legacy_prefixes: &["/api/core/finance/v1"],
             // 模块化单体嵌入：由宿主进程（topems-server）统一初始化全局 telemetry，
             // 避免重复设置全局 tracing subscriber 导致 panic
             init_telemetry: false,

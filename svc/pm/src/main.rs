@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
         enable_rls: true,
         enable_request_context: true,
         api_prefix: "/api/pm",
-        legacy_prefixes: &["/api/v1/pm"],
+        legacy_prefixes: &[],
         init_telemetry: true,
     };
 

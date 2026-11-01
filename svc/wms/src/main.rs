@@ -37,7 +37,7 @@ async fn main() -> Result<()> {
         max_db_connections: 10,
         enable_events: true,
         api_prefix: "/api/wms",
-        legacy_prefixes: &["/api/v1/wms"],
+        legacy_prefixes: &[],
         ..Default::default()
     };
 

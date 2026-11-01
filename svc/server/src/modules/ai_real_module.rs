@@ -267,7 +267,7 @@ impl AiRealModule {
         );
 
         // 注意：create_routes 内部已通过 register_routes_with_legacy_alias 注册完整前缀
-        // （/api/ai、/api/v1/ai、/api/core/ai/v1），protected 路由只存在于这些前缀下。
+        // （/api/ai、/api/core/ai/v1；v1 legacy 别名已随批 4 p13 退役），protected 路由只存在于这些前缀下。
         // 与 plugin_registry 同理：直接挂载（merge），不可再 nest（否则变 /api/ai/api/ai/*）。
         let routes = Router::new().merge(router);
 

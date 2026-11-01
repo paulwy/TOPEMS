@@ -214,7 +214,7 @@ fn create_routes_inner(state: AppState, public_routes: Router<()>, with_openapi:
     let app = register_routes_with_legacy_alias(
         Router::new().merge(public_routes),
         "/api/integration",
-        &["/api/v1/integration"],
+        &[],
         protected_routes,
     );
 

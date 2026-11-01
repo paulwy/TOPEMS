@@ -39,7 +39,7 @@ impl PortalRealModule {
             enable_rls: true,
             enable_request_context: true,
             api_prefix: "/api/portal",
-            legacy_prefixes: &["/api/v1/portal", "/api/core/portal/v1"],
+            legacy_prefixes: &["/api/core/portal/v1"],
             init_telemetry: false,
         };
 

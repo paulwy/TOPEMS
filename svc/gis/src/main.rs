@@ -37,7 +37,7 @@ async fn main() -> Result<()> {
         enable_rls: true,
         enable_request_context: false,
         api_prefix: "/api/gis",
-        legacy_prefixes: &["/api/v1/gis", "/api/core/gis/v1"],
+        legacy_prefixes: &["/api/core/gis/v1"],
         init_telemetry: true,
     };
     let ctx = bootstrap_service(&config).await?;

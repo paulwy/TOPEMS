@@ -971,7 +971,7 @@ pub fn create_routes(
     let app = register_routes_with_legacy_alias(
         Router::new().merge(public_routes),
         "/api/core/ai/v1",
-        &["/api/v1/ai", "/api/ai"],
+        &["/api/ai"],
         all_protected_routes,
     )
     .merge(if include_api_info {

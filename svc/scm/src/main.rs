@@ -37,7 +37,7 @@ async fn main() -> Result<()> {
         max_db_connections: 50,
         enable_events: true,
         api_prefix: "/api/scm",
-        legacy_prefixes: &["/api/v1/scm"],
+        legacy_prefixes: &[],
         ..Default::default()
     };
 

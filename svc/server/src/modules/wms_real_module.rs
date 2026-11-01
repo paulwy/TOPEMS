@@ -41,7 +41,7 @@ impl WmsRealModule {
             enable_rls: true,
             enable_request_context: true,
             api_prefix: "/api/wms",
-            legacy_prefixes: &["/api/v1/wms"],
+            legacy_prefixes: &[],
             // 宿主进程统一初始化全局 telemetry
             init_telemetry: false,
         };

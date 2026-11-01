@@ -39,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
         max_db_connections: 10,
         enable_events: true,
         api_prefix: "/api/mes",
-        legacy_prefixes: &["/api/v1/mes"],
+        legacy_prefixes: &[],
         ..Default::default()
     };
 

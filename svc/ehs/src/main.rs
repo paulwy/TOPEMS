@@ -44,7 +44,7 @@ async fn main() -> anyhow::Result<()> {
         enable_rls: true,
         enable_request_context: true,
         api_prefix: "/api/ehs",
-        legacy_prefixes: &["/api/v1/ehs"],
+        legacy_prefixes: &[],
         init_telemetry: true,
     };
 

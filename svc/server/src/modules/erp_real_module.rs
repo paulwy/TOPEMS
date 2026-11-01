@@ -44,7 +44,7 @@ impl ErpRealModule {
             max_db_connections: 20,
             enable_events: true,
             api_prefix: "/api/erp",
-            legacy_prefixes: &["/api/v1/erp"],
+            legacy_prefixes: &[],
             // 宿主进程统一初始化全局 telemetry
             init_telemetry: false,
             ..Default::default()

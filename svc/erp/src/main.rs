@@ -63,7 +63,7 @@ async fn main() -> Result<()> {
         max_db_connections: 20,
         enable_events: true,
         api_prefix: "/api/erp",
-        legacy_prefixes: &["/api/v1/erp"],
+        legacy_prefixes: &[],
         ..Default::default()
     };
 

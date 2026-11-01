@@ -18,7 +18,7 @@ describe.skipIf(!apiReachable)('Cross-service flow', () => {
     const headers = await getAuthHeaders();
     const createCandidates = [
       '/api/hrm/departments',
-      '/api/v1/hrm/departments',
+      '/api/hrm/departments',
     ];
 
     let created: Department | undefined;
@@ -60,7 +60,7 @@ describe.skipIf(!apiReachable)('Cross-service flow', () => {
     const readCandidates = [
       `${basePath}/departments/${created.id}`,
       `/api/hrm/departments/${created.id}`,
-      `/api/v1/hrm/departments/${created.id}`,
+      `/api/hrm/departments/${created.id}`,
     ];
 
     let found: Department | undefined;

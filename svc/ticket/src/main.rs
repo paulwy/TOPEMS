@@ -29,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
         enable_rls: true,
         enable_request_context: true,
         api_prefix: "/api/ticket",
-        legacy_prefixes: &["/api/v1/ticket"],
+        legacy_prefixes: &[],
         init_telemetry: true,
     };
 
