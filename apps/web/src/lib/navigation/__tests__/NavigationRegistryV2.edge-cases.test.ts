@@ -558,5 +558,33 @@ describe('NavigationRegistryV2 Edge Cases', () => {
       expect(codes).toContain('srm-dashboard');
       expect(codes).toContain('srm-supplier');
     });
+
+    it('getSidebarNavItems 应排除 srm-order（采购订单域唯一归属 scm，批4）', () => {
+      registry.registerModule({
+        code: 'test-srm-order-p3',
+        name: 'SRM Order Test',
+        icon: 'Test',
+        path: '/test-srm-order',
+        source: 'core',
+        navItems: [
+          { code: 'srm-product', path: '/test-srm-order/products', label: '商品', icon: 'Test' },
+          {
+            code: 'srm-order',
+            path: '/test-srm-order/orders',
+            label: '订单',
+            icon: 'Test',
+            showInTabs: true,
+            showInSidebar: false,
+          },
+        ],
+      });
+      registeredCodes.push('test-srm-order-p3');
+
+      const codes = registry
+        .getSidebarNavItems('test-srm-order-p3', () => true)
+        .map((item) => item.code);
+      expect(codes).not.toContain('srm-order');
+      expect(codes).toContain('srm-product');
+    });
   });
 });

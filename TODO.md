@@ -1,3 +1,10 @@
+## 批 4 第三批：采购×3 归属收敛（srm-order → scm 采购订单，1 项）（2026-11-02）✅
+
+> 目标：审计 S-2 采购订单重叠（scm/srm/erp）收敛。盘点结论：scm.purchase_orders（申请→订单→收货闭环主流程，保留）+ srm.purchase_orders（供应商视角同语义双表）+ erp-purchase-order（第一批已收敛→scm）。wms 无采购入口。
+
+- **收敛 1 项（srm/config.ts）**：`srm-order` 加 `showInSidebar: false` + 归属注释（采购订单域唯一归属 scm；路由/权限/showInTabs 保留；后端合并至 scm 主表见 TODO P4/P5）。
+- **验证（全绿）**：① navigation 套件 27/27 PASS（edge-cases 20 用例，新增 srm-order 回归）；② `tsc --noEmit` EXIT 0；③ eslint 清零；④ 对账无新增 orphan（2 缺失为 P5 存量）；⑤ 浏览器实测：srm 侧边栏"订单管理"消失，其余 12 项正常。
+
 ## 批 4 第二批：合同×4 归属盘点与收敛（srm-contract → scm 采购合同，1 项）（2026-11-02）✅
 
 > 目标：审计 S-2 合同管理重叠（scm×2/srm/pm/hrm）收敛。盘点结论：5 个合同入口各查数据实体后——scm.purchase_contracts（采购合同主流程，含 submit/approve/terminate）+ srm.supplier_contracts（供应商合同台账，字段同构）为**同语义双表**；pm/hrm/crm 合同均为独立业务实体（项目合同/劳动合同/客户合同），保留。scm 菜单合同入口实测仅 1 处（审计"scm×2 双入口"基线已变化）。

@@ -411,6 +411,10 @@ export const srmNavConfig: ModuleNavConfig = {
       order: 5,
       group: 'business',
       showInTabs: true,
+      // P3 批4：采购订单域唯一归属 scm（scm.purchase_orders 主流程，申请→订单→收货闭环）。
+      // srm 采购订单（srm.purchase_orders）为供应商视角同语义冗余表，侧边栏隐藏重复入口；
+      // 路由/权限/页签保留可直达；后端数据整合（合并至 scm 主表）见 TODO P4/P5。
+      showInSidebar: false,
       description: i18n.t('srm.nav.srm-order_desc'),
     },
     {
