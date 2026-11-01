@@ -45,22 +45,21 @@
 
 （空——32 项真实登录态复核 FAIL 已全部核销）
 
-**2026-11-02 追加（批 4 p11 首次触发 smoke 门禁暴露；已核销 mes 4 / erp 3 / mobile attendance 6，剩 6）**：
+**2026-11-02 追加（批 4 p11 首次触发 smoke 门禁暴露；19 项全部核销清零）**：
 批 4 p11（/api/aps 兼容层退役、aps 直连 /api/mes）首次改动 `apps/web/src/api/*` 触发
 web-contract-smoke 门禁实跑，暴露 19 项存量 handler 500（此前批 4 p1-p10 均不涉及
 api 目录故门禁跳过）：mes material-plans 写操作 4、erp example 演示端点 3、mobile
 attendance/inventory/production 12。
-- 已核销：mes material-plans 4 项根因=`tenant_id = COALESCE(NULLIF(current_setting(
+- mes material-plans 4：根因=`tenant_id = COALESCE(NULLIF(current_setting(
   'app.tenant_id', true), ''), '00000000-...')` 缺 ::UUID cast（uuid=text 无操作符→SQL
   报错→500），material_plan.rs L289/L356 补 cast 后业务 404 计 PASS（批 4 p12 核销）。
-  批 4 p13 退役 /api/v1 重启 8099 后 erp example 3 + mobile attendance 6 自动核销
+- erp example 3 + mobile attendance 6：批 4 p13 退役 /api/v1 重启 8099 后自动核销
   （500→200/正常语义，根因未修，疑似环境态/连接池，重跑后转绿）。
-- 待核销：mobile inventory 2 + production 4（候选：mobile 同款 tenant cast 缺陷，
-  后续批批量修复）。
+- mobile inventory 2 + production 4（批 4 p14 核销）：根因=mobile handler 用
+  TypedServiceClient 跨服务直调下游（MesApi/WmsApi），默认 base 指向独立服务端口
+  （mes 8030 / wms 8041，monolith 下未运行）→ 连接失败→500；monolith 启动未带
+  `<SVC>_SERVICE_URL` env（run_monolith.sh 已含统一指向 :8099 的约定）。注入
+  `MES_SERVICE_URL=http://localhost:8099 WMS_SERVICE_URL=http://localhost:8099`
+  重启 8099 后 6 项全转绿（200 / 业务 404）。无代码改动。
 
-- GET /api/mobile/inventory/items
-- GET /api/mobile/inventory/items/00000000-0000-0000-0000-000000000099
-- GET /api/mobile/production/orders
-- GET /api/mobile/production/orders/00000000-0000-0000-0000-000000000099
-- POST /api/mobile/production/orders/00000000-0000-0000-0000-000000000099/start
-- POST /api/mobile/production/orders/00000000-0000-0000-0000-000000000099/complete
+> **19 项 KNOWN 500 全部核销清零**；后续任何 FAIL 一律阻断门禁。

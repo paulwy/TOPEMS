@@ -1,3 +1,13 @@
+## 批 4 第十四批：KNOWN 500 核销-3（mobile inventory 2 + production 4，部署 env 根因）（2026-11-02）✅
+
+> 目标：核销 p13 遗留的 mobile 剩 6 项 KNOWN（inventory GET /items + /items/{id}、production GET /orders + /orders/{id} + POST /start + /complete）。
+> 根因（与 p12 cast 缺陷不同）：mobile handler 用 `TypedServiceClient` 跨服务直调下游（MesApi/WmsApi），默认 base 指向独立服务端口（mes 8030 / wms 8041，monolith 下未运行）→ 连接失败→500。monolith 裸跑 nohup 未带 `<SVC>_SERVICE_URL` env（`scripts/run_monolith.sh` 已含统一指向 :8099 的约定）。
+
+- **侦查**：mobile 全模块 tenant 模式 0 处缺 cast（此前 7 处全带 ::UUID，大小写误判）；inventory handler 调 WmsApi（`list_inventory_items(1,100)`）、production 调 MesApi（`list_production_orders`）→ 失败即 500"调用WMS/MES服务失败"；`lib/shared-service-client` define_service_api! 默认：MesApi 8030 env=MES_SERVICE_URL base=/api/mes、WmsApi 8041 env=WMS_SERVICE_URL base=/api/wms。
+- **修复（部署配置，无代码改动）**：注入 `MES_SERVICE_URL=http://localhost:8099 WMS_SERVICE_URL=http://localhost:8099` 重启 8099（与 run_monolith.sh 既有 `<SVC>_SERVICE_URL=:8099` 约定一致）→ 6 端点全转绿（GET 200 / 未存在项业务 404：库存不存在/生产工单不存在/状态不允许）。
+- **验证（全绿）**：smoke **4667/4667 PASS、0 FAIL（KNOWN 豁免 6→0）**；gap_list KNOWN 清空。
+- **后续候选**：erp 真实缺 cast = **12 处**（svc/erp/src/，grep -iv 大小写修正后计数；早期 66 为未过滤大小写过时数字），修复方向同 p12 material_plan.rs。
+
 ## 批 4 第十三批：LEGACY_DUP `/api/v1` 前缀全面退役（39 文件 + 双轨/限流/集成测试同步）（2026-11-02）✅
 
 > 目标：清理 p11 遗留的 legacy `/api/v1/<svc>` 双轨别名（register_routes_with_legacy_alias 为 /api/<svc> 挂的旧版前缀），全仓库退役。前端已无 /api/v1 消费（4 处均为注释/废弃说明/外部示例）。
