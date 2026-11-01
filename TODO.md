@@ -1,3 +1,15 @@
+## 补测续：redesign 剩余页（wms 3 页 + PluginMarketplace + MesWorkOrder，38 用例）（2026-11-01）✅ 完成
+
+> **redesign 补测线收尾批**：续 CrmCustomer/Contract/Opportunity 三例后，将 wms 域 ListPageTemplate 复杂/自绘形态页与剩余 redesign 大页一次性补齐（5 文件 / 38 用例）。wms 其余 1-hook 纯包装页（SupplierManagementPage 等）已有测试覆盖，不在本批。
+> - `InboundPage.test.tsx`（6 用例，ListPageTemplate 手写形态 13 hooks）：渲染（k18 title/queryKey 'wms-inbound-orders'）；InboundStats 4 卡（k0 total 4/k1 pending/k2 receiving|confirmed/k3 completed，三值同为 1 用 getAllByText）；crud.api 委托 wmsApi.inboundOrders；2 行操作（k16 confirm show pending / k17 complete show receiving|quality_check）；confirm 失败 k7 error toast
+> - `OutboundPage.test.tsx`（8 用例，15 hooks）：渲染（k28 title/queryKey 'wms-outbound-orders'）；OutboundStats 4 卡（k0 total/k1 pending/k2 picking|picked/k3 completed|shipped）；crud 委托；4 行操作（k24 confirm show pending / k25 pick show confirmed|picking / k26 ship show picked|packing，参数 (id, []) / k27 complete show shipped）；confirm 失败 k7 error toast
+> - `WmsStocktakePage.test.tsx`（8 用例，redesign 形态 38 hooks）：渲染（header 3 层 breadcrumbs/data 2 行/rowKey）；footer 4 StatTile（stat_total/in_progress/completed/discrepancy 求和）；列渲染（9 列 actions 4 按钮）；Tabs（all/draft/in_progress/completed + badge）；toolbar（refresh/new）；**删除确认闭环**（actions children[3] → Modal → btn_confirm_delete → 500ms mutationFn 不调 API + invalidate + toast）；详情 Drawer；create Modal（stockTakeApi.create + invalidate）
+> - `PluginMarketplacePage.test.tsx`（8 用例，ListPageTemplate 手写形态双 useQuery + usePluginStore）：渲染（title/data 2/loading/searchable/columns）；headerContent suite 卡片；columns 渲染；suite 筛选（点击卡片 → data 过滤 1）；popular 排序（install_count 降序）；grid 安装（purchase → installPlugin + success toast）；详情 Dialog（onRowClick）；refresh action
+> - `MesWorkOrderPage.test.tsx`（8 用例，redesign 形态 24 hooks）：渲染（header title/data 3/rowKey）；footer 4 StatTile（total/in_progress/pending/completed）；列渲染（actions 3 按钮）；Tabs（all/pending/in_progress/completed + badge）；**删除闭环**（actions children[2] → mesApi.workOrders.delete + invalidate + toast，onError 亦 success toast）；详情 Drawer（tableProps.onRowClick）；toolbar（search/workshop/refresh/new）；Tabs 切换过滤
+> - **模板要点（本批固化）**：手写形态 mock `@/components/templates/ListPageTemplate`（记录 props + data-testid）；redesign 形态 mock `@/components/redesign` 13+ 组件（Modal 渲染 footer、StatTile label:value、Tabs 可点击、Drawer、ToastContainer、FileUpload 等）；页面直引 i18n 实例时 `vi.mock('@/i18n', () => ({ default: { t: (k) => k } }))`；useNotificationStore mock 需支持 selector 形态（`useNotificationStore((state) => state.addNotification)`）；异步行操作必须 `await act(async () => ...)` 防 act 泄漏（泄漏会导致后续用例 render 空 body）；多个同名数值用 getAllByText + toHaveLength；placeholder 断言用 getByPlaceholderText
+> - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
+> - 提交：本批（5 测试文件 + TODO 小节）待推送。
+
 ## v1.126 审计整改第三批：P2 域裁剪（一）——死代码清理 + dashboard 下沉 + mobile 隐藏（2026-11-01）✅
 
 > 承接 v1.125 遗留（批 3：wms 孤儿组件死代码 + P2 域裁剪 dashboard/analytics/setting/mobile）。完成盘点与可安全执行部分，analytics/setting 折叠登记 UI 工程子任务。
