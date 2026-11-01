@@ -2750,7 +2750,9 @@
     },
     "nav": {
       "erp-dictionaries": "Data Dictionaries",
-      "erp-dictionaries_desc": "ERP business dictionaries"
+      "erp-dictionaries_desc": "ERP business dictionaries",
+      "erp-data-dictionaries": "Data Dictionaries (Admin)",
+      "erp-data-dictionaries_desc": "ERP data dictionaries (/erp/data-dictionaries)"
     }
   },
   "financial_analysis_page": {

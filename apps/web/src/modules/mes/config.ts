@@ -10,7 +10,6 @@ export const MES_PATHS = {
   dashboard: '/mes/dashboard',
   productionOrders: '/mes/production-orders',
   productionOrderDetail: '/mes/production-orders/:id',
-  workOrders: '/mes/work-orders',
   equipment: '/mes/equipment',
   equipmentDetail: '/mes/equipment/:id',
   workStations: '/mes/workstations',
@@ -120,32 +119,6 @@ interface ProductionOrderDetailPageProps {
   /** 版本号（带版本控制的实体）*/
 
   version?: string | number;
-}
-
-interface WorkOrderPageProps {
-  /** 分页：当前页码 */
-
-  page?: number;
-
-  /** 分页：每页大小 */
-
-  pageSize?: number;
-
-  /** 过滤器：前端宽松 Record<string, unknown>（V257 P1-1 深度细化时升级为 schema）*/
-
-  filters?: Record<string, unknown>;
-
-  /** 关键字搜索（顶部搜索框）*/
-
-  searchKeyword?: string;
-
-  /** 排序字段 */
-
-  sortBy?: string;
-
-  /** 排序方向 */
-
-  sortOrder?: 'asc' | 'desc';
 }
 
 interface EquipmentManagementPageProps {
@@ -967,18 +940,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       action: 'read',
     } as RouteConfigV2<ProductionOrderDetailPageProps>,
     {
-      path: MES_PATHS.workOrders,
-      element: lazyWithRetry(() => import('@/pages/mes/WorkOrderPage'), 'WorkOrderPage'),
-      module: 'mes',
-      code: 'mes-work-orders',
-      title: i18n.t('mes.nav.mes-work-orders'),
-      titleKey: 'mes.nav.mes-work-orders',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['mes:work_order:read'],
-      action: 'read',
-    } as RouteConfigV2<WorkOrderPageProps>,
-    {
       path: MES_PATHS.equipment,
       element: lazyWithRetry(
         () => import('@/pages/mes/EquipmentManagementPage'),
@@ -1540,17 +1501,6 @@ export const mesNavConfig: ModuleNavConfig = {
       group: 'business',
       showInTabs: true,
       description: i18n.t('mes.nav.mes-work-orders_desc'),
-    },
-    {
-      code: 'mes-work-orders',
-      label: i18n.t('mes.nav.mes-work-orders'),
-      labelKey: 'mes.nav.mes-work-orders',
-      icon: 'FileText',
-      path: MES_PATHS.workOrders,
-      permission: 'mes:work_order:read',
-      order: 2,
-      group: 'business',
-      description: i18n.t('mes.nav.mes-equipment_desc'),
     },
     {
       code: 'mes-equipment',

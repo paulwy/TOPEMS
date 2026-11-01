@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import ScmIncomingInspectionPage from '../scm/ScmIncomingInspectionPage';
 import ScmEvaluationPage from '../scm/ScmEvaluationPage';
-import PurchaseContractPage from '../scm/PurchaseContractPage';
 import { scmApi } from '@/api/scm';
 
 // setup-mocks.ts 将 createCrudPageAdapter mock 为直通(api)=>api；
@@ -238,82 +237,6 @@ describe('ScmCrudPages3', () => {
       await expect(props.apiAdapter.create({})).rejects.toThrow('创建失败');
       await expect(props.apiAdapter.update('ev-1', {})).rejects.toThrow('更新失败');
       await expect(props.apiAdapter.delete('ev-1')).rejects.toThrow('删除失败');
-    });
-  });
-
-  describe('PurchaseContractPage', () => {
-    it('renders purchase contract page with SCM breadcrumbs', () => {
-      render(<PurchaseContractPage />);
-
-      expect(screen.getByTestId('crud-page')).toBeInTheDocument();
-      expect(mockCrudPage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          schema: { name: 'purchaseContractSchema' },
-          breadcrumbs: [{ label: 'SCM' }, { label: 'scm.purchase_contract_page.k0' }],
-        })
-      );
-    });
-
-    it('maps purchase contract list params and unwraps response', async () => {
-      render(<PurchaseContractPage />);
-      const props = mockCrudPage.mock.calls[0][0];
-
-      const result = await props.apiAdapter.list({ page: 3, pageSize: 25 });
-
-      expect(scmApi.purchaseContracts.list).toHaveBeenCalledWith({ page: 3, page_size: 25 });
-      expect(result).toEqual({
-        data: [{ id: 'pc-1', contract_no: 'CT-001', status: 'active' }],
-        total: 1,
-      });
-    });
-
-    it('delegates purchase contract create, update and delete operations', async () => {
-      vi.mocked(scmApi.purchaseContracts.create).mockResolvedValue({
-        success: true,
-        data: { id: 'pc-2', contract_no: 'CT-002' },
-      });
-      vi.mocked(scmApi.purchaseContracts.update).mockResolvedValue({
-        success: true,
-        data: { id: 'pc-1', contract_no: 'CT-001' },
-      });
-      vi.mocked(scmApi.purchaseContracts.delete).mockResolvedValue({ success: true });
-
-      render(<PurchaseContractPage />);
-      const props = mockCrudPage.mock.calls[0][0];
-
-      await expect(props.apiAdapter.create({ contract_no: 'CT-002' })).resolves.toEqual({
-        id: 'pc-2',
-        contract_no: 'CT-002',
-      });
-      await expect(props.apiAdapter.update('pc-1', { contract_no: 'CT-001' })).resolves.toEqual({
-        id: 'pc-1',
-        contract_no: 'CT-001',
-      });
-      await expect(props.apiAdapter.delete('pc-1')).resolves.toBeUndefined();
-
-      expect(scmApi.purchaseContracts.create).toHaveBeenCalledWith({ contract_no: 'CT-002' });
-      expect(scmApi.purchaseContracts.update).toHaveBeenCalledWith('pc-1', {
-        contract_no: 'CT-001',
-      });
-      expect(scmApi.purchaseContracts.delete).toHaveBeenCalledWith('pc-1');
-    });
-
-    it('throws translated errors when purchase contract API operations fail', async () => {
-      vi.mocked(scmApi.purchaseContracts.list).mockResolvedValueOnce({
-        success: false,
-        data: null,
-      });
-      vi.mocked(scmApi.purchaseContracts.create).mockResolvedValueOnce({ success: false });
-      vi.mocked(scmApi.purchaseContracts.update).mockResolvedValueOnce({ success: false });
-      vi.mocked(scmApi.purchaseContracts.delete).mockResolvedValueOnce({ success: false });
-
-      render(<PurchaseContractPage />);
-      const props = mockCrudPage.mock.calls[0][0];
-
-      await expect(props.apiAdapter.list({})).rejects.toThrow('加载列表失败');
-      await expect(props.apiAdapter.create({})).rejects.toThrow('创建失败');
-      await expect(props.apiAdapter.update('pc-1', {})).rejects.toThrow('更新失败');
-      await expect(props.apiAdapter.delete('pc-1')).rejects.toThrow('删除失败');
     });
   });
 });

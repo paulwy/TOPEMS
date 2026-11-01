@@ -2431,7 +2431,9 @@
     },
     "nav": {
       "erp-dictionaries": "数据字典",
-      "erp-dictionaries_desc": "ERP 业务数据字典管理"
+      "erp-dictionaries_desc": "ERP 业务数据字典管理",
+      "erp-data-dictionaries": "数据字典(管理)",
+      "erp-data-dictionaries_desc": "ERP 数据字典管理（/erp/data-dictionaries）"
     }
   },
   "erp.voucher.batchAction.batchSubmit.success": "Success",

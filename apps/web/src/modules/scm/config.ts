@@ -73,16 +73,6 @@ interface ScmEvaluationPageProps {
   filters?: Record<string, unknown>;
 }
 
-/** PurchaseContractPage 路由 Props · 模板=list */
-interface PurchaseContractPageProps {
-  /** 分页页码，默认 1 */
-  page?: number;
-  /** 分页大小，默认 20 */
-  pageSize?: number;
-  /** 列表筛选条件键值对 */
-  filters?: Record<string, unknown>;
-}
-
 /** ScmDeliveryAppointmentPage 路由 Props · 模板=list */
 interface ScmDeliveryAppointmentPageProps {
   /** 分页页码，默认 1 */
@@ -187,7 +177,6 @@ export const SCM_PATHS = {
   suppliers: '/scm/suppliers',
   supplierAdmission: '/scm/supplier-admission',
   supplierEvaluation: '/scm/supplier-evaluation',
-  contracts: '/scm/contracts',
   deliveryAppointment: '/scm/delivery-appointment',
   mrpPlan: '/scm/mrp-plan',
   mrpSuggestion: '/scm/mrp-suggestion',
@@ -313,21 +302,6 @@ export const scmModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['scm:supplier_evaluation:read'],
       action: 'read',
     } satisfies RouteConfigV2<ScmEvaluationPageProps>,
-    {
-      path: SCM_PATHS.contracts,
-      element: lazyWithRetry(
-        () => import('@/pages/scm/PurchaseContractPage'),
-        'PurchaseContractPage'
-      ),
-      module: 'scm',
-      code: 'scm-contracts',
-      title: i18n.t('scm.nav.scm-contracts'),
-      titleKey: 'scm.nav.scm-contracts',
-      template: 'list',
-      group: 'process',
-      requiredPermissions: ['scm:contract:read'],
-      action: 'read',
-    } satisfies RouteConfigV2<PurchaseContractPageProps>,
     {
       path: SCM_PATHS.deliveryAppointment,
       element: lazyWithRetry(
@@ -609,17 +583,6 @@ export const scmNavConfig: ModuleNavConfig = {
       order: 1,
       group: 'process',
       description: i18n.t('scm.nav.scm-supplier-evaluation_desc'),
-    },
-    {
-      code: 'scm-contracts',
-      label: i18n.t('scm.nav.scm-contracts'),
-      labelKey: 'scm.nav.scm-contracts',
-      icon: 'FileText',
-      path: SCM_PATHS.contracts,
-      permission: 'scm:contract:read',
-      order: 2,
-      group: 'process',
-      description: i18n.t('scm.nav.scm-contracts_desc'),
     },
     {
       code: 'scm-delivery-appointment',

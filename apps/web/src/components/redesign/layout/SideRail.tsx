@@ -71,10 +71,10 @@ const defaultItems: NavItem[] = [
         path: '/mes/production-orders',
       },
       {
-        id: 'mes-work-orders',
+        id: 'mes-work-order',
         label: 'shared.sidebar.mes_work_orders',
         icon: ClipboardList,
-        path: '/mes/work-orders',
+        path: '/mes/work-order',
       },
       {
         id: 'mes-equipment',
