@@ -607,6 +607,9 @@ export const erpNavConfig: ModuleNavConfig = {
       order: 1,
       group: 'business',
       showInTabs: true,
+      // P3 批4：财务域唯一归属 finance（finance 后端完整：vouchers/ledger/receivable/payable/budget/accounting-subjects 等）。
+      // erp-general-ledger 页面（VoucherPage）实为调用 finance voucherApi，erp 后端无总账/凭证模块。
+      showInSidebar: false,
       description: i18n.t('erp.nav.erp-general-ledger_desc'),
     },
     {
@@ -764,6 +767,8 @@ export const erpNavConfig: ModuleNavConfig = {
       permission: 'erp:receivable_payable:read',
       order: 8,
       group: 'business',
+      // P3 批4：财务域唯一归属 finance（erp-receivable-payable 页面实为调用 finance receivableApi/payableApi）。
+      showInSidebar: false,
       description: i18n.t('erp.nav.erp-receivable-payable_desc'),
     },
     {
@@ -787,6 +792,8 @@ export const erpNavConfig: ModuleNavConfig = {
       permission: 'erp:budget:read',
       order: 10,
       group: 'business',
+      // P3 批4：财务域唯一归属 finance（erp-budget-management 页面实为调用 finance budgetApi/expenseApi）。
+      showInSidebar: false,
       description: i18n.t('erp.nav.erp-budget-management_desc'),
     },
     {
@@ -809,6 +816,8 @@ export const erpNavConfig: ModuleNavConfig = {
       permission: 'erp:accounting_subject:read',
       order: 12,
       group: 'master',
+      // P3 批4：财务域唯一归属 finance（erp-accounting-management 页面实为调用 finance accountingSubjectApi/openingBalanceApi，erp api 仅为再导出）。
+      showInSidebar: false,
       description: i18n.t('erp.nav.erp-accounting-management_desc'),
     },
     {
@@ -853,6 +862,8 @@ export const erpNavConfig: ModuleNavConfig = {
       permission: 'erp:financial_analysis:read',
       order: 2,
       group: 'analytics',
+      // P3 批4：财务域唯一归属 finance（erp-financial-analysis 页面实为调用 finance financeReportApi）。
+      showInSidebar: false,
       description: i18n.t('erp.nav.erp-financial-analysis_desc'),
     },
     {

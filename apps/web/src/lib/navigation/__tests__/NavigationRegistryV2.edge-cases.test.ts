@@ -676,5 +676,83 @@ describe('NavigationRegistryV2 Edge Cases', () => {
       expect(codes).toContain('rd-project');
       expect(codes).toContain('rd-test');
     });
+
+    it('getSidebarNavItems 应排除 erp 财务重复入口（finance 域唯一归属，批4）且保留 bank-account', () => {
+      registry.registerModule({
+        code: 'test-erp-finance-p3',
+        name: 'ERP Finance Test',
+        icon: 'Test',
+        path: '/test-erp-finance',
+        source: 'core',
+        navItems: [
+          {
+            code: 'erp-dashboard',
+            path: '/test-erp-finance/dashboard',
+            label: '总览',
+            icon: 'Test',
+          },
+          {
+            code: 'erp-dictionaries',
+            path: '/test-erp-finance/dicts',
+            label: '字典',
+            icon: 'Test',
+          },
+          {
+            code: 'erp-general-ledger',
+            path: '/test-erp-finance/vouchers',
+            label: '总账',
+            icon: 'Test',
+            showInTabs: true,
+            showInSidebar: false,
+          },
+          {
+            code: 'erp-receivable-payable',
+            path: '/test-erp-finance/arp',
+            label: '应收应付',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+          {
+            code: 'erp-budget-management',
+            path: '/test-erp-finance/budget',
+            label: '预算',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+          {
+            code: 'erp-accounting-management',
+            path: '/test-erp-finance/accounting',
+            label: '会计核算',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+          {
+            code: 'erp-financial-analysis',
+            path: '/test-erp-finance/analysis',
+            label: '财务分析',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+          {
+            code: 'erp-bank-account',
+            path: '/test-erp-finance/banks',
+            label: '银行账户',
+            icon: 'Test',
+          },
+        ],
+      });
+      registeredCodes.push('test-erp-finance-p3');
+
+      const codes = registry
+        .getSidebarNavItems('test-erp-finance-p3', () => true)
+        .map((item) => item.code);
+      expect(codes).not.toContain('erp-general-ledger');
+      expect(codes).not.toContain('erp-receivable-payable');
+      expect(codes).not.toContain('erp-budget-management');
+      expect(codes).not.toContain('erp-accounting-management');
+      expect(codes).not.toContain('erp-financial-analysis');
+      expect(codes).toContain('erp-bank-account');
+      expect(codes).toContain('erp-dictionaries');
+    });
   });
 });

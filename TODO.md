@@ -1,6 +1,12 @@
-## 批 4 第五批：物料×4 归属收敛（rd-material → pdm，1 项）（2026-11-02）✅
+## 批 4 第六批：财务×2 归属收敛（erp 财务 5 项 → finance，5 项）（2026-11-02）✅
 
-> 目标：审计 L341 物料×4 重叠收敛。盘点结论：物料主数据域 = pdm（pdm.materials；DATA-01：master_data.materials 已建表待切流）；erp.materials 为冗余主数据源（第一批 erp-material-management 已收敛→pdm）；rd-material 页面实为调用 erp /materials（rd 后端 material.rs 实为 rs.material_tests 物料测试，RD 物料测试归口 rd-test 菜单）；mes/aps 为生产物料业务（mes.material_plans/material_bom/requirement/issue/return + aps 物料计划/短缺分析，业务特有非主数据副本）；wms-items 为库存管理（InventoryPage）非物料主数据。
+> 目标：审计 L341 财务×2（finance/erp）收敛。盘点结论：finance 为财务域唯一归属（finance 后端完整：core_finance_vouchers/ledger/receivable/payable/budget/accounting_subjects/settlement/tax/treasury/risk/reports）；erp 后端仅有 bank_account.rs 一个财务模块，其余 erp 财务菜单页面实为调用 finance API（VoucherPage→finance voucherApi、ReceivablePayablePage→finance receivable/payableApi、BudgetManagementPage→finance budgetApi、FinancialAnalysisPage→finance financeReportApi、AccountingManagementPage→finance accountingSubjectApi/openingBalanceApi，erp api 仅为再导出）。erp-financial-statements 第一批已收敛。
+
+- **收敛 5 项（erp/config.ts）**：`erp-general-ledger`/`erp-receivable-payable`/`erp-budget-management`/`erp-accounting-management`/`erp-financial-analysis` 各加 `showInSidebar: false` + 归属注释（财务域唯一归属 finance，路由/权限/页签保留）。
+- **保留**：erp-bank-account（erp.bank_accounts 独立后端，finance 无银行账户）；erp-dashboard/字典/数据库/审计/办公用品/会议室/公告/用车申请等非财务菜单。
+- **验证（全绿）**：① navigation 套件 30/30 PASS（edge-cases 23 用例，新增 erp 财务收敛回归）；② `tsc --noEmit` EXIT 0；③ eslint 清零；④ 浏览器实测：企业资源子菜单总账/应收应付/预算/会计核算/财务分析消失，银行账户/字典/数据库/审计等保留。
+
+## 批 4 第五批：物料×4 归属收敛（rd-material → pdm，1 项）（2026-11-02）✅> 目标：审计 L341 物料×4 重叠收敛。盘点结论：物料主数据域 = pdm（pdm.materials；DATA-01：master_data.materials 已建表待切流）；erp.materials 为冗余主数据源（第一批 erp-material-management 已收敛→pdm）；rd-material 页面实为调用 erp /materials（rd 后端 material.rs 实为 rs.material_tests 物料测试，RD 物料测试归口 rd-test 菜单）；mes/aps 为生产物料业务（mes.material_plans/material_bom/requirement/issue/return + aps 物料计划/短缺分析，业务特有非主数据副本）；wms-items 为库存管理（InventoryPage）非物料主数据。
 
 - **收敛 1 项（rd/config.ts）**：`rd-material` 加 `showInSidebar: false` + 归属注释（物料主数据归属 pdm；rd-material 页调 erp /materials 冗余接口；RD 物料测试走 rd-test；路由/权限/页签保留）。
 - **保留**：pdm-material（主域）、mes 物料需求/领料/退料/BOM、aps 物料计划/短缺分析、wms 库存（非主数据）。
