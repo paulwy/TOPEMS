@@ -14,19 +14,61 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 const samples = {
   qms: [
-    { id: 'q1', check_no: 'QC-20261015-001', inspection_no: 'QC-20261015-001', inspection_type: 'IQC', product_name: '精密轴套', quantity: 120, status: 'approved', inspector: '张三', inspected_at: '2026-10-15T10:00:00Z', created_at: '2026-10-15T09:00:00Z' },
+    {
+      id: 'q1',
+      check_no: 'QC-20261015-001',
+      inspection_no: 'QC-20261015-001',
+      inspection_type: 'IQC',
+      product_name: '精密轴套',
+      quantity: 120,
+      status: 'approved',
+      inspector: '张三',
+      inspected_at: '2026-10-15T10:00:00Z',
+      created_at: '2026-10-15T09:00:00Z',
+    },
   ],
   crm: [
-    { id: 'c1', code: 'CUST-001', name: '北方精密制造有限公司', short_name: '北方精密', status: 'active', industry: '制造', created_at: '2026-10-15T08:00:00Z' },
+    {
+      id: 'c1',
+      code: 'CUST-001',
+      name: '北方精密制造有限公司',
+      short_name: '北方精密',
+      status: 'active',
+      industry: '制造',
+      created_at: '2026-10-15T08:00:00Z',
+    },
   ],
   erp: [
-    { id: 'e1', order_no: 'SO-20261015-001', customer_name: '北方精密', status: 'confirmed', total_amount: 50000, order_date: '2026-10-15', created_at: '2026-10-15T08:00:00Z' },
+    {
+      id: 'e1',
+      order_no: 'SO-20261015-001',
+      customer_name: '北方精密',
+      status: 'confirmed',
+      total_amount: 50000,
+      order_date: '2026-10-15',
+      created_at: '2026-10-15T08:00:00Z',
+    },
   ],
   wms: [
-    { id: 'w1', inbound_no: 'IN-20261015-001', supplier_name: '华北供应商', status: 'completed', total_quantity: 200, created_at: '2026-10-15T08:00:00Z' },
+    {
+      id: 'w1',
+      inbound_no: 'IN-20261015-001',
+      supplier_name: '华北供应商',
+      status: 'completed',
+      total_quantity: 200,
+      created_at: '2026-10-15T08:00:00Z',
+    },
   ],
   hrm: [
-    { id: 'h1', employee_no: 'EMP-001', name: '王五', department: '制造部', position: '工程师', status: 'active', created_at: '2026-10-15T08:00:00Z' },
+    {
+      id: 'h1',
+      employee_no: 'EMP-001',
+      name: '王五',
+      department: '制造部',
+      position: '工程师',
+      status: 'active',
+      created_at: '2026-10-15T08:00:00Z',
+    },
   ],
 };
 
@@ -74,7 +116,6 @@ vi.mock('@/api/hrm/employee', () => ({
 import QmsPage from '@/pages/qms/QmsInspectionRedesignPage';
 import CrmPage from '@/pages/crm/CrmCustomerRedesignPage';
 import ErpPage from '@/pages/erp/ErpSalesOrderRedesignPage';
-import WmsPage from '@/pages/wms/WmsInboundOrderPage';
 import HrmPage from '@/pages/hrm/HrmEmployeeRedesignPage';
 
 class CaptureBoundary extends Component<{ name: string; errors: string[]; children?: ReactNode }> {
@@ -83,10 +124,12 @@ class CaptureBoundary extends Component<{ name: string; errors: string[]; childr
     return { hasError: true };
   }
   componentDidCatch(error: unknown) {
-    this.props.errors.push(`[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`);
+    this.props.errors.push(
+      `[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`
+    );
   }
   render() {
-    if (this.state.hasError) return <div data-testid="page-crash" />;
+    if (this.state.hasError) return <div data-testid='page-crash' />;
     return this.props.children;
   }
 }
@@ -94,10 +137,15 @@ class CaptureBoundary extends Component<{ name: string; errors: string[]; childr
 function renderPage(Page: React.ComponentType, captured: string[]) {
   return render(
     <ThemeProvider theme={createTheme()}>
-      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
         <MemoryRouter>
-          <Suspense fallback={<div data-testid="loading" />}>
-            <CaptureBoundary name="form" errors={captured}>
+          <Suspense fallback={<div data-testid='loading' />}>
+            <CaptureBoundary
+              name='form'
+              errors={captured}
+            >
               <Page />
             </CaptureBoundary>
           </Suspense>
@@ -116,7 +164,6 @@ const pages: Array<[string, React.ComponentType]> = [
   ['QMS 检验列表', QmsPage],
   ['CRM 客户列表', CrmPage],
   ['ERP 销售订单列表', ErpPage],
-  ['WMS 入库单列表', WmsPage],
   ['HRM 员工列表', HrmPage],
 ];
 

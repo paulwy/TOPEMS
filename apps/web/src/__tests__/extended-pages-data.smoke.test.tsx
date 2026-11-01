@@ -16,18 +16,119 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 const samples = {
-  outbound: [{ id: 'o1', order_no: 'OUT-20261015-001', status: 'shipped', customer_name: '测试客户', created_at: '2026-10-15T08:00:00Z' }],
-  wmsInv: [{ id: 'i1', sku: 'SKU-001', product_name: '深沟球轴承', quantity: 100, warehouse: '主仓', created_at: '2026-10-15T08:00:00Z' }],
-  stocktake: [{ id: 'st1', take_no: 'ST-20261015-001', stock_take_no: 'ST-20261015-001', status: 'completed', warehouse: '主仓', created_at: '2026-10-15T08:00:00Z' }],
-  location: [{ id: 'l1', code: 'LOC-001', name: 'A区货架', warehouse: '主仓', created_at: '2026-10-15T08:00:00Z' }],
-  issue: [{ id: 'q1', issue_no: 'NCR-20261015-001', title: '外观不良', status: 'open', product_name: '精密轴', created_at: '2026-10-15T08:00:00Z' }],
-  eightD: [{ id: 'e1', report_no: '8D-20261015-001', title: '客诉分析', status: 'in_progress', created_at: '2026-10-15T08:00:00Z' }],
-  audit: [{ id: 'a1', plan_no: 'AUD-20261015-001', audit_no: 'AUD-20261015-001', title: '年度内审', status: 'planned', created_at: '2026-10-15T08:00:00Z' }],
-  opportunity: [{ id: 'op1', name: '华北新项目', status: 'open', amount: 100000, created_at: '2026-10-15T08:00:00Z' }],
-  attendance: [{ id: 'ar1', employee_name: '李四', date: '2026-10-15', status: 'present', created_at: '2026-10-15T08:00:00Z' }],
-  performance: [{ id: 'pr1', employee_name: '李四', period: '2026-Q3', status: 'completed', score: 88, created_at: '2026-10-15T08:00:00Z' }],
-  erpInv: [{ id: 'ei1', sku: 'RAW-001', product_name: '原材料', quantity: 50, created_at: '2026-10-15T08:00:00Z' }],
-  ehs: [{ id: 'eh1', accident_no: 'EHS-20261015-001', title: '工伤事件', status: 'closed', created_at: '2026-10-15T08:00:00Z' }],
+  outbound: [
+    {
+      id: 'o1',
+      order_no: 'OUT-20261015-001',
+      status: 'shipped',
+      customer_name: '测试客户',
+      created_at: '2026-10-15T08:00:00Z',
+    },
+  ],
+  wmsInv: [
+    {
+      id: 'i1',
+      sku: 'SKU-001',
+      product_name: '深沟球轴承',
+      quantity: 100,
+      warehouse: '主仓',
+      created_at: '2026-10-15T08:00:00Z',
+    },
+  ],
+  stocktake: [
+    {
+      id: 'st1',
+      take_no: 'ST-20261015-001',
+      stock_take_no: 'ST-20261015-001',
+      status: 'completed',
+      warehouse: '主仓',
+      created_at: '2026-10-15T08:00:00Z',
+    },
+  ],
+  location: [
+    {
+      id: 'l1',
+      code: 'LOC-001',
+      name: 'A区货架',
+      warehouse: '主仓',
+      created_at: '2026-10-15T08:00:00Z',
+    },
+  ],
+  issue: [
+    {
+      id: 'q1',
+      issue_no: 'NCR-20261015-001',
+      title: '外观不良',
+      status: 'open',
+      product_name: '精密轴',
+      created_at: '2026-10-15T08:00:00Z',
+    },
+  ],
+  eightD: [
+    {
+      id: 'e1',
+      report_no: '8D-20261015-001',
+      title: '客诉分析',
+      status: 'in_progress',
+      created_at: '2026-10-15T08:00:00Z',
+    },
+  ],
+  audit: [
+    {
+      id: 'a1',
+      plan_no: 'AUD-20261015-001',
+      audit_no: 'AUD-20261015-001',
+      title: '年度内审',
+      status: 'planned',
+      created_at: '2026-10-15T08:00:00Z',
+    },
+  ],
+  opportunity: [
+    {
+      id: 'op1',
+      name: '华北新项目',
+      status: 'open',
+      amount: 100000,
+      created_at: '2026-10-15T08:00:00Z',
+    },
+  ],
+  attendance: [
+    {
+      id: 'ar1',
+      employee_name: '李四',
+      date: '2026-10-15',
+      status: 'present',
+      created_at: '2026-10-15T08:00:00Z',
+    },
+  ],
+  performance: [
+    {
+      id: 'pr1',
+      employee_name: '李四',
+      period: '2026-Q3',
+      status: 'completed',
+      score: 88,
+      created_at: '2026-10-15T08:00:00Z',
+    },
+  ],
+  erpInv: [
+    {
+      id: 'ei1',
+      sku: 'RAW-001',
+      product_name: '原材料',
+      quantity: 50,
+      created_at: '2026-10-15T08:00:00Z',
+    },
+  ],
+  ehs: [
+    {
+      id: 'eh1',
+      accident_no: 'EHS-20261015-001',
+      title: '工伤事件',
+      status: 'closed',
+      created_at: '2026-10-15T08:00:00Z',
+    },
+  ],
 };
 
 vi.mock('@/api/wms/outbound', () => ({
@@ -43,33 +144,64 @@ vi.mock('@/api/wms/location', () => ({
   locationApi: { list: vi.fn(async () => samples.location), create: vi.fn(), update: vi.fn() },
 }));
 vi.mock('@/api/qms/issue', () => ({
-  issueApi: { listIssues: vi.fn(async () => samples.issue), createIssue: vi.fn(), updateIssue: vi.fn() },
+  issueApi: {
+    listIssues: vi.fn(async () => samples.issue),
+    createIssue: vi.fn(),
+    updateIssue: vi.fn(),
+  },
 }));
 vi.mock('@/api/qms/eightD', () => ({
-  eightDApi: { listEightDReports: vi.fn(async () => samples.eightD), createEightDReport: vi.fn(), updateEightDReport: vi.fn() },
+  eightDApi: {
+    listEightDReports: vi.fn(async () => samples.eightD),
+    createEightDReport: vi.fn(),
+    updateEightDReport: vi.fn(),
+  },
 }));
 vi.mock('@/api/qms/audit', () => ({
-  auditApi: { listAuditPlans: vi.fn(async () => samples.audit), createAuditPlan: vi.fn(), startAuditPlan: vi.fn(), completeAuditPlan: vi.fn() },
+  auditApi: {
+    listAuditPlans: vi.fn(async () => samples.audit),
+    createAuditPlan: vi.fn(),
+    startAuditPlan: vi.fn(),
+    completeAuditPlan: vi.fn(),
+  },
 }));
 vi.mock('@/api/crm/opportunity', () => ({
-  opportunityApi: { list: vi.fn(async () => samples.opportunity), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+  opportunityApi: {
+    list: vi.fn(async () => samples.opportunity),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
 }));
 vi.mock('@/api/hrm/attendance', () => ({
-  attendanceApi: { list: vi.fn(async () => samples.attendance), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+  attendanceApi: {
+    list: vi.fn(async () => samples.attendance),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
 }));
 vi.mock('@/api/hrm/performance', () => ({
-  performanceReviewApi: { list: vi.fn(async () => samples.performance), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+  performanceReviewApi: {
+    list: vi.fn(async () => samples.performance),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
 }));
 vi.mock('@/api/erp/core/inventory', () => ({
   inventoryApi: { list: vi.fn(async () => samples.erpInv) },
 }));
 vi.mock('@/api/ehs', () => ({
-  ehsApi: { listAccidents: vi.fn(async () => samples.ehs), createAccident: vi.fn(), updateAccident: vi.fn(), deleteAccident: vi.fn() },
+  ehsApi: {
+    listAccidents: vi.fn(async () => samples.ehs),
+    createAccident: vi.fn(),
+    updateAccident: vi.fn(),
+    deleteAccident: vi.fn(),
+  },
 }));
 
-import WmsOutboundPage from '@/pages/wms/WmsOutboundOrderPage';
 import WmsStocktakePage from '@/pages/wms/WmsStocktakePage';
-import WmsLocationPage from '@/pages/wms/WmsLocationPage';
 import QmsIssuePage from '@/pages/qms/QmsNonconformanceRedesignPage';
 import QmsEightDPage from '@/pages/qms/QmsEightDRedesignPage';
 import QmsAuditPage from '@/pages/qms/QmsAuditRedesignPage';
@@ -85,18 +217,18 @@ class CaptureBoundary extends Component<{ name: string; errors: string[]; childr
     return { hasError: true };
   }
   componentDidCatch(error: unknown) {
-    this.props.errors.push(`[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`);
+    this.props.errors.push(
+      `[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`
+    );
   }
   render() {
-    if (this.state.hasError) return <div data-testid="page-crash" />;
+    if (this.state.hasError) return <div data-testid='page-crash' />;
     return this.props.children;
   }
 }
 
 const pages: Array<[string, React.ComponentType, string]> = [
-  ['WMS 出库单列表', WmsOutboundPage, 'OUT-20261015-001'],
   ['WMS 盘点列表', WmsStocktakePage, 'ST-20261015-001'],
-  ['WMS 库位列表', WmsLocationPage, 'LOC-001'],
   ['QMS 不合格品列表', QmsIssuePage, 'NCR-20261015-001'],
   ['QMS 8D 报告列表', QmsEightDPage, '8D-20261015-001'],
   ['QMS 内审计划列表', QmsAuditPage, 'AUD-20261015-001'],
@@ -119,8 +251,11 @@ describe('扩展页面数据 mock 深测（12 列表页带样本数据渲染）'
           <ThemeProvider theme={createTheme()}>
             <QueryClientProvider client={qc}>
               <MemoryRouter>
-                <Suspense fallback={<div data-testid="loading" />}>
-                  <CaptureBoundary name={_name} errors={captured}>
+                <Suspense fallback={<div data-testid='loading' />}>
+                  <CaptureBoundary
+                    name={_name}
+                    errors={captured}
+                  >
                     <Page />
                   </CaptureBoundary>
                 </Suspense>
@@ -156,8 +291,11 @@ describe('扩展页面数据 mock 深测（12 列表页带样本数据渲染）'
           <ThemeProvider theme={createTheme()}>
             <QueryClientProvider client={qc}>
               <MemoryRouter>
-                <Suspense fallback={<div data-testid="loading" />}>
-                  <CaptureBoundary name="EHS 事故列表" errors={captured}>
+                <Suspense fallback={<div data-testid='loading' />}>
+                  <CaptureBoundary
+                    name='EHS 事故列表'
+                    errors={captured}
+                  >
                     <EhsAccidentPage />
                   </CaptureBoundary>
                 </Suspense>

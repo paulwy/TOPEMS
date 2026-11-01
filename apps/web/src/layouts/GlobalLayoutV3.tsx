@@ -96,8 +96,11 @@ function buildSidebarItems(
   checkPermission: (permission: string) => boolean,
   unreadCount: number
 ): NavItem[] {
+  // P2-1 mobile 模块 Web 侧隐藏：mobile 为移动端专用入口（MobileNav 独立渲染，
+  // 移动端导航仍展示），Web 侧边栏不再显示 mobile 模块组。
   const registryItems = navigationRegistryV2
     .getTopNavItems(checkPermission)
+    .filter((item) => item.code !== 'mobile')
     .slice()
     .sort((a, b) => {
       const orderA = MODULE_ORDER_INDEX.get(a.code) ?? Number.MAX_SAFE_INTEGER;
@@ -118,8 +121,11 @@ function buildSidebarItems(
 
   for (const moduleItem of registryItems) {
     const moduleConfig = navigationRegistryV2.getModule(moduleItem.code);
+    // P2-2 dashboard 下沉模块首页：dashboard 入口不占侧边栏菜单（路由与
+    // 模块 Tab 保留，进入模块仍由 /<mod>/dashboard 作为 landing 页），
+    // 消除 35+ 个 dashboard 冗余入口。
     const configuredChildren = (moduleConfig?.navItems ?? []).filter(
-      (item) => item.showInSidebar !== false
+      (item) => item.showInSidebar !== false && !item.code.endsWith('-dashboard')
     );
     const children = navigationRegistryV2
       .getSidebarNavItems(moduleItem.code, checkPermission)

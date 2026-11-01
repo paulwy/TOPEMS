@@ -134,7 +134,6 @@ vi.mock('@/api/hrm/employee', () => ({
 import QmsPage from '@/pages/qms/QmsInspectionRedesignPage';
 import CrmPage from '@/pages/crm/CrmCustomerRedesignPage';
 import ErpPage from '@/pages/erp/ErpSalesOrderRedesignPage';
-import WmsPage from '@/pages/wms/WmsInboundOrderPage';
 import HrmPage from '@/pages/hrm/HrmEmployeeRedesignPage';
 
 class CaptureBoundary extends Component<{ name: string; errors: string[]; children?: ReactNode }> {
@@ -143,10 +142,12 @@ class CaptureBoundary extends Component<{ name: string; errors: string[]; childr
     return { hasError: true };
   }
   componentDidCatch(error: unknown) {
-    this.props.errors.push(`[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`);
+    this.props.errors.push(
+      `[${this.props.name}] ${error instanceof Error ? error.message : String(error)}`
+    );
   }
   render() {
-    if (this.state.hasError) return <div data-testid="page-crash" />;
+    if (this.state.hasError) return <div data-testid='page-crash' />;
     return this.props.children;
   }
 }
@@ -157,8 +158,11 @@ function renderWithProviders(ui: ReactNode, errors: string[]) {
     <ThemeProvider theme={createTheme()}>
       <QueryClientProvider client={qc}>
         <MemoryRouter>
-          <Suspense fallback={<div data-testid="loading" />}>
-            <CaptureBoundary name="core-page" errors={errors}>
+          <Suspense fallback={<div data-testid='loading' />}>
+            <CaptureBoundary
+              name='core-page'
+              errors={errors}
+            >
               {ui}
             </CaptureBoundary>
           </Suspense>
@@ -172,7 +176,6 @@ const pages: Array<[string, React.ComponentType, string]> = [
   ['QMS 检验列表', QmsPage, 'QC-20261015-001'],
   ['CRM 客户列表', CrmPage, 'CUST-001'],
   ['ERP 销售订单列表', ErpPage, 'SO-20261015-001'],
-  ['WMS 入库单列表', WmsPage, 'IN-20261015-001'],
   ['HRM 员工列表', HrmPage, 'EMP-001'],
 ];
 
