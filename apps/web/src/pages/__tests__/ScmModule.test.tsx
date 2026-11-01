@@ -4,7 +4,6 @@ import { render } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import SupplierAdmissionPage from '../scm/SupplierAdmissionPage';
 import PurchaseRequisitionPage from '../scm/PurchaseRequisitionPage';
-import PurchaseContractPage from '../scm/PurchaseContractPage';
 import ScmPurchaseOrderPage from '../scm/ScmPurchaseOrderPage';
 import { scmApi } from '@/api/scm';
 import { useNotificationStore, useAuthStore } from '@/store';
@@ -202,26 +201,6 @@ describe('PurchaseRequisitionPage', () => {
     expect(scmApi.purchaseRequisitions.create).toBeDefined();
     expect(scmApi.purchaseRequisitions.update).toBeDefined();
     expect(scmApi.purchaseRequisitions.delete).toBeDefined();
-  });
-});
-
-describe('PurchaseContractPage', () => {
-  it('should render without crashing', () => {
-    const { container } = render(
-      <BrowserRouter>
-        <PurchaseContractPage />
-      </BrowserRouter>
-    );
-    expect(container).toBeDefined();
-  });
-
-  it('should have purchase contract API methods defined', () => {
-    expect(scmApi.purchaseContracts.list).toBeDefined();
-    expect(scmApi.purchaseContracts.get).toBeDefined();
-    expect(scmApi.purchaseContracts.create).toBeDefined();
-    expect(scmApi.purchaseContracts.update).toBeDefined();
-    expect(scmApi.purchaseContracts.delete).toBeDefined();
-    expect(scmApi.purchaseContracts.sign).toBeDefined();
   });
 });
 

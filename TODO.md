@@ -944,6 +944,18 @@
 - **收尾**：演练 nginx 实例按 runbook §4 停止（80/443 已释放）；BFF 8099 由 run-e2e-stack.sh up 起、保留运行（日志 /tmp/topems_monolith_e2e.log）。
 - **边界（如实标注）**：生产 Linux 机 `nginx -t && systemctl reload nginx` + 6 域冒烟仍待目标机执行（P-5/P-6 生产侧 🟡 不勾）；本机演练证明配置加载/SSL/upstream/反代链路全部正确。
 
+## 补测续：crm 商机页（CrmOpportunityRedesignPage·redesign 形态 19 hooks）+ 环境修复（React 双副本锚定）（2026-11-01）✅ 完成
+
+> **crm redesign 形态页补测同构第三例**：CrmOpportunityRedesignPage（19 hooks / 1041 行）——useQuery（opportunityApi.list 服务端分页）+ 3 mutations（delete/create/update，mutationFn 内 setTimeout 模拟 300/500ms 延迟）+ ListPageTemplate + 4 StatTile（stat_total/stat_pipeline/stat_pipeline_amount/stat_won_amount）+ Tabs（tab_all/tab_pipeline/stage_won/stage_lost，badge 拼接）+ 删除确认闭环
+> - `CrmOpportunityRedesignPage.test.tsx`（6 用例）：ListPageTemplate props（header/breadcrumbs/data 2 行/rowKey/columns）；footer 4 StatTile（total 2/pipeline 1/pipeline_amount 2 格式化/won_amount）；列渲染（opp_no 回退 OPP2026 序号、localizedName、stage/amount/win_rate、actions 3 按钮）；Tabs（label+badge）；toolbar（refresh/create）；**删除确认闭环**（actions children[2] → Modal（footer mock 渲染）→ btn_confirm_delete → opportunityApi.delete + invalidateQueries + toast）
+> - **可测性要点**：与 Customer/Contract 同构——redesign 组件 mock（Modal 渲染 footer）、act() 包裹、waitFor（mutationFn 延迟 300/500ms）、全 mock react-query（useMutation 执行 mutationFn+onSuccess）、mapApiOpportunities 未跑（useQuery 直返原始 API 形态）
+> - **环境修复（本批全量回归暴露，已落地）**：
+>   1. **React 双副本根因**（全量 345 failed/47 files 主体）：pnpm 下 shared-components 的 peer react 被解析到 mobile 的 19.3.0（根 workspace 原无 react 声明），而 web 运行时 react/react-dom 是 19.2.8 → MUI/emotion 链 Invalid hook call。修复：根 + packages/shared-components 两处 devDependencies 精确锚定 `react/react-dom 19.2.8` + pnpm install，lockfile shared-components importer 的 @mui 等 peer 从 react@19.3.0 切至 19.2.8（mobile 的 19.3.0 链保留不动）；验证 ActionButton.test.tsx 13/13 恢复通过。
+>   2. **ScmModule.test.tsx import 崩溃**：v1.125（15d28d13e8）删除 PurchaseContractPage → 删除该 import 与 describe 块（2 用例），其余用例保留。
+> - 验证：Opportunity 6/6 passed；eslint 0；tsc 0；全量收敛 345→43 failed（残余见下）。
+> - **残余登记（另行处理，非本批引入）**：全量 43 failed / 18 files——**MUI v9 升级暴露的 theme.palette 扩展色断点**（~40 项：SrmSupplierPage:60/SrmContractPage:110 等 10+ 页 `theme.palette.purple[500]` 类，useTheme 在无 ThemeProvider 测试下返回默认 palette 无扩展色）+ perm-matrix-guard.test.ts R5（后端 utoipa security()/permission() 标注缺失 1 项）+ a11y-layout axe 扫描（act 环境噪音）。
+> - 提交：本批（Opportunity 测试 + ScmModule 修复 + 依赖锚定 + TODO 小节）待推送。
+
 ## 补测续：crm 客户页（CrmCustomerRedesignPage·redesign 形态 19 hooks）（2026-10-25）✅ 完成
 
 > **crm redesign 形态页补测首例**：CrmCustomerRedesignPage（19 hooks / 1049 行）——useQuery（服务端分页）+ 3 mutations（delete/create/update）+ ListPageTemplate + 4 StatTile + Tabs + Modal/Drawer + 删除确认闭环
