@@ -1,3 +1,22 @@
+## v1.125 审计整改第二批：同模块重复菜单项三端收敛（2026-11-01）✅
+
+> 承接 v1.124 遗留观察项（批 2：同模块重复 13 项删除）。对"13 项"逐项盘点（前端 navItems/路由、DB 种子、页面组件、git 首提交、引用面五维核实）→ **实测 6 处真删 + 1 处重命名 + 7 项核为非重复保留**，三端（前端 config / DB 种子 / 迁移）同步收敛，门禁全绿后提交推送 ✅。
+
+- **盘点结论（13 项核实表）**：
+  - **删除（同一功能双入口/孤儿路由）**：
+    1. mes 工单双入口（seed:80 `mes-work-orders` / seed:85 `mes-work-order`，同 permission）→ 同功能新旧实现：`mes-work-orders`→WorkOrderPage（基础 CRUD 适配器，首提交 2026-09-05 cf737a6bd0）、`mes-work-order`→MesWorkOrderPage（useQuery 手写页，2026-10-20 4e2ef7dd4f）→ **删旧留新**。
+    2. scm 合同双入口（seed:453 `scm-contracts` / seed:457 `scm-purchase-contract`，同 permission、同 scmApi.purchaseContracts）→ 同数据域双形态：PurchaseContractPage（purchaseContractSchema 基础 CRUD）vs ScmPurchaseContractPage（purchaseContractWizardSchema 3 步向导+嵌套物料明细子表，Phase 3 WizardBuilder 迁移）→ **删基础版留向导版**。
+    3-5. wms 三个孤儿路由：`wmsLocationsRoute`(/wms/locations)、`wmsInboundOrdersRoute`(/wms/inbound-orders)、`wmsOutboundOrdersRoute`(/wms/outbound-orders)——无 DB 种子、无 navItem，权威入口为 locationManagementRoute(/wms/location-management, 种子 wms-locations)、wms-inbound-order、wms-outbound-order → **删三个孤儿路由**。
+  - **重命名（同名不同功能，不删）**：erp `erp-dictionaries` code 撞名——dictManagementRoute(/erp/dict-management→DictManagementPage, tree, setting, erp:dictionary:read) 与 内联路由(/erp/data-dictionaries→DictionaryPage, list, master) 是两个不同功能页面 → **保留两个功能，data-dictionaries 路由+navItem 重命名为 `erp-data-dictionaries`**（含 i18n zh/en 新 key）。
+  - **保留（非重复，核销为不删）**：doc 三入口（doc-list/documents/document-center 三路径三页面三权限）、notification dashboard/list/center（不同页面，共用 /notify/list API 属正常复用，P2 复核）、hrm overview/dashboard（不同页面）、pm projects/project-list（不同页面，审计"同源"表述不成立：/pm/projects vs /pm/project-list 路径不同）、iam/admin 同组件 DashboardPage（跨模块组件复用，归 P3）、跨模块语义重叠（scm/srm 供应商、finance/asset 资产、tms 双写表、report/bi 前缀）→ **P3 域收敛**。
+- **落地明细（三端）**：
+  - 前端：`apps/web/src/modules/{mes,scm,wms,erp}/config.ts`（删 2 路由+2 navItem+2 路径常量、删 3 孤儿路由+3 路径常量、erp 字典重命名）；`SideRail.tsx` 菜单改指 /mes/work-order（原悬空指向已删路由）；`i18n/locales/{zh,en}/erp.json` 新 key；删除 `pages/mes/WorkOrderPage.tsx`+`pages/scm/PurchaseContractPage.tsx` 及 `__tests__/WorkOrderPage.test.tsx`、`ScmCrudPages3.test.tsx` 移除 PurchaseContractPage 块；修复 wms locationManagementRoute title 复制粘贴 bug（wms-dashboard→wms-locations）。
+  - DB 迁移：`20261101140000_menu_dedupe_delete.sql`（幂等 DELETE core_menus WHERE tenant_id='00000000-0000-0000-0000-000000000001' AND code IN ('mes-work-orders','scm-contracts')）；erp 重命名纯前端（DB 无种子）、wms 孤儿路由无种子，均无需迁移。
+  - 引用面核对：menuPermissions.ts 旧路径映射保留（无破坏）；WMS_PATHS.locations/inboundOrders/outboundOrders 全库无引用随常量删；WorkOrderPage/PurchaseContractPage 零外部引用后连页+测试删。
+- **验证** ✅：对账脚本 `scripts/audit_menu_consistency.py`：dup_in_fe **清零**（erp-dictionaries 撞名消除）、orphan_db 恰为迁移待删两条（mes-work-orders/scm-contracts，DELETE 后闭环）、orphan_fe/path_mismatch 与批 1 基线一致无新增；tsc typecheck、eslint（7 改动文件）、check-migration-names --strict、check-migrations、schema-defense-drift、rls-permissions、check-icons、migration validate（checksums.txt 更新）全绿；vitest ScmCrudPages3（8 tests）/ MesModule（3 tests）通过；pre-commit 17 钩子全绿。
+- **提交**：`15d28d13e8` 已推送 main（14 files，+41/-662，含 3 文件删除 + 新迁移 + checksums + 整改计划批 2 状态✅）。本条目（v1.125）为核销提交。
+- **遗留/观察项**：批 3 P2 dashboard/analytics/setting/mobile 裁剪（orphan 206 随域收敛核销）；批 4 P3 跨模块归属+权限码统一（FE 413/BE 846）；notification 9 端点功能排期 P2；wms 孤儿页面组件 WmsInboundOrderPage/WmsOutboundOrderPage/WmsLocationPage 已成不可达死代码，随批 3 清理评估；aps 权限码登记核查。
+
 ## v1.124 审计整改第一批：菜单对账 + mes 工站收敛 + 孤儿补种（2026-11-01）✅
 
 > 承接 2026-11-01 全量深度审计（35 模块四维对应性 144 项 + 架构质量 28 项 + mobile 补审 3 项 = 172 项）。审计报告与整改计划已存档 docs/audit/（TOPEMS全面评估与审计报告_2026-11-01.html + TOPEMS审计整改计划_2026-11-01.md）；飞书云文档 https://my.feishu.cn/docx/YYsPdDNkeo46k8xjCQkcqPUN6vd。全部问题按 模块/类型/优先级 登记可核销，菜单优化按 P1-P5 排期；批 1 已完成并核销 ✅。
