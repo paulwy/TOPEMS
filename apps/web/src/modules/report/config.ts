@@ -194,6 +194,9 @@ export const reportNavConfig: ModuleNavConfig = {
       order: 0,
       group: 'overview',
       showInTabs: true,
+      // P3 批4：报表域唯一归属 bi（report 前端复用 bi 后端 /api/bi，同一 analytics 服务）。
+      // report-dashboard 与 bi-dashboard 重复入口，侧边栏隐藏（路由/权限/页签保留）。
+      showInSidebar: false,
       description: i18n.t('report.nav.report-dashboard_desc'),
     },
     {
@@ -206,6 +209,8 @@ export const reportNavConfig: ModuleNavConfig = {
       order: 1,
       group: 'report',
       showInTabs: true,
+      // P3 批4：报表域唯一归属 bi（report-list 与 bi-report 重复入口，同一后端）。
+      showInSidebar: false,
       description: i18n.t('report.nav.report-list_desc'),
     },
     {
@@ -217,6 +222,8 @@ export const reportNavConfig: ModuleNavConfig = {
       permission: 'report:design:write',
       order: 2,
       group: 'report',
+      // P3 批4：报表域唯一归属 bi（report-design 与 bi-visualization 重复入口，同一后端）。
+      showInSidebar: false,
       description: i18n.t('report.nav.report-design_desc'),
     },
     {
@@ -228,6 +235,8 @@ export const reportNavConfig: ModuleNavConfig = {
       permission: 'report:builder:write',
       order: 3,
       group: 'report',
+      // P3 批4：报表域唯一归属 bi（report-builder 与 bi-report-builder 重复入口，同一后端）。
+      showInSidebar: false,
       description: i18n.t('report.nav.report-builder_desc'),
     },
     {
@@ -274,6 +283,8 @@ export const reportNavConfig: ModuleNavConfig = {
       permission: 'report:dashboard:read',
       order: 4,
       group: 'report',
+      // P3 批4：报表域唯一归属 bi（report-report 与 bi-report 重复入口，同一后端）。
+      showInSidebar: false,
       description: i18n.t('report.nav.report-report_desc'),
     },
     {

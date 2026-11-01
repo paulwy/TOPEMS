@@ -1,6 +1,12 @@
-## 批 4 第六批：财务×2 归属收敛（erp 财务 5 项 → finance，5 项）（2026-11-02）✅
+## 批 4 第七批：报表×2 归属收敛 + 客户/资产/质量盘点（report 5 项 → bi，2026-11-02）✅
 
-> 目标：审计 L341 财务×2（finance/erp）收敛。盘点结论：finance 为财务域唯一归属（finance 后端完整：core_finance_vouchers/ledger/receivable/payable/budget/accounting_subjects/settlement/tax/treasury/risk/reports）；erp 后端仅有 bank_account.rs 一个财务模块，其余 erp 财务菜单页面实为调用 finance API（VoucherPage→finance voucherApi、ReceivablePayablePage→finance receivable/payableApi、BudgetManagementPage→finance budgetApi、FinancialAnalysisPage→finance financeReportApi、AccountingManagementPage→finance accountingSubjectApi/openingBalanceApi，erp api 仅为再导出）。erp-financial-statements 第一批已收敛。
+> 目标：审计 L341 报表×2（report/bi）收敛；客户×2/资产×3/质量×2 盘点判定。报表盘点结论：report 前端模块全部 API 走 `apiClient.bi`（/reports /templates /report-types /schedules /subscriptions，同一 analytics 后端），report 与 bi 为同一后端两套前端入口；bi 为报表/BI 域唯一归属（数据源/数据集/可视化/报表构建/分析全链路）。客户×2：crm-customers 主域 + erp-customer-management 第一批已收敛→crm。资产×3：asset 模块（数据在 erp.assets，前端资产域唯一入口）+ erp-asset-management（第一批已收敛→asset）+ finance-assets（会计科目资产类，FinanceAssetPage 用 accountApi category=asset 计提折旧生成凭证，与 asset 实物折旧台账语义不同，保留）+ master-data-asset-catalog（主数据分类字典，保留）。质量×2：qms 体系域（qa_quality_inspections/issues + APQP/FMEA/8D/纠正）+ mes 生产质检域（quality_management 独立表 quality_standards/inspection/patrol，非 qms 副本）+ master-quality（数据质量规则引擎 quality-v51）+ mobile-quality（移动端），语义均独立，全部保留。
+
+- **收敛 5 项（report/config.ts）**：`report-dashboard`/`report-list`/`report-design`/`report-builder`/`report-report` 各加 `showInSidebar: false` + 归属注释（报表域唯一归属 bi，同一 analytics 后端；路由/权限/页签保留）。
+- **保留**：report-schedule/subscription/template/viewer（bi 前端未覆盖的报表中心特有功能：调度/订阅/模板/查看器）。
+- **验证（全绿）**：① navigation 套件 31/31 PASS（edge-cases 24 用例，新增报表收敛回归）；② `tsc --noEmit` EXIT 0；③ eslint 清零；④ 浏览器实测：报表中心子菜单仅剩定时报表/订阅管理/报表查看/报表模板，报表总览/列表/设计/构建/报表消失。
+
+## 批 4 第六批：财务×2 归属收敛（erp 财务 5 项 → finance，5 项）（2026-11-02）✅> 目标：审计 L341 财务×2（finance/erp）收敛。盘点结论：finance 为财务域唯一归属（finance 后端完整：core_finance_vouchers/ledger/receivable/payable/budget/accounting_subjects/settlement/tax/treasury/risk/reports）；erp 后端仅有 bank_account.rs 一个财务模块，其余 erp 财务菜单页面实为调用 finance API（VoucherPage→finance voucherApi、ReceivablePayablePage→finance receivable/payableApi、BudgetManagementPage→finance budgetApi、FinancialAnalysisPage→finance financeReportApi、AccountingManagementPage→finance accountingSubjectApi/openingBalanceApi，erp api 仅为再导出）。erp-financial-statements 第一批已收敛。
 
 - **收敛 5 项（erp/config.ts）**：`erp-general-ledger`/`erp-receivable-payable`/`erp-budget-management`/`erp-accounting-management`/`erp-financial-analysis` 各加 `showInSidebar: false` + 归属注释（财务域唯一归属 finance，路由/权限/页签保留）。
 - **保留**：erp-bank-account（erp.bank_accounts 独立后端，finance 无银行账户）；erp-dashboard/字典/数据库/审计/办公用品/会议室/公告/用车申请等非财务菜单。

@@ -754,5 +754,95 @@ describe('NavigationRegistryV2 Edge Cases', () => {
       expect(codes).toContain('erp-bank-account');
       expect(codes).toContain('erp-dictionaries');
     });
+
+    it('getSidebarNavItems 应排除 report 与 bi 重复入口且保留调度/订阅/模板/查看器（批4）', () => {
+      registry.registerModule({
+        code: 'test-report-bi-p3',
+        name: 'Report BI Test',
+        icon: 'Test',
+        path: '/test-report-bi',
+        source: 'core',
+        navItems: [
+          { code: 'bi-dashboard', path: '/test-report-bi/bi', label: 'BI', icon: 'Test' },
+          {
+            code: 'report-dashboard',
+            path: '/test-report-bi/dashboard',
+            label: '报表总览',
+            icon: 'Test',
+            showInTabs: true,
+            showInSidebar: false,
+          },
+          {
+            code: 'report-list',
+            path: '/test-report-bi/list',
+            label: '报表列表',
+            icon: 'Test',
+            showInTabs: true,
+            showInSidebar: false,
+          },
+          {
+            code: 'report-design',
+            path: '/test-report-bi/design',
+            label: '报表设计',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+          {
+            code: 'report-builder',
+            path: '/test-report-bi/builder',
+            label: '报表构建',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+          {
+            code: 'report-report',
+            path: '/test-report-bi/reports',
+            label: '报表',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+          {
+            code: 'report-schedule',
+            path: '/test-report-bi/schedules',
+            label: '调度',
+            icon: 'Test',
+            showInTabs: true,
+          },
+          {
+            code: 'report-subscription',
+            path: '/test-report-bi/subscriptions',
+            label: '订阅',
+            icon: 'Test',
+            showInTabs: true,
+          },
+          {
+            code: 'report-template',
+            path: '/test-report-bi/templates',
+            label: '模板',
+            icon: 'Test',
+          },
+          {
+            code: 'report-viewer',
+            path: '/test-report-bi/viewer',
+            label: '查看器',
+            icon: 'Test',
+          },
+        ],
+      });
+      registeredCodes.push('test-report-bi-p3');
+
+      const codes = registry
+        .getSidebarNavItems('test-report-bi-p3', () => true)
+        .map((item) => item.code);
+      expect(codes).not.toContain('report-dashboard');
+      expect(codes).not.toContain('report-list');
+      expect(codes).not.toContain('report-design');
+      expect(codes).not.toContain('report-builder');
+      expect(codes).not.toContain('report-report');
+      expect(codes).toContain('report-schedule');
+      expect(codes).toContain('report-subscription');
+      expect(codes).toContain('report-template');
+      expect(codes).toContain('report-viewer');
+    });
   });
 });
