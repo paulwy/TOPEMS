@@ -238,6 +238,7 @@ export default defineConfig({
           include: [
             'src/utils/__tests__/**/*.{test,spec}.{ts,tsx}',
             'src/lib/__tests__/**/*.{test,spec}.{ts,tsx}',
+            'src/lib/**/__tests__/**/*.{test,spec}.{ts,tsx}',
             'src/api/__tests__/**/*.{test,spec}.{ts,tsx}',
             'src/api/*/__tests__/**/*.{test,spec}.{ts,tsx}',
             'src/services/__tests__/**/*.{test,spec}.{ts,tsx}',

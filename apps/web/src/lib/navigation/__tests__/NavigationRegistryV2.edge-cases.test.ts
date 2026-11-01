@@ -409,4 +409,126 @@ describe('NavigationRegistryV2 Edge Cases', () => {
       expect(cards.some((card) => card.code === 'test-module-perm')).toBe(false);
     });
   });
+
+  describe('P3 跨模块归属收敛（showInSidebar: false）', () => {
+    it('getSidebarNavItems 应排除 showInSidebar: false 的重复入口（erp 收敛 9 项）', () => {
+      registry.registerModule({
+        code: 'test-erp-p3',
+        name: 'ERP Test',
+        icon: 'Test',
+        path: '/test-erp',
+        source: 'core',
+        navItems: [
+          // 保留项
+          { code: 'erp-dashboard', path: '/test-erp/dashboard', label: '仪表盘', icon: 'Test' },
+          { code: 'erp-dictionaries', path: '/test-erp/dictionaries', label: '字典', icon: 'Test' },
+          // P3 收敛项（showInSidebar: false）
+          {
+            code: 'erp-customer-management',
+            path: '/test-erp/customers',
+            label: '客户',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+          {
+            code: 'erp-supplier-management',
+            path: '/test-erp/suppliers',
+            label: '供应商',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+          {
+            code: 'erp-inventory-management',
+            path: '/test-erp/inventory',
+            label: '库存',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+          {
+            code: 'erp-material-management',
+            path: '/test-erp/materials',
+            label: '物料',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+          {
+            code: 'erp-purchase-order',
+            path: '/test-erp/purchase',
+            label: '采购',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+          {
+            code: 'erp-sales-orders',
+            path: '/test-erp/sales',
+            label: '销售',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+          {
+            code: 'erp-financial-statements',
+            path: '/test-erp/finance',
+            label: '财务',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+          {
+            code: 'erp-vehicle-management',
+            path: '/test-erp/vehicles',
+            label: '车辆',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+          {
+            code: 'erp-asset-management',
+            path: '/test-erp/assets',
+            label: '资产',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+        ],
+      });
+      registeredCodes.push('test-erp-p3');
+
+      const items = registry.getSidebarNavItems('test-erp-p3', () => true);
+      const codes = items.map((item) => item.code);
+      // 收敛项不在侧边栏
+      const hiddenCodes = [
+        'erp-customer-management',
+        'erp-supplier-management',
+        'erp-inventory-management',
+        'erp-material-management',
+        'erp-purchase-order',
+        'erp-sales-orders',
+        'erp-financial-statements',
+        'erp-vehicle-management',
+        'erp-asset-management',
+      ];
+      for (const c of hiddenCodes) {
+        expect(codes).not.toContain(c);
+      }
+      // 保留项仍在
+      expect(codes).toContain('erp-dashboard');
+      expect(codes).toContain('erp-dictionaries');
+    });
+
+    it('showInSidebar 缺省时仍展示（默认 true）', () => {
+      registry.registerModule({
+        code: 'test-erp-default',
+        name: 'ERP Default',
+        icon: 'Test',
+        path: '/test-erp-default',
+        source: 'core',
+        navItems: [
+          { code: 'keep-item', path: '/test-erp-default/keep', label: '保留', icon: 'Test' },
+        ],
+      });
+      registeredCodes.push('test-erp-default');
+
+      const codes = registry
+        .getSidebarNavItems('test-erp-default', () => true)
+        .map((item) => item.code);
+      expect(codes).toContain('keep-item');
+    });
+  });
 });

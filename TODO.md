@@ -1,4 +1,23 @@
-## 补测续：redesign 剩余页（wms 3 页 + PluginMarketplace + MesWorkOrder，38 用例）（2026-11-01）✅ 完成
+## 批 4 第一批：P3 跨模块归属收敛（erp → 各专属域，9 项）（2026-11-02）✅
+
+> 目标：审计整改批 4（P3 跨模块归属）第一批——erp 综合管理模块 9 个跨模块重复入口收敛为"域唯一归属 + 只读引用"（侧边栏隐藏重复入口，路由/权限/页面保留可直达）。收敛基准：审计报告 C1-C11 跨模块重叠 22 项（供应商×4/合同×4/采购×3/物料×4/财务×2/客户×2/资产×3/质量×2/报表×2/车辆×3）。
+
+- **盘点**：扫描 35 模块 config.ts navItems 得到菜单级重叠矩阵；确认 `getSidebarNavItems` 首行即过滤 `showInSidebar !== false`，`showInSidebar: false` 是实现收敛的官方机制（GlobalLayoutV3/NavigationRegistryV2 均消费）。
+- **收敛 9 项（erp/config.ts 加 `showInSidebar: false`，注释标注归属域）**：客户管理→crm、供应商管理→srm（原已有 crossModuleRef 标记）、库存管理→wms、物料管理→pdm、采购订单→scm、销售订单→crm、财务报表→finance、车辆管理→tms、资产管理→asset。
+- **验证（全绿）**：① `tsc --noEmit` EXIT 0；② 新增 P3 收敛回归测试 2 例（NavigationRegistryV2.edge-cases.test.ts，18→18 PASS，验证收敛项不出现在 getSidebarNavItems、保留项仍展示）；③ navigation 套件 25/25 PASS；④ `verify_navigation.mjs --strict` 通过；⑤ `audit_menu_consistency.py` 无新增 orphan（orphan_FE 268 为 P5 存量）；⑥ eslint 清零；⑦ 浏览器实测 admin 登录展开"企业资源"：9 个收敛项全部消失，保留项正常。
+- **顺带修复（存量）**：`NavigationRegistryV2.edge-cases.test.ts` 与 `NavigationRegistryV2.test.ts` 自 vitest.config 多 project 重构（2026-09-27）后不在任何 project include 中成为孤儿测试——unit project include 补 `src/lib/**/__tests__/**` 纳入。
+- **后续（批 4 未完）**：C1-C11 剩余重叠——合同×4（crm/hrm/pm/scm/srm 按业务类型归属，观察）与采购×3、物料业务项（mes 领料/aps 计划）、质量×2（mes 工序质量）、报表×2（report 并入 bi 前缀归一）、wms/scm 侧供应商入口；权限码 FE 413/BE 846 统一专项；车辆×3 中 oa-vehicles/erp-vehicle-request 业务保留判断。
+
+
+
+> 目标：WCS smoke（scripts/web_contract_smoke.py，BFF 8099 嵌入态）既有 14 项 handler 500 缺口复现、归因并核销。
+> 结论：**实测 21 个端点 FAIL（handler_error 500），根因 = 下游独立服务未运行（非代码缺陷）；启动 4 个下游服务后 4667/4667 PASS, 0 FAIL**（/tmp/wcs_today2.json）。
+
+- **复现（带超管 service token）**：erp example ×3（employees/departments/companies）+ mobile ×18（approvals 5 / attendance 6 / inventory 2 / production 5）→ 全部 500 handler_error。
+- **根因（server 日志 /tmp/topems-server.log）**：monolith 8099 经 TypedServiceClient 调下游全部连接失败——erp example 调 `localhost:8020/api/hrm/*`（HRM 未运行）、mobile approvals 调 `localhost:8000/api/core/flow/tasks/*`（IAM 未运行）、attendance 调 `localhost:8020/api/hrm/*`、inventory 调 `localhost:8041/api/wms/*`（WMS 未运行）、production 调 `localhost:8030/api/mes/*`（MES 未运行）；部分先触发 503 circuit breaker open（半开试探失败）后归并 500。
+- **核销动作**：`topems.sh start iam(8000) hrm(8020) mes(8030) wms(8041)` 四服务拉起 → 复测 21 端点全 200 → WCS 全量 **4667/4667 PASS 0 FAIL**。
+- **登记/遗留**：本类 500 属"运行环境依赖"（monolith 需下游服务在线），**非契约/代码缺口**；与 TODO:4651（mobile 调 WMS/MES 未运行 → 6 FAIL）同源。建议后续：① server 启动前做下游依赖探活提示（缺失列出清单，避免 500 误判为代码问题）；② 可考虑 `topems.sh start server` 自动拉齐 iam/hrm/mes/wms 依赖（待排期）。
+
 
 > **redesign 补测线收尾批**：续 CrmCustomer/Contract/Opportunity 三例后，将 wms 域 ListPageTemplate 复杂/自绘形态页与剩余 redesign 大页一次性补齐（5 文件 / 38 用例）。wms 其余 1-hook 纯包装页（SupplierManagementPage 等）已有测试覆盖，不在本批。
 > - `InboundPage.test.tsx`（6 用例，ListPageTemplate 手写形态 13 hooks）：渲染（k18 title/queryKey 'wms-inbound-orders'）；InboundStats 4 卡（k0 total 4/k1 pending/k2 receiving|confirmed/k3 completed，三值同为 1 用 getAllByText）；crud.api 委托 wmsApi.inboundOrders；2 行操作（k16 confirm show pending / k17 complete show receiving|quality_check）；confirm 失败 k7 error toast

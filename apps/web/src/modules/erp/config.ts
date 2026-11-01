@@ -619,6 +619,7 @@ export const erpNavConfig: ModuleNavConfig = {
       order: 2,
       group: 'master',
       description: i18n.t('erp.nav.erp-customer-management_desc'),
+      showInSidebar: false, // P3 跨模块归属：客户唯一归属 CRM(crm-customers)，erp 保留路由只读引用
     },
     {
       code: 'erp-supplier-management',
@@ -631,6 +632,7 @@ export const erpNavConfig: ModuleNavConfig = {
       group: 'master',
       description: i18n.t('erp.nav.erp-supplier-management_desc'),
       crossModuleRef: true, // overlaps with SCM(scm-suppliers), SRM(srm-supplier) -- supplier domain
+      showInSidebar: false, // P3 跨模块归属：供应商唯一归属 SRM(srm-supplier)，erp 保留路由只读引用
     },
     {
       code: 'erp-inventory-management',
@@ -643,6 +645,7 @@ export const erpNavConfig: ModuleNavConfig = {
       group: 'master',
       description: i18n.t('erp.nav.erp-inventory-management_desc'),
       crossModuleRef: true, // overlaps with WMS(wms-items) -- inventory domain
+      showInSidebar: false, // P3 跨模块归属：库存唯一归属 WMS(wms-items)，erp 保留路由只读引用
     },
     {
       code: 'erp-material-management',
@@ -654,6 +657,7 @@ export const erpNavConfig: ModuleNavConfig = {
       order: 5,
       group: 'master',
       description: i18n.t('erp.nav.erp-material-management_desc'),
+      showInSidebar: false, // P3 跨模块归属：物料唯一归属 PDM(pdm-material)，erp 保留路由只读引用
     },
     {
       code: 'erp-purchase-order',
@@ -667,6 +671,7 @@ export const erpNavConfig: ModuleNavConfig = {
       showInTabs: true,
       description: i18n.t('erp.nav.erp-purchase-order_desc'),
       crossModuleRef: true, // overlaps with SCM(scm-purchase-orders), SRM(srm-order) -- purchase order domain
+      showInSidebar: false, // P3 跨模块归属：采购订单唯一归属 SCM(scm-purchase-orders)，erp 保留路由只读引用
     },
     {
       code: 'erp-sales-orders',
@@ -679,6 +684,7 @@ export const erpNavConfig: ModuleNavConfig = {
       group: 'process',
       description: i18n.t('erp.nav.erp-sales-orders_desc'),
       crossModuleRef: true, // overlaps with CRM(crm-sales-funnel) -- sales domain
+      showInSidebar: false, // P3 跨模块归属：销售订单归属 CRM 销售域，erp 保留路由只读引用
     },
     {
       code: 'erp-financial-statements',
@@ -691,6 +697,7 @@ export const erpNavConfig: ModuleNavConfig = {
       group: 'analytics',
       showInTabs: true,
       description: i18n.t('erp.nav.erp-financial-statements_desc'),
+      showInSidebar: false, // P3 跨模块归属：财务报表归属 FINANCE(finance-reports)，erp 保留路由只读引用
     },
     {
       code: 'erp-dictionaries',
@@ -746,6 +753,7 @@ export const erpNavConfig: ModuleNavConfig = {
       order: 7,
       group: 'master',
       description: i18n.t('erp.nav.erp-vehicle-management_desc'),
+      showInSidebar: false, // P3 跨模块归属：车辆唯一归属 TMS(tms-vehicles)，erp 保留路由只读引用
     },
     {
       code: 'erp-receivable-payable',
@@ -768,6 +776,7 @@ export const erpNavConfig: ModuleNavConfig = {
       order: 9,
       group: 'master',
       description: i18n.t('erp.nav.erp-asset-management_desc'),
+      showInSidebar: false, // P3 跨模块归属：资产唯一归属 ASSET(asset-list)，erp 保留路由只读引用
     },
     {
       code: 'erp-budget-management',
