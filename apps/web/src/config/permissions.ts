@@ -601,7 +601,7 @@ const PERMISSION_DEFS: Record<string, string> = {
   // 'lowcode:workflow:read': 'lowcode:workflow:read',
 
   // master (1 codes)
-  'master:data-asset:read': 'master:data-asset:read',
+  'master-data:data-asset:read': 'master-data:data-asset:read',
 
   // mes (29 codes)
   'mes:analytics:read': 'mes:analytics:read',
@@ -856,9 +856,9 @@ const PERMISSION_DEFS: Record<string, string> = {
   'finance:currency:read': 'finance:currency:read',
   'finance:period:read': 'finance:period:read',
   'lims:test-method:read': 'lims:test-method:read',
-  'master_data:ai_governance:read': 'master_data:ai_governance:read',
-  'master_data:commercial:read': 'master_data:commercial:read',
-  'master_data:lineage:read': 'master_data:lineage:read',
+  'master-data:ai_governance:read': 'master-data:ai_governance:read',
+  'master-data:commercial:read': 'master-data:commercial:read',
+  'master-data:lineage:read': 'master-data:lineage:read',
   'master-data:schema:read': 'master-data:schema:read',
   'mes:workshop:read': 'mes:workshop:read',
   'pdm:drawing:read': 'pdm:drawing:read',

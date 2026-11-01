@@ -1,3 +1,12 @@
+## 批 4 第九批：权限码 FE 417/BE 846 统一专项（master 归一 + 39 码补录，2026-11-02）✅
+
+> 目标：审计 L197 结论3"权限码前端 413 / 后端 846 严重分裂"、整改计划 L206 P3"权限码 FE/BE 统一专项"、L110 master 模块三种风格并存。盘点：前端 FE 权限码全集 417（config.ts permission/requiredPermissions + config/permissions.ts 注册表）；后端签发权威为 **public.core_permissions**（unified-core iam 查询表，live 1033 码；mes.core_permissions 为另一张非权威表）。差异：38 个前端使用但未签发码 + finance:period:read（init SQL 中 resource/action 拆分错误 period_read 且活库缺失）。
+
+- **归一 master 前端三风格**（master/config.ts 24 处 + config/permissions.ts 5 处）：`master:data-asset:read`（2 段风格）与 `master_data:*`（9 个下划线风格）全部统一为 `master-data:*`（连字符，与模块名一致）；旧风格残留 0。
+- **补录 39 码**（新迁移 `20261102000001_sync_frontend_permission_codes_batch4.sql`，幂等 ON CONFLICT/WHERE NOT EXISTS）：38 个 FE-only 码 + finance:period:read（resource=finance:period, action=read 正确拆分）。应用验证：首跑 INSERT，二跑 INSERT 0（幂等）。
+- **收敛结果**：FE 417 码全集 100% 可签发（live public.core_permissions 缺失 0）。
+- **验证（全绿）**：① navigation 套件 25/25 PASS；② `tsc --noEmit` EXIT 0；③ eslint 清零；④ `verify_navigation --strict` 总缺失 2（P5 存量，无新增）；⑤ perm-matrix 无新 FAIL（R5 unified-core subscription.rs 为存量）；⑥ 浏览器实测：主数据治理菜单显示/渲染正常（"master.moduleName" 为 HMR 瞬态，刷新恢复）。
+
 ## 批 4 第八批：车辆×3 归属收敛（oa-vehicles → tms，1 项）（2026-11-02）✅
 
 > 目标：审计 L341 车辆×3（tms/erp/oa）收敛。盘点结论：tms.tms_vehicles 为车辆主数据源（tms_shipments 引用 vehicle_id）；erp.vehicles 与 tms_vehicles 同语义双表（erp 后端 vehicles.rs，仅 own-schema 查询）；oa-vehicles 页面（VehicleManagementPage）实为调用 erp vehicleApi（/vehicles）；erp-vehicle-management 第一批已收敛→tms；erp.vehicle_requests 用车申请为业务流（申请/审批，tms 无对应）。

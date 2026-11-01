@@ -51,7 +51,7 @@ const dataAssetCatalogRoute: RouteConfigV2<DataAssetCatalogPageProps> = {
   titleKey: 'master.dataAssetCatalog',
   template: 'list',
   group: 'master',
-  requiredPermissions: ['master:data-asset:read'],
+  requiredPermissions: ['master-data:data-asset:read'],
   action: 'read',
 };
 
@@ -80,7 +80,7 @@ const lineageAnalyticsRoute: RouteConfigV2<Record<string, never>> = {
   titleKey: 'master.lineageAnalytics',
   template: 'list',
   group: 'master',
-  requiredPermissions: ['master_data:lineage:read'],
+  requiredPermissions: ['master-data:lineage:read'],
   action: 'read',
 };
 
@@ -93,7 +93,7 @@ const aiGovernanceRoute: RouteConfigV2<Record<string, never>> = {
   titleKey: 'master.aiGovernance',
   template: 'list',
   group: 'master',
-  requiredPermissions: ['master_data:ai_governance:read'],
+  requiredPermissions: ['master-data:ai_governance:read'],
   action: 'read',
 };
 
@@ -109,7 +109,7 @@ const commercialRoute: RouteConfigV2<Record<string, never>> = {
   titleKey: 'master.commercial',
   template: 'list',
   group: 'master',
-  requiredPermissions: ['master_data:commercial:read'],
+  requiredPermissions: ['master-data:commercial:read'],
   action: 'read',
 };
 const publicMasterDataRoute: RouteConfigV2<Record<string, never>> = {
@@ -124,7 +124,7 @@ const publicMasterDataRoute: RouteConfigV2<Record<string, never>> = {
   titleKey: 'master.publicMasterData',
   template: 'list',
   group: 'master',
-  requiredPermissions: ['master:data-asset:read'],
+  requiredPermissions: ['master-data:data-asset:read'],
   action: 'read',
 };
 const disasterRecoveryRoute: RouteConfigV2<Record<string, never>> = {
@@ -139,7 +139,7 @@ const disasterRecoveryRoute: RouteConfigV2<Record<string, never>> = {
   titleKey: 'master.disasterRecovery',
   template: 'list',
   group: 'master',
-  requiredPermissions: ['master_data:disaster:read'],
+  requiredPermissions: ['master-data:disaster:read'],
   action: 'read',
 };
 const semanticSearchRoute: RouteConfigV2<Record<string, never>> = {
@@ -154,7 +154,7 @@ const semanticSearchRoute: RouteConfigV2<Record<string, never>> = {
   titleKey: 'master.semanticSearch',
   template: 'list',
   group: 'master',
-  requiredPermissions: ['master_data:semantic:read'],
+  requiredPermissions: ['master-data:semantic:read'],
   action: 'read',
 };
 const knowledgeGraphRoute: RouteConfigV2<Record<string, never>> = {
@@ -169,7 +169,7 @@ const knowledgeGraphRoute: RouteConfigV2<Record<string, never>> = {
   titleKey: 'master.knowledgeGraph',
   template: 'list',
   group: 'master',
-  requiredPermissions: ['master_data:knowledge:read'],
+  requiredPermissions: ['master-data:knowledge:read'],
   action: 'read',
 };
 const qualityRoute: RouteConfigV2<Record<string, never>> = {
@@ -181,7 +181,7 @@ const qualityRoute: RouteConfigV2<Record<string, never>> = {
   titleKey: 'master.quality',
   template: 'list',
   group: 'master',
-  requiredPermissions: ['master_data:quality:read'],
+  requiredPermissions: ['master-data:quality:read'],
   action: 'read',
 };
 const governanceRoute: RouteConfigV2<Record<string, never>> = {
@@ -196,7 +196,7 @@ const governanceRoute: RouteConfigV2<Record<string, never>> = {
   titleKey: 'master.governance',
   template: 'list',
   group: 'master',
-  requiredPermissions: ['master_data:governance:read'],
+  requiredPermissions: ['master-data:governance:read'],
   action: 'read',
 };
 const versioningRoute: RouteConfigV2<Record<string, never>> = {
@@ -211,7 +211,7 @@ const versioningRoute: RouteConfigV2<Record<string, never>> = {
   titleKey: 'master.versioning',
   template: 'list',
   group: 'master',
-  requiredPermissions: ['master_data:versioning:read'],
+  requiredPermissions: ['master-data:versioning:read'],
   action: 'read',
 };
 
@@ -226,7 +226,7 @@ export const masterModuleConfig: RouteModuleConfig = {
   status: 'online',
   order: 95,
   description: i18n.t('master.module_desc'),
-  permission: 'master:data-asset:read',
+  permission: 'master-data:data-asset:read',
   routes: [
     dataAssetCatalogRoute,
     schemaRegistryRoute,
@@ -260,7 +260,7 @@ export const masterNavConfig: ModuleNavConfig = {
       labelKey: 'master.dataAssetCatalog',
       icon: 'Database',
       path: MASTER_PATHS.dataAssetCatalog,
-      permission: 'master:data-asset:read',
+      permission: 'master-data:data-asset:read',
       order: 0,
       group: 'master',
       showInSidebar: true,
@@ -284,7 +284,7 @@ export const masterNavConfig: ModuleNavConfig = {
       labelKey: 'master.lineageAnalytics',
       icon: 'AccountTree',
       path: MASTER_PATHS.lineageAnalytics,
-      permission: 'master_data:lineage:read',
+      permission: 'master-data:lineage:read',
       order: 2,
       group: 'master',
       showInSidebar: true,
@@ -296,7 +296,7 @@ export const masterNavConfig: ModuleNavConfig = {
       labelKey: 'master.aiGovernance',
       icon: 'AutoAwesome',
       path: MASTER_PATHS.aiGovernance,
-      permission: 'master_data:ai_governance:read',
+      permission: 'master-data:ai_governance:read',
       order: 3,
       group: 'master',
       showInSidebar: true,
@@ -308,7 +308,7 @@ export const masterNavConfig: ModuleNavConfig = {
       labelKey: 'master.commercial',
       icon: 'Storefront',
       path: MASTER_PATHS.commercial,
-      permission: 'master_data:commercial:read',
+      permission: 'master-data:commercial:read',
       order: 4,
       group: 'master',
       showInSidebar: true,
@@ -320,7 +320,7 @@ export const masterNavConfig: ModuleNavConfig = {
       labelKey: 'master.publicMasterData',
       icon: 'Boxes',
       path: MASTER_PATHS.publicMasterData,
-      permission: 'master:data-asset:read',
+      permission: 'master-data:data-asset:read',
       order: 5,
       group: 'master',
       showInSidebar: true,
@@ -332,7 +332,7 @@ export const masterNavConfig: ModuleNavConfig = {
       labelKey: 'master.versioning',
       icon: 'History',
       path: MASTER_PATHS.versioning,
-      permission: 'master_data:versioning:read',
+      permission: 'master-data:versioning:read',
       order: 6,
       group: 'master',
       showInSidebar: true,
@@ -344,7 +344,7 @@ export const masterNavConfig: ModuleNavConfig = {
       labelKey: 'master.governance',
       icon: 'Gauge',
       path: MASTER_PATHS.governance,
-      permission: 'master_data:governance:read',
+      permission: 'master-data:governance:read',
       order: 7,
       group: 'master',
       showInSidebar: true,
@@ -356,7 +356,7 @@ export const masterNavConfig: ModuleNavConfig = {
       labelKey: 'master.quality',
       icon: 'ShieldCheck',
       path: MASTER_PATHS.quality,
-      permission: 'master_data:quality:read',
+      permission: 'master-data:quality:read',
       order: 8,
       group: 'master',
       showInSidebar: true,
@@ -368,7 +368,7 @@ export const masterNavConfig: ModuleNavConfig = {
       labelKey: 'master.knowledgeGraph',
       icon: 'Network',
       path: MASTER_PATHS.knowledgeGraph,
-      permission: 'master_data:knowledge:read',
+      permission: 'master-data:knowledge:read',
       order: 9,
       group: 'master',
       showInSidebar: true,
@@ -380,7 +380,7 @@ export const masterNavConfig: ModuleNavConfig = {
       labelKey: 'master.semanticSearch',
       icon: 'Search',
       path: MASTER_PATHS.semanticSearch,
-      permission: 'master_data:semantic:read',
+      permission: 'master-data:semantic:read',
       order: 10,
       group: 'master',
       showInSidebar: true,
@@ -392,7 +392,7 @@ export const masterNavConfig: ModuleNavConfig = {
       labelKey: 'master.disasterRecovery',
       icon: 'LifeBuoy',
       path: MASTER_PATHS.disasterRecovery,
-      permission: 'master_data:disaster:read',
+      permission: 'master-data:disaster:read',
       order: 11,
       group: 'master',
       showInSidebar: true,
