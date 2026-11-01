@@ -1,3 +1,15 @@
+## v1.124 审计整改第一批：菜单对账 + mes 工站收敛 + 孤儿补种（2026-11-01）⏳
+
+> 承接 2026-11-01 全量深度审计（35 模块四维对应性 144 项 + 架构质量 28 项 + mobile 补审 3 项 = 172 项）。审计报告与整改计划已存档 docs/audit/（TOPEMS全面评估与审计报告_2026-11-01.html + TOPEMS审计整改计划_2026-11-01.md）；飞书云文档 https://my.feishu.cn/docx/YYsPdDNkeo46k8xjCQkcqPUN6vd。全部问题按 模块/类型/优先级 登记可核销，菜单优化按 P1-P5 排期；本轮落地批 1（未完持续，完成后核销 ✅）。
+
+- **登记**：172 项问题清单（含证据 文件:行号）+ 菜单优化 P1-P5 + 6 批实施计划 → docs/audit/TOPEMS审计整改计划_2026-11-01.md。
+- **批 1-① 对账机制**：新增 scripts/audit_menu_consistency.py —— 解析 35 模块 config.ts navItems 与 DB 种子 core_menus（20260724000005_seed_module_menus.sql），输出 orphan_FE / orphan_DB / 路径不一致，并生成补种 SQL 建议；可重复运行，纳入 P1 对账门禁候选。
+- **批 1-② mes 工站路径收敛**：config.ts 删除重复路由 `/mes/workstations`（code mes-workstations，与 `/mes/work-stations` 同指 WorkStationPage，config.ts:1024 vs :1013）；MES_PATHS.workStations 统一为 `/mes/workstations`（与 modules/registry/core-modules.ts:67、lib/plugin-loader/pluginManager.ts:716 引用一致）；DB 种子 mes-work-stations path 同步 UPDATE（新迁移，code 不变保持 FE/DB 对齐）。
+- **批 1-③ MENU_ORPHAN_FE 补种**：31 项前端有菜单无 DB 种子 → 生成补种迁移（真实功能项；permission 取前端 requiredPermissions 首码；APS 等并入项不重复补）。
+- **批 1-④ 低风险评估结论**：notification archive/templates/statistics —— 前端 api/notification/template.ts 声明 9 端点（/notification/notification-templates*）在 svc/communication 全部无路由，属**功能实现**（需建表 + handler，列为 P2 功能排期，本轮不动代码）；report/bi 共用 analytics /api/bi 前缀 —— 架构级，P3 跨模块归属收敛处理。
+- **验证**：前端改动 pnpm lint / typecheck；迁移 check-migration-names.mjs；pre-push 门禁；commit <待填> 已推送。
+- **遗留/观察项**：同模块重复 13 项删除（mes 工单双入口、scm 合同双入口等）→ 批 2；权限码 FE 413/BE 846 统一、主数据多源、DB 菜单单一权威 → P3-P5；notification 9 端点功能排期 P2；aps 权限码 `aps:*` 登记核查。
+
 ## v1.123 前端格式清理：lint 221 problems → 0 全量归零（2026-11-01）✅
 
 > 核销 v1.122 登记的存量观察（apps/web AI API 新文件 prettier 格式 + no-unused-vars）。两笔提交已推送：ddf407d651（192 errors 自动修复）、fda7237303（29 warnings 清零）。

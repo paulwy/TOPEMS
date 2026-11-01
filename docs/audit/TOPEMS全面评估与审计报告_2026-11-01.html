@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TOPEMS 全面评估与审计报告 · 2026-11-01</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230F766E'/%3E%3Cpath d='M8 22 L13 12 L17 19 L21 10 L24 16' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --ink:#0B1220; --ink2:#1E293B; --paper:#F6F8FB; --card:#FFFFFF;
+  --teal:#0F766E; --teal-soft:#E6F2F1; --amber:#B45309; --amber-soft:#FCF3E7;
+  --red:#B91C1C; --red-soft:#FBEAEA; --green:#15803D; --green-soft:#E9F5EE;
+  --gray:#64748B; --line:#E2E8F0; --line2:#CBD5E1;
+  --mono:"SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font:16px/1.75 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+a{color:var(--teal);text-decoration:none}
+/* ===== Hero ===== */
+.hero{background:var(--ink);color:#F1F5F9;padding:72px 0 60px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-140px;top:-140px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(15,118,110,.35),transparent 70%)}
+.hero .kicker{font-size:13px;letter-spacing:.32em;color:#5EEAD4;text-transform:uppercase;margin-bottom:18px}
+.hero h1{font-size:clamp(30px,4.6vw,52px);line-height:1.18;font-weight:800;letter-spacing:.02em;max-width:900px}
+.hero .sub{margin-top:16px;font-size:17px;color:#CBD5E1;max-width:760px}
+.hero .meta{margin-top:26px;font-size:13px;color:#94A3B8}
+.hero .meta b{color:#E2E8F0;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:42px;position:relative;z-index:1}
+.stat{background:rgba(15,23,42,.55);border:1px solid rgba(148,163,184,.25);border-radius:12px;padding:18px 20px}
+.stat .num{font-size:clamp(26px,3vw,36px);font-weight:800;color:#5EEAD4;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.stat .lbl{font-size:13px;color:#CBD5E1;margin-top:4px}
+.stat .hint{font-size:12px;color:#64748B;margin-top:2px}
+/* ===== Nav ===== */
+.toc{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:34px 0;padding:22px 26px}
+.toc h2{font-size:15px;color:var(--gray);letter-spacing:.18em;margin-bottom:12px}
+.toc ol{list-style:none;counter-reset:toc}
+.toc li{counter-increment:toc;padding:7px 0;border-bottom:1px dashed var(--line);font-size:15px}
+.toc li:last-child{border-bottom:none}
+.toc li::before{content:counter(toc,decimal-leading-zero);font-family:var(--mono);color:var(--teal);font-size:13px;margin-right:12px;font-weight:700}
+.toc a{color:var(--ink2);font-weight:600}
+.toc a:hover{color:var(--teal)}
+/* ===== Sections ===== */
+section{padding:52px 0 8px;scroll-margin-top:12px}
+.sec-head{display:flex;align-items:baseline;gap:16px;border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:26px}
+.sec-head .no{font-family:var(--mono);font-size:15px;color:var(--teal);font-weight:700;letter-spacing:.1em}
+.sec-head h2{font-size:clamp(22px,3vw,30px);font-weight:800;letter-spacing:.02em}
+.sec-head .en{font-size:13px;color:var(--gray);font-family:var(--mono);margin-left:auto}
+h3{font-size:19px;font-weight:700;margin:34px 0 14px;padding-left:12px;border-left:4px solid var(--teal)}
+h4{font-size:16px;font-weight:700;margin:22px 0 10px}
+p{margin-bottom:12px}
+ul,ol{padding-left:22px;margin-bottom:12px}
+li{margin-bottom:6px}
+/* ===== Cards / grids ===== */
+.grid2{display:grid;grid-template-columns:1fr;gap:14px;margin:16px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.card h4{margin-top:0;font-size:15px;color:var(--ink2)}
+.card .n{font-size:26px;font-weight:800;color:var(--teal);font-variant-numeric:tabular-nums}
+.callout{border-radius:10px;padding:14px 18px;margin:14px 0;font-size:14.5px}
+.callout.hi{background:var(--red-soft);border-left:4px solid var(--red)}
+.callout.warn{background:var(--amber-soft);border-left:4px solid var(--amber)}
+.callout.ok{background:var(--green-soft);border-left:4px solid var(--green)}
+.callout.info{background:var(--teal-soft);border-left:4px solid var(--teal)}
+.callout b{font-weight:700}
+/* ===== Tables ===== */
+.tbl-scroll{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13.5px;background:var(--card)}
+th{background:var(--ink);color:#F1F5F9;font-weight:600;text-align:left;padding:10px 10px;font-size:12.5px;letter-spacing:.02em}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:nth-child(even) td{background:#FAFCFD}
+td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12.5px}
+td.bad{color:var(--red);font-weight:700}
+td.mid{color:var(--amber);font-weight:600}
+td.good{color:var(--green);font-weight:600}
+.tag{display:inline-block;padding:1px 8px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.tag.r{background:var(--red-soft);color:var(--red)}
+.tag.a{background:var(--amber-soft);color:var(--amber)}
+.tag.g{background:var(--green-soft);color:var(--green)}
+.tag.t{background:var(--teal-soft);color:var(--teal)}
+/* ===== Charts ===== */
+.chart{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 12px 6px;margin:14px 0}
+.chart .c-title{font-size:14px;font-weight:700;padding:0 8px 8px;display:flex;align-items:center;gap:8px}
+.chart .c-title .src{font-size:11.5px;color:var(--gray);font-weight:400;margin-left:auto;font-family:var(--mono)}
+.chart .box{width:100%;height:360px}
+.chart .box.h260{height:260px}
+.chart .box.h420{height:420px}
+/* ===== Finding list ===== */
+.finding{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:8px;padding:14px 16px;margin:12px 0;font-size:14.5px}
+.finding .fid{font-family:var(--mono);font-size:12px;color:var(--teal);font-weight:700;margin-right:8px}
+.finding .sev{font-size:11px;font-weight:700;padding:1px 7px;border-radius:10px;margin-right:8px}
+.sev.H{background:var(--red-soft);color:var(--red)}
+.sev.M{background:var(--amber-soft);color:var(--amber)}
+.sev.L{background:var(--teal-soft);color:var(--teal)}
+.finding .ev{font-family:var(--mono);font-size:12px;color:var(--gray);display:block;margin-top:6px;word-break:break-all}
+/* ===== Timeline (menu phases) ===== */
+.timeline{list-style:none;padding-left:0;margin:18px 0}
+.timeline li{position:relative;padding:0 0 22px 34px;border-left:2px solid var(--line2)}
+.timeline li::before{content:"";position:absolute;left:-7px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--teal);border:2px solid var(--paper)}
+.timeline li .ph{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--teal);display:block}
+.timeline li .tt{font-weight:700;display:block;margin:2px 0 4px}
+.timeline li .dd{font-size:14px;color:var(--ink2)}
+.timeline li .fs{font-family:var(--mono);font-size:12px;color:var(--gray);display:block;margin-top:4px}
+/* ===== Footer ===== */
+footer{background:var(--ink);color:#94A3B8;margin-top:60px;padding:34px 0;font-size:13px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
+footer code{font-family:var(--mono);color:#CBD5E1}
+@media (min-width:768px){
+  .stats{grid-template-columns:repeat(6,1fr)}
+  .grid2{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 封面 ===== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">Engineering Audit Report</div>
+    <h1>TOPEMS 全面评估与审计报告</h1>
+    <p class="sub">菜单 · 功能 · 模块 · 前端路由 · 后端 API · 数据库四维对应性审计，系统架构与工程质量审计，以及菜单过长收敛方案。全部结论基于代码实测，标注口径与来源。</p>
+    <div class="meta">数据基准：<b>2026-11-01</b>（git HEAD 同日上午）&nbsp;·&nbsp; 审计范围：<b>apps/{desktop,mobile,web} + svc/ 30 个服务 + packages/ + database/ 527 个迁移 + docs/</b></div>
+    <div class="stats">
+      <div class="stat"><div class="num">35</div><div class="lbl">前端业务模块</div><div class="hint">moduleImports 注册</div></div>
+      <div class="stat"><div class="num">452</div><div class="lbl">前端菜单项 navItems</div><div class="hint">DB 种子仅 184 项/13 模块</div></div>
+      <div class="stat"><div class="num">3,702</div><div class="lbl">后端 API 端点</div><div class="hint">30 个 svc 实测</div></div>
+      <div class="stat"><div class="num">708</div><div class="lbl">数据库表</div><div class="hint">迁移文件统计</div></div>
+      <div class="stat"><div class="num">172</div><div class="lbl">审计发现问题</div><div class="hint">144 对应性 + 28 架构质量</div></div>
+      <div class="stat"><div class="num">-65%</div><div class="lbl">菜单收敛目标</div><div class="hint">452 → ~160 项</div></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+<!-- ===== 目录 ===== -->
+<nav class="toc">
+  <h2>目录</h2>
+  <ol>
+    <li><a href="#s1">审计方法与口径</a></li>
+    <li><a href="#s2">结论总览（四大核心发现）</a></li>
+    <li><a href="#s3">对应性审计：菜单 → 路由 → API → 表</a></li>
+    <li><a href="#s4">架构与质量审计：目录 / 公共模块 / UI / 文档 / 数据统一</a></li>
+    <li><a href="#s5">菜单优化方案：452 项 → ~160 项</a></li>
+    <li><a href="#s6">附录：统计口径与来源</a></li>
+  </ol>
+</nav>
+
+<!-- ===== 01 方法与口径 ===== -->
+<section id="s1">
+  <div class="sec-head"><span class="no">01</span><h2>审计方法与口径</h2><span class="en">METHOD &amp; SCOPE</span></div>
+
+  <h3>审计目标</h3>
+  <p>围绕用户提出的三项重点，对 /Users/air/TOPEMS 全项目做只读深度审计：<b>（1）菜单、功能、模块、前端路由、后端 API、数据库是否一一对应；（2）系统架构、目录设置、公共模块、UI 设计、文档分类、数据统一是否存在缺陷；（3）菜单过长，给出可执行的收敛优化方案。</b></p>
+
+  <h3>四维对应性审计口径（经探查核实）</h3>
+  <div class="tbl-scroll">
+  <table>
+    <colgroup><col style="width:16%"><col style="width:42%"><col style="width:42%"></colgroup>
+    <tr><th>维度</th><th>权威来源（口径）</th><th>审计方式</th></tr>
+    <tr><td><b>菜单</b></td><td>三个口径并存：<br>① DB 权威 <code>database/migrations/20260724000005_seed_module_menus.sql</code>（core_menu_groups + core_menus）；<br>② 前端权威（运行时真实渲染）<code>apps/web/src/modules/*/config.ts</code> 的 <code>navItems</code>，经 NavigationRegistryV2 → GlobalLayoutV3；<br>③ 移动端 <code>apps/mobile/src/navigation/AppNavigator.tsx</code></td><td>三个口径分别计数并交叉比对（grep + 脚本解析）</td></tr>
+    <tr><td><b>前端路由</b></td><td>各模块 config.ts 的 <code>routes</code> 数组（RouteConfigV2，含 requiredPermissions / tier），注册于 <code>routes/v2/index.ts</code> moduleImports</td><td>解析 routes 数组元素（含变量引用解析），与 navItems 路径比对</td></tr>
+    <tr><td><b>后端 API</b></td><td>各 <code>svc/&lt;mod&gt;/src/main.rs</code> 的 ServiceConfig api_prefix（如 /api/crm），端点在 <code>modules/*.rs</code> 的 axum <code>.route()</code>；端口单一信源 <code>apps/web/src/config/ports.ts</code></td><td><code>grep -rhoE '\.route\("…"'</code> 枚举去重计数</td></tr>
+    <tr><td><b>数据库表</b></td><td><code>database/migrations/*.sql</code>（527 个文件）按模块 schema/前缀的 CREATE TABLE；参考 svc models</td><td>按 schema 去重计数</td></tr>
+  </table>
+  </div>
+
+  <h3>状态标记定义（映射矩阵使用）</h3>
+  <div class="tbl-scroll">
+  <table>
+    <colgroup><col style="width:22%"><col style="width:78%"></colgroup>
+    <tr><th>状态</th><th>含义</th></tr>
+    <tr><td><span class="tag g">OK</span></td><td>菜单 → 路由 → API → 表 全链路对齐</td></tr>
+    <tr><td><span class="tag a">MENU_ORPHAN_FE</span></td><td>前端 navItem 在 DB core_menus 无对应种子（前端为运行时真实菜单，DB 菜单源形同虚设）</td></tr>
+    <tr><td><span class="tag a">MENU_ORPHAN_DB</span></td><td>DB 种子菜单在前端 navItems 无对应项</td></tr>
+    <tr><td><span class="tag r">ROUTE_NO_API</span></td><td>前端路由存在但后端无对应 API（页面 404 / 空壳）</td></tr>
+    <tr><td><span class="tag r">API_NO_ROUTE</span></td><td>后端 API 存在但前端无路由/菜单入口</td></tr>
+    <tr><td><span class="tag r">API_NO_TABLE</span></td><td>API 存在但无对应数据库表</td></tr>
+    <tr><td><span class="tag r">TABLE_NO_API</span></td><td>数据库表存在但无 API 入口</td></tr>
+    <tr><td><span class="tag r">DUPLICATE</span></td><td>同语义重复（同模块内或跨模块）</td></tr>
+    <tr><td><span class="tag r">PERM_MISMATCH</span></td><td>权限码不一致（DB 种子 / config requiredPermissions / menuPermissions.ts 三处漂移）</td></tr>
+    <tr><td><span class="tag a">LEGACY_DUP</span></td><td>v1 旧前缀（/api/v1/…）或旧服务挂载与新 API 并存</td></tr>
+    <tr><td><span class="tag t">PARTIAL</span></td><td>部分对齐或待核实（缺哪一环已说明）</td></tr>
+  </table>
+  </div>
+
+  <div class="callout info"><b>执行方式：</b>按业务域分片并行审计（制造/质量域、供应链/财务/客户域、平台能力域、协同/人力/项目域），每模块产出可核对的映射矩阵；架构质量与菜单专项独立成线。全程只读，未修改项目任何文件。全部数字来自实际 grep / 脚本统计，禁止估算；无法核实的项明确标注「待核实」。</div>
+</section>
+
+<!-- ===== 02 结论总览 ===== -->
+<section id="s2">
+  <div class="sec-head"><span class="no">02</span><h2>结论总览（四大核心发现）</h2><span class="en">EXECUTIVE SUMMARY</span></div>
+
+  <div class="finding"><span class="fid">结论 1</span><span class="sev H">高</span><b>菜单体系双重权威，对应性审计无法成立。</b>运行时侧边栏由 35 个模块 config.ts 的 452 项 navItems 驱动（<code>GlobalLayoutV3.tsx</code> 直接消费 moduleConfig.navItems），而 DB core_menus 仅种子 13 模块 184 项、只经 unified-core /menu/menus 做管理展示——两个口径不重叠，造成「DB 有菜单前端不渲染」「前端 22 个模块在 DB 无任何菜单记录」的双向断裂。</div>
+
+  <div class="finding"><span class="fid">结论 2</span><span class="sev H">高</span><b>四维链路存在系统性的断裂与漂移：144 项对应性问题。</b>其中 31 项 MENU_ORPHAN_FE（前端菜单无 DB 种子）、28 项 PERM_MISMATCH（权限码三处漂移）、16 项 ROUTE_NO_API（菜单/路由无后端）、15 项 DUPLICATE（同语义重复）。典型：mes 的「工单管理」双入口、scm 合同双入口、lims 检验任务双入口、erp 整模块无 DB 菜单且与 finance/crm/scm/wms 大面积业务重叠、aps 已并入 mes 但前端仍是独立模块、asset 无独立后端复用 erp:8010。</div>
+
+  <div class="finding"><span class="fid">结论 3</span><span class="sev H">高</span><b>架构质量五维均不达标（2~3/5）：28 项缺陷。</b>最严重：根目录散落 12 份审计报告 + 962KB TODO.md；shared-constants 空包、business-tools-sdk 零引用；旧 AppLayout 与 GlobalLayoutV3 双轨并存、design-tokens 旁路；docs 的 audit/reports/quality 三处重叠；客户/供应商/物料主数据在 crm/erp/scm/srm/pdm 多服务重复定义、权限码前端 413 / 后端 846 严重分裂。</div>
+
+  <div class="finding"><span class="fid">结论 4</span><span class="sev M">中</span><b>菜单过长可用「域收敛 + 折叠 + 合并 + 动态可见性」四条主线在 3 个月内收敛 65%。</b>35 个模块平铺 → 10 个 L1 业务域；452 项 → ~160 项；dashboard 冗余项清零；重复/重叠入口清零；推荐 DB 菜单单一权威改造（unified-core 已有 CRUD，需补角色化读取接口），分 5 阶段落地。</div>
+</section>
+
+<!-- ===== 03 对应性审计 ===== -->
+<section id="s3">
+  <div class="sec-head"><span class="no">03</span><h2>对应性审计：菜单 → 路由 → API → 表</h2><span class="en">TRACEABILITY AUDIT</span></div>
+
+  <h3>3.1 全景数字</h3>
+  <div class="grid2">
+    <div class="card"><div class="n">184</div><div class="lbl" style="margin-top:4px">DB 菜单种子（13 模块 / 53 组）</div><div style="font-size:13px;color:var(--gray);margin-top:6px">seed_module_menus.sql：mes 25、finance 17、hrm 16、pdm 16、wms 16、scm 15、ehs 14、lims 14、srm 14、crm 12、qms 11、report 8、pm 6</div></div>
+    <div class="card"><div class="n">452</div><div class="lbl" style="margin-top:4px">前端 navItems（35 模块，全扁平无子级）</div><div style="font-size:13px;color:var(--gray);margin-top:6px">group 分布：process 102 / master 96 / analytics 90 / setting 61 / business 61 / overview 37 / report 5</div></div>
+    <div class="card"><div class="n">529</div><div class="lbl" style="margin-top:4px">前端路由（config routes 数组）</div><div style="font-size:13px;color:var(--gray);margin-top:6px">含明细/新建/编辑等隐藏路由；已确认菜单-路由路径不一致 ≥1 处（mes 工位管理）</div></div>
+    <div class="card"><div class="n">3,702</div><div class="lbl" style="margin-top:4px">后端 API 端点（30 服务实测）</div><div style="font-size:13px;color:var(--gray);margin-top:6px">finance 446、erp 383、master-data 315、mes 215、ai 205 为前五</div></div>
+    <div class="card"><div class="n">708</div><div class="lbl" style="margin-top:4px">数据库表（迁移统计）</div><div style="font-size:13px;color:var(--gray);margin-top:6px">iam 97、master_data 89、ehs 55、mes 46、lims 40 为前五</div></div>
+    <div class="card"><div class="n">144</div><div class="lbl" style="margin-top:4px">对应性问题（35 模块）</div><div style="font-size:13px;color:var(--gray);margin-top:6px">问题数 Top5：wms / bi / admin / rd 各 8，erp 7</div></div>
+  </div>
+
+  <h3>3.2 问题类型分布</h3>
+  <div class="chart"><div class="c-title">对应性问题类型分布（144 项）<span class="src">来源：4 域 summary JSON 聚合</span></div><div class="box" id="chIssueTypes"></div></div>
+
+  <div class="grid2">
+    <div>
+      <h3>3.3 问题数 Top15 模块</h3>
+      <div class="chart"><div class="c-title">模块问题数排行（对应性）<span class="src">来源：聚合 JSON</span></div><div class="box h260" id="chIssueTop"></div></div>
+    </div>
+    <div>
+      <h3>3.4 菜单项规模 Top10</h3>
+      <div class="chart"><div class="c-title">模块 navItems 规模排行<span class="src">来源：config.ts 脚本解析</span></div><div class="box h260" id="chNavTop"></div></div>
+    </div>
+  </div>
+
+  <h3>3.5 四维规模热力图（35 模块 × 4 维度）</h3>
+  <div class="chart"><div class="c-title">模块规模热力图（按各维度最大值归一化；悬停查看真实值）<span class="src">DB菜单 / 前端菜单 / 后端API / 数据库表</span></div><div class="box h420" id="chHeat"></div></div>
+  <div class="callout warn"><b>读图提示：</b>行内色块越深表示规模越大。可直观看到：左侧 13 个有 DB 种子的模块 vs 右侧 22 个完全无 DB 菜单的模块（空白行）；monitor / automation / report / admin 出现「有 API 无表」、asset / aps 出现「无后端」的整行空档。</div>
+
+  <h3>3.6 模块映射矩阵总表（35 模块）</h3>
+  <div class="tbl-scroll">
+  <table id="matTable">
+    <colgroup><col style="width:9%"><col style="width:8%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:8%"><col style="width:12%"><col style="width:36%"></colgroup>
+    <tr><th>模块</th><th class="num">DB菜单</th><th class="num">前端菜单</th><th class="num">路由</th><th class="num">API</th><th class="num">表</th><th class="num">问题</th><th>主要不一致</th></tr>
+  </table>
+  </div>
+
+  <h3>3.7 关键发现（按域）</h3>
+
+  <h4>制造 / 质量域（mes、aps、pdm、qms、lims、ehs、erp）— 33 项问题</h4>
+  <div class="finding"><span class="fid">M-1</span><span class="sev H">高</span><b>aps 已并入 mes，但前端仍是独立模块（迁移过渡期残留）。</b>svc/aps 已删除、DB 无 aps 菜单、无 aps 表；后端排程接口实挂在 svc/mes（<code>aps_scheduling.rs</code>），svc/mes main.rs:266 挂载 /api/aps 兼容重定向层（注释声明 2026-11-28 移除）。前端 aps 模块（12 navItems / 18 routes，v2/index.ts:63）仍独立存在。<span class="ev">证据：svc/mes/src/modules/aps_compat.rs；apps/web/src/routes/v2/index.ts:63</span></div>
+  <div class="finding"><span class="fid">M-2</span><span class="sev H">高</span><b>erp 整模块无 DB 菜单种子（24 项 navItems 全部无 core_menus 对应），且与 finance/crm/scm/wms 业务大面积重叠。</b>erp 含财务（budget/asset/GL/receivable-payable/accounting）、客户、供应商、库存、物料、车辆、会议室、公告等跨域菜单。<span class="ev">证据：grep /erp/ 于 526 个迁移无菜单插入；apps/web/src/modules/erp/config.ts</span></div>
+  <div class="finding"><span class="fid">M-3</span><span class="sev H">高</span><b>mes 内部重复与漂移：</b>「工单管理」mes-work-orders 与「工单管理(新)」mes-work-order 双入口（seed:80,85 / config.ts:1557,1789）；「设备OEE」与「OEE分析」重复；dashboard 权限码 DB <code>mes:read</code> vs 前端 <code>mes:dashboard:read</code>。<span class="ev">证据：seed_module_menus.sql:80-87；config.ts:1538</span></div>
+  <div class="finding"><span class="fid">M-4</span><span class="sev M">中</span><b>pdm / qms / lims / ehs 共性：</b>dashboard 权限码三方漂移（DB <code>xxx:read</code> / FE <code>xxx:dashboard:read</code> / menuPermissions <code>xxx:product:read</code> 等）；8-15 个前端 navItem 无 DB 种子；ehs-compliance 有页有表（qa_ehs_compliance_items/evaluations）但 svc/ehs 无 /compliance 路由；pdm-formula / product-config / product-category 前端有页无 svc/pdm 路由。<span class="ev">证据：menuPermissions.ts:23,29,33；svc/ehs 路由枚举</span></div>
+
+  <h4>供应链 / 财务 / 客户域（scm、wms、srm、finance、crm、tms、asset）— 40 项问题</h4>
+  <div class="finding"><span class="fid">S-1</span><span class="sev H">高</span><b>tms / asset 在 DB 菜单种子完全缺失</b>（全库 grep <code>'tms-'</code>/<code>'asset-'</code> 于 core_menus 零命中）；asset 更无独立后端——5 个 navItem 复用 erp:8010、0 专属 API、0 专属表，路由权限 <code>asset:list:read</code> 与 menuPermissions <code>asset:dashboard:read</code> 漂移。<span class="ev">证据：svc/ 目录与 ports.ts；menuPermissions.ts:37</span></div>
+  <div class="finding"><span class="fid">S-2</span><span class="sev H">高</span><b>跨模块菜单重叠：供应商 / 合同 / 采购订单 / 资产。</b>供应商管理在 scm、srm、wms、erp 4 处；合同管理在 scm×2、srm、pm、hrm；采购订单在 scm、srm、erp；资产管理在 finance、erp、独立 asset 模块。scm 后端存在 /sync/suppliers-from-srm 佐证数据互通但菜单未切分。<span class="ev">证据：scm/wms/srm/erp config.ts navItems；svc/scm 路由</span></div>
+  <div class="finding"><span class="fid">S-3</span><span class="sev M">中</span><b>finance 双口径差异收敛中：</b>DB 种子 17 项全部有前端 navItem，但权限码漂移（应收应付：种子 <code>finance:receivable:read</code> vs 前端 <code>finance:receivable_payable:read</code>）；前端多出 consolidation-reports / budget-detail 两项；finance 服务 446 端点 / 22 表体量最大。<span class="ev">证据：seed:29 vs finance/config.ts</span></div>
+  <div class="finding"><span class="fid">S-4</span><span class="sev M">中</span><b>wms 单复数路径问题：</b>wms-locations 菜单 code 在 navItems 中重复注册（/wms/location-management 与 /wms/locations 并存）；menuPermissions 的 /scm/overview、/scm/price-comparison 权限码与路由不一致。<span class="ev">证据：wms/config.ts；menuPermissions.ts:70-72</span></div>
+
+  <h4>平台能力域（ai、bi、report、monitor、integration、master、admin、iam、automation）— 46 项问题</h4>
+  <div class="finding"><span class="fid">P-1</span><span class="sev H">高</span><b>report 与 bi 共用 analytics 服务同一 /api/bi 前缀（8060），两个前端模块边界模糊。</b>report 8 项 DB 种子 vs 前端 9 项；report-viewer 无种子；DB 种子权限 <code>report:read</code> vs 前端 <code>report:dashboard:read</code>。<span class="ev">证据：svc/analytics/src/routes.rs:3；routes/v2/index.ts:25,60；seed:535-542</span></div>
+  <div class="finding"><span class="fid">P-2</span><span class="sev H">高</span><b>master 命名三方不一致：</b>前端模块 master / 后端服务 svc/master-data / 数据库 schema master_data；权限码三风格并存（<code>master:</code> / <code>master-data:</code> / <code>master_data:</code>）。menuPermissions 无 /master/* 映射，/master/dashboard 死 key 已注释。<span class="ev">证据：master/config.ts:54,67,83,219；menuPermissions.ts:30-31</span></div>
+  <div class="finding"><span class="fid">P-3</span><span class="sev H">高</span><b>monitor / automation 有 API 无表：</b>monitor 64 端点、automation 35 端点，但迁移中无对应 schema 表；automation 被 unified-core routes/mod.rs:208 注释为「501 planned」而实际已完整实现。<span class="ev">证据：svc/monitor、svc/automation 路由枚举 vs grep CREATE TABLE</span></div>
+  <div class="finding"><span class="fid">P-4</span><span class="sev M">中</span><b>bi 3 处权限码不一致</b>（visualization/report/dataset 均漂移）、admin 2 处（system-settings、monitor）、iam 1 处（/iam/user）；9 个平台模块全部无 DB 菜单种子、全部无移动端入口。<span class="ev">证据：menuPermissions.ts:44-114 对照各 config.ts</span></div>
+
+  <h4>协同 / 人力 / 项目域（gis、plugin、workflow、notification、doc、im、oa、ticket、rd、pm、hrm）— 42 项问题</h4>
+  <div class="finding"><span class="fid">C-1</span><span class="sev H">高</span><b>oa 无独立后端，散落在 svc/mobile(8070) 与 svc/erp(8010)。</b>公告在 mobile 与 erp 双注册；车辆在 erp。Web 端 oa API 明确调用 mobile 服务。<span class="ev">证据：apps/web/src/api/mobile/oa.ts:1-27；svc/erp/src/modules/vehicles.rs:34；svc/mobile/src/shared/mod.rs:671</span></div>
+  <div class="finding"><span class="fid">C-2</span><span class="sev H">高</span><b>notification 3 个入口无后端：</b>前端 7 个 navItem，但 svc/communication 仅 6 处路由，archive / templates / statistics 无对应端点。<span class="ev">证据：svc/communication/src/main.rs</span></div>
+  <div class="finding"><span class="fid">C-3</span><span class="sev H">高</span><b>rd 3 个空入口：</b>rd-code / rd-review / rd-release 既无后端路由也无对应表（svc/rd 仅 7 个模型）。<span class="ev">证据：svc/rd/src/models/</span></div>
+  <div class="finding"><span class="fid">C-4</span><span class="sev M">中</span><b>plugin 前端模块与 plugin-registry 服务脱节：</b>svc/plugin-registry 仅 3 处路由（上传/发布缺失），插件 CRUD 实际在 unified-core /api/core/plugins。<span class="ev">证据：svc/plugin-registry/src/main.rs</span></div>
+  <div class="finding"><span class="fid">C-5</span><span class="sev M">中</span><b>hrm / pm 种子缺口：</b>hrm 种子 16 项 vs 前端 21 项（缺 5 个设置/向导项）；pm 种子 6 项 vs 前端 11 项（缺 5 项）；其余 9 模块（gis/plugin/workflow/notification/doc/im/oa/ticket/rd）全部无 DB 种子。<span class="ev">证据：seed:127-142,574-579 vs hrm/pm config.ts</span></div>
+  <div class="finding"><span class="fid">C-6</span><span class="sev L">低</span><b>路径级不一致：</b>menuPermissions 的 /gis/map、/gis/fence 映射 gis:dashboard:read 而路由要求 gis:map:read / gis:fence:read；/im/mail 映射漂移；ticket-center 用 system:center:read 非 ticket:*。<span class="ev">证据：menuPermissions.ts:49-52</span></div>
+</section>
+
+<!-- ===== 04 架构与质量 ===== -->
+<section id="s4">
+  <div class="sec-head"><span class="no">04</span><h2>架构与质量审计</h2><span class="en">ARCHITECTURE &amp; QUALITY</span></div>
+
+  <h3>4.1 五维评分</h3>
+  <div class="chart"><div class="c-title">架构质量五维评分（1-5）<span class="src">来源：architecture-audit.md</span></div><div class="box h260" id="chArch"></div></div>
+  <div class="grid2">
+    <div class="card"><div class="n">28</div><div class="lbl" style="margin-top:4px">缺陷总数</div><div style="font-size:13px;color:var(--gray);margin-top:6px">高 13 / 中 11 / 低 4</div></div>
+    <div class="card"><div class="n">2.3</div><div class="lbl" style="margin-top:4px">五维平均分（满分 5）</div><div style="font-size:13px;color:var(--gray);margin-top:6px">目录 3.0 / 复用 2.0 / UI 2.5 / 文档 2.0 / 数据 2.0</div></div>
+  </div>
+
+  <h3>4.2 目录设置（DIR，6 项）</h3>
+  <div class="finding"><span class="fid">DIR-01</span><span class="sev H">高</span><b>根目录散落 12 份审计/修复/状态 .md（约 600KB+），未归入 docs/audit。</b><span class="ev">证据：/Users/air/TOPEMS/{审查报告,修复清单,TOPEMS全项目测试与审计报告,MCP修复方案,状态存档,验证执行清单,...}-*.md</span></div>
+  <div class="finding"><span class="fid">DIR-02</span><span class="sev H">高</span><b>TODO.md 962KB / 5860 行堆在根目录</b>，承担模块开发流水账，应与 docs/ 体系分离或拆分为按模块归档。<span class="ev">证据：/Users/air/TOPEMS/TODO.md</span></div>
+  <div class="finding"><span class="fid">DIR-03</span><span class="sev M">中</span><b>空壳目录：</b>svc/migration-sdk/（仅 Cargo.lock）、shared/lib/（仅 Cargo.lock）；scripts/ 104 项未按语言分层且含 __pycache__。<span class="ev">证据：svc/migration-sdk/；shared/lib/</span></div>
+
+  <h3>4.3 公共模块复用（REUSE，5 项）</h3>
+  <div class="finding"><span class="fid">REUSE-01</span><span class="sev H">高</span><b>packages/shared-constants 是空包</b>（无 src / 无 package.json，三端 0 import）；packages/business-tools-sdk 6 个源文件三端 0 import。<span class="ev">证据：packages/shared-constants/；packages/business-tools-sdk/src/</span></div>
+  <div class="finding"><span class="fid">REUSE-02</span><span class="sev M">中</span><b>shared-components 桌面端仅 1 文件、移动端 0 文件引用</b>；shared-utils 23 文件仅 3 处 import；app-shell 在 web 仅 3 处 type-only import——共享包名义存在、实际复用率极低。<span class="ev">证据：apps/{desktop,mobile}/package.json；packages/shared-utils/src/</span></div>
+
+  <h3>4.4 UI 一致性（UI，5 项）</h3>
+  <div class="finding"><span class="fid">UI-01</span><span class="sev H">高</span><b>布局双轨：</b>旧 components/layout/AppLayout.tsx 仍被 App.tsx 引用，与 layouts/GlobalLayoutV3.tsx 并存；theme/design-tokens.ts 旁路定义 sizeTokens，redesign-tokens.css（228 行）与 generated-tokens.css（373 行）两份 token 文件并存。<span class="ev">证据：apps/web/src/App.tsx vs layouts/GlobalLayoutV3.tsx；apps/web/src/theme/</span></div>
+  <div class="finding"><span class="fid">UI-02</span><span class="sev M">中</span><b>web components/ 49 条通用与业务组件混杂</b>；storybook-theme 与 theme.ts 双份主题。<span class="ev">证据：apps/web/src/components/</span></div>
+
+  <h3>4.5 文档分类（DOC，6 项）</h3>
+  <div class="finding"><span class="fid">DOC-01</span><span class="sev H">高</span><b>三类重叠：</b>docs/audit（14 项）、docs/reports 下含 audit 子目录（101 项）、docs/quality（9 项）定位重叠；archive 双位置（docs/archive 114 项 vs docs/reports/archive）。<span class="ev">证据：docs/audit/；docs/reports/audit/；docs/archive/</span></div>
+  <div class="finding"><span class="fid">DOC-02</span><span class="sev M">中</span><b>空分类：</b>docs/docs-center（0 个 md）、docs/onboarding（1 个 md）近空；architecture / design / developer 边界模糊。<span class="ev">证据：docs/docs-center/；docs/onboarding/</span></div>
+  <div class="finding"><span class="fid">DOC-03</span><span class="sev M">中</span><b>重组方案（推荐）：</b>docs 收敛为 6 大分类——architecture（含 design）/ modules / api / operations（deploy+security+performance）/ quality（audit+reports+quality 三合一）/ training（getting-started+onboarding+training+user-guide 四合一），根目录散落报告与 TODO.md 迁入 quality/audit 与 project 归档；空目录删除或明示状态。</div>
+
+  <h3>4.6 数据统一（DATA，6 项）</h3>
+  <div class="finding"><span class="fid">DATA-01</span><span class="sev H">高</span><b>主数据多源：</b>客户 crm.customers 与 erp.customers 双源 + crm.core_crm_customers 影子表；供应商 scm/srm/erp 三处并存 + 双向快照；物料 master_data.materials 已建表但 erp/scm/pdm/public 未切流。<span class="ev">证据：20260725000000_business_base_tables.sql；20260908000007、20260918000060、20261023000003</span></div>
+  <div class="finding"><span class="fid">DATA-02</span><span class="sev H">高</span><b>权限码体系分裂：</b>前端 config requiredPermissions 413 条 vs 后端种子 846 条，其中 35 条前端死码、468 条后端死码；<code>master_data:</code> 与 <code>master-data:</code> 命名混用。menuPermissions.ts 与 config.ts 的不一致是本次审计 PERM_MISMATCH 的直接来源。<span class="ev">证据：apps/web/src/modules/*/config.ts vs database/migrations/ 权限种子</span></div>
+  <div class="finding"><span class="fid">DATA-03</span><span class="sev M">中</span><b>字典表三套并行</b>（master_data / public / erp 均有 core_dict_*）；RLS 覆盖率未门禁化（tenant_id 分布、策略批量迁移未做强制校验）。<span class="ev">证据：迁移 20260908000016/17/18、20261015000076/77</span></div>
+</section>
+
+<!-- ===== 05 菜单优化 ===== -->
+<section id="s5">
+  <div class="sec-head"><span class="no">05</span><h2>菜单优化方案：452 项 → ~160 项</h2><span class="en">MENU OPTIMIZATION</span></div>
+
+  <h3>5.1 现状：菜单为什么「过长」</h3>
+  <p>① 35 个模块在顶层<b>平铺</b>，无一级业务域归纳；② 每模块含 1 个 dashboard（35 个「仪表盘」）；③ mes（40 项）、wms（26 项）、erp（24 项）等模块 navItems 超 20 项且无折叠；④ 同模块重复 11 处、跨模块重叠 11 组；⑤ DB（184 项）与前端（452 项）双口径不一致，无法做租户级收敛。</p>
+
+  <h3>5.2 优化前后对照</h3>
+  <div class="chart"><div class="c-title">菜单收敛前后对比<span class="src">方案目标值</span></div><div class="box h260" id="chMenuBA"></div></div>
+
+  <h3>5.3 目标结构：一级域 → 模块 → 组 → 项（4 层，复用已有 ModuleSuite 模型）</h3>
+  <div class="tbl-scroll">
+  <table>
+    <colgroup><col style="width:16%"><col style="width:52%"><col style="width:16%"><col style="width:16%"></colgroup>
+    <tr><th>L1 业务域</th><th>包含模块（收敛后）</th><th class="num">模块数</th><th>动作</th></tr>
+    <tr><td>企业平台 enterprise</td><td>admin、iam、master、plugin、automation</td><td class="num">5</td><td>master 从业务菜单移入平台域</td></tr>
+    <tr><td>制造域 manufacturing</td><td>mes（吸收 aps）、ehs</td><td class="num">2</td><td>aps 合并入 mes</td></tr>
+    <tr><td>质量域 quality</td><td>qms、lims</td><td class="num">2</td><td>—</td></tr>
+    <tr><td>供应链域 supply</td><td>scm、wms、srm、tms</td><td class="num">4</td><td>供应商/采购唯一归属 scm</td></tr>
+    <tr><td>财务域 finance</td><td>finance（吸收 erp 财务项）</td><td class="num">1</td><td>erp 财务类菜单并入</td></tr>
+    <tr><td>人力域 hr</td><td>hrm</td><td class="num">1</td><td>—</td></tr>
+    <tr><td>客户域 crm</td><td>crm</td><td class="num">1</td><td>客户唯一归属 crm</td></tr>
+    <tr><td>项目域 project</td><td>pm、rd、pdm</td><td class="num">3</td><td>—</td></tr>
+    <tr><td>协同域 collaboration</td><td>workflow、doc、im、oa、ticket、notification、asset</td><td class="num">7</td><td>oa 收敛后端归属后保留</td></tr>
+    <tr><td>平台能力域 platform</td><td>ai、bi（吸收 report）、gis、integration、monitor、mobile</td><td class="num">5</td><td>report 并入 bi；mobile 默认隐藏</td></tr>
+  </table>
+  </div>
+  <div class="callout ok"><b>收敛效果：</b>一级菜单 35 → <b>10</b>；二级模块 35 → <b>31</b>（aps 并入 mes、report 并入 bi、erp 归 finance 域）；菜单项 452 → <b>~160</b>（-65%）。</div>
+
+  <h3>5.4 冗余与重叠清单（合并/删除 35+ 项）</h3>
+  <div class="tbl-scroll">
+  <table>
+    <colgroup><col style="width:14%"><col style="width:44%"><col style="width:24%"><col style="width:18%"></colgroup>
+    <tr><th>类型</th><th>涉及菜单项</th><th>建议</th><th>项数</th></tr>
+    <tr><td>同模块重复</td><td>mes 工单×2、OEE×2、生产总览×2；scm 合同×2；lims 检验任务×2；pdm BOM×2；erp 字典×2；finance 预算/合并×2；hrm 报表×2；admin 系统×2</td><td>合并保留新页/唯一归属</td><td class="num mid">13</td></tr>
+    <tr><td>跨模块重叠</td><td>供应商×4（scm/srm/wms/erp）、合同×4、采购订单×3、物料×4、财务×2（finance/erp）、客户×2、资产×3、质量×2、报表×2（report/bi）、车辆×3</td><td>域唯一归属 + 只读引用</td><td class="num mid">22</td></tr>
+    <tr><td>结构性冗余</td><td>35 个 dashboard 项、analytics 超 4 项折叠（~28）、setting 合并（~26）、mobile 12 项 Web 侧隐藏、master 12 项移入平台域</td><td>首页承载/折叠/隐藏</td><td class="num mid">~100</td></tr>
+  </table>
+  </div>
+
+  <h3>5.5 动态可见性（权限收敛）</h3>
+  <ul>
+    <li><b>tier 分层</b>：routes/v2/types.ts 已定义 basic/advanced，core_tenant_modules 激活机制已预留但未接线——将 aps / rd / integration / master 设为 advanced，租户按需激活，常态菜单直接减 4 模块。</li>
+    <li><b>权限过滤</b>：修复 menuPermissions.ts 死映射（/master/dashboard）与 28 处 PERM_MISMATCH（§3.6 与对应性审计明细），使菜单随权限精确显隐。</li>
+    <li><b>按端裁剪</b>：mobile 模块 Web 侧 showInSidebar:false；移动端 AppNavigator 改为共享路由注册表 + 端级过滤。</li>
+  </ul>
+
+  <h3>5.6 单一权威（根治）与实施步骤</h3>
+  <div class="callout info"><b>推荐方案：DB core_menus 为菜单元数据权威，前端按角色/租户动态拉取渲染。</b>理由：菜单已是多租户 SaaS 形态（tenant_id + RLS），权限/可见性必须在服务端统一；前端 452 项硬编码于 35 个 config.ts 无法做租户级收敛。改造量：unified-core 已有 /menu/menus CRUD，需补「按角色/租户拉取菜单树（含权限过滤）」读接口；前端 GlobalLayoutV3 改拉取渲染，config navItems 保留为模块默认兜底。过渡期先按 5.3-5.4 同步双口径。</div>
+  <ul class="timeline">
+    <li><span class="ph">P1 · 本周</span><span class="tt">删除同模块重复 13 项 + 修复路径不一致</span><span class="dd">删除 D1-D11 重复入口；修复 mes「工位管理」菜单路径 /mes/work-stations 与路由 /mes/workstations 不一致</span><span class="fs">涉及：apps/web/src/modules/{mes,scm,lims,pdm,erp,finance,hrm,admin}/config.ts；验证：路由全量渲染无 404</span></li>
+    <li><span class="ph">P2 · 2 周</span><span class="tt">dashboard 下沉 + analytics/setting 折叠 + mobile 隐藏</span><span class="dd">35 个 dashboard 项移出菜单（模块首页承载）；analytics 超 4 项折叠；setting 合并为 1 入口</span><span class="fs">涉及：35 个 config.ts（可脚本批量）；验证：侧边栏截图对比，452 → ~280</span></li>
+    <li><span class="ph">P3 · 1 月</span><span class="tt">跨模块归属收敛（C1-C11）</span><span class="dd">erp 财务项并入 finance；供应商/客户/物料/资产唯一归属</span><span class="fs">涉及：config.ts + 对应 svc 路由 + menuPermissions.ts；验证：权限矩阵回归无 PERM_MISMATCH</span></li>
+    <li><span class="ph">P4 · 2 月</span><span class="tt">tier 激活机制接线</span><span class="dd">core_tenant_modules 接入，advanced 模块默认隐藏，租户级菜单差异生效</span><span class="fs">涉及：pluginManager.ts / 路由过滤 / unified-core 租户接口；验证：租户 A/B 菜单差异</span></li>
+    <li><span class="ph">P5 · 3 月</span><span class="tt">DB 菜单单一权威改造</span><span class="dd">core_menus 服务端权威 + 前端拉取渲染，双口径归一</span><span class="fs">涉及：unified-core menu API、GlobalLayoutV3、NavigationRegistryV2；验证：全链路菜单拉取渲染通过</span></li>
+  </ul>
+</section>
+
+<!-- ===== 06 附录 ===== -->
+<section id="s6">
+  <div class="sec-head"><span class="no">06</span><h2>附录：统计口径与来源</h2><span class="en">APPENDIX</span></div>
+  <h3>6.1 计数口径</h3>
+  <ul>
+    <li>前端 navItems / routes：脚本解析 <code>apps/web/src/modules/*/config.ts</code>（35 个）的 navItems / routes 数组（含变量引用解析）；routes 计数 = 数组元素数（全部无 children，等价 flattenRoutes）。</li>
+    <li>DB 菜单：正则统计 <code>20260724000005_seed_module_menus.sql</code> 的 core_menus VALUES 行（184 项 / 53 组 / 13 模块）。</li>
+    <li>后端 API：<code>grep -rhoE '\.route\("…"'</code> 于各 svc/src 去重计数（含跨行注册，故部分模块计数含 MethodRouter 展开）。</li>
+    <li>数据库表：迁移文件按 schema CREATE TABLE 去重计数。</li>
+    <li>移动端：AppNavigator.tsx Tab.Screen 数（10）。</li>
+  </ul>
+  <h3>6.2 关键来源文件</h3>
+  <ul style="font-family:var(--mono);font-size:12.5px">
+    <li>database/migrations/20260724000005_seed_module_menus.sql、012_menu.sql、20260924090000_menu_global_visible.sql</li>
+    <li>apps/web/src/routes/v2/index.ts、types.ts；apps/web/src/lib/navigation/NavigationRegistryV2.ts；apps/web/src/layouts/GlobalLayoutV3.tsx</li>
+    <li>apps/web/src/config/menuPermissions.ts、ports.ts；packages/app-shell/src/navigation-types.ts</li>
+    <li>apps/web/src/modules/*/config.ts（35 个）</li>
+    <li>svc/*/src/main.rs + modules/*.rs（30 服务）</li>
+    <li>database/migrations/*.sql（527 个）</li>
+  </ul>
+  <h3>6.3 待核实项</h3>
+  <ul>
+    <li>aps 权限码 <code>aps:*</code> 是否在权限种子登记；mes 能耗/异常表、erp 财务分析页的精确表归属。</li>
+    <li>notification 模板/统计端点是否在其他文件（当前 6 端点口径）；oa 端点精确计数（router 动态组装）。</li>
+    <li>RLS 是否覆盖全部业务表（建议运行 scripts/check-rls-coverage.py 出覆盖率报表）。</li>
+    <li>BIZ 749 条读端点、to_bind 332 条绑定池等历史专项与本次审计的交叉核对（见 TODO.md 关键词检索）。</li>
+  </ul>
+  <h3>6.4 完整映射矩阵与明细</h3>
+  <p>本报告为结论版。逐模块「菜单项 → 前端路由 → 后端 API → 数据库表」完整映射矩阵、文件:行号证据与 144 项对应性问题明细，见同批次交付的四个分域审计文件（mapping-manufacturing-quality.md、mapping-supply-finance-crm.md、mapping-platform.md、mapping-collab-hr-project.md）与架构审计文件（architecture-audit.md）。</p>
+</section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div>TOPEMS 全面评估与审计报告 · 2026-11-01 · 只读审计，未修改项目文件</div>
+    <div><code>audit · traceability · architecture · menu</code></div>
+  </div>
+</footer>
+
+<script src="https://fastly.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script>
+const MODULES = [{"c":"mes","db":25,"nav":40,"rt":43,"api":215,"tb":46,"iss":4},{"c":"aps","db":0,"nav":12,"rt":18,"api":0,"tb":0,"iss":3},{"c":"pdm","db":16,"nav":21,"rt":21,"api":71,"tb":9,"iss":4},{"c":"qms","db":11,"nav":19,"rt":28,"api":162,"tb":30,"iss":2},{"c":"lims","db":14,"nav":16,"rt":20,"api":131,"tb":40,"iss":2},{"c":"ehs","db":14,"nav":14,"rt":15,"api":129,"tb":55,"iss":2},{"c":"erp","db":0,"nav":24,"rt":25,"api":383,"tb":20,"iss":7},{"c":"scm","db":15,"nav":21,"rt":21,"api":96,"tb":24,"iss":6},{"c":"wms","db":16,"nav":26,"rt":37,"api":170,"tb":9,"iss":8},{"c":"srm","db":14,"nav":14,"rt":16,"api":76,"tb":13,"iss":4},{"c":"finance","db":17,"nav":19,"rt":24,"api":446,"tb":22,"iss":4},{"c":"crm","db":12,"nav":15,"rt":22,"api":97,"tb":18,"iss":5},{"c":"tms","db":0,"nav":12,"rt":18,"api":39,"tb":7,"iss":3},{"c":"asset","db":0,"nav":5,"rt":5,"api":0,"tb":0,"iss":3},{"c":"ai","db":0,"nav":13,"rt":13,"api":205,"tb":6,"iss":3},{"c":"bi","db":0,"nav":12,"rt":13,"api":152,"tb":16,"iss":8},{"c":"report","db":8,"nav":9,"rt":9,"api":21,"tb":0,"iss":5},{"c":"monitor","db":0,"nav":7,"rt":7,"api":64,"tb":0,"iss":4},{"c":"integration","db":0,"nav":9,"rt":9,"api":94,"tb":7,"iss":3},{"c":"master","db":0,"nav":12,"rt":12,"api":315,"tb":89,"iss":6},{"c":"admin","db":0,"nav":20,"rt":22,"api":190,"tb":0,"iss":8},{"c":"iam","db":0,"nav":5,"rt":5,"api":63,"tb":97,"iss":4},{"c":"automation","db":0,"nav":5,"rt":5,"api":35,"tb":0,"iss":5},{"c":"gis","db":0,"nav":5,"rt":5,"api":24,"tb":23,"iss":3},{"c":"plugin","db":0,"nav":3,"rt":4,"api":3,"tb":9,"iss":3},{"c":"workflow","db":0,"nav":11,"rt":13,"api":105,"tb":34,"iss":2},{"c":"notification","db":0,"nav":7,"rt":8,"api":6,"tb":9,"iss":5},{"c":"doc","db":0,"nav":6,"rt":6,"api":15,"tb":11,"iss":3},{"c":"im","db":0,"nav":2,"rt":2,"api":29,"tb":3,"iss":2},{"c":"oa","db":0,"nav":5,"rt":5,"api":15,"tb":5,"iss":4},{"c":"ticket","db":0,"nav":2,"rt":2,"api":21,"tb":8,"iss":2},{"c":"rd","db":0,"nav":17,"rt":23,"api":50,"tb":27,"iss":8},{"c":"hrm","db":16,"nav":21,"rt":25,"api":67,"tb":32,"iss":3},{"c":"pm","db":6,"nav":11,"rt":16,"api":32,"tb":39,"iss":3},{"c":"mobile","db":0,"nav":12,"rt":12,"api":181,"tb":0,"iss":3}];
+const ISSUE_TYPES = [["MENU_ORPHAN_FE", 31], ["PERM_MISMATCH", 28], ["ROUTE_NO_API", 16], ["DUPLICATE", 15], ["PARTIAL", 14], ["LEGACY_DUP", 10], ["MOBILE_NO_MENU", 9], ["API_NO_TABLE", 5], ["MENU_PERM_MISSING", 3], ["MENU_ORPHAN_DB", 2], ["TABLE_NO_API", 2], ["MODULE_ORPHAN", 1], ["API_NO_ROUTE", 1], ["NAMING_DIFF", 1], ["LEGACY_COMMENT", 1]];
+
+function initChart(id, option){
+  var el = document.getElementById(id);
+  if(!el || typeof echarts === 'undefined') return;
+  var chart = echarts.init(el);
+  chart.setOption(option);
+  window.addEventListener('resize', function(){ chart.resize(); });
+}
+
+// 3.2 问题类型分布（横向柱，长类目）
+initChart('chIssueTypes', {
+  title:{text:'对应性问题类型分布', left:8, top:6, textStyle:{fontSize:14}},
+  tooltip:{trigger:'axis', triggerOn:'mousemove|click', renderMode:'richText', confine:true},
+  grid:{left:190, right:40, top:40, bottom:24, containLabel:true},
+  xAxis:{type:'value', axisLabel:{fontSize:11}},
+  yAxis:{type:'category', data:ISSUE_TYPES.map(function(d){return d[0];}).reverse(), axisLabel:{fontSize:11}},
+  series:[{type:'bar', data:ISSUE_TYPES.map(function(d){return d[1];}).reverse(), barWidth:14,
+    itemStyle:{color:'#0F766E'}, label:{show:true, position:'right', fontSize:11}}
+  ]
+});
+
+// 3.3 模块问题数 Top15
+(function(){
+  var top = MODULES.slice().sort(function(a,b){return b.iss-a.iss;}).slice(0,15).reverse();
+  initChart('chIssueTop', {
+    tooltip:{trigger:'axis', triggerOn:'mousemove|click', renderMode:'richText', confine:true},
+    grid:{left:56, right:32, top:12, bottom:24, containLabel:true},
+    xAxis:{type:'value', axisLabel:{fontSize:10}},
+    yAxis:{type:'category', data:top.map(function(m){return m.c;}), axisLabel:{fontSize:11}},
+    series:[{type:'bar', data:top.map(function(m){return m.iss;}), barWidth:13,
+      itemStyle:{color:'#B45309'}, label:{show:true, position:'right', fontSize:10}}
+    ]
+  });
+})();
+
+// 3.4 模块菜单规模 Top10
+(function(){
+  var top = MODULES.slice().sort(function(a,b){return b.nav-a.nav;}).slice(0,10).reverse();
+  initChart('chNavTop', {
+    tooltip:{trigger:'axis', triggerOn:'mousemove|click', renderMode:'richText', confine:true},
+    grid:{left:56, right:32, top:12, bottom:24, containLabel:true},
+    xAxis:{type:'value', axisLabel:{fontSize:10}},
+    yAxis:{type:'category', data:top.map(function(m){return m.c;}), axisLabel:{fontSize:11}},
+    series:[{type:'bar', data:top.map(function(m){return m.nav;}), barWidth:13,
+      itemStyle:{color:'#0F766E'}, label:{show:true, position:'right', fontSize:10}}
+    ]
+  });
+})();
+
+// 3.5 四维热力图
+(function(){
+  var dims = [['DB菜单','db'],['前端菜单','nav'],['后端API','api'],['数据库表','tb']];
+  var maxes = {};
+  dims.forEach(function(d){ maxes[d[1]] = Math.max.apply(null, MODULES.map(function(m){return m[d[1]];})); });
+  var value = [], yNames = [];
+  MODULES.forEach(function(m, idx){
+    yNames.push(m.c);
+    dims.forEach(function(d, di){
+      value.push([di, idx, +(m[d[1]] / maxes[d[1]]).toFixed(2)]);
+    });
+  });
+  initChart('chHeat', {
+    title:{text:'35 模块 × 4 维度规模热力图', left:8, top:6, textStyle:{fontSize:14}},
+    tooltip:{trigger:'item', triggerOn:'mousemove|click', renderMode:'richText', confine:true,
+      formatter:function(p){
+        var m = MODULES[p.value[1]], d = dims[p.value[0]];
+        var real = m[d[1]];
+        return '模块 ' + m.c + String.fromCharCode(10) + d[0] + '：' + real + '（归一化 ' + p.value[2] + '）';
+      }},
+    grid:{left:56, right:90, top:40, bottom:24, containLabel:true},
+    xAxis:{type:'category', data:['DB菜单','前端菜单','后端API','数据库表'], axisLabel:{fontSize:11}},
+    yAxis:{type:'category', data:yNames, axisLabel:{fontSize:10}},
+    visualMap:{min:0, max:1, orient:'vertical', right:8, top:'center',
+      text:['高','低'], textStyle:{fontSize:10},
+      inRange:{color:['#F6F8FB','#99C6C1','#0F766E']}},
+    series:[{type:'heatmap', data:value, label:{show:false}}]
+  });
+})();
+
+// 4.1 架构五维雷达
+initChart('chArch', {
+  tooltip:{trigger:'item', triggerOn:'mousemove|click', renderMode:'richText', confine:true},
+  radar:{indicator:[
+    {name:'目录设置', max:5}, {name:'公共模块复用', max:5}, {name:'UI一致性', max:5},
+    {name:'文档分类', max:5}, {name:'数据统一', max:5}
+  ], radius:'62%', axisName:{fontSize:12}},
+  series:[{type:'radar', data:[{value:[3,2,2.5,2,2], name:'评分',
+    areaStyle:{opacity:0.15}, itemStyle:{color:'#0F766E'}}],
+    label:{show:true, fontSize:11, formatter:function(p){return p.value;}}}]
+});
+
+// 5.2 菜单前后对比
+initChart('chMenuBA', {
+  tooltip:{trigger:'axis', triggerOn:'mousemove|click', renderMode:'richText', confine:true},
+  legend:{data:['优化前','优化后'], top:6, textStyle:{fontSize:11}},
+  grid:{left:70, right:20, top:40, bottom:24, containLabel:true},
+  xAxis:{type:'category', data:['一级菜单','二级模块','菜单项总数','每模块平均项数'],
+    axisLabel:{fontSize:11, interval:0}},
+  yAxis:{type:'value', axisLabel:{fontSize:10}},
+  series:[
+    {name:'优化前', type:'bar', data:[35,35,452,12.9], barWidth:22, itemStyle:{color:'#B45309'},
+      label:{show:true, position:'top', fontSize:10}},
+    {name:'优化后', type:'bar', data:[10,31,160,5], barWidth:22, itemStyle:{color:'#0F766E'},
+      label:{show:true, position:'top', fontSize:10}}
+  ]
+});
+
+// 3.6 矩阵总表
+(function(){
+  var rows = MODULES.slice().sort(function(a,b){return b.iss-a.iss;});
+  var body = rows.map(function(m){
+    var main = [];
+    if(m.db === 0 && m.nav > 0) main.push('无DB菜单');
+    if(m.api === 0 && m.nav > 0) main.push('无后端');
+    if(m.tb === 0 && m.api > 0) main.push('无专属表');
+    if(m.iss >= 6) main.push('重叠/重复密集');
+    if(main.length === 0) main.push(m.iss > 0 ? '部分不一致' : '基本对齐');
+    var cls = m.iss >= 6 ? 'bad' : (m.iss >= 3 ? 'mid' : 'good');
+    return '<tr><td><b>' + m.c + '</b></td><td class="num">' + m.db + '</td><td class="num">' + m.nav +
+      '</td><td class="num">' + m.rt + '</td><td class="num">' + m.api + '</td><td class="num">' + m.tb +
+      '</td><td class="num ' + cls + '">' + m.iss + '</td><td>' + main.join('；') + '</td></tr>';
+  }).join('');
+  document.getElementById('matTable').insertAdjacentHTML('beforeend', body);
+})();
+</script>
+</body>
+</html>
