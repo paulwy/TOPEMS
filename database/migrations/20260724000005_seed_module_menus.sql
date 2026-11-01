@@ -14,7 +14,8 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order;
+    sort_order = EXCLUDED.sort_order
+    permissions = EXCLUDED.permissions;
 
 -- Menu items for 财务管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -62,7 +63,8 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order;
+    sort_order = EXCLUDED.sort_order
+    permissions = EXCLUDED.permissions;
 
 -- Menu items for 生产执行
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -72,10 +74,10 @@ FROM (VALUES
     ('mes-production-record', '生产记录', 'ScrollText', 2, '/mes/production-record', 'mes:production_record:read', 'mes_analytics'),
     ('mes-work-report', '工作报告', 'FileCheck', 3, '/mes/work-report', 'mes:work_report:read', 'mes_analytics'),
     ('mes-equipment-oee', '设备OEE', 'Gauge', 4, '/mes/equipment-oee', 'mes:oee:read', 'mes_analytics'),
-    ('mes-production-dashboard', '生产总览', 'BarChart3', 5, '/mes/production-dashboard', 'mes:read', 'mes_analytics'),
-    ('mes-production-cost', '生产成本核算', 'DollarSign', 6, '/mes/production-cost', 'mes:read', 'mes_analytics'),
-    ('mes-energy-management', '能耗管理', 'Zap', 7, '/mes/energy-management', 'mes:read', 'mes_analytics'),
-    ('mes-anomaly-detection', '异常预警', 'AlertTriangle', 8, '/mes/anomaly-detection', 'mes:read', 'mes_analytics'),
+    ('mes-production-dashboard', '生产总览', 'BarChart3', 5, '/mes/production-dashboard', 'mes:production_dashboard:read', 'mes_analytics'),
+    ('mes-production-cost', '生产成本核算', 'DollarSign', 6, '/mes/production-cost', 'mes:production_cost:read', 'mes_analytics'),
+    ('mes-energy-management', '能耗管理', 'Zap', 7, '/mes/energy-management', 'mes:energy_management:read', 'mes_analytics'),
+    ('mes-anomaly-detection', '异常预警', 'AlertTriangle', 8, '/mes/anomaly-detection', 'mes:anomaly_detection:read', 'mes_analytics'),
     ('mes-production-orders', '生产订单', 'ClipboardList', 1, '/mes/production-orders', 'mes:production_order:read', 'mes_business'),
     ('mes-work-orders', '工单管理', 'FileText', 2, '/mes/work-orders', 'mes:work_order:read', 'mes_business'),
     ('mes-equipment', '设备管理', 'Wrench', 3, '/mes/equipment', 'mes:equipment:read', 'mes_business'),
@@ -84,7 +86,7 @@ FROM (VALUES
     ('mes-material-requirement', '物料需求', 'Package', 6, '/mes/material-requirement', 'mes:material:read', 'mes_business'),
     ('mes-work-order', '工单管理(新)', 'ClipboardList', 7, '/mes/work-order', 'mes:work_order:read', 'mes_business'),
     ('mes-quality', '质量管理', 'CheckCircle', 8, '/mes/quality', 'mes:quality:read', 'mes_business'),
-    ('mes-dashboard', '仪表盘', 'LayoutDashboard', 0, '/mes/dashboard', 'mes:read', 'mes_overview'),
+    ('mes-dashboard', '仪表盘', 'LayoutDashboard', 0, '/mes/dashboard', 'mes:dashboard:read', 'mes_overview'),
     ('mes-process-routes', '工艺路线', 'Route', 1, '/mes/process-routes', 'mes:process_route:read', 'mes_process'),
     ('mes-process-flow', '工艺流程', 'GitBranch', 2, '/mes/process-flow', 'mes:process_flow:read', 'mes_process'),
     ('mes-production-process', '生产过程', 'Activity', 3, '/mes/production-process', 'mes:production_process:read', 'mes_process'),
@@ -118,7 +120,8 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order;
+    sort_order = EXCLUDED.sort_order
+    permissions = EXCLUDED.permissions;
 
 -- Menu items for 人力资源
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -165,7 +168,8 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order;
+    sort_order = EXCLUDED.sort_order
+    permissions = EXCLUDED.permissions;
 
 -- Menu items for 产品数据
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -184,7 +188,7 @@ FROM (VALUES
     ('pdm-batch', '批次管理', 'Hash', 10, '/pdm/batch', 'pdm:batch:read', 'pdm_business'),
     ('pdm-step', '步骤管理', 'CircleDot', 11, '/pdm/step', 'pdm:step:read', 'pdm_business'),
     ('pdm-product-category', '产品类别', 'Tags', 12, '/pdm/product-category', 'pdm:product_category:read', 'pdm_business'),
-    ('pdm-dashboard', '仪表盘', 'LayoutDashboard', 0, '/pdm/dashboard', 'pdm:read', 'pdm_overview'),
+    ('pdm-dashboard', '仪表盘', 'LayoutDashboard', 0, '/pdm/dashboard', 'pdm:dashboard:read', 'pdm_overview'),
     ('pdm-version', '版本管理', 'Tag', 1, '/pdm/version', 'pdm:version:read', 'pdm_process'),
     ('pdm-change', '变更管理', 'RefreshCw', 2, '/pdm/change', 'pdm:change:read', 'pdm_process')
 ) AS v(code, name, icon, sort_order, path, permission, group_code)
@@ -212,7 +216,8 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order;
+    sort_order = EXCLUDED.sort_order
+    permissions = EXCLUDED.permissions;
 
 -- Menu items for 仓储管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -259,7 +264,8 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order;
+    sort_order = EXCLUDED.sort_order
+    permissions = EXCLUDED.permissions;
 
 -- Menu items for 安全环保
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -275,7 +281,7 @@ FROM (VALUES
     ('ehs-hazardous-material', '危化品管理', 'FlaskConical', 7, '/ehs/hazardous-material', 'ehs:hazardous_material:read', 'ehs_business'),
     ('ehs-emergency', '应急管理', 'Zap', 8, '/ehs/emergency', 'ehs:emergency:read', 'ehs_business'),
     ('ehs-incident-report', '事件报告', 'FileText', 9, '/ehs/incident-report', 'ehs:incident:read', 'ehs_business'),
-    ('ehs-dashboard', '仪表盘', 'LayoutDashboard', 0, '/ehs/dashboard', 'ehs:read', 'ehs_overview'),
+    ('ehs-dashboard', '仪表盘', 'LayoutDashboard', 0, '/ehs/dashboard', 'ehs:dashboard:read', 'ehs_overview'),
     ('ehs-plan', '工作计划', 'Calendar', 1, '/ehs/plan', 'ehs:plan:read', 'ehs_process'),
     ('ehs-training', '培训管理', 'GraduationCap', 2, '/ehs/training', 'ehs:training:read', 'ehs_process'),
     ('ehs-drill', '应急演练', 'LifeBuoy', 3, '/ehs/drill', 'ehs:drill:read', 'ehs_process')
@@ -304,7 +310,8 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order;
+    sort_order = EXCLUDED.sort_order
+    permissions = EXCLUDED.permissions;
 
 -- Menu items for 实验室管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -321,7 +328,7 @@ FROM (VALUES
     ('lims-instrument', '仪器设备', 'Microscope', 6, '/lims/instrument', 'lims:instrument:read', 'lims_business'),
     ('lims-instrument-maintenance', '仪器维护', 'Wrench', 7, '/lims/instrument-maintenance', 'lims:instrument:write', 'lims_business'),
     ('lims-reagent', '试剂管理', 'FlaskRound', 8, '/lims/reagent', 'lims:reagent:read', 'lims_business'),
-    ('lims-dashboard', '仪表盘', 'LayoutDashboard', 0, '/lims/dashboard', 'lims:read', 'lims_overview'),
+    ('lims-dashboard', '仪表盘', 'LayoutDashboard', 0, '/lims/dashboard', 'lims:dashboard:read', 'lims_overview'),
     ('lims-test-method', '测试方法', 'FileText', 1, '/lims/test-method', 'lims:test_method:read', 'lims_settings'),
     ('lims-barcode', '条码管理', 'Barcode', 2, '/lims/barcode', 'lims:barcode:read', 'lims_settings')
 ) AS v(code, name, icon, sort_order, path, permission, group_code)
@@ -349,7 +356,8 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order;
+    sort_order = EXCLUDED.sort_order
+    permissions = EXCLUDED.permissions;
 
 -- Menu items for 客户关系
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -362,10 +370,10 @@ FROM (VALUES
     ('crm-interactions', '互动记录', 'MessageSquare', 4, '/crm/interactions', 'crm:interaction:read', 'crm_business'),
     ('crm-returns', '退货/售后', 'RotateCcw', 5, '/crm/returns', 'crm:return:read', 'crm_business'),
     ('crm-customer-segmentation', '客户分群', 'Layers', 6, '/crm/customer-segmentation', 'crm:segmentation:read', 'crm_business'),
-    ('crm-customer-scoring', '客户评分', 'Award', 7, '/crm/customer-scoring', 'crm:scoring:read', 'crm_business'),
+    ('crm-customer-scoring', '客户评分', 'Award', 7, '/crm/customer-scoring', 'crm:customer_scoring:read', 'crm_business'),
     ('crm-dashboard', '仪表盘', 'LayoutDashboard', 0, '/crm/dashboard', 'crm:read', 'crm_overview'),
-    ('crm-sales-funnel', '销售漏斗', 'TrendingUp', 1, '/crm/sales-funnel', 'crm:funnel:read', 'crm_process'),
-    ('crm-sales-forecast', '销售预测', 'BarChart3', 2, '/crm/sales-forecast', 'crm:forecast:read', 'crm_process'),
+    ('crm-sales-funnel', '销售漏斗', 'TrendingUp', 1, '/crm/sales-funnel', 'crm:sales_funnel:read', 'crm_process'),
+    ('crm-sales-forecast', '销售预测', 'BarChart3', 2, '/crm/sales-forecast', 'crm:sales_forecast:read', 'crm_process'),
     ('crm-billing', '计费管理', 'CreditCard', 3, '/crm/billing', 'crm:billing:read', 'crm_process')
 ) AS v(code, name, icon, sort_order, path, permission, group_code)
 JOIN core_menu_groups g ON g.code = v.group_code AND g.tenant_id = '00000000-0000-0000-0000-000000000001'
@@ -392,7 +400,8 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order;
+    sort_order = EXCLUDED.sort_order
+    permissions = EXCLUDED.permissions;
 
 -- Menu items for 质量管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -404,7 +413,7 @@ FROM (VALUES
     ('qms-quality-control', '质量控制', 'ClipboardList', 2, '/qms/quality-control', 'qms:quality_control:read', 'qms_business'),
     ('qms-nonconformance', '不合格品', 'XCircle', 3, '/qms/nonconformance', 'qms:nonconformance:read', 'qms_business'),
     ('qms-standards', '质量标准', 'FileText', 4, '/qms/standards', 'qms:standard:read', 'qms_business'),
-    ('qms-dashboard', '仪表盘', 'LayoutDashboard', 0, '/qms/dashboard', 'qms:read', 'qms_overview'),
+    ('qms-dashboard', '仪表盘', 'LayoutDashboard', 0, '/qms/dashboard', 'qms:dashboard:read', 'qms_overview'),
     ('qms-audit-management', '审核管理', 'SearchCheck', 1, '/qms/audit-management', 'qms:audit:read', 'qms_process'),
     ('qms-apqp', 'APQP管理', 'BookOpen', 2, '/qms/apqp', 'qms:apqp:read', 'qms_process'),
     ('qms-fmea', 'FMEA分析', 'AlertTriangle', 3, '/qms/fmea', 'qms:fmea:read', 'qms_process'),
@@ -434,7 +443,8 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order;
+    sort_order = EXCLUDED.sort_order
+    permissions = EXCLUDED.permissions;
 
 -- Menu items for 供应链管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -481,7 +491,8 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order;
+    sort_order = EXCLUDED.sort_order
+    permissions = EXCLUDED.permissions;
 
 -- Menu items for 供应商关系
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -526,17 +537,18 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order;
+    sort_order = EXCLUDED.sort_order
+    permissions = EXCLUDED.permissions;
 
 -- Menu items for 报表中心
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
 SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000001', g.id, v.name, v.code, v.path, v.icon, v.sort_order, 'active', json_build_object('permission', v.permission)
 FROM (VALUES
-    ('report-list', '报表列表', 'List', 1, '/report/list', 'report:read', 'report_business'),
+    ('report-list', '报表列表', 'List', 1, '/report/list', 'report:dashboard:read', 'report_business'),
     ('report-design', '报表设计', 'Wand2', 2, '/report/design', 'report:design:write', 'report_business'),
     ('report-builder', '报表构建', 'Blocks', 3, '/report/builder', 'report:builder:write', 'report_business'),
-    ('report-report', '报表', 'FileSpreadsheet', 4, '/report/report', 'report:read', 'report_business'),
-    ('report-dashboard', '报表中心', 'LayoutDashboard', 0, '/report/dashboard', 'report:read', 'report_overview'),
+    ('report-report', '报表', 'FileSpreadsheet', 4, '/report/report', 'report:dashboard:read', 'report_business'),
+    ('report-dashboard', '报表中心', 'LayoutDashboard', 0, '/report/dashboard', 'report:dashboard:read', 'report_overview'),
     ('report-schedule', '定时任务', 'Clock', 1, '/report/schedule', 'report:schedule:read', 'report_process'),
     ('report-subscription', '报表订阅', 'Bell', 2, '/report/subscription', 'report:subscription:read', 'report_process'),
     ('report-template', '模板管理', 'FolderKanban', 1, '/report/template', 'report:template:read', 'report_settings')
@@ -565,7 +577,8 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order;
+    sort_order = EXCLUDED.sort_order
+    permissions = EXCLUDED.permissions;
 
 -- Menu items for 项目管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)

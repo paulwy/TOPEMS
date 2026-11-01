@@ -1,3 +1,13 @@
+## 批 4 第十批：PERM_MISMATCH 延伸（B 类映射修正 + A 类 DB 菜单种子宽码对齐）（2026-11-02）✅
+
+> 目标：整改计划 L34-181 列出的 P3 PERM_MISMATCH 项。分两类：B 类（前端 menuPermissions.ts 菜单→权限映射与路由 requiredPermissions 不一致）、A 类（DB 菜单种子宽码 vs FE 路由细码）。
+
+- **B 类（menuPermissions.ts 11 处修正 + integration 8 条补映射 + ticket 归一 4 处）**：/bi/visualization→bi:visualization:read、/bi/report→bi:report:read、/bi/dataset→bi:dataset:read（删旧 bi:dashboard:read 两行）、/admin/monitor→admin:monitor:read、/admin/system-settings→admin:system:write、/iam/user→iam:user:read、/gis/map→gis:map:read、/gis/fence→gis:fence:read、/im/mail→im:mail:read、/scm/overview→scm:overview:read、/scm/price-comparison→scm:price_comparison:read；integration 8 条（dashboard/connections/mappings/events/erp-overview/lims-qms/mes-erp/wms-scm → integration:{dashboard,connection,mapping,event,erp,lims,mes,wms}:read）。ticket/config.ts 4 处 system:center:read→ticket:dashboard:read（残留 0）。
+- **A 类（DB 菜单种子 15 行宽码→FE 细码）**：mes 5 处（dashboard/production-dashboard/production-cost/energy-management/anomaly-detection）+ pdm/ehs/lims/qms dashboard + report 3 处（list/report/dashboard）→ report:dashboard:read + crm 3 处（customer-scoring/sales-funnel/sales-forecast）。已应用 live（运行时权威 mes.core_menus tenant 0001，unified-core 无前缀查询命中）。
+- **顺带修复**：seed_module_menus.sql 13 个 DO UPDATE 块缺 `permissions = EXCLUDED.permissions` 列（历史缺陷，导致种子重跑不更新菜单权限）。
+- **无需修改**：srm-scoring-dimension（FE 路由与 DB 种子一致共用 srm:evaluation:read，仅语义无独立码）、aps:*（DB 已有 7 码，核实存在）。
+- **验证（全绿）**：① navigation 套件 25/25 PASS；② tsc EXIT 0；③ eslint 清零；④ verify_navigation 总缺失 2（P5 存量，无新增）；⑤ perm-matrix 仅存量 R5；⑥ 浏览器实测：工单中心（工单概览/工单中心）、客户管理（销售漏斗/销售预测/客户评分）、供应链（供应链概览/价格对比）菜单全部正常渲染。
+
 ## 批 4 第九批：权限码 FE 417/BE 846 统一专项（master 归一 + 39 码补录，2026-11-02）✅
 
 > 目标：审计 L197 结论3"权限码前端 413 / 后端 846 严重分裂"、整改计划 L206 P3"权限码 FE/BE 统一专项"、L110 master 模块三种风格并存。盘点：前端 FE 权限码全集 417（config.ts permission/requiredPermissions + config/permissions.ts 注册表）；后端签发权威为 **public.core_permissions**（unified-core iam 查询表，live 1033 码；mes.core_permissions 为另一张非权威表）。差异：38 个前端使用但未签发码 + finance:period:read（init SQL 中 resource/action 拆分错误 period_read 且活库缺失）。

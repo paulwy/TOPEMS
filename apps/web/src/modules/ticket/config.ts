@@ -39,7 +39,7 @@ const ticketCenterRoute: RouteConfigV2<TicketCenterPageProps> = {
   titleKey: 'ticket.nav.ticket-center',
   template: 'list',
   group: 'business',
-  requiredPermissions: ['system:center:read'],
+  requiredPermissions: ['ticket:dashboard:read'],
   action: 'read',
 };
 
@@ -54,7 +54,7 @@ export const ticketModuleConfig: RouteModuleConfig = {
   status: 'online',
   order: 6,
   description: i18n.t('ticket.nav.module_name_desc'),
-  permission: 'system:center:read',
+  permission: 'ticket:dashboard:read',
   routes: [dashboardRoute, ticketCenterRoute],
 };
 
@@ -64,7 +64,7 @@ export const ticketNavConfig: ModuleNavConfig = {
   nameKey: 'ticket.nav.module_name',
   icon: 'Ticket',
   path: TICKET_PATHS.root,
-  permission: 'system:center:read',
+  permission: 'ticket:dashboard:read',
   source: 'core',
   suite: 'collaboration',
   status: 'online',
@@ -89,7 +89,7 @@ export const ticketNavConfig: ModuleNavConfig = {
       labelKey: 'ticket.nav.ticket-center',
       icon: 'Ticket',
       path: TICKET_PATHS.center,
-      permission: 'system:center:read',
+      permission: 'ticket:dashboard:read',
       order: 1,
       group: 'business',
       showInTabs: true,
