@@ -586,5 +586,65 @@ describe('NavigationRegistryV2 Edge Cases', () => {
       expect(codes).not.toContain('srm-order');
       expect(codes).toContain('srm-product');
     });
+
+    it('getSidebarNavItems 应排除供应商主数据跨模块副本（scm/wms → srm，批4）', () => {
+      registry.registerModule({
+        code: 'test-supplier-scm',
+        name: 'SCM Supplier',
+        icon: 'Test',
+        path: '/test-supplier-scm',
+        source: 'core',
+        navItems: [
+          {
+            code: 'scm-purchase-orders',
+            path: '/test-supplier-scm/orders',
+            label: '采购订单',
+            icon: 'Test',
+          },
+          {
+            code: 'scm-suppliers',
+            path: '/test-supplier-scm/suppliers',
+            label: '供应商',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+        ],
+      });
+      registry.registerModule({
+        code: 'test-supplier-wms',
+        name: 'WMS Supplier',
+        icon: 'Test',
+        path: '/test-supplier-wms',
+        source: 'core',
+        navItems: [
+          {
+            code: 'wms-batches',
+            path: '/test-supplier-wms/batches',
+            label: '批次',
+            icon: 'Test',
+          },
+          {
+            code: 'wms-supplier-management',
+            path: '/test-supplier-wms/suppliers',
+            label: '供应商',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+        ],
+      });
+      registeredCodes.push('test-supplier-scm', 'test-supplier-wms');
+
+      const scmCodes = registry
+        .getSidebarNavItems('test-supplier-scm', () => true)
+        .map((item) => item.code);
+      expect(scmCodes).not.toContain('scm-suppliers');
+      expect(scmCodes).toContain('scm-purchase-orders');
+
+      const wmsCodes = registry
+        .getSidebarNavItems('test-supplier-wms', () => true)
+        .map((item) => item.code);
+      expect(wmsCodes).not.toContain('wms-supplier-management');
+      expect(wmsCodes).toContain('wms-batches');
+    });
   });
 });

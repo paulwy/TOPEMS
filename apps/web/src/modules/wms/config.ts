@@ -661,6 +661,10 @@ export const wmsNavConfig: ModuleNavConfig = {
       permission: 'wms:supplier:read',
       order: 5,
       group: 'master',
+      // P3 批4：供应商主数据域唯一归属 srm（srm.suppliers 主数据源）。
+      // wms 无独立供应商后端（batches 仅存 supplier_id/name 快照，经 data_sync 消费），
+      // 供应商主数据入口侧边栏隐藏（路由/权限保留可直达）。
+      showInSidebar: false,
       description: i18n.t('wms.nav.wms-serial-number_desc'),
     },
     {

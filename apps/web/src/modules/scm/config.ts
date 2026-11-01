@@ -560,6 +560,10 @@ export const scmNavConfig: ModuleNavConfig = {
       permission: 'scm:supplier:read',
       order: 4,
       group: 'master',
+      // P3 批4：供应商主数据域唯一归属 srm（srm.suppliers 主数据源，scm 经 /sync/suppliers-from-srm 同步副本）。
+      // scm 保留采购流程特有功能（准入 scm-supplier-admission/评估 scm-supplier-evaluation/分级 scm-supplier-tier），
+      // 供应商主数据入口侧边栏隐藏（路由/权限保留可直达）；后端数据整合见 TODO P4/P5。
+      showInSidebar: false,
       description: i18n.t('scm.nav.scm-suppliers_desc'),
     },
     {

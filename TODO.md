@@ -1,3 +1,11 @@
+## 批 4 第四批：供应商×4 归属收敛（scm-suppliers/wms-supplier-management → srm，2 项）（2026-11-02）✅
+
+> 目标：审计 S-2 供应商管理重叠（scm/srm/wms/erp）收敛。盘点结论：srm.suppliers 为供应商主数据源（srm 模块=供应商关系管理，bidding 等模块均引用）；scm 经 `/sync/suppliers-from-srm` 同步（scm.suppliers 为副本）；wms 无独立供应商后端（batches 仅存 supplier_id/name 快照，经 data_sync 消费）；erp-supplier-management 第一批已收敛→srm。scm 保留采购流程特有功能：供应商准入（scm.supplier_admissions）/评估（scm.supplier_evaluations）/送货预约/分级（scm 特有表，非主数据副本）。
+
+- **收敛 2 项**：① `scm-suppliers`（scm/config.ts）加 `showInSidebar: false` + 归属注释（主数据归属 srm，scm 为同步副本；准入/评估/分级保留）；② `wms-supplier-management`（wms/config.ts）加 `showInSidebar: false` + 归属注释（wms 无独立后端，消费快照）。
+- **保留**：srm-supplier（主域）、scm-supplier-admission/evaluation/tier/delivery-appointment（scm 特有流程功能）。
+- **验证（全绿）**：① navigation 套件 28/28 PASS（edge-cases 21 用例，新增供应商收敛回归）；② `tsc --noEmit` EXIT 0；③ eslint 清零；④ `verify_navigation --strict` 无新增缺失；⑤ 浏览器实测：scm 侧"供应商"消失（准入/评估/送货预约/分级保留）、wms 侧"供应商"消失（仓库/批次/库存等保留）。
+
 ## 批 4 第三批：采购×3 归属收敛（srm-order → scm 采购订单，1 项）（2026-11-02）✅
 
 > 目标：审计 S-2 采购订单重叠（scm/srm/erp）收敛。盘点结论：scm.purchase_orders（申请→订单→收货闭环主流程，保留）+ srm.purchase_orders（供应商视角同语义双表）+ erp-purchase-order（第一批已收敛→scm）。wms 无采购入口。
