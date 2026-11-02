@@ -1,3 +1,18 @@
+## 批 5 第五批：MENU_ORPHAN iam/ai/integration/rd/notification/oa 补种（2026-11-02）✅
+
+> 目标：批量推进 MENU_ORPHAN 剩余模块——本批补 6 模块 56 项种子。
+
+- **补种**（新增 `20261102170000_menu_seed_iam_ai_integration_rd_notification_oa.sql`）：
+  - iam 2 组 + 5 项（dashboard/user/role/permission/company-structure）
+  - ai 4 组 + 13 项（dashboard/chat/code/document/knowledge/prompts/settings/assistant/dify-chat/businessCopilot/governanceDashboard/dsh-knowledge/dsh-rag）
+  - integration 5 组 + 9 项（dashboard/connections/mappings/events/erp/lims-qms/mes-erp/wms-scm/settings）
+  - rd 6 组 + 17 项（dashboard/overview/project/experiment/formula/material/code/build/test/bug/review/deploy/release/milestone/doc/report/settings）
+  - notification 3 组 + 7 项、oa 4 组 + 5 项
+  - core_menus 331→387。
+- **修正**：ai-code/rd-code path 提取误抓嵌套 module 对象（AI_PATHS.code 实为 /ai/code、/rd/code），已用真实 path。
+- **验证**：56 项全部在 DB；权限码 0 无效。
+- **遗留**：MENU_ORPHAN 剩余 5 行（gis/plugin/doc/workflow/ticket）待下一批补种。
+
 ## 批 5 第四批：MENU_ORPHAN admin/master/automation/monitor 补种（2026-11-02）✅
 
 > 目标：批量推进 MENU_ORPHAN 剩余模块——本批补 4 模块 44 项种子。
