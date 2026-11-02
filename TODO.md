@@ -1,3 +1,15 @@
+## 批 5 第十七批：遗留项处理——tms 旧表核销 + 迁移盘点评估（2026-11-02）✅
+
+> 审计整改后遗留工程项处置。
+
+- **tms 旧表 carriers/drivers 核销**：tms.carriers/tms.drivers（旧）与 tms.tms_carriers/tms.tms_drivers（新）双写表（DUPLICATE L83 已核销）；实测旧表 0 行数据（carriers 0 / drivers 0）——无数据迁移需求，新表 tms_carriers 1 行；旧表保留不删（避免破坏性）。
+- **迁移盘点**：_sqlx_migrations 已应用 479 / database/migrations 文件 539——约 60 个迁移未登记应用（20261024000017 之后）。分类：
+  ① **4 个破坏性迁移不应用**（core_schema_duplicates_cleanup / remove_legacy_ledger_tables / identity_tables_converge / menu_dedupe_delete，已确认排除）；
+  ② **批 4/5 手动 psql -f 应用的菜单/权限迁移**（20261101_* menu 系列）DB 已生效但未登记 _sqlx_migrations——幂等（ON CONFLICT）可重跑；
+  ③ **其余 DDL/INSERT**（ehs/mes/schema_defense 等约 50 个）未评估——含 ALTER TABLE 重复应用会报"列已存在"，需逐一核对是否已手动应用。
+- **风险记录**：手动应用与 _sqlx_migrations 登记不同步，下次自动迁移可能重跑已生效 DDL 报错——列为工程后续（schema_defense 校验/迁移登记治理）。
+- **master.governance(zh) i18n**：低优先级瑕疵（维度名 undefined），服务未运行无法浏览器实测，记录待后续。
+
 ## 批 5 第十六批：计划级 3 行核销——批 4/5/6 计划收尾（2026-11-02）✅
 
 > 计划级行（L219-221）状态核销。
