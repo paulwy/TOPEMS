@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './PurchaseOrderPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -389,10 +390,10 @@ const PurchaseOrderPage: React.FC = () => {
       sortable: true,
       render: (row) => (
         <div>
-          <div style={{ fontWeight: 600, color: 'var(--accent-primary)', marginBottom: 2 }}>
+          <div className={styles.il1}>
             {row.order_no}
           </div>
-          <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+          <div className={styles.il2}>
             {row.items_count} {t('erp.purchase_order.column.items_count_unit')}
           </div>
         </div>
@@ -403,10 +404,10 @@ const PurchaseOrderPage: React.FC = () => {
       header: t('erp.purchase_order.column.supplier'),
       render: (row) => (
         <div>
-          <div style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 2 }}>
+          <div className={styles.il3}>
             {row.supplier_name}
           </div>
-          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+          <div className={styles.il4}>
             {row.supplier_code}
           </div>
         </div>
@@ -418,7 +419,7 @@ const PurchaseOrderPage: React.FC = () => {
       align: 'right',
       sortable: true,
       render: (row) => (
-        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+        <span className={styles.il5}>
           {formatAmount(row.total_amount, row.currency)}
         </span>
       ),
@@ -443,9 +444,9 @@ const PurchaseOrderPage: React.FC = () => {
       key: 'buyer',
       header: t('erp.purchase_order.column.buyer'),
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+        <div className={styles.il6}>
           <div style={avatarCircle}>{row.buyer.charAt(0)}</div>
-          <span style={{ fontSize: 13 }}>{row.buyer}</span>
+          <span className={styles.il7}>{row.buyer}</span>
         </div>
       ),
     },
@@ -453,7 +454,7 @@ const PurchaseOrderPage: React.FC = () => {
       key: 'department',
       header: t('erp.purchase_order.column.department'),
       render: (row) => (
-        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{row.department}</span>
+        <span className={styles.il8}>{row.department}</span>
       ),
     },
     {
@@ -461,7 +462,7 @@ const PurchaseOrderPage: React.FC = () => {
       header: t('erp.purchase_order.column.expected_date'),
       sortable: true,
       render: (row) => (
-        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+        <span className={styles.il9}>
           {row.expected_date}
         </span>
       ),
@@ -472,7 +473,7 @@ const PurchaseOrderPage: React.FC = () => {
       align: 'right',
       width: 150,
       render: (row) => (
-        <div style={{ display: 'flex', gap: 'var(--space-1)', justifyContent: 'flex-end' }}>
+        <div className={styles.il10}>
           <Button
             size='sm'
             variant='ghost'
@@ -497,7 +498,7 @@ const PurchaseOrderPage: React.FC = () => {
             variant='ghost'
             leftIcon={<Trash2 size={14} />}
             onClick={() => deleteMutation.mutate(row.id)}
-            style={{ color: 'var(--error-500)' }}
+            className={styles.il11}
           >
             {t('erp.purchase_order.action.delete')}
           </Button>
@@ -516,19 +517,14 @@ const PurchaseOrderPage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={styles.il12}
             >
               <Input
                 placeholder={t('erp.purchase_order.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 280 }}
+                className={styles.il13}
               />
               <Select
                 value={departmentFilter}
@@ -548,10 +544,10 @@ const PurchaseOrderPage: React.FC = () => {
                     label: t('erp.purchase_order.department.admin'),
                   },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il14}
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div className={styles.il15}>
               <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
@@ -625,7 +621,7 @@ const PurchaseOrderPage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredOrders.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il16}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -653,23 +649,19 @@ const PurchaseOrderPage: React.FC = () => {
         size='lg'
       >
         {selectedOrder && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div className={styles.il17}>
             {/* 状态卡片 */}
             <Card>
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
+                className={styles.il18}
               >
                 <div>
                   <div style={heroOrder}>{selectedOrder.order_no}</div>
-                  <div style={{ fontSize: 'var(--text-base)', color: 'var(--text-secondary)' }}>
+                  <div className={styles.il19}>
                     {selectedOrder.supplier_name}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                <div className={styles.il20}>
                   <Badge variant={statusConfig[selectedOrder.status].variant}>
                     {statusConfig[selectedOrder.status].label}
                   </Badge>
@@ -686,7 +678,7 @@ const PurchaseOrderPage: React.FC = () => {
             {/* 基本信息 */}
             <Card title={t('erp.purchase_order.drawer.basic_info')}>
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
+                className={styles.il21}
               >
                 <InfoItem
                   label={t('erp.purchase_order.drawer.supplier_name')}
@@ -726,7 +718,7 @@ const PurchaseOrderPage: React.FC = () => {
             {/* 备注 */}
             {selectedOrder.remark && (
               <Card title={t('erp.purchase_order.drawer.remark')}>
-                <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                <p className={styles.il22}>
                   {selectedOrder.remark}
                 </p>
               </Card>
@@ -734,12 +726,12 @@ const PurchaseOrderPage: React.FC = () => {
 
             {/* 操作按钮 */}
             {selectedOrder.status === 'pending_approval' && (
-              <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
+              <div className={styles.il23}>
                 <Button
                   variant='ghost'
                   leftIcon={<XCircle size={16} />}
                   onClick={() => pushToast('info', t('erp.purchase_order.toast.rejected'))}
-                  style={{ color: 'var(--error-500)' }}
+                  className={styles.il24}
                 >
                   {t('erp.purchase_order.action.reject')}
                 </Button>
@@ -753,7 +745,7 @@ const PurchaseOrderPage: React.FC = () => {
               </div>
             )}
             {selectedOrder.status === 'approved' && (
-              <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
+              <div className={styles.il25}>
                 <Button
                   variant='primary'
                   leftIcon={<Truck size={16} />}
@@ -764,7 +756,7 @@ const PurchaseOrderPage: React.FC = () => {
               </div>
             )}
             {selectedOrder.status === 'ordered' && (
-              <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
+              <div className={styles.il26}>
                 <Button
                   variant='primary'
                   leftIcon={<CheckCircle size={16} />}
@@ -806,15 +798,15 @@ const PurchaseOrderPage: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+        <div className={styles.il27}>
+          <div className={styles.il28}>
             <div>
               <label
                 htmlFor='po-supplier'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                className={styles.il29}
               >
                 {t('erp.purchase_order.form.supplier')}{' '}
-                <span style={{ color: 'var(--text-error)' }}>*</span>
+                <span className={styles.il30}>*</span>
               </label>
               <Select
                 id='po-supplier'
@@ -825,7 +817,7 @@ const PurchaseOrderPage: React.FC = () => {
             <div>
               <label
                 htmlFor='po-buyer'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                className={styles.il31}
               >
                 {t('erp.purchase_order.form.buyer')}
               </label>
@@ -837,7 +829,7 @@ const PurchaseOrderPage: React.FC = () => {
             <div>
               <label
                 htmlFor='po-department'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                className={styles.il32}
               >
                 {t('erp.purchase_order.form.department')}
               </label>
@@ -863,7 +855,7 @@ const PurchaseOrderPage: React.FC = () => {
             <div>
               <label
                 htmlFor='po-priority'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                className={styles.il33}
               >
                 {t('erp.purchase_order.form.priority')}
               </label>
@@ -880,7 +872,7 @@ const PurchaseOrderPage: React.FC = () => {
             <div>
               <label
                 htmlFor='po-expected-date'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                className={styles.il34}
               >
                 {t('erp.purchase_order.form.expected_date')}
               </label>
@@ -892,7 +884,7 @@ const PurchaseOrderPage: React.FC = () => {
             <div>
               <label
                 htmlFor='po-currency'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                className={styles.il35}
               >
                 {t('erp.purchase_order.form.currency')}
               </label>
@@ -909,7 +901,7 @@ const PurchaseOrderPage: React.FC = () => {
           <div>
             <label
               htmlFor='po-remark'
-              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              className={styles.il36}
             >
               {t('erp.purchase_order.form.remark')}
             </label>
@@ -917,23 +909,13 @@ const PurchaseOrderPage: React.FC = () => {
               id='po-remark'
               rows={3}
               placeholder={t('erp.purchase_order.form.remark_placeholder')}
-              style={{
-                width: '100%',
-                padding: 'var(--space-3)',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-default)',
-                backgroundColor: 'var(--surface-1)',
-                color: 'var(--text-primary)',
-                fontSize: 14,
-                resize: 'vertical',
-                fontFamily: 'inherit',
-              }}
+              className={styles.il37}
             />
           </div>
           <div>
             <label
               htmlFor='field-1'
-              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              className={styles.il38}
             >
               {t('erp.purchase_order.form.attachment')}
             </label>
@@ -961,10 +943,10 @@ const PurchaseOrderPage: React.FC = () => {
 // 信息项组件
 const InfoItem: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
   <div>
-    <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', marginBottom: 4 }}>
+    <div className={styles.il39}>
       {label}
     </div>
-    <div style={{ fontSize: 'var(--text-base)', color: 'var(--text-primary)', fontWeight: 500 }}>
+    <div className={styles.il40}>
       {value}
     </div>
   </div>

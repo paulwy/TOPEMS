@@ -1,0 +1,234 @@
+/* src/pages/erp/PurchaseOrderPage.tsx 内联样式迁移（自动生成） */
+
+.il1 {
+  font-weight: 600px;
+  color: var(--accent-primary);
+  margin-bottom: 2px;
+}
+
+.il2 {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.il3 {
+  font-size: 13px;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.il4 {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.il5 {
+  font-weight: 600px;
+  color: var(--text-primary);
+}
+
+.il6 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.il7 {
+  font-size: 13px;
+}
+
+.il8 {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.il9 {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.il10 {
+  display: flex;
+  gap: var(--space-1);
+  justify-content: flex-end;
+}
+
+.il11 {
+  color: var(--error-500);
+}
+
+.il12 {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.il13 {
+  width: 280px;
+}
+
+.il14 {
+  width: 140px;
+}
+
+.il15 {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.il16 {
+  margin-top: var(--space-4);
+}
+
+.il17 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.il18 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.il19 {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+}
+
+.il20 {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.il21 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.il22 {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6px;
+}
+
+.il23 {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.il24 {
+  color: var(--error-500);
+}
+
+.il25 {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.il26 {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.il27 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.il28 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.il29 {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 500px;
+}
+
+.il30 {
+  color: var(--text-error);
+}
+
+.il31 {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 500px;
+}
+
+.il32 {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 500px;
+}
+
+.il33 {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 500px;
+}
+
+.il34 {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 500px;
+}
+
+.il35 {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 500px;
+}
+
+.il36 {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 500px;
+}
+
+.il37 {
+  width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background-color: var(--surface-1);
+  color: var(--text-primary);
+  font-size: 14px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.il38 {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 500px;
+}
+
+.il39 {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.il40 {
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  font-weight: 500px;
+}
