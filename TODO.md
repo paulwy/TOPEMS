@@ -7,6 +7,7 @@
   - 修复：首轮重写遗漏 MAX_RETRIES/RETRY_DELAY/BACKOFF_FACTOR/READY_TIMEOUT 变量行 → 已补回主脚本。
 - **ListPageTemplate 审计（P0 完成）**：组件 110 行健康；103 引用均为 import `@/components/templates` + 正常 props 使用（抽查 PmTemplatePage 3 / InspectionResultPage 2）→ **结论：无需拆分**（原排期项调整为审计，核销）。
 - **内联样式迁移 2363 处**：入 Next 批（Batch1 top8 文件 ~400 处迁 CSS Modules，每文件独立 commit + build 验证）。
+- **Batch1 内联样式迁移（完成）**：top8 中 7 文件迁 227 处静态内联样式 → CSS Modules（erp 40 / RedesignDemo 45 / DashboardPage 36 / ErrorBoundary 35 / MesWorkOrderPage 36 / PerformanceMonitorPage 20 / MapView 12 / gis index 3；动态 143 处保留）；每文件独立 commit；typecheck 0 错误 + build 通过；工具 /tmp/migrate3.py（数字→px、className 合并 cx、MesWorkOrderPage import 改名 css 避本地 styles 冲突）；MapView/gis 动态密集文件剩余静态按保守判定保留，Batch2 再补。
 
 ## topems / topems_prepare 账本治理（另案，2026-11-02）✅
 
