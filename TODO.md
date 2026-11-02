@@ -291,6 +291,11 @@
   产出 `docs/前端UI全面审计报告-2026-11-03.md` + `docs/前端页面清单-2026-11-03.csv`（518 路由/
   36 模块：页面文件 516、页面级测试 107（20.9%）、API 接线 464（90.4%）、e2e 83 spec 覆盖 45
   路由（8.7%）；7 模块零页面测试；三态 49/25/74%；10-07 缺陷复查 FieldSelector/mobile 端点已修复）。
+- ✅（2026-11-03 已执行）**P0 全量路由冒烟 e2e（可达性 100%）**：full-route-smoke.spec.ts 改造
+  （动态段 `:param` 占位 `1`，518 全覆盖）；8099 BFF + 8000 core + DB/Redis + 前端 dev 实跑 5 批，
+  运行时推导 **542 路由硬失败 0**（8.7% → 100%）；修复 3 个冒烟实跑缺陷：ObservabilityPanel.module.css
+  缺失（全局 blank）、crm/tags 双重前缀 /api/core/api、RateLimitConfigPage path_rules 对象↔数组转换。
+  报告 §5/§6 已更新，commit `...` push。
 - ✅（2026-11-03 已执行）TOPEMS 增量缓存清理：clean_target.sh --auto 130.9G → 30.7G（节省 100.2G，
   增量缓存 111.5G，最终产物保留）。
 - GitHub dependabot 提示 19 漏洞（1 critical、8 high、6 moderate、4 low）待治理（https://github.com/paulwy/TOPEMS/security/dependabot）。

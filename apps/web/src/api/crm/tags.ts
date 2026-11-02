@@ -33,11 +33,11 @@ export interface TagListResponse {
 
 export const tagApi = {
   list: (params: PaginationParams & { search?: string }) =>
-    apiClient.get<ApiResponse<TagListResponse>>('/api/crm/tags', { params }),
-  get: (id: string) => apiClient.get<ApiResponse<CrmTag>>(`/api/crm/tags/${id}`),
+    apiClient.crm.get<ApiResponse<TagListResponse>>('/tags', { params }),
+  get: (id: string) => apiClient.crm.get<ApiResponse<CrmTag>>(`/tags/${id}`),
   create: (data: CreateTagRequest) =>
-    apiClient.post<ApiResponse<{ id: string }>>('/api/crm/tags', data),
+    apiClient.crm.post<ApiResponse<{ id: string }>>('/tags', data),
   update: (id: string, data: UpdateTagRequest) =>
-    apiClient.put<ApiResponse<{ id: string }>>(`/api/crm/tags/${id}`, data),
-  remove: (id: string) => apiClient.delete<ApiResponse<string>>(`/api/crm/tags/${id}`),
+    apiClient.crm.put<ApiResponse<{ id: string }>>(`/tags/${id}`, data),
+  remove: (id: string) => apiClient.crm.delete<ApiResponse<string>>(`/tags/${id}`),
 };

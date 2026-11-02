@@ -1,0 +1,9 @@
+/* ObservabilityPanel 图标布局样式（il1/il2 用于指标行内的小图标） */
+.il1,
+.il2 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  flex-shrink: 0;
+}

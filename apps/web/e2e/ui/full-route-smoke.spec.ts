@@ -17,7 +17,8 @@
  * - B2：逐路由收集 console error 与 HTTP >=400 响应，过滤 vite/HMR/静态资源噪声。
  *
  * 路由清单**在运行时从源码重新推导**（正则解析 `_PATHS` 常量表），避免与源码漂移。
- * 含 `:param` 的动态段用占位值 `1` 替代。
+ * 含 `:param` 的动态段用占位值 `1` 替代（可达性冒烟：验证路由渲染不崩溃/不落 404，
+ * 详情页以占位 id 进入加载/空态即可，不做业务断言）。518 路由全覆盖（2026-11-03 P0）。
  *
  * 运行（单体模式必须显式指定后端地址，否则 apiLogin 失败 → mock token → 401 假失败）：
  *   API_URL=http://localhost:8099 pnpm exec playwright test e2e/ui/full-route-smoke.spec.ts \
@@ -54,7 +55,9 @@ function extractPaths(file: string): string[] {
 function buildInventory(webSrc: string): RouteEntry[] {
   const entries: RouteEntry[] = [];
   const push = (group: string, paths: string[]) =>
-    paths.filter((p) => !p.includes(':')).forEach((route) => entries.push({ group, route }));
+    paths.forEach((route) =>
+      entries.push({ group, route: route.includes(':') ? route.replace(/:[^/]+/g, '1') : route }),
+    );
 
   for (const f of ['dashboard.ts', 'common.ts', 'auth.ts']) {
     const abs = path.join(webSrc, 'routes', f);
@@ -78,7 +81,7 @@ function isNoise(text: string): boolean {
 
 test.describe('B1/B2 全路由巡检 smoke', () => {
   test('遍历路由清单：可达性 + 控制台洁净', async ({ browser }, testInfo) => {
-    // 479 条路由在 dev 模式单线程遍历超过 1h；支持 ROUTE_FILTER（group 前缀）分批并行
+    // 518 条路由在 dev 模式单线程遍历超过 1h；支持 ROUTE_FILTER（group 前缀）分批并行
     test.setTimeout(45 * 60 * 1000);
 
     const webSrc = path.resolve(path.dirname(testInfo.file), '../../src');

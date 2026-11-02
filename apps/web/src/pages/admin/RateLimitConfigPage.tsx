@@ -101,6 +101,31 @@ const DEFAULT_ANTI_REPLAY: AntiReplayConfig = {
   enforce_paths: [],
 };
 
+/**
+ * 后端 rate-limit config 的 path_rules 为 {path: rule} 对象形态，
+ * 前端组件期望 PathRule[] 数组 —— 入口转换（加载/重置）。
+ */
+const toPathRulesArray = (rules: unknown): PathRule[] => {
+  if (Array.isArray(rules)) return rules as PathRule[];
+  if (rules && typeof rules === 'object') {
+    return Object.entries(rules as Record<string, Partial<RateLimitRule>>).map(([path, rule]) => ({
+      path,
+      rule: {
+        requests: rule?.requests ?? 0,
+        window_secs: rule?.window_secs ?? 60,
+        priority: rule?.priority ?? 0,
+      },
+    }));
+  }
+  return [];
+};
+
+/** 前端 PathRule[] 转回后端 {path: rule} 对象形态 —— 出口转换（保存）。 */
+const toPathRulesObject = (rules: PathRule[]): Record<string, RateLimitRule> =>
+  Object.fromEntries(
+    rules.map((r) => [r.path, { requests: r.rule.requests, window_secs: r.rule.window_secs, priority: r.rule.priority }]),
+  );
+
 const RateLimitConfigPage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -119,7 +144,7 @@ const RateLimitConfigPage: React.FC = () => {
     queryFn: async () => {
       const res = await apiClient.core.get<RateLimitConfig>('/iam/v1/rate-limit/config');
       if (res.success && res.data) {
-        return res.data;
+        return { ...res.data, path_rules: toPathRulesArray(res.data.path_rules) };
       }
       return DEFAULT_CONFIG;
     },
@@ -154,7 +179,10 @@ const RateLimitConfigPage: React.FC = () => {
 
   const saveMutation = useMutation({
     mutationFn: async (next: RateLimitConfig) => {
-      const res = await apiClient.core.put<RateLimitConfig>('/iam/v1/rate-limit/config', next);
+      const res = await apiClient.core.put<RateLimitConfig>(
+        '/iam/v1/rate-limit/config',
+        { ...next, path_rules: toPathRulesObject(next.path_rules) },
+      );
       return res;
     },
     onSuccess: (res) => {
@@ -232,7 +260,7 @@ const RateLimitConfigPage: React.FC = () => {
     },
     onSuccess: (res) => {
       if (res.success && res.data) {
-        setConfig(res.data);
+        setConfig({ ...res.data, path_rules: toPathRulesArray(res.data.path_rules) });
         addNotification({
           title: t('admin.rate_limit_config_page.reset_done'),
           message: t('admin.rate_limit_config_page.rate_limit_config_reset'),
