@@ -1,3 +1,12 @@
+## RLS 覆盖率工程——第一子步：实时缺口盘点（2026-11-02）✅
+
+> 承接批 5 第十八批记录的 RLS 覆盖率工程排期；静态 SQL 扫描之后做 DB 实时核对，产出可执行缺口清单。
+
+- **盘点**（topems_test 实时）：含 tenant_id/org_id 列但表级 relrowsecurity=false 的表 **65 张**（排除系统 schema/_archive）。
+- **分类**：业务实体类 **29 张**（需补 RLS——ehs 7 / iam 8（dashboard_snapshots×6+permission_audit_logs+tenant_permissions）/ master_data 3 / finance 2 / lims 2 / mes 2 / scm 2 / plugin_erp 1 / pm 1 / public 1）+ 配置/系统类 **36 张**（core_* 等豁免，应用层权限控制）。
+- **清单**：`docs/security/rls-gap-inventory-20261102.md`（全量明细 + 补启方案）。
+- **下一步（第二子步，待指示/分批）**：业务类 29 张按模块分批 `ALTER TABLE ENABLE ROW LEVEL SECURITY` + 标准 tenant 策略；已确认有策略但未 enable 的表（如 core_dict_items/types）先只补 ENABLE。
+
 ## 长尾核销：mobile inventory/production 契约错位（2026-11-02）✅
 
 > 承接「遗留独立轨道」长尾项核销；批 4 第十四批最终验证（行 371：smoke 4667/4667 PASS、KNOWN 豁免 6→0、gap_list 清空）已证明闭环。
