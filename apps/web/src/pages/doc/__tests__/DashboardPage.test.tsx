@@ -56,12 +56,16 @@ describe('DashboardPage', () => {
       expect(screen.getByTestId('stat-card-total-documents')).toHaveTextContent('128');
     });
 
-    // 其余卡片渲染来自 mock 的数值（title 走 i18n key，测试环境未解析为中文，但 value 是真实数据）
+    // doc.status.* / doc.menu.template 别名补全后解析为中文标题，value 来自 mock 数值
+    expect(screen.getByTestId('stat-card-published-documents')).toHaveTextContent('已发布');
     expect(screen.getByTestId('stat-card-published-documents')).toHaveTextContent('96');
+    expect(screen.getByTestId('stat-card-draft-documents')).toHaveTextContent('草稿');
     expect(screen.getByTestId('stat-card-draft-documents')).toHaveTextContent('20');
+    expect(screen.getByTestId('stat-card-archived-documents')).toHaveTextContent('已归档');
     expect(screen.getByTestId('stat-card-archived-documents')).toHaveTextContent('12');
     expect(screen.getByTestId('stat-card-total-folders')).toHaveTextContent('文件夹');
     expect(screen.getByTestId('stat-card-total-folders')).toHaveTextContent('18');
+    expect(screen.getByTestId('stat-card-templates')).toHaveTextContent('模板');
     expect(screen.getByTestId('stat-card-templates')).toHaveTextContent('7');
   });
 });

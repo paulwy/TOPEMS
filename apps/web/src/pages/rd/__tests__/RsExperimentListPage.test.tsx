@@ -34,50 +34,6 @@ vi.mock('@/api/rd', () => ({
   },
 }));
 
-// Page uses named import { CrudPage } but global mock only ships default.
-// Re-implement a minimal CrudPage mock that mirrors the global one.
-vi.mock('@/components/templates/CrudPage', () => {
-  const React = require('react');
-  const CrudPage = ({ schema, apiAdapter }: any) => {
-    const { useState, useEffect } = React;
-    const [rows, setRows] = useState<any[]>([]);
-    useEffect(() => {
-      let active = true;
-      if (!apiAdapter?.list) return;
-      Promise.resolve(apiAdapter.list({ page: 1, pageSize: 1000 }))
-        .then((resp: any) => {
-          if (!active) return;
-          const items = resp?.data ?? (Array.isArray(resp) ? resp : []);
-          setRows(Array.isArray(items) ? items : []);
-        })
-        .catch(() => {});
-      return () => {
-        active = false;
-      };
-    }, [apiAdapter]);
-    const title = schema?.title || 'CRUD';
-    return React.createElement(
-      'div',
-      { 'data-testid': 'crud-page' },
-      React.createElement('h1', null, title),
-      ...rows.map((row: any, ri: number) =>
-        React.createElement(
-          'div',
-          { key: ri, 'data-testid': `crud-row-${ri}` },
-          ...(schema?.fields ?? []).map((f: any) =>
-            React.createElement(
-              'span',
-              { key: f.name, 'data-testid': `cell-${f.name}-${ri}` },
-              String(row[f.name] ?? '')
-            )
-          )
-        )
-      )
-    );
-  };
-  return { __esModule: true, default: CrudPage, CrudPage };
-});
-
 describe('RsExperimentListPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();

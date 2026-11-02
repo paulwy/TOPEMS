@@ -5,9 +5,8 @@ import { renderWithProviders, screen, waitFor } from '@/__tests__/test-utils';
 import ForecastManagementPage from '../ForecastManagementPage';
 
 // CrudPage 包装页：mock forecastApi.list 返回 data.items。
-// 注意：forecastSchema.title = i18n.t('pages.forecast_management_page.k3')，
-// 该 key 在 zh/pages.json 中为「删除中...」（疑似误用 key，应为 k4「需求预测管理（计算/验证）」）。
-// 此处按页面真实渲染结果断言，并在交付报告中记录该页面问题。
+// forecastSchema.title 已修正为 pages.forecast_management_page.k4
+// （zh =「需求预测管理（计算/验证）」，en = "Requirement Prediction Management( Calculate/ Validation)"）。
 vi.mock('@/api/aps', () => ({
   forecastApi: {
     list: vi.fn().mockResolvedValue({
@@ -48,11 +47,10 @@ describe('ForecastManagementPage', () => {
     vi.clearAllMocks();
   });
 
-  it('renders page heading（当前 schema.title 实际渲染为「删除中...」）', async () => {
+  it('renders page heading（需求预测管理（计算/验证））', async () => {
     renderWithProviders(<ForecastManagementPage />);
-    // 真实渲染结果：title key 误用导致显示「删除中...」
     expect(
-      await screen.findByRole('heading', { name: '删除中...' })
+      await screen.findByRole('heading', { name: '需求预测管理（计算/验证）' })
     ).toBeInTheDocument();
   });
 

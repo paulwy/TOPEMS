@@ -12,6 +12,19 @@
 > 根台账（2026-11-02 归档治理）：2026-11-01 前已完成段已归档至 `docs/archive/TODO-archive-2026-10-31.md`（177 段，原文保留）；本文件保留近期进行/未完成/11-01 起段与未标完成段。
 > 历史更早段（2026-10-08 前）如仍散落于本文件，按同一标准继续归档。
 
+## 前端质量工程收尾链 P1 遗留问题小修（2026-11-03）✅
+
+> 承接 P1 补页面级测试段：补测暴露的 5 项页面问题 + 1 项测试基建根因全部修复核销（commit 后推送 origin/main）。
+
+- **问题 1（aps schema title 误用）**：`schemas/aps/forecast.ts` title 误用 `pages.forecast_management_page.k3`（「删除中...」）→ 修复：title/createTitle/editTitle 三处统一改 `k4`（需求预测管理（计算/验证），zh/en 均存在）；同款排查 aps 其余 4 个 schema title（productionPlan/schedule/capacity/materialPlan）均无误用。ForecastManagementPage 测试断言同步更新（删除中...→正确标题），aps 模块 12 文件 24 测试全绿。
+- **问题 2（doc DocumentsPage key 冲突）**：复用 `pages.index.k15/k29`（进度/实验室检验统计报表）→ 修复：页头 h5→`doc.nav.doc-documents`、上传按钮→`doc.documents.upload`、uploading 态→`doc.documents.uploading`（顺带修掉串用的 k17「开始日期」）、删除文件夹失败通知→新增 `doc.documents.delete_folder_failed`；zh/en doc.json 同步补 key。doc 模块 6 文件 11 测试全绿。
+- **问题 3（rd headerContent 传函数未调用）**：`RsMaterialListPage.tsx` headerContent 定义为 `() => (...)` 却以函数引用传入 CrudPage（真实渲染报 "Functions are not valid as a React child"）→ 修复：改为直接 JSX 元素；同款排查 rd 20 页仅此一处。rd 模块 20 文件 32 测试全绿。
+- **问题 4（CrudPage 命名导入兼容）**：rd 9 页 `import { CrudPage } from '@/components/templates/CrudPage'` 与 setup-mocks 仅 default 导出不兼容 → 修复：setup-mocks.ts CrudPage mock 同时导出 `default` + `CrudPage` 命名导出；9 个测试文件内本地兜底 mock 整段删除，走全局 mock 端到端验证通过。
+- **问题 5（doc DashboardPage 嵌套 key）**：`doc.status.published/draft/archived`、`doc.menu.template` 与扁平 locale 不符（测试环境返回原 key）→ 修复：zh/en doc.json 顶层补 4 个扁平别名（纯增量、页面零改动）；DashboardPage 测试补 4 张卡片真实中文断言。
+- **monitor 4 页 headerContent 根因（同源基建）**：setup-mocks 的 CrudPage stub 直接 push 函数型 headerContent（区块被吞 + React 警告）→ 修复：stub 内对函数型 headerContent 自动调用 `headerContent(rows, rows.length)`；monitor 模块 7 文件 12 测试回归全绿。
+- **验证**：全量 `pnpm vitest run` 544 文件 / 6434 测试 0 失败；`tsc --noEmit` 0 错误。
+- **文档**：审计报告新增 §4.1.1 修复核销表；页面清单 CSV 无变化。
+
 ## 前端质量工程收尾链 P1：补页面级测试（2026-11-03）✅
 
 > 承接前端审计报告 §6 P1（页面测试 ≥35%）；7 零覆盖模块 68 页 + mes/wms/erp 低垂 6 页全量补齐，commit 后推送 origin/main。

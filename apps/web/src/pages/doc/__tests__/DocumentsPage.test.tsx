@@ -67,12 +67,12 @@ describe('DocumentsPage', () => {
   it('renders page header, search box and upload button', () => {
     renderWithProviders(<DocumentsPage />);
 
-    // header h5 标题（Typography variant=h5）
-    expect(screen.getByRole('heading', { level: 5 })).toBeInTheDocument();
+    // header h5 标题：doc.nav.doc-documents → 我的文档
+    expect(screen.getByRole('heading', { level: 5 })).toHaveTextContent('我的文档');
     // 搜索框（TextField input）
     expect(screen.getByRole('textbox')).toBeInTheDocument();
-    // 上传按钮（按钮组中最后一个 Button，含 Upload 图标 + span 文本）
-    // i18n key pages.index.k29 在测试环境解析为其他模块文案，改用按钮数量/结构断言
+    // 上传按钮：doc.documents.upload → 上传（未上传态）
+    expect(screen.getByRole('button', { name: '上传' })).toBeInTheDocument();
     const buttons = screen.getAllByRole('button');
     expect(buttons.length).toBeGreaterThanOrEqual(5);
   });

@@ -249,7 +249,7 @@ const DocumentsPage: React.FC = () => {
         } catch (err: unknown) {
           apiLogger.error(i18n.t('pages.index.k4'), err);
           addNotification({
-            title: i18n.t('pages.index.k15'),
+            title: i18n.t('doc.documents.delete_folder_failed'),
             message: i18n.t('pages.index.k16'),
             type: 'error',
           });
@@ -532,7 +532,7 @@ const DocumentsPage: React.FC = () => {
                 variant='h5'
                 sx={{ fontWeight: 700, color: 'grey.900' }}
               >
-                {i18n.t('pages.index.k15')}
+                {i18n.t('doc.nav.doc-documents')}
               </Typography>
               {selectedFolder && (
                 <Typography sx={{ color: 'grey.500' }}>/ {selectedFolder.name}</Typography>
@@ -619,7 +619,7 @@ const DocumentsPage: React.FC = () => {
                 disabled={uploading}
               >
                 <Upload sx={{ width: 16, height: 16, mr: 1 }} />
-                <span>{uploading ? i18n.t('pages.index.k17') : i18n.t('pages.index.k29')}</span>
+                <span>{uploading ? i18n.t('doc.documents.uploading') : i18n.t('doc.documents.upload')}</span>
               </Button>
               <input
                 ref={fileInputRef}

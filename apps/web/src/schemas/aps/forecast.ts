@@ -3,7 +3,7 @@ import i18n from '@/i18n';
 
 export const forecastSchema: EntitySchema = {
   entity: 'demand_forecast',
-  title: i18n.t('pages.forecast_management_page.k3'),
+  title: i18n.t('pages.forecast_management_page.k4'),
   description: i18n.t('pages.forecast_management_page.k4'),
 
   api: {
@@ -130,6 +130,6 @@ export const forecastSchema: EntitySchema = {
   actions: ['create', 'edit', 'detail', 'delete'],
 
   formColCount: 2,
-  createTitle: i18n.t('pages.forecast_management_page.k3'),
-  editTitle: i18n.t('pages.forecast_management_page.k3'),
+  createTitle: i18n.t('pages.forecast_management_page.k4'),
+  editTitle: i18n.t('pages.forecast_management_page.k4'),
 };

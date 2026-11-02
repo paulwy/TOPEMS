@@ -91,5 +91,10 @@
   "doc.nav.doc-knowledge-base": "知识库",
   "doc.nav.doc-knowledge-base_desc": "知识库",
   "doc.nav.doc-file-detail": "文件详情",
-  "doc.nav.doc-file-detail_desc": "文件详情"
+  "doc.nav.doc-file-detail_desc": "文件详情",
+  "doc.status.published": "已发布",
+  "doc.status.draft": "草稿",
+  "doc.status.archived": "已归档",
+  "doc.menu.template": "模板",
+  "doc.documents.delete_folder_failed": "删除文件夹失败"
 }

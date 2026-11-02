@@ -992,8 +992,7 @@ vi.mock('recharts', () => ({
 // ─── Mock CrudPage and complex template components ────────────────────────
 vi.mock('@/components/templates/CrudPage', () => {
   const React = require('react');
-  return {
-    default: ({ schema, apiAdapter, customRowActions, actions, headerContent, children }: any) => {
+  const CrudPageImpl = ({ schema, apiAdapter, customRowActions, actions, headerContent, children }: any) => {
       const { useState, useEffect } = React;
       const [rows, setRows] = useState<any[]>([]);
       const [loading, setLoading] = useState<boolean>(true);
@@ -1029,7 +1028,15 @@ vi.mock('@/components/templates/CrudPage', () => {
 
       const title = schema?.title || 'CRUD';
       const nodes: React.ReactNode[] = [React.createElement('h1', { key: '__t' }, title)];
-      if (headerContent) nodes.push(headerContent);
+      if (headerContent) {
+        // 函数型 headerContent（monitor/rd 等页面传 (rows, total) => JSX 或 () => JSX）
+        // 必须调用后才能作为 ReactNode 渲染，否则报 "Functions are not valid as a React child"
+        nodes.push(
+          typeof headerContent === 'function'
+            ? headerContent(rows, rows.length)
+            : headerContent
+        );
+      }
       if (loading) {
         nodes.push(
           React.createElement(
@@ -1068,8 +1075,9 @@ vi.mock('@/components/templates/CrudPage', () => {
       });
       if (children) nodes.push(children);
       return React.createElement('div', { 'data-testid': 'crud-page' }, ...nodes);
-    },
   };
+  // 同时提供 default 与命名导出 CrudPage：rd 等 8 页使用 `import { CrudPage } from '@/components/templates/CrudPage'`
+  return { default: CrudPageImpl, CrudPage: CrudPageImpl };
 });
 
 const __templateStub = ({ children }: any) => React.createElement('div', null, children);

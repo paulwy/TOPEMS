@@ -140,7 +140,7 @@ const RsMaterialListPage: React.FC = () => {
       onClick: () => {},
     },
   ];
-  const headerContent = () => (
+  const headerContent = (
     <Box>
       <Box
         sx={{
