@@ -1,4 +1,17 @@
 
+## 表级漂移补齐：topems@5432（452）+ 5433（130）缺失表闭环（2026-11-03）✅
+
+> 上轮挂账"表级漂移"闭环：pg_dump(test schema-only) + python 提取缺失表 CREATE/索引 → 重放目标库。
+
+- **方法**：test 为结构参照（pg_dump --schema-only --no-owner），python 按缺失清单提取 CREATE TABLE（含内联 FK/PK/CHECK）+ CREATE INDEX，psql 重放。FK 均在 CREATE TABLE 内（PG dump 无独立 ALTER ADD FK——初版"ADD CONSTRAINT 提取 0"是正常现象）。
+- **topems@5432**：452 表补齐（portal 118/iam 54/lims 44/public 43/flow 37 等）→ 缺失 0（924→1376）。
+- **5433**：130 表补齐（iam 52/flow 32 等）→ 缺失 0（1271→1401，仅余 _sqlx_test 测试表）。
+- **验证**：两库"test 有 目标无"= 0；health 200；_sqlx_migrations 账本未动（546，只补 DDL 不记账）。
+- **踩坑**：python 提取清单需竖线→点分隔转换（5433 版有、topems 版漏写导致提取 0）；CREATE INDEX 冲突 2 个（无 IF NOT EXISTS，表已建无碍）。
+- **反向表挂账**：5433 独有 74 表（public 46/mes 6/ehs 6 等——含 core_notification_* 等新迁移表）、topems 独有 49 表——非缺失，保留待甄别（可能是验证/迁移差异）。
+- **门禁现状**：check-consistency 仍 exit 1（反向表数不等）——缺失方向已清零，反向差异挂账。
+
+
 ## check-consistency.sh 表级漂移门禁增强 + 5433 表级漂移新发现（2026-11-03）✅
 
 > 上轮教训固化：账本/最新版本一致 ≠ 表结构一致。增强脚本加逐业务 schema 表数对比。
