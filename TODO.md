@@ -1,3 +1,15 @@
+## 前端 UI 审计 + WIP 目录核查（2026-11-02）✅
+
+> 承接「遗留独立轨道」排期项；只读审计 + 隔离区核查。
+
+- **前端 UI 审计**：
+  - 内联样式 `style={{` **2363 处**（记录 ~787 过时/口径差异）；top：gis/index.tsx 66、gis MapView 63、RedesignDemo 52、DashboardPage 51、ErrorBoundary 46、mes 工单 41、erp 采购单 41、admin 性能监控 40。
+  - ListPageTemplate 引用 **103 处**（拆分项确认）。
+  - scripts/topems.sh **3910 行**（28+ 函数、case 命令 30+ 段）——拆分项确认。
+  - **结论**：三子项排期均确认成立且量大（前端工程独立排期，非本批执行）。
+- **WIP 目录（database/migrations-wip）**：7/7 全跟踪（6 迁移 + README）；2026-10-23 审计已确认"有意滞留/已生效登记，符合隔离约定"→ **无需清理**（设计隔离区维持）。
+- **结论**：WIP 无需清理；前端三项入工程排期。
+
 ## prod 部署项收口：迁移登记 + NULLIF 形态 + menu 种子 + RLS batch1（2026-11-02）✅
 
 > 目标库确认：topems_prod（本机 5432，账本 537 缺 3）；.env 指向 topems_test 为开发链。
