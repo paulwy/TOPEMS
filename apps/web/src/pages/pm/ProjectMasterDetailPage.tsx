@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import styles from './ProjectMasterDetailPage.module.css';
 import {
   MasterDetailPageTemplate,
   type MasterColumn,
 } from '../../components/templates/MasterDetailPageTemplate';
+import { projectApi } from '@/api/pm/project';
 import i18n from '@/i18n';
 import { Box, Typography, Chip, Divider } from '@mui/material';
 import { Calendar, User, DollarSign, Target, CheckCircle } from 'lucide-react';
@@ -20,58 +22,63 @@ interface ProjectItem {
   budget: number;
   description?: string;
 }
-const initialProjects: ProjectItem[] = [
-  {
-    id: '1',
-    name: i18n.t('pm.project_master_detail_page.k0'),
-    manager: i18n.t('pm.project_master_detail_page.k1'),
-    status: 'active',
-    priority: 'high',
-    progress: 65,
-    startDate: '2026-01-15',
-    endDate: '2026-06-30',
-    budget: 500000,
-    description: i18n.t('pm.project_master_detail_page.k2'),
-  },
-  {
-    id: '2',
-    name: i18n.t('pm.project_master_detail_page.k3'),
-    manager: i18n.t('pm.project_master_detail_page.k4'),
-    status: 'active',
-    priority: 'medium',
-    progress: 30,
-    startDate: '2026-02-01',
-    endDate: '2026-05-15',
-    budget: 150000,
-    description: i18n.t('pm.project_master_detail_page.k5'),
-  },
-  {
-    id: '3',
-    name: i18n.t('pm.project_master_detail_page.k6'),
-    manager: i18n.t('pm.project_master_detail_page.k7'),
-    status: 'completed',
-    priority: 'high',
-    progress: 100,
-    startDate: '2025-08-01',
-    endDate: '2026-01-31',
-    budget: 300000,
-    description: i18n.t('pm.project_master_detail_page.k8'),
-  },
-  {
-    id: '4',
-    name: i18n.t('pm.project_master_detail_page.k9'),
-    manager: i18n.t('pm.project_master_detail_page.k10'),
-    status: 'inactive',
-    priority: 'medium',
-    progress: 20,
-    startDate: '2026-01-01',
-    endDate: '2026-12-31',
-    budget: 400000,
-    description: i18n.t('pm.project_master_detail_page.k11'),
-  },
-];
+
+/** 后端 status（draft/active/completed/closed…）→ 前端枚举 */
+const normalizeStatus = (s?: string | null): ProjectItem['status'] => {
+  switch (s) {
+    case 'completed':
+      return 'completed';
+    case 'inactive':
+    case 'closed':
+    case 'archived':
+      return 'inactive';
+    default:
+      return 'active'; // draft / active / planning → active
+  }
+};
+
+const normalizePriority = (p?: string | null): ProjectItem['priority'] => {
+  if (p === 'low' || p === 'high' || p === 'urgent') return p;
+  return 'medium';
+};
+
+const toDate = (iso?: string | null): string => (iso ? iso.slice(0, 10) : '');
+
+interface PmProjectRow {
+  id: string;
+  name: string;
+  leader?: string | null;
+  status?: string | null;
+  priority?: string | null;
+  progress?: number | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  budget?: number | null;
+  description?: string | null;
+}
+
+const toProjectItem = (p: PmProjectRow): ProjectItem => ({
+  id: p.id,
+  name: p.name,
+  manager: p.leader ?? '—',
+  status: normalizeStatus(p.status),
+  priority: normalizePriority(p.priority),
+  progress: p.progress ?? 0,
+  startDate: toDate(p.start_date),
+  endDate: toDate(p.end_date),
+  budget: p.budget ?? 0,
+  description: p.description ?? undefined,
+});
+
 export const ProjectMasterDetailPage: React.FC = () => {
-  const [projects] = useState<ProjectItem[]>(initialProjects);
+  const { data: projects = [] } = useQuery<ProjectItem[]>({
+    queryKey: ['pm-projects'],
+    queryFn: async () => {
+      const res = await projectApi.list({ page: 1, page_size: 100 });
+      const rows = (res.data as { data?: { projects?: PmProjectRow[] } }).data?.projects ?? [];
+      return rows.map(toProjectItem);
+    },
+  });
   const columns: MasterColumn<ProjectItem>[] = [
     {
       id: 'name',

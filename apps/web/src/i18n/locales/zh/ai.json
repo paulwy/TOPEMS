@@ -1138,5 +1138,6 @@
   "ai.dshRag.k36": "总数",
   "ai.dshRag.k37": "检索与协作",
   "ai.dshRag.k38": "RAG 统计",
-  "ai.dshRag.k39": "Agent 性能"
+  "ai.dshRag.k39": "Agent 性能",
+  "ai.chat.message.reply_failed": "AI 回复失败，请稍后重试"
 }

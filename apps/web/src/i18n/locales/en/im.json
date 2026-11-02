@@ -509,5 +509,13 @@
   "im.nav.im-mail": "Mail",
   "im.nav.module_name_desc": "IM",
   "im.nav.im-dashboard_desc": "IM Overview",
-  "im.nav.im-mail_desc": "Mail"
+  "im.nav.im-mail_desc": "Mail",
+  "im.dashboard_page.k3": "Total Rooms",
+  "im.dashboard_page.k4": "vs last period",
+  "im.dashboard_page.k5": "Group Chats",
+  "im.dashboard_page.k6": "Group rooms",
+  "im.dashboard_page.k7": "Direct Chats",
+  "im.dashboard_page.k8": "Direct/private rooms",
+  "im.dashboard_page.k9": "Total Members",
+  "im.dashboard_page.k10": "All room members"
 }

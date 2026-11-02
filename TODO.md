@@ -292,6 +292,14 @@
   2 页占位（DynamicRouter/TemplateDemoPage）；**8 页真未接线→功能开发待办**：ai/chat（mock 会话）、
   im/dashboard+im/mail（im 模块整体未接）、integration/erp-overview（mock）、pm/timeline+pm/project-list
   （硬编码数据）、mobile/profile、finance/consolidation（本地 state）。报告 §4.2/§6 已更新。
+- ✅（2026-11-03 已执行）**补 8 页真缺失接线（逐个接 API，先确认后端接口存在）**：接口探测（代码层 grep + 运行时 curl）——
+  pm/integration/ai 在线可验证（GET /pm/projects、/pm/projects/milestones/timeline、/integration/erp/connections、
+  /ai/conversations、POST /ai/chat 需 `query` 字段）；im/mail/mobile 后端代码存在但 **BFF 8099 未挂载（404）**——前端照接、
+  运行时验证标注待挂载；finance/consolidation **后端无接口不接**（svc/finance 无 consolidation 路由）。已改 7 页（均 useQuery + 既有 api 封装）：
+  pm/project-list（projectApi.list）、pm/timeline（milestoneApi.getTimeline）、integration/erp-overview（connectionApi.listConnections，
+  stats/列表/底部数字全动态）、ai/chat（chatApi.listConversations + chat 真实回复，删 setTimeout 假回复）、im/dashboard（imApi.listChatRooms
+  统计卡）、mobile/profile（userApi.getProfile 回退登录态）；**im/mail 复核修正**——全量 API 已在 MailPageHooks.tsx（emailApi/templateApi），
+  原"零 API"判断误读目录文件。tsc 全仓全绿；报告 §4.2/§6 已更新，commit `...` push。
 - ✅（2026-11-03 已执行）**P0 全量路由冒烟 e2e（可达性 100%）**：full-route-smoke.spec.ts 改造
   （动态段 `:param` 占位 `1`，518 全覆盖）；8099 BFF + 8000 core + DB/Redis + 前端 dev 实跑 5 批，
   运行时推导 **542 路由硬失败 0**（8.7% → 100%）；修复 3 个冒烟实跑缺陷：ObservabilityPanel.module.css

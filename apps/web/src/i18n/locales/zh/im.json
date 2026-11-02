@@ -257,5 +257,13 @@
   "im.nav.im-dashboard": "消息概览",
   "im.nav.im-dashboard_desc": "消息概览",
   "im.nav.im-mail": "邮件管理",
-  "im.nav.im-mail_desc": "邮件管理"
+  "im.nav.im-mail_desc": "邮件管理",
+  "im.dashboard_page.k3": "聊天室总数",
+  "im.dashboard_page.k4": "较上周期",
+  "im.dashboard_page.k5": "群聊",
+  "im.dashboard_page.k6": "群组聊天室",
+  "im.dashboard_page.k7": "私聊",
+  "im.dashboard_page.k8": "单聊会话",
+  "im.dashboard_page.k9": "成员总数",
+  "im.dashboard_page.k10": "全部房间成员数"
 }

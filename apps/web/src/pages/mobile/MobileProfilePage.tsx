@@ -1,6 +1,8 @@
 import { designTokens } from '@topems/tokens';
 import styles from './MobileProfilePage.module.css';
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { userApi } from '@/api/mobile/user';
 import { Box, Typography, Avatar, useTheme, Switch, Chip, Paper } from '@mui/material';
 import {
   Home,
@@ -44,6 +46,13 @@ const MobileSettingsPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { data: profile } = useQuery({
+    queryKey: ['mobile-profile'],
+    queryFn: () => userApi.getProfile().then((res) => res.data),
+  });
+  const displayName = profile?.full_name || user?.fullName || user?.username || '';
+  const displayEmail = profile?.email || user?.email || 'user@example.com';
+  const displayRole = profile?.position || user?.role || profile?.department || i18n.t('mobile.mobile_profile_page.k29');
   const [darkMode, setDarkMode] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(true);
   const settingGroups: SettingGroup[] = [
@@ -253,24 +262,24 @@ const MobileSettingsPage: React.FC = () => {
               bgcolor: 'primary.main',
             }}
           >
-            {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
+            {displayName.charAt(0) || 'U'}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               variant='h6'
               sx={{ fontWeight: 600, mb: 0.5 }}
             >
-              {user?.fullName || user?.username || i18n.t('mobile.mobile_profile_page.k28')}
+              {displayName || i18n.t('mobile.mobile_profile_page.k28')}
             </Typography>
             <Typography
               variant='body2'
               color='text.secondary'
               sx={{ mb: 0.5 }}
             >
-              {user?.email || 'user@example.com'}
+              {displayEmail}
             </Typography>
             <Chip
-              label={user?.role || i18n.t('mobile.mobile_profile_page.k29')}
+              label={displayRole}
               size='small'
               color='primary'
               variant='outlined'

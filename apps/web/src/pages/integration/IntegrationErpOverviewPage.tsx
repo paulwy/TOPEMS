@@ -6,6 +6,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -42,6 +43,7 @@ import {
   type RecentItem,
 } from '@/components/templates';
 import { useNotificationStore } from '@/store';
+import { connectionApi } from '@/api/integration/connection';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
@@ -67,92 +69,43 @@ interface SyncLog {
   status: 'success' | 'error';
 }
 
-const MOCK_SYNC_TASKS: SyncTask[] = [
-  {
-    id: 'sync-001',
-    name: i18n.t('integration.integration_erp_overview_page.k0'),
-    type: 'IAM',
-    status: 'success',
-    lastSyncTime: '2024-01-15 14:30:00',
-    records: 1250,
-  },
-  {
-    id: 'sync-002',
-    name: i18n.t('integration.integration_erp_overview_page.k1'),
-    type: 'WMS',
-    status: 'syncing',
-    lastSyncTime: '2024-01-15 14:25:00',
-    records: 856,
-    progress: 65,
-  },
-  {
-    id: 'sync-003',
-    name: i18n.t('integration.integration_erp_overview_page.k2'),
-    type: 'ERP',
-    status: 'success',
-    lastSyncTime: '2024-01-15 14:20:00',
-    records: 342,
-  },
-  {
-    id: 'sync-004',
-    name: i18n.t('integration.integration_erp_overview_page.k3'),
-    type: 'FIN',
-    status: 'error',
-    lastSyncTime: '2024-01-15 14:15:00',
-    records: 0,
-  },
-  {
-    id: 'sync-005',
-    name: i18n.t('integration.integration_erp_overview_page.k4'),
-    type: 'CRM',
-    status: 'pending',
-    lastSyncTime: '-',
-    records: 0,
-  },
-];
+interface ErpConnectionRow {
+  id: string;
+  name: string;
+  type: string;
+  api_url?: string | null;
+  sync_direction?: string | null;
+  sync_mode?: string | null;
+  status: string;
+  isactive?: boolean;
+  last_sync_at?: string | null;
+  updated_at?: string | null;
+}
 
-const MOCK_SYNC_LOGS: SyncLog[] = [
-  {
-    id: 'log-001',
-    action: i18n.t('integration.integration_erp_overview_page.k5'),
-    module: i18n.t('integration.integration_erp_overview_page.k6'),
-    user: i18n.t('integration.integration_erp_overview_page.k7'),
-    time: '14:30:00',
-    status: 'success',
-  },
-  {
-    id: 'log-002',
-    action: i18n.t('integration.integration_erp_overview_page.k8'),
-    module: i18n.t('integration.integration_erp_overview_page.k9'),
-    user: i18n.t('integration.integration_erp_overview_page.k10'),
-    time: '14:15:00',
-    status: 'error',
-  },
-  {
-    id: 'log-003',
-    action: i18n.t('integration.integration_erp_overview_page.k11'),
-    module: i18n.t('integration.integration_erp_overview_page.k12'),
-    user: i18n.t('integration.integration_erp_overview_page.k13'),
-    time: '14:25:00',
-    status: 'success',
-  },
-  {
-    id: 'log-004',
-    action: i18n.t('integration.integration_erp_overview_page.k14'),
-    module: i18n.t('integration.integration_erp_overview_page.k15'),
-    user: i18n.t('integration.integration_erp_overview_page.k16'),
-    time: '14:20:00',
-    status: 'success',
-  },
-  {
-    id: 'log-005',
-    action: i18n.t('integration.integration_erp_overview_page.k17'),
-    module: i18n.t('integration.integration_erp_overview_page.k18'),
-    user: i18n.t('integration.integration_erp_overview_page.k19'),
-    time: '14:10:00',
-    status: 'success',
-  },
-];
+const toSyncStatus = (s: string, isActive?: boolean): SyncStatus => {
+  if (s === 'error' || s === 'failed') return 'error';
+  if (s === 'syncing') return 'syncing';
+  if (s === 'active' || s === 'connected' || isActive) return 'success';
+  return 'pending';
+};
+
+const toTask = (c: ErpConnectionRow): SyncTask => ({
+  id: c.id,
+  name: c.name,
+  type: c.type,
+  status: toSyncStatus(c.status, c.isactive),
+  lastSyncTime: c.last_sync_at ? c.last_sync_at.slice(0, 19).replace('T', ' ') : '-',
+  records: 0,
+});
+
+const toLog = (c: ErpConnectionRow): SyncLog => ({
+  id: c.id,
+  action: c.name,
+  module: c.type,
+  user: c.sync_direction ?? '-',
+  time: (c.updated_at ?? '').slice(11, 19),
+  status: c.status === 'error' || c.status === 'failed' ? 'error' : 'success',
+});
 
 const getStatusIcon = (status: SyncStatus) => {
   switch (status) {
@@ -212,47 +165,61 @@ export const IntegrationErpOverviewPage: React.FC = () => {
   const { t } = useTranslation('integration');
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const stats: StatCard[] = useMemo(
-    () => [
+  const { data: connections = [] } = useQuery<ErpConnectionRow[]>({
+    queryKey: ['integration-erp-connections'],
+    queryFn: async () => {
+      const res = await connectionApi.listConnections({ page: 1, pageSize: 100 });
+      const arr = res.data as unknown;
+      return Array.isArray(arr)
+        ? (arr as ErpConnectionRow[])
+        : ((arr as { data?: ErpConnectionRow[] }).data ?? []);
+    },
+  });
+
+  const stats: StatCard[] = useMemo(() => {
+    const total = connections.length;
+    const errors = connections.filter((c) => c.status === 'error' || c.status === 'failed').length;
+    const active = connections.filter((c) => c.status === 'active' || c.status === 'connected' || c.isactive).length;
+    const successRate = total ? Math.round((active / total) * 1000) / 10 : 0;
+    return [
       {
         id: 'total-syncs',
         title: i18n.t('integration.integration_erp_overview_page.k24'),
-        value: '12',
+        value: String(total),
         icon: <GitMerge size={20} />,
-        change: 2,
+        change: 0,
         changeLabel: i18n.t('integration.integration_erp_overview_page.k25'),
         color: 'primary',
       },
       {
         id: 'success-rate',
         title: i18n.t('integration.integration_erp_overview_page.k26'),
-        value: '96.5%',
+        value: `${successRate}%`,
         icon: <TrendingUp size={20} />,
-        change: 1.2,
+        change: 0,
         changeLabel: i18n.t('integration.integration_erp_overview_page.k27'),
         color: 'success',
       },
       {
-        id: 'total-records',
+        id: 'active-connections',
         title: i18n.t('integration.integration_erp_overview_page.k28'),
-        value: '12,580',
+        value: String(active),
         icon: <Database size={20} />,
-        change: 1250,
+        change: 0,
         changeLabel: i18n.t('integration.integration_erp_overview_page.k29'),
         color: 'info',
       },
       {
         id: 'errors',
         title: i18n.t('integration.integration_erp_overview_page.k30'),
-        value: '3',
+        value: String(errors),
         icon: <AlertCircle size={20} />,
-        change: -2,
+        change: 0,
         changeLabel: i18n.t('integration.integration_erp_overview_page.k31'),
         color: 'error',
       },
-    ],
-    []
-  );
+    ];
+  }, [connections]);
 
   const quickActions: QuickAction[] = useMemo(
     () => [
@@ -295,94 +262,102 @@ export const IntegrationErpOverviewPage: React.FC = () => {
 
   const recentItems: RecentItem[] = useMemo(
     () =>
-      MOCK_SYNC_LOGS.slice(0, 5).map((log) => ({
-        id: log.id,
-        title: log.action,
-        description: `${log.module} · ${log.user}`,
-        time: log.time,
-        icon: log.status === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />,
-        iconColor: log.status === 'success' ? 'success.main' : 'error.main',
-      })),
-    []
+      connections
+        .slice()
+        .sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''))
+        .slice(0, 5)
+        .map((c) => toLog(c))
+        .map((log) => ({
+          id: log.id,
+          title: log.action,
+          description: `${log.module} · ${log.user}`,
+          time: log.time,
+          icon: log.status === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />,
+          iconColor: log.status === 'success' ? 'success.main' : 'error.main',
+        })),
+    [connections]
   );
 
   const syncTasksList = useMemo(
     () =>
-      MOCK_SYNC_TASKS.map((task) => (
-        <ListItem
-          key={task.id}
-          sx={{
-            px: 2,
-            py: 1.5,
-            '&:hover': { bgcolor: 'action.hover' },
-          }}
-        >
-          <ListItemIcon sx={{ minWidth: 36 }}>
-            <Avatar
-              sx={{
-                width: 32,
-                height: 32,
-                bgcolor: `${getStatusColor(task.status)}.main`,
-                opacity: task.status === 'syncing' ? 0.7 : 1,
-              }}
-            >
-              {getStatusIcon(task.status)}
-            </Avatar>
-          </ListItemIcon>
-          <ListItemText
-            primary={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography
-                  variant='body2'
-                  sx={{ fontWeight: 500 }}
-                >
-                  {task.name}
-                </Typography>
-                <Chip
-                  size='small'
-                  label={task.type}
-                  variant='outlined'
-                  sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
-                />
-              </Box>
-            }
-            secondary={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 0.5 }}>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  {task.lastSyncTime}
-                </Typography>
-                {task.records > 0 && (
+      connections.map((c) => {
+        const task = toTask(c);
+        return (
+          <ListItem
+            key={task.id}
+            sx={{
+              px: 2,
+              py: 1.5,
+              '&:hover': { bgcolor: 'action.hover' },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 36 }}>
+              <Avatar
+                sx={{
+                  width: 32,
+                  height: 32,
+                  bgcolor: `${getStatusColor(task.status)}.main`,
+                  opacity: task.status === 'syncing' ? 0.7 : 1,
+                }}
+              >
+                {getStatusIcon(task.status)}
+              </Avatar>
+            </ListItemIcon>
+            <ListItemText
+              primary={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontWeight: 500 }}
+                  >
+                    {task.name}
+                  </Typography>
+                  <Chip
+                    size='small'
+                    label={task.type}
+                    variant='outlined'
+                    sx={{ height: 18, fontSize: designTokens.typography.fontSize.scale['0.65rem'] }}
+                  />
+                </Box>
+              }
+              secondary={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 0.5 }}>
                   <Typography
                     variant='caption'
                     color='text.secondary'
                   >
-                    {t('integration.integration_erp_overview_page.m1', { v1: task.records })}
+                    {task.lastSyncTime}
                   </Typography>
-                )}
-                {task.progress !== undefined && (
-                  <Box sx={{ width: 60 }}>
-                    <LinearProgress
-                      variant='determinate'
-                      value={task.progress}
-                      sx={{ height: 4, borderRadius: 3 }}
-                    />
-                  </Box>
-                )}
-              </Box>
-            }
-          />
-          <Chip
-            size='small'
-            label={getStatusLabel(task.status)}
-            color={getStatusColor(task.status) as React.ComponentProps<typeof Chip>['color']}
-            variant={task.status === 'syncing' ? 'outlined' : 'filled'}
-          />
-        </ListItem>
-      )),
-    [t]
+                  {task.records > 0 && (
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
+                      {t('integration.integration_erp_overview_page.m1', { v1: task.records })}
+                    </Typography>
+                  )}
+                  {task.progress !== undefined && (
+                    <Box sx={{ width: 60 }}>
+                      <LinearProgress
+                        variant='determinate'
+                        value={task.progress}
+                        sx={{ height: 4, borderRadius: 3 }}
+                      />
+                    </Box>
+                  )}
+                </Box>
+              }
+            />
+            <Chip
+              size='small'
+              label={getStatusLabel(task.status)}
+              color={getStatusColor(task.status) as React.ComponentProps<typeof Chip>['color']}
+              variant={task.status === 'syncing' ? 'outlined' : 'filled'}
+            />
+          </ListItem>
+        );
+      }),
+    [connections, t]
   );
 
   return (
@@ -513,7 +488,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                       variant='h5'
                       sx={{ fontWeight: 600, color: 'success.main' }}
                     >
-                      1,250
+                      {connections.length}
                     </Typography>
                     <Typography
                       variant='caption'
@@ -529,7 +504,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                       variant='h5'
                       sx={{ fontWeight: 600, color: 'primary.main' }}
                     >
-                      3.2s
+                      {stats.find((s) => s.id === 'active-connections')?.value ?? '0'}
                     </Typography>
                     <Typography
                       variant='caption'
@@ -545,7 +520,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                       variant='h5'
                       sx={{ fontWeight: 600, color: 'warning.main' }}
                     >
-                      99.2%
+                      {stats.find((s) => s.id === 'success-rate')?.value ?? '0%'}
                     </Typography>
                     <Typography
                       variant='caption'

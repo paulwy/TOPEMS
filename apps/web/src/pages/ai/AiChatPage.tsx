@@ -8,6 +8,8 @@ import styles from './AiChatPage.module.css';
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { chatApi } from '@/api/ai/chat';
 import {
   MessageSquare,
   Send,
@@ -70,74 +72,27 @@ interface ChatSession {
   type: 'qa' | 'summary' | 'code' | 'general';
 }
 
-const mockSessions: ChatSession[] = [
-  {
-    id: '1',
-    title: i18n.t('ai.ai_chat_page.k0'),
-    messages: [],
-    timestamp: new Date(Date.now() - 300000),
-    type: 'qa',
-  },
-  {
-    id: '2',
-    title: i18n.t('ai.ai_chat_page.k1'),
-    messages: [],
-    timestamp: new Date(Date.now() - 1800000),
-    type: 'summary',
-  },
-  {
-    id: '3',
-    title: i18n.t('pages.ai_chat_page.react_0'),
-    messages: [],
-    timestamp: new Date(Date.now() - 3600000),
-    type: 'code',
-  },
-  {
-    id: '4',
-    title: i18n.t('ai.ai_chat_page.k2'),
-    messages: [],
-    timestamp: new Date(Date.now() - 7200000),
-    type: 'general',
-  },
-];
-
-const mockMessages: Message[] = [
-  {
-    id: '1',
-    role: 'user',
-    content: i18n.t('ai.ai_chat_page.k3'),
-    timestamp: new Date(Date.now() - 300000),
-    type: 'qa',
-  },
-  {
-    id: '2',
-    role: 'assistant',
-    content: i18n.t('pages.ai_chat_page.k1'),
-    timestamp: new Date(Date.now() - 280000),
-    type: 'qa',
-  },
-  {
-    id: '3',
-    role: 'user',
-    content: i18n.t('ai.ai_chat_page.k4'),
-    timestamp: new Date(Date.now() - 60000),
-    type: 'qa',
-  },
-  {
-    id: '4',
-    role: 'assistant',
-    content: i18n.t('pages.ai_chat_page.k2'),
-    timestamp: new Date(Date.now() - 30000),
-    type: 'qa',
-  },
-];
-
 const quickPrompts = [
   { id: '1', label: 'quick_prompt.analyze', icon: <Lightbulb size={16} />, category: 'qa' },
   { id: '2', label: 'quick_prompt.summarize', icon: <FileText size={16} />, category: 'summary' },
   { id: '3', label: 'quick_prompt.generate_code', icon: <Code size={16} />, category: 'code' },
   { id: '4', label: 'quick_prompt.explain_code', icon: <FileCode size={16} />, category: 'code' },
 ];
+
+interface AiConversationRow {
+  id: string;
+  title: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+const toSession = (c: AiConversationRow): ChatSession => ({
+  id: c.id,
+  title: c.title,
+  messages: [],
+  timestamp: new Date(c.updated_at ?? c.created_at ?? Date.now()),
+  type: 'qa',
+});
 
 const getTypeIcon = (type: ChatSession['type']) => {
   const icons = {
@@ -165,13 +120,13 @@ export const AiChatPage: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
-  const [messages, setMessages] = useState<Message[]>(mockMessages);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [selectedModel, setSelectedModel] = useState('gpt-4');
   const [isTyping, setIsTyping] = useState(false);
   const [activeTab, setActiveTab] = useState<'qa' | 'summary' | 'code' | 'general'>('qa');
-  const [sessions, setSessions] = useState<ChatSession[]>(mockSessions);
-  const [selectedSessionId, setSelectedSessionId] = useState('1');
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [selectedSessionId, setSelectedSessionId] = useState('');
   const [showSidebar, setShowSidebar] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [docFile, setDocFile] = useState<File | null>(null);
@@ -182,6 +137,24 @@ export const AiChatPage: React.FC = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const { data: conversations } = useQuery<AiConversationRow[]>({
+    queryKey: ['ai-conversations'],
+    queryFn: async () => {
+      const res = await chatApi.listConversations();
+      const arr = res.data as unknown;
+      return Array.isArray(arr)
+        ? (arr as AiConversationRow[])
+        : ((arr as { data?: AiConversationRow[] }).data ?? []);
+    },
+  });
+
+  useEffect(() => {
+    if (conversations && conversations.length > 0) {
+      setSessions(conversations.map(toSession));
+      setSelectedSessionId((prev) => prev || conversations[0].id);
+    }
+  }, [conversations]);
 
   const handleSend = useCallback(async () => {
     if (!inputValue.trim()) return;
@@ -197,37 +170,31 @@ export const AiChatPage: React.FC = () => {
     setInputValue('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      let responseContent = '';
-      switch (activeTab) {
-        case 'qa':
-          responseContent = i18n.t('ai.chat.response.qa');
-          break;
-        case 'summary':
-          responseContent = i18n.t('ai.chat.response.summary');
-          break;
-        case 'code':
-          responseContent = i18n.t('ai.chat.response.code');
-          break;
-        default:
-          responseContent = i18n.t('ai.chat.response.default');
-      }
-
+    try {
+      const res = await chatApi.chat({ query: userMessage.content });
+      const answer = res.data?.answer ?? i18n.t('ai.chat.response.default');
       const assistantMessage: Message = {
         id: String(Date.now() + 1),
         role: 'assistant',
-        content: responseContent,
+        content: answer,
         timestamp: new Date(),
         type: activeTab,
       };
       setMessages((prev) => [...prev, assistantMessage]);
-      setIsTyping(false);
       addNotification({
         title: i18n.t('ai.chat.message.sent_title'),
         message: i18n.t('ai.chat.message.ai_replied'),
         type: 'success',
       });
-    }, 1500);
+    } catch {
+      addNotification({
+        title: i18n.t('ai.chat.message.sent_title'),
+        message: i18n.t('ai.chat.message.reply_failed'),
+        type: 'error',
+      });
+    } finally {
+      setIsTyping(false);
+    }
   }, [inputValue, activeTab, addNotification]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -248,22 +215,32 @@ export const AiChatPage: React.FC = () => {
     });
   };
 
-  const handleNewChat = () => {
-    const newSession: ChatSession = {
-      id: String(Date.now()),
-      title: i18n.t('ai.chat.session.new_title'),
-      messages: [],
-      timestamp: new Date(),
-      type: activeTab,
-    };
-    setSessions((prev) => [newSession, ...prev]);
-    setSelectedSessionId(newSession.id);
-    setMessages([]);
-    addNotification({
-      title: i18n.t('ai.chat.message.new_session_title'),
-      message: i18n.t('ai.chat.message.session_created'),
-      type: 'info',
-    });
+  const handleNewChat = async () => {
+    try {
+      const res = await chatApi.createConversation();
+      const created = res.data;
+      const newSession: ChatSession = {
+        id: created?.id ?? String(Date.now()),
+        title: created?.title ?? i18n.t('ai.chat.session.new_title'),
+        messages: [],
+        timestamp: new Date(created?.created_at ?? Date.now()),
+        type: activeTab,
+      };
+      setSessions((prev) => [newSession, ...prev]);
+      setSelectedSessionId(newSession.id);
+      setMessages([]);
+      addNotification({
+        title: i18n.t('ai.chat.message.new_session_title'),
+        message: i18n.t('ai.chat.message.session_created'),
+        type: 'info',
+      });
+    } catch {
+      addNotification({
+        title: i18n.t('ai.chat.message.new_session_title'),
+        message: i18n.t('ai.chat.message.session_created'),
+        type: 'error',
+      });
+    }
   };
 
   const handleSelectSession = (sessionId: string) => {
@@ -275,6 +252,13 @@ export const AiChatPage: React.FC = () => {
   };
 
   const handleDeleteSession = (sessionId: string) => {
+    chatApi.deleteConversation(sessionId).catch(() => {
+      addNotification({
+        title: i18n.t('ai.chat.message.delete_session_title'),
+        message: i18n.t('ai.chat.message.reply_failed'),
+        type: 'error',
+      });
+    });
     setSessions((prev) => prev.filter((s) => s.id !== sessionId));
     if (selectedSessionId === sessionId) {
       const remaining = sessions.filter((s) => s.id !== sessionId);

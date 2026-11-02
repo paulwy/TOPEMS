@@ -1,178 +1,78 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import styles from './ProjectTimelinePage.module.css';
 import {
   TimelinePageTemplate,
   type TimelineGroup,
 } from '../../components/templates/TimelinePageTemplate';
+import { milestoneApi } from '@/api/pm/project';
 import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
-import { Plus, Rocket, Target, Calendar } from 'lucide-react';
+import { Plus, Rocket } from 'lucide-react';
 
 const today = new Date();
-const formatDate = (daysOffset: number) => {
-  const date = new Date(today);
-  date.setDate(date.getDate() + daysOffset);
-  return date.toISOString().split('T')[0];
+
+interface TimelineRow {
+  id: string;
+  project_id: string;
+  project_name?: string | null;
+  project_code?: string | null;
+  name: string;
+  description?: string | null;
+  due_date?: string | null;
+  completed_date?: string | null;
+  status: string;
+  phase_id?: string | null;
+}
+
+const toStatus = (s: string): 'completed' | 'in-progress' | 'pending' | 'cancelled' => {
+  switch (s) {
+    case 'completed':
+      return 'completed';
+    case 'in_progress':
+    case 'in-progress':
+      return 'in-progress';
+    case 'cancelled':
+    case 'canceled':
+      return 'cancelled';
+    default:
+      return 'pending';
+  }
 };
-const groups: TimelineGroup[] = [
-  {
-    id: 'milestones',
-    title: i18n.t('pm.project_timeline_page.k0'),
-    icon: <Rocket className={styles.il1} />,
-    color: 'secondary.500',
-    collapsible: true,
-    nodes: [
-      {
-        id: 'm1',
-        title: i18n.t('pm.project_timeline_page.k1'),
-        description: i18n.t('pm.project_timeline_page.k2'),
-        date: formatDate(-10),
-        type: 'milestone',
-        status: 'completed',
-        priority: 'high',
-        participants: [
-          { id: '1', name: i18n.t('pm.project_timeline_page.k3') },
-          { id: '2', name: i18n.t('pm.project_timeline_page.k4') },
-        ],
-      },
-      {
-        id: 'm2',
-        title: i18n.t('pm.project_timeline_page.k5'),
-        description: i18n.t('pm.project_timeline_page.k6'),
-        date: formatDate(-5),
-        type: 'milestone',
-        status: 'completed',
-        priority: 'high',
-        participants: [{ id: '3', name: i18n.t('pm.project_timeline_page.k7') }],
-      },
-      {
-        id: 'm3',
-        title: i18n.t('pm.project_timeline_page.k8'),
-        description: i18n.t('pages.project_timeline_page.ui_0'),
-        date: formatDate(5),
-        type: 'milestone',
-        status: 'in-progress',
-        priority: 'medium',
-      },
-      {
-        id: 'm4',
-        title: i18n.t('pm.project_timeline_page.k9'),
-        description: i18n.t('pm.project_timeline_page.k10'),
-        date: formatDate(20),
-        type: 'milestone',
-        status: 'pending',
-        priority: 'high',
-      },
-      {
-        id: 'm5',
-        title: i18n.t('pm.project_timeline_page.k11'),
-        description: i18n.t('pm.project_timeline_page.k12'),
-        date: formatDate(35),
-        type: 'milestone',
-        status: 'pending',
-        priority: 'high',
-      },
-    ],
-  },
-  {
-    id: 'tasks',
-    title: i18n.t('pm.project_timeline_page.k13'),
-    icon: <Target className={styles.il2} />,
-    color: 'primary.500',
-    collapsible: true,
-    nodes: [
-      {
-        id: 't1',
-        title: i18n.t('pm.project_timeline_page.k14'),
-        description: i18n.t('pm.project_timeline_page.k15'),
-        date: formatDate(-3),
-        time: '09:00',
-        type: 'task',
-        status: 'completed',
-        priority: 'high',
-        tags: [{ label: i18n.t('pm.project_timeline_page.k16'), color: 'success.500' }],
-      },
-      {
-        id: 't2',
-        title: i18n.t('pages.project_timeline_page.api_1'),
-        description: i18n.t('pm.project_timeline_page.restfulapi_17'),
-        date: formatDate(2),
-        time: '14:00',
-        type: 'task',
-        status: 'in-progress',
-        priority: 'high',
-        tags: [{ label: i18n.t('pm.project_timeline_page.k18'), color: 'success.500' }],
-        children: [
-          {
-            id: 't2-1',
-            title: i18n.t('pm.project_timeline_page.api_19'),
-            date: formatDate(0),
-            type: 'task',
-            status: 'completed',
-          },
-          {
-            id: 't2-2',
-            title: i18n.t('pm.project_timeline_page.api_20'),
-            date: formatDate(3),
-            type: 'task',
-            status: 'in-progress',
-          },
-          {
-            id: 't2-3',
-            title: i18n.t('pm.project_timeline_page.api_21'),
-            date: formatDate(8),
-            type: 'task',
-            status: 'pending',
-          },
-        ],
-      },
-      {
-        id: 't3',
-        title: i18n.t('pm.project_timeline_page.k22'),
-        description: i18n.t('pm.project_timeline_page.k23'),
-        date: formatDate(10),
-        type: 'task',
-        status: 'pending',
-        priority: 'medium',
-        tags: [{ label: i18n.t('pm.project_timeline_page.k24'), color: 'cyan.500' }],
-      },
-    ],
-  },
-  {
-    id: 'meetings',
-    title: i18n.t('pm.project_timeline_page.k25'),
-    icon: <Calendar className={styles.il3} />,
-    color: 'warning.500',
-    collapsible: true,
-    nodes: [
-      {
-        id: 'mt1',
-        title: i18n.t('pm.project_timeline_page.k26'),
-        description: i18n.t('pm.project_timeline_page.k27'),
-        date: formatDate(0),
-        time: '10:00',
-        type: 'meeting',
-        location: i18n.t('pm.project_timeline_page.a_28'),
-        participants: [
-          { id: '1', name: i18n.t('pm.project_timeline_page.k29') },
-          { id: '2', name: i18n.t('pm.project_timeline_page.k30') },
-          { id: '3', name: i18n.t('pm.project_timeline_page.k31') },
-          { id: '4', name: i18n.t('pm.project_timeline_page.k32') },
-        ],
-      },
-      {
-        id: 'mt2',
-        title: i18n.t('pm.project_timeline_page.k33'),
-        description: i18n.t('pm.project_timeline_page.k34'),
-        date: formatDate(8),
-        time: '14:00',
-        type: 'meeting',
-        location: i18n.t('pm.project_timeline_page.b_35'),
-      },
-    ],
-  },
-];
+
+const toGroups = (rows: TimelineRow[]): TimelineGroup[] =>
+  rows.length
+    ? [
+        {
+          id: 'milestones',
+          title: i18n.t('pm.project_timeline_page.k0'),
+          icon: <Rocket className={styles.il1} />,
+          color: 'secondary.500',
+          collapsible: true,
+          nodes: rows.map((r) => ({
+            id: r.id,
+            title: r.name,
+            description:
+              r.project_name
+                ? [r.project_name, r.project_code].filter(Boolean).join(' · ')
+                : (r.description ?? undefined),
+            date: (r.due_date ?? r.completed_date ?? '').slice(0, 10) || '-',
+            type: 'milestone',
+            status: toStatus(r.status),
+            priority: 'medium',
+          })),
+        },
+      ]
+    : [];
+
 export const ProjectTimelinePage: React.FC = () => {
+  const { data: groups = [] } = useQuery<TimelineGroup[]>({
+    queryKey: ['pm-milestone-timeline'],
+    queryFn: async () => {
+      const res = await milestoneApi.getTimeline();
+      return toGroups((res.data as { data?: TimelineRow[] }).data ?? []);
+    },
+  });
   return (
     <PageContainer
       autoTitle={false}

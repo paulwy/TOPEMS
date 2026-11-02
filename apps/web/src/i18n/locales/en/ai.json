@@ -1328,5 +1328,6 @@
   "ai.dshRag.k36": "Total",
   "ai.dshRag.k37": "Retrieval & Agents",
   "ai.dshRag.k38": "RAG Stats",
-  "ai.dshRag.k39": "Agent Performance"
+  "ai.dshRag.k39": "Agent Performance",
+  "ai.chat.message.reply_failed": "AI reply failed, please retry later"
 }
