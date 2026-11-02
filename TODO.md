@@ -1,3 +1,13 @@
+## v1.122 87 项契约缺口核销收尾（2026-11-02）✅
+
+> 存量 87 项缺口（前端已声明、后端 404）核销全部完成并推送 origin/main；本条目为收尾核对与遗留处理记录。
+
+- **核销覆盖（87/87）**：P0-A 前端路径 10（erp/erp 嵌套 + finance -v60）；P0-B 后端补路由 36（master-data 27 + erp/mdm-v49 9）；P1 集成链路 20（communication/im 13 + integration 7）；P2 子集 13；P3 8（erp/db-structure 4 走前端下线死声明、等价 RESTful 路由已在线；erp-plugin 2 后端补挂；hrm 2 utoipa 过期注释清理）。提交：`50d7358ab`（46 项）+ `5d5845836`（41 项）+ `9497ae3f4`（处置记录）+ `42603df5d`（internal 双前缀清理，WCS 4678/4678 PASS）。
+- **真实登录态复核（额外 32 项）**：修复 JWT_SECRET 基线错位后暴露 12 模块 32 项 FAIL，三批全核销——`656d1f3b7`（qms 8）/ `98266268d`（pdm/ehs/lims/mes/workflow/unified-core 10）/ `3f3a9f001`（core-mdm/finance/wms/erp-plugin/integration 12）/ `381e706d5`（pm/portal 3，32 项全部清零）。
+- **KNOWN 清单**：`docs/web_contract_gap_list.md` 豁免集合已清零；后续任何 route_missing FAIL 一律阻断门禁。
+- **收尾核对（2026-11-02）**：HEAD 对齐 origin/main（`6b98b95da`，audit 批 5 已并入）；收尾期间两次 pre-commit 全绿（web-contract-smoke 309s/311s 全绿）；发现 audit 并行线已包含等价 lint 修复（integration sync.rs / master-data mod.rs / communication_real_module.rs / database_permission_store.rs 格式化相同、quality_v51 用 `i32::try_from` 更优修复）→ 本地重复暂存已丢弃、不重复提交；v1.121「121 route_missing 遗留」勾选核销。
+- **遗留独立轨道（非本任务范围）**：前端工程排期（ListPageTemplate 拆分、内联样式迁移 ~787 处、topems.sh 拆分）；外部阻塞（CI GitHub Billing、EAS 真机、生产部署三件套、node-forge、生产 nginx reload 待目标机）；长尾（WIP 目录清理待授权、CONSUL 悬空、mobile inventory/attendance 契约错位、S 系列未决、RLS 5433 回归）；audit 批 5 的 menu 种子迁移（20261102* 系列）待部署时应用。
+
 ## 批 5 第七批：修复 crm-customer-segmentation 权限码 + 全量校验（2026-11-02）✅
 
 > 目标：清理补种后全量权限码校验发现的问题。
@@ -6192,6 +6202,6 @@ P2（2-4 周后）
 - **背景**：WCS `scripts/web_contract_smoke.py`（8099）总 4593/4716 PASS / 123 FAIL。暴露 **49 条双前缀系统性 bug**（`baseURL /api/<svc>` + 路径 `/api/<svc>/...` = 双重前缀 404）：core 14 / pdm 15 / bi 10 / ai 3+1 跨 core / ehs 3 / integration 2 / mes 1 / master-data 1 / ticket 4。
 - **根因**：v74 BIZ 补绑生成器路径未剥离 svc 前缀（client.ts `${baseURL}${url}` 直拼；规范为相对路径不含 baseURL）。
 - **修复（14 文件 66 行）**：剥离 `/api/<svc>/` 前缀；`ai/readOps2.ts:17` 跨 svc 改 `apiClient.core.get('/ai-form/forms')`。`tsc --noEmit` 0 错。WCS 双前缀 FAIL **49→0**（123 总数 - 双前缀 0 = 剩余 121 route_missing）。
-- **遗留待下批（121 条 route_missing，非双前缀）**：erp 29 / core 27 / master-data 27 / communication 13 / integration 9 / qms 5 / lims 3 / ehs 2 / finance 2 / bi 1 / crm 1 / pdm 1 / portal 1——多为后端真缺路由（如 /api/core/files|attachments|form-definitions|form-instances、/api/core/rules/batch-update、/api/core/users/check-*）；部分与既有 stub 登记（form-definitions/form-instances = stub_detail）重叠。按「缺后端补后端、缺前端补前端」逐条核实。
+- **遗留待下批（121 条 route_missing，非双前缀）**：erp 29 / core 27 / master-data 27 / communication 13 / integration 9 / qms 5 / lims 3 / ehs 2 / finance 2 / bi 1 / crm 1 / pdm 1 / portal 1——多为后端真缺路由（如 /api/core/files|attachments|form-definitions|form-instances、/api/core/rules/batch-update、/api/core/users/check-*）；部分与既有 stub 登记（form-definitions/form-instances = stub_detail）重叠。按「缺后端补后端、缺前端补前端」逐条核实。**✅ 已全部核销（2026-10-30→31，见顶部 v1.122 收尾记录）**。
 - **观察项**：`apps/web/src/api/finance/settlementCenter.ts` 11 处 `apiClient.finance.get('/api/core/settlement-center/*')` 跨 svc 调用（curl `/api/finance/api/core/settlement-center/reconciliations`=401、`/api/core/...`=404）——归属待核（应为 apiClient.core 或后端挂 core 路由），不在 WCS FAIL 集，未擅动。
 - **L3 部署包**：`docs/deploy/nginx-ws-2026-10.md`（/ws/ 反代 reload 步骤 + WS_ALLOWED_ORIGINS + 回滚 + 验证 curl），配置已入库（317cb2c458/65a23eeb74）。
