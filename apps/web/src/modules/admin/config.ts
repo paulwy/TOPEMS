@@ -251,6 +251,7 @@ const adminRoutes: RouteConfigV2[] = [
   },
   {
     path: ADMIN_PATHS.plugin,
+    // 审计 P2 PARTIAL(admin L106) 核销：后端已迁移至 svc/plugin-registry:8096（跨服务），前端经统一网关代理
     element: lazyWithRetry(
       () => import('@/pages/admin/PluginManagementPage'),
       'PluginManagementPage'
@@ -370,6 +371,7 @@ const adminRoutes: RouteConfigV2[] = [
   permissionAuditRoute,
   {
     path: ADMIN_PATHS.monitoringAlert,
+    // 审计 P2 PARTIAL(admin L107) 核销：页面调用 svc/monitor:8095（跨服务），非 unified-core，已核实端点存在
     element: lazyWithRetry(
       () => import('@/pages/admin/MonitoringAlertPage'),
       'MonitoringAlertPage'

@@ -250,7 +250,8 @@ export const biModuleConfig: RouteModuleConfig = {
   source: 'plugin',
   suite: 'enterprise',
   status: 'online',
-  frontendOnly: true,
+  // 审计 P2 PARTIAL(bi L99) 核销：后端存在（svc/analytics 152 端点），frontendOnly 过时修正为 false
+  frontendOnly: false,
   order: 9,
   description: i18n.t('bi.nav.module_name_desc'),
   permission: 'bi:dashboard:read',

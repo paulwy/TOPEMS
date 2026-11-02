@@ -1,3 +1,14 @@
+## 批 5 第十一批：PARTIAL bi/admin 配置修正 + schema 归属类 4 行核销（2026-11-02）✅
+
+> 目标：推进 PARTIAL 类——配置过时修正 + schema 归属核实。
+
+- **bi 配置修正**（L99）：`apps/web/src/modules/bi/config.ts` frontendOnly true→false（后端 svc/analytics 152 端点已核实）——verify_navigation --strict 全绿（100%）。
+- **admin 配置标注**（L106/L107）：admin-plugin 注释标注后端 svc/plugin-registry:8096 跨服务；admin-monitoring-alert 注释标注 svc/monitor:8095 跨服务。
+- **pdm 核销**（L40）：DB 核实 pdm_products/pdm_materials/pdm_change_notices 已在 pdm schema（public 双份为兼容遗留）。
+- **master 核销**（L112）：schema_registry 在 iam schema（另有 public/mes/master_data 多份，页面展示 iam 数据为设计）。
+- **ai 核销**（L134）：knowledge_bases 在 core schema——core 承载共享知识库、ai 模块消费为设计。
+- **report 核销**（L118）：无独立 schedule 表；调度复用 integration.async_tasks（异步任务承载定时报表）为设计。
+
 ## 批 5 第十批：ROUTE_NO_API asset/bi/admin/rd/oa/doc/notification 11 行核销（2026-11-02）✅
 
 > 目标：继续逐行侦查 ROUTE_NO_API——本批核实 11 行有等价端点或页面无 API 需求。
