@@ -6528,3 +6528,4 @@ P2（2-4 周后）
 - **方法提取修复**：脚本仅匹配 `method = "GET"` 形式，utoipa 裸关键词（`#[utoipa::path(delete,`）未解析默认 GET → 补正则（`utoipa::path\(\s*(get|post|put|delete|patch|head|options)`），测试 DELETE 解析正确。
 - **下线候选 705**：读端点+无引用（portal 204 / erp 140 / unified-core 69 / master-data 55 / ai 32 / finance 27 / analytics 27 等）——删路由为破坏性决策，需人工逐条确认（保留 v74_tend=待定）。
 - **下一步**：P0 5 条前端绑定（若确认方法/业务价值）；下线候选 705 人工确认后删路由（另行决策）。
+- **P0 5 条人工核实（2026-11-02，均非真缺口）**：monitor list/batch_update_settings 已绑（api/monitor/settings.ts get/put '/settings'，apiClient 前缀拼接致脚本归一化误判）；plugin install_plugin_simple 已绑（api/plugin/plugin.ts post /api/plugins/{code}/install）；update_plugin 为 dev 端点（/api/plugin/dev/plugins/{code}）管理/开发用途前端不绑；communication delete_all_notifications 无直接绑定但功能冗余（前端 bulk-delete-all 已覆盖批量删除）→ 归下线候选。**P0 实质 0**（启发式池 P0 需人工核实，与旧基线 P0 实质 0 一致）。
