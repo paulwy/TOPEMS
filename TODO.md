@@ -6532,3 +6532,11 @@ P2（2-4 周后）
 - **脚本归一化修复（SVC_NAMES 补全）**：monitor/communication/notification/plugin-registry/plugin/scheduler/workflow/auth/iam/rbac 等服务名缺失致后端首段不去、绑定误判 → 补全后重跑：P0 5→2、P1 100→96、P2 63→61、下线 705→690、总数 873→849（24 条误报消除）；剩余 P0 2 条仍为 plugin-registry（install 实际已绑——pluginAxios 独立实例未被 api_re/fetch_re 覆盖；update_plugin 为 dev 端点）→ **P0 实质仍 0**。脚本局限记录：pluginAxios 等独立 axios 实例调用不在提取范围。
 - **脚本提取扩展（axios 实例）**：新增 inst_re 覆盖 pluginAxios.post/axios.get 等独立实例调用 → 重跑：总数 849→836、**P0 2→0（清零）**、P1 96→89、P2 61→57、下线 690 不变。**v74 池 P0 级绑定缺口收口（三轮累计消除 37 条误报：SVC_NAMES 24 + axios 实例 13）**。终态：候选 836 = P0 0 / P1 89 / P2 57 / 下线 690。
 - **P1 抽样核实（4 条，均非脚本误报）**：copilot admin/faqs（reactQuery 引用但写调用缺）、mail/emails（前端无调用）、customers profile/tags（前端无调用）、erp production-order（前端仅 mes 服务有 production-orders，erp 端点无调用）——P1 89 条为真实前端绑定缺口概率高（写端点+前端无调用），属前端开发 backlog；**v74 池审计收口完成**：P0 级清零（脚本三轮修复+人工核实），P1/P2/下线候选为真实 backlog 内容，供后续前端工程排期（删路由等破坏性决策待人工确认）。
+
+## 批 5 第二十一批：topems 库迁移账本补登 60（2026-11-02）✅
+
+> 承接 L26 另案治理（test/prod/5433 已 540/540）；topems（5432）补齐 10-26~11-02 新迁移登记。
+
+- **差值核算**：迁移文件 541（527 个时间戳） vs 账本 481 → 未登记 **60 个**（20261026080000~20261102210000，10-26 后新迁移，batch1/2 已单独补登）。
+- **已应用抽查**：ehs.training_records / ehs.qa_ehs_environmental_regulations / core_menus（610 行）均存在 → 判定已应用仅缺登记。
+- **补登**：60 条 INSERT（checksum=`\x6d616e75616c2d76` 与账本主体一致、execution_time=0/ms=0、ON CONFLICT DO NOTHING 幂等，description 取文件名后缀）→ 账本 **541/541** 对齐（文件-账本差集 0）。
