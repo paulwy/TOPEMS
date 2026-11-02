@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import styles from './DashboardPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import {
   type LucideIcon,
@@ -460,47 +461,25 @@ const DashboardPage: React.FC = () => {
                 return (
                   <div
                     key={module.id}
-                    style={{
-                      padding: 'var(--space-3)',
-                      backgroundColor: 'var(--surface-2)',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-default)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 'var(--space-3)',
-                    }}
+                    className={styles.il1}
                   >
                     <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 'var(--radius-sm)',
-                        backgroundColor: 'var(--accent-primary)',
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
+                      className={styles.il2}
                     >
                       <Icon size={20} />
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 500, fontSize: 14, color: 'var(--text-primary)' }}>
+                    <div className={styles.il3}>
+                      <div className={styles.il4}>
                         {module.name}
                       </div>
-                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                      <div className={styles.il5}>
                         {module.desc}
                       </div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
+                    <div className={styles.il6}>
                       <StatusLight state={module.status} />
                       <div
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 600,
-                          color: 'var(--text-primary)',
-                          marginTop: 4,
-                        }}
+                        className={styles.il7}
                       >
                         {module.stat}
                       </div>
@@ -523,7 +502,7 @@ const DashboardPage: React.FC = () => {
               </Badge>
             }
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            <div className={styles.il8}>
               {alerts.map((alert) => (
                 <div
                   key={alert.id}
@@ -545,10 +524,10 @@ const DashboardPage: React.FC = () => {
                     }`,
                   }}
                 >
-                  <div style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 4 }}>
+                  <div className={styles.il9}>
                     {alert.message}
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{alert.time}</div>
+                  <div className={styles.il10}>{alert.time}</div>
                 </div>
               ))}
             </div>
@@ -575,19 +554,11 @@ const DashboardPage: React.FC = () => {
               </Badge>
             }
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            <div className={styles.il11}>
               {tasks.map((task) => (
                 <div
                   key={task.id}
-                  style={{
-                    padding: 'var(--space-3)',
-                    backgroundColor: 'var(--surface-2)',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-default)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-3)',
-                  }}
+                  className={styles.il12}
                 >
                   <div
                     style={{
@@ -603,7 +574,7 @@ const DashboardPage: React.FC = () => {
                       flexShrink: 0,
                     }}
                   />
-                  <div style={{ flex: 1, fontSize: 14, color: 'var(--text-primary)' }}>
+                  <div className={styles.il13}>
                     {task.title}
                   </div>
                   <Tag
@@ -622,13 +593,7 @@ const DashboardPage: React.FC = () => {
                         : i18n.t('dashboard.dash_priority_low')}
                   </Tag>
                   <div
-                    style={{
-                      fontSize: 12,
-                      color: 'var(--text-secondary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4,
-                    }}
+                    className={styles.il14}
                   >
                     <Clock size={12} />
                     {task.due}
@@ -645,7 +610,7 @@ const DashboardPage: React.FC = () => {
             title={i18n.t('dashboard.dash_health_title')}
             subtitle={i18n.t('dashboard.dash_health_subtitle')}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            <div className={styles.il15}>
               <HealthItem
                 icon={Cpu}
                 label={i18n.t('dashboard.dash_health_api_gateway')}
@@ -682,13 +647,13 @@ const DashboardPage: React.FC = () => {
       title={i18n.t('dashboard.dash_all_modules')}
       subtitle={i18n.t('dashboard.dash_all_modules_subtitle')}
     >
-      <div style={{ marginBottom: 'var(--space-4)' }}>
+      <div className={styles.il16}>
         <Input
           placeholder={i18n.t('dashboard.dash_search_placeholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           leftIcon={<Search size={16} />}
-          style={{ maxWidth: 320 }}
+          className={styles.il17}
         />
       </div>
       {filteredModules.length === 0 ? (
@@ -719,44 +684,26 @@ const DashboardPage: React.FC = () => {
                 }}
               >
                 <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-3)',
-                    marginBottom: 'var(--space-2)',
-                  }}
+                  className={styles.il18}
                 >
                   <div
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 'var(--radius-sm)',
-                      backgroundColor: 'var(--accent-primary)',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
+                    className={styles.il19}
                   >
                     <Icon size={20} />
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                    <div className={styles.il20}>
                       {module.name}
                     </div>
                     <StatusLight state={module.status} />
                   </div>
                 </div>
                 <div
-                  style={{
-                    fontSize: 13,
-                    color: 'var(--text-secondary)',
-                    marginBottom: 'var(--space-2)',
-                  }}
+                  className={styles.il21}
                 >
                   {module.desc}
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--accent-primary)' }}>
+                <div className={styles.il22}>
                   {module.stat}
                 </div>
               </div>
@@ -779,7 +726,7 @@ const DashboardPage: React.FC = () => {
           icon={CheckCircle2}
         />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+        <div className={styles.il23}>
           {alerts.map((alert) => (
             <div
               key={alert.id}
@@ -817,11 +764,11 @@ const DashboardPage: React.FC = () => {
                   marginTop: 2,
                 }}
               />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 500, color: 'var(--text-primary)', marginBottom: 4 }}>
+              <div className={styles.il24}>
+                <div className={styles.il25}>
                   {alert.message}
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{alert.time}</div>
+                <div className={styles.il26}>{alert.time}</div>
               </div>
               <Tag
                 variant={
@@ -847,7 +794,7 @@ const DashboardPage: React.FC = () => {
 
   return (
     <PageContainer autoTitle>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+      <div className={styles.il27}>
         <PageHeader
           title={i18n.t('dashboard.dash_workspace')}
           subtitle={i18n.t('dashboard.dash_workspace_subtitle')}
@@ -861,17 +808,10 @@ const DashboardPage: React.FC = () => {
         />
 
         <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'flex-end',
-            marginBottom: 'var(--space-3)',
-            gap: 'var(--space-3)',
-            flexWrap: 'wrap',
-          }}
+          className={styles.il28}
         >
           {showCustomRange && (
-            <div style={{ width: 320 }}>
+            <div className={styles.il29}>
               <DateRangePicker
                 value={customDateRange}
                 onChange={setCustomDateRange}
@@ -927,7 +867,7 @@ const DashboardPage: React.FC = () => {
               ...timeRangeOptions.map((o) => ({ ...o, label: i18n.t(o.labelKey) })),
               { value: 'custom', label: i18n.t('dashboard.dash_custom_range') },
             ]}
-            style={{ width: 160 }}
+            className={styles.il30}
           />
         </div>
 
@@ -958,14 +898,10 @@ const DashboardPage: React.FC = () => {
           onChange={setActiveTab}
         />
 
-        <div style={{ marginTop: 'var(--space-2)' }}>
+        <div className={styles.il31}>
           {isLoading ? (
             <div
-              style={{
-                padding: 'var(--space-12)',
-                textAlign: 'center',
-                color: 'var(--text-secondary)',
-              }}
+              className={styles.il32}
             >
               {i18n.t('dashboard.dash_loading')}
             </div>
@@ -990,14 +926,7 @@ const HealthItem: React.FC<{
   value: string;
 }> = ({ icon: Icon, label, status, value }) => (
   <div
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 'var(--space-3)',
-      padding: 'var(--space-3)',
-      backgroundColor: 'var(--surface-2)',
-      borderRadius: 'var(--radius-sm)',
-    }}
+    className={styles.il33}
   >
     <div
       style={{
@@ -1023,9 +952,9 @@ const HealthItem: React.FC<{
     >
       <Icon size={18} />
     </div>
-    <div style={{ flex: 1 }}>
-      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{label}</div>
-      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{value}</div>
+    <div className={styles.il34}>
+      <div className={styles.il35}>{label}</div>
+      <div className={styles.il36}>{value}</div>
     </div>
     <StatusLight
       state={
