@@ -90,12 +90,12 @@ async fn main() -> Result<()> {
                 r#"
                 SELECT json_build_object(
                     'items', COALESCE(json_agg(t), '[]'::json),
-                    'total', (SELECT COUNT(*) FROM drivers WHERE deleted_at IS NULL),
+                    'total', (SELECT COUNT(*) FROM tms.tms_drivers WHERE deleted_at IS NULL),
                     'page', 1,
                     'page_size', 10
                 ) as data
                 FROM (
-                    SELECT d.* FROM drivers d
+                    SELECT d.* FROM tms.tms_drivers d
                     WHERE d.deleted_at IS NULL
                     ORDER BY d.created_at DESC
                     LIMIT 10 OFFSET 0
@@ -158,12 +158,12 @@ async fn main() -> Result<()> {
                 r#"
                 SELECT json_build_object(
                     'items', COALESCE(json_agg(t), '[]'::json),
-                    'total', (SELECT COUNT(*) FROM carriers WHERE deleted_at IS NULL),
+                    'total', (SELECT COUNT(*) FROM tms.tms_carriers WHERE deleted_at IS NULL),
                     'page', 1,
                     'page_size', 10
                 ) as data
                 FROM (
-                    SELECT c.* FROM carriers c
+                    SELECT c.* FROM tms.tms_carriers c
                     WHERE c.deleted_at IS NULL
                     ORDER BY c.created_at DESC
                     LIMIT 10 OFFSET 0

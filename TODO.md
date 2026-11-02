@@ -1,3 +1,17 @@
+## 批 5 第二批：DUPLICATE 剩余 9 项核销 + tms 双写表统一（2026-11-02）✅
+
+> 目标：DUPLICATE 14（实际 15）项全量清零——本批处理剩余 9 项跨模块语义类。
+
+- **核销 8 项**（侦查判定设计保留，非代码重复）：
+  - scm-contracts：无残留（仅 scm-purchase-contract）。
+  - scm-suppliers / srm-supplier / wms-supplier-management：三模块独立权限码（scm/srm/wms:supplier:read），采购/供应商关系/仓储视角模块化设计。
+  - finance-assets：finance:asset:read（财务固定资产）与 asset 模块（资产管理台账）独立权限。
+  - iam-dashboard：复用 @/pages/admin/DashboardPage 共享组件，不同路由模块入口。
+  - notification dashboard/list/center、doc list/documents/center、hrm dashboard/overview：均为不同 path 多视图设计（doc list=/doc/list、documents=/doc/documents；hrm dashboard=/hrm/dashboard、overview=/hrm/overview）。
+- **tms 双写统一（真问题）**：main.rs 预热查询仍引用旧表 carriers/drivers，新表 tms_carriers/tms_drivers 为 schema_defense 权威（模块主逻辑已用新表）。统一 4 处旧表引用 → tms.tms_carriers / tms.tms_drivers（新旧表列结构相同）。旧表行保留未删（避免破坏，后续清理）。
+- **验证**：grep svc/tms 无旧表引用残留；cargo check -p topems-tms 通过；DUPLICATE 15 行全 ✅（🆕 0）。
+- **遗留**：旧表 carriers/drivers 数据未迁移未删（schema_defense 不覆盖），后续可评估删表。
+
 ## 批 5 第一批：DUPLICATE 前端 6 项核销 + MENU_ORPHAN 12 行补种（2026-11-02）✅
 
 > 目标：批 4 收官后按建议推进 P1：先 DUPLICATE 去重（小而明确），再 MENU_ORPHAN DB 种子补齐。
