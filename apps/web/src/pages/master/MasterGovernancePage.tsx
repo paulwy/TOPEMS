@@ -215,9 +215,9 @@ const MasterGovernancePage: React.FC = () => {
               {dims.length === 0 && emptyRow(3)}
               {dims.map((d, i) => (
                 <TableRow key={i}>
-                  <TableCell>{String(d.name)}</TableCell>
-                  <TableCell>{String(d.score)}</TableCell>
-                  <TableCell>{String(d.weight)}</TableCell>
+                  <TableCell>{String(d.name ?? d.dimension ?? d.key ?? '-')}</TableCell>
+                  <TableCell>{String(d.score ?? 0)}</TableCell>
+                  <TableCell>{String(d.weight ?? 0)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
