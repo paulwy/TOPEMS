@@ -1,3 +1,12 @@
+## 批 4 第十六批：tests/integration 29 项存量红核销（BASE_URL 聚合入口 + IAM openapi 聚合文档）（2026-11-02）✅
+
+> 目标：核销 p13 遗留的 tests/integration 29 项存量红（health-checks 打 8000 对非 core 服务 404 + openapi IAM api-docs 探测失败）。
+> 根因：integration 默认 BASE_URL=8000（独立 unified-core），而 health-checks 遍历全服务 `/api/<svc>/health` 只挂 8099（monolith 聚合）→ 非 core 服务 404；IAM 无独立 openapi 端点（unified-core 聚合模式下 IAM 路由并入核心文档，`/api/core/api-docs/openapi.json` paths 含 10 条 /iam/*）。
+
+- **修**：helpers/api-client.ts BASE_URL 默认 8000→8099（聚合入口；独立 IAM 场景用 BASE_URL env 覆盖）；openapi.spec.ts IAM 测试候选路径改核心聚合文档 + 断言 paths 含 /iam/*。
+- **验证（全绿）**：integration **33 passed | 6 skipped**（无 FAIL；skip=无凭据条件跳过）；TEST_TOKEN 下 openapi **3/3 真过**；health-checks **30/30**；29 项存量红全消。
+- **备注**：auth-flow/cross-service 同走 8099 仍绿；skip 语义=无 TEST_TOKEN 环境条件跳过（CI 可注入）。
+
 ## 批 4 第十五批：finance saga `/api/v1/*` 死路径元数据清理（2026-11-02）✅
 
 > 目标：清理 p13 保留项 finance saga `/api/v1/vouchers/*` 死路径。侦查确认 saga 为纯内存模拟（execute_saga 正向/补偿均不实际调用 HTTP，仅 force_fail 判断），endpoint 是纯元数据字符串 → p13 退役不影响功能，但残留 v1 需一致化。
