@@ -1,3 +1,16 @@
+## 批 5 第十三批：API_NO_TABLE 6 行 + TABLE_NO_API 2 行 + MISMATCH 1 行 + wms OK 核查（2026-11-02）✅
+
+> 目标：清理剩余表/端点对应性类别。
+
+- **automation 核销**：35 端点无 DB 依赖（automation.rs 无 sqlx/query/表引用——计算型规则引擎，内存执行）。
+- **monitor 核销**：复用 public.alerts/monitor_settings/monitor_thresholds（共享 public 表设计，同 knowledge_bases 范式）。
+- **rd ×3 核销**：code→rs.projects（Rs 专属表存在）、review→rd.builds、release→rd.deploys——表均在 rd/rs schema。
+- **mobile 核销**：聚合 BFF 无专属表为架构设计（读写依赖其他服务）。
+- **erp TABLE_NO_API 核销**：bank_accounts 路由已存在（/erp/bank-accounts）；account_balances 为财务集成落表，前端会计走 finance accounting-subjects（有端点）。
+- **wms TABLE_NO_API 核销**：主表已在 wms schema（inventory/locations/batches/stock_takes 等 20+ 表）——"仅 9 张表"过时。
+- **wms MISMATCH 核销**：nav=stock-take / 路由=stocktake / 后端=/stock-takes 为命名别名设计（业务名/URL 紧凑名/RESTful 复数），前端路由与导航映射正常。
+- **wms OK 核查**：种子 wms-warehouses path=/wms/warehouse-management 与前端 config.ts:47 一致。
+
 ## 批 5 第十二批：PARTIAL 剩余 6 行核销——14/14 全清零（2026-11-02）✅
 
 > 目标：PARTIAL 类收尾。
