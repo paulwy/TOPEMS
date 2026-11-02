@@ -90,7 +90,7 @@
 - **盘点外增量**：实时核对发现 `mes.work_orders`、`mobile.documents`（均含 tenant_id uuid、无策略，盘点 65 张未覆盖）→ batch2 迁移 `20261102230000_rls_enable_biz_batch2.sql`（幂等 DO 块 + ENABLE）已应用。
 - **终态**：含租户列 1202 张中 **1184 已启用** RLS；剩余 18 张全为备份/系统/配置豁免类（_archive/备份表/core_*/_sqlx_migrations/spatial_ref_sys/schema_defense_ledger/monitor_thresholds/erp_dictionaries 等）——**业务实体类缺口清零**。
 - **清单**：docs/security/rls-gap-inventory-20261102.md 已追加复核记录。
-- **下一步**：BIZ 749 读端点 / to_bind 332 绑定逐表核对（工程大项，独立于审计）；豁免类 18 张保持应用层权限控制口径。
+- **RLS 工程闭环结论**：后段读端点审计（三层注入机制覆盖完备——连接级 DEFAULT_TENANT_ID + 请求级中间件 x-tenant-id + 策略放行分支；749/411 口径核销，见 docs/security/rls-read-endpoint-audit-20261102.md）、配置类 36 张豁免（应用层权限控制）、RLS 生效验证（探针角色行级过滤矩阵）均已完成；to_bind 332 为 v73 作废口径（当前基线 v74 重建池 1649 候选，属前端绑定工程，独立于 RLS）；豁免类 18 张保持应用层权限控制口径；**5433 回归挂账（待 5433 环境恢复）**。
 
 ## RLS 覆盖率工程——第一子步：实时缺口盘点（2026-11-02）✅
 
