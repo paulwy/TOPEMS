@@ -1,4 +1,15 @@
 
+## 5433 public.qa_lab_samples/tasks 标准表补建 + FK 对齐（2026-11-03）✅
+
+> 上轮挂账项②闭环：5433 缺 public 事实标准表（0004 迁移注释所指），qa_lab FK 全删未重建。
+
+- **补建**：重放 20260921000100（public.qa_lab_samples 14 列 + 索引）+ 1007000009 建表段（public.qa_lab_tasks——**发现建表段无 PRIMARY KEY，补 ALTER ADD PK(id)**——test 侧有 PK 故 FK 可建）。
+- **FK 重建**：5433 与 test 完全一致——6 个 FK（inspection_reports/records/lifecycle/tasks/rfid_tags/barcodes → public.qa_lab_samples/tasks）。
+- **验证**：5433 账本 546、check-consistency 一致、health 200。
+- **教训**：① ADD CONSTRAINT IF NOT EXISTS 为 MySQL 语法，PostgreSQL 需 DO 块+pg_constraint 检查；② 1007000009 的 public.qa_lab_tasks 建表段缺 PK（迁移缺陷，test 靠后续/手工补）——复制 DDL 补齐时须核对约束。
+- **遗留**：topems@5432 仍缺 33 个模块 schema（lims/plugin_* 等，挂账——建议备份后全量重放对齐 test，需用户拍板）。
+
+
 ## 并行线迁移 0001/0002/0004 五库应用 + schema 漂移治理（2026-11-03）✅
 
 > 并行线推入 3 个新迁移（lims/全局删误用 status_standard CHECK + lims fk repoint）——应用时暴露历史 schema 漂移（补登账本未重放 DDL）。
