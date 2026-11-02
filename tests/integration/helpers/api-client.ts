@@ -10,7 +10,9 @@ function resolveBaseUrl(): string {
   if (candidate && candidate !== '/') {
     return candidate.replace(/\/$/, '');
   }
-  return 'http://localhost:8000';
+  // 模块化单体聚合入口 :8099（挂载全部 /api/<svc>/health、openapi 聚合文档）。
+  // 独立 unified-core（仅 IAM 场景）时用 BASE_URL env 覆盖。
+  return 'http://localhost:8099';
 }
 
 export const BASE_URL = resolveBaseUrl();

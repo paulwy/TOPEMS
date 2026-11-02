@@ -62,10 +62,11 @@ describe.skipIf(!apiReachable)('OpenAPI docs', () => {
   });
 
   it('exposes an OpenAPI endpoint for IAM', async (ctx: TaskContext) => {
+    // IAM 无独立 openapi 端点：unified-core 聚合模式下 IAM 路由并入核心文档
+    // （/api/core/api-docs/openapi.json，paths 含 /iam/*）
     const candidates = [
-      '/api/core/iam/api-docs/openapi.json',
-      '/api/iam/api-docs/openapi.json',
-      '/api/iam/api-docs/openapi.json',
+      '/api/core/api-docs/openapi.json',
+      '/api/core/api-docs/openapi.json',
     ];
 
     let lastStatus = 0;
@@ -79,6 +80,7 @@ describe.skipIf(!apiReachable)('OpenAPI docs', () => {
         if (resp.status === 200) {
           const doc = await resp.json();
           expect(doc.openapi).toMatch(/^3\.\d\.\d$/);
+          expect(Object.keys(doc.paths ?? {}).some((k) => k.includes('/iam/'))).toBeTruthy();
           return;
         }
         if (resp.status === 401) {
@@ -92,6 +94,7 @@ describe.skipIf(!apiReachable)('OpenAPI docs', () => {
           if (resp.status === 200) {
             const doc = await resp.json();
             expect(doc.openapi).toMatch(/^3\.\d\.\d$/);
+            expect(Object.keys(doc.paths ?? {}).some((k) => k.includes('/iam/'))).toBeTruthy();
             return;
           }
         }
