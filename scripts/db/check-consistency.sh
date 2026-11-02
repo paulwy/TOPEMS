@@ -54,3 +54,40 @@ if [ -n "$DEV_VER" ] && [ -n "$DEP_VER" ]; then
     exit 1
   fi
 fi
+
+# == 表级一致性（2026-11-03 增强） ==
+# 教训：账本计数/最新版本一致 ≠ schema/表结构一致（topems 曾 542 账本但缺 34 schema、
+# 5433 缺 public 标准表均漏检）。现按业务 schema 对比两库表数量，快速暴露表级漂移。
+# 排除：pg_*/information_schema/_sqlx_test（测试专用 schema）。
+TBLQ="SELECT table_schema||':'||count(*) FROM information_schema.tables WHERE table_schema NOT LIKE 'pg_%' AND table_schema NOT IN ('information_schema','_sqlx_test') GROUP BY table_schema ORDER BY 1"
+echo "== 表级一致性（业务 schema 表数对比） =="
+DEV_TBLS=$(psql -h "$DEV_HOST" -p "$DEV_PORT" -U "$DEV_USER" -d "$DEV_DB" -t -A -c "$TBLQ" 2>/dev/null | sort || true)
+DEP_TBLS=$(psql -h "$DEP_HOST" -p "$DEP_PORT" -U "$DEP_USER" -d "$DEP_DB" -t -A -c "$TBLQ" 2>/dev/null | sort || true)
+# 逐 schema 对比：仅输出表数不一致的 schema（去同值行）
+DIFF_LINES=""
+while IFS= read -r line; do
+  [ -z "$line" ] && continue
+  sch=${line%%:*}
+  devn=${line##*:}
+  depn=$(printf '%s\n' "$DEP_TBLS" | awk -F: -v s="$sch" '$1==s {print $2}')
+  if [ -z "$depn" ]; then depn=0; fi
+  if [ "$devn" != "$depn" ]; then
+    DIFF_LINES="${DIFF_LINES}  ${sch}: 主库=$devn vs 验证库=$depn"$'\n'
+  fi
+done <<< "$DEV_TBLS"
+# 验证库独有 schema（主库无此 schema）
+while IFS= read -r line; do
+  [ -z "$line" ] && continue
+  sch=${line%%:*}
+  if ! printf '%s\n' "$DEV_TBLS" | grep -q "^$sch:"; then
+    DIFF_LINES="${DIFF_LINES}  ${sch}: 主库=0 vs 验证库=${line##*:}"$'\n'
+  fi
+done <<< "$DEP_TBLS"
+if [ -n "$DIFF_LINES" ]; then
+  echo "!! 表级漂移（业务 schema 表数不一致）："
+  printf '%s' "$DIFF_LINES"
+  echo "   参考：scripts/db 或 docs/database 的表级对齐记录；账本一致不代表表结构一致"
+  exit 1
+else
+  echo "== 结论：表级一致（逐业务 schema 表数相同） =="
+fi
