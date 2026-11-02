@@ -10,10 +10,9 @@
 
 > 承接 dependabot 审计遗留跟踪项；registry.npmjs.org 网络阻塞（在线 audit 不可达），以 pnpm-lock.yaml 静态版本核对完成复核。
 
-- **node-forge 13 条 advisory 收敛**：lock 已含 `node-forge@1.4.0`（CVE-2022-24771/24772/24773 修复版）——上次基线 1.3.x 旧链升级到位。
-- **维持挂账**：minimatch 旧链（eslint 10 系/exceljs 链）、glob 9.3.4 旧链、deepmerge 3.3.0（上游无补丁）——跨大版本 overrides 风险 > 收益，不执行。
-- **复核限制**：在线 `pnpm audit` 因 registry 网络阻塞未全量重扫；待网络恢复重跑确认全量 advisory 集。
-- **记录**：docs/security/dependabot-local-audit-20261102.md §6。
+- **结论修正（node-forge 未收敛）**：在线 `pnpm audit` 重扫成功——19 条 = critical 0 / high 6 / moderate 9 / low 4，advisory 15 个，与基线**完全一致，漏洞面无变化**。`node-forge@1.4.0` 仍被判定 vulnerable（`vulnerable=<=1.4.0`，13 条 advisory 无修复版本，node-forge 已停更）——上轮"升级 1.4.0 即收敛"为误判（最新版 ≠ 修复版），13 条维持挂账。
+- **维持挂账**：minimatch 旧链（eslint 10 系/exceljs 链锁 3.x；新链 11.0.3 已修）、glob 9.3.4 旧链（新链 14.0.3 已修）、deepmerge 4.3.1（>=4.2.0 <=4.3.1 无补丁）——跨大版本 overrides 风险 > 收益，不执行。
+- **记录**：docs/security/dependabot-local-audit-20261102.md §6（修正版）。
 
 ## 5433 验证实例恢复 + RLS 5433 回归核销（2026-11-02）✅
 

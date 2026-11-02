@@ -53,8 +53,8 @@
 3. **定期重扫**：npm 生态 `pnpm audit`（官方 registry）+ Rust 生态 `cargo audit --db`（SSH advisory-db），纳入每周缓存清理同周期
 4. 本批 19 项均无 critical，暂不阻断发布；生产 server 侧（Rust）0 漏洞
 
-## 6. 周期复核（2026-11-02 晚）
+## 6. 周期复核（2026-11-02 晚）——在线重扫完成 + 结论修正
 
-- **node-forge 已收敛**：pnpm-lock.yaml 静态核对——`node-forge@1.4.0`（CVE-2022-24771/24772/24773 修复版，> 基线 1.3.x 旧链）——上次 13 条 node-forge advisory 不再适用。
-- **维持基线挂账**：minimatch 旧链（eslint 10 系 / exceljs>archiver 链，锁 3.x）、glob 旧链（9.3.4）、deepmerge 3.3.0（上游无补丁）——跨大版本 overrides 破坏构建/Excel 导出风险 > 收益，不执行。
-- **复核限制**：`registry.npmjs.org` 网络阻塞（curl 无响应）→ 在线 `pnpm audit` 全量重扫不可达，本次为 lock 静态版本核对；待网络恢复后重跑 `npm_config_registry=https://registry.npmjs.org pnpm audit --json` 复核全量 advisory 集。
+- **在线重扫完成**：`pnpm audit --json`（registry 网络间歇恢复后成功）——**19 条 = critical 0 / high 6 / moderate 9 / low 4，advisory 15 个，与基线完全一致，漏洞面无变化**。
+- **结论修正（node-forge 未收敛）**：`node-forge@1.4.0` 仍被判定 vulnerable（`vulnerable=<=1.4.0`，13 条 advisory 全部无修复版本——node-forge 已停更）——上一轮静态核对"升级 1.4.0 即收敛"为**误判**（最新版 ≠ 修复版）。node-forge 13 条维持挂账（expo ~58.0.21 > @expo/cli 锁链）。
+- **其余维持基线**：minimatch 新链已修（lock 含 11.0.3 > 11.0.1）但 eslint 10 系 / exceljs>archiver 旧链 3.x 挂账；glob 新链已修（14.0.3 > 14.0.1）但旧链 9.3.4 挂账；deepmerge 4.3.1 仍 vulnerable（>=4.2.0 <=4.3.1 无补丁）——跨大版本 overrides 破坏构建/Excel 导出风险 > 收益，均不执行。
