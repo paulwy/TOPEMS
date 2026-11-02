@@ -55,39 +55,29 @@ if [ -n "$DEV_VER" ] && [ -n "$DEP_VER" ]; then
   fi
 fi
 
-# == 表级一致性（2026-11-03 增强） ==
+# == 表级一致性（2026-11-03 增强 v2：全表清单对比，区分缺失/反向） ==
 # 教训：账本计数/最新版本一致 ≠ schema/表结构一致（topems 曾 542 账本但缺 34 schema、
-# 5433 缺 public 标准表均漏检）。现按业务 schema 对比两库表数量，快速暴露表级漂移。
+# 5433 缺 public 标准表均漏检）。现直接对比两库业务表清单（精确到表）。
+# 方向语义：缺失（主库有、验证库无）= 硬漂移 → exit 1；反向（验证库有、主库无）
+# = 非迁移建的历史/验证残留 → 警告不阻断（挂账甄别）。
 # 排除：pg_*/information_schema/_sqlx_test（测试专用 schema）。
-TBLQ="SELECT table_schema||':'||count(*) FROM information_schema.tables WHERE table_schema NOT LIKE 'pg_%' AND table_schema NOT IN ('information_schema','_sqlx_test') GROUP BY table_schema ORDER BY 1"
-echo "== 表级一致性（业务 schema 表数对比） =="
-DEV_TBLS=$(psql -h "$DEV_HOST" -p "$DEV_PORT" -U "$DEV_USER" -d "$DEV_DB" -t -A -c "$TBLQ" 2>/dev/null | sort || true)
-DEP_TBLS=$(psql -h "$DEP_HOST" -p "$DEP_PORT" -U "$DEP_USER" -d "$DEP_DB" -t -A -c "$TBLQ" 2>/dev/null | sort || true)
-# 逐 schema 对比：仅输出表数不一致的 schema（去同值行）
-DIFF_LINES=""
-while IFS= read -r line; do
-  [ -z "$line" ] && continue
-  sch=${line%%:*}
-  devn=${line##*:}
-  depn=$(printf '%s\n' "$DEP_TBLS" | awk -F: -v s="$sch" '$1==s {print $2}')
-  if [ -z "$depn" ]; then depn=0; fi
-  if [ "$devn" != "$depn" ]; then
-    DIFF_LINES="${DIFF_LINES}  ${sch}: 主库=$devn vs 验证库=$depn"$'\n'
-  fi
-done <<< "$DEV_TBLS"
-# 验证库独有 schema（主库无此 schema）
-while IFS= read -r line; do
-  [ -z "$line" ] && continue
-  sch=${line%%:*}
-  if ! printf '%s\n' "$DEV_TBLS" | grep -q "^$sch:"; then
-    DIFF_LINES="${DIFF_LINES}  ${sch}: 主库=0 vs 验证库=${line##*:}"$'\n'
-  fi
-done <<< "$DEP_TBLS"
-if [ -n "$DIFF_LINES" ]; then
-  echo "!! 表级漂移（业务 schema 表数不一致）："
-  printf '%s' "$DIFF_LINES"
-  echo "   参考：scripts/db 或 docs/database 的表级对齐记录；账本一致不代表表结构一致"
+TBLQ="SELECT table_schema||'.'||table_name FROM information_schema.tables WHERE table_schema NOT LIKE 'pg_%' AND table_schema NOT IN ('information_schema','_sqlx_test')"
+echo "== 表级一致性（业务表清单对比） =="
+DEV_LST=$(psql -h "$DEV_HOST" -p "$DEV_PORT" -U "$DEV_USER" -d "$DEV_DB" -t -A -c "$TBLQ" 2>/dev/null | sort | sed '/^$/d' || true)
+DEP_LST=$(psql -h "$DEP_HOST" -p "$DEP_PORT" -U "$DEP_USER" -d "$DEP_DB" -t -A -c "$TBLQ" 2>/dev/null | sort | sed '/^$/d' || true)
+MISS_LST=$(comm -23 <(printf '%s\n' "$DEV_LST") <(printf '%s\n' "$DEP_LST"))
+REV_LST=$(comm -13 <(printf '%s\n' "$DEV_LST") <(printf '%s\n' "$DEP_LST"))
+MISS_N=$(printf '%s\n' "$MISS_LST" | sed '/^$/d' | wc -l | tr -d ' ')
+REV_N=$(printf '%s\n' "$REV_LST" | sed '/^$/d' | wc -l | tr -d ' ')
+if [ -n "$MISS_LST" ]; then
+  echo "!! 表级缺失漂移（主库有、验证库无）共 $MISS_N 个（硬伤，须补齐）："
+  printf '%s\n' "$MISS_LST" | head -5 | sed 's/^/  /'
+  echo "   参考：pg_dump --schema-only + 缺失清单提取重放（scripts/db 或 docs/database 记录）"
   exit 1
+fi
+if [ -n "$REV_LST" ]; then
+  echo "⚠️ 反向表（验证库有、主库无）共 $REV_N 个（非迁移建残留，挂账甄别，不阻断）："
+  printf '%s\n' "$REV_LST" | head -3 | sed 's/^/  /'
 else
-  echo "== 结论：表级一致（逐业务 schema 表数相同） =="
+  echo "== 结论：表级一致（业务表清单相同） =="
 fi
