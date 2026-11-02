@@ -1,3 +1,10 @@
+## 批 5 第十五批：MOBILE_NO_MENU 10 行核销——P4 全清零（2026-11-02）✅
+
+> 设计核销：移动端轻量办公定位。
+
+- **核销理由**：apps/mobile/src/navigation/AppNavigator.tsx 为 8 个通用 Tab 轻量移动办公设计（Home-Dashboard / Task / Approval / Attendance / Notification / Document / Inventory / Profile-Settings），覆盖作业场景（任务/审批/考勤/库存/文档）；bi/admin/master/report/automation/monitor/iam/ai/integration 均为桌面端业务管理模块（web 端完整覆盖），移动端无入口为设计取舍（与 bi/im 前端 frontendOnly 豁免同理），非缺陷。
+- **10 行清单**：bi（L100）、admin（L108）、master（L114）、report（L119）、automation（L124）、monitor（L127）、iam（L132）、ai（L135）、integration（L138）、mobile 总行（L187）。
+
 ## 批 5 第十四批：ROUTE_NO_API 最后 2 行核销——16/16 全清零，P1/P2 全类别清零（2026-11-02）✅
 
 > 剩余 2 行"真缺"侦查定论。
