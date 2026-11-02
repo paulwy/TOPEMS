@@ -1,4 +1,14 @@
 
+## topems@5432 schema 集补齐（34 个缺失全部补建）+ 表级漂移挂账（2026-11-03）✅
+
+> 上轮挂账项①部分闭环：schema 本体（pg_namespace 级）已与 test 完全对齐。
+
+- **补建**：重放 000_create_schemas.sql（44 个幂等 CREATE SCHEMA）+ 1007000006 建段（analytics/communication/doc_service 等）+ 1007000009 portal + 手动 notification/storage。
+- **验证**：topems@5432 schema 集 **59/59 与 test 完全一致**（comm 无差异）。
+- **关键事实**：topems-server(:8099) 进程环境 DATABASE_URL=**topems_prod@5432**（非 topems）——topems 主库漂移对运行系统**无实际影响**；topems_prod 已 546/59 schema 完整。
+- **表级漂移（挂账）**：topems 924 表 vs test 1328 表，**缺 404 表**（portal 118/lims 44/iam 等模块表缺）——补齐需逐迁移重放或备份后全量重建，成本高、当前无业务影响 → 挂账，建议后续备份后重放对齐。
+
+
 ## 5433 public.qa_lab_samples/tasks 标准表补建 + FK 对齐（2026-11-03）✅
 
 > 上轮挂账项②闭环：5433 缺 public 事实标准表（0004 迁移注释所指），qa_lab FK 全删未重建。
