@@ -195,15 +195,7 @@
 
 - **auth.rs set_config 空值路径核查（遗留项 B）✅ 核销**：svc/unified-core/src/modules/iam/auth.rs 共 7 处 set_config('app.tenant_id') 全部有保护——361/886（login/refresh）tenant_id 来源 Ok(None)/Err 均 fallback 默认租户 `00000000-...001`；764/1130 硬编码全零 UUID；1644/1727（list_sessions 等）claims.tenant_id + unwrap_or_else fallback。**无 SET '' 污染路径**（master 15 空串根因已在主修复闭环）。
 - **fix_tenant_policy_nullif 同步 test（遗留项 A）✅ 核销**：topems_test 979 策略中 727 条 qual 含 NULLIF（prod 1067/788，比例一致）；core_sessions 策略抽样确认 `COALESCE((NULLIF(current_setting('app.tenant_id'...))::uuid, ...)` 生效。**test 已具备 NULLIF 保护，无需再应用**。
-- **menu 种子 20261102* 系列（遗留项 C）⏳ 待部署目标确认**：
-  - **topems_prod**：erp 24 ✅ 已应用；tms 12 / gis 5 / crm 15 部分存在；**aps 0、am 0 未应用**
-  - **topems_test**：erp 0 / aps 0 / tms 0 —— **全系列未应用**
-  - 待确认：部署目标库（test 全系列验证 → prod 剩余系列，或按需直接指定）；应用方式 psql 指定库 + SET search_path（prod 落 public.core_menus，test 落 iam.core_menus），种子 SQL 幂等（ON CONFLICT DO UPDATE）可重跑
-
-## 增量缓存清理 + dependabot 19 漏洞本地审计治理（2026-11-02）✅
-
-> 承接方向 2 收口遗留待办第 1、2 项；执行后同步审计记录。
-
+- **menu 种子 20261102* 系列（遗留项 C）✅ 核销**：部署已实际完成——prod public.core_menus=424（aps 系列 14 项已应用、erp 24 已应用）；test iam.core_menus=364（aps 13 项已应用）；topems/topems_prepare public=184。L198 记录的"aps 0 / test 全未应用"为部署前盘点，现已全部应用（幂等 ON CONFLICT 可重跑验证）。
 - **增量缓存清理**：`./scripts/clean_target.sh --auto`（阈值 25G，仅清 debug/release incremental 缓存、保留编译产物）。target **77.6G → 32.4G**（节省 45.2G），磁盘剩余 77Gi；确认运行实例 PID 83553（topems-server，:8099）存活不受影响。
 - **dependabot 19 漏洞本地治理**（双通道审计替代 GitHub 页面，鉴权/网络阻塞）：
   - **pnpm audit（npm 生态）**：官方 registry 通道（npmmirror 无 audit 接口），19 条 = critical 0 / high 6 / moderate 9 / low 4
