@@ -1,3 +1,11 @@
+## tests/integration 存量红核销（2026-11-02）✅
+
+> 承接「批 4/5 遗留」中"tests/integration 29 存量红"条目；本机服务 :8099 实跑 vitest 核销。
+
+- **health-checks.spec.ts**：30 tests **全绿**（BASE_URL 已适配模块化单体聚合入口 :8099，非 core 服务 404 旧问题已随聚合挂载消解；core/ai/mes/erp 等抽查 health 均 200）。
+- **openapi.spec.ts**：1 过 + **2 skip**（`/api/core/api-docs/openapi.json` 401 需认证 → isAuthAvailable 探测登录凭据（test_admin/admin123）失败返回 false → 测试按设计 skip；**不红**）。登录凭据为环境配置项（TEST_USERNAME/TEST_PASSWORD/TEST_TOKEN 可覆盖），非测试代码缺陷——auth.ts 保持原样。
+- **结论**：存量 29 红清零（0 failed），测试文件 2 passed（31 passed + 2 skipped）。
+
 ## 批 5 第十八批：RLS 覆盖率核查运行 + 交叉核对评估（2026-11-02）✅
 
 > 待核实项三运行 scripts/check-rls-coverage.py。
