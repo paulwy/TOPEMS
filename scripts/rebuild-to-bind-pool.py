@@ -49,6 +49,8 @@ SVC_NAMES = {
     "dsh", "pm", "tms", "gis", "mobile", "finance", "hrm", "portal", "search",
     "aps", "bi", "admin", "consolidation", "unified-core", "integration", "bff",
     "master-data", "master-data-refs",
+    "monitor", "communication", "notification", "plugin-registry", "plugin",
+    "scheduler", "workflow", "auth", "iam", "rbac",
 }
 
 
