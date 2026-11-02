@@ -1,3 +1,22 @@
+## 批 5 第一批：DUPLICATE 前端 6 项核销 + MENU_ORPHAN 12 行补种（2026-11-02）✅
+
+> 目标：批 4 收官后按建议推进 P1：先 DUPLICATE 去重（小而明确），再 MENU_ORPHAN DB 种子补齐。
+
+- **DUPLICATE 6 项核销**（侦查后判定现状已收敛/设计保留，计划行号过时）：
+  - erp-dictionaries：navItems 仅 1 处（L282 为 route code 非重复注册）。
+  - mes-work-order：route(L1273)+navItem(L1727) 同名正常，无 mes-work-orders 残留。
+  - wms-locations：仅 /wms/location-management 一路径（route+navItem 同名正常）。
+  - wms-inbound-order / wms-outbound-order：route+navItem 同名正常，无复数变体。
+  - pm-projects(/pm/projects list) 与 pm-project-list(/pm/project-list master-detail)：不同页面不同模板，双视图设计保留。
+  - 结论：非代码重复，属审计行号过时（批 4 归属收敛已收敛）→ 计划 6 行 ⚠→✅。
+- **MENU_ORPHAN 补种**（关键：backfill 迁移创建后从未应用——_sqlx_migrations 停在 20261024，本批手动应用）：
+  - 应用 `20261101120000_menu_backfill_orphan_fe.sql`（62 项：mes15/wms10/qms8/scm6/pdm5/hrm5/pm5/crm3/lims2/finance2/report1）——core_menus 184→246。
+  - 新增 `20261102140000_menu_seed_erp.sql`：erp 全模块补种（6 组 erp_overview/process/business/master/analytics/settings + 24 项种子，permission 取 navItem 真实细粒度权限码）——246→270。
+  - 验证：erp 24 项权限码全部在 core_permissions；hrm/pm/mes/pdm/qms/wms/crm/lims/report 抽查项全落地。
+  - 计划 MENU_ORPHAN 12 行 🆕→✅（erp/mes/pdm/qms/lims/wms/scm/crm/finance/report/hrm/pm）。
+- **验证**：perm-matrix ci-report exit 0；DB core_menus 270 条。
+- **遗留**：_sqlx_migrations 仍停在 20261024（另 50 个迁移文件未应用，含 4 个破坏性迁移），本批仅手动应用菜单相关 2 个（幂等 INSERT）；其余模块（tms/asset/bi/admin/master/automation/monitor/iam/ai/integration/rd/notification/oa/gis/plugin/doc/workflow/im/ticket）MENU_ORPHAN 待后续批补种。
+
 ## 批 4 第二十批：verify_navigation 路由声明解析修正（P5 存量 2 归零）（2026-11-02）✅
 
 > 目标：批 4 整体回归后消除 verify 缺失 2（原 P5 存量）——两者均为 verify 猜测逻辑误报，改为按路由实际声明解析。
