@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import css from './MesWorkOrderPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Factory,
@@ -349,10 +350,10 @@ const MesWorkOrderPage: React.FC = () => {
       sortable: true,
       render: (row) => (
         <div>
-          <div style={{ fontWeight: 600, color: 'var(--accent-primary)', marginBottom: 2 }}>
+          <div className={css.il1}>
             {row.order_no}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{row.product_name}</div>
+          <div className={css.il2}>{row.product_name}</div>
         </div>
       ),
     },
@@ -376,8 +377,8 @@ const MesWorkOrderPage: React.FC = () => {
             <Package size={16} />
           </div>
           <div>
-            <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{row.product_name}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{row.product_code}</div>
+            <div className={css.il3}>{row.product_name}</div>
+            <div className={css.il4}>{row.product_code}</div>
           </div>
         </div>
       ),
@@ -387,17 +388,12 @@ const MesWorkOrderPage: React.FC = () => {
       header: t('mes.work_order_page.col_qty_progress'),
       align: 'center',
       render: (row) => (
-        <div style={{ minWidth: 120 }}>
-          <div style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 4 }}>
+        <div className={css.il5}>
+          <div className={css.il6}>
             {row.completed_quantity} / {row.quantity}
           </div>
           <div
-            style={{
-              height: 6,
-              backgroundColor: 'var(--surface-2)',
-              borderRadius: 3,
-              overflow: 'hidden',
-            }}
+            className={css.il7}
           >
             <div
               style={{
@@ -414,7 +410,7 @@ const MesWorkOrderPage: React.FC = () => {
               }}
             />
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
+          <div className={css.il8}>
             {getProgress(row)}%
           </div>
         </div>
@@ -427,7 +423,7 @@ const MesWorkOrderPage: React.FC = () => {
         const config = statusConfig[row.status];
         const StatusIcon = config.icon;
         return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div className={css.il9}>
             <StatusIcon
               size={14}
               style={{ color: config.color }}
@@ -450,8 +446,8 @@ const MesWorkOrderPage: React.FC = () => {
       header: t('mes.work_order_page.col_workshop_line'),
       render: (row) => (
         <div>
-          <div style={{ fontSize: 13, color: 'var(--text-primary)' }}>{row.workshop}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{row.production_line}</div>
+          <div className={css.il10}>{row.workshop}</div>
+          <div className={css.il11}>{row.production_line}</div>
         </div>
       ),
     },
@@ -461,22 +457,11 @@ const MesWorkOrderPage: React.FC = () => {
       render: (row) => (
         <div style={styles.inlineRow}>
           <div
-            style={{
-              width: 24,
-              height: 24,
-              borderRadius: '50%',
-              backgroundColor: 'var(--accent-primary)',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 11,
-              fontWeight: 600,
-            }}
+            className={css.il12}
           >
             {row.operator.charAt(0)}
           </div>
-          <span style={{ fontSize: 13 }}>{row.operator}</span>
+          <span className={css.il13}>{row.operator}</span>
         </div>
       ),
     },
@@ -485,7 +470,7 @@ const MesWorkOrderPage: React.FC = () => {
       header: t('mes.work_order_page.planned_end'),
       sortable: true,
       render: (row) => (
-        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+        <span className={css.il14}>
           {formatDateTime(row.planned_end)}
         </span>
       ),
@@ -496,7 +481,7 @@ const MesWorkOrderPage: React.FC = () => {
       align: 'right',
       width: 150,
       render: (row) => (
-        <div style={{ display: 'flex', gap: 'var(--space-1)', justifyContent: 'flex-end' }}>
+        <div className={css.il15}>
           <Button
             size='sm'
             variant='ghost'
@@ -521,7 +506,7 @@ const MesWorkOrderPage: React.FC = () => {
             variant='ghost'
             leftIcon={<Trash2 size={14} />}
             onClick={() => deleteMutation.mutate(row.id)}
-            style={{ color: 'var(--error-500)' }}
+            className={css.il16}
           >
             {t('mes.work_order_page.action_delete')}
           </Button>
@@ -540,19 +525,14 @@ const MesWorkOrderPage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={css.il17}
             >
               <Input
                 placeholder={t('mes.work_order_page.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 280 }}
+                className={css.il18}
               />
               <Select
                 value={workshopFilter}
@@ -572,9 +552,9 @@ const MesWorkOrderPage: React.FC = () => {
                     label: t('mes.work_order_page.workshop_3'),
                   },
                 ]}
-                style={{ width: 140 }}
+                className={css.il19}
               />
-              <div style={{ width: 280 }}>
+              <div className={css.il20}>
                 <DateRangePicker
                   value={dateRange}
                   onChange={setDateRange}
@@ -583,7 +563,7 @@ const MesWorkOrderPage: React.FC = () => {
                 />
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div className={css.il21}>
               <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
@@ -657,7 +637,7 @@ const MesWorkOrderPage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredOrders.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={css.il22}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -689,28 +669,19 @@ const MesWorkOrderPage: React.FC = () => {
             {/* 状态卡片 */}
             <Card>
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
+                className={css.il23}
               >
                 <div>
                   <div
-                    style={{
-                      fontSize: 20,
-                      fontWeight: 600,
-                      color: 'var(--accent-primary)',
-                      marginBottom: 4,
-                    }}
+                    className={css.il24}
                   >
                     {selectedOrder.order_no}
                   </div>
-                  <div style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+                  <div className={css.il25}>
                     {selectedOrder.product_name} ({selectedOrder.product_code})
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                <div className={css.il26}>
                   <Badge variant={statusConfig[selectedOrder.status].variant}>
                     {t(statusConfig[selectedOrder.status].labelKey)}
                   </Badge>
@@ -721,23 +692,18 @@ const MesWorkOrderPage: React.FC = () => {
               </div>
 
               {/* 进度条 */}
-              <div style={{ marginTop: 'var(--space-4)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              <div className={css.il27}>
+                <div className={css.il28}>
+                  <span className={css.il29}>
                     {t('mes.work_order_page.progress_label')}
                   </span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  <span className={css.il30}>
                     {selectedOrder.completed_quantity} / {selectedOrder.quantity} (
                     {getProgress(selectedOrder)}%)
                   </span>
                 </div>
                 <div
-                  style={{
-                    height: 10,
-                    backgroundColor: 'var(--surface-2)',
-                    borderRadius: 5,
-                    overflow: 'hidden',
-                  }}
+                  className={css.il31}
                 >
                   <div
                     style={{
@@ -820,7 +786,7 @@ const MesWorkOrderPage: React.FC = () => {
             {/* 备注 */}
             {selectedOrder.remark && (
               <Card title={t('mes.work_order.k30')}>
-                <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                <p className={css.il32}>
                   {selectedOrder.remark}
                 </p>
               </Card>
@@ -898,7 +864,7 @@ const MesWorkOrderPage: React.FC = () => {
         }
       >
         <div style={styles.columnStack}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div className={css.il33}>
             <div>
               <label
                 htmlFor='wo-product-name'
@@ -1017,17 +983,7 @@ const MesWorkOrderPage: React.FC = () => {
               id='wo-remark'
               rows={3}
               placeholder={t('mes.work_order_page.ph_remark')}
-              style={{
-                width: '100%',
-                padding: 'var(--space-3)',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-default)',
-                backgroundColor: 'var(--surface-1)',
-                color: 'var(--text-primary)',
-                fontSize: 14,
-                resize: 'vertical',
-                fontFamily: 'inherit',
-              }}
+              className={css.il34}
             />
           </div>
           <div>
@@ -1061,8 +1017,8 @@ const MesWorkOrderPage: React.FC = () => {
 // 信息项组件
 const InfoItem: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
   <div>
-    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>{label}</div>
-    <div style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 500 }}>{value}</div>
+    <div className={css.il35}>{label}</div>
+    <div className={css.il36}>{value}</div>
   </div>
 );
 
