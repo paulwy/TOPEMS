@@ -284,9 +284,12 @@
 - ai 4 于 1102f 的精确瞬态/顺序依赖根因未 100% 归因（手动 curl 200 vs 冒烟 body=500；1102g/h 两轮全绿为当前事实）。
 - fix_tenant_policy_nullif 是否同步 test 库（prod 已应用，test 未确认）。
 - 残留 11 表文本比较形式策略是否统一 NULLIF（后续决策）。
-- svc/unified-core/src/modules/iam/auth.rs 两处事务内 set_config（bind(&tenant_ctx)）在 tenant_ctx 为空时是否残留 SET '' 污染路径（潜在路径核查）。
-- 「前端 UI 全面审计报告待办 + §4 e2e 基线扩展」已授权未启动。
-- 「TOPEMS 增量缓存每周清理」定时任务触发未执行：target 68G 超 25G 阈值（clean_target.sh --auto 只清增量缓存、保留最终产物，建议执行）。
+- ✅（2026-11-03 核查闭环）svc/unified-core/src/modules/iam/auth.rs set_config 污染路径：4 处
+  tenant_ctx（L361/L886 login·refresh 查询类型 `uuid::Uuid` 不可能空串；L1644/L1727 claims 缺失
+  fallback 默认租户 0001）均绑定合法 Uuid 或默认租户，**无 SET '' 残留路径**。
+- 「前端 UI 全面审计报告待办 + §4 e2e 基线扩展」已授权未启动（待用户补定义：报告范围/§4 指向/交付形态）。
+- ✅（2026-11-03 已执行）TOPEMS 增量缓存清理：clean_target.sh --auto 130.9G → 30.7G（节省 100.2G，
+  增量缓存 111.5G，最终产物保留）。
 - GitHub dependabot 提示 19 漏洞（1 critical、8 high、6 moderate、4 low）待治理（https://github.com/paulwy/TOPEMS/security/dependabot）。
 - menu 种子迁移 20261102* 系列（erp/tms_asset/admin_master_automation_monitor/iam_ai_integration_rd_notification_oa/gis_plugin_doc_workflow_ticket/crm/fix_menu_crm_permission）待部署时应用（延续既有遗留轨道）。
 
