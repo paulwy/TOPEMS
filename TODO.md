@@ -1,3 +1,11 @@
+## 批 5 第十六批：计划级 3 行核销——批 4/5/6 计划收尾（2026-11-02）✅
+
+> 计划级行（L219-221）状态核销。
+
+- **批 4 P3 跨模块归属+权限码统一**：批 4 p10-p20 已完成权限映射收敛 + p27 crm 权限码修复（`crm-customer-segmentation` 占位码→真实码）——已完成。
+- **批 5 P4 tier 激活+移动端统一**：移动端统一已核销（p35 MOBILE_NO_MENU 10/10）；tier 分级已在模块 config 声明（如 erp `tier:'basic'`），按 tier 过滤渲染为产品策略（未强制激活，非缺陷）。
+- **批 6 P5 DB 菜单单一权威**：DB 权威已立——core_menus 426 条（tenant 001）为权威数据源，web 端 MenuManagementPage 基于 menuApi 管理（listGroups/listMenus），前端模块 config 为渲染声明，MENU_ORPHAN 补齐后三端经审计同步全绿。
+
 ## 批 5 第十五批：MOBILE_NO_MENU 10 行核销——P4 全清零（2026-11-02）✅
 
 > 设计核销：移动端轻量办公定位。
