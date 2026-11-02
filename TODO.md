@@ -1,3 +1,11 @@
+## RLS batch2 应用 + work_orders 补列前置迁移（2026-11-02）✅
+
+> 承接远端 e16e6c683 后同步：20261102230000_rls_enable_biz_batch2（mes.work_orders + mobile.documents RLS）拉取后五库应用。
+
+- **结构漂移修复**：batch2 在 topems/topems_test/topems_prepare 应用失败——`mes.work_orders` 缺 tenant_id 列（prod/5433 已含）——新增前置迁移 `20261102225000_rls_batch2_prereq_work_orders_tenant_id.sql`（幂等 ADD COLUMN IF NOT EXISTS）。
+- **五库账本对齐 542/542**：topems/topems_test/topems_prepare 自动应用 225000+230000；topems_prod/5433（batch2 已应用）手动补登 225000（checksum=sha384 decode hex，execution_time=0），sqlx migrate run 校验全过（exit 0）。
+- **策略验证**：mes.work_orders=1 / mobile.documents=1 条 rls_tenant_isolation 策略（topems 库）；双库一致性：5432 vs 5433 最新迁移版本一致（20261102230000）。
+
 ## 依赖周期重扫：node-forge 收敛 + 静态复核（2026-11-02）✅
 
 > 承接 dependabot 审计遗留跟踪项；registry.npmjs.org 网络阻塞（在线 audit 不可达），以 pnpm-lock.yaml 静态版本核对完成复核。
