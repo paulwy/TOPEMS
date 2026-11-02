@@ -109,7 +109,8 @@ describe('LazyImage', () => {
     );
     const wrapper = container.querySelector('.lazy-img');
     expect(wrapper).not.toBeNull();
-    expect((wrapper as HTMLElement).style.width).toBe('100px');
+    // 内联样式已迁移为 CSS Modules 类（styles.il1 → width: 100px），断言类传递
+    expect(wrapper).toHaveClass(styles.il1);
   });
 
   it('does not crash with minimal props', () => {
