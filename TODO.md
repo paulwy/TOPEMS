@@ -1,3 +1,9 @@
+## 批 4 第十七批：unified-core 双轨注释残留同步（2026-11-02）✅
+
+> 目标：p13 退役 /api/v1/core 双轨后，routes/mod.rs L192 的 register_routes_with_legacy_alias 双轨说明注释残留，同步为已退役，避免误导后续维护。
+- 改动：routes/mod.rs 1 处注释更新；验证 cargo check -p topems-unified-core 通过。
+- 至此批 4 全部 OPEN_ITEMS 闭环：KNOWN 500 19→0（p12/p13/p14）、finance saga v1 死路径（p15）、integration 29 红（p16）、注释残留（p17）。
+
 ## 批 4 第十六批：tests/integration 29 项存量红核销（BASE_URL 聚合入口 + IAM openapi 聚合文档）（2026-11-02）✅
 
 > 目标：核销 p13 遗留的 tests/integration 29 项存量红（health-checks 打 8000 对非 core 服务 404 + openapi IAM api-docs 探测失败）。
