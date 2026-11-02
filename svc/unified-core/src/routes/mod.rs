@@ -205,7 +205,7 @@ pub fn create_routes(
         // A4: MDM 主数据死信队列管理 API（list=system:read / replay=system:write）
         .merge(mdm_dlq::mdm_dlq_routes(state))
         .merge(doc::doc_routes(state))
-        // V66.1：Automation 编排虚拟服务（planned 阶段，501 Not Implemented）
+        // V66.1：Automation 编排服务（已完整实现，含 rules/runs/variables 端点，非 501 占位）
         .merge(automation::automation_routes(state))
         // V68.1 A2.4.1: login_log 路由已合并到 audit::create_routes（统一 require_permission 层）
         .merge(modules::audit::create_routes(state.clone()))

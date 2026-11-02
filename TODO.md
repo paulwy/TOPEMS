@@ -1,3 +1,12 @@
+## 批 5 第八批：aps MODULE_ORPHAN 补种 + automation LEGACY_COMMENT（2026-11-02）✅
+
+> 目标：推进剩余 P1/P2 单行类别。
+
+- **aps 补种**（新增 `20261102200000_menu_seed_aps.sql`）：3 组 + 12 项（dashboard/production-plans/schedules/capacities/material-plans/forecasts + analytics 6）——core_menus 414→426。aps 为前端独立模块、后端由 svc/mes 承载（aps_compat 合并设计），DB 缺菜单种子已补齐。
+- **核销 aps PARTIAL**：dashboard/analytics 复用 mes 看板/analytics 端点为合并设计（非缺失）。
+- **automation LEGACY_COMMENT 修复**：`svc/unified-core/src/routes/mod.rs:208` 注释"planned 501"过时（automation.rs 已完整实现），更新为完整实现描述。cargo check -p topems-unified-core 通过。
+- **验证**：aps 12 项全在 DB、权限码 0 无效。
+
 ## v1.122 87 项契约缺口核销收尾（2026-11-02）✅
 
 > 存量 87 项缺口（前端已声明、后端 404）核销全部完成并推送 origin/main；本条目为收尾核对与遗留处理记录。
