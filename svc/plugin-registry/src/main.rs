@@ -94,6 +94,35 @@ async fn main() -> anyhow::Result<()> {
             "/dev/runtime/{code}/register",
             post(modules::plugin::handlers::runtime::register_plugin),
         )
+        // 审计 P2 ROUTE_NO_API(plugin) 核销：挂载 marketplace 端点（handler 已存在、此前未挂载）
+        .route(
+            "/api/plugin/marketplace",
+            get(modules::plugin::handlers::marketplace::get_marketplace_summary),
+        )
+        .route(
+            "/api/plugin/marketplace/categories",
+            get(modules::plugin::handlers::marketplace::list_categories),
+        )
+        .route(
+            "/api/plugin/marketplace/list",
+            get(modules::plugin::handlers::marketplace::list_plugins),
+        )
+        .route(
+            "/api/plugin/plugins/{code}",
+            get(modules::plugin::handlers::marketplace::get_plugin),
+        )
+        .route(
+            "/api/plugin/plugins/{code}/versions",
+            get(modules::plugin::handlers::marketplace::get_plugin_versions),
+        )
+        .route(
+            "/api/plugin/plugins/{code}/reviews",
+            get(modules::plugin::handlers::marketplace::get_plugin_reviews),
+        )
+        .route(
+            "/api/plugin/plugins/{code}/reviews",
+            post(modules::plugin::handlers::marketplace::create_review),
+        )
         .with_state(app_state)
         // stateful_public 在 build_application 返回后才 merge，需单独补 metrics 鉴权层。
         .layer(topems_shared_bootstrap::metrics_auth_layer());

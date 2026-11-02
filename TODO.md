@@ -1,3 +1,11 @@
+## 批 5 第十四批：ROUTE_NO_API 最后 2 行核销——16/16 全清零，P1/P2 全类别清零（2026-11-02）✅
+
+> 剩余 2 行"真缺"侦查定论。
+
+- **notification-archive 核销（审计行过时）**：svc/communication/src/notification.rs 已完整实现 archive/config（GET L1700 / PUT L1728）、archived 列表（L1583）、{id}/archive、{id}/unarchive、archive/run 等 handler；main.rs L72-L83（notification_read 挂 GET archived + archive/config）、L141/L145（notification_write 挂 PUT archive/config + POST archive/run）；api_prefix=/api/communication + handler path 前缀与前端 baseURL（/api/communication/notification）相对路径拼接匹配——端点非缺失，审计行基于早期 main.rs 挂载枚举（过时）。
+- **plugin-upload 核销（真缺补齐）**：marketplace handlers 已实现（get_marketplace_summary / list_categories / list_plugins / get_plugin(Path code) / get_plugin_versions / get_plugin_reviews / create_review），但 main.rs 此前未挂载（仅 health/metrics/register）→ 本批补挂 7 条路由（GET /api/plugin/marketplace、/marketplace/categories、/marketplace/list、/plugins/{code}、/plugins/{code}/versions、/plugins/{code}/reviews + POST reviews）；core_plugins 36 条数据在库；cargo check -p topems-plugin-registry 通过。
+- **批 5 全类别清零达成**：DUPLICATE 15/15、MENU_ORPHAN 35/35、PARTIAL 14/14、API_NO_TABLE 6/6、TABLE_NO_API 2/2、MISMATCH 1/1、ROUTE_NO_API 16/16。
+
 ## 批 5 第十三批：API_NO_TABLE 6 行 + TABLE_NO_API 2 行 + MISMATCH 1 行 + wms OK 核查（2026-11-02）✅
 
 > 目标：清理剩余表/端点对应性类别。
