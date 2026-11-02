@@ -1,3 +1,17 @@
+## 批 5 第四批：MENU_ORPHAN admin/master/automation/monitor 补种（2026-11-02）✅
+
+> 目标：批量推进 MENU_ORPHAN 剩余模块——本批补 4 模块 44 项种子。
+
+- **补种**（新增 `20261102160000_menu_seed_admin_master_automation_monitor.sql`）：
+  - admin 4 组 + 20 项（dashboard/tenant/billing/account/bank/dictionary/system/settings/plugin/database/migration/config-debug/audit-log/rate-limit/feature-flag/menu/monitor/performance/permission-audit/monitoring-alert）
+  - master 1 组（master_data）+ 12 项（data-asset/schema/lineage/ai-governance/commercial/public-master/versioning/governance/quality/knowledge/semantic/disaster）
+  - automation 4 组 + 5 项（dashboard/rules/runs/designer/variables）
+  - monitor 5 组 + 7 项（dashboard/alerts/alert-history/rules/metrics/logs/settings）
+  - core_menus 287→331。
+- **admin tenant-detail/tenant-settings 核销**：detail/settings 路由非导航入口，无 navItem 为设计。
+- **验证**：44 项全部在 DB；权限码 0 无效（含 admin feature-flag/menu 的 `system:read` 已在 core_permissions）。
+- **遗留**：MENU_ORPHAN 剩余 11 行（iam/ai/integration/rd/notification/oa/gis/plugin/doc/workflow/ticket）待后续批补种。
+
 ## 批 5 第三批：MENU_ORPHAN tms/asset 补种 + bi/im frontendOnly 豁免（2026-11-02）✅
 
 > 目标：推进 MENU_ORPHAN 剩余模块——本批补 2 个模块种子 + 核销 frontendOnly/详情页设计。
