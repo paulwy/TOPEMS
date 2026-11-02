@@ -177,6 +177,10 @@ def extract_frontend_refs():
         re.I,
     )
     fetch_re = re.compile(r"\b(fetch|axios)\s*\(\s*[`'\"]?(?P<path>/api/[^`'\")\s]+)")
+    # 独立 axios 实例调用（pluginAxios.post('/api/...')、axios.get(...) 等）——非 apiClient 形态
+    inst_re = re.compile(
+        r"\b(?:\w*[Aa]xios|\baxios)\.(?P<verb>get|post|put|patch|delete)\s*\(\s*[`'\"]?(?P<path>/[^`'\")\s]+)",
+    )
     for app in APPS:
         base = os.path.join(ROOT, app)
         if not os.path.isdir(base):
@@ -196,6 +200,9 @@ def extract_frontend_refs():
                 for m in fetch_re.finditer(text):
                     p = normalize(m.group("path"))
                     refs[p].append(("fetch", m.group("path"), os.path.relpath(fp, ROOT)))
+                for m in inst_re.finditer(text):
+                    p = normalize(m.group("path"))
+                    refs[p].append((m.group("verb").lower(), m.group("path"), os.path.relpath(fp, ROOT)))
     return refs
 
 
