@@ -1,3 +1,12 @@
+## 批 5 第九批：ROUTE_NO_API erp/pdm/ehs 3 行核销（2026-11-02）✅
+
+> 目标：逐行侦查 ROUTE_NO_API（前端有页/后端疑似无路由）——本批核实 3 模块均有等价端点。
+
+- **erp 核销**：bank-accounts 路由已存在（`svc/erp/src/modules/bank_account.rs` `/erp/bank-accounts`）；receivable-payable / budget-management 前端复用 `@/api/finance`（receivableApi/budgetApi，finance 服务有端点）——等价端点设计。
+- **pdm 核销**：production-formulas、configurations（`/api/pdm/configurations` CRUD）、documents 路由齐全；product-category 页复用 documentApi（有端点）。
+- **ehs 核销**：`/api/ehs/environmental-compliance/regulations` 路由已存在（environmental_compliance.rs）。
+- **验证**：svc/pdm 全路由枚举（30+ 条）确认；无代码改动，纯核销。
+
 ## 批 5 第八批：aps MODULE_ORPHAN 补种 + automation LEGACY_COMMENT（2026-11-02）✅
 
 > 目标：推进剩余 P1/P2 单行类别。
