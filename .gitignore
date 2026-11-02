@@ -105,6 +105,7 @@ trae-ai-contest/
 .backups/
 .bak-*/
 *.bak
+*.bak-*   # 连字符形态（如 backup-topems.sh.bak-20261030）
 *.bak.*
 *.backup
 *.old
