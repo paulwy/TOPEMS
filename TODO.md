@@ -1,4 +1,15 @@
 
+## 远端 web 并行线提交链验证（ESLint 528→0 属实，2026-11-03）✅
+
+> 验证 rebase 合入的 web 并行线提交（9beaef4f3 ESLint 修复 / 6b6e4dbab 空态模板 / 5536afe73 e2e-web.yml CI）。
+
+- **ESLint**：`apps/web` 实跑 `npx eslint .`——**exit 0（0 problems）**——确认 9beaef4f3"528→0"属实，lint 门禁能力恢复。
+- **空态模板**（6b6e4dbab）：已合入（478/511 93.5%）。
+- **e2e CI**（5536afe73）：e2e-web.yml 已拉回合入。
+- **结论**：远端并行线提交链完整有效，无破坏；前端 lint 基线 0。
+- **状态**：剩余挂账 = AR-08（路线图级）+ lighthouse（非阻断）。
+
+
 ## B 批放弃归档收官（用户拍板 2，2026-11-03）✅
 
 > 用户确认放弃 B 批恢复（本机路径已穷尽：git 四层 + backups/ + ssh）。
