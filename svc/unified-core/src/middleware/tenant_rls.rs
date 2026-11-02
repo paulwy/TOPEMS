@@ -221,7 +221,9 @@ async fn set_rls_policy_conn(
         // （database/migrations/20261102210000_fix_tenant_policy_nullif.sql），否则 uuid cast 空串报错。
         // 不能 SET ''（旧实现）：部分策略 qual 对 '' 直接 ::uuid（无 NULLIF），
         // PG 即使 OR 有 ='' 分支仍可能评估后续 cast → invalid input syntax for type uuid: ""
-        sqlx::query("RESET app.tenant_id").execute(&mut **conn).await?;
+        sqlx::query("RESET app.tenant_id")
+            .execute(&mut **conn)
+            .await?;
     } else {
         sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
             .bind(tenant_id)
