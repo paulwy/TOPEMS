@@ -1,3 +1,12 @@
+## 迁移收口：menu_crm_permission 去 schema 前缀 + batch4 权限码应用（2026-11-02）✅
+
+> 承接「menu 种子」条目中迁移文件 bug 与未应用迁移的后续处理（本机 topems_test 闭环）。
+
+- **20261102190000_fix_menu_crm_permission.sql 修正**：`UPDATE mes.core_menus` → `UPDATE core_menus`（无 schema 前缀，依赖 search_path：prod=public / test=iam）；checksums.txt 同步新 hash `221e80b7`。已推送 `8b7b26f60`。
+- **batch4 权限码补录（20261102000001）应用**：topems_test 应用成功（`INSERT 0 36`，public.core_permissions；level 列已存在跳过；ON CONFLICT DO NOTHING 幂等）；抽样核对 admin:dashboard:write / crm:contract:read / erp:sales:read 均已在库。
+- **ehs 环境合规列（20261102100000）核对**：topems_test 的 qa_ehs_environmental_regulations 4 列（tenant_id/keywords/applicable_scopes/created_by）均已存在（已生效），无需重跑。
+- **残留观察**：topems_test 的 public.core_menus 仍有 1 条 `crm-customer-segmentation` 错误码——iam.core_menus（search_path 权威）已修复；public 残留为历史双 schema 冗余，非权威路径，待后续决策是否清理。
+
 ## 批 5 第十七批：遗留项处理——tms 旧表核销 + 迁移盘点评估（2026-11-02）✅
 
 > 审计整改后遗留工程项处置。
