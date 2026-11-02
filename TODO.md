@@ -1,4 +1,15 @@
 
+## 迁移文件 bug 闭环：20261102190000_fix_menu_crm_permission.sql 修正 + 五库实修（2026-11-03）✅
+
+> TODO ⚠️（409 行）闭环：迁移硬编码 schema 缺陷修正。
+
+- **修正**：原文件无前缀 UPDATE（依赖 search_path，但 core_menus 各库不同 schema——prod/public、test/iam——仍会失败）→ **DO 块双 schema 探测**（显式 public + iam，不依赖 search_path；任一存在即 UPDATE，均无则 NOTICE 跳过，幂等可重跑）。
+- **五库权限码核验 + 实修**：test/prod/5433 已正确；**topems/prepare 仍是错误码（crm:segmentation:read）——修正版实测修复 → crm:customer_segmentation:read 五库一致**。
+- **账本 checksum 同步**：该迁移五库已登记（success=true）但 checksum 为旧文件——UPDATE 为修正版（6526411c...），五库一致；计数仍 546。
+- **坑**：先前查账本误用含 error 列的 SELECT（_sqlx_migrations 无此列）→ 2>/dev/null 吞错误误判"账本无记录"——实际已登记。
+- **验证**：五库权限码正确、checksum 一致、门禁绿。
+
+
 ## 5433 反向空表清理（DROP 65，2026-11-03）✅（用户拍板 1）
 
 > 处置挂账①：DROP 5433 反向表中 count=0 的空表（73 尝试）。
