@@ -1003,10 +1003,25 @@
   clippy 0 警告、单测 mobile 151 + lims 151 全绿。**新发现**：lims 集成测试 2 失败
   （test_inspection_task_crud/test_inspection_record_crud）——DB 约束
   ck_inspection_tasks_status_standard（status ∈ active/inactive/archived）与测试插入 'pending'
-  不匹配，且未在任何迁移文件 grep 到该约束（疑运行时/手工加），既有问题非本次引入，待业务确认后处置
+  不匹配，且未在任何迁移文件 grep 到该约束（疑运行时/手工加），既有问题非本次引入
 - **srm anyhow 清零（70→0）**：commit f79b9c5c0a——main 返回 `Result<(), TopemsError>`
   （From<anyhow::Error>→Internal）+ L179 降级客户端构建错误换 TopemsError::NetworkRequest；
   cargo check / clippy / 单测全绿
+
+### 2026-11-03 lims 集成测试 2 失败修复（commit 33354f7ed7）
+- **根因确认**：lims.inspection_tasks.status DEFAULT='pending'（NOT NULL，业务 FSM pending→in_progress→
+  completed，集成测试 L117/L220 插入 'pending'、L234/L239 UPDATE in_progress/completed），窄版约束
+  ck_inspection_tasks_status_standard（active/inactive/archived）为模板误用——与 20261026130000 修复的
+  23 张同款炸弹，lims 部分漏网。lims.inspection_records 无此约束（测试挂点全在 tasks）。
+- **修复**：`20261103000001_lims_remove_misapplied_status_standard_checks.sql`——DO 循环删除 lims
+  15 张表（inspection_tasks/lab_ledger/qa_lab_*/qa_lims_*/reagents，全 0 行零数据风险）的
+  *_status_standard 约束，业务状态机由代码层保证；幂等（重跑 0 条）。
+- **验证**：cargo test -p topems-lims 集成测试全绿（8 passed / 0 failed，含此前 2 失败用例）、
+  validate.sh Errors 0/Checksum 0/Drift 0、checksums 545、_sqlx_migrations 账本补登 manual-v。
+- **⚠️ 全库同类残留（未动，待确认）**：实测 342 张表同款"窄版 status_standard + 领域态 DEFAULT"
+  （public 75/ehs 28/mes 25/portal 20/pm 19/qms 17/finance 16/erp 16/wms 16/hrm 15/lims 15/…），
+  10-26 只修 23 张系冰山一角，建议按同一先例批量清理（DEFAULT 不在 CHECK 内 = 不带 status 的
+  INSERT 必违反，均含真实业务拦截风险）。
 
 ### ⬜ B7 剩余（后续批次候选，静态 Err 计数）
 - ai 45 / crm 27 / portal 26 / integration 15 / mes 10 / finance 9 / scm 3 / erp 3 / analytics 3 /
