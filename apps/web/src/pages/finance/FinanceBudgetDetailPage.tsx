@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import styles from './FinanceBudgetDetailPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
@@ -435,7 +436,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
         actions={[
           {
             label: t('finance.finance_budget_detail_page.analysis'),
-            icon: <PieChart style={{ width: 18, height: 18 }} />,
+            icon: <PieChart className={styles.il1} />,
             variant: 'outlined',
             onClick: () => setShowAnalysis(true),
           },

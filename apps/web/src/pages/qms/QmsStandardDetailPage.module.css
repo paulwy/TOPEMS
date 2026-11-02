@@ -1,0 +1,46 @@
+/* ./pages/qms/QmsStandardDetailPage.tsx inline-style migration (auto) */
+
+.il1 {
+  width: 16px;
+  height: 16px;
+}
+
+.il2 {
+  width: 16px;
+  height: 16px;
+}
+
+.il3 {
+  width: 12px;
+  height: 12px;
+}
+
+.il4 {
+  width: 16px;
+  height: 16px;
+}
+
+.il5 {
+  width: 100%;
+  padding: 2px;
+  border-radius: md;
+  border: 1px solid border.default;
+}
+
+.il6 {
+  width: 100%;
+  padding: 3px;
+  border-radius: sm;
+  border: 1px solid border.default;
+  resize: none;
+  height: 96px;
+}
+
+.il7 {
+  width: 100%;
+  padding: 3px;
+  border-radius: sm;
+  border: 1px solid border.default;
+  resize: none;
+  height: 96px;
+}

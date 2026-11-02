@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import styles from './BomPage.module.css';
 import {
   Box,
   Card,
@@ -539,7 +540,7 @@ export const BomPage: React.FC = () => {
         <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
           <Package
             size={48}
-            style={{ marginBottom: 16, opacity: 0.5 }}
+            className={styles.il1}
           />
           <Typography>{t('pdm.bom_page.bom_19')}</Typography>
         </Box>
@@ -551,7 +552,7 @@ export const BomPage: React.FC = () => {
     <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>
       <GitCompare
         size={48}
-        style={{ marginBottom: 16, opacity: 0.5 }}
+        className={styles.il2}
       />
       <Box>{t('pdm.bom_page.bom_20')}</Box>
       <Button
@@ -586,7 +587,7 @@ export const BomPage: React.FC = () => {
   return (
     <PageContainer
       headerProps={{
-        pageIcon: <Package style={{ width: 20, height: 20 }} />,
+        pageIcon: <Package className={styles.il3} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
       }}
       maxWidth='xl'

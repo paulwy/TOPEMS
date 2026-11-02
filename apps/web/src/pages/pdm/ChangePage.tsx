@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './ChangePage.module.css';
 import { Box, Card, CardContent, Typography, Chip, useTheme } from '@mui/material';
 import { FileWarning, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -522,7 +523,7 @@ export const ChangePage: React.FC = () => {
   return (
     <PageContainer
       headerProps={{
-        pageIcon: <FileWarning style={{ width: 20, height: 20 }} />,
+        pageIcon: <FileWarning className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
       }}
       maxWidth='xl'

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './PmProjectListPage.module.css';
 import { useNavigate } from 'react-router-dom';
 import { Box, useTheme } from '@mui/material';
 import { FolderKanban, Eye, Edit } from 'lucide-react';
@@ -194,7 +195,7 @@ const PmProjectListPage: React.FC = () => {
       title={i18n.t('pm.pm_project_list_page.k20')}
       subtitle={i18n.t('pm.pm_project_list_page.k21')}
       headerProps={{
-        pageIcon: <FolderKanban style={{ width: 20, height: 20 }} />,
+        pageIcon: <FolderKanban className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
       }}
     >

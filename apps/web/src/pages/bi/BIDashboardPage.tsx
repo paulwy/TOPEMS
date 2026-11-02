@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import styles from './BIDashboardPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -323,7 +324,7 @@ const BIDashboardPage = () => {
       title={i18n.t('bi.bi_dashboard_page.bi_heading')}
       subtitle={i18n.t('bi.bi_dashboard_page.subtitle')}
       headerProps={{
-        pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
+        pageIcon: <BarChart3 className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary[600]} 100%)`,
       }}
       padding={false}

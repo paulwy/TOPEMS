@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import styles from './PdmProjectPage.module.css';
 import {
   Box,
   Dialog,
@@ -334,7 +335,7 @@ const PdmProjectPage: React.FC = () => {
         <Box sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>
           <FolderKanban
             size={48}
-            style={{ marginBottom: 16, opacity: 0.5 }}
+            className={styles.il1}
           />
           <Box>{t('pdm.pdm_project_page.k25')}</Box>
         </Box>
@@ -534,7 +535,7 @@ const PdmProjectPage: React.FC = () => {
       title={t('pdm.pdm_project_page.m1')}
       subtitle={t('pdm.pdm_project_page.k37')}
       headerProps={{
-        pageIcon: <FolderKanban style={{ width: 20, height: 20 }} />,
+        pageIcon: <FolderKanban className={styles.il2} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
       }}
     >

@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import css from './ConsolidationScopeTable.module.css';
 import { useTranslation } from 'react-i18next';
 import { Chip, Button } from '@mui/material';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -83,7 +84,7 @@ export function ConsolidationCompanyTable({
       cell: ({ row }) => (
         <div style={styles.iconRow}>
           <Building2 sx={{ width: 16, height: 16, color: 'text.disabled' }} />
-          <span style={{ fontFamily: 'monospace', fontSize: 14 }}>
+          <span className={css.il1}>
             {row.getValue('company_code')}
           </span>
         </div>
@@ -95,7 +96,7 @@ export function ConsolidationCompanyTable({
       accessorKey: 'company_name',
       cell: ({ row }) => (
         <div style={styles.iconRow}>
-          <span style={{ fontWeight: 500 }}>{row.getValue('company_name')}</span>
+          <span className={css.il2}>{row.getValue('company_name')}</span>
           {row.original.is_parent && (
             <Chip
               size='small'
@@ -130,7 +131,7 @@ export function ConsolidationCompanyTable({
       header: t('finance.consolidation_scope_page.col_ownership_percentage'),
       accessorKey: 'ownership_percentage',
       cell: ({ row }) => (
-        <span style={{ fontFamily: 'monospace' }}>{row.getValue('ownership_percentage')}%</span>
+        <span className={css.il3}>{row.getValue('ownership_percentage')}%</span>
       ),
     },
     {
@@ -138,7 +139,7 @@ export function ConsolidationCompanyTable({
       header: t('finance.consolidation_scope_page.col_consolidation_percentage'),
       accessorKey: 'consolidation_percentage',
       cell: ({ row }) => (
-        <span style={{ fontFamily: 'monospace' }}>{row.getValue('consolidation_percentage')}%</span>
+        <span className={css.il4}>{row.getValue('consolidation_percentage')}%</span>
       ),
     },
     {
@@ -146,7 +147,7 @@ export function ConsolidationCompanyTable({
       header: t('finance.consolidation_scope_page.col_minority_interest'),
       accessorKey: 'minority_interest',
       cell: ({ row }) => (
-        <span style={{ fontFamily: 'monospace', textAlign: 'right' }}>
+        <span className={css.il5}>
           ¥
           {row.original.minority_interest.toLocaleString('zh-CN', {
             minimumFractionDigits: 2,

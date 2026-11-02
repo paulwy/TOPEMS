@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import styles from './PmContractCreatePage.module.css';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { FileText, Calendar, Users } from 'lucide-react';
@@ -122,7 +123,7 @@ const PmContractCreatePage: React.FC = () => {
       id: 'basic',
       title: i18n.t('pm.pm_contract_create_page.k17'),
       description: i18n.t('pm.pm_contract_create_page.k18'),
-      icon: <FileText style={{ width: 18, height: 18 }} />,
+      icon: <FileText className={styles.il1} />,
       collapsible: false,
       fields: [
         {
@@ -176,7 +177,7 @@ const PmContractCreatePage: React.FC = () => {
       id: 'parties',
       title: i18n.t('pm.pm_contract_create_page.k28'),
       description: i18n.t('pm.pm_contract_create_page.k29'),
-      icon: <Users style={{ width: 18, height: 18 }} />,
+      icon: <Users className={styles.il2} />,
       collapsible: false,
       fields: [
         {
@@ -229,7 +230,7 @@ const PmContractCreatePage: React.FC = () => {
       id: 'dates',
       title: i18n.t('pm.pm_contract_create_page.k41'),
       description: i18n.t('pm.pm_contract_create_page.k42'),
-      icon: <Calendar style={{ width: 18, height: 18 }} />,
+      icon: <Calendar className={styles.il3} />,
       collapsible: false,
       fields: [
         {

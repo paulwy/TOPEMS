@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './AiModelSettingsPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import {
   Box,
@@ -1037,7 +1038,7 @@ export const AiModelSettingsPage: React.FC = () => {
     <SettingsPageTemplate
       title={t('ai.model_settings.title')}
       subtitle={t('ai.model_settings.subtitle')}
-      icon={<Settings style={{ width: 20, height: 20 }} />}
+      icon={<Settings className={styles.il1} />}
       tabs={tabs}
       showSaveButton={false}
       showResetButton={false}

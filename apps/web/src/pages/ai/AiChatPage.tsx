@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './AiChatPage.module.css';
 /**
  * AI 对话页面 - V4.0 标准化改造 + ChatPageTemplate 迁移
  *
@@ -656,11 +657,7 @@ export const AiChatPage: React.FC = () => {
                         }}
                       >
                         <pre
-                          style={{
-                            margin: 0,
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word',
-                          }}
+                          className={styles.il1}
                         >
                           {part}
                         </pre>
@@ -835,7 +832,7 @@ export const AiChatPage: React.FC = () => {
               type='file'
               accept='.txt,.md,.docx,.pdf'
               onChange={handleFileUpload}
-              style={{ display: 'none' }}
+              className={styles.il2}
               id='doc-upload'
             />
             <Button

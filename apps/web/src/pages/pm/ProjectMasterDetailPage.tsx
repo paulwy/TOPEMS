@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './ProjectMasterDetailPage.module.css';
 import {
   MasterDetailPageTemplate,
   type MasterColumn,
@@ -168,7 +169,7 @@ export const ProjectMasterDetailPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <User style={{ width: 18, height: 18, color: 'primary.main' }} />
+                <User className={styles.il1} />
               </Box>
               <Box>
                 <Typography
@@ -199,7 +200,7 @@ export const ProjectMasterDetailPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <Target style={{ width: 18, height: 18, color: 'success.main' }} />
+                <Target className={styles.il2} />
               </Box>
               <Box>
                 <Typography
@@ -233,7 +234,7 @@ export const ProjectMasterDetailPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <Calendar style={{ width: 18, height: 18, color: 'info.main' }} />
+                <Calendar className={styles.il3} />
               </Box>
               <Box>
                 <Typography
@@ -264,7 +265,7 @@ export const ProjectMasterDetailPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <DollarSign style={{ width: 18, height: 18, color: 'warning.main' }} />
+                <DollarSign className={styles.il4} />
               </Box>
               <Box>
                 <Typography
@@ -320,7 +321,7 @@ export const ProjectMasterDetailPage: React.FC = () => {
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {item.status === 'completed' ? (
-            <CheckCircle style={{ width: 24, height: 24, color: 'success.main' }} />
+            <CheckCircle className={styles.il5} />
           ) : item.status === 'active' ? (
             <Box
               sx={{

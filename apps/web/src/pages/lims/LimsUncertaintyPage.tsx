@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './LimsUncertaintyPage.module.css';
 import { Calculator } from 'lucide-react';
 import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -206,7 +207,7 @@ const LimsUncertaintyPage: React.FC = () => {
       title={i18n.t('lims.lims_uncertainty_page.k10')}
       subtitle='Uncertainty Evaluation'
       headerProps={{
-        pageIcon: <Calculator style={{ width: 20, height: 20 }} />,
+        pageIcon: <Calculator className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.orange.main} 0%, ${theme.palette.orange.dark} 100%)`,
       }}
     >

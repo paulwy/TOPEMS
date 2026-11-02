@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import styles from './LimsSampleDetailPage.module.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
@@ -565,7 +566,7 @@ const LimsSampleDetailPage: React.FC = () => {
           background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, grey.100 100%)`,
         }}
       >
-        <div style={{ textAlign: 'center' }}>
+        <div className={styles.il1}>
           <div
             style={{
               width: 48,
@@ -596,7 +597,7 @@ const LimsSampleDetailPage: React.FC = () => {
           background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, grey.100 100%)`,
         }}
       >
-        <div style={{ textAlign: 'center' }}>
+        <div className={styles.il2}>
           <AlertCircle
             sx={{
               width: 64,
@@ -624,7 +625,7 @@ const LimsSampleDetailPage: React.FC = () => {
       padding={false}
       maxWidth={false}
       headerProps={{
-        pageIcon: <Package style={{ width: 20, height: 20 }} />,
+        pageIcon: <Package className={styles.il3} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.teal[400]} 0%, ${theme.palette.teal[600]} 100%)`,
       }}
     >

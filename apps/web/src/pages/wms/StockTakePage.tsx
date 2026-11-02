@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import styles from './StockTakePage.module.css';
 import {
   Dialog,
   DialogTitle,
@@ -762,7 +763,7 @@ const StockTakePage: React.FC = () => {
       title={t('wms.stocktake_page.breadcrumb_current')}
       subtitle={t('wms.stocktake_page.stocktake_2')}
       headerProps={{
-        pageIcon: <Package style={{ width: 20, height: 20 }} />,
+        pageIcon: <Package className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >

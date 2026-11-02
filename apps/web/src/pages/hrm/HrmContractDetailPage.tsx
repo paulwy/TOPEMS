@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import styles from './HrmContractDetailPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import {
@@ -448,7 +449,7 @@ const HrmContractDetailPage: React.FC = () => {
         actions={[
           {
             label: t('hrm.hrm_contract_detail_page.renew'),
-            icon: <Calendar style={{ width: 18, height: 18 }} />,
+            icon: <Calendar className={styles.il1} />,
             onClick: () => setShowRenewDialog(true),
           },
         ]}

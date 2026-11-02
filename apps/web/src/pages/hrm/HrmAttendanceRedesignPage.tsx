@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './HrmAttendanceRedesignPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
@@ -418,7 +419,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
         header: t('hrm.attendance_redesign_page.k22'),
         sortable: true,
         render: (row) => (
-          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'var(--font-medium)' }}>
+          <span className={styles.il1}>
             {row.date}
           </span>
         ),
@@ -428,11 +429,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
         header: t('hrm.attendance_redesign_page.k23'),
         render: (row) => (
           <span
-            style={{
-              fontWeight: 'var(--font-semibold)',
-              color: 'var(--accent-primary)',
-              fontFamily: 'var(--font-mono)',
-            }}
+            className={styles.il2}
           >
             {row.emp_no}
           </span>
@@ -441,26 +438,26 @@ const HrmAttendanceRedesignPage: React.FC = () => {
       {
         key: 'employee_name',
         header: t('hrm.attendance_redesign_page.k24'),
-        render: (row) => <div style={{ fontWeight: 500 }}>{row.employee_name}</div>,
+        render: (row) => <div className={styles.il3}>{row.employee_name}</div>,
       },
       {
         key: 'check_in',
         header: t('hrm.attendance_redesign_page.k25'),
         align: 'center',
-        render: (row) => <span style={{ fontFamily: 'var(--font-mono)' }}>{row.check_in}</span>,
+        render: (row) => <span className={styles.il4}>{row.check_in}</span>,
       },
       {
         key: 'check_out',
         header: t('hrm.attendance_redesign_page.k26'),
         align: 'center',
-        render: (row) => <span style={{ fontFamily: 'var(--font-mono)' }}>{row.check_out}</span>,
+        render: (row) => <span className={styles.il5}>{row.check_out}</span>,
       },
       {
         key: 'work_hours',
         header: t('hrm.attendance_redesign_page.k27'),
         align: 'right',
         sortable: true,
-        render: (row) => <span style={{ fontFamily: 'var(--font-mono)' }}>{row.work_hours}h</span>,
+        render: (row) => <span className={styles.il6}>{row.work_hours}h</span>,
       },
       {
         key: 'overtime_hours',
@@ -491,7 +488,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
         header: t('hrm.attendance_redesign_page.k30'),
         align: 'right',
         render: (row) => (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
+          <div className={styles.il7}>
             <Button
               variant='ghost'
               size='sm'
@@ -559,19 +556,14 @@ const HrmAttendanceRedesignPage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={styles.il8}
             >
               <Input
                 placeholder={t('hrm.attendance_redesign_page.k4')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 280 }}
+                className={styles.il9}
               />
               <Select
                 value={deptFilter}
@@ -583,10 +575,10 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                   { value: t('hrm.demo.dept_design'), label: t('hrm.demo.dept_design') },
                   { value: t('hrm.demo.dept_market'), label: t('hrm.demo.dept_market') },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il10}
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div className={styles.il11}>
               <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
@@ -657,7 +649,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredRecords.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il12}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -688,24 +680,16 @@ const HrmAttendanceRedesignPage: React.FC = () => {
           <div style={colGap4}>
             <Card>
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
+                className={styles.il13}
               >
                 <div>
                   <div style={detailLabel}>{selectedRecord.date}</div>
                   <div
-                    style={{
-                      fontSize: 'var(--text-lg)',
-                      fontWeight: 'var(--font-bold)',
-                      marginTop: 'var(--space-1)',
-                    }}
+                    className={styles.il14}
                   >
                     {selectedRecord.employee_name}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+                  <div className={styles.il15}>
                     {selectedRecord.department} · {selectedRecord.emp_no}
                   </div>
                 </div>
@@ -721,11 +705,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 <div>
                   <div style={detailLabel}>{t('hrm.attendance_redesign_page.k25')}</div>
                   <div
-                    style={{
-                      fontSize: 'var(--text-xl)',
-                      fontWeight: 'var(--font-bold)',
-                      fontFamily: 'var(--font-mono)',
-                    }}
+                    className={styles.il16}
                   >
                     {selectedRecord.check_in}
                   </div>
@@ -733,11 +713,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 <div>
                   <div style={detailLabel}>{t('hrm.attendance_redesign_page.k26')}</div>
                   <div
-                    style={{
-                      fontSize: 'var(--text-xl)',
-                      fontWeight: 'var(--font-bold)',
-                      fontFamily: 'var(--font-mono)',
-                    }}
+                    className={styles.il17}
                   >
                     {selectedRecord.check_out}
                   </div>
@@ -749,7 +725,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
               <div style={gridTwoCol}>
                 <div>
                   <div style={detailLabel}>{t('hrm.attendance_redesign_page.k39')}</div>
-                  <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
+                  <div className={styles.il18}>
                     {selectedRecord.work_hours} {t('hrm.attendance_redesign_page.k40')}
                   </div>
                 </div>
@@ -825,7 +801,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
         }
       >
         <div style={colGap4}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div className={styles.il19}>
             <div>
               <label
                 htmlFor='field-1'

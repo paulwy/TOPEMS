@@ -1,0 +1,98 @@
+/* ./pages/hrm/HrmAttendanceRedesignPage.tsx inline-style migration (auto) */
+
+.il1 {
+  font-family: var(--font-mono);
+  font-weight: var(--font-medium);
+}
+
+.il2 {
+  font-weight: var(--font-semibold);
+  color: var(--accent-primary);
+  font-family: var(--font-mono);
+}
+
+.il3 {
+  font-weight: 500px;
+}
+
+.il4 {
+  font-family: var(--font-mono);
+}
+
+.il5 {
+  font-family: var(--font-mono);
+}
+
+.il6 {
+  font-family: var(--font-mono);
+}
+
+.il7 {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+.il8 {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.il9 {
+  width: 280px;
+}
+
+.il10 {
+  width: 140px;
+}
+
+.il11 {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.il12 {
+  margin-top: var(--space-4);
+}
+
+.il13 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.il14 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  margin-top: var(--space-1);
+}
+
+.il15 {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.il16 {
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  font-family: var(--font-mono);
+}
+
+.il17 {
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  font-family: var(--font-mono);
+}
+
+.il18 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+}
+
+.il19 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}

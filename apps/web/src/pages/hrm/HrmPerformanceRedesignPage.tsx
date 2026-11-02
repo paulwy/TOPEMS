@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './HrmPerformanceRedesignPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
@@ -447,11 +448,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
         sortable: true,
         render: (row) => (
           <span
-            style={{
-              fontWeight: 'var(--font-semibold)',
-              color: 'var(--accent-primary)',
-              fontFamily: 'var(--font-mono)',
-            }}
+            className={styles.il1}
           >
             {row.review_no}
           </span>
@@ -462,8 +459,8 @@ const HrmPerformanceRedesignPage: React.FC = () => {
         header: t('hrm.performance_redesign_page.k19'),
         render: (row) => (
           <div>
-            <div style={{ fontWeight: 500 }}>{row.employee_name}</div>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+            <div className={styles.il2}>{row.employee_name}</div>
+            <div className={styles.il3}>
               {row.department}
             </div>
           </div>
@@ -477,10 +474,10 @@ const HrmPerformanceRedesignPage: React.FC = () => {
         key: 'reviewer',
         header: t('hrm.performance_redesign_page.k21'),
         render: (row) => (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <div className={styles.il4}>
             <User
               size={14}
-              style={{ color: 'var(--text-tertiary)' }}
+              className={styles.il5}
             />
             <span>{row.reviewer}</span>
           </div>
@@ -496,7 +493,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
             <Badge variant={config.variant}>
               <Star
                 size={12}
-                style={{ marginRight: 4 }}
+                className={styles.il6}
               />
               {config.label}
             </Badge>
@@ -525,7 +522,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
         header: t('hrm.performance_redesign_page.k24'),
         align: 'right',
         render: (row) => (
-          <span style={{ fontFamily: 'var(--font-mono)' }}>
+          <span className={styles.il7}>
             {row.kpi_completion > 0 ? `${row.kpi_completion}%` : '-'}
           </span>
         ),
@@ -544,7 +541,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
         header: t('hrm.performance_redesign_page.k26'),
         align: 'right',
         render: (row) => (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
+          <div className={styles.il8}>
             <Button
               variant='ghost'
               size='sm'
@@ -612,19 +609,14 @@ const HrmPerformanceRedesignPage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={styles.il9}
             >
               <Input
                 placeholder={t('hrm.performance_redesign_page.k4')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 280 }}
+                className={styles.il10}
               />
               <Select
                 value={deptFilter}
@@ -636,7 +628,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                   { value: t('hrm.demo.dept_design'), label: t('hrm.demo.dept_design') },
                   { value: t('hrm.demo.dept_market'), label: t('hrm.demo.dept_market') },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il11}
               />
             </div>
             <div style={rowGap2}>
@@ -710,7 +702,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredReviews.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il12}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -741,24 +733,16 @@ const HrmPerformanceRedesignPage: React.FC = () => {
           <div style={colGap4}>
             <Card>
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
+                className={styles.il13}
               >
                 <div>
                   <div style={detailLabel}>{selectedReview.review_no}</div>
                   <div
-                    style={{
-                      fontSize: 'var(--text-lg)',
-                      fontWeight: 'var(--font-bold)',
-                      marginTop: 'var(--space-1)',
-                    }}
+                    className={styles.il14}
                   >
                     {selectedReview.employee_name}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+                  <div className={styles.il15}>
                     {selectedReview.department} · {selectedReview.period}
                   </div>
                 </div>
@@ -787,12 +771,12 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                   }}
                 >
                   {selectedReview.score}
-                  <span style={{ fontSize: 'var(--text-xl)', color: 'var(--text-secondary)' }}>
+                  <span className={styles.il16}>
                     {' '}
                     {t('hrm.performance_redesign_page.k30')}
                   </span>
                 </div>
-                <div style={{ textAlign: 'center', marginTop: 'var(--space-2)' }}>
+                <div className={styles.il17}>
                   <Badge variant={ratingConfig[selectedReview.rating]?.variant || 'default'}>
                     {ratingConfig[selectedReview.rating]?.label}{' '}
                     {t('hrm.performance_redesign_page.k31')}
@@ -803,7 +787,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
 
             <Card title={t('hrm.performance_redesign_page.k35')}>
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
+                className={styles.il18}
               >
                 <div>
                   <div style={detailLabel}>{t('hrm.performance_redesign_page.k20')}</div>
@@ -815,13 +799,13 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('hrm.performance_redesign_page.k24')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
+                  <div className={styles.il19}>
                     {selectedReview.kpi_completion > 0 ? `${selectedReview.kpi_completion}%` : '-'}
                   </div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('hrm.performance_redesign_page.k36')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>
+                  <div className={styles.il20}>
                     {formatDateTime(selectedReview.created_at)}
                   </div>
                 </div>
@@ -885,7 +869,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
         }
       >
         <div style={colGap4}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div className={styles.il21}>
             <div>
               <label
                 htmlFor='field-1'

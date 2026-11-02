@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './LimsTaskDetailPage.module.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
@@ -382,7 +383,7 @@ const LimsTaskDetailPage: React.FC = () => {
           background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, grey.100 100%)`,
         }}
       >
-        <div style={{ textAlign: 'center' }}>
+        <div className={styles.il1}>
           <div
             style={{
               width: 48,
@@ -413,7 +414,7 @@ const LimsTaskDetailPage: React.FC = () => {
           background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, grey.100 100%)`,
         }}
       >
-        <div style={{ textAlign: 'center' }}>
+        <div className={styles.il2}>
           <AlertCircle
             sx={{
               width: 64,
@@ -485,13 +486,13 @@ const LimsTaskDetailPage: React.FC = () => {
             : [
                 {
                   label: i18n.t('pages.lims_task_detail_page.k32'),
-                  icon: <Plus style={{ width: 18, height: 18 }} />,
+                  icon: <Plus className={styles.il3} />,
                   onClick: () => setShowRecordModal(true),
                   variant: 'outlined',
                 },
                 {
                   label: i18n.t('pages.lims_task_detail_page.k33'),
-                  icon: <Play style={{ width: 18, height: 18 }} />,
+                  icon: <Play className={styles.il4} />,
                   onClick: () => setShowCompleteModal(true),
                   variant: 'contained',
                   color: 'success',

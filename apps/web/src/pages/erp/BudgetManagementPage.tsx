@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './BudgetManagementPage.module.css';
 import { Box, Tabs, Tab, useTheme } from '@mui/material';
 import { Wallet, Receipt, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
 import { PageContainer } from '@/components/common';
@@ -208,9 +209,9 @@ const BudgetManagementPage: React.FC = () => {
       headerProps={{
         pageIcon:
           activeTab === 0 ? (
-            <Wallet style={{ width: 20, height: 20 }} />
+            <Wallet className={styles.il1} />
           ) : (
-            <Receipt style={{ width: 20, height: 20 }} />
+            <Receipt className={styles.il2} />
           ),
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}

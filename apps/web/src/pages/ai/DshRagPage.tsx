@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import styles from './DshRagPage.module.css';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Search, BarChart3, Gauge } from 'lucide-react';
@@ -358,19 +359,19 @@ const DshRagPage: React.FC = () => {
       >
         <Tab
           sx={tabStyle}
-          icon={<Search style={{ width: 16, height: 16 }} />}
+          icon={<Search className={styles.il1} />}
           iconPosition='start'
           label={t('ai.dshRag.k37')}
         />
         <Tab
           sx={tabStyle}
-          icon={<BarChart3 style={{ width: 16, height: 16 }} />}
+          icon={<BarChart3 className={styles.il2} />}
           iconPosition='start'
           label={t('ai.dshRag.k38')}
         />
         <Tab
           sx={tabStyle}
-          icon={<Gauge style={{ width: 16, height: 16 }} />}
+          icon={<Gauge className={styles.il3} />}
           iconPosition='start'
           label={t('ai.dshRag.k39')}
         />

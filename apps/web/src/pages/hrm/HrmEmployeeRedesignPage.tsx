@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './HrmEmployeeRedesignPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
@@ -468,11 +469,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
         sortable: true,
         render: (row) => (
           <span
-            style={{
-              fontWeight: 'var(--font-semibold)',
-              color: 'var(--accent-primary)',
-              fontFamily: 'var(--font-mono)',
-            }}
+            className={styles.il1}
           >
             {row.emp_no}
           </span>
@@ -483,8 +480,8 @@ const HrmEmployeeRedesignPage: React.FC = () => {
         header: t('hrm.employee_redesign_page.k20'),
         render: (row) => (
           <div>
-            <div style={{ fontWeight: 500 }}>{row.name}</div>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+            <div className={styles.il2}>{row.name}</div>
+            <div className={styles.il3}>
               {row.position}
             </div>
           </div>
@@ -494,10 +491,10 @@ const HrmEmployeeRedesignPage: React.FC = () => {
         key: 'department',
         header: t('hrm.employee_redesign_page.k21'),
         render: (row) => (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <div className={styles.il4}>
             <Building
               size={14}
-              style={{ color: 'var(--text-tertiary)' }}
+              className={styles.il5}
             />
             <span>{row.department}</span>
           </div>
@@ -516,7 +513,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
         key: 'phone',
         header: t('hrm.employee_redesign_page.k23'),
         render: (row) => (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-sm)' }}>
+          <span className={styles.il6}>
             {row.phone}
           </span>
         ),
@@ -527,7 +524,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
         align: 'right',
         sortable: true,
         render: (row) => (
-          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'var(--font-semibold)' }}>
+          <span className={styles.il7}>
             {formatSalary(row.salary)}
           </span>
         ),
@@ -551,7 +548,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
         header: t('hrm.employee_redesign_page.k27'),
         align: 'right',
         render: (row) => (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
+          <div className={styles.il8}>
             <Button
               variant='ghost'
               size='sm'
@@ -619,19 +616,14 @@ const HrmEmployeeRedesignPage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={styles.il9}
             >
               <Input
                 placeholder={t('hrm.employee_redesign_page.k4')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 280 }}
+                className={styles.il10}
               />
               <Select
                 value={deptFilter}
@@ -643,7 +635,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                   { value: t('hrm.demo.dept_design'), label: t('hrm.demo.dept_design') },
                   { value: t('hrm.demo.dept_market'), label: t('hrm.demo.dept_market') },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il11}
               />
             </div>
             <div style={rowGap2}>
@@ -717,7 +709,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredEmployees.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il12}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -748,24 +740,16 @@ const HrmEmployeeRedesignPage: React.FC = () => {
           <div style={colGap4}>
             <Card>
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
+                className={styles.il13}
               >
                 <div>
                   <div style={detailLabel}>{selectedEmployee.emp_no}</div>
                   <div
-                    style={{
-                      fontSize: 'var(--text-lg)',
-                      fontWeight: 'var(--font-bold)',
-                      marginTop: 'var(--space-1)',
-                    }}
+                    className={styles.il14}
                   >
                     {selectedEmployee.name}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+                  <div className={styles.il15}>
                     {selectedEmployee.department} · {selectedEmployee.position}
                   </div>
                 </div>
@@ -786,23 +770,23 @@ const HrmEmployeeRedesignPage: React.FC = () => {
               <div style={gridTwoCol}>
                 <div>
                   <div style={detailLabel}>{t('hrm.employee_redesign_page.k23')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
+                  <div className={styles.il16}>
                     {selectedEmployee.phone}
                   </div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('hrm.employee_redesign_page.k35')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>{selectedEmployee.email}</div>
+                  <div className={styles.il17}>{selectedEmployee.email}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('hrm.employee_redesign_page.k36')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
+                  <div className={styles.il18}>
                     {selectedEmployee.manager}
                   </div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('hrm.employee_redesign_page.k25')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>{selectedEmployee.join_date}</div>
+                  <div className={styles.il19}>{selectedEmployee.join_date}</div>
                 </div>
               </div>
             </Card>
@@ -811,13 +795,13 @@ const HrmEmployeeRedesignPage: React.FC = () => {
               <div style={gridTwoCol}>
                 <div>
                   <div style={detailLabel}>{t('hrm.employee_redesign_page.k24')}</div>
-                  <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
+                  <div className={styles.il20}>
                     {formatSalary(selectedEmployee.salary)}
                   </div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('hrm.employee_redesign_page.k38')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>
+                  <div className={styles.il21}>
                     {formatDateTime(selectedEmployee.created_at)}
                   </div>
                 </div>
@@ -878,7 +862,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
         }
       >
         <div style={colGap4}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div className={styles.il22}>
             <div>
               <label
                 htmlFor='field-1'
@@ -1024,7 +1008,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
           </>
         }
       >
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+        <p className={styles.il23}>
           {t('hrm.employee_redesign_page.k59', { name: deleteTarget?.name })}
         </p>
       </Modal>

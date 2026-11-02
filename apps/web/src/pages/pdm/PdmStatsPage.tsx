@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './PdmStatsPage.module.css';
 import { TrendingUp, Factory, ClipboardList, Package, Activity, CheckCircle } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
@@ -320,7 +321,7 @@ const PdmStatsPage: React.FC = () => {
     <PageContainer
       padding={false}
       headerProps={{
-        pageIcon: <TrendingUp style={{ width: 20, height: 20 }} />,
+        pageIcon: <TrendingUp className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
       }}
     >

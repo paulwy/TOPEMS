@@ -9,6 +9,7 @@
  * - Tab 2: 期初余额（openingBalanceSchema 驱动 + 结转按钮）
  */
 import React, { useMemo } from 'react';
+import styles from './AccountingManagementPage.module.css';
 import { Box, Tabs, Tab, Button, useTheme } from '@mui/material';
 import { FileSpreadsheet, RefreshCw } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -171,7 +172,7 @@ const AccountingManagementPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <FileSpreadsheet style={{ width: 20, height: 20 }} />,
+        pageIcon: <FileSpreadsheet className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >

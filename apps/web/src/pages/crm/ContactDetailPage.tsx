@@ -1,4 +1,5 @@
 import { Chip, Typography, Box, InputLabel, useTheme } from '@mui/material';
+import styles from './ContactDetailPage.module.css';
 import React, { useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { User, Phone, Building2 } from 'lucide-react';
@@ -161,7 +162,7 @@ const ContactDetailPage: React.FC = () => {
           >
             <Phone
               size={16}
-              style={{ marginRight: 8 }}
+              className={styles.il1}
             />
             {t('crm.contactDetail.section_contact_method')}
           </Typography>
@@ -189,7 +190,7 @@ const ContactDetailPage: React.FC = () => {
           >
             <Building2
               size={16}
-              style={{ marginRight: 8 }}
+              className={styles.il2}
             />
             {t('crm.contactDetail.section_related')}
           </Typography>

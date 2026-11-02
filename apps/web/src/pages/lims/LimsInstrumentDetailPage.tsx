@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './LimsInstrumentDetailPage.module.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
@@ -500,7 +501,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
       padding={false}
       maxWidth={false}
       headerProps={{
-        pageIcon: <Settings style={{ width: 20, height: 20 }} />,
+        pageIcon: <Settings className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.teal[400]} 0%, ${theme.palette.teal[600]} 100%)`,
       }}
     >

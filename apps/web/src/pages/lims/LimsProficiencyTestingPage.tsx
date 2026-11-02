@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './LimsProficiencyTestingPage.module.css';
 import { Box, useTheme } from '@mui/material';
 import { FileCheck, Clock, CheckCircle, XCircle, Target } from 'lucide-react';
 import { PageContainer } from '@/components/common';
@@ -127,7 +128,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <FileCheck style={{ width: 20, height: 20 }} />,
+        pageIcon: <FileCheck className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >

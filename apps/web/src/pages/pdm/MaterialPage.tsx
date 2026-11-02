@@ -1,4 +1,5 @@
 import { useMemo, useCallback } from 'react';
+import styles from './MaterialPage.module.css';
 import { Box, Typography, useTheme } from '@mui/material';
 import { Layers } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -216,7 +217,7 @@ export default function MaterialPage() {
       title={t('pdm.material_page.k3')}
       subtitle={t('pdm.material_page.k4')}
       headerProps={{
-        pageIcon: <Layers style={{ width: 20, height: 20 }} />,
+        pageIcon: <Layers className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
       }}
     >

@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useCallback } from 'react';
+import styles from './InspectionTaskPage.module.css';
 import {
   Box,
   Typography,
@@ -313,7 +314,7 @@ const InspectionTaskPage: React.FC = () => {
       title={i18n.t('lims.inspection_task_page.k33')}
       subtitle='Inspection Task Management'
       headerProps={{
-        pageIcon: <ClipboardList style={{ width: 20, height: 20 }} />,
+        pageIcon: <ClipboardList className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary[600]} 100%)`,
       }}
     >

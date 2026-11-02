@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './InventoryReportPage.module.css';
 import { Box, FormControl, InputLabel, MenuItem, Select, useTheme } from '@mui/material';
 import { BarChart3, Warehouse as WarehouseIcon } from 'lucide-react';
 import { PageContainer } from '@/components/common';
@@ -276,7 +277,7 @@ const InventoryReportPage: React.FC = () => {
       title={t('wms.inventory_report_page.title')}
       subtitle={t('wms.inventory_report_page.subtitle')}
       headerProps={{
-        pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
+        pageIcon: <BarChart3 className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]}, ${theme.palette.secondary[600]})`,
       }}
     >

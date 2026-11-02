@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './PageHeader.module.css';
 import { Stack, IconButton, Typography, Box, Button } from '@mui/material';
 import { ChevronRight, Plus, RefreshCw, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -41,7 +42,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
           aria-label={i18n.t('bi.gis_page_components__page_header.back')}
         >
-          <ChevronRight style={{ transform: 'rotate(180deg)' }} />
+          <ChevronRight className={styles.il1} />
         </IconButton>
         <Box>
           <Typography

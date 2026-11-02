@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './CrmOpportunityRedesignPage.module.css';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -472,11 +473,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
         sortable: true,
         render: (row) => (
           <span
-            style={{
-              fontWeight: 'var(--font-semibold)',
-              color: 'var(--accent-primary)',
-              fontFamily: 'var(--font-mono)',
-            }}
+            className={styles.il1}
           >
             {row.opp_no}
           </span>
@@ -485,7 +482,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
       {
         key: 'name',
         header: t('crm.opportunity_redesign.col_name'),
-        render: (row) => <div style={{ fontWeight: 500 }}>{row.name}</div>,
+        render: (row) => <div className={styles.il2}>{row.name}</div>,
       },
       {
         key: 'stage',
@@ -502,7 +499,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
         align: 'right',
         sortable: true,
         render: (row) => (
-          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'var(--font-semibold)' }}>
+          <span className={styles.il3}>
             {formatAmount(row.amount)}
           </span>
         ),
@@ -511,7 +508,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
         key: 'probability',
         header: t('crm.opportunity_redesign.col_probability'),
         align: 'center',
-        render: (row) => <span style={{ fontSize: 'var(--text-sm)' }}>{row.probability}%</span>,
+        render: (row) => <span className={styles.il4}>{row.probability}%</span>,
       },
       {
         key: 'source',
@@ -526,10 +523,10 @@ const CrmOpportunityRedesignPage: React.FC = () => {
         key: 'owner',
         header: t('crm.opportunity_redesign.field_owner'),
         render: (row) => (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <div className={styles.il5}>
             <User
               size={14}
-              style={{ color: 'var(--text-tertiary)' }}
+              className={styles.il6}
             />
             <span>{row.owner}</span>
           </div>
@@ -545,7 +542,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
         header: t('crm.opportunity_redesign.col_actions'),
         align: 'right',
         render: (row) => (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
+          <div className={styles.il7}>
             <Button
               variant='ghost'
               size='sm'
@@ -613,19 +610,14 @@ const CrmOpportunityRedesignPage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={styles.il8}
             >
               <Input
                 placeholder={t('crm.opportunity_redesign.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 280 }}
+                className={styles.il9}
               />
               <Select
                 value={stageFilter}
@@ -639,10 +631,10 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                   { value: 'won', label: t('crm.opportunity_redesign.stage_won') },
                   { value: 'lost', label: t('crm.opportunity_redesign.stage_lost') },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il10}
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div className={styles.il11}>
               <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
@@ -713,7 +705,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredOpportunities.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il12}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -744,24 +736,16 @@ const CrmOpportunityRedesignPage: React.FC = () => {
           <div style={colGap4}>
             <Card>
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
+                className={styles.il13}
               >
                 <div>
                   <div style={detailLabel}>{selectedOpp.opp_no}</div>
                   <div
-                    style={{
-                      fontSize: 'var(--text-lg)',
-                      fontWeight: 'var(--font-bold)',
-                      marginTop: 'var(--space-1)',
-                    }}
+                    className={styles.il14}
                   >
                     {selectedOpp.name}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+                  <div className={styles.il15}>
                     {selectedOpp.customer_name}
                   </div>
                 </div>
@@ -774,8 +758,8 @@ const CrmOpportunityRedesignPage: React.FC = () => {
 
             {/* 销售阶段进度 */}
             <Card title={t('crm.opportunity_redesign.section_stage')}>
-              <div style={{ marginTop: 'var(--space-2)' }}>
-                <div style={{ display: 'flex', gap: 4 }}>
+              <div className={styles.il16}>
+                <div className={styles.il17}>
                   {['lead', 'qualified', 'proposal', 'negotiation', 'won'].map((stage) => {
                     const config = stageConfig[stage as keyof typeof stageConfig];
                     const isActive =
@@ -803,7 +787,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
 
             <Card title={t('crm.opportunity_redesign.section_info')}>
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
+                className={styles.il18}
               >
                 <div>
                   <div style={detailLabel}>{t('crm.opportunity_redesign.col_amount')}</div>
@@ -815,7 +799,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('crm.opportunity_redesign.field_expected_date')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOpp.expected_date}</div>
+                  <div className={styles.il19}>{selectedOpp.expected_date}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('crm.opportunity_redesign.field_source')}</div>
@@ -830,7 +814,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('crm.opportunity_redesign.field_create_time')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>
+                  <div className={styles.il20}>
                     {formatDateTime(selectedOpp.created_at)}
                   </div>
                 </div>
@@ -903,7 +887,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
               defaultValue={selectedOpp?.name}
             />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div className={styles.il21}>
             <div>
               <label
                 htmlFor='field-2'
@@ -1025,7 +1009,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
           </>
         }
       >
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+        <p className={styles.il22}>
           {t('crm.opportunity_redesign.delete_confirm_message', { name: deleteTarget?.name })}
         </p>
       </Modal>

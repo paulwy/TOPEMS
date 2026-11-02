@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import styles from './AiCodeAssistantPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import {
   Box,
@@ -376,7 +377,7 @@ export const AiCodeAssistantPage: React.FC = () => {
       description={t('ai.code_assistant.subtitle')}
       pageContainerProps={{
         headerProps: {
-          pageIcon: <Code2 style={{ width: 20, height: 20 }} />,
+          pageIcon: <Code2 className={styles.il1} />,
           pageGradient: `linear-gradient(135deg, ${theme.palette.pink[300]} 0%, ${theme.palette.pink[500]} 100%)`,
         },
       }}
@@ -712,14 +713,7 @@ export const AiCodeAssistantPage: React.FC = () => {
                   }}
                 >
                   <pre
-                    style={{
-                      margin: 0,
-                      fontFamily: 'monospace',
-                      fontSize: 13,
-                      lineHeight: 1.6,
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                    }}
+                    className={styles.il2}
                   >
                     {result}
                   </pre>

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './HrmPayrollPage.module.css';
 import { useQueryClient } from '@tanstack/react-query';
 import { Box, Typography, Button, InputBase, useTheme } from '@mui/material';
 import {
@@ -534,7 +535,7 @@ const HrmPayrollPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <BadgeDollarSign style={{ width: 20, height: 20 }} />,
+        pageIcon: <BadgeDollarSign className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.success.main}, ${theme.palette.success.dark})`,
       }}
     >

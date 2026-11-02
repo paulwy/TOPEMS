@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './ProjectCreateWizardPage.module.css';
 import { WizardPageTemplate, type WizardStep } from '../../components/templates/WizardPageTemplate';
 import {
   TextField,
@@ -60,7 +61,7 @@ export const ProjectCreateWizardPage: React.FC = () => {
       id: 'basic',
       label: t('pm.project_create_wizard_page.k0'),
       description: t('pm.project_create_wizard_page.k1'),
-      icon: <FolderKanban style={{ width: 18, height: 18 }} />,
+      icon: <FolderKanban className={styles.il1} />,
       component: (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <TextField
@@ -88,7 +89,7 @@ export const ProjectCreateWizardPage: React.FC = () => {
       id: 'manager',
       label: t('pm.project_create_wizard_page.k4'),
       description: t('pm.project_create_wizard_page.k5'),
-      icon: <User style={{ width: 18, height: 18 }} />,
+      icon: <User className={styles.il2} />,
       optional: false,
       component: (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -132,7 +133,7 @@ export const ProjectCreateWizardPage: React.FC = () => {
       id: 'timeline',
       label: t('pm.project_create_wizard_page.k14'),
       description: t('pm.project_create_wizard_page.k15'),
-      icon: <Calendar style={{ width: 18, height: 18 }} />,
+      icon: <Calendar className={styles.il3} />,
       skipable: true,
       component: (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -157,7 +158,7 @@ export const ProjectCreateWizardPage: React.FC = () => {
       id: 'budget',
       label: t('pm.project_create_wizard_page.k18'),
       description: t('pm.project_create_wizard_page.k19'),
-      icon: <Settings style={{ width: 18, height: 18 }} />,
+      icon: <Settings className={styles.il4} />,
       skipable: true,
       component: (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -181,7 +182,7 @@ export const ProjectCreateWizardPage: React.FC = () => {
       id: 'summary',
       label: t('pm.project_create_wizard_page.k21'),
       description: t('pm.project_create_wizard_page.k22'),
-      icon: <CheckCircle2 style={{ width: 18, height: 18 }} />,
+      icon: <CheckCircle2 className={styles.il5} />,
       component: (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <PaperInfo

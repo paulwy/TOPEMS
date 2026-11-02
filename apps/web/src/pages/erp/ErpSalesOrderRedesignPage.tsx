@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './ErpSalesOrderRedesignPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -464,11 +465,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
         sortable: true,
         render: (row) => (
           <span
-            style={{
-              fontWeight: 'var(--font-semibold)',
-              color: 'var(--accent-primary)',
-              fontFamily: 'var(--font-mono)',
-            }}
+            className={styles.il1}
           >
             {row.order_no}
           </span>
@@ -477,13 +474,13 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
       {
         key: 'customer_name',
         header: t('erp.erp_sales_order_redesign.column.customer_name'),
-        render: (row) => <div style={{ fontWeight: 500 }}>{row.customer_name}</div>,
+        render: (row) => <div className={styles.il2}>{row.customer_name}</div>,
       },
       {
         key: 'quantity',
         header: t('erp.erp_sales_order_redesign.column.quantity'),
         align: 'center',
-        render: (row) => <span style={{ fontFamily: 'var(--font-mono)' }}>{row.quantity}</span>,
+        render: (row) => <span className={styles.il3}>{row.quantity}</span>,
       },
       {
         key: 'total_amount',
@@ -491,7 +488,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
         align: 'right',
         sortable: true,
         render: (row) => (
-          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'var(--font-semibold)' }}>
+          <span className={styles.il4}>
             {formatAmount(row.total_amount)}
           </span>
         ),
@@ -510,10 +507,10 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
         key: 'salesperson',
         header: t('erp.erp_sales_order_redesign.column.salesperson'),
         render: (row) => (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <div className={styles.il5}>
             <User
               size={14}
-              style={{ color: 'var(--text-tertiary)' }}
+              className={styles.il6}
             />
             <span>{row.salesperson}</span>
           </div>
@@ -533,7 +530,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
         header: t('erp.erp_sales_order_redesign.column.actions'),
         align: 'right',
         render: (row) => (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
+          <div className={styles.il7}>
             <Button
               variant='ghost'
               size='sm'
@@ -601,19 +598,14 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={styles.il8}
             >
               <Input
                 placeholder={t('erp.erp_sales_order_redesign.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 280 }}
+                className={styles.il9}
               />
               <Select
                 value={statusFilter}
@@ -626,10 +618,10 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                   { value: 'delivered', label: t('erp.erp_sales_order_redesign.status.delivered') },
                   { value: 'cancelled', label: t('erp.erp_sales_order_redesign.status.cancelled') },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il10}
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div className={styles.il11}>
               <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
@@ -700,7 +692,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredOrders.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il12}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -731,24 +723,16 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
           <div style={colGap4}>
             <Card>
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
+                className={styles.il13}
               >
                 <div>
                   <div style={detailLabel}>{selectedOrder.order_no}</div>
                   <div
-                    style={{
-                      fontSize: 'var(--text-lg)',
-                      fontWeight: 'var(--font-bold)',
-                      marginTop: 'var(--space-1)',
-                    }}
+                    className={styles.il14}
                   >
                     {selectedOrder.customer_name}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+                  <div className={styles.il15}>
                     {selectedOrder.product_name}
                   </div>
                 </div>
@@ -762,11 +746,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
             {/* 订单金额大字体 */}
             <Card title={t('erp.erp_sales_order_redesign.card.total_amount')}>
               <div
-                style={{
-                  fontSize: 'var(--text-3xl)',
-                  fontWeight: 'var(--font-bold)',
-                  textAlign: 'center',
-                }}
+                className={styles.il16}
               >
                 {formatAmount(selectedOrder.total_amount)}
               </div>
@@ -774,7 +754,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
 
             <Card title={t('erp.erp_sales_order_redesign.card.order_info')}>
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
+                className={styles.il17}
               >
                 <div>
                   <div style={detailLabel}>
@@ -784,7 +764,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('erp.erp_sales_order_redesign.field.quantity')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
+                  <div className={styles.il18}>
                     {selectedOrder.quantity} {t('erp.erp_sales_order_redesign.field.piece_unit')}
                   </div>
                 </div>
@@ -792,7 +772,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                   <div style={detailLabel}>
                     {t('erp.erp_sales_order_redesign.field.unit_price')}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
+                  <div className={styles.il19}>
                     ¥{selectedOrder.unit_price.toLocaleString('zh-CN')}
                   </div>
                 </div>
@@ -806,13 +786,13 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                   <div style={detailLabel}>
                     {t('erp.erp_sales_order_redesign.field.order_date')}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOrder.order_date}</div>
+                  <div className={styles.il20}>{selectedOrder.order_date}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>
                     {t('erp.erp_sales_order_redesign.field.delivery_date')}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOrder.delivery_date}</div>
+                  <div className={styles.il21}>{selectedOrder.delivery_date}</div>
                 </div>
               </div>
             </Card>
@@ -873,7 +853,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
         }
       >
         <div style={colGap4}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div className={styles.il22}>
             <div>
               <label
                 htmlFor='field-1'
@@ -1021,7 +1001,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
           </>
         }
       >
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+        <p className={styles.il23}>
           {t('erp.erp_sales_order_redesign.delete.confirm_message', {
             order_no: deleteTarget?.order_no,
           })}

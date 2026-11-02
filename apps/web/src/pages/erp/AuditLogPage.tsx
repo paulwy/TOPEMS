@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import styles from './AuditLogPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import {
   Box,
@@ -429,7 +430,7 @@ const AuditLogPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Monitor
               size={14}
-              style={{ opacity: 0.5 }}
+              className={styles.il1}
             />
             {row.entity_type}
           </Box>
@@ -482,7 +483,7 @@ const AuditLogPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Clock
               size={14}
-              style={{ opacity: 0.5 }}
+              className={styles.il2}
             />
             <Typography
               variant='body2'

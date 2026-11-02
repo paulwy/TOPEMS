@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './QmsNonconformanceRedesignPage.module.css';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -552,11 +553,7 @@ const QmsNonconformancePage: React.FC = () => {
         sortable: true,
         render: (row) => (
           <span
-            style={{
-              fontWeight: 'var(--font-semibold)',
-              color: 'var(--accent-primary)',
-              fontFamily: 'var(--font-mono)',
-            }}
+            className={styles.il1}
           >
             {row.nc_no}
           </span>
@@ -567,8 +564,8 @@ const QmsNonconformancePage: React.FC = () => {
         header: t('qms.nonconformance_redesign.col_title'),
         render: (row) => (
           <div>
-            <div style={{ fontWeight: 500 }}>{row.title}</div>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+            <div className={styles.il2}>{row.title}</div>
+            <div className={styles.il3}>
               {row.product_name} / {row.batch_no}
             </div>
           </div>
@@ -621,7 +618,7 @@ const QmsNonconformancePage: React.FC = () => {
         header: t('qms.nonconformance_redesign.col_actions'),
         align: 'right',
         render: (row) => (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
+          <div className={styles.il4}>
             <Button
               variant='ghost'
               size='sm'
@@ -689,19 +686,14 @@ const QmsNonconformancePage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={styles.il5}
             >
               <Input
                 placeholder={t('qms.nonconformance_redesign.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 280 }}
+                className={styles.il6}
               />
               <Select
                 value={severityFilter}
@@ -712,7 +704,7 @@ const QmsNonconformancePage: React.FC = () => {
                   { value: 'major', label: t('qms.nonconformance_redesign.severity_major') },
                   { value: 'critical', label: t('qms.nonconformance_redesign.severity_critical') },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il7}
               />
             </div>
             <div style={rowGap2}>
@@ -786,7 +778,7 @@ const QmsNonconformancePage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredItems.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il8}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -817,20 +809,12 @@ const QmsNonconformancePage: React.FC = () => {
           <div style={colGap4}>
             <Card>
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
+                className={styles.il9}
               >
                 <div>
                   <div style={detailLabel}>{selectedNc.nc_no}</div>
                   <div
-                    style={{
-                      fontSize: 'var(--text-lg)',
-                      fontWeight: 'var(--font-bold)',
-                      marginTop: 'var(--space-1)',
-                    }}
+                    className={styles.il10}
                   >
                     {selectedNc.title}
                   </div>
@@ -849,14 +833,14 @@ const QmsNonconformancePage: React.FC = () => {
             </Card>
 
             <Card title={t('qms.nonconformance_redesign.card_problem_desc')}>
-              <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+              <p className={styles.il11}>
                 {selectedNc.description}
               </p>
             </Card>
 
             <Card title={t('qms.nonconformance_redesign.card_basic_info')}>
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
+                className={styles.il12}
               >
                 <div>
                   <div style={detailLabel}>
@@ -866,7 +850,7 @@ const QmsNonconformancePage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.nonconformance_redesign.drawer_batch_no')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
+                  <div className={styles.il13}>
                     {selectedNc.batch_no}
                   </div>
                 </div>
@@ -884,13 +868,13 @@ const QmsNonconformancePage: React.FC = () => {
                   <div style={detailLabel}>
                     {t('qms.nonconformance_redesign.col_discovered_date')}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>{selectedNc.discovered_date}</div>
+                  <div className={styles.il14}>{selectedNc.discovered_date}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>
                     {t('qms.nonconformance_redesign.drawer_created_at')}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>
+                  <div className={styles.il15}>
                     {formatDateTime(selectedNc.created_at)}
                   </div>
                 </div>
@@ -898,7 +882,7 @@ const QmsNonconformancePage: React.FC = () => {
             </Card>
 
             <Card title={t('qms.nonconformance_redesign.card_category')}>
-              <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+              <div className={styles.il16}>
                 <Tag variant='default'>
                   {typeConfig[selectedNc.nc_type]?.label ||
                     t('qms.nonconformance_redesign.unknown')}
@@ -984,7 +968,7 @@ const QmsNonconformancePage: React.FC = () => {
               defaultValue={selectedNc?.title}
             />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div className={styles.il17}>
             <div>
               <label
                 htmlFor='field-2'
@@ -1060,17 +1044,7 @@ const QmsNonconformancePage: React.FC = () => {
               rows={3}
               placeholder={t('qms.nonconformance_redesign.field_detail_placeholder')}
               defaultValue={selectedNc?.description}
-              style={{
-                width: '100%',
-                padding: 'var(--space-3)',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-default)',
-                backgroundColor: 'var(--surface-1)',
-                color: 'var(--text-primary)',
-                fontSize: 14,
-                resize: 'vertical',
-                fontFamily: 'inherit',
-              }}
+              className={styles.il18}
             />
           </div>
         </div>
@@ -1100,7 +1074,7 @@ const QmsNonconformancePage: React.FC = () => {
           </>
         }
       >
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+        <p className={styles.il19}>
           {t('qms.nonconformance_redesign.delete_message', { nc_no: deleteTarget?.nc_no })}
         </p>
       </Modal>

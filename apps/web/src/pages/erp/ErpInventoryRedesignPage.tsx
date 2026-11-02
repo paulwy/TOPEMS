@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './ErpInventoryRedesignPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import {
   Search,
@@ -329,11 +330,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
       sortable: true,
       render: (row) => (
         <span
-          style={{
-            fontWeight: 'var(--font-semibold)',
-            color: 'var(--accent-primary)',
-            fontFamily: 'var(--font-mono)',
-          }}
+          className={styles.il1}
         >
           {row.sku}
         </span>
@@ -344,8 +341,8 @@ const ErpInventoryRedesignPage: React.FC = () => {
       header: t('erp.erp_inventory_redesign.column.product_name'),
       render: (row) => (
         <div>
-          <div style={{ fontWeight: 500 }}>{row.product_name}</div>
-          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+          <div className={styles.il2}>{row.product_name}</div>
+          <div className={styles.il3}>
             {row.category}
           </div>
         </div>
@@ -355,10 +352,10 @@ const ErpInventoryRedesignPage: React.FC = () => {
       key: 'warehouse',
       header: t('erp.erp_inventory_redesign.column.warehouse'),
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+        <div className={styles.il4}>
           <Warehouse
             size={14}
-            style={{ color: 'var(--text-tertiary)' }}
+            className={styles.il5}
           />
           <span>{row.warehouse}</span>
         </div>
@@ -371,19 +368,12 @@ const ErpInventoryRedesignPage: React.FC = () => {
       sortable: true,
       render: (row) => (
         <div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 'var(--font-semibold)' }}>
+          <div className={styles.il6}>
             {row.quantity} {row.unit}
           </div>
           {/* 库存水平进度条 */}
           <div
-            style={{
-              width: 80,
-              height: 4,
-              backgroundColor: 'var(--surface-2)',
-              borderRadius: 2,
-              marginTop: 4,
-              overflow: 'hidden',
-            }}
+            className={styles.il7}
           >
             <div
               style={{
@@ -401,7 +391,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
       header: t('erp.erp_inventory_redesign.column.safety_stock'),
       align: 'right',
       render: (row) => (
-        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
+        <span className={styles.il8}>
           {row.safety_stock} {row.unit}
         </span>
       ),
@@ -412,7 +402,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
       align: 'right',
       sortable: true,
       render: (row) => (
-        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'var(--font-medium)' }}>
+        <span className={styles.il9}>
           {formatAmount(row.total_value)}
         </span>
       ),
@@ -431,7 +421,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
       header: t('erp.erp_inventory_redesign.column.actions'),
       align: 'right',
       render: (row) => (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
+        <div className={styles.il10}>
           <Button
             variant='ghost'
             size='sm'
@@ -463,19 +453,14 @@ const ErpInventoryRedesignPage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={styles.il11}
             >
               <Input
                 placeholder={t('erp.erp_inventory_redesign.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 280 }}
+                className={styles.il12}
               />
               <Select
                 value={warehouseFilter}
@@ -495,10 +480,10 @@ const ErpInventoryRedesignPage: React.FC = () => {
                     label: t('erp.erp_inventory_redesign.warehouse.north'),
                   },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il13}
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div className={styles.il14}>
               <Button
                 variant='primary'
                 leftIcon={<Plus size={16} />}
@@ -566,7 +551,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredItems.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il15}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -594,27 +579,19 @@ const ErpInventoryRedesignPage: React.FC = () => {
         size='lg'
       >
         {selectedItem && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div className={styles.il16}>
             <Card>
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
+                className={styles.il17}
               >
                 <div>
                   <div style={detailLabel}>{selectedItem.sku}</div>
                   <div
-                    style={{
-                      fontSize: 'var(--text-lg)',
-                      fontWeight: 'var(--font-bold)',
-                      marginTop: 'var(--space-1)',
-                    }}
+                    className={styles.il18}
                   >
                     {selectedItem.product_name}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+                  <div className={styles.il19}>
                     {selectedItem.category} · {selectedItem.warehouse}
                   </div>
                 </div>
@@ -627,28 +604,17 @@ const ErpInventoryRedesignPage: React.FC = () => {
 
             {/* 库存水平可视化 */}
             <Card title={t('erp.erp_inventory_redesign.drawer.stock_level')}>
-              <div style={{ marginBottom: 'var(--space-3)' }}>
+              <div className={styles.il20}>
                 <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginBottom: 'var(--space-2)',
-                    fontSize: 'var(--text-sm)',
-                  }}
+                  className={styles.il21}
                 >
                   <span>{t('erp.erp_inventory_redesign.drawer.current_stock')}</span>
-                  <span style={{ fontWeight: 'var(--font-bold)', fontFamily: 'var(--font-mono)' }}>
+                  <span className={styles.il22}>
                     {selectedItem.quantity} {selectedItem.unit}
                   </span>
                 </div>
                 <div
-                  style={{
-                    width: '100%',
-                    height: 12,
-                    backgroundColor: 'var(--surface-2)',
-                    borderRadius: 6,
-                    overflow: 'hidden',
-                  }}
+                  className={styles.il23}
                 >
                   <div
                     style={{
@@ -660,13 +626,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
                   />
                 </div>
                 <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginTop: 'var(--space-2)',
-                    fontSize: 'var(--text-xs)',
-                    color: 'var(--text-secondary)',
-                  }}
+                  className={styles.il24}
                 >
                   <span>
                     {t('erp.erp_inventory_redesign.drawer.safety_stock_label', {
@@ -681,7 +641,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
 
             <Card title={t('erp.erp_inventory_redesign.drawer.stock_info')}>
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
+                className={styles.il25}
               >
                 <div>
                   <div style={detailLabel}>{t('erp.erp_inventory_redesign.drawer.warehouse')}</div>
@@ -693,7 +653,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('erp.erp_inventory_redesign.drawer.unit_price')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
+                  <div className={styles.il26}>
                     ¥{selectedItem.unit_price.toLocaleString('zh-CN')}
                   </div>
                 </div>
@@ -702,11 +662,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
                     {t('erp.erp_inventory_redesign.drawer.total_value')}
                   </div>
                   <div
-                    style={{
-                      fontSize: 'var(--text-sm)',
-                      fontWeight: 'var(--font-bold)',
-                      fontFamily: 'var(--font-mono)',
-                    }}
+                    className={styles.il27}
                   >
                     {formatAmount(selectedItem.total_value)}
                   </div>
@@ -715,7 +671,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
                   <div style={detailLabel}>
                     {t('erp.erp_inventory_redesign.drawer.last_restock')}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>{selectedItem.last_restock}</div>
+                  <div className={styles.il28}>{selectedItem.last_restock}</div>
                 </div>
               </div>
             </Card>
@@ -733,7 +689,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
         title={t('erp.erp_inventory_redesign.modal.title')}
         size='lg'
         footer={
-          <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
+          <div className={styles.il29}>
             <Button
               variant='ghost'
               onClick={() => {
@@ -754,11 +710,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
         }
       >
         <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 'var(--space-3)',
-          }}
+          className={styles.il30}
         >
           {(
             [
@@ -772,7 +724,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
           ).map(([key, label]) => (
             <label
               key={key}
-              style={{ display: 'flex', flexDirection: 'column', gap: 4 }}
+              className={styles.il31}
             >
               <span style={detailLabel}>{label}</span>
               <Input
@@ -790,7 +742,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
           ).map(([key, label]) => (
             <label
               key={key}
-              style={{ display: 'flex', flexDirection: 'column', gap: 4 }}
+              className={styles.il32}
             >
               <span style={detailLabel}>{label}</span>
               <Input

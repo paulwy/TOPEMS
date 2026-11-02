@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import styles from './HrmSetupWizardPage.module.css';
 import {
   Box,
   Paper,
@@ -525,7 +526,7 @@ const HrmSetupWizardPage: React.FC = () => {
       id: 'company',
       label: t('hrm.setup_wizard.step1.label'),
       description: t('hrm.setup_wizard.step1.desc'),
-      icon: <Building2 style={{ width: 18, height: 18 }} />,
+      icon: <Building2 className={styles.il1} />,
       component: (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField
@@ -596,7 +597,7 @@ const HrmSetupWizardPage: React.FC = () => {
       id: 'departments',
       label: t('hrm.setup_wizard.step2.label'),
       description: t('hrm.setup_wizard.step2.desc'),
-      icon: <Network style={{ width: 18, height: 18 }} />,
+      icon: <Network className={styles.il2} />,
       component: (
         <Box>
           {deptRows.map((row, index) => (
@@ -685,7 +686,7 @@ const HrmSetupWizardPage: React.FC = () => {
       id: 'positions',
       label: t('hrm.setup_wizard.step3.label'),
       description: t('hrm.setup_wizard.step3.desc'),
-      icon: <Briefcase style={{ width: 18, height: 18 }} />,
+      icon: <Briefcase className={styles.il3} />,
       component: (
         <Box>
           {posRows.map((row, index) => (
@@ -782,7 +783,7 @@ const HrmSetupWizardPage: React.FC = () => {
       id: 'admin',
       label: t('hrm.setup_wizard.step4.label'),
       description: t('hrm.setup_wizard.step4.desc'),
-      icon: <UserCog style={{ width: 18, height: 18 }} />,
+      icon: <UserCog className={styles.il4} />,
       component: (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
@@ -895,7 +896,7 @@ const HrmSetupWizardPage: React.FC = () => {
       id: 'confirm',
       label: t('hrm.setup_wizard.step5.label'),
       description: t('hrm.setup_wizard.step5.desc'),
-      icon: <Flag style={{ width: 18, height: 18 }} />,
+      icon: <Flag className={styles.il5} />,
       component: (
         <Box>
           <Typography
@@ -999,7 +1000,7 @@ const HrmSetupWizardPage: React.FC = () => {
           <CheckCircle2
             size={48}
             color='success'
-            style={{ margin: '0 auto 16px' }}
+            className={styles.il6}
           />
           <Typography
             variant='h5'

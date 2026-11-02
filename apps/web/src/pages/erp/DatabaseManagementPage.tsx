@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './DatabaseManagementPage.module.css';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -453,7 +454,7 @@ const DatabaseManagementPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Table
               size={16}
-              style={{ opacity: 0.5 }}
+              className={styles.il1}
             />
             <Typography
               sx={{
@@ -516,7 +517,7 @@ const DatabaseManagementPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Database
               size={16}
-              style={{ opacity: 0.5 }}
+              className={styles.il2}
             />
             <Typography
               sx={{

@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './BatchManagementPage.module.css';
 import { Box, Chip, useTheme } from '@mui/material';
 import CrudPage from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
@@ -257,7 +258,7 @@ const BatchManagementPage: React.FC = () => {
       subtitle={t('wms.batch_management_page.status_1')}
       maxWidth='xl'
       headerProps={{
-        pageIcon: <Layers style={{ width: 20, height: 20 }} />,
+        pageIcon: <Layers className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
       }}
     >

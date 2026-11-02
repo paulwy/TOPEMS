@@ -1,4 +1,5 @@
 import { useMemo, useCallback, useState, useEffect } from 'react';
+import styles from './PdmBomPage.module.css';
 import {
   Box,
   Typography,
@@ -244,7 +245,7 @@ export default function PdmBomPage() {
   return (
     <PageContainer
       headerProps={{
-        pageIcon: <Database style={{ width: 20, height: 20 }} />,
+        pageIcon: <Database className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.cyan.main} 0%, ${theme.palette.cyan.dark} 100%)`,
       }}
     >

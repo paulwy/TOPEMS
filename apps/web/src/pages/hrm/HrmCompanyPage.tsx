@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './HrmCompanyPage.module.css';
 import {
   Box,
   Typography,
@@ -441,7 +442,7 @@ const HrmCompanyPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <Building style={{ width: 20, height: 20 }} />,
+        pageIcon: <Building className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.info.main}, ${theme.palette.info.dark})`,
       }}
     >

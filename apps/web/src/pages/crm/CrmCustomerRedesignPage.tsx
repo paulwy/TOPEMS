@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './CrmCustomerRedesignPage.module.css';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -475,11 +476,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
         sortable: true,
         render: (row) => (
           <span
-            style={{
-              fontWeight: 'var(--font-semibold)',
-              color: 'var(--accent-primary)',
-              fontFamily: 'var(--font-mono)',
-            }}
+            className={styles.il1}
           >
             {row.customer_no}
           </span>
@@ -489,7 +486,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
         key: 'customer_name',
         header: t('crm.customer_list_page.col_customer_name'),
         render: (row) => (
-          <div style={{ fontWeight: 500 }}>
+          <div className={styles.il2}>
             {localizedName(row.customer_name, row.customer_name_en)}
           </div>
         ),
@@ -508,7 +505,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
         header: t('crm.customer_list_page.field_contact_person'),
         render: (row) => (
           <div>
-            <div style={{ fontSize: 'var(--text-sm)' }}>{row.contact_person}</div>
+            <div className={styles.il3}>{row.contact_person}</div>
             <div style={cellSub}>{row.contact_phone}</div>
           </div>
         ),
@@ -519,7 +516,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
         align: 'right',
         sortable: true,
         render: (row) => (
-          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'var(--font-semibold)' }}>
+          <span className={styles.il4}>
             {formatAmount(row.total_order_amount, t)}
           </span>
         ),
@@ -547,7 +544,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
         header: t('crm.customer_list_page.col_actions'),
         align: 'right',
         render: (row) => (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
+          <div className={styles.il5}>
             <Button
               variant='ghost'
               size='sm'
@@ -615,19 +612,14 @@ const CrmCustomerRedesignPage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={styles.il6}
             >
               <Input
                 placeholder={t('crm.customer_list_page.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 280 }}
+                className={styles.il7}
               />
               <Select
                 value={levelFilter}
@@ -640,7 +632,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
                   { value: 'C', label: t('crm.customer_list_page.level_c') },
                   { value: 'D', label: t('crm.customer_list_page.level_d') },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il8}
               />
             </div>
             <div style={rowGap2}>
@@ -714,7 +706,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredCustomers.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il9}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -745,27 +737,19 @@ const CrmCustomerRedesignPage: React.FC = () => {
           <div style={colGap4}>
             <Card>
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
+                className={styles.il10}
               >
                 <div>
                   <div style={detailLabel}>{selectedCustomer.customer_no}</div>
                   <div
-                    style={{
-                      fontSize: 'var(--text-lg)',
-                      fontWeight: 'var(--font-bold)',
-                      marginTop: 'var(--space-1)',
-                    }}
+                    className={styles.il11}
                   >
                     {localizedName(
                       selectedCustomer.customer_name,
                       selectedCustomer.customer_name_en
                     )}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+                  <div className={styles.il12}>
                     {selectedCustomer.industry}
                   </div>
                 </div>
@@ -790,17 +774,17 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('crm.customer_list_page.field_contact_phone')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
+                  <div className={styles.il13}>
                     {selectedCustomer.contact_phone}
                   </div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('crm.customer_list_page.field_email')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>{selectedCustomer.email}</div>
+                  <div className={styles.il14}>{selectedCustomer.email}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('crm.customer_list_page.field_address')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>{selectedCustomer.address}</div>
+                  <div className={styles.il15}>{selectedCustomer.address}</div>
                 </div>
               </div>
             </Card>
@@ -827,7 +811,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('crm.customer_list_page.field_create_time')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>
+                  <div className={styles.il16}>
                     {formatDateTime(selectedCustomer.created_at)}
                   </div>
                 </div>
@@ -889,7 +873,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
         }
       >
         <div style={colGap4}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div className={styles.il17}>
             <div>
               <label
                 htmlFor='field-1'
@@ -1031,7 +1015,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
           </>
         }
       >
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+        <p className={styles.il18}>
           {t('crm.customer_list_page.delete_confirm_message', {
             name: localizedName(deleteTarget?.customer_name, deleteTarget?.customer_name_en),
           })}

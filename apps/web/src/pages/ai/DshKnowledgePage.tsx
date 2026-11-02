@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import styles from './DshKnowledgePage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Network, Boxes, GitBranch, Route } from 'lucide-react';
@@ -488,25 +489,25 @@ const DshKnowledgePage: React.FC = () => {
       >
         <Tab
           sx={tabStyle}
-          icon={<Boxes style={{ width: 16, height: 16 }} />}
+          icon={<Boxes className={styles.il1} />}
           iconPosition='start'
           label={t('ai.dshKnowledge.k40')}
         />
         <Tab
           sx={tabStyle}
-          icon={<Network style={{ width: 16, height: 16 }} />}
+          icon={<Network className={styles.il2} />}
           iconPosition='start'
           label={t('ai.dshKnowledge.k41')}
         />
         <Tab
           sx={tabStyle}
-          icon={<GitBranch style={{ width: 16, height: 16 }} />}
+          icon={<GitBranch className={styles.il3} />}
           iconPosition='start'
           label={t('ai.dshKnowledge.k42')}
         />
         <Tab
           sx={tabStyle}
-          icon={<Route style={{ width: 16, height: 16 }} />}
+          icon={<Route className={styles.il4} />}
           iconPosition='start'
           label={t('ai.dshKnowledge.k43')}
         />

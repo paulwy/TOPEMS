@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import styles from './ReplenishmentPage.module.css';
 import { Box, Button, Stack, Typography, useTheme } from '@mui/material';
 import { ShoppingCart, AlertTriangle, RefreshCw, CheckCircle } from 'lucide-react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -414,7 +415,7 @@ const ReplenishmentPage: React.FC = () => {
       title={t('wms.replenishment_page.breadcrumb_current')}
       subtitle={t('wms.replenishment_page.auto_replenishment_alert')}
       headerProps={{
-        pageIcon: <ShoppingCart style={{ width: 20, height: 20 }} />,
+        pageIcon: <ShoppingCart className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`,
       }}
     >

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import styles from './ReceivablePayablePage.module.css';
 import { Box, Tabs, Tab, useTheme } from '@mui/material';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { PageContainer } from '@/components/common';
@@ -150,9 +151,9 @@ const ReceivablePayablePage: React.FC = () => {
       headerProps={{
         pageIcon:
           activeTab === 0 ? (
-            <ArrowUpRight style={{ width: 20, height: 20 }} />
+            <ArrowUpRight className={styles.il1} />
           ) : (
-            <ArrowDownRight style={{ width: 20, height: 20 }} />
+            <ArrowDownRight className={styles.il2} />
           ),
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}

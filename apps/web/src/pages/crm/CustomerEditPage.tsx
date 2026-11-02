@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './CustomerEditPage.module.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { Building2, Mail } from 'lucide-react';
@@ -175,7 +176,7 @@ const CustomerEditPage: React.FC = () => {
       id: 'basic',
       title: t('crm.customerEdit.section_basic_title'),
       description: t('crm.customerEdit.section_basic_desc'),
-      icon: <Building2 style={{ width: 18, height: 18 }} />,
+      icon: <Building2 className={styles.il1} />,
       collapsible: false,
       fields: [
         {
@@ -232,7 +233,7 @@ const CustomerEditPage: React.FC = () => {
       id: 'contact',
       title: t('crm.customerEdit.section_contact_title'),
       description: t('crm.customerEdit.section_contact_desc'),
-      icon: <Mail style={{ width: 18, height: 18 }} />,
+      icon: <Mail className={styles.il2} />,
       collapsible: false,
       fields: [
         {

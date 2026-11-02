@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './ConsolidationReportsPage.module.css';
 import {
   Building2,
   TrendingUp,
@@ -535,7 +536,7 @@ export default function ConsolidationReportsPage() {
 
             {reportDetail?.data && reportDetail.data.length > 0 && (
               <Box sx={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <table className={styles.il2}>
                   <thead>
                     <tr>
                       <th
@@ -608,12 +609,7 @@ export default function ConsolidationReportsPage() {
                             {line.item_name || '-'}
                           </td>
                           <td
-                            style={{
-                              textAlign: 'right',
-                              padding: 3,
-                              borderBottom: '1px solid',
-                              fontFamily: 'monospace',
-                            }}
+                            className={styles.il3}
                           >
                             {currentPeriod.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
                           </td>
@@ -662,19 +658,19 @@ export default function ConsolidationReportsPage() {
             {selectedReport.approval_status === 'pending' &&
               selectedReport.status === 'completed' && (
                 <Button onClick={() => approveReport.mutate(selectedReport.id)}>
-                  <Check style={{ width: 16, height: 16, marginRight: 8 }} />
+                  <Check className={styles.il4} />
                   {t('finance.consolidation_reports_page.e13')}
                 </Button>
               )}
             {selectedReport.approval_status === 'approved' &&
               selectedReport.status === 'completed' && (
                 <Button onClick={() => publishReport.mutate(selectedReport.id)}>
-                  <Send style={{ width: 16, height: 16, marginRight: 8 }} />
+                  <Send className={styles.il5} />
                   {t('finance.consolidation_reports_page.e14')}
                 </Button>
               )}
             <Button variant='outlined'>
-              <Download style={{ width: 16, height: 16, marginRight: 8 }} />
+              <Download className={styles.il6} />
               {t('finance.consolidation_reports_page.e15')}
             </Button>
             <Button onClick={() => setShowDetail(false)}>

@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './VoucherFilters.module.css';
 import { Search, RefreshCw } from 'lucide-react';
 import {
   Box,
@@ -78,7 +79,7 @@ const VoucherFilters: React.FC<VoucherFiltersProps> = (vm) => {
                 <InputAdornment position='start'>
                   <Search
                     size={16}
-                    style={{ opacity: 0.5 }}
+                    className={styles.il1}
                   />
                 </InputAdornment>
               ),

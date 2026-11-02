@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './SampleReceivePage.module.css';
 import {
   Box,
   Typography,
@@ -445,7 +446,7 @@ const SampleReceivePage: React.FC = () => {
       title={i18n.t('lims.sample_receive_page.k24')}
       subtitle='Sample Receive Management'
       headerProps={{
-        pageIcon: <TestTube style={{ width: 20, height: 20 }} />,
+        pageIcon: <TestTube className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.teal[400]} 0%, ${theme.palette.teal[600]} 100%)`,
       }}
     >

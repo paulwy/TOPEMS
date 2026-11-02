@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './WmsStocktakePage.module.css';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -462,7 +463,7 @@ const WmsStocktakePage: React.FC = () => {
         header: t('wms.stocktake_page.col_order_no'),
         sortable: true,
         render: (row) => (
-          <span style={{ fontWeight: 'var(--font-semibold)', color: 'var(--accent-primary)' }}>
+          <span className={styles.il1}>
             {row.order_no}
           </span>
         ),
@@ -472,8 +473,8 @@ const WmsStocktakePage: React.FC = () => {
         header: t('wms.stocktake_page.col_title'),
         render: (row) => (
           <div>
-            <div style={{ fontWeight: 500 }}>{row.title}</div>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+            <div className={styles.il2}>{row.title}</div>
+            <div className={styles.il3}>
               {row.creator}
             </div>
           </div>
@@ -500,14 +501,9 @@ const WmsStocktakePage: React.FC = () => {
           const progress =
             row.total_items > 0 ? Math.round((row.counted_items / row.total_items) * 100) : 0;
           return (
-            <div style={{ minWidth: 120 }}>
+            <div className={styles.il4}>
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: 'var(--text-xs)',
-                  marginBottom: 4,
-                }}
+                className={styles.il5}
               >
                 <span>
                   {row.counted_items}/{row.total_items}
@@ -515,13 +511,7 @@ const WmsStocktakePage: React.FC = () => {
                 <span>{progress}%</span>
               </div>
               <div
-                style={{
-                  height: 6,
-                  backgroundColor: 'var(--surface-3)',
-                  borderRadius: 3,
-                  overflow: 'hidden',
-                  marginTop: 4,
-                }}
+                className={styles.il6}
               >
                 <div
                   style={{
@@ -545,7 +535,7 @@ const WmsStocktakePage: React.FC = () => {
               {t('wms.stocktake_page.items_unit', { count: row.discrepancy_items })}
             </Badge>
           ) : (
-            <span style={{ color: 'var(--text-tertiary)' }}>0</span>
+            <span className={styles.il7}>0</span>
           ),
       },
       {
@@ -567,7 +557,7 @@ const WmsStocktakePage: React.FC = () => {
         header: t('wms.stocktake_page.col_actions'),
         align: 'right',
         render: (row) => (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
+          <div className={styles.il8}>
             <Button
               variant='ghost'
               size='sm'
@@ -645,19 +635,14 @@ const WmsStocktakePage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={styles.il9}
             >
               <Input
                 placeholder={t('wms.stocktake_page.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 280 }}
+                className={styles.il10}
               />
               <Select
                 value={warehouseFilter}
@@ -677,7 +662,7 @@ const WmsStocktakePage: React.FC = () => {
                     label: t('wms.stocktake_page.wh_finished'),
                   },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il11}
               />
             </div>
             <div style={rowGap2}>
@@ -751,7 +736,7 @@ const WmsStocktakePage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredOrders.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il12}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -782,20 +767,12 @@ const WmsStocktakePage: React.FC = () => {
           <div style={colGap4}>
             <Card>
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
+                className={styles.il13}
               >
                 <div>
                   <div style={detailLabel}>{selectedOrder.order_no}</div>
                   <div
-                    style={{
-                      fontSize: 'var(--text-lg)',
-                      fontWeight: 'var(--font-bold)',
-                      marginTop: 'var(--space-1)',
-                    }}
+                    className={styles.il14}
                   >
                     {selectedOrder.title}
                   </div>
@@ -814,14 +791,9 @@ const WmsStocktakePage: React.FC = () => {
             </Card>
 
             <Card title={t('wms.stocktake_page.section_progress')}>
-              <div style={{ marginTop: 'var(--space-2)' }}>
+              <div className={styles.il15}>
                 <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: 'var(--text-sm)',
-                    marginBottom: 'var(--space-2)',
-                  }}
+                  className={styles.il16}
                 >
                   <span>
                     {t('wms.stocktake_page.progress_counted', {
@@ -829,7 +801,7 @@ const WmsStocktakePage: React.FC = () => {
                       total: selectedOrder.total_items,
                     })}
                   </span>
-                  <span style={{ fontWeight: 'var(--font-semibold)' }}>
+                  <span className={styles.il17}>
                     {selectedOrder.total_items > 0
                       ? Math.round((selectedOrder.counted_items / selectedOrder.total_items) * 100)
                       : 0}
@@ -837,12 +809,7 @@ const WmsStocktakePage: React.FC = () => {
                   </span>
                 </div>
                 <div
-                  style={{
-                    height: 8,
-                    backgroundColor: 'var(--surface-3)',
-                    borderRadius: 4,
-                    overflow: 'hidden',
-                  }}
+                  className={styles.il18}
                 >
                   <div
                     style={{
@@ -861,7 +828,7 @@ const WmsStocktakePage: React.FC = () => {
 
             <Card title={t('wms.stocktake_page.section_basic_info')}>
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
+                className={styles.il19}
               >
                 <div>
                   <div style={detailLabel}>{t('wms.stocktake_page.col_warehouse')}</div>
@@ -873,21 +840,21 @@ const WmsStocktakePage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('wms.stocktake_page.col_start_date')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOrder.start_date}</div>
+                  <div className={styles.il20}>{selectedOrder.start_date}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('wms.stocktake_page.label_finish_date')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOrder.end_date || '-'}</div>
+                  <div className={styles.il21}>{selectedOrder.end_date || '-'}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('wms.stocktake_page.label_discrepancy_count')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)' }}>
+                  <div className={styles.il22}>
                     {t('wms.stocktake_page.items_unit', { count: selectedOrder.discrepancy_items })}
                   </div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('wms.stocktake_page.label_created_at')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>
+                  <div className={styles.il23}>
                     {formatDateTime(selectedOrder.created_at)}
                   </div>
                 </div>
@@ -952,7 +919,7 @@ const WmsStocktakePage: React.FC = () => {
               defaultValue={selectedOrder?.title}
             />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div className={styles.il24}>
             <div>
               <label
                 htmlFor='field-2'
@@ -1041,7 +1008,7 @@ const WmsStocktakePage: React.FC = () => {
           </>
         }
       >
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+        <p className={styles.il25}>
           {t('wms.stocktake_page.delete_confirm_message', { order_no: deleteTarget?.order_no })}
         </p>
       </Modal>

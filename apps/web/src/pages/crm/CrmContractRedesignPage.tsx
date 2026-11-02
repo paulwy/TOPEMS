@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './CrmContractRedesignPage.module.css';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -440,11 +441,7 @@ const CrmContractRedesignPage: React.FC = () => {
         sortable: true,
         render: (row) => (
           <span
-            style={{
-              fontWeight: 'var(--font-semibold)',
-              color: 'var(--accent-primary)',
-              fontFamily: 'var(--font-mono)',
-            }}
+            className={styles.il1}
           >
             {row.contract_no}
           </span>
@@ -455,8 +452,8 @@ const CrmContractRedesignPage: React.FC = () => {
         header: t('crm.contract_redesign.col_title'),
         render: (row) => (
           <div>
-            <div style={{ fontWeight: 500 }}>{row.title}</div>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+            <div className={styles.il2}>{row.title}</div>
+            <div className={styles.il3}>
               {row.customer_name}
             </div>
           </div>
@@ -477,7 +474,7 @@ const CrmContractRedesignPage: React.FC = () => {
         align: 'right',
         sortable: true,
         render: (row) => (
-          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'var(--font-semibold)' }}>
+          <span className={styles.il4}>
             {formatAmount(row.amount)}
           </span>
         ),
@@ -496,10 +493,10 @@ const CrmContractRedesignPage: React.FC = () => {
         key: 'owner',
         header: t('crm.contract_redesign.field_owner'),
         render: (row) => (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <div className={styles.il5}>
             <User
               size={14}
-              style={{ color: 'var(--text-tertiary)' }}
+              className={styles.il6}
             />
             <span>{row.owner}</span>
           </div>
@@ -519,7 +516,7 @@ const CrmContractRedesignPage: React.FC = () => {
         header: t('crm.contract_redesign.col_actions'),
         align: 'right',
         render: (row) => (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
+          <div className={styles.il7}>
             <Button
               variant='ghost'
               size='sm'
@@ -587,19 +584,14 @@ const CrmContractRedesignPage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={styles.il8}
             >
               <Input
                 placeholder={t('crm.contract_redesign.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 280 }}
+                className={styles.il9}
               />
               <Select
                 value={typeFilter}
@@ -611,7 +603,7 @@ const CrmContractRedesignPage: React.FC = () => {
                   { value: 'service', label: t('crm.contract_redesign.type_service') },
                   { value: 'framework', label: t('crm.contract_redesign.type_framework') },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il10}
               />
             </div>
             <div style={rowGap2}>
@@ -685,7 +677,7 @@ const CrmContractRedesignPage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredContracts.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il11}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -716,24 +708,16 @@ const CrmContractRedesignPage: React.FC = () => {
           <div style={colGap4}>
             <Card>
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
+                className={styles.il12}
               >
                 <div>
                   <div style={detailLabel}>{selectedContract.contract_no}</div>
                   <div
-                    style={{
-                      fontSize: 'var(--text-lg)',
-                      fontWeight: 'var(--font-bold)',
-                      marginTop: 'var(--space-1)',
-                    }}
+                    className={styles.il13}
                   >
                     {selectedContract.title}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+                  <div className={styles.il14}>
                     {selectedContract.customer_name}
                   </div>
                 </div>
@@ -751,14 +735,14 @@ const CrmContractRedesignPage: React.FC = () => {
             </Card>
 
             <Card title={t('crm.contract_redesign.section_amount')}>
-              <div style={{ fontSize: 'var(--text-2xl)', fontWeight: 'var(--font-bold)' }}>
+              <div className={styles.il15}>
                 {formatAmount(selectedContract.amount)}
               </div>
             </Card>
 
             <Card title={t('crm.contract_redesign.section_info')}>
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
+                className={styles.il16}
               >
                 <div>
                   <div style={detailLabel}>{t('crm.contract_redesign.field_sign_date')}</div>
@@ -772,15 +756,15 @@ const CrmContractRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('crm.contract_redesign.col_start_date')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>{selectedContract.start_date}</div>
+                  <div className={styles.il17}>{selectedContract.start_date}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('crm.contract_redesign.col_end_date')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>{selectedContract.end_date}</div>
+                  <div className={styles.il18}>{selectedContract.end_date}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('crm.contract_redesign.field_create_time')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>
+                  <div className={styles.il19}>
                     {formatDateTime(selectedContract.created_at)}
                   </div>
                 </div>
@@ -850,7 +834,7 @@ const CrmContractRedesignPage: React.FC = () => {
               defaultValue={selectedContract?.title}
             />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div className={styles.il20}>
             <div>
               <label
                 htmlFor='field-2'
@@ -970,7 +954,7 @@ const CrmContractRedesignPage: React.FC = () => {
           </>
         }
       >
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+        <p className={styles.il21}>
           {t('crm.contract_redesign.delete_confirm_message', { name: deleteTarget?.title })}
         </p>
       </Modal>

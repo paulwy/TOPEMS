@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import styles from './ReportBuilderPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit2, Trash2, Eye, Download, FileText, RefreshCw } from 'lucide-react';
 import {
@@ -697,7 +698,7 @@ const ReportBuilderPage = () => {
       title={i18n.t('bi.report_builder_page.report_builder_title')}
       subtitle={i18n.t('bi.report_builder_page.create_1')}
       headerProps={{
-        pageIcon: <FileText style={{ width: 20, height: 20 }} />,
+        pageIcon: <FileText className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
       }}
       padding={false}

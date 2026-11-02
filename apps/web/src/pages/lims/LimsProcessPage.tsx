@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import styles from './LimsProcessPage.module.css';
 import {
   Box,
   Paper,
@@ -229,7 +230,7 @@ const LimsProcessPage: React.FC = () => {
   return (
     <PageContainer
       headerProps={{
-        pageIcon: <ClipboardList style={{ width: 20, height: 20 }} />,
+        pageIcon: <ClipboardList className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.teal[400]} 0%, ${theme.palette.teal[600]} 100%)`,
       }}
     >

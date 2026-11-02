@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import styles from './PmProjectCreatePage.module.css';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { FolderOpen, Calendar, DollarSign, Tag, FileText } from 'lucide-react';
@@ -108,7 +109,7 @@ const PmProjectCreatePage: React.FC = () => {
       id: 'basic',
       title: i18n.t('pm.pm_project_create_page.k18'),
       description: i18n.t('pm.pm_project_create_page.k19'),
-      icon: <FolderOpen style={{ width: 18, height: 18 }} />,
+      icon: <FolderOpen className={styles.il1} />,
       collapsible: false,
       fields: [
         {
@@ -142,7 +143,7 @@ const PmProjectCreatePage: React.FC = () => {
       id: 'description',
       title: i18n.t('pm.pm_project_create_page.k25'),
       description: i18n.t('pm.pm_project_create_page.k26'),
-      icon: <FileText style={{ width: 18, height: 18 }} />,
+      icon: <FileText className={styles.il2} />,
       collapsible: false,
       fields: [
         {
@@ -158,7 +159,7 @@ const PmProjectCreatePage: React.FC = () => {
       id: 'budget',
       title: i18n.t('pm.pm_project_create_page.k28'),
       description: i18n.t('pm.pm_project_create_page.k29'),
-      icon: <DollarSign style={{ width: 18, height: 18 }} />,
+      icon: <DollarSign className={styles.il3} />,
       collapsible: false,
       fields: [
         {
@@ -181,7 +182,7 @@ const PmProjectCreatePage: React.FC = () => {
       id: 'dates',
       title: i18n.t('pm.pm_project_create_page.k34'),
       description: i18n.t('pm.pm_project_create_page.k35'),
-      icon: <Calendar style={{ width: 18, height: 18 }} />,
+      icon: <Calendar className={styles.il4} />,
       collapsible: false,
       fields: [
         {
@@ -204,7 +205,7 @@ const PmProjectCreatePage: React.FC = () => {
       id: 'tags',
       title: i18n.t('pm.pm_project_create_page.k40'),
       description: i18n.t('pm.pm_project_create_page.k41'),
-      icon: <Tag style={{ width: 18, height: 18 }} />,
+      icon: <Tag className={styles.il5} />,
       collapsible: false,
       fields: [
         {

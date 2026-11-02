@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import styles from './DataAnalysisPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import { salesOrderApi } from '@/api/erp/core/salesOrder';
 import { BarChart3, TrendingUp, PieChart, Table2, RefreshCw, Download, Layers } from 'lucide-react';
@@ -227,7 +228,7 @@ const DataAnalysisPage = () => {
             startIcon={
               <TrendingUp
                 size={16}
-                style={{ transform: 'rotate(180deg)' }}
+                className={styles.il1}
               />
             }
             onClick={handleDrillUp}
@@ -619,7 +620,7 @@ const DataAnalysisPage = () => {
       title={t('bi.data_analysis_page.page_title')}
       subtitle={t('bi.data_analysis_page.page_subtitle')}
       headerProps={{
-        pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
+        pageIcon: <BarChart3 className={styles.il2} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary[400]} 100%)`,
       }}
       padding={false}

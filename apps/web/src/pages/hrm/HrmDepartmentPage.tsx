@@ -1,4 +1,5 @@
 import CrudPage from '@/components/templates/CrudPage';
+import styles from './HrmDepartmentPage.module.css';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { RowAction } from '@/components/templates/list/types';
 import { PageContainer } from '@/components/common';
@@ -300,7 +301,7 @@ const HrmDepartmentPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <Building2 style={{ width: 20, height: 20 }} />,
+        pageIcon: <Building2 className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
       }}
     >

@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useCallback } from 'react';
+import styles from './ReturnDetailPage.module.css';
 import { Typography, Box, InputLabel, Button, Chip, useTheme } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { RotateCcw, CheckCircle, XCircle, Package, CircleDot, Ban } from 'lucide-react';
@@ -300,7 +301,7 @@ const ReturnDetailPage: React.FC = () => {
     }
     return (
       <Box sx={{ overflow: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table className={styles.il1}>
           <thead>
             <tr style={{ borderBottom: `1px solid ${theme.palette.grey[200]}` }}>
               <th
@@ -625,7 +626,7 @@ const ReturnDetailPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <RotateCcw style={{ width: 20, height: 20 }} />,
+        pageIcon: <RotateCcw className={styles.il2} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
       }}
     >

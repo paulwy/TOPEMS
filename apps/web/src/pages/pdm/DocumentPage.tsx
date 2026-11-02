@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import styles from './DocumentPage.module.css';
 import {
   Box,
   Card,
@@ -523,7 +524,7 @@ export const DocumentPage: React.FC = () => {
   return (
     <PageContainer
       headerProps={{
-        pageIcon: <FileText style={{ width: 20, height: 20 }} />,
+        pageIcon: <FileText className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
       maxWidth='xl'

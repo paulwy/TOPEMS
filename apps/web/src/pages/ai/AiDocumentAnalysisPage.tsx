@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import styles from './AiDocumentAnalysisPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import {
   Box,
@@ -243,7 +244,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
       leftPanelWidth={3}
       pageContainerProps={{
         headerProps: {
-          pageIcon: <FileText style={{ width: 20, height: 20 }} />,
+          pageIcon: <FileText className={styles.il1} />,
           pageGradient: `linear-gradient(135deg, ${theme.palette.cyan[600]} 0%, ${theme.palette.cyan[300]} 100%)`,
         },
       }}
@@ -277,7 +278,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                 type='file'
                 id='doc-upload'
                 accept='.pdf,.docx,.doc,.txt'
-                style={{ display: 'none' }}
+                className={styles.il2}
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
                     setUploadedFile(e.target.files[0]);

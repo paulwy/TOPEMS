@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './ProjectTimelinePage.module.css';
 import {
   TimelinePageTemplate,
   type TimelineGroup,
@@ -17,7 +18,7 @@ const groups: TimelineGroup[] = [
   {
     id: 'milestones',
     title: i18n.t('pm.project_timeline_page.k0'),
-    icon: <Rocket style={{ width: 18, height: 18 }} />,
+    icon: <Rocket className={styles.il1} />,
     color: 'secondary.500',
     collapsible: true,
     nodes: [
@@ -76,7 +77,7 @@ const groups: TimelineGroup[] = [
   {
     id: 'tasks',
     title: i18n.t('pm.project_timeline_page.k13'),
-    icon: <Target style={{ width: 18, height: 18 }} />,
+    icon: <Target className={styles.il2} />,
     color: 'primary.500',
     collapsible: true,
     nodes: [
@@ -140,7 +141,7 @@ const groups: TimelineGroup[] = [
   {
     id: 'meetings',
     title: i18n.t('pm.project_timeline_page.k25'),
-    icon: <Calendar style={{ width: 18, height: 18 }} />,
+    icon: <Calendar className={styles.il3} />,
     color: 'warning.500',
     collapsible: true,
     nodes: [
@@ -211,7 +212,7 @@ export const ProjectTimelinePage: React.FC = () => {
         actions={[
           {
             label: i18n.t('pm.project_timeline_page.k42'),
-            icon: <Plus style={{ width: 16, height: 16 }} />,
+            icon: <Plus className={styles.il4} />,
             onClick: () => {},
           },
         ]}

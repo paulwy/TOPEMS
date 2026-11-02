@@ -1,0 +1,180 @@
+/* ./pages/erp/ErpInventoryRedesignPage.tsx inline-style migration (auto) */
+
+.il1 {
+  font-weight: var(--font-semibold);
+  color: var(--accent-primary);
+  font-family: var(--font-mono);
+}
+
+.il2 {
+  font-weight: 500px;
+}
+
+.il3 {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.il4 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.il5 {
+  color: var(--text-tertiary);
+}
+
+.il6 {
+  font-family: var(--font-mono);
+  font-weight: var(--font-semibold);
+}
+
+.il7 {
+  width: 80px;
+  height: 4px;
+  background-color: var(--surface-2);
+  border-radius: 2px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.il8 {
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+.il9 {
+  font-family: var(--font-mono);
+  font-weight: var(--font-medium);
+}
+
+.il10 {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+.il11 {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.il12 {
+  width: 280px;
+}
+
+.il13 {
+  width: 140px;
+}
+
+.il14 {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.il15 {
+  margin-top: var(--space-4);
+}
+
+.il16 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.il17 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.il18 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  margin-top: var(--space-1);
+}
+
+.il19 {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.il20 {
+  margin-bottom: var(--space-3);
+}
+
+.il21 {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.il22 {
+  font-weight: var(--font-bold);
+  font-family: var(--font-mono);
+}
+
+.il23 {
+  width: 100%;
+  height: 12px;
+  background-color: var(--surface-2);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.il24 {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.il25 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.il26 {
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+}
+
+.il27 {
+  font-size: var(--text-sm);
+  font-weight: var(--font-bold);
+  font-family: var(--font-mono);
+}
+
+.il28 {
+  font-size: var(--text-sm);
+}
+
+.il29 {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.il30 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.il31 {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.il32 {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

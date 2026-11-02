@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import styles from './BiPermissionPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Shield,
@@ -482,7 +483,7 @@ const BiPermissionPage = () => {
       title={i18n.t('bi.bi_permission_page.permission_mgmt_heading')}
       subtitle={i18n.t('bi.bi_permission_page.page_subtitle')}
       headerProps={{
-        pageIcon: <Shield style={{ width: 20, height: 20 }} />,
+        pageIcon: <Shield className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error[600]} 100%)`,
       }}
       padding={false}

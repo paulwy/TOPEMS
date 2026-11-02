@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import styles from './AiPromptLibraryPage.module.css';
 import {
   Box,
   Typography,
@@ -583,7 +584,7 @@ export const AiPromptLibraryPage: React.FC = () => {
       padding={false}
       maxWidth={false}
       headerProps={{
-        pageIcon: <BookOpen style={{ width: 20, height: 20 }} />,
+        pageIcon: <BookOpen className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.teal[200]} 0%, ${theme.palette.pink[100]} 100%)`,
       }}
     >
@@ -827,14 +828,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                 </Box>
               ) : generatedResult ? (
                 <pre
-                  style={{
-                    margin: 0,
-                    fontFamily: 'monospace',
-                    fontSize: 13,
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word',
-                    lineHeight: 1.6,
-                  }}
+                  className={styles.il2}
                 >
                   {generatedResult}
                 </pre>

@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
+import styles from './BarcodePage.module.css';
 import { Box, Typography, Card, CardContent, useTheme } from '@mui/material';
 import { Barcode as BarcodeIcon, Printer, ScanLine } from 'lucide-react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -425,7 +426,7 @@ const BarcodePage: React.FC = () => {
       title={i18n.t('lims.barcode_page.k32')}
       subtitle='Barcode Management'
       headerProps={{
-        pageIcon: <BarcodeIcon style={{ width: 20, height: 20 }} />,
+        pageIcon: <BarcodeIcon className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.teal[400]} 0%, ${theme.palette.teal[600]} 100%)`,
       }}
     >

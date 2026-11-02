@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import styles from './QmsStandardDetailPage.module.css';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FileText, Calendar, FileCheck, Plus, Download, Upload } from 'lucide-react';
@@ -368,7 +369,7 @@ const QmsStandardDetailPage: React.FC = () => {
           {
             id: 'info',
             label: i18n.t('pages.qms_standard_detail_page.k21'),
-            icon: <FileText style={{ width: 16, height: 16 }} />,
+            icon: <FileText className={styles.il1} />,
             content: (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <Box
@@ -461,7 +462,7 @@ const QmsStandardDetailPage: React.FC = () => {
           {
             id: 'history',
             label: i18n.t('pages.qms_standard_detail_page.k23'),
-            icon: <FileCheck style={{ width: 16, height: 16 }} />,
+            icon: <FileCheck className={styles.il2} />,
             badge: revisions.length,
             content: (
               <CrudPage
@@ -490,7 +491,7 @@ const QmsStandardDetailPage: React.FC = () => {
                         size='small'
                         sx={{ mt: 2 }}
                         onClick={() => setShowRevisionModal(true)}
-                        startIcon={<Plus style={{ width: 12, height: 12 }} />}
+                        startIcon={<Plus className={styles.il3} />}
                       >
                         {i18n.t('pages.qms_standard_detail_page.k14')}
                       </Button>
@@ -504,7 +505,7 @@ const QmsStandardDetailPage: React.FC = () => {
         actions={[
           {
             label: i18n.t('pages.qms_standard_detail_page.k25'),
-            icon: <Plus style={{ width: 16, height: 16 }} />,
+            icon: <Plus className={styles.il4} />,
             onClick: () => setShowRevisionModal(true),
             variant: 'outlined',
           },
@@ -628,12 +629,7 @@ const QmsStandardDetailPage: React.FC = () => {
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
-                  style={{
-                    width: '100%',
-                    padding: 2,
-                    borderRadius: 'md',
-                    border: '1px solid border.default',
-                  }}
+                  className={styles.il5}
                 >
                   <option value='active'>{i18n.t('pages.qms_standard_detail_page.k30')}</option>
                   <option value='draft'>{i18n.t('pages.qms_standard_detail_page.k31')}</option>
@@ -688,14 +684,7 @@ const QmsStandardDetailPage: React.FC = () => {
                   }))
                 }
                 placeholder={i18n.t('pages.qms_standard_detail_page.k23')}
-                style={{
-                  width: '100%',
-                  padding: 3,
-                  borderRadius: 'sm',
-                  border: '1px solid border.default',
-                  resize: 'none',
-                  height: '96px',
-                }}
+                className={styles.il6}
               />
             </Box>
           </Box>
@@ -760,14 +749,7 @@ const QmsStandardDetailPage: React.FC = () => {
               </Box>
               <textarea
                 placeholder={i18n.t('pages.qms_standard_detail_page.k29')}
-                style={{
-                  width: '100%',
-                  padding: 3,
-                  borderRadius: 'sm',
-                  border: '1px solid border.default',
-                  resize: 'none',
-                  height: '96px',
-                }}
+                className={styles.il7}
               />
             </Box>
           </Box>

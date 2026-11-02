@@ -1,0 +1,15 @@
+/* ./pages/ai/AiCodeAssistantPage.tsx inline-style migration (auto) */
+
+.il1 {
+  width: 20px;
+  height: 20px;
+}
+
+.il2 {
+  margin: 0;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.6px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

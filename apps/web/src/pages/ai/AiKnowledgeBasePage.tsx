@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import styles from './AiKnowledgeBasePage.module.css';
 import {
   Box,
   Typography,
@@ -348,7 +349,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
       leftPanelBreakpoint='lg'
       pageContainerProps={{
         headerProps: {
-          pageIcon: <BookOpen style={{ width: 20, height: 20 }} />,
+          pageIcon: <BookOpen className={styles.il1} />,
           pageGradient: `linear-gradient(135deg, ${theme.palette.blue[400]} 0%, ${theme.palette.purple[500]} 100%)`,
         },
       }}

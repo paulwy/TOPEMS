@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import styles from './BiIndexPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import {
   BarChart3,
@@ -222,7 +223,7 @@ const BiIndexPage = () => {
       title={t('bi.bi_index_page.bi_hero_title')}
       subtitle={t('bi.bi_index_page.hero_subtitle')}
       headerProps={{
-        pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
+        pageIcon: <BarChart3 className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary.main} 100%)`,
       }}
       padding={false}

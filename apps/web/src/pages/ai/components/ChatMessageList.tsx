@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './ChatMessageList.module.css';
 /**
  * Chat message list - renders messages, typing indicator, and empty state.
  */
@@ -99,11 +100,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
                         }}
                       >
                         <pre
-                          style={{
-                            margin: 0,
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word',
-                          }}
+                          className={styles.il1}
                         >
                           {part}
                         </pre>

@@ -1,0 +1,31 @@
+/* ./pages/pm/ProjectMasterDetailPage.tsx inline-style migration (auto) */
+
+.il1 {
+  width: 18px;
+  height: 18px;
+  color: primary.main;
+}
+
+.il2 {
+  width: 18px;
+  height: 18px;
+  color: success.main;
+}
+
+.il3 {
+  width: 18px;
+  height: 18px;
+  color: info.main;
+}
+
+.il4 {
+  width: 18px;
+  height: 18px;
+  color: warning.main;
+}
+
+.il5 {
+  width: 24px;
+  height: 24px;
+  color: success.main;
+}

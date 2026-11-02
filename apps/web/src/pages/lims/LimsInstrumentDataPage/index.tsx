@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import styles from './index.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Database, Play, Settings, Eye, RefreshCw, Edit, Trash2 } from 'lucide-react';
@@ -965,7 +966,7 @@ const LimsInstrumentDataPage: React.FC = () => {
     <PageContainer
       maxWidth='xl'
       headerProps={{
-        pageIcon: <Database style={{ width: 20, height: 20 }} />,
+        pageIcon: <Database className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.teal[400]} 0%, ${theme.palette.teal[600]} 100%)`,
       }}
     >

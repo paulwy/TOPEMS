@@ -1,0 +1,106 @@
+/* ./pages/qms/QmsNonconformanceRedesignPage.tsx inline-style migration (auto) */
+
+.il1 {
+  font-weight: var(--font-semibold);
+  color: var(--accent-primary);
+  font-family: var(--font-mono);
+}
+
+.il2 {
+  font-weight: 500px;
+}
+
+.il3 {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.il4 {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+.il5 {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.il6 {
+  width: 280px;
+}
+
+.il7 {
+  width: 140px;
+}
+
+.il8 {
+  margin-top: var(--space-4);
+}
+
+.il9 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.il10 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  margin-top: var(--space-1);
+}
+
+.il11 {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.il12 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.il13 {
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+}
+
+.il14 {
+  font-size: var(--text-sm);
+}
+
+.il15 {
+  font-size: var(--text-sm);
+}
+
+.il16 {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.il17 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.il18 {
+  width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background-color: var(--surface-1);
+  color: var(--text-primary);
+  font-size: 14px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.il19 {
+  margin: 0;
+  color: var(--text-secondary);
+}

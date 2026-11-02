@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import styles from './InspectionResultPage.module.css';
 import { Typography } from '@mui/material';
 import { Calendar, User, FileCheck, AlertCircle } from 'lucide-react';
 import { ListPageTemplate } from '@/components/templates';
@@ -73,7 +74,7 @@ export default function InspectionResultPage() {
         id: 'result',
         label: t('lims.inspection_result_page.col_result'),
         render: (row) => (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span className={styles.il1}>
             <FileCheck size={14} />
             {row.result}
           </span>
@@ -83,7 +84,7 @@ export default function InspectionResultPage() {
         id: 'status',
         label: t('lims.inspection_result_page.col_status'),
         render: (row) => (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span className={styles.il2}>
             <AlertCircle size={14} />
             {row.status}
           </span>
@@ -93,7 +94,7 @@ export default function InspectionResultPage() {
         id: 'inspector',
         label: t('lims.inspection_result_page.col_inspector'),
         render: (row) => (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span className={styles.il3}>
             <User size={14} />
             {row.inspector}
           </span>
@@ -103,7 +104,7 @@ export default function InspectionResultPage() {
         id: 'inspection_date',
         label: t('lims.inspection_result_page.col_inspection_date'),
         render: (row) => (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span className={styles.il4}>
             <Calendar size={14} />
             {row.inspection_date}
           </span>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './QmsAuditRedesignPage.module.css';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -446,11 +447,7 @@ const QmsAuditRedesignPage: React.FC = () => {
         sortable: true,
         render: (row) => (
           <span
-            style={{
-              fontWeight: 'var(--font-semibold)',
-              color: 'var(--accent-primary)',
-              fontFamily: 'var(--font-mono)',
-            }}
+            className={styles.il1}
           >
             {row.audit_no}
           </span>
@@ -461,8 +458,8 @@ const QmsAuditRedesignPage: React.FC = () => {
         header: t('qms.audit_redesign.col_title'),
         render: (row) => (
           <div>
-            <div style={{ fontWeight: 500 }}>{row.title}</div>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+            <div className={styles.il2}>{row.title}</div>
+            <div className={styles.il3}>
               {row.scope}
             </div>
           </div>
@@ -500,7 +497,7 @@ const QmsAuditRedesignPage: React.FC = () => {
               {row.findings} {t('qms.audit_redesign.findings_unit')}
             </Badge>
           ) : (
-            <span style={{ color: 'var(--text-tertiary)' }}>-</span>
+            <span className={styles.il4}>-</span>
           ),
       },
       {
@@ -517,7 +514,7 @@ const QmsAuditRedesignPage: React.FC = () => {
         header: t('qms.audit_redesign.col_actions'),
         align: 'right',
         render: (row) => (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
+          <div className={styles.il5}>
             <Button
               variant='ghost'
               size='sm'
@@ -585,19 +582,14 @@ const QmsAuditRedesignPage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={styles.il6}
             >
               <Input
                 placeholder={t('qms.audit_redesign.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 280 }}
+                className={styles.il7}
               />
               <Select
                 value={typeFilter}
@@ -610,7 +602,7 @@ const QmsAuditRedesignPage: React.FC = () => {
                   { value: 'product', label: t('qms.audit_redesign.type_product') },
                   { value: 'supplier', label: t('qms.audit_redesign.type_supplier') },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il8}
               />
             </div>
             <div style={rowGap2}>
@@ -684,7 +676,7 @@ const QmsAuditRedesignPage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredAudits.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il9}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -715,20 +707,12 @@ const QmsAuditRedesignPage: React.FC = () => {
           <div style={colGap4}>
             <Card>
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
+                className={styles.il10}
               >
                 <div>
                   <div style={detailLabel}>{selectedAudit.audit_no}</div>
                   <div
-                    style={{
-                      fontSize: 'var(--text-lg)',
-                      fontWeight: 'var(--font-bold)',
-                      marginTop: 'var(--space-1)',
-                    }}
+                    className={styles.il11}
                   >
                     {selectedAudit.title}
                   </div>
@@ -745,14 +729,14 @@ const QmsAuditRedesignPage: React.FC = () => {
             </Card>
 
             <Card title={t('qms.audit_redesign.card_scope')}>
-              <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+              <p className={styles.il12}>
                 {selectedAudit.scope}
               </p>
             </Card>
 
             <Card title={t('qms.audit_redesign.card_basic_info')}>
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
+                className={styles.il13}
               >
                 <div>
                   <div style={detailLabel}>{t('qms.audit_redesign.col_auditor')}</div>
@@ -764,23 +748,23 @@ const QmsAuditRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.audit_redesign.col_plan_date')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>{selectedAudit.plan_date}</div>
+                  <div className={styles.il14}>{selectedAudit.plan_date}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.audit_redesign.drawer_actual_date')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>
+                  <div className={styles.il15}>
                     {selectedAudit.actual_date || '-'}
                   </div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.audit_redesign.drawer_findings')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)' }}>
+                  <div className={styles.il16}>
                     {selectedAudit.findings} {t('qms.audit_redesign.findings_unit')}
                   </div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.audit_redesign.drawer_created_at')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>
+                  <div className={styles.il17}>
                     {formatDateTime(selectedAudit.created_at)}
                   </div>
                 </div>
@@ -846,7 +830,7 @@ const QmsAuditRedesignPage: React.FC = () => {
               defaultValue={selectedAudit?.title}
             />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div className={styles.il18}>
             <div>
               <label
                 htmlFor='field-2'
@@ -946,7 +930,7 @@ const QmsAuditRedesignPage: React.FC = () => {
           </>
         }
       >
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+        <p className={styles.il19}>
           {t('qms.audit_redesign.delete_message', { audit_no: deleteTarget?.audit_no })}
         </p>
       </Modal>

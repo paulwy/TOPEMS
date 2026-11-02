@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './HrmEmployeeEditPage.module.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
@@ -175,7 +176,7 @@ const HrmEmployeeEditPage: React.FC = () => {
       id: 'basic',
       title: t('hrm.hrm_employee_edit_page.info'),
       description: t('hrm.hrm_employee_edit_page.info_1'),
-      icon: <User style={{ width: 18, height: 18 }} />,
+      icon: <User className={styles.il1} />,
       collapsible: false,
       fields: [
         {
@@ -213,7 +214,7 @@ const HrmEmployeeEditPage: React.FC = () => {
       id: 'contact',
       title: t('hrm.hrm_employee_edit_page.contact_info'),
       description: t('hrm.hrm_employee_edit_page.info_2'),
-      icon: <Mail style={{ width: 18, height: 18 }} />,
+      icon: <Mail className={styles.il2} />,
       collapsible: false,
       fields: [
         {
@@ -241,7 +242,7 @@ const HrmEmployeeEditPage: React.FC = () => {
       id: 'work',
       title: t('hrm.hrm_employee_edit_page.info_3'),
       description: t('hrm.hrm_employee_edit_page.info_4'),
-      icon: <Briefcase style={{ width: 18, height: 18 }} />,
+      icon: <Briefcase className={styles.il3} />,
       collapsible: false,
       fields: [
         {
@@ -286,7 +287,7 @@ const HrmEmployeeEditPage: React.FC = () => {
       id: 'emergency',
       title: t('hrm.hrm_employee_edit_page.contact'),
       description: t('hrm.hrm_employee_edit_page.contact_1'),
-      icon: <MapPin style={{ width: 18, height: 18 }} />,
+      icon: <MapPin className={styles.il4} />,
       collapsible: false,
       fields: [
         {

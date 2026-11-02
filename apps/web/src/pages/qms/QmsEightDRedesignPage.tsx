@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './QmsEightDRedesignPage.module.css';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -463,11 +464,7 @@ const QmsEightDRedesignPage: React.FC = () => {
         sortable: true,
         render: (row) => (
           <span
-            style={{
-              fontWeight: 'var(--font-semibold)',
-              color: 'var(--accent-primary)',
-              fontFamily: 'var(--font-mono)',
-            }}
+            className={styles.il1}
           >
             {row.report_no}
           </span>
@@ -478,8 +475,8 @@ const QmsEightDRedesignPage: React.FC = () => {
         header: t('qms.eight_d_redesign.col_title'),
         render: (row) => (
           <div>
-            <div style={{ fontWeight: 500 }}>{row.title}</div>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+            <div className={styles.il2}>{row.title}</div>
+            <div className={styles.il3}>
               {row.product_name}
               {row.customer_name && ` / ${row.customer_name}`}
             </div>
@@ -509,17 +506,10 @@ const QmsEightDRedesignPage: React.FC = () => {
         header: t('qms.eight_d_redesign.col_current_step'),
         render: (row) => (
           <div>
-            <div style={{ fontSize: 'var(--text-sm)' }}>{row.current_step}</div>
+            <div className={styles.il4}>{row.current_step}</div>
             {/* 进度条 */}
             <div
-              style={{
-                width: 100,
-                height: 4,
-                backgroundColor: 'var(--surface-3)',
-                borderRadius: 2,
-                marginTop: 4,
-                overflow: 'hidden',
-              }}
+              className={styles.il5}
             >
               <div
                 style={{
@@ -537,10 +527,10 @@ const QmsEightDRedesignPage: React.FC = () => {
         key: 'owner',
         header: t('qms.eight_d_redesign.col_owner'),
         render: (row) => (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <div className={styles.il6}>
             <User
               size={14}
-              style={{ color: 'var(--text-tertiary)' }}
+              className={styles.il7}
             />
             <span>{row.owner}</span>
           </div>
@@ -577,7 +567,7 @@ const QmsEightDRedesignPage: React.FC = () => {
         header: t('qms.eight_d_redesign.col_actions'),
         align: 'right',
         render: (row) => (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
+          <div className={styles.il8}>
             <Button
               variant='ghost'
               size='sm'
@@ -645,19 +635,14 @@ const QmsEightDRedesignPage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={styles.il9}
             >
               <Input
                 placeholder={t('qms.eight_d_redesign.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 280 }}
+                className={styles.il10}
               />
               <Select
                 value={severityFilter}
@@ -668,7 +653,7 @@ const QmsEightDRedesignPage: React.FC = () => {
                   { value: 'major', label: t('qms.eight_d_redesign.severity_major') },
                   { value: 'critical', label: t('qms.eight_d_redesign.severity_critical') },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il11}
               />
             </div>
             <div style={rowGap2}>
@@ -742,7 +727,7 @@ const QmsEightDRedesignPage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredReports.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il12}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -773,20 +758,12 @@ const QmsEightDRedesignPage: React.FC = () => {
           <div style={colGap4}>
             <Card>
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
+                className={styles.il13}
               >
                 <div>
                   <div style={detailLabel}>{selectedReport.report_no}</div>
                   <div
-                    style={{
-                      fontSize: 'var(--text-lg)',
-                      fontWeight: 'var(--font-bold)',
-                      marginTop: 'var(--space-1)',
-                    }}
+                    className={styles.il14}
                   >
                     {selectedReport.title}
                   </div>
@@ -806,12 +783,12 @@ const QmsEightDRedesignPage: React.FC = () => {
 
             {/* 8D 步骤进度 */}
             <Card title={t('qms.eight_d_redesign.drawer_steps_title')}>
-              <div style={{ marginTop: 'var(--space-2)' }}>
-                <div style={{ fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>
+              <div className={styles.il15}>
+                <div className={styles.il16}>
                   {t('qms.eight_d_redesign.drawer_current_step')}
                   {selectedReport.current_step}
                 </div>
-                <div style={{ display: 'flex', gap: 4 }}>
+                <div className={styles.il17}>
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((step) => (
                     <div
                       key={step}
@@ -828,13 +805,7 @@ const QmsEightDRedesignPage: React.FC = () => {
                   ))}
                 </div>
                 <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: 'var(--text-xs)',
-                    color: 'var(--text-tertiary)',
-                    marginTop: 4,
-                  }}
+                  className={styles.il18}
                 >
                   <span>D1</span>
                   <span>D2</span>
@@ -850,7 +821,7 @@ const QmsEightDRedesignPage: React.FC = () => {
 
             <Card title={t('qms.eight_d_redesign.drawer_basic_info')}>
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
+                className={styles.il19}
               >
                 <div>
                   <div style={detailLabel}>{t('qms.eight_d_redesign.drawer_product_name')}</div>
@@ -875,11 +846,11 @@ const QmsEightDRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.eight_d_redesign.col_due_date')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>{selectedReport.due_date}</div>
+                  <div className={styles.il20}>{selectedReport.due_date}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.eight_d_redesign.drawer_created_at')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>
+                  <div className={styles.il21}>
                     {formatDateTime(selectedReport.created_at)}
                   </div>
                 </div>
@@ -947,7 +918,7 @@ const QmsEightDRedesignPage: React.FC = () => {
               defaultValue={selectedReport?.title}
             />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div className={styles.il22}>
             <div>
               <label
                 htmlFor='field-2'
@@ -1050,7 +1021,7 @@ const QmsEightDRedesignPage: React.FC = () => {
           </>
         }
       >
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+        <p className={styles.il23}>
           {t('qms.eight_d_redesign.delete_message', { report_no: deleteTarget?.report_no })}
         </p>
       </Modal>

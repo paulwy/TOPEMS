@@ -1,0 +1,90 @@
+/* ./pages/crm/CrmCustomerRedesignPage.tsx inline-style migration (auto) */
+
+.il1 {
+  font-weight: var(--font-semibold);
+  color: var(--accent-primary);
+  font-family: var(--font-mono);
+}
+
+.il2 {
+  font-weight: 500px;
+}
+
+.il3 {
+  font-size: var(--text-sm);
+}
+
+.il4 {
+  font-family: var(--font-mono);
+  font-weight: var(--font-semibold);
+}
+
+.il5 {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+.il6 {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.il7 {
+  width: 280px;
+}
+
+.il8 {
+  width: 140px;
+}
+
+.il9 {
+  margin-top: var(--space-4);
+}
+
+.il10 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.il11 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  margin-top: var(--space-1);
+}
+
+.il12 {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.il13 {
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+}
+
+.il14 {
+  font-size: var(--text-sm);
+}
+
+.il15 {
+  font-size: var(--text-sm);
+}
+
+.il16 {
+  font-size: var(--text-sm);
+}
+
+.il17 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.il18 {
+  margin: 0;
+  color: var(--text-secondary);
+}

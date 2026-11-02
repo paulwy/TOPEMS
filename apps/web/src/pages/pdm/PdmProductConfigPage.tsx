@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './PdmProductConfigPage.module.css';
 import { Box, Chip, Grid, useTheme } from '@mui/material';
 import { Settings, Zap, Package, Shield } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -288,7 +289,7 @@ export const PdmProductConfigPage: React.FC = () => {
   return (
     <PageContainer
       headerProps={{
-        pageIcon: <Settings style={{ width: 20, height: 20 }} />,
+        pageIcon: <Settings className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary[600]} 100%)`,
       }}
     >

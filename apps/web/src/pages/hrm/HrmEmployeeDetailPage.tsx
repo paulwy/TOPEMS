@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import styles from './HrmEmployeeDetailPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { Box, Typography, InputLabel, Avatar, useTheme } from '@mui/material';
@@ -390,7 +391,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         actions={[
           {
             label: t('hrm.hrm_employee_detail_page.transfer'),
-            icon: <Briefcase style={{ width: 18, height: 18 }} />,
+            icon: <Briefcase className={styles.il1} />,
             onClick: () => setShowTransferDialog(true),
           },
         ]}

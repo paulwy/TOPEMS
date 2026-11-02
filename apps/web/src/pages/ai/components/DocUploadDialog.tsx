@@ -3,6 +3,7 @@
  * generating a summary.
  */
 import React from 'react';
+import styles from './DocUploadDialog.module.css';
 import { FileText } from 'lucide-react';
 import {
   Box,
@@ -46,7 +47,7 @@ const DocUploadDialog: React.FC<DocUploadDialogProps> = ({
             type='file'
             accept='.txt,.md,.docx,.pdf'
             onChange={onFileUpload}
-            style={{ display: 'none' }}
+            className={styles.il1}
             id='doc-upload'
           />
           <Button

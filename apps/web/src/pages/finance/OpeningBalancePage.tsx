@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState, useEffect } from 'react';
+import styles from './OpeningBalancePage.module.css';
 import {
   Box,
   Button,
@@ -459,7 +460,7 @@ export default function OpeningBalancePage() {
                   >
                     <RefreshCw
                       size={16}
-                      style={{ marginRight: 8 }}
+                      className={styles.il1}
                     />
                     {t('finance.opening_balance_page.e1')}
                   </Button>

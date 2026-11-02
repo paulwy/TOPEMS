@@ -1,4 +1,5 @@
 import { useMemo, useCallback } from 'react';
+import styles from './ProductPage.module.css';
 import { Box, Typography, useTheme } from '@mui/material';
 import { Package } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -190,7 +191,7 @@ export default function ProductPage() {
   return (
     <PageContainer
       headerProps={{
-        pageIcon: <Package style={{ width: 20, height: 20 }} />,
+        pageIcon: <Package className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
       }}
     >

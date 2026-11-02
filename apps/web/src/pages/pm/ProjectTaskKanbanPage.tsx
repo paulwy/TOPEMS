@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import styles from './ProjectTaskKanbanPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import { KanbanPageTemplate, type KanbanColumn } from '@/components/templates/KanbanPageTemplate';
 import i18n from '@/i18n';
@@ -225,7 +226,7 @@ const ProjectTaskKanbanPage: React.FC = () => {
       actions={[
         {
           label: i18n.t('pm.project_task_kanban_page.k27'),
-          icon: <Plus style={{ width: 16, height: 16 }} />,
+          icon: <Plus className={styles.il1} />,
           onClick: () => {},
         },
       ]}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import styles from './DatasetPage.module.css';
 import { Plus, Edit2, Trash2, Eye, Play, Database, RefreshCw, FileText } from 'lucide-react';
 import {
   Box,
@@ -769,7 +770,7 @@ const DatasetPage = () => {
       title={i18n.t('bi.dataset_page.page_title')}
       subtitle={i18n.t('bi.dataset_page.page_subtitle')}
       headerProps={{
-        pageIcon: <Database style={{ width: 20, height: 20 }} />,
+        pageIcon: <Database className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
       }}
       padding={false}

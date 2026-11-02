@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './ImportModal.module.css';
 import i18n from '@/i18n';
 import {
   Dialog,
@@ -100,13 +101,13 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 type='file'
                 accept='.csv'
                 onChange={onFileChange}
-                style={{ display: 'none' }}
+                className={styles.il1}
                 id='csv-upload'
               />
               <Upload
                 size={48}
                 color='text.disabled'
-                style={{ marginBottom: 8 }}
+                className={styles.il2}
               />
               <Typography color='text.secondary'>{i18n.t('bi.import_modal.k1')}</Typography>
               <Typography

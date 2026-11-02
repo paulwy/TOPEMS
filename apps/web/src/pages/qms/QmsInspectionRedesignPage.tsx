@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './QmsInspectionRedesignPage.module.css';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -467,11 +468,7 @@ const QmsInspectionPage: React.FC = () => {
         sortable: true,
         render: (row) => (
           <span
-            style={{
-              fontWeight: 'var(--font-semibold)',
-              color: 'var(--accent-primary)',
-              fontFamily: 'var(--font-mono)',
-            }}
+            className={styles.il1}
           >
             {row.check_no}
           </span>
@@ -482,8 +479,8 @@ const QmsInspectionPage: React.FC = () => {
         header: t('qms.inspection_redesign.col_title'),
         render: (row) => (
           <div>
-            <div style={{ fontWeight: 500 }}>{row.title}</div>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+            <div className={styles.il2}>{row.title}</div>
+            <div className={styles.il3}>
               {row.batch_no}
             </div>
           </div>
@@ -513,15 +510,15 @@ const QmsInspectionPage: React.FC = () => {
         header: t('qms.inspection_redesign.col_inspector'),
         render: (row) =>
           row.inspector ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+            <div className={styles.il4}>
               <User
                 size={14}
-                style={{ color: 'var(--text-tertiary)' }}
+                className={styles.il5}
               />
               <span>{row.inspector}</span>
             </div>
           ) : (
-            <span style={{ color: 'var(--text-tertiary)' }}>-</span>
+            <span className={styles.il6}>-</span>
           ),
       },
       {
@@ -529,7 +526,7 @@ const QmsInspectionPage: React.FC = () => {
         header: t('qms.inspection_redesign.col_result'),
         align: 'center',
         render: (row) => {
-          if (!row.result) return <span style={{ color: 'var(--text-tertiary)' }}>-</span>;
+          if (!row.result) return <span className={styles.il7}>-</span>;
           const config = resultConfig[row.result] || resultConfig.pending;
           return <Badge variant={config.variant}>{config.label}</Badge>;
         },
@@ -548,7 +545,7 @@ const QmsInspectionPage: React.FC = () => {
         header: t('qms.inspection_redesign.col_actions'),
         align: 'right',
         render: (row) => (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-1)' }}>
+          <div className={styles.il8}>
             <Button
               variant='ghost'
               size='sm'
@@ -616,19 +613,14 @@ const QmsInspectionPage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={styles.il9}
             >
               <Input
                 placeholder={t('qms.inspection_redesign.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 280 }}
+                className={styles.il10}
               />
               <Select
                 value={typeFilter}
@@ -639,7 +631,7 @@ const QmsInspectionPage: React.FC = () => {
                   { value: 'process', label: t('qms.inspection_redesign.type_process') },
                   { value: 'final', label: t('qms.inspection_redesign.type_final') },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il11}
               />
             </div>
             <div style={rowGap2}>
@@ -713,7 +705,7 @@ const QmsInspectionPage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredInspections.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il12}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -744,20 +736,12 @@ const QmsInspectionPage: React.FC = () => {
           <div style={colGap4}>
             <Card>
               <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                }}
+                className={styles.il13}
               >
                 <div>
                   <div style={detailLabel}>{selectedInspection.check_no}</div>
                   <div
-                    style={{
-                      fontSize: 'var(--text-lg)',
-                      fontWeight: 'var(--font-bold)',
-                      marginTop: 'var(--space-1)',
-                    }}
+                    className={styles.il14}
                   >
                     {selectedInspection.title}
                   </div>
@@ -785,7 +769,7 @@ const QmsInspectionPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.inspection_redesign.drawer_batch_no')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
+                  <div className={styles.il15}>
                     {selectedInspection.batch_no}
                   </div>
                 </div>
@@ -806,13 +790,13 @@ const QmsInspectionPage: React.FC = () => {
               <div style={gridTwoCol}>
                 <div>
                   <div style={detailLabel}>{t('qms.inspection_redesign.drawer_created_at')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>
+                  <div className={styles.il16}>
                     {formatDateTime(selectedInspection.created_at)}
                   </div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.inspection_redesign.drawer_completed_at')}</div>
-                  <div style={{ fontSize: 'var(--text-sm)' }}>
+                  <div className={styles.il17}>
                     {formatDateTime(selectedInspection.completed_at)}
                   </div>
                 </div>
@@ -821,16 +805,16 @@ const QmsInspectionPage: React.FC = () => {
 
             {selectedInspection.result && (
               <Card title={t('qms.inspection_redesign.card_result')}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                <div className={styles.il18}>
                   {selectedInspection.result === 'qualified' ? (
                     <CheckCircle
                       size={24}
-                      style={{ color: 'var(--success-500)' }}
+                      className={styles.il19}
                     />
                   ) : (
                     <XCircle
                       size={24}
-                      style={{ color: 'var(--error-500)' }}
+                      className={styles.il20}
                     />
                   )}
                   <span style={detailValue}>
@@ -900,7 +884,7 @@ const QmsInspectionPage: React.FC = () => {
               style={sectionTitle}
             >
               {t('qms.inspection_redesign.field_title_label')}{' '}
-              <span style={{ color: 'var(--text-error)' }}>*</span>
+              <span className={styles.il21}>*</span>
             </label>
             <Input
               id='field-1'
@@ -908,7 +892,7 @@ const QmsInspectionPage: React.FC = () => {
               defaultValue={selectedInspection?.title}
             />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div className={styles.il22}>
             <div>
               <label
                 htmlFor='field-2'
@@ -932,7 +916,7 @@ const QmsInspectionPage: React.FC = () => {
                 style={sectionTitle}
               >
                 {t('qms.inspection_redesign.field_product_label')}{' '}
-                <span style={{ color: 'var(--text-error)' }}>*</span>
+                <span className={styles.il23}>*</span>
               </label>
               <Input
                 id='field-3'
@@ -959,7 +943,7 @@ const QmsInspectionPage: React.FC = () => {
                 style={sectionTitle}
               >
                 {t('qms.inspection_redesign.field_quantity_label')}{' '}
-                <span style={{ color: 'var(--text-error)' }}>*</span>
+                <span className={styles.il24}>*</span>
               </label>
               <Input
                 id='field-5'
@@ -996,7 +980,7 @@ const QmsInspectionPage: React.FC = () => {
           </>
         }
       >
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+        <p className={styles.il25}>
           {t('qms.inspection_redesign.delete_message', { check_no: deleteTarget?.check_no })}
         </p>
       </Modal>

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './LimsInstrumentMaintenancePage.module.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
@@ -301,7 +302,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       title={i18n.t('lims.lims_instrument_maintenance_page.k13')}
       subtitle='Instrument Maintenance'
       headerProps={{
-        pageIcon: <Wrench style={{ width: 20, height: 20 }} />,
+        pageIcon: <Wrench className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.teal[400]}, ${theme.palette.teal[600]})`,
         backButton: { onClick: () => navigate(LIMS_PATHS.root) },
       }}

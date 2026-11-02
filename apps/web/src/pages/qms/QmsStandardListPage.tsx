@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './QmsStandardListPage.module.css';
 import { useNavigate } from 'react-router-dom';
 import { ClipboardCheck, FileText, FileCheck, Eye } from 'lucide-react';
 import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
@@ -178,7 +179,7 @@ const QmsStandardListPage: React.FC = () => {
       title={i18n.t('qms.qms_standard_list_page.k10')}
       subtitle='Quality Standards'
       headerProps={{
-        pageIcon: <ClipboardCheck style={{ width: 20, height: 20 }} />,
+        pageIcon: <ClipboardCheck className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary.main} 100%)`,
       }}
       maxWidth='xl'
