@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # =============================================
 # TOPEMS lib/db.sh（自 scripts/topems.sh 拆分，2026-11-02）
 # =============================================
@@ -264,7 +265,7 @@ redis_stop() {
 
 db_migrate() {
     info "运行数据库迁移（统一入口 scripts/migrate.sh）..."
-    cd "$PROJECT_ROOT"
+    cd "$PROJECT_ROOT" || exit 1
 
     load_env
     parse_database_url

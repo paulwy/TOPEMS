@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # =============================================
 # TOPEMS lib/service.sh（自 scripts/topems.sh 拆分，2026-11-02）
 # =============================================
@@ -46,7 +47,7 @@ _start_service_internal() {
     local port_env_var
     port_env_var=$(get_port_env_var "$service_name")
 
-    cd "$PROJECT_ROOT"
+    cd "$PROJECT_ROOT" || exit 1
     
     if [ "$service_name" = "iam" ]; then
         # port_env_var 对 iam 即 CORE_PORT，无需重复赋值
@@ -569,13 +570,13 @@ start_dev_macos() {
     if ! check_port 3000; then
         ensure_frontend_deps "$pkg_cmd" || return 1
         # stdin=/dev/null 避免 TTY 关闭导致 Vite readline 触发 EIO 崩溃
-        cd "$PROJECT_ROOT/apps/web" && \
-            nohup "$pkg_cmd" run dev -- \
-                --port 3000 \
-                --host "${FRONTEND_BIND_HOST:-::}" \
-                < /dev/null \
-                > "/tmp/topems-web.log" 2>&1 &
-        cd - > /dev/null
+        cd "$PROJECT_ROOT/apps/web" || exit 1
+        nohup "$pkg_cmd" run dev -- \
+            --port 3000 \
+            --host "${FRONTEND_BIND_HOST:-::}" \
+            < /dev/null \
+            > "/tmp/topems-web.log" 2>&1 &
+        cd - > /dev/null || exit 1
         sleep 5
         info "前端服务启动中..."
     else
@@ -624,13 +625,13 @@ start_frontend() {
     else
         # 用 nohup + stdin=/dev/null 脱离 TTY，防止 TTY 关闭后 Vite readline 读到 EIO 崩溃
         # 使用 -- 透传参数到 vite（pnpm 自身参数不会误传入 vite）
-        cd "$PROJECT_ROOT/apps/web" && \
-            nohup "$pkg_cmd" run dev -- \
-                --port 3000 \
-                --host "${FRONTEND_BIND_HOST:-::}" \
-                < /dev/null \
-                > "/tmp/topems-web.log" 2>&1 &
-        cd - > /dev/null
+        cd "$PROJECT_ROOT/apps/web" || exit 1
+        nohup "$pkg_cmd" run dev -- \
+            --port 3000 \
+            --host "${FRONTEND_BIND_HOST:-::}" \
+            < /dev/null \
+            > "/tmp/topems-web.log" 2>&1 &
+        cd - > /dev/null || exit 1
     fi
     local pid=$!
     [ -z "$pid" ] && pid=$existing_pid

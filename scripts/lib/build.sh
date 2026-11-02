@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # =============================================
 # TOPEMS lib/build.sh（自 scripts/topems.sh 拆分，2026-11-02）
 # =============================================
@@ -28,7 +29,7 @@ build_service() {
     info "编译 $service_name 服务..."
     local executable_name
     executable_name=$(get_executable_name "$service_name")
-    cd "$PROJECT_ROOT"
+    cd "$PROJECT_ROOT" || exit 1
 
     # V3xx 参数解析：显式循环（替代子串匹配，避免 --debug/--dev 误判；未知 flag 透传）
     # V64+ 编译策略：默认优先离线（SQLX_OFFLINE=true），依赖根目录 .sqlx/
@@ -189,7 +190,7 @@ ensure_frontend_deps() {
         return 1
     fi
 
-    cd "$web_dir"
+    cd "$web_dir" || exit 1
 
     if [ ! -d "node_modules" ]; then
         info "安装前端依赖..."
@@ -212,7 +213,7 @@ build_all_backend() {
     local -a extra_opts=("$@")
     info "全量编译所有后端服务..."
 
-    cd "$PROJECT_ROOT"
+    cd "$PROJECT_ROOT" || exit 1
 
     # V64+ 新参数: --prepare（先刷新 sqlx 缓存，需要 DATABASE_URL）
     #              --online（强制在线编译，跳过离线）
@@ -556,7 +557,7 @@ test_backend() {
         warning "db_migrate 未完全成功，继续测试（依赖应用 init_database 兜底）"
     fi
 
-    cd "$PROJECT_ROOT"
+    cd "$PROJECT_ROOT" || exit 1
     # V3xx：与 lefthook pre-push / CI 一致，离线模式跑测试（根 .sqlx 已入库）
     export SQLX_OFFLINE=true
     if cargo test --release --workspace 2>&1; then
@@ -574,6 +575,7 @@ test_backend() {
 #   flags:      --no-typecheck  跳过前置 tsc --noEmit
 # 输出: 染色 summary（Test Files X passed / Tests Y passed），失败时返回非 0
 
+# shellcheck disable=SC2120 # 参数可选：无参调用使用默认 all；外部可传 subcommand/flags
 test_frontend() {
     local subcmd="all"
     local do_typecheck=1

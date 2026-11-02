@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # =============================================
 # TOPEMS lib/run.sh（自 scripts/topems.sh 拆分，2026-11-02）
 # =============================================
@@ -90,7 +91,7 @@ run_cli() {
             "$cli_entry" "$@"
             return $?
         fi
-        cd "$CLI_DIR"
+        cd "$CLI_DIR" || exit 1
         # 创建虚拟环境（如果不存在）
         if [ ! -f ".venv/bin/activate" ]; then
             info "创建 Python 虚拟环境 .venv ..."

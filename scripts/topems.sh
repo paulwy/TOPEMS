@@ -18,12 +18,6 @@ if [ -z "$PROJECT_ROOT" ] || [ ! -f "$PROJECT_ROOT/Cargo.toml" ]; then
 fi
 
 # 颜色定义
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m'
 
 MAX_RETRIES=${MAX_RETRIES:-3}
 RETRY_DELAY=${RETRY_DELAY:-3}
