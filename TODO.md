@@ -1,3 +1,12 @@
+## 批 4 第十九批：master/automation MENU_PERM_MISSING 补映射 + 计划 P3 全部核销（2026-11-02）✅
+
+> 目标：p18 判定核销后剩余 4 项 P3（master/automation MENU_PERM_MISSING、integration MENU_PERM_MISSING、mobile PARTIAL）收尾；补 master/automation 的 menuPermissions 映射（审计项直接要求），计划 P3 全部核销。
+
+- **补映射**：menuPermissions.ts 新增 master 12 项（/master/*→master-data:* 对齐路由级）+ automation 5 项（/automation/*→automation:*，designer→rule:write）——integration 8 项已在第四批补。
+- **mobile PARTIAL**：判定保留——mobile 为移动端 BFF 聚合层（181 API 承载 oa/文档），业务数据在各域后端，cross-service 调用已随 p14 指向聚合 8099，边界重叠收敛。
+- **验证（全绿）**：verify_navigation 缺失仍 2（=P5 存量，新增映射合法未增加缺失）；tsc EXIT 0；eslint 通过。
+- **计划状态**：docs/audit/TOPEMS审计整改计划_2026-11-01.md **P3 全部 44 行 ✅（0 行 🆕）**。
+
 ## 批 4 第十八批：剩余 P3 判定核销 5 项（计划文档状态同步）（2026-11-02）✅
 
 > 目标：批 4 全部代码整改闭环后，核对整改计划剩余 P3 项，5 项为"判定保留/设计"类，逐项核销并同步计划文档状态（🆕→✅）。

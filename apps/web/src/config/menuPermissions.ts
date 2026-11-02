@@ -147,4 +147,23 @@ export const MENU_PERMISSIONS: Record<string, string> = {
   '/integration/lims-qms': 'integration:lims:read',
   '/integration/mes-erp': 'integration:mes:read',
   '/integration/wms-scm': 'integration:wms:read',
+  // master 主数据（批 4：对齐路由级 master-data:* requiredPermissions）
+  '/master/data-asset-catalog': 'master-data:data-asset:read',
+  '/master/schema-registry': 'master-data:schema:read',
+  '/master/lineage-analytics': 'master-data:lineage:read',
+  '/master/ai-governance': 'master-data:ai_governance:read',
+  '/master/commercial': 'master-data:commercial:read',
+  '/master/public-master-data': 'master-data:data-asset:read',
+  '/master/disaster-recovery': 'master-data:disaster:read',
+  '/master/semantic-search': 'master-data:semantic:read',
+  '/master/knowledge-graph': 'master-data:knowledge:read',
+  '/master/quality': 'master-data:quality:read',
+  '/master/governance': 'master-data:governance:read',
+  '/master/versioning': 'master-data:versioning:read',
+  // automation 自动化（批 4：对齐路由级 automation:* requiredPermissions）
+  '/automation/dashboard': 'automation:dashboard:read',
+  '/automation/rules': 'automation:rule:read',
+  '/automation/runs': 'automation:run:read',
+  '/automation/designer': 'automation:rule:write',
+  '/automation/variables': 'automation:variable:read',
 };
