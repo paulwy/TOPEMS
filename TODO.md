@@ -1,3 +1,13 @@
+## 批 5 第六批：MENU_ORPHAN gis/plugin/doc/workflow/ticket 补种——MENU_ORPHAN 全清零（2026-11-02）✅
+
+> 目标：收尾 MENU_ORPHAN 剩余 5 模块——本批后 MENU_ORPHAN 35 行全核销。
+
+- **补种**（新增 `20261102180000_menu_seed_gis_plugin_doc_workflow_ticket.sql`）：
+  - gis 3 组 + 5 项、plugin 2 组 + 3 项、doc 2 组 + 6 项（含 file-detail `/doc/documents/:id` 详情路由）、workflow 4 组 + 11 项、ticket 2 组 + 2 项——core_menus 387→414。
+- **注意**：plugin-upload 权限码 `admin:plugin:write`（admin 前缀，真实码已命中）；doc/workflow 含 `:id` 参数路径（navItem 设计保留）。
+- **MENU_ORPHAN 全量核销**：35 行 ✅ / 剩余 0。core_menus 从 184 扩至 414（累计补种 230 项）。
+- **验证**：27 项全在 DB；权限码 0 无效。
+
 ## 批 5 第五批：MENU_ORPHAN iam/ai/integration/rd/notification/oa 补种（2026-11-02）✅
 
 > 目标：批量推进 MENU_ORPHAN 剩余模块——本批补 6 模块 56 项种子。
