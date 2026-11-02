@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import styles from './Stepper.stories.module.css';
 import { fn } from 'storybook/test';
 
 import Stepper from './Stepper';
@@ -95,7 +96,7 @@ export const Vertical: Story = {
     orientation: 'vertical',
   },
   render: (args) => (
-    <div style={{ width: 400 }}>
+    <div className={styles.il1}>
       <Stepper {...args} />
     </div>
   ),

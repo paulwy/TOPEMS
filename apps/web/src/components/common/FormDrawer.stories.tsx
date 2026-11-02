@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import styles from './FormDrawer.stories.module.css';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 
@@ -49,18 +50,18 @@ export const Default: Story = {
           onClose={() => setOpen(false)}
           onSubmit={() => setOpen(false)}
         >
-          <div style={{ display: 'grid', gap: 12 }}>
+          <div className={styles.il1}>
             <input
               placeholder='名称'
-              style={{ padding: 8 }}
+              className={styles.il2}
             />
             <input
               placeholder='描述'
-              style={{ padding: 8 }}
+              className={styles.il3}
             />
             <textarea
               placeholder='备注'
-              style={{ padding: 8, minHeight: 80 }}
+              className={styles.il4}
             />
           </div>
         </FormDrawer>

@@ -18,6 +18,7 @@
  */
 
 import React, { useCallback, useMemo, useState, useRef } from 'react';
+import styles from './CrudPage.module.css';
 import { useCrudPagination } from './useCrudPagination';
 import { useCrudDialogs } from './useCrudDialogs';
 import {
@@ -986,7 +987,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
           ref={fileInputRef}
           type='file'
           accept={importConfig.accept || '.csv,.xlsx,.xls'}
-          style={{ display: 'none' }}
+          className={styles.il1}
           onChange={handleImport}
         />
       )}

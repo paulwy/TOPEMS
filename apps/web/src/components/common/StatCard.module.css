@@ -1,0 +1,29 @@
+/* ./components/common/StatCard.tsx inline-style migration (auto) */
+
+.il1 {
+  overflow: visible;
+}
+
+.il2 {
+  width: 16px;
+  height: 16px;
+  margin-right: 0.5px;
+}
+
+.il3 {
+  width: 16px;
+  height: 16px;
+  margin-right: 1px;
+}
+
+.il4 {
+  width: 16px;
+  height: 16px;
+  margin-right: 1px;
+}
+
+.il5 {
+  width: 16px;
+  height: 16px;
+  margin-right: 1px;
+}

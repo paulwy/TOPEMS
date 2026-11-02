@@ -4,6 +4,7 @@
  * 提供基类组件和多种特化组件，支持丰富的交互和动画效果
  */
 import React, { useEffect, useState, useRef } from 'react';
+import styles from './StatCard.module.css';
 import { iconSm } from '../sharedStyles';
 import {
   Box,
@@ -308,7 +309,7 @@ export const Sparkline: React.FC<SparklineProps> = ({
     <svg
       width={width}
       height={height}
-      style={{ overflow: 'visible' }}
+      className={styles.il1}
     >
       <defs>
         <linearGradient
@@ -946,7 +947,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 onClick={(e) => setTimeMenuAnchor(e.currentTarget)}
                 sx={{ textTransform: 'none' }}
               >
-                <Calendar style={{ width: 16, height: 16, marginRight: 0.5 }} />
+                <Calendar className={styles.il2} />
                 {DEFAULT_TIME_RANGES.find((r) => r.value === timeRange)?.label ||
                   i18n.t('shared.stat_card.k5')}
               </Button>
@@ -1050,7 +1051,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               setActionMenuAnchor(null);
             }}
           >
-            <RefreshCw style={{ width: 16, height: 16, marginRight: 1 }} />
+            <RefreshCw className={styles.il3} />
             {i18n.t('components.stat_card.k3')}
           </MenuItem>
         )}
@@ -1061,7 +1062,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               setActionMenuAnchor(null);
             }}
           >
-            <Download style={{ width: 16, height: 16, marginRight: 1 }} />
+            <Download className={styles.il4} />
             {i18n.t('components.stat_card.k4')}
           </MenuItem>
         )}
@@ -1072,7 +1073,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               setActionMenuAnchor(null);
             }}
           >
-            <Maximize2 style={{ width: 16, height: 16, marginRight: 1 }} />
+            <Maximize2 className={styles.il5} />
             {i18n.t('components.stat_card.k5')}
           </MenuItem>
         )}

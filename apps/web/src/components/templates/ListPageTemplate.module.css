@@ -1,0 +1,21 @@
+/* ./components/templates/ListPageTemplate.tsx inline-style migration (auto) */
+
+.il1 {
+  color: text.disabled;
+}
+
+.il2 {
+  color: text.disabled;
+}
+
+.il3 {
+  color: error.main;
+}
+
+.il4 {
+  color: error.main;
+}
+
+.il5 {
+  display: none;
+}

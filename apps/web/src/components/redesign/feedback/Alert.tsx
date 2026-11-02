@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './Alert.module.css';
 import clsx from 'clsx';
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react';
 
@@ -85,32 +86,22 @@ export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
           color={theme.icon}
           style={{ flexShrink: 0, marginTop: '2px' }}
         />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+        <div className={styles.il2}>
           {title && (
             <span
-              style={{
-                fontWeight: 'var(--font-semibold)',
-                color: 'var(--text-primary)',
-              }}
+              className={styles.il3}
             >
               {title}
             </span>
           )}
-          <span style={{ color: 'var(--text-secondary)' }}>{children}</span>
+          <span className={styles.il4}>{children}</span>
         </div>
         {dismissible && (
           <button
             type='button'
             onClick={onDismiss}
             aria-label='Dismiss alert'
-            style={{
-              flexShrink: 0,
-              padding: 'var(--space-1)',
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--text-tertiary)',
-              cursor: 'pointer',
-            }}
+            className={styles.il5}
           >
             <X size={16} />
           </button>

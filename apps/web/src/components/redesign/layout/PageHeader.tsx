@@ -1,4 +1,6 @@
 import React from 'react';
+import cx from 'clsx';
+import styles from './PageHeader.module.css';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../primitives';
@@ -29,26 +31,13 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const { t } = useTranslation();
   return (
     <header
-      className={clsx('redesign-page-header', className)}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'var(--space-3)',
-        marginBottom: 'var(--space-6)',
-        ...style,
-      }}
+      className={cx(clsx('redesign-page-header', className), styles.il1)}
       {...rest}
     >
       <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
-          gap: 'var(--space-4)',
-        }}
+        className={styles.il2}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+        <div className={styles.il3}>
           {backButton && (
             <Button
               variant='ghost'
@@ -60,24 +49,16 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           )}
           {title && (
             <h1
-              style={{
-                margin: 0,
-                fontFamily: 'var(--font-brand)',
-                fontSize: 'var(--text-3xl)',
-                fontWeight: 'var(--font-bold)',
-                letterSpacing: 'var(--tracking-tight)',
-                color: 'var(--text-primary)',
-                lineHeight: 'var(--leading-tight)',
-              }}
+              className={styles.il4}
             >
               {title}
             </h1>
           )}
-          {subtitle && <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{subtitle}</p>}
+          {subtitle && <p className={styles.il5}>{subtitle}</p>}
         </div>
 
         {(primaryAction || (secondaryActions && secondaryActions.length > 0)) && (
-          <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+          <div className={styles.il6}>
             {secondaryActions?.map((action, index) => (
               <Button
                 key={index}

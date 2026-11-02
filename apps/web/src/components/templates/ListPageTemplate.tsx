@@ -1,4 +1,5 @@
 import { iconSm, iconMd, iconLg } from '../sharedStyles';
+import styles from './ListPageTemplate.module.css';
 import { ListPageHeader } from './ListPageHeader';
 import { useListPageForm } from './useListPageForm';
 import { useListPageSortSearch } from './useListPageSortSearch';
@@ -988,7 +989,7 @@ export function ListPageTemplate<
       const error = formErrors[field.key];
       const formatValue = (val: unknown, fieldType: string): React.ReactNode => {
         if (val === null || val === undefined || val === '')
-          return <span style={{ color: 'text.disabled' }}>-</span>;
+          return <span className={styles.il1}>-</span>;
         // 日期/时间格式化
         if (fieldType === 'date' && typeof val === 'string') {
           try {
@@ -1009,7 +1010,7 @@ export function ListPageTemplate<
           return val.length > 0 ? (
             val.join(', ')
           ) : (
-            <span style={{ color: 'text.disabled' }}>-</span>
+            <span className={styles.il2}>-</span>
           );
         }
         // switch 类型
@@ -1248,7 +1249,7 @@ export function ListPageTemplate<
                 sx={{ mb: 0.5, color: 'text.secondary' }}
               >
                 {field.label}
-                {field.required && <span style={{ color: 'error.main' }}> *</span>}
+                {field.required && <span className={styles.il3}> *</span>}
               </Typography>
               <RadioGroup
                 value={value ?? ''}
@@ -1279,7 +1280,7 @@ export function ListPageTemplate<
                 sx={{ mb: 0.5, color: 'text.secondary' }}
               >
                 {field.label}
-                {field.required && <span style={{ color: 'error.main' }}> *</span>}
+                {field.required && <span className={styles.il4}> *</span>}
               </Typography>
               <FormGroup row={field.optionLayout === 'horizontal'}>
                 {field.options?.map((opt) => {
@@ -1420,7 +1421,7 @@ export function ListPageTemplate<
         )}
         <input
           type='submit'
-          style={{ display: 'none' }}
+          className={styles.il5}
         />
       </Box>
     );

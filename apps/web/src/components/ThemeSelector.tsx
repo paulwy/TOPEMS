@@ -6,6 +6,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
+import styles from './ThemeSelector.module.css';
 import {
   IconButton,
   Tooltip,
@@ -176,7 +177,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ showMenu = true })
                       </Typography>
                     </Box>
                     {theme === item.value && (
-                      <Check style={{ width: 16, height: 16, color: 'primary.main' }} />
+                      <Check className={styles.il1} />
                     )}
                   </Box>
                 }

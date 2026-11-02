@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './ProjectTemplateCard.module.css';
 import { Card, CardContent, CardHeader, Typography, Chip, Button } from '@mui/material';
 import React from 'react';
 
@@ -32,7 +33,7 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
       }}
     >
       <CardHeader sx={{ pb: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className={styles.il1}>
           <div
             style={{
               width: 48,
@@ -91,11 +92,11 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
             marginTop: 8,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div className={styles.il2}>
             <Clock size={16} />
             <span>{i18n.t('components.project_template_card.k0')}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div className={styles.il3}>
             <Tag size={16} />
             <span>
               {i18n.t('components.project_template_card.k1', {
@@ -106,19 +107,14 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
         </div>
 
         <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 8,
-            marginTop: 8,
-          }}
+          className={styles.il4}
         >
           {template.tags.map((tag) => (
             <Chip
               key={tag}
               size='small'
               label={
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span className={styles.il5}>
                   <Tag size={12} />
                   {tag}
                 </span>

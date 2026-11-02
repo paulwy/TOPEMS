@@ -1,0 +1,6 @@
+/* ./components/redesign/primitives/Toggle.tsx inline-style migration (auto) */
+
+.il1 {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}

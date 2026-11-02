@@ -1,4 +1,6 @@
 import React from 'react';
+import cx from 'clsx';
+import styles from './Button.module.css';
 import clsx from 'clsx';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -92,15 +94,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading && (
           <span
-            className='animate-spin'
-            style={{
-              width: '1em',
-              height: '1em',
-              border: '2px solid currentColor',
-              borderRightColor: 'transparent',
-              borderRadius: '50%',
-              display: 'inline-block',
-            }}
+            className={cx('animate-spin', styles.il1)}
             aria-hidden='true'
           />
         )}

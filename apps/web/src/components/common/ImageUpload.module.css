@@ -1,0 +1,14 @@
+/* ./components/common/ImageUpload.tsx inline-style migration (auto) */
+
+.il1 {
+  display: none;
+}
+
+.il2 {
+  max-width: 80vw;
+  max-height: 70vh;
+}
+
+.il3 {
+  transform: scaleX(-1);
+}

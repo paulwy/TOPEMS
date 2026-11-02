@@ -25,6 +25,7 @@
  * ```
  */
 import React from 'react';
+import styles from './FormDialog.module.css';
 import { Dialog, type DialogSize } from './Dialog';
 import i18n from '@/i18n';
 
@@ -113,7 +114,7 @@ export const FormDialog = React.memo(function FormDialog({
         onKeyDown={handleKeyDown}
         role='presentation'
         tabIndex={-1}
-        style={{ display: 'flex', flexDirection: 'column' }}
+        className={styles.il1}
       >
         {children}
       </div>

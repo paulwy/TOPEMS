@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import styles from './SideRail.module.css';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
@@ -319,13 +320,7 @@ export const SideRail: React.FC<SideRailProps> = ({
       {...rest}
     >
       <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 'var(--space-1)',
-          width: '100%',
-          padding: '0 var(--space-2)',
-        }}
+        className={styles.il1}
       >
         {resolvedItems.map((item) => {
           const Icon = item.icon;
@@ -363,7 +358,7 @@ export const SideRail: React.FC<SideRailProps> = ({
                   textAlign: expanded ? 'left' : 'center',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                <div className={styles.il2}>
                   <Icon
                     size={20}
                     strokeWidth={showActive ? 2.5 : 2}
@@ -427,15 +422,7 @@ export const SideRail: React.FC<SideRailProps> = ({
               {/* 子菜单 */}
               {hasChildren && expanded && isExpanded && (
                 <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 'var(--space-0-5)',
-                    marginTop: '4px',
-                    marginLeft: '24px',
-                    paddingLeft: '12px',
-                    borderLeft: '1px solid var(--border-default)',
-                  }}
+                  className={styles.il3}
                 >
                   {item.children!.map((child) => {
                     const ChildIcon = child.icon;
@@ -464,14 +451,10 @@ export const SideRail: React.FC<SideRailProps> = ({
                       >
                         <ChildIcon
                           size={16}
-                          style={{ flexShrink: 0 }}
+                          className={styles.il4}
                         />
                         <span
-                          style={{
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
+                          className={styles.il5}
                         >
                           {child.label}
                         </span>
@@ -487,14 +470,7 @@ export const SideRail: React.FC<SideRailProps> = ({
 
       {footerItems && footerItems.length > 0 && (
         <div
-          style={{
-            marginTop: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 'var(--space-2)',
-            width: '100%',
-            padding: '0 var(--space-2)',
-          }}
+          className={styles.il6}
         >
           {resolvedFooterItems.map((item) => {
             const Icon = item.icon;
@@ -522,9 +498,9 @@ export const SideRail: React.FC<SideRailProps> = ({
               >
                 <Icon
                   size={20}
-                  style={{ flexShrink: 0 }}
+                  className={styles.il7}
                 />
-                {expanded && <span style={{ fontSize: 'var(--text-base)' }}>{item.label}</span>}
+                {expanded && <span className={styles.il8}>{item.label}</span>}
               </button>
             );
           })}

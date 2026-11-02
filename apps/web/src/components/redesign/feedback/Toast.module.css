@@ -1,0 +1,32 @@
+/* ./components/redesign/feedback/Toast.tsx inline-style migration (auto) */
+
+.il2 {
+  flex: 1px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.il3 {
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.il4 {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.il5 {
+  flex-shrink: 0;
+  padding: var(--space-1);
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+
+.il6 {
+  pointer-events: auto;
+}

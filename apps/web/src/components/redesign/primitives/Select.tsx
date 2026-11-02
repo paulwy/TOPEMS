@@ -1,4 +1,6 @@
 import React, { useId } from 'react';
+import cx from 'clsx';
+import styles from './Select.module.css';
 import clsx from 'clsx';
 
 export interface SelectOption {
@@ -41,25 +43,12 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         : undefined);
     return (
       <div
-        className={clsx('redesign-select-wrapper', className)}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 'var(--space-1)',
-          width: '100%',
-          ...style,
-        }}
+        className={cx(clsx('redesign-select-wrapper', className), styles.il1)}
       >
         {label && (
           <label
             htmlFor={selectId}
-            style={{
-              fontSize: 'var(--text-xs)',
-              fontWeight: 'var(--font-semibold)',
-              letterSpacing: 'var(--tracking-wider)',
-              textTransform: 'uppercase',
-              color: 'var(--text-secondary)',
-            }}
+            className={styles.il2}
           >
             {label}
           </label>
@@ -83,20 +72,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             id={selectId}
             aria-label={ariaLabel ?? label ?? placeholder ?? undefined}
             data-testid={resolvedTestId}
-            style={{
-              flex: 1,
-              minWidth: 0,
-              height: '100%',
-              padding: 0,
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              color: 'var(--text-primary)',
-              fontFamily: 'var(--font-ui)',
-              fontSize: 'var(--text-base)',
-              cursor: 'pointer',
-              appearance: 'none',
-            }}
+            className={styles.il3}
             {...rest}
           >
             {placeholder && (
@@ -122,7 +98,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             height='12'
             viewBox='0 0 12 12'
             fill='none'
-            style={{ marginLeft: 'var(--space-2)', color: 'var(--text-tertiary)' }}
+            className={styles.il4}
           >
             <path
               d='M2.5 4.5L6 8L9.5 4.5'
@@ -135,10 +111,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         </div>
         {error && (
           <span
-            style={{
-              fontSize: 'var(--text-xs)',
-              color: 'var(--error-500)',
-            }}
+            className={styles.il5}
           >
             {error}
           </span>

@@ -1,4 +1,6 @@
 import React from 'react';
+import cx from 'clsx';
+import styles from './FormPageTemplate.module.css';
 import { useTranslation } from 'react-i18next';
 import { PageHeader, type PageHeaderProps } from '../layout';
 import { Button } from '../primitives';
@@ -35,14 +37,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   const resolvedCancelLabel = cancelLabel ?? t('components.form_page_template.cancel');
   return (
     <div
-      className={className}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'var(--space-6)',
-        maxWidth: '960px',
-        ...style,
-      }}
+      className={cx(className, styles.il1)}
       {...rest}
     >
       <PageHeader {...header} />
@@ -52,28 +47,14 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
           e.preventDefault();
           onSubmit?.();
         }}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 'var(--space-6)',
-          padding: 'var(--space-6)',
-          backgroundColor: 'var(--surface-1)',
-          border: '1px solid var(--border-default)',
-          borderRadius: 'var(--radius-sm)',
-        }}
+        className={styles.il2}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div className={styles.il3}>
           {children}
         </div>
 
         <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: 'var(--space-3)',
-            paddingTop: 'var(--space-4)',
-            borderTop: '1px solid var(--border-default)',
-          }}
+          className={styles.il4}
         >
           {actions}
           {onCancel && (

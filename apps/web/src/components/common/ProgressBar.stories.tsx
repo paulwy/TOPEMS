@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import styles from './ProgressBar.stories.module.css';
 
 import ProgressBar from './ProgressBar';
 
@@ -68,7 +69,7 @@ export const Default: Story = {
 
 const LinearVariants: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+    <div className={styles.il1}>
       <ProgressBar
         value={30}
         color='primary'
@@ -95,7 +96,7 @@ const LinearVariants: Story = {
 
 const Circular: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px' }}>
+    <div className={styles.il2}>
       <ProgressBar
         value={30}
         variant='circular'
@@ -127,7 +128,7 @@ const Circular: Story = {
 
 const Segmented: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+    <div className={styles.il3}>
       <ProgressBar
         value={30}
         variant='segmented'
@@ -157,7 +158,7 @@ const WithLabel: Story = {
 
 const Animated: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+    <div className={styles.il4}>
       <ProgressBar
         value={40}
         animated
@@ -188,7 +189,7 @@ const Striped: Story = {
 
 export const Sizes: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+    <div className={styles.il5}>
       <ProgressBar
         value={50}
         size='small'

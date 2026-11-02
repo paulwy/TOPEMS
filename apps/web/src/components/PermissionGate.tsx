@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import styles from './PermissionGate.module.css';
 import React from 'react';
 import { usePermission } from '../hooks/usePermission';
 import { Loader2 } from 'lucide-react';
@@ -26,12 +27,7 @@ export const ModuleGate: React.FC<ModuleGateProps> = ({
   if (loading) {
     return (
       <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 2,
-        }}
+        className={styles.il1}
       >
         <Loader2
           data-testid='loader'
@@ -71,7 +67,7 @@ export const ModuleGate: React.FC<ModuleGateProps> = ({
   if (showDisabled) {
     return (
       <div
-        style={{ opacity: 0.5, cursor: 'not-allowed' }}
+        className={styles.il2}
         title={`${i18n.t('components.permission_gate.k0')}${module}${i18n.t('components.permission_gate.k1')}${action}${i18n.t('components.permission_gate.k2')}`}
       >
         {children}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
+import styles from './AmapLayer.module.css';
 import AMapLoader from '@amap/amap-jsapi-loader';
 import type { DevicePoint, StorageLocation } from '../../api/gis';
 import config from '../../config/runtime';
@@ -185,7 +186,7 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
     return (
       <div
         ref={mapContainer}
-        style={{ width: '100%', height: '100%' }}
+        className={styles.il1}
       />
     );
   }

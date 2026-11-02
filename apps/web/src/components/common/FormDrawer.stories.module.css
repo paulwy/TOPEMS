@@ -1,0 +1,19 @@
+/* ./components/common/FormDrawer.stories.tsx inline-style migration (auto) */
+
+.il1 {
+  display: grid;
+  gap: 12px;
+}
+
+.il2 {
+  padding: 8px;
+}
+
+.il3 {
+  padding: 8px;
+}
+
+.il4 {
+  padding: 8px;
+  min-height: 80px;
+}

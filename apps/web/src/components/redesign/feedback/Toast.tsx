@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import styles from './Toast.module.css';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, Info, X, XCircle, AlertTriangle } from 'lucide-react';
 
@@ -70,19 +71,15 @@ export const ToastItem: React.FC<{ toast: Toast; onDismiss: (id: string) => void
         color={colors[toast.variant]}
         style={{ flexShrink: 0, marginTop: '2px' }}
       />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+      <div className={styles.il2}>
         {toast.title && (
           <span
-            style={{
-              fontWeight: 'var(--font-semibold)',
-              fontSize: 'var(--text-sm)',
-              color: 'var(--text-primary)',
-            }}
+            className={styles.il3}
           >
             {toast.title}
           </span>
         )}
-        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+        <span className={styles.il4}>
           {toast.message}
         </span>
       </div>
@@ -90,14 +87,7 @@ export const ToastItem: React.FC<{ toast: Toast; onDismiss: (id: string) => void
         type='button'
         onClick={() => onDismiss(toast.id)}
         aria-label='Dismiss notification'
-        style={{
-          flexShrink: 0,
-          padding: 'var(--space-1)',
-          background: 'transparent',
-          border: 'none',
-          color: 'var(--text-tertiary)',
-          cursor: 'pointer',
-        }}
+        className={styles.il5}
       >
         <X size={16} />
       </button>
@@ -132,7 +122,7 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          style={{ pointerEvents: 'auto' }}
+          className={styles.il6}
         >
           <ToastItem
             toast={toast}

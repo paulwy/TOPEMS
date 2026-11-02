@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import styles from './LazyImage.stories.module.css';
 import { fn } from 'storybook/test';
 
 import LazyImage from './LazyImage';
@@ -31,13 +32,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   render: (args) => (
     <div
-      style={{
-        width: 240,
-        height: 160,
-        border: '1px solid #eee',
-        borderRadius: 8,
-        overflow: 'hidden',
-      }}
+      className={styles.il1}
     >
       <LazyImage {...args} />
     </div>
@@ -48,14 +43,7 @@ export const Default: Story = {
 export const WithPlaceholder: Story = {
   render: (args) => (
     <div
-      style={{
-        width: 240,
-        height: 160,
-        border: '1px solid #eee',
-        borderRadius: 8,
-        overflow: 'hidden',
-        background: '#f5f5f5',
-      }}
+      className={styles.il2}
     >
       <LazyImage {...args} />
     </div>

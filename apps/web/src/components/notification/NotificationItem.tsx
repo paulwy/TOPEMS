@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './NotificationItem.module.css';
 import { useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { Check, Trash2, ExternalLink } from 'lucide-react';
@@ -84,15 +85,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
     case 'alert':
       return (
         <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 'full',
-            backgroundColor: 'error.lighter',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          className={styles.il1}
         >
           <svg
             style={{
@@ -144,15 +137,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
     case 'message':
       return (
         <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 'full',
-            backgroundColor: 'success.lighter',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          className={styles.il2}
         >
           <svg
             style={{
@@ -305,18 +290,12 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         }
       }}
     >
-      <div style={{ display: 'flex', gap: 12 }}>
+      <div className={styles.il3}>
         {getNotificationIcon(notification.notification_type, theme)}
 
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div className={styles.il4}>
           <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              gap: 8,
-              marginBottom: 4,
-            }}
+            className={styles.il5}
           >
             <h4
               style={{
@@ -369,10 +348,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           >
             <span>{formatTime(notification.created_at)}</span>
             <span
-              style={{
-                fontWeight: 500,
-                ...getPriorityColor(notification.priority),
-              }}
+              className={styles.il6}
             >
               {getPriorityLabel(notification.priority)}
             </span>
@@ -382,13 +358,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 
       {isHovered && (
         <div
-          style={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            display: 'flex',
-            gap: 4,
-          }}
+          className={styles.il7}
         >
           {!notification.is_read && (
             <button

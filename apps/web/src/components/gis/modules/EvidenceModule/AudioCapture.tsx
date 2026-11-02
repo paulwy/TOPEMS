@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './AudioCapture.module.css';
 // modules/EvidenceModule/AudioCapture.tsx
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Mic, Square, Pause, Play, X, Check } from 'lucide-react';
@@ -294,7 +295,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
             <audio
               src={audioUrl}
               controls
-              style={{ width: '100%' }}
+              className={styles.il1}
             />
             <Box
               sx={{

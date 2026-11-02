@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import styles from './Drawer.stories.module.css';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 
@@ -63,7 +64,7 @@ export const RightPersistent: Story = {
           open={open}
           onClose={() => setOpen(false)}
         >
-          <div style={{ padding: 16 }}>持久化右侧抽屉示例：点击外部按钮切换开合。</div>
+          <div className={styles.il1}>持久化右侧抽屉示例：点击外部按钮切换开合。</div>
         </Drawer>
       </div>
     );

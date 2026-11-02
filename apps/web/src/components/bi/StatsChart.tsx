@@ -1,18 +1,12 @@
 import React, { Suspense, lazy } from 'react';
+import styles from './StatsChart.module.css';
 import type { StatsChartProps } from './StatsChartImpl';
 
 export type { StatsChartProps };
 
 const ChartFallback: React.FC<{ height?: number }> = ({ height = 200 }) => (
   <div
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      width: '100%',
-      height,
-      borderRadius: 12,
-    }}
+    className={styles.il1}
   />
 );
 

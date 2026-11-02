@@ -1,4 +1,6 @@
 import React from 'react';
+import cx from 'clsx';
+import styles from './DetailPageTemplate.module.css';
 import { PageHeader, type PageHeaderProps } from '../layout';
 import { Tabs, type TabItem } from '../primitives';
 
@@ -45,13 +47,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
 }) => {
   return (
     <div
-      className={className}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'var(--space-6)',
-        ...style,
-      }}
+      className={cx(className, styles.il1)}
       {...rest}
     >
       <PageHeader {...header} />
@@ -79,13 +75,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
               }}
             >
               <span
-                style={{
-                  fontSize: 'var(--text-xs)',
-                  fontWeight: 'var(--font-medium)',
-                  letterSpacing: 'var(--tracking-wide)',
-                  textTransform: 'uppercase',
-                  color: 'var(--text-tertiary)',
-                }}
+                className={styles.il2}
               >
                 {section.label}
               </span>
@@ -101,11 +91,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
                 />
               ) : (
                 <div
-                  style={{
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 'var(--font-medium)',
-                    color: 'var(--text-primary)',
-                  }}
+                  className={styles.il3}
                 >
                   {section.value}
                 </div>
@@ -115,15 +101,9 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 'var(--space-6)', alignItems: 'flex-start' }}>
+      <div className={styles.il4}>
         <div
-          style={{
-            flex: 1,
-            minWidth: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 'var(--space-6)',
-          }}
+          className={styles.il5}
         >
           {tabs && tabs.length > 0 && (
             <Tabs

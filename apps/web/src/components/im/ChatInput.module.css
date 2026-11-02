@@ -1,0 +1,39 @@
+/* ./components/im/ChatInput.tsx inline-style migration (auto) */
+
+.il1 {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.il2 {
+  position: relative;
+}
+
+.il3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.il4 {
+  display: none;
+}
+
+.il5 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.il6 {
+  display: none;
+}
+
+.il7 {
+  flex: 1px;
+}

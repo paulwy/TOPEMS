@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import cx from 'clsx';
+import styles from './LazyImage.test.module.css';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
@@ -102,8 +104,7 @@ describe('LazyImage', () => {
       <LazyImage
         src='https://example.com/img.png'
         alt='示例图片'
-        className='lazy-img'
-        style={{ width: 100 }}
+        className={cx('lazy-img', styles.il1)}
       />
     );
     const wrapper = container.querySelector('.lazy-img');

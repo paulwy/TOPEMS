@@ -8,6 +8,7 @@
  * Uses prismjs directly (no react-syntax-highlighter wrapper) for smaller bundle.
  */
 import { useTheme } from '@mui/material';
+import styles from './MarkdownPreview.module.css';
 import { designTokens } from '@topems/tokens';
 import React, { Suspense, lazy, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -41,7 +42,7 @@ const CodeBlock = lazy(() =>
           }
         }, [language, children]);
         return (
-          <pre style={{ margin: '1rem 0', padding: '1rem', borderRadius: '4px', overflow: 'auto' }}>
+          <pre className={styles.il1}>
             <code
               ref={codeRef}
               className={`language-${language}`}
@@ -101,8 +102,8 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
             );
           },
           table: ({ children }) => (
-            <div style={{ overflowX: 'auto', margin: '1rem 0' }}>
-              <table style={{ borderCollapse: 'collapse', width: '100%' }}>{children}</table>
+            <div className={styles.il2}>
+              <table className={styles.il3}>{children}</table>
             </div>
           ),
           th: ({ children }) => (
@@ -204,8 +205,8 @@ export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
               }}
             />
           ),
-          strong: ({ children }) => <strong style={{ fontWeight: 600 }}>{children}</strong>,
-          em: ({ children }) => <em style={{ fontStyle: 'italic' }}>{children}</em>,
+          strong: ({ children }) => <strong className={styles.il4}>{children}</strong>,
+          em: ({ children }) => <em className={styles.il5}>{children}</em>,
         }}
       >
         {content}

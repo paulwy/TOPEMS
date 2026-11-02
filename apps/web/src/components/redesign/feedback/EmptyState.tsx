@@ -1,4 +1,6 @@
 import React from 'react';
+import cx from 'clsx';
+import styles from './EmptyState.module.css';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { Search, Inbox, FileQuestion, type LucideIcon } from 'lucide-react';
@@ -46,27 +48,11 @@ export const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
     return (
       <div
         ref={ref}
-        className={clsx('redesign-empty-state', className)}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 'var(--space-4)',
-          padding: 'var(--space-12) var(--space-6)',
-          textAlign: 'center',
-          ...style,
-        }}
+        className={cx(clsx('redesign-empty-state', className), styles.il1)}
         {...rest}
       >
         <div
-          style={{
-            display: 'inline-flex',
-            padding: 'var(--space-4)',
-            color: 'var(--text-tertiary)',
-            backgroundColor: 'var(--surface-2)',
-            borderRadius: 'var(--radius-full)',
-          }}
+          className={styles.il2}
         >
           <Icon
             size={32}
@@ -74,26 +60,15 @@ export const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
           />
         </div>
         <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 'var(--space-2)',
-            maxWidth: '320px',
-          }}
+          className={styles.il3}
         >
           <h3
-            style={{
-              margin: 0,
-              fontFamily: 'var(--font-brand)',
-              fontSize: 'var(--text-lg)',
-              fontWeight: 'var(--font-semibold)',
-              color: 'var(--text-primary)',
-            }}
+            className={styles.il4}
           >
             {title ?? defaultTitles[variant]}
           </h3>
           {description && (
-            <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{description}</p>
+            <p className={styles.il5}>{description}</p>
           )}
           {children}
         </div>

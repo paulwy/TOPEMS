@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import styles from './Drawer.module.css';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from '../primitives';
@@ -115,26 +116,13 @@ export const Drawer: React.FC<DrawerProps> = ({
       >
         {(title || description) && (
           <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              gap: 'var(--space-4)',
-              padding: 'var(--space-5)',
-              borderBottom: '1px solid var(--border-default)',
-            }}
+            className={styles.il1}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+            <div className={styles.il2}>
               {title && (
                 <h2
                   id='redesign-drawer-title'
-                  style={{
-                    margin: 0,
-                    fontFamily: 'var(--font-brand)',
-                    fontSize: 'var(--text-xl)',
-                    fontWeight: 'var(--font-semibold)',
-                    color: 'var(--text-primary)',
-                  }}
+                  className={styles.il3}
                 >
                   {title}
                 </h2>
@@ -142,7 +130,7 @@ export const Drawer: React.FC<DrawerProps> = ({
               {description && (
                 <p
                   id='redesign-drawer-desc'
-                  style={{ margin: 0, color: 'var(--text-secondary)' }}
+                  className={styles.il4}
                 >
                   {description}
                 </p>
@@ -159,17 +147,11 @@ export const Drawer: React.FC<DrawerProps> = ({
           </div>
         )}
 
-        <div style={{ flex: 1, overflow: 'auto', padding: 'var(--space-5)' }}>{children}</div>
+        <div className={styles.il5}>{children}</div>
 
         {footer && (
           <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: 'var(--space-3)',
-              padding: 'var(--space-4) var(--space-5)',
-              borderTop: '1px solid var(--border-default)',
-            }}
+            className={styles.il6}
           >
             {footer}
           </div>

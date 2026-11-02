@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useRef, useState } from 'react';
+import styles from './Map3DView.module.css';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Sphere, Box, Line, Html } from '@react-three/drei';
 import type * as THREE from 'three';
@@ -81,7 +82,7 @@ function DeviceMarker({
             whiteSpace: 'nowrap',
           }}
         >
-          <div style={{ fontWeight: 500 }}>{name}</div>
+          <div className={styles.il1}>{name}</div>
           <div
             style={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], opacity: 0.75 }}
           >
@@ -137,7 +138,7 @@ function StorageMarker({
             whiteSpace: 'nowrap',
           }}
         >
-          <div style={{ fontWeight: 500 }}>{name}</div>
+          <div className={styles.il2}>{name}</div>
           <div
             style={{ fontSize: designTokens.typography.fontSize.scale['0.75rem'], opacity: 0.75 }}
           >

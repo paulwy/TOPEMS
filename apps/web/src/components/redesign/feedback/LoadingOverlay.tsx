@@ -1,4 +1,6 @@
 import React from 'react';
+import cx from 'clsx';
+import styles from './LoadingOverlay.module.css';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
@@ -43,23 +45,11 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
       {...rest}
     >
       <span
-        className='animate-spin'
-        style={{
-          width: '32px',
-          height: '32px',
-          border: '2px solid var(--accent-primary)',
-          borderRightColor: 'transparent',
-          borderRadius: '50%',
-        }}
+        className={cx('animate-spin', styles.il1)}
         aria-hidden='true'
       />
       <span
-        style={{
-          fontSize: 'var(--text-sm)',
-          fontWeight: 'var(--font-medium)',
-          color: 'var(--text-secondary)',
-          letterSpacing: 'var(--tracking-wide)',
-        }}
+        className={styles.il2}
       >
         {resolvedLabel}
       </span>

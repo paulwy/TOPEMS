@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import styles from './StatusBadge.stories.module.css';
 import { fn } from 'storybook/test';
 
 import StatusBadge from './StatusBadge';
@@ -74,7 +75,7 @@ export const Default: Story = {
 
 export const AllStatuses: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+    <div className={styles.il1}>
       <StatusBadge status='active' />
       <StatusBadge status='inactive' />
       <StatusBadge status='pending' />
@@ -98,7 +99,7 @@ export const WithIcon: Story = {
 
 export const Sizes: Story = {
   render: () => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+    <div className={styles.il2}>
       <StatusBadge
         status='active'
         size='sm'
@@ -117,7 +118,7 @@ export const Sizes: Story = {
 
 export const Variants: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+    <div className={styles.il3}>
       <StatusBadge
         status='active'
         variant='filled'
@@ -143,7 +144,7 @@ const Clickable: Story = {
 
 const HRMStatuses: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+    <div className={styles.il4}>
       <StatusBadge status='employeeactive' />
       <StatusBadge status='employee_inactive' />
       <StatusBadge status='employee_probation' />
@@ -154,7 +155,7 @@ const HRMStatuses: Story = {
 
 const AttendanceStatuses: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+    <div className={styles.il5}>
       <StatusBadge status='attendance_normal' />
       <StatusBadge status='attendance_late' />
       <StatusBadge status='attendance_early_leave' />

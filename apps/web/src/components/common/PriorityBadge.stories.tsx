@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import styles from './PriorityBadge.stories.module.css';
 
 import PriorityBadge from './PriorityBadge';
 
@@ -37,7 +38,7 @@ export const Default: Story = {
 
 export const AllPriorities: Story = {
   render: (args) => (
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+    <div className={styles.il1}>
       {['low', 'medium', 'high', 'urgent', 'critical'].map((p) => (
         <PriorityBadge
           key={p}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import styles from './FormDialog.stories.module.css';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 
@@ -52,11 +53,11 @@ export const Default: Story = {
         >
           <input
             placeholder='名称'
-            style={{ width: '100%', padding: 8, marginBottom: 8 }}
+            className={styles.il1}
           />
           <input
             placeholder='描述'
-            style={{ width: '100%', padding: 8 }}
+            className={styles.il2}
           />
         </FormDialog>
       </div>

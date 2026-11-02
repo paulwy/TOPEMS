@@ -1,0 +1,6 @@
+/* ./components/common/FormDialog.tsx inline-style migration (auto) */
+
+.il1 {
+  display: flex;
+  flex-direction: column;
+}

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import styles from './Dialog.stories.module.css';
 import { fn } from 'storybook/test';
 
 import { Dialog } from './Dialog';
@@ -95,7 +96,7 @@ const LargeContent: Story = {
     title: '用户详情',
     maxWidth: 'md',
     children: (
-      <div style={{ minHeight: 300 }}>
+      <div className={styles.il1}>
         <Typography paragraph>姓名：张三</Typography>
         <Typography paragraph>部门：研发部</Typography>
         <Typography paragraph>职位：前端工程师</Typography>

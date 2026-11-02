@@ -1,0 +1,37 @@
+/* ./components/common/RelativeTime.stories.tsx inline-style migration (auto) */
+
+.il1 {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.il2 {
+  display: flex;
+  justify-content: space-between;
+  width: 400px;
+}
+
+.il3 {
+  display: flex;
+  justify-content: space-between;
+  width: 400px;
+}
+
+.il4 {
+  display: flex;
+  justify-content: space-between;
+  width: 400px;
+}
+
+.il5 {
+  display: flex;
+  justify-content: space-between;
+  width: 400px;
+}
+
+.il6 {
+  display: flex;
+  justify-content: space-between;
+  width: 400px;
+}

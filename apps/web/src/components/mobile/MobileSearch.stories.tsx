@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import styles from './MobileSearch.stories.module.css';
 import { fn } from 'storybook/test';
 
 import MobileSearch from './MobileSearch';
@@ -29,7 +30,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   render: (args) => (
-    <div style={{ width: 360, padding: 12, border: '1px solid #eee', borderRadius: 12 }}>
+    <div className={styles.il1}>
       <MobileSearch {...args} />
     </div>
   ),
@@ -44,7 +45,7 @@ export const Default: Story = {
 
 export const NoHistory: Story = {
   render: (args) => (
-    <div style={{ width: 360, padding: 12, border: '1px solid #eee', borderRadius: 12 }}>
+    <div className={styles.il2}>
       <MobileSearch {...args} />
     </div>
   ),

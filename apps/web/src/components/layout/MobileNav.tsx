@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './MobileNav.module.css';
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
@@ -280,7 +281,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
               gap: 1,
             }}
           >
-            <Search style={{ width: 16, height: 16, color: 'text.secondary' }} />
+            <Search className={styles.il1} />
             <input
               type='text'
               placeholder={i18n.t('components.mobile_nav.k0')}

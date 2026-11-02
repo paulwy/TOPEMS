@@ -1,5 +1,6 @@
 // modules/EvidenceModule/VideoCapture.tsx
 import React, { useRef, useState, useCallback, useEffect } from 'react';
+import styles from './VideoCapture.module.css';
 import { Video, Square, Pause, Play, SwitchCamera, X, Check } from 'lucide-react';
 import { Box, IconButton, Typography, Button } from '@mui/material';
 import { logger } from '@/utils/logger';
@@ -214,7 +215,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
           <video
             src={previewUrl}
             controls
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            className={styles.il1}
           />
         ) : (
           <>
@@ -223,7 +224,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
               autoPlay
               playsInline
               muted
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              className={styles.il2}
             />
 
             {/* Recording indicator */}
@@ -321,7 +322,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
         {/* Hidden canvas for thumbnail */}
         <canvas
           ref={canvasRef}
-          style={{ display: 'none' }}
+          className={styles.il3}
         />
 
         {/* Error Message */}

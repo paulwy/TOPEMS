@@ -27,6 +27,7 @@
  * ```
  */
 import React from 'react';
+import styles from './FormDrawer.module.css';
 import { Drawer, type DrawerAnchor } from './Drawer';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
@@ -88,11 +89,7 @@ export const FormDrawer = React.memo(function FormDrawer({
 
   const footerContent = (
     <div
-      style={{
-        display: 'flex',
-        justifyContent: 'flex-end',
-        gap: 8,
-      }}
+      className={styles.il1}
     >
       <button
         type='button'
@@ -166,7 +163,7 @@ export const FormDrawer = React.memo(function FormDrawer({
         onKeyDown={handleKeyDown}
         role='presentation'
         tabIndex={-1}
-        style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+        className={styles.il2}
       >
         {children}
       </div>

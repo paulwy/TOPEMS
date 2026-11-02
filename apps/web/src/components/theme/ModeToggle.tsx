@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import styles from './ModeToggle.module.css';
 import { Moon, Sun, Monitor } from 'lucide-react';
 import { Menu, MenuItem, Button } from '@mui/material';
 import { useThemeStore } from '@/store';
@@ -61,15 +62,15 @@ export function ModeToggle() {
         }}
       >
         <MenuItem onClick={() => handleThemeChange('light')}>
-          <Sun style={{ width: 16, height: 16, marginRight: 8 }} />
+          <Sun className={styles.il1} />
           {i18n.t('components.mode_toggle.k0')}
         </MenuItem>
         <MenuItem onClick={() => handleThemeChange('dark')}>
-          <Moon style={{ width: 16, height: 16, marginRight: 8 }} />
+          <Moon className={styles.il2} />
           {i18n.t('components.mode_toggle.k1')}
         </MenuItem>
         <MenuItem onClick={() => handleThemeChange('system')}>
-          <Monitor style={{ width: 16, height: 16, marginRight: 8 }} />
+          <Monitor className={styles.il3} />
           {i18n.t('components.mode_toggle.k2')}
         </MenuItem>
       </Menu>

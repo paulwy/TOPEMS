@@ -1,0 +1,99 @@
+/* ./components/bi/ChartCard.tsx inline-style migration (auto) */
+
+.il1 {
+  width: 16px;
+  height: 16px;
+  color: success.main;
+}
+
+.il2 {
+  width: 16px;
+  height: 16px;
+  color: error.main;
+  transform: rotate(180deg);
+}
+
+.il3 {
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+}
+
+.il4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.il5 {
+  font-size: 12px;
+  font-weight: 500px;
+}
+
+.il6 {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.il7 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.il8 {
+  width: 24px;
+  height: 24px;
+  color: error.main;
+}
+
+.il9 {
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+}
+
+.il10 {
+  text-align: center;
+}
+
+.il11 {
+  text-align: center;
+}
+
+.il12 {
+  text-align: center;
+}
+
+.il13 {
+  text-align: center;
+}
+
+.il14 {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+}
+
+.il15 {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+}
+
+.il16 {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+}
+
+.il17 {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+}

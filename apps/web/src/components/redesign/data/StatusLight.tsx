@@ -1,4 +1,6 @@
 import React from 'react';
+import cx from 'clsx';
+import styles from './StatusLight.module.css';
 import clsx from 'clsx';
 
 export type StatusLightState = 'running' | 'idle' | 'warning' | 'error' | 'offline';
@@ -24,15 +26,7 @@ export const StatusLight = React.forwardRef<HTMLSpanElement, StatusLightProps>(
     return (
       <span
         ref={ref}
-        className={clsx('redesign-status-light', className)}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 'var(--space-2)',
-          fontSize: 'var(--text-sm)',
-          color: 'var(--text-secondary)',
-          ...style,
-        }}
+        className={cx(clsx('redesign-status-light', className), styles.il1)}
         {...rest}
       >
         <span

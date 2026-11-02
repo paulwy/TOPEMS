@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import css from './NotificationProvider.module.css';
 import i18n from '@/i18n';
 
 import React, { useEffect, useState } from 'react';
@@ -157,7 +158,7 @@ const Toast = ({ id, title, message, type, duration, removeNotification }: Toast
         }}
         aria-label={i18n.t('shared.notification_provider.k0')}
       >
-        <X style={{ height: 16, width: 16 }} />
+        <X className={css.il1} />
       </Button>
     </Box>
   );

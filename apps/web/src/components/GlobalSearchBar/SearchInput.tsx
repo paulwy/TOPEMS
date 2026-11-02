@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import styles from './SearchInput.module.css';
 import {
   Paper,
   InputBase,
@@ -92,7 +93,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
       >
         <Search
           size={16}
-          style={{ opacity: 0.6 }}
+          className={styles.il1}
         />
         <InputBase
           inputRef={inputRef}

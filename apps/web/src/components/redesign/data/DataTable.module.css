@@ -1,0 +1,65 @@
+/* ./components/redesign/data/DataTable.tsx inline-style migration (auto) */
+
+.il1 {
+  width: 100%;
+  overflow: auto;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-1);
+}
+
+.il2 {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.il3 {
+  background-color: var(--surface-2);
+}
+
+.il4 {
+  width: 48px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.il5 {
+  cursor: pointer;
+}
+
+.il6 {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.il7 {
+  display: inline-flex;
+  color: var(--text-tertiary);
+}
+
+.il8 {
+  border-bottom: 1px solid var(--border-default);
+}
+
+.il9 {
+  width: 16px;
+  height: 16px;
+}
+
+.il10 {
+  border-bottom: 1px solid var(--border-default);
+}
+
+.il11 {
+  border-bottom: 1px solid var(--border-default);
+}
+
+.il12 {
+  cursor: pointer;
+}
+
+.il13 {
+  border-bottom: 1px solid var(--border-default);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}

@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './Toggle.module.css';
 
 export interface ToggleProps extends Omit<React.HTMLAttributes<HTMLButtonElement>, 'onChange'> {
   checked: boolean;
@@ -58,7 +59,7 @@ export const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(
           />
         </span>
         {label && (
-          <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>{label}</span>
+          <span className={styles.il1}>{label}</span>
         )}
       </button>
     );

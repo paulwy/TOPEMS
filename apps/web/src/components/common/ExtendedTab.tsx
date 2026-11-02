@@ -5,6 +5,7 @@
  * 仅在关联模块已安装时显示。
  */
 import React from 'react';
+import styles from './ExtendedTab.module.css';
 import { Tab } from '@mui/material';
 import { usePlugins } from '@/context/PluginContext';
 
@@ -46,7 +47,7 @@ const ExtendedTab: React.FC<ExtendedTabProps> = React.memo(({ configs, onChange:
           key={config.value}
           label={config.label}
           value={config.value}
-          icon={config.icon ? <span style={{ marginRight: 4 }}>{config.icon}</span> : undefined}
+          icon={config.icon ? <span className={styles.il1}>{config.icon}</span> : undefined}
           iconPosition='start'
         />
       ))}

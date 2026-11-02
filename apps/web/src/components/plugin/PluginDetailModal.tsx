@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import styles from './PluginDetailModal.module.css';
 import { Package, X, ShoppingCart, CheckCircle } from 'lucide-react';
 import {
   Card,
@@ -286,7 +287,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                   >
                     {i18n.t('components.plugin_detail_modal.k6')}
                   </Typography>
-                  <div style={{ textAlign: 'center' }}>
+                  <div className={styles.il1}>
                     <Typography
                       variant='h3'
                       sx={{ fontWeight: 'bold' }}

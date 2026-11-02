@@ -1,0 +1,13 @@
+/* ./components/common/FormDrawer.tsx inline-style migration (auto) */
+
+.il1 {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.il2 {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}

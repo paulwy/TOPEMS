@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import styles from './TreeView.stories.module.css';
 import { fn } from 'storybook/test';
 
 import TreeView from './TreeView';
@@ -125,7 +126,7 @@ const FileSystem: Story = {
     selected: 'common',
   },
   render: (args) => (
-    <div style={{ width: 300, border: '1px solid #e0e0e0', borderRadius: 8, padding: 8 }}>
+    <div className={styles.il1}>
       <TreeView {...args} />
     </div>
   ),

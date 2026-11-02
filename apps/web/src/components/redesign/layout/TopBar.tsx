@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import cx from 'clsx';
+import styles from './TopBar.module.css';
 import { useTranslation } from 'react-i18next';
 import {
   Bell,
@@ -95,7 +97,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         borderBottom: '1px solid var(--border-default)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+      <div className={styles.il1}>
         {handleToggle && (
           <Button
             data-testid='topbar-sidebar-toggle'
@@ -107,32 +109,21 @@ export const TopBar: React.FC<TopBarProps> = ({
             <ToggleIcon size={18} />
           </Button>
         )}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-2)' }}>
+        <div className={styles.il2}>
           <span
-            style={{
-              fontFamily: 'var(--font-brand)',
-              fontSize: 'var(--text-xl)',
-              fontWeight: 'var(--font-bold)',
-              letterSpacing: 'var(--tracking-tight)',
-              color: 'var(--text-primary)',
-            }}
+            className={styles.il3}
           >
             {title}
           </span>
           <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 'var(--text-xs)',
-              color: 'var(--accent-primary)',
-              letterSpacing: 'var(--tracking-wider)',
-            }}
+            className={styles.il4}
           >
             OS
           </span>
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+      <div className={styles.il5}>
         <Button
           data-testid='topbar-command-palette'
           variant='ghost'
@@ -143,18 +134,8 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
           <span className='desktop-only'>{i18n.t('common.search')}</span>
           <kbd
-            className='desktop-only'
             aria-hidden='true'
-            style={{
-              marginLeft: 'var(--space-2)',
-              padding: '2px 6px',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 'var(--text-xs)',
-              color: 'var(--text-tertiary)',
-              backgroundColor: 'var(--surface-2)',
-              border: '1px solid var(--border-default)',
-              borderRadius: 'var(--radius-sm)',
-            }}
+            className={cx('desktop-only', styles.il6)}
           >
             ⌘K
           </kbd>
@@ -184,7 +165,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* 用户菜单 */}
         <div
-          style={{ position: 'relative' }}
+          className={styles.il7}
           ref={userMenuRef}
         >
           <Button
@@ -215,35 +196,21 @@ export const TopBar: React.FC<TopBarProps> = ({
             >
               {/* 用户信息 */}
               <div
-                style={{
-                  padding: '12px 16px',
-                  borderBottom: '1px solid var(--border-default)',
-                }}
+                className={styles.il8}
               >
-                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                <div className={styles.il9}>
                   {user?.name || user?.username || t('components.top_bar.user_fallback')}
                 </div>
-                <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                <div className={styles.il10}>
                   {user?.email || ''}
                 </div>
               </div>
 
               {/* 菜单选项 */}
-              <div style={{ padding: '4px 0' }}>
+              <div className={styles.il11}>
                 <button
                   onClick={handleProfileClick}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-2)',
-                    width: '100%',
-                    padding: '8px 16px',
-                    border: 'none',
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-primary)',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                  }}
+                  className={styles.il12}
                 >
                   <UserCircle size={16} />
                   {t('components.top_bar.profile')}
@@ -251,18 +218,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
                 <button
                   onClick={handleSettingsClick}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-2)',
-                    width: '100%',
-                    padding: '8px 16px',
-                    border: 'none',
-                    backgroundColor: 'transparent',
-                    color: 'var(--text-primary)',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                  }}
+                  className={styles.il13}
                 >
                   <SettingsIcon size={16} />
                   {t('components.top_bar.account_settings')}
@@ -271,25 +227,11 @@ export const TopBar: React.FC<TopBarProps> = ({
 
               {/* 退出登录 */}
               <div
-                style={{
-                  borderTop: '1px solid var(--border-default)',
-                  padding: '4px 0',
-                }}
+                className={styles.il14}
               >
                 <button
                   onClick={handleLogout}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-2)',
-                    width: '100%',
-                    padding: '8px 16px',
-                    border: 'none',
-                    backgroundColor: 'transparent',
-                    color: 'var(--error)',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                  }}
+                  className={styles.il15}
                 >
                   <LogOut size={16} />
                   {t('components.top_bar.logout')}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './AppShell.module.css';
 import { useNavigate } from 'react-router-dom';
 import { TopBar, type TopBarProps } from './TopBar';
 import i18n from '@/i18n';
@@ -64,10 +65,7 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   return (
     <div
-      style={{
-        minHeight: '100dvh',
-        backgroundColor: 'var(--bg-primary)',
-      }}
+      className={styles.il1}
     >
       <TopBar
         {...topBarProps}
@@ -102,46 +100,27 @@ export const AppShell: React.FC<AppShellProps> = ({
           {breadcrumbs.length > 1 && (
             <nav
               aria-label='Breadcrumb'
-              style={{ marginBottom: 'var(--space-4)' }}
+              className={styles.il2}
             >
               <ol
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--space-2)',
-                  margin: 0,
-                  padding: 0,
-                  listStyle: 'none',
-                  fontSize: 'var(--text-xs)',
-                  color: 'var(--text-tertiary)',
-                }}
+                className={styles.il3}
               >
                 {breadcrumbs.map((crumb, index) => (
                   <li
                     key={index}
-                    style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}
+                    className={styles.il4}
                   >
                     {index > 0 && <span aria-hidden='true'>/</span>}
                     {crumb.onClick ? (
                       <button
                         type='button'
                         onClick={() => crumb.onClick?.()}
-                        style={{
-                          color: 'inherit',
-                          textDecoration: 'none',
-                          cursor: 'pointer',
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                          margin: 0,
-                          font: 'inherit',
-                          fontSize: 'inherit',
-                        }}
+                        className={styles.il5}
                       >
                         {crumb.label}
                       </button>
                     ) : (
-                      <span style={{ color: 'var(--text-secondary)' }}>{crumb.label}</span>
+                      <span className={styles.il6}>{crumb.label}</span>
                     )}
                   </li>
                 ))}

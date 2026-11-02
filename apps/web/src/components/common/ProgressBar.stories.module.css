@@ -1,0 +1,35 @@
+/* ./components/common/ProgressBar.stories.tsx inline-style migration (auto) */
+
+.il1 {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.il2 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+}
+
+.il3 {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.il4 {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.il5 {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}

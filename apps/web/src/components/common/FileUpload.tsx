@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
+import styles from './FileUpload.module.css';
 import { logger } from '@/utils/logger';
 import {
   Box,
@@ -411,7 +412,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           multiple
           accept={accept.join(',')}
           onChange={(e) => handleFileSelect(e.target.files)}
-          style={{ display: 'none' }}
+          className={styles.il1}
         />
       </UploadArea>
 

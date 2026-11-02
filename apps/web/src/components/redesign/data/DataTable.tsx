@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import cx from 'clsx';
+import styles from './DataTable.module.css';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpDown, ChevronDown, ChevronUp } from 'lucide-react';
@@ -99,27 +101,15 @@ export function DataTable<T extends object>({
 
   return (
     <div
-      className={clsx('redesign-data-table', className)}
-      style={{
-        width: '100%',
-        overflow: 'auto',
-        border: '1px solid var(--border-default)',
-        borderRadius: 'var(--radius-sm)',
-        backgroundColor: 'var(--surface-1)',
-        ...style,
-      }}
+      className={cx(clsx('redesign-data-table', className), styles.il1)}
       {...rest}
     >
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className={styles.il2}>
         <thead>
-          <tr style={{ backgroundColor: 'var(--surface-2)' }}>
+          <tr className={styles.il3}>
             {selectable && (
               <th
-                style={{
-                  ...cellPadding,
-                  width: '48px',
-                  borderBottom: '1px solid var(--border-default)',
-                }}
+                className={styles.il4}
               >
                 <input
                   type='checkbox'
@@ -131,7 +121,7 @@ export function DataTable<T extends object>({
                         currentSelected.length > 0 && currentSelected.length < data.length;
                   }}
                   onChange={handleSelectAll}
-                  style={{ cursor: 'pointer' }}
+                  className={styles.il5}
                 />
               </th>
             )}
@@ -156,11 +146,11 @@ export function DataTable<T extends object>({
                 onClick={() => handleSort(column)}
               >
                 <span
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-1)' }}
+                  className={styles.il6}
                 >
                   {column.header}
                   {column.sortable && (
-                    <span style={{ display: 'inline-flex', color: 'var(--text-tertiary)' }}>
+                    <span className={styles.il7}>
                       {sort?.key === column.key ? (
                         sort.direction === 'asc' ? (
                           <ChevronUp size={14} />
@@ -182,21 +172,16 @@ export function DataTable<T extends object>({
             ? Array.from({ length: 6 }).map((_, i) => (
                 <tr key={`skeleton-${i}`}>
                   {selectable && (
-                    <td style={{ ...cellPadding, borderBottom: '1px solid var(--border-default)' }}>
+                    <td className={styles.il8}>
                       <div
-                        className='skeleton'
-                        style={{ width: '16px', height: '16px' }}
+                        className={cx('skeleton', styles.il9)}
                       />
                     </td>
                   )}
                   {columns.map((column) => (
                     <td
                       key={column.key}
-                      style={{
-                        ...cellPadding,
-                        borderBottom: '1px solid var(--border-default)',
-                        ...alignStyle(column.align),
-                      }}
+                      className={styles.il10}
                     >
                       <div
                         className='skeleton'
@@ -226,7 +211,7 @@ export function DataTable<T extends object>({
                   >
                     {selectable && (
                       <td
-                        style={{ ...cellPadding, borderBottom: '1px solid var(--border-default)' }}
+                        className={styles.il11}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <input
@@ -234,20 +219,14 @@ export function DataTable<T extends object>({
                           aria-label={`Select row ${id}`}
                           checked={isSelected}
                           onChange={() => handleSelect(id)}
-                          style={{ cursor: 'pointer' }}
+                          className={styles.il12}
                         />
                       </td>
                     )}
                     {columns.map((column) => (
                       <td
                         key={column.key}
-                        style={{
-                          ...cellPadding,
-                          borderBottom: '1px solid var(--border-default)',
-                          fontSize: 'var(--text-sm)',
-                          color: 'var(--text-primary)',
-                          ...alignStyle(column.align),
-                        }}
+                        className={styles.il13}
                       >
                         {column.render
                           ? column.render(row, index)

@@ -1,0 +1,29 @@
+/* ./components/common/NumberFields.stories.tsx inline-style migration (auto) */
+
+.il1 {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 300px;
+}
+
+.il2 {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 300px;
+}
+
+.il3 {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 300px;
+}
+
+.il4 {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 350px;
+}

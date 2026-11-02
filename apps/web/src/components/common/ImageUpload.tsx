@@ -3,6 +3,7 @@
  * 支持拖拽上传、预览、删除、多图上传和裁剪功能
  */
 import React, { useState, useCallback, useRef } from 'react';
+import styles from './ImageUpload.module.css';
 import {
   Box,
   Typography,
@@ -315,7 +316,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         accept={accept}
         multiple
         onChange={(e) => handleFileSelect(e.target.files)}
-        style={{ display: 'none' }}
+        className={styles.il1}
       />
     </UploadArea>
   );
@@ -456,7 +457,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             <img
               src={previewImage}
               alt=''
-              style={{ maxWidth: '80vw', maxHeight: '70vh' }}
+              className={styles.il2}
             />
           )}
         </DialogContent>
@@ -538,7 +539,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
               >
                 <RotateCw
                   size={20}
-                  style={{ transform: 'scaleX(-1)' }}
+                  className={styles.il3}
                 />
               </IconButton>
               <TextField

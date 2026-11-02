@@ -1,0 +1,17 @@
+/* ./components/gis/modules/EvidenceModule/VideoCapture.tsx inline-style migration (auto) */
+
+.il1 {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.il2 {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.il3 {
+  display: none;
+}

@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './NotificationSettings.module.css';
 import { flexRowCenter, flexColumnGap16 } from '../sharedStyles';
 import { Volume2, VolumeX, Monitor, Smartphone } from 'lucide-react';
 import type { NotificationSettingsData } from '../../hooks/useNotificationSettings';
@@ -19,26 +20,17 @@ const NotificationSettings: React.FC = () => {
       }}
     >
       <h4
-        style={{
-          fontSize: 14,
-          fontWeight: 500,
-          color: 'text.primary',
-          marginBottom: 16,
-        }}
+        className={styles.il1}
       >
         {i18n.t('components.notification_settings.k0')}
       </h4>
 
       <div style={flexColumnGap16}>
         <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
+          className={styles.il2}
         >
           <div style={flexRowCenter}>
-            <Monitor style={{ width: 16, height: 16, color: 'text.secondary' }} />
+            <Monitor className={styles.il3} />
             <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
               {i18n.t('components.notification_settings.k1')}
             </span>
@@ -73,17 +65,13 @@ const NotificationSettings: React.FC = () => {
         </div>
 
         <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
+          className={styles.il4}
         >
           <div style={flexRowCenter}>
             {settings.enableSound ? (
-              <Volume2 style={{ width: 16, height: 16, color: 'text.secondary' }} />
+              <Volume2 className={styles.il5} />
             ) : (
-              <VolumeX style={{ width: 16, height: 16, color: 'text.secondary' }} />
+              <VolumeX className={styles.il6} />
             )}
             <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
               {i18n.t('components.notification_settings.k2')}
@@ -119,14 +107,10 @@ const NotificationSettings: React.FC = () => {
         </div>
 
         <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'spaceBetween',
-          }}
+          className={styles.il7}
         >
           <div style={flexRowCenter}>
-            <Smartphone style={{ width: 16, height: 16, color: 'text.secondary' }} />
+            <Smartphone className={styles.il8} />
             <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
               {i18n.t('components.notification_settings.k3')}
             </span>
@@ -171,19 +155,15 @@ const NotificationSettings: React.FC = () => {
           >
             {i18n.t('components.notification_settings.k4')}
           </h5>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className={styles.il9}>
             {(
               Object.entries(settings.types) as [keyof NotificationSettingsData['types'], boolean][]
             ).map(([type, enabled]) => (
               <div
                 key={type}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
+                className={styles.il10}
               >
-                <span style={{ fontSize: 14, color: 'text.secondary' }}>
+                <span className={styles.il11}>
                   {type === 'system' && i18n.t('shared.notification_settings.k0')}
                   {type === 'workflow' && i18n.t('shared.notification_settings.k1')}
                   {type === 'reminder' && i18n.t('shared.notification_settings.k2')}
@@ -224,12 +204,7 @@ const NotificationSettings: React.FC = () => {
 
         <div style={{ paddingTop: 12, borderTop: '1px solid var(--mui-palette-divider)' }}>
           <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 12,
-            }}
+            className={styles.il12}
           >
             <span
               style={{ fontSize: 12, fontWeight: 500, color: 'var(--mui-palette-text-secondary)' }}
@@ -280,7 +255,7 @@ const NotificationSettings: React.FC = () => {
                   outline: 'none',
                 }}
               />
-              <span style={{ fontSize: 12, color: 'text.secondary' }}>
+              <span className={styles.il13}>
                 {i18n.t('components.notification_settings.k6')}
               </span>
               <input

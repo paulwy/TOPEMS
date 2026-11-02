@@ -1,4 +1,6 @@
 import React, { useState, useRef, type ChangeEvent } from 'react';
+import cx from 'clsx';
+import styles from './WorkflowDesigner.module.css';
 import { Box, TextField, FormLabel, Divider, Typography, Button } from '@mui/material';
 import { Plus, Trash2, Save, ZoomIn, ZoomOut, Move } from 'lucide-react';
 import { designTokens } from '@topems/tokens';
@@ -285,7 +287,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
         >
           <svg
             ref={svgRef}
-            style={{ width: '100%', height: '100%' }}
+            className={styles.il1}
             onMouseDown={handleMouseDown}
           >
             <defs>
@@ -321,8 +323,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                 return (
                   <g
                     key={`edge-${edge.id}`}
-                    className='edge'
-                    style={{ cursor: 'pointer' }}
+                    className={cx('edge', styles.il2)}
                   >
                     <path
                       d={`M ${s.x} ${s.y} C ${s.x + controlXOffset} ${s.y}, ${t.x - controlXOffset} ${t.y}, ${t.x} ${t.y}`}
@@ -412,7 +413,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     fill='var(--color-primary-foreground)'
                     stroke='text.disabled'
                     strokeWidth='2'
-                    style={{ cursor: 'pointer' }}
+                    className={styles.il3}
                     onMouseUp={(e) => handlePortMouseUp(e, node.id)}
                     onMouseOver={(e) => {
                       const target = e.target as SVGElement;
@@ -430,7 +431,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
                     fill='var(--color-primary-foreground)'
                     stroke='text.disabled'
                     strokeWidth='2'
-                    style={{ cursor: 'pointer' }}
+                    className={styles.il4}
                     onMouseDown={(e) => handlePortMouseDown(e, node.id)}
                     onMouseOver={(e) => {
                       const target = e.target as SVGElement;

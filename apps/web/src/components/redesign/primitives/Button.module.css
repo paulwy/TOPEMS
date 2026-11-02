@@ -1,0 +1,10 @@
+/* ./components/redesign/primitives/Button.tsx inline-style migration (auto) */
+
+.il1 {
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+}

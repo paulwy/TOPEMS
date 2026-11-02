@@ -1,4 +1,6 @@
 import React from 'react';
+import cx from 'clsx';
+import css from './Badge.module.css';
 import clsx from 'clsx';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
@@ -55,33 +57,12 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
     return (
       <span
         ref={ref}
-        className={clsx('redesign-badge', className)}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 'var(--space-1)',
-          height: '20px',
-          padding: '0 var(--space-2)',
-          fontFamily: 'var(--font-ui)',
-          fontSize: 'var(--text-xs)',
-          fontWeight: 'var(--font-semibold)',
-          letterSpacing: 'var(--tracking-wider)',
-          textTransform: 'uppercase',
-          borderRadius: 'var(--radius-none)',
-          ...styles[variant],
-          ...style,
-        }}
+        className={cx(clsx('redesign-badge', className), css.il1)}
         {...rest}
       >
         {dot && (
           <span
-            className={pulse ? 'animate-pulse-dot' : ''}
-            style={{
-              width: '6px',
-              height: '6px',
-              borderRadius: '50%',
-              backgroundColor: 'currentColor',
-            }}
+            className={cx(pulse ? 'animate-pulse-dot' : '', css.il2)}
             aria-hidden='true'
           />
         )}

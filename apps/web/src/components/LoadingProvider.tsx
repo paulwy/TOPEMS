@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './LoadingProvider.module.css';
 import type { ReactNode, CSSProperties } from 'react';
 import React, {
   createContext,
@@ -226,7 +227,7 @@ const CircularProgressBar: React.FC<{ progress: number }> = memo(({ progress }) 
     <svg
       width={80}
       height={80}
-      style={{ transform: 'rotate(-90deg)' }}
+      className={styles.il1}
     >
       <circle
         cx={40}
@@ -235,7 +236,7 @@ const CircularProgressBar: React.FC<{ progress: number }> = memo(({ progress }) 
         fill='none'
         stroke='currentColor'
         strokeWidth={4}
-        style={{ opacity: 0.2 }}
+        className={styles.il2}
       />
       <circle
         cx={40}

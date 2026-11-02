@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './DateRangePicker.module.css';
 import React, { useState } from 'react';
 import { Box, Menu, Paper, TextField, Typography, Button } from '@mui/material';
 import { Calendar, ChevronDown } from 'lucide-react';
@@ -112,9 +113,9 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         disabled={disabled}
         sx={{ textTransform: 'none' }}
       >
-        <Calendar style={{ width: 16, height: 16, marginRight: 8 }} />
+        <Calendar className={styles.il1} />
         <span>{displayText}</span>
-        <ChevronDown style={{ width: 16, height: 16, marginLeft: 4 }} />
+        <ChevronDown className={styles.il2} />
       </Button>
       <Menu
         anchorEl={anchorEl}

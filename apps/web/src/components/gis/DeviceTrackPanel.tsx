@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import styles from './DeviceTrackPanel.module.css';
 import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet';
 import {
   Play,
@@ -635,7 +636,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
               <MapContainer
                 center={[currentPoint.latitude, currentPoint.longitude]}
                 zoom={16}
-                style={{ height: '100%', width: '100%' }}
+                className={styles.il1}
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

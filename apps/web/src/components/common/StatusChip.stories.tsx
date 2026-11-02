@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import styles from './StatusChip.stories.module.css';
 
 import StatusChip from './StatusChip';
 
@@ -51,7 +52,7 @@ export const Default: Story = {
 
 export const AllStatuses: Story = {
   render: (args) => (
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+    <div className={styles.il1}>
       {['active', 'pending', 'approved', 'rejected', 'success', 'warning', 'error', 'info'].map(
         (s) => (
           <StatusChip

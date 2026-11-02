@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './DocumentIntelligence.module.css';
 import {
   Alert,
   Box,
@@ -599,7 +600,7 @@ export const DocumentIntelligence: React.FC<DocumentIntelligenceProps> = ({
                     startAdornment: (
                       <Search
                         size={18}
-                        style={{ marginRight: 8, color: 'text.secondary' }}
+                        className={styles.il1}
                       />
                     ),
                   },

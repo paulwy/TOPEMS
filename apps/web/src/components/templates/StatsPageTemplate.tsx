@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './StatsPageTemplate.module.css';
 import { iconSm } from '../sharedStyles';
 /**
  * StatsPageTemplate - 统计图表页面模板
@@ -575,7 +576,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                     <tr>
                       <td
                         colSpan={table.columns.length}
-                        style={{ textAlign: 'center', padding: 40 }}
+                        className={styles.il1}
                       >
                         <Typography color='text.secondary'>
                           {i18n.t('components.stats_page_template.k0')}
@@ -586,7 +587,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                     <tr>
                       <td
                         colSpan={table.columns.length}
-                        style={{ textAlign: 'center', padding: 40 }}
+                        className={styles.il2}
                       >
                         <Typography color='text.secondary'>
                           {i18n.t('templates.stats_page_template.k1')}

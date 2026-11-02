@@ -1,4 +1,6 @@
 import React from 'react';
+import cx from 'clsx';
+import css from './Tag.module.css';
 import clsx from 'clsx';
 
 export interface TagProps extends React.HTMLAttributes<HTMLSpanElement> {
@@ -49,22 +51,7 @@ export const Tag = React.forwardRef<HTMLSpanElement, TagProps>(
     return (
       <span
         ref={ref}
-        className={clsx('redesign-tag', className)}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 'var(--space-1)',
-          height: '24px',
-          padding: '0 var(--space-2)',
-          fontFamily: 'var(--font-ui)',
-          fontSize: 'var(--text-xs)',
-          fontWeight: 'var(--font-medium)',
-          letterSpacing: 'var(--tracking-wide)',
-          border: '1px solid',
-          borderRadius: 'var(--radius-none)',
-          ...styles[variant],
-          ...style,
-        }}
+        className={cx(clsx('redesign-tag', className), css.il1)}
         {...rest}
       >
         {children}
@@ -73,20 +60,7 @@ export const Tag = React.forwardRef<HTMLSpanElement, TagProps>(
             type='button'
             onClick={onRemove}
             aria-label='Remove tag'
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '14px',
-              height: '14px',
-              marginLeft: '2px',
-              padding: 0,
-              background: 'transparent',
-              border: 'none',
-              color: 'currentColor',
-              cursor: 'pointer',
-              opacity: 0.7,
-            }}
+            className={css.il2}
           >
             ×
           </button>

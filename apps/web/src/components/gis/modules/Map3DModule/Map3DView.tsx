@@ -3,6 +3,8 @@
  * 支持3D地图视图、高度可视化、3D建筑和设施模型
  */
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import cx from 'clsx';
+import styles from './Map3DView.module.css';
 import { MapContainer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import i18n from '@/i18n';
@@ -123,9 +125,8 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
       <MapContainer
         center={viewState.center}
         zoom={viewState.zoom}
-        style={{ height: '100%', width: '100%' }}
+        className={cx('map-3d-container', styles.il1)}
         ref={mapRef}
-        className='map-3d-container'
       >
         {/* 地图层级 */}
         <TileLayer3D

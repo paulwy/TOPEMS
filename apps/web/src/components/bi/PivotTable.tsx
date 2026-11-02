@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import styles from './PivotTable.module.css';
 import { useTheme } from '@mui/material';
 import { Search, Filter, RefreshCw, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import { designTokens } from '@topems/tokens';
@@ -209,7 +210,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
               y2='16'
             />
           </svg>
-          <p style={{ marginTop: 2 }}>{i18n.t('components.pivot_table.k5')}</p>
+          <p className={styles.il1}>{i18n.t('components.pivot_table.k5')}</p>
         </div>
       </div>
     );
@@ -225,12 +226,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
       }}
     >
       <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 4,
-        }}
+        className={styles.il2}
       >
         <h3
           style={{
@@ -242,8 +238,8 @@ export const PivotTable: React.FC<PivotConfig> = ({
         >
           {title}
         </h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ position: 'relative' }}>
+        <div className={styles.il3}>
+          <div className={styles.il4}>
             <Search
               style={{
                 position: 'absolute',
@@ -292,7 +288,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
             }}
           >
             <Filter size={16} />
-            <span style={{ fontSize: 12 }}>{i18n.t('components.pivot_table.k6')}</span>
+            <span className={styles.il5}>{i18n.t('components.pivot_table.k6')}</span>
           </button>
           <select
             value={activeAggregator}
@@ -377,7 +373,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
           >
             {i18n.t('components.pivot_table.k1')}
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+          <div className={styles.il6}>
             {rows.map((row) => (
               <div key={row}>
                 <div
@@ -444,13 +440,9 @@ export const PivotTable: React.FC<PivotConfig> = ({
         </div>
       )}
 
-      <div style={{ overflowX: 'auto' }}>
+      <div className={styles.il7}>
         <table
-          style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            minWidth: '500px',
-          }}
+          className={styles.il8}
         >
           <thead>
             <tr>
@@ -517,7 +509,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                       toggleRow(row as string);
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div className={styles.il9}>
                       {expandedRows.has(row as string) ? (
                         <ChevronDown
                           sx={{ width: 14, height: 14, color: theme.palette.text.secondary }}

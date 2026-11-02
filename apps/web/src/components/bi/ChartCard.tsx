@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './ChartCard.module.css';
 import { iconSm, flexRowCenter } from '../sharedStyles';
 import {
   BarChart3,
@@ -128,15 +129,10 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   const getTrendIcon = () => {
     if (!trend || trend === 'stable') return null;
     return trend === 'up' ? (
-      <TrendingUp style={{ width: 16, height: 16, color: 'success.main' }} />
+      <TrendingUp className={styles.il1} />
     ) : (
       <TrendingUp
-        style={{
-          width: 16,
-          height: 16,
-          color: 'error.main',
-          transform: 'rotate(180deg)',
-        }}
+        className={styles.il2}
       />
     );
   };
@@ -209,7 +205,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 onClick={(e) => setTimeMenuAnchor(e.currentTarget)}
                 sx={{ textTransform: 'none', padding: `${designTokens.spacing.sm} 12px` }}
               >
-                <Calendar style={{ width: 16, height: 16, marginRight: 4 }} />
+                <Calendar className={styles.il3} />
                 <span>
                   {timeRanges.find((r) => r.value === timeRange)?.label ||
                     i18n.t('shared.chart_card.k6')}
@@ -228,12 +224,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
         }
       >
         <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            flexWrap: 'wrap',
-          }}
+          className={styles.il4}
         >
           <Typography
             variant='h6'
@@ -251,7 +242,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               }}
             >
               {getTrendIcon()}
-              <span style={{ fontSize: 12, fontWeight: 500 }}>{trendValue}</span>
+              <span className={styles.il5}>{trendValue}</span>
             </div>
           )}
           {showDrillDown && onDrillDown && (
@@ -281,20 +272,13 @@ export const ChartCard: React.FC<ChartCardProps> = ({
 
       <CardContent sx={{ padding: 24 }}>
         {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className={styles.il6}>
             <Skeleton sx={{ width: '33%', height: 16 }} />
             <Skeleton sx={{ width: '100%', height: height - 40, borderRadius: 8 }} />
           </div>
         ) : error ? (
           <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 32,
-              textAlign: 'center',
-            }}
+            className={styles.il7}
           >
             <div
               style={{
@@ -308,7 +292,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 marginBottom: 12,
               }}
             >
-              <AlertCircle style={{ width: 24, height: 24, color: 'error.main' }} />
+              <AlertCircle className={styles.il8} />
             </div>
             <Typography
               variant='body1'
@@ -323,7 +307,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 size='small'
                 onClick={onRefresh}
               >
-                <RefreshCw style={{ width: 16, height: 16, marginRight: 4 }} />
+                <RefreshCw className={styles.il9} />
                 {i18n.t('components.chart_card.k0')}
               </Button>
             )}
@@ -343,7 +327,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 }}
               >
                 {summary.total !== undefined && (
-                  <div style={{ textAlign: 'center' }}>
+                  <div className={styles.il10}>
                     <Typography
                       variant='caption'
                       color='text.secondary'
@@ -361,7 +345,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                   </div>
                 )}
                 {summary.avg !== undefined && (
-                  <div style={{ textAlign: 'center' }}>
+                  <div className={styles.il11}>
                     <Typography
                       variant='caption'
                       color='text.secondary'
@@ -377,7 +361,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                   </div>
                 )}
                 {summary.max !== undefined && (
-                  <div style={{ textAlign: 'center' }}>
+                  <div className={styles.il12}>
                     <Typography
                       variant='caption'
                       color='text.secondary'
@@ -393,7 +377,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                   </div>
                 )}
                 {summary.min !== undefined && (
-                  <div style={{ textAlign: 'center' }}>
+                  <div className={styles.il13}>
                     <Typography
                       variant='caption'
                       color='text.secondary'
@@ -445,7 +429,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               setActionMenuAnchor(null);
             }}
           >
-            <RefreshCw style={{ width: 16, height: 16, marginRight: 8 }} />
+            <RefreshCw className={styles.il14} />
             {i18n.t('components.chart_card.k5')}
           </MenuItem>
         )}
@@ -456,7 +440,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               setActionMenuAnchor(null);
             }}
           >
-            <Download style={{ width: 16, height: 16, marginRight: 8 }} />
+            <Download className={styles.il15} />
             {i18n.t('components.chart_card.k6')}
           </MenuItem>
         )}
@@ -467,7 +451,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               setActionMenuAnchor(null);
             }}
           >
-            <Maximize2 style={{ width: 16, height: 16, marginRight: 8 }} />
+            <Maximize2 className={styles.il16} />
             {i18n.t('components.chart_card.k7')}
           </MenuItem>
         )}
@@ -478,7 +462,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               setActionMenuAnchor(null);
             }}
           >
-            <TrendingUp style={{ width: 16, height: 16, marginRight: 8 }} />
+            <TrendingUp className={styles.il17} />
             {i18n.t('components.chart_card.k8')}
           </MenuItem>
         )}

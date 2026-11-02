@@ -1,4 +1,6 @@
 import React, { useRef, useState, useCallback } from 'react';
+import cx from 'clsx';
+import styles from './FileUpload.module.css';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { Upload, X, File, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
@@ -198,29 +200,28 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         return (
           <Loader2
             size={16}
-            className='animate-spin'
-            style={{ color: 'var(--accent-primary)' }}
+            className={cx('animate-spin', styles.il1)}
           />
         );
       case 'success':
         return (
           <CheckCircle
             size={16}
-            style={{ color: 'var(--success-500)' }}
+            className={styles.il2}
           />
         );
       case 'error':
         return (
           <AlertCircle
             size={16}
-            style={{ color: 'var(--error-500)' }}
+            className={styles.il3}
           />
         );
       default:
         return (
           <File
             size={16}
-            style={{ color: 'var(--text-tertiary)' }}
+            className={styles.il4}
           />
         );
     }
@@ -264,26 +265,18 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         }}
       >
         <div
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: '50%',
-            backgroundColor: 'var(--surface-2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          className={styles.il5}
         >
           <Upload
             size={24}
-            style={{ color: 'var(--text-secondary)' }}
+            className={styles.il6}
           />
         </div>
-        <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>
+        <div className={styles.il7}>
           {resolvedHint}
         </div>
         {accept && (
-          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+          <div className={styles.il8}>
             {t('components.file_upload.supported_formats', { accept })}
             {maxSize && ` · ${t('components.file_upload.max_size_hint', { maxSize })}`}
           </div>
@@ -297,62 +290,37 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         multiple={multiple}
         disabled={disabled}
         onChange={handleInputChange}
-        style={{ display: 'none' }}
+        className={styles.il9}
       />
 
       {/* 文件列表 */}
       {showFileList && value.length > 0 && (
         <div
-          style={{
-            marginTop: 'var(--space-3)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 'var(--space-2)',
-          }}
+          className={styles.il10}
         >
           {value.map((file) => (
             <div
               key={file.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-3)',
-                padding: 'var(--space-3)',
-                backgroundColor: 'var(--surface-1)',
-                border: '1px solid var(--border-default)',
-                borderRadius: 'var(--radius-sm)',
-              }}
+              className={styles.il11}
             >
               {getStatusIcon(file.status)}
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div className={styles.il12}>
                 <div
-                  style={{
-                    fontSize: 'var(--text-sm)',
-                    color: 'var(--text-primary)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
+                  className={styles.il13}
                 >
                   {file.name}
                 </div>
-                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+                <div className={styles.il14}>
                   {formatFileSize(file.size)}
                   {file.error && (
-                    <span style={{ color: 'var(--error-500)', marginLeft: 'var(--space-2)' }}>
+                    <span className={styles.il15}>
                       {file.error}
                     </span>
                   )}
                 </div>
                 {file.status === 'uploading' && file.progress !== undefined && (
                   <div
-                    style={{
-                      marginTop: 'var(--space-1)',
-                      height: 4,
-                      backgroundColor: 'var(--surface-3)',
-                      borderRadius: 2,
-                      overflow: 'hidden',
-                    }}
+                    className={styles.il16}
                   >
                     <div
                       style={{

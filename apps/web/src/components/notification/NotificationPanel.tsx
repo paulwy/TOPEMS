@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import styles from './NotificationPanel.module.css';
 import { useTheme, Chip } from '@mui/material';
 import { Check, Settings, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import NotificationItem from './NotificationItem';
@@ -161,7 +162,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         <h3 style={{ fontSize: 18, fontWeight: 600, color: theme.palette.text.primary }}>
           {i18n.t('components.notification_panel.k0')}
         </h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className={styles.il1}>
           {wsConnected ? (
             <Chip
               icon={<Wifi size={14} />}
@@ -224,7 +225,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             }}
           >
             <svg
-              style={{ width: 20, height: 20 }}
+              className={styles.il2}
               fill='none'
               stroke='currentColor'
               viewBox='0 0 24 24'
@@ -324,15 +325,10 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         </div>
       )}
 
-      <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+      <div className={styles.il3}>
         {loading ? (
           <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 48,
-            }}
+            className={styles.il4}
           >
             <div
               style={{
@@ -374,7 +370,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
                 d='M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'
               />
             </svg>
-            <p style={{ fontSize: 14 }}>
+            <p className={styles.il5}>
               {activeTab === 'unread'
                 ? i18n.t('shared.notification_panel.k6')
                 : i18n.t('shared.notification_panel.k5')}

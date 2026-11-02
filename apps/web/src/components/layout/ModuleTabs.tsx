@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import styles from './ModuleTabs.module.css';
 import {
   Box,
   IconButton,
@@ -376,7 +377,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
         onClick={() => navigate(tab.path)}
       >
         {!isMobile && (
-          <GripVertical style={{ width: 14, height: 14, opacity: 0.5, flexShrink: 0 }} />
+          <GripVertical className={styles.il1} />
         )}
         <Box
           component='span'
@@ -389,7 +390,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
         >
           {tab.label}
         </Box>
-        {tab.pinned && <Pin style={{ width: 12, height: 12, flexShrink: 0, opacity: 0.7 }} />}
+        {tab.pinned && <Pin className={styles.il2} />}
         {tab.closable !== false && !tab.pinned && (
           <IconButton
             size='small'

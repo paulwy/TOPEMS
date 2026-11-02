@@ -1,0 +1,7 @@
+/* ./components/ThemeSelector.tsx inline-style migration (auto) */
+
+.il1 {
+  width: 16px;
+  height: 16px;
+  color: primary.main;
+}

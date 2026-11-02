@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import styles from './Tooltip.module.css';
 import { createPortal } from 'react-dom';
 
 export type TooltipPlacement = 'top' | 'bottom' | 'left' | 'right';
@@ -82,7 +83,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
         onMouseLeave={hide}
         onFocus={show}
         onBlur={hide}
-        style={{ display: 'inline-flex' }}
+        className={styles.il1}
       >
         {children}
       </span>

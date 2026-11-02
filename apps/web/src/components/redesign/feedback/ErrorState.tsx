@@ -1,4 +1,6 @@
 import React from 'react';
+import cx from 'clsx';
+import styles from './ErrorState.module.css';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
@@ -37,18 +39,8 @@ export const ErrorState = React.forwardRef<HTMLDivElement, ErrorStateProps>(
     return (
       <div
         ref={ref}
-        className={clsx('redesign-error-state', className)}
         role='alert'
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 'var(--space-5)',
-          padding: 'var(--space-12) var(--space-6)',
-          textAlign: 'center',
-          ...style,
-        }}
+        className={cx(clsx('redesign-error-state', className), styles.il1)}
         {...rest}
       >
         <div
@@ -68,64 +60,33 @@ export const ErrorState = React.forwardRef<HTMLDivElement, ErrorStateProps>(
         </div>
 
         <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 'var(--space-2)',
-            maxWidth: '400px',
-          }}
+          className={styles.il2}
         >
           <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 'var(--space-3)',
-            }}
+            className={styles.il3}
           >
             <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 'var(--text-4xl)',
-                fontWeight: 'var(--font-bold)',
-                color: 'var(--error-500)',
-                lineHeight: 'var(--leading-none)',
-              }}
+              className={styles.il4}
             >
               {code}
             </span>
             <h1
-              style={{
-                margin: 0,
-                fontFamily: 'var(--font-brand)',
-                fontSize: 'var(--text-2xl)',
-                fontWeight: 'var(--font-semibold)',
-                color: 'var(--text-primary)',
-              }}
+              className={styles.il5}
             >
               {resolvedTitle}
             </h1>
           </div>
-          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{resolvedMessage}</p>
+          <p className={styles.il6}>{resolvedMessage}</p>
           {traceId && (
             <code
-              style={{
-                display: 'inline-block',
-                marginTop: 'var(--space-2)',
-                padding: 'var(--space-1) var(--space-2)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: 'var(--text-xs)',
-                color: 'var(--text-tertiary)',
-                backgroundColor: 'var(--surface-2)',
-                borderRadius: 'var(--radius-sm)',
-              }}
+              className={styles.il7}
             >
               Trace ID: {traceId}
             </code>
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+        <div className={styles.il8}>
           {onRetry && (
             <Button
               variant='primary'

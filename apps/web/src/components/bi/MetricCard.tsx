@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import styles from './MetricCard.module.css';
 import { TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Box, Typography, useTheme } from '@mui/material';
@@ -48,7 +49,7 @@ const Sparkline: React.FC<SparklineProps> = ({
     <svg
       width={width}
       height={height}
-      style={{ overflow: 'visible' }}
+      className={styles.il1}
     >
       <defs>
         <linearGradient

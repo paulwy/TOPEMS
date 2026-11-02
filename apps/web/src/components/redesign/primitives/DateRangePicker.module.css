@@ -1,0 +1,60 @@
+/* ./components/redesign/primitives/DateRangePicker.tsx inline-style migration (auto) */
+
+.il1 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.il2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.il3 {
+  position: relative;
+  flex: 1px;
+}
+
+.il4 {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.il5 {
+  padding-left: 36px;
+}
+
+.il6 {
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
+}
+
+.il7 {
+  position: relative;
+  flex: 1px;
+}
+
+.il8 {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.il9 {
+  padding-left: 36px;
+}
+
+.il10 {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}

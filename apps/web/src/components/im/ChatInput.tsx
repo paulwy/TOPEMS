@@ -1,4 +1,5 @@
 import { TextField, Button, useTheme } from '@mui/material';
+import styles from './ChatInput.module.css';
 import React, { useState, useRef } from 'react';
 import { Send, Paperclip, Image, FileText } from 'lucide-react';
 import { logger } from '@/utils/logger';
@@ -83,8 +84,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         padding: 16,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12 }}>
-        <div style={{ position: 'relative' }}>
+      <div className={styles.il1}>
+        <div className={styles.il2}>
           <Button
             variant='text'
             size='small'
@@ -112,13 +113,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               }}
             >
               <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: 8,
-                  cursor: 'pointer',
-                }}
+                className={styles.il3}
               >
                 <Image style={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
                 <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
@@ -129,18 +124,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   type='file'
                   accept='image/*'
                   onChange={(e) => handleFileUpload(e, 'image')}
-                  style={{ display: 'none' }}
+                  className={styles.il4}
                   disabled={uploading}
                 />
               </label>
               <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: 8,
-                  cursor: 'pointer',
-                }}
+                className={styles.il5}
               >
                 <FileText style={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
                 <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
@@ -150,7 +139,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   ref={fileInputRef}
                   type='file'
                   onChange={(e) => handleFileUpload(e, 'file')}
-                  style={{ display: 'none' }}
+                  className={styles.il6}
                   disabled={uploading}
                 />
               </label>
@@ -158,7 +147,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           )}
         </div>
 
-        <div style={{ flex: 1 }}>
+        <div className={styles.il7}>
           <TextField
             value={message}
             onChange={(e) => setMessage(e.target.value)}

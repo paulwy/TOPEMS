@@ -1,0 +1,28 @@
+/* ./components/notification/NotificationPanel.tsx inline-style migration (auto) */
+
+.il1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.il2 {
+  width: 20px;
+  height: 20px;
+}
+
+.il3 {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.il4 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+}
+
+.il5 {
+  font-size: 14px;
+}

@@ -1,0 +1,26 @@
+/* ./components/templates/MarkdownPreview.tsx inline-style migration (auto) */
+
+.il1 {
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow: auto;
+}
+
+.il2 {
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.il3 {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.il4 {
+  font-weight: 600px;
+}
+
+.il5 {
+  font-style: italic;
+}

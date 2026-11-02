@@ -1,0 +1,8 @@
+/* ./components/common/FormField.stories.tsx inline-style migration (auto) */
+
+.il1 {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 300px;
+}

@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './ModuleCard.module.css';
 import { Box, Typography, Button } from '@mui/material';
 import i18n from '@/i18n';
 import { ArrowRight } from 'lucide-react';
@@ -97,7 +98,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
             flexShrink: 0,
           }}
         >
-          <Icon style={{ width: 22, height: 22 }} />
+          <Icon className={styles.il1} />
         </Box>
         <Box sx={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'flex-end' }}>
           <ModuleStatusBadge status={item.status} />

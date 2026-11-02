@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import styles from './RelativeTime.stories.module.css';
 
 import RelativeTime from './RelativeTime';
 
@@ -80,24 +81,24 @@ const WithAbsoluteTime: Story = {
 
 const MultipleTimes: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: 400 }}>
+    <div className={styles.il1}>
+      <div className={styles.il2}>
         <span>1分钟前：</span>
         <RelativeTime date={oneMinuteAgo.toISOString()} />
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: 400 }}>
+      <div className={styles.il3}>
         <span>1小时前：</span>
         <RelativeTime date={oneHourAgo.toISOString()} />
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: 400 }}>
+      <div className={styles.il4}>
         <span>1天前：</span>
         <RelativeTime date={oneDayAgo.toISOString()} />
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: 400 }}>
+      <div className={styles.il5}>
         <span>1周前：</span>
         <RelativeTime date={oneWeekAgo.toISOString()} />
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: 400 }}>
+      <div className={styles.il6}>
         <span>1月前：</span>
         <RelativeTime date={oneMonthAgo.toISOString()} />
       </div>

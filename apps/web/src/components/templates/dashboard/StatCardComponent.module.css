@@ -1,0 +1,19 @@
+/* ./components/templates/dashboard/StatCardComponent.tsx inline-style migration (auto) */
+
+.il1 {
+  width: 14px;
+  height: 14px;
+  color: success.dark;
+}
+
+.il2 {
+  width: 14px;
+  height: 14px;
+  color: error.main;
+}
+
+.il3 {
+  width: 14px;
+  height: 14px;
+  color: text.disabled;
+}

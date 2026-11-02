@@ -1,4 +1,6 @@
 import React from 'react';
+import cx from 'clsx';
+import styles from './StatTile.module.css';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { ArrowDownRight, ArrowUpRight, Minus, type LucideIcon } from 'lucide-react';
@@ -86,22 +88,10 @@ export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
         />
 
         <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            minWidth: 0,
-          }}
+          className={styles.il1}
         >
           <span
-            className='uppercase-label'
-            style={{
-              color: 'var(--text-tertiary)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              minWidth: 0,
-            }}
+            className={cx('uppercase-label', styles.il2)}
           >
             {label}
           </span>
@@ -123,36 +113,23 @@ export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
         {loading ? (
           <>
             <div
-              className='skeleton'
-              style={{ width: '60%', height: '36px' }}
+              className={cx('skeleton', styles.il3)}
             />
             <div
-              className='skeleton'
-              style={{ width: '40%', height: '16px' }}
+              className={cx('skeleton', styles.il4)}
             />
           </>
         ) : (
           <>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-2)' }}>
+            <div className={styles.il5}>
               <span
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 'var(--text-3xl)',
-                  fontWeight: 'var(--font-bold)',
-                  letterSpacing: 'var(--tracking-tight)',
-                  color: 'var(--text-primary)',
-                  lineHeight: 'var(--leading-tight)',
-                }}
+                className={styles.il6}
               >
                 {value}
               </span>
               {unit && (
                 <span
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 'var(--text-sm)',
-                    color: 'var(--text-tertiary)',
-                  }}
+                  className={styles.il7}
                 >
                   {unit}
                 </span>
@@ -160,7 +137,7 @@ export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
             </div>
 
             {trend && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
+              <div className={styles.il8}>
                 <TrendIcon
                   size={14}
                   color={trendColor}
@@ -176,10 +153,7 @@ export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
                   {trendValue}
                 </span>
                 <span
-                  style={{
-                    fontSize: 'var(--text-xs)',
-                    color: 'var(--text-tertiary)',
-                  }}
+                  className={styles.il9}
                 >
                   {t('components.stat_tile.vs_last_month')}
                 </span>

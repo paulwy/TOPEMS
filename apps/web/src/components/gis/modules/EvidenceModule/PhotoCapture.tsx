@@ -1,5 +1,6 @@
 // modules/EvidenceModule/PhotoCapture.tsx
 import React, { useRef, useState, useCallback, useEffect } from 'react';
+import styles from './PhotoCapture.module.css';
 import { Camera, SwitchCamera, Sun, X } from 'lucide-react';
 import { Box, IconButton, Typography, Button } from '@mui/material';
 import { logger } from '@/utils/logger';
@@ -146,13 +147,13 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
           autoPlay
           playsInline
           muted
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          className={styles.il1}
         />
 
         {/* Hidden canvas for capture */}
         <canvas
           ref={canvasRef}
-          style={{ display: 'none' }}
+          className={styles.il2}
         />
 
         {/* Error Message */}

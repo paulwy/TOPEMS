@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import cx from 'clsx';
+import styles from './Pagination.module.css';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
@@ -104,25 +106,17 @@ export const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <div
-      className={clsx('redesign-pagination', className)}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 'var(--space-4)',
-        flexWrap: 'wrap',
-        ...style,
-      }}
+      className={cx(clsx('redesign-pagination', className), styles.il1)}
     >
       {/* 左侧：总数信息 */}
       {showTotal && totalItems !== undefined && (
-        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+        <span className={styles.il2}>
           {t('components.pagination.total', { total: totalItems, current, pageCount: total })}
         </span>
       )}
 
       {/* 右侧：分页控件 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+      <div className={styles.il3}>
         {/* 首页 */}
         <button
           data-testid='pagination-first'
@@ -152,11 +146,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           page === '...' ? (
             <span
               key={`ellipsis-${index}`}
-              style={{
-                padding: '0 4px',
-                color: 'var(--text-tertiary)',
-                fontSize: 'var(--text-sm)',
-              }}
+              className={styles.il4}
             >
               ...
             </span>
@@ -237,8 +227,8 @@ export const Pagination: React.FC<PaginationProps> = ({
 
         {/* 快速跳转 */}
         {showQuickJumper && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+          <div className={styles.il5}>
+            <span className={styles.il6}>
               {t('components.pagination.jump_to')}
             </span>
             <input
@@ -255,19 +245,9 @@ export const Pagination: React.FC<PaginationProps> = ({
                   }
                 }
               }}
-              style={{
-                width: 56,
-                height: 32,
-                padding: '0 8px',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-default)',
-                backgroundColor: 'var(--surface-1)',
-                color: 'var(--text-primary)',
-                fontSize: 'var(--text-sm)',
-                textAlign: 'center',
-              }}
+              className={styles.il7}
             />
-            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+            <span className={styles.il8}>
               {t('components.pagination.page')}
             </span>
           </div>

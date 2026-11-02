@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './DataSourcePanel.module.css';
 import {
   Box,
   Typography,
@@ -169,12 +170,12 @@ export const DataSourcePanel: React.FC<DataSourcePanelProps> = ({
                 type='file'
                 accept='.xlsx,.xls,.csv'
                 onChange={handleFileUpload}
-                style={{ display: 'none' }}
+                className={styles.il1}
                 id='excel-upload'
               />
               <label
                 htmlFor='excel-upload'
-                style={{ cursor: 'pointer' }}
+                className={styles.il2}
               >
                 <Box
                   sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}

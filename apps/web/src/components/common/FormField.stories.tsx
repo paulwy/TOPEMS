@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import styles from './FormField.stories.module.css';
 import { fn } from 'storybook/test';
 
 import FormField from './FormField';
@@ -125,7 +126,7 @@ export const Disabled: Story = {
 
 export const Sizes: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: 300 }}>
+    <div className={styles.il1}>
       <FormField
         name='small'
         label='紧凑尺寸 (small)'

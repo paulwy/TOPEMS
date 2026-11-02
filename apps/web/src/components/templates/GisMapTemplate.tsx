@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import styles from './GisMapTemplate.module.css';
 import type { BoxProps } from '@mui/material';
 import {
   Box,
@@ -716,7 +717,7 @@ export function GisMapTemplate({
         ref={mapRef}
         center={initialCenter}
         zoom={initialZoom}
-        style={{ width: '100%', height: '100%' }}
+        className={styles.il1}
         zoomControl={zoomControl}
       >
         <MapClickHandler onMapClick={onMapClick} />

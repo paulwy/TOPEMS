@@ -1,0 +1,51 @@
+/* ./components/notification/NotificationItem.tsx inline-style migration (auto) */
+
+.il1 {
+  width: 40px;
+  height: 40px;
+  border-radius: full;
+  background-color: error.lighter;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.il2 {
+  width: 40px;
+  height: 40px;
+  border-radius: full;
+  background-color: success.lighter;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.il3 {
+  display: flex;
+  gap: 12px;
+}
+
+.il4 {
+  flex: 1px;
+  min-width: 0;
+}
+
+.il5 {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.il6 {
+  font-weight: 500px;
+}
+
+.il7 {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+}

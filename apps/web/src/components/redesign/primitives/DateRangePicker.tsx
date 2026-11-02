@@ -1,4 +1,6 @@
 import React from 'react';
+import cx from 'clsx';
+import styles from './DateRangePicker.module.css';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { Calendar } from 'lucide-react';
@@ -80,33 +82,16 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
   return (
     <div
-      className={clsx('redesign-date-range-picker', className)}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'var(--space-2)',
-        ...style,
-      }}
+      className={cx(clsx('redesign-date-range-picker', className), styles.il1)}
     >
       {/* 日期输入 */}
       <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'var(--space-2)',
-        }}
+        className={styles.il2}
       >
-        <div style={{ position: 'relative', flex: 1 }}>
+        <div className={styles.il3}>
           <Calendar
             size={16}
-            style={{
-              position: 'absolute',
-              left: 12,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'var(--text-tertiary)',
-              pointerEvents: 'none',
-            }}
+            className={styles.il4}
           />
           <input
             type='date'
@@ -116,23 +101,16 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             max={maxDate || value?.end || maxDate}
             disabled={disabled}
             placeholder={resolvedStartPlaceholder}
-            style={{ ...inputStyle, paddingLeft: 36 }}
+            className={styles.il5}
           />
         </div>
-        <span style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-sm)' }}>
+        <span className={styles.il6}>
           {t('components.date_range_picker.to')}
         </span>
-        <div style={{ position: 'relative', flex: 1 }}>
+        <div className={styles.il7}>
           <Calendar
             size={16}
-            style={{
-              position: 'absolute',
-              left: 12,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'var(--text-tertiary)',
-              pointerEvents: 'none',
-            }}
+            className={styles.il8}
           />
           <input
             type='date'
@@ -142,14 +120,14 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             max={maxDate}
             disabled={disabled}
             placeholder={resolvedEndPlaceholder}
-            style={{ ...inputStyle, paddingLeft: 36 }}
+            className={styles.il9}
           />
         </div>
       </div>
 
       {/* 预设快捷选项 */}
       {presets && presets.length > 0 && (
-        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+        <div className={styles.il10}>
           {presets.map((preset) => (
             <button
               key={preset.label}

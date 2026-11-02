@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import styles from './PageTransition.stories.module.css';
 
 import PageTransition from './PageTransition';
 
@@ -31,13 +32,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   render: (args) => (
     <div
-      style={{
-        width: 320,
-        height: 480,
-        border: '1px solid #eee',
-        borderRadius: 12,
-        overflow: 'hidden',
-      }}
+      className={styles.il1}
     >
       <PageTransition {...args}>
         <div
@@ -49,7 +44,7 @@ export const Default: Story = {
           }}
         >
           <h3>页面内容</h3>
-          <p style={{ color: '#666' }}>切换时此内容会按方向滑入。</p>
+          <p className={styles.il2}>切换时此内容会按方向滑入。</p>
         </div>
       </PageTransition>
     </div>

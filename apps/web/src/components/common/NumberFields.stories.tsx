@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import styles from './NumberFields.stories.module.css';
 import { fn } from 'storybook/test';
 import { Box, Typography } from '@mui/material';
 
@@ -24,7 +25,7 @@ type Story = StoryObj<typeof meta>;
 
 export const NumberFieldDefault: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: 300 }}>
+    <div className={styles.il1}>
       <Typography variant='subtitle2'>NumberField - 数字输入</Typography>
       <NumberField
         label='数量'
@@ -37,7 +38,7 @@ export const NumberFieldDefault: Story = {
 
 export const CurrencyFieldDefault: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: 300 }}>
+    <div className={styles.il2}>
       <Typography variant='subtitle2'>CurrencyField - 货币输入</Typography>
       <CurrencyField
         label='金额'
@@ -50,7 +51,7 @@ export const CurrencyFieldDefault: Story = {
 
 export const PercentFieldDefault: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: 300 }}>
+    <div className={styles.il3}>
       <Typography variant='subtitle2'>PercentField - 百分比输入</Typography>
       <PercentField
         label='完成率'
@@ -63,7 +64,7 @@ export const PercentFieldDefault: Story = {
 
 export const AllFields: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: 350 }}>
+    <div className={styles.il4}>
       <Box>
         <Typography
           variant='subtitle2'

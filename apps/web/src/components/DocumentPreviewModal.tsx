@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import styles from './DocumentPreviewModal.module.css';
 import { useTheme } from '@mui/material';
 import { X, FileText, AlertCircle, Loader2 } from 'lucide-react';
 import { docApi } from '../api/doc';
@@ -211,7 +212,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
             borderBottom: '1px solid grey.200',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <div className={styles.il1}>
             <FileText sx={{ width: 24, height: 24, color: 'primary.dark' }} />
             <h2
               style={{
@@ -321,7 +322,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           {/* 容器始终渲染和显示 */}
           <div
             ref={containerRef}
-            style={{ padding: 4, minHeight: '80vh' }}
+            className={styles.il2}
           />
         </div>
 

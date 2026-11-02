@@ -1,4 +1,6 @@
 import React from 'react';
+import cx from 'clsx';
+import styles from './ListPageTemplate.module.css';
 import { useTranslation } from 'react-i18next';
 import { PageHeader, type PageHeaderProps } from '../layout';
 import { DataTable, type DataTableProps, type DataTableColumn } from '../data';
@@ -45,13 +47,7 @@ export function ListPageTemplate<T extends object>({
   const { t } = useTranslation();
   return (
     <div
-      className={className}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'var(--space-6)',
-        ...style,
-      }}
+      className={cx(className, styles.il1)}
       {...rest}
     >
       <PageHeader {...header} />
@@ -72,13 +68,7 @@ export function ListPageTemplate<T extends object>({
 
       {toolbar && (
         <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between',
-            gap: 'var(--space-4)',
-          }}
+          className={styles.il2}
         >
           {toolbar}
         </div>

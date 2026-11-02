@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import cx from 'clsx';
+import styles from './LazyImage.module.css';
 import { designTokens } from '@topems/tokens';
 
 interface LazyImageProps {
@@ -117,12 +119,7 @@ const LazyImage: React.FC<LazyImageProps> = ({
   return (
     <div
       ref={imgRef}
-      className={className}
-      style={{
-        position: 'relative',
-        overflow: 'hidden',
-        ...style,
-      }}
+      className={cx(className, styles.il1)}
     >
       {!isLoaded && (
         <div

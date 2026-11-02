@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './StatCardComponent.module.css';
 import React from 'react';
 import { Box, Card, CardContent, Skeleton, Typography, Chip, Stack } from '@mui/material';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
@@ -154,11 +155,11 @@ export const StatCardComponent: React.FC<StatCardType & { loading?: boolean }> =
                 {change !== undefined && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
                     {change > 0 ? (
-                      <TrendingUp style={{ width: 14, height: 14, color: 'success.dark' }} />
+                      <TrendingUp className={styles.il1} />
                     ) : change < 0 ? (
-                      <TrendingDown style={{ width: 14, height: 14, color: 'error.main' }} />
+                      <TrendingDown className={styles.il2} />
                     ) : (
-                      <Minus style={{ width: 14, height: 14, color: 'text.disabled' }} />
+                      <Minus className={styles.il3} />
                     )}
                     <Typography
                       variant='caption'

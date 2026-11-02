@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import styles from './ActionButton.stories.module.css';
 import { fn } from 'storybook/test';
 
 import ActionButton from './ActionButton';
@@ -70,7 +71,7 @@ export const Default: Story = {
 
 const AllVariants: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
+    <div className={styles.il1}>
       <ActionButton
         label='主要操作'
         variant='primary'
@@ -134,7 +135,7 @@ export const Disabled: Story = {
 
 export const Sizes: Story = {
   render: () => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+    <div className={styles.il2}>
       <ActionButton
         label='小按钮'
         size='small'

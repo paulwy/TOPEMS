@@ -1,0 +1,13 @@
+/* ./components/PermissionGate.tsx inline-style migration (auto) */
+
+.il1 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+}
+
+.il2 {
+  opacity: 0.5px;
+  cursor: not-allowed;
+}

@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './Card.module.css';
 import clsx from 'clsx';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -78,34 +79,23 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         )}
         {(title || subtitle || action) && (
           <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'space-between',
-              gap: 'var(--space-3)',
-              marginBottom: 'var(--space-4)',
-            }}
+            className={styles.il1}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+            <div className={styles.il2}>
               {title && (
                 <div
-                  style={{
-                    fontSize: 'var(--text-base)',
-                    fontWeight: 'var(--font-semibold)',
-                    color: 'var(--text-primary)',
-                    lineHeight: 'var(--leading-tight)',
-                  }}
+                  className={styles.il3}
                 >
                   {title}
                 </div>
               )}
               {subtitle && (
-                <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+                <div className={styles.il4}>
                   {subtitle}
                 </div>
               )}
             </div>
-            {action && <div style={{ flexShrink: 0 }}>{action}</div>}
+            {action && <div className={styles.il5}>{action}</div>}
           </div>
         )}
         {children}

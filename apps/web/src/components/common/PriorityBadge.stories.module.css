@@ -1,0 +1,7 @@
+/* ./components/common/PriorityBadge.stories.tsx inline-style migration (auto) */
+
+.il1 {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

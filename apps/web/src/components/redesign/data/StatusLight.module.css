@@ -1,0 +1,9 @@
+/* ./components/redesign/data/StatusLight.tsx inline-style migration (auto) */
+
+.il1 {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}

@@ -1,0 +1,18 @@
+/* ./components/common/LazyImage.stories.tsx inline-style migration (auto) */
+
+.il1 {
+  width: 240px;
+  height: 160px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.il2 {
+  width: 240px;
+  height: 160px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f5f5f5;
+}

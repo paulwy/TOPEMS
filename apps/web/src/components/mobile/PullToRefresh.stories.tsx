@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import styles from './PullToRefresh.stories.module.css';
 import { Box, List, ListItemButton, ListItemText, ListItemIcon } from '@mui/material';
 import { FileText, Clock, CheckCircle } from 'lucide-react';
 
@@ -146,7 +147,7 @@ export const StaticPreview: Story = {
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, mb: 2 }}>
-          <Clock style={{ width: 24, height: 24, color: 'text.secondary' }} />
+          <Clock className={styles.il1} />
           <Box sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>下拉刷新</Box>
         </Box>
         <List disablePadding>

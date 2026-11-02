@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import cx from 'clsx';
+import styles from './DashboardEditor.module.css';
 import {
   Plus,
   Save,
@@ -491,8 +493,7 @@ export const DashboardEditor: React.FC<{
           <svg
             width='100%'
             height='100%'
-            style={{ position: 'absolute', top: 0, left: 0 }}
-            className={isPreviewMode ? 'hidden' : ''}
+            className={cx(styles.il1, isPreviewMode ? 'hidden' : '')}
           >
             {Array.from({ length: GRID_COLS }).map((_, i) => (
               <line
@@ -820,7 +821,7 @@ export const DashboardEditor: React.FC<{
                         value={type.value}
                       >
                         {type.icon}
-                        <span style={{ marginLeft: 8 }}>{type.label}</span>
+                        <span className={styles.il2}>{type.label}</span>
                       </MenuItem>
                     ))}
                   </Select>
@@ -911,7 +912,7 @@ export const DashboardEditor: React.FC<{
                   value={type.value}
                 >
                   {type.icon}
-                  <span style={{ marginLeft: 8 }}>{type.label}</span>
+                  <span className={styles.il3}>{type.label}</span>
                 </MenuItem>
               ))}
             </Select>
@@ -934,7 +935,7 @@ export const DashboardEditor: React.FC<{
                     value={type.value}
                   >
                     {type.icon}
-                    <span style={{ marginLeft: 8 }}>{type.label}</span>
+                    <span className={styles.il4}>{type.label}</span>
                   </MenuItem>
                 ))}
               </Select>

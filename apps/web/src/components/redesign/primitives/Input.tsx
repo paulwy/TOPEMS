@@ -1,4 +1,6 @@
 import React, { useId } from 'react';
+import cx from 'clsx';
+import styles from './Input.module.css';
 import clsx from 'clsx';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -15,25 +17,12 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
     return (
       <div
-        className={clsx('redesign-input-wrapper', className)}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 'var(--space-1)',
-          width: '100%',
-          ...style,
-        }}
+        className={cx(clsx('redesign-input-wrapper', className), styles.il1)}
       >
         {label && (
           <label
             htmlFor={inputId}
-            style={{
-              fontSize: 'var(--text-xs)',
-              fontWeight: 'var(--font-semibold)',
-              letterSpacing: 'var(--tracking-wider)',
-              textTransform: 'uppercase',
-              color: 'var(--text-secondary)',
-            }}
+            className={styles.il2}
           >
             {label}
           </label>
@@ -54,39 +43,25 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           data-error={!!error}
         >
           {leftIcon && (
-            <span style={{ color: 'var(--text-tertiary)', display: 'inline-flex' }}>
+            <span className={styles.il3}>
               {leftIcon}
             </span>
           )}
           <input
             ref={ref}
             id={inputId}
-            style={{
-              flex: 1,
-              minWidth: 0,
-              height: '100%',
-              padding: 0,
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              color: 'var(--text-primary)',
-              fontFamily: 'var(--font-ui)',
-              fontSize: 'var(--text-base)',
-            }}
+            className={styles.il4}
             {...rest}
           />
           {rightIcon && (
-            <span style={{ color: 'var(--text-tertiary)', display: 'inline-flex' }}>
+            <span className={styles.il5}>
               {rightIcon}
             </span>
           )}
         </div>
         {error && (
           <span
-            style={{
-              fontSize: 'var(--text-xs)',
-              color: 'var(--error-500)',
-            }}
+            className={styles.il6}
           >
             {error}
           </span>

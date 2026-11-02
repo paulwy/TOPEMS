@@ -1,4 +1,5 @@
 import React, { Suspense, lazy } from 'react';
+import styles from './ChartLibrary.module.css';
 import {
   BarChart,
   Bar,
@@ -131,13 +132,7 @@ const GaugeChart = ({
 
   return (
     <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
-      }}
+      className={styles.il1}
     >
       <svg
         width='200'
@@ -295,7 +290,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
             {title}
           </h3>
         )}
-        <div style={{ color: 'text.muted', textAlign: 'center' }}>
+        <div className={styles.il2}>
           <svg
             width='48'
             height='48'
@@ -324,7 +319,7 @@ export const ChartComponent: React.FC<ChartConfig> = ({
               y2='16'
             />
           </svg>
-          <p style={{ marginTop: 2 }}>{i18n.t('shared.chart_library.k0')}</p>
+          <p className={styles.il3}>{i18n.t('shared.chart_library.k0')}</p>
         </div>
       </div>
     );

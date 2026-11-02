@@ -1,5 +1,6 @@
 // modules/MapModule/LayerManager.tsx
 import React from 'react';
+import styles from './LayerManager.module.css';
 import { Layers, ChevronDown, ChevronUp, MapPin, Navigation, Info, Pencil } from 'lucide-react';
 import { Box, Typography, Paper, Button } from '@mui/material';
 import { designTokens } from '@topems/tokens';
@@ -103,12 +104,12 @@ const LayerManager: React.FC<LayerManagerProps> = ({
         {showPanel ? (
           <ChevronUp
             size={16}
-            style={{ color: 'text.secondary' }}
+            className={styles.il1}
           />
         ) : (
           <ChevronDown
             size={16}
-            style={{ color: 'text.secondary' }}
+            className={styles.il2}
           />
         )}
       </Button>
