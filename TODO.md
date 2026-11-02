@@ -1,3 +1,12 @@
+## 依赖周期重扫：node-forge 收敛 + 静态复核（2026-11-02）✅
+
+> 承接 dependabot 审计遗留跟踪项；registry.npmjs.org 网络阻塞（在线 audit 不可达），以 pnpm-lock.yaml 静态版本核对完成复核。
+
+- **node-forge 13 条 advisory 收敛**：lock 已含 `node-forge@1.4.0`（CVE-2022-24771/24772/24773 修复版）——上次基线 1.3.x 旧链升级到位。
+- **维持挂账**：minimatch 旧链（eslint 10 系/exceljs 链）、glob 9.3.4 旧链、deepmerge 3.3.0（上游无补丁）——跨大版本 overrides 风险 > 收益，不执行。
+- **复核限制**：在线 `pnpm audit` 因 registry 网络阻塞未全量重扫；待网络恢复重跑确认全量 advisory 集。
+- **记录**：docs/security/dependabot-local-audit-20261102.md §6。
+
 ## 5433 验证实例恢复 + RLS 5433 回归核销（2026-11-02）✅
 
 > 承接「处理 5433（重建实例）」指示；探查推翻"已不存在"判断——数据目录 `/opt/homebrew/var/postgresql@18_5433` 完整（§6.3 标注的 `postgres5433` 为路径误记）。

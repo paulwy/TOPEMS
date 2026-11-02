@@ -52,3 +52,9 @@
 2. **跟踪上游**：expo（node-forge 移除）、exceljs/archiver（minimatch@3 解锁）、eslint（@eslint/config-array 锁 minimatch@3）——任一上游发版后重新审计
 3. **定期重扫**：npm 生态 `pnpm audit`（官方 registry）+ Rust 生态 `cargo audit --db`（SSH advisory-db），纳入每周缓存清理同周期
 4. 本批 19 项均无 critical，暂不阻断发布；生产 server 侧（Rust）0 漏洞
+
+## 6. 周期复核（2026-11-02 晚）
+
+- **node-forge 已收敛**：pnpm-lock.yaml 静态核对——`node-forge@1.4.0`（CVE-2022-24771/24772/24773 修复版，> 基线 1.3.x 旧链）——上次 13 条 node-forge advisory 不再适用。
+- **维持基线挂账**：minimatch 旧链（eslint 10 系 / exceljs>archiver 链，锁 3.x）、glob 旧链（9.3.4）、deepmerge 3.3.0（上游无补丁）——跨大版本 overrides 破坏构建/Excel 导出风险 > 收益，不执行。
+- **复核限制**：`registry.npmjs.org` 网络阻塞（curl 无响应）→ 在线 `pnpm audit` 全量重扫不可达，本次为 lock 静态版本核对；待网络恢复后重跑 `npm_config_registry=https://registry.npmjs.org pnpm audit --json` 复核全量 advisory 集。
