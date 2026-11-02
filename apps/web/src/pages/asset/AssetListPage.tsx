@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './AssetListPage.module.css';
 import {
   Box,
   Card,
@@ -576,7 +577,7 @@ export const AssetListPage: React.FC = () => {
   return (
     <PageContainer
       headerProps={{
-        pageIcon: <Package style={{ width: 20, height: 20 }} />,
+        pageIcon: <Package className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
       }}
       maxWidth='xl'

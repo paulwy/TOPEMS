@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import styles from './ProfileTabBar.module.css';
 import { Card, CardContent, Tabs, Tab, Avatar, IconButton, Box, Typography } from '@mui/material';
 import { User, Shield, Activity, Bell, Star, Camera, RefreshCw } from 'lucide-react';
 import type { User as UserType } from '@/api/iam';
@@ -59,7 +60,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, avatarUrl, onAvatarUpload }) 
               type='file'
               accept='image/*'
               onChange={onAvatarUpload}
-              style={{ display: 'none' }}
+              className={styles.il1}
             />
           </Box>
           <Typography

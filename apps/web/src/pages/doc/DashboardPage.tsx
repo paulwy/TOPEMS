@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './DashboardPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import {
   FileText,
@@ -217,7 +218,7 @@ const DocumentDashboardPage: React.FC = () => {
       title={i18n.t('pages.dashboard_page.k31')}
       subtitle={`${getGreeting()}，${i18n.t('pages.dashboard_page.k6')}`}
       headerProps={{
-        pageIcon: <FileText style={{ width: 20, height: 20 }} />,
+        pageIcon: <FileText className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.cyan.main} 100%)`,
       }}
       padding={false}

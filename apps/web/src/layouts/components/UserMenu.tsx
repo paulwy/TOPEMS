@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import styles from './UserMenu.module.css';
 import {
   Box,
   Avatar,
@@ -238,7 +239,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
           }}
         >
           <ListItemIcon sx={{ minWidth: 36 }}>
-            <User style={{ width: 18, height: 18 }} />
+            <User className={styles.il1} />
           </ListItemIcon>
           <ListItemText>{i18n.t('pages.user_menu.k3')}</ListItemText>
         </MenuItem>
@@ -250,7 +251,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
           }}
         >
           <ListItemIcon sx={{ minWidth: 36 }}>
-            <Settings style={{ width: 18, height: 18 }} />
+            <Settings className={styles.il2} />
           </ListItemIcon>
           <ListItemText>{i18n.t('pages.user_menu.k4')}</ListItemText>
         </MenuItem>
@@ -262,7 +263,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
           }}
         >
           <ListItemIcon sx={{ minWidth: 36 }}>
-            <HelpCircle style={{ width: 18, height: 18 }} />
+            <HelpCircle className={styles.il3} />
           </ListItemIcon>
           <ListItemText
             primary={
@@ -301,7 +302,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
           }}
         >
           <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-            <LogOut style={{ width: 18, height: 18 }} />
+            <LogOut className={styles.il4} />
           </ListItemIcon>
           <ListItemText
             sx={{
@@ -350,7 +351,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
               flexShrink: 0,
             }}
           >
-            <AlertTriangle style={{ width: 22, height: 22 }} />
+            <AlertTriangle className={styles.il5} />
           </Box>
           <Typography
             variant='h6'
@@ -388,7 +389,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
             color='error'
             size='small'
             autoFocus
-            startIcon={<LogOut style={{ width: 16, height: 16 }} />}
+            startIcon={<LogOut className={styles.il6} />}
             sx={[
               {
                 textTransform: 'none',

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './HealthManagementPage.module.css';
 import { Box, Card, CardContent, Typography, Chip, Tabs, Tab, useTheme } from '@mui/material';
 import { Heart, FileText, Users, ClipboardList, CheckSquare, ShieldAlert } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
@@ -305,25 +306,25 @@ const HealthManagementPage: React.FC = () => {
       >
         <Tab
           sx={tabStyle}
-          icon={<FileText style={{ width: 16, height: 16 }} />}
+          icon={<FileText className={styles.il1} />}
           iconPosition='start'
           label={t('ehs.health_management_page.list')}
         />
         <Tab
           sx={tabStyle}
-          icon={<ClipboardList style={{ width: 16, height: 16 }} />}
+          icon={<ClipboardList className={styles.il2} />}
           iconPosition='start'
           label={t('ehs.health_check_plan.k0')}
         />
         <Tab
           sx={tabStyle}
-          icon={<CheckSquare style={{ width: 16, height: 16 }} />}
+          icon={<CheckSquare className={styles.il3} />}
           iconPosition='start'
           label={t('ehs.health_check_record.k0')}
         />
         <Tab
           sx={tabStyle}
-          icon={<ShieldAlert style={{ width: 16, height: 16 }} />}
+          icon={<ShieldAlert className={styles.il4} />}
           iconPosition='start'
           label={t('ehs.contraindication.k0')}
         />

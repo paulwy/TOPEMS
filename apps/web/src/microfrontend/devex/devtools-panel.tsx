@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './devtools-panel.module.css';
 import {
   Box,
   Typography,
@@ -1279,7 +1280,7 @@ const DebugSessionsTab: React.FC = () => {
               <input
                 type='file'
                 accept='.json'
-                style={{ display: 'none' }}
+                className={styles.il1}
                 id='session-import'
                 onChange={(e) => {
                   const file = e.target.files?.[0];

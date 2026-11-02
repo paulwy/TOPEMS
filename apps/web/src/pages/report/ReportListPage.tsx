@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './ReportListPage.module.css';
 import { Box, Card, CardContent, Typography, useTheme } from '@mui/material';
 import {
   FileText as FileTextIcon,
@@ -191,7 +192,7 @@ const ReportListPage: React.FC = () => {
       title={i18n.t('pages.report_list_page.k15')}
       subtitle={i18n.t('pages.report_list_page.k16')}
       headerProps={{
-        pageIcon: <FileBarChart style={{ width: 20, height: 20 }} />,
+        pageIcon: <FileBarChart className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >

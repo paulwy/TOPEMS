@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './NotificationDetailPage.module.css';
 import { Box, Typography, InputLabel, Chip, Button, useTheme } from '@mui/material';
 import { Bell, Clock, MessageSquare, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
@@ -395,7 +396,7 @@ const NotificationDetailPage: React.FC = () => {
         actions={[
           {
             label: i18n.t('notification.notification_detail_page.k43'),
-            icon: <Clock style={{ width: 18, height: 18 }} />,
+            icon: <Clock className={styles.il1} />,
             onClick: handleMarkUnread,
           },
         ]}

@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './DocumentSidebar.module.css';
 import { Card, CardContent, Box, Button, Tooltip } from '@mui/material';
 import { Folder, FolderOpen, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -37,7 +38,7 @@ const DocumentSidebar: React.FC<DocumentSidebarProps> = ({
               sx={{ justifyContent: 'flex-start', width: '100%' }}
             >
               {renderFolderIcon(selectedFolderId === null)}
-              <span style={{ fontWeight: 500 }}>{t('doc.documents.all_files')}</span>
+              <span className={styles.il1}>{t('doc.documents.all_files')}</span>
             </Button>
 
             {folders.map((folder) => (
@@ -53,12 +54,7 @@ const DocumentSidebar: React.FC<DocumentSidebarProps> = ({
                   >
                     {renderFolderIcon(selectedFolderId === folder.id)}
                     <span
-                      style={{
-                        fontWeight: 500,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
+                      className={styles.il2}
                     >
                       {folder.name}
                     </span>

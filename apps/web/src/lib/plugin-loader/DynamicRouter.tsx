@@ -1,4 +1,5 @@
 import React, { useEffect, useState, Suspense, lazy } from 'react';
+import styles from './DynamicRouter.module.css';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import type { PluginManifest } from './PluginLoader';
 import { ModuleLoadingFallback, PluginLoader } from './PluginLoader';
@@ -210,11 +211,11 @@ export const DynamicRouter: React.FC = () => {
 
   if (Object.keys(errors).length > 0) {
     return (
-      <div style={{ padding: 5 }}>
+      <div className={styles.il1}>
         {Object.entries(errors).map(([path, message]) => (
           <div
             key={path}
-            style={{ color: 'error.main', marginBottom: 2.5 }}
+            className={styles.il2}
           >
             {path}: {message}
           </div>

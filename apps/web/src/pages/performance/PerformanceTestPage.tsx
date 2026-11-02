@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import styles from './PerformanceTestPage.module.css';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@topems/tokens';
 import { useTranslation } from 'react-i18next';
@@ -491,20 +492,10 @@ const PerformanceTestPage: React.FC = () => {
         }
       `}</style>
 
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div className={styles.il1}>
           <div style={{ textAlign: 'center', marginBottom: designTokens.spacing['2xl'] }}>
             <div
-              style={{
-                width: '80px',
-                height: '80px',
-                background: 'action.disabledBackground',
-                borderRadius: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 1rem',
-                backdropFilter: 'blur(10px)',
-              }}
+              className={styles.il2}
             >
               <svg
                 width='40'

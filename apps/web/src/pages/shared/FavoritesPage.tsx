@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import styles from './FavoritesPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
@@ -473,7 +474,7 @@ const FavoritesPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <Star style={{ width: 20, height: 20 }} />,
+        pageIcon: <Star className={styles.il1} />,
       }}
     >
       <Tabs

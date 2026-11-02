@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import styles from './DependencyGovernance.module.css';
 import {
   Box,
   Typography,
@@ -87,7 +88,7 @@ const StatCard: React.FC<{
               ) : (
                 <ArrowUpIcon
                   size={12}
-                  style={{ transform: 'rotate(180deg)' }}
+                  className={styles.il1}
                 />
               )}
               {trend}
@@ -158,7 +159,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
         <svg
           width='640'
           height='420'
-          style={{ display: 'block' }}
+          className={styles.il2}
         >
           <defs>
             <marker
@@ -214,7 +215,7 @@ const DependencyGraphVisualization: React.FC<{ graph: DependencyGraph }> = ({ gr
                 key={node.id}
                 onMouseEnter={() => setHoveredNode(node.id)}
                 onMouseLeave={() => setHoveredNode(null)}
-                style={{ cursor: 'pointer' }}
+                className={styles.il3}
               >
                 <rect
                   x={pos.x - 5}

@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './DesignerCanvas.module.css';
 import { Box, Chip, IconButton, Paper, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 import {
   Network as CanvasModeIcon,
@@ -105,7 +106,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
           <svg
             width={CANVAS_WIDTH}
             height={CANVAS_HEIGHT}
-            style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
+            className={styles.il1}
           >
             <defs>
               <marker
@@ -211,7 +212,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
             >
               <CanvasModeIcon
                 size={48}
-                style={{ opacity: 0.3 }}
+                className={styles.il2}
               />
               <Typography
                 color='text.secondary'

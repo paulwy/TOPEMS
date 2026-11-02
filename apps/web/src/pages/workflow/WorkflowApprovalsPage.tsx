@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './WorkflowApprovalsPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Clock,
@@ -338,10 +339,10 @@ const WorkflowApprovalsPage: React.FC = () => {
       sortable: true,
       render: (row) => (
         <div>
-          <div style={{ fontWeight: 500, color: 'var(--text-primary)', marginBottom: 2 }}>
+          <div className={styles.il1}>
             {row.title}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+          <div className={styles.il2}>
             {localizedName(row.workflowName, row.workflowNameEn)} · {row.nodeName}
           </div>
         </div>
@@ -351,20 +352,9 @@ const WorkflowApprovalsPage: React.FC = () => {
       key: 'initiator',
       header: t('workflow.approvals_page.col_initiator'),
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+        <div className={styles.il3}>
           <div
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: '50%',
-              backgroundColor: 'var(--accent-primary)',
-              color: 'var(--text-on-accent)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 12,
-              fontWeight: 600,
-            }}
+            className={styles.il4}
           >
             {row.initiator.charAt(0)}
           </div>
@@ -387,7 +377,7 @@ const WorkflowApprovalsPage: React.FC = () => {
         const config = statusConfig[row.status];
         const StatusIcon = config.icon;
         return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div className={styles.il5}>
             <StatusIcon
               size={14}
               style={{
@@ -409,7 +399,7 @@ const WorkflowApprovalsPage: React.FC = () => {
       header: t('workflow.approvals_page.col_received_at'),
       sortable: true,
       render: (row) => (
-        <span style={{ color: 'var(--text-secondary)' }}>{formatTime(row.receivedAt)}</span>
+        <span className={styles.il6}>{formatTime(row.receivedAt)}</span>
       ),
     },
     {
@@ -418,7 +408,7 @@ const WorkflowApprovalsPage: React.FC = () => {
       align: 'right',
       width: 180,
       render: (row) => (
-        <div style={{ display: 'flex', gap: 'var(--space-1)', justifyContent: 'flex-end' }}>
+        <div className={styles.il7}>
           <Button
             size='sm'
             variant='ghost'
@@ -448,7 +438,7 @@ const WorkflowApprovalsPage: React.FC = () => {
                   setSelectedTask(row);
                   setRejectDialogOpen(true);
                 }}
-                style={{ color: 'var(--error-500)' }}
+                className={styles.il8}
               >
                 {t('workflow.workflow_approvals_page.k14')}
               </Button>
@@ -469,19 +459,14 @@ const WorkflowApprovalsPage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={styles.il9}
             >
               <Input
                 placeholder={t('workflow.approvals_page.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 240 }}
+                className={styles.il10}
               />
               <Select
                 value={priorityFilter}
@@ -494,10 +479,10 @@ const WorkflowApprovalsPage: React.FC = () => {
                   { value: 'medium', label: t('workflow.approvals_page.priority_medium') },
                   { value: 'low', label: t('workflow.approvals_page.priority_low') },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il11}
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div className={styles.il12}>
               <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
@@ -539,7 +524,7 @@ const WorkflowApprovalsPage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredTasks.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il13}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -567,11 +552,11 @@ const WorkflowApprovalsPage: React.FC = () => {
         size='lg'
       >
         {selectedTask && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div className={styles.il14}>
             {/* 基本信息 */}
             <Card title={t('workflow.approvals_page.card_basic')}>
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
+                className={styles.il15}
               >
                 <InfoItem
                   label={t('workflow.approvals_page.col_subject')}
@@ -628,14 +613,14 @@ const WorkflowApprovalsPage: React.FC = () => {
 
             {/* 审批内容 */}
             <Card title={t('workflow.approvals_page.card_content')}>
-              <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              <p className={styles.il16}>
                 {selectedTask.description || t('workflow.approvals_page.no_description')}
               </p>
             </Card>
 
             {/* 审批流程 */}
             <Card title={t('workflow.approvals_page.card_flow')}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+              <div className={styles.il17}>
                 <FlowStep
                   icon={<User size={16} />}
                   title={t('workflow.approvals_page.flow_start_title')}
@@ -676,12 +661,12 @@ const WorkflowApprovalsPage: React.FC = () => {
 
             {/* 操作按钮 */}
             {selectedTask.status === 'pending' && (
-              <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
+              <div className={styles.il18}>
                 <Button
                   variant='ghost'
                   leftIcon={<XCircle size={16} />}
                   onClick={() => setRejectDialogOpen(true)}
-                  style={{ color: 'var(--error-500)' }}
+                  className={styles.il19}
                 >
                   {t('workflow.workflow_approvals_page.k14')}
                 </Button>
@@ -734,8 +719,8 @@ const WorkflowApprovalsPage: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+        <div className={styles.il20}>
+          <p className={styles.il21}>
             {t('workflow.approvals_page.reject_reason_label')}
           </p>
           <textarea
@@ -743,17 +728,7 @@ const WorkflowApprovalsPage: React.FC = () => {
             onChange={(e) => setRejectReason(e.target.value)}
             placeholder={t('workflow.approvals_page.reject_reason_placeholder')}
             rows={4}
-            style={{
-              width: '100%',
-              padding: 'var(--space-3)',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-default)',
-              backgroundColor: 'var(--surface-1)',
-              color: 'var(--text-primary)',
-              fontSize: 14,
-              resize: 'vertical',
-              fontFamily: 'inherit',
-            }}
+            className={styles.il22}
           />
         </div>
       </Modal>
@@ -769,8 +744,8 @@ const WorkflowApprovalsPage: React.FC = () => {
 // 信息项组件
 const InfoItem: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
   <div>
-    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>{label}</div>
-    <div style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 500 }}>{value}</div>
+    <div className={styles.il23}>{label}</div>
+    <div className={styles.il24}>{value}</div>
   </div>
 );
 
@@ -782,7 +757,7 @@ const FlowStep: React.FC<{
   status: 'completed' | 'current' | 'pending';
   time: string;
 }> = ({ icon, title, description, status, time }) => (
-  <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'flex-start' }}>
+  <div className={styles.il25}>
     <div
       style={{
         width: 32,
@@ -808,12 +783,12 @@ const FlowStep: React.FC<{
     >
       {icon}
     </div>
-    <div style={{ flex: 1 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{title}</span>
-        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{time}</span>
+    <div className={styles.il26}>
+      <div className={styles.il27}>
+        <span className={styles.il28}>{title}</span>
+        <span className={styles.il29}>{time}</span>
       </div>
-      <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>
+      <div className={styles.il30}>
         {description}
       </div>
     </div>

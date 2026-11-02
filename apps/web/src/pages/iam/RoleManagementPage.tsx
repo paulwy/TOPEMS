@@ -3,6 +3,7 @@
 // - 旧的兼容实现位于 src/iam/ 目录（由 App 根路由 /iam 访问，保留向后兼容）
 // - 如非必要，请优先修改 pages/iam/ 中的新页面版本
 import React, { useMemo, useState } from 'react';
+import css from './RoleManagementPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Edit2, Key, Plus, RefreshCw, Search, Shield, Trash2 } from 'lucide-react';
 
@@ -230,9 +231,9 @@ const RoleManagementPage: React.FC = () => {
           <div style={styles.inlineRow}>
             <Shield
               size={16}
-              style={{ color: 'var(--accent-primary)' }}
+              className={css.il1}
             />
-            <span style={{ fontWeight: 'var(--font-semibold)', color: 'var(--text-primary)' }}>
+            <span className={css.il2}>
               {row.name}
             </span>
           </div>
@@ -242,14 +243,14 @@ const RoleManagementPage: React.FC = () => {
         key: 'description',
         header: i18n.t('iam.role_management_page.k20'),
         render: (row) => (
-          <span style={{ color: 'var(--text-secondary)' }}>{row.description || '-'}</span>
+          <span className={css.il3}>{row.description || '-'}</span>
         ),
       },
       {
         key: 'created_at',
         header: i18n.t('iam.role_management_page.k21'),
         render: (row) => (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)' }}>
+          <span className={css.il4}>
             {formatDateTime(row.created_at)}
           </span>
         ),
@@ -259,7 +260,7 @@ const RoleManagementPage: React.FC = () => {
         header: i18n.t('iam.role_management_page.k22'),
         align: 'right',
         render: (row) => (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
+          <div className={css.il5}>
             <Button
               variant='ghost'
               size='sm'
@@ -294,9 +295,9 @@ const RoleManagementPage: React.FC = () => {
   const toolbar = (
     <>
       <div
-        style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'flex-end' }}
+        className={css.il6}
       >
-        <div style={{ width: '260px' }}>
+        <div className={css.il7}>
           <Input
             placeholder={i18n.t('iam.role_management_page.k23')}
             value={search}
@@ -304,12 +305,12 @@ const RoleManagementPage: React.FC = () => {
             leftIcon={
               <Search
                 size={16}
-                style={{ color: 'var(--text-tertiary)' }}
+                className={css.il8}
               />
             }
           />
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+        <div className={css.il9}>
           <FilterChip
             label={i18n.t('iam.role_management.all_with_count', { count: data?.total ?? 0 })}
             active={!debouncedSearch}
@@ -325,7 +326,7 @@ const RoleManagementPage: React.FC = () => {
           )}
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+      <div className={css.il10}>
         <Button
           variant='secondary'
           leftIcon={<RefreshCw size={16} />}
@@ -567,22 +568,15 @@ const PermissionsDrawer: React.FC<{
           ))}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+        <div className={css.il11}>
           {Object.entries(groupedPermissions).map(([category, perms]) => (
             <div key={category}>
               <h4
-                style={{
-                  margin: '0 0 var(--space-3) 0',
-                  fontSize: 'var(--text-xs)',
-                  fontWeight: 'var(--font-bold)',
-                  letterSpacing: 'var(--tracking-wide)',
-                  textTransform: 'uppercase',
-                  color: 'var(--text-tertiary)',
-                }}
+                className={css.il12}
               >
                 {category}
               </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+              <div className={css.il13}>
                 {perms.map((perm) => {
                   const hasPermission = rolePermissions.some((p) => p.id === perm.id);
                   const isToggling = togglingPermissionId === perm.id;
@@ -600,13 +594,10 @@ const PermissionsDrawer: React.FC<{
                           : undefined,
                       }}
                     >
-                      <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className={css.il14}>
                         <div style={styles.inlineRow}>
                           <span
-                            style={{
-                              fontWeight: 'var(--font-semibold)',
-                              color: 'var(--text-primary)',
-                            }}
+                            className={css.il15}
                           >
                             {perm.name}
                           </span>
@@ -618,22 +609,13 @@ const PermissionsDrawer: React.FC<{
                         </div>
                         {perm.description && (
                           <p
-                            style={{
-                              margin: 'var(--space-1) 0 0',
-                              color: 'var(--text-secondary)',
-                              fontSize: 'var(--text-sm)',
-                            }}
+                            className={css.il16}
                           >
                             {perm.description}
                           </p>
                         )}
                         <p
-                          style={{
-                            margin: 'var(--space-1) 0 0',
-                            color: 'var(--text-tertiary)',
-                            fontSize: 'var(--text-xs)',
-                            fontFamily: 'var(--font-mono)',
-                          }}
+                          className={css.il17}
                         >
                           {perm.code}
                         </p>
@@ -657,11 +639,7 @@ const PermissionsDrawer: React.FC<{
 
           {permissions.length === 0 && !loading && (
             <div
-              style={{
-                textAlign: 'center',
-                padding: 'var(--space-8)',
-                color: 'var(--text-secondary)',
-              }}
+              className={css.il18}
             >
               {i18n.t('iam.role_management_page.k48')}
             </div>

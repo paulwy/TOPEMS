@@ -1,0 +1,21 @@
+/* ./pages/rd/RsExperimentDetailPage.tsx inline-style migration (auto) */
+
+.il1 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+}
+
+.il2 {
+  margin-bottom: 12px;
+}
+
+.il3 {
+  padding: 12px;
+}
+
+.il4 {
+  white-space: pre-wrap;
+  word-break: break-all;
+}

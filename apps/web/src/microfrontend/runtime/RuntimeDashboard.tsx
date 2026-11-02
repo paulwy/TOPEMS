@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './RuntimeDashboard.module.css';
 import i18n from '@/i18n';
 /**
  * V45.0 Track F: 微前端终极形态 — 运行时控制台
@@ -1273,9 +1274,9 @@ const DesignSystemTab: React.FC = () => {
                 sx={{ mb: 0.5 }}
               >
                 <span style={{ color: 'primary.300' }}>{v.name}</span>
-                <span style={{ color: 'text.secondary' }}>: </span>
+                <span className={styles.il1}>: </span>
                 <span style={{ color: 'warning.400' }}>{v.value}</span>
-                <span style={{ color: 'text.secondary' }}>;</span>
+                <span className={styles.il2}>;</span>
               </Box>
             ))}
           </Box>
@@ -1513,7 +1514,7 @@ const LifecycleTab: React.FC = () => {
                   <Typography sx={{ fontSize: 9, color: 'text.secondary' }}>
                     {flow.label}
                   </Typography>
-                  <span style={{ color: 'text.secondary' }}>→</span>
+                  <span className={styles.il3}>→</span>
                 </Box>
                 <Chip
                   size='small'

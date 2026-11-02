@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import styles from './MasterQualityPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Gauge, ShieldCheck, ListChecks, Sparkles } from 'lucide-react';
@@ -459,25 +460,25 @@ const MasterQualityPage: React.FC = () => {
       >
         <Tab
           sx={tabStyle}
-          icon={<Gauge style={{ width: 16, height: 16 }} />}
+          icon={<Gauge className={styles.il1} />}
           iconPosition='start'
           label={t('master.quality.k32')}
         />
         <Tab
           sx={tabStyle}
-          icon={<ListChecks style={{ width: 16, height: 16 }} />}
+          icon={<ListChecks className={styles.il2} />}
           iconPosition='start'
           label={t('master.quality.k33')}
         />
         <Tab
           sx={tabStyle}
-          icon={<ShieldCheck style={{ width: 16, height: 16 }} />}
+          icon={<ShieldCheck className={styles.il3} />}
           iconPosition='start'
           label={t('master.quality.k34')}
         />
         <Tab
           sx={tabStyle}
-          icon={<Sparkles style={{ width: 16, height: 16 }} />}
+          icon={<Sparkles className={styles.il4} />}
           iconPosition='start'
           label={t('master.quality.k35')}
         />

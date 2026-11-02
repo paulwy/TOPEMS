@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import styles from './MasterVersioningPage.module.css';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { GitBranch, History, ShieldCheck, ClipboardList, KeyRound } from 'lucide-react';
@@ -514,31 +515,31 @@ const MasterVersioningPage: React.FC = () => {
       >
         <Tab
           sx={tabStyle}
-          icon={<History style={{ width: 16, height: 16 }} />}
+          icon={<History className={styles.il1} />}
           iconPosition='start'
           label={t('master.versioning.k36')}
         />
         <Tab
           sx={tabStyle}
-          icon={<GitBranch style={{ width: 16, height: 16 }} />}
+          icon={<GitBranch className={styles.il2} />}
           iconPosition='start'
           label={t('master.versioning.k37')}
         />
         <Tab
           sx={tabStyle}
-          icon={<ClipboardList style={{ width: 16, height: 16 }} />}
+          icon={<ClipboardList className={styles.il3} />}
           iconPosition='start'
           label={t('master.versioning.k38')}
         />
         <Tab
           sx={tabStyle}
-          icon={<KeyRound style={{ width: 16, height: 16 }} />}
+          icon={<KeyRound className={styles.il4} />}
           iconPosition='start'
           label={t('master.versioning.k39')}
         />
         <Tab
           sx={tabStyle}
-          icon={<ShieldCheck style={{ width: 16, height: 16 }} />}
+          icon={<ShieldCheck className={styles.il5} />}
           iconPosition='start'
           label={t('master.versioning.k40')}
         />

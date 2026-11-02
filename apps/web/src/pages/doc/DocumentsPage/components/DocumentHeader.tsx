@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './DocumentHeader.module.css';
 import { Box, Typography, TextField, Tooltip, Button } from '@mui/material';
 import { ChevronLeft, Search, Plus, Upload, Filter, Grid3X3, List } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -167,7 +168,7 @@ const DocumentHeader: React.FC<DocumentHeaderProps> = ({
             <input
               ref={fileInputRef}
               type='file'
-              style={{ display: 'none' }}
+              className={styles.il1}
               onChange={onFileUpload}
               accept='*/*'
             />

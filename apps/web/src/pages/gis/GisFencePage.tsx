@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import styles from './GisFencePage.module.css';
 import {
   Box,
   Card,
@@ -337,28 +338,28 @@ export const GisFencePage: React.FC = () => {
       id: 'total',
       title: t('gis.gis_fence_page.k14'),
       value: fences.length,
-      icon: <Shield style={{ width: 24, height: 24 }} />,
+      icon: <Shield className={styles.il1} />,
       color: 'primary',
     },
     {
       id: 'active',
       title: t('gis.gis_fence_page.k15'),
       value: fences.filter((f) => f.status === 'active').length,
-      icon: <CheckCircle style={{ width: 24, height: 24 }} />,
+      icon: <CheckCircle className={styles.il2} />,
       color: 'success',
     },
     {
       id: 'device_points',
       title: t('gis.gis_fence_page.k16'),
       value: statistics?.device_points ?? 0,
-      icon: <MapPin style={{ width: 24, height: 24 }} />,
+      icon: <MapPin className={styles.il3} />,
       color: 'warning',
     },
     {
       id: 'pipelines',
       title: t('gis.gis_fence_page.k17'),
       value: statistics?.pipelines ?? 0,
-      icon: <Route style={{ width: 24, height: 24 }} />,
+      icon: <Route className={styles.il4} />,
       color: 'error',
     },
   ];

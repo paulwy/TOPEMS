@@ -1,9 +1,10 @@
 import type { EntitySchema } from '@/schema';
+import styles from './billing.module.css';
 import i18n from '@/i18n';
 
 const formatCurrency = (amount: number | undefined) => {
   return (
-    <span style={{ fontWeight: 500, fontFamily: 'monospace' }}>
+    <span className={styles.il1}>
       ¥{(amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
     </span>
   );

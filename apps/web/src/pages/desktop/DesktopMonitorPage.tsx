@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import styles from './DesktopMonitorPage.module.css';
 import { useTranslation } from 'react-i18next';
 import { ensureNamespacesLoaded } from '@/i18n';
 import {
@@ -105,7 +106,7 @@ const DesktopMonitorPage = () => {
           <Monitor
             size={64}
             color={theme.palette.text.secondary}
-            style={{ marginBottom: 16 }}
+            className={styles.il1}
           />
           <Typography
             variant='h5'

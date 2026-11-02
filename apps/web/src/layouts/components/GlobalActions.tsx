@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './GlobalActions.module.css';
 import { Stack, Tooltip, IconButton } from '@mui/material';
 import { Search, Sparkles } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -38,7 +39,7 @@ export const GlobalActions: React.FC<GlobalActionsProps> = ({ onSearchClick }) =
           onClick={onSearchClick}
           sx={buttonSx}
         >
-          <Search style={{ width: 18, height: 18 }} />
+          <Search className={styles.il1} />
         </IconButton>
       </Tooltip>
 
@@ -56,7 +57,7 @@ export const GlobalActions: React.FC<GlobalActionsProps> = ({ onSearchClick }) =
           }}
           sx={{ ...buttonSx, color: 'primary.main' }}
         >
-          <Sparkles style={{ width: 18, height: 18 }} />
+          <Sparkles className={styles.il2} />
         </IconButton>
       </Tooltip>
     </Stack>

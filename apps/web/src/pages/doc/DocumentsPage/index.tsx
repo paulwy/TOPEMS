@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './index.module.css';
 import { CardListTemplate } from '@/components/templates';
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import {
@@ -623,7 +624,7 @@ const DocumentsPage: React.FC = () => {
               <input
                 ref={fileInputRef}
                 type='file'
-                style={{ display: 'none' }}
+                className={styles.il1}
                 onChange={handleFileUpload}
                 accept='*/*'
               />

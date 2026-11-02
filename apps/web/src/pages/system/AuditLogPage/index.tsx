@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import styles from './index.module.css';
 import {
   FileText,
   Download,
@@ -182,7 +183,7 @@ const AuditLogPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Clock
               size={14}
-              style={{ opacity: 0.5 }}
+              className={styles.il1}
             />
             <Typography
               variant='body2'
@@ -235,7 +236,7 @@ const AuditLogPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Monitor
               size={14}
-              style={{ opacity: 0.5 }}
+              className={styles.il2}
             />
             {row.entity_type}
           </Box>

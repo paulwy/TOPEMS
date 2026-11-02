@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import styles from './CategoryManagementPage.module.css';
 import {
   Box,
   Drawer,
@@ -304,7 +305,7 @@ export const CategoryManagementPage: React.FC = () => {
   return (
     <PageContainer
       headerProps={{
-        pageIcon: <Folder style={{ width: 20, height: 20 }} />,
+        pageIcon: <Folder className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
       }}
       maxWidth='xl'

@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import styles from './TransferPage.module.css';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { Building2, MapPin, Calendar } from 'lucide-react';
@@ -118,7 +119,7 @@ const TransferPage: React.FC = () => {
       id: 'asset',
       title: t('asset.transfer_page.info'),
       description: t('asset.transfer_page.transfer'),
-      icon: <Building2 style={{ width: 18, height: 18 }} />,
+      icon: <Building2 className={styles.il1} />,
       collapsible: false,
       color: 'primary',
       fields: [
@@ -139,7 +140,7 @@ const TransferPage: React.FC = () => {
       id: 'department',
       title: t('asset.transfer_page.info_1'),
       description: t('asset.transfer_page.description'),
-      icon: <MapPin style={{ width: 18, height: 18 }} />,
+      icon: <MapPin className={styles.il2} />,
       collapsible: false,
       color: 'secondary',
       fields: [
@@ -183,7 +184,7 @@ const TransferPage: React.FC = () => {
       id: 'transfer',
       title: t('asset.transfer_page.info_2'),
       description: t('asset.transfer_page.responsible_person'),
-      icon: <Calendar style={{ width: 18, height: 18 }} />,
+      icon: <Calendar className={styles.il3} />,
       collapsible: false,
       color: 'info',
       fields: [

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import styles from './UserManagementPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Edit2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 
@@ -158,18 +159,18 @@ const UserManagementPage: React.FC = () => {
         key: 'username',
         header: i18n.t('iam.user_management_page.k7'),
         render: (row) => (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <div className={styles.il1}>
             <Avatar
               name={row.full_name || row.username}
               size='sm'
               status={row.isactive ? 'online' : 'offline'}
             />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-              <span style={{ fontWeight: 'var(--font-semibold)', color: 'var(--text-primary)' }}>
+            <div className={styles.il2}>
+              <span className={styles.il3}>
                 {row.username}
               </span>
               {row.full_name && (
-                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+                <span className={styles.il4}>
                   {row.full_name}
                 </span>
               )}
@@ -197,7 +198,7 @@ const UserManagementPage: React.FC = () => {
         key: 'created_at',
         header: i18n.t('iam.user_management_page.k10'),
         render: (row) => (
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)' }}>
+          <span className={styles.il5}>
             {formatDateTime(row.created_at)}
           </span>
         ),
@@ -207,7 +208,7 @@ const UserManagementPage: React.FC = () => {
         header: i18n.t('iam.user_management_page.k11'),
         align: 'right',
         render: (row) => (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
+          <div className={styles.il6}>
             <Button
               variant='ghost'
               size='sm'
@@ -244,9 +245,9 @@ const UserManagementPage: React.FC = () => {
   const toolbar = (
     <>
       <div
-        style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'flex-end' }}
+        className={styles.il7}
       >
-        <div style={{ width: '260px' }}>
+        <div className={styles.il8}>
           <Input
             placeholder={i18n.t('iam.user_management_page.k12')}
             value={search}
@@ -254,12 +255,12 @@ const UserManagementPage: React.FC = () => {
             leftIcon={
               <Search
                 size={16}
-                style={{ color: 'var(--text-tertiary)' }}
+                className={styles.il9}
               />
             }
           />
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+        <div className={styles.il10}>
           <FilterChip
             label={i18n.t('iam.user_management.filter_all')}
             active={statusFilter === 'all'}
@@ -280,7 +281,7 @@ const UserManagementPage: React.FC = () => {
           />
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+      <div className={styles.il11}>
         <Button
           variant='secondary'
           leftIcon={<RefreshCw size={16} />}
@@ -323,7 +324,7 @@ const UserManagementPage: React.FC = () => {
       />
 
       {allUsers.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il12}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -458,9 +459,9 @@ const UserDrawer: React.FC<{
         </>
       }
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      <div className={styles.il13}>
         <Card>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div className={styles.il14}>
             <Input
               label={i18n.t('iam.user_management_page.k28')}
               value={formData.username}

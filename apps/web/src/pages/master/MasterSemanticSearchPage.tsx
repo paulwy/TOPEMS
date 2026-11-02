@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import styles from './MasterSemanticSearchPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Search, Share2, Tag } from 'lucide-react';
@@ -347,19 +348,19 @@ const MasterSemanticSearchPage: React.FC = () => {
       >
         <Tab
           sx={tabStyle}
-          icon={<Search style={{ width: 16, height: 16 }} />}
+          icon={<Search className={styles.il1} />}
           iconPosition='start'
           label={t('master.semanticSearch.k25')}
         />
         <Tab
           sx={tabStyle}
-          icon={<Share2 style={{ width: 16, height: 16 }} />}
+          icon={<Share2 className={styles.il2} />}
           iconPosition='start'
           label={t('master.semanticSearch.k26')}
         />
         <Tab
           sx={tabStyle}
-          icon={<Tag style={{ width: 16, height: 16 }} />}
+          icon={<Tag className={styles.il3} />}
           iconPosition='start'
           label={t('master.semanticSearch.k27')}
         />

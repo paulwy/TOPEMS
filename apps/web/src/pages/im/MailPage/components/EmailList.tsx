@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './EmailList.module.css';
 import {
   Box,
   Button,
@@ -236,7 +237,7 @@ const EmailList: React.FC<EmailListProps> = ({
               <Mail
                 size={48}
                 color='text.disabled'
-                style={{ margin: '0 auto 12px' }}
+                className={styles.il1}
               />
               <Typography sx={{ color: 'grey.500' }}>{t('im.email_list.k6')}</Typography>
             </Box>

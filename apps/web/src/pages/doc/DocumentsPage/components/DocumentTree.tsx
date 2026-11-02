@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './DocumentTree.module.css';
 import { Card, CardContent, Box, Button, Tooltip } from '@mui/material';
 import { Folder, FolderOpen, Trash2 } from 'lucide-react';
 import type { Folder as FolderType } from '@/api/doc';
@@ -32,7 +33,7 @@ export const DocumentTree: React.FC<DocumentTreeProps> = ({
               ) : (
                 <Folder sx={{ width: 20, height: 20, mr: 1.5 }} />
               )}
-              <span style={{ fontWeight: 500 }}>{i18n.t('pages.document_tree.k0')}</span>
+              <span className={styles.il1}>{i18n.t('pages.document_tree.k0')}</span>
             </Button>
 
             {folders.map((folder) => (
@@ -52,12 +53,7 @@ export const DocumentTree: React.FC<DocumentTreeProps> = ({
                       <Folder sx={{ width: 20, height: 20, mr: 1.5 }} />
                     )}
                     <span
-                      style={{
-                        fontWeight: 500,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
+                      className={styles.il2}
                     >
                       {folder.name}
                     </span>

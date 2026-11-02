@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import styles from './EhsHazardDetailPage.module.css';
 import { apiLogger } from '@/utils/logger';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -702,7 +703,7 @@ const EhsHazardDetailPage: React.FC = () => {
         actions={[
           {
             label: t('ehs.ehs_hazard_detail_page.add_control_measure'),
-            icon: <Plus style={{ width: 18, height: 18 }} />,
+            icon: <Plus className={styles.il1} />,
             variant: 'outlined',
             onClick: () => setShowControlModal(true),
           },

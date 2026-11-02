@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import styles from './SecurityCenter.module.css';
 import {
   Box,
   Typography,
@@ -400,7 +401,7 @@ const ScanHistoryList: React.FC<{ history: ScanHistoryEntry[] }> = ({ history })
       <Paper sx={{ p: 4, textAlign: 'center' }}>
         <ClockIcon
           size={48}
-          style={{ opacity: 0.3, marginBottom: 16 }}
+          className={styles.il1}
         />
         <Typography color='text.secondary'>
           {i18n.t('microfrontend.security_center.k25')}
@@ -592,7 +593,7 @@ const SecurityCenter: React.FC<SecurityCenterProps> = () => {
             scanning ? (
               <RefreshIcon
                 size={18}
-                style={{ animation: 'spin 1s linear infinite' }}
+                className={styles.il2}
               />
             ) : (
               <ZapIcon size={18} />

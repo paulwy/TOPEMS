@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import styles from './ObservabilityPanel.module.css';
 import {
   Box,
   Typography,
@@ -302,7 +303,7 @@ const ObservabilityPanel: React.FC = () => {
                           <span>
                             <ClockIcon
                               size={10}
-                              style={{ display: 'inline', marginRight: 2 }}
+                              className={styles.il1}
                             />
                             {i18n.t('microfrontend.observability_panel.k4')}:{' '}
                             {formatDurationShort(m.whiteScreenTime)}
@@ -531,7 +532,7 @@ const ObservabilityPanel: React.FC = () => {
                           <span>
                             <TrendingUpIcon
                               size={10}
-                              style={{ display: 'inline', marginRight: 2 }}
+                              className={styles.il2}
                             />
                             {i18n.t('microfrontend.observability_panel.k13')}:{' '}
                             {formatDurationShort(s.averageDuration)}

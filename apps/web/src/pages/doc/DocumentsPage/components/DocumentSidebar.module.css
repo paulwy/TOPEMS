@@ -1,0 +1,12 @@
+/* ./pages/doc/DocumentsPage/components/DocumentSidebar.tsx inline-style migration (auto) */
+
+.il1 {
+  font-weight: 500px;
+}
+
+.il2 {
+  font-weight: 500px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

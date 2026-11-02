@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './SrmFinancePage.module.css';
 import { Box, Grid, useTheme } from '@mui/material';
 import { DollarSign, CreditCard, Receipt, TrendingUp } from 'lucide-react';
 import { srmApi } from '@/api/srm';
@@ -181,7 +182,7 @@ const SrmFinancePage: React.FC = () => {
           <MetricCard
             title={i18n.t('pages.srm_finance_page.k14')}
             value={stats.totalRecords}
-            icon={<Receipt style={{ width: 24, height: 24 }} />}
+            icon={<Receipt className={styles.il1} />}
             gradient={['success.main', 'success.dark']}
             subtitle={`${stats.orders}${i18n.t('pages.srm_finance_page.k0')}${stats.contracts}${i18n.t('pages.srm_finance_page.k1')}`}
             trend='neutral'
@@ -191,7 +192,7 @@ const SrmFinancePage: React.FC = () => {
           <MetricCard
             title={i18n.t('pages.srm_finance_page.k15')}
             value={stats.orders}
-            icon={<CreditCard style={{ width: 24, height: 24 }} />}
+            icon={<CreditCard className={styles.il2} />}
             gradient={['primary.main', theme.palette.primary.dark]}
             subtitle={i18n.t('pages.srm_finance_page.k16')}
             trend='neutral'
@@ -201,7 +202,7 @@ const SrmFinancePage: React.FC = () => {
           <MetricCard
             title={i18n.t('pages.srm_finance_page.k17')}
             value={stats.contracts}
-            icon={<Receipt style={{ width: 24, height: 24 }} />}
+            icon={<Receipt className={styles.il3} />}
             gradient={[theme.palette.teal.main, theme.palette.teal.dark]}
             subtitle={i18n.t('pages.srm_finance_page.k18')}
             trend='neutral'
@@ -211,7 +212,7 @@ const SrmFinancePage: React.FC = () => {
           <MetricCard
             title={i18n.t('pages.srm_finance_page.k19')}
             value={`¥${stats.totalAmount.toLocaleString()}`}
-            icon={<DollarSign style={{ width: 24, height: 24 }} />}
+            icon={<DollarSign className={styles.il4} />}
             gradient={[theme.palette.secondary.main, theme.palette.secondary.dark]}
             subtitle={i18n.t('pages.srm_finance_page.k20')}
             trend='neutral'
@@ -221,7 +222,7 @@ const SrmFinancePage: React.FC = () => {
           <MetricCard
             title={i18n.t('pages.srm_finance_page.k21')}
             value={`¥${stats.pendingAmount.toLocaleString()}`}
-            icon={<TrendingUp style={{ width: 24, height: 24 }} />}
+            icon={<TrendingUp className={styles.il5} />}
             gradient={['warning.main', theme.palette.warning.dark]}
             subtitle={i18n.t('pages.srm_finance_page.k22')}
             trend='neutral'
@@ -231,7 +232,7 @@ const SrmFinancePage: React.FC = () => {
           <MetricCard
             title={i18n.t('pages.srm_finance_page.k23')}
             value={`¥${stats.completedAmount.toLocaleString()}`}
-            icon={<DollarSign style={{ width: 24, height: 24 }} />}
+            icon={<DollarSign className={styles.il6} />}
             gradient={['success.main', 'success.dark']}
             subtitle={i18n.t('pages.srm_finance_page.k24')}
             trend='neutral'

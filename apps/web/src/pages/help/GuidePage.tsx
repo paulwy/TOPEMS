@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import styles from './GuidePage.module.css';
 import {
   Box,
   Typography,
@@ -179,7 +180,7 @@ export const GuidePage: React.FC = () => {
           >
             <ArrowLeft
               size={16}
-              style={{ marginRight: 8 }}
+              className={styles.il1}
             />
             {i18n.t('pages.guide_page.k2')}
           </Button>

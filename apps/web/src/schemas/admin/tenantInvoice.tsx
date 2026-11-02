@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './tenantInvoice.module.css';
 import { Download } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
 import type { RowAction } from '@/components/templates';
@@ -6,7 +7,7 @@ import i18n from '@/i18n';
 
 const formatCurrency = (amount: number | undefined) => {
   return (
-    <span style={{ fontWeight: 600 }}>
+    <span className={styles.il1}>
       ¥{(amount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
     </span>
   );

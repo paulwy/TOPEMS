@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './DocumentList.module.css';
 import {
   Card,
   CardContent,
@@ -400,9 +401,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                       <tr
                         key={item.id}
                         onClick={() => onSelectFolder(item.id)}
-                        style={{
-                          cursor: 'pointer',
-                        }}
+                        className={styles.il1}
                       >
                         <td
                           style={{
@@ -484,7 +483,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
                       <tr
                         key={item.id}
                         onClick={() => navigate(DOC_PATHS.documentDetail.replace(':id', item.id))}
-                        style={{ cursor: 'pointer' }}
+                        className={styles.il2}
                       >
                         <td
                           style={{

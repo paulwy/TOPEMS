@@ -1,0 +1,75 @@
+/* ./pages/iam/UserManagementPage.tsx inline-style migration (auto) */
+
+.il1 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.il2 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.il3 {
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.il4 {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.il5 {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.il6 {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.il7 {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.il8 {
+  width: 260px;
+}
+
+.il9 {
+  color: var(--text-tertiary);
+}
+
+.il10 {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.il11 {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.il12 {
+  margin-top: var(--space-4);
+}
+
+.il13 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.il14 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}

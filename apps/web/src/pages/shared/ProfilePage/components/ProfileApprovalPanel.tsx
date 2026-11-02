@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './ProfileApprovalPanel.module.css';
 import { Box, Typography, Button, CircularProgress, Switch, Chip, useTheme } from '@mui/material';
 import {
   Clock,
@@ -403,7 +404,7 @@ const ProfileApprovalPanel: React.FC<ProfileApprovalPanelProps> = ({
                   >
                     <Icon
                       size={24}
-                      style={{ color: 'common.white' }}
+                      className={styles.il1}
                     />
                   </Box>
                   <Typography

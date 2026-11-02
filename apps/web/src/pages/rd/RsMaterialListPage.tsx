@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
+import styles from './RsMaterialListPage.module.css';
 import { Box, Card, CardContent, Typography } from '@mui/material';
 import { Package, Edit, Trash2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -224,7 +225,7 @@ const RsMaterialListPage: React.FC = () => {
       </Box>
       <input
         accept='.csv'
-        style={{ display: 'none' }}
+        className={styles.il1}
         id='import-material-file'
         type='file'
         onChange={handleImport}

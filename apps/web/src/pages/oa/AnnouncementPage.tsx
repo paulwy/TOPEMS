@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './AnnouncementPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
@@ -273,35 +274,24 @@ const AnnouncementPage: React.FC = () => {
       render: (row) => (
         <div>
           <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--space-2)',
-              marginBottom: 2,
-            }}
+            className={styles.il1}
           >
             {row.priority === 'high' && <Tag variant='error'>{t('oa.announcement_page.k18')}</Tag>}
-            <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{row.title}</span>
+            <span className={styles.il2}>{row.title}</span>
           </div>
           <div
-            style={{
-              fontSize: 12,
-              color: 'var(--text-secondary)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-            }}
+            className={styles.il3}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span className={styles.il4}>
               <User size={12} />
               {row.author}
             </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span className={styles.il5}>
               <Calendar size={12} />
               {formatTime(row.created_at)}
             </span>
             {row.views !== undefined && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span className={styles.il6}>
                 <Eye size={12} />
                 {row.views}
               </span>
@@ -334,7 +324,7 @@ const AnnouncementPage: React.FC = () => {
       align: 'right',
       width: 150,
       render: (row) => (
-        <div style={{ display: 'flex', gap: 'var(--space-1)', justifyContent: 'flex-end' }}>
+        <div className={styles.il7}>
           <Button
             size='sm'
             variant='ghost'
@@ -368,7 +358,7 @@ const AnnouncementPage: React.FC = () => {
             variant='ghost'
             leftIcon={<Trash2 size={14} />}
             onClick={() => deleteMutation.mutate(row.id)}
-            style={{ color: 'var(--error-500)' }}
+            className={styles.il8}
           >
             {t('oa.announcement_page.k27')}
           </Button>
@@ -387,19 +377,14 @@ const AnnouncementPage: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={styles.il9}
             >
               <Input
                 placeholder={t('oa.announcement_page.k3')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 240 }}
+                className={styles.il10}
               />
               <Select
                 value={categoryFilter}
@@ -412,10 +397,10 @@ const AnnouncementPage: React.FC = () => {
                   { value: 'activity', label: t('oa.announcement_page.k8') },
                   { value: 'other', label: t('oa.announcement_page.k9') },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il11}
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div className={styles.il12}>
               <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
@@ -455,7 +440,7 @@ const AnnouncementPage: React.FC = () => {
       </ListPageTemplate>
 
       {filteredAnnouncements.length > 0 && (
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il13}>
           <Pagination
             current={currentPage}
             total={totalPages}
@@ -483,16 +468,11 @@ const AnnouncementPage: React.FC = () => {
         size='lg'
       >
         {selectedAnnouncement && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div className={styles.il14}>
             {/* 标题区 */}
             <div>
               <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--space-2)',
-                  marginBottom: 'var(--space-2)',
-                }}
+                className={styles.il15}
               >
                 {selectedAnnouncement.priority === 'high' && (
                   <Tag variant='error'>{t('oa.announcement_page.k18')}</Tag>
@@ -509,7 +489,7 @@ const AnnouncementPage: React.FC = () => {
                 </Badge>
               </div>
               <h2
-                style={{ margin: 0, fontSize: 20, fontWeight: 600, color: 'var(--text-primary)' }}
+                className={styles.il16}
               >
                 {selectedAnnouncement.title}
               </h2>
@@ -517,28 +497,20 @@ const AnnouncementPage: React.FC = () => {
 
             {/* 元信息 */}
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-4)',
-                padding: 'var(--space-3)',
-                backgroundColor: 'var(--surface-2)',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: 13,
-                color: 'var(--text-secondary)',
-              }}
+              className={styles.il17}
             >
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className={styles.il18}>
                 <User size={14} />
                 {t('oa.announcement_page.k29', { author: selectedAnnouncement.author })}
               </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className={styles.il19}>
                 <Calendar size={14} />
                 {t('oa.announcement_page.k30', {
                   time: formatTime(selectedAnnouncement.created_at),
                 })}
               </span>
               {selectedAnnouncement.views !== undefined && (
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span className={styles.il20}>
                   <Eye size={14} />
                   {t('oa.announcement_page.k31', { views: selectedAnnouncement.views })}
                 </span>
@@ -548,12 +520,7 @@ const AnnouncementPage: React.FC = () => {
             {/* 正文 */}
             <Card title={t('oa.announcement_page.k32')}>
               <div
-                style={{
-                  fontSize: 14,
-                  lineHeight: 1.8,
-                  color: 'var(--text-primary)',
-                  whiteSpace: 'pre-wrap',
-                }}
+                className={styles.il21}
               >
                 {selectedAnnouncement.content}
               </div>
@@ -599,16 +566,11 @@ const AnnouncementPage: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div className={styles.il22}>
           <div>
             <label
               htmlFor='announcement-title'
-              style={{
-                display: 'block',
-                marginBottom: 'var(--space-1)',
-                fontSize: 14,
-                fontWeight: 500,
-              }}
+              className={styles.il23}
             >
               {t('oa.announcement_page.k37')}
             </label>
@@ -621,16 +583,11 @@ const AnnouncementPage: React.FC = () => {
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+          <div className={styles.il24}>
             <div>
               <label
                 htmlFor='announcement-category'
-                style={{
-                  display: 'block',
-                  marginBottom: 'var(--space-1)',
-                  fontSize: 14,
-                  fontWeight: 500,
-                }}
+                className={styles.il25}
               >
                 {t('oa.announcement_page.k39')}
               </label>
@@ -650,12 +607,7 @@ const AnnouncementPage: React.FC = () => {
             <div>
               <label
                 htmlFor='announcement-priority'
-                style={{
-                  display: 'block',
-                  marginBottom: 'var(--space-1)',
-                  fontSize: 14,
-                  fontWeight: 500,
-                }}
+                className={styles.il26}
               >
                 {t('oa.announcement_page.k40')}
               </label>
@@ -680,12 +632,7 @@ const AnnouncementPage: React.FC = () => {
           <div>
             <label
               htmlFor='announcement-content'
-              style={{
-                display: 'block',
-                marginBottom: 'var(--space-1)',
-                fontSize: 14,
-                fontWeight: 500,
-              }}
+              className={styles.il27}
             >
               {t('oa.announcement_page.k41')}
             </label>
@@ -695,30 +642,14 @@ const AnnouncementPage: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               placeholder={t('oa.announcement_page.k42')}
               rows={10}
-              style={{
-                width: '100%',
-                padding: 'var(--space-3)',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-default)',
-                backgroundColor: 'var(--surface-1)',
-                color: 'var(--text-primary)',
-                fontSize: 14,
-                resize: 'vertical',
-                fontFamily: 'inherit',
-                lineHeight: 1.6,
-              }}
+              className={styles.il28}
             />
           </div>
 
           <div>
             <label
               htmlFor='announcement-attachments'
-              style={{
-                display: 'block',
-                marginBottom: 'var(--space-1)',
-                fontSize: 14,
-                fontWeight: 500,
-              }}
+              className={styles.il29}
             >
               {t('oa.announcement_page.k43')}
             </label>

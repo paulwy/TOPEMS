@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './EhsOccupationalDiseasePage.module.css';
 import { Box, Card, CardContent, Typography, Chip, useTheme } from '@mui/material';
 import { HeartPulse, CalendarCheck, AlertCircle, ClipboardList } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -357,7 +358,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
             {i18n.t('pages.ehs_occupational_disease_page.k9')}
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <CalendarCheck style={{ width: 16, height: 16 }} />
+            <CalendarCheck className={styles.il1} />
             {caseRow.diagnosis_date
               ? new Date(caseRow.diagnosis_date).toLocaleDateString('zh-CN')
               : '-'}

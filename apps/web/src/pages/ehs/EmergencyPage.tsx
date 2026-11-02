@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './EmergencyPage.module.css';
 import { Box, Card, CardContent, Typography, Chip, useTheme } from '@mui/material';
 import { AlertCircle, FileText, Activity, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -330,7 +331,7 @@ const EmergencyPage: React.FC = () => {
             {i18n.t('pages.emergency_page.k9')}
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Users style={{ width: 16, height: 16 }} />
+            <Users className={styles.il1} />
             {participantsText}
           </Box>
         </Box>

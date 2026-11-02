@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import styles from './GisTrackingPage.module.css';
 import {
   Box,
   Card,
@@ -227,7 +228,7 @@ export const GisTrackingPage: React.FC = () => {
       subtitle={t('gis.gis_tracking_page.k17')}
       maxWidth='xl'
       headerProps={{
-        pageIcon: <Map style={{ width: 20, height: 20 }} />,
+        pageIcon: <Map className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
       }}
     >

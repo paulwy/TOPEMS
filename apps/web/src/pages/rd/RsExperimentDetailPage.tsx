@@ -1,4 +1,5 @@
 import { Grid } from '@/components';
+import styles from './RsExperimentDetailPage.module.css';
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { RD_PATHS } from '@/modules/rd/config';
@@ -212,12 +213,7 @@ const RsExperimentDetailPage: React.FC = () => {
         sx={{ py: 3 }}
       >
         <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '50vh',
-          }}
+          className={styles.il1}
         >
           <LoadingSpinner size='lg' />
         </div>
@@ -244,7 +240,7 @@ const RsExperimentDetailPage: React.FC = () => {
   return (
     <PageContainer maxWidth='xl'>
       {/* 页面头部 */}
-      <div style={{ marginBottom: 12 }}>
+      <div className={styles.il2}>
         <Stack
           direction='row'
           sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}
@@ -418,7 +414,7 @@ const RsExperimentDetailPage: React.FC = () => {
           />
         </Tabs>
 
-        <div style={{ padding: 12 }}>
+        <div className={styles.il3}>
           {activeTab === 0 && (
             <Stack
               direction='row'
@@ -502,7 +498,7 @@ const RsExperimentDetailPage: React.FC = () => {
                   {i18n.t('pages.rs_experiment_detail_page.k17')}
                 </Typography>
                 {experiment.results && typeof experiment.results === 'object' ? (
-                  <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                  <pre className={styles.il4}>
                     {JSON.stringify(experiment.results, null, 2)}
                   </pre>
                 ) : (

@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './DesignerToolbar.module.css';
 import {
   Box,
   Button,
@@ -108,14 +109,14 @@ export const DesignerToolbar: React.FC<DesignerToolbarProps> = ({
             <ToggleButton value='canvas'>
               <CanvasModeIcon
                 size={16}
-                style={{ marginRight: 4 }}
+                className={styles.il1}
               />
               {t('automation.automation_designer_page_components_designer_toolbar.e1')}
             </ToggleButton>
             <ToggleButton value='form'>
               <FormModeIcon
                 size={16}
-                style={{ marginRight: 4 }}
+                className={styles.il2}
               />
               {t('automation.automation_designer_page_components_designer_toolbar.e2')}
             </ToggleButton>

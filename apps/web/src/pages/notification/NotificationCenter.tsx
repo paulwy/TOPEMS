@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import css from './NotificationCenter.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Check,
@@ -251,19 +252,14 @@ const NotificationCenter: React.FC = () => {
         toolbar={
           <>
             <div
-              style={{
-                display: 'flex',
-                gap: 'var(--space-3)',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-              }}
+              className={css.il1}
             >
               <Input
                 placeholder={t('notification.notification_center.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 240 }}
+                className={css.il2}
               />
               {selectedIds.size > 0 && (
                 <Badge variant='cyan'>
@@ -273,7 +269,7 @@ const NotificationCenter: React.FC = () => {
                 </Badge>
               )}
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div className={css.il3}>
               <Button
                 variant='ghost'
                 leftIcon={<CheckCheck size={16} />}
@@ -310,8 +306,8 @@ const NotificationCenter: React.FC = () => {
           onRowClick: handleNotificationClick,
         }}
         footer={
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+          <div className={css.il4}>
+            <span className={css.il5}>
               {t('notification.notification_center.footer_summary', {
                 total: notifications.length,
                 unread: unreadCount,
@@ -340,31 +336,19 @@ const NotificationCenter: React.FC = () => {
           />
 
           <div
-            style={{
-              marginTop: 'var(--space-4)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 'var(--space-2)',
-            }}
+            className={css.il6}
           >
             {/* 全选栏 */}
             <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-3)',
-                padding: 'var(--space-2) var(--space-3)',
-                backgroundColor: 'var(--surface-2)',
-                borderRadius: 'var(--radius-sm)',
-              }}
+              className={css.il7}
             >
               <input
                 type='checkbox'
                 checked={selectedIds.size === notifications.length && notifications.length > 0}
                 onChange={selectAll}
-                style={{ width: 16, height: 16, cursor: 'pointer' }}
+                className={css.il8}
               />
-              <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+              <span className={css.il9}>
                 {selectedIds.size > 0
                   ? t('notification.notification_center.selected_count', {
                       count: selectedIds.size,
@@ -412,7 +396,7 @@ const NotificationCenter: React.FC = () => {
                       toggleSelect(notification.id);
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    style={{ width: 16, height: 16, cursor: 'pointer', marginTop: 2 }}
+                    className={css.il10}
                   />
 
                   <div
@@ -431,14 +415,9 @@ const NotificationCenter: React.FC = () => {
                     <TypeIcon size={20} />
                   </div>
 
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className={css.il11}>
                     <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 'var(--space-2)',
-                        marginBottom: 4,
-                      }}
+                      className={css.il12}
                     >
                       <span
                         style={{
@@ -451,47 +430,28 @@ const NotificationCenter: React.FC = () => {
                       </span>
                       {!notification.is_read && (
                         <span
-                          style={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            backgroundColor: 'var(--accent-primary)',
-                          }}
+                          className={css.il13}
                         />
                       )}
                       <Badge
                         variant='default'
-                        style={{ fontSize: 11 }}
+                        className={css.il14}
                       >
                         {t(typeConfig.labelKey)}
                       </Badge>
                     </div>
                     <p
-                      style={{
-                        margin: 0,
-                        fontSize: 13,
-                        color: 'var(--text-secondary)',
-                        lineHeight: 1.5,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                      }}
+                      className={css.il15}
                     >
                       {notification.content || t('notification.notification_center.no_content')}
                     </p>
-                    <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
+                    <div className={css.il16}>
                       {formatTime(notification.created_at || notification.created_at)}
                     </div>
                   </div>
 
                   <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 'var(--space-1)',
-                      flexShrink: 0,
-                    }}
+                    className={css.il17}
                   >
                     {!notification.is_read && (
                       <Button
@@ -514,7 +474,7 @@ const NotificationCenter: React.FC = () => {
                         e.stopPropagation();
                         deleteMutation.mutate(notification.id);
                       }}
-                      style={{ color: 'var(--error-500)' }}
+                      className={css.il18}
                     >
                       {t('notification.notification_center.btn_delete')}
                     </Button>
@@ -549,13 +509,9 @@ const NotificationCenter: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div className={css.il19}>
           <div
-            style={{
-              padding: 'var(--space-4)',
-              backgroundColor: 'var(--surface-2)',
-              borderRadius: 'var(--radius-sm)',
-            }}
+            className={css.il20}
           >
             <h4 style={styles.sectionHeading}>
               {t('notification.notification_center.section_channels')}
@@ -579,11 +535,7 @@ const NotificationCenter: React.FC = () => {
           </div>
 
           <div
-            style={{
-              padding: 'var(--space-4)',
-              backgroundColor: 'var(--surface-2)',
-              borderRadius: 'var(--radius-sm)',
-            }}
+            className={css.il21}
           >
             <h4 style={styles.sectionHeading}>
               {t('notification.notification_center.section_types')}
@@ -613,11 +565,7 @@ const NotificationCenter: React.FC = () => {
           </div>
 
           <div
-            style={{
-              padding: 'var(--space-4)',
-              backgroundColor: 'var(--surface-2)',
-              borderRadius: 'var(--radius-sm)',
-            }}
+            className={css.il22}
           >
             <h4 style={styles.sectionHeading}>
               {t('notification.notification_center.section_dnd')}
@@ -628,17 +576,12 @@ const NotificationCenter: React.FC = () => {
                 description={t('notification.notification_center.dnd_enable_desc')}
               />
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}
+                className={css.il23}
               >
                 <div>
                   <label
                     htmlFor='dnd-start-time'
-                    style={{
-                      display: 'block',
-                      marginBottom: 4,
-                      fontSize: 13,
-                      color: 'var(--text-secondary)',
-                    }}
+                    className={css.il24}
                   >
                     {t('notification.notification_center.dnd_start')}
                   </label>
@@ -651,12 +594,7 @@ const NotificationCenter: React.FC = () => {
                 <div>
                   <label
                     htmlFor='dnd-end-time'
-                    style={{
-                      display: 'block',
-                      marginBottom: 4,
-                      fontSize: 13,
-                      color: 'var(--text-secondary)',
-                    }}
+                    className={css.il25}
                   >
                     {t('notification.notification_center.dnd_end')}
                   </label>
@@ -688,11 +626,11 @@ const SettingToggle: React.FC<{
 }> = ({ label, description, defaultChecked = false }) => {
   const [checked, setChecked] = useState(defaultChecked);
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div className={css.il26}>
       <div>
-        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{label}</div>
+        <div className={css.il27}>{label}</div>
         {description && (
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+          <div className={css.il28}>
             {description}
           </div>
         )}

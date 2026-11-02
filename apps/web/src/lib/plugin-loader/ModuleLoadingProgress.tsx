@@ -2,6 +2,7 @@
  * ModuleLoadingProgress - Progress display component for module loading
  */
 import React, { useEffect, useState } from 'react';
+import styles from './ModuleLoadingProgress.module.css';
 import { Box, Typography, useTheme } from '@mui/material';
 import { useModuleLoadingStore } from '@/store/moduleLoadingStore';
 import i18n from '@/i18n';
@@ -68,7 +69,7 @@ export const ModuleLoadingProgress: React.FC<ModuleLoadingProgressProps> = ({
         <svg
           width={size}
           height={size}
-          style={{ transform: 'rotate(-90deg)' }}
+          className={styles.il1}
         >
           <circle
             cx={size / 2}

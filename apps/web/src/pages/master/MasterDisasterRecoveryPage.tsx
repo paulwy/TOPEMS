@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import styles from './MasterDisasterRecoveryPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { LifeBuoy, History, ShieldAlert, Database } from 'lucide-react';
@@ -568,25 +569,25 @@ const MasterDisasterRecoveryPage: React.FC = () => {
       >
         <Tab
           sx={tabStyle}
-          icon={<Database style={{ width: 16, height: 16 }} />}
+          icon={<Database className={styles.il1} />}
           iconPosition='start'
           label={t('master.disasterRecovery.k47')}
         />
         <Tab
           sx={tabStyle}
-          icon={<History style={{ width: 16, height: 16 }} />}
+          icon={<History className={styles.il2} />}
           iconPosition='start'
           label={t('master.disasterRecovery.k48')}
         />
         <Tab
           sx={tabStyle}
-          icon={<ShieldAlert style={{ width: 16, height: 16 }} />}
+          icon={<ShieldAlert className={styles.il3} />}
           iconPosition='start'
           label={t('master.disasterRecovery.k49')}
         />
         <Tab
           sx={tabStyle}
-          icon={<LifeBuoy style={{ width: 16, height: 16 }} />}
+          icon={<LifeBuoy className={styles.il4} />}
           iconPosition='start'
           label={t('master.disasterRecovery.k50')}
         />

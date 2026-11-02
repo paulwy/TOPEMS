@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './NotificationStatsPage.module.css';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell, CheckCircle, Archive } from 'lucide-react';
 import { PageContainer } from '@/components/common';
@@ -228,16 +229,9 @@ const NotificationStatsPage: React.FC = () => {
         customToolbar={
           serviceStatus && (
             <div
-              style={{
-                backgroundColor: 'common.white',
-                borderRadius: 8,
-                padding: 16,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
+              className={styles.il1}
             >
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div className={styles.il2}>
                 <div
                   style={{
                     width: 12,

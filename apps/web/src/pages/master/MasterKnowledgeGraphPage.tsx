@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import styles from './MasterKnowledgeGraphPage.module.css';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Network, Search, GitBranch, ThumbsUp } from 'lucide-react';
@@ -377,25 +378,25 @@ const MasterKnowledgeGraphPage: React.FC = () => {
       >
         <Tab
           sx={tabStyle}
-          icon={<Network style={{ width: 16, height: 16 }} />}
+          icon={<Network className={styles.il1} />}
           iconPosition='start'
           label={t('master.knowledgeGraph.k23')}
         />
         <Tab
           sx={tabStyle}
-          icon={<GitBranch style={{ width: 16, height: 16 }} />}
+          icon={<GitBranch className={styles.il2} />}
           iconPosition='start'
           label={t('master.knowledgeGraph.k24')}
         />
         <Tab
           sx={tabStyle}
-          icon={<Search style={{ width: 16, height: 16 }} />}
+          icon={<Search className={styles.il3} />}
           iconPosition='start'
           label={t('master.knowledgeGraph.k25')}
         />
         <Tab
           sx={tabStyle}
-          icon={<ThumbsUp style={{ width: 16, height: 16 }} />}
+          icon={<ThumbsUp className={styles.il4} />}
           iconPosition='start'
           label={t('master.knowledgeGraph.k26')}
         />

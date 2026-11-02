@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './ReportList.module.css';
 import { Box, Typography, Chip, Button } from '@mui/material';
 import { FileText, Eye, Download, Trash2, Calendar, Columns } from 'lucide-react';
 import type { ReportData, ReportTypeInfo } from '@/api/report';
@@ -143,7 +144,7 @@ const ReportList: React.FC<ReportListProps> = ({
                       }}
                     >
                       {getFormatIcon(report.config.format)}
-                      <span style={{ marginLeft: 4 }}>{report.config.format.toUpperCase()}</span>
+                      <span className={styles.il1}>{report.config.format.toUpperCase()}</span>
                     </Box>
                     <Box
                       sx={{

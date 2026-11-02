@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import styles from './DocumentCenterPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
 import { CardListTemplate, type CardRenderConfig, type CardAction } from '@/components/templates';
@@ -676,7 +677,7 @@ const DocumentCenterPage: React.FC = () => {
               type='file'
               multiple
               onChange={handleFileSelect}
-              style={{ display: 'none' }}
+              className={styles.il1}
               id='file-upload'
             />
             <Button

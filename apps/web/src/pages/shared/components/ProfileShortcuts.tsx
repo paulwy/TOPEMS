@@ -5,6 +5,7 @@
  * Bottom: Currently added shortcuts Chip list
  */
 import React from 'react';
+import styles from './ProfileShortcuts.module.css';
 import { Activity, FileText, GitBranch, Bell, Bot, MessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Box, Typography, Chip, useTheme } from '@mui/material';
@@ -154,7 +155,7 @@ const ProfileShortcuts: React.FC<ProfileShortcutsProps> = ({ profile }) => {
                 >
                   <Icon
                     size={24}
-                    style={{ color: 'common.white' }}
+                    className={styles.il1}
                   />
                 </Box>
                 <Typography

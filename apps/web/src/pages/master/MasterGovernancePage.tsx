@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import styles from './MasterGovernancePage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Gauge, ListChecks, Workflow, Boxes } from 'lucide-react';
@@ -413,25 +414,25 @@ const MasterGovernancePage: React.FC = () => {
       >
         <Tab
           sx={tabStyle}
-          icon={<Gauge style={{ width: 16, height: 16 }} />}
+          icon={<Gauge className={styles.il1} />}
           iconPosition='start'
           label={t('master.governance.k28')}
         />
         <Tab
           sx={tabStyle}
-          icon={<ListChecks style={{ width: 16, height: 16 }} />}
+          icon={<ListChecks className={styles.il2} />}
           iconPosition='start'
           label={t('master.governance.k29')}
         />
         <Tab
           sx={tabStyle}
-          icon={<Workflow style={{ width: 16, height: 16 }} />}
+          icon={<Workflow className={styles.il3} />}
           iconPosition='start'
           label={t('master.governance.k30')}
         />
         <Tab
           sx={tabStyle}
-          icon={<Boxes style={{ width: 16, height: 16 }} />}
+          icon={<Boxes className={styles.il4} />}
           iconPosition='start'
           label={t('master.governance.k31')}
         />

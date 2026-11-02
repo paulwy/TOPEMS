@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './ModuleMarketplace.module.css';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
@@ -796,7 +797,7 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
             >
               <FolderIcon
                 size={18}
-                style={{ marginRight: 12, opacity: 0.7 }}
+                className={styles.il1}
               />
               <ListItemText
                 primary={i18n.t('microfrontend.module_marketplace.k8')}
@@ -912,7 +913,7 @@ const ModuleMarketplace: React.FC<ModuleMarketplaceProps> = ({ onClose }) => {
               <Box sx={{ textAlign: 'center', py: 8 }}>
                 <PackageIcon
                   size={48}
-                  style={{ opacity: 0.3, marginBottom: 16 }}
+                  className={styles.il2}
                 />
                 <Typography color='text.secondary'>
                   {i18n.t('microfrontend.module_marketplace.k17')}

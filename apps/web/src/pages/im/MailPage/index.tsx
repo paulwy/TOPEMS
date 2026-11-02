@@ -1,4 +1,5 @@
 import { Box, Button, Tabs, Tab, Typography } from '@mui/material';
+import styles from './index.module.css';
 import React from 'react';
 import { Mail, Send, Plus, ChevronLeft, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -67,7 +68,7 @@ const MailPage: React.FC = () => {
                     <Mail
                       size={28}
                       color='primary.dark'
-                      style={{ marginRight: 12 }}
+                      className={styles.il1}
                     />
                     {t('im.mail_page_index.e1')}
                   </Typography>
@@ -84,7 +85,7 @@ const MailPage: React.FC = () => {
                   <Button onClick={() => m.setShowSendModal(true)}>
                     <Send
                       size={20}
-                      style={{ marginRight: 8 }}
+                      className={styles.il2}
                     />
                     {t('im.mail_page_components_send_email_dialog.e1')}
                   </Button>
@@ -93,7 +94,7 @@ const MailPage: React.FC = () => {
                   <Button onClick={() => m.setShowTemplateModal(true)}>
                     <Plus
                       size={20}
-                      style={{ marginRight: 8 }}
+                      className={styles.il3}
                     />
                     {t('im.mail_page_index.e4')}
                   </Button>

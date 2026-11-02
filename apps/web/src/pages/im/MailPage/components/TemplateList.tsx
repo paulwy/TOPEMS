@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './TemplateList.module.css';
 import {
   Box,
   Button,
@@ -154,7 +155,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
               <FileText
                 size={48}
                 color='text.disabled'
-                style={{ margin: '0 auto 12px' }}
+                className={styles.il1}
               />
               <Typography sx={{ color: 'grey.500' }}>{t('im.template_list.k3')}</Typography>
             </Box>
