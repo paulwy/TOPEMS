@@ -1,3 +1,13 @@
+## 批 4 第二十批：verify_navigation 路由声明解析修正（P5 存量 2 归零）（2026-11-02）✅
+
+> 目标：批 4 整体回归后消除 verify 缺失 2（原 P5 存量）——两者均为 verify 猜测逻辑误报，改为按路由实际声明解析。
+
+- **页面文件误报**（/erp/data-dictionaries）：verify 按 path 猜 DataDictionariesPage.tsx，实际路由 element 显式 import `@/pages/erp/DictionaryPage`（存在）——新增 route 声明解析（逐块提取 routes 数组的 path→element import 映射 + 扩展名候选 .tsx/.ts/index）。
+- **权限误报**（/hrm/setup）：hrm 建号向导 requiredPermissions: [] 为免权限设计（showInTabs: false），verify 判"permission 字段缺失"——新增 routePermissionless 豁免（路由 requiredPermissions 空数组的 navItem 视为合法免权限）。
+- **改动**：scripts/verify_navigation.mjs 67 行纯新增（route meta 构建 + item 附加 + flattenPaths 透传 + A2 扩展名候选 + A4 豁免）。
+- **验证**：verify_navigation --strict **总缺失 0、覆盖率 100%、严格模式通过**；node --check 语法 OK；eslint 80 个均为既有问题（unused vars/console，非本次引入）。
+- **注意**：verify 现按路由 element 与 requiredPermissions 真实声明判定，未来新增模块 navItem 与路由声明不一致时（如页面文件名与 path 不同构、免权限向导）不再误报。
+
 ## 批 4 第十九批：master/automation MENU_PERM_MISSING 补映射 + 计划 P3 全部核销（2026-11-02）✅
 
 > 目标：p18 判定核销后剩余 4 项 P3（master/automation MENU_PERM_MISSING、integration MENU_PERM_MISSING、mobile PARTIAL）收尾；补 master/automation 的 menuPermissions 映射（审计项直接要求），计划 P3 全部核销。

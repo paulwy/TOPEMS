@@ -101,6 +101,8 @@ function flattenPaths(nodes) {
             code: node.code,
             label: node.label,
             permission: node.permission,
+            routeElementFile: node.routeElementFile,
+            routePermissionless: node.routePermissionless,
           });
         }
         if (node.children && Array.isArray(node.children)) {
@@ -519,6 +521,44 @@ function loadNavTree() {
 
     const pathMap = extractPathConstants(content);
 
+    // route 声明元数据（按实际路由配置而非 navItem 猜测）：
+    //   routeElementMap:  path -> element import 的页面文件（真实页面存在性）
+    //   routePermissionless: path -> requiredPermissions 为空数组（免权限设计，如建号向导）
+    const routeElementMap = new Map();
+    const routePermissionless = new Set();
+    const routesStart = content.indexOf('routes:');
+    if (routesStart !== -1) {
+      const routesArrStart = content.indexOf('[', routesStart);
+      if (routesArrStart !== -1) {
+        const routesArrEnd = findMatchingBracket(content, routesArrStart);
+        if (routesArrEnd !== -1) {
+          const routesBody = content.slice(routesArrStart + 1, routesArrEnd);
+          let rb = 0;
+          while (rb < routesBody.length) {
+            if (routesBody[rb] === '{') {
+              const rEnd = findMatchingBracket(routesBody, rb);
+              const block = routesBody.slice(rb, rEnd + 1);
+              const pRaw = extractAnyPath(block, 'path');
+              let p = null;
+              if (pRaw) p = resolvePathReference(pRaw, pathMap, content);
+              if (p) {
+                const elMatch = block.match(/import\('([^']+)'\)/);
+                if (elMatch) {
+                  routeElementMap.set(p, elMatch[1].replace('@/', WEB_ROOT + '/'));
+                }
+                if (/requiredPermissions\s*:\s*\[\s*\]/.test(block)) {
+                  routePermissionless.add(p);
+                }
+              }
+              rb = rEnd + 1;
+            } else {
+              rb++;
+            }
+          }
+        }
+      }
+    }
+
     const navItemsStart = content.indexOf('navItems:');
     if (navItemsStart === -1) continue;
 
@@ -569,6 +609,8 @@ function loadNavTree() {
           order,
           group,
           moduleCode,
+          routeElementFile: routeElementMap.get(path) || null,
+          routePermissionless: routePermissionless.has(path) || false,
         });
         totalNavItems++;
       }
@@ -763,6 +805,26 @@ function collectMissingPages(flattened) {
         ...item,
         file: relative(PROJECT_ROOT, matched),
       });
+    } else if (item.routeElementFile) {
+      // 路由显式 element import 的页面文件存在（文件名与 path 不同构时的真实来源）
+      const elCandidates = [
+        item.routeElementFile + '.tsx',
+        item.routeElementFile + '.ts',
+        item.routeElementFile + '/index.tsx',
+        item.routeElementFile + '/index.ts',
+      ];
+      const elFound = elCandidates.find((f) => existsSync(f));
+      if (elFound) {
+        verified.push({
+          ...item,
+          file: relative(PROJECT_ROOT, elFound),
+        });
+      } else {
+        missing.push({
+          ...item,
+          candidates: candidates.map((c) => relative(PROJECT_ROOT, c)),
+        });
+      }
     } else {
       missing.push({
         ...item,
@@ -968,6 +1030,11 @@ function collectMissingPermissions(flattened) {
 
   for (const item of flattened) {
     if (!item.permission) {
+      if (item.routePermissionless) {
+        // 路由声明 requiredPermissions 为空数组：免权限设计（如 hrm 建号向导），合法
+        verified.push(item);
+        continue;
+      }
       missing.push({
         ...item,
         reason: 'permission 字段缺失',
