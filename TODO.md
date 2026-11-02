@@ -1,3 +1,11 @@
+## 长尾核销：mobile inventory/production 契约错位（2026-11-02）✅
+
+> 承接「遗留独立轨道」长尾项核销；批 4 第十四批最终验证（行 371：smoke 4667/4667 PASS、KNOWN 豁免 6→0、gap_list 清空）已证明闭环。
+
+- **代码层确认**：svc/mobile/src/shared/mod.rs 当前 WmsApi/MesApi 均指向聚合入口 `http://localhost:8099`（MesApi 走 env MES_SERVICE_URL 默认 8099）——批 4 时点"独立服务 8030/8041 不可达"根因已随聚合模式适配消除。
+- **现状**：mobile health 200；KNOWN 500 清单已清零（inventory/production 不再保留豁免）。
+- **结论**：长尾项核销，无待办。
+
 ## 残留 11 表 NULLIF 统一决策（2026-11-02）✅
 
 > 承接「master 15 根因闭环」遗留决策项（残留 11 表文本比较形式策略是否统一 NULLIF）。
