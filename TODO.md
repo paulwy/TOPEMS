@@ -1,3 +1,14 @@
+## 批 5 第十二批：PARTIAL 剩余 6 行核销——14/14 全清零（2026-11-02）✅
+
+> 目标：PARTIAL 类收尾。
+
+- **srm 核销**：srm-finance 财务 tab 为供应商业务聚合视图（SrmFinancePage 调 srmApi 合同/采购单数据），非与 finance 模块重复实现。
+- **oa 核销**：oa 无独立后端为架构事实——oa-documents 复用 erp core documentApi、车辆在 svc/erp vehicles.rs、其余走 mobile 聚合 BFF——端点均已核实存在。
+- **plugin 核销**：plugin-detail 路由 /plugin/:id 无 navItem 为 detail 路由设计（verify_navigation --strict 100% 覆盖）。
+- **hrm 核销**：4 个设置类 navItem（attendance-rule/payroll-template/recruitment-flow/training-plan）复用 `/settings/{category}` 聚合端点——category 区分设计。
+- **workflow 核销**：workflow-notification-center 为工作流侧通知聚合视图（WorkflowNotificationCenterPage），与 notification 模块中心业务视角不同。
+- **pm 核销**：pm-templates（PmTemplatePage 调 pmApi /projects 等价）、pm-timeline（ProjectTimelinePage，后端有 /projects/{id}/gantt + /analytics/project-trend 时间线端点）。
+
 ## 批 5 第十一批：PARTIAL bi/admin 配置修正 + schema 归属类 4 行核销（2026-11-02）✅
 
 > 目标：推进 PARTIAL 类——配置过时修正 + schema 归属核实。
