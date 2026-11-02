@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './ProductionRecordPage.module.css';
 import { Box, Typography, useTheme } from '@mui/material';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
@@ -18,7 +19,7 @@ const ProductionRecordPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <Activity style={{ width: 20, height: 20 }} />,
+        pageIcon: <Activity className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
       }}
     >

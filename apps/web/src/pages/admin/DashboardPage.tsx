@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './DashboardPage.module.css';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Users, Shield, Activity, AlertTriangle, ArrowRight } from 'lucide-react';
@@ -129,7 +130,7 @@ export const DashboardPage: React.FC = () => {
       title={i18n.t('admin.dashboard_page.k24')}
       subtitle={getGreeting()}
       headerProps={{
-        pageIcon: <Shield style={{ width: 20, height: 20 }} />,
+        pageIcon: <Shield className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]} 0%, ${theme.palette.secondary.main} 100%)`,
       }}
       padding={false}

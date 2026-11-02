@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './MobileApprovalPage.module.css';
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
@@ -200,15 +201,15 @@ const MobileApprovalPage: React.FC = () => {
   const getTypeIcon = (type: ApprovalItem['type']) => {
     switch (type) {
       case 'purchase':
-        return <Package style={{ width: 20, height: 20 }} />;
+        return <Package className={styles.il1} />;
       case 'leave':
-        return <Users style={{ width: 20, height: 20 }} />;
+        return <Users className={styles.il2} />;
       case 'expense':
-        return <DollarSign style={{ width: 20, height: 20 }} />;
+        return <DollarSign className={styles.il3} />;
       case 'contract':
-        return <FileText style={{ width: 20, height: 20 }} />;
+        return <FileText className={styles.il4} />;
       default:
-        return <FileText style={{ width: 20, height: 20 }} />;
+        return <FileText className={styles.il5} />;
     }
   };
   const getTypeColor = (type: ApprovalItem['type']) => {
@@ -323,14 +324,14 @@ const MobileApprovalPage: React.FC = () => {
   const rightSwipeActions: SwipeActionItem[] = [
     {
       id: 'approve',
-      icon: <Check style={{ width: 20, height: 20 }} />,
+      icon: <Check className={styles.il6} />,
       label: i18n.t('mobile.mobile_approval_page.k15'),
       color: theme.palette.success.main,
       onClick: () => {},
     },
     {
       id: 'reject',
-      icon: <X style={{ width: 20, height: 20 }} />,
+      icon: <X className={styles.il7} />,
       label: i18n.t('mobile.mobile_approval_page.k16'),
       color: theme.palette.error.main,
       onClick: () => {},
@@ -348,28 +349,28 @@ const MobileApprovalPage: React.FC = () => {
     {
       id: 'home',
       label: i18n.t('mobile.mobile_approval_page.k17'),
-      icon: <Home style={{ width: 22, height: 22 }} />,
+      icon: <Home className={styles.il8} />,
     },
     {
       id: 'tasks',
       label: i18n.t('mobile.mobile_approval_page.k18'),
-      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+      icon: <ListTodo className={styles.il9} />,
     },
     {
       id: 'scan',
       label: i18n.t('mobile.mobile_approval_page.k19'),
-      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+      icon: <ScanLine className={styles.il10} />,
     },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_approval_page.k20'),
-      icon: <CheckSquare style={{ width: 22, height: 22 }} />,
+      icon: <CheckSquare className={styles.il11} />,
       badge: 3,
     },
     {
       id: 'profile',
       label: i18n.t('mobile.mobile_approval_page.k21'),
-      icon: <User style={{ width: 22, height: 22 }} />,
+      icon: <User className={styles.il12} />,
     },
   ];
   if (selectedApproval) {
@@ -478,7 +479,7 @@ const MobileApprovalPage: React.FC = () => {
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Avatar sx={{ width: 44, height: 44 }}>
-                <UserIcon style={{ width: 22, height: 22 }} />
+                <UserIcon className={styles.il13} />
               </Avatar>
               <Box>
                 <Typography
@@ -578,7 +579,7 @@ const MobileApprovalPage: React.FC = () => {
                       }}
                     >
                       {step.status === 'completed' ? (
-                        <Check style={{ width: 14, height: 14 }} />
+                        <Check className={styles.il14} />
                       ) : (
                         <Typography
                           variant='caption'
@@ -672,7 +673,7 @@ const MobileApprovalPage: React.FC = () => {
               fullWidth
               variant='outlined'
               color='error'
-              startIcon={processing ? null : <X style={{ width: 20, height: 20 }} />}
+              startIcon={processing ? null : <X className={styles.il15} />}
               onClick={() => handleReject(selectedApproval)}
               disabled={processing}
             >
@@ -684,7 +685,7 @@ const MobileApprovalPage: React.FC = () => {
               fullWidth
               variant='contained'
               color='success'
-              startIcon={processing ? null : <Check style={{ width: 20, height: 20 }} />}
+              startIcon={processing ? null : <Check className={styles.il16} />}
               onClick={() => handleApprove(selectedApproval)}
               disabled={processing}
             >
@@ -713,7 +714,7 @@ const MobileApprovalPage: React.FC = () => {
           sx={{ minWidth: 44, minHeight: 44 }}
           aria-label={i18n.t('mobile.mobile_approval_page.k28')}
         >
-          <Filter style={{ width: 20, height: 20 }} />
+          <Filter className={styles.il17} />
         </IconButton>,
       ]}
       headerProps={{
@@ -741,7 +742,7 @@ const MobileApprovalPage: React.FC = () => {
             input: {
               startAdornment: (
                 <InputAdornment position='start'>
-                  <Search style={{ width: 20, height: 20 }} />
+                  <Search className={styles.il18} />
                 </InputAdornment>
               ),
             },

@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import styles from './DictionaryManagementPage.module.css';
 import {
   Box,
   Typography,
@@ -874,7 +875,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({}) =
               type='file'
               accept='.json'
               onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-              style={{ width: '100%' }}
+              className={styles.il1}
             />
           </Box>
         </DialogContent>

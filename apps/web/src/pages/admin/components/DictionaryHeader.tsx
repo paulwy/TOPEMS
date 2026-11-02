@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './DictionaryHeader.module.css';
 import { Box, Typography, Button } from '@mui/material';
 import { Book, Plus } from 'lucide-react';
 import { BackButton } from '@/components/common';
@@ -38,7 +39,7 @@ const DictionaryHeader: React.FC<DictionaryHeaderProps> = ({ onCreateClick }) =>
               >
                 <Book
                   size={28}
-                  style={{ marginRight: 12 }}
+                  className={styles.il1}
                 />
                 {i18n.t('admin.dictionary_management_page.page_title')}
               </Typography>

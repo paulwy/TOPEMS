@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import styles from './TenantManagementPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Building2,
@@ -163,15 +164,15 @@ const TenantManagementPage: React.FC = () => {
       header: t('admin.tenant_management_page.col_name'),
       sortable: true,
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+        <div className={styles.il1}>
           <Avatar
             name={row.name}
             size='sm'
             variant='rounded'
           />
           <div>
-            <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{row.name}</div>
-            <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+            <div className={styles.il2}>{row.name}</div>
+            <div className={styles.il3}>
               {row.code}
             </div>
           </div>
@@ -207,7 +208,7 @@ const TenantManagementPage: React.FC = () => {
       header: t('admin.tenant_management_page.col_created'),
       sortable: true,
       render: (row) => (
-        <span style={{ color: 'var(--text-secondary)' }}>{formatDateTime(row.created_at)}</span>
+        <span className={styles.il4}>{formatDateTime(row.created_at)}</span>
       ),
     },
     {
@@ -216,7 +217,7 @@ const TenantManagementPage: React.FC = () => {
       align: 'right',
       width: 120,
       render: (row) => (
-        <div style={{ display: 'flex', gap: 'var(--space-1)', justifyContent: 'flex-end' }}>
+        <div className={styles.il5}>
           <Button
             size='sm'
             variant='ghost'
@@ -233,7 +234,7 @@ const TenantManagementPage: React.FC = () => {
             variant='ghost'
             leftIcon={<Trash2 size={14} />}
             onClick={() => setDeleteTarget(row)}
-            style={{ color: 'var(--error-500)' }}
+            className={styles.il6}
           >
             {t('admin.tenant_management_page.btn_delete')}
           </Button>
@@ -264,13 +265,13 @@ const TenantManagementPage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+            <div className={styles.il7}>
               <Input
                 placeholder={t('admin.tenant_management_page.search_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 leftIcon={<Search size={16} />}
-                style={{ width: 280 }}
+                className={styles.il8}
               />
               <Select
                 value={statusFilter}
@@ -282,10 +283,10 @@ const TenantManagementPage: React.FC = () => {
                   { value: 'suspended', label: t('admin.tenant_management_page.status_suspended') },
                   { value: 'expired', label: t('admin.tenant_management_page.status_expired') },
                 ]}
-                style={{ width: 140 }}
+                className={styles.il9}
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div className={styles.il10}>
               <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
@@ -311,7 +312,7 @@ const TenantManagementPage: React.FC = () => {
         emptyTitle={t('admin.tenant_management_page.empty_title')}
         emptyDescription={t('admin.tenant_management_page.empty_description')}
         footer={
-          <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+          <div className={styles.il11}>
             <StatTile
               label={t('admin.tenant_management_page.stat_total')}
               value={stats.total}
@@ -389,7 +390,7 @@ const TenantManagementPage: React.FC = () => {
           </>
         }
       >
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+        <p className={styles.il12}>
           {t('admin.tenant_management_page.delete_confirm', { name: deleteTarget?.name })}
         </p>
       </Modal>
@@ -432,7 +433,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
   return (
     <form
       onSubmit={handleSubmit}
-      style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}
+      className={styles.il13}
     >
       <div>
         <label
@@ -467,7 +468,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
         />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+      <div className={styles.il14}>
         <div>
           <label
             htmlFor='tenant-plan'
@@ -524,12 +525,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
       </div>
 
       <div
-        style={{
-          display: 'flex',
-          gap: 'var(--space-2)',
-          justifyContent: 'flex-end',
-          marginTop: 'var(--space-4)',
-        }}
+        className={styles.il15}
       >
         <Button
           type='button'

@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import styles from './WorkReportPage.module.css';
 import { Box, Typography, useTheme } from '@mui/material';
 import { useQueryClient } from '@tanstack/react-query';
 import CrudPage, { type CrudApiAdapter, type RowAction } from '@/components/templates/CrudPage';
@@ -103,7 +104,7 @@ const WorkReportPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <FileText style={{ width: 20, height: 20 }} />,
+        pageIcon: <FileText className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >

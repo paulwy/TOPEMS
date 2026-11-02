@@ -12,6 +12,7 @@ import {
   useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
+import styles from './ProductionSchedulePage.module.css';
 import { PageContainer } from '@/components/common';
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -253,7 +254,7 @@ const ProductionSchedulePage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <Calendar style={{ width: 20, height: 20 }} />,
+        pageIcon: <Calendar className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[500]} 0%, ${theme.palette.secondary[700]} 100%)`,
       }}
     >

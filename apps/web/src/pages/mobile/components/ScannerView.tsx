@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './ScannerView.module.css';
 import { Box, Typography, Button, Paper, IconButton, useTheme } from '@mui/material';
 import { Flashlight, Image, Barcode, Package, CheckSquare, ArrowRight } from 'lucide-react';
 import { MobileButton } from '@/components/mobile';
@@ -119,9 +120,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
                   boxShadow: (theme) => `0 0 10px ${alpha(theme.palette.info.main, 0.8)}`,
                   animation: 'scanLine 2s ease-in-out infinite',
                 }}
-                style={{
-                  animation: 'scanLine 2s ease-in-out infinite',
-                }}
+                className={styles.il1}
               />
             )}
           </Box>
@@ -221,7 +220,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
             onClick={onFlashToggle}
             aria-label={i18n.t('mobile.scanner_view.k0')}
           >
-            <Flashlight style={{ width: 24, height: 24 }} />
+            <Flashlight className={styles.il2} />
           </IconButton>
           <Typography
             variant='caption'
@@ -243,7 +242,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
             }}
             aria-label={i18n.t('mobile.scanner_view.k1')}
           >
-            <Image style={{ width: 24, height: 24 }} />
+            <Image className={styles.il3} />
           </IconButton>
           <Typography
             variant='caption'
@@ -266,7 +265,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
             onClick={onManualTabClick}
             aria-label={i18n.t('mobile.scanner_view.k2')}
           >
-            <Barcode style={{ width: 24, height: 24 }} />
+            <Barcode className={styles.il4} />
           </IconButton>
           <Typography
             variant='caption'
@@ -305,7 +304,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
                 color: 'primary.main',
               }}
             >
-              <Package style={{ width: 24, height: 24 }} />
+              <Package className={styles.il5} />
             </Box>
             <Box sx={{ flex: 1 }}>
               <Typography
@@ -321,7 +320,7 @@ const ScannerView: React.FC<ScannerViewProps> = ({
                 {i18n.t('mobile.scan.label.material_code')}: {scanResult}
               </Typography>
             </Box>
-            <Button endIcon={<ArrowRight style={{ width: 16, height: 16 }} />}>
+            <Button endIcon={<ArrowRight className={styles.il6} />}>
               {i18n.t('mobile.scan.action.view')}
             </Button>
           </Box>

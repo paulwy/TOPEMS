@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './TenantSettingsPage.module.css';
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -381,13 +382,7 @@ const TenantSettingsPage: React.FC = () => {
                   type='color'
                   value={formData.primary_color}
                   onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
-                  style={{
-                    width: 48,
-                    height: 48,
-                    border: 'none',
-                    cursor: 'pointer',
-                    borderRadius: 4,
-                  }}
+                  className={styles.il1}
                 />
                 <TextField
                   size='small'
@@ -408,13 +403,7 @@ const TenantSettingsPage: React.FC = () => {
                   type='color'
                   value={formData.secondary_color}
                   onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
-                  style={{
-                    width: 48,
-                    height: 48,
-                    border: 'none',
-                    cursor: 'pointer',
-                    borderRadius: 4,
-                  }}
+                  className={styles.il2}
                 />
                 <TextField
                   size='small'

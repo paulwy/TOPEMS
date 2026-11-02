@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './MaterialIssuePage.module.css';
 import {
   Box,
   Typography,
@@ -142,7 +143,7 @@ const MaterialIssuePage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <PackageOpen style={{ width: 20, height: 20 }} />,
+        pageIcon: <PackageOpen className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
       }}
     >

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import styles from './MobileSettingsPage.module.css';
 import { useNotificationStore } from '../../store';
 import { Smartphone, Shield, RefreshCw } from 'lucide-react';
 import {
@@ -152,7 +153,7 @@ const MobileSettingsPage: React.FC = () => {
     {
       id: 'app',
       title: i18n.t('mobile.mobile_settings_page.k18'),
-      icon: <Smartphone style={{ width: 20, height: 20 }} />,
+      icon: <Smartphone className={styles.il1} />,
       color: 'primary',
       fields: [
         {
@@ -181,7 +182,7 @@ const MobileSettingsPage: React.FC = () => {
     {
       id: 'security',
       title: i18n.t('mobile.mobile_settings_page.k25'),
-      icon: <Shield style={{ width: 20, height: 20 }} />,
+      icon: <Shield className={styles.il2} />,
       color: 'success',
       fields: [
         {
@@ -196,7 +197,7 @@ const MobileSettingsPage: React.FC = () => {
     {
       id: 'other',
       title: i18n.t('mobile.mobile_settings_page.k28'),
-      icon: <RefreshCw style={{ width: 20, height: 20 }} />,
+      icon: <RefreshCw className={styles.il3} />,
       color: 'info',
       fields: [],
     },

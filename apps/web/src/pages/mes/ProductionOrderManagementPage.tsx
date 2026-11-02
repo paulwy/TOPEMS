@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import styles from './ProductionOrderManagementPage.module.css';
 import { useQueryClient } from '@tanstack/react-query';
 import { Box, Typography, useTheme } from '@mui/material';
 import { Play, CheckCircle, XCircle } from 'lucide-react';
@@ -160,7 +161,7 @@ const ProductionOrderManagementPage: React.FC = () => {
       title={i18n.t('mes.production_order_management_page.production_2')}
       subtitle={i18n.t('mes.production_order_management_page.order_number_1')}
       headerProps={{
-        pageIcon: <Play style={{ width: 20, height: 20 }} />,
+        pageIcon: <Play className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >

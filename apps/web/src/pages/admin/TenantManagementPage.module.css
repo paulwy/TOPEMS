@@ -1,0 +1,80 @@
+/* ./pages/admin/TenantManagementPage.tsx inline-style migration (auto) */
+
+.il1 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.il2 {
+  font-weight: 500px;
+  color: var(--text-primary);
+}
+
+.il3 {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.il4 {
+  color: var(--text-secondary);
+}
+
+.il5 {
+  display: flex;
+  gap: var(--space-1);
+  justify-content: flex-end;
+}
+
+.il6 {
+  color: var(--error-500);
+}
+
+.il7 {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.il8 {
+  width: 280px;
+}
+
+.il9 {
+  width: 140px;
+}
+
+.il10 {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.il11 {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.il12 {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.il13 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.il14 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.il15 {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  margin-top: var(--space-4);
+}

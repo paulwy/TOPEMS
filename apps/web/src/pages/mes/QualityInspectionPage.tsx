@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
+import styles from './QualityInspectionPage.module.css';
 import { Box, Typography, useTheme } from '@mui/material';
 import { Download, CheckCircle } from 'lucide-react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -149,7 +150,7 @@ const QualityInspectionPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <CheckCircle style={{ width: 20, height: 20 }} />,
+        pageIcon: <CheckCircle className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >

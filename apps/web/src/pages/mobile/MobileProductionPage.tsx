@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './MobileProductionPage.module.css';
 import { IconButton } from '@mui/material';
 import { Home, ListTodo, ScanLine, CheckSquare, User, Barcode } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -63,28 +64,28 @@ const MobileProductionPage: React.FC = () => {
     {
       id: 'home',
       label: i18n.t('mobile.mobile_production_page.k0'),
-      icon: <Home style={{ width: 22, height: 22 }} />,
+      icon: <Home className={styles.il1} />,
     },
     {
       id: 'tasks',
       label: i18n.t('mobile.mobile_production_page.k1'),
-      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+      icon: <ListTodo className={styles.il2} />,
     },
     {
       id: 'scan',
       label: i18n.t('mobile.mobile_production_page.k2'),
-      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+      icon: <ScanLine className={styles.il3} />,
     },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_production_page.k3'),
-      icon: <CheckSquare style={{ width: 22, height: 22 }} />,
+      icon: <CheckSquare className={styles.il4} />,
       badge: 3,
     },
     {
       id: 'profile',
       label: i18n.t('mobile.mobile_production_page.k4'),
-      icon: <User style={{ width: 22, height: 22 }} />,
+      icon: <User className={styles.il5} />,
     },
   ];
   return (
@@ -104,7 +105,7 @@ const MobileProductionPage: React.FC = () => {
           onClick={() => navigate(MOBILE_PATHS.scanPage)}
           aria-label={i18n.t('mobile.mobile_production_page.k6')}
         >
-          <Barcode style={{ width: 20, height: 20 }} />
+          <Barcode className={styles.il6} />
         </IconButton>,
       ]}
       headerProps={{

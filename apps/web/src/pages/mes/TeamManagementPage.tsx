@@ -12,6 +12,7 @@ import {
   useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
+import styles from './TeamManagementPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import { Users } from 'lucide-react';
 import { LoadingSpinner } from '@topems/shared-components';
@@ -233,7 +234,7 @@ function TeamManagementPage() {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <Users style={{ width: 20, height: 20 }} />,
+        pageIcon: <Users className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
       }}
     >

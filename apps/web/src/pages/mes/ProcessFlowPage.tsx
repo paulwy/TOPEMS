@@ -1,4 +1,5 @@
 import { Box, Typography, Chip, Stack, useTheme } from '@mui/material';
+import styles from './ProcessFlowPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import { GitBranch, BarChart3 } from 'lucide-react';
 import CrudPage from '@/components/templates/CrudPage';
@@ -294,7 +295,7 @@ function ProcessFlowPage() {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <GitBranch style={{ width: 20, height: 20 }} />,
+        pageIcon: <GitBranch className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
       }}
     >

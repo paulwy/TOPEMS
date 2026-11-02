@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './MobileAttendancePage.module.css';
 import React, { useState, useCallback } from 'react';
 import {
   Box,
@@ -353,28 +354,28 @@ const MobileAttendancePage: React.FC = () => {
     {
       id: 'home',
       label: i18n.t('mobile.mobile_attendance_page.k35'),
-      icon: <Home style={{ width: 22, height: 22 }} />,
+      icon: <Home className={styles.il1} />,
     },
     {
       id: 'tasks',
       label: i18n.t('mobile.mobile_attendance_page.k36'),
-      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+      icon: <ListTodo className={styles.il2} />,
     },
     {
       id: 'scan',
       label: i18n.t('mobile.mobile_attendance_page.k37'),
-      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+      icon: <ScanLine className={styles.il3} />,
     },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_attendance_page.k38'),
-      icon: <CheckSquare style={{ width: 22, height: 22 }} />,
+      icon: <CheckSquare className={styles.il4} />,
       badge: 3,
     },
     {
       id: 'profile',
       label: i18n.t('mobile.mobile_attendance_page.k39'),
-      icon: <User style={{ width: 22, height: 22 }} />,
+      icon: <User className={styles.il5} />,
     },
   ];
   const todayStatus = attendanceStats?.today_status;
@@ -394,7 +395,7 @@ const MobileAttendancePage: React.FC = () => {
           onClick={() => setLeaveDialogOpen(true)}
           sx={{ minWidth: 'auto', px: 1 }}
         >
-          <Plus style={{ width: 20, height: 20 }} />
+          <Plus className={styles.il6} />
         </Button>,
       ]}
       headerProps={{
@@ -670,7 +671,7 @@ const MobileAttendancePage: React.FC = () => {
                             color: `${getStatusColor(record.status)}.main`,
                           }}
                         >
-                          <Clock style={{ width: 20, height: 20 }} />
+                          <Clock className={styles.il7} />
                         </Avatar>
                       }
                       title={record.date}
@@ -750,7 +751,7 @@ const MobileAttendancePage: React.FC = () => {
                     </Typography>
                     <MobileButton
                       variant='contained'
-                      startIcon={<Plus style={{ width: 18, height: 18 }} />}
+                      startIcon={<Plus className={styles.il8} />}
                       onClick={() => setLeaveDialogOpen(true)}
                     >
                       {i18n.t('pages.mobile_attendance_page.k10')}

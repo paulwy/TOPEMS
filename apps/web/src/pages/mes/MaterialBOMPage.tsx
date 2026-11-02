@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './MaterialBOMPage.module.css';
 import {
   Box,
   Typography,
@@ -227,7 +228,7 @@ const MaterialBOMPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <Package style={{ width: 20, height: 20 }} />,
+        pageIcon: <Package className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >

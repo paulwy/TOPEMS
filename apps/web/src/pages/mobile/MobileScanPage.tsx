@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import styles from './MobileScanPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import { mobileApi } from '@/api/mobile';
 import {
@@ -259,28 +260,28 @@ const MobileScanPage: React.FC = () => {
     {
       id: 'home',
       label: i18n.t('mobile.mobile_scan_page.k21'),
-      icon: <Home style={{ width: 22, height: 22 }} />,
+      icon: <Home className={styles.il1} />,
     },
     {
       id: 'tasks',
       label: i18n.t('mobile.mobile_scan_page.k22'),
-      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+      icon: <ListTodo className={styles.il2} />,
     },
     {
       id: 'scan',
       label: i18n.t('mobile.mobile_scan_page.k23'),
-      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+      icon: <ScanLine className={styles.il3} />,
     },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_scan_page.k24'),
-      icon: <CheckSquare style={{ width: 22, height: 22 }} />,
+      icon: <CheckSquare className={styles.il4} />,
       badge: 3,
     },
     {
       id: 'profile',
       label: i18n.t('mobile.mobile_scan_page.k25'),
-      icon: <User style={{ width: 22, height: 22 }} />,
+      icon: <User className={styles.il5} />,
     },
   ];
   return (
@@ -420,9 +421,7 @@ const MobileScanPage: React.FC = () => {
                       boxShadow: `0 0 10px ${alpha(theme.palette.info.main, 0.8)}`,
                       animation: 'scanLine 2s ease-in-out infinite',
                     }}
-                    style={{
-                      animation: 'scanLine 2s ease-in-out infinite',
-                    }}
+                    className={styles.il6}
                   />
                 )}
               </Box>
@@ -459,11 +458,7 @@ const MobileScanPage: React.FC = () => {
                   }}
                 >
                   <CheckSquare
-                    style={{
-                      width: 32,
-                      height: 32,
-                      color: 'common.white',
-                    }}
+                    className={styles.il7}
                   />
                 </Box>
                 <Typography
@@ -526,7 +521,7 @@ const MobileScanPage: React.FC = () => {
                 onClick={() => setFlashOn(!flashOn)}
                 aria-label={i18n.t('mobile.mobile_scan_page.k28')}
               >
-                <Flashlight style={{ width: 24, height: 24 }} />
+                <Flashlight className={styles.il8} />
               </IconButton>
               <Typography
                 variant='caption'
@@ -548,7 +543,7 @@ const MobileScanPage: React.FC = () => {
                 }}
                 aria-label={i18n.t('mobile.mobile_scan_page.k29')}
               >
-                <Image style={{ width: 24, height: 24 }} />
+                <Image className={styles.il9} />
               </IconButton>
               <Typography
                 variant='caption'
@@ -571,7 +566,7 @@ const MobileScanPage: React.FC = () => {
                 onClick={() => setActiveTab(2)}
                 aria-label={i18n.t('mobile.mobile_scan_page.k30')}
               >
-                <Barcode style={{ width: 24, height: 24 }} />
+                <Barcode className={styles.il10} />
               </IconButton>
               <Typography
                 variant='caption'
@@ -610,7 +605,7 @@ const MobileScanPage: React.FC = () => {
                     color: 'primary.main',
                   }}
                 >
-                  <Package style={{ width: 24, height: 24 }} />
+                  <Package className={styles.il11} />
                 </Box>
                 <Box sx={{ flex: 1 }}>
                   <Typography
@@ -626,7 +621,7 @@ const MobileScanPage: React.FC = () => {
                     {i18n.t('pages.mobile_scan_page.k8')}: {scanResult}
                   </Typography>
                 </Box>
-                <Button endIcon={<ArrowRight style={{ width: 16, height: 16 }} />}>
+                <Button endIcon={<ArrowRight className={styles.il12} />}>
                   {i18n.t('mobile.mobile_scan_page.k31')}
                 </Button>
               </Box>
@@ -654,7 +649,7 @@ const MobileScanPage: React.FC = () => {
                 input: {
                   startAdornment: (
                     <InputAdornment position='start'>
-                      <Search style={{ width: 20, height: 20 }} />
+                      <Search className={styles.il13} />
                     </InputAdornment>
                   ),
                   endAdornment:
@@ -665,7 +660,7 @@ const MobileScanPage: React.FC = () => {
                           onClick={handleClearHistory}
                           aria-label={i18n.t('mobile.mobile_scan_page.k33')}
                         >
-                          <Trash2 style={{ width: 18, height: 18 }} />
+                          <Trash2 className={styles.il14} />
                         </IconButton>
                       </InputAdornment>
                     ) : undefined,
@@ -717,9 +712,9 @@ const MobileScanPage: React.FC = () => {
                   <MobileCard
                     leftIcon={
                       item.type === 'qrcode' ? (
-                        <QrCode style={{ width: 20, height: 20 }} />
+                        <QrCode className={styles.il15} />
                       ) : (
-                        <Barcode style={{ width: 20, height: 20 }} />
+                        <Barcode className={styles.il16} />
                       )
                     }
                     title={item.content}
@@ -813,7 +808,7 @@ const MobileScanPage: React.FC = () => {
               variant='contained'
               onClick={handleManualSubmit}
               disabled={!manualInput.trim()}
-              startIcon={<Barcode style={{ width: 20, height: 20 }} />}
+              startIcon={<Barcode className={styles.il17} />}
             >
               {i18n.t('pages.mobile_scan_page.k13')}
             </MobileButton>

@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './MobileInventoryPage.module.css';
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
@@ -375,28 +376,28 @@ const MobileInventoryPage: React.FC = () => {
     {
       id: 'home',
       label: i18n.t('mobile.mobile_inventory_page.k40'),
-      icon: <Home style={{ width: 22, height: 22 }} />,
+      icon: <Home className={styles.il1} />,
     },
     {
       id: 'tasks',
       label: i18n.t('mobile.mobile_inventory_page.k41'),
-      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+      icon: <ListTodo className={styles.il2} />,
     },
     {
       id: 'scan',
       label: i18n.t('mobile.mobile_inventory_page.k42'),
-      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+      icon: <ScanLine className={styles.il3} />,
     },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_inventory_page.k43'),
-      icon: <CheckSquare style={{ width: 22, height: 22 }} />,
+      icon: <CheckSquare className={styles.il4} />,
       badge: 3,
     },
     {
       id: 'profile',
       label: i18n.t('mobile.mobile_inventory_page.k44'),
-      icon: <User style={{ width: 22, height: 22 }} />,
+      icon: <User className={styles.il5} />,
     },
   ];
   return (
@@ -416,7 +417,7 @@ const MobileInventoryPage: React.FC = () => {
           onClick={() => navigate(MOBILE_PATHS.scanPage)}
           aria-label={i18n.t('mobile.mobile_inventory_page.k46')}
         >
-          <Barcode style={{ width: 20, height: 20 }} />
+          <Barcode className={styles.il6} />
         </IconButton>,
       ]}
       headerProps={{
@@ -463,7 +464,7 @@ const MobileInventoryPage: React.FC = () => {
               input: {
                 startAdornment: (
                   <InputAdornment position='start'>
-                    <Search style={{ width: 20, height: 20 }} />
+                    <Search className={styles.il7} />
                   </InputAdornment>
                 ),
               },
@@ -493,7 +494,7 @@ const MobileInventoryPage: React.FC = () => {
                             color: `${getStatusColor(item.status)}.main`,
                           }}
                         >
-                          <Package style={{ width: 20, height: 20 }} />
+                          <Package className={styles.il8} />
                         </Avatar>
                       }
                       title={item.name}
@@ -717,7 +718,7 @@ const MobileInventoryPage: React.FC = () => {
                             color: 'success.main',
                           }}
                         >
-                          <Warehouse style={{ width: 20, height: 20 }} />
+                          <Warehouse className={styles.il9} />
                         </Avatar>
                       }
                       title={order.orderNo}
@@ -799,7 +800,7 @@ const MobileInventoryPage: React.FC = () => {
                             color: 'info.main',
                           }}
                         >
-                          <Truck style={{ width: 20, height: 20 }} />
+                          <Truck className={styles.il10} />
                         </Avatar>
                       }
                       title={order.orderNo}

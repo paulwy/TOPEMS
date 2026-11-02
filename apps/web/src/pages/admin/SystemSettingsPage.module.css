@@ -1,0 +1,56 @@
+/* ./pages/admin/SystemSettingsPage.tsx inline-style migration (auto) */
+
+.il1 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-3);
+}
+
+.il2 {
+  margin-top: var(--space-4);
+}
+
+.il3 {
+  padding: var(--space-8);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.il4 {
+  padding: var(--space-8);
+  text-align: center;
+  color: var(--error-500);
+}
+
+.il5 {
+  padding: var(--space-4);
+  background-color: var(--surface-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+}
+
+.il6 {
+  margin: 0 0 var(--space-3) 0;
+  font-size: 14px;
+  font-weight: 600px;
+  color: var(--text-primary);
+}
+
+.il7 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.il8 {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: 13px;
+  font-weight: 500px;
+  color: var(--text-secondary);
+}
+
+.il9 {
+  color: var(--error-500);
+  margin-left: 2px;
+}

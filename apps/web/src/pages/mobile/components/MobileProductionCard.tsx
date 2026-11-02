@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './MobileProductionCard.module.css';
 /**
  * MobileProduction work order card list component
  * @refactor-split Extracted from MobileProductionPage.tsx (V79 Phase 2)
@@ -202,7 +203,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                       color: 'primary.main',
                     }}
                   >
-                    <ClipboardList style={{ width: 20, height: 20 }} />
+                    <ClipboardList className={styles.il1} />
                   </Avatar>
                 }
                 title={report.orderNo}
@@ -288,7 +289,7 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
                       color: `${getStatusColor(equipment.status)}.main`,
                     }}
                   >
-                    <Monitor style={{ width: 20, height: 20 }} />
+                    <Monitor className={styles.il2} />
                   </Avatar>
                 }
                 title={equipment.name}

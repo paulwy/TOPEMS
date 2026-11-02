@@ -3,6 +3,7 @@
  * @refactor-split Extracted from MobileProductionPage.tsx (V79 Phase 2)
  */
 import React from 'react';
+import styles from './MobileProductionActions.module.css';
 import { Box, Typography } from '@mui/material';
 import { Play, Pause, Plus } from 'lucide-react';
 import { MobileButton } from '@/components/mobile';
@@ -43,7 +44,7 @@ export const MobileProductionActions: React.FC<MobileProductionActionsProps> = (
           <MobileButton
             size='small'
             variant='contained'
-            startIcon={<Play style={{ width: 16, height: 16 }} />}
+            startIcon={<Play className={styles.il1} />}
             onClick={() => onOrderAction(order, 'start')}
           >
             {i18n.t('mobile.production.action.start')}
@@ -54,7 +55,7 @@ export const MobileProductionActions: React.FC<MobileProductionActionsProps> = (
             <MobileButton
               size='small'
               variant='outlined'
-              startIcon={<Pause style={{ width: 16, height: 16 }} />}
+              startIcon={<Pause className={styles.il2} />}
               onClick={() => onOrderAction(order, 'pause')}
             >
               {i18n.t('mobile.production.action.pause')}
@@ -62,7 +63,7 @@ export const MobileProductionActions: React.FC<MobileProductionActionsProps> = (
             <MobileButton
               size='small'
               variant='contained'
-              startIcon={<Plus style={{ width: 16, height: 16 }} />}
+              startIcon={<Plus className={styles.il3} />}
               onClick={() => onStartReport(order)}
             >
               {i18n.t('mobile.production.action.report')}
@@ -73,7 +74,7 @@ export const MobileProductionActions: React.FC<MobileProductionActionsProps> = (
           <MobileButton
             size='small'
             variant='contained'
-            startIcon={<Play style={{ width: 16, height: 16 }} />}
+            startIcon={<Play className={styles.il4} />}
             onClick={() => onOrderAction(order, 'resume')}
           >
             {i18n.t('mobile.production.action.continue')}

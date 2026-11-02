@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './PluginInstallStepper.module.css';
 import {
   Alert,
   Box,
@@ -148,7 +149,7 @@ const PluginInstallStepper: React.FC<PluginInstallStepperProps> = ({
           <CheckCircle
             size={64}
             color='green'
-            style={{ marginBottom: 16 }}
+            className={styles.il1}
           />
           <Typography
             variant='h6'

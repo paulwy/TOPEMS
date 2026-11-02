@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './AlarmList.module.css';
 import React from 'react';
 import { Box, Chip, CircularProgress, Divider, Paper, Typography, Stack } from '@mui/material';
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
@@ -69,7 +70,7 @@ const AlarmList: React.FC<{ alarms: RealtimeAlarm[]; loading?: boolean }> = ({
             <CheckCircle2
               size={32}
               color='success.main'
-              style={{ marginBottom: 8 }}
+              className={styles.il1}
             />
             <Typography
               variant='body2'

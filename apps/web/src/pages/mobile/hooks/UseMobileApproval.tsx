@@ -1,4 +1,5 @@
 import { Package, Users, DollarSign, FileText } from 'lucide-react';
+import styles from './UseMobileApproval.module.css';
 import i18n from '@/i18n';
 
 export interface ApprovalItem {
@@ -44,15 +45,15 @@ export interface ApiApproval {
 export const getTypeIcon = (type: ApprovalItem['type']) => {
   switch (type) {
     case 'purchase':
-      return <Package style={{ width: 20, height: 20 }} />;
+      return <Package className={styles.il1} />;
     case 'leave':
-      return <Users style={{ width: 20, height: 20 }} />;
+      return <Users className={styles.il2} />;
     case 'expense':
-      return <DollarSign style={{ width: 20, height: 20 }} />;
+      return <DollarSign className={styles.il3} />;
     case 'contract':
-      return <FileText style={{ width: 20, height: 20 }} />;
+      return <FileText className={styles.il4} />;
     default:
-      return <FileText style={{ width: 20, height: 20 }} />;
+      return <FileText className={styles.il5} />;
   }
 };
 export const getTypeColor = (type: ApprovalItem['type']) => {

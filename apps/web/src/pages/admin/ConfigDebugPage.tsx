@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './ConfigDebugPage.module.css';
 import { Box, Paper, Typography, CardContent, CardHeader, useTheme } from '@mui/material';
 import { Server, Database, Code } from 'lucide-react';
 import config from '../../config/runtime';
@@ -12,7 +13,7 @@ const ConfigDebugPage: React.FC = () => {
       id: 'services',
       title: i18n.t('admin.config_debug_page.k0'),
       description: i18n.t('admin.config_debug_page.k1'),
-      icon: <Server style={{ width: 20, height: 20 }} />,
+      icon: <Server className={styles.il1} />,
       color: 'primary',
       fields: [],
     },
@@ -20,7 +21,7 @@ const ConfigDebugPage: React.FC = () => {
       id: 'api',
       title: i18n.t('pages.config_debug_page.api_0'),
       description: i18n.t('pages.config_debug_page.api_1'),
-      icon: <Database style={{ width: 20, height: 20 }} />,
+      icon: <Database className={styles.il2} />,
       color: 'success',
       fields: [],
     },
@@ -28,7 +29,7 @@ const ConfigDebugPage: React.FC = () => {
       id: 'env',
       title: i18n.t('admin.config_debug_page.k2'),
       description: i18n.t('admin.config_debug_page.k3'),
-      icon: <Code style={{ width: 20, height: 20 }} />,
+      icon: <Code className={styles.il3} />,
       color: 'warning',
       fields: [],
     },
@@ -58,7 +59,7 @@ const ConfigDebugPage: React.FC = () => {
                     color: 'primary.main',
                   }}
                 >
-                  <Server style={{ width: 20, height: 20 }} />
+                  <Server className={styles.il4} />
                 </Box>
                 <Box>
                   <Typography
@@ -108,7 +109,7 @@ const ConfigDebugPage: React.FC = () => {
                     color: 'success.main',
                   }}
                 >
-                  <Database style={{ width: 20, height: 20 }} />
+                  <Database className={styles.il5} />
                 </Box>
                 <Box>
                   <Typography
@@ -158,7 +159,7 @@ const ConfigDebugPage: React.FC = () => {
                     color: 'warning.main',
                   }}
                 >
-                  <Code style={{ width: 20, height: 20 }} />
+                  <Code className={styles.il6} />
                 </Box>
                 <Box>
                   <Typography

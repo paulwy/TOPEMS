@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './ApprovalCard.module.css';
 /**
  * ApprovalCard - Approval list item card component
  * @refactor-split Extracted from MobileApprovalPage.tsx
@@ -33,14 +34,14 @@ export const ApprovalCard: React.FC<ApprovalCardProps> = ({
   const rightSwipeActions: SwipeActionItem[] = [
     {
       id: 'approve',
-      icon: <Check style={{ width: 20, height: 20 }} />,
+      icon: <Check className={styles.il1} />,
       label: i18n.t('mobile.approval.action.approve'),
       color: theme.palette.success.main,
       onClick: onApprove || (() => {}),
     },
     {
       id: 'reject',
-      icon: <X style={{ width: 20, height: 20 }} />,
+      icon: <X className={styles.il2} />,
       label: i18n.t('mobile.approval.action.reject'),
       color: theme.palette.error.main,
       onClick: onReject || (() => {}),

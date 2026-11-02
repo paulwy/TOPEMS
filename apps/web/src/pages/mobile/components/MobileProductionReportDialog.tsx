@@ -3,6 +3,7 @@
  * @refactor-split Extracted from MobileProductionPage.tsx (V79 Phase 2)
  */
 import React from 'react';
+import styles from './MobileProductionReportDialog.module.css';
 import {
   Box,
   Typography,
@@ -122,7 +123,7 @@ export const MobileProductionReportDialog: React.FC<MobileProductionReportDialog
         <MobileButton
           variant='contained'
           onClick={onSubmit}
-          startIcon={<CheckSquare style={{ width: 18, height: 18 }} />}
+          startIcon={<CheckSquare className={styles.il1} />}
         >
           {i18n.t('mobile.production.action.submit_report')}
         </MobileButton>

@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './ScanHistory.module.css';
 import React from 'react';
 import {
   Box,
@@ -52,7 +53,7 @@ const ScanHistory: React.FC<ScanHistoryProps> = ({
             input: {
               startAdornment: (
                 <InputAdornment position='start'>
-                  <Search style={{ width: 20, height: 20 }} />
+                  <Search className={styles.il1} />
                 </InputAdornment>
               ),
               endAdornment:
@@ -63,7 +64,7 @@ const ScanHistory: React.FC<ScanHistoryProps> = ({
                       onClick={onClearHistory}
                       aria-label={i18n.t('mobile.scan_history.k0')}
                     >
-                      <Trash2 style={{ width: 18, height: 18 }} />
+                      <Trash2 className={styles.il2} />
                     </IconButton>
                   </InputAdornment>
                 ) : undefined,
@@ -115,9 +116,9 @@ const ScanHistory: React.FC<ScanHistoryProps> = ({
               <MobileCard
                 leftIcon={
                   item.type === 'qrcode' ? (
-                    <QrCode style={{ width: 20, height: 20 }} />
+                    <QrCode className={styles.il3} />
                   ) : (
-                    <Barcode style={{ width: 20, height: 20 }} />
+                    <Barcode className={styles.il4} />
                   )
                 }
                 title={item.content}

@@ -1,4 +1,5 @@
 import { Typography, Box, InputLabel, Chip, useTheme } from '@mui/material';
+import styles from './EquipmentDetailPage.module.css';
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -341,7 +342,7 @@ const EquipmentDetailPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <Wrench style={{ width: 20, height: 20 }} />,
+        pageIcon: <Wrench className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
       }}
     >

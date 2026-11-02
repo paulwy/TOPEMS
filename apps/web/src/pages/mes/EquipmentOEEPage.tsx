@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './EquipmentOEEPage.module.css';
 import { Box, Typography, LinearProgress, InputLabel, useTheme } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -367,7 +368,7 @@ const EquipmentOEEPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <Gauge style={{ width: 20, height: 20 }} />,
+        pageIcon: <Gauge className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >

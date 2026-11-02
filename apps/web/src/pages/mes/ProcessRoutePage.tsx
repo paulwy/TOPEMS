@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import styles from './ProcessRoutePage.module.css';
 import { Box, Chip, Typography, InputLabel, Stack, useTheme } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { Route } from 'lucide-react';
@@ -230,7 +231,7 @@ const ProcessRoutePage: React.FC = () => {
       title={i18n.t('mes.process_route_page.process')}
       subtitle={i18n.t('mes.process_route_page.process_1')}
       headerProps={{
-        pageIcon: <Route style={{ width: 20, height: 20 }} />,
+        pageIcon: <Route className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
       }}
     >

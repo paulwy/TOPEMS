@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './OperationAuditLogFilter.module.css';
 import { Search, Calendar, X } from 'lucide-react';
 import {
   Box,
@@ -94,7 +95,7 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
               <InputAdornment position='start'>
                 <Search
                   size={16}
-                  style={{ opacity: 0.5 }}
+                  className={styles.il1}
                 />
               </InputAdornment>
             ),
@@ -192,7 +193,7 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Calendar
           size={18}
-          style={{ opacity: 0.5 }}
+          className={styles.il2}
         />
         <Typography
           variant='body2'

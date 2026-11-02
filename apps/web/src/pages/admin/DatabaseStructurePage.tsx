@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './DatabaseStructurePage.module.css';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 import React, { useState, useEffect } from 'react';
@@ -908,7 +909,7 @@ const DatabaseStructurePage: React.FC = () => {
               <FileCode
                 size={16}
                 color='success.400'
-                style={{ marginTop: 2 }}
+                className={styles.il1}
               />
               <Box
                 component='pre'

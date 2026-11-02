@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './MaterialRequirementPage.module.css';
 import { Box, Typography, InputLabel, useTheme } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
@@ -246,7 +247,7 @@ const MaterialRequirementPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <Calculator style={{ width: 20, height: 20 }} />,
+        pageIcon: <Calculator className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.dark} 100%)`,
       }}
     >

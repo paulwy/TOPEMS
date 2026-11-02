@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './MobileProfilePage.module.css';
 import React, { useState } from 'react';
 import { Box, Typography, Avatar, useTheme, Switch, Chip, Paper } from '@mui/material';
 import {
@@ -51,7 +52,7 @@ const MobileSettingsPage: React.FC = () => {
       items: [
         {
           id: 'notifications',
-          icon: <Bell style={{ width: 20, height: 20 }} />,
+          icon: <Bell className={styles.il1} />,
           label: i18n.t('mobile.mobile_profile_page.k1'),
           subtitle: i18n.t('mobile.mobile_profile_page.k2'),
           type: 'navigate',
@@ -59,7 +60,7 @@ const MobileSettingsPage: React.FC = () => {
         },
         {
           id: 'scan',
-          icon: <ScanLine style={{ width: 20, height: 20 }} />,
+          icon: <ScanLine className={styles.il2} />,
           label: i18n.t('mobile.mobile_profile_page.k3'),
           subtitle: i18n.t('mobile.mobile_profile_page.k4'),
           type: 'navigate',
@@ -67,7 +68,7 @@ const MobileSettingsPage: React.FC = () => {
         },
         {
           id: 'offline',
-          icon: <Database style={{ width: 20, height: 20 }} />,
+          icon: <Database className={styles.il3} />,
           label: i18n.t('mobile.mobile_profile_page.k5'),
           subtitle: i18n.t('mobile.mobile_profile_page.k6'),
           type: 'navigate',
@@ -83,7 +84,7 @@ const MobileSettingsPage: React.FC = () => {
         },
         {
           id: 'app-settings',
-          icon: <Smartphone style={{ width: 20, height: 20 }} />,
+          icon: <Smartphone className={styles.il4} />,
           label: i18n.t('mobile.mobile_profile_page.k7'),
           subtitle: i18n.t('mobile.mobile_profile_page.k8'),
           type: 'navigate',
@@ -96,7 +97,7 @@ const MobileSettingsPage: React.FC = () => {
       items: [
         {
           id: 'dark-mode',
-          icon: <Moon style={{ width: 20, height: 20 }} />,
+          icon: <Moon className={styles.il5} />,
           label: i18n.t('mobile.mobile_profile_page.k10'),
           type: 'switch',
           value: darkMode,
@@ -104,7 +105,7 @@ const MobileSettingsPage: React.FC = () => {
         },
         {
           id: 'push',
-          icon: <Bell style={{ width: 20, height: 20 }} />,
+          icon: <Bell className={styles.il6} />,
           label: i18n.t('mobile.mobile_profile_page.k11'),
           subtitle: i18n.t('mobile.mobile_profile_page.k12'),
           type: 'switch',
@@ -113,7 +114,7 @@ const MobileSettingsPage: React.FC = () => {
         },
         {
           id: 'language',
-          icon: <Globe style={{ width: 20, height: 20 }} />,
+          icon: <Globe className={styles.il7} />,
           label: i18n.t('mobile.mobile_profile_page.k13'),
           subtitle: i18n.t('mobile.mobile_profile_page.k14'),
           type: 'navigate',
@@ -126,7 +127,7 @@ const MobileSettingsPage: React.FC = () => {
       items: [
         {
           id: 'security',
-          icon: <Shield style={{ width: 20, height: 20 }} />,
+          icon: <Shield className={styles.il8} />,
           label: i18n.t('mobile.mobile_profile_page.k16'),
           subtitle: i18n.t('mobile.mobile_profile_page.k17'),
           type: 'navigate',
@@ -134,7 +135,7 @@ const MobileSettingsPage: React.FC = () => {
         },
         {
           id: 'privacy',
-          icon: <Shield style={{ width: 20, height: 20 }} />,
+          icon: <Shield className={styles.il9} />,
           label: i18n.t('mobile.mobile_profile_page.k18'),
           type: 'navigate',
           path: MOBILE_PATHS.settings,
@@ -146,14 +147,14 @@ const MobileSettingsPage: React.FC = () => {
       items: [
         {
           id: 'help',
-          icon: <HelpCircle style={{ width: 20, height: 20 }} />,
+          icon: <HelpCircle className={styles.il10} />,
           label: i18n.t('mobile.mobile_profile_page.k20'),
           type: 'navigate',
           path: '/help',
         },
         {
           id: 'about',
-          icon: <Info style={{ width: 20, height: 20 }} />,
+          icon: <Info className={styles.il11} />,
           label: i18n.t('mobile.mobile_profile_page.topems_21'),
           subtitle: i18n.t('pages.mobile_profile_page.210_0'),
           type: 'navigate',
@@ -184,28 +185,28 @@ const MobileSettingsPage: React.FC = () => {
     {
       id: 'home',
       label: i18n.t('mobile.mobile_profile_page.k22'),
-      icon: <Home style={{ width: 22, height: 22 }} />,
+      icon: <Home className={styles.il12} />,
     },
     {
       id: 'tasks',
       label: i18n.t('mobile.mobile_profile_page.k23'),
-      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+      icon: <ListTodo className={styles.il13} />,
     },
     {
       id: 'scan',
       label: i18n.t('mobile.mobile_profile_page.k24'),
-      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+      icon: <ScanLine className={styles.il14} />,
     },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_profile_page.k25'),
-      icon: <CheckSquare style={{ width: 22, height: 22 }} />,
+      icon: <CheckSquare className={styles.il15} />,
       badge: 3,
     },
     {
       id: 'profile',
       label: i18n.t('mobile.mobile_profile_page.k26'),
-      icon: <User style={{ width: 22, height: 22 }} />,
+      icon: <User className={styles.il16} />,
     },
   ];
   const handleNavigate = (path?: string) => {

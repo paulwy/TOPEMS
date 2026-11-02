@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './MobileTaskListPage.module.css';
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import {
   Box,
@@ -171,25 +172,25 @@ const MobileTaskListPage: React.FC = () => {
         return {
           label: i18n.t('mobile.mobile_task_list_page.k6'),
           color: 'warning' as const,
-          icon: <Clock style={{ width: 14, height: 14 }} />,
+          icon: <Clock className={styles.il1} />,
         };
       case 'in_progress':
         return {
           label: i18n.t('mobile.mobile_task_list_page.k7'),
           color: 'primary' as const,
-          icon: <ListTodo style={{ width: 14, height: 14 }} />,
+          icon: <ListTodo className={styles.il2} />,
         };
       case 'completed':
         return {
           label: i18n.t('mobile.mobile_task_list_page.k8'),
           color: 'success' as const,
-          icon: <CheckCircle2 style={{ width: 14, height: 14 }} />,
+          icon: <CheckCircle2 className={styles.il3} />,
         };
       case 'paused':
         return {
           label: i18n.t('mobile.mobile_task_list_page.k9'),
           color: 'default' as const,
-          icon: <PauseCircle style={{ width: 14, height: 14 }} />,
+          icon: <PauseCircle className={styles.il4} />,
         };
     }
   };
@@ -210,14 +211,14 @@ const MobileTaskListPage: React.FC = () => {
   const rightSwipeActions: SwipeActionItem[] = [
     {
       id: 'complete',
-      icon: <CheckSquare style={{ width: 20, height: 20 }} />,
+      icon: <CheckSquare className={styles.il5} />,
       label: i18n.t('mobile.mobile_task_list_page.k13'),
       color: theme.palette.success.main,
       onClick: () => {},
     },
     {
       id: 'delete',
-      icon: <AlertCircle style={{ width: 20, height: 20 }} />,
+      icon: <AlertCircle className={styles.il6} />,
       label: i18n.t('mobile.mobile_task_list_page.k14'),
       color: theme.palette.error.main,
       onClick: () => {},
@@ -260,28 +261,28 @@ const MobileTaskListPage: React.FC = () => {
     {
       id: 'home',
       label: i18n.t('mobile.mobile_task_list_page.k15'),
-      icon: <Home style={{ width: 22, height: 22 }} />,
+      icon: <Home className={styles.il7} />,
     },
     {
       id: 'tasks',
       label: i18n.t('mobile.mobile_task_list_page.k16'),
-      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+      icon: <ListTodo className={styles.il8} />,
     },
     {
       id: 'scan',
       label: i18n.t('mobile.mobile_task_list_page.k17'),
-      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+      icon: <ScanLine className={styles.il9} />,
     },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_task_list_page.k18'),
-      icon: <CheckSquare style={{ width: 22, height: 22 }} />,
+      icon: <CheckSquare className={styles.il10} />,
       badge: 3,
     },
     {
       id: 'profile',
       label: i18n.t('mobile.mobile_task_list_page.k19'),
-      icon: <User style={{ width: 22, height: 22 }} />,
+      icon: <User className={styles.il11} />,
     },
   ];
   return (
@@ -320,7 +321,7 @@ const MobileTaskListPage: React.FC = () => {
             input: {
               startAdornment: (
                 <InputAdornment position='start'>
-                  <Search style={{ width: 20, height: 20 }} />
+                  <Search className={styles.il12} />
                 </InputAdornment>
               ),
               endAdornment: searchQuery ? (

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import styles from './PluginManagementPage.module.css';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
@@ -714,7 +715,7 @@ const PluginManagementPage: React.FC = () => {
                   <CheckCircle
                     size={64}
                     color='green'
-                    style={{ marginBottom: 16 }}
+                    className={styles.il1}
                   />
                   <Typography
                     variant='h6'

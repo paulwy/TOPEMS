@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './DictionaryImportModal.module.css';
 import {
   Box,
   Typography,
@@ -44,7 +45,7 @@ const DictionaryImportModal: React.FC<DictionaryImportModalProps> = ({
             type='file'
             accept='.json'
             onChange={(e) => onFileChange(e.target.files?.[0] || null)}
-            style={{ width: '100%' }}
+            className={styles.il1}
           />
         </Box>
       </DialogContent>

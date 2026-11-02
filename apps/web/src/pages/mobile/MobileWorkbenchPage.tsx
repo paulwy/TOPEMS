@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './MobileWorkbenchPage.module.css';
 import React, { useCallback, useEffect } from 'react';
 import { Box, Typography, Paper, Chip, Avatar, useTheme, List, Badge } from '@mui/material';
 import { Grid } from '@/components/common';
@@ -81,7 +82,7 @@ const MobileWorkbenchPage: React.FC = () => {
           id: '1',
           label: i18n.t('mobile.mobile_workbench_page.k0'),
           value: workbenchData.pending_tasks,
-          icon: <ListTodo style={{ width: 20, height: 20 }} />,
+          icon: <ListTodo className={styles.il1} />,
           color: 'primary' as const,
           badge: workbenchData.pending_tasks,
         },
@@ -89,7 +90,7 @@ const MobileWorkbenchPage: React.FC = () => {
           id: '2',
           label: i18n.t('mobile.mobile_workbench_page.k1'),
           value: workbenchData.pending_approvals,
-          icon: <CheckSquare style={{ width: 20, height: 20 }} />,
+          icon: <CheckSquare className={styles.il2} />,
           color: 'warning' as const,
           badge: workbenchData.pending_approvals,
         },
@@ -97,14 +98,14 @@ const MobileWorkbenchPage: React.FC = () => {
           id: '3',
           label: i18n.t('mobile.mobile_workbench_page.k2'),
           value: workbenchData.today_production_output,
-          icon: <Factory style={{ width: 20, height: 20 }} />,
+          icon: <Factory className={styles.il3} />,
           color: 'success' as const,
         },
         {
           id: '4',
           label: i18n.t('mobile.mobile_workbench_page.k3'),
           value: `${workbenchData.today_quality_pass_rate}%`,
-          icon: <TrendingUp style={{ width: 20, height: 20 }} />,
+          icon: <TrendingUp className={styles.il4} />,
           color: 'info' as const,
         },
       ];
@@ -114,7 +115,7 @@ const MobileWorkbenchPage: React.FC = () => {
           title: i18n.t('pages.mobile_workbench_page.a3_0'),
           subtitle: i18n.t('mobile.mobile_workbench_page.k4'),
           time: '10:30',
-          avatar: <ClipboardList style={{ width: 20, height: 20 }} />,
+          avatar: <ClipboardList className={styles.il5} />,
           type: 'task',
           status: i18n.t('mobile.mobile_workbench_page.k5'),
         },
@@ -123,7 +124,7 @@ const MobileWorkbenchPage: React.FC = () => {
           title: i18n.t('mobile.mobile_workbench_page.k6'),
           subtitle: i18n.t('pages.mobile_workbench_page.12500_1'),
           time: '09:45',
-          avatar: <CheckSquare style={{ width: 20, height: 20 }} />,
+          avatar: <CheckSquare className={styles.il6} />,
           type: 'approval',
           status: i18n.t('mobile.mobile_workbench_page.k7'),
         },
@@ -132,7 +133,7 @@ const MobileWorkbenchPage: React.FC = () => {
           title: i18n.t('pages.mobile_workbench_page.po20240678_2'),
           subtitle: i18n.t('mobile.mobile_workbench_page.500_8'),
           time: '08:00',
-          avatar: <Factory style={{ width: 20, height: 20 }} />,
+          avatar: <Factory className={styles.il7} />,
           type: 'production',
           status: i18n.t('mobile.mobile_workbench_page.k9'),
         },
@@ -141,7 +142,7 @@ const MobileWorkbenchPage: React.FC = () => {
           title: i18n.t('mobile.mobile_workbench_page.k10'),
           subtitle: i18n.t('pages.mobile_workbench_page.b20240601_3'),
           time: i18n.t('pages.mobile_workbench_page.1620_4'),
-          avatar: <ClipboardCheck style={{ width: 20, height: 20 }} />,
+          avatar: <ClipboardCheck className={styles.il8} />,
           type: 'quality',
           status: i18n.t('mobile.mobile_workbench_page.k11'),
         },
@@ -150,7 +151,7 @@ const MobileWorkbenchPage: React.FC = () => {
           title: i18n.t('mobile.mobile_workbench_page.k12'),
           subtitle: i18n.t('pages.mobile_workbench_page.22002400_5'),
           time: i18n.t('pages.mobile_workbench_page.1400_6'),
-          avatar: <Bell style={{ width: 20, height: 20 }} />,
+          avatar: <Bell className={styles.il9} />,
           type: 'notification',
         },
       ];
@@ -171,21 +172,21 @@ const MobileWorkbenchPage: React.FC = () => {
     {
       id: 'attendance',
       label: i18n.t('mobile.mobile_workbench_page.k13'),
-      icon: <CalendarCheck style={{ width: 24, height: 24 }} />,
+      icon: <CalendarCheck className={styles.il10} />,
       path: MOBILE_PATHS.attendance,
       color: 'primary',
     },
     {
       id: 'scan',
       label: i18n.t('mobile.mobile_workbench_page.k14'),
-      icon: <ScanLine style={{ width: 24, height: 24 }} />,
+      icon: <ScanLine className={styles.il11} />,
       path: MOBILE_PATHS.scanPage,
       color: 'success',
     },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_workbench_page.k15'),
-      icon: <CheckSquare style={{ width: 24, height: 24 }} />,
+      icon: <CheckSquare className={styles.il12} />,
       path: MOBILE_PATHS.approvals,
       color: 'warning',
       badge: 3,
@@ -193,35 +194,35 @@ const MobileWorkbenchPage: React.FC = () => {
     {
       id: 'inventory',
       label: i18n.t('mobile.mobile_workbench_page.k16'),
-      icon: <Package style={{ width: 24, height: 24 }} />,
+      icon: <Package className={styles.il13} />,
       path: MOBILE_PATHS.inventory,
       color: 'info',
     },
     {
       id: 'quality',
       label: i18n.t('mobile.mobile_workbench_page.k17'),
-      icon: <ClipboardCheck style={{ width: 24, height: 24 }} />,
+      icon: <ClipboardCheck className={styles.il14} />,
       path: MOBILE_PATHS.quality,
       color: 'error',
     },
     {
       id: 'production',
       label: i18n.t('mobile.mobile_workbench_page.k18'),
-      icon: <Factory style={{ width: 24, height: 24 }} />,
+      icon: <Factory className={styles.il15} />,
       path: MOBILE_PATHS.production,
       color: 'secondary',
     },
     {
       id: 'tasks',
       label: i18n.t('mobile.mobile_workbench_page.k19'),
-      icon: <ListTodo style={{ width: 24, height: 24 }} />,
+      icon: <ListTodo className={styles.il16} />,
       path: MOBILE_PATHS.tasks,
       color: 'primary',
     },
     {
       id: 'more',
       label: i18n.t('mobile.mobile_workbench_page.k20'),
-      icon: <Zap style={{ width: 24, height: 24 }} />,
+      icon: <Zap className={styles.il17} />,
       path: MOBILE_PATHS.home,
       color: 'info',
     },
@@ -320,28 +321,28 @@ const MobileWorkbenchPage: React.FC = () => {
     {
       id: 'home',
       label: i18n.t('mobile.mobile_workbench_page.k26'),
-      icon: <Home style={{ width: 22, height: 22 }} />,
+      icon: <Home className={styles.il18} />,
     },
     {
       id: 'tasks',
       label: i18n.t('mobile.mobile_workbench_page.k27'),
-      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+      icon: <ListTodo className={styles.il19} />,
     },
     {
       id: 'scan',
       label: i18n.t('mobile.mobile_workbench_page.k28'),
-      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+      icon: <ScanLine className={styles.il20} />,
     },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_workbench_page.k29'),
-      icon: <CheckSquare style={{ width: 22, height: 22 }} />,
+      icon: <CheckSquare className={styles.il21} />,
       badge: 3,
     },
     {
       id: 'profile',
       label: i18n.t('mobile.mobile_workbench_page.k30'),
-      icon: <User style={{ width: 22, height: 22 }} />,
+      icon: <User className={styles.il22} />,
     },
   ];
   return (
@@ -402,11 +403,11 @@ const MobileWorkbenchPage: React.FC = () => {
               badgeContent={unreadCount}
               color='error'
             >
-              <Bell style={{ width: 22, height: 22, opacity: 0.9 }} />
+              <Bell className={styles.il23} />
             </Badge>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Clock style={{ width: 16, height: 16 }} />
+            <Clock className={styles.il24} />
             <Typography
               variant='body2'
               sx={{ opacity: 0.9 }}
@@ -596,7 +597,7 @@ const MobileWorkbenchPage: React.FC = () => {
                   <Typography variant='caption'>
                     {i18n.t('mobile.mobile_workbench_page.k34')}
                   </Typography>
-                  <ChevronRight style={{ width: 16, height: 16 }} />
+                  <ChevronRight className={styles.il25} />
                 </Box>
               </Box>
               <List disablePadding>

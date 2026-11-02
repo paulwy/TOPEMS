@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import styles from './ApsSchedulingPage.module.css';
 import {
   Box,
   Typography,
@@ -705,7 +706,7 @@ const ApsSchedulingPage: React.FC = () => {
             <Brain
               size={64}
               color={theme.palette.grey[300]}
-              style={{ marginBottom: 16 }}
+              className={styles.il1}
             />
             <Typography
               variant='h6'

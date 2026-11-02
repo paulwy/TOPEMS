@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import styles from './SystemSettingsPage.module.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { Settings, Mail, MessageSquare, FileText, RefreshCw } from 'lucide-react';
@@ -226,7 +227,7 @@ const SystemSettingsPage: React.FC = () => {
       </FieldGroup>
 
       <FieldGroup title={t('admin.system_settings_page.group_smtp')}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-3)' }}>
+        <div className={styles.il1}>
           <FormField
             label={t('admin.system_settings_page.smtp_server')}
             required
@@ -471,20 +472,16 @@ const SystemSettingsPage: React.FC = () => {
           onChange={(id) => setActiveTab(id as TabKey)}
         />
 
-        <div style={{ marginTop: 'var(--space-4)' }}>
+        <div className={styles.il2}>
           {isLoading ? (
             <div
-              style={{
-                padding: 'var(--space-8)',
-                textAlign: 'center',
-                color: 'var(--text-secondary)',
-              }}
+              className={styles.il3}
             >
               {t('admin.system_settings_page.loading')}
             </div>
           ) : error ? (
             <div
-              style={{ padding: 'var(--space-8)', textAlign: 'center', color: 'var(--error-500)' }}
+              className={styles.il4}
             >
               {t('admin.system_settings_page.load_failed_default')}
             </div>
@@ -508,24 +505,14 @@ const FieldGroup: React.FC<{ title: string; children: React.ReactNode }> = ({
   children,
 }) => (
   <div
-    style={{
-      padding: 'var(--space-4)',
-      backgroundColor: 'var(--surface-2)',
-      borderRadius: 'var(--radius-sm)',
-      border: '1px solid var(--border-default)',
-    }}
+    className={styles.il5}
   >
     <h4
-      style={{
-        margin: '0 0 var(--space-3) 0',
-        fontSize: 14,
-        fontWeight: 600,
-        color: 'var(--text-primary)',
-      }}
+      className={styles.il6}
     >
       {title}
     </h4>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+    <div className={styles.il7}>
       {children}
     </div>
   </div>
@@ -539,16 +526,10 @@ const FormField: React.FC<{ label: string; required?: boolean; children: React.R
 }) => (
   <div>
     <label
-      style={{
-        display: 'block',
-        marginBottom: 'var(--space-1)',
-        fontSize: 13,
-        fontWeight: 500,
-        color: 'var(--text-secondary)',
-      }}
+      className={styles.il8}
     >
       {label}
-      {required && <span style={{ color: 'var(--error-500)', marginLeft: 2 }}>*</span>}
+      {required && <span className={styles.il9}>*</span>}
     </label>
     {children}
   </div>

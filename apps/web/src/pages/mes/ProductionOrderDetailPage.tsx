@@ -9,6 +9,7 @@ import {
   useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
+import styles from './ProductionOrderDetailPage.module.css';
 import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -574,7 +575,7 @@ const ProductionOrderDetailPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <Package style={{ width: 20, height: 20 }} />,
+        pageIcon: <Package className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >

@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './ManualInput.module.css';
 import { Box, Typography, Chip, Paper, TextField } from '@mui/material';
 import { Barcode } from 'lucide-react';
 import { MobileButton } from '@/components/mobile';
@@ -61,7 +62,7 @@ const ManualInput: React.FC<ManualInputProps> = ({
           variant='contained'
           onClick={onSubmit}
           disabled={!manualInput.trim()}
-          startIcon={<Barcode style={{ width: 20, height: 20 }} />}
+          startIcon={<Barcode className={styles.il1} />}
         >
           {i18n.t('mobile.scan.action.confirm')}
         </MobileButton>

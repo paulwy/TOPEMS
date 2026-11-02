@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './TenantBillingPage.module.css';
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
@@ -256,7 +257,7 @@ const TenantBillingPage: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                   <Users
                     size={20}
-                    style={{ opacity: 0.7 }}
+                    className={styles.il1}
                   />
                   <Typography
                     variant='subtitle2'
@@ -296,7 +297,7 @@ const TenantBillingPage: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                   <HardDrive
                     size={20}
-                    style={{ opacity: 0.7 }}
+                    className={styles.il2}
                   />
                   <Typography
                     variant='subtitle2'
@@ -339,7 +340,7 @@ const TenantBillingPage: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                   <Activity
                     size={20}
-                    style={{ opacity: 0.7 }}
+                    className={styles.il3}
                   />
                   <Typography
                     variant='subtitle2'
@@ -467,13 +468,13 @@ const TenantBillingPage: React.FC = () => {
                             <Check
                               size={16}
                               color='green'
-                              style={{ marginRight: 8, flexShrink: 0 }}
+                              className={styles.il4}
                             />
                           ) : (
                             <X
                               size={16}
                               color='gray'
-                              style={{ marginRight: 8, flexShrink: 0, opacity: 0.5 }}
+                              className={styles.il5}
                             />
                           )}
                           <ListItemText

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import styles from './ProductionGantt.module.css';
 import {
   Box,
   CircularProgress,
@@ -142,7 +143,7 @@ const ProductionGantt: React.FC<{
           <Calendar
             size={32}
             color='grey.400'
-            style={{ marginBottom: 8 }}
+            className={styles.il1}
           />
           <Typography
             variant='body2'

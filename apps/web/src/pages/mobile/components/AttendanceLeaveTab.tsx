@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './AttendanceLeaveTab.module.css';
 /**
  * AttendanceLeaveTab - Leave applications list
  * @refactor-split Extracted from MobileAttendancePage.tsx
@@ -83,7 +84,7 @@ export const AttendanceLeaveTab: React.FC<AttendanceLeaveTabProps> = ({
           </Typography>
           <MobileButton
             variant='contained'
-            startIcon={<Plus style={{ width: 18, height: 18 }} />}
+            startIcon={<Plus className={styles.il1} />}
             onClick={onOpenLeaveDialog}
           >
             {i18n.t('mobile.attendance.action.apply_leave')}

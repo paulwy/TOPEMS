@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './MobileQualityPage.module.css';
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
@@ -361,28 +362,28 @@ const MobileQualityPage: React.FC = () => {
     {
       id: 'home',
       label: i18n.t('mobile.mobile_quality_page.k36'),
-      icon: <Home style={{ width: 22, height: 22 }} />,
+      icon: <Home className={styles.il1} />,
     },
     {
       id: 'tasks',
       label: i18n.t('mobile.mobile_quality_page.k37'),
-      icon: <ListTodo style={{ width: 22, height: 22 }} />,
+      icon: <ListTodo className={styles.il2} />,
     },
     {
       id: 'scan',
       label: i18n.t('mobile.mobile_quality_page.k38'),
-      icon: <ScanLine style={{ width: 22, height: 22 }} />,
+      icon: <ScanLine className={styles.il3} />,
     },
     {
       id: 'approval',
       label: i18n.t('mobile.mobile_quality_page.k39'),
-      icon: <CheckSquare style={{ width: 22, height: 22 }} />,
+      icon: <CheckSquare className={styles.il4} />,
       badge: 3,
     },
     {
       id: 'profile',
       label: i18n.t('mobile.mobile_quality_page.k40'),
-      icon: <User style={{ width: 22, height: 22 }} />,
+      icon: <User className={styles.il5} />,
     },
   ];
   return (
@@ -402,7 +403,7 @@ const MobileQualityPage: React.FC = () => {
           onClick={() => navigate(MOBILE_PATHS.scanPage)}
           aria-label={i18n.t('mobile.mobile_quality_page.k42')}
         >
-          <Barcode style={{ width: 20, height: 20 }} />
+          <Barcode className={styles.il6} />
         </IconButton>,
       ]}
       headerProps={{
@@ -449,7 +450,7 @@ const MobileQualityPage: React.FC = () => {
               input: {
                 startAdornment: (
                   <InputAdornment position='start'>
-                    <Search style={{ width: 20, height: 20 }} />
+                    <Search className={styles.il7} />
                   </InputAdornment>
                 ),
               },
@@ -841,7 +842,7 @@ const MobileQualityPage: React.FC = () => {
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Button
                 variant='outlined'
-                startIcon={<Camera style={{ width: 18, height: 18 }} />}
+                startIcon={<Camera className={styles.il8} />}
                 fullWidth
               >
                 {i18n.t('pages.mobile_quality_page.k12')}
@@ -857,7 +858,7 @@ const MobileQualityPage: React.FC = () => {
             variant='contained'
             color='error'
             onClick={handleSubmitDefect}
-            startIcon={<AlertTriangle style={{ width: 18, height: 18 }} />}
+            startIcon={<AlertTriangle className={styles.il9} />}
           >
             {i18n.t('pages.mobile_quality_page.k13')}
           </MobileButton>

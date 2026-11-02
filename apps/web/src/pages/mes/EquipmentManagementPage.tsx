@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import styles from './EquipmentManagementPage.module.css';
 import {
   Box,
   Dialog,
@@ -228,7 +229,7 @@ export default function EquipmentManagementPage() {
       title={i18n.t('mes.equipment_management_page.breadcrumb_current')}
       subtitle={i18n.t('mes.equipment_management_page.name')}
       headerProps={{
-        pageIcon: <Wrench style={{ width: 20, height: 20 }} />,
+        pageIcon: <Wrench className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.dark} 100%)`,
       }}
     >

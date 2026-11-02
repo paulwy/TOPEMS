@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './ApprovalDetail.module.css';
 /**
  * ApprovalDetail - Approval detail page component
  * @refactor-split Extracted from MobileApprovalPage.tsx
@@ -130,7 +131,7 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Avatar sx={{ width: 44, height: 44 }}>
-            <UserIcon style={{ width: 22, height: 22 }} />
+            <UserIcon className={styles.il1} />
           </Avatar>
           <Box>
             <Typography
@@ -229,7 +230,7 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
                   }}
                 >
                   {step.status === 'completed' ? (
-                    <Check style={{ width: 14, height: 14 }} />
+                    <Check className={styles.il2} />
                   ) : (
                     <Typography
                       variant='caption'
@@ -323,7 +324,7 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
           fullWidth
           variant='outlined'
           color='error'
-          startIcon={processing ? null : <X style={{ width: 20, height: 20 }} />}
+          startIcon={processing ? null : <X className={styles.il3} />}
           onClick={onReject}
           disabled={processing}
         >
@@ -335,7 +336,7 @@ export const ApprovalDetail: React.FC<ApprovalDetailProps> = ({
           fullWidth
           variant='contained'
           color='success'
-          startIcon={processing ? null : <Check style={{ width: 20, height: 20 }} />}
+          startIcon={processing ? null : <Check className={styles.il4} />}
           onClick={onApprove}
           disabled={processing}
         >

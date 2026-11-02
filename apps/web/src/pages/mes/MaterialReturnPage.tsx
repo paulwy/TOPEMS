@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './MaterialReturnPage.module.css';
 import {
   Box,
   Typography,
@@ -142,7 +143,7 @@ const MaterialReturnPage: React.FC = () => {
       autoTitle
       autoBreadcrumbs
       headerProps={{
-        pageIcon: <Undo2 style={{ width: 20, height: 20 }} />,
+        pageIcon: <Undo2 className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.error.main} 0%, ${theme.palette.error[700]} 100%)`,
       }}
     >

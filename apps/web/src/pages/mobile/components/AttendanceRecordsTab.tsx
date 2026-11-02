@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './AttendanceRecordsTab.module.css';
 /**
  * AttendanceRecordsTab - Attendance records list
  * @refactor-split Extracted from MobileAttendancePage.tsx
@@ -50,7 +51,7 @@ export const AttendanceRecordsTab: React.FC<AttendanceRecordsTabProps> = ({ reco
                   color: `${getStatusColor(record.status)}.main`,
                 }}
               >
-                <Clock style={{ width: 20, height: 20 }} />
+                <Clock className={styles.il1} />
               </Avatar>
             }
             title={record.date}

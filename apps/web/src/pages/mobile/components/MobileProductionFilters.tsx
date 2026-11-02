@@ -1,4 +1,5 @@
 import { designTokens } from '@topems/tokens';
+import styles from './MobileProductionFilters.module.css';
 /**
  * MobileProduction filter bar component
  * @refactor-split Extracted from MobileProductionPage.tsx (V79 Phase 2)
@@ -66,7 +67,7 @@ export const MobileProductionFilters: React.FC<MobileProductionFiltersProps> = (
               input: {
                 startAdornment: (
                   <InputAdornment position='start'>
-                    <Search style={{ width: 20, height: 20 }} />
+                    <Search className={styles.il1} />
                   </InputAdornment>
                 ),
               },
