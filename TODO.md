@@ -993,6 +993,21 @@
 - 验证：编译 0 错误、clippy 0 警告、单测 mobile 149 + lims 245 全绿
 - **mobile 静态 Err = 8→0、lims = 8→0**（本批清零两个小服务）
 
+### 2026-11-02 补齐记录（用户指令「继续补齐」3 项实际缺口，全部验证全绿后提交）
+- **方向③固化入主线**：commit e83d6e3fe0（`20261005000003_rd_status_default_active.sql` +
+  `20261005000004_lims_qa_lab_fk_repoint.sql`；01/02 已被 align_public_shadow_tables/
+  align_public_core_dict_name_en 占用故顺延 03/04）。live 已应用（rd status DEFAULT 'active' +
+  5 FK repoint→public + DROP 4 骨架表）、幂等重跑 0 错、checksums 补登至 544/544（含并行线
+  prereq 225000）、validate.sh Errors 0、_sqlx_migrations 账本 544/544。origin/main=e83d6e3fe0
+- **B7 第5批复核验证**：函数已 TopemsError 化（前批 975bd32e3）；本次复核 cargo check 0 错误、
+  clippy 0 警告、单测 mobile 151 + lims 151 全绿。**新发现**：lims 集成测试 2 失败
+  （test_inspection_task_crud/test_inspection_record_crud）——DB 约束
+  ck_inspection_tasks_status_standard（status ∈ active/inactive/archived）与测试插入 'pending'
+  不匹配，且未在任何迁移文件 grep 到该约束（疑运行时/手工加），既有问题非本次引入，待业务确认后处置
+- **srm anyhow 清零（70→0）**：commit f79b9c5c0a——main 返回 `Result<(), TopemsError>`
+  （From<anyhow::Error>→Internal）+ L179 降级客户端构建错误换 TopemsError::NetworkRequest；
+  cargo check / clippy / 单测全绿
+
 ### ⬜ B7 剩余（后续批次候选，静态 Err 计数）
 - ai 45 / crm 27 / portal 26 / integration 15 / mes 10 / finance 9 / scm 3 / erp 3 / analytics 3 /
   wms 2 / master-data 2 / unified-core 1（+ 各服务 Result<_, String> 双参形态与
