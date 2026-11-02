@@ -1,3 +1,14 @@
+## 批 4 第十八批：剩余 P3 判定核销 5 项（计划文档状态同步）（2026-11-02）✅
+
+> 目标：批 4 全部代码整改闭环后，核对整改计划剩余 P3 项，5 项为"判定保留/设计"类，逐项核销并同步计划文档状态（🆕→✅）。
+
+- **oa LEGACY_DUP（announcements 双端点）**：erp=管理端 CRUD（create/update/delete/publish/unpublish）、mobile=员工端阅读（list/get/read 标记）——双视角设计非重复，保留。
+- **monitor LEGACY_DUP**：unified-core monitor 路由已注释拆出至 svc/monitor:8095（注释说明保留），非缺陷。
+- **report LEGACY_DUP**：report 前端模块 API 全部走 apiClient.bi（p7 盘点：report 与 bi 同一 analytics 后端两套前端入口），设计保留。
+- **master NAMING_DIFF**：前端 master / 后端 master-data / DB master_data 三方命名不一致——不改名（风险大），文档登记映射，保留。
+- **erp API_NO_ROUTE**：erp 遗留后端能力（/addressbook/* /hr/* /master-data/* /mdm-v49/* /consolidation/* /fixed-assets/* /leave-requests/* /search/global）无前端菜单入口——保留后端能力、登记已知（前端补页超出本批；verify_navigation 99.8% 已收敛前端路由，缺失 2=P5 存量）。
+- **验证**：docs/audit/TOPEMS审计整改计划_2026-11-01.md 5 行 🆕→✅；verify_navigation 缺失 2=P5 存量不变。
+
 ## 批 4 第十七批：unified-core 双轨注释残留同步（2026-11-02）✅
 
 > 目标：p13 退役 /api/v1/core 双轨后，routes/mod.rs L192 的 register_routes_with_legacy_alias 双轨说明注释残留，同步为已退役，避免误导后续维护。
