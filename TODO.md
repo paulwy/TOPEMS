@@ -1,4 +1,25 @@
 
+## 数据库治理深化：列级 schema 漂移核查（information_schema 全列对比，2026-11-03）✅（结论登记）
+
+> 表级对齐（缺失 0×5）后深化到列级——五库 information_schema.columns 全量对比（排除 pg_catalog/information_schema/_sqlx_test；test 为结构参照）。
+
+**列级差异统计**（test 有/库无）：
+
+| 库 | 列名缺失 | 同名类型差异 |
+|---|---|---|
+| topems@5432 | 139 | 637 |
+| topems@5433 | 115 | 212 |
+| topems_prod | 123 | 215 |
+| topems_prepare | 158 | 142 |
+
+**性质甄别（关键）**：
+- **deleted_at 软删除列占大头**：topems 114/5433 95/prod 107/prepare 95（全部主库缺）——**test 超前**（开发加 soft delete 未固化迁移）——主库无属正常（迁移链治理原则：结构变更走迁移）——**不手工 ALTER 补主库**；治理选项：固化迁移 or test 清理（未来批次）。
+- **prepare 残壳表**：communication.core_geofences（prepare 2 列 vs 其余 20）、ehs.training_programs（2 vs 16）、portal.portal_todos、ehs.training_records——**真实缺口**（历史 pre-clean 残留）——**待补齐**（可安全 ALTER 对齐，非破坏）。
+- **tenant_id 缺口**：topems 7 / prepare 9 表缺 tenant_id（RLS 隔离未全覆盖）——**待评估**（哪些表属 RLS 敏感）。
+- 其余零星 1-3 列（mdm_* 等 1 列缺失——各表差异）。
+
+**状态**：列级核查登记——无运行时影响（health 200、表级门禁绿、服务全链路正常）。列级补齐/固化迁移列为后续批次候选（AR-08 同类），不做即时批量修改。
+
 ## 前端质量工程收尾链 P2：空态专项二期——57 页自绘页空态补齐/评估（2026-11-03）✅
 
 > 承接 P1 补页面级测试段；复算 57 页自绘页缺口（无 EmptyState 关键词 && 不用 12 白名单模板），逐页三分类，commit 后推送 origin/main。
@@ -11,6 +32,7 @@
 - **i18n**：新增 key 全在 zh/en 双侧（crm.tags.empty、erp.dictionaries.empty、gis.devices.empty、lims.analytes.empty、lims.methodCategories.empty、mes.capacity.empty、mes.masterData.empty、qms.inspectionStandard.empty、ai.chat.empty.*、mobile.mobile_inventory_page.empty_*、mobile.mobile_quality_page.empty_*、mobile.mobile_attendance_page.empty_records_*、mobile.production.empty_*），扁平 dotted key 与现有风格一致，加载器 flattenToNested 兼容。
 - **验证全绿**：全量 `pnpm vitest run` 0 失败（基线 544 文件 / 6434 测试 + 相关模块回归）；`tsc --noEmit` 0 错误；`eslint .` 全仓 **0 problems**（承接 P2 ESLint 行，528→0 保持）；i18n zh/en 合法可解析。
 - **文档**：审计报告 §0 速览三态行 / §4.3（57 页三分类明细）/ §6 P2 行同步更新。
+
 
 ## 远端 web 并行线提交链验证（ESLint 528→0 属实，2026-11-03）✅
 
