@@ -1,3 +1,11 @@
+## 批 5 第七批：修复 crm-customer-segmentation 权限码 + 全量校验（2026-11-02）✅
+
+> 目标：清理补种后全量权限码校验发现的问题。
+
+- **问题**：backfill 补种 crm-customer-segmentation 时 permission 误写 `crm:segmentation:read`（core_permissions 无此码）；前端真实码为 `crm:customer_segmentation:read`（下划线，route requiredPermissions 同源）。
+- **修复**（新增 `20261102190000_fix_menu_crm_permission.sql`）：固定值 UPDATE 改回真实码。
+- **验证**：core_menus（tenant 0001）414 项全量权限码校验 0 无效。
+
 ## 批 5 第六批：MENU_ORPHAN gis/plugin/doc/workflow/ticket 补种——MENU_ORPHAN 全清零（2026-11-02）✅
 
 > 目标：收尾 MENU_ORPHAN 剩余 5 模块——本批后 MENU_ORPHAN 35 行全核销。
