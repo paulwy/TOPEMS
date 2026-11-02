@@ -869,7 +869,7 @@
 **验收基线**：全仓 `cargo check --workspace` 0 error 0 warning；单测 ai 1190 / shared-core 790+ / service-client 73 / analytics 22 / finance 39 等全绿；main 领先 origin（未 push，用户未要求）。
 **B7 全链路 commit**：B7-6 → 7 → 9 → 10 → 11 → 12 → 13 → 14 → 15（双清零）→ 16a/16b（Result String 清零）→ 17（anyhow/Box 生产清零）→ 17b 续（examples 清零）→ 并行线 B7-13~18 + finance 泄露面清零。B7 宣告收尾 ✅
 
-## 2026-10-04 批1剩余+批2 收口（B3/B4/B5/B6/B8/B9 完成，本地提交未 push）⚠️（2026-11-02 复核：对应代码不在当前主线——gis enable_rls/validate.sh/shared-db rls 池化/crm 精度测试/leaflet mock 未检出，B7 srm anyhow 残留 1 文件；'本地提交未 push'为实，恢复来源待确认）
+## 2026-10-04 批1剩余+批2 收口（B3/B4/B5/B6/B8/B9 完成，本地提交未 push）⚠️（2026-11-02 复核：对应代码不在当前主线——gis enable_rls/validate.sh/shared-db rls 池化/crm 精度测试/leaflet mock 未检出，B7 srm anyhow 残留 1 文件；'本地提交未 push'为实，恢复来源待确认。2026-11-02 三层核查定论：主线历史/全部 refs/reflog/游离对象（fsck 244 commit）均无该批实现 commit（eca99460b 链）——本机不可恢复，恢复来源仅剩云主机/备份/其他设备）
 
 > 依据「下一步工作规划」D 节执行形态：批 1（快赢收口）→ 批 2（残留偿还）。用户已拍板：批1剩余+批2 共 6 项，决策项（B1/B14/B15/A2/A5）暂跳过。
 > 说明：A3/A4/B2/B13 在本次会话前已由并行线完成并推 origin/main（TODO 表格未同步，此处补记）；B3 代码亦已在 HEAD（由并行线带入），本次验证确认。
@@ -893,7 +893,7 @@
 - **决策项跳过（用户拍板暂不处理）**：B1（search→erp 白名单撤销）、B14（守卫重构）、B15（埋点）、A2（5433 docker）、A5（erp RLS）
 - **环境阻塞**：A1（nginx 生产 conf 需 Linux/生产环境）；5433 仍 DOWN、nginx 未运行
 
-## 2026-10-04 第二轮收口（B10/B11/B12 完成，本地提交未 push）⚠️（2026-11-02 复核：对应代码不在当前主线——gis enable_rls/validate.sh/shared-db rls 池化/crm 精度测试/leaflet mock 未检出，B7 srm anyhow 残留 1 文件；'本地提交未 push'为实，恢复来源待确认）
+## 2026-10-04 第二轮收口（B10/B11/B12 完成，本地提交未 push）⚠️（2026-11-02 复核：对应代码不在当前主线——gis enable_rls/validate.sh/shared-db rls 池化/crm 精度测试/leaflet mock 未检出，B7 srm anyhow 残留 1 文件；'本地提交未 push'为实，恢复来源待确认。2026-11-02 三层核查定论：主线历史/全部 refs/reflog/游离对象（fsck 244 commit）均无该批实现 commit（eca99460b 链）——本机不可恢复，恢复来源仅剩云主机/备份/其他设备）
 
 > 用户「继续推进」后开启第二轮：B10（P2 数据丢失修复）+ B11/B12（P2 迁出/校验脚本），三项全部完成并本地提交（55342082c → 210b971e6，均未 push；远端同步由并行协作线负责）。
 
@@ -919,7 +919,7 @@
 - **决策项跳过（用户拍板暂不处理）**：B1（search→erp 白名单撤销）、B14（守卫重构）、B15（埋点）、A2（5433 docker）、A5（erp RLS）
 - **环境阻塞**：A1（nginx 生产 conf 需 Linux/生产环境）；5433 仍 DOWN、nginx 未运行；SIGKILL 完整 e2e 需独占实例环境（并行线 11824 周期覆盖共享表）
 
-## 2026-10-05 B7 分批推进（第 1-2 批：svc/srm + svc/rd 完成，本地提交未 push）⚠️（2026-11-02 复核：对应代码不在当前主线——gis enable_rls/validate.sh/shared-db rls 池化/crm 精度测试/leaflet mock 未检出，B7 srm anyhow 残留 1 文件；'本地提交未 push'为实，恢复来源待确认）
+## 2026-10-05 B7 分批推进（第 1-2 批：svc/srm + svc/rd 完成，本地提交未 push）⚠️（2026-11-02 复核：对应代码不在当前主线——gis enable_rls/validate.sh/shared-db rls 池化/crm 精度测试/leaflet mock 未检出，B7 srm anyhow 残留 1 文件；'本地提交未 push'为实，恢复来源待确认。2026-11-02 三层核查定论：主线历史/全部 refs/reflog/游离对象（fsck 244 commit）均无该批实现 commit（eca99460b 链）——本机不可恢复，恢复来源仅剩云主机/备份/其他设备）
 
 > 用户「继续」后开启 B7（U7 残留：静态 error() TopemsError 化 / ADR 阶段二）。B7 为 L 级（1313 处静态文案 + anyhow 清退），按「每服务分批」推进；本批完成 srm/rd 两个小服务的 anyhow 清退 + 静态 Err TopemsError 化，形成可复制模板。提交 d2bfb24ce / 1f203fe39，均未 push。
 
@@ -970,7 +970,7 @@
 - 决策项跳过（用户拍板暂不处理）：B1/B14/B15/A2/A5
 - 环境阻塞：A1（生产 nginx conf 需 Linux）；SIGKILL 完整 e2e 需独占实例环境（并行线 11824）
 
-## 2026-10-05 方向③收尾 + B7 第 5 批（本地提交未 push）⚠️（2026-11-02 复核：对应代码不在当前主线——gis enable_rls/validate.sh/shared-db rls 池化/crm 精度测试/leaflet mock 未检出，B7 srm anyhow 残留 1 文件；'本地提交未 push'为实，恢复来源待确认）
+## 2026-10-05 方向③收尾 + B7 第 5 批（本地提交未 push）⚠️（2026-11-02 复核：对应代码不在当前主线——gis enable_rls/validate.sh/shared-db rls 池化/crm 精度测试/leaflet mock 未检出，B7 srm anyhow 残留 1 文件；'本地提交未 push'为实，恢复来源待确认。2026-11-02 三层核查定论：主线历史/全部 refs/reflog/游离对象（fsck 244 commit）均无该批实现 commit（eca99460b 链）——本机不可恢复，恢复来源仅剩云主机/备份/其他设备）
 
 > 用户按建议推进：先快赢收口（方向③遗留 + U3b 闭环），再 B7 静态文案分批（mobile/lims）。
 
