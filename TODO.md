@@ -1,3 +1,16 @@
+## 批 5 第十批：ROUTE_NO_API asset/bi/admin/rd/oa/doc/notification 11 行核销（2026-11-02）✅
+
+> 目标：继续逐行侦查 ROUTE_NO_API——本批核实 11 行有等价端点或页面无 API 需求。
+
+- **asset 核销**：前端复用 erp:8010 `/assets`（svc/erp modules/asset.rs CRUD 齐全）。
+- **bi 核销**：bi-gis 路由（GisPage）调用 `@/api/gis`——svc/gis 有完整路由（/devices、/warehouse-locations 等，api_prefix /api/gis）。
+- **admin 核销**：admin-bank-account 页面无任何 API 调用（静态/未实现，无后端需求）。
+- **rd 4 行核销**：rd-code→rdApi.listProjects（/projects 有）；rd-review→buildApi（/builds 有）；rd-release→deployApi（/deploys 有）；rd-material→erp `/materials`（material.rs 有）+ doc `/documents` + report `/reports/projects/*`——均等价端点。
+- **oa 核销**：oa-documents 复用 `@/api/erp/core` documentApi（svc/erp modules/documents.rs `/documents` 有）。
+- **doc 核销**：doc-knowledge-base 走 docApi `/documents` 系（unified-core doc.rs 有）。
+- **notification 2 行核销**：templates/statistics 页面无 API 调用（静态页面，无后端需求）。
+- **剩余 2 行真缺（待补后端）**：notification-archive（调 `/notifications/archive/config`，svc/communication 无该端点）；plugin（marketplaceApi 调 `/api/plugin/marketplace`，svc/plugin-registry 仅 health/metrics/register 空壳）。
+
 ## 批 5 第九批：ROUTE_NO_API erp/pdm/ehs 3 行核销（2026-11-02）✅
 
 > 目标：逐行侦查 ROUTE_NO_API（前端有页/后端疑似无路由）——本批核实 3 模块均有等价端点。
