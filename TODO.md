@@ -46,6 +46,70 @@
 - **wms MISMATCH 核销**：nav=stock-take / 路由=stocktake / 后端=/stock-takes 为命名别名设计（业务名/URL 紧凑名/RESTful 复数），前端路由与导航映射正常。
 - **wms OK 核查**：种子 wms-warehouses path=/wms/warehouse-management 与前端 config.ts:47 一致。
 
+## menu 种子 20261102* 系列部署应用（2026-11-02）✅
+
+> 承接上方「遗留核查续推进」条目中 menu 种子遗留项；用户确认部署方案「先 test 全系列，再 prod 剩余」。
+
+- **topems_test（全系列，search_path=iam）**：erp 24 / tms_asset / admin_master / iam_ai（ai- 13）/ gis / aps 12 全部应用成功；crm 错误权限码（crm:segmentation:read → crm:customer_segmentation:read）修复清零
+- **topems_prod（剩余系列，search_path=public）**：aps 12 新增；tms_asset 5 / admin_master 7 / iam_ai 5 / gis 2 补种；erp 24 幂等重跑无副作用
+- **验证**：prod 各系列菜单（aps 12 / erp 24 / tms 12 / gis 5 / admin 20 / ai 13 / crm 15）齐全；test 同上
+- **⚠️ 迁移文件 bug**：20261102190000_fix_menu_crm_permission.sql 硬编码 `mes.core_menus`，但 prod/test 的 core_menus 均不在 mes schema（prod=public、test=iam）——直接执行报 relation does not exist；已用等价 UPDATE（iam.core_menus）修复 test 的 1 条错误码（prod 无错误码）。**文件待修正为无 schema 前缀**（依赖 search_path），需后续提交。
+- **未包含**（不在本次确认范围）：20261102000001_sync_frontend_permission_codes_batch4.sql、20261102100000_ehs_environmental_compliance_columns.sql 未应用，待后续确认。
+
+## 遗留核查续推进：auth.rs 空值路径 + test 库 NULLIF 核销（2026-11-02）✅
+
+> 承接「方向 2 收口」遗留清单第 2、4 项；只读核查，未做任何 DB 写操作。
+
+- **auth.rs set_config 空值路径核查（遗留项 B）✅ 核销**：svc/unified-core/src/modules/iam/auth.rs 共 7 处 set_config('app.tenant_id') 全部有保护——361/886（login/refresh）tenant_id 来源 Ok(None)/Err 均 fallback 默认租户 `00000000-...001`；764/1130 硬编码全零 UUID；1644/1727（list_sessions 等）claims.tenant_id + unwrap_or_else fallback。**无 SET '' 污染路径**（master 15 空串根因已在主修复闭环）。
+- **fix_tenant_policy_nullif 同步 test（遗留项 A）✅ 核销**：topems_test 979 策略中 727 条 qual 含 NULLIF（prod 1067/788，比例一致）；core_sessions 策略抽样确认 `COALESCE((NULLIF(current_setting('app.tenant_id'...))::uuid, ...)` 生效。**test 已具备 NULLIF 保护，无需再应用**。
+- **menu 种子 20261102* 系列（遗留项 C）⏳ 待部署目标确认**：
+  - **topems_prod**：erp 24 ✅ 已应用；tms 12 / gis 5 / crm 15 部分存在；**aps 0、am 0 未应用**
+  - **topems_test**：erp 0 / aps 0 / tms 0 —— **全系列未应用**
+  - 待确认：部署目标库（test 全系列验证 → prod 剩余系列，或按需直接指定）；应用方式 psql 指定库 + SET search_path（prod 落 public.core_menus，test 落 iam.core_menus），种子 SQL 幂等（ON CONFLICT DO UPDATE）可重跑
+
+## 增量缓存清理 + dependabot 19 漏洞本地审计治理（2026-11-02）✅
+
+> 承接方向 2 收口遗留待办第 1、2 项；执行后同步审计记录。
+
+- **增量缓存清理**：`./scripts/clean_target.sh --auto`（阈值 25G，仅清 debug/release incremental 缓存、保留编译产物）。target **77.6G → 32.4G**（节省 45.2G），磁盘剩余 77Gi；确认运行实例 PID 83553（topems-server，:8099）存活不受影响。
+- **dependabot 19 漏洞本地治理**（双通道审计替代 GitHub 页面，鉴权/网络阻塞）：
+  - **pnpm audit（npm 生态）**：官方 registry 通道（npmmirror 无 audit 接口），19 条 = critical 0 / high 6 / moderate 9 / low 4
+  - **cargo audit（Rust 生态）**：advisory-db 经 SSH clone（HTTPS 直连 GitHub 超时），0 漏洞；3 unmaintained（proc-macro-error/ttf-parser/unsafe-libyaml）在 audit.toml 豁免集合
+  - **分类结论**：node-forge 13 条（expo ~58.0.21 > @expo/cli，无修复版本）挂账；minimatch 4 条（eslint 10 系 + exceljs>archiver>archiver-utils 锁 minimatch@3）挂账；glob 2 条传递旧链、deepmerge 1 条无补丁——**无安全 overrides 通道（minimatch 3→11 / glob 9→14 为跨大版本，破坏构建与 Excel 导出风险 > 收益），不执行**
+  - **影响面**：critical 0，生产 server（Rust）0 漏洞；前端高危全在 expo CLI 开发期工具链
+  - **记录**：docs/security/dependabot-local-audit-20261102.md（与 10-29 基线对比 25→19，opentelemetry/tmp/js-yaml 等已收敛）
+  - **遗留**：跟踪 expo / exceljs / eslint 上游发版后重扫；建议纳入每周清理同周期
+
+## 方向 2 模块契约审计：运行时冒烟 FAIL 清零收口 + 提交推送（2026-11-02）✅
+
+> 目标：权威冒烟基线 FAIL 清零（19→4→0）并固化推送。定时任务「继续」轮执行收尾记录。
+
+- **冒烟基线演进**：1102e 19 FAIL（master 15 + ai 4）→ 1102f 4 FAIL（仅 ai 4，master 全绿）→ **1102g/h 连续两轮 4667/4667 PASS, 0 FAIL**（新权威基线 /tmp/web_smoke_1102g.json+.log、/tmp/web_smoke_1102h.json+.log；模块明细 ai 174 / master 280 / pm 148 / mes 217 / lims 143 / erp 366 / bi 172 / finance 263 / ehs 177 / crm 116）。
+- **master 15 根因闭环**：非 handler SQL 缺陷——`app.tenant_id=''`（空串）污染连接池 → prod 库 RLS 策略 qual 无 NULLIF 保护的 `::uuid` cast 报 `invalid input syntax for type uuid: ""`；旧实例 76005 kill 未生效致重启后仍 500。修复：tenant_rls.rs 空值 RESET（:212）替代 SET ''（:196 超管空串）+ 重建二进制 + kill -9 清污池 → suggestions 全 200（/tmp/r1-r3.json）、1102f master 全绿。
+- **ai 4 瞬态处理**：1102f 的 4 FAIL（GET/DELETE /api/ai/conversations 系 http=200 body=500）手动 curl 全 200、`--svc ai` 174/174 全绿；RUST_LOG 补 topems_ai=debug 重启（PID 83553）后 1102g/h 连续两轮全绿——精确瞬态根因未 100% 归因（见遗留）。
+- **DB 层加固**：20261102210000_fix_tenant_policy_nullif.sql（42 策略 ALTER 幂等、NULLIF 包裹 current_setting cast）已应用 prod；core.ai_conversations 与 mdm_ai_suggestions 策略 2/2 NULLIF；残留 11 表（mdm_recovery_points/plans、mdm_tags、mdm_improvement_plans、mdm_failover_records、mdm_v60_lineage_nodes、mdm_critical_functions、mdm_bc_tests、core_dict_items/core_dict_types、mdm_api_exposures）为文本比较 `(tenant_id)::text = current_setting(...)`（不触发 uuid 崩溃，统一 NULLIF 留待决策）。
+- **提交推送**：14 文件修复固化为本地提交 **5c06ef0b2**（tenant_rls RESET、ai_governance_v59/semantic_v57/disaster_v56 db_exec 补 tracing::error!、pm tags jsonb 三处、mes team/process_flow + lims instrument COALESCE/NULLIF 类型修复、seed_module_menus 缺逗号语法修复、ehs 环境合规列迁移、fix_tenant_policy_nullif、checksums 同步）→ **push 成功**（c0c160290..5c06ef0b2 main）；pre-push 门禁串行全绿（shellcheck 98 脚本 0 告警、config 一致性、cargo-clippy-workspace 314s、cargo-fmt-check、cargo-test-workspace 106s）；push 后工作区 clean（仅 untracked backup-topems.sh.bak-20261030 用户备份保留）。
+- **plist 恢复**：com.topems.server.plist 已回退审计期 RUST_LOG 注入（与备份 /tmp/com.topems.server.plist.bak-rustlog 完全一致）；launchd 无 com.topems.server（当前手动实例 PID 83553 跑 8099，日志 /tmp/server-prod3.log）。
+- **验证产物**：/tmp/topems_closure_report.html（HTML+SVG 收口报告：基线演进、根因链、全绿矩阵）已交付。
+
+**遗留待办（⏳ 未决，后续轮推进）**：
+- ai 4 于 1102f 的精确瞬态/顺序依赖根因未 100% 归因（手动 curl 200 vs 冒烟 body=500；1102g/h 两轮全绿为当前事实）。
+- fix_tenant_policy_nullif 是否同步 test 库（prod 已应用，test 未确认）。
+- 残留 11 表文本比较形式策略是否统一 NULLIF（后续决策）。
+- svc/unified-core/src/modules/iam/auth.rs 两处事务内 set_config（bind(&tenant_ctx)）在 tenant_ctx 为空时是否残留 SET '' 污染路径（潜在路径核查）。
+- 「前端 UI 全面审计报告待办 + §4 e2e 基线扩展」已授权未启动。
+- 「TOPEMS 增量缓存每周清理」定时任务触发未执行：target 68G 超 25G 阈值（clean_target.sh --auto 只清增量缓存、保留最终产物，建议执行）。
+- GitHub dependabot 提示 19 漏洞（1 critical、8 high、6 moderate、4 low）待治理（https://github.com/paulwy/TOPEMS/security/dependabot）。
+- menu 种子迁移 20261102* 系列（erp/tms_asset/admin_master_automation_monitor/iam_ai_integration_rd_notification_oa/gis_plugin_doc_workflow_ticket/crm/fix_menu_crm_permission）待部署时应用（延续既有遗留轨道）。
+
+## 近期任务台账补录（2026-10-29 ~ 2026-11-02）✅
+
+> 目标：task 清单 19 项状态同步（历史未录入 TODO.md 的完成项）。
+
+- **环境与工程**：topems.sh clean 子命令改造 + Makefile 清理目标同步 + 相关文档更新；sccache 升级 0.16→0.18.0（5GiB 上限生效并完成适用场景验证）。
+- **clippy 治理**：Phase 1 clippy --fix 机械清理；Phase 4a 37 crate 冗余内联 allow 清理；Phase 2 panic 类逐服务修复（ai/erp/mes/portal + unified-core 全清盘）并完成 push；Phase 3 金额域数值转换风险清单。
+- **前端接线**：C1 /dashboard/real-time-status（supplyChainDashboard wrapper + 页面）；D1 比价审批 approve wrapper + 页面按钮；D2 采购单驳回 reject wrapper + 页面按钮；C2/C7 收敛别名路由（删 /mrp/material-summary、/fail）；E1-E3 报价子集 api 接线（getQuote/updateQuote/submitQuote）；C3-C6 到货通知 api 接线 + 页面决策标注；类型契约对齐（以远端为准）；来料检验页面落地；P3 验证（cargo check + 前端门禁 + 提交推送）。
+
 ## 批 5 第十二批：PARTIAL 剩余 6 行核销——14/14 全清零（2026-11-02）✅
 
 > 目标：PARTIAL 类收尾。
