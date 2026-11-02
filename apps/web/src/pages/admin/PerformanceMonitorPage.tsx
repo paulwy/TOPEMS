@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import styles from './PerformanceMonitorPage.module.css';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationStore } from '@/store';
@@ -164,18 +165,18 @@ const PerformanceMonitorPage: React.FC = () => {
         backButton: {
           onClick: () => navigate(DASHBOARD_PATHS.dashboard),
         },
-        pageIcon: <Activity style={{ width: 20, height: 20 }} />,
+        pageIcon: <Activity className={styles.il1} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.secondary[400]}, ${theme.palette.secondary.main})`,
         actions: [
           {
             label: i18n.t('admin.performance_monitor_page.action_export'),
-            icon: <Download style={{ width: 16, height: 16 }} />,
+            icon: <Download className={styles.il2} />,
             onClick: handleExport,
             variant: 'outlined',
           },
           {
             label: i18n.t('admin.performance_monitor_page.action_clear'),
-            icon: <Trash2 style={{ width: 16, height: 16 }} />,
+            icon: <Trash2 className={styles.il3} />,
             onClick: handleClear,
             variant: 'contained',
             color: 'error',
@@ -202,8 +203,8 @@ const PerformanceMonitorPage: React.FC = () => {
         >
           {i18n.t('admin.performance_monitor_page.section_page_metrics')}
         </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className={styles.il4}>
+          <div className={styles.il5}>
             <span
               style={{
                 color: theme.palette.grey[500],
@@ -212,9 +213,9 @@ const PerformanceMonitorPage: React.FC = () => {
             >
               {i18n.t('admin.performance_monitor_page.first_paint')}
             </span>
-            <span style={{ fontWeight: 500 }}>{metrics.firstPaint.toFixed(0)}ms</span>
+            <span className={styles.il6}>{metrics.firstPaint.toFixed(0)}ms</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className={styles.il7}>
             <span
               style={{
                 color: theme.palette.grey[500],
@@ -223,9 +224,9 @@ const PerformanceMonitorPage: React.FC = () => {
             >
               {i18n.t('admin.performance_monitor_page.first_contentful_paint')}
             </span>
-            <span style={{ fontWeight: 500 }}>{metrics.firstContentfulPaint.toFixed(0)}ms</span>
+            <span className={styles.il8}>{metrics.firstContentfulPaint.toFixed(0)}ms</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className={styles.il9}>
             <span
               style={{
                 color: theme.palette.grey[500],
@@ -234,9 +235,9 @@ const PerformanceMonitorPage: React.FC = () => {
             >
               {i18n.t('admin.performance_monitor_page.dom_content_loaded')}
             </span>
-            <span style={{ fontWeight: 500 }}>{metrics.domContentLoaded.toFixed(0)}ms</span>
+            <span className={styles.il10}>{metrics.domContentLoaded.toFixed(0)}ms</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className={styles.il11}>
             <span
               style={{
                 color: theme.palette.grey[500],
@@ -245,7 +246,7 @@ const PerformanceMonitorPage: React.FC = () => {
             >
               {i18n.t('admin.performance_monitor_page.page_fully_loaded')}
             </span>
-            <span style={{ fontWeight: 500 }}>{metrics.pageLoadTime.toFixed(0)}ms</span>
+            <span className={styles.il12}>{metrics.pageLoadTime.toFixed(0)}ms</span>
           </div>
         </div>
       </div>
@@ -259,7 +260,7 @@ const PerformanceMonitorPage: React.FC = () => {
           boxShadow: designTokens.shadows.sm,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className={styles.il13}>
           <h3
             style={{
               fontSize: designTokens.typography.fontSize.scale['1.125rem'],
@@ -269,7 +270,7 @@ const PerformanceMonitorPage: React.FC = () => {
           >
             {i18n.t('admin.performance_monitor_page.section_slow_api')}
           </h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className={styles.il14}>
             <span
               style={{
                 color: theme.palette.grey[500],
@@ -301,7 +302,7 @@ const PerformanceMonitorPage: React.FC = () => {
           </div>
         </div>
         {slowCalls.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 32 }}>
+          <div className={styles.il15}>
             <CheckCircle
               style={{ width: 48, height: 48, color: theme.palette.success[500], marginBottom: 8 }}
             />
@@ -311,14 +312,7 @@ const PerformanceMonitorPage: React.FC = () => {
           </div>
         ) : (
           <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-              maxHeight: 256,
-              overflow: 'auto',
-              marginTop: 16,
-            }}
+            className={styles.il16}
           >
             {slowCalls.map((call, idx) => (
               <div
@@ -333,7 +327,7 @@ const PerformanceMonitorPage: React.FC = () => {
                 }}
               >
                 <div>
-                  <p style={{ fontWeight: 500, margin: 0 }}>{call.endpoint}</p>
+                  <p className={styles.il17}>{call.endpoint}</p>
                   <p
                     style={{
                       fontSize: designTokens.typography.fontSize.scale['0.75rem'],
@@ -344,7 +338,7 @@ const PerformanceMonitorPage: React.FC = () => {
                     {new Date(call.timestamp).toLocaleString()}
                   </p>
                 </div>
-                <div style={{ textAlign: 'right' }}>
+                <div className={styles.il18}>
                   <p style={{ fontWeight: 500, color: theme.palette.error.main, margin: 0 }}>
                     {(call.duration / 1000).toFixed(2)}s
                   </p>
@@ -384,7 +378,7 @@ const PerformanceMonitorPage: React.FC = () => {
         showCharts={false}
         tableSectionTitle={i18n.t('admin.performance_monitor_page.api_call_history')}
         customToolbar={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
+          <div className={styles.il19}>
             <label
               style={{
                 display: 'flex',
@@ -398,7 +392,7 @@ const PerformanceMonitorPage: React.FC = () => {
                 type='checkbox'
                 checked={autoRefresh}
                 onChange={(e) => setAutoRefresh(e.target.checked)}
-                style={{ width: 18, height: 18 }}
+                className={styles.il20}
               />
               {i18n.t('admin.performance_monitor_page.auto_refresh')}
             </label>
