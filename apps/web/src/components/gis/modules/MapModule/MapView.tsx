@@ -1,5 +1,6 @@
 // modules/MapModule/MapView.tsx
 import React, { useState, useCallback, useEffect, useMemo, lazy, Suspense } from 'react';
+import styles from './MapView.module.css';
 import { useMapMeasure } from './useMapMeasure';
 import { useTheme } from '@mui/material';
 import {
@@ -183,11 +184,7 @@ const DetailsPanel: React.FC<{
         }}
       >
         <h3
-          style={{
-            fontWeight: 600,
-            color: 'common.white',
-            margin: 0,
-          }}
+          className={styles.il1}
         >
           {i18n.t('gis.map_view.k5')}
         </h3>
@@ -217,8 +214,8 @@ const DetailsPanel: React.FC<{
           />
         </button>
       </div>
-      <div style={{ padding: '1rem' }}>
-        <div style={{ marginBottom: '1rem' }}>
+      <div className={styles.il2}>
+        <div className={styles.il3}>
           <div
             style={{
               fontSize: designTokens.typography.fontSize.scale['0.875rem'],
@@ -233,7 +230,7 @@ const DetailsPanel: React.FC<{
           </div>
         </div>
         {'device_type' in selectedItem && (
-          <div style={{ marginBottom: '1rem' }}>
+          <div className={styles.il4}>
             <div
               style={{
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
@@ -249,7 +246,7 @@ const DetailsPanel: React.FC<{
           </div>
         )}
         {'location_type' in selectedItem && (
-          <div style={{ marginBottom: '1rem' }}>
+          <div className={styles.il5}>
             <div
               style={{
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
@@ -265,7 +262,7 @@ const DetailsPanel: React.FC<{
           </div>
         )}
         {'status' in selectedItem && (
-          <div style={{ marginBottom: '1rem' }}>
+          <div className={styles.il6}>
             <div
               style={{
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
@@ -289,7 +286,7 @@ const DetailsPanel: React.FC<{
           </div>
         )}
         {'capacity' in selectedItem && selectedItem.capacity !== undefined && (
-          <div style={{ marginBottom: '1rem' }}>
+          <div className={styles.il7}>
             <div
               style={{
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
@@ -305,7 +302,7 @@ const DetailsPanel: React.FC<{
           </div>
         )}
         {'current_usage' in selectedItem && selectedItem.current_usage !== undefined && (
-          <div style={{ marginBottom: '1rem' }}>
+          <div className={styles.il8}>
             <div
               style={{
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
@@ -321,7 +318,7 @@ const DetailsPanel: React.FC<{
           </div>
         )}
         {'description' in selectedItem && selectedItem.description && (
-          <div style={{ marginBottom: '1rem' }}>
+          <div className={styles.il9}>
             <div
               style={{
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
@@ -616,7 +613,7 @@ const MapView: React.FC<MapViewProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentDrawing, clearMeasure, finishDrawing]);
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div className={styles.il10}>
       {/* Map Type Switch */}
       {mapType === 'amap' ? (
         <AmapLayer
@@ -629,7 +626,7 @@ const MapView: React.FC<MapViewProps> = ({
         <MapContainer
           center={mapCenter}
           zoom={zoom}
-          style={{ height: '100%', width: '100%' }}
+          className={styles.il11}
         >
           <MapEvents
             toolMode={toolMode}
@@ -1181,7 +1178,7 @@ const MapView: React.FC<MapViewProps> = ({
 
       {/* Heatmap Legend */}
       {showHeatmap && (
-        <div style={{ position: 'absolute', bottom: '1rem', right: '6rem' }}>
+        <div className={styles.il12}>
           <HeatmapLegend mode={heatmapMode} />
         </div>
       )}
