@@ -1,3 +1,14 @@
+## 批 5 第三批：MENU_ORPHAN tms/asset 补种 + bi/im frontendOnly 豁免（2026-11-02）✅
+
+> 目标：推进 MENU_ORPHAN 剩余模块——本批补 2 个模块种子 + 核销 frontendOnly/详情页设计。
+
+- **tms/asset 补种**（新增 `20261102150000_menu_seed_tms_asset.sql`）：tms 4 组 + 12 项（dashboard/vehicles/drivers/carriers/routes/shipments + analytics 6）、asset 5 组 + 5 项（dashboard/list/categories/depreciation/transfers）——core_menus 270→287。
+- **frontendOnly 豁免核销**：bi（moduleConfig frontendOnly: true，纯前端 BI）、im（同）——设计不上 DB 菜单，豁免。
+- **bi-module-detail 核销**：detail 模板路由（BIModuleDetailPage）非导航入口，无 navItem 为设计。
+- **验证**：tms/asset 17 项权限码全在 core_permissions；psql 应用 ON ERROR STOP 通过。
+- **注意**：期间 Mac 环境离线一次，迁移文件首写未落盘（已验证），恢复后重写并应用成功。
+- **遗留**：MENU_ORPHAN 剩余 15 行（admin×2/master/automation/monitor/iam/ai/integration/rd/notification/oa/gis/plugin/doc/workflow/ticket）待后续批补种。
+
 ## 批 5 第二批：DUPLICATE 剩余 9 项核销 + tms 双写表统一（2026-11-02）✅
 
 > 目标：DUPLICATE 14（实际 15）项全量清零——本批处理剩余 9 项跨模块语义类。
