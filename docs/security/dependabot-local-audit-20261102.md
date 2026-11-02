@@ -58,3 +58,10 @@
 - **在线重扫完成**：`pnpm audit --json`（registry 网络间歇恢复后成功）——**19 条 = critical 0 / high 6 / moderate 9 / low 4，advisory 15 个，与基线完全一致，漏洞面无变化**。
 - **结论修正（node-forge 未收敛）**：`node-forge@1.4.0` 仍被判定 vulnerable（`vulnerable=<=1.4.0`，13 条 advisory 全部无修复版本——node-forge 已停更）——上一轮静态核对"升级 1.4.0 即收敛"为**误判**（最新版 ≠ 修复版）。node-forge 13 条维持挂账（expo ~58.0.21 > @expo/cli 锁链）。
 - **其余维持基线**：minimatch 新链已修（lock 含 11.0.3 > 11.0.1）但 eslint 10 系 / exceljs>archiver 旧链 3.x 挂账；glob 新链已修（14.0.3 > 14.0.1）但旧链 9.3.4 挂账；deepmerge 4.3.1 仍 vulnerable（>=4.2.0 <=4.3.1 无补丁）——跨大版本 overrides 破坏构建/Excel 导出风险 > 收益，均不执行。
+
+## 7. cargo audit 周期复核（2026-11-02 晚）
+
+- **advisory-db 更新**（SSH clone + pull，新增 thrift RUSTSEC-2026-0435 / zip RUSTSEC-2026-0429 等）。
+- **新发现 1 个漏洞并已修复**：`pulldown-cmark 0.13.5`（RUSTSEC-2026-0433，high 7.5——ENABLE_WIKILINKS 嵌套图片 wikilink 二次解析 DoS，2026-10-28 发布，Solution >=0.13.6）→ **cargo update --precise 0.13.6 已升级**（Cargo.lock，patch 级无破坏；经 prost-build → tonic-prost-build → etcd-client → topems-shared-event 构建链）。
+- **复查结果**：`cargo audit --db /tmp/advisory-db --no-fetch`（跳过 yanked 网络检查）exit 0——**0 漏洞 + 3 unmaintained**（proc-macro-error/ttf-parser/unsafe-libyaml，audit.toml 豁免集合内）——与基线一致。
+- **注**：cargo audit 默认会访问 crates.io 检查 yanked 包，registry 网络间歇阻塞导致大量超时错误——用 `--no-fetch` 跳过该检查可稳定出结果。

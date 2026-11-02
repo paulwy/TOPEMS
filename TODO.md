@@ -1,3 +1,13 @@
+## cargo audit 周期复核：pulldown-cmark 0.13.6 升级（2026-11-02）✅
+
+> 承接依赖审计 Rust 侧周期复核（advisory-db 更新后重扫）；pnpm 侧已完成（见上方依赖周期重扫段）。
+
+- **新发现 1 漏洞并修复**：`pulldown-cmark 0.13.5`（RUSTSEC-2026-0433，high 7.5——ENABLE_WIKILINKS 嵌套图片 wikilink 二次解析 DoS，2026-10-28 新 advisory，Solution >=0.13.6）→ `cargo update --precise 0.13.6`（patch 级无破坏；链：prost-build → tonic-prost-build → etcd-client → topems-shared-event）。
+- **编译验证**：`cargo check -p topems-shared-event --locked` 通过（11.6s，无错误）。
+- **复查**：`cargo audit --db /tmp/advisory-db --no-fetch` exit 0——0 漏洞 + 3 unmaintained（豁免集合内）——与基线一致。
+- **经验**：cargo audit 默认查 yanked 需访问 crates.io（registry 网络间歇阻塞→172 条超时错误）——`--no-fetch` 跳过可稳定出结果。
+- **记录**：docs/security/dependabot-local-audit-20261102.md §7。
+
 ## RLS batch2 应用 + work_orders 补列前置迁移（2026-11-02）✅
 
 > 承接远端 e16e6c683 后同步：20261102230000_rls_enable_biz_batch2（mes.work_orders + mobile.documents RLS）拉取后五库应用。
