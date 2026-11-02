@@ -31,7 +31,7 @@ const NotificationSettings: React.FC = () => {
         >
           <div style={flexRowCenter}>
             <Monitor className={styles.il3} />
-            <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
+            <span className={styles.il1}>
               {i18n.t('components.notification_settings.k1')}
             </span>
           </div>
@@ -73,7 +73,7 @@ const NotificationSettings: React.FC = () => {
             ) : (
               <VolumeX className={styles.il6} />
             )}
-            <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
+            <span className={styles.il2}>
               {i18n.t('components.notification_settings.k2')}
             </span>
           </div>
@@ -111,7 +111,7 @@ const NotificationSettings: React.FC = () => {
         >
           <div style={flexRowCenter}>
             <Smartphone className={styles.il8} />
-            <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
+            <span className={styles.il3}>
               {i18n.t('components.notification_settings.k3')}
             </span>
           </div>
@@ -207,7 +207,7 @@ const NotificationSettings: React.FC = () => {
             className={styles.il12}
           >
             <span
-              style={{ fontSize: 12, fontWeight: 500, color: 'var(--mui-palette-text-secondary)' }}
+              className={styles.il4}
             >
               {i18n.t('components.notification_settings.k5')}
             </span>

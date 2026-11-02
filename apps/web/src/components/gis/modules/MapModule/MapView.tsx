@@ -240,7 +240,7 @@ const DetailsPanel: React.FC<{
             >
               {i18n.t('components.map_view.k1')}
             </div>
-            <div style={{ color: 'var(--mui-palette-text-secondary)' }}>
+            <div className={styles.il1}>
               {selectedItem.device_type}
             </div>
           </div>
@@ -256,7 +256,7 @@ const DetailsPanel: React.FC<{
             >
               {i18n.t('components.map_view.k2')}
             </div>
-            <div style={{ color: 'var(--mui-palette-text-secondary)' }}>
+            <div className={styles.il2}>
               {selectedItem.location_type}
             </div>
           </div>
@@ -296,7 +296,7 @@ const DetailsPanel: React.FC<{
             >
               {i18n.t('components.map_view.k4')}
             </div>
-            <div style={{ color: 'var(--mui-palette-text-secondary)' }}>
+            <div className={styles.il3}>
               {selectedItem.capacity}
             </div>
           </div>
@@ -312,7 +312,7 @@ const DetailsPanel: React.FC<{
             >
               {i18n.t('components.map_view.k5')}
             </div>
-            <div style={{ color: 'var(--mui-palette-text-secondary)' }}>
+            <div className={styles.il4}>
               {selectedItem.current_usage}
             </div>
           </div>

@@ -304,7 +304,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                 <Divider />
 
                 <div className='flex items-center justify-between'>
-                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>
+                  <span className={styles.il1}>
                     {i18n.t('components.plugin_detail_modal.k8')}
                   </span>
                   <Typography sx={{ fontWeight: 'medium' }}>
@@ -313,14 +313,14 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                 </div>
 
                 <div className='flex items-center justify-between'>
-                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>
+                  <span className={styles.il2}>
                     {i18n.t('components.plugin_detail_modal.k9')}
                   </span>
                   <Typography sx={{ fontWeight: 'medium' }}>{plugin.category}</Typography>
                 </div>
 
                 <div className='flex items-center justify-between'>
-                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>
+                  <span className={styles.il3}>
                     {i18n.t('components.plugin_detail_modal.k10')}
                   </span>
                   <Typography sx={{ fontWeight: 'medium' }}>

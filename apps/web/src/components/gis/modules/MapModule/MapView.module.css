@@ -1,56 +1,17 @@
-/* src/components/gis/modules/MapModule/MapView.tsx 内联样式迁移（自动生成） */
+/* ./components/gis/modules/MapModule/MapView.tsx inline-style migration (auto) */
 
 .il1 {
-  font-weight: 600px;
-  color: common.white;
-  margin: 0;
+  color: var(--mui-palette-text-secondary);
 }
 
 .il2 {
-  padding: 1rem;
+  color: var(--mui-palette-text-secondary);
 }
 
 .il3 {
-  margin-bottom: 1rem;
+  color: var(--mui-palette-text-secondary);
 }
 
 .il4 {
-  margin-bottom: 1rem;
-}
-
-.il5 {
-  margin-bottom: 1rem;
-}
-
-.il6 {
-  margin-bottom: 1rem;
-}
-
-.il7 {
-  margin-bottom: 1rem;
-}
-
-.il8 {
-  margin-bottom: 1rem;
-}
-
-.il9 {
-  margin-bottom: 1rem;
-}
-
-.il10 {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.il11 {
-  height: 100%;
-  width: 100%;
-}
-
-.il12 {
-  position: absolute;
-  bottom: 1rem;
-  right: 6rem;
+  color: var(--mui-palette-text-secondary);
 }

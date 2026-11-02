@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import styles from './FitBoundsControl.module.css';
 import { IconButton } from '@mui/material';
 import { Maximize2 } from 'lucide-react';
 import { designTokens } from '@topems/tokens';

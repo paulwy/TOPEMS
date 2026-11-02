@@ -377,11 +377,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
             {rows.map((row) => (
               <div key={row}>
                 <div
-                  style={{
-                    fontSize: 12,
-                    color: 'var(--mui-palette-text-secondary)',
-                    marginBottom: 4,
-                  }}
+                  className={styles.il1}
                 >
                   {row}
                 </div>
@@ -408,11 +404,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
             {cols.map((col) => (
               <div key={col}>
                 <div
-                  style={{
-                    fontSize: 12,
-                    color: 'var(--mui-palette-text-secondary)',
-                    marginBottom: 4,
-                  }}
+                  className={styles.il2}
                 >
                   {col}
                 </div>
@@ -571,7 +563,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                 </tr>
               </React.Fragment>
             ))}
-            <tr style={{ backgroundColor: 'var(--mui-palette-grey-100)' }}>
+            <tr className={styles.il3}>
               <td
                 style={{
                   padding: `12px ${designTokens.spacing.md}px`,

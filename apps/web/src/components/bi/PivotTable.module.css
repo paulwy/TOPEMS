@@ -1,48 +1,17 @@
-/* components/bi/PivotTable.tsx inline-style migration (auto) */
+/* ./components/bi/PivotTable.tsx inline-style migration (auto) */
 
 .il1 {
-  margin-top: 2px;
+  font-size: 12px;
+  color: var(--mui-palette-text-secondary);
+  margin-bottom: 4px;
 }
 
 .il2 {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  font-size: 12px;
+  color: var(--mui-palette-text-secondary);
   margin-bottom: 4px;
 }
 
 .il3 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.il4 {
-  position: relative;
-}
-
-.il5 {
-  font-size: 12px;
-}
-
-.il6 {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.il7 {
-  overflow-x: auto;
-}
-
-.il8 {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 500px;
-}
-
-.il9 {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  background-color: var(--mui-palette-grey-100);
 }

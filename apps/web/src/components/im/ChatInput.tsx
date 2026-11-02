@@ -116,7 +116,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 className={styles.il3}
               >
                 <Image style={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
-                <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
+                <span className={styles.il1}>
                   {i18n.t('components.chat_input.k0')}
                 </span>
                 <input
@@ -132,7 +132,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 className={styles.il5}
               >
                 <FileText style={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
-                <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
+                <span className={styles.il2}>
                   {i18n.t('components.chat_input.k1')}
                 </span>
                 <input

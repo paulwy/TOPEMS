@@ -9,6 +9,7 @@ import React, {
   useCallback,
 } from 'react';
 import { MapContainer, TileLayer } from 'react-leaflet';
+import styles from './index.module.css';
 import { ZoomIn, ZoomOut } from 'lucide-react';
 import { Box as MuiBox, Typography, Paper, IconButton } from '@mui/material';
 import type { DevicePoint, StorageLocation, GeoJSONFeature } from '../../../api/gis';

@@ -1,5 +1,13 @@
 /* ./components/plugin/PluginDetailModal.tsx inline-style migration (auto) */
 
 .il1 {
-  text-align: center;
+  color: var(--mui-palette-text-secondary);
+}
+
+.il2 {
+  color: var(--mui-palette-text-secondary);
+}
+
+.il3 {
+  color: var(--mui-palette-text-secondary);
 }

@@ -1,0 +1,11 @@
+/* ./components/bi/StatsChartBarImpl.tsx inline-style migration (auto) */
+
+.il1 {
+  font-weight: 500px;
+  color: var(--mui-palette-text-primary);
+}
+
+.il2 {
+  font-size: 14px;
+  color: var(--mui-palette-text-secondary);
+}

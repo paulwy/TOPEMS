@@ -2,78 +2,21 @@
 
 .il1 {
   font-size: 14px;
-  font-weight: 500px;
-  color: text.primary;
-  margin-bottom: 16px;
+  color: var(--mui-palette-text-secondary);
 }
 
 .il2 {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  font-size: 14px;
+  color: var(--mui-palette-text-secondary);
 }
 
 .il3 {
-  width: 16px;
-  height: 16px;
-  color: text.secondary;
+  font-size: 14px;
+  color: var(--mui-palette-text-secondary);
 }
 
 .il4 {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.il5 {
-  width: 16px;
-  height: 16px;
-  color: text.secondary;
-}
-
-.il6 {
-  width: 16px;
-  height: 16px;
-  color: text.secondary;
-}
-
-.il7 {
-  display: flex;
-  align-items: center;
-  justify-content: spaceBetween;
-}
-
-.il8 {
-  width: 16px;
-  height: 16px;
-  color: text.secondary;
-}
-
-.il9 {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.il10 {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.il11 {
-  font-size: 14px;
-  color: text.secondary;
-}
-
-.il12 {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.il13 {
   font-size: 12px;
-  color: text.secondary;
+  font-weight: 500px;
+  color: var(--mui-palette-text-secondary);
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './PolarCases.module.css';
 import {
   PieChart,
   Pie,
@@ -42,7 +43,7 @@ const CustomTooltipPolar: React.FC<CustomTooltipProps> = ({ active, payload }) =
           minWidth: '120px',
         }}
       >
-        <p style={{ fontWeight: 600, color: 'var(--mui-palette-text-primary)', marginBottom: 2 }}>
+        <p className={styles.il1}>
           {payload[0].name}
         </p>
         {payload.map((item, index) => (

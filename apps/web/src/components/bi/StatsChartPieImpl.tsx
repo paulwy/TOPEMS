@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './StatsChartPieImpl.module.css';
 import { PieChart, Pie, Cell, Tooltip, Legend } from '../charts/_vendors/recharts-polar';
 import type { ChartData } from '../charts/AreaChart';
 import { designTokens } from '@topems/tokens';
@@ -43,10 +44,10 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
           border: '1px solid border.default',
         }}
       >
-        <p style={{ fontWeight: 500, color: 'var(--mui-palette-text-primary)' }}>
+        <p className={styles.il1}>
           {payload[0].name}
         </p>
-        <p style={{ fontSize: '14px', color: 'var(--mui-palette-text-secondary)' }}>
+        <p className={styles.il2}>
           {String(payload[0].value)}
         </p>
       </div>
