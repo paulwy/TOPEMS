@@ -12,6 +12,17 @@
 > 根台账（2026-11-02 归档治理）：2026-11-01 前已完成段已归档至 `docs/archive/TODO-archive-2026-10-31.md`（177 段，原文保留）；本文件保留近期进行/未完成/11-01 起段与未标完成段。
 > 历史更早段（2026-10-08 前）如仍散落于本文件，按同一标准继续归档。
 
+## 前端质量工程收尾链 P1：补页面级测试（2026-11-03）✅
+
+> 承接前端审计报告 §6 P1（页面测试 ≥35%）；7 零覆盖模块 68 页 + mes/wms/erp 低垂 6 页全量补齐，commit 后推送 origin/main。
+
+- **覆盖结果**：页面级测试 109 → **183/518（35.3%）**（≥35% 达标；口径 = 同名/聚合 import 页面组件文件本身）。
+- **补齐范围（74 个新测试文件，0 降级、全部真实渲染断言）**：rd 20 / aps 12 / master 12 / integration 9 / monitor 7 / doc 6 / im 2 / extras（erp/OfficeSupplies、erp/Vehicle、wms/Location、wms/SupplierManagement、wms/OutboundOrder、mes/ProcessRoute）6；测试栈 vitest + RTL，页面 import 自身组件文件，mock 模块 api 返回确定性数据，断言真实中文标题/数据单元格/统计卡。
+- **验证**：模块目录 vitest 全绿（rd 32 / aps 24 / master 21 / integration 13 / monitor 12 / doc 11 / im 4 / extras 12 测试）；全量 `pnpm vitest run` 0 失败；`tsc --noEmit` 无新增错误。
+- **测试基建修正**：`src/__tests__/setup-mocks.ts` localeFiles 白名单补 `'master'`（+1 行，使 zh/master.json 真实中文注入，纯增量无副作用，种子回归通过）。
+- **测试暴露的页面问题（未改源码，另立修复项）**：① aps `schemas/aps/forecast.ts` forecastSchema.title 误用 `pages.forecast_management_page.k3`（zh 为「删除中...」），列表页标题错显「删除中...」；② doc `DocumentsPage` 复用 `pages.index.k15/k29`（解析为「进度」「实验室检验统计报表」）与文档管理语义不符；③ rd `RsMaterialListPage` 将函数赋值给 headerContent（未调用），真实 CrudPage 渲染会报 "Functions are not valid as a React child"；④ rd 8 页命名导入 `{ CrudPage } from '@/components/templates/CrudPage'` 与全局 mock 仅 default 导出不兼容（测试内已本地兜底）；⑤ doc `DashboardPage` 使用 `doc.status.*/doc.menu.*` 嵌套 key（zh/doc.json 为无 `doc.` 前缀扁平结构，i18n mock 返回原 key）。
+- **文档**：`docs/前端页面清单-2026-11-03.csv`（74 页 页面级测试 否→是）、`docs/前端UI全面审计报告-2026-11-03.md`（§0 速览 / §4.1 / §6 P1 行）同步更新。
+
 ## cargo audit 周期复核：pulldown-cmark 0.13.6 升级（2026-11-02）✅
 
 > 承接依赖审计 Rust 侧周期复核（advisory-db 更新后重扫）；pnpm 侧已完成（见上方依赖周期重扫段）。

@@ -828,6 +828,7 @@ const __flattenLocale = (obj: Record<string, unknown>, prefix = ''): Record<stri
     'lims',
     'mes',
     'microfrontend',
+    'master',
     'mobile',
     'monitor',
     'notification',
