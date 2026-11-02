@@ -175,6 +175,8 @@
   "templates.settings_page_template.k7": "There are unsaved changes",
   "templates.settings_page_template.k8": "Close",
   "templates.settings_page_template.k9": "Close",
+  "templates.settings_page_template.k10": "No settings available",
+  "templates.settings_page_template.k11": "There are no settings to display. Check the page configuration or contact an administrator.",
   "templates.stats_page_template.k0": "Export",
   "templates.stats_page_template.k1": "No data",
   "templates.stats_page_template.k2": "No data",

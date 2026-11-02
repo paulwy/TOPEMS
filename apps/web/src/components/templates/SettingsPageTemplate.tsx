@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import type { BreadcrumbItem, PageHeaderProps } from './PageHeader';
 import { PageHeader } from './PageHeader';
+import { EmptyState } from '@topems/shared-components';
 
 // ============ 类型定义 ============
 
@@ -694,6 +695,13 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
       )}
 
       {renderTabs()}
+
+      {allSections.length === 0 && !loading && (
+        <EmptyState
+          title={i18n.t('templates.settings_page_template.k10')}
+          description={i18n.t('templates.settings_page_template.k11')}
+        />
+      )}
 
       {allSections.map(renderSection)}
 

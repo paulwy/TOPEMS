@@ -175,6 +175,8 @@
   "templates.settings_page_template.k7": "有未保存的更改",
   "templates.settings_page_template.k8": "关闭",
   "templates.settings_page_template.k9": "关闭",
+  "templates.settings_page_template.k10": "暂无设置内容",
+  "templates.settings_page_template.k11": "当前没有可显示的设置项，请检查页面配置或联系管理员",
   "templates.stats_page_template.k0": "导出",
   "templates.stats_page_template.k1": "暂无数据",
   "templates.stats_page_template.k2": "暂无数据",

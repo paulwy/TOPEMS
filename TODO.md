@@ -12,6 +12,17 @@
 > 根台账（2026-11-02 归档治理）：2026-11-01 前已完成段已归档至 `docs/archive/TODO-archive-2026-10-31.md`（177 段，原文保留）；本文件保留近期进行/未完成/11-01 起段与未标完成段。
 > 历史更早段（2026-10-08 前）如仍散落于本文件，按同一标准继续归档。
 
+## 前端质量工程收尾链 P2 空态模板默认注入（2026-11-03）✅
+
+> 承接 P1 e2e 加深段：空态从"最弱项"（关键词口径 25%）闭环为模板默认注入口径 **478/511（93.5%，目标 ≥50%）**（commit 后推送 origin/main）。
+
+- **探查结论**：关键词口径（页面文件 grep `EmptyState/empty`）低估真实空态——列表/详情/看板/表单等主流页面均由模板承载，模板层已具备空态实现：ListPageTemplate `data.length===0 → EmptyState`、StatsPageTemplate 全空且非 loading → EmptyState、DashboardTemplate `emptyState.show → EmptyState`、TreePageTemplate/KanbanPageTemplate/FormPageTemplate/MasterDetailPageTemplate/CardListTemplate/TimelinePageTemplate/DetailPageTemplate 均含空态；**唯一零空态常用模板 = SettingsPageTemplate**（28+ 页使用）、ChatPageTemplate 为插槽外壳（ReactNode 无法可靠判空，空态由调用页决定，不注入）。
+- **注入**：`SettingsPageTemplate` 增加 `allSections.length === 0 && !loading → <EmptyState>`；i18n 新增 `templates.settings_page_template.k10/k11`（zh「暂无设置内容」/ en "No settings available"）。
+- **口径修正（模板默认注入）**：页面具备空态 = 页面文件含关键词 或 页面使用的模板具备空态实现（12 模板白名单，CrudPage 列表模式由 ListPageTemplate 承载计入）。复算：**511 页中 478 页具备空态（93.5%）**。
+- **验证**：tsc 0 错误；全量 vitest 544 文件 / 6434 测试 0 失败（Settings 注入对 31 个使用页无破坏——sections 静态配置非空，空态分支不触发）。
+- **剩余 33 页自绘页无空态**（GIS 地图 / Mobile 移动端 / Designer-Builder 画布 / Copilot / report-workflow 设计器等），数据空时无统一空态，记录为后续专项（报告 §4.3 备注 + §6 备注）。
+- 报告 §0 速览三态行、§4.3 重写、§6 P2 空态行标 ✅。
+
 ## 前端质量工程收尾链 P1 核心链路 e2e 加深（2026-11-03）✅
 
 > 承接 P1 页面测试/小修段：核心 7 模块（mes/wms/erp/finance/scm/srm/tms）e2e 达标并实跑全绿（commit 后推送 origin/main）。
