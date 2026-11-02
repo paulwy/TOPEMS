@@ -45,7 +45,7 @@ pub struct Project {
     #[serde(alias = "risk_level", rename = "risklevel")]
     pub risk_level: Option<String>,
     pub priority: Option<i32>,
-    pub tags: Option<Vec<String>>,
+    pub tags: Option<serde_json::Value>,
     #[serde(alias = "parent_id", rename = "parentId")]
     pub parent_id: Option<Uuid>,
     pub workspace_id: Option<Uuid>,
@@ -98,7 +98,7 @@ pub struct CreateProjectRequest {
     #[serde(alias = "risk_level", rename = "risklevel")]
     pub risk_level: Option<String>,
     pub priority: Option<i32>,
-    pub tags: Option<Vec<String>>,
+    pub tags: Option<serde_json::Value>,
     #[serde(alias = "parent_id", rename = "parentId")]
     pub parent_id: Option<Uuid>,
     pub workspace_id: Option<Uuid>,
@@ -122,7 +122,7 @@ pub struct UpdateProjectRequest {
     #[serde(alias = "risk_level", rename = "risklevel")]
     pub risk_level: Option<String>,
     pub priority: Option<i32>,
-    pub tags: Option<Vec<String>>,
+    pub tags: Option<serde_json::Value>,
     #[serde(alias = "parent_id", rename = "parentId")]
     pub parent_id: Option<Uuid>,
     pub workspace_id: Option<Uuid>,

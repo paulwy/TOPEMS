@@ -32,7 +32,10 @@ macro_rules! db_exec {
     ($e:expr) => {
         match $e {
             Ok(v) => v,
-            Err(e) => return ApiResponse::from(TopemsError::internal("数据库操作失败", e)),
+            Err(e) => {
+                tracing::error!("数据库操作失败: {}", e);
+                return ApiResponse::from(TopemsError::internal("数据库操作失败", e));
+            }
         }
     };
 }

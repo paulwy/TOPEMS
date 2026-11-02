@@ -14,8 +14,7 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order
-    permissions = EXCLUDED.permissions;
+    sort_order = EXCLUDED.sort_order;
 
 -- Menu items for 财务管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -63,8 +62,7 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order
-    permissions = EXCLUDED.permissions;
+    sort_order = EXCLUDED.sort_order;
 
 -- Menu items for 生产执行
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -120,8 +118,7 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order
-    permissions = EXCLUDED.permissions;
+    sort_order = EXCLUDED.sort_order;
 
 -- Menu items for 人力资源
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -168,8 +165,7 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order
-    permissions = EXCLUDED.permissions;
+    sort_order = EXCLUDED.sort_order;
 
 -- Menu items for 产品数据
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -216,8 +212,7 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order
-    permissions = EXCLUDED.permissions;
+    sort_order = EXCLUDED.sort_order;
 
 -- Menu items for 仓储管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -264,8 +259,7 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order
-    permissions = EXCLUDED.permissions;
+    sort_order = EXCLUDED.sort_order;
 
 -- Menu items for 安全环保
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -310,8 +304,7 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order
-    permissions = EXCLUDED.permissions;
+    sort_order = EXCLUDED.sort_order;
 
 -- Menu items for 实验室管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -356,8 +349,7 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order
-    permissions = EXCLUDED.permissions;
+    sort_order = EXCLUDED.sort_order;
 
 -- Menu items for 客户关系
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -400,8 +392,7 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order
-    permissions = EXCLUDED.permissions;
+    sort_order = EXCLUDED.sort_order;
 
 -- Menu items for 质量管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -443,8 +434,7 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order
-    permissions = EXCLUDED.permissions;
+    sort_order = EXCLUDED.sort_order;
 
 -- Menu items for 供应链管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -491,8 +481,7 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order
-    permissions = EXCLUDED.permissions;
+    sort_order = EXCLUDED.sort_order;
 
 -- Menu items for 供应商关系
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -537,8 +526,7 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order
-    permissions = EXCLUDED.permissions;
+    sort_order = EXCLUDED.sort_order;
 
 -- Menu items for 报表中心
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)
@@ -577,8 +565,7 @@ FROM (VALUES
 ON CONFLICT (tenant_id, code) DO UPDATE SET
     name = EXCLUDED.name,
     icon = EXCLUDED.icon,
-    sort_order = EXCLUDED.sort_order
-    permissions = EXCLUDED.permissions;
+    sort_order = EXCLUDED.sort_order;
 
 -- Menu items for 项目管理
 INSERT INTO core_menus (id, tenant_id, group_id, name, code, path, icon, sort_order, status, permissions)

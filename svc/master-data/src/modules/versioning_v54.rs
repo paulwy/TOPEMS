@@ -6,10 +6,11 @@
 //! - 审计日志 (MDMAuditLogger): 不可变追加日志、事件分类、合规审计
 //! - 数据权限矩阵 (PermissionMatrix): RLS、列级脱敏、角色继承
 
-use axum::{extract::Path, extract::Query, extract::State, Json};
+use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use sqlx::Row;
 use std::collections::HashMap;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 use utoipa::ToSchema;
@@ -1301,8 +1302,16 @@ pub async fn get_entity_history(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn export_audit_log(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<ExportAuditLogRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    // 请求租户：缺失/非法 → nil，与 v59 语义一致（对齐 RLS current_setting 空值兜底）
+    let tenant_uuid = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or_else(uuid::Uuid::nil);
+
     let rows = sqlx::query(&format!(
         "SELECT {AUDIT_EVENT_COLS} FROM master_data.mdm_audit_events
          WHERE entity_type = COALESCE($1, entity_type)
@@ -1320,7 +1329,7 @@ pub async fn export_audit_log(
 
     if let Err(e) = sqlx::query(
         "INSERT INTO master_data.mdm_audit_export_logs (id, user_id, export_type, record_count, exported_at, ip_address, tenant_id)
-         VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+         VALUES ($1,$2,$3,$4,$5,$6,$7)",
     )
     .bind(&export_id)
     .bind("current_user")
@@ -1328,6 +1337,7 @@ pub async fn export_audit_log(
     .bind(record_count)
     .bind(&now)
     .bind("127.0.0.1")
+    .bind(tenant_uuid)
     .execute(&state.db)
     .await
     {

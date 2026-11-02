@@ -214,10 +214,20 @@ async fn set_rls_policy_conn(
     tenant_id: &str,
 ) -> Result<(), sqlx::Error> {
     // is_local=false：会话级。仅作用于本请求独占连接，且请求结束后显式清空，不污染池。
-    sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
-        .bind(tenant_id)
-        .execute(&mut **conn)
-        .await?;
+    if tenant_id.is_empty() {
+        // superuser/空租户：RESET app.tenant_id。
+        // PG18 实测：SET 过再 RESET 后 current_setting(..., true) 回落为空串 ''（非 NULL），
+        // 业务 SQL/策略中 ((current_setting(...))::uuid) 必须经 NULLIF 包裹兜底
+        // （database/migrations/20261102210000_fix_tenant_policy_nullif.sql），否则 uuid cast 空串报错。
+        // 不能 SET ''（旧实现）：部分策略 qual 对 '' 直接 ::uuid（无 NULLIF），
+        // PG 即使 OR 有 ='' 分支仍可能评估后续 cast → invalid input syntax for type uuid: ""
+        sqlx::query("RESET app.tenant_id").execute(&mut **conn).await?;
+    } else {
+        sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+            .bind(tenant_id)
+            .execute(&mut **conn)
+            .await?;
+    }
 
     Ok(())
 }
