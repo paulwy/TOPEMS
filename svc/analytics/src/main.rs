@@ -18,6 +18,7 @@ use topems_shared_bootstrap::{
 };
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::rls::rls_middleware;
 use utoipa::OpenApi;
 
 use topems_analytics::{modules, routes, ApiDoc};
@@ -126,6 +127,13 @@ async fn main() -> anyhow::Result<()> {
         .with_state(app_state);
 
     app.router = app.router.merge(stateful_public);
+
+    // ── RLS 行级隔离中间件（对齐 analytics_real_module 同构；2026-11-02 补挂）──
+    // x-tenant-id 请求头 → app.tenant_id GUC（无 header 直接放行，不影响 public/health/metrics）
+    app.router = app.router.layer(axum::middleware::from_fn_with_state(
+        ctx.db.clone(),
+        rls_middleware,
+    ));
 
     tracing::info!(
         "✅ Analytics Service is running at http://0.0.0.0:{} (BI prefix: {})",

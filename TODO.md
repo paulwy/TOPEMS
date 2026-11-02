@@ -50,7 +50,7 @@
 - **口径核对**：openapi.json 全量 GET 1566 / openapi-aggregated GET 411（749 为历史口径，以当前为准）。
 - **注入机制（三层）**：① 连接级 DEFAULT_TENANT_ID 兜底（shared-bootstrap after_connect set_config）；② 请求级中间件 x-tenant-id → set_config 会话级（独占连接 + 请求后 RESET 归还）；③ RLS 策略放行分支（无上下文不阻断）。
 - **覆盖核对（全服务）**：独立服务 23 个全部挂 tenant/rls 中间件（ai/gis 在 embedded/routes 层）；unified-core（routes/mod.rs:268 tenant_rls_middleware）/ portal / integration 在路由层挂；server 模块化在 real_module 层挂。
-- **遗留标注**：独立 analytics 服务 main.rs 未挂（当前不运行，端点经 server AnalyticsRealModule 已覆盖）；若后续独立部署需补挂 tenant_middleware。
+- **遗留标注（已核销）**：独立 analytics main.rs 已补挂 `rls_middleware`（2026-11-02，对齐 analytics_real_module 同构；x-tenant-id → app.tenant_id GUC，无 header 放行不影响 public/health）；核实生产 systemd 同时部署 topems-analytics.service（独立轨）与 topems-server.service（server 轨），两条轨 RLS 上下文注入现已全覆盖。cargo check -p topems-analytics 通过。
 - **结论**：读端点 tenant 注入覆盖完备；文档 `docs/security/rls-read-endpoint-audit-20261102.md`。
 
 ## RLS 工程后续核查：配置类补启结论 + 生效验证边界（2026-11-02）✅
