@@ -1,3 +1,11 @@
+## 残留 11 表 NULLIF 统一决策（2026-11-02）✅
+
+> 承接「master 15 根因闭环」遗留决策项（残留 11 表文本比较形式策略是否统一 NULLIF）。
+
+- **test 库核对**：11 表中 core_dict_items / core_dict_types 策略已为 NULLIF 形式（`tenant_id = (NULLIF(current_setting(...))::uuid)`）；mdm_recovery_points/plans/tags/improvement_plans/failover_records/v60_lineage_nodes/critical_functions/bc_tests/api_exposures 在 test 无 RLS 策略（无 `current_setting` 引用）。
+- **决策**：**test 库已安全，无需统一**。残留"文本比较"记录为 prod 库形态（`(tenant_id)::text = current_setting(...)`，不触发 uuid 崩溃）；统一 NULLIF 列入 prod 部署/后续工程项（若 prod 该 11 表确有策略再做迁移，需 DO 块动态判策略存在，避免 ALTER POLICY 不存在报错）。
+- **结论**：本机（topems_test）无待办动作，决策闭环。
+
 ## tests/integration 存量红核销（2026-11-02）✅
 
 > 承接「批 4/5 遗留」中"tests/integration 29 存量红"条目；本机服务 :8099 实跑 vitest 核销。
