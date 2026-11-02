@@ -287,10 +287,11 @@
 - ✅（2026-11-03 核查闭环）svc/unified-core/src/modules/iam/auth.rs set_config 污染路径：4 处
   tenant_ctx（L361/L886 login·refresh 查询类型 `uuid::Uuid` 不可能空串；L1644/L1727 claims 缺失
   fallback 默认租户 0001）均绑定合法 Uuid 或默认租户，**无 SET '' 残留路径**。
-- ✅（2026-11-03 已交付）「前端 UI 全面审计报告 + §4 e2e 基线扩展」：全量页面清单口径，
-  产出 `docs/前端UI全面审计报告-2026-11-03.md` + `docs/前端页面清单-2026-11-03.csv`（518 路由/
-  36 模块：页面文件 516、页面级测试 107（20.9%）、API 接线 464（90.4%）、e2e 83 spec 覆盖 45
-  路由（8.7%）；7 模块零页面测试；三态 49/25/74%；10-07 缺陷复查 FieldSelector/mobile 端点已修复）。
+- ✅（2026-11-03 已执行）**P0 接线复核（消除"疑似未接线"）**：52 页无直接 API import 全量链路复核——
+  32 页经 store/hooks/reactQuery **间接已接线**（审计口径修正）；10 页设计如此（静态入口/概览/纯配置 UI）；
+  2 页占位（DynamicRouter/TemplateDemoPage）；**8 页真未接线→功能开发待办**：ai/chat（mock 会话）、
+  im/dashboard+im/mail（im 模块整体未接）、integration/erp-overview（mock）、pm/timeline+pm/project-list
+  （硬编码数据）、mobile/profile、finance/consolidation（本地 state）。报告 §4.2/§6 已更新。
 - ✅（2026-11-03 已执行）**P0 全量路由冒烟 e2e（可达性 100%）**：full-route-smoke.spec.ts 改造
   （动态段 `:param` 占位 `1`，518 全覆盖）；8099 BFF + 8000 core + DB/Redis + 前端 dev 实跑 5 批，
   运行时推导 **542 路由硬失败 0**（8.7% → 100%）；修复 3 个冒烟实跑缺陷：ObservabilityPanel.module.css
