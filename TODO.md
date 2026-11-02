@@ -1,3 +1,13 @@
+## 前端三子项实施 P0：topems.sh 拆分 + ListPageTemplate 审计（2026-11-02）✅
+
+> 方案文档：docs/frontend-engine/frontend-trios-backlog-20261102.md（排期 Now/Next/Later 已入库）。
+
+- **topems.sh 拆分（P0 完成）**：3910 行/84 函数 → 拆 6 个 lib 模块（common 19 / build 11 / service 19 / db 19 / run 5 / maintain 10 函数）+ 主脚本保留头部（含 MAX_RETRIES/READY_TIMEOUT 等变量）+ source 加载 + show_help + case。
+  - 验证：全部 `bash -n` 通过；`help` 完整输出；`check_port 8099` ✅（已监听）；`status` 正常输出；8 个核心函数定义抽查 ✅。
+  - 修复：首轮重写遗漏 MAX_RETRIES/RETRY_DELAY/BACKOFF_FACTOR/READY_TIMEOUT 变量行 → 已补回主脚本。
+- **ListPageTemplate 审计（P0 完成）**：组件 110 行健康；103 引用均为 import `@/components/templates` + 正常 props 使用（抽查 PmTemplatePage 3 / InspectionResultPage 2）→ **结论：无需拆分**（原排期项调整为审计，核销）。
+- **内联样式迁移 2363 处**：入 Next 批（Batch1 top8 文件 ~400 处迁 CSS Modules，每文件独立 commit + build 验证）。
+
 ## topems / topems_prepare 账本治理（另案，2026-11-02）✅
 
 > 承接遗留另案；test/prod 已 540/540 后，补治理余两库。
