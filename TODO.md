@@ -6,6 +6,15 @@
 - **判定规则**：多租户业务表（tenant_id/org_id）需 RLS；core_*/_config/_template 等平台配置类由应用层权限控制；业务实体类待逐表确认。
 - **交叉核对评估**：BIZ 749 条读端点 / to_bind 332 条绑定池与 RLS 的逐表绑定核对为工程大项（约 1331 业务表 × 读端点映射），非审计整改范围（审计聚焦菜单/端点/权限码三端一致性）——列入数据安全工程排期（RLS 启用策略 + 读端点绑定）。
 - **结论**：审计整改计划全绿收官；RLS 覆盖率为独立数据安全工程项（不阻塞审计），记录待工程后续。
+## 迁移登记专项治理：_sqlx_migrations 账本对齐（2026-11-02）✅
+
+> 承接「迁移收口」条目中列明的工程后续（账本停滞导致下次自动迁移会重跑 DDL / 误应用破坏性迁移）。
+
+- **盘点**：topems_test 账本 426 条 vs migrations 文件 539 个 → 差 **113 个未登记**（含早期 000-013 已归一化排除）。
+- **分类**：① 破坏性 4 个（core_schema_duplicates_cleanup / remove_legacy_ledger_tables / identity_tables_converge / menu_dedupe_delete——明确不应用）；② menu/权限系列 12 个（手动 psql 已应用，幂等）；③ 其余 97 个 DDL/INSERT（抽查 mes.work_orders / ehs.training_records / pm.projects 等已生效，多数已手动/自愈应用）。
+- **登记**：`database/migrations_registry_align.sql` 生成 113 条 INSERT（checksum = sha384(文件内容)，与 sqlx 0.8.6 算法一致；success=true 跳过 sqlx 自动重跑；含破坏性 4 个登记防误应用；ON CONFLICT DO NOTHING 幂等）。应用成功 `INSERT 0 113`。
+- **验证**：账本 539/539 与文件完全对齐，剩余未登记 0，success=false 0；下次 sqlx 自动迁移将无待应用项（破坏性迁移被登记跳过）。
+- **登记语义说明**：success=true 表示"已处理"而非"schema 已变更"——破坏性迁移明确不应用；其余抽查多数已生效，未逐项核对余下的 schema 差异（若发现功能缺陷再单独补迁移）。
 
 ## 迁移收口：menu_crm_permission 去 schema 前缀 + batch4 权限码应用（2026-11-02）✅
 
