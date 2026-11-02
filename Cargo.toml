@@ -23,7 +23,7 @@ members = [
     # core     ：平台核心（unified-core/monitor/plugin-registry/search/
     #             communication/integration/portal/mobile/ticket）
     # erp      ：企业资源（erp/scm/srm/pm/pdm）
-    # finance  ：财务（finance/billing）
+    # finance  ：财务（finance）
     # crm      ：客户关系（crm）
     # wms      ：仓储制造（wms/tms/mes/qms/ehs/lims/gis/rd）
     # advanced ：高级数据（master-data/analytics）
@@ -91,8 +91,8 @@ resolver = "2"
 # 28 工作区业务服务全部使用以下统一启动 API：
 #   ServiceConfig → bootstrap_service → build_application → run
 #   三种模式拆分：
-#     A. 标准 build_application (8): search,ticket,
-#                                    communication,billing,master-data,
+#     A. 标准 build_application (7): search,ticket,
+#                                    communication,master-data,
 #                                    hrm,finance,wms
 #     B. stateful + build_application (11): qms,ehs,pdm,lims,erp,crm,
 #                                          srm,scm,mes,pm,rd

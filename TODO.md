@@ -1,4 +1,11 @@
 
+## DIR-13 Cargo 注释修正 + wms 死代码遗留项复核（2026-11-03）✅
+
+- **DIR-13**（原登记"待 Cargo 干净后执行"）：billing 已由 66a5ded86 移除——L26 `finance/billing→finance`、L94-95 A 组 8→7（删 billing），根 Cargo.toml 注释与现状一致（diff 3+/3-）。
+- **遗留项 6 复核**：`wms inventory.rs:108 publish_inventory_updated` 死代码——全仓 .rs **0 引用**（函数已不在当前代码，此前清理轮已移除）→ 确认闭环，清单补 ✅。
+- **状态**：数据库治理 + 迁移缺陷 + DIR-13 + wms 遗留均闭环；B 批来源/AR-08/PARTIAL2 仍挂账待决策。
+
+
 ## 迁移文件 bug 闭环：20261102190000_fix_menu_crm_permission.sql 修正 + 五库实修（2026-11-03）✅
 
 > TODO ⚠️（409 行）闭环：迁移硬编码 schema 缺陷修正。
@@ -1615,7 +1622,7 @@
 3. **观测缺口 G1/G2/G3**（边指标 status 维度 / 出站延迟直方图 / shared-core 死指标）：代码在 lib/svc 边界外，仅登记建议
 4. **`nginx -t` 生产 Linux 验证**（macOS epoll 限制）
 5. **hrm MDM 主数据事件**独立 `topems:stream:master_data:*` 总线未纳入 ZSET 重试（需另设计通道）
-6. **wms `inventory.rs:108`** `publish_inventory_updated` 死代码
+6. **wms `inventory.rs:108`** `publish_inventory_updated` 死代码 ✅（已闭环：当前代码 0 引用，函数已清，2026-11-03 复确认）
 7. **本地环境**：TOPEMS/target 构建产物 114G 已清理（磁盘 100%→65%）；下次本地构建需全量重编
 
 ## ✅ 本地等价 CI 验证完成（2026-10-08 方案 A）
