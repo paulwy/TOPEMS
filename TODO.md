@@ -699,7 +699,7 @@
   - 保留项（eslint-disable + 注释）：EhsHazardDetailPage #f9a825 设计既定色；client.ts SNAKE_CASE_SERVICES 灰度回滚名单。
 - **验证**：`pnpm lint` 0 problems、`pnpm typecheck` 通过、pre-push 门禁全绿；前端 lint 回到 P3-3 基线 0 problems。
 
-## v1.113 BFF WS 接线 P0 迷你试点（2026-10-29）⚠️
+## v1.113 BFF WS 接线 P0 迷你试点（2026-10-29）✅（P0/P1 闭环；契约化/配额/前端试点待立项）
 
 > 承接 BFF WS 接线立项决策（全量缓立、P0 先行）：8099 落地 WS Hub 骨架端点。
 
@@ -1332,7 +1332,7 @@
 - **门禁/测试**：clippy 0 warning；双门禁 py/cjs PASS；erp 902 测试绿；lefthook 全 hook 通过。
 - **残留（生产部署注意）**：单行写 handler 现已补齐 commit；emit 在事务内发布，若 commit 失败仍有孤儿事件（与 delete_customer 既有取舍一致，未用 outbox）；sales_order 状态流转 commit 失败仅 log 不返回 500。
 
-## 2026-10-08 D6 outbox 事件一致性评估（决策文档已出，待实施）
+## 2026-10-08 D6 outbox 事件一致性评估（决策文档已出，待实施）✅（2026-11-02 复核：方案 B 已实施完成+typed 2 组改造，代码在主线）
 
 > B1 + 事务专项核查（c843ad423）暴露"事务内 emit"窗口：孤儿事件（commit 失败已发）+ 丢失事件（XADD 失败源表有行投影缺）。产出 `docs/architecture/decision-d6-outbox-event-consistency.md`，**本项只出文档，未改业务代码、未落迁移**。
 
