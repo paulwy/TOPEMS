@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from './index.module.css';
 import { GisProvider, useGis } from '../../context/GisContext';
 import { GisMapTemplate, type MapMarker, type GeoFence } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -773,7 +774,7 @@ const GisContent: React.FC = () => {
                 >
                   <MapPin
                     size={20}
-                    style={{ color: 'success.dark' }}
+                    className={styles.il1}
                   />
                 </Box>
                 <Box>
@@ -815,7 +816,7 @@ const GisContent: React.FC = () => {
                 >
                   <ArrowRight
                     size={20}
-                    style={{ color: 'primary.light' }}
+                    className={styles.il2}
                   />
                 </Box>
                 <Box>
@@ -857,7 +858,7 @@ const GisContent: React.FC = () => {
                 >
                   <Warehouse
                     size={20}
-                    style={{ color: 'warning.dark' }}
+                    className={styles.il3}
                   />
                 </Box>
                 <Box>
