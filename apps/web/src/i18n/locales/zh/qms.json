@@ -1939,5 +1939,6 @@
   "qms.inspectionStandard.deleteSuccess": "删除成功",
   "qms.inspectionStandard.deleteFailed": "删除失败",
   "qms.nav.qms-eight-d": "8D 报告",
-  "qms.nav.qms-audit": "质量审核"
+  "qms.nav.qms-audit": "质量审核",
+  "qms.inspectionStandard.empty": "暂无检验标准"
 }

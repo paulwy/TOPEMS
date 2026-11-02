@@ -515,5 +515,6 @@
       "gis-devices": "设备注册",
       "gis-devices_desc": "GIS 设备注册管理"
     }
-  }
+  },
+  "gis.devices.empty": "暂无设备"
 }

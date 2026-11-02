@@ -9,6 +9,7 @@ import { Box, Typography, Paper, Chip, List, Divider, Avatar, useTheme } from '@
 import { Clock, ClipboardList, Monitor } from 'lucide-react';
 import i18n from '@/i18n';
 import { MobileCard } from '@/components/mobile';
+import { EmptyState } from '@/components';
 import { sizeTokens } from '@/theme';
 import type { ProductionOrder, WorkReport, Equipment } from '@/api/mobile';
 import { MobileProductionActions } from './MobileProductionActions';
@@ -60,6 +61,14 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
     <>
       {activeTab === 0 && (
         <List disablePadding>
+          {filteredOrders.length === 0 && (
+            <EmptyState
+              compact
+              icon={<ClipboardList size={28} />}
+              title={i18n.t('mobile.production.empty_orders_title')}
+              description={i18n.t('mobile.production.empty_orders_desc')}
+            />
+          )}
           {filteredOrders.map((order, index) => {
             const progress = (order.completed_quantity / order.quantity) * 100;
             return (
@@ -191,6 +200,14 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
       )}
       {activeTab === 1 && (
         <List disablePadding>
+          {workReports.length === 0 && (
+            <EmptyState
+              compact
+              icon={<Clock size={28} />}
+              title={i18n.t('mobile.production.empty_reports_title')}
+              description={i18n.t('mobile.production.empty_reports_desc')}
+            />
+          )}
           {workReports.map((report, index) => (
             <React.Fragment key={report.id}>
               <MobileCard
@@ -277,6 +294,14 @@ export const MobileProductionCard: React.FC<MobileProductionCardProps> = ({
       )}
       {activeTab === 2 && (
         <List disablePadding>
+          {equipmentList.length === 0 && (
+            <EmptyState
+              compact
+              icon={<Monitor size={28} />}
+              title={i18n.t('mobile.production.empty_equipment_title')}
+              description={i18n.t('mobile.production.empty_equipment_desc')}
+            />
+          )}
           {equipmentList.map((equipment, index) => (
             <React.Fragment key={equipment.id}>
               <MobileCard

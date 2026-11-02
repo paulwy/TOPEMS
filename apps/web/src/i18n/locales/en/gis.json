@@ -860,5 +860,6 @@
   "gis.gis_fence_page.e13_poly": "A polygon fence needs at least 3 vertices, please add coordinates",
   "gis.gis_fence_page.e13_rect": "A rectangle fence needs two diagonal corner coordinates",
   "gis.gis_fence_page.e14": "Finish Drawing",
-  "gis.gis_fence_page.e15": "Cancel"
+  "gis.gis_fence_page.e15": "Cancel",
+  "gis.devices.empty": "No devices yet"
 }

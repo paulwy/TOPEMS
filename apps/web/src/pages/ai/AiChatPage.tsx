@@ -52,6 +52,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { ChatPageTemplate } from '@/components/templates';
+import { EmptyState } from '@/components';
 import { AI_PATHS } from '@/modules/ai/config';
 import { useNotificationStore } from '@/store';
 import i18n from '@/i18n';
@@ -138,7 +139,7 @@ export const AiChatPage: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const { data: conversations } = useQuery<AiConversationRow[]>({
+  const { data: conversations, isLoading } = useQuery<AiConversationRow[]>({
     queryKey: ['ai-conversations'],
     queryFn: async () => {
       const res = await chatApi.listConversations();
@@ -375,6 +376,14 @@ export const AiChatPage: React.FC = () => {
       </Box>
 
       <Box sx={{ flex: 1, overflow: 'auto' }}>
+        {!isLoading && sessions.length === 0 && (
+          <EmptyState
+            compact
+            icon={<MessageSquare size={28} />}
+            title={i18n.t('ai.chat.empty.sessions_title')}
+            description={i18n.t('ai.chat.empty.sessions_desc')}
+          />
+        )}
         {sessions.map((session) => (
           <Paper
             key={session.id}

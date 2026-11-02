@@ -1013,6 +1013,8 @@
   "ai.assistant.report.label.query": "查询语句",
   "ai.assistant.report.label.time_range": "时间范围",
   "ai.chat.action.delete": "删除",
+  "ai.chat.empty.sessions_title": "暂无会话",
+  "ai.chat.empty.sessions_desc": "点击新建会话，开始一次对话",
   "ai.dify.action.dislike": "不喜欢",
   "ai.dify.action.like": "喜欢",
   "ai.dify.action.refresh": "刷新",

@@ -41,6 +41,7 @@ import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { MobilePageTemplate } from '@/components/templates';
+import { EmptyState } from '@/components';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const MobileQualityPage: React.FC = () => {
@@ -468,6 +469,14 @@ const MobileQualityPage: React.FC = () => {
           <>
             {activeTab === 0 && (
               <List disablePadding>
+                {filteredTasks.length === 0 && (
+                  <EmptyState
+                    compact
+                    icon={<CheckSquare size={28} />}
+                    title={i18n.t('mobile.mobile_quality_page.empty_task_title')}
+                    description={i18n.t('mobile.mobile_quality_page.empty_task_desc')}
+                  />
+                )}
                 {filteredTasks.map((task, index) => (
                   <React.Fragment key={task.id}>
                     <Paper
@@ -629,6 +638,14 @@ const MobileQualityPage: React.FC = () => {
             )}
             {activeTab === 1 && (
               <List disablePadding>
+                {defectRecords.length === 0 && (
+                  <EmptyState
+                    compact
+                    icon={<AlertTriangle size={28} />}
+                    title={i18n.t('mobile.mobile_quality_page.empty_defect_title')}
+                    description={i18n.t('mobile.mobile_quality_page.empty_defect_desc')}
+                  />
+                )}
                 {defectRecords.map((defect, index) => (
                   <React.Fragment key={defect.id}>
                     <Paper

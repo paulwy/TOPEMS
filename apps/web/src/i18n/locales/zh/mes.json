@@ -1710,5 +1710,7 @@
       "mes-capacity": "产能日历",
       "mes-capacity_desc": "各工作中心产能日历管理"
     }
-  }
+  },
+  "mes.capacity.empty": "暂无产能数据",
+  "mes.masterData.empty": "暂无主数据"
 }

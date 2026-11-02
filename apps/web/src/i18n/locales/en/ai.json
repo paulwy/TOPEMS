@@ -1196,6 +1196,8 @@
   "ai.assistant.report.label.query": "Query",
   "ai.assistant.report.label.time_range": "Time Range",
   "ai.chat.action.delete": "Delete",
+  "ai.chat.empty.sessions_title": "No conversations",
+  "ai.chat.empty.sessions_desc": "Start a new conversation to begin",
   "ai.dify.action.dislike": "Dislike",
   "ai.dify.action.like": "Like",
   "ai.dify.action.refresh": "Refresh",

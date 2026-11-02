@@ -47,6 +47,7 @@ import { mobileApi, type AttendanceStats, type LeaveApplication } from '@/api/mo
 import { apiLogger } from '@/utils/logger';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { MobilePageTemplate } from '@/components/templates';
+import { EmptyState } from '@/components';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const MobileAttendancePage: React.FC = () => {
@@ -659,6 +660,14 @@ const MobileAttendancePage: React.FC = () => {
             )}
             {activeTab === 1 && (
               <List disablePadding>
+                {records.length === 0 && (
+                  <EmptyState
+                    compact
+                    icon={<Clock size={28} />}
+                    title={i18n.t('mobile.mobile_attendance_page.empty_records_title')}
+                    description={i18n.t('mobile.mobile_attendance_page.empty_records_desc')}
+                  />
+                )}
                 {records.map((record, index) => (
                   <React.Fragment key={record.id}>
                     <MobileCard

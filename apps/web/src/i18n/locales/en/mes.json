@@ -2982,5 +2982,7 @@
   "mes.masterData.saveSuccess": "Saved successfully",
   "mes.masterData.saveFailed": "Save failed, please check input",
   "mes.masterData.deleteSuccess": "Deleted successfully",
-  "mes.masterData.deleteFailed": "Delete failed"
+  "mes.masterData.deleteFailed": "Delete failed",
+  "mes.capacity.empty": "No capacity data yet",
+  "mes.masterData.empty": "No master data yet"
 }

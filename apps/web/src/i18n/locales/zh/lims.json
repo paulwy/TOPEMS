@@ -1630,5 +1630,7 @@
   "lims.analytes.saveSuccess": "保存成功",
   "lims.analytes.saveFailed": "保存失败，请检查输入",
   "lims.analytes.deleteSuccess": "删除成功",
-  "lims.analytes.deleteFailed": "删除失败"
+  "lims.analytes.deleteFailed": "删除失败",
+  "lims.analytes.empty": "暂无检验项目",
+  "lims.methodCategories.empty": "暂无方法分类"
 }

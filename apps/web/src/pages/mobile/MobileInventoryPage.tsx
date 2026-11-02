@@ -49,6 +49,7 @@ import { apiLogger } from '@/utils/logger';
 import { useQuery } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { MobilePageTemplate } from '@/components/templates';
+import { EmptyState } from '@/components';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const MobileInventoryPage: React.FC = () => {
@@ -482,6 +483,14 @@ const MobileInventoryPage: React.FC = () => {
           <>
             {activeTab === 0 && (
               <List disablePadding>
+                {filteredItems.length === 0 && (
+                  <EmptyState
+                    compact
+                    icon={<Package size={28} />}
+                    title={i18n.t('mobile.mobile_inventory_page.empty_material_title')}
+                    description={i18n.t('mobile.mobile_inventory_page.empty_material_desc')}
+                  />
+                )}
                 {filteredItems.map((item, index) => (
                   <React.Fragment key={item.id ?? index}>
                     <MobileCard
@@ -561,6 +570,14 @@ const MobileInventoryPage: React.FC = () => {
             )}
             {activeTab === 1 && (
               <List disablePadding>
+                {stocktakeTasks.length === 0 && (
+                  <EmptyState
+                    compact
+                    icon={<ClipboardList size={28} />}
+                    title={i18n.t('mobile.mobile_inventory_page.empty_stocktake_title')}
+                    description={i18n.t('mobile.mobile_inventory_page.empty_stocktake_desc')}
+                  />
+                )}
                 {stocktakeTasks.map((task, index) => (
                   <React.Fragment key={task.id}>
                     <Paper
@@ -706,6 +723,14 @@ const MobileInventoryPage: React.FC = () => {
             )}
             {activeTab === 2 && (
               <List disablePadding>
+                {inboundOrders.length === 0 && (
+                  <EmptyState
+                    compact
+                    icon={<Warehouse size={28} />}
+                    title={i18n.t('mobile.mobile_inventory_page.empty_inbound_title')}
+                    description={i18n.t('mobile.mobile_inventory_page.empty_inbound_desc')}
+                  />
+                )}
                 {inboundOrders.map((order, index) => (
                   <React.Fragment key={order.id}>
                     <MobileCard
@@ -788,6 +813,14 @@ const MobileInventoryPage: React.FC = () => {
             )}
             {activeTab === 3 && (
               <List disablePadding>
+                {outboundOrders.length === 0 && (
+                  <EmptyState
+                    compact
+                    icon={<Truck size={28} />}
+                    title={i18n.t('mobile.mobile_inventory_page.empty_outbound_title')}
+                    description={i18n.t('mobile.mobile_inventory_page.empty_outbound_desc')}
+                  />
+                )}
                 {outboundOrders.map((order, index) => (
                   <React.Fragment key={order.id}>
                     <MobileCard

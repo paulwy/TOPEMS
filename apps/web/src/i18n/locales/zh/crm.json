@@ -1159,5 +1159,6 @@
   "crm.opportunity_redesign.toast_delete_fail": "商机删除失败",
   "crm.opportunity_redesign.toast_delete_success": "商机删除成功",
   "crm.opportunity_redesign.toast_update_fail": "商机更新失败",
-  "crm.opportunity_redesign.toast_update_success": "商机更新成功"
+  "crm.opportunity_redesign.toast_update_success": "商机更新成功",
+  "crm.tags.empty": "暂无客户标签"
 }

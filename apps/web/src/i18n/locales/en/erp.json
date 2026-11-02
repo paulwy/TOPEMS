@@ -3722,5 +3722,6 @@
   "erp.demo.remark_urgent": "Urgent procurement, approval needed ASAP",
   "erp.demo.remark_overbudget": "Over budget, rejected",
   "erp.purchase_order.department.unassigned": "Unassigned",
-  "erp.nav.erp-sales-orders_desc": "Sales Orders"
+  "erp.nav.erp-sales-orders_desc": "Sales Orders",
+  "erp.dictionaries.empty": "No dictionaries yet"
 }

@@ -30,6 +30,7 @@ import type { Workshop, ProductionLine, Shift, WorkCalendar } from '@/api/mes';
 import { useNotificationStore } from '@/store';
 
 import { PageContainer } from '@/components/common';
+import { EmptyState } from '@/components';
 
 type TabKey = 'workshops' | 'productionLines' | 'shifts' | 'workCalendars';
 
@@ -314,49 +315,65 @@ const MesMasterDataPage: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    hover
-                  >
-                    {columns[tab].map((c) => {
-                      const v = (row as unknown as Record<string, unknown>)[c.key];
-                      return (
-                        <TableCell key={c.key}>
-                          {c.key === 'status' ? (
-                            <Chip
-                              size='small'
-                              color={(v as string) === 'active' ? 'success' : 'default'}
-                              label={v as string}
-                            />
-                          ) : typeof v === 'boolean' ? (
-                            <Chip
-                              size='small'
-                              color={v ? 'success' : 'default'}
-                              label={v ? '✓' : '—'}
-                            />
-                          ) : (
-                            ((v as string) ?? '—')
-                          )}
-                        </TableCell>
-                      );
-                    })}
-                    <TableCell align='right'>
-                      <IconButton
-                        size='small'
-                        onClick={() => openEdit(row)}
-                      >
-                        <Pencil size={16} />
-                      </IconButton>
-                      <IconButton
-                        size='small'
-                        onClick={() => removeMutation.mutate(row.id)}
-                      >
-                        <Trash2 size={16} />
-                      </IconButton>
+                {rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns[tab].length + 1}
+                      align='center'
+                      sx={{ py: 4 }}
+                    >
+                      <EmptyState
+                        emoji='🗂️'
+                        title={t('mes.masterData.empty')}
+                        compact
+                      />
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      hover
+                    >
+                      {columns[tab].map((c) => {
+                        const v = (row as unknown as Record<string, unknown>)[c.key];
+                        return (
+                          <TableCell key={c.key}>
+                            {c.key === 'status' ? (
+                              <Chip
+                                size='small'
+                                color={(v as string) === 'active' ? 'success' : 'default'}
+                                label={v as string}
+                              />
+                            ) : typeof v === 'boolean' ? (
+                              <Chip
+                                size='small'
+                                color={v ? 'success' : 'default'}
+                                label={v ? '✓' : '—'}
+                              />
+                            ) : (
+                              ((v as string) ?? '—')
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                      <TableCell align='right'>
+                        <IconButton
+                          size='small'
+                          onClick={() => openEdit(row)}
+                        >
+                          <Pencil size={16} />
+                        </IconButton>
+                        <IconButton
+                          size='small'
+                          onClick={() => removeMutation.mutate(row.id)}
+                        >
+                          <Trash2 size={16} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>

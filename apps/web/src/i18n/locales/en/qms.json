@@ -3211,5 +3211,6 @@
   "qms.inspectionStandard.deleteSuccess": "Deleted successfully",
   "qms.inspectionStandard.deleteFailed": "Delete failed",
   "qms.nav.qms-eight-d": "8D Report",
-  "qms.nav.qms-audit": "Quality Audit"
+  "qms.nav.qms-audit": "Quality Audit",
+  "qms.inspectionStandard.empty": "No inspection standards yet"
 }

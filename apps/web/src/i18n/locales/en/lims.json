@@ -2491,5 +2491,7 @@
   "lims.analytes.saveSuccess": "Saved successfully",
   "lims.analytes.saveFailed": "Save failed, please check input",
   "lims.analytes.deleteSuccess": "Deleted successfully",
-  "lims.analytes.deleteFailed": "Delete failed"
+  "lims.analytes.deleteFailed": "Delete failed",
+  "lims.analytes.empty": "No analytes yet",
+  "lims.methodCategories.empty": "No method categories yet"
 }

@@ -3240,5 +3240,6 @@
   "erp.demo.remark_urgent": "紧急采购，需尽快审批",
   "erp.demo.remark_overbudget": "预算超标，已驳回",
   "erp.purchase_order.department.unassigned": "未分配",
-  "erp.nav.erp-sales-orders_desc": "销售订单"
+  "erp.nav.erp-sales-orders_desc": "销售订单",
+  "erp.dictionaries.empty": "暂无数据字典"
 }

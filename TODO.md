@@ -1,4 +1,17 @@
 
+## 前端质量工程收尾链 P2：空态专项二期——57 页自绘页空态补齐/评估（2026-11-03）✅
+
+> 承接 P1 补页面级测试段；复算 57 页自绘页缺口（无 EmptyState 关键词 && 不用 12 白名单模板），逐页三分类，commit 后推送 origin/main。
+
+- **口径修正**：§4.3 旧记录 33 页为早期 grep 口径，复算（页面文件无 EmptyState 关键词 && 不使用白名单模板，含目录页 index.tsx）= **57 页**。
+- **三分类结果（57/57 全部给出结论）**：
+  - **补齐 13 页**（shared `EmptyState` 条件渲染 `!loading && 数据空`，i18n zh/en 双补）：crm/TagPage（种子）、erp/DictionaryPage、gis/DevicePage、lims/AnalytePage、lims/MethodCategoryPage、mes/CapacityPage、mes/MesMasterDataPage、qms/InspectionStandardPage、ai/AiChatPage（会话列表）、mobile/MobileInventoryPage（4 tab）、mobile/MobileQualityPage（2 tab）、mobile/MobileAttendancePage（tab1）、mobile/MobileProductionPage（经 MobileProductionCard 3 tab）。
+  - **已有空态 31 页**（源码已有 colSpan 空行/「暂无xxx」Typography/引导态/mock 回退，未改动）：master 12 + system/MenuManagementPage、finance 2、pdm/PdmDrawingPage、report/ReportViewer、gis 2、bi/GisPage、ai 7、mobile 3、pm/PmProjectTypeConfigPage。
+  - **形态不适用 13 页**（画布/设计器/地图/向导/首页/配置表单/IDE 初始态属产品设计）：integration/IntegrationSettingsPage、automation/AutomationDesignerPage、bi/BIVisualizationPage、hrm/HrmSetupWizardPage、plugin/PluginUploadPage、report/ReportDesignPage、report/ReportPage（壳页）、workflow/WorkflowDesignerPage、ai/GovernanceDashboardPage、mobile 3（Home/Workbench/Profile）、pm/ProjectCreateWizardPage。
+- **i18n**：新增 key 全在 zh/en 双侧（crm.tags.empty、erp.dictionaries.empty、gis.devices.empty、lims.analytes.empty、lims.methodCategories.empty、mes.capacity.empty、mes.masterData.empty、qms.inspectionStandard.empty、ai.chat.empty.*、mobile.mobile_inventory_page.empty_*、mobile.mobile_quality_page.empty_*、mobile.mobile_attendance_page.empty_records_*、mobile.production.empty_*），扁平 dotted key 与现有风格一致，加载器 flattenToNested 兼容。
+- **验证全绿**：全量 `pnpm vitest run` 0 失败（基线 544 文件 / 6434 测试 + 相关模块回归）；`tsc --noEmit` 0 错误；`eslint .` 全仓 **0 problems**（承接 P2 ESLint 行，528→0 保持）；i18n zh/en 合法可解析。
+- **文档**：审计报告 §0 速览三态行 / §4.3（57 页三分类明细）/ §6 P2 行同步更新。
+
 ## 远端 web 并行线提交链验证（ESLint 528→0 属实，2026-11-03）✅
 
 > 验证 rebase 合入的 web 并行线提交（9beaef4f3 ESLint 修复 / 6b6e4dbab 空态模板 / 5536afe73 e2e-web.yml CI）。

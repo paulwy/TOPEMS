@@ -28,6 +28,7 @@ import type { GisDevice } from '@/api/gis/devices';
 import { useNotificationStore } from '@/store';
 
 import { PageContainer } from '@/components/common';
+import { EmptyState } from '@/components';
 
 interface ListLike {
   items?: unknown[];
@@ -176,43 +177,60 @@ const DevicePage: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    hover
-                  >
-                    {columns.map((c) => (
-                      <TableCell key={c.key}>
-                        {c.key === 'status' ? (
-                          <Chip
-                            size='small'
-                            label={row.status}
-                            color={row.status === 'active' ? 'success' : 'default'}
-                          />
-                        ) : (
-                          ((row as unknown as Record<string, string | number | null>)[c.key] ?? '-')
-                        )}
-                      </TableCell>
-                    ))}
-                    <TableCell>
-                      <IconButton
-                        size='small'
-                        data-testid='device-edit-btn'
-                        onClick={() => openEdit(row)}
-                      >
-                        <Pencil size={16} />
-                      </IconButton>
-                      <IconButton
-                        size='small'
-                        color='error'
-                        data-testid='device-delete-btn'
-                        onClick={() => removeMutation.mutate(row.id)}
-                      >
-                        <Trash2 size={16} />
-                      </IconButton>
+                {rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length + 1}
+                      align='center'
+                      sx={{ py: 4 }}
+                    >
+                      <EmptyState
+                        emoji='📡'
+                        title={t('gis.devices.empty')}
+                        compact
+                      />
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      hover
+                    >
+                      {columns.map((c) => (
+                        <TableCell key={c.key}>
+                          {c.key === 'status' ? (
+                            <Chip
+                              size='small'
+                              label={row.status}
+                              color={row.status === 'active' ? 'success' : 'default'}
+                            />
+                          ) : (
+                            ((row as unknown as Record<string, string | number | null>)[c.key] ??
+                            '-')
+                          )}
+                        </TableCell>
+                      ))}
+                      <TableCell>
+                        <IconButton
+                          size='small'
+                          data-testid='device-edit-btn'
+                          onClick={() => openEdit(row)}
+                        >
+                          <Pencil size={16} />
+                        </IconButton>
+                        <IconButton
+                          size='small'
+                          color='error'
+                          data-testid='device-delete-btn'
+                          onClick={() => removeMutation.mutate(row.id)}
+                        >
+                          <Trash2 size={16} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>
