@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import cx from 'clsx';
+import styles from './RedesignDemo.module.css';
 import {
   Activity,
   AlertTriangle,
@@ -215,12 +217,7 @@ const RedesignDemo: React.FC = () => {
                 }
               >
                 <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    justifyContent: 'space-between',
-                    marginBottom: 'var(--space-3)',
-                  }}
+                  className={styles.il1}
                 >
                   <div
                     style={{
@@ -239,35 +236,20 @@ const RedesignDemo: React.FC = () => {
                   />
                 </div>
                 <h3
-                  style={{
-                    margin: '0 0 var(--space-1)',
-                    fontFamily: 'var(--font-brand)',
-                    fontSize: 'var(--text-lg)',
-                    fontWeight: 'var(--font-semibold)',
-                    color: 'var(--text-primary)',
-                  }}
+                  className={styles.il2}
                 >
                   {t(m.name)}
                 </h3>
                 <p
-                  style={{
-                    margin: '0 0 var(--space-3)',
-                    fontSize: 'var(--text-sm)',
-                    color: 'var(--text-secondary)',
-                  }}
+                  className={styles.il3}
                 >
                   {t(m.desc)}
                 </p>
                 <div
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                  className={styles.il4}
                 >
                   <span
-                    style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 'var(--text-xl)',
-                      fontWeight: 'var(--font-bold)',
-                      color: 'var(--text-primary)',
-                    }}
+                    className={styles.il5}
                   >
                     {t(m.stat)}
                   </span>
@@ -284,33 +266,21 @@ const RedesignDemo: React.FC = () => {
         </div>
 
         <div
-          className='r-col-12 r-col-lg-4'
-          style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}
+          className={cx('r-col-12 r-col-lg-4', styles.il6)}
         >
           <Card
             className='animate-fade-in-up stagger-6'
             accent='error'
           >
             <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-2)',
-                marginBottom: 'var(--space-4)',
-              }}
+              className={styles.il7}
             >
               <AlertTriangle
                 size={18}
                 color='var(--error-500)'
               />
               <h2
-                style={{
-                  margin: 0,
-                  fontFamily: 'var(--font-brand)',
-                  fontSize: 'var(--text-md)',
-                  fontWeight: 'var(--font-semibold)',
-                  color: 'var(--text-primary)',
-                }}
+                className={styles.il8}
               >
                 {t('demo.section.realtime_alerts')}
               </h2>
@@ -322,20 +292,13 @@ const RedesignDemo: React.FC = () => {
                 3
               </Badge>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            <div className={styles.il9}>
               {alerts.map((alert) => (
                 <div
                   key={alert.id}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 'var(--space-1)',
-                    padding: 'var(--space-3)',
-                    backgroundColor: 'var(--surface-2)',
-                    borderRadius: 'var(--radius-sm)',
-                  }}
+                  className={styles.il10}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                  <div className={styles.il11}>
                     <Badge
                       variant={alert.level}
                       dot={alert.level === 'error' || alert.level === 'warning'}
@@ -346,11 +309,11 @@ const RedesignDemo: React.FC = () => {
                           ? t('demo.alert_level.warning')
                           : t('demo.alert_level.info')}
                     </Badge>
-                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+                    <span className={styles.il12}>
                       {alert.time}
                     </span>
                   </div>
-                  <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>
+                  <span className={styles.il13}>
                     {t(alert.message)}
                   </span>
                 </div>
@@ -363,47 +326,29 @@ const RedesignDemo: React.FC = () => {
             accent='cyan'
           >
             <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-2)',
-                marginBottom: 'var(--space-4)',
-              }}
+              className={styles.il14}
             >
               <Clock
                 size={18}
                 color='var(--cyan-400)'
               />
               <h2
-                style={{
-                  margin: 0,
-                  fontFamily: 'var(--font-brand)',
-                  fontSize: 'var(--text-md)',
-                  fontWeight: 'var(--font-semibold)',
-                  color: 'var(--text-primary)',
-                }}
+                className={styles.il15}
               >
                 {t('demo.section.todo')}
               </h2>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            <div className={styles.il16}>
               {tasks.map((task) => (
                 <div
                   key={task.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    justifyContent: 'space-between',
-                    gap: 'var(--space-3)',
-                    paddingBottom: 'var(--space-3)',
-                    borderBottom: '1px solid var(--border-default)',
-                  }}
+                  className={styles.il17}
                 >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>
+                  <div className={styles.il18}>
+                    <span className={styles.il19}>
                       {t(task.title)}
                     </span>
-                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+                    <span className={styles.il20}>
                       {t('demo.task_due', { due: t(task.due) })}
                     </span>
                   </div>
@@ -432,30 +377,19 @@ const RedesignDemo: React.FC = () => {
             accent='success'
           >
             <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-2)',
-                marginBottom: 'var(--space-4)',
-              }}
+              className={styles.il21}
             >
               <Cpu
                 size={18}
                 color='var(--success-500)'
               />
               <h2
-                style={{
-                  margin: 0,
-                  fontFamily: 'var(--font-brand)',
-                  fontSize: 'var(--text-md)',
-                  fontWeight: 'var(--font-semibold)',
-                  color: 'var(--text-primary)',
-                }}
+                className={styles.il22}
               >
                 {t('demo.section.system_health')}
               </h2>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            <div className={styles.il23}>
               {[
                 { label: t('demo.svc.api'), status: 'running' as const },
                 { label: t('demo.svc.mq'), status: 'running' as const },
@@ -464,9 +398,9 @@ const RedesignDemo: React.FC = () => {
               ].map((svc) => (
                 <div
                   key={svc.label}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                  className={styles.il24}
                 >
-                  <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+                  <span className={styles.il25}>
                     {svc.label}
                   </span>
                   <StatusLight
@@ -504,7 +438,7 @@ const RedesignDemo: React.FC = () => {
             interactive
             accent={m.status === 'running' ? 'amber' : m.status === 'warning' ? 'warning' : 'cyan'}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-4)' }}>
+            <div className={styles.il26}>
               <div
                 style={{
                   display: 'inline-flex',
@@ -516,23 +450,12 @@ const RedesignDemo: React.FC = () => {
               >
                 <Icon size={24} />
               </div>
-              <div style={{ flex: 1 }}>
+              <div className={styles.il27}>
                 <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 'var(--space-1)',
-                  }}
+                  className={styles.il28}
                 >
                   <h3
-                    style={{
-                      margin: 0,
-                      fontFamily: 'var(--font-brand)',
-                      fontSize: 'var(--text-lg)',
-                      fontWeight: 'var(--font-semibold)',
-                      color: 'var(--text-primary)',
-                    }}
+                    className={styles.il29}
                   >
                     {t(m.name)}
                   </h3>
@@ -542,21 +465,12 @@ const RedesignDemo: React.FC = () => {
                   />
                 </div>
                 <p
-                  style={{
-                    margin: '0 0 var(--space-3)',
-                    fontSize: 'var(--text-sm)',
-                    color: 'var(--text-secondary)',
-                  }}
+                  className={styles.il30}
                 >
                   {t(m.desc)}
                 </p>
                 <span
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 'var(--text-xl)',
-                    fontWeight: 'var(--font-bold)',
-                    color: 'var(--text-primary)',
-                  }}
+                  className={styles.il31}
                 >
                   {t(m.stat)}
                 </span>
@@ -582,8 +496,7 @@ const RedesignDemo: React.FC = () => {
 
   const renderAlerts = () => (
     <section
-      className='animate-fade-in-up'
-      style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}
+      className={cx('animate-fade-in-up', styles.il32)}
     >
       <Alert
         variant='info'
@@ -614,19 +527,13 @@ const RedesignDemo: React.FC = () => {
         {t('demo.banner_equipment.body')}
       </Alert>
 
-      <Card style={{ marginTop: 'var(--space-4)' }}>
+      <Card className={styles.il33}>
         <h3
-          style={{
-            margin: '0 0 var(--space-4)',
-            fontFamily: 'var(--font-brand)',
-            fontSize: 'var(--text-md)',
-            fontWeight: 'var(--font-semibold)',
-            color: 'var(--text-primary)',
-          }}
+          className={styles.il34}
         >
           {t('demo.section.realtime_alert_stream')}
         </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+        <div className={styles.il35}>
           {alerts.map((alert) => (
             <Alert
               key={alert.id}
@@ -692,7 +599,7 @@ const RedesignDemo: React.FC = () => {
           title={t('demo.empty.custom_title')}
           description={t('demo.empty.custom_desc')}
         >
-          <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'center' }}>
+          <div className={styles.il36}>
             <Tag variant='amber'>{t('demo.tag.a')}</Tag>
             <Tag variant='cyan'>{t('demo.tag.b')}</Tag>
           </div>
@@ -745,8 +652,7 @@ const RedesignDemo: React.FC = () => {
 
         {showSuccessAlert && (
           <div
-            className='animate-fade-in-up'
-            style={{ marginBottom: 'var(--space-4)' }}
+            className={cx('animate-fade-in-up', styles.il37)}
           >
             <Alert
               variant='success'
@@ -759,15 +665,7 @@ const RedesignDemo: React.FC = () => {
         )}
 
         <div
-          className='animate-fade-in-up stagger-1'
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between',
-            gap: 'var(--space-4)',
-            marginBottom: 'var(--space-6)',
-          }}
+          className={cx('animate-fade-in-up stagger-1', styles.il38)}
         >
           <Tabs
             tabs={tabs.map((tab) => ({ ...tab, label: t(tab.label) }))}
@@ -775,14 +673,9 @@ const RedesignDemo: React.FC = () => {
             onChange={setActiveTab}
           />
           <div
-            style={{
-              display: 'flex',
-              gap: 'var(--space-3)',
-              flexWrap: 'wrap',
-              alignItems: 'flex-end',
-            }}
+            className={styles.il39}
           >
-            <div style={{ width: '160px' }}>
+            <div className={styles.il40}>
               <Select
                 label={t('demo.select.time_range')}
                 options={timeRangeOptions.map((o) => ({ value: o.value, label: t(o.label) }))}
@@ -790,7 +683,7 @@ const RedesignDemo: React.FC = () => {
                 onChange={(e) => setTimeRange(e.target.value)}
               />
             </div>
-            <div style={{ width: '140px' }}>
+            <div className={styles.il41}>
               <Select
                 label={t('demo.select.line')}
                 options={lineOptions.map((o) => ({ value: o.value, label: t(o.label) }))}
@@ -798,7 +691,7 @@ const RedesignDemo: React.FC = () => {
                 onChange={(e) => setLine(e.target.value)}
               />
             </div>
-            <div style={{ width: '260px' }}>
+            <div className={styles.il42}>
               <Input
                 placeholder={t('demo.search_placeholder')}
                 value={searchQuery}
@@ -806,12 +699,12 @@ const RedesignDemo: React.FC = () => {
                 leftIcon={
                   <Search
                     size={16}
-                    style={{ color: 'var(--text-tertiary)' }}
+                    className={styles.il43}
                   />
                 }
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+            <div className={styles.il44}>
               <Tag variant='amber'>{t('demo.tag.today_line')}</Tag>
               <Tag variant='cyan'>{t('demo.tag.today_shift')}</Tag>
               <Tag
@@ -854,7 +747,7 @@ const RedesignDemo: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div className={styles.il45}>
           <Input
             label={t('demo.modal.wo_title')}
             placeholder={t('demo.modal.wo_title_ph')}

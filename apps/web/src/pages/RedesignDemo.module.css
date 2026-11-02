@@ -1,0 +1,281 @@
+/* src/pages/RedesignDemo.tsx 内联样式迁移（自动生成） */
+
+.il1 {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.il2 {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-brand);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.il3 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.il4 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.il5 {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+}
+
+.il6 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.il7 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.il8 {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: var(--text-md);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.il9 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.il10 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background-color: var(--surface-2);
+  border-radius: var(--radius-sm);
+}
+
+.il11 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.il12 {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.il13 {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.il14 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.il15 {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: var(--text-md);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.il16 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.il17 {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.il18 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.il19 {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.il20 {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.il21 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.il22 {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: var(--text-md);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.il23 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.il24 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.il25 {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.il26 {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.il27 {
+  flex: 1px;
+}
+
+.il28 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-1);
+}
+
+.il29 {
+  margin: 0;
+  font-family: var(--font-brand);
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.il30 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.il31 {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: var(--font-bold);
+  color: var(--text-primary);
+}
+
+.il32 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.il33 {
+  margin-top: var(--space-4);
+}
+
+.il34 {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-brand);
+  font-size: var(--text-md);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.il35 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.il36 {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: center;
+}
+
+.il37 {
+  margin-bottom: var(--space-4);
+}
+
+.il38 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.il39 {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.il40 {
+  width: 160px;
+}
+
+.il41 {
+  width: 140px;
+}
+
+.il42 {
+  width: 260px;
+}
+
+.il43 {
+  color: var(--text-tertiary);
+}
+
+.il44 {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.il45 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
