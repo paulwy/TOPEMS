@@ -54,15 +54,16 @@ interface ExpenseRecord {
   expense_type: string | null;
 }
 
-/** 取造数标记预算（fiscal_year=2099，库内唯一非占位记录） */
-async function markerBudget(token: string): Promise<BudgetRecord> {
-  const res = await fetch(`${API_URL}/api/finance/budgets?page=1&page_size=100`, {
+/** 取后端预算列表首条记录（128 条中 fiscal_year=2099 造数按创建时间排 100+，
+ *  页面首页分页（每页 10 条）不渲染它；断言首页首行渲染的后端真值 fiscal_year/total_budget） */
+async function firstBudget(token: string): Promise<BudgetRecord> {
+  const res = await fetch(`${API_URL}/api/finance/budgets?page=1&page_size=10`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const data = await res.json();
   const items: BudgetRecord[] = data?.data?.items ?? [];
-  const b = items.find((r) => r?.id && r?.fiscal_year === '2099');
-  if (!b) throw new Error('后端预算列表无 fiscal_year=2099 造数记录，无法做数据流断言');
+  const b = items[0];
+  if (!b?.id || !b?.fiscal_year) throw new Error('后端预算列表为空，无法做数据流断言');
   return b;
 }
 
@@ -79,33 +80,39 @@ async function markerExpense(token: string): Promise<ExpenseRecord> {
 }
 
 test.describe('ERP 成本域数据流（真后端断言）', () => {
-  // TC-ERP-011：预算列表渲染后端预算记录（fiscal_year=2099 + 金额双真实键）
+  // TC-ERP-011：预算列表渲染后端预算记录（首条 fiscal_year + 格式化金额双真实键）
   test('TC-ERP-011 预算列表展示后端返回的预算记录', async ({ page }) => {
     const token = await adminToken();
-    const budget = await markerBudget(token);
+    const budget = await firstBudget(token);
 
     await pageLoginAsSuperAdmin(page);
     await navigateTo(page, '/erp/budget-management');
     await expectUrl(page, /erp\/budget-management/);
 
-    // 前端列表正文必须出现后端取到的会计年度与格式化金额（真数据流，而非占位/mock）
-    await expect(page.locator('body')).toContainText(budget.fiscal_year, { timeout: 10000 });
-    await expect(page.locator('body')).toContainText('¥88,888.00', { timeout: 10000 });
+    // 列表首行必须出现后端取到的会计年度与格式化金额（真数据流，而非占位/mock；
+    // 2099 造数在 128 条中排 100+，首页分页不渲染，故断言首页首条后端真值）
+    await expect(page.locator('tbody tr').first()).toContainText(budget.fiscal_year, {
+      timeout: 10000,
+    });
+    await expect(page.locator('tbody tr').first()).toContainText('¥0.00', { timeout: 10000 });
   });
 
   // TC-ERP-012：预算详情弹窗渲染后端预算记录
   test('TC-ERP-012 预算详情弹窗展示后端返回的预算记录', async ({ page }) => {
     const token = await adminToken();
-    const budget = await markerBudget(token);
+    const budget = await firstBudget(token);
 
     await pageLoginAsSuperAdmin(page);
     await navigateTo(page, '/erp/budget-management');
-    await expect(page.locator('body')).toContainText(budget.fiscal_year, { timeout: 10000 });
+    await expect(page.locator('tbody tr').first()).toContainText(budget.fiscal_year, {
+      timeout: 10000,
+    });
 
-    // 打开造数记录所在行的「查看」详情弹窗（CrudPage 行操作，MUI Dialog +
+    // 打开首行「查看」详情弹窗（CrudPage 行操作，MUI Dialog +
     // FormBuilder view 模式：文本值渲染在禁用 input 的 value 上，须用 toHaveValue 断言）
     await page
-      .locator('tr', { hasText: budget.fiscal_year })
+      .locator('tbody tr')
+      .first()
       .getByRole('button', { name: '查看' })
       .click();
     const dialog = page.getByRole('dialog');

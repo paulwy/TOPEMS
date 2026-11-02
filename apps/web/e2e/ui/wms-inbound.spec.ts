@@ -67,8 +67,9 @@ test.describe('WMS 入库单数据流（真后端断言）', () => {
     const order = await firstInboundOrder(token);
 
     await pageLoginAsSuperAdmin(page);
-    await navigateTo(page, '/wms/inbound-orders');
-    await expectUrl(page, /wms\/inbound-orders/);
+    // 列表路由为单数 /wms/inbound-order（InboundOrderPage）；复数 /wms/inbound-orders 仅详情路由存在
+    await navigateTo(page, '/wms/inbound-order');
+    await expectUrl(page, /wms\/inbound-order/);
 
     // 前端列表正文必须出现后端取到的入库单号（真数据流，而非空表/mock）
     await expect(page.locator('body')).toContainText(order.order_number, { timeout: 10000 });

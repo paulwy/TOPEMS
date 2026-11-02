@@ -12,6 +12,18 @@
 > 根台账（2026-11-02 归档治理）：2026-11-01 前已完成段已归档至 `docs/archive/TODO-archive-2026-10-31.md`（177 段，原文保留）；本文件保留近期进行/未完成/11-01 起段与未标完成段。
 > 历史更早段（2026-10-08 前）如仍散落于本文件，按同一标准继续归档。
 
+## 前端质量工程收尾链 P1 核心链路 e2e 加深（2026-11-03）✅
+
+> 承接 P1 页面测试/小修段：核心 7 模块（mes/wms/erp/finance/scm/srm/tms）e2e 达标并实跑全绿（commit 后推送 origin/main）。
+
+- **覆盖核算（可复算）**：全量 spec 文件路径 vs CSV 核心路由段级比对 → **核心 177 路由静态覆盖 44（24.9%，目标 ≥15%=27）**；各模块：mes 15 / wms 14 / tms 6 / finance 5 / erp 4 / scm 4 / srm 2。
+- **21 个核心 spec 实跑 69/69 全绿**（4 批：mes 14 / wms 23 / erp-finance 11 / scm-srm-tms 21；环境 8000+8099+3000+5432+6379）。
+- **修复 2 个在库 spec 缺陷**：
+  1. `wms-inbound.spec.ts` 列表路由 `/wms/inbound-orders`（复数）不存在 → 404；改 `/wms/inbound-order`（单数 InboundOrderPage，详情路由保持复数不变）。
+  2. `erp-cost.spec.ts` markerBudget 找 fiscal_year=2099 但 128 条中排 100+（page_size=100 截断 + 首页分页 10 条不渲染）→ 改首页首条真值断言（fiscal_year + ¥0.00 双真实键，详情弹窗 toHaveValue 同步）。
+- **口径备注**：核心模块真数据流断言依赖后端种子（srm 20 / mes MO202610* / finance ledger+payments / expenses VERIFY-2099+EXP2099 / wms 入库 2）；tms/scm/wms-outbound 接口在线无种子，对应 spec 以流程/结构断言覆盖。
+- 报告 §0 速览 e2e 行、§5.4（新增实跑记录段）、§6 P1 行已更新 ✅。
+
 ## 前端质量工程收尾链 P1 遗留问题小修（2026-11-03）✅
 
 > 承接 P1 补页面级测试段：补测暴露的 5 项页面问题 + 1 项测试基建根因全部修复核销（commit 后推送 origin/main）。
