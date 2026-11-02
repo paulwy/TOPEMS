@@ -1,3 +1,14 @@
+## 5433 验证实例恢复 + RLS 5433 回归核销（2026-11-02）✅
+
+> 承接「处理 5433（重建实例）」指示；探查推翻"已不存在"判断——数据目录 `/opt/homebrew/var/postgresql@18_5433` 完整（§6.3 标注的 `postgres5433` 为路径误记）。
+
+- **实例恢复**：pg_ctl 直接启动成功（postmaster PID 52867，无需 initdb 重建）；topems 库原为 9 月快照（账本 250）→ 按 §6.3 空库重放（drop → create → sqlx migrate run 全量 **540/540**）。
+- **迁移链漂移修复（空库重放暴露真实缺陷）**：20261102220000 引用的 29 张 batch1 表重放后部分落错误 schema/缺失——① `iam.tenant_permissions`（20260825/27 无前缀 CREATE 落 public，test 在 iam）补建对齐；② `public.qa_lab_samples/tasks` SET SCHEMA 移入 lims、`plugin_erp.accounting_subjects` 从 test 复制；③ 逐表补 tenant_id 列；psql 直执行验证后登记账本。
+- **checksum 治理（四库 + 5433）**：topems 库 540 条 + test 1 / prod 3 / prepare 61 条补登 checksum 为 "\x" 转义文本错版（`encode(hex) LIKE '5c78%'`）→ 统一修正为 `decode(sha384 hex)`；四库 + 5433 `sqlx migrate run` 校验全过（exit 0），消除未来 migrate 的 modified 误报。
+- **RLS 5433 回归核销（挂账项）**：探针角色 `rls_test_user` + crm.customers 双租户数据（A×3/B×2）矩阵——租户A=3 / 租户B=2 / 超管 topems 与 0000=5 / 不存在租户=0 / 无上下文与空串全放行（防御设计），与 5432 口径一致；验证数据已清理。
+- **双库一致性**：`bash scripts/db/check-consistency.sh` 主库 5432 vs 5433 最新迁移版本一致（20261102220000）。
+- **文档口径更新**：database-primary-instance.md §6/§6.3（实例已恢复、数据目录 postgresql@18_5433、启停命令、漂移修复步骤）；check-consistency.sh 注释同步。
+
 ## 前端三子项实施 P0：topems.sh 拆分 + ListPageTemplate 审计（2026-11-02）✅
 
 > 方案文档：docs/frontend-engine/frontend-trios-backlog-20261102.md（排期 Now/Next/Later 已入库）。

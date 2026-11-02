@@ -4,7 +4,7 @@
 > 背景：2026-09-01 起宿主机 5432 被 Homebrew postgres 占用，postgres 容器改映射 5433；两套实例长期并存，
 > 需明确"哪个是主、如何保持一致、何时用哪个"。
 
-> **更新（2026-10-16）**：§6 / §7 描述的 **5433 Homebrew 验证实例已不存在**（数据目录 `/opt/homebrew/var/postgres5433` 缺失、5433 端口无监听），相关小节已就地标注；本机 `backups/` 目录及 §7.4 三份 dump 资产亦缺失。另：§7.1 所述**开发库 `topems_dev` 亦不存在**——本机仅存 `topems` / `topems_prepare` / `postgres`。
+> **更新（2026-11-02）**：**5433 Homebrew 验证实例已恢复**——2026-10-16 标注误判，数据目录实为 `/opt/homebrew/var/postgresql@18_5433`（完整存在，PG_VERSION=18），实例已 pg_ctl 启动、迁移链空库重放至 540/540、RLS 回归与双库一致性核销，相关小节已就地更新。另：§7.1 所述**开发库 `topems_dev` 亦不存在**——本机仅存 `topems` / `topems_prepare` / `postgres`。
 
 ## 1. 实例口径（唯一权威）
 
@@ -35,7 +35,7 @@
 | 操作 | 命令 |
 |---|---|
 | 本地 psql（生产主库） | `PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5432 -U topems -d topems` |
-| 验证库 psql（5433） | `PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5433 -U topems -d topems`（迁移链重放/账本核对，见 §6）⚠️ **2026-10-16 起该实例已不存在**，执行前须先按 §6.3 重建 |
+| 验证库 psql（5433） | `PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5433 -U topems -d topems`（迁移链重放/账本核对，见 §6）✅ **2026-11-02 起该实例已恢复**（数据目录 `/opt/homebrew/var/postgresql@18_5433`），可直接连接 |
 | 迁移执行（生产/开发） | `DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems sqlx migrate run`（原 `topems_dev` 用同名 5432 库覆盖 `DATABASE_URL` 的做法**已失效**：该库 2026-10-16 核实不存在） |
 | 一致性检查 | `bash scripts/db/check-consistency.sh` |
 
@@ -51,14 +51,14 @@
 
 > 用户定案（A2）：**弃 docker 口径**。5433 端口上的官方双库验证实例改用 **Homebrew PostgreSQL**（非 docker 容器），作为与 5432 开发主库配对的"第二库"，专用于迁移链空库重放 / 双库账本核对 / RLS 隔离回归。本节为该实例的运维权威口径，**与上文 §1 表格中"5433=docker 部署库"的历史映射不冲突**：§1 描述的是 docker-compose 部署形态下的宿主映射；本节固化的是本地开发/验证口径下 5433 的实际承载者。
 
-> **现状更新（2026-10-16）**：该实例**已不存在**——数据目录 `/opt/homebrew/var/postgres5433` 全盘无迹、5433 无任何监听；原「保留运行（常驻）」策略随之失效。复用须按 §6.1 / §6.3 **重建**（`initdb` 新数据目录 → 建 `topems` 角色与库 → 迁移链空库重放）。
+> **现状更新（2026-11-02）**：该实例**已恢复**——数据目录 `/opt/homebrew/var/postgresql@18_5433` 完整存在（2026-10-16 标注的 `postgres5433` 路径实为误记），pg_ctl 直接启动成功；topems 库按 §6.3 流程重建（drop → create → 迁移链空库重放 540/540）。**注意**：空库重放存在迁移链漂移——20261102220000 引用的 `iam.tenant_permissions`（20260825/27 无前缀 CREATE 落 public）与 `lims.qa_lab_*`/`plugin_erp.accounting_subjects`（重放落 public/finance/plugin_finance）需对齐 test 结构后重放，相关修复步骤见下。
 
 ### 6.1 实例方案（唯一权威）
 
 | 项 | 值 |
 |---|---|
 | 软件版本 | **PostgreSQL 18.4（Homebrew）**（`/opt/homebrew/opt/postgresql@18`） |
-| 数据目录 | `/opt/homebrew/var/postgres5433`（独立于 brew 默认 5432 实例的数据目录） |
+| 数据目录 | `/opt/homebrew/var/postgresql@18_5433`（postgresql@18 版本实例，独立于 brew 默认 5432 实例；2026-10-16 标注的 `postgres5433` 为误记） |
 | 监听端口 | `5433`（`postgresql.conf`：`port=5433`，`listen_addresses='localhost'`） |
 | 启停方式 | `pg_ctl`（**不**用 Docker / brew services）：见 6.3 |
 | 认证 | **trust**（`pg_hba.conf`：local / 127.0.0.1 / ::1 全部 trust；仅本机回环） |
@@ -66,7 +66,7 @@
 | 数据库 | `topems` |
 | 连接串 | `MIGRATE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@127.0.0.1:5433/topems` |
 | 用途 | 双库验证（与 5432 配对）：空库守卫重放、`_sqlx_migrations` 双账本核对、RLS/租户隔离回归 |
-| 运行策略 | ~~保留运行（常驻，供随批验证复用；不随验证结束销毁）~~ → **已失效（2026-10-16）**：实例已销毁，数据目录不存在、端口无监听；复用需按 §6.3 重建 |
+| 运行策略 | 保留运行（常驻，供随批验证复用）→ **2026-11-02 已恢复**：pg_ctl 启动 + 空库重放 540/540，RLS 回归核销；日常停启用 §6.2 |
 
 > 实测基线（2026-10-08）：`_sqlx_migrations` = **329** 条，与磁盘迁移文件数、5432 开发主库 public 账本三者一致（checksum 0 漂移）。
 
@@ -79,10 +79,10 @@
 ### 6.3 启停 / 重放 / 核对命令速查
 
 ```bash
-# --- 启停（pg_ctl；数据目录固定 /opt/homebrew/var/postgres5433）---
-# ⚠️ 2026-10-16：该数据目录已不存在，以下命令当前不可用；须先 initdb 重建目录并重建库
-pg_ctl -D /opt/homebrew/var/postgres5433 -l /opt/homebrew/var/postgres5433/server.log start   # 启动
-pg_ctl -D /opt/homebrew/var/postgres5433 stop -m fast                                       # 停止（快速）
+# --- 启停（pg_ctl；数据目录 /opt/homebrew/var/postgresql@18_5433）---
+# ✅ 2026-11-02：实例已恢复，以下命令可直接使用（postmaster PID 52867 时已启动，勿重复 start）
+/opt/homebrew/opt/postgresql@18/bin/pg_ctl -D /opt/homebrew/var/postgresql@18_5433 -l /opt/homebrew/var/postgresql@18_5433/server.log start   # 启动
+/opt/homebrew/opt/postgresql@18/bin/pg_ctl -D /opt/homebrew/var/postgresql@18_5433 stop -m fast                                     # 停止（快速）
 pg_ctl -D /opt/homebrew/var/postgres5433 status                                             # 状态
 
 # --- 连接 ---

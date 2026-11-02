@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # TOPEMS 数据库实例一致性检查
-# 对比主库（5432 brew）与第二库（Homebrew 验证实例，默认 5433；2026-10-16 起该实例已不存在，见 docs/database/database-primary-instance.md §6）的迁移版本
+# 对比主库（5432 brew）与第二库（Homebrew 验证实例，默认 5433；2026-11-02 起该实例已恢复，数据目录 /opt/homebrew/var/postgresql@18_5433，见 docs/database/database-primary-instance.md §6）的迁移版本
 # 用法：bash scripts/db/check-consistency.sh
 set -euo pipefail
 
@@ -20,7 +20,7 @@ DEV_USER="${DEV_USER:-topems}"
 DEV_PASS="${DEV_PASS:-topems}"
 
 # 第二库（验证库）：Homebrew 实例，数据目录 /opt/homebrew/var/postgres5433；psql 直连，不再走 docker
-# ⚠️ 2026-10-16 核实：该实例已不存在（数据目录缺失、5433 无监听）→ 第二库不可达时本脚本跳过比对并给出重建指引
+# ⚠️ 2026-11-02 核实：该实例已恢复（数据目录 /opt/homebrew/var/postgresql@18_5433，pg_ctl 已启动）；第二库不可达时本脚本跳过比对并给出重建指引
 # 可通过环境变量覆盖第二库地址：DEP_HOST / DEP_PORT / DEP_DB / DEP_USER
 DEP_HOST="${DEP_HOST:-localhost}"
 DEP_PORT="${DEP_PORT:-5433}"
@@ -40,7 +40,7 @@ DEP_VER=$(psql -h "$DEP_HOST" -p "$DEP_PORT" -U "$DEP_USER" -d "$DEP_DB" -t -A -
 
 if [ -z "$DEP_VER" ]; then
   echo "!! 第二库不可达 → 跳过双库账本比对"
-  echo "   5433 Homebrew 验证实例自 2026-10-16 起已不存在，重建见 docs/database/database-primary-instance.md §6.3"
+  echo "   5433 Homebrew 验证实例不可达（2026-11-02 起数据目录 /opt/homebrew/var/postgresql@18_5433，需 pg_ctl 启动），重建/恢复见 docs/database/database-primary-instance.md §6.3"
   echo "   若已改用其他第二库，以 DEP_HOST/DEP_PORT/DEP_DB 覆盖后重跑"
   exit 0
 fi
