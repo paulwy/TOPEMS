@@ -287,7 +287,10 @@
 - ✅（2026-11-03 核查闭环）svc/unified-core/src/modules/iam/auth.rs set_config 污染路径：4 处
   tenant_ctx（L361/L886 login·refresh 查询类型 `uuid::Uuid` 不可能空串；L1644/L1727 claims 缺失
   fallback 默认租户 0001）均绑定合法 Uuid 或默认租户，**无 SET '' 残留路径**。
-- 「前端 UI 全面审计报告待办 + §4 e2e 基线扩展」已授权未启动（待用户补定义：报告范围/§4 指向/交付形态）。
+- ✅（2026-11-03 已交付）「前端 UI 全面审计报告 + §4 e2e 基线扩展」：全量页面清单口径，
+  产出 `docs/前端UI全面审计报告-2026-11-03.md` + `docs/前端页面清单-2026-11-03.csv`（518 路由/
+  36 模块：页面文件 516、页面级测试 107（20.9%）、API 接线 464（90.4%）、e2e 83 spec 覆盖 45
+  路由（8.7%）；7 模块零页面测试；三态 49/25/74%；10-07 缺陷复查 FieldSelector/mobile 端点已修复）。
 - ✅（2026-11-03 已执行）TOPEMS 增量缓存清理：clean_target.sh --auto 130.9G → 30.7G（节省 100.2G，
   增量缓存 111.5G，最终产物保留）。
 - GitHub dependabot 提示 19 漏洞（1 critical、8 high、6 moderate、4 low）待治理（https://github.com/paulwy/TOPEMS/security/dependabot）。
