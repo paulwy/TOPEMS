@@ -84,7 +84,7 @@
 
 ## 批 5 第十九批：RLS batch1 落地复核 + batch2 增量补启（2026-11-02）✅
 
-> 承接 batch1 迁移；实时核对落地状态，补盘点外业务缺口。
+> 承接 batch1 迁移；实时核对落地状态，补盘点外业务缺口。本段后附「批 5 第二十批：v74 池刷新」。
 
 - **batch1 复核**（topems 实时）：29 张中 27/29 已 ENABLE + 策略各 1；`lims.qa_lab_samples`/`lims.qa_lab_tasks` 策略已建但**未 ENABLE**（手动补 ENABLE，29/29 全绿）。
 - **盘点外增量**：实时核对发现 `mes.work_orders`、`mobile.documents`（均含 tenant_id uuid、无策略，盘点 65 张未覆盖）→ batch2 迁移 `20261102230000_rls_enable_biz_batch2.sql`（幂等 DO 块 + ENABLE）已应用。
@@ -6518,3 +6518,13 @@ P2（2-4 周后）
 - **遗留待下批（121 条 route_missing，非双前缀）**：erp 29 / core 27 / master-data 27 / communication 13 / integration 9 / qms 5 / lims 3 / ehs 2 / finance 2 / bi 1 / crm 1 / pdm 1 / portal 1——多为后端真缺路由（如 /api/core/files|attachments|form-definitions|form-instances、/api/core/rules/batch-update、/api/core/users/check-*）；部分与既有 stub 登记（form-definitions/form-instances = stub_detail）重叠。按「缺后端补后端、缺前端补前端」逐条核实。**✅ 已全部核销（2026-10-30→31，见顶部 v1.122 收尾记录）**。
 - **观察项**：`apps/web/src/api/finance/settlementCenter.ts` 11 处 `apiClient.finance.get('/api/core/settlement-center/*')` 跨 svc 调用（curl `/api/finance/api/core/settlement-center/reconciliations`=401、`/api/core/...`=404）——归属待核（应为 apiClient.core 或后端挂 core 路由），不在 WCS FAIL 集，未擅动。
 - **L3 部署包**：`docs/deploy/nginx-ws-2026-10.md`（/ws/ 反代 reload 步骤 + WS_ALLOWED_ORIGINS + 回滚 + 验证 curl），配置已入库（317cb2c458/65a23eeb74）。
+
+## 批 5 第二十批：v74 绑定池刷新 + 方法提取修复（2026-11-02）✅
+
+> 承接 v74 池（审计遗留前端绑定工程）；基于当前 origin/main 重跑刷新基线。
+
+- **重跑基线**：`scripts/rebuild-to-bind-pool.py` 基于当前 main 刷新 → **候选 873**（P0 5 / P1 100 / P2 63 / 下线候选 705；旧基线 2026-10-29 为 P0 3 / P1 100 / P2 48 / 下线 1361——前端大量补绑后下线候选大幅下降）。
+- **P0 5 条**（写+弱引用，待前端绑定）：communication `/notification/notifications`（delete_all）、monitor `/api/monitor/settings`（list/batch_update）、plugin-registry `/api/plugins/{code}/install` + `/api/plugin/dev/plugins/{code}`（install/update）；方法列显示 GET 但 utoipa 标注 delete/put（注册方法待核）。
+- **方法提取修复**：脚本仅匹配 `method = "GET"` 形式，utoipa 裸关键词（`#[utoipa::path(delete,`）未解析默认 GET → 补正则（`utoipa::path\(\s*(get|post|put|delete|patch|head|options)`），测试 DELETE 解析正确。
+- **下线候选 705**：读端点+无引用（portal 204 / erp 140 / unified-core 69 / master-data 55 / ai 32 / finance 27 / analytics 27 等）——删路由为破坏性决策，需人工逐条确认（保留 v74_tend=待定）。
+- **下一步**：P0 5 条前端绑定（若确认方法/业务价值）；下线候选 705 人工确认后删路由（另行决策）。

@@ -149,7 +149,13 @@ def extract_backend_routes():
                     if not pm:
                         continue
                     raw = pm.group(1)
-                    method = (METHOD_RE.search(body) or [None, "GET"])[1] if METHOD_RE.search(body) else "GET"
+                    # 方法：兼容 method = "GET" 与 utoipa 裸关键词（#[utoipa::path(delete, ...)]）
+                    mm = METHOD_RE.search(body)
+                    if mm:
+                        method = mm.group(1)
+                    else:
+                        mm2 = re.search(r'utoipa::path\(\s*(get|post|put|delete|patch|head|options)\s*[,)]', body)
+                        method = mm2.group(1).upper() if mm2 else "GET"
                     opid = OPID_RE.search(body).group(1) if OPID_RE.search(body) else fn
                     # 函数体：从 fn 声明后 2000 字符（粗略写库判定）
                     fn_src = text[m.end(): m.end() + 2500]
