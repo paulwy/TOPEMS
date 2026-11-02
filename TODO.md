@@ -1,3 +1,11 @@
+## topems / topems_prepare 账本治理（另案，2026-11-02）✅
+
+> 承接遗留另案；test/prod 已 540/540 后，补治理余两库。
+
+- **topems 库**（920 表、账本 0）：抽查早/中/晚期迁移目标表均存在（core_users/core_tenants/core_plugins/qa_ehs_compliance_evaluations 等），判定迁移已应用仅登记缺失 → **补登 540 条**（checksum=sha384 前16hex、ON CONFLICT DO NOTHING），账本 **540/540 对齐**。
+- **topems_prepare 库**（1304 表、账本 479 缺 61）：缺 61 全为 20261026 之后新迁移；抽查 5 个中 3 个表目标（ehs.training_records/public.subscriptions/ehs.safety_checks）均存在、2 个为策略/种子类无表目标 → **补登 61 条**，账本 **540/540 对齐**。
+- **注**：两库补登脚本 /tmp 不入库；topems 库 920 表结构虽完整，中间段迁移未逐条核验（抽样 3+2 点），如后续 sqlx 校验失败按 checksum 重查。
+
 ## 前端 UI 审计 + WIP 目录核查（2026-11-02）✅
 
 > 承接「遗留独立轨道」排期项；只读审计 + 隔离区核查。
