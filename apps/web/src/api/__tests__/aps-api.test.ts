@@ -213,7 +213,7 @@ describe('APS Module API Tests', () => {
       const { forecastApi } = await import('../aps/forecast');
       await forecastApi.list({ page: 1, pageSize: 10 });
       const { apiClient } = await import('../client');
-      expect(apiClient.aps.get).toHaveBeenCalledWith('/forecasts', {
+      expect(apiClient.aps.get).toHaveBeenCalledWith('/demand-forecasts', {
         params: { page: 1, pageSize: 10 },
       });
     });
@@ -222,7 +222,7 @@ describe('APS Module API Tests', () => {
       const { forecastApi } = await import('../aps/forecast');
       await forecastApi.get('fc-001');
       const { apiClient } = await import('../client');
-      expect(apiClient.aps.get).toHaveBeenCalledWith('/forecasts/fc-001');
+      expect(apiClient.aps.get).toHaveBeenCalledWith('/demand-forecasts/fc-001');
     });
 
     it('create should call POST /forecasts with data', async () => {
@@ -235,7 +235,7 @@ describe('APS Module API Tests', () => {
       };
       await forecastApi.create(data);
       const { apiClient } = await import('../client');
-      expect(apiClient.aps.post).toHaveBeenCalledWith('/forecasts', data);
+      expect(apiClient.aps.post).toHaveBeenCalledWith('/demand-forecasts', data);
     });
 
     it('update should call PUT /forecasts/:id with data', async () => {
@@ -243,28 +243,28 @@ describe('APS Module API Tests', () => {
       const data = { forecast_quantity: 1200 };
       await forecastApi.update('fc-001', data);
       const { apiClient } = await import('../client');
-      expect(apiClient.aps.put).toHaveBeenCalledWith('/forecasts/fc-001', data);
+      expect(apiClient.aps.put).toHaveBeenCalledWith('/demand-forecasts/fc-001', data);
     });
 
     it('delete should call DELETE /forecasts/:id', async () => {
       const { forecastApi } = await import('../aps/forecast');
       await forecastApi.delete('fc-001');
       const { apiClient } = await import('../client');
-      expect(apiClient.aps.delete).toHaveBeenCalledWith('/forecasts/fc-001');
+      expect(apiClient.aps.delete).toHaveBeenCalledWith('/demand-forecasts/fc-001');
     });
 
     it('calculate should call POST /forecasts/:id/calculate', async () => {
       const { forecastApi } = await import('../aps/forecast');
       await forecastApi.calculate('fc-001');
       const { apiClient } = await import('../client');
-      expect(apiClient.aps.post).toHaveBeenCalledWith('/forecasts/fc-001/calculate');
+      expect(apiClient.aps.post).toHaveBeenCalledWith('/demand-forecasts/fc-001/calculate');
     });
 
     it('validate should call POST /forecasts/:id/validate', async () => {
       const { forecastApi } = await import('../aps/forecast');
       await forecastApi.validate('fc-001');
       const { apiClient } = await import('../client');
-      expect(apiClient.aps.post).toHaveBeenCalledWith('/forecasts/fc-001/validate');
+      expect(apiClient.aps.post).toHaveBeenCalledWith('/demand-forecasts/fc-001/validate');
     });
   });
 });
