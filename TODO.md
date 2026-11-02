@@ -1,3 +1,12 @@
+## RLS 覆盖率工程——第二子步 batch1：29 张业务表补启 RLS（2026-11-02）✅
+
+> 承接第一子步盘点；预查 29 张均无 rls_tenant_isolation 策略，生成幂等迁移补启。
+
+- **迁移**：`database/migrations/20261102220000_rls_enable_biz_batch1.sql`（29 张，幂等 DO 块 + 列类型适配）。
+- **关键修障**：预查发现 `iam.tenant_permissions` 等表 `tenant_id` 为 **character varying**（非 uuid）——`varchar = uuid` 无操作符导致首批 CREATE POLICY 失败；重写为按列类型选择比较形态（uuid 列用 `::uuid` 比较，varchar 列用 `(col)::text = NULLIF(...)` 文本比较），并改 DO 块幂等。
+- **实测**：应用成功；29/29 表 `relrowsecurity=true` + 策略各 1；服务 health 全 200（monitor/core/mes）；迁移账本 **540/540** 对齐（checksum sha384 前16 `2345771f1fade9ad`）；checksums.txt 已同步。
+- **口径备注**：topems 为表 owner（RLS 对 owner 绕过），隔离为纵深防御形态；后续若需强制可 FORCE ROW LEVEL SECURITY。
+
 ## RLS 覆盖率工程——第一子步：实时缺口盘点（2026-11-02）✅
 
 > 承接批 5 第十八批记录的 RLS 覆盖率工程排期；静态 SQL 扫描之后做 DB 实时核对，产出可执行缺口清单。
