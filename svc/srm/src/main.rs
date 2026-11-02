@@ -5,7 +5,6 @@ mod schema_defense;
 mod services;
 mod shared;
 
-use anyhow::Result;
 use axum::routing::get;
 use std::env;
 use std::sync::Arc;
@@ -18,6 +17,7 @@ use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes,
     default_init_db, run, ServiceConfig,
 };
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
 
@@ -30,7 +30,7 @@ use modules::{
 };
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> Result<(), TopemsError> {
     env::set_var("SEARCH_PATH", "srm, public, shared");
 
     let config = ServiceConfig {
@@ -176,7 +176,11 @@ async fn main() -> Result<()> {
         Err(e) => {
             tracing::warn!(error = %e, "工作流服务客户端带令牌初始化失败，降级为同地址tokenless客户端；审批流在恢复前将报错，主服务继续启动");
             TypedServiceClient::new(WorkflowApi, &workflow_url)
-                .map_err(|e| anyhow::anyhow!("工作流降级客户端也无法构建（HTTP栈异常）: {e}"))?
+                .map_err(|e| {
+                    TopemsError::NetworkRequest(format!(
+                        "工作流降级客户端也无法构建（HTTP栈异常）: {e}"
+                    ))
+                })?
         }
     };
 
@@ -277,5 +281,5 @@ async fn main() -> Result<()> {
     tracing::info!("✅ TOPEMS-SRM 已就绪");
     tracing::info!("🔒 认证保护已启用");
 
-    run(app).await
+    run(app).await.map_err(Into::into)
 }
