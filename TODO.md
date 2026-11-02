@@ -1,4 +1,15 @@
 
+## 5433 反向空表清理（DROP 65，2026-11-03）✅（用户拍板 1）
+
+> 处置挂账①：DROP 5433 反向表中 count=0 的空表（73 尝试）。
+
+- **结果**：65 个 DROP 成功（core_notification_*/ehs hazard_*/qa_ehs_* 等空残留）；8 个因 FK 依赖被 RESTRICT 阻止（**不 CASCADE**，保留）。
+- **剩余反向 6**：finance.core_finance_currencies（16 行数据）+ mobile_users / qa_ehs_compliance_evaluations 等（有引用依赖）——保留挂账。
+- **门禁**：反向警告 74→6、exit 0；5433 表数 1401→1336（65 删）。
+- **坑**：DROP 默认 RESTRICT——有依赖表报"无法删除…倚赖"；不 CASCADE（避免连删引用者）。
+- **状态**：五库账本 546×5 + schema 59×5 + 表级缺失 0×5 稳定；反向残余 6（5433）/74（prod）/72（prepare）/49（topems）挂账。
+
+
 ## 五库表级缺失全清零收官（prod 100 + prepare 96，2026-11-03）✅
 
 > 表级对齐扩展到运行库：topems_prod（服务连接库）缺 100、topems_prepare 缺 96——同为"账本 546 有、DDL 未重放"漂移——pg_dump + python 提取重放补齐。
