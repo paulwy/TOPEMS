@@ -1,4 +1,13 @@
 
+## 前端 PARTIAL 2 复核：schema-defense 已 PASS 闭环（2026-11-03）✅
+
+> PARTIAL 2 中 schema-defense（TABLE_DEFS vs 内联 CREATE 列名对拍）复核：`python3 scripts/check-schema-defense-drift.py`——**drift 处数=0、PASS (exit 0)**（对拍表 0、无双写跳过 647）——此前"build 0/defense 0 失败"已随表结构治理修复。
+
+- **PARTIAL 2 收敛**：仅剩 lighthouse（lhci serve 200、NO_FCP 不阻断——SPA 首屏性能指标，非阻断挂账，性能优化属独立工程）。
+- **验证**：脚本实跑 exit 0（纯验证，无文件改动）。
+- **状态**：剩余挂账 = B 批来源（待决策）+ AR-08（路线图级）+ lighthouse 非阻断。
+
+
 ## DIR-13 Cargo 注释修正 + wms 死代码遗留项复核（2026-11-03）✅
 
 - **DIR-13**（原登记"待 Cargo 干净后执行"）：billing 已由 66a5ded86 移除——L26 `finance/billing→finance`、L94-95 A 组 8→7（删 billing），根 Cargo.toml 注释与现状一致（diff 3+/3-）。
