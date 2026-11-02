@@ -1,4 +1,15 @@
 
+## 数据库治理：tenant_id RLS 覆盖评估 + 补列闭环（2026-11-03）✅
+
+> 承接列级核查挂账——tenant_id 缺口（topems 7 / prepare 9 表）评估与补齐。
+
+- **评估**：缺 tenant_id 表全部为 ehs.qa_ehs_* 业务表 + training_* + core 会话/刷新令牌表；**RLS 状态核查**（topems qa_ehs_* 49 表中 47 个 RLS off，仅 hazards/accidents 已启用）——补列不改变现有访问行为（安全）。
+- **补列**：topems 7 表 + prepare 9 表（qa_ehs_compliance_evaluations/discharge_permits/drill_evaluations/drill_records/env_monitor_records/environment_incidents/environmental_regulations + prepare 侧 training_programs/training_records/core_refresh_tokens/core_sessions/qa_ehs_risks）`ADD COLUMN tenant_id uuid`（对齐 test，0 错误）。
+- **验证**：两库 tenant_id 列名缺失剩余 = **0**；表级门禁仍绿。
+- **deleted_at 固化迁移评估（挂账）**：topems 缺 114 / prepare 95（test 超前列）；**test 类型不统一**（1223 timestamptz + 42 timestamp）且 soft delete 未业务化（主库无、服务正常）——**不单独固化**；建议 soft delete 功能立项时统一（timestamptz）固化迁移（AR-08 同类批次）。
+- **剩余**：AR-08（路线图级）+ lighthouse（非阻断）+ deleted_at 随功能固化（后续批次）。
+
+
 ## 数据库治理：prepare 残壳表列级补齐（47 列 ALTER，2026-11-03）✅
 
 > 承接列级核查——prepare 4 个历史 pre-clean 残壳表对齐 test 结构（仅加列，不动数据/已有对象）。
