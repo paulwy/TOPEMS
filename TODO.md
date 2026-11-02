@@ -1,3 +1,14 @@
+
+## 并行线迁移 0001/0002/0004 五库应用 + schema 漂移治理（2026-11-03）✅
+
+> 并行线推入 3 个新迁移（lims/全局删误用 status_standard CHECK + lims fk repoint）——应用时暴露历史 schema 漂移（补登账本未重放 DDL）。
+
+- **五库账本 546/546**，迁移版本一致 20261103000002；check-consistency 通过；health 200。
+- **漂移 1（topems@5432 缺 34 个模块 schema）**：历史手工补登账本（e16e6c683 补登 60）只记账不建 DDL → rd/lims/plugin_*/portal 等 schema 从未建。修复：**rd 已补建**（重放 20260908000004 幂等建 rd.bugs/builds/deploys/test_cases 4 表）+ 真实应用 0003（rd status default）+ 执行 0002（删 srm 等存在表误用 CHECK）+ 补登 0001/0004（lims 缺失，无对象可操作）。
+- **漂移 2（5433 缺 public 标准表）**：public.qa_lab_samples/tasks 不存在（0004 ②段 ADD FK 引用失败）——手动删 6 FK + DROP lims 骨架表 + 补登 0004 + 真实应用 0001/0002。
+- **遗留（已挂账）**：topems@5432 仍缺 33 个 schema（lims/plugin_* 等——业务服务连接影响待评估，建议备份后全量重放对齐 test）；5433 public.qa_lab_samples/tasks 标准表缺失（相关 public FK 已删未重建）。
+- **教训**：账本计数对齐 ≠ schema 结构对齐；check-consistency 仅比最新版本。schema 漂移核对须全量对比 pg_namespace。
+
 ## TODO 归档治理（2026-11-02）✅
 
 > 根 TODO.md 超 1MB（1,072,224 B / 421 段）持续触发 large-files 提交门禁——审计遗留工程项清空后执行归档。
