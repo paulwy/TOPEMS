@@ -10,6 +10,7 @@
 - **Batch1 内联样式迁移（完成）**：top8 中 7 文件迁 227 处静态内联样式 → CSS Modules（erp 40 / RedesignDemo 45 / DashboardPage 36 / ErrorBoundary 35 / MesWorkOrderPage 36 / PerformanceMonitorPage 20 / MapView 12 / gis index 3；动态 143 处保留）；每文件独立 commit；typecheck 0 错误 + build 通过；工具 /tmp/migrate3.py（数字→px、className 合并 cx、MesWorkOrderPage import 改名 css 避本地 styles 冲突）；MapView/gis 动态密集文件剩余静态按保守判定保留，Batch2 再补。
 - **Batch2 内联样式迁移（完成）**：全仓剩余 2136 处中 296 文件迁 **1251 处静态** → CSS Modules（工具升级 /tmp/migrate5.py：修复合并删原 className + cx import 检测 + 本地 styles 冲突改名；22 文件 cx 合并、6 文件 css 别名）；typecheck 0 错误 + build 通过；5 处人工修复（Alert/Toast/ConsolidationReports 还原 style 至仅接受 style 的组件、DashboardEditor/Map3DView className 跨行合并）；按目录分 4 批 commit（components / mobile+mes+admin / 业务模块系 / layouts+microfrontend 等）。累计迁移 **1478 处**（Batch1 227 + Batch2 1251），动态样式保留。
 - **Batch3 补迁（完成）**：动态保留样式复查——剩余 874 处仅 50 处实为 var() 引用（CSS 变量）可迁，放宽判定（var() 放行 + 组件 style 跳过）补迁 50 处/23 文件；typecheck 0 错误 + build 通过。**全仓累计迁移 1528 处**（1478+50），剩余 ~807 处为真动态（theme/palette/条件式/变量）保留内联；组件仅接受 style 的还原点 3 处保持 style。内联样式迁移工程**收口**。
+- **P3 topems.sh case 精简（完成）**：主脚本 case 冗余模式收敛——新增 `_require_service`（空服务名校验 5 处）、`_unknown_subcmd`（未知子命令 4 处）、`_parse_force_flag`（restart force 2 处）；logs/build 参数校验收敛。验证：bash -n + help + 空服务名 + db/redis 未知子命令 + status 冒烟全过。
 
 ## topems / topems_prepare 账本治理（另案，2026-11-02）✅
 

@@ -39,6 +39,20 @@ for _lib in common build service db run maintain; do
 done
 unset _lib
 
+# ── 精简辅助（2026-11-02 P3）──
+_require_service() {
+  [ -z "$1" ] && { error "请指定服务名"; show_help; exit 1; }
+}
+_unknown_subcmd() {  # 用法: _unknown_subcmd <子命令> <顶层命令> <可用列表>
+  error "未知 $2 命令: $1"
+  echo "可用命令: $3"
+  exit 1
+}
+_parse_force_flag() {  # 用法: _parse_force_flag "${3:-}"（输出到 _topems_force_flag）
+  _topems_force_flag=false
+  [ "$1" = "--force" ] && _topems_force_flag=true
+}
+
 show_help() {
     cat << EOF
 TOPEMS 服务管理工具
@@ -237,9 +251,7 @@ case "${1:-help}" in
                 start_frontend
                 ;;
             "")
-                error "请指定服务名"
-                show_help
-                exit 1
+                _require_service "$2"
                 ;;
             *)
                 # V3xx SQLx 缓存新鲜度门禁（--skip-sqlx-check 可跳过）；--force 归一化
@@ -281,29 +293,25 @@ case "${1:-help}" in
                         exit 1
                     }
                 fi
-                _topems_force_flag=false
-                [ "${3:-}" = "--force" ] && _topems_force_flag=true
+                _parse_force_flag "${3:-}"
                 stop_service mes && sleep 1 && start_service mes "$_topems_force_flag"
                 ;;
             "")
-                error "请指定服务名"
-                show_help
-                exit 1
+                _require_service "$2"
                 ;;
             *)
                 _check_sqlx_cache_freshness "${@:3}" || exit 1
-                _topems_force_flag=false
-                [ "${3:-}" = "--force" ] && _topems_force_flag=true
+                _parse_force_flag "${3:-}"
                 stop_service "$2" && sleep 1 && start_service "$2" "$_topems_force_flag"
                 ;;
         esac
         ;;
     logs)
-        [ -z "$2" ] && { error "请指定服务名"; show_help; exit 1; }
+        _require_service "$2"
         logs_service "$2" "${3:-50}"
         ;;
     build)
-        [ -z "$2" ] && { error "请指定服务名"; show_help; exit 1; }
+        _require_service "$2"
         # V3xx SQLx 缓存新鲜度门禁（--skip-sqlx-check 可跳过）
         _check_sqlx_cache_freshness "${@:3}" || exit 1
         build_service "$2" "${@:3}"
@@ -365,9 +373,7 @@ case "${1:-help}" in
                 "$SCRIPT_DIR/dev/sqlx-prepare.sh" --merge
                 ;;
             *)
-                error "未知 sqlx 子命令: $2"
-                echo "可用命令: prepare, check-offline, merge"
-                exit 1
+                _unknown_subcmd "$2" sqlx "prepare, check-offline, merge"
                 ;;
         esac
         ;;
@@ -411,9 +417,7 @@ case "${1:-help}" in
                 python3 "$SCRIPT_DIR/check_schema_boundary.py"
                 ;;
             *)
-                error "未知数据库命令: $2"
-                echo "可用命令: start, stop, status, migrate, backup, restore, reset, defense-check, defense-check-all, boundary-check"
-                exit 1
+                _unknown_subcmd "$2" db "start, stop, status, migrate, backup, restore, reset, defense-check, defense-check-all, boundary-check"
                 ;;
         esac
         ;;
@@ -426,9 +430,7 @@ case "${1:-help}" in
                 redis_stop
                 ;;
             *)
-                error "未知 redis 命令: $2"
-                echo "可用命令: start, stop"
-                exit 1
+                _unknown_subcmd "$2" redis "start, stop"
                 ;;
         esac
         ;;
@@ -455,9 +457,7 @@ case "${1:-help}" in
                 ws_check
                 ;;
             *)
-                error "未知 WebSocket 命令: $2"
-                echo "可用命令: check"
-                exit 1
+                _unknown_subcmd "$2" ws "check"
                 ;;
         esac
         ;;
