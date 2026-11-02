@@ -1,5 +1,20 @@
 # TOPEMS 审计与工程项台账归档（2026-10-31 及更早已完成段）
 
+<!-- 2026-11-02 二次归档：补标"已完成"段 -->
+
+## v1.113 BFF WS 接线 P0 迷你试点（2026-10-29）✅（P0/P1 闭环；契约化/配额/前端试点待立项）
+
+> 承接 BFF WS 接线立项决策（全量缓立、P0 先行）：8099 落地 WS Hub 骨架端点。
+
+- **落地**（commit 8615aebc70）：
+  - `GET /ws/healthz`：非 Upgrade 状态端点（`{ok, version, clients, channels}`）——curl 200 验证。
+  - `GET /ws/{module}/{feature}`：通用路径，模块注册表白名单（iam/workflow/im/mes/wms/ai/notification/dashboard/ticket 9 项），未注册模块 Upgrade 返回 426——`/ws/foo/bar` 426 验证。
+  - 挂载：server unified_core_real_module 独立 `Router<Arc<WsState>>` with_state 后 merge（同 mes WS 接线模式），置于 auth layer 之后（healthz 公开；WS 升级由 handle_socket 内 verify_jwt_token 自验）。
+  - 升级握手验证：`/ws/notification/alerts?token=<MCS token>` → auth_success（JWT 通过）。
+- **P1 已闭环（commit 待推）**：根因= `ws.rs` auth_success 发送的 `tx_shared` 写锁 guard 为函数级变量（Rust Drop 类型在词法作用域末尾释放），发送后锁被持续持有 → 主循环各分支与心跳 task 再取写锁死锁（tokio RwLock 不可重入）。修复= 发送包进块作用域立即释放锁。全链路验证：auth_success → ping/pong → subscribe/subscribed（channel: notification:broadcasts）→ 31s 周期心跳 全通。
+- **签名注意**（实测）：WS 消息签名序列化用**插入序**（serde_json preserve_order 行为；服务端 `remove("signature")` 后按原插入序 to_string），客户端签名须用 json.dumps 默认插入序（`separators=(",", ":")`），**非** sort_keys 字母序。
+- **待办**：① 契约 JSON-RPC 2.0 化（现协议为 type/payload 自定义）；② 安全配额表（6 连接/32 频道/64KB/广播频控）；③ 前端 useWebSocket + 试点页（全量触发条件达成时立项）。
+
 > 由 TODO.md 归档（2026-11-02）：以下为 2026-11-01 前**已完成**（✅）的台账段，原文保留可检索。
 > 归档后 TODO.md 由 1072 KB 降至 448 KB（<1MB，不再触发 large-files 门禁）。
 > 归档标准：段标题含（YYYY-MM-DD）日期 < 2026-11-01 且段内含 ✅。

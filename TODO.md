@@ -699,19 +699,6 @@
   - 保留项（eslint-disable + 注释）：EhsHazardDetailPage #f9a825 设计既定色；client.ts SNAKE_CASE_SERVICES 灰度回滚名单。
 - **验证**：`pnpm lint` 0 problems、`pnpm typecheck` 通过、pre-push 门禁全绿；前端 lint 回到 P3-3 基线 0 problems。
 
-## v1.113 BFF WS 接线 P0 迷你试点（2026-10-29）✅（P0/P1 闭环；契约化/配额/前端试点待立项）
-
-> 承接 BFF WS 接线立项决策（全量缓立、P0 先行）：8099 落地 WS Hub 骨架端点。
-
-- **落地**（commit 8615aebc70）：
-  - `GET /ws/healthz`：非 Upgrade 状态端点（`{ok, version, clients, channels}`）——curl 200 验证。
-  - `GET /ws/{module}/{feature}`：通用路径，模块注册表白名单（iam/workflow/im/mes/wms/ai/notification/dashboard/ticket 9 项），未注册模块 Upgrade 返回 426——`/ws/foo/bar` 426 验证。
-  - 挂载：server unified_core_real_module 独立 `Router<Arc<WsState>>` with_state 后 merge（同 mes WS 接线模式），置于 auth layer 之后（healthz 公开；WS 升级由 handle_socket 内 verify_jwt_token 自验）。
-  - 升级握手验证：`/ws/notification/alerts?token=<MCS token>` → auth_success（JWT 通过）。
-- **P1 已闭环（commit 待推）**：根因= `ws.rs` auth_success 发送的 `tx_shared` 写锁 guard 为函数级变量（Rust Drop 类型在词法作用域末尾释放），发送后锁被持续持有 → 主循环各分支与心跳 task 再取写锁死锁（tokio RwLock 不可重入）。修复= 发送包进块作用域立即释放锁。全链路验证：auth_success → ping/pong → subscribe/subscribed（channel: notification:broadcasts）→ 31s 周期心跳 全通。
-- **签名注意**（实测）：WS 消息签名序列化用**插入序**（serde_json preserve_order 行为；服务端 `remove("signature")` 后按原插入序 to_string），客户端签名须用 json.dumps 默认插入序（`separators=(",", ":")`），**非** sort_keys 字母序。
-- **待办**：① 契约 JSON-RPC 2.0 化（现协议为 type/payload 自定义）；② 安全配额表（6 连接/32 频道/64KB/广播频控）；③ 前端 useWebSocket + 试点页（全量触发条件达成时立项）。
-
 ## S25 语义治理闭环：flow 表前缀 + mobile 4xx 透传（第 55 轮，2026-10-28）✅ 已完成
 
 > 目标：清零 `docs/web_contract_gap_list.md` 剩余 42 条 KNOWN（workflow 39 + mobile 3）。
@@ -1140,7 +1127,7 @@
 
 ---
 
-## 2026-10-07 第二梯队修复（已完成，摘要 `artifacts/tier2-fixes/TOPEMS第二梯队修复摘要.md`）
+## 2026-10-07 第二梯队修复（已完成，摘要 `artifacts/tier2-fixes/TOPEMS第二梯队修复摘要.md`） ✅
 
 ### ✅ 已完成并提交
 - **DB-04 自助 DDL 入链**（commit `61a25cfb7`）：`/erp/db/columns` modify/drop 三端点全部降级为只读迁移建议（幂等 IF NOT EXISTS SQL + 走迁移链提示），不再执行 DDL；preview 幂等化；标识符转义保留；cargo check 绿 + 25 单测 + 自签 JWT 路由实测。**follow-up**：DatabaseStructurePage 前端仍调用该端点（仅读 success/message 不崩，但"执行"不再建列），已登记前端改造
@@ -1160,7 +1147,7 @@
 - ✅ ② DatabaseStructurePage 前端改造 → **已实施**（commit `880bbc3c7`）
 - ✅ ③ FE-17 收敛实施分批 → **阶段 0+1 已实施**（commit `7f68d169f`）；阶段 2-5 分批待后续
 
-## 2026-10-12 WCS 全量契约冒烟实跑（已完成，日志 `docs/reports/audit/wcs-smoke-2026-10-12.log`）
+## 2026-10-12 WCS 全量契约冒烟实跑（已完成，日志 `docs/reports/audit/wcs-smoke-2026-10-12.log`） ✅
 
 > 构建 `cargo build -p topems-server`（6m38s）→ `run_monolith.sh --daemon`（:8099，health 200）→ `python3 scripts/web_contract_smoke.py` 全量实跑。环境已复原（服务已停、端口关闭）。
 
@@ -1174,7 +1161,7 @@
   - ✅ **已定位并防护（2026-10-14，commit 见下）**：全 registry 扫描唯一 `advance(2)` = `multer-3.1.0/src/buffer.rs:117`（multipart 边界扫描 `advance(CRLF.len())`），触发面 = AI 上传端点（`svc/ai/src/modules/document.rs upload`、`ai_knowledge/handlers.rs upload_document`）。multer 3.1.0 经核实已是上游最新版（3.1.1+ 不存在，axum 0.8.9 要求 `^3.0`），防护 A 无可升；防护 B 入口握手守卫（首 field 5s timeout，空/截断 body → 400 短路）；防护 C panic hook 落盘 `logs/panic-{service}.log`（`lib/shared-core/src/logging/mod.rs install_panic_file_hook`）。本地实测 3 组畸形 multipart curl 全部干净 400、0 panic、0 backtrace。若生产再 panic，以 panic hook 文件栈顶修正 multer 假设。
 - **修复建议**：ehs 契约对齐（业务决策）、bytes panic 调查（带 backtrace）、integration sync 记环境性豁免；无历史基线，106 均判「既有缺口/契约漂移」，与 finance/BE-07/AR-08 改动无关（路径无 finance、无 ai dsh、无依赖敏感特征）
 
-## 2026-10-07 第三梯队实施（已完成，摘要 `artifacts/tier2-fixes/TOPEMS第三梯队修复摘要.md`）
+## 2026-10-07 第三梯队实施（已完成，摘要 `artifacts/tier2-fixes/TOPEMS第三梯队修复摘要.md`） ✅
 
 ### ✅ 已完成并提交
 - **AR-09 TABLE_DEFS 对拍止血**（commit `b768b3f4f`，方案 C）：`scripts/check-schema-defense-drift.py` 纯静态对拍——**实测修正前提**：29 个 schema_defense*.rs 的 CREATE 均为骨架占位符，真「同文件双写」仅 gis/db/schema.rs（20 表）+ ehs/models/mod.rs（43 表），扫描单位改为「全部 28 个 TABLE_DEFS 定义点」；现状 63 对拍表 0 漂移、575 表无双写跳过；双向注入测试证明能抓漂移；接线：lefthook `schema-defense-drift`（WARN 先行）+ ci.yml job（python3 全量可硬阻断，quality-gate 挂载）
@@ -1190,7 +1177,7 @@
 - **FE-17**：全量启用后建议各服务做一次列表翻页 UI 回归；回滚=从 `SNAKE_CASE_SERVICES` Set 移除服务名
 - **BE-05 checker**：CI 建议用 `--live-csv` 传预生成 CSV 解耦（默认自动调 extractor 需 python3）
 
-## 2026-10-07 审计剩余缺陷收尾批次（已完成，摘要 `artifacts/tier2-fixes/TOPEMS审计剩余缺陷收尾修复摘要.md`）
+## 2026-10-07 审计剩余缺陷收尾批次（已完成，摘要 `artifacts/tier2-fixes/TOPEMS审计剩余缺陷收尾修复摘要.md`） ✅
 
 ### ✅ 已完成并提交
 - **DB-05 孤儿序列**（commit `8dfb53e84`）：DROP mes.tenant_permissions_id_seq / mes.tool_permissions_id_seq（pg_depend 无列归属、无 DEFAULT nextval 引用，'n' 依赖指向已 DROP 表）——幂等迁移 `20261007204300`，双库（5432+5433）应用 + psql 断言 count=0，public.tenant_permissions_id_seq 未误伤；_sqlx_test.database_ids 无害保留
@@ -1228,7 +1215,7 @@
 - **~~全链 5433 空库守卫阻塞~~ 已解决（2026-10-17 核实）**：用户并发迁移 `20261007140000_align_stub_tables_handler_contract.sql` 已入库（`4058848d20` web-contract stub 对齐收口 4125/4125 全绿 + `29060e9148` audit 写入链路对齐），内容为幂等 `ADD COLUMN IF NOT EXISTS` 对齐，不再引用不存在的 finance.reconciliation_orders；后续所有提交 pre-commit migration-validate 全绿（checksums 一致）——迁移链门禁层面已对齐，全链 DB 重放待有数据库环境时补跑
 - **AR-08 实施前置**：Cargo.toml/Cargo.lock 用户并发（jsonwebtoken rust_crypto）提交变干净后，按 ar08 方案批次执行（先 A 批 → C 批 → B 批）
 
-## 2026-10-07 第四批·BE-08 triage + 前端收敛 + 文档小项（已完成，摘要 `artifacts/tier2-fixes/TOPEMS第四批修复摘要.md`）
+## 2026-10-07 第四批·BE-08 triage + 前端收敛 + 文档小项（已完成，摘要 `artifacts/tier2-fixes/TOPEMS第四批修复摘要.md`） ✅
 
 ### ✅ 已完成并提交
 - **BE-08 路由 triage 二次分类**（交付在 artifacts/，只读未删任何路由）：`topems_routes_triage.csv`（2179 条全归类、零重复、可复跑脚本 `artifacts/tier2-fixes/triage_routes.py`）+ 报告 `BE-08-routes-triage-report.md`。六类：a BFF/service-client 消费 56、b mobile/desktop 消费 1（补回漏标 `DELETE /api/mobile/barcode/history/{id}`，顺带发现契约错位：mobile 同路径有 GET 调用但后端仅注册 DELETE）、c 插件/健康/内部运维 57、d 导出/批量/异步 37、e v5x 过渡 137（命名规律坐实：handler 模块 `quality_v51/lineage_v52/…/metadata_v60` + `mdm-v49` 路径段，master-data 98 + portal 13 + mdm 15）、**f 真孤儿候选 1891**（portal 294/erp 202/unified-core 193/ehs 131/analytics 107；「候选」非「确认孤儿」——同进程 handler 互调/scheduler/外部网关不在静态口径，报告局限已写明）；建议按 crate 分批与业务确认后走下线流程
@@ -1245,7 +1232,7 @@
 - **BE-07 后续修正项（2026-10-12 收口完成，见下节）**：settlement_v55 422 映射、ai dsh 自建 ErrorCode→HTTP 映射、api-error-codes.md 手册 422/COMMON_010 条目、enhanced.rs 测试 422 示例——均属代码/文档修正，未在本批动（纯文档批次）
 - **AR-03 实施窗口**：核心两文件无并发冲突，Phase 1（台账 + hash + 单测）可在任何窗口启动；加依赖建议标准库 sha2 以避开 Cargo.* 用户占用
 
-## 2026-10-07 AR-03 Phase 1 实施（已完成，摘要 `artifacts/tier2-fixes/AR-03-Phase1-实施摘要.md`）
+## 2026-10-07 AR-03 Phase 1 实施（已完成，摘要 `artifacts/tier2-fixes/AR-03-Phase1-实施摘要.md`） ✅
 
 ## ✅ BE-07 收口（2026-10-12，422 约定全仓落地）
 
@@ -1269,7 +1256,7 @@
 - **全服务灰度**：其余 27 服务零代码改动发版自动生效，建议发版后抽查 unified-core / ehs
 - **台账落 schema**：search_path 差异使台账落各服务自身 schema（wms./gis.）——天然多 schema 隔离，跨库审计需逐 schema 查
 
-## 2026-10-07 BE-08 孤儿候选分批业务确认辅助取证（已完成，报告 `artifacts/audit/orphan-review/孤儿候选分批确认清单.md`）
+## 2026-10-07 BE-08 孤儿候选分批业务确认辅助取证（已完成，报告 `artifacts/audit/orphan-review/孤儿候选分批确认清单.md`） ✅
 
 ### ✅ 完成
 - **1891 条 f 类路由四维增强取证**（5 片并行：① handler 完整度 ② 全仓引用 ③ 文件活跃度 ④ 挂载机制），合并校验：总和=1891= triage f 类、重复键 0、11 列一致
@@ -1282,7 +1269,7 @@
 - **下线执行**：随模块删除或单条删 route+handler 并同步 OpenAPI；portal C 级 230 条视为"已发布 API"不按孤儿处理
 - 全程只读：无源码改动、无路由删除、未修改任何 inventory/triage/前端 CSV
 
-## 2026-10-08 BE-08 A 级孤儿候选下线实施（已完成，摘要 `artifacts/tier2-fixes/BE-08-A级下线实施摘要.md`）
+## 2026-10-08 BE-08 A 级孤儿候选下线实施（已完成，摘要 `artifacts/tier2-fixes/BE-08-A级下线实施摘要.md`） ✅
 
 ### ✅ 完成
 - **ehs 119/119 删除**（`ad954b5ab`，13 文件 +8/-3816）：全部复核确认占位（DB 操作审计——6 文件全文件无 DB、其余 DB 在 B 级 handler）+ 零引用；openapi.rs 文档化引用同步清理；跨路由复用 handler 保护（safety/emergency_plan/environmental_compliance/occupational_disease/data_sync/hazardous_material 仅删路由行保留函数体）；hazard.rs StartApprovalRequest 误删已恢复
@@ -1295,7 +1282,7 @@
 - 降级 4 条（gauge 真实服务 + 3 条前端在用）按真实业务补全或另行评估；教训：下线前必查前端调用面（api-boundary-gate 可拦截）
 - B 级 1483 条待业务逐批确认（报告第六节批次建议）；C 级 267 条保留观察
 
-## 2026-10-08 B 级分批确认工作簿生成（已完成，总览 `artifacts/audit/orphan-review/batches/B级分批确认总览.md`）
+## 2026-10-08 B 级分批确认工作簿生成（已完成，总览 `artifacts/audit/orphan-review/batches/B级分批确认总览.md`） ✅
 
 ### ✅ 完成（全程只读，未改源码未删路由）
 - **1483 条 B 级 → 11 批确认工作簿**（batch_01~11，按 crate 由大到小，每批 100-200 条，批内按模块文件聚簇）：15 列 = 原 11 取证列 + `suggested_tendency` + `decision`(全空待填) + `openapi_doc` + `db_write`
@@ -3011,7 +2998,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **finance 重复发票语义修复**：sales_invoice.rs create Err 分支捕获 SQLSTATE 23505 → 409（"发票编号已存在，请勿重复创建"）。验证：重复 INV-SC-A-001 → code=409；新 INV-SC-A-002 → code=200。
 - **mobile 同步端点澄清**：/offline/sync（OfflineSyncRequest: sync_type/data/records_count）与 /offline/sync-data（SyncRequest: operations/last_sync_time）并存均正常，场景报告发现③表述已修正。
 - **search 投影不覆盖 crm 客户**：架构边界（投影由 erp 快照维护），记录留待后续。
-## 已完成（15 个 commit，bundle -4.3MB）
+## 已完成（15 个 commit，bundle -4.3MB） ✅
 
 | Commit | 内容 |
 |---|---|
