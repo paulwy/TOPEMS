@@ -1,4 +1,14 @@
 
+## 数据库治理：prepare 残壳表列级补齐（47 列 ALTER，2026-11-03）✅
+
+> 承接列级核查——prepare 4 个历史 pre-clean 残壳表对齐 test 结构（仅加列，不动数据/已有对象）。
+
+- **补齐 47 列**（information_schema 精确类型含长度）：communication.core_geofences 2→20、ehs.training_programs 2→16、portal.portal_todos 3→12、ehs.training_records 15→21——**全部对齐 test 参照**（ALTER 0 错误）。
+- **验证**：4 表列数 = test；表级门禁 check-consistency 仍绿（exit 0）。
+- **剩余列级差异**（已登记性质）：deleted_at 95（test 超前不补主库）、tenant_id 9（RLS 待评估）、updated_at/status 等零星——**均非运行时缺陷**。
+- **脚本**：/tmp/alter_prepare_columns.sql（47 条 ALTER，可复用/可审计）。
+
+
 ## 数据库治理深化：列级 schema 漂移核查（information_schema 全列对比，2026-11-03）✅（结论登记）
 
 > 表级对齐（缺失 0×5）后深化到列级——五库 information_schema.columns 全量对比（排除 pg_catalog/information_schema/_sqlx_test；test 为结构参照）。
