@@ -98,6 +98,7 @@ pub struct MaturityAssessment {
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DimensionScore {
+    pub name: String,
     pub dimension: GovernanceDimension,
     pub score: f64,
     pub weight: f64,
@@ -1059,6 +1060,16 @@ fn dimension_str(d: &GovernanceDimension) -> &str {
         GovernanceDimension::Ownership => "ownership",
         GovernanceDimension::Process => "process",
         GovernanceDimension::Technology => "technology",
+    }
+}
+
+fn dimension_name(d: &GovernanceDimension) -> &'static str {
+    match d {
+        GovernanceDimension::Quality => "数据质量",
+        GovernanceDimension::Consistency => "一致性",
+        GovernanceDimension::Ownership => "数据归属",
+        GovernanceDimension::Process => "流程规范",
+        GovernanceDimension::Technology => "技术支撑",
     }
 }
 
@@ -2031,8 +2042,10 @@ fn maturity_assessment_from_row(r: &sqlx::postgres::PgRow) -> MaturityAssessment
 }
 
 fn dimension_score_from_row(r: &sqlx::postgres::PgRow) -> DimensionScore {
+    let dimension = parse_dimension(r.get("dimension")).unwrap_or(GovernanceDimension::Quality);
     DimensionScore {
-        dimension: parse_dimension(r.get("dimension")).unwrap_or(GovernanceDimension::Quality),
+        name: dimension_name(&dimension).to_string(),
+        dimension,
         score: r.get("score"),
         weight: r.get("weight"),
         maturity_level: parse_maturity_level(r.get("maturity_level"))
