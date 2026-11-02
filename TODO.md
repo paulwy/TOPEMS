@@ -1,4 +1,15 @@
 
+## B 批恢复来源补充核查：backups/ + ssh 穷尽（2026-11-03）✅（结论强化）
+
+> B 批 4 段 ⚠️ 恢复可能性最终核查（本机维度穷尽）。
+
+- **backups/**（31M）：仅 DB dump（topems_prod 每日 03:00 备份至 20261103）+ 迁移备份 SQL + 观察文档——**无 B 批代码备份**。
+- **~/.ssh/config**：仅 github.com 一个 Host——**无云主机/生产机访问路径**（本机无法 ssh 云主机核查）。
+- **GitHub 远端**：git log/ls-remote 全部 refs 已查（KEY_FACTS 记录）——**无 eca99460b 链**。
+- **结论强化**：本机恢复路径穷尽（git 四层 + backups + ssh）——**剩余来源仅用户其他设备/云主机（需用户提供访问或确认放弃归档）**。
+- **待用户拍板**：① 提供云主机/其他设备访问 → 我继续核查；② 确认放弃 → 4 段 ⚠️ 改标"已放弃"并入归档。
+
+
 ## 前端 PARTIAL 2 复核：schema-defense 已 PASS 闭环（2026-11-03）✅
 
 > PARTIAL 2 中 schema-defense（TABLE_DEFS vs 内联 CREATE 列名对拍）复核：`python3 scripts/check-schema-defense-drift.py`——**drift 处数=0、PASS (exit 0)**（对拍表 0、无双写跳过 647）——此前"build 0/defense 0 失败"已随表结构治理修复。
