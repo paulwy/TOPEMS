@@ -1,4 +1,22 @@
 
+## 数据库治理：列级类型差异甄别（633 项模式分类，2026-11-03）✅（挂账后续批次）
+
+> 列级核查剩余的同名列类型差异（topems 633 项；5433/prod/prepare 同模式 212/215/142）——模式分类与治理建议。
+
+**差异模式 top（topems）**：
+| 数量 | test | topems | 性质 |
+|---|---|---|---|
+| 371 | timestamp with time zone | timestamp without time zone | 时区语义（test 正确）——统一需 ALTER TYPE + 时区解释，挂账 |
+| 174 | text | character varying | PG 语义等价（无损可修，量大，挂账） |
+| 43 | double precision | numeric | 业务精度（金额类敏感）——契约层甄别，挂账 |
+| 15 | timestamp with time zone | date | 类型语义差异，挂账 |
+| 11 | numeric | double precision | 反向精度差异，挂账 |
+| 19 | 其他零星（text/uuid/inet/integer 等） | | 挂账 |
+
+**治理建议**：类型差异统一归入「全栈类型与字段统一」后续批次（与 deleted_at 固化同类）——timestamptz 时区统一优先（371 项，涉及服务时间语义）；text/varchar 无损项可低风险批量（量大）；double/numeric 需逐表甄别业务精度契约后处理。当前无运行时缺陷（服务 200、门禁绿、全链路正常）。
+- **清单**：/tmp/typediff_topems.txt（633 行 test|topems 对照，可复用/可审计）。
+
+
 ## 数据库治理：tenant_id RLS 覆盖评估 + 补列闭环（2026-11-03）✅
 
 > 承接列级核查挂账——tenant_id 缺口（topems 7 / prepare 9 表）评估与补齐。
