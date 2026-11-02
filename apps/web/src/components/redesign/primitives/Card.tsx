@@ -78,22 +78,10 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
           />
         )}
         {(title || subtitle || action) && (
-          <div
-            className={styles.il1}
-          >
+          <div className={styles.il1}>
             <div className={styles.il2}>
-              {title && (
-                <div
-                  className={styles.il3}
-                >
-                  {title}
-                </div>
-              )}
-              {subtitle && (
-                <div className={styles.il4}>
-                  {subtitle}
-                </div>
-              )}
+              {title && <div className={styles.il3}>{title}</div>}
+              {subtitle && <div className={styles.il4}>{subtitle}</div>}
             </div>
             {action && <div className={styles.il5}>{action}</div>}
           </div>

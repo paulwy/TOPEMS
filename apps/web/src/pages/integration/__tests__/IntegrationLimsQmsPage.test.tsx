@@ -23,8 +23,6 @@ describe('IntegrationLimsQmsPage', () => {
 
   it('renders schema title heading（LIMS-QMS 同步）', () => {
     renderWithProviders(<IntegrationLimsQmsPage />);
-    expect(
-      screen.getByRole('heading', { name: 'LIMS-QMS 同步' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'LIMS-QMS 同步' })).toBeInTheDocument();
   });
 });

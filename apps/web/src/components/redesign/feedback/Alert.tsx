@@ -87,13 +87,7 @@ export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
           style={{ flexShrink: 0, marginTop: '2px' }}
         />
         <div className={styles.il2}>
-          {title && (
-            <span
-              className={styles.il3}
-            >
-              {title}
-            </span>
-          )}
+          {title && <span className={styles.il3}>{title}</span>}
           <span className={styles.il4}>{children}</span>
         </div>
         {dismissible && (

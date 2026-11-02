@@ -38,7 +38,9 @@ vi.mock('@/api/rd', () => ({
 }));
 
 describe('RsMaterialListPage', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders h1 研发物料 and stat cards', async () => {
     renderWithProviders(<RsMaterialListPage />);

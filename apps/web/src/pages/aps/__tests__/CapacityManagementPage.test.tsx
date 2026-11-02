@@ -43,9 +43,7 @@ describe('CapacityManagementPage', () => {
 
   it('renders page heading（产能管理）', async () => {
     renderWithProviders(<CapacityManagementPage />);
-    expect(
-      await screen.findByRole('heading', { name: '产能管理' })
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '产能管理' })).toBeInTheDocument();
   });
 
   it('renders capacity rows from mocked API data', async () => {

@@ -114,9 +114,7 @@ export const Modal: React.FC<ModalProps> = ({
         }}
       >
         {(title || description) && (
-          <div
-            className={styles.il1}
-          >
+          <div className={styles.il1}>
             <div className={styles.il2}>
               {title && (
                 <h2
@@ -148,13 +146,7 @@ export const Modal: React.FC<ModalProps> = ({
 
         <div className={styles.il5}>{children}</div>
 
-        {footer && (
-          <div
-            className={styles.il6}
-          >
-            {footer}
-          </div>
-        )}
+        {footer && <div className={styles.il6}>{footer}</div>}
       </div>
     </div>,
     document.body

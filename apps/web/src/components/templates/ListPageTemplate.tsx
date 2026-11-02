@@ -1007,11 +1007,7 @@ export function ListPageTemplate<
         }
         // 数组值（checkbox 等）
         if (Array.isArray(val)) {
-          return val.length > 0 ? (
-            val.join(', ')
-          ) : (
-            <span className={styles.il2}>-</span>
-          );
+          return val.length > 0 ? val.join(', ') : <span className={styles.il2}>-</span>;
         }
         // switch 类型
         if (fieldType === 'switch') {

@@ -28,7 +28,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   loading = false,
   actions,
   className,
-  style,
+
   action: _action, // 显式排除 action，避免传递给非 form 元素
   ...rest
 }) => {
@@ -49,13 +49,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         }}
         className={styles.il2}
       >
-        <div className={styles.il3}>
-          {children}
-        </div>
+        <div className={styles.il3}>{children}</div>
 
-        <div
-          className={styles.il4}
-        >
+        <div className={styles.il4}>
           {actions}
           {onCancel && (
             <Button

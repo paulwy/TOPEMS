@@ -1,5 +1,4 @@
 import React from 'react';
-import styles from './DetailsPanel.module.css';
 import { Box as MuiBox, Typography, Paper, IconButton, Chip } from '@mui/material';
 import { X } from 'lucide-react';
 import type { DevicePoint, StorageLocation } from '../../../../api/gis';

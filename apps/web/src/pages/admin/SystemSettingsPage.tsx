@@ -474,17 +474,9 @@ const SystemSettingsPage: React.FC = () => {
 
         <div className={styles.il2}>
           {isLoading ? (
-            <div
-              className={styles.il3}
-            >
-              {t('admin.system_settings_page.loading')}
-            </div>
+            <div className={styles.il3}>{t('admin.system_settings_page.loading')}</div>
           ) : error ? (
-            <div
-              className={styles.il4}
-            >
-              {t('admin.system_settings_page.load_failed_default')}
-            </div>
+            <div className={styles.il4}>{t('admin.system_settings_page.load_failed_default')}</div>
           ) : (
             renderTabContent()
           )}
@@ -504,17 +496,9 @@ const FieldGroup: React.FC<{ title: string; children: React.ReactNode }> = ({
   title,
   children,
 }) => (
-  <div
-    className={styles.il5}
-  >
-    <h4
-      className={styles.il6}
-    >
-      {title}
-    </h4>
-    <div className={styles.il7}>
-      {children}
-    </div>
+  <div className={styles.il5}>
+    <h4 className={styles.il6}>{title}</h4>
+    <div className={styles.il7}>{children}</div>
   </div>
 );
 
@@ -525,9 +509,7 @@ const FormField: React.FC<{ label: string; required?: boolean; children: React.R
   children,
 }) => (
   <div>
-    <label
-      className={styles.il8}
-    >
+    <label className={styles.il8}>
       {label}
       {required && <span className={styles.il9}>*</span>}
     </label>

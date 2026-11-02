@@ -21,7 +21,9 @@ vi.mock('@/api/rd', () => ({
 }));
 
 describe('RsDocPage', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders h1 文档', async () => {
     renderWithProviders(<RsDocPage />);

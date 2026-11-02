@@ -183,11 +183,7 @@ const DetailsPanel: React.FC<{
           background: `linear-gradient(to right, ${designTokens.colors.cyan['500']}, primary.main)`,
         }}
       >
-        <h3
-          className={styles.il1}
-        >
-          {i18n.t('gis.map_view.k5')}
-        </h3>
+        <h3 className={styles.il1}>{i18n.t('gis.map_view.k5')}</h3>
         <button
           onClick={onClose}
           style={{
@@ -240,9 +236,7 @@ const DetailsPanel: React.FC<{
             >
               {i18n.t('components.map_view.k1')}
             </div>
-            <div className={styles.il1}>
-              {selectedItem.device_type}
-            </div>
+            <div className={styles.il1}>{selectedItem.device_type}</div>
           </div>
         )}
         {'location_type' in selectedItem && (
@@ -256,9 +250,7 @@ const DetailsPanel: React.FC<{
             >
               {i18n.t('components.map_view.k2')}
             </div>
-            <div className={styles.il2}>
-              {selectedItem.location_type}
-            </div>
+            <div className={styles.il2}>{selectedItem.location_type}</div>
           </div>
         )}
         {'status' in selectedItem && (
@@ -296,9 +288,7 @@ const DetailsPanel: React.FC<{
             >
               {i18n.t('components.map_view.k4')}
             </div>
-            <div className={styles.il3}>
-              {selectedItem.capacity}
-            </div>
+            <div className={styles.il3}>{selectedItem.capacity}</div>
           </div>
         )}
         {'current_usage' in selectedItem && selectedItem.current_usage !== undefined && (
@@ -312,9 +302,7 @@ const DetailsPanel: React.FC<{
             >
               {i18n.t('components.map_view.k5')}
             </div>
-            <div className={styles.il4}>
-              {selectedItem.current_usage}
-            </div>
+            <div className={styles.il4}>{selectedItem.current_usage}</div>
           </div>
         )}
         {'description' in selectedItem && selectedItem.description && (

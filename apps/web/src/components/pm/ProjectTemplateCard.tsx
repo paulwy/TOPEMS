@@ -106,9 +106,7 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
           </div>
         </div>
 
-        <div
-          className={styles.il4}
-        >
+        <div className={styles.il4}>
           {template.tags.map((tag) => (
             <Chip
               key={tag}

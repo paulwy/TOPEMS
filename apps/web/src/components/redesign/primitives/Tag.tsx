@@ -1,7 +1,6 @@
 import React from 'react';
-import cx from 'clsx';
 import css from './Tag.module.css';
-import clsx from 'clsx';
+import { clsx as cx, clsx } from 'clsx';
 
 export interface TagProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: 'default' | 'amber' | 'cyan' | 'success' | 'warning' | 'error';
@@ -11,11 +10,8 @@ export interface TagProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 export const Tag = React.forwardRef<HTMLSpanElement, TagProps>(
-  (
-    { children, variant = 'default', onRemove, className, style, action: _action, ...rest },
-    ref
-  ) => {
-    const styles: Record<string, React.CSSProperties> = {
+  ({ children, onRemove, className, action: _action, ...rest }, ref) => {
+    const _styles: Record<string, React.CSSProperties> = {
       default: {
         backgroundColor: 'var(--surface-3)',
         color: 'var(--text-secondary)',

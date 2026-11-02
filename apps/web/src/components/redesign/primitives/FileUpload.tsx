@@ -1,7 +1,6 @@
 import React, { useRef, useState, useCallback } from 'react';
-import cx from 'clsx';
 import styles from './FileUpload.module.css';
-import clsx from 'clsx';
+import { clsx as cx, clsx } from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { Upload, X, File, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
@@ -264,17 +263,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({
           textAlign: 'center',
         }}
       >
-        <div
-          className={styles.il5}
-        >
+        <div className={styles.il5}>
           <Upload
             size={24}
             className={styles.il6}
           />
         </div>
-        <div className={styles.il7}>
-          {resolvedHint}
-        </div>
+        <div className={styles.il7}>{resolvedHint}</div>
         {accept && (
           <div className={styles.il8}>
             {t('components.file_upload.supported_formats', { accept })}
@@ -295,9 +290,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
       {/* 文件列表 */}
       {showFileList && value.length > 0 && (
-        <div
-          className={styles.il10}
-        >
+        <div className={styles.il10}>
           {value.map((file) => (
             <div
               key={file.id}
@@ -305,23 +298,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             >
               {getStatusIcon(file.status)}
               <div className={styles.il12}>
-                <div
-                  className={styles.il13}
-                >
-                  {file.name}
-                </div>
+                <div className={styles.il13}>{file.name}</div>
                 <div className={styles.il14}>
                   {formatFileSize(file.size)}
-                  {file.error && (
-                    <span className={styles.il15}>
-                      {file.error}
-                    </span>
-                  )}
+                  {file.error && <span className={styles.il15}>{file.error}</span>}
                 </div>
                 {file.status === 'uploading' && file.progress !== undefined && (
-                  <div
-                    className={styles.il16}
-                  >
+                  <div className={styles.il16}>
                     <div
                       style={{
                         width: `${file.progress}%`,

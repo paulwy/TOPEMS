@@ -176,9 +176,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ showMenu = true })
                         {item.description}
                       </Typography>
                     </Box>
-                    {theme === item.value && (
-                      <Check className={styles.il1} />
-                    )}
+                    {theme === item.value && <Check className={styles.il1} />}
                   </Box>
                 }
               />

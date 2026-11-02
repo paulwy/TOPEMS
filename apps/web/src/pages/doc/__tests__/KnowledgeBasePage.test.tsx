@@ -3,14 +3,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen, waitFor } from '@/__tests__/test-utils';
 
 import KnowledgeBasePage from '../KnowledgeBasePage';
+import type { TreePageTemplateProps } from '@/components/templates/TreePageTemplate';
 
 // §4C 覆盖 barrel mock：全局 TreePageTemplate 是 children-only stub（吞掉 detailPanel），
 // 这里覆盖为渲染 detailPanel 内容，使页面计算出的空态提示真正进入 DOM。
 // 该页无 API 调用（使用 MOCK_DOCS 常量），无需 mock @/api/doc。
 vi.mock('@/components/templates', () => ({
-  TreePageTemplate: ({ detailPanel, data }: any) => (
+  TreePageTemplate: ({ detailPanel, data }: TreePageTemplateProps) => (
     <div>
-      <div data-testid="tree-data">{JSON.stringify((data ?? []).length)}</div>
+      <div data-testid='tree-data'>{JSON.stringify((data ?? []).length)}</div>
       {detailPanel ? detailPanel(null) : null}
     </div>
   ),

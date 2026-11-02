@@ -53,11 +53,7 @@ const DocumentSidebar: React.FC<DocumentSidebarProps> = ({
                     sx={{ flex: 1, justifyContent: 'flex-start' }}
                   >
                     {renderFolderIcon(selectedFolderId === folder.id)}
-                    <span
-                      className={styles.il2}
-                    >
-                      {folder.name}
-                    </span>
+                    <span className={styles.il2}>{folder.name}</span>
                   </Button>
                   <Tooltip title={t('doc.documents.delete_folder')}>
                     <span>

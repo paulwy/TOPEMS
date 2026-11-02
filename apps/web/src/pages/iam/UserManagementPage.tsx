@@ -166,14 +166,8 @@ const UserManagementPage: React.FC = () => {
               status={row.isactive ? 'online' : 'offline'}
             />
             <div className={styles.il2}>
-              <span className={styles.il3}>
-                {row.username}
-              </span>
-              {row.full_name && (
-                <span className={styles.il4}>
-                  {row.full_name}
-                </span>
-              )}
+              <span className={styles.il3}>{row.username}</span>
+              {row.full_name && <span className={styles.il4}>{row.full_name}</span>}
             </div>
           </div>
         ),
@@ -197,11 +191,7 @@ const UserManagementPage: React.FC = () => {
       {
         key: 'created_at',
         header: i18n.t('iam.user_management_page.k10'),
-        render: (row) => (
-          <span className={styles.il5}>
-            {formatDateTime(row.created_at)}
-          </span>
-        ),
+        render: (row) => <span className={styles.il5}>{formatDateTime(row.created_at)}</span>,
       },
       {
         key: 'actions',
@@ -244,9 +234,7 @@ const UserManagementPage: React.FC = () => {
 
   const toolbar = (
     <>
-      <div
-        className={styles.il7}
-      >
+      <div className={styles.il7}>
         <div className={styles.il8}>
           <Input
             placeholder={i18n.t('iam.user_management_page.k12')}

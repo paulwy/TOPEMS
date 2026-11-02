@@ -6,7 +6,9 @@ import MasterQualityPage from '../MasterQualityPage';
 
 vi.mock('@/api/master/quality', () => ({
   qualityApi: {
-    getDashboard: vi.fn().mockResolvedValue({ data: { total_entities: 20, total_checks: 100, passed: 90, failed: 10, pass_rate: 0.9 } }),
+    getDashboard: vi.fn().mockResolvedValue({
+      data: { total_entities: 20, total_checks: 100, passed: 90, failed: 10, pass_rate: 0.9 },
+    }),
     getScore: vi.fn().mockResolvedValue({ data: { score: 88, grade: 'A' } }),
     listChecks: vi.fn().mockResolvedValue({ data: [] }),
     listRules: vi.fn().mockResolvedValue({ data: [] }),

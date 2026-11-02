@@ -712,11 +712,7 @@ export const AiCodeAssistantPage: React.FC = () => {
                     bgcolor: 'grey.50',
                   }}
                 >
-                  <pre
-                    className={styles.il2}
-                  >
-                    {result}
-                  </pre>
+                  <pre className={styles.il2}>{result}</pre>
                 </Paper>
               )}
 

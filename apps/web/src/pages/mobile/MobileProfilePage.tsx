@@ -52,7 +52,11 @@ const MobileSettingsPage: React.FC = () => {
   });
   const displayName = profile?.full_name || user?.fullName || user?.username || '';
   const displayEmail = profile?.email || user?.email || 'user@example.com';
-  const displayRole = profile?.position || user?.role || profile?.department || i18n.t('mobile.mobile_profile_page.k29');
+  const displayRole =
+    profile?.position ||
+    user?.role ||
+    profile?.department ||
+    i18n.t('mobile.mobile_profile_page.k29');
   const [darkMode, setDarkMode] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(true);
   const settingGroups: SettingGroup[] = [

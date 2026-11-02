@@ -50,9 +50,7 @@ describe('IntegrationErpOverviewPage', () => {
 
   it('renders sync task list with connection names', async () => {
     renderWithProviders(<IntegrationErpOverviewPage />);
-    expect(
-      await screen.findByText('ERP-生产订单连接')
-    ).toBeInTheDocument();
+    expect(await screen.findByText('ERP-生产订单连接')).toBeInTheDocument();
     expect(screen.getByText('WMS-库存连接')).toBeInTheDocument();
   });
 });

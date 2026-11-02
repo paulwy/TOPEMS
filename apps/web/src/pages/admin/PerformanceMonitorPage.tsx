@@ -311,9 +311,7 @@ const PerformanceMonitorPage: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div
-            className={styles.il16}
-          >
+          <div className={styles.il16}>
             {slowCalls.map((call, idx) => (
               <div
                 key={idx}

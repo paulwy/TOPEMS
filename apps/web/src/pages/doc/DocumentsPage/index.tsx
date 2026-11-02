@@ -619,7 +619,9 @@ const DocumentsPage: React.FC = () => {
                 disabled={uploading}
               >
                 <Upload sx={{ width: 16, height: 16, mr: 1 }} />
-                <span>{uploading ? i18n.t('doc.documents.uploading') : i18n.t('doc.documents.upload')}</span>
+                <span>
+                  {uploading ? i18n.t('doc.documents.uploading') : i18n.t('doc.documents.upload')}
+                </span>
               </Button>
               <input
                 ref={fileInputRef}

@@ -1,5 +1,4 @@
 import React from 'react';
-import styles from './LayerPanel.module.css';
 import { Box as MuiBox, Typography, Paper, Button, useTheme } from '@mui/material';
 import { Layers, ChevronUp, ChevronDown, MapPin, Navigation, Info, Pencil } from 'lucide-react';
 import LayerToggle from './LayerToggle';

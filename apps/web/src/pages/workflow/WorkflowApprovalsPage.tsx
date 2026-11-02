@@ -339,9 +339,7 @@ const WorkflowApprovalsPage: React.FC = () => {
       sortable: true,
       render: (row) => (
         <div>
-          <div className={styles.il1}>
-            {row.title}
-          </div>
+          <div className={styles.il1}>{row.title}</div>
           <div className={styles.il2}>
             {localizedName(row.workflowName, row.workflowNameEn)} · {row.nodeName}
           </div>
@@ -353,11 +351,7 @@ const WorkflowApprovalsPage: React.FC = () => {
       header: t('workflow.approvals_page.col_initiator'),
       render: (row) => (
         <div className={styles.il3}>
-          <div
-            className={styles.il4}
-          >
-            {row.initiator.charAt(0)}
-          </div>
+          <div className={styles.il4}>{row.initiator.charAt(0)}</div>
           <span>{row.initiator}</span>
         </div>
       ),
@@ -398,9 +392,7 @@ const WorkflowApprovalsPage: React.FC = () => {
       key: 'receivedAt',
       header: t('workflow.approvals_page.col_received_at'),
       sortable: true,
-      render: (row) => (
-        <span className={styles.il6}>{formatTime(row.receivedAt)}</span>
-      ),
+      render: (row) => <span className={styles.il6}>{formatTime(row.receivedAt)}</span>,
     },
     {
       key: 'actions',
@@ -458,9 +450,7 @@ const WorkflowApprovalsPage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={styles.il9}
-            >
+            <div className={styles.il9}>
               <Input
                 placeholder={t('workflow.approvals_page.search_placeholder')}
                 value={searchQuery}
@@ -555,9 +545,7 @@ const WorkflowApprovalsPage: React.FC = () => {
           <div className={styles.il14}>
             {/* 基本信息 */}
             <Card title={t('workflow.approvals_page.card_basic')}>
-              <div
-                className={styles.il15}
-              >
+              <div className={styles.il15}>
                 <InfoItem
                   label={t('workflow.approvals_page.col_subject')}
                   value={selectedTask.title}
@@ -720,9 +708,7 @@ const WorkflowApprovalsPage: React.FC = () => {
         }
       >
         <div className={styles.il20}>
-          <p className={styles.il21}>
-            {t('workflow.approvals_page.reject_reason_label')}
-          </p>
+          <p className={styles.il21}>{t('workflow.approvals_page.reject_reason_label')}</p>
           <textarea
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
@@ -788,9 +774,7 @@ const FlowStep: React.FC<{
         <span className={styles.il28}>{title}</span>
         <span className={styles.il29}>{time}</span>
       </div>
-      <div className={styles.il30}>
-        {description}
-      </div>
+      <div className={styles.il30}>{description}</div>
     </div>
   </div>
 );

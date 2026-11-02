@@ -12,6 +12,18 @@
 > 根台账（2026-11-02 归档治理）：2026-11-01 前已完成段已归档至 `docs/archive/TODO-archive-2026-10-31.md`（177 段，原文保留）；本文件保留近期进行/未完成/11-01 起段与未标完成段。
 > 历史更早段（2026-10-08 前）如仍散落于本文件，按同一标准继续归档。
 
+## 前端质量工程收尾链 P2 ESLint resolver 噪音实跑复核并修复（2026-11-03）✅
+
+> 承接 P2 空态段（10-07 P0 遗留收官）：lint 从实跑 528 problems → **0 problems**，门禁能力恢复（commit 后推送 origin/main）。
+
+- **实跑复核**：`pnpm exec eslint .` 实测 **528 problems（457 errors / 71 warnings）**——10-07 记录的 3953 条 import resolver 噪音**已不存在**（`import/no-unresolved` 已 off，实跑无 import 解析噪音）。
+- **457 prettier errors**：`eslint --fix` 全清（全仓库格式统一）。
+- **30 import/no-duplicates**：redesign 15 文件 `import cx from 'clsx'` + `import clsx from 'clsx'` 同模块双导入（且为错误用法——clsx 包仅有命名导出无 default）→ 合并为 `import { clsx as cx, clsx } from 'clsx'`。
+- **27 no-unused-vars**：删 6 处未用 `styles` import（gis 4 + ModulesOverviewPage + ApprovalHeader）+ 16 处解构未用项（`style`/`variant`）+ 5 处未用赋值改 `_` 前缀（StatsChart height / NotificationItem getPriorityColor / Badge·Tag styles / DateRangePicker inputStyle）。
+- **14 no-explicit-any**：5 个测试文件模板 mock 改真实 Props 类型（MonitorSettings→SettingsPageTemplateProps+SettingTab/Section/Field、KnowledgeBase→TreePageTemplateProps、rd 3 页→FormPageTemplateProps+FormSection/FormField）。
+- **验证**：`pnpm exec eslint .` exit 0（0 problems）；tsc 0 错误；全量 vitest 544 文件 / 6434 测试 0 失败。
+- 报告 §0 速览 10-07 复查行（3/3 闭环）、§4.4 ESLint 行、§6 P2 行标 ✅。
+
 ## 前端质量工程收尾链 P2 空态模板默认注入（2026-11-03）✅
 
 > 承接 P1 e2e 加深段：空态从"最弱项"（关键词口径 25%）闭环为模板默认注入口径 **478/511（93.5%，目标 ≥50%）**（commit 后推送 origin/main）。

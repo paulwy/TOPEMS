@@ -445,13 +445,7 @@ const QmsAuditRedesignPage: React.FC = () => {
         key: 'audit_no',
         header: t('qms.audit_redesign.col_audit_no'),
         sortable: true,
-        render: (row) => (
-          <span
-            className={styles.il1}
-          >
-            {row.audit_no}
-          </span>
-        ),
+        render: (row) => <span className={styles.il1}>{row.audit_no}</span>,
       },
       {
         key: 'title',
@@ -459,9 +453,7 @@ const QmsAuditRedesignPage: React.FC = () => {
         render: (row) => (
           <div>
             <div className={styles.il2}>{row.title}</div>
-            <div className={styles.il3}>
-              {row.scope}
-            </div>
+            <div className={styles.il3}>{row.scope}</div>
           </div>
         ),
       },
@@ -581,9 +573,7 @@ const QmsAuditRedesignPage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={styles.il6}
-            >
+            <div className={styles.il6}>
               <Input
                 placeholder={t('qms.audit_redesign.search_placeholder')}
                 value={searchQuery}
@@ -706,16 +696,10 @@ const QmsAuditRedesignPage: React.FC = () => {
         {selectedAudit && (
           <div style={colGap4}>
             <Card>
-              <div
-                className={styles.il10}
-              >
+              <div className={styles.il10}>
                 <div>
                   <div style={detailLabel}>{selectedAudit.audit_no}</div>
-                  <div
-                    className={styles.il11}
-                  >
-                    {selectedAudit.title}
-                  </div>
+                  <div className={styles.il11}>{selectedAudit.title}</div>
                 </div>
                 <div style={rowGap2}>
                   <Badge variant={typeConfig[selectedAudit.audit_type]?.variant || 'default'}>
@@ -729,15 +713,11 @@ const QmsAuditRedesignPage: React.FC = () => {
             </Card>
 
             <Card title={t('qms.audit_redesign.card_scope')}>
-              <p className={styles.il12}>
-                {selectedAudit.scope}
-              </p>
+              <p className={styles.il12}>{selectedAudit.scope}</p>
             </Card>
 
             <Card title={t('qms.audit_redesign.card_basic_info')}>
-              <div
-                className={styles.il13}
-              >
+              <div className={styles.il13}>
                 <div>
                   <div style={detailLabel}>{t('qms.audit_redesign.col_auditor')}</div>
                   <div style={detailValue}>{selectedAudit.auditor}</div>
@@ -752,9 +732,7 @@ const QmsAuditRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.audit_redesign.drawer_actual_date')}</div>
-                  <div className={styles.il15}>
-                    {selectedAudit.actual_date || '-'}
-                  </div>
+                  <div className={styles.il15}>{selectedAudit.actual_date || '-'}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.audit_redesign.drawer_findings')}</div>
@@ -764,9 +742,7 @@ const QmsAuditRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.audit_redesign.drawer_created_at')}</div>
-                  <div className={styles.il17}>
-                    {formatDateTime(selectedAudit.created_at)}
-                  </div>
+                  <div className={styles.il17}>{formatDateTime(selectedAudit.created_at)}</div>
                 </div>
               </div>
             </Card>

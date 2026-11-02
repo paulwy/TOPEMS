@@ -415,11 +415,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             </div>
 
             {/* 错误标题 */}
-            <h2
-              className={styles.il5}
-            >
-              {friendlyMessage.title}
-            </h2>
+            <h2 className={styles.il5}>{friendlyMessage.title}</h2>
 
             {/* 错误描述 */}
             <p className={styles.il6}>
@@ -467,57 +463,33 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                       overflowY: 'auto',
                     }}
                   >
-                    <div
-                      className={styles.il8}
-                    >
+                    <div className={styles.il8}>
                       <Code2 size={16} />
-                      <span className={styles.il9}>
-                        {i18n.t('components.error_boundary.k14')}
-                      </span>
+                      <span className={styles.il9}>{i18n.t('components.error_boundary.k14')}</span>
                     </div>
 
                     {/* 错误信息 */}
                     <div className={styles.il10}>
-                      <div
-                        className={styles.il11}
-                      >
-                        {i18n.t('components.error_boundary.k1')}
-                      </div>
-                      <div className={styles.il12}>
-                        {error.message}
-                      </div>
+                      <div className={styles.il11}>{i18n.t('components.error_boundary.k1')}</div>
+                      <div className={styles.il12}>{error.message}</div>
                     </div>
 
                     {/* 错误类型 */}
                     <div className={styles.il13}>
-                      <div
-                        className={styles.il14}
-                      >
-                        {i18n.t('components.error_boundary.k2')}
-                      </div>
-                      <div className={styles.il15}>
-                        {getErrorType(error)}
-                      </div>
+                      <div className={styles.il14}>{i18n.t('components.error_boundary.k2')}</div>
+                      <div className={styles.il15}>{getErrorType(error)}</div>
                     </div>
 
                     {/* 错误级别 */}
                     <div className={styles.il16}>
-                      <div
-                        className={styles.il17}
-                      >
-                        {i18n.t('components.error_boundary.k3')}
-                      </div>
+                      <div className={styles.il17}>{i18n.t('components.error_boundary.k3')}</div>
                       <div className={styles.il18}>{level}</div>
                     </div>
 
                     {/* 错误时间 */}
                     {errorReport && (
                       <div className={styles.il19}>
-                        <div
-                          className={styles.il20}
-                        >
-                          {i18n.t('components.error_boundary.k4')}
-                        </div>
+                        <div className={styles.il20}>{i18n.t('components.error_boundary.k4')}</div>
                         <div className={styles.il21}>
                           {new Date(errorReport.timestamp).toLocaleString('zh-CN')}
                         </div>
@@ -527,45 +499,25 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                     {/* 用户代理 */}
                     {errorReport && (
                       <div className={styles.il22}>
-                        <div
-                          className={styles.il23}
-                        >
-                          {i18n.t('components.error_boundary.k5')}
-                        </div>
-                        <div
-                          className={styles.il24}
-                        >
-                          {errorReport.userAgent}
-                        </div>
+                        <div className={styles.il23}>{i18n.t('components.error_boundary.k5')}</div>
+                        <div className={styles.il24}>{errorReport.userAgent}</div>
                       </div>
                     )}
 
                     {/* React 版本 */}
                     {errorReport?.reactVersion && (
                       <div className={styles.il25}>
-                        <div
-                          className={styles.il26}
-                        >
+                        <div className={styles.il26}>
                           {i18n.t('components.error_boundary.react_6')}
                         </div>
-                        <div className={styles.il27}>
-                          {errorReport.reactVersion}
-                        </div>
+                        <div className={styles.il27}>{errorReport.reactVersion}</div>
                       </div>
                     )}
 
                     {/* 组件栈 */}
                     <div>
-                      <div
-                        className={styles.il28}
-                      >
-                        {i18n.t('components.error_boundary.k7')}
-                      </div>
-                      <div
-                        className={styles.il29}
-                      >
-                        {errorInfo.componentStack || 'N/A'}
-                      </div>
+                      <div className={styles.il28}>{i18n.t('components.error_boundary.k7')}</div>
+                      <div className={styles.il29}>{errorInfo.componentStack || 'N/A'}</div>
                     </div>
                   </div>
                 )}
@@ -573,9 +525,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             )}
 
             {/* 操作按钮区域 */}
-            <div
-              className={styles.il30}
-            >
+            <div className={styles.il30}>
               {/* 重试按钮 */}
               {enableRetry && (
                 <button

@@ -63,7 +63,10 @@ vi.mock('@/components/templates', () => ({
       {subtitle ? <div>{subtitle}</div> : null}
       {headerContent}
       {sections?.map((s) => (
-        <section key={s.id} data-testid={`section-${s.id}`}>
+        <section
+          key={s.id}
+          data-testid={`section-${s.id}`}
+        >
           <h3>{s.title}</h3>
           <div>{s.content}</div>
         </section>

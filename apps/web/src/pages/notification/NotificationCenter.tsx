@@ -251,9 +251,7 @@ const NotificationCenter: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={css.il1}
-            >
+            <div className={css.il1}>
               <Input
                 placeholder={t('notification.notification_center.search_placeholder')}
                 value={searchQuery}
@@ -335,13 +333,9 @@ const NotificationCenter: React.FC = () => {
             onChange={(id) => setActiveFilter(id as NotificationFilterType)}
           />
 
-          <div
-            className={css.il6}
-          >
+          <div className={css.il6}>
             {/* 全选栏 */}
-            <div
-              className={css.il7}
-            >
+            <div className={css.il7}>
               <input
                 type='checkbox'
                 checked={selectedIds.size === notifications.length && notifications.length > 0}
@@ -416,9 +410,7 @@ const NotificationCenter: React.FC = () => {
                   </div>
 
                   <div className={css.il11}>
-                    <div
-                      className={css.il12}
-                    >
+                    <div className={css.il12}>
                       <span
                         style={{
                           fontWeight: notification.is_read ? 400 : 600,
@@ -428,11 +420,7 @@ const NotificationCenter: React.FC = () => {
                       >
                         {notification.title || notification.type}
                       </span>
-                      {!notification.is_read && (
-                        <span
-                          className={css.il13}
-                        />
-                      )}
+                      {!notification.is_read && <span className={css.il13} />}
                       <Badge
                         variant='default'
                         className={css.il14}
@@ -440,9 +428,7 @@ const NotificationCenter: React.FC = () => {
                         {t(typeConfig.labelKey)}
                       </Badge>
                     </div>
-                    <p
-                      className={css.il15}
-                    >
+                    <p className={css.il15}>
                       {notification.content || t('notification.notification_center.no_content')}
                     </p>
                     <div className={css.il16}>
@@ -450,9 +436,7 @@ const NotificationCenter: React.FC = () => {
                     </div>
                   </div>
 
-                  <div
-                    className={css.il17}
-                  >
+                  <div className={css.il17}>
                     {!notification.is_read && (
                       <Button
                         size='sm'
@@ -510,9 +494,7 @@ const NotificationCenter: React.FC = () => {
         }
       >
         <div className={css.il19}>
-          <div
-            className={css.il20}
-          >
+          <div className={css.il20}>
             <h4 style={styles.sectionHeading}>
               {t('notification.notification_center.section_channels')}
             </h4>
@@ -534,9 +516,7 @@ const NotificationCenter: React.FC = () => {
             </div>
           </div>
 
-          <div
-            className={css.il21}
-          >
+          <div className={css.il21}>
             <h4 style={styles.sectionHeading}>
               {t('notification.notification_center.section_types')}
             </h4>
@@ -564,9 +544,7 @@ const NotificationCenter: React.FC = () => {
             </div>
           </div>
 
-          <div
-            className={css.il22}
-          >
+          <div className={css.il22}>
             <h4 style={styles.sectionHeading}>
               {t('notification.notification_center.section_dnd')}
             </h4>
@@ -575,9 +553,7 @@ const NotificationCenter: React.FC = () => {
                 label={t('notification.notification_center.dnd_enable')}
                 description={t('notification.notification_center.dnd_enable_desc')}
               />
-              <div
-                className={css.il23}
-              >
+              <div className={css.il23}>
                 <div>
                   <label
                     htmlFor='dnd-start-time'
@@ -629,11 +605,7 @@ const SettingToggle: React.FC<{
     <div className={css.il26}>
       <div>
         <div className={css.il27}>{label}</div>
-        {description && (
-          <div className={css.il28}>
-            {description}
-          </div>
-        )}
+        {description && <div className={css.il28}>{description}</div>}
       </div>
       <Toggle
         checked={checked}

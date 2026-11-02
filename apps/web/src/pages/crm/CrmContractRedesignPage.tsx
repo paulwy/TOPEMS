@@ -439,13 +439,7 @@ const CrmContractRedesignPage: React.FC = () => {
         key: 'contract_no',
         header: t('crm.contract_redesign.col_contract_no'),
         sortable: true,
-        render: (row) => (
-          <span
-            className={styles.il1}
-          >
-            {row.contract_no}
-          </span>
-        ),
+        render: (row) => <span className={styles.il1}>{row.contract_no}</span>,
       },
       {
         key: 'title',
@@ -453,9 +447,7 @@ const CrmContractRedesignPage: React.FC = () => {
         render: (row) => (
           <div>
             <div className={styles.il2}>{row.title}</div>
-            <div className={styles.il3}>
-              {row.customer_name}
-            </div>
+            <div className={styles.il3}>{row.customer_name}</div>
           </div>
         ),
       },
@@ -473,11 +465,7 @@ const CrmContractRedesignPage: React.FC = () => {
         header: t('crm.contract_redesign.col_amount'),
         align: 'right',
         sortable: true,
-        render: (row) => (
-          <span className={styles.il4}>
-            {formatAmount(row.amount)}
-          </span>
-        ),
+        render: (row) => <span className={styles.il4}>{formatAmount(row.amount)}</span>,
       },
       {
         key: 'start_date',
@@ -583,9 +571,7 @@ const CrmContractRedesignPage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={styles.il8}
-            >
+            <div className={styles.il8}>
               <Input
                 placeholder={t('crm.contract_redesign.search_placeholder')}
                 value={searchQuery}
@@ -707,19 +693,11 @@ const CrmContractRedesignPage: React.FC = () => {
         {selectedContract && (
           <div style={colGap4}>
             <Card>
-              <div
-                className={styles.il12}
-              >
+              <div className={styles.il12}>
                 <div>
                   <div style={detailLabel}>{selectedContract.contract_no}</div>
-                  <div
-                    className={styles.il13}
-                  >
-                    {selectedContract.title}
-                  </div>
-                  <div className={styles.il14}>
-                    {selectedContract.customer_name}
-                  </div>
+                  <div className={styles.il13}>{selectedContract.title}</div>
+                  <div className={styles.il14}>{selectedContract.customer_name}</div>
                 </div>
                 <div style={rowGap2}>
                   <Badge variant={typeConfig[selectedContract.type]?.variant || 'default'}>
@@ -735,15 +713,11 @@ const CrmContractRedesignPage: React.FC = () => {
             </Card>
 
             <Card title={t('crm.contract_redesign.section_amount')}>
-              <div className={styles.il15}>
-                {formatAmount(selectedContract.amount)}
-              </div>
+              <div className={styles.il15}>{formatAmount(selectedContract.amount)}</div>
             </Card>
 
             <Card title={t('crm.contract_redesign.section_info')}>
-              <div
-                className={styles.il16}
-              >
+              <div className={styles.il16}>
                 <div>
                   <div style={detailLabel}>{t('crm.contract_redesign.field_sign_date')}</div>
                   <div style={detailValue}>
@@ -764,9 +738,7 @@ const CrmContractRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('crm.contract_redesign.field_create_time')}</div>
-                  <div className={styles.il19}>
-                    {formatDateTime(selectedContract.created_at)}
-                  </div>
+                  <div className={styles.il19}>{formatDateTime(selectedContract.created_at)}</div>
                 </div>
               </div>
             </Card>

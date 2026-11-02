@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import cx from 'clsx';
 import styles from './DataTable.module.css';
-import clsx from 'clsx';
+import { clsx as cx, clsx } from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpDown, ChevronDown, ChevronUp } from 'lucide-react';
 import { EmptyState } from '../feedback';
@@ -50,7 +49,7 @@ export function DataTable<T extends object>({
   sort,
   onSort,
   className,
-  style,
+
   action: _action, // 显式排除 action，避免传递给非 form 元素
   ...rest
 }: DataTableProps<T>) {
@@ -108,9 +107,7 @@ export function DataTable<T extends object>({
         <thead>
           <tr className={styles.il3}>
             {selectable && (
-              <th
-                className={styles.il4}
-              >
+              <th className={styles.il4}>
                 <input
                   type='checkbox'
                   aria-label='Select all rows'
@@ -145,9 +142,7 @@ export function DataTable<T extends object>({
                 }}
                 onClick={() => handleSort(column)}
               >
-                <span
-                  className={styles.il6}
-                >
+                <span className={styles.il6}>
                   {column.header}
                   {column.sortable && (
                     <span className={styles.il7}>
@@ -173,9 +168,7 @@ export function DataTable<T extends object>({
                 <tr key={`skeleton-${i}`}>
                   {selectable && (
                     <td className={styles.il8}>
-                      <div
-                        className={cx('skeleton', styles.il9)}
-                      />
+                      <div className={cx('skeleton', styles.il9)} />
                     </td>
                   )}
                   {columns.map((column) => (

@@ -88,9 +88,7 @@ export const FormDrawer = React.memo(function FormDrawer({
   };
 
   const footerContent = (
-    <div
-      className={styles.il1}
-    >
+    <div className={styles.il1}>
       <button
         type='button'
         onClick={onClose}

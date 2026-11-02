@@ -225,9 +225,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
         padding: 6,
       }}
     >
-      <div
-        className={styles.il2}
-      >
+      <div className={styles.il2}>
         <h3
           style={{
             fontSize: '18px',
@@ -376,11 +374,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
           <div className={styles.il6}>
             {rows.map((row) => (
               <div key={row}>
-                <div
-                  className={styles.il1}
-                >
-                  {row}
-                </div>
+                <div className={styles.il1}>{row}</div>
                 <select
                   style={{
                     padding: 4,
@@ -403,11 +397,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
             ))}
             {cols.map((col) => (
               <div key={col}>
-                <div
-                  className={styles.il2}
-                >
-                  {col}
-                </div>
+                <div className={styles.il2}>{col}</div>
                 <select
                   style={{
                     padding: 4,
@@ -433,9 +423,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
       )}
 
       <div className={styles.il7}>
-        <table
-          className={styles.il8}
-        >
+        <table className={styles.il8}>
           <thead>
             <tr>
               <th

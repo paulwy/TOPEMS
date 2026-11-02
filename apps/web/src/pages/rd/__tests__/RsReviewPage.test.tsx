@@ -36,7 +36,9 @@ vi.mock('@/api/rd', () => ({
 }));
 
 describe('RsReviewPage', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders h1 配方评审', async () => {
     renderWithProviders(<RsReviewPage />);

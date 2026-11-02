@@ -446,13 +446,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
         key: 'review_no',
         header: t('hrm.performance_redesign_page.k18'),
         sortable: true,
-        render: (row) => (
-          <span
-            className={styles.il1}
-          >
-            {row.review_no}
-          </span>
-        ),
+        render: (row) => <span className={styles.il1}>{row.review_no}</span>,
       },
       {
         key: 'employee_name',
@@ -460,9 +454,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
         render: (row) => (
           <div>
             <div className={styles.il2}>{row.employee_name}</div>
-            <div className={styles.il3}>
-              {row.department}
-            </div>
+            <div className={styles.il3}>{row.department}</div>
           </div>
         ),
       },
@@ -608,9 +600,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={styles.il9}
-            >
+            <div className={styles.il9}>
               <Input
                 placeholder={t('hrm.performance_redesign_page.k4')}
                 value={searchQuery}
@@ -732,16 +722,10 @@ const HrmPerformanceRedesignPage: React.FC = () => {
         {selectedReview && (
           <div style={colGap4}>
             <Card>
-              <div
-                className={styles.il13}
-              >
+              <div className={styles.il13}>
                 <div>
                   <div style={detailLabel}>{selectedReview.review_no}</div>
-                  <div
-                    className={styles.il14}
-                  >
-                    {selectedReview.employee_name}
-                  </div>
+                  <div className={styles.il14}>{selectedReview.employee_name}</div>
                   <div className={styles.il15}>
                     {selectedReview.department} · {selectedReview.period}
                   </div>
@@ -771,10 +755,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                   }}
                 >
                   {selectedReview.score}
-                  <span className={styles.il16}>
-                    {' '}
-                    {t('hrm.performance_redesign_page.k30')}
-                  </span>
+                  <span className={styles.il16}> {t('hrm.performance_redesign_page.k30')}</span>
                 </div>
                 <div className={styles.il17}>
                   <Badge variant={ratingConfig[selectedReview.rating]?.variant || 'default'}>
@@ -786,9 +767,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
             )}
 
             <Card title={t('hrm.performance_redesign_page.k35')}>
-              <div
-                className={styles.il18}
-              >
+              <div className={styles.il18}>
                 <div>
                   <div style={detailLabel}>{t('hrm.performance_redesign_page.k20')}</div>
                   <div style={detailValue}>{selectedReview.period}</div>
@@ -805,9 +784,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('hrm.performance_redesign_page.k36')}</div>
-                  <div className={styles.il20}>
-                    {formatDateTime(selectedReview.created_at)}
-                  </div>
+                  <div className={styles.il20}>{formatDateTime(selectedReview.created_at)}</div>
                 </div>
               </div>
             </Card>

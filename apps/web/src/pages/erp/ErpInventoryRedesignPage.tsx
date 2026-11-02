@@ -328,13 +328,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
       key: 'sku',
       header: t('erp.erp_inventory_redesign.column.sku'),
       sortable: true,
-      render: (row) => (
-        <span
-          className={styles.il1}
-        >
-          {row.sku}
-        </span>
-      ),
+      render: (row) => <span className={styles.il1}>{row.sku}</span>,
     },
     {
       key: 'product_name',
@@ -342,9 +336,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
       render: (row) => (
         <div>
           <div className={styles.il2}>{row.product_name}</div>
-          <div className={styles.il3}>
-            {row.category}
-          </div>
+          <div className={styles.il3}>{row.category}</div>
         </div>
       ),
     },
@@ -372,9 +364,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
             {row.quantity} {row.unit}
           </div>
           {/* 库存水平进度条 */}
-          <div
-            className={styles.il7}
-          >
+          <div className={styles.il7}>
             <div
               style={{
                 width: `${Math.min(100, (row.quantity / (row.safety_stock * 2)) * 100)}%`,
@@ -401,11 +391,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
       header: t('erp.erp_inventory_redesign.column.total_value'),
       align: 'right',
       sortable: true,
-      render: (row) => (
-        <span className={styles.il9}>
-          {formatAmount(row.total_value)}
-        </span>
-      ),
+      render: (row) => <span className={styles.il9}>{formatAmount(row.total_value)}</span>,
     },
     {
       key: 'status',
@@ -452,9 +438,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={styles.il11}
-            >
+            <div className={styles.il11}>
               <Input
                 placeholder={t('erp.erp_inventory_redesign.search_placeholder')}
                 value={searchQuery}
@@ -581,16 +565,10 @@ const ErpInventoryRedesignPage: React.FC = () => {
         {selectedItem && (
           <div className={styles.il16}>
             <Card>
-              <div
-                className={styles.il17}
-              >
+              <div className={styles.il17}>
                 <div>
                   <div style={detailLabel}>{selectedItem.sku}</div>
-                  <div
-                    className={styles.il18}
-                  >
-                    {selectedItem.product_name}
-                  </div>
+                  <div className={styles.il18}>{selectedItem.product_name}</div>
                   <div className={styles.il19}>
                     {selectedItem.category} · {selectedItem.warehouse}
                   </div>
@@ -605,17 +583,13 @@ const ErpInventoryRedesignPage: React.FC = () => {
             {/* 库存水平可视化 */}
             <Card title={t('erp.erp_inventory_redesign.drawer.stock_level')}>
               <div className={styles.il20}>
-                <div
-                  className={styles.il21}
-                >
+                <div className={styles.il21}>
                   <span>{t('erp.erp_inventory_redesign.drawer.current_stock')}</span>
                   <span className={styles.il22}>
                     {selectedItem.quantity} {selectedItem.unit}
                   </span>
                 </div>
-                <div
-                  className={styles.il23}
-                >
+                <div className={styles.il23}>
                   <div
                     style={{
                       width: `${Math.min(100, (selectedItem.quantity / (selectedItem.safety_stock * 2)) * 100)}%`,
@@ -625,9 +599,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
                     }}
                   />
                 </div>
-                <div
-                  className={styles.il24}
-                >
+                <div className={styles.il24}>
                   <span>
                     {t('erp.erp_inventory_redesign.drawer.safety_stock_label', {
                       value: selectedItem.safety_stock,
@@ -640,9 +612,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
             </Card>
 
             <Card title={t('erp.erp_inventory_redesign.drawer.stock_info')}>
-              <div
-                className={styles.il25}
-              >
+              <div className={styles.il25}>
                 <div>
                   <div style={detailLabel}>{t('erp.erp_inventory_redesign.drawer.warehouse')}</div>
                   <div style={detailValue}>{selectedItem.warehouse}</div>
@@ -661,11 +631,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
                   <div style={detailLabel}>
                     {t('erp.erp_inventory_redesign.drawer.total_value')}
                   </div>
-                  <div
-                    className={styles.il27}
-                  >
-                    {formatAmount(selectedItem.total_value)}
-                  </div>
+                  <div className={styles.il27}>{formatAmount(selectedItem.total_value)}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>
@@ -709,9 +675,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
           </div>
         }
       >
-        <div
-          className={styles.il30}
-        >
+        <div className={styles.il30}>
           {(
             [
               ['material_code', t('erp.erp_inventory_redesign.modal.field.material_code')],

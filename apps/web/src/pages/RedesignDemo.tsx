@@ -216,9 +216,7 @@ const RedesignDemo: React.FC = () => {
                   m.status === 'running' ? 'amber' : m.status === 'warning' ? 'warning' : 'cyan'
                 }
               >
-                <div
-                  className={styles.il1}
-                >
+                <div className={styles.il1}>
                   <div
                     style={{
                       display: 'inline-flex',
@@ -235,24 +233,10 @@ const RedesignDemo: React.FC = () => {
                     pulse={m.status === 'running'}
                   />
                 </div>
-                <h3
-                  className={styles.il2}
-                >
-                  {t(m.name)}
-                </h3>
-                <p
-                  className={styles.il3}
-                >
-                  {t(m.desc)}
-                </p>
-                <div
-                  className={styles.il4}
-                >
-                  <span
-                    className={styles.il5}
-                  >
-                    {t(m.stat)}
-                  </span>
+                <h3 className={styles.il2}>{t(m.name)}</h3>
+                <p className={styles.il3}>{t(m.desc)}</p>
+                <div className={styles.il4}>
+                  <span className={styles.il5}>{t(m.stat)}</span>
                   <Button
                     variant='ghost'
                     size='sm'
@@ -265,25 +249,17 @@ const RedesignDemo: React.FC = () => {
           })}
         </div>
 
-        <div
-          className={cx('r-col-12 r-col-lg-4', styles.il6)}
-        >
+        <div className={cx('r-col-12 r-col-lg-4', styles.il6)}>
           <Card
             className='animate-fade-in-up stagger-6'
             accent='error'
           >
-            <div
-              className={styles.il7}
-            >
+            <div className={styles.il7}>
               <AlertTriangle
                 size={18}
                 color='var(--error-500)'
               />
-              <h2
-                className={styles.il8}
-              >
-                {t('demo.section.realtime_alerts')}
-              </h2>
+              <h2 className={styles.il8}>{t('demo.section.realtime_alerts')}</h2>
               <Badge
                 variant='error'
                 dot
@@ -309,13 +285,9 @@ const RedesignDemo: React.FC = () => {
                           ? t('demo.alert_level.warning')
                           : t('demo.alert_level.info')}
                     </Badge>
-                    <span className={styles.il12}>
-                      {alert.time}
-                    </span>
+                    <span className={styles.il12}>{alert.time}</span>
                   </div>
-                  <span className={styles.il13}>
-                    {t(alert.message)}
-                  </span>
+                  <span className={styles.il13}>{t(alert.message)}</span>
                 </div>
               ))}
             </div>
@@ -325,18 +297,12 @@ const RedesignDemo: React.FC = () => {
             className='animate-fade-in-up stagger-7'
             accent='cyan'
           >
-            <div
-              className={styles.il14}
-            >
+            <div className={styles.il14}>
               <Clock
                 size={18}
                 color='var(--cyan-400)'
               />
-              <h2
-                className={styles.il15}
-              >
-                {t('demo.section.todo')}
-              </h2>
+              <h2 className={styles.il15}>{t('demo.section.todo')}</h2>
             </div>
             <div className={styles.il16}>
               {tasks.map((task) => (
@@ -345,12 +311,8 @@ const RedesignDemo: React.FC = () => {
                   className={styles.il17}
                 >
                   <div className={styles.il18}>
-                    <span className={styles.il19}>
-                      {t(task.title)}
-                    </span>
-                    <span className={styles.il20}>
-                      {t('demo.task_due', { due: t(task.due) })}
-                    </span>
+                    <span className={styles.il19}>{t(task.title)}</span>
+                    <span className={styles.il20}>{t('demo.task_due', { due: t(task.due) })}</span>
                   </div>
                   <Badge
                     variant={
@@ -376,18 +338,12 @@ const RedesignDemo: React.FC = () => {
             className='animate-fade-in-up stagger-8'
             accent='success'
           >
-            <div
-              className={styles.il21}
-            >
+            <div className={styles.il21}>
               <Cpu
                 size={18}
                 color='var(--success-500)'
               />
-              <h2
-                className={styles.il22}
-              >
-                {t('demo.section.system_health')}
-              </h2>
+              <h2 className={styles.il22}>{t('demo.section.system_health')}</h2>
             </div>
             <div className={styles.il23}>
               {[
@@ -400,9 +356,7 @@ const RedesignDemo: React.FC = () => {
                   key={svc.label}
                   className={styles.il24}
                 >
-                  <span className={styles.il25}>
-                    {svc.label}
-                  </span>
+                  <span className={styles.il25}>{svc.label}</span>
                   <StatusLight
                     state={svc.status}
                     label={
@@ -451,29 +405,15 @@ const RedesignDemo: React.FC = () => {
                 <Icon size={24} />
               </div>
               <div className={styles.il27}>
-                <div
-                  className={styles.il28}
-                >
-                  <h3
-                    className={styles.il29}
-                  >
-                    {t(m.name)}
-                  </h3>
+                <div className={styles.il28}>
+                  <h3 className={styles.il29}>{t(m.name)}</h3>
                   <StatusLight
                     state={m.status}
                     pulse={m.status === 'running'}
                   />
                 </div>
-                <p
-                  className={styles.il30}
-                >
-                  {t(m.desc)}
-                </p>
-                <span
-                  className={styles.il31}
-                >
-                  {t(m.stat)}
-                </span>
+                <p className={styles.il30}>{t(m.desc)}</p>
+                <span className={styles.il31}>{t(m.stat)}</span>
               </div>
             </div>
           </Card>
@@ -495,9 +435,7 @@ const RedesignDemo: React.FC = () => {
   );
 
   const renderAlerts = () => (
-    <section
-      className={cx('animate-fade-in-up', styles.il32)}
-    >
+    <section className={cx('animate-fade-in-up', styles.il32)}>
       <Alert
         variant='info'
         title={t('demo.banner_notification.title')}
@@ -528,11 +466,7 @@ const RedesignDemo: React.FC = () => {
       </Alert>
 
       <Card className={styles.il33}>
-        <h3
-          className={styles.il34}
-        >
-          {t('demo.section.realtime_alert_stream')}
-        </h3>
+        <h3 className={styles.il34}>{t('demo.section.realtime_alert_stream')}</h3>
         <div className={styles.il35}>
           {alerts.map((alert) => (
             <Alert
@@ -651,9 +585,7 @@ const RedesignDemo: React.FC = () => {
         />
 
         {showSuccessAlert && (
-          <div
-            className={cx('animate-fade-in-up', styles.il37)}
-          >
+          <div className={cx('animate-fade-in-up', styles.il37)}>
             <Alert
               variant='success'
               dismissible
@@ -664,17 +596,13 @@ const RedesignDemo: React.FC = () => {
           </div>
         )}
 
-        <div
-          className={cx('animate-fade-in-up stagger-1', styles.il38)}
-        >
+        <div className={cx('animate-fade-in-up stagger-1', styles.il38)}>
           <Tabs
             tabs={tabs.map((tab) => ({ ...tab, label: t(tab.label) }))}
             activeTab={activeTab}
             onChange={setActiveTab}
           />
-          <div
-            className={styles.il39}
-          >
+          <div className={styles.il39}>
             <div className={styles.il40}>
               <Select
                 label={t('demo.select.time_range')}

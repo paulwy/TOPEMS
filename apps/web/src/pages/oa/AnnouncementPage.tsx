@@ -273,15 +273,11 @@ const AnnouncementPage: React.FC = () => {
       sortable: true,
       render: (row) => (
         <div>
-          <div
-            className={styles.il1}
-          >
+          <div className={styles.il1}>
             {row.priority === 'high' && <Tag variant='error'>{t('oa.announcement_page.k18')}</Tag>}
             <span className={styles.il2}>{row.title}</span>
           </div>
-          <div
-            className={styles.il3}
-          >
+          <div className={styles.il3}>
             <span className={styles.il4}>
               <User size={12} />
               {row.author}
@@ -376,9 +372,7 @@ const AnnouncementPage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={styles.il9}
-            >
+            <div className={styles.il9}>
               <Input
                 placeholder={t('oa.announcement_page.k3')}
                 value={searchQuery}
@@ -471,9 +465,7 @@ const AnnouncementPage: React.FC = () => {
           <div className={styles.il14}>
             {/* 标题区 */}
             <div>
-              <div
-                className={styles.il15}
-              >
+              <div className={styles.il15}>
                 {selectedAnnouncement.priority === 'high' && (
                   <Tag variant='error'>{t('oa.announcement_page.k18')}</Tag>
                 )}
@@ -488,17 +480,11 @@ const AnnouncementPage: React.FC = () => {
                     t('oa.announcement_page.k16')}
                 </Badge>
               </div>
-              <h2
-                className={styles.il16}
-              >
-                {selectedAnnouncement.title}
-              </h2>
+              <h2 className={styles.il16}>{selectedAnnouncement.title}</h2>
             </div>
 
             {/* 元信息 */}
-            <div
-              className={styles.il17}
-            >
+            <div className={styles.il17}>
               <span className={styles.il18}>
                 <User size={14} />
                 {t('oa.announcement_page.k29', { author: selectedAnnouncement.author })}
@@ -519,11 +505,7 @@ const AnnouncementPage: React.FC = () => {
 
             {/* 正文 */}
             <Card title={t('oa.announcement_page.k32')}>
-              <div
-                className={styles.il21}
-              >
-                {selectedAnnouncement.content}
-              </div>
+              <div className={styles.il21}>{selectedAnnouncement.content}</div>
             </Card>
           </div>
         )}

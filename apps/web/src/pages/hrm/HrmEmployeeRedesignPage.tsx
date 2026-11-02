@@ -467,13 +467,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
         key: 'emp_no',
         header: t('hrm.employee_redesign_page.k19'),
         sortable: true,
-        render: (row) => (
-          <span
-            className={styles.il1}
-          >
-            {row.emp_no}
-          </span>
-        ),
+        render: (row) => <span className={styles.il1}>{row.emp_no}</span>,
       },
       {
         key: 'name',
@@ -481,9 +475,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
         render: (row) => (
           <div>
             <div className={styles.il2}>{row.name}</div>
-            <div className={styles.il3}>
-              {row.position}
-            </div>
+            <div className={styles.il3}>{row.position}</div>
           </div>
         ),
       },
@@ -512,22 +504,14 @@ const HrmEmployeeRedesignPage: React.FC = () => {
       {
         key: 'phone',
         header: t('hrm.employee_redesign_page.k23'),
-        render: (row) => (
-          <span className={styles.il6}>
-            {row.phone}
-          </span>
-        ),
+        render: (row) => <span className={styles.il6}>{row.phone}</span>,
       },
       {
         key: 'salary',
         header: t('hrm.employee_redesign_page.k24'),
         align: 'right',
         sortable: true,
-        render: (row) => (
-          <span className={styles.il7}>
-            {formatSalary(row.salary)}
-          </span>
-        ),
+        render: (row) => <span className={styles.il7}>{formatSalary(row.salary)}</span>,
       },
       {
         key: 'join_date',
@@ -615,9 +599,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={styles.il9}
-            >
+            <div className={styles.il9}>
               <Input
                 placeholder={t('hrm.employee_redesign_page.k4')}
                 value={searchQuery}
@@ -739,16 +721,10 @@ const HrmEmployeeRedesignPage: React.FC = () => {
         {selectedEmployee && (
           <div style={colGap4}>
             <Card>
-              <div
-                className={styles.il13}
-              >
+              <div className={styles.il13}>
                 <div>
                   <div style={detailLabel}>{selectedEmployee.emp_no}</div>
-                  <div
-                    className={styles.il14}
-                  >
-                    {selectedEmployee.name}
-                  </div>
+                  <div className={styles.il14}>{selectedEmployee.name}</div>
                   <div className={styles.il15}>
                     {selectedEmployee.department} · {selectedEmployee.position}
                   </div>
@@ -770,9 +746,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
               <div style={gridTwoCol}>
                 <div>
                   <div style={detailLabel}>{t('hrm.employee_redesign_page.k23')}</div>
-                  <div className={styles.il16}>
-                    {selectedEmployee.phone}
-                  </div>
+                  <div className={styles.il16}>{selectedEmployee.phone}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('hrm.employee_redesign_page.k35')}</div>
@@ -780,9 +754,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('hrm.employee_redesign_page.k36')}</div>
-                  <div className={styles.il18}>
-                    {selectedEmployee.manager}
-                  </div>
+                  <div className={styles.il18}>{selectedEmployee.manager}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('hrm.employee_redesign_page.k25')}</div>
@@ -795,15 +767,11 @@ const HrmEmployeeRedesignPage: React.FC = () => {
               <div style={gridTwoCol}>
                 <div>
                   <div style={detailLabel}>{t('hrm.employee_redesign_page.k24')}</div>
-                  <div className={styles.il20}>
-                    {formatSalary(selectedEmployee.salary)}
-                  </div>
+                  <div className={styles.il20}>{formatSalary(selectedEmployee.salary)}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('hrm.employee_redesign_page.k38')}</div>
-                  <div className={styles.il21}>
-                    {formatDateTime(selectedEmployee.created_at)}
-                  </div>
+                  <div className={styles.il21}>{formatDateTime(selectedEmployee.created_at)}</div>
                 </div>
               </div>
             </Card>

@@ -1,7 +1,6 @@
 import React from 'react';
-import cx from 'clsx';
 import styles from './DateRangePicker.module.css';
-import clsx from 'clsx';
+import { clsx as cx, clsx } from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { Calendar } from 'lucide-react';
 
@@ -45,7 +44,6 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   disabled = false,
   presets,
   className,
-  style,
 }) => {
   const { t } = useTranslation();
   const resolvedStartPlaceholder =
@@ -64,7 +62,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     onChange?.(preset.value());
   };
 
-  const inputStyle: React.CSSProperties = {
+  const _inputStyle: React.CSSProperties = {
     flex: 1,
     height: 40,
     padding: '0 var(--space-3)',
@@ -81,13 +79,9 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   };
 
   return (
-    <div
-      className={cx(clsx('redesign-date-range-picker', className), styles.il1)}
-    >
+    <div className={cx(clsx('redesign-date-range-picker', className), styles.il1)}>
       {/* 日期输入 */}
-      <div
-        className={styles.il2}
-      >
+      <div className={styles.il2}>
         <div className={styles.il3}>
           <Calendar
             size={16}
@@ -104,9 +98,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             className={styles.il5}
           />
         </div>
-        <span className={styles.il6}>
-          {t('components.date_range_picker.to')}
-        </span>
+        <span className={styles.il6}>{t('components.date_range_picker.to')}</span>
         <div className={styles.il7}>
           <Calendar
             size={16}

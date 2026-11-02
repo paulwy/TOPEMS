@@ -463,26 +463,16 @@ const DashboardPage: React.FC = () => {
                     key={module.id}
                     className={styles.il1}
                   >
-                    <div
-                      className={styles.il2}
-                    >
+                    <div className={styles.il2}>
                       <Icon size={20} />
                     </div>
                     <div className={styles.il3}>
-                      <div className={styles.il4}>
-                        {module.name}
-                      </div>
-                      <div className={styles.il5}>
-                        {module.desc}
-                      </div>
+                      <div className={styles.il4}>{module.name}</div>
+                      <div className={styles.il5}>{module.desc}</div>
                     </div>
                     <div className={styles.il6}>
                       <StatusLight state={module.status} />
-                      <div
-                        className={styles.il7}
-                      >
-                        {module.stat}
-                      </div>
+                      <div className={styles.il7}>{module.stat}</div>
                     </div>
                   </div>
                 );
@@ -524,9 +514,7 @@ const DashboardPage: React.FC = () => {
                     }`,
                   }}
                 >
-                  <div className={styles.il9}>
-                    {alert.message}
-                  </div>
+                  <div className={styles.il9}>{alert.message}</div>
                   <div className={styles.il10}>{alert.time}</div>
                 </div>
               ))}
@@ -574,9 +562,7 @@ const DashboardPage: React.FC = () => {
                       flexShrink: 0,
                     }}
                   />
-                  <div className={styles.il13}>
-                    {task.title}
-                  </div>
+                  <div className={styles.il13}>{task.title}</div>
                   <Tag
                     variant={
                       task.priority === 'high'
@@ -592,9 +578,7 @@ const DashboardPage: React.FC = () => {
                         ? i18n.t('dashboard.dash_priority_medium')
                         : i18n.t('dashboard.dash_priority_low')}
                   </Tag>
-                  <div
-                    className={styles.il14}
-                  >
+                  <div className={styles.il14}>
                     <Clock size={12} />
                     {task.due}
                   </div>
@@ -683,29 +667,17 @@ const DashboardPage: React.FC = () => {
                   transition: 'border-color 0.2s',
                 }}
               >
-                <div
-                  className={styles.il18}
-                >
-                  <div
-                    className={styles.il19}
-                  >
+                <div className={styles.il18}>
+                  <div className={styles.il19}>
                     <Icon size={20} />
                   </div>
                   <div>
-                    <div className={styles.il20}>
-                      {module.name}
-                    </div>
+                    <div className={styles.il20}>{module.name}</div>
                     <StatusLight state={module.status} />
                   </div>
                 </div>
-                <div
-                  className={styles.il21}
-                >
-                  {module.desc}
-                </div>
-                <div className={styles.il22}>
-                  {module.stat}
-                </div>
+                <div className={styles.il21}>{module.desc}</div>
+                <div className={styles.il22}>{module.stat}</div>
               </div>
             );
           })}
@@ -765,9 +737,7 @@ const DashboardPage: React.FC = () => {
                 }}
               />
               <div className={styles.il24}>
-                <div className={styles.il25}>
-                  {alert.message}
-                </div>
+                <div className={styles.il25}>{alert.message}</div>
                 <div className={styles.il26}>{alert.time}</div>
               </div>
               <Tag
@@ -807,9 +777,7 @@ const DashboardPage: React.FC = () => {
           ]}
         />
 
-        <div
-          className={styles.il28}
-        >
+        <div className={styles.il28}>
           {showCustomRange && (
             <div className={styles.il29}>
               <DateRangePicker
@@ -900,11 +868,7 @@ const DashboardPage: React.FC = () => {
 
         <div className={styles.il31}>
           {isLoading ? (
-            <div
-              className={styles.il32}
-            >
-              {i18n.t('dashboard.dash_loading')}
-            </div>
+            <div className={styles.il32}>{i18n.t('dashboard.dash_loading')}</div>
           ) : activeTab === 'overview' ? (
             renderOverview()
           ) : activeTab === 'modules' ? (
@@ -925,9 +889,7 @@ const HealthItem: React.FC<{
   status: 'healthy' | 'warning' | 'error';
   value: string;
 }> = ({ icon: Icon, label, status, value }) => (
-  <div
-    className={styles.il33}
-  >
+  <div className={styles.il33}>
     <div
       style={{
         width: 36,

@@ -52,10 +52,9 @@ const toGroups = (rows: TimelineRow[]): TimelineGroup[] =>
           nodes: rows.map((r) => ({
             id: r.id,
             title: r.name,
-            description:
-              r.project_name
-                ? [r.project_name, r.project_code].filter(Boolean).join(' · ')
-                : (r.description ?? undefined),
+            description: r.project_name
+              ? [r.project_name, r.project_code].filter(Boolean).join(' · ')
+              : (r.description ?? undefined),
             date: (r.due_date ?? r.completed_date ?? '').slice(0, 10) || '-',
             type: 'milestone',
             status: toStatus(r.status),

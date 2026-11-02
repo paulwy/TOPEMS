@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import styles from './ModulesOverviewPage.module.css';
 import {
   Box,
   Typography,

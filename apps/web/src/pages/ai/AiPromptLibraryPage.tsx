@@ -827,11 +827,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                   </Typography>
                 </Box>
               ) : generatedResult ? (
-                <pre
-                  className={styles.il2}
-                >
-                  {generatedResult}
-                </pre>
+                <pre className={styles.il2}>{generatedResult}</pre>
               ) : (
                 <Box sx={{ textAlign: 'center', py: 6 }}>
                   <Sparkles

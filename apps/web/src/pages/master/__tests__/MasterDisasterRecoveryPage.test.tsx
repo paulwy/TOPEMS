@@ -6,16 +6,33 @@ import MasterDisasterRecoveryPage from '../MasterDisasterRecoveryPage';
 
 vi.mock('@/api/master/disasterRecovery', () => ({
   disasterRecoveryApi: {
-    getRecoveryStatus: vi
+    getRecoveryStatus: vi.fn().mockResolvedValue({
+      data: { state: 'healthy', pending_jobs: 2, last_recovery_at: '2026-11-01T00:00:00Z' },
+    }),
+    listRecoveryPoints: vi.fn().mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: 'P1',
+            created_at: '2026-11-01',
+            snapshot_type: 'full',
+            size_bytes: 1024,
+            created_by: 'admin',
+          },
+        ],
+        total: 1,
+      },
+    }),
+    getPlanProgress: vi
       .fn()
-      .mockResolvedValue({ data: { state: 'healthy', pending_jobs: 2, last_recovery_at: '2026-11-01T00:00:00Z' } }),
-    listRecoveryPoints: vi
+      .mockResolvedValue({ data: { current_step: 1, total_steps: 3, status: 'running' } }),
+    getContinuityScore: vi
       .fn()
-      .mockResolvedValue({ data: { items: [{ id: 'P1', created_at: '2026-11-01', snapshot_type: 'full', size_bytes: 1024, created_by: 'admin' }], total: 1 } }),
-    getPlanProgress: vi.fn().mockResolvedValue({ data: { current_step: 1, total_steps: 3, status: 'running' } }),
-    getContinuityScore: vi.fn().mockResolvedValue({ data: { score: 85, coverage_percentage: 90, risk_level: 'low' } }),
+      .mockResolvedValue({ data: { score: 85, coverage_percentage: 90, risk_level: 'low' } }),
     listContinuityPlans: vi.fn().mockResolvedValue({ data: { items: [], total: 0 } }),
-    getReplicationStatus: vi.fn().mockResolvedValue({ data: { source_region: 'cn-east', target_region: 'cn-south', status: 'active' } }),
+    getReplicationStatus: vi.fn().mockResolvedValue({
+      data: { source_region: 'cn-east', target_region: 'cn-south', status: 'active' },
+    }),
     getRegionHealth: vi.fn().mockResolvedValue({ data: [] }),
     getFailoverHistory: vi.fn().mockResolvedValue({ data: [] }),
     createRecoveryPoint: vi.fn().mockResolvedValue({ data: {} }),

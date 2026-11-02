@@ -179,7 +179,9 @@ export const IntegrationErpOverviewPage: React.FC = () => {
   const stats: StatCard[] = useMemo(() => {
     const total = connections.length;
     const errors = connections.filter((c) => c.status === 'error' || c.status === 'failed').length;
-    const active = connections.filter((c) => c.status === 'active' || c.status === 'connected' || c.isactive).length;
+    const active = connections.filter(
+      (c) => c.status === 'active' || c.status === 'connected' || c.isactive
+    ).length;
     const successRate = total ? Math.round((active / total) * 1000) / 10 : 0;
     return [
       {

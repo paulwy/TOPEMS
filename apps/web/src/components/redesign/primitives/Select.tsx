@@ -1,7 +1,6 @@
 import React, { useId } from 'react';
-import cx from 'clsx';
 import styles from './Select.module.css';
-import clsx from 'clsx';
+import { clsx as cx, clsx } from 'clsx';
 
 export interface SelectOption {
   value: string;
@@ -26,7 +25,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       options,
       placeholder,
       className,
-      style,
+
       'aria-label': ariaLabel,
       'data-testid': dataTestId,
       ...rest
@@ -42,9 +41,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         ? `select-${label.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')}`
         : undefined);
     return (
-      <div
-        className={cx(clsx('redesign-select-wrapper', className), styles.il1)}
-      >
+      <div className={cx(clsx('redesign-select-wrapper', className), styles.il1)}>
         {label && (
           <label
             htmlFor={selectId}
@@ -109,13 +106,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             />
           </svg>
         </div>
-        {error && (
-          <span
-            className={styles.il5}
-          >
-            {error}
-          </span>
-        )}
+        {error && <span className={styles.il5}>{error}</span>}
       </div>
     );
   }

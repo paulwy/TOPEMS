@@ -463,13 +463,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
         key: 'order_no',
         header: t('erp.erp_sales_order_redesign.column.order_no'),
         sortable: true,
-        render: (row) => (
-          <span
-            className={styles.il1}
-          >
-            {row.order_no}
-          </span>
-        ),
+        render: (row) => <span className={styles.il1}>{row.order_no}</span>,
       },
       {
         key: 'customer_name',
@@ -487,11 +481,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
         header: t('erp.erp_sales_order_redesign.column.total_amount'),
         align: 'right',
         sortable: true,
-        render: (row) => (
-          <span className={styles.il4}>
-            {formatAmount(row.total_amount)}
-          </span>
-        ),
+        render: (row) => <span className={styles.il4}>{formatAmount(row.total_amount)}</span>,
       },
       {
         key: 'order_date',
@@ -597,9 +587,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={styles.il8}
-            >
+            <div className={styles.il8}>
               <Input
                 placeholder={t('erp.erp_sales_order_redesign.search_placeholder')}
                 value={searchQuery}
@@ -722,19 +710,11 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
         {selectedOrder && (
           <div style={colGap4}>
             <Card>
-              <div
-                className={styles.il13}
-              >
+              <div className={styles.il13}>
                 <div>
                   <div style={detailLabel}>{selectedOrder.order_no}</div>
-                  <div
-                    className={styles.il14}
-                  >
-                    {selectedOrder.customer_name}
-                  </div>
-                  <div className={styles.il15}>
-                    {selectedOrder.product_name}
-                  </div>
+                  <div className={styles.il14}>{selectedOrder.customer_name}</div>
+                  <div className={styles.il15}>{selectedOrder.product_name}</div>
                 </div>
                 <Badge variant={statusConfig[selectedOrder.status]?.variant || 'default'}>
                   {statusConfig[selectedOrder.status]?.label ||
@@ -745,17 +725,11 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
 
             {/* 订单金额大字体 */}
             <Card title={t('erp.erp_sales_order_redesign.card.total_amount')}>
-              <div
-                className={styles.il16}
-              >
-                {formatAmount(selectedOrder.total_amount)}
-              </div>
+              <div className={styles.il16}>{formatAmount(selectedOrder.total_amount)}</div>
             </Card>
 
             <Card title={t('erp.erp_sales_order_redesign.card.order_info')}>
-              <div
-                className={styles.il17}
-              >
+              <div className={styles.il17}>
                 <div>
                   <div style={detailLabel}>
                     {t('erp.erp_sales_order_redesign.field.product_name')}

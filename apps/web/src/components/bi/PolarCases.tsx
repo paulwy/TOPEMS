@@ -43,9 +43,7 @@ const CustomTooltipPolar: React.FC<CustomTooltipProps> = ({ active, payload }) =
           minWidth: '120px',
         }}
       >
-        <p className={styles.il1}>
-          {payload[0].name}
-        </p>
+        <p className={styles.il1}>{payload[0].name}</p>
         {payload.map((item, index) => (
           <p
             key={index}

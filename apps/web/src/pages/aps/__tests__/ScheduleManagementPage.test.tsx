@@ -45,9 +45,7 @@ describe('ScheduleManagementPage', () => {
 
   it('renders page heading（排程管理）', async () => {
     renderWithProviders(<ScheduleManagementPage />);
-    expect(
-      await screen.findByRole('heading', { name: '排程管理' })
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '排程管理' })).toBeInTheDocument();
   });
 
   it('renders schedule rows from mocked API data', async () => {

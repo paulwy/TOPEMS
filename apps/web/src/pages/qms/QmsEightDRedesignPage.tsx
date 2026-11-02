@@ -462,13 +462,7 @@ const QmsEightDRedesignPage: React.FC = () => {
         key: 'report_no',
         header: t('qms.eight_d_redesign.col_report_no'),
         sortable: true,
-        render: (row) => (
-          <span
-            className={styles.il1}
-          >
-            {row.report_no}
-          </span>
-        ),
+        render: (row) => <span className={styles.il1}>{row.report_no}</span>,
       },
       {
         key: 'title',
@@ -508,9 +502,7 @@ const QmsEightDRedesignPage: React.FC = () => {
           <div>
             <div className={styles.il4}>{row.current_step}</div>
             {/* 进度条 */}
-            <div
-              className={styles.il5}
-            >
+            <div className={styles.il5}>
               <div
                 style={{
                   width: `${((statusConfig[row.status]?.step || 1) / 9) * 100}%`,
@@ -634,9 +626,7 @@ const QmsEightDRedesignPage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={styles.il9}
-            >
+            <div className={styles.il9}>
               <Input
                 placeholder={t('qms.eight_d_redesign.search_placeholder')}
                 value={searchQuery}
@@ -757,16 +747,10 @@ const QmsEightDRedesignPage: React.FC = () => {
         {selectedReport && (
           <div style={colGap4}>
             <Card>
-              <div
-                className={styles.il13}
-              >
+              <div className={styles.il13}>
                 <div>
                   <div style={detailLabel}>{selectedReport.report_no}</div>
-                  <div
-                    className={styles.il14}
-                  >
-                    {selectedReport.title}
-                  </div>
+                  <div className={styles.il14}>{selectedReport.title}</div>
                 </div>
                 <div style={rowGap2}>
                   <Badge variant={severityConfig[selectedReport.severity]?.variant || 'default'}>
@@ -804,9 +788,7 @@ const QmsEightDRedesignPage: React.FC = () => {
                     />
                   ))}
                 </div>
-                <div
-                  className={styles.il18}
-                >
+                <div className={styles.il18}>
                   <span>D1</span>
                   <span>D2</span>
                   <span>D3</span>
@@ -820,9 +802,7 @@ const QmsEightDRedesignPage: React.FC = () => {
             </Card>
 
             <Card title={t('qms.eight_d_redesign.drawer_basic_info')}>
-              <div
-                className={styles.il19}
-              >
+              <div className={styles.il19}>
                 <div>
                   <div style={detailLabel}>{t('qms.eight_d_redesign.drawer_product_name')}</div>
                   <div style={detailValue}>{selectedReport.product_name}</div>
@@ -850,9 +830,7 @@ const QmsEightDRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.eight_d_redesign.drawer_created_at')}</div>
-                  <div className={styles.il21}>
-                    {formatDateTime(selectedReport.created_at)}
-                  </div>
+                  <div className={styles.il21}>{formatDateTime(selectedReport.created_at)}</div>
                 </div>
               </div>
             </Card>

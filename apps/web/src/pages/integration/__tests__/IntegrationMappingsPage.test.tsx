@@ -36,17 +36,13 @@ describe('IntegrationMappingsPage', () => {
 
   it('renders schema title heading（数据映射）', () => {
     renderWithProviders(<IntegrationMappingsPage />);
-    expect(
-      screen.getByRole('heading', { name: '数据映射' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '数据映射' })).toBeInTheDocument();
   });
 
   it('renders mapping row adapted from mocked API', async () => {
     renderWithProviders(<IntegrationMappingsPage />);
     await waitFor(() => {
-      expect(
-        screen.getByText('客户主数据映射')
-      ).toBeInTheDocument();
+      expect(screen.getByText('客户主数据映射')).toBeInTheDocument();
     });
   });
 });

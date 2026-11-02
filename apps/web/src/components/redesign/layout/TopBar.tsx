@@ -110,16 +110,8 @@ export const TopBar: React.FC<TopBarProps> = ({
           </Button>
         )}
         <div className={styles.il2}>
-          <span
-            className={styles.il3}
-          >
-            {title}
-          </span>
-          <span
-            className={styles.il4}
-          >
-            OS
-          </span>
+          <span className={styles.il3}>{title}</span>
+          <span className={styles.il4}>OS</span>
         </div>
       </div>
 
@@ -195,15 +187,11 @@ export const TopBar: React.FC<TopBarProps> = ({
               }}
             >
               {/* 用户信息 */}
-              <div
-                className={styles.il8}
-              >
+              <div className={styles.il8}>
                 <div className={styles.il9}>
                   {user?.name || user?.username || t('components.top_bar.user_fallback')}
                 </div>
-                <div className={styles.il10}>
-                  {user?.email || ''}
-                </div>
+                <div className={styles.il10}>{user?.email || ''}</div>
               </div>
 
               {/* 菜单选项 */}
@@ -226,9 +214,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               </div>
 
               {/* 退出登录 */}
-              <div
-                className={styles.il14}
-              >
+              <div className={styles.il14}>
                 <button
                   onClick={handleLogout}
                   className={styles.il15}

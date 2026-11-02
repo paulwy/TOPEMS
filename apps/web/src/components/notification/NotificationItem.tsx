@@ -84,9 +84,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
       );
     case 'alert':
       return (
-        <div
-          className={styles.il1}
-        >
+        <div className={styles.il1}>
           <svg
             style={{
               width: 20,
@@ -136,9 +134,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
       );
     case 'message':
       return (
-        <div
-          className={styles.il2}
-        >
+        <div className={styles.il2}>
           <svg
             style={{
               width: 20,
@@ -189,7 +185,7 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
   }
 };
 
-const getPriorityColor = (priority: number) => {
+const _getPriorityColor = (priority: number) => {
   if (priority >= 4) return { color: 'error.dark' };
   if (priority >= 3) return { color: 'warning.600' };
   if (priority >= 2) return { color: 'yellow.600' };
@@ -294,9 +290,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         {getNotificationIcon(notification.notification_type, theme)}
 
         <div className={styles.il4}>
-          <div
-            className={styles.il5}
-          >
+          <div className={styles.il5}>
             <h4
               style={{
                 fontSize: 14,
@@ -347,19 +341,13 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
             }}
           >
             <span>{formatTime(notification.created_at)}</span>
-            <span
-              className={styles.il6}
-            >
-              {getPriorityLabel(notification.priority)}
-            </span>
+            <span className={styles.il6}>{getPriorityLabel(notification.priority)}</span>
           </div>
         </div>
       </div>
 
       {isHovered && (
-        <div
-          className={styles.il7}
-        >
+        <div className={styles.il7}>
           {!notification.is_read && (
             <button
               onClick={handleMarkAsRead}

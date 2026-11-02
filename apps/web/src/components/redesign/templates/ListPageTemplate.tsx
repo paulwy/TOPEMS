@@ -40,7 +40,7 @@ export function ListPageTemplate<T extends object>({
   tableProps,
   footer,
   className,
-  style,
+
   action: _action, // 显式排除 action，避免传递给非 form 元素
   ...rest
 }: ListPageTemplateProps<T>) {
@@ -66,13 +66,7 @@ export function ListPageTemplate<T extends object>({
         </div>
       )}
 
-      {toolbar && (
-        <div
-          className={styles.il2}
-        >
-          {toolbar}
-        </div>
-      )}
+      {toolbar && <div className={styles.il2}>{toolbar}</div>}
 
       {data.length === 0 && !loading && !error ? (
         <EmptyState

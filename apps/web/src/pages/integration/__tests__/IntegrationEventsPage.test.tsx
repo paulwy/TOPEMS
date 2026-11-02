@@ -13,8 +13,6 @@ describe('IntegrationEventsPage', () => {
 
   it('renders schema title heading（事件日志）', () => {
     renderWithProviders(<IntegrationEventsPage />);
-    expect(
-      screen.getByRole('heading', { name: '事件日志' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '事件日志' })).toBeInTheDocument();
   });
 });

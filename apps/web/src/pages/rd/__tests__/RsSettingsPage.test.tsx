@@ -26,7 +26,9 @@ vi.mock('@/api/rd/settings', () => ({
 }));
 
 describe('RsSettingsPage', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders statistics cards and repo tab default data', async () => {
     renderWithProviders(<RsSettingsPage />);

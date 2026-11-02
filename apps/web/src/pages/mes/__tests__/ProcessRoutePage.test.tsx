@@ -46,9 +46,7 @@ describe('ProcessRoutePage', () => {
   it('renders page heading（工艺路线）', async () => {
     renderWithProviders(<ProcessRoutePage />);
 
-    expect(
-      await screen.findByRole('heading', { name: '工艺路线' })
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '工艺路线' })).toBeInTheDocument();
   });
 
   it('renders process route row cells from mocked API data', async () => {

@@ -376,9 +376,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
         }}
         onClick={() => navigate(tab.path)}
       >
-        {!isMobile && (
-          <GripVertical className={styles.il1} />
-        )}
+        {!isMobile && <GripVertical className={styles.il1} />}
         <Box
           component='span'
           sx={{

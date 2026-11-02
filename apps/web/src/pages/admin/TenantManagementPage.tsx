@@ -172,9 +172,7 @@ const TenantManagementPage: React.FC = () => {
           />
           <div>
             <div className={styles.il2}>{row.name}</div>
-            <div className={styles.il3}>
-              {row.code}
-            </div>
+            <div className={styles.il3}>{row.code}</div>
           </div>
         </div>
       ),
@@ -207,9 +205,7 @@ const TenantManagementPage: React.FC = () => {
       key: 'created_at',
       header: t('admin.tenant_management_page.col_created'),
       sortable: true,
-      render: (row) => (
-        <span className={styles.il4}>{formatDateTime(row.created_at)}</span>
-      ),
+      render: (row) => <span className={styles.il4}>{formatDateTime(row.created_at)}</span>,
     },
     {
       key: 'actions',
@@ -524,9 +520,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
         />
       </div>
 
-      <div
-        className={styles.il15}
-      >
+      <div className={styles.il15}>
         <Button
           type='button'
           variant='ghost'

@@ -112,13 +112,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 zIndex: designTokens.zIndex.contentLayer,
               }}
             >
-              <label
-                className={styles.il3}
-              >
+              <label className={styles.il3}>
                 <Image style={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
-                <span className={styles.il1}>
-                  {i18n.t('components.chat_input.k0')}
-                </span>
+                <span className={styles.il1}>{i18n.t('components.chat_input.k0')}</span>
                 <input
                   ref={imageInputRef}
                   type='file'
@@ -128,13 +124,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   disabled={uploading}
                 />
               </label>
-              <label
-                className={styles.il5}
-              >
+              <label className={styles.il5}>
                 <FileText style={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
-                <span className={styles.il2}>
-                  {i18n.t('components.chat_input.k1')}
-                </span>
+                <span className={styles.il2}>{i18n.t('components.chat_input.k1')}</span>
                 <input
                   ref={fileInputRef}
                   type='file'

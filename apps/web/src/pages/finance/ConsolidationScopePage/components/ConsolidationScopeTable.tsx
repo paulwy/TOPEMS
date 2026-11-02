@@ -84,9 +84,7 @@ export function ConsolidationCompanyTable({
       cell: ({ row }) => (
         <div style={styles.iconRow}>
           <Building2 sx={{ width: 16, height: 16, color: 'text.disabled' }} />
-          <span className={css.il1}>
-            {row.getValue('company_code')}
-          </span>
+          <span className={css.il1}>{row.getValue('company_code')}</span>
         </div>
       ),
     },
@@ -130,9 +128,7 @@ export function ConsolidationCompanyTable({
       id: 'ownership_percentage',
       header: t('finance.consolidation_scope_page.col_ownership_percentage'),
       accessorKey: 'ownership_percentage',
-      cell: ({ row }) => (
-        <span className={css.il3}>{row.getValue('ownership_percentage')}%</span>
-      ),
+      cell: ({ row }) => <span className={css.il3}>{row.getValue('ownership_percentage')}%</span>,
     },
     {
       id: 'consolidation_percentage',

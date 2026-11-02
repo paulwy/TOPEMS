@@ -61,16 +61,22 @@ vi.mock('@/components/templates', () => ({
   }) => (
     <div>
       <h1>{detailItemName}</h1>
-      {loading ? <div data-testid="loading">Loading...</div> : null}
-      {error ? <div data-testid="error">{error}</div> : null}
+      {loading ? <div data-testid='loading'>Loading...</div> : null}
+      {error ? <div data-testid='error'>{error}</div> : null}
       {tabs?.map((t) => (
-        <div key={t.id} data-testid={`tab-${t.id}`}>
+        <div
+          key={t.id}
+          data-testid={`tab-${t.id}`}
+        >
           <h3>{t.label}</h3>
           <div>{t.content}</div>
         </div>
       ))}
       {sections?.map((s) => (
-        <section key={s.id} data-testid={`section-${s.id}`}>
+        <section
+          key={s.id}
+          data-testid={`section-${s.id}`}
+        >
           {s.title ? <h3>{s.title}</h3> : null}
           <div>{s.content}</div>
         </section>
@@ -88,9 +94,7 @@ describe('FileDetailPage', () => {
     renderWithProviders(<FileDetailPage />);
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { name: '年度财务决算.xlsx' })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: '年度财务决算.xlsx' })).toBeInTheDocument();
     });
   });
 

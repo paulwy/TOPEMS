@@ -212,9 +212,7 @@ const RsExperimentDetailPage: React.FC = () => {
         maxWidth='xl'
         sx={{ py: 3 }}
       >
-        <div
-          className={styles.il1}
-        >
+        <div className={styles.il1}>
           <LoadingSpinner size='lg' />
         </div>
       </Container>
@@ -498,9 +496,7 @@ const RsExperimentDetailPage: React.FC = () => {
                   {i18n.t('pages.rs_experiment_detail_page.k17')}
                 </Typography>
                 {experiment.results && typeof experiment.results === 'object' ? (
-                  <pre className={styles.il4}>
-                    {JSON.stringify(experiment.results, null, 2)}
-                  </pre>
+                  <pre className={styles.il4}>{JSON.stringify(experiment.results, null, 2)}</pre>
                 ) : (
                   <Typography
                     variant='body2'

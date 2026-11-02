@@ -42,9 +42,7 @@ describe('ProductionPlanPage', () => {
   it('renders page heading（生产计划）', async () => {
     renderWithProviders(<ProductionPlanPage />);
 
-    expect(
-      await screen.findByRole('heading', { name: '生产计划' })
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '生产计划' })).toBeInTheDocument();
   });
 
   it('renders production plan rows from mocked API data', async () => {

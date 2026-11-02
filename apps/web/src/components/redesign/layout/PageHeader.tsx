@@ -1,7 +1,6 @@
 import React from 'react';
-import cx from 'clsx';
 import styles from './PageHeader.module.css';
-import clsx from 'clsx';
+import { clsx as cx, clsx } from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../primitives';
 
@@ -24,7 +23,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   secondaryActions,
   breadcrumbs: _breadcrumbs, // G1: 面包屑统一由 AppShell 自动面包屑渲染，页面级 breadcrumbs 不再渲染
   className,
-  style,
+
   action: _action, // 显式排除 action，避免传递给非 form 元素
   ...rest
 }) => {
@@ -34,9 +33,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       className={cx(clsx('redesign-page-header', className), styles.il1)}
       {...rest}
     >
-      <div
-        className={styles.il2}
-      >
+      <div className={styles.il2}>
         <div className={styles.il3}>
           {backButton && (
             <Button
@@ -47,13 +44,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               ← {backButton.label || t('components.page_header.back')}
             </Button>
           )}
-          {title && (
-            <h1
-              className={styles.il4}
-            >
-              {title}
-            </h1>
-          )}
+          {title && <h1 className={styles.il4}>{title}</h1>}
           {subtitle && <p className={styles.il5}>{subtitle}</p>}
         </div>
 

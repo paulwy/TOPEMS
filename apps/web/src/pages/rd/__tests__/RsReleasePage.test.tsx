@@ -32,7 +32,9 @@ vi.mock('@/api/rd', () => ({
 }));
 
 describe('RsReleasePage', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders h1 配方发布', async () => {
     renderWithProviders(<RsReleasePage />);

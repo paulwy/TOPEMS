@@ -304,25 +304,19 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                 <Divider />
 
                 <div className='flex items-center justify-between'>
-                  <span className={styles.il1}>
-                    {i18n.t('components.plugin_detail_modal.k8')}
-                  </span>
+                  <span className={styles.il1}>{i18n.t('components.plugin_detail_modal.k8')}</span>
                   <Typography sx={{ fontWeight: 'medium' }}>
                     {plugin.install_count?.toLocaleString() || 0}
                   </Typography>
                 </div>
 
                 <div className='flex items-center justify-between'>
-                  <span className={styles.il2}>
-                    {i18n.t('components.plugin_detail_modal.k9')}
-                  </span>
+                  <span className={styles.il2}>{i18n.t('components.plugin_detail_modal.k9')}</span>
                   <Typography sx={{ fontWeight: 'medium' }}>{plugin.category}</Typography>
                 </div>
 
                 <div className='flex items-center justify-between'>
-                  <span className={styles.il3}>
-                    {i18n.t('components.plugin_detail_modal.k10')}
-                  </span>
+                  <span className={styles.il3}>{i18n.t('components.plugin_detail_modal.k10')}</span>
                   <Typography sx={{ fontWeight: 'medium' }}>
                     {plugin.author_name || i18n.t('components.plugin_detail_modal.k11')}
                   </Typography>

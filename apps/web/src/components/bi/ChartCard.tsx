@@ -131,9 +131,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
     return trend === 'up' ? (
       <TrendingUp className={styles.il1} />
     ) : (
-      <TrendingUp
-        className={styles.il2}
-      />
+      <TrendingUp className={styles.il2} />
     );
   };
 
@@ -223,9 +221,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
           </div>
         }
       >
-        <div
-          className={styles.il4}
-        >
+        <div className={styles.il4}>
           <Typography
             variant='h6'
             sx={{ fontWeight: 'semibold' }}
@@ -277,9 +273,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             <Skeleton sx={{ width: '100%', height: height - 40, borderRadius: 8 }} />
           </div>
         ) : error ? (
-          <div
-            className={styles.il7}
-          >
+          <div className={styles.il7}>
             <div
               style={{
                 width: 48,

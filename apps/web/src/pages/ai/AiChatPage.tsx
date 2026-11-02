@@ -640,11 +640,7 @@ export const AiChatPage: React.FC = () => {
                           fontFamily: 'monospace',
                         }}
                       >
-                        <pre
-                          className={styles.il1}
-                        >
-                          {part}
-                        </pre>
+                        <pre className={styles.il1}>{part}</pre>
                       </Box>
                     ) : (
                       <Typography

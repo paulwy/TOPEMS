@@ -1,5 +1,4 @@
 import React from 'react';
-import styles from './ApprovalHeader.module.css';
 import { Box, Typography, Stack } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import { User, MessageSquare, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';

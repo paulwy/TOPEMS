@@ -233,27 +233,19 @@ const RoleManagementPage: React.FC = () => {
               size={16}
               className={css.il1}
             />
-            <span className={css.il2}>
-              {row.name}
-            </span>
+            <span className={css.il2}>{row.name}</span>
           </div>
         ),
       },
       {
         key: 'description',
         header: i18n.t('iam.role_management_page.k20'),
-        render: (row) => (
-          <span className={css.il3}>{row.description || '-'}</span>
-        ),
+        render: (row) => <span className={css.il3}>{row.description || '-'}</span>,
       },
       {
         key: 'created_at',
         header: i18n.t('iam.role_management_page.k21'),
-        render: (row) => (
-          <span className={css.il4}>
-            {formatDateTime(row.created_at)}
-          </span>
-        ),
+        render: (row) => <span className={css.il4}>{formatDateTime(row.created_at)}</span>,
       },
       {
         key: 'actions',
@@ -294,9 +286,7 @@ const RoleManagementPage: React.FC = () => {
 
   const toolbar = (
     <>
-      <div
-        className={css.il6}
-      >
+      <div className={css.il6}>
         <div className={css.il7}>
           <Input
             placeholder={i18n.t('iam.role_management_page.k23')}
@@ -571,11 +561,7 @@ const PermissionsDrawer: React.FC<{
         <div className={css.il11}>
           {Object.entries(groupedPermissions).map(([category, perms]) => (
             <div key={category}>
-              <h4
-                className={css.il12}
-              >
-                {category}
-              </h4>
+              <h4 className={css.il12}>{category}</h4>
               <div className={css.il13}>
                 {perms.map((perm) => {
                   const hasPermission = rolePermissions.some((p) => p.id === perm.id);
@@ -596,29 +582,15 @@ const PermissionsDrawer: React.FC<{
                     >
                       <div className={css.il14}>
                         <div style={styles.inlineRow}>
-                          <span
-                            className={css.il15}
-                          >
-                            {perm.name}
-                          </span>
+                          <span className={css.il15}>{perm.name}</span>
                           {hasPermission && (
                             <Badge variant='success'>
                               {i18n.t('iam.role_management_page.k45')}
                             </Badge>
                           )}
                         </div>
-                        {perm.description && (
-                          <p
-                            className={css.il16}
-                          >
-                            {perm.description}
-                          </p>
-                        )}
-                        <p
-                          className={css.il17}
-                        >
-                          {perm.code}
-                        </p>
+                        {perm.description && <p className={css.il16}>{perm.description}</p>}
+                        <p className={css.il17}>{perm.code}</p>
                       </div>
                       <Button
                         variant={hasPermission ? 'danger' : 'secondary'}
@@ -638,11 +610,7 @@ const PermissionsDrawer: React.FC<{
           ))}
 
           {permissions.length === 0 && !loading && (
-            <div
-              className={css.il18}
-            >
-              {i18n.t('iam.role_management_page.k48')}
-            </div>
+            <div className={css.il18}>{i18n.t('iam.role_management_page.k48')}</div>
           )}
         </div>
       )}

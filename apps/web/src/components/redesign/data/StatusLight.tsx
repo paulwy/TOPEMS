@@ -1,7 +1,6 @@
 import React from 'react';
-import cx from 'clsx';
 import styles from './StatusLight.module.css';
-import clsx from 'clsx';
+import { clsx as cx, clsx } from 'clsx';
 
 export type StatusLightState = 'running' | 'idle' | 'warning' | 'error' | 'offline';
 
@@ -14,7 +13,7 @@ export interface StatusLightProps extends React.HTMLAttributes<HTMLSpanElement> 
 }
 
 export const StatusLight = React.forwardRef<HTMLSpanElement, StatusLightProps>(
-  ({ state, label, pulse = false, className, style, action: _action, ...rest }, ref) => {
+  ({ state, label, pulse = false, className, action: _action, ...rest }, ref) => {
     const colors: Record<StatusLightState, string> = {
       running: 'var(--success-500)',
       idle: 'var(--cyan-500)',

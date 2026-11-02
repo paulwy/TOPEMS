@@ -1,7 +1,6 @@
 import React from 'react';
-import cx from 'clsx';
 import styles from './EmptyState.module.css';
-import clsx from 'clsx';
+import { clsx as cx, clsx } from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { Search, Inbox, FileQuestion, type LucideIcon } from 'lucide-react';
 import { Button } from '../primitives';
@@ -31,7 +30,7 @@ export const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
       description,
       action,
       className,
-      style,
+
       children,
       ...rest
     },
@@ -51,25 +50,15 @@ export const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
         className={cx(clsx('redesign-empty-state', className), styles.il1)}
         {...rest}
       >
-        <div
-          className={styles.il2}
-        >
+        <div className={styles.il2}>
           <Icon
             size={32}
             strokeWidth={1.5}
           />
         </div>
-        <div
-          className={styles.il3}
-        >
-          <h3
-            className={styles.il4}
-          >
-            {title ?? defaultTitles[variant]}
-          </h3>
-          {description && (
-            <p className={styles.il5}>{description}</p>
-          )}
+        <div className={styles.il3}>
+          <h3 className={styles.il4}>{title ?? defaultTitles[variant]}</h3>
+          {description && <p className={styles.il5}>{description}</p>}
           {children}
         </div>
         {action && (

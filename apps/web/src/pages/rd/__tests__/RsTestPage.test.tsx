@@ -32,7 +32,9 @@ vi.mock('@/api/rd', () => ({
 }));
 
 describe('RsTestPage', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders h1 测试用例', async () => {
     renderWithProviders(<RsTestPage />);

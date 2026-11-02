@@ -6,9 +6,14 @@ import MasterSemanticSearchPage from '../MasterSemanticSearchPage';
 
 vi.mock('@/api/master/semanticSearch', () => ({
   semanticSearchApi: {
-    getSearchStats: vi
-      .fn()
-      .mockResolvedValue({ data: { indexed_entities: 1200, embeddings_dimension: 768, index_size_bytes: 4096, last_reindex_at: '2026-11-01' } }),
+    getSearchStats: vi.fn().mockResolvedValue({
+      data: {
+        indexed_entities: 1200,
+        embeddings_dimension: 768,
+        index_size_bytes: 4096,
+        last_reindex_at: '2026-11-01',
+      },
+    }),
     searchSemantic: vi.fn().mockResolvedValue({ data: [] }),
     getSubgraph: vi.fn().mockResolvedValue({ data: { nodes: [], edges: [] } }),
     getTagsForEntity: vi.fn().mockResolvedValue({ data: [] }),

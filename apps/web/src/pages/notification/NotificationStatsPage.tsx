@@ -228,9 +228,7 @@ const NotificationStatsPage: React.FC = () => {
         showSearch={false}
         customToolbar={
           serviceStatus && (
-            <div
-              className={styles.il1}
-            >
+            <div className={styles.il1}>
               <div className={styles.il2}>
                 <div
                   style={{

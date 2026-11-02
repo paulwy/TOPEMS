@@ -1,8 +1,7 @@
 import React from 'react';
-import cx from 'clsx';
 import styles from './LoadingOverlay.module.css';
 import { createPortal } from 'react-dom';
-import clsx from 'clsx';
+import { clsx as cx, clsx } from 'clsx';
 import { useTranslation } from 'react-i18next';
 
 export interface LoadingOverlayProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -48,11 +47,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
         className={cx('animate-spin', styles.il1)}
         aria-hidden='true'
       />
-      <span
-        className={styles.il2}
-      >
-        {resolvedLabel}
-      </span>
+      <span className={styles.il2}>{resolvedLabel}</span>
     </div>
   );
 

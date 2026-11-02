@@ -462,11 +462,7 @@ const WmsStocktakePage: React.FC = () => {
         key: 'order_no',
         header: t('wms.stocktake_page.col_order_no'),
         sortable: true,
-        render: (row) => (
-          <span className={styles.il1}>
-            {row.order_no}
-          </span>
-        ),
+        render: (row) => <span className={styles.il1}>{row.order_no}</span>,
       },
       {
         key: 'title',
@@ -474,9 +470,7 @@ const WmsStocktakePage: React.FC = () => {
         render: (row) => (
           <div>
             <div className={styles.il2}>{row.title}</div>
-            <div className={styles.il3}>
-              {row.creator}
-            </div>
+            <div className={styles.il3}>{row.creator}</div>
           </div>
         ),
       },
@@ -502,17 +496,13 @@ const WmsStocktakePage: React.FC = () => {
             row.total_items > 0 ? Math.round((row.counted_items / row.total_items) * 100) : 0;
           return (
             <div className={styles.il4}>
-              <div
-                className={styles.il5}
-              >
+              <div className={styles.il5}>
                 <span>
                   {row.counted_items}/{row.total_items}
                 </span>
                 <span>{progress}%</span>
               </div>
-              <div
-                className={styles.il6}
-              >
+              <div className={styles.il6}>
                 <div
                   style={{
                     width: `${progress}%`,
@@ -634,9 +624,7 @@ const WmsStocktakePage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={styles.il9}
-            >
+            <div className={styles.il9}>
               <Input
                 placeholder={t('wms.stocktake_page.search_placeholder')}
                 value={searchQuery}
@@ -766,16 +754,10 @@ const WmsStocktakePage: React.FC = () => {
         {selectedOrder && (
           <div style={colGap4}>
             <Card>
-              <div
-                className={styles.il13}
-              >
+              <div className={styles.il13}>
                 <div>
                   <div style={detailLabel}>{selectedOrder.order_no}</div>
-                  <div
-                    className={styles.il14}
-                  >
-                    {selectedOrder.title}
-                  </div>
+                  <div className={styles.il14}>{selectedOrder.title}</div>
                 </div>
                 <div style={rowGap2}>
                   <Badge variant={typeConfig[selectedOrder.type]?.variant || 'default'}>
@@ -792,9 +774,7 @@ const WmsStocktakePage: React.FC = () => {
 
             <Card title={t('wms.stocktake_page.section_progress')}>
               <div className={styles.il15}>
-                <div
-                  className={styles.il16}
-                >
+                <div className={styles.il16}>
                   <span>
                     {t('wms.stocktake_page.progress_counted', {
                       counted: selectedOrder.counted_items,
@@ -808,9 +788,7 @@ const WmsStocktakePage: React.FC = () => {
                     %
                   </span>
                 </div>
-                <div
-                  className={styles.il18}
-                >
+                <div className={styles.il18}>
                   <div
                     style={{
                       width: `${
@@ -827,9 +805,7 @@ const WmsStocktakePage: React.FC = () => {
             </Card>
 
             <Card title={t('wms.stocktake_page.section_basic_info')}>
-              <div
-                className={styles.il19}
-              >
+              <div className={styles.il19}>
                 <div>
                   <div style={detailLabel}>{t('wms.stocktake_page.col_warehouse')}</div>
                   <div style={detailValue}>{selectedOrder.warehouse}</div>
@@ -854,9 +830,7 @@ const WmsStocktakePage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('wms.stocktake_page.label_created_at')}</div>
-                  <div className={styles.il23}>
-                    {formatDateTime(selectedOrder.created_at)}
-                  </div>
+                  <div className={styles.il23}>{formatDateTime(selectedOrder.created_at)}</div>
                 </div>
               </div>
             </Card>

@@ -37,7 +37,9 @@ vi.mock('@/api/rd', () => ({
 }));
 
 describe('RsDeployPage', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders h1 部署管理', async () => {
     renderWithProviders(<RsDeployPage />);

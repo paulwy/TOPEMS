@@ -89,9 +89,7 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
           minWidth: '120px',
         }}
       >
-        <p className={styles.il1}>
-          {payload[0].name}
-        </p>
+        <p className={styles.il1}>{payload[0].name}</p>
         {payload.map((item, index) => (
           <p
             key={index}
@@ -131,9 +129,7 @@ const GaugeChart = ({
   const offset = circumference * ((100 - percentage) / 100);
 
   return (
-    <div
-      className={styles.il1}
-    >
+    <div className={styles.il1}>
       <svg
         width='200'
         height='160'

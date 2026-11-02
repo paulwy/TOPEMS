@@ -27,7 +27,7 @@ vi.mock('@/api/aps', () => ({
 }));
 
 vi.mock('@/components/charts', () => ({
-  LazyChart: () => <div data-testid="lazy-chart" />,
+  LazyChart: () => <div data-testid='lazy-chart' />,
 }));
 
 describe('ApsDashboardPage', () => {

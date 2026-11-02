@@ -494,9 +494,7 @@ const PerformanceTestPage: React.FC = () => {
 
         <div className={styles.il1}>
           <div style={{ textAlign: 'center', marginBottom: designTokens.spacing['2xl'] }}>
-            <div
-              className={styles.il2}
-            >
+            <div className={styles.il2}>
               <svg
                 width='40'
                 height='40'

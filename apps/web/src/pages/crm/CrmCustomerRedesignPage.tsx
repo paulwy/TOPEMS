@@ -474,21 +474,13 @@ const CrmCustomerRedesignPage: React.FC = () => {
         key: 'customer_no',
         header: t('crm.customer_list_page.col_customer_no'),
         sortable: true,
-        render: (row) => (
-          <span
-            className={styles.il1}
-          >
-            {row.customer_no}
-          </span>
-        ),
+        render: (row) => <span className={styles.il1}>{row.customer_no}</span>,
       },
       {
         key: 'customer_name',
         header: t('crm.customer_list_page.col_customer_name'),
         render: (row) => (
-          <div className={styles.il2}>
-            {localizedName(row.customer_name, row.customer_name_en)}
-          </div>
+          <div className={styles.il2}>{localizedName(row.customer_name, row.customer_name_en)}</div>
         ),
       },
       {
@@ -516,9 +508,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
         align: 'right',
         sortable: true,
         render: (row) => (
-          <span className={styles.il4}>
-            {formatAmount(row.total_order_amount, t)}
-          </span>
+          <span className={styles.il4}>{formatAmount(row.total_order_amount, t)}</span>
         ),
       },
       {
@@ -611,9 +601,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={styles.il6}
-            >
+            <div className={styles.il6}>
               <Input
                 placeholder={t('crm.customer_list_page.search_placeholder')}
                 value={searchQuery}
@@ -736,22 +724,16 @@ const CrmCustomerRedesignPage: React.FC = () => {
         {selectedCustomer && (
           <div style={colGap4}>
             <Card>
-              <div
-                className={styles.il10}
-              >
+              <div className={styles.il10}>
                 <div>
                   <div style={detailLabel}>{selectedCustomer.customer_no}</div>
-                  <div
-                    className={styles.il11}
-                  >
+                  <div className={styles.il11}>
                     {localizedName(
                       selectedCustomer.customer_name,
                       selectedCustomer.customer_name_en
                     )}
                   </div>
-                  <div className={styles.il12}>
-                    {selectedCustomer.industry}
-                  </div>
+                  <div className={styles.il12}>{selectedCustomer.industry}</div>
                 </div>
                 <div style={rowGap2}>
                   <Badge variant={levelConfig[selectedCustomer.level]?.variant || 'default'}>
@@ -774,9 +756,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('crm.customer_list_page.field_contact_phone')}</div>
-                  <div className={styles.il13}>
-                    {selectedCustomer.contact_phone}
-                  </div>
+                  <div className={styles.il13}>{selectedCustomer.contact_phone}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('crm.customer_list_page.field_email')}</div>
@@ -811,9 +791,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('crm.customer_list_page.field_create_time')}</div>
-                  <div className={styles.il16}>
-                    {formatDateTime(selectedCustomer.created_at)}
-                  </div>
+                  <div className={styles.il16}>{formatDateTime(selectedCustomer.created_at)}</div>
                 </div>
               </div>
             </Card>

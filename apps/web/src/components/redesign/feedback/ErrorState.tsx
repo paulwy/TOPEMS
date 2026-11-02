@@ -1,7 +1,6 @@
 import React from 'react';
-import cx from 'clsx';
 import styles from './ErrorState.module.css';
-import clsx from 'clsx';
+import { clsx as cx, clsx } from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '../primitives';
@@ -27,7 +26,7 @@ export const ErrorState = React.forwardRef<HTMLDivElement, ErrorStateProps>(
       onRetry,
       onFeedback,
       className,
-      style,
+
       action: _action, // 显式排除 action，避免传递给非 form 元素
       ...rest
     },
@@ -59,31 +58,13 @@ export const ErrorState = React.forwardRef<HTMLDivElement, ErrorStateProps>(
           />
         </div>
 
-        <div
-          className={styles.il2}
-        >
-          <div
-            className={styles.il3}
-          >
-            <span
-              className={styles.il4}
-            >
-              {code}
-            </span>
-            <h1
-              className={styles.il5}
-            >
-              {resolvedTitle}
-            </h1>
+        <div className={styles.il2}>
+          <div className={styles.il3}>
+            <span className={styles.il4}>{code}</span>
+            <h1 className={styles.il5}>{resolvedTitle}</h1>
           </div>
           <p className={styles.il6}>{resolvedMessage}</p>
-          {traceId && (
-            <code
-              className={styles.il7}
-            >
-              Trace ID: {traceId}
-            </code>
-          )}
+          {traceId && <code className={styles.il7}>Trace ID: {traceId}</code>}
         </div>
 
         <div className={styles.il8}>

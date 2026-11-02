@@ -319,9 +319,7 @@ export const SideRail: React.FC<SideRailProps> = ({
       aria-label='Main navigation'
       {...rest}
     >
-      <div
-        className={styles.il1}
-      >
+      <div className={styles.il1}>
         {resolvedItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeId === item.id || item.active;
@@ -421,9 +419,7 @@ export const SideRail: React.FC<SideRailProps> = ({
 
               {/* 子菜单 */}
               {hasChildren && expanded && isExpanded && (
-                <div
-                  className={styles.il3}
-                >
+                <div className={styles.il3}>
                   {item.children!.map((child) => {
                     const ChildIcon = child.icon;
                     const isChildActive = activeId === child.id;
@@ -453,11 +449,7 @@ export const SideRail: React.FC<SideRailProps> = ({
                           size={16}
                           className={styles.il4}
                         />
-                        <span
-                          className={styles.il5}
-                        >
-                          {child.label}
-                        </span>
+                        <span className={styles.il5}>{child.label}</span>
                       </button>
                     );
                   })}
@@ -469,9 +461,7 @@ export const SideRail: React.FC<SideRailProps> = ({
       </div>
 
       {footerItems && footerItems.length > 0 && (
-        <div
-          className={styles.il6}
-        >
+        <div className={styles.il6}>
           {resolvedFooterItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeId === item.id;

@@ -58,9 +58,7 @@ export const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(
             }}
           />
         </span>
-        {label && (
-          <span className={styles.il1}>{label}</span>
-        )}
+        {label && <span className={styles.il1}>{label}</span>}
       </button>
     );
   }

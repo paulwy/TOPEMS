@@ -123,7 +123,10 @@ const toPathRulesArray = (rules: unknown): PathRule[] => {
 /** 前端 PathRule[] 转回后端 {path: rule} 对象形态 —— 出口转换（保存）。 */
 const toPathRulesObject = (rules: PathRule[]): Record<string, RateLimitRule> =>
   Object.fromEntries(
-    rules.map((r) => [r.path, { requests: r.rule.requests, window_secs: r.rule.window_secs, priority: r.rule.priority }]),
+    rules.map((r) => [
+      r.path,
+      { requests: r.rule.requests, window_secs: r.rule.window_secs, priority: r.rule.priority },
+    ])
   );
 
 const RateLimitConfigPage: React.FC = () => {
@@ -179,10 +182,10 @@ const RateLimitConfigPage: React.FC = () => {
 
   const saveMutation = useMutation({
     mutationFn: async (next: RateLimitConfig) => {
-      const res = await apiClient.core.put<RateLimitConfig>(
-        '/iam/v1/rate-limit/config',
-        { ...next, path_rules: toPathRulesObject(next.path_rules) },
-      );
+      const res = await apiClient.core.put<RateLimitConfig>('/iam/v1/rate-limit/config', {
+        ...next,
+        path_rules: toPathRulesObject(next.path_rules),
+      });
       return res;
     },
     onSuccess: (res) => {

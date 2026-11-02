@@ -3,6 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderWithProviders, screen } from '@/__tests__/test-utils';
 
 import RsProjectCreatePage from '../RsProjectCreatePage';
+import type {
+  FormPageTemplateProps,
+  FormSection,
+  FormField,
+} from '@/components/templates/FormPageTemplate';
 
 vi.mock('@/api/rd', () => ({
   rdApi: {
@@ -18,13 +23,19 @@ vi.mock('@/api/rd', () => ({
 // Page imports FormPageTemplate from subpath '@/components/templates/FormPageTemplate'.
 // Override it so page-computed sections/fields are rendered for assertions.
 vi.mock('@/components/templates/FormPageTemplate', () => ({
-  FormPageTemplate: ({ sections, submitText }: any) => (
+  FormPageTemplate: ({ sections, submitText }: FormPageTemplateProps) => (
     <div>
-      {sections?.map((s: any) => (
-        <section key={s.id} data-testid={`section-${s.id}`}>
+      {sections?.map((s: FormSection) => (
+        <section
+          key={s.id}
+          data-testid={`section-${s.id}`}
+        >
           <h3>{s.title}</h3>
-          {s.fields?.map((f: any) => (
-            <div key={f.name} data-testid={`field-${f.name}`}>
+          {s.fields?.map((f: FormField) => (
+            <div
+              key={f.name}
+              data-testid={`field-${f.name}`}
+            >
               {f.label}
             </div>
           ))}

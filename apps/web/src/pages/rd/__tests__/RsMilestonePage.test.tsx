@@ -28,7 +28,9 @@ vi.mock('@/api/rd', () => ({
 }));
 
 describe('RsMilestonePage', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders h1 里程碑', async () => {
     renderWithProviders(<RsMilestonePage />);

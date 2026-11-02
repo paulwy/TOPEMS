@@ -23,8 +23,6 @@ describe('IntegrationWmsScmPage', () => {
 
   it('renders schema title heading（WMS-SCM 同步）', () => {
     renderWithProviders(<IntegrationWmsScmPage />);
-    expect(
-      screen.getByRole('heading', { name: 'WMS-SCM 同步' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'WMS-SCM 同步' })).toBeInTheDocument();
   });
 });

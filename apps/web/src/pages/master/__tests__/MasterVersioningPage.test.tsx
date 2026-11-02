@@ -9,9 +9,9 @@ vi.mock('@/api/master/versioning', () => ({
     listHistory: vi.fn().mockResolvedValue({ data: { items: [], total: 0 } }),
     queryAuditLog: vi.fn().mockResolvedValue({ data: { items: [], total: 0 } }),
     getResourcePermissions: vi.fn().mockResolvedValue({ data: [] }),
-    getComplianceAudit: vi
-      .fn()
-      .mockResolvedValue({ data: { total_changes: 0, retention_days: 90, violations: [], has_violations: false } }),
+    getComplianceAudit: vi.fn().mockResolvedValue({
+      data: { total_changes: 0, retention_days: 90, violations: [], has_violations: false },
+    }),
     createSnapshot: vi.fn().mockResolvedValue({ data: {} }),
     createBranch: vi.fn().mockResolvedValue({ data: {} }),
     mergeBranch: vi.fn().mockResolvedValue({ data: {} }),

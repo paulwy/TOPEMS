@@ -49,7 +49,10 @@ vi.mock('@/components/templates', () => ({
       {subtitle ? <div>{subtitle}</div> : null}
       {headerContent}
       {sections?.map((s) => (
-        <section key={s.id} data-testid={`section-${s.id}`}>
+        <section
+          key={s.id}
+          data-testid={`section-${s.id}`}
+        >
           <h3>{s.title}</h3>
           <div>{s.content}</div>
         </section>
@@ -81,9 +84,7 @@ describe('CapacityDetailPage', () => {
   it('shows detail page title as work_center_name', async () => {
     renderWithProviders(<CapacityDetailPage />);
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { name: '装配一线' })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: '装配一线' })).toBeInTheDocument();
     });
   });
 });

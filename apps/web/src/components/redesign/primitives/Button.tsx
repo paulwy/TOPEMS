@@ -1,7 +1,6 @@
 import React from 'react';
-import cx from 'clsx';
 import styles from './Button.module.css';
-import clsx from 'clsx';
+import { clsx as cx, clsx } from 'clsx';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';

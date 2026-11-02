@@ -52,11 +52,7 @@ export const DocumentTree: React.FC<DocumentTreeProps> = ({
                     ) : (
                       <Folder sx={{ width: 20, height: 20, mr: 1.5 }} />
                     )}
-                    <span
-                      className={styles.il2}
-                    >
-                      {folder.name}
-                    </span>
+                    <span className={styles.il2}>{folder.name}</span>
                   </Button>
                   <Tooltip title={i18n.t('pages.document_tree.k1')}>
                     <span>

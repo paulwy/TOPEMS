@@ -51,13 +51,19 @@ vi.mock('@/components/templates', () => ({
       {subtitle ? <div>{subtitle}</div> : null}
       {headerContent}
       {infoCard?.stats?.map((s, i) => (
-        <div key={i} data-testid={`info-stat-${i}`}>
+        <div
+          key={i}
+          data-testid={`info-stat-${i}`}
+        >
           <span>{s.label}</span>
           <span>{s.value}</span>
         </div>
       ))}
       {sections?.map((s) => (
-        <section key={s.id} data-testid={`section-${s.id}`}>
+        <section
+          key={s.id}
+          data-testid={`section-${s.id}`}
+        >
           <h3>{s.title}</h3>
           <div>{s.content}</div>
         </section>

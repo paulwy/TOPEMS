@@ -418,22 +418,12 @@ const HrmAttendanceRedesignPage: React.FC = () => {
         key: 'date',
         header: t('hrm.attendance_redesign_page.k22'),
         sortable: true,
-        render: (row) => (
-          <span className={styles.il1}>
-            {row.date}
-          </span>
-        ),
+        render: (row) => <span className={styles.il1}>{row.date}</span>,
       },
       {
         key: 'emp_no',
         header: t('hrm.attendance_redesign_page.k23'),
-        render: (row) => (
-          <span
-            className={styles.il2}
-          >
-            {row.emp_no}
-          </span>
-        ),
+        render: (row) => <span className={styles.il2}>{row.emp_no}</span>,
       },
       {
         key: 'employee_name',
@@ -555,9 +545,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={styles.il8}
-            >
+            <div className={styles.il8}>
               <Input
                 placeholder={t('hrm.attendance_redesign_page.k4')}
                 value={searchQuery}
@@ -679,16 +667,10 @@ const HrmAttendanceRedesignPage: React.FC = () => {
         {selectedRecord && (
           <div style={colGap4}>
             <Card>
-              <div
-                className={styles.il13}
-              >
+              <div className={styles.il13}>
                 <div>
                   <div style={detailLabel}>{selectedRecord.date}</div>
-                  <div
-                    className={styles.il14}
-                  >
-                    {selectedRecord.employee_name}
-                  </div>
+                  <div className={styles.il14}>{selectedRecord.employee_name}</div>
                   <div className={styles.il15}>
                     {selectedRecord.department} · {selectedRecord.emp_no}
                   </div>
@@ -704,19 +686,11 @@ const HrmAttendanceRedesignPage: React.FC = () => {
               <div style={gridTwoCol}>
                 <div>
                   <div style={detailLabel}>{t('hrm.attendance_redesign_page.k25')}</div>
-                  <div
-                    className={styles.il16}
-                  >
-                    {selectedRecord.check_in}
-                  </div>
+                  <div className={styles.il16}>{selectedRecord.check_in}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('hrm.attendance_redesign_page.k26')}</div>
-                  <div
-                    className={styles.il17}
-                  >
-                    {selectedRecord.check_out}
-                  </div>
+                  <div className={styles.il17}>{selectedRecord.check_out}</div>
                 </div>
               </div>
             </Card>

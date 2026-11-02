@@ -1,7 +1,6 @@
 import React from 'react';
-import cx from 'clsx';
 import styles from './StatTile.module.css';
-import clsx from 'clsx';
+import { clsx as cx, clsx } from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { ArrowDownRight, ArrowUpRight, Minus, type LucideIcon } from 'lucide-react';
 
@@ -87,14 +86,8 @@ export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
           aria-hidden='true'
         />
 
-        <div
-          className={styles.il1}
-        >
-          <span
-            className={cx('uppercase-label', styles.il2)}
-          >
-            {label}
-          </span>
+        <div className={styles.il1}>
+          <span className={cx('uppercase-label', styles.il2)}>{label}</span>
           {Icon && (
             <span
               style={{
@@ -112,28 +105,14 @@ export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
 
         {loading ? (
           <>
-            <div
-              className={cx('skeleton', styles.il3)}
-            />
-            <div
-              className={cx('skeleton', styles.il4)}
-            />
+            <div className={cx('skeleton', styles.il3)} />
+            <div className={cx('skeleton', styles.il4)} />
           </>
         ) : (
           <>
             <div className={styles.il5}>
-              <span
-                className={styles.il6}
-              >
-                {value}
-              </span>
-              {unit && (
-                <span
-                  className={styles.il7}
-                >
-                  {unit}
-                </span>
-              )}
+              <span className={styles.il6}>{value}</span>
+              {unit && <span className={styles.il7}>{unit}</span>}
             </div>
 
             {trend && (
@@ -152,11 +131,7 @@ export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
                 >
                   {trendValue}
                 </span>
-                <span
-                  className={styles.il9}
-                >
-                  {t('components.stat_tile.vs_last_month')}
-                </span>
+                <span className={styles.il9}>{t('components.stat_tile.vs_last_month')}</span>
               </div>
             )}
           </>

@@ -72,16 +72,8 @@ export const ToastItem: React.FC<{ toast: Toast; onDismiss: (id: string) => void
         style={{ flexShrink: 0, marginTop: '2px' }}
       />
       <div className={styles.il2}>
-        {toast.title && (
-          <span
-            className={styles.il3}
-          >
-            {toast.title}
-          </span>
-        )}
-        <span className={styles.il4}>
-          {toast.message}
-        </span>
+        {toast.title && <span className={styles.il3}>{toast.title}</span>}
+        <span className={styles.il4}>{toast.message}</span>
       </div>
       <button
         type='button'

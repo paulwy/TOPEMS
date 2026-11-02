@@ -608,9 +608,7 @@ export default function ConsolidationReportsPage() {
                           >
                             {line.item_name || '-'}
                           </td>
-                          <td
-                            className={styles.il3}
-                          >
+                          <td className={styles.il3}>
                             {currentPeriod.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
                           </td>
                           <td

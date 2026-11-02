@@ -40,7 +40,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   sidebarWidth = '320px',
   loading = false,
   className,
-  style,
+
   action: _action, // 显式排除 action，避免传递给非 form 元素
   onRefresh: _onRefresh, // 显式排除 onRefresh，避免传递给 DOM 元素
   ...rest
@@ -74,11 +74,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
                 gridColumn: section.fullWidth ? '1 / -1' : undefined,
               }}
             >
-              <span
-                className={styles.il2}
-              >
-                {section.label}
-              </span>
+              <span className={styles.il2}>{section.label}</span>
               {loading ? (
                 <div
                   style={{
@@ -90,11 +86,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
                   }}
                 />
               ) : (
-                <div
-                  className={styles.il3}
-                >
-                  {section.value}
-                </div>
+                <div className={styles.il3}>{section.value}</div>
               )}
             </div>
           ))}
@@ -102,9 +94,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
       )}
 
       <div className={styles.il4}>
-        <div
-          className={styles.il5}
-        >
+        <div className={styles.il5}>
           {tabs && tabs.length > 0 && (
             <Tabs
               tabs={tabs}

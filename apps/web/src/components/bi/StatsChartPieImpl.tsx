@@ -44,12 +44,8 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
           border: '1px solid border.default',
         }}
       >
-        <p className={styles.il1}>
-          {payload[0].name}
-        </p>
-        <p className={styles.il2}>
-          {String(payload[0].value)}
-        </p>
+        <p className={styles.il1}>{payload[0].name}</p>
+        <p className={styles.il2}>{String(payload[0].value)}</p>
       </div>
     );
   }

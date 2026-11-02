@@ -350,9 +350,7 @@ const MesWorkOrderPage: React.FC = () => {
       sortable: true,
       render: (row) => (
         <div>
-          <div className={css.il1}>
-            {row.order_no}
-          </div>
+          <div className={css.il1}>{row.order_no}</div>
           <div className={css.il2}>{row.product_name}</div>
         </div>
       ),
@@ -392,9 +390,7 @@ const MesWorkOrderPage: React.FC = () => {
           <div className={css.il6}>
             {row.completed_quantity} / {row.quantity}
           </div>
-          <div
-            className={css.il7}
-          >
+          <div className={css.il7}>
             <div
               style={{
                 height: '100%',
@@ -410,9 +406,7 @@ const MesWorkOrderPage: React.FC = () => {
               }}
             />
           </div>
-          <div className={css.il8}>
-            {getProgress(row)}%
-          </div>
+          <div className={css.il8}>{getProgress(row)}%</div>
         </div>
       ),
     },
@@ -456,11 +450,7 @@ const MesWorkOrderPage: React.FC = () => {
       header: t('mes.work_order_page.operator'),
       render: (row) => (
         <div style={styles.inlineRow}>
-          <div
-            className={css.il12}
-          >
-            {row.operator.charAt(0)}
-          </div>
+          <div className={css.il12}>{row.operator.charAt(0)}</div>
           <span className={css.il13}>{row.operator}</span>
         </div>
       ),
@@ -469,11 +459,7 @@ const MesWorkOrderPage: React.FC = () => {
       key: 'planned_end',
       header: t('mes.work_order_page.planned_end'),
       sortable: true,
-      render: (row) => (
-        <span className={css.il14}>
-          {formatDateTime(row.planned_end)}
-        </span>
-      ),
+      render: (row) => <span className={css.il14}>{formatDateTime(row.planned_end)}</span>,
     },
     {
       key: 'actions',
@@ -524,9 +510,7 @@ const MesWorkOrderPage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={css.il17}
-            >
+            <div className={css.il17}>
               <Input
                 placeholder={t('mes.work_order_page.search_placeholder')}
                 value={searchQuery}
@@ -668,15 +652,9 @@ const MesWorkOrderPage: React.FC = () => {
           <div style={styles.columnStack}>
             {/* 状态卡片 */}
             <Card>
-              <div
-                className={css.il23}
-              >
+              <div className={css.il23}>
                 <div>
-                  <div
-                    className={css.il24}
-                  >
-                    {selectedOrder.order_no}
-                  </div>
+                  <div className={css.il24}>{selectedOrder.order_no}</div>
                   <div className={css.il25}>
                     {selectedOrder.product_name} ({selectedOrder.product_code})
                   </div>
@@ -694,17 +672,13 @@ const MesWorkOrderPage: React.FC = () => {
               {/* 进度条 */}
               <div className={css.il27}>
                 <div className={css.il28}>
-                  <span className={css.il29}>
-                    {t('mes.work_order_page.progress_label')}
-                  </span>
+                  <span className={css.il29}>{t('mes.work_order_page.progress_label')}</span>
                   <span className={css.il30}>
                     {selectedOrder.completed_quantity} / {selectedOrder.quantity} (
                     {getProgress(selectedOrder)}%)
                   </span>
                 </div>
-                <div
-                  className={css.il31}
-                >
+                <div className={css.il31}>
                   <div
                     style={{
                       height: '100%',
@@ -786,9 +760,7 @@ const MesWorkOrderPage: React.FC = () => {
             {/* 备注 */}
             {selectedOrder.remark && (
               <Card title={t('mes.work_order.k30')}>
-                <p className={css.il32}>
-                  {selectedOrder.remark}
-                </p>
+                <p className={css.il32}>{selectedOrder.remark}</p>
               </Card>
             )}
 

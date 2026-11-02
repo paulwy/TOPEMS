@@ -64,9 +64,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   });
 
   return (
-    <div
-      className={styles.il1}
-    >
+    <div className={styles.il1}>
       <TopBar
         {...topBarProps}
         onToggleSidebar={handleToggleSidebar}
@@ -102,9 +100,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               aria-label='Breadcrumb'
               className={styles.il2}
             >
-              <ol
-                className={styles.il3}
-              >
+              <ol className={styles.il3}>
                 {breadcrumbs.map((crumb, index) => (
                   <li
                     key={index}

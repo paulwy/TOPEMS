@@ -34,7 +34,9 @@ vi.mock('@/api/rd', () => ({
 }));
 
 describe('RsBugPage', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders h1 缺陷', async () => {
     renderWithProviders(<RsBugPage />);

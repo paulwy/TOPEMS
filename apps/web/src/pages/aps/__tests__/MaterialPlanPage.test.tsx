@@ -45,9 +45,7 @@ describe('MaterialPlanPage', () => {
 
   it('renders page heading（物料计划）', async () => {
     renderWithProviders(<MaterialPlanPage />);
-    expect(
-      await screen.findByRole('heading', { name: '物料计划' })
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '物料计划' })).toBeInTheDocument();
   });
 
   it('renders material plan rows from mocked API data', async () => {

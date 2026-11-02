@@ -19,21 +19,13 @@ const NotificationSettings: React.FC = () => {
         borderBottom: '1px solid grey.200',
       }}
     >
-      <h4
-        className={styles.il1}
-      >
-        {i18n.t('components.notification_settings.k0')}
-      </h4>
+      <h4 className={styles.il1}>{i18n.t('components.notification_settings.k0')}</h4>
 
       <div style={flexColumnGap16}>
-        <div
-          className={styles.il2}
-        >
+        <div className={styles.il2}>
           <div style={flexRowCenter}>
             <Monitor className={styles.il3} />
-            <span className={styles.il1}>
-              {i18n.t('components.notification_settings.k1')}
-            </span>
+            <span className={styles.il1}>{i18n.t('components.notification_settings.k1')}</span>
           </div>
           <button
             onClick={() => toggleSetting('enableDesktop')}
@@ -64,18 +56,14 @@ const NotificationSettings: React.FC = () => {
           </button>
         </div>
 
-        <div
-          className={styles.il4}
-        >
+        <div className={styles.il4}>
           <div style={flexRowCenter}>
             {settings.enableSound ? (
               <Volume2 className={styles.il5} />
             ) : (
               <VolumeX className={styles.il6} />
             )}
-            <span className={styles.il2}>
-              {i18n.t('components.notification_settings.k2')}
-            </span>
+            <span className={styles.il2}>{i18n.t('components.notification_settings.k2')}</span>
           </div>
           <button
             onClick={() => toggleSetting('enableSound')}
@@ -106,14 +94,10 @@ const NotificationSettings: React.FC = () => {
           </button>
         </div>
 
-        <div
-          className={styles.il7}
-        >
+        <div className={styles.il7}>
           <div style={flexRowCenter}>
             <Smartphone className={styles.il8} />
-            <span className={styles.il3}>
-              {i18n.t('components.notification_settings.k3')}
-            </span>
+            <span className={styles.il3}>{i18n.t('components.notification_settings.k3')}</span>
           </div>
           <button
             onClick={() => toggleSetting('enableMobilePush')}
@@ -203,14 +187,8 @@ const NotificationSettings: React.FC = () => {
         </div>
 
         <div style={{ paddingTop: 12, borderTop: '1px solid var(--mui-palette-divider)' }}>
-          <div
-            className={styles.il12}
-          >
-            <span
-              className={styles.il4}
-            >
-              {i18n.t('components.notification_settings.k5')}
-            </span>
+          <div className={styles.il12}>
+            <span className={styles.il4}>{i18n.t('components.notification_settings.k5')}</span>
             <button
               onClick={toggleQuietHours}
               style={{
@@ -255,9 +233,7 @@ const NotificationSettings: React.FC = () => {
                   outline: 'none',
                 }}
               />
-              <span className={styles.il13}>
-                {i18n.t('components.notification_settings.k6')}
-              </span>
+              <span className={styles.il13}>{i18n.t('components.notification_settings.k6')}</span>
               <input
                 type='time'
                 value={settings.quietHours.end}

@@ -390,9 +390,7 @@ const PurchaseOrderPage: React.FC = () => {
       sortable: true,
       render: (row) => (
         <div>
-          <div className={styles.il1}>
-            {row.order_no}
-          </div>
+          <div className={styles.il1}>{row.order_no}</div>
           <div className={styles.il2}>
             {row.items_count} {t('erp.purchase_order.column.items_count_unit')}
           </div>
@@ -404,12 +402,8 @@ const PurchaseOrderPage: React.FC = () => {
       header: t('erp.purchase_order.column.supplier'),
       render: (row) => (
         <div>
-          <div className={styles.il3}>
-            {row.supplier_name}
-          </div>
-          <div className={styles.il4}>
-            {row.supplier_code}
-          </div>
+          <div className={styles.il3}>{row.supplier_name}</div>
+          <div className={styles.il4}>{row.supplier_code}</div>
         </div>
       ),
     },
@@ -419,9 +413,7 @@ const PurchaseOrderPage: React.FC = () => {
       align: 'right',
       sortable: true,
       render: (row) => (
-        <span className={styles.il5}>
-          {formatAmount(row.total_amount, row.currency)}
-        </span>
+        <span className={styles.il5}>{formatAmount(row.total_amount, row.currency)}</span>
       ),
     },
     {
@@ -453,19 +445,13 @@ const PurchaseOrderPage: React.FC = () => {
     {
       key: 'department',
       header: t('erp.purchase_order.column.department'),
-      render: (row) => (
-        <span className={styles.il8}>{row.department}</span>
-      ),
+      render: (row) => <span className={styles.il8}>{row.department}</span>,
     },
     {
       key: 'expected_date',
       header: t('erp.purchase_order.column.expected_date'),
       sortable: true,
-      render: (row) => (
-        <span className={styles.il9}>
-          {row.expected_date}
-        </span>
-      ),
+      render: (row) => <span className={styles.il9}>{row.expected_date}</span>,
     },
     {
       key: 'actions',
@@ -516,9 +502,7 @@ const PurchaseOrderPage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={styles.il12}
-            >
+            <div className={styles.il12}>
               <Input
                 placeholder={t('erp.purchase_order.search_placeholder')}
                 value={searchQuery}
@@ -652,14 +636,10 @@ const PurchaseOrderPage: React.FC = () => {
           <div className={styles.il17}>
             {/* 状态卡片 */}
             <Card>
-              <div
-                className={styles.il18}
-              >
+              <div className={styles.il18}>
                 <div>
                   <div style={heroOrder}>{selectedOrder.order_no}</div>
-                  <div className={styles.il19}>
-                    {selectedOrder.supplier_name}
-                  </div>
+                  <div className={styles.il19}>{selectedOrder.supplier_name}</div>
                 </div>
                 <div className={styles.il20}>
                   <Badge variant={statusConfig[selectedOrder.status].variant}>
@@ -677,9 +657,7 @@ const PurchaseOrderPage: React.FC = () => {
 
             {/* 基本信息 */}
             <Card title={t('erp.purchase_order.drawer.basic_info')}>
-              <div
-                className={styles.il21}
-              >
+              <div className={styles.il21}>
                 <InfoItem
                   label={t('erp.purchase_order.drawer.supplier_name')}
                   value={selectedOrder.supplier_name}
@@ -718,9 +696,7 @@ const PurchaseOrderPage: React.FC = () => {
             {/* 备注 */}
             {selectedOrder.remark && (
               <Card title={t('erp.purchase_order.drawer.remark')}>
-                <p className={styles.il22}>
-                  {selectedOrder.remark}
-                </p>
+                <p className={styles.il22}>{selectedOrder.remark}</p>
               </Card>
             )}
 
@@ -805,8 +781,7 @@ const PurchaseOrderPage: React.FC = () => {
                 htmlFor='po-supplier'
                 className={styles.il29}
               >
-                {t('erp.purchase_order.form.supplier')}{' '}
-                <span className={styles.il30}>*</span>
+                {t('erp.purchase_order.form.supplier')} <span className={styles.il30}>*</span>
               </label>
               <Select
                 id='po-supplier'
@@ -943,12 +918,8 @@ const PurchaseOrderPage: React.FC = () => {
 // 信息项组件
 const InfoItem: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
   <div>
-    <div className={styles.il39}>
-      {label}
-    </div>
-    <div className={styles.il40}>
-      {value}
-    </div>
+    <div className={styles.il39}>{label}</div>
+    <div className={styles.il40}>{value}</div>
   </div>
 );
 

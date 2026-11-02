@@ -471,13 +471,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
         key: 'opp_no',
         header: t('crm.opportunity_redesign.col_opp_no'),
         sortable: true,
-        render: (row) => (
-          <span
-            className={styles.il1}
-          >
-            {row.opp_no}
-          </span>
-        ),
+        render: (row) => <span className={styles.il1}>{row.opp_no}</span>,
       },
       {
         key: 'name',
@@ -498,11 +492,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
         header: t('crm.opportunity_redesign.col_amount'),
         align: 'right',
         sortable: true,
-        render: (row) => (
-          <span className={styles.il3}>
-            {formatAmount(row.amount)}
-          </span>
-        ),
+        render: (row) => <span className={styles.il3}>{formatAmount(row.amount)}</span>,
       },
       {
         key: 'probability',
@@ -609,9 +599,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={styles.il8}
-            >
+            <div className={styles.il8}>
               <Input
                 placeholder={t('crm.opportunity_redesign.search_placeholder')}
                 value={searchQuery}
@@ -735,19 +723,11 @@ const CrmOpportunityRedesignPage: React.FC = () => {
         {selectedOpp && (
           <div style={colGap4}>
             <Card>
-              <div
-                className={styles.il13}
-              >
+              <div className={styles.il13}>
                 <div>
                   <div style={detailLabel}>{selectedOpp.opp_no}</div>
-                  <div
-                    className={styles.il14}
-                  >
-                    {selectedOpp.name}
-                  </div>
-                  <div className={styles.il15}>
-                    {selectedOpp.customer_name}
-                  </div>
+                  <div className={styles.il14}>{selectedOpp.name}</div>
+                  <div className={styles.il15}>{selectedOpp.customer_name}</div>
                 </div>
                 <Badge variant={stageConfig[selectedOpp.stage]?.variant || 'default'}>
                   {stageConfig[selectedOpp.stage]?.label ||
@@ -786,9 +766,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
             </Card>
 
             <Card title={t('crm.opportunity_redesign.section_info')}>
-              <div
-                className={styles.il18}
-              >
+              <div className={styles.il18}>
                 <div>
                   <div style={detailLabel}>{t('crm.opportunity_redesign.col_amount')}</div>
                   <div style={heroValue}>{formatAmount(selectedOpp.amount)}</div>
@@ -814,9 +792,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('crm.opportunity_redesign.field_create_time')}</div>
-                  <div className={styles.il20}>
-                    {formatDateTime(selectedOpp.created_at)}
-                  </div>
+                  <div className={styles.il20}>{formatDateTime(selectedOpp.created_at)}</div>
                 </div>
               </div>
             </Card>

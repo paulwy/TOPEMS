@@ -21,7 +21,9 @@ vi.mock('@/api/client', () => ({
 }));
 
 describe('RsReportPage', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('renders stat cards (project/experiment/formula stats)', async () => {
     renderWithProviders(<RsReportPage />);

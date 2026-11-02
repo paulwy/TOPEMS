@@ -7,7 +7,7 @@ import DashboardPage from '../DashboardPage';
 // DashboardTemplate 形态（§4B）：全局 mock 渲染 stat-card-<id> 及其 title/value span。
 // LazyChart 未在 setup-mocks 中全局 mock，这里替换为占位。
 vi.mock('@/components/charts', () => ({
-  LazyChart: () => <div data-testid="lazy-chart" />,
+  LazyChart: () => <div data-testid='lazy-chart' />,
 }));
 
 vi.mock('@/api/doc', () => ({

@@ -208,11 +208,7 @@ const BudgetManagementPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon:
-          activeTab === 0 ? (
-            <Wallet className={styles.il1} />
-          ) : (
-            <Receipt className={styles.il2} />
-          ),
+          activeTab === 0 ? <Wallet className={styles.il1} /> : <Receipt className={styles.il2} />,
         pageGradient: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       }}
     >

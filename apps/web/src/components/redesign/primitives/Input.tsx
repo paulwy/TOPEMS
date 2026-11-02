@@ -1,7 +1,6 @@
 import React, { useId } from 'react';
-import cx from 'clsx';
 import styles from './Input.module.css';
-import clsx from 'clsx';
+import { clsx as cx, clsx } from 'clsx';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -11,14 +10,12 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, leftIcon, rightIcon, className, style, id, ...rest }, ref) => {
+  ({ label, error, leftIcon, rightIcon, className, id, ...rest }, ref) => {
     const autoId = useId();
     const inputId = id || autoId;
 
     return (
-      <div
-        className={cx(clsx('redesign-input-wrapper', className), styles.il1)}
-      >
+      <div className={cx(clsx('redesign-input-wrapper', className), styles.il1)}>
         {label && (
           <label
             htmlFor={inputId}
@@ -42,30 +39,16 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           }}
           data-error={!!error}
         >
-          {leftIcon && (
-            <span className={styles.il3}>
-              {leftIcon}
-            </span>
-          )}
+          {leftIcon && <span className={styles.il3}>{leftIcon}</span>}
           <input
             ref={ref}
             id={inputId}
             className={styles.il4}
             {...rest}
           />
-          {rightIcon && (
-            <span className={styles.il5}>
-              {rightIcon}
-            </span>
-          )}
+          {rightIcon && <span className={styles.il5}>{rightIcon}</span>}
         </div>
-        {error && (
-          <span
-            className={styles.il6}
-          >
-            {error}
-          </span>
-        )}
+        {error && <span className={styles.il6}>{error}</span>}
       </div>
     );
   }

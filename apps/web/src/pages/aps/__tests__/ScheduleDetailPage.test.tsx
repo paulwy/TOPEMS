@@ -52,7 +52,10 @@ vi.mock('@/components/templates', () => ({
       {subtitle ? <div>{subtitle}</div> : null}
       {headerContent}
       {sections?.map((s) => (
-        <section key={s.id} data-testid={`section-${s.id}`}>
+        <section
+          key={s.id}
+          data-testid={`section-${s.id}`}
+        >
           <h3>{s.title}</h3>
           <div>{s.content}</div>
         </section>
@@ -82,9 +85,7 @@ describe('ScheduleDetailPage', () => {
   it('shows detail page title as schedule_no', async () => {
     renderWithProviders(<ScheduleDetailPage />);
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { name: 'SCH-2026-001' })
-      ).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'SCH-2026-001' })).toBeInTheDocument();
     });
   });
 });

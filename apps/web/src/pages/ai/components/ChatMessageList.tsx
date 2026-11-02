@@ -99,11 +99,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
                           fontFamily: 'monospace',
                         }}
                       >
-                        <pre
-                          className={styles.il1}
-                        >
-                          {part}
-                        </pre>
+                        <pre className={styles.il1}>{part}</pre>
                       </Box>
                     ) : (
                       <Typography

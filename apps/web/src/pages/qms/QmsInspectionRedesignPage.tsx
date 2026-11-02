@@ -466,13 +466,7 @@ const QmsInspectionPage: React.FC = () => {
         key: 'check_no',
         header: t('qms.inspection_redesign.col_check_no'),
         sortable: true,
-        render: (row) => (
-          <span
-            className={styles.il1}
-          >
-            {row.check_no}
-          </span>
-        ),
+        render: (row) => <span className={styles.il1}>{row.check_no}</span>,
       },
       {
         key: 'title',
@@ -480,9 +474,7 @@ const QmsInspectionPage: React.FC = () => {
         render: (row) => (
           <div>
             <div className={styles.il2}>{row.title}</div>
-            <div className={styles.il3}>
-              {row.batch_no}
-            </div>
+            <div className={styles.il3}>{row.batch_no}</div>
           </div>
         ),
       },
@@ -612,9 +604,7 @@ const QmsInspectionPage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={styles.il9}
-            >
+            <div className={styles.il9}>
               <Input
                 placeholder={t('qms.inspection_redesign.search_placeholder')}
                 value={searchQuery}
@@ -735,16 +725,10 @@ const QmsInspectionPage: React.FC = () => {
         {selectedInspection && (
           <div style={colGap4}>
             <Card>
-              <div
-                className={styles.il13}
-              >
+              <div className={styles.il13}>
                 <div>
                   <div style={detailLabel}>{selectedInspection.check_no}</div>
-                  <div
-                    className={styles.il14}
-                  >
-                    {selectedInspection.title}
-                  </div>
+                  <div className={styles.il14}>{selectedInspection.title}</div>
                 </div>
                 <div style={rowGap2}>
                   <Badge
@@ -769,9 +753,7 @@ const QmsInspectionPage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.inspection_redesign.drawer_batch_no')}</div>
-                  <div className={styles.il15}>
-                    {selectedInspection.batch_no}
-                  </div>
+                  <div className={styles.il15}>{selectedInspection.batch_no}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.inspection_redesign.col_quantity')}</div>
@@ -790,9 +772,7 @@ const QmsInspectionPage: React.FC = () => {
               <div style={gridTwoCol}>
                 <div>
                   <div style={detailLabel}>{t('qms.inspection_redesign.drawer_created_at')}</div>
-                  <div className={styles.il16}>
-                    {formatDateTime(selectedInspection.created_at)}
-                  </div>
+                  <div className={styles.il16}>{formatDateTime(selectedInspection.created_at)}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.inspection_redesign.drawer_completed_at')}</div>

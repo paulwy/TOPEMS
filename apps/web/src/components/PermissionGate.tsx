@@ -26,9 +26,7 @@ export const ModuleGate: React.FC<ModuleGateProps> = ({
 
   if (loading) {
     return (
-      <div
-        className={styles.il1}
-      >
+      <div className={styles.il1}>
         <Loader2
           data-testid='loader'
           sx={{

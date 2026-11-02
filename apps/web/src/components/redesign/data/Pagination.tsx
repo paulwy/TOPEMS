@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
-import cx from 'clsx';
 import styles from './Pagination.module.css';
-import clsx from 'clsx';
+import { clsx as cx, clsx } from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
@@ -76,7 +75,6 @@ export const Pagination: React.FC<PaginationProps> = ({
   showTotal = true,
   disabled = false,
   className,
-  style,
 }) => {
   const { t } = useTranslation();
   const pages = useMemo(() => getPageNumbers(current, total), [current, total]);
@@ -105,9 +103,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   };
 
   return (
-    <div
-      className={cx(clsx('redesign-pagination', className), styles.il1)}
-    >
+    <div className={cx(clsx('redesign-pagination', className), styles.il1)}>
       {/* 左侧：总数信息 */}
       {showTotal && totalItems !== undefined && (
         <span className={styles.il2}>
@@ -228,9 +224,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         {/* 快速跳转 */}
         {showQuickJumper && (
           <div className={styles.il5}>
-            <span className={styles.il6}>
-              {t('components.pagination.jump_to')}
-            </span>
+            <span className={styles.il6}>{t('components.pagination.jump_to')}</span>
             <input
               type='number'
               min={1}
@@ -247,9 +241,7 @@ export const Pagination: React.FC<PaginationProps> = ({
               }}
               className={styles.il7}
             />
-            <span className={styles.il8}>
-              {t('components.pagination.page')}
-            </span>
+            <span className={styles.il8}>{t('components.pagination.page')}</span>
           </div>
         )}
       </div>

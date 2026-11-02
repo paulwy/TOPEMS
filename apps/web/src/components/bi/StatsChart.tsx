@@ -4,10 +4,8 @@ import type { StatsChartProps } from './StatsChartImpl';
 
 export type { StatsChartProps };
 
-const ChartFallback: React.FC<{ height?: number }> = ({ height = 200 }) => (
-  <div
-    className={styles.il1}
-  />
+const ChartFallback: React.FC<{ height?: number }> = ({ height: _height = 200 }) => (
+  <div className={styles.il1} />
 );
 
 const StatsChartLazy = lazy(() =>

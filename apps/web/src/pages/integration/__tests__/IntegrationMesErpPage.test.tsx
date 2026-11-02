@@ -23,8 +23,6 @@ describe('IntegrationMesErpPage', () => {
 
   it('renders schema title heading（MES-ERP 同步）', () => {
     renderWithProviders(<IntegrationMesErpPage />);
-    expect(
-      screen.getByRole('heading', { name: 'MES-ERP 同步' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'MES-ERP 同步' })).toBeInTheDocument();
   });
 });

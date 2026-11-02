@@ -327,9 +327,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
 
       <div className={styles.il3}>
         {loading ? (
-          <div
-            className={styles.il4}
-          >
+          <div className={styles.il4}>
             <div
               style={{
                 width: 32,

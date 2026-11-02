@@ -551,13 +551,7 @@ const QmsNonconformancePage: React.FC = () => {
         key: 'nc_no',
         header: t('qms.nonconformance_redesign.col_nc_no'),
         sortable: true,
-        render: (row) => (
-          <span
-            className={styles.il1}
-          >
-            {row.nc_no}
-          </span>
-        ),
+        render: (row) => <span className={styles.il1}>{row.nc_no}</span>,
       },
       {
         key: 'title',
@@ -685,9 +679,7 @@ const QmsNonconformancePage: React.FC = () => {
         }}
         toolbar={
           <>
-            <div
-              className={styles.il5}
-            >
+            <div className={styles.il5}>
               <Input
                 placeholder={t('qms.nonconformance_redesign.search_placeholder')}
                 value={searchQuery}
@@ -808,16 +800,10 @@ const QmsNonconformancePage: React.FC = () => {
         {selectedNc && (
           <div style={colGap4}>
             <Card>
-              <div
-                className={styles.il9}
-              >
+              <div className={styles.il9}>
                 <div>
                   <div style={detailLabel}>{selectedNc.nc_no}</div>
-                  <div
-                    className={styles.il10}
-                  >
-                    {selectedNc.title}
-                  </div>
+                  <div className={styles.il10}>{selectedNc.title}</div>
                 </div>
                 <div style={rowGap2}>
                   <Badge variant={severityConfig[selectedNc.severity]?.variant || 'default'}>
@@ -833,15 +819,11 @@ const QmsNonconformancePage: React.FC = () => {
             </Card>
 
             <Card title={t('qms.nonconformance_redesign.card_problem_desc')}>
-              <p className={styles.il11}>
-                {selectedNc.description}
-              </p>
+              <p className={styles.il11}>{selectedNc.description}</p>
             </Card>
 
             <Card title={t('qms.nonconformance_redesign.card_basic_info')}>
-              <div
-                className={styles.il12}
-              >
+              <div className={styles.il12}>
                 <div>
                   <div style={detailLabel}>
                     {t('qms.nonconformance_redesign.drawer_product_name')}
@@ -850,9 +832,7 @@ const QmsNonconformancePage: React.FC = () => {
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.nonconformance_redesign.drawer_batch_no')}</div>
-                  <div className={styles.il13}>
-                    {selectedNc.batch_no}
-                  </div>
+                  <div className={styles.il13}>{selectedNc.batch_no}</div>
                 </div>
                 <div>
                   <div style={detailLabel}>{t('qms.nonconformance_redesign.col_quantity')}</div>
@@ -874,9 +854,7 @@ const QmsNonconformancePage: React.FC = () => {
                   <div style={detailLabel}>
                     {t('qms.nonconformance_redesign.drawer_created_at')}
                   </div>
-                  <div className={styles.il15}>
-                    {formatDateTime(selectedNc.created_at)}
-                  </div>
+                  <div className={styles.il15}>{formatDateTime(selectedNc.created_at)}</div>
                 </div>
               </div>
             </Card>

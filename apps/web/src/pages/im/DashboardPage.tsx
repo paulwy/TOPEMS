@@ -22,7 +22,9 @@ export const DashboardPage: React.FC = () => {
   const stats: StatCard[] = useMemo(() => {
     const total = rooms.length;
     const groups = rooms.filter((r) => r.room_type === 'group').length;
-    const direct = rooms.filter((r) => r.room_type === 'direct' || r.room_type === 'private').length;
+    const direct = rooms.filter(
+      (r) => r.room_type === 'direct' || r.room_type === 'private'
+    ).length;
     const members = rooms.reduce((acc, r) => acc + (r.members?.length ?? 0), 0);
     return [
       {

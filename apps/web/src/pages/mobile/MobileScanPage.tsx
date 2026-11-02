@@ -457,9 +457,7 @@ const MobileScanPage: React.FC = () => {
                     mb: 2,
                   }}
                 >
-                  <CheckSquare
-                    className={styles.il7}
-                  />
+                  <CheckSquare className={styles.il7} />
                 </Box>
                 <Typography
                   variant='h6'

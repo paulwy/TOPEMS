@@ -21,8 +21,6 @@ describe('IntegrationConnectionsPage', () => {
 
   it('renders schema title heading（连接管理）', () => {
     renderWithProviders(<IntegrationConnectionsPage />);
-    expect(
-      screen.getByRole('heading', { name: '连接管理' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '连接管理' })).toBeInTheDocument();
   });
 });
