@@ -211,7 +211,10 @@ export const HeaderNotifications: React.FC = () => {
         <Box sx={{ py: 0, maxHeight: 340, overflowY: 'auto' }}>
           {notificationsLoading ? (
             <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}>
-              <CircularProgress size={24} />
+              <CircularProgress
+                size={24}
+                aria-label={i18n.t('common.loading')}
+              />
             </Box>
           ) : notifications.length === 0 ? (
             <Box

@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { Box, useTheme, useMediaQuery, CircularProgress } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { glassSx } from '@/theme/effects';
+import i18n from '@/i18n';
 import { HeaderLogo } from './HeaderLogo';
 import { HeaderSearch } from './HeaderSearch';
 import { HeaderUserMenu } from './HeaderUserMenu';
@@ -96,7 +97,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {rightActions || (
             <>
               <TenantSwitcher />
-              <Suspense fallback={<CircularProgress size={20} />}>
+              <Suspense
+                fallback={
+                  <CircularProgress
+                    size={20}
+                    aria-label={i18n.t('common.loading')}
+                  />
+                }
+              >
                 <HeaderNotifications />
               </Suspense>
               <LanguageSelector />
