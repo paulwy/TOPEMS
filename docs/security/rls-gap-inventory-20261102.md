@@ -81,3 +81,8 @@
 ## 下一步
 - 业务类 29 张按模块分批补：ALTER TABLE ... ENABLE ROW LEVEL SECURITY + 标准 tenant 策略（tenant_id = NULLIF(current_setting('app.tenant_id'))::uuid OR tenant_id IS NULL + 超管放行）。
 - 已确认有策略但表未 enable 的（如 core_dict_items/types）可先只补 ENABLE。
+
+## 复核记录（2026-11-02 晚间）
+- **batch1（29 张业务表）落地复核**：27/29 已 ENABLE + 策略各 1；`lims.qa_lab_samples` / `lims.qa_lab_tasks` 策略已建但未 ENABLE → 已补 ENABLE（29/29 全绿）。
+- **盘点外增量（实时核对发现）**：`mes.work_orders`、`mobile.documents`（均含 tenant_id uuid、无策略）→ 已补标准策略 + ENABLE（batch2：`20261102230000_rls_enable_biz_batch2.sql`）。
+- **终态**：含租户列 1202 张中 1184 已启用 RLS；剩余 18 张全为备份/系统/配置豁免类（_archive、备份表、core_*、_sqlx_migrations、spatial_ref_sys、schema_defense_ledger、monitor_thresholds、erp_dictionaries 等）——**业务实体类缺口清零**。

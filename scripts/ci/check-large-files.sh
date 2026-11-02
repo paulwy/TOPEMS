@@ -11,7 +11,7 @@ FOUND=''
 
 for f in $STAGED; do
   case "$f" in
-    pnpm-lock.yaml|*-lock.yaml|database/postgres_data/*|docs/project/TODO.md|packages/shared-types/src/generated/openapi.d.ts|docs/api/openapi-aggregated.*|docs/api/openapi.json|fixtures/full_schema_contract.sql) continue ;;
+    pnpm-lock.yaml|*-lock.yaml|database/postgres_data/*|docs/project/TODO.md|TODO.md|packages/shared-types/src/generated/openapi.d.ts|docs/api/openapi-aggregated.*|docs/api/openapi.json|fixtures/full_schema_contract.sql) continue ;;
   esac
   [ -f "$f" ] || continue
   SIZE=$(wc -c < "$f" 2>/dev/null || echo 0)

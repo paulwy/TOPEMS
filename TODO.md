@@ -82,6 +82,16 @@
 - **实测**：应用成功；29/29 表 `relrowsecurity=true` + 策略各 1；服务 health 全 200（monitor/core/mes）；迁移账本 **540/540** 对齐（checksum sha384 前16 `2345771f1fade9ad`）；checksums.txt 已同步。
 - **口径备注**：topems 为表 owner（RLS 对 owner 绕过），隔离为纵深防御形态；后续若需强制可 FORCE ROW LEVEL SECURITY。
 
+## 批 5 第十九批：RLS batch1 落地复核 + batch2 增量补启（2026-11-02）✅
+
+> 承接 batch1 迁移；实时核对落地状态，补盘点外业务缺口。
+
+- **batch1 复核**（topems 实时）：29 张中 27/29 已 ENABLE + 策略各 1；`lims.qa_lab_samples`/`lims.qa_lab_tasks` 策略已建但**未 ENABLE**（手动补 ENABLE，29/29 全绿）。
+- **盘点外增量**：实时核对发现 `mes.work_orders`、`mobile.documents`（均含 tenant_id uuid、无策略，盘点 65 张未覆盖）→ batch2 迁移 `20261102230000_rls_enable_biz_batch2.sql`（幂等 DO 块 + ENABLE）已应用。
+- **终态**：含租户列 1202 张中 **1184 已启用** RLS；剩余 18 张全为备份/系统/配置豁免类（_archive/备份表/core_*/_sqlx_migrations/spatial_ref_sys/schema_defense_ledger/monitor_thresholds/erp_dictionaries 等）——**业务实体类缺口清零**。
+- **清单**：docs/security/rls-gap-inventory-20261102.md 已追加复核记录。
+- **下一步**：BIZ 749 读端点 / to_bind 332 绑定逐表核对（工程大项，独立于审计）；豁免类 18 张保持应用层权限控制口径。
+
 ## RLS 覆盖率工程——第一子步：实时缺口盘点（2026-11-02）✅
 
 > 承接批 5 第十八批记录的 RLS 覆盖率工程排期；静态 SQL 扫描之后做 DB 实时核对，产出可执行缺口清单。
