@@ -1018,10 +1018,18 @@
   *_status_standard 约束，业务状态机由代码层保证；幂等（重跑 0 条）。
 - **验证**：cargo test -p topems-lims 集成测试全绿（8 passed / 0 failed，含此前 2 失败用例）、
   validate.sh Errors 0/Checksum 0/Drift 0、checksums 545、_sqlx_migrations 账本补登 manual-v。
-- **⚠️ 全库同类残留（未动，待确认）**：实测 342 张表同款"窄版 status_standard + 领域态 DEFAULT"
-  （public 75/ehs 28/mes 25/portal 20/pm 19/qms 17/finance 16/erp 16/wms 16/hrm 15/lims 15/…），
-  10-26 只修 23 张系冰山一角，建议按同一先例批量清理（DEFAULT 不在 CHECK 内 = 不带 status 的
-  INSERT 必违反，均含真实业务拦截风险）。
+- **✅ 全库同类残留（已批量清理，commit 8e1a23ff2b）**：实测 342 张表同款"窄版 status_standard +
+  领域态 DEFAULT"（public 75/ehs 28/mes 25/portal 20/pm 19/qms 17/finance 16/erp 16/wms 16/
+  hrm 15/lims 15/…），10-26 只修 23 张系冰山一角；用户确认后按同一先例全量清尾（见下段）。
+
+### 2026-11-03 全库 327 张 status_standard 误用约束批量清理（commit 8e1a23ff2b）
+- **迁移**：`20261103000002_global_remove_misapplied_status_standard_checks.sql`——显式清单 327 对
+  (schema, table)（342−lims 已修 15），DO 循环删除 *_status_standard 约束；业务状态机由代码层保证、
+  CHECK 语义保证现有行合法 → 删约束零数据风险；幂等（第一遍 327 dropped、重跑 0）。
+- **验证**：全库漏网归零（残留计数 0）；现存 status_standard 仅 251 张 DEFAULT='active' 的合法表；
+  validate.sh Errors 0/Checksum 0/Drift 0、checksums 546、_sqlx_migrations 账本补登 manual-v；
+  lims 集成 8 passed + mobile 单测 250 全绿回归。
+- 处置依据：与 20261026130000（23 张）、20261103000001（lims 15 张）同一先例，用户 11-03 确认推进。
 
 ### ⬜ B7 剩余（后续批次候选，静态 Err 计数）
 - ai 45 / crm 27 / portal 26 / integration 15 / mes 10 / finance 9 / scm 3 / erp 3 / analytics 3 /
