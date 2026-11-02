@@ -1,0 +1,268 @@
+name: Web E2E (apps/web UI suite)
+
+# apps/web 前端 e2e 套件（playwright.config.ts，testDir ./e2e/ui）CI 固化
+# ————————————————————————————————————————————————————————————————
+# 与 tests/e2e（旧套件，8080 单体，见 e2e.yml）区分：本 workflow 跑
+#   apps/web/e2e/ui/**（83 spec：518 路由全量冒烟 + 核心模块业务 spec）。
+# 环境 = topems-server 模块化单体(:8099) + 前端 vite(:3000) + PG + Redis。
+# 触发：
+#   - push/PR  → 核心 7 模块冒烟子集（~177 路由）+ tms-shipment 流程型业务
+#   - nightly  → 全量 518 路由冒烟（5 批）+ tms-shipment
+#   - workflow_dispatch → 同 nightly（全量）
+#
+# 已知边界（2026-11-03 首期固化）：
+#   - 核心业务 spec 中依赖预置业务种子（srm 20 条 / mes MO202610* / finance ledger
+#     等）的用例在 CI 空库会失败，首期不纳入门禁；仅 tms-shipment（UI 全流程自造数）
+#     为流程型业务代表。二期 = 业务种子固化脚本（scripts/dev/seed-*.sh）后扩展。
+#   - 冒烟为可达性四断言（页面标题/正文/加载/控制台洁净），零业务数据依赖。
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: 'Run scope (core = push/PR 核心子集, full = 全量 5 批)'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - core
+          - full
+  schedule:
+    # Nightly 03:00 UTC（11:00 Asia/Shanghai），全量巡检
+    - cron: '0 3 * * *'
+
+concurrency:
+  group: e2e-web-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
+  DATABASE_URL: postgres://topems_e2e:topems_e2e_secret@localhost:5432/topems_e2e
+  REDIS_URL: redis://localhost:6379/0
+  JWT_SECRET: e2e-jwt-secret-key-for-testing-only-32chars
+  APP_ENV: e2e
+  # apps/web 套件实跑口径（本地已验证命令）：
+  API_URL: http://localhost:8099
+  BASE_URL: http://localhost:3000
+
+jobs:
+  web-e2e:
+    name: Web UI E2E (${{ github.event_name == 'push' || github.event_name == 'pull_request' && 'core' || 'full' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: topems_e2e
+          POSTGRES_PASSWORD: topems_e2e_secret
+          POSTGRES_DB: topems_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Cache pnpm store
+        uses: actions/cache@v5
+        with:
+          path: ~/.local/share/pnpm/store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies (workspace)
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Rust toolchain
+        uses: ./.github/actions/setup-rust
+        with:
+          cache-prefix: "e2e-web-2026-11-03"
+
+      - name: Install sqlx-cli
+        run: cargo install sqlx-cli --no-default-features --features postgres,rustls
+
+      - name: Apply top-level migrations
+        run: sqlx migrate run --source database/migrations --database-url "$DATABASE_URL"
+
+      - name: Build backend (topems-server monolith)
+        run: SQLX_OFFLINE=true cargo build -p topems-server
+
+      - name: Start backend on :8099
+        # 与本地 run_monolith.sh 同构：SERVICE_URL 全量指向单体自身（内嵌路由 + service token）
+        env:
+          SERVER_PORT: "8099"
+          DB_MAX_CONNECTIONS: "8"
+          SEARCH_PATH: "flow, mobile, rs, erp, public, iam, shared"
+          MONOLITH_SERVICE_URL: http://localhost:8099
+          CRM_SERVICE_URL: http://localhost:8099
+          ERP_SERVICE_URL: http://localhost:8099
+          FEEDBACK_SERVICE_URL: http://localhost:8099
+          FILE_SERVICE_URL: http://localhost:8099
+          FINANCE_SERVICE_URL: http://localhost:8099
+          HRM_SERVICE_URL: http://localhost:8099
+          IAM_SERVICE_URL: http://localhost:8099
+          AI_SERVICE_URL: http://localhost:8099
+          BI_SERVICE_URL: http://localhost:8099
+          COMMUNICATION_SERVICE_URL: http://localhost:8099
+          EHS_SERVICE_URL: http://localhost:8099
+          GIS_SERVICE_URL: http://localhost:8099
+          INTEGRATION_SERVICE_URL: http://localhost:8099
+          LIMS_SERVICE_URL: http://localhost:8099
+          MASTER_DATA_SERVICE_URL: http://localhost:8099
+          MES_SERVICE_URL: http://localhost:8099
+          MOBILE_SERVICE_URL: http://localhost:8099
+          PDM_SERVICE_URL: http://localhost:8099
+          PM_SERVICE_URL: http://localhost:8099
+          PORTAL_SERVICE_URL: http://localhost:8099
+          RD_SERVICE_URL: http://localhost:8099
+          SCM_SERVICE_URL: http://localhost:8099
+          SRM_SERVICE_URL: http://localhost:8099
+          DOC_SERVICE_URL: http://localhost:8099
+          MONITOR_SERVICE_URL: http://localhost:8099
+          NOTIFICATION_SERVICE_URL: http://localhost:8099
+          QMS_SERVICE_URL: http://localhost:8099
+          SEARCH_SERVICE_URL: http://localhost:8099
+          TICKET_SERVICE_URL: http://localhost:8099
+          WMS_SERVICE_URL: http://localhost:8099
+          WORKFLOW_SERVICE_URL: http://localhost:8099
+        run: nohup ./target/debug/topems-server > /tmp/topems-server.log 2>&1 &
+
+      - name: Wait for backend health
+        run: |
+          for i in $(seq 1 72); do
+            if curl -sf http://localhost:8099/api/server/health >/dev/null; then
+              echo "✅ backend healthy after ~$((i * 5))s"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "❌ backend not healthy in 360s; log tail:"
+          tail -120 /tmp/topems-server.log
+          exit 1
+
+      - name: Verify admin login via BFF (真 JWT 前置校验)
+        run: |
+          BODY=$(curl -sf -X POST http://localhost:8099/api/core/iam/auth/login \
+            -H 'Content-Type: application/json' \
+            -d '{"username":"admin","password":"admin123"}')
+          echo "$BODY" | grep -q '"access_token"' || { echo "❌ admin login failed"; exit 1; }
+          echo "✅ admin login ok"
+
+      - name: Build web (production)
+        # dev 模式冒烟每路由 vite 按需编译，~300 路由超 45min（2026-11-03 本地实测）；
+        # production build + vite preview 后同批 4.7min（提速 ~20x），CI 门禁必须走 preview。
+        working-directory: apps/web
+        run: pnpm build
+
+      - name: Start web preview on :3000
+        working-directory: apps/web
+        run: nohup npx vite preview --port 3000 --host > /tmp/topems-web-e2e.log 2>&1 &
+
+      - name: Wait for web preview
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3000/ >/dev/null 2>&1; then
+              echo "✅ web up after ~$((i * 5))s"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "❌ web not up in 300s; log tail:"
+          tail -40 /tmp/topems-web-e2e.log
+          exit 1
+
+      - name: Run Web UI E2E — 核心 7 模块冒烟子集（push/PR 门禁）
+        # 核心模块 = mes/wms/erp/finance/scm/srm/tms（ROUTE_FILTER 前缀匹配含同首字母
+        # master/mobile/monitor/ehs 等，实测 ~300 路由 preview 下 4.7min 全绿）
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        working-directory: apps/web
+        env:
+          API_URL: ${{ env.API_URL }}
+          BASE_URL: ${{ env.BASE_URL }}
+          SMOKE_TIMEOUT_MS: "5400000"
+          CI: 'true'
+        run: |
+          ROUTE_FILTER="module:m,module:w,module:e,module:f,module:s,module:t" \
+            pnpm exec playwright test e2e/ui/full-route-smoke.spec.ts \
+              --project=chromium --workers=1 --retries=0 --reporter=github,html
+
+      - name: Run Web UI E2E — 全量 518 路由冒烟（nightly / manual full）
+        if: github.event_name != 'push' && github.event_name != 'pull_request'
+        working-directory: apps/web
+        env:
+          API_URL: ${{ env.API_URL }}
+          BASE_URL: ${{ env.BASE_URL }}
+          SMOKE_TIMEOUT_MS: "5400000"
+          CI: 'true'
+        run: |
+          # 518 路由按模块首字母 5 批串行（ROUTE_FILTER 前缀匹配；preview 下每批 1-3min）
+          for batch in "module:a,module:b,module:c,module:d" \
+                       "module:e,module:f,module:g,module:h" \
+                       "module:i,module:l,module:m" \
+                       "module:n,module:o,module:p,module:q,module:r" \
+                       "module:s,module:t,module:w,routes"; do
+            echo "===== batch: $batch ====="
+            ROUTE_FILTER="$batch" pnpm exec playwright test e2e/ui/full-route-smoke.spec.ts \
+              --project=chromium --workers=1 --retries=0 --reporter=github,html
+          done
+
+      - name: Run Web UI E2E — 流程型业务（tms-shipment 全流程自造数）
+        # CI 空库无业务种子：tms-shipment 走 创建→派车→追踪→签收 全流程（UI 造数），
+        # 是首期唯一可入门的流程型业务代表（其余核心 spec 依赖种子，见文件头注释）
+        working-directory: apps/web
+        env:
+          API_URL: ${{ env.API_URL }}
+          BASE_URL: ${{ env.BASE_URL }}
+          CI: 'true'
+        run: |
+          pnpm exec playwright test e2e/ui/tms-shipment.spec.ts \
+            --project=chromium --workers=1 --retries=0 --reporter=github,html
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-report-web-ui
+          path: apps/web/playwright-report/ui/
+          retention-days: 7
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-results-web-ui
+          path: apps/web/test-results/
+          retention-days: 7

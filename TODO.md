@@ -128,6 +128,19 @@
 > 根台账（2026-11-02 归档治理）：2026-11-01 前已完成段已归档至 `docs/archive/TODO-archive-2026-10-31.md`（177 段，原文保留）；本文件保留近期进行/未完成/11-01 起段与未标完成段。
 > 历史更早段（2026-10-08 前）如仍散落于本文件，按同一标准继续归档。
 
+## 前端质量工程收尾链 CI 固化（2026-11-03）✅
+
+> 承接 P2 段（§5.3 建议项 4/5）：apps/web 前端 e2e 套件纳入 CI 门禁（commit 后推送 origin/main）。
+
+- **新增 `.github/workflows/e2e-web.yml`**（与旧套件 tests/e2e 的 e2e.yml 分离）：
+  - 环境 = topems-server 模块化单体 :8099（SERVICE_URL 全量指自身，复刻 run_monolith.sh）+ **前端 production build + `vite preview` :3000**（dev 模式核心子集 45min 超时/拆批 1.5h 仍超 → preview 提速 ~20x，实测 4.7min 全绿）+ PG16/Redis7 services + setup-rust action + sqlx migrate + 健康轮询 + admin 真 JWT 登录前置校验。
+  - **push/PR 门禁**：核心 7 模块冒烟子集（`ROUTE_FILTER=module:m,module:w,module:e,module:f,module:s,module:t`，~300 路由可达性四断言，preview 4.7min）+ tms-shipment 流程型业务（preview 5 passed 25.4s）。
+  - **nightly 03:00 UTC / manual full**：全量 518 路由冒烟（模块首字母 5 批串行，preview 下每批 1-3min）+ tms-shipment。
+  - smoke spec 支持 `SMOKE_TIMEOUT_MS` 环境变量（默认 45min 不变）。
+- **首期边界（留痕）**：CI 空库无业务种子，依赖预置种子（srm 20 / mes MO202610* / finance ledger 等）的核心 spec 不入门禁；tms-shipment（UI 全流程自造数）为流程型业务代表。二期 = `scripts/dev/seed-*.sh` 业务种子固化后扩展。
+- **验证**：workflow YAML 结构校验通过（on/jobs/20 steps、if 分支）；门禁命令本地实跑——核心子集 preview 4.7min 全绿（硬失败 0）、finance 批 2.6s、tms-shipment 5 passed 25.4s。
+- 报告 §5.3 建议项 4/5 标 ✅ + 附录验证记录更新。
+
 ## 前端质量工程收尾链 P2 ESLint resolver 噪音实跑复核并修复（2026-11-03）✅
 
 > 承接 P2 空态段（10-07 P0 遗留收官）：lint 从实跑 528 problems → **0 problems**，门禁能力恢复（commit 后推送 origin/main）。

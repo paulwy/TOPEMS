@@ -81,8 +81,9 @@ function isNoise(text: string): boolean {
 
 test.describe('B1/B2 全路由巡检 smoke', () => {
   test('遍历路由清单：可达性 + 控制台洁净', async ({ browser }, testInfo) => {
-    // 518 条路由在 dev 模式单线程遍历超过 1h；支持 ROUTE_FILTER（group 前缀）分批并行
-    test.setTimeout(45 * 60 * 1000);
+    // 518 条路由在 dev 模式单线程遍历超过 1h；支持 ROUTE_FILTER（group 前缀）分批并行。
+    // 默认 45min 上限；CI 大批次（如核心 7 模块子集）可经 SMOKE_TIMEOUT_MS 调高。
+    test.setTimeout(Number(process.env.SMOKE_TIMEOUT_MS) || 45 * 60 * 1000);
 
     const webSrc = path.resolve(path.dirname(testInfo.file), '../../src');
     let inventory = buildInventory(webSrc);
