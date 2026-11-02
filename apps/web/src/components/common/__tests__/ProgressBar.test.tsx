@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 import ProgressBar from '../ProgressBar';
@@ -15,6 +15,8 @@ vi.mock('@/store', () => ({
   ),
 }));
 
+// ProgressBar 现为 @topems/shared-components 的真实实现（此前是 stub）。
+// 删除 stub 时代断言（组件名文本）；保留渲染不抛错 / 结构存在 / 可重复渲染。
 describe('ProgressBar', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -23,11 +25,6 @@ describe('ProgressBar', () => {
   it('renders without crashing', () => {
     const { container } = render(<ProgressBar />);
     expect(container.firstChild).toBeInTheDocument();
-  });
-
-  it('renders ProgressBar text content', () => {
-    render(<ProgressBar />);
-    expect(screen.getByText('ProgressBar')).toBeInTheDocument();
   });
 
   it('renders a div element', () => {
@@ -41,9 +38,7 @@ describe('ProgressBar', () => {
 
   it('renders consistently on multiple renders', () => {
     const { unmount: u1 } = render(<ProgressBar />);
-    expect(screen.getByText('ProgressBar')).toBeInTheDocument();
     u1();
-    render(<ProgressBar />);
-    expect(screen.getByText('ProgressBar')).toBeInTheDocument();
+    expect(() => render(<ProgressBar />)).not.toThrow();
   });
 });

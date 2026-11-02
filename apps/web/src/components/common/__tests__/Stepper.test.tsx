@@ -1,9 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 import { renderWithProviders } from '@/__tests__/test-utils';
-import Stepper from '../Stepper';
+import Stepper, { type StepItem } from '../Stepper';
+
+// Stepper 现为 @topems/shared-components 的真实实现（此前是 stub 空 div），
+// 需要 steps/activeStep props。保留集成级断言：渲染不抛错 + 可点击。
+const steps: StepItem[] = [
+  { label: '创建', status: 'completed' },
+  { label: '提交', status: 'active' },
+  { label: '审批', status: 'pending' },
+];
 
 describe('Stepper', () => {
   beforeEach(() => {
@@ -11,28 +19,34 @@ describe('Stepper', () => {
   });
 
   it('renders without crashing', () => {
-    renderWithProviders(<Stepper />);
-    expect(screen.getByText('Stepper')).toBeInTheDocument();
+    const { container } = renderWithProviders(
+      <Stepper
+        steps={steps}
+        activeStep={1}
+      />
+    );
+    expect(container.firstElementChild).not.toBeNull();
   });
 
-  it('renders a div element', () => {
-    const { container } = renderWithProviders(<Stepper />);
-    expect(container.querySelector('div')).not.toBeNull();
+  it('renders step labels', () => {
+    const { getByText } = renderWithProviders(
+      <Stepper
+        steps={steps}
+        activeStep={1}
+      />
+    );
+    expect(getByText('创建')).toBeInTheDocument();
+    expect(getByText('审批')).toBeInTheDocument();
   });
 
-  it('renders the component text content', () => {
-    renderWithProviders(<Stepper />);
-    expect(screen.getByText(/Stepper/)).toBeInTheDocument();
-  });
-
-  it('renders exactly one div element as stub', () => {
-    const { container } = renderWithProviders(<Stepper />);
-    expect(container.querySelectorAll('div')).toHaveLength(1);
-  });
-
-  it('does not crash when clicked (stub has no handlers)', () => {
-    renderWithProviders(<Stepper />);
-    const el = screen.getByText('Stepper');
-    expect(() => fireEvent.click(el)).not.toThrow();
+  it('does not crash when clicked', () => {
+    const { container } = renderWithProviders(
+      <Stepper
+        steps={steps}
+        activeStep={1}
+      />
+    );
+    const el = container.firstElementChild;
+    expect(() => fireEvent.click(el as Element)).not.toThrow();
   });
 });

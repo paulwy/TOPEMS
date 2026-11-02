@@ -310,9 +310,10 @@ describe('DataTable', () => {
         showExport={false}
       />
     );
-    const rows = screen.getAllByRole('row');
-    const dataRow = rows[1];
-    fireEvent.click(dataRow);
+    // 数据行走 react-window 虚拟滚动（外层还有容器行），用数据单元格定位真实数据行
+    const dataRow = screen.getByText('张三').closest('tr');
+    expect(dataRow).not.toBeNull();
+    fireEvent.click(dataRow as Element);
     expect(handleRowClick).toHaveBeenCalledTimes(1);
   });
 

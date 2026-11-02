@@ -8,7 +8,7 @@ import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/api/ehs', () => ({
   ehsApi: {
-    listDrills: vi
+    listDrillRecords: vi
       .fn()
       .mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
     getDrill: vi.fn(),
@@ -125,17 +125,17 @@ describe('EhsDrillPage', () => {
         <EhsDrillPage />
       </BrowserRouter>
     );
-    expect(ehsApi.listDrills).toBeDefined();
+    expect(ehsApi.listDrillRecords).toBeDefined();
     expect(ehsApi.createDrill).toBeDefined();
     expect(ehsApi.getDrill).toBeDefined();
   });
 
-  it('should call listDrills API on mount', () => {
+  it('should call listDrillRecords API on mount', () => {
     render(
       <BrowserRouter>
         <EhsDrillPage />
       </BrowserRouter>
     );
-    expect(ehsApi.listDrills).toHaveBeenCalled();
+    expect(ehsApi.listDrillRecords).toHaveBeenCalled();
   });
 });

@@ -5,34 +5,26 @@ import React from 'react';
 import { renderWithProviders } from '@/__tests__/test-utils';
 import ActionButton from '../ActionButton';
 
+// ActionButton 现为 @topems/shared-components 的真实实现（此前是 stub 空 div）。
+// 保留集成级断言：渲染不抛错 + 可点击；删除 stub 时代断言（组件名文本 / 恰好 1 div）。
 describe('ActionButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('renders without crashing', () => {
-    renderWithProviders(<ActionButton />);
-    expect(screen.getByText('ActionButton')).toBeInTheDocument();
+    const { container } = renderWithProviders(<ActionButton />);
+    expect(container.firstElementChild).not.toBeNull();
   });
 
   it('renders a div element', () => {
     const { container } = renderWithProviders(<ActionButton />);
-    expect(container.querySelector('div')).not.toBeNull();
+    expect(container.querySelector('div,button')).not.toBeNull();
   });
 
-  it('renders the component text content', () => {
-    renderWithProviders(<ActionButton />);
-    expect(screen.getByText(/ActionButton/)).toBeInTheDocument();
-  });
-
-  it('renders exactly one div element as stub', () => {
+  it('does not crash when clicked', () => {
     const { container } = renderWithProviders(<ActionButton />);
-    expect(container.querySelectorAll('div')).toHaveLength(1);
-  });
-
-  it('does not crash when clicked (stub has no handlers)', () => {
-    renderWithProviders(<ActionButton />);
-    const el = screen.getByText('ActionButton');
-    expect(() => fireEvent.click(el)).not.toThrow();
+    const el = container.firstElementChild;
+    expect(() => fireEvent.click(el as Element)).not.toThrow();
   });
 });

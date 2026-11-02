@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 import RelativeTime from '../RelativeTime';
@@ -15,6 +15,8 @@ vi.mock('@/store', () => ({
   ),
 }));
 
+// RelativeTime 现为 @topems/shared-components 的真实实现（此前是 stub）。
+// 删除 stub 时代断言（组件名文本 / 恰好 1 div）；保留渲染不抛错 / 结构存在 / 可重复渲染。
 describe('RelativeTime', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -25,14 +27,9 @@ describe('RelativeTime', () => {
     expect(container.firstChild).toBeInTheDocument();
   });
 
-  it('renders RelativeTime text content', () => {
-    render(<RelativeTime />);
-    expect(screen.getByText('RelativeTime')).toBeInTheDocument();
-  });
-
-  it('renders a div element', () => {
+  it('renders a root element', () => {
     const { container } = render(<RelativeTime />);
-    expect(container.querySelector('div')).toBeTruthy();
+    expect(container.firstElementChild).not.toBeNull();
   });
 
   it('is a function component (no props required)', () => {
@@ -41,9 +38,7 @@ describe('RelativeTime', () => {
 
   it('renders consistently on re-render', () => {
     const { unmount } = render(<RelativeTime />);
-    expect(screen.getByText('RelativeTime')).toBeInTheDocument();
     unmount();
-    render(<RelativeTime />);
-    expect(screen.getByText('RelativeTime')).toBeInTheDocument();
+    expect(() => render(<RelativeTime />)).not.toThrow();
   });
 });
