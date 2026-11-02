@@ -6613,6 +6613,29 @@
         "usage_count": "Usage Count",
         "created_by": "Created By"
       }
+    },
+    "governance_dashboard": {
+      "title": "AI Governance Dashboard",
+      "subtitle": "Governance Metrics Overview",
+      "score": "Overall Score",
+      "stat_total_requests": "Total Requests",
+      "stat_success_rate": "Success Rate",
+      "stat_avg_response": "Avg Response Time",
+      "stat_token_usage": "Token Usage",
+      "stat_active_users": "Active Users",
+      "stat_cache_hit": "Cache Hit Rate",
+      "risk_title": "Risk Items",
+      "risk_score": "Risk Score",
+      "risk_high_items": "High Risk Items ({{count}})",
+      "compliance_title": "Compliance Checks",
+      "compliance_rate": "Compliance Rate",
+      "compliance_passed": "Passed",
+      "compliance_failed": "Failed",
+      "compliance_checks": "Checks",
+      "cost_title": "Cost Overview",
+      "cost_budget": "Budget",
+      "cost_llm": "LLM Calls",
+      "cost_tools": "Tool Calls"
     }
   },
   "automation": {

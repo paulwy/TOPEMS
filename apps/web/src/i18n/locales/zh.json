@@ -6619,6 +6619,29 @@
         "usage_count": "使用次数",
         "created_by": "创建人"
       }
+    },
+    "governance_dashboard": {
+      "title": "AI 治理看板",
+      "subtitle": "治理指标总览",
+      "score": "综合评分",
+      "stat_total_requests": "总请求数",
+      "stat_success_rate": "成功率",
+      "stat_avg_response": "平均响应时间",
+      "stat_token_usage": "Token 用量",
+      "stat_active_users": "活跃用户",
+      "stat_cache_hit": "缓存命中率",
+      "risk_title": "风险项",
+      "risk_score": "风险评分",
+      "risk_high_items": "高风险项（{{count}}）",
+      "compliance_title": "合规检查",
+      "compliance_rate": "合规率",
+      "compliance_passed": "通过",
+      "compliance_failed": "未通过",
+      "compliance_checks": "检查项",
+      "cost_title": "成本概览",
+      "cost_budget": "预算",
+      "cost_llm": "LLM 调用",
+      "cost_tools": "工具调用"
     }
   },
   "automation": {
