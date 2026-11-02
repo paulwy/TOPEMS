@@ -8,6 +8,7 @@
 - **ListPageTemplate 审计（P0 完成）**：组件 110 行健康；103 引用均为 import `@/components/templates` + 正常 props 使用（抽查 PmTemplatePage 3 / InspectionResultPage 2）→ **结论：无需拆分**（原排期项调整为审计，核销）。
 - **内联样式迁移 2363 处**：入 Next 批（Batch1 top8 文件 ~400 处迁 CSS Modules，每文件独立 commit + build 验证）。
 - **Batch1 内联样式迁移（完成）**：top8 中 7 文件迁 227 处静态内联样式 → CSS Modules（erp 40 / RedesignDemo 45 / DashboardPage 36 / ErrorBoundary 35 / MesWorkOrderPage 36 / PerformanceMonitorPage 20 / MapView 12 / gis index 3；动态 143 处保留）；每文件独立 commit；typecheck 0 错误 + build 通过；工具 /tmp/migrate3.py（数字→px、className 合并 cx、MesWorkOrderPage import 改名 css 避本地 styles 冲突）；MapView/gis 动态密集文件剩余静态按保守判定保留，Batch2 再补。
+- **Batch2 内联样式迁移（完成）**：全仓剩余 2136 处中 296 文件迁 **1251 处静态** → CSS Modules（工具升级 /tmp/migrate5.py：修复合并删原 className + cx import 检测 + 本地 styles 冲突改名；22 文件 cx 合并、6 文件 css 别名）；typecheck 0 错误 + build 通过；5 处人工修复（Alert/Toast/ConsolidationReports 还原 style 至仅接受 style 的组件、DashboardEditor/Map3DView className 跨行合并）；按目录分 4 批 commit（components / mobile+mes+admin / 业务模块系 / layouts+microfrontend 等）。累计迁移 **1478 处**（Batch1 227 + Batch2 1251），动态样式保留。
 
 ## topems / topems_prepare 账本治理（另案，2026-11-02）✅
 
