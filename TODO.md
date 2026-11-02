@@ -1,3 +1,14 @@
+## prod 部署项收口：迁移登记 + NULLIF 形态 + menu 种子 + RLS batch1（2026-11-02）✅
+
+> 目标库确认：topems_prod（本机 5432，账本 537 缺 3）；.env 指向 topems_test 为开发链。
+
+- **迁移登记 prod**：账本 **540/540 完全对齐**（缺 []）；应用顺序 20261102200000 → 20261102210000 → 20261102220000，各登记 checksum sha384。
+- **menu 种子迁移**（20261102200000）：应用成功（aps 3 菜单组 + 12 菜单 + 1 权限，验证 core_menu_groups 3 组命中）。
+- **NULLIF prod 形态**（20261102210000）：应用成功（ALTER POLICY 重设 core_sessions/ai_conversations/communication/mdm 等，无错误）。
+- **RLS batch1 prod 应用**（20261102220000）：**prod 适配版**（/tmp，不入库）应用 24 张，0 错误；存在表全部 relrowsecurity=true + rls_tenant_isolation 策略各 1。
+- **prod vs test 结构差异（记录）**：prod 缺 4 张（iam.tenant_permissions、lims.qa_lab_samples/tasks、plugin_erp.accounting_subjects）+ public.qa_ehs_risks 无租户列（test 有 org_id）→ 仓库迁移文件为 test 版 29 张，prod 部署需按实际结构适配跳过。
+- **备注**：topems 库（920 表、账本 0）未治理（非本指令范围，另案）；topems_prepare 账本 479 亦差 61。
+
 ## RLS 覆盖率工程——后段：749 读端点绑定审计（2026-11-02）✅
 
 > 承接 batch1；核对读端点 tenant 上下文注入覆盖（中间件全局层注入，端点无需逐查）。
