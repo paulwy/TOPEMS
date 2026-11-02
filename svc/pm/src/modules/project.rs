@@ -982,7 +982,7 @@ mod tests {
             benefit_target: Some(serde_json::json!({"target": 200000})),
             risk_level: Some("medium".to_string()),
             priority: Some(1),
-            tags: Some(vec!["urgent".to_string()]),
+            tags: Some(serde_json::json!(["urgent"])),
             parent_id: None,
             workspace_id: None,
             cost_center_id: None,
