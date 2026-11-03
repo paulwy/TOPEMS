@@ -3803,3 +3803,28 @@ P2（2-4 周后）
 - **经验**：① DO 块内 `'tbl'::regclass` 在 IF false 分支仍会解析报错 → 用 `DECLARE t oid := to_regclass(...)` 变量（NULL 安全）；② CREATE INDEX IF NOT EXISTS 不防表缺失 → 必须 to_regclass 守卫；③ 无 PK 表大多为空壳（prod 108 表中 96 全空）→ 补 PK 主要价值是 schema 完整性。
 ### 状态与下批
 - 下批：索引二批（无索引且非空表的业务列：按表行数排序甄别）或 PK 二批（非 id 自然 key 列）或类型延展代码侧（svc ai u32→i64 4 处 + CHAR 类代码修复）。CHECK 约束因 11-03 误用移除历史暂缓。
+
+## 第三十三轮（2026-11-03）：test(5432) vs 5433 同列类型差异批量对齐 353→0 ✅
+
+> 以 test（5432）为基准库，5433（colima 恢复库）对齐 test 同列数据类型。
+
+- **初始差异**：353 项同列类型差异（跨 23 schema）。
+- **已完成批次 DB-06 至 DB-18**（13 个 migration）：
+  - DB-06 `a5eb039a71`：5433 jsonb↔text 11 列
+  - DB-07 `445f491d34`：test 时间戳残留 7 + uuid 25
+  - DB-08 `a0cbff210d`：test varchar→text 190 列（finance 66/pm 39/mobile 24 等）
+  - DB-09 `99fa79557c`：test iam.position_* id bigint→uuid 4 表
+  - DB-10 `f701da7e63`：5433 varchar/text→uuid 19 列
+  - DB-11 `48e4da79bf`：5433 varchar→text 24 列
+  - DB-12 `b74dbd8cef`：5433 date↔timestamptz 21 列
+  - DB-13 `60ac59a209`：5433 numeric↔double precision 20 列
+  - DB-14 `f35a1fb52e`：test varchar→uuid 7 列（有数据，非合法 uuid 转零 uuid）
+  - DB-15 `ef12919ea9`：5433 integer/bigint 16 列
+  - DB-16 `e442c7e0c3`：5433 tenant_id RLS 策略解耦 14 列（DROP POLICY×2 → ALTER TYPE uuid → SET DEFAULT 零 uuid → CREATE POLICY×2）
+  - DB-17 `515106beaf`：5433 零星类型 12 列（uuid→varchar 8 / rs.formulas 2 / ip_address 1）
+  - DB-18 `1f9405302a`：特殊类型 8 列（USER-DEFINED enum 4 / ARRAY↔jsonb 3 / vector 1）
+- **终态**：同列类型差异 **353 → 0** ✅
+- **关键坑**：`docker exec topems-postgres psql ... <<'SQL'` heredoc 模式在本环境静默不生效——输出显示 ALTER TABLE 成功但数据库未变更。DB-10/11/12/13/15 均踩此坑，后续通过 `docker exec -i ... < file.sql` 文件重定向才正确执行。
+- **经验**：① RLS 策略依赖列需先 DROP POLICY → ALTER → CREATE POLICY；② USER-DEFINED enum 需先 CREATE TYPE 再 ALTER COLUMN TYPE；③ ARRAY↔jsonb 不能直接 cast，需 to_jsonb() 或临时列方案；④ pgvector vector 类型需指定 schema（ai.vector）。
+### 状态
+- 类型批次主体完成，差异归零。剩余：prod 生产库 ALTER 单独评估（未执行）。
