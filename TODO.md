@@ -1,4 +1,20 @@
 
+## 数据库治理：类型统一补充——permission_audit_logs tenant_id/user_id 对齐（2026-11-03）✅（类型差异 633→3）
+
+> 承接 5 项挂账——处理 RLS 策略耦合的 2 项。
+
+**执行**（DROP POLICY → ALTER → CREATE POLICY 重建）：
+- tenant_id/user_id：uuid → **varchar(64)**（对齐 test——USING ::varchar(64)）
+- RLS 策略 tenant_isolation_permission_audit_logs 重建：表达式 `::uuid` 适配为 **::text**（varchar 列比较）——语义保留（tenant 隔离不变）。
+- **FK 移除**：`permission_audit_logs_user_id_fkey`（user_id→iam.users(id)）DROP——**对齐 test（该表无此 FK）**；user_id 完整性约束移除已登记（应用层校验兜底）。
+
+**踩坑**：psql -c 多语句隐式事务——user_id FK ERROR 导致**整体回滚**（tenant_id 改动丢失）；策略耦合 ALTER 必须 DROP POLICY 后**分步执行**再重建。
+
+**验证**：同名类型差异 **633→3**；门禁 exit 0 绿；策略数=1（RLS 仍生效）。
+
+**剩余 3 项挂账（id 契约）**：iam.permission_audit_logs.id、public.core_sessions.id、public.core_refresh_tokens.id（uuid↔bigint 不可逆——需主键契约立项）。
+
+
 ## 数据库治理：类型统一批次收官（topems 633→5，628 项对齐，2026-11-03）✅（5 项挂账）
 
 > 承接 545 项对齐后——剩余 88 精度类逐表契约甄别执行。
