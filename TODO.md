@@ -1,4 +1,20 @@
 
+## DB-04 时间戳统一总闭环（2026-11-03）✅（四库 naive 全归零）
+
+> 时间戳挂账收尾——prepare 库空库确认，无需 ALTER。
+
+**四库最终状态**：
+
+| 库 | naive 列 | 处理 |
+|---|---|---|
+| 5432 test（基准） | 0 | ✅ 本就为 0 |
+| 5433（colima 开发库） | 421→0 | ✅ DB-04 migration |
+| prod topems_prod（192.168.110.115） | 174→0 | ✅ DB-04-prod migration |
+| topems_prepare | 0（空库无表） | ✅ 无需 ALTER |
+
+**结论**：时间戳挂账全闭环，无遗留。
+
+
 ## DB-04-prod：prod 生产库 naive timestamp → timestamptz 统一（2026-11-03）✅（174 列一次重放）
 
 > prod 生产库时间戳统一——174 列 naive → timestamptz。
