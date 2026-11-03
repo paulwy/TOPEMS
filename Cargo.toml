@@ -372,7 +372,7 @@ mime = "0.3"
 mime_guess = "2"
 pdf-extract = "0.12"
 rust_decimal = { version = "1", features = ["serde"] }
-rand = "0.8"
+rand = "0.10"
 
 tempfile = "3.8"
 time = { version = "0.3", features = ["serde", "formatting", "parsing", "macros"] }
@@ -395,7 +395,7 @@ aes-gcm = "0.11"
 amqprs = "2.1"
 async-stream = "0.3"
 base64 = "0.23"
-brotli = "3.5"
+brotli = "9"
 envy = "0.4"
 etcd-client = "0.19"
 flate2 = "1.0"

@@ -1,3 +1,12 @@
+## AR-08 低破坏面依赖升级批 2：rand 0.8→0.10 + brotli 3.5→9（2026-11-03）✅
+
+> 承接 AR-08 低破坏面批 1（6 项已推送）；rand 为批 1 标注"另批评估"项，本批接手。prost 确认无直接依赖（workspace 键不存在、lock 0.14.4 仅传递版）→ 跳过。
+- **rand 0.8→0.10（两个 major）破坏面实录**：`thread_rng()` 移除 → 7 处改 `rand::rng()`；`Rng::gen` 改名 `random()`（redis.rs seed）；`Rng::gen_range` 移至 `RngExt` 并改名 `random_range`（redis.rs 3 + service_client.rs 1 + agent.rs 4）；`rand::RngCore` re-export 移除 → 改 `rand::rand_core::RngCore` 后因 rand_core 0.10 将 fill_bytes 移入 `Rng` trait 再改 `use rand::Rng`；`rngs::OsRng` 改名 `SysRng`（仅 test 用，改 `rand::rng()` 规避 getrandom trait bound 问题）；**`StandardUniform: Distribution<usize>` 在 0.9+ 移除**（platform 相关类型）→ service_discovery.rs:566 `random::<usize>()` 改 `rand::random_range(0..instances.len())`（clippy -D correctness 抓 u64 as usize 截断后定稿）。
+- **brotli 3.5→9**：仅 shared-core compression_middleware.rs 用 `CompressorWriter`，API 稳定零改动。
+- **验证全绿**：cargo check --workspace --all-targets **0 error**；5 crate **2607 测试 0 failed**（shared-event 366/shared-auth 205/unified-core 540/ai 992/crm 504；shared-event 1 个 `test_event_subscriber_..._redis_unavailable` 连真实 redis 挂起为环境依赖、与本批无关，skip 后其余全过）；clippy `-D correctness` 5 crate **0 error**。
+- **lock 现状**：rand 0.8.6/0.9.4/0.10.1 三版共存（传递依赖固定 0.8/0.9）、brotli 8.0.2（decompressor 传递）+ 9.1.1。
+- **未动**：sqlx/reqwest/redis/utoipa/opentelemetry/lapin/etcd-client 留独立立项；desktop 14 条硬编码特例维持。
+
 ## AR-08 低破坏面依赖升级批：6 项工具/密码学依赖大版本（2026-11-03）✅
 > 承接 AR-08 后续清单（git b8a486de18 登记 16 项大版本升级）；用户拍板从低破坏面开始、sqlx 留独立立项。本批完成 6 项：serial_test 3→4、md5 0.7→0.8、sha2 0.10→0.11、hmac 0.12→0.13、base64 0.22→0.23、aes-gcm 0.10→0.11。
 - **工具类（零破坏）**：serial_test 3→4、md5 0.7→0.8——仅改 workspace 键 + lock 更新，cargo check --all-targets 0 error；serial_test 用户 4 个 lib crate 测试全绿（766 passed，#[serial] 运行时正常）。

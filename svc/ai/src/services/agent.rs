@@ -490,16 +490,16 @@ impl AgentService {
     #[allow(clippy::indexing_slicing)] // mock 天气数据：gen_range 已限制 0..len，数学上安全
     fn get_weather_data(&self, _city: &str) -> WeatherData {
         let weather_conditions = ["晴", "多云", "阴", "小雨", "中雨", "大雨", "雷阵雨", "雾霾"];
-        let mut rng = rand::thread_rng();
-        let idx = rand::Rng::gen_range(&mut rng, 0..weather_conditions.len());
+        let mut rng = rand::rng();
+        let idx = rand::RngExt::random_range(&mut rng, 0..weather_conditions.len());
 
         WeatherData {
             condition: weather_conditions[idx].to_string(),
-            temp: rand::Rng::gen_range(&mut rng, 15..35),
-            feels_like: rand::Rng::gen_range(&mut rng, 12..38),
-            humidity: rand::Rng::gen_range(&mut rng, 30..95),
-            wind_speed: format!("{} km/h", rand::Rng::gen_range(&mut rng, 5..30)),
-            air_quality: match rand::Rng::gen_range(&mut rng, 0..100) {
+            temp: rand::RngExt::random_range(&mut rng, 15..35),
+            feels_like: rand::RngExt::random_range(&mut rng, 12..38),
+            humidity: rand::RngExt::random_range(&mut rng, 30..95),
+            wind_speed: format!("{} km/h", rand::RngExt::random_range(&mut rng, 5..30)),
+            air_quality: match rand::RngExt::random_range(&mut rng, 0..100) {
                 0..=50 => "优",
                 51..=100 => "良",
                 101..=150 => "轻度污染",

@@ -563,7 +563,7 @@ impl ConsulDiscoveryClient {
             return None;
         }
         // 简单随机负载均衡
-        let idx = rand::random::<usize>() % instances.len();
+        let idx = rand::random_range(0..instances.len());
         let instance = &instances[idx];
         Some(format!("http://{}:{}", instance.address, instance.port))
     }

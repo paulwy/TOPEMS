@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use futures::Future;
 use parking_lot::{Mutex, RwLock};
-use rand::Rng;
+use rand::RngExt;
 use redis::{Client, Connection, RedisResult};
 use serde::{Deserialize, Serialize};
 use std::hash::Hasher;
@@ -130,8 +130,8 @@ impl RedisCacheService {
         let ttl = match ttl_seconds {
             Some(ttl) => {
                 if self.protection_config.enable_random_ttl {
-                    let jitter = rand::thread_rng()
-                        .gen_range(0..self.protection_config.random_ttl_jitter_seconds);
+                    let jitter = rand::rng()
+                        .random_range(0..self.protection_config.random_ttl_jitter_seconds);
                     Some(ttl + jitter)
                 } else {
                     Some(ttl)
@@ -210,8 +210,8 @@ impl RedisCacheService {
             let serialized = serde_json::to_string(&result).map_err(TopemsError::Serialization)?;
             let ttl_with_jitter = if self.protection_config.enable_random_ttl {
                 ttl.map(|t| {
-                    let jitter = rand::thread_rng()
-                        .gen_range(0..self.protection_config.random_ttl_jitter_seconds);
+                    let jitter = rand::rng()
+                        .random_range(0..self.protection_config.random_ttl_jitter_seconds);
                     t + jitter
                 })
             } else {
@@ -235,8 +235,8 @@ impl RedisCacheService {
         let serialized = serde_json::to_string(&result).map_err(TopemsError::Serialization)?;
         let ttl_with_jitter = if self.protection_config.enable_random_ttl {
             ttl.map(|t| {
-                let jitter = rand::thread_rng()
-                    .gen_range(0..self.protection_config.random_ttl_jitter_seconds);
+                let jitter = rand::rng()
+                    .random_range(0..self.protection_config.random_ttl_jitter_seconds);
                 t + jitter
             })
         } else {
@@ -432,7 +432,7 @@ impl BloomFilter {
         Self {
             bits: Arc::new(RwLock::new(vec![false; bits_needed])),
             num_hashes,
-            seed: rand::thread_rng().gen(),
+            seed: rand::rng().random(),
         }
     }
 

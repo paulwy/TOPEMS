@@ -271,9 +271,9 @@ pub fn verify_jwt_token(token: &str, secret: &str) -> Result<Claims, TopemsError
 }
 
 pub fn generate_refresh_token() -> String {
-    use rand::RngCore;
+    use rand::Rng;
     let mut bytes = [0u8; 32];
-    rand::thread_rng().fill_bytes(&mut bytes);
+    rand::rng().fill_bytes(&mut bytes);
     bytes.iter().map(|b| format!("{:02x}", b)).collect()
 }
 

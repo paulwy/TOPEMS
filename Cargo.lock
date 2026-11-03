@@ -85,12 +85,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cc7bb162ec39d46ab1ca8c77bf72e890535becd1751bb45f64c597edb4c8c6b3"
 
 [[package]]
+name = "alloc-no-stdlib"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c2fb6cfd47bf496ff64095c20eaba0c201404ee38714d4142fcfa1dc334fcc7a"
+
+[[package]]
 name = "alloc-stdlib"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94fb8275041c72129eb51b7d0322c29b8387a0386127718b096429201a5d6ece"
 dependencies = [
- "alloc-no-stdlib",
+ "alloc-no-stdlib 2.0.4",
+]
+
+[[package]]
+name = "alloc-stdlib"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b5c1865780388bfa186411ab5f247819487fc4864c6e9c3106611fa347586e1"
+dependencies = [
+ "alloc-no-stdlib 3.0.0",
 ]
 
 [[package]]
@@ -742,34 +757,24 @@ dependencies = [
 
 [[package]]
 name = "brotli"
-version = "3.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d640d25bc63c50fb1f0b545ffd80207d2e10a4c965530809b40ba3386825c391"
-dependencies = [
- "alloc-no-stdlib",
- "alloc-stdlib",
- "brotli-decompressor 2.5.1",
-]
-
-[[package]]
-name = "brotli"
 version = "8.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4bd8b9603c7aa97359dbd97ecf258968c95f3adddd6db2f7e7a5bef101c84560"
 dependencies = [
- "alloc-no-stdlib",
- "alloc-stdlib",
+ "alloc-no-stdlib 2.0.4",
+ "alloc-stdlib 0.2.2",
  "brotli-decompressor 5.0.0",
 ]
 
 [[package]]
-name = "brotli-decompressor"
-version = "2.5.1"
+name = "brotli"
+version = "9.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e2e4afe60d7dd600fdd3de8d0f08c2b7ec039712e3b6137ff98b7004e82de4f"
+checksum = "627b7cfb0578f0eafce087a90fcd40add1231900b69e4d4de2d456260a4f5d81"
 dependencies = [
- "alloc-no-stdlib",
- "alloc-stdlib",
+ "alloc-no-stdlib 3.0.0",
+ "alloc-stdlib 0.3.0",
+ "brotli-decompressor 6.2.0",
 ]
 
 [[package]]
@@ -778,8 +783,18 @@ version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "874bb8112abecc98cbd6d81ea4fa7e94fb9449648c93cc89aa40c81c24d7de03"
 dependencies = [
- "alloc-no-stdlib",
- "alloc-stdlib",
+ "alloc-no-stdlib 2.0.4",
+ "alloc-stdlib 0.2.2",
+]
+
+[[package]]
+name = "brotli-decompressor"
+version = "6.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "34c6783f42c21c952ad7112b354f0ba2f10760e9decea5b1b60523d6e270faaf"
+dependencies = [
+ "alloc-no-stdlib 3.0.0",
+ "alloc-stdlib 0.3.0",
 ]
 
 [[package]]
@@ -5521,7 +5536,7 @@ dependencies = [
  "parking_lot",
  "pdf-extract",
  "prometheus",
- "rand 0.8.6",
+ "rand 0.10.1",
  "regex",
  "reqwest 0.12.28",
  "serde",
@@ -5563,7 +5578,7 @@ dependencies = [
  "job_scheduler_ng",
  "lopdf 0.45.0",
  "once_cell",
- "rand 0.8.6",
+ "rand 0.10.1",
  "serde",
  "serde_json",
  "sqlx",
@@ -5612,7 +5627,7 @@ dependencies = [
  "axum-test",
  "chrono",
  "mockall",
- "rand 0.8.6",
+ "rand 0.10.1",
  "reqwest 0.12.28",
  "rust_decimal",
  "serde",
@@ -5670,7 +5685,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "prometheus",
- "rand 0.8.6",
+ "rand 0.10.1",
  "regex",
  "reqwest 0.12.28",
  "rust_decimal",
@@ -5759,7 +5774,7 @@ dependencies = [
  "axum",
  "bigdecimal",
  "chrono",
- "rand 0.8.6",
+ "rand 0.10.1",
  "reqwest 0.12.28",
  "rust_decimal",
  "serde",
@@ -5835,7 +5850,7 @@ dependencies = [
  "anyhow",
  "axum",
  "chrono",
- "rand 0.8.6",
+ "rand 0.10.1",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
@@ -5859,7 +5874,7 @@ dependencies = [
  "chrono",
  "futures-util",
  "lazy_static",
- "rand 0.8.6",
+ "rand 0.10.1",
  "serde",
  "serde_json",
  "sqlx",
@@ -6266,7 +6281,7 @@ dependencies = [
  "jsonwebtoken",
  "parking_lot",
  "prometheus",
- "rand 0.8.6",
+ "rand 0.10.1",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
@@ -6321,7 +6336,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
- "brotli 3.5.0",
+ "brotli 9.1.1",
  "chrono",
  "envy",
  "flate2",
@@ -6390,7 +6405,7 @@ dependencies = [
  "hostname",
  "lapin",
  "parking_lot",
- "rand 0.8.6",
+ "rand 0.10.1",
  "redis",
  "regex",
  "reqwest 0.12.28",
@@ -6560,7 +6575,7 @@ dependencies = [
  "lazy_static",
  "lettre",
  "prometheus",
- "rand 0.8.6",
+ "rand 0.10.1",
  "redis",
  "regex",
  "reqwest 0.12.28",

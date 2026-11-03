@@ -894,9 +894,9 @@ impl LoadBalancer {
                 endpoint
             }
             LoadBalancingStrategy::Random => {
-                use rand::Rng;
-                let mut rng = rand::thread_rng();
-                let index = rng.gen_range(0..self.endpoints.len());
+                use rand::{Rng, RngExt};
+                let mut rng = rand::rng();
+                let index = rng.random_range(0..self.endpoints.len());
                 &self.endpoints[index]
             }
         }

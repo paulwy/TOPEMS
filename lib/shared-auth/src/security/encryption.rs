@@ -1,7 +1,7 @@
 use aes_gcm::{aead::Aead, Aes256Gcm, Key, Nonce};
 use base64::{engine::general_purpose::STANDARD, Engine};
 use hmac::{Hmac, KeyInit, Mac};
-use rand::RngCore;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use std::collections::HashMap;
@@ -152,7 +152,7 @@ impl FieldEncryptionService {
         let key = self.key_manager.current_key()?;
         let cipher = Aes256Gcm::new(&Key::<Aes256Gcm>::from(*key));
         let mut nonce_bytes = [0u8; 12];
-        rand::thread_rng().fill_bytes(&mut nonce_bytes);
+        rand::rng().fill_bytes(&mut nonce_bytes);
         let nonce = Nonce::from(nonce_bytes);
         let ciphertext = cipher
             .encrypt(&nonce, plaintext.as_bytes())
@@ -513,7 +513,7 @@ pub fn decrypt_string_value(
 ///   - 生产环境（DEPLOYMENT_MODE=saas 或 MULTI_TENANT_ENABLED=true）：密钥未设置时 panic
 ///   - 开发环境：密钥未设置时 warn 并使用安全随机生成的临时密钥（非硬编码）
 pub fn init_encryption_from_env() -> FieldEncryptionService {
-    use rand::RngCore;
+    use rand::Rng;
 
     let is_production = is_production_mode();
 
@@ -544,7 +544,7 @@ pub fn init_encryption_from_env() -> FieldEncryptionService {
          该密钥重启后会变化，已加密数据将无法解密。生产环境必须显式配置密钥。"
     );
     let mut random_key = [0u8; 32];
-    rand::rngs::OsRng.fill_bytes(&mut random_key);
+    rand::rng().fill_bytes(&mut random_key);
     FieldEncryptionService::new(KeyManager::new(&random_key))
 }
 
