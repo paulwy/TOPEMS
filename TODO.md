@@ -144,6 +144,25 @@
 
 **结论**：treeshake:true 正式启用（production CJS alias 修复了历史 Jt 白屏根因）；brotli closeBundle 清理兜底保留为防回归保险。剩余候选仅 ②③。
 
+## 性能优化批次③：候选②评估（不裁）+ lighthouse 复测 ✅（2026-11-03，性能批次收尾）
+
+**候选②（preload 再裁）评估——不做**：剩余 38 个 preload chunk 合计 468KB gz，大头 mui-core-vendor（144KB gz）/react-vendor（72KB gz）为登录页静态硬依赖（MUI 基础组件 + React 运行时，不可裁）；其余为 ≤8KB 小 util/hook chunk，裁剪无体积收益且延迟拉取反而劣化 FCP。**结论：首屏 preload 已精简到位，无高价值裁剪对象。**
+
+**候选③（lighthouse 复测，treeshake:true 产物 + preview 4173 + 系统 Chrome CLI）**：
+| 指标 | 历史基线（treeshake:false） | 复测（treeshake:true） | 变化 |
+|---|---|---|---|
+| 性能分 | 58 | **61** | +3 |
+| FCP | 7.4s | **6.0s** | -1.4s |
+| LCP | 8.6s | **7.2s** | -1.4s |
+| TBT | 0ms | 0ms | — |
+| CLS | 0 | 0 | — |
+| 传输大小 | 1.3MB | **1.06MB** | -19% |
+| 请求数 | 186 | 199 | +13（treeshake 拆分更细，HTTP/2 无碍） |
+
+**结论**：treeshake:true 收益在真实性能指标确认（FCP/LCP -1.4s、传输 -19%、性能分 +3；请求数 +13 为拆分细化代价，TBT/CLS 保持最优）。**性能优化批次 ①②③ 全绿，性能优化工程挂账（MUI vendor/i18n code-split + treeshake）收尾关闭**。
+
+
+
 
 
 
