@@ -1,4 +1,17 @@
 
+## 数据库治理：类型统一完全收官（topems 633→0，id 契约闭环，2026-11-03）✅
+
+> 承接 3 项 id 契约挂账——三表 id 类型对齐（数据空、可安全转换）。
+
+**执行**（DROP DEFAULT → ALTER TYPE → 重建 DEFAULT）：
+- **iam.permission_audit_logs.id**：uuid → **bigint**（USING ::text::bigint，空表安全）+ 创建序列 iam.permission_audit_logs_id_seq + SET DEFAULT nextval（对齐 test）。
+- **public.core_sessions.id / core_refresh_tokens.id**：bigint → **uuid**（USING ::text::uuid）+ SET DEFAULT gen_random_uuid() + DROP 孤儿序列 core_sessions_id_seq/core_refresh_tokens_id_seq（对齐 test）。
+
+**验证**：同名类型差异 **633→0**（五级核查中最深层类型层完全对齐 test）；门禁 exit 0 绿；FK 引用 0 冲突、数据全空无损。
+
+**类型统一批次终态**：topems@5432 与 test 类型完全一致；其他库（5433 212/prod 215/prepare 142）差异未动（可复用 /tmp/alter_typediff_topems.sql 思路分批，prod 运行库需单独评估）。数据库治理全层级收官：表/列/索引/约束/RLS/类型。
+
+
 ## 数据库治理：类型统一补充——permission_audit_logs tenant_id/user_id 对齐（2026-11-03）✅（类型差异 633→3）
 
 > 承接 5 项挂账——处理 RLS 策略耦合的 2 项。
