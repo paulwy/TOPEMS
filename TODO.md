@@ -1,4 +1,24 @@
 
+## 反向表甄别收尾：5433 恢复库 schema 缺失（2026-11-03）✅（已知差异，不补建）
+
+> 反向表挂账甄别——实际 239 个（非 TODO 原记 6 个，数字过时）。
+
+**现状**：5432 test 1533 表 vs 5433 1294 表，反向表（test 有、5433 无）239 个。
+
+**分布**：
+- master_data.mdm_* ~100（master_data schema 几乎全缺）
+- public.pdm_* ~30（PDM 模块）
+- public.qa_* ~30（QMS 模块）
+- public.analytics_* ~15（分析模块）
+- 各 schema schema_defense_ledger 5
+- *_backup_20260919 备份表 3
+- 其他零散 ~56
+
+**根因**：5433 是恢复库——恢复时只恢复了部分 schema，master_data / pdm / qa / analytics 等大块未恢复。
+
+**结论**：已知差异，不补建（5433 是开发/恢复库非生产；prod 生产库表完整）。门禁 warning 不阻断，接受现状。
+
+
 ## DB-05：5433 public.tenant_permissions.tenant_id varchar→uuid（2026-11-03）✅（RLS 策略解耦）
 
 > 类型批次 RLS 依赖列挂账收口——5433 tenant_permissions.tenant_id 对齐 prod uuid。
