@@ -1,4 +1,15 @@
 
+## 约束批次③：FK 复核补建（2026-11-03）✅（约束批次闭环，1 数据违规挂账）
+
+> 批次规划约束③——FK 复核（test 192 vs topems 178，缺 100）。
+
+**执行**：100 条 ADD FOREIGN KEY 试建——**99 成功**、**1 数据违规**（core_user_roles_user_id_fkey：user_id=e8f2a1f4-8f99-4059-b8ca-3a05e50ac6d4 不在 core_users——孤儿数据，登记清理后续，不强制补）。
+
+**验证**：topems FK 178→**277**（含 topems 特有 86 反向 + 对齐）；门禁绿（版本段 unbound warning 仍存）、health 200、表 1376 不变。
+
+**约束批次总闭环**：① CHECK 补链 ✅ → ② pkey 624+unique 149 ✅ → ③ FK 99 ✅。**剩余挂账**：core_user_roles 孤儿 user_id（数据清理项）、门禁脚本版本段 warning 修复。
+
+
 ## 约束批次②：pkey/unique 补建执行（2026-11-03）✅（名差异项登记，违规 0）
 
 > 批次规划约束②——pkey 706 + unique 149 补建（test 参照，先试建捕获违规）。
