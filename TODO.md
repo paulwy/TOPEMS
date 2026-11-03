@@ -28,6 +28,31 @@
 - **需 USING 转换**：text→jsonb/text[] 等 6 项（不做无 USING 转换）；
 - **RLS 策略依赖**：tenant_id 类列被策略引用不可 ALTER（新发现，需策略解耦先行）。
 
+## 类型批次剩余甄别：test vs 5433 全量 154 项重跑分类 + crm.audit_logs 值域根因（2026-11-03）⏸️（决策材料就绪）
+
+> "继续"推进类型批次剩余——重跑 test（参照）vs 5433 同列类型差异（pg_attribute 口径，安全子集执行后最新状态），全量 **154 项**（清单 /tmp/typediff_pairs_5433_full.txt，格式 `schema.table|col|test_type|cur_type`）。
+
+**154 项分类（决策材料）**：
+| 类别 | 数量 | 分布/说明 | 状态 |
+|---|---|---|---|
+| 时间戳统一 | **99** | bi 34 / ehs 34 / mes 13 / public 7 / finance 5 / master_data 5 / portal 1（test=ts vs cur=timestamptz；另 text|date vs timestamptz 零星） | **挂决策** |
+| uuid 契约 | **40** | master_data 23 / iam 7 / mobile 4 / public 3 / bi·ehs·mes 各 1（cur=uuid vs test=text\|varchar） | **挂决策** |
+| 需 USING | 4 | jsonb vs text/text[]、text[] vs jsonb（数据合法性甄别后可做） | 挂账 |
+| varchar 长度 | 3 | test varchar(64) vs cur varchar 无界（对齐需收紧，截断风险） | 挂账 |
+| bigint vs uuid | 2 | 契约级差异，需逐表甄别 | 挂账 |
+| 零星 | 6 | uuid vs varchar(128/100/64/255)、jsonb vs varchar(32) 等 | 挂账 |
+
+**决策请求（两项，均影响 Rust sqlx 类型绑定与跨库契约）**：
+1. **时间戳统一方向**：A. 5433 99 列 → timestamp without time zone（对齐 test，弱时区语义）；B. test 全库 → timestamptz（对齐 5433，强时区语义，推荐——现代应用 + sqlx PgTimeTz）。**选 A 或 B 后即可批量执行**。
+2. **uuid 契约方向**：A. 5433 40 列 → text/varchar（对齐 test，放宽校验）；B. test 对应列 → uuid（对齐 5433，严格 UUID 校验，推荐——master_data 23 项最多）。**选 A 或 B 后逐表验数据再执行**。
+
+**crm.audit_logs 值域冲突根因（约束①遗留挂账调查）**：
+- prod 独有 CHECK `ck_audit_logs_status_standard`（status ∈ active/inactive/archived/success/failure）；**不含 'error'**；test/topems 均无该 CHECK。
+- topems 应用**真实写入** status='error'（11 条）+ 'success'（2 条）→ 若按 prod 约束补 CHECK 即违规。
+- **根因**：prod 约束未跟上应用契约（error 为真实业务态）。**建议**：prod 值域扩 'error'（改生产约束，需拍板）或 11 条清洗为 failure（不解决根因，不推荐）。**挂账等拍板**。
+
+
+
 
 ## 三库 pkey 补全（2026-11-03）✅（索引批次完全收官）
 
