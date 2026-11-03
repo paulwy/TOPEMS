@@ -1,12 +1,15 @@
 //! OpenAPI 文档路由
 //!
-//! 提供 OpenAPI JSON 规范和交互式 API 文档查看器。
-//! 使用 Redoc CDN 渲染，无需额外依赖。
+//! 提供 OpenAPI JSON 规范和交互式 API 文档查看器：
+//! - `/swagger-ui`：Swagger UI（自托管资源，不依赖 CDN，utoipa-swagger-ui）
+//! - `/api-docs`：Redoc 渲染页（CDN）
+//! - `/api-docs/openapi.json`：OpenAPI 3.0 JSON 规范
 
 use axum::response::{Html, Json};
 use axum::routing::get;
 use axum::Router;
 use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 use crate::modules::openapi::IamApiDoc;
 use crate::AppState;
@@ -110,6 +113,13 @@ async fn api_docs() -> Html<String> {
 /// 注册 OpenAPI 文档路由
 pub fn openapi_routes() -> Router<AppState> {
     Router::new()
+        // Swagger UI：自托管交互式调试页（utoipa-swagger-ui，无需外网 CDN）。
+        // utoipa-swagger-ui 10 的 .url() 第二参数为 OpenApi 实例（SwaggerUi 自行托管 spec），
+        // spec 路径放在 SwaggerUi 前缀下，避免与现有 /api-docs/openapi.json（Redoc 用）路由冲突。
+        .merge(
+            SwaggerUi::new("/swagger-ui")
+                .url("/swagger-ui/api-docs/openapi.json", IamApiDoc::openapi()),
+        )
         .route("/api-docs", get(api_docs))
         .route("/api-docs/openapi.json", get(openapi_json))
         // 兼容常见路径

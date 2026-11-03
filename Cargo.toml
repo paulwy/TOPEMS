@@ -343,9 +343,10 @@ anyhow = "1"
 bcrypt = "0.15"
 reqwest = { version = "0.13", features = ["json", "query", "blocking", "form"] }
 utoipa = { version = "6", features = ["uuid", "chrono", "decimal", "bigdecimal"] }
-# 注：utoipa-swagger-ui（Swagger UI 页面）已从 workspace 移除（原版本 4.x 硬依赖 axum 0.6，与项目 axum 0.8 冲突）
-# erp/pm/rd 3 服务原引用了 workspace utoipa-swagger-ui 但均未在代码中实际 import（Grep 0 命中），属于冗余依赖
-# 未来如需本地 Swagger UI 调试，可单独引入 utoipa v5 + utoipa-swagger-ui v9（匹配 axum 0.8）
+# utoipa-swagger-ui（Swagger UI 本地调试页）：2026-11-03 接入 unified-core /swagger-ui。
+# 历史：4.x 硬依赖 axum 0.6 与项目 axum 0.8 冲突而移除（erp/pm/rd 原引用但均未实际 import，冗余）；
+# 现 utoipa 已升 6，配套 utoipa-swagger-ui 10（axum 0.8 兼容），按需服务引用 axum feature。
+utoipa-swagger-ui = { version = "10", features = ["axum"] }
 csv = "1"
 once_cell = "1.19"
 zip = "9"

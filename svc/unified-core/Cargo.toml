@@ -24,6 +24,7 @@ sqlx = { workspace = true, features = ["rust_decimal"] }
 topems-shared-bootstrap = { workspace = true }
 topems-shared-db = { workspace = true }
 utoipa.workspace = true
+utoipa-swagger-ui.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
 anyhow.workspace = true
