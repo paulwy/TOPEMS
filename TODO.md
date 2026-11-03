@@ -3400,3 +3400,13 @@ P2（2-4 周后）
 - **低风险可下线候选**（~8 个）：迁移/临时/归档 7 + dev 1——需人工逐条确认后删路由。
 - **652 业务读端点**：需服务间调用深核（bff/aggregator 挂载、其他 handler 引用）才能定下线——超出前端视角，属后续工程。
 - **结论**：v74"下线候选 690"为前端视角标签，真正低风险可下线仅 ~8；删路由仍为破坏性决策，全部待人工确认。
+## 第三十二轮（2026-11-03）：P3 数据库治理第一批——FK 索引补链 246 + 无主键表补 PK 97（先数据校验）
+- **审计基建**：新增 `scripts/audit/db-governance-audit.sh`（三库统一只读审计矩阵：表数/无主键/无二级索引/CHECK/UNIQUE/FK）。
+- **三库缺失矩阵（2026-11-03 实测）**：prod 1402 表（无主键 108、无二级索引 727、CHECK 25、UNIQUE 233、FK 253）；topems 1376（713/832/6/148/178）；prepare 1400（104/868/16/241/265）。
+- **索引补链（FK 列无索引 246 处）**：`20261103000003_db_governance_fk_indexes.sql` —— DO 块 + to_regclass/information_schema 双守卫（库无关幂等，14 schema 覆盖 bi/ehs/erp/finance/gis/hrm/iam/mes/mobile/public/qms/scm/srm/unified_core）。prepare 演练 244 条 + test 演练 0 error（2 表列差异被守卫跳过）+ 三库全 0 error。
+- **PK 补链（先数据校验）**：`20261103000004_db_governance_pk_backfill.sql` —— 108 无主键表中 97 表含 id 列 → 逐一校验 **0 NULL / 0 重复 全干净**（96 干净 + 1 多余）→ DO 块 + to_regclass 变量（NULL 安全）+ 无 PK 才 ADD。prepare/test 演练 0 error。
+- **落地**：topems 应用后无主键表 713→632（-81，余 16 表在 topems 无对应/已有 PK）；三库 _sqlx_migrations 账本 548/548 对齐（migrate.sh run 幂等 no-op 验证）。
+- **类型延展（未执行，分类登记）**：236 不匹配（132 ✗）：89 CHAR（代码 String vs 列 UUID/JSONB → **改代码**，非列）、22 DOUBLE（f64 vs NUMERIC/DECIMAL → **数值语义冲突需人工复核/代码改 Decimal**）、4 INT（BIGINT ← u32 → **代码 u32→i64 安全**）、2 DATE/7 TIMESTAMPTZ/6 TEXT 零星。**本轮不改列**（数据/精度风险 + 多数属代码侧）。
+- **经验**：① DO 块内 `'tbl'::regclass` 在 IF false 分支仍会解析报错 → 用 `DECLARE t oid := to_regclass(...)` 变量（NULL 安全）；② CREATE INDEX IF NOT EXISTS 不防表缺失 → 必须 to_regclass 守卫；③ 无 PK 表大多为空壳（prod 108 表中 96 全空）→ 补 PK 主要价值是 schema 完整性。
+### 状态与下批
+- 下批：索引二批（无索引且非空表的业务列：按表行数排序甄别）或 PK 二批（非 id 自然 key 列）或类型延展代码侧（svc ai u32→i64 4 处 + CHAR 类代码修复）。CHECK 约束因 11-03 误用移除历史暂缓。
