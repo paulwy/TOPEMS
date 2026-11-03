@@ -1,4 +1,14 @@
 
+## 数据库治理：RLS 策略覆盖状态五库对比（2026-11-03）✅（衔接 tenant_id 补列）
+
+> 承接 tenant_id 补列——RLS 启用现状（relrowsecurity）五库对比。
+
+**RLS on 表数**：test **844**、topems **114**、5433 **852**、prod **883**、prepare **894**。
+- **topems@5432 显著低**（114 vs 其余 850+）——**开发库 RLS 未广泛启用**（安全层漂移）；test/prod/prepare/5433 基本一致（RLS 多租户隔离已广泛生效）。
+- **EHS qa_ehs_* 47 表 RLS off**（各库）——tenant_id 补列已就位（结构），RLS 策略未挂接（缺口）。
+- **治理建议**：挂账后续批次——①topems 开发库 RLS 启用对齐（需应用层 tenant 上下文配合，大）；②EHS 47 表 RLS 策略挂接（与 tenant_id 补列衔接，可做小项但启用后影响访问语义，需先验证应用读取路径）。当前无访问异常（服务 200、全链路正常——RLS 未启用表不受影响）。
+
+
 ## 数据库治理：约束级对齐核查（FK 完整 0 缺失，pkey/check 挂账，2026-11-03）✅
 
 > 表→列→索引→约束四级核查收官——pg_constraint 全量对比（test 参照，排除 pg 系统 schema，contype::text 修正）。
