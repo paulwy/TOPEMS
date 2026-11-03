@@ -69,7 +69,7 @@ impl MigrationExecutor {
     fn calculate_checksum(sql: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(sql.as_bytes());
-        format!("{:x}", hasher.finalize())
+        hex::encode(hasher.finalize())
     }
 
     /// 执行单个迁移
@@ -382,7 +382,7 @@ mod tests {
     fn calculate_checksum_sha256_hex() {
         let mut hasher = Sha256::new();
         hasher.update(b"hello");
-        let expected = format!("{:x}", hasher.finalize());
+        let expected = hex::encode(hasher.finalize());
         let got = MigrationExecutor::calculate_checksum("hello");
         assert_eq!(got, expected);
     }
@@ -399,7 +399,7 @@ mod tests {
         let got = MigrationExecutor::calculate_checksum("");
         let mut hasher = Sha256::new();
         hasher.update(b"");
-        let expected = format!("{:x}", hasher.finalize());
+        let expected = hex::encode(hasher.finalize());
         assert_eq!(got, expected);
     }
 }

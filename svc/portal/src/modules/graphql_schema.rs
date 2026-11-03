@@ -543,7 +543,7 @@ impl QueryRoot {
         let query_hash = {
             let mut hasher = Sha256::new();
             hasher.update(query.as_bytes());
-            format!("{:x}", hasher.finalize())
+            hex::encode(hasher.finalize())
         };
 
         if let Some(cached) = FederatedCacheManager::get_query_cache(&query_hash, &vars_hash) {

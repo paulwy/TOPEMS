@@ -105,7 +105,7 @@ fn hash_token(token: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(token.as_bytes());
     let result = hasher.finalize();
-    format!("{:x}", result)
+    hex::encode(result)
 }
 
 #[allow(dead_code)]
@@ -1111,7 +1111,7 @@ pub async fn logout(
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
     hasher.update(refresh_token.as_bytes());
-    let token_hash = format!("{:x}", hasher.finalize());
+    let token_hash = hex::encode(hasher.finalize());
 
     // RLS FORCE：logout 请求无 JWT，中间件不设置连接上下文；以系统级上下文
     // （全 0 = RLS 策略管理分支）校验 token 归属，后续删除/吊销落真实租户上下文。

@@ -601,7 +601,7 @@ impl AIQueryRouter {
             let mut hasher = Sha256::new();
             hasher.update(query.as_bytes());
             let result = hasher.finalize();
-            format!("{:x}", result)
+            hex::encode(result)
         };
 
         if let Some(ref pref) = preferred_service {

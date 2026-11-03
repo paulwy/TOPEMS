@@ -775,7 +775,7 @@ impl FederationQueryPlan {
 pub fn federation_v2_query_hash(query: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(query.as_bytes());
-    format!("{:x}", hasher.finalize())
+    hex::encode(hasher.finalize())
 }
 
 /// V42.0: 查询计划缓存
@@ -1966,7 +1966,7 @@ impl FederationV3Planner {
     fn query_hash(query: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(query.as_bytes());
-        format!("{:x}", hasher.finalize())
+        hex::encode(hasher.finalize())
     }
 
     #[allow(clippy::indexing_slicing, clippy::unwrap_used)]
@@ -2578,7 +2578,7 @@ pub fn v3_variables_hash(variables: &serde_json::Value) -> String {
     let s = serde_json::to_string(variables).unwrap_or_default();
     let mut hasher = Sha256::new();
     hasher.update(s.as_bytes());
-    format!("{:x}", hasher.finalize())
+    hex::encode(hasher.finalize())
 }
 
 #[allow(

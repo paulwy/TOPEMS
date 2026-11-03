@@ -166,7 +166,7 @@ impl FederatedCacheV2State {
                 .unwrap_or_default()
                 .as_bytes(),
         );
-        format!("{:x}", hasher.finalize())
+        hex::encode(hasher.finalize())
     }
 
     fn evict_lru_if_needed(&mut self) {

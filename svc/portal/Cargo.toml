@@ -32,6 +32,7 @@ prometheus.workspace = true
 tower-cookies.workspace = true
 sqlx.workspace = true
 sha2.workspace = true
+hex.workspace = true
 topems-shared-bootstrap = { workspace = true }
 
 [dev-dependencies]

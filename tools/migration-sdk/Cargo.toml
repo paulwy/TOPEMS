@@ -35,6 +35,7 @@ async-trait.workspace = true
 
 # 哈希
 sha2.workspace = true
+hex.workspace = true
 
 # OpenAPI 文档骨架（V71 A1）
 utoipa.workspace = true

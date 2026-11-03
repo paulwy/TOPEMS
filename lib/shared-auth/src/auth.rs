@@ -277,7 +277,7 @@ pub fn generate_refresh_token() -> String {
     bytes.iter().map(|b| format!("{:02x}", b)).collect()
 }
 
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use sha2::Sha256;
 
 type HmacSha256 = Hmac<Sha256>;

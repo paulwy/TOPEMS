@@ -1,3 +1,11 @@
+## AR-08 低破坏面依赖升级批：6 项工具/密码学依赖大版本（2026-11-03）✅
+> 承接 AR-08 后续清单（git b8a486de18 登记 16 项大版本升级）；用户拍板从低破坏面开始、sqlx 留独立立项。本批完成 6 项：serial_test 3→4、md5 0.7→0.8、sha2 0.10→0.11、hmac 0.12→0.13、base64 0.22→0.23、aes-gcm 0.10→0.11。
+- **工具类（零破坏）**：serial_test 3→4、md5 0.7→0.8——仅改 workspace 键 + lock 更新，cargo check --all-targets 0 error；serial_test 用户 4 个 lib crate 测试全绿（766 passed，#[serial] 运行时正常）。
+- **密码学家族（digest 0.11 破坏面）**：sha2/hmac 升级连带 digest 0.10→0.11——**输出类型 GenericArray→Array（hybrid-array）丢失 LowerHex**，全仓 `format!("{:x}", finalize()/result)` 共 21 处改 `hex::encode(...)`（tools/migration-sdk 3 + svc/portal 16 + svc/unified-core 2）；`{ :x}` 仅用于 u64/Uuid 的 7 处正确保留。
+- **aes-gcm 0.11 连带 aead 0.6 破坏面**：`aead::OsRng`/`generate_nonce` 移除（且 rand 0.8 的 OsRng 不满足 rand_core 0.9 约束）→ shared-auth encryption.rs **nonce 自生成**（thread_rng().fill_bytes 12B + Nonce::from_slice）；hmac 0.13 将 `Mac::new_from_slice` 移至 `KeyInit` → 2 处改 trait 路径。
+- **hex 依赖**：migration-sdk/portal/unified-core 3 个 Cargo.toml 新增 `hex.workspace = true`（已存在 workspace 键 0.4）。
+- **验证全绿**：`cargo check --workspace --all-targets` **0 error**；topems-shared-auth 205 + migration-sdk 32 + unified-core 540 + portal 582 测试 **0 failed**（nonce 加密/HMAC/checksum/etag 运行时行为回归通过）；clippy `-D correctness` 4 crate **0 error**。
+- **未动**：rand 0.8（0.8→0.10 两个 major，Rng 重构破坏面大，另批评估）、sqlx/reqwest/redis/utoipa/opentelemetry/prost/brotli 等大件（独立立项）；desktop 14 条硬编码依赖仍为特例。
 
 ## 数据库治理：类型统一延展——5433 安全子集 18 项（2026-11-03）✅（194 挂账）
 
@@ -12,7 +20,6 @@
 
 **prod（215）/prepare（142）类型差异未启动**：prod 运行库 ALTER 需单独评估；prepare 同 5433 方向混合。**其他库类型统一挂账后续批次**（复用 /tmp/alter_typediff_topems.sql 思路 + 5433 教训）。
 
-
 ## 数据库治理：类型统一完全收官（topems 633→0，id 契约闭环，2026-11-03）✅
 
 > 承接 3 项 id 契约挂账——三表 id 类型对齐（数据空、可安全转换）。
@@ -24,7 +31,6 @@
 **验证**：同名类型差异 **633→0**（五级核查中最深层类型层完全对齐 test）；门禁 exit 0 绿；FK 引用 0 冲突、数据全空无损。
 
 **类型统一批次终态**：topems@5432 与 test 类型完全一致；其他库（5433 212/prod 215/prepare 142）差异未动（可复用 /tmp/alter_typediff_topems.sql 思路分批，prod 运行库需单独评估）。数据库治理全层级收官：表/列/索引/约束/RLS/类型。
-
 
 ## 数据库治理：类型统一补充——permission_audit_logs tenant_id/user_id 对齐（2026-11-03）✅（类型差异 633→3）
 
@@ -40,7 +46,6 @@
 **验证**：同名类型差异 **633→3**；门禁 exit 0 绿；策略数=1（RLS 仍生效）。
 
 **剩余 3 项挂账（id 契约）**：iam.permission_audit_logs.id、public.core_sessions.id、public.core_refresh_tokens.id（uuid↔bigint 不可逆——需主键契约立项）。
-
 
 ## 数据库治理：类型统一批次收官（topems 633→5，628 项对齐，2026-11-03）✅（5 项挂账）
 
@@ -59,7 +64,6 @@
 
 **踩坑记录**：psql -f 批量报错前缀为 `psql:/path:N: ERROR`——`grep ^ERROR` 不匹配导致误判 0 错误、漏掉后续执行；批量 ALTER 验证必须看完整输出或 grep 全 ERROR。
 
-
 ## 数据库治理：类型统一批次（topems@5432 545 项安全对齐，2026-11-03）✅（剩余 88 精度类挂账）
 
 > 启动挂账批次——633 项类型差异按 test 参照对齐，安全子集执行。
@@ -73,7 +77,6 @@
 **剩余 88 项挂账（精度/契约类）**：numeric 43、date 15、double precision 11、uuid 6、integer 3、inet 2 + 零星——需逐表契约甄别（精度/数据转换规则，不做无 USING 转换）。**其他库**（5433 212/prod 215/prepare 142）类型差异未动（prod 运行库 ALTER 需单独评估）。
 - **脚本**：/tmp/alter_typediff_topems.sql（545 条可复用）、/tmp/typediff_skip_topems.txt（88 挂账）。
 
-
 ## 数据库治理：RLS 批次前置定论（应用上下文未入库 + 数据 tenant 稀疏，挂账等应用 tenant 化立项，2026-11-03）✅
 
 > 承接可行性评估——定位应用 tenant 上下文设置路径 + 数据 tenant_id 分布，确认批次前置。
@@ -83,7 +86,6 @@
 - **732 启用风险评估**：策略宽松模板放行 NULL tenant 行——当前数据下启用**无即时破坏**（NULL 行照常读写），但**隔离价值也无**（NULL 全放行）；真实价值需**应用 tenant 化改造**（设置上下文 + 数据 tenant_id 填充）后才有隔离对象。
 
 **定论**：RLS 治理批次（732 表 + EHS 47）**挂账等「应用 tenant 化」立项**（设置 app.tenant_id 上下文 + 数据填充——跨应用/数据工程，路线图级）；当前维持不动（启用无收益、改造需立项）。数据库治理五级核查全部闭环/挂账清晰。
-
 
 ## 数据库治理：RLS 治理批次可行性评估（模板成熟/前置条件确认，2026-11-03）✅（挂账待试点）
 
@@ -121,7 +123,6 @@
 - **成因**：RLS 启用**非纯迁移驱动**——迁移文件含 241 条 ENABLE ROW LEVEL SECURITY（72 文件），但实际 RLS on 850+（test 844/prod 883）——部分启用来自运行时/建表路径；**topems 库未应用该部分**（开发库安全层缺口，非 test 超前——test 844 广泛）。迁移 DISABLE 0（无回退痕迹）。
 - **影响**：RLS 未启用 = 表级行级租户隔离缺失（多租户安全层弱化）；服务当前正常（应用层过滤或单租户使用，无访问异常）。
 - **治理建议**：挂账后续批次——topems RLS 对齐（732 表 ENABLE + 策略挂接）需应用层 tenant 上下文配合验证（大工程，与 EHS 47 表同属 RLS 治理批次）；当前不批量启用（避免未验证策略下破坏访问语义）。
-
 
 ## 数据库治理：RLS 策略覆盖状态五库对比（2026-11-03）✅（衔接 tenant_id 补列）
 

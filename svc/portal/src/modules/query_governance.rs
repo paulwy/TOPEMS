@@ -353,7 +353,7 @@ impl PersistedQueryEntry {
     fn calculate_hash(query_text: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(query_text.as_bytes());
-        format!("{:x}", hasher.finalize())
+        hex::encode(hasher.finalize())
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]

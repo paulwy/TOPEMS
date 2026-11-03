@@ -797,7 +797,7 @@ fn seed_optimization_demo_data() {
     for (_name, query) in demo_queries {
         let mut hasher = Sha256::new();
         hasher.update(query.as_bytes());
-        let hash = format!("{:x}", hasher.finalize());
+        let hash = hex::encode(hasher.finalize());
         analyze_and_store_query(&hash, query);
     }
 }

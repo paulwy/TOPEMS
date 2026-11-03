@@ -279,15 +279,15 @@ impl SemanticCacheEngine {
 
         let mut hasher = Sha256::new();
         hasher.update(fields.as_bytes());
-        let fields_hash = format!("{:x}", hasher.finalize());
+        let fields_hash = hex::encode(hasher.finalize());
 
         let mut hasher = Sha256::new();
         hasher.update(arguments.as_bytes());
-        let arguments_hash = format!("{:x}", hasher.finalize());
+        let arguments_hash = hex::encode(hasher.finalize());
 
         let mut hasher = Sha256::new();
         hasher.update(directives.as_bytes());
-        let directives_hash = format!("{:x}", hasher.finalize());
+        let directives_hash = hex::encode(hasher.finalize());
 
         QuerySignatureGql {
             operation_type,
@@ -456,7 +456,7 @@ impl SemanticCacheEngine {
         let normalized = Self::normalize_query(query);
         let mut hasher = Sha256::new();
         hasher.update(normalized.as_bytes());
-        let query_hash = format!("{:x}", hasher.finalize());
+        let query_hash = hex::encode(hasher.finalize());
         let now = Utc::now();
         // 精确匹配（先找索引，再修改，避免同时持有 entries 可变借用与 state 字段借用）
         let mut found_idx: Option<usize> = None;
@@ -515,7 +515,7 @@ impl SemanticCacheEngine {
         let normalized = Self::normalize_query(query);
         let mut hasher = Sha256::new();
         hasher.update(normalized.as_bytes());
-        let query_hash = format!("{:x}", hasher.finalize());
+        let query_hash = hex::encode(hasher.finalize());
         let signature = Self::compute_signature(query);
         let now = Utc::now();
         let ttl = state.config.default_ttl_seconds;

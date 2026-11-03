@@ -1,9 +1,10 @@
 use aes_gcm::{
-    aead::{Aead, AeadCore, KeyInit, OsRng},
+    aead::Aead,
     Aes256Gcm, Key, Nonce,
 };
 use base64::{engine::general_purpose::STANDARD, Engine};
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use std::collections::HashMap;
@@ -153,7 +154,9 @@ impl FieldEncryptionService {
     pub fn encrypt(&self, plaintext: &str) -> EncryptionResult<EncryptedField> {
         let key = self.key_manager.current_key()?;
         let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
-        let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
+        let mut nonce_bytes = [0u8; 12];
+        rand::thread_rng().fill_bytes(&mut nonce_bytes);
+        let nonce = Nonce::from_slice(&nonce_bytes);
         let ciphertext = cipher
             .encrypt(&nonce, plaintext.as_bytes())
             .map_err(|e| EncryptionError::EncryptionFailed(e.to_string()))?;
@@ -235,7 +238,7 @@ impl SearchableEncryption {
     }
 
     pub fn generate_search_token(&self, keyword: &str) -> EncryptionResult<String> {
-        let mut mac = <HmacSha256 as Mac>::new_from_slice(&self.index_key)
+        let mut mac = <HmacSha256 as KeyInit>::new_from_slice(&self.index_key)
             .map_err(|e| EncryptionError::EncryptionFailed(format!("HMAC init failed: {}", e)))?;
         mac.update(keyword.as_bytes());
         let result = mac.finalize();

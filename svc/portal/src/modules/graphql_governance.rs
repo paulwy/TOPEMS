@@ -322,7 +322,7 @@ impl SchemaRegistry {
     fn compute_hash(sdl: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(sdl.as_bytes());
-        format!("{:x}", hasher.finalize())
+        hex::encode(hasher.finalize())
     }
 
     /// 注册新 Schema 版本
@@ -805,7 +805,7 @@ impl SchemaVersionManager {
     fn compute_hash(sdl: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(sdl.as_bytes());
-        format!("{:x}", hasher.finalize())
+        hex::encode(hasher.finalize())
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
