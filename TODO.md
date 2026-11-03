@@ -1,4 +1,15 @@
 
+## 数据库治理：RLS 批次前置定论（应用上下文未入库 + 数据 tenant 稀疏，挂账等应用 tenant 化立项，2026-11-03）✅
+
+> 承接可行性评估——定位应用 tenant 上下文设置路径 + 数据 tenant_id 分布，确认批次前置。
+
+- **应用源码**：apps/（desktop/mobile/web）无后端 server；crates 全 grep 无 PgConnectOptions/DATABASE_URL/app.tenant_id 命中——**tenant 上下文设置路径不在仓库源码**（推断部署侧环境注入/中间件，未入库）。
+- **数据 tenant_id 分布**：prod finance.sales_invoices 0 行（数据稀疏）；master_data.products 无 tenant_id 列或查询不可用——**prod 数据多为空/NULL，RLS 隔离对象有限**。
+- **732 启用风险评估**：策略宽松模板放行 NULL tenant 行——当前数据下启用**无即时破坏**（NULL 行照常读写），但**隔离价值也无**（NULL 全放行）；真实价值需**应用 tenant 化改造**（设置上下文 + 数据 tenant_id 填充）后才有隔离对象。
+
+**定论**：RLS 治理批次（732 表 + EHS 47）**挂账等「应用 tenant 化」立项**（设置 app.tenant_id 上下文 + 数据填充——跨应用/数据工程，路线图级）；当前维持不动（启用无收益、改造需立项）。数据库治理五级核查全部闭环/挂账清晰。
+
+
 ## 数据库治理：RLS 治理批次可行性评估（模板成熟/前置条件确认，2026-11-03）✅（挂账待试点）
 
 > 承接 732 缺口——验证策略模式、FORCE 生效层与应用 tenant 上下文设置路径。
