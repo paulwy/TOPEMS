@@ -1,3 +1,21 @@
+
+## 数据库治理：RLS 治理批次可行性评估（模板成熟/前置条件确认，2026-11-03）✅（挂账待试点）
+
+> 承接 732 缺口——验证策略模式、FORCE 生效层与应用 tenant 上下文设置路径。
+
+**RLS 模式成熟度（test/prod）**：
+- 策略数：test **1006**（全 cmd=ALL）；迁移驱动（82 文件 CREATE POLICY）+ migrations-wip GIS RLS 文件。
+- **策略模板 rls_tenant_isolation**：`(current_setting('app.tenant_id') IS NULL OR '' OR 零UUID) OR (tenant_id IS NULL) OR (tenant_id = NULLIF(current_setting(...))::uuid)`——宽松放行（无上下文/NULL tenant 行可读）。
+- **FORCE RLS 生效**：test **779**、topems **105**、prod **874**（非仅 owner 绕过——RLS 多租户隔离在 test/prod 真实生效）。
+
+**关键前置条件**：应用代码（apps/crates）**未发现设置 app.tenant_id 上下文**（SET/app.tenant_id/options 均无命中）——服务连 prod（874 FORCE）运行正常，推断数据 tenant_id 多为 NULL 或部署侧设置（路径待查证）；**未设上下文时非 NULL tenant 行会被策略拒绝**。
+
+**治理建议（试点路径，当前不启用）**：
+1. **试点 EHS 47 表**（tenant_id 补列已就位）——套 rls_tenant_isolation 模板 + ENABLE + FORCE，小范围验证服务读写（先验证应用读取路径/上下文设置）；
+2. 试点验证通过后扩 732 表（分模块批次）；
+3. **前置待办**：定位应用 tenant 上下文设置路径（部署中间件/连接 options）——缺失则试点不可行（启用即拒非 NULL tenant 行）。
+- 当前维持挂账（条件未满足不启用，避免未验证破坏访问语义）。
+
 ## 前端质量工程收尾链 CI 二期：业务种子固化 + 数据断言型核心 spec 入门禁（2026-11-03）✅
 > 承接 CI 固化段（§5.3 建议项 4/5）；首期边界（CI 空库无业务种子）已消除——10 资源种子 + 10 个数据断言型 spec 入门禁，commit 后推送 origin/main。
 - **关键事实修正**：核心 spec 非「写死数据」——多为 `firstRecord()`（GET API 首页首条再断言），空库仅需每资源 ≥1 条记录；自造数流程型（wms-outbound/location/stocktake、mes-quality、tms-shipment）无需种子。
