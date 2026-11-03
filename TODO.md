@@ -1,3 +1,4 @@
+
 ## AR-08 独立立项：utoipa 4→6（2026-11-03）✅
 
 > 用户拍板"utoipa 4→6"（workspace 键 `=4.2.3` → `"6"`，lock 解析 utoipa 6.0.0 / utoipa-gen 6.0.1）；全仓 684 文件、3629 处 `#[utoipa::path]` 引用，AR-08 16 项大版本升级至此全部闭环。
@@ -62,6 +63,25 @@
 - **验证全绿**：cargo check --workspace --all-targets **0 error**；5 crate **2607 测试 0 failed**（shared-event 366/shared-auth 205/unified-core 540/ai 992/crm 504；shared-event 1 个 `test_event_subscriber_..._redis_unavailable` 连真实 redis 挂起为环境依赖、与本批无关，skip 后其余全过）；clippy `-D correctness` 5 crate **0 error**。
 - **lock 现状**：rand 0.8.6/0.9.4/0.10.1 三版共存（传递依赖固定 0.8/0.9）、brotli 8.0.2（decompressor 传递）+ 9.1.1。
 - **未动**：sqlx/reqwest/redis/utoipa/opentelemetry/lapin/etcd-client 留独立立项；desktop 14 条硬编码特例维持。
+
+
+## deleted_at 固化评估：随 soft delete 功能立项（2026-11-03）✅（挂账方式确认）
+
+> 五类挂账之 deleted_at——用户确认"随 soft delete 功能固化"。
+
+**现状**：
+- **DB 层 114 表**（topems 缺、test 有）：master_data **70** / ehs 15 / finance 6 / public 5 / rd 4 / rs 3 / core 3 / wms 2 / qms·pm·integration·hrm·gis·erp 各 1。
+- **代码层**：svc/**pm 已有完整 soft delete 模板**（`WHERE deleted_at IS NULL` + `current_setting('app.tenant_id')` 租户上下文双过滤——task.rs 112/131/193/207/334/403 行）；svc/lims 仅 schema_defense 列定义；**其余模块（含 master_data 70 表）0 消费**——挂列无功能。
+- 前端 types/queryBuilder 有 deleted_at 类型。
+
+**固化路径（随 soft delete 功能立项）**：
+1. 以 **svc/pm 为模板**统一 soft delete 模式（查询过滤 + 删除 API 改软删 UPDATE + TABLE_DEFS 列统一）；
+2. **模块分批**：master_data（MDM 70 表）优先 → ehs 15 → 其余；
+3. 每批随功能同发**迁移补列**（deleted_at TIMESTAMPTZ + 索引，幂等）；
+4. 与 **RLS 治理同批**（app.tenant_id 上下文模式已具备，见 pm）。
+
+**不单独手工 ALTER 主库补列**（无功能消费则列无意义）——挂账至 soft delete 功能立项。
+
 
 ## AR-08 低破坏面依赖升级批：6 项工具/密码学依赖大版本（2026-11-03）✅
 > 承接 AR-08 后续清单（git b8a486de18 登记 16 项大版本升级）；用户拍板从低破坏面开始、sqlx 留独立立项。本批完成 6 项：serial_test 3→4、md5 0.7→0.8、sha2 0.10→0.11、hmac 0.12→0.13、base64 0.22→0.23、aes-gcm 0.10→0.11。
