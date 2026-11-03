@@ -65,6 +65,29 @@
 - topems 应用**真实写入** status='error'（11 条）+ 'success'（2 条）→ 若按 prod 约束补 CHECK 即违规。
 - **根因**：prod 约束未跟上应用契约（error 为真实业务态）。**建议**：prod 值域扩 'error'（改生产约束，需拍板）或 11 条清洗为 failure（不解决根因，不推荐）。**挂账等拍板**。
 
+## 类型批次 1B/2B 执行：test 对齐 timestamptz/uuid ✅（2026-11-03，用户拍板后批量闭环）
+
+> 用户拍板 **1B（test 全库 → timestamptz，对齐 5433）+ 2B（test 对应列 → uuid，对齐 5433）**。方向确立后执行集中在 test 库（5433/prepare 本为 timestamptz/uuid，无需动）。
+
+**执行明细（test 库，5432/topems_test）**：
+1. **时间戳 86 列**（test=timestamp without tz → timestamptz）：**86/86 成功**（隐式转换，无 USING）。
+2. **uuid 23 列**（test=text/varchar → uuid）：**23/23 成功**，分三路：
+   - **12 直改**（USING col::uuid，数据全部合法——预校验 bad=0）；
+   - **5 个 DEFAULT 解耦**（master_data mdm_billing_records/sla_incidents/sla_measurements/subscriptions/usage_records.tenant_id，DEFAULT `''::text` 不可自动 cast → DROP DEFAULT → ALTER USING ::uuid → SET DEFAULT `'00000000-0000-0000-0000-000000000001'::uuid` 对齐 5433 系统租户）；
+   - **6 个 RLS 策略依赖列解耦**（mes.material_plans / mobile.oa_announcements·oa_calendar_events·oa_meetings·oa_tasks / public.permission_audit_logs.tenant_id）：**DROP 该表全部策略 → ALTER USING ::uuid → 按原定义重建**（表达式 `tenant_id =` → `(tenant_id)::text =` 适配 uuid 列，语义等价）；**8 条策略全部重建成功**。
+
+**验证（全绿）**：
+- test 列类型对照清单：时间戳 86 / uuid 23 **未达标 0**；策略数 8 条恢复一致；
+- topems-server:8099 health 200；门禁（check-consistency.sh）迁移版本一致、表级一致、exit 0（反向表 6 个既有挂账不阻断）；
+- **5433 时间戳/uuid 维度与 test 全对齐**（差异归零）。
+
+**剩余挂账（类型批次）**：
+- **prepare 反向/其他差异**：vs 新 test 仍余时间戳 6 + uuid 15（prepare 侧列型不同，需逐项甄别方向后再执行——同向 timestamptz/uuid 者可沿用 1B/2B 方法）；
+- 需 USING 4（jsonb/text 互转）、varchar 长度 3、bigint↔uuid 2、零星 6（既有挂账）；
+- crm.audit_logs prod 值域扩 'error' 拍板（既有挂账）。
+
+
+
 
 
 
