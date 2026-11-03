@@ -113,6 +113,26 @@
 3. **类型批次**（后续）：其他库安全子集（text/timestamptz 同向）→ 精度/契约类逐表甄别（不做无 USING 转换）；5433 timestamptz 反向 94 等待 test 时区统一决策。
 4. **性能优化**（独立工程）：MUI vendor 257KB + i18n locale 大包 → code-split/lazy 路由 → 再测基线（当前 prod 58/FCP 7.4s）。
 
+## 性能优化批次①：探查核验 + modulePreload 加固（2026-11-03）✅（MUI/i18n 分包已实现，加固防回归）
+
+> 用户指令"性能优化启动（MUI vendor/i18n code-split）"→ 探查 apps/web 现状后核验：挂账口径（MUI 257KB + i18n 大包→code-split/lazy）**实际已实现**，本轮做防御性加固 + 基线固化。
+
+**探查结论（现场核验，非猜测）**：
+- **MUI 分包已实现**：vite.config.ts `topemsRechartsSplitPlugin` 已含 mui-core-vendor（@mui/material+emotion）/ mui-icons / mui-x-date-pickers / mui-x-tree-view 独立 vendor chunk；构建实测 mui-core-vendor gz 255.71KB、mui-icons gz 621.97KB（icons-material 实际使用集合，非全量——冷门图标 Abc/Rsvp/StarBorder 等均不在 chunk）。
+- **i18n code-split 已实现**：src/i18n/index.ts 主 locale 走 `import.meta.glob('./locales/{zh,en}.json')` 异步按语言拆 chunk（zh gz 53.81KB / en gz 50.07KB）；命名空间分层（BOOTSTRAP_SET 首屏必需 + business/framework 按需）；schema.json eager 仅数十 KB；ensureLanguageLoaded/preloadFullLanguagePack 齐备。构建确认 i18n chunk 已独立（zh-*/en-*）。
+- **路由懒加载已实现**：appRoutes.tsx 全路由 Suspense + 懒加载；modulePreload 已裁剪 config-*/markdown/exceljs 等。
+- **首屏 preload 基线**：index.html modulepreload 38 个 chunk，mui-icons/mui-x-date-pickers 等业务大 vendor 均不在预取列表（首屏不消费）。
+
+**本轮改动（加固防回归）**：
+- `apps/web/vite.config.ts` modulePreload resolveDependencies 裁剪列表加 **mui-icons**（621.97KB gz 图标库——若未来入口图变化导致 icons 进入首屏可达依赖，将自动排除出 HTML preload，避免 186 req 基线劣化）。
+- 重构建验证：preload 38 个、mui-icons 0 预取、exit 0。
+
+**挂账更新**：
+- ~~MUI vendor 257KB + i18n locale 大包 → code-split/lazy~~ → **已实现，关闭**（vite.config 分包 + i18n import.meta.glob 懒加载，实测基线见上）。
+- **剩余候选**（下批）：① treeshake:false→true 试验（历史 2026-10-17 因 Jt 白屏回退，现 production CJS alias 已就位，可重试验证——若绿则 total 19.12MB→16.48MB 预期）；② 首屏 preload 38 个中 dashboard/useDashboardWebSocket 等业务 chunk 是否可再裁（需功能核验）；③ lighthouse prod 58/FCP 7.4s 复测对比。
+
+
+
 
 ## lighthouse 挂账处置：NO_FCP 根因确认 + lhci 配置固化（2026-11-03）✅（性能优化挂账后续）
 

@@ -1374,7 +1374,7 @@ minify: 'esbuild',
           if (name.startsWith('config-')) return false;
           // 非登录首屏大 vendor / 业务页面 chunk（业务页面按需消费）
           if (
-            /^(markdown-vendor|exceljs-vendor|office-vendor|mui-x-date-pickers|mui-x-tree-view|recharts-|r3f-vendor|leaflet-vendor|amap-vendor|dev-tools|admin-|hrm-|finance-)/.test(
+            /^(markdown-vendor|exceljs-vendor|office-vendor|mui-icons|mui-x-date-pickers|mui-x-tree-view|recharts-|r3f-vendor|leaflet-vendor|amap-vendor|dev-tools|admin-|hrm-|finance-)/.test(
               name
             )
           ) {
