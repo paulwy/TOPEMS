@@ -1,4 +1,20 @@
 
+## lighthouse 挂账处置：NO_FCP 根因确认 + lhci 配置固化（2026-11-03）✅（性能优化挂账后续）
+
+> 长期挂账 lighthouse——实测 dev vs prod 基线，NO_FCP 根因 = lhci 测 dev（未生产构建）。
+
+**实测（lighthouse 12.8 headless desktop）**：
+- **dev（vite dev 8063）**：性能 **34**、FCP **123.8s**（≈lhci NO_FCP 根因）、请求 **2337/57MB**（未压缩：MUI 3.3MB、react-dom 2.8MB、react-router 2MB、i18n locale 1.8+1.1MB）。
+- **prod（vite build + preview 4173）**：性能 **58**、FCP **7.4s**、LCP 8.6s、**TBT 0ms**、CLS 0.001、interactive 8.6s、请求 **186/1.3MB**、可访问性 **100**/最佳实践 96/SEO 91。
+- **结论**：生产构建 FCP 有数据——NO_FCP 非产品缺陷，是 lhci 跑 dev/未构建 URL；dev 57MB 未压缩 JS 是唯一异常源。
+
+**处置**：新建 **apps/web/.lighthouserc.json**（collect URL=生产 preview 4173、chromeFlags headless=new/no-proxy、性能 **warn** 不阻断、可访问性 0.9/最佳实践 0.9/SEO 0.8 error 门禁、filesystem upload）。
+
+**遗留**：
+- lhci autorun 本地 **3 次 CHROME_INTERSTITIAL**（直接 lighthouse CLI 均成功——lhci chrome 启动环境差异，CI 环境验证留后续）；
+- 性能 58 优化（MUI vendor 257KB + i18n locale 大包 → code-split/lazy 路由）——**性能优化独立工程挂账**（与索引对齐同类）。
+
+
 ## AR-08 独立立项：utoipa 4→6（2026-11-03）✅
 
 > 用户拍板"utoipa 4→6"（workspace 键 `=4.2.3` → `"6"`，lock 解析 utoipa 6.0.0 / utoipa-gen 6.0.1）；全仓 684 文件、3629 处 `#[utoipa::path]` 引用，AR-08 16 项大版本升级至此全部闭环。
