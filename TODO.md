@@ -1,3 +1,11 @@
+## AR-08 低破坏面依赖升级批 4：reqwest 0.12→0.13（2026-11-03）✅
+
+> 承接 AR-08 批 1/2/3；reqwest 使用面广（21 crate、55+ Client 调用点）但 0.13 破坏面集中在 feature 拆分。
+- **0.13 破坏点实录**：`RequestBuilder::query` 拆为独立 `query` feature（shared-ai 4 处）、`blocking::RequestBuilder::form` 拆为 `form` feature（erp kingdee/sap adapter 2 处）——**workspace 键 features 由 `["json"]` 补齐为 `["json", "query", "blocking", "form"]`，零源码改动**。
+- **验证全绿**：cargo check --workspace --all-targets **0 error**；3 crate **1014 测试 0 failed**（shared-ai 71/erp 870/shared-service-client 73）；clippy `-D correctness` 4 crate **0 error**。
+- **AR-08 进度 13/16**：批 1（6）+ 批 2（rand/brotli）+ 批 3（etcd-client/opentelemetry/lapin 达标）+ 本批（reqwest）。
+- **未动**：sqlx（独立立项）、redis 0.24→1.7（重构级大件，建议独立立项）、utoipa 4→6（681 文件 use 面最广，建议独立立项）；desktop 14 条硬编码特例维持。
+
 ## AR-08 低破坏面依赖升级批 3：etcd-client 0.19→0.21 + opentelemetry 0.32→0.33（2026-11-03）✅
 
 > 承接 AR-08 批 1/2；本批含 lapin 确认（清单 4.10→4.12，workspace 与 lock 已 4.12.2，达标免动）。

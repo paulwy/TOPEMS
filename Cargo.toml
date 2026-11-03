@@ -341,7 +341,7 @@ dotenv = { package = "dotenvy", version = "0.15" }
 thiserror = "2"
 anyhow = "1"
 bcrypt = "0.15"
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.13", features = ["json", "query", "blocking", "form"] }
 utoipa = "=4.2.3"
 # 注：utoipa-swagger-ui（Swagger UI 页面）已从 workspace 移除（原版本 4.x 硬依赖 axum 0.6，与项目 axum 0.8 冲突）
 # erp/pm/rd 3 服务原引用了 workspace utoipa-swagger-ui 但均未在代码中实际 import（Grep 0 命中），属于冗余依赖
