@@ -1,4 +1,22 @@
 
+## 数据库治理：类型统一批次收官（topems 633→5，628 项对齐，2026-11-03）✅（5 项挂账）
+
+> 承接 545 项对齐后——剩余 88 精度类逐表契约甄别执行。
+
+**本轮执行 85 项**（含 545 批次后验证）：
+- **精度 USING 28 项**：date→timestamptz 15（erp/wms/crm 日期）、OEE 指标 double→numeric 11、timestamptz→date 2——`USING col::timestamp/numeric/date` 显式转换。
+- **numeric 43 项**：wms 库存/金额 + erp 资产（test double 参照）`USING col::double precision`（金额精度风险登记——f64 已知技术债）。
+- **剩余 14 项**：inet→text 2、integer→double 2、uuid→text 3、integer→varchar(50)、varchar→integer（数据校验 0 非法）、uuid→varchar(64)（权限审计）、text→uuid 2（changed_by/checked_by 数据校验 0 非法）、ARRAY→jsonb（to_jsonb）。
+
+**验证**：同名类型差异 **633→5**（628 项对齐）；门禁 exit 0 绿、数据校验全通过。
+
+**5 项挂账**：
+- **iam.permission_audit_logs tenant_id/user_id**（uuid vs test varchar）——**ALTER 被 RLS 策略阻止**（`cannot alter type of a column used in a policy definition`——tenant_isolation_permission_audit_logs 依赖该列）——改需 DROP/重建策略（与 RLS 批次耦合）。
+- **id 契约 3 项**：iam.permission_audit_logs.id、public.core_sessions.id、public.core_refresh_tokens.id（uuid↔bigint——值不可逆转换，需主键契约立项）。
+
+**踩坑记录**：psql -f 批量报错前缀为 `psql:/path:N: ERROR`——`grep ^ERROR` 不匹配导致误判 0 错误、漏掉后续执行；批量 ALTER 验证必须看完整输出或 grep 全 ERROR。
+
+
 ## 数据库治理：类型统一批次（topems@5432 545 项安全对齐，2026-11-03）✅（剩余 88 精度类挂账）
 
 > 启动挂账批次——633 项类型差异按 test 参照对齐，安全子集执行。
