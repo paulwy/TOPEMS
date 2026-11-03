@@ -1,0 +1,24 @@
+-- ============================================================
+-- DB-06: 5433 jsonb ↔ text/ARRAY 类型对齐 test（15 列）
+--
+-- 背景：类型批次挂账——需 USING 转换项。test 为基准，5433 对齐。
+-- 关键实测（2026-11-03）：15 列全部空表或全 NULL（core_sessions.device_info 17 行全 NULL）。
+-- 幂等：DO 块仅在列存在且类型不符时 ALTER。
+-- ============================================================
+
+SET lock_timeout = '5s';
+
+-- test=jsonb vs cur=text（7 列 → 改 jsonb）
+DO $m$ BEGIN IF EXISTS (SELECT 1 FROM pg_attribute a JOIN pg_class t ON t.oid=a.attrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname='lims' AND t.relname='instrument_calibrations' AND a.attname='calibration_results' AND NOT a.attisdropped AND a.atttypid='text'::regtype) THEN ALTER TABLE lims.instrument_calibrations ALTER COLUMN calibration_results TYPE jsonb USING calibration_results::jsonb; END IF; END $m$;
+DO $m$ BEGIN IF EXISTS (SELECT 1 FROM pg_attribute a JOIN pg_class t ON t.oid=a.attrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname='pm' AND t.relname='acceptance_records' AND a.attname='findings' AND NOT a.attisdropped AND a.atttypid='text'::regtype) THEN ALTER TABLE pm.acceptance_records ALTER COLUMN findings TYPE jsonb USING findings::jsonb; END IF; END $m$;
+DO $m$ BEGIN IF EXISTS (SELECT 1 FROM pg_attribute a JOIN pg_class t ON t.oid=a.attrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname='pm' AND t.relname='acceptance_records' AND a.attname='recommendations' AND NOT a.attisdropped AND a.atttypid='text'::regtype) THEN ALTER TABLE pm.acceptance_records ALTER COLUMN recommendations TYPE jsonb USING recommendations::jsonb; END IF; END $m$;
+DO $m$ BEGIN IF EXISTS (SELECT 1 FROM pg_attribute a JOIN pg_class t ON t.oid=a.attrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname='pm' AND t.relname='settlement_adjustments' AND a.attname='supporting_documents' AND NOT a.attisdropped AND a.atttypid='text'::regtype) THEN ALTER TABLE pm.settlement_adjustments ALTER COLUMN supporting_documents TYPE jsonb USING supporting_documents::jsonb; END IF; END $m$;
+DO $m$ BEGIN IF EXISTS (SELECT 1 FROM pg_attribute a JOIN pg_class t ON t.oid=a.attrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname='public' AND t.relname='core_sessions' AND a.attname='device_info' AND NOT a.attisdropped AND a.atttypid='text'::regtype) THEN ALTER TABLE public.core_sessions ALTER COLUMN device_info TYPE jsonb USING device_info::jsonb; END IF; END $m$;
+DO $m$ BEGIN IF EXISTS (SELECT 1 FROM pg_attribute a JOIN pg_class t ON t.oid=a.attrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname='public' AND t.relname='monitor_settings' AND a.attname='value' AND NOT a.attisdropped AND a.atttypid='text'::regtype) THEN ALTER TABLE public.monitor_settings ALTER COLUMN value TYPE jsonb USING value::jsonb; END IF; END $m$;
+DO $m$ BEGIN IF EXISTS (SELECT 1 FROM pg_attribute a JOIN pg_class t ON t.oid=a.attrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname='rs' AND t.relname='experiments' AND a.attname='results' AND NOT a.attisdropped AND a.atttypid='text'::regtype) THEN ALTER TABLE rs.experiments ALTER COLUMN results TYPE jsonb USING results::jsonb; END IF; END $m$;
+
+-- test=text vs cur=jsonb（4 列 → 改 text）
+DO $m$ BEGIN IF EXISTS (SELECT 1 FROM pg_attribute a JOIN pg_class t ON t.oid=a.attrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname='finance' AND t.relname='finance_voucher_generation_rules' AND a.attname='mapping_config' AND NOT a.attisdropped AND a.atttypid='jsonb'::regtype) THEN ALTER TABLE finance.finance_voucher_generation_rules ALTER COLUMN mapping_config TYPE text USING mapping_config::text; END IF; END $m$;
+DO $m$ BEGIN IF EXISTS (SELECT 1 FROM pg_attribute a JOIN pg_class t ON t.oid=a.attrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname='finance' AND t.relname='payables' AND a.attname='payment_schedule' AND NOT a.attisdropped AND a.atttypid='jsonb'::regtype) THEN ALTER TABLE finance.payables ALTER COLUMN payment_schedule TYPE text USING payment_schedule::text; END IF; END $m$;
+DO $m$ BEGIN IF EXISTS (SELECT 1 FROM pg_attribute a JOIN pg_class t ON t.oid=a.attrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname='finance' AND t.relname='receivables' AND a.attname='payment_schedule' AND NOT a.attisdropped AND a.atttypid='jsonb'::regtype) THEN ALTER TABLE finance.receivables ALTER COLUMN payment_schedule TYPE text USING payment_schedule::text; END IF; END $m$;
+DO $m$ BEGIN IF EXISTS (SELECT 1 FROM pg_attribute a JOIN pg_class t ON t.oid=a.attrelid JOIN pg_namespace n ON n.oid=t.relnamespace WHERE n.nspname='rs' AND t.relname='formulas' AND a.attname='process_steps' AND NOT a.attisdropped AND a.atttypid='jsonb'::regtype) THEN ALTER TABLE rs.formulas ALTER COLUMN process_steps TYPE text USING process_steps::text; END IF; END $m$;
