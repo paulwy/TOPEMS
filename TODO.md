@@ -1,4 +1,18 @@
 
+## 数据库治理：类型统一批次（topems@5432 545 项安全对齐，2026-11-03）✅（剩余 88 精度类挂账）
+
+> 启动挂账批次——633 项类型差异按 test 参照对齐，安全子集执行。
+
+**执行**：545 条 ALTER COLUMN TYPE（**0 错误**）——
+- **text 化 174 项**（varchar→text，无损失——status/email/phone/contact_phone 等）
+- **timestamptz 化 371 项**（timestamp→timestamptz，对齐 test 时区语义——created_at 124/updated_at 88/deleted_at 58/started_at 等）
+
+**验证**：同口径重算——同名类型差异 633→**88**（545 全消除）；门禁 exit 0 绿（表级不受影响）。
+
+**剩余 88 项挂账（精度/契约类）**：numeric 43、date 15、double precision 11、uuid 6、integer 3、inet 2 + 零星——需逐表契约甄别（精度/数据转换规则，不做无 USING 转换）。**其他库**（5433 212/prod 215/prepare 142）类型差异未动（prod 运行库 ALTER 需单独评估）。
+- **脚本**：/tmp/alter_typediff_topems.sql（545 条可复用）、/tmp/typediff_skip_topems.txt（88 挂账）。
+
+
 ## 数据库治理：RLS 批次前置定论（应用上下文未入库 + 数据 tenant 稀疏，挂账等应用 tenant 化立项，2026-11-03）✅
 
 > 承接可行性评估——定位应用 tenant 上下文设置路径 + 数据 tenant_id 分布，确认批次前置。
