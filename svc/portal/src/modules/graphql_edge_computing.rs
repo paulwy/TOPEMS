@@ -735,12 +735,15 @@ impl CdnCacheManager {
         let expires = now + chrono::Duration::milliseconds(ttl);
         let value_str = serde_json::to_string(value).unwrap_or_default();
         let size_bytes = key.len() + value_str.len();
-        let etag = format!("\"{}\"", hex::encode({
-            let mut h = Sha256::new();
-            h.update(key.as_bytes());
-            h.update(value_str.as_bytes());
-            h.finalize()
-        }));
+        let etag = format!(
+            "\"{}\"",
+            hex::encode({
+                let mut h = Sha256::new();
+                h.update(key.as_bytes());
+                h.update(value_str.as_bytes());
+                h.finalize()
+            })
+        );
         let entry = CdnCacheEntryData {
             key: key.to_string(),
             value: value_str,

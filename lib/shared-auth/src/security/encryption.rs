@@ -1,7 +1,4 @@
-use aes_gcm::{
-    aead::Aead,
-    Aes256Gcm, Key, Nonce,
-};
+use aes_gcm::{aead::Aead, Aes256Gcm, Key, Nonce};
 use base64::{engine::general_purpose::STANDARD, Engine};
 use hmac::{Hmac, KeyInit, Mac};
 use rand::RngCore;

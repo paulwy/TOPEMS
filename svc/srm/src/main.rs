@@ -175,12 +175,11 @@ async fn main() -> Result<(), TopemsError> {
         }
         Err(e) => {
             tracing::warn!(error = %e, "工作流服务客户端带令牌初始化失败，降级为同地址tokenless客户端；审批流在恢复前将报错，主服务继续启动");
-            TypedServiceClient::new(WorkflowApi, &workflow_url)
-                .map_err(|e| {
-                    TopemsError::NetworkRequest(format!(
-                        "工作流降级客户端也无法构建（HTTP栈异常）: {e}"
-                    ))
-                })?
+            TypedServiceClient::new(WorkflowApi, &workflow_url).map_err(|e| {
+                TopemsError::NetworkRequest(format!(
+                    "工作流降级客户端也无法构建（HTTP栈异常）: {e}"
+                ))
+            })?
         }
     };
 
