@@ -129,7 +129,22 @@
 
 **挂账更新**：
 - ~~MUI vendor 257KB + i18n locale 大包 → code-split/lazy~~ → **已实现，关闭**（vite.config 分包 + i18n import.meta.glob 懒加载，实测基线见上）。
-- **剩余候选**（下批）：① treeshake:false→true 试验（历史 2026-10-17 因 Jt 白屏回退，现 production CJS alias 已就位，可重试验证——若绿则 total 19.12MB→16.48MB 预期）；② 首屏 preload 38 个中 dashboard/useDashboardWebSocket 等业务 chunk 是否可再裁（需功能核验）；③ lighthouse prod 58/FCP 7.4s 复测对比。
+- **剩余候选**（下批）：~~① treeshake:false→true 试验~~ → **已执行绿（批次②）**；② 首屏 preload 38 个中 dashboard/useDashboardWebSocket 等业务 chunk 是否可再裁（需功能核验）；③ lighthouse prod 58/FCP 7.4s 复测对比。
+
+## 性能优化批次②：treeshake:false→true 重试验 ✅（2026-11-03 绿，正式启用）
+
+> 候选①执行：历史 2026-10-17 因 treeshake:true 丢 React.createContext（Jt=void 0）登录白屏回退 false；本轮重试验——production CJS alias（react→cjs/react.production.js 等）已就位，理论根因已解。
+
+**执行与验证（全部通过）**：
+1. `vite.config.ts` treeshake: false → true（注释更新，保留历史回退记录）。
+2. **构建**：exit 0，无 Jt 构建错误。
+3. **产物对比**（false → true）：dist/assets 30,444KB → 24,748KB（**-5,696KB / -18.7%**，超历史 -14% 预期）；react-vendor 388KB → 242KB（-38%）；mui-core-vendor 881KB → 758KB；recharts-polar/mui-x-date-pickers 各 -10~23%。
+4. **createContext 保留核验**：react-vendor chunk `createContext=function` 绑定正常（历史白屏根因特征未现）。
+5. **运行时验证**：vite preview + Playwright 系统 Chrome 无头渲染登录页 → title "TOPEMS - 企业数字化平台"、body 内容 72 字符、#root 挂载成功（rootHasChildren=true）、**pageerror/console error NONE**。
+
+**结论**：treeshake:true 正式启用（production CJS alias 修复了历史 Jt 白屏根因）；brotli closeBundle 清理兜底保留为防回归保险。剩余候选仅 ②③。
+
+
 
 
 

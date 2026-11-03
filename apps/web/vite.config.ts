@@ -1393,11 +1393,14 @@ minify: 'esbuild',
       //     一致（4 过 1 挂，挂项为既有环境问题：dashboard 侧边栏依赖后端
       //     权限数据、骨架屏超时，与 tree-shaking 无关）
       // 若未来升级 Rolldown 后出现 Jt 类错误，回退为 treeshake:false 并排查模块
-            // 2026-10-17 实测：treeshake:true 下 prod build 产物 react-vendor chunk
+      // 2026-10-17 实测回退：treeshake:true 下 prod build 产物 react-vendor chunk
       // 丢失 React.createContext 实现（Jt=void 0），登录页白屏
       // `TypeError: Jt is not a function`（dev 正常，因 dev 走 C3 §5.2 预打包修复）；
       // 按注释预案回退 treeshake:false 恢复正确性（brotli closeBundle 清理兜底保留）。
-treeshake: false,
+      // 2026-11-03 重试验：production CJS alias（react→cjs/react.production.js 等，
+      // mode==='production' 条件 alias，绕过条件 CJS 入口转换 bug）已就位，
+      // 理论上已修复 createContext 丢失根因，重新开启 treeshake 验证产物与运行。
+treeshake: true,
       // https://rolldown.rs/reference/InputOptions.checks
       checks: {
         // Disable noisy plugin timing summary; only useful when tuning builds.
