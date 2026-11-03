@@ -117,6 +117,12 @@ jobs:
       - name: Apply top-level migrations
         run: sqlx migrate run --source database/migrations --database-url "$DATABASE_URL"
 
+      - name: Seed core e2e data（数据断言型 spec 种子，幂等）
+        # 10 资源各 1 条最小业务记录（srm/scm/mes/finance/erp/wms），
+        # 供 firstRecord 真数据取数型 spec 断言；erp-cost 额外需
+        # fiscal_year=2099 预算 + EXP2099 报销单标记记录。
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/dev/seed-e2e-core.sql
+
       - name: Build backend (topems-server monolith)
         run: SQLX_OFFLINE=true cargo build -p topems-server
 
@@ -219,6 +225,29 @@ jobs:
             pnpm exec playwright test e2e/ui/full-route-smoke.spec.ts \
               --project=chromium --workers=1 --retries=0 --reporter=github,html
 
+      - name: Run Web UI E2E — 数据断言型核心 spec（push/PR 门禁，种子支撑）
+        # 10 spec 21 用例：firstRecord 取首页首条真数据再断言（srm/scm/mes/erp/finance/wms
+        # 六域，erp-cost 含 fiscal_year=2099 + EXP2099 标记断言）；本地实测 21 passed 1.2m。
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        working-directory: apps/web
+        env:
+          API_URL: ${{ env.API_URL }}
+          BASE_URL: ${{ env.BASE_URL }}
+          CI: 'true'
+        run: |
+          pnpm exec playwright test \
+            e2e/ui/srm-supplier.spec.ts \
+            e2e/ui/scm-supplier.spec.ts \
+            e2e/ui/scm-purchase.spec.ts \
+            e2e/ui/mes-production-order.spec.ts \
+            e2e/ui/mes-equipment.spec.ts \
+            e2e/ui/erp-cost.spec.ts \
+            e2e/ui/erp-asset.spec.ts \
+            e2e/ui/erp-finance.spec.ts \
+            e2e/ui/finance-voucher.spec.ts \
+            e2e/ui/wms-inbound.spec.ts \
+            --project=chromium --workers=1 --retries=0 --reporter=github,html
+
       - name: Run Web UI E2E — 全量 518 路由冒烟（nightly / manual full）
         if: github.event_name != 'push' && github.event_name != 'pull_request'
         working-directory: apps/web
@@ -238,10 +267,23 @@ jobs:
             ROUTE_FILTER="$batch" pnpm exec playwright test e2e/ui/full-route-smoke.spec.ts \
               --project=chromium --workers=1 --retries=0 --reporter=github,html
           done
+          # 数据断言型核心 spec（种子支撑，与 push/PR 门禁同一批）
+          pnpm exec playwright test \
+            e2e/ui/srm-supplier.spec.ts \
+            e2e/ui/scm-supplier.spec.ts \
+            e2e/ui/scm-purchase.spec.ts \
+            e2e/ui/mes-production-order.spec.ts \
+            e2e/ui/mes-equipment.spec.ts \
+            e2e/ui/erp-cost.spec.ts \
+            e2e/ui/erp-asset.spec.ts \
+            e2e/ui/erp-finance.spec.ts \
+            e2e/ui/finance-voucher.spec.ts \
+            e2e/ui/wms-inbound.spec.ts \
+            --project=chromium --workers=1 --retries=0 --reporter=github,html
 
       - name: Run Web UI E2E — 流程型业务（tms-shipment 全流程自造数）
-        # CI 空库无业务种子：tms-shipment 走 创建→派车→追踪→签收 全流程（UI 造数），
-        # 是首期唯一可入门的流程型业务代表（其余核心 spec 依赖种子，见文件头注释）
+        # tms-shipment 走 创建→派车→追踪→签收 全流程（UI 造数），
+        # 无需种子即可跑，为流程型业务代表（push/PR 与 nightly 均执行）。
         working-directory: apps/web
         env:
           API_URL: ${{ env.API_URL }}

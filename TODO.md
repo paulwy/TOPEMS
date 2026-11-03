@@ -1,3 +1,12 @@
+## 前端质量工程收尾链 CI 二期：业务种子固化 + 数据断言型核心 spec 入门禁（2026-11-03）✅
+> 承接 CI 固化段（§5.3 建议项 4/5）；首期边界（CI 空库无业务种子）已消除——10 资源种子 + 10 个数据断言型 spec 入门禁，commit 后推送 origin/main。
+- **关键事实修正**：核心 spec 非「写死数据」——多为 `firstRecord()`（GET API 首页首条再断言），空库仅需每资源 ≥1 条记录；自造数流程型（wms-outbound/location/stocktake、mes-quality、tms-shipment）无需种子。
+- **新增 `scripts/dev/seed-e2e-core.sql`**（幂等，固定 UUID + ON CONFLICT DO NOTHING）：
+  - 10 资源各 1 条最小业务记录：srm.suppliers（SUP-SEED-001）、scm.suppliers + scm.purchase_orders（PO-SEED-001，外键父子）、mes.production_orders（MO20261103001）、mes.equipment（EQ-SEED-001）、finance.budgets（fiscal_year=2099 标记）、finance.expenses（EXP2099 标记）、finance.vouchers（记2026110001）、erp.assets（AST-SEED-001）、wms.inbound_orders（IB-SEED-001）。
+  - DB 列名与 API 字段映射差异已核实（order_number→order_no、equipment_code→equipment_no、po_no→order_number、org_id→tenant_id 等），按 DB 列 INSERT。
+- **workflow（e2e-web.yml）**：migrate 后新增 seed step（`psql "$DATABASE_URL" -f`）；push/PR 门禁 + nightly 均新增「数据断言型核心 spec」step（10 spec 21 用例）。
+- **验证**：seed SQL BEGIN/ROLLBACK 10/10 通过（列/约束合法）；真实执行后 10 spec preview :3100 **21 passed 1.2m 全绿**（srm/scm/mes/erp/finance/wms 六域）。
+- **文档**：报告 §5.3 建议项 5/5 标 ✅（首期边界段改写为二期完成）、附录补 CI 二期验证记录。
 
 ## 数据库治理：RLS 策略覆盖状态五库对比（2026-11-03）✅（衔接 tenant_id 补列）
 
@@ -7,7 +16,6 @@
 - **topems@5432 显著低**（114 vs 其余 850+）——**开发库 RLS 未广泛启用**（安全层漂移）；test/prod/prepare/5433 基本一致（RLS 多租户隔离已广泛生效）。
 - **EHS qa_ehs_* 47 表 RLS off**（各库）——tenant_id 补列已就位（结构），RLS 策略未挂接（缺口）。
 - **治理建议**：挂账后续批次——①topems 开发库 RLS 启用对齐（需应用层 tenant 上下文配合，大）；②EHS 47 表 RLS 策略挂接（与 tenant_id 补列衔接，可做小项但启用后影响访问语义，需先验证应用读取路径）。当前无访问异常（服务 200、全链路正常——RLS 未启用表不受影响）。
-
 
 ## 数据库治理：约束级对齐核查（FK 完整 0 缺失，pkey/check 挂账，2026-11-03）✅
 
@@ -24,7 +32,6 @@
 **治理建议**：约束统一归入后续批次（与类型统一/deleted_at 同类）——**pkey/unique 补前须数据唯一性校验**（防 ADD CONSTRAINT 失败回滚）、check 类可低风险补；FK 已完整无需动。当前服务健康、门禁绿，无完整性缺陷报告。
 - **清单**：/tmp/con_*.txt（各库约束清单）。
 
-
 ## 数据库治理：索引级对齐核查（缺 1137/775/285/767，2026-11-03）✅（挂账性能批次）
 
 > 表→列→索引三级核查收尾——pg_indexes 全量对比（test 参照，排除 pg 系统 schema）。
@@ -36,7 +43,6 @@
 
 **治理建议**：索引对齐归入「性能优化后续批次」（与 lighthouse 同类）——优先 topems@5432（缺最多 1137）逐表甄别有效索引后 CREATE INDEX（安全、不影响正确性）；prod 最接近基线。当前服务健康、门禁绿，无性能缺陷报告。
 - **清单**：/tmp/idx_*.txt（各库索引清单）、/tmp/topems_missidx.txt（topems 缺索引按表）。
-
 
 ## 数据库治理：列级类型差异甄别（633 项模式分类，2026-11-03）✅（挂账后续批次）
 
@@ -55,7 +61,6 @@
 **治理建议**：类型差异统一归入「全栈类型与字段统一」后续批次（与 deleted_at 固化同类）——timestamptz 时区统一优先（371 项，涉及服务时间语义）；text/varchar 无损项可低风险批量（量大）；double/numeric 需逐表甄别业务精度契约后处理。当前无运行时缺陷（服务 200、门禁绿、全链路正常）。
 - **清单**：/tmp/typediff_topems.txt（633 行 test|topems 对照，可复用/可审计）。
 
-
 ## 数据库治理：tenant_id RLS 覆盖评估 + 补列闭环（2026-11-03）✅
 
 > 承接列级核查挂账——tenant_id 缺口（topems 7 / prepare 9 表）评估与补齐。
@@ -66,7 +71,6 @@
 - **deleted_at 固化迁移评估（挂账）**：topems 缺 114 / prepare 95（test 超前列）；**test 类型不统一**（1223 timestamptz + 42 timestamp）且 soft delete 未业务化（主库无、服务正常）——**不单独固化**；建议 soft delete 功能立项时统一（timestamptz）固化迁移（AR-08 同类批次）。
 - **剩余**：AR-08（路线图级）+ lighthouse（非阻断）+ deleted_at 随功能固化（后续批次）。
 
-
 ## 数据库治理：prepare 残壳表列级补齐（47 列 ALTER，2026-11-03）✅
 
 > 承接列级核查——prepare 4 个历史 pre-clean 残壳表对齐 test 结构（仅加列，不动数据/已有对象）。
@@ -75,7 +79,6 @@
 - **验证**：4 表列数 = test；表级门禁 check-consistency 仍绿（exit 0）。
 - **剩余列级差异**（已登记性质）：deleted_at 95（test 超前不补主库）、tenant_id 9（RLS 待评估）、updated_at/status 等零星——**均非运行时缺陷**。
 - **脚本**：/tmp/alter_prepare_columns.sql（47 条 ALTER，可复用/可审计）。
-
 
 ## 数据库治理深化：列级 schema 漂移核查（information_schema 全列对比，2026-11-03）✅（结论登记）
 
@@ -111,7 +114,6 @@
 - **验证全绿**：全量 `pnpm vitest run` 0 失败（基线 544 文件 / 6434 测试 + 相关模块回归）；`tsc --noEmit` 0 错误；`eslint .` 全仓 **0 problems**（承接 P2 ESLint 行，528→0 保持）；i18n zh/en 合法可解析。
 - **文档**：审计报告 §0 速览三态行 / §4.3（57 页三分类明细）/ §6 P2 行同步更新。
 
-
 ## 远端 web 并行线提交链验证（ESLint 528→0 属实，2026-11-03）✅
 
 > 验证 rebase 合入的 web 并行线提交（9beaef4f3 ESLint 修复 / 6b6e4dbab 空态模板 / 5536afe73 e2e-web.yml CI）。
@@ -121,7 +123,6 @@
 - **e2e CI**（5536afe73）：e2e-web.yml 已拉回合入。
 - **结论**：远端并行线提交链完整有效，无破坏；前端 lint 基线 0。
 - **状态**：剩余挂账 = AR-08（路线图级）+ lighthouse（非阻断）。
-
 
 ## B 批放弃归档收官（用户拍板 2，2026-11-03）✅
 
@@ -142,7 +143,6 @@
 - **结论强化**：本机恢复路径穷尽（git 四层 + backups + ssh）——**剩余来源仅用户其他设备/云主机（需用户提供访问或确认放弃归档）**。
 - **待用户拍板**：① 提供云主机/其他设备访问 → 我继续核查；② 确认放弃 → 4 段 ⚠️ 改标"已放弃"并入归档。
 
-
 ## 前端 PARTIAL 2 复核：schema-defense 已 PASS 闭环（2026-11-03）✅
 
 > PARTIAL 2 中 schema-defense（TABLE_DEFS vs 内联 CREATE 列名对拍）复核：`python3 scripts/check-schema-defense-drift.py`——**drift 处数=0、PASS (exit 0)**（对拍表 0、无双写跳过 647）——此前"build 0/defense 0 失败"已随表结构治理修复。
@@ -151,13 +151,11 @@
 - **验证**：脚本实跑 exit 0（纯验证，无文件改动）。
 - **状态**：剩余挂账 = B 批来源（待决策）+ AR-08（路线图级）+ lighthouse 非阻断。
 
-
 ## DIR-13 Cargo 注释修正 + wms 死代码遗留项复核（2026-11-03）✅
 
 - **DIR-13**（原登记"待 Cargo 干净后执行"）：billing 已由 66a5ded86 移除——L26 `finance/billing→finance`、L94-95 A 组 8→7（删 billing），根 Cargo.toml 注释与现状一致（diff 3+/3-）。
 - **遗留项 6 复核**：`wms inventory.rs:108 publish_inventory_updated` 死代码——全仓 .rs **0 引用**（函数已不在当前代码，此前清理轮已移除）→ 确认闭环，清单补 ✅。
 - **状态**：数据库治理 + 迁移缺陷 + DIR-13 + wms 遗留均闭环；B 批来源/AR-08/PARTIAL2 仍挂账待决策。
-
 
 ## 迁移文件 bug 闭环：20261102190000_fix_menu_crm_permission.sql 修正 + 五库实修（2026-11-03）✅
 
@@ -169,7 +167,6 @@
 - **坑**：先前查账本误用含 error 列的 SELECT（_sqlx_migrations 无此列）→ 2>/dev/null 吞错误误判"账本无记录"——实际已登记。
 - **验证**：五库权限码正确、checksum 一致、门禁绿。
 
-
 ## 5433 反向空表清理（DROP 65，2026-11-03）✅（用户拍板 1）
 
 > 处置挂账①：DROP 5433 反向表中 count=0 的空表（73 尝试）。
@@ -179,7 +176,6 @@
 - **门禁**：反向警告 74→6、exit 0；5433 表数 1401→1336（65 删）。
 - **坑**：DROP 默认 RESTRICT——有依赖表报"无法删除…倚赖"；不 CASCADE（避免连删引用者）。
 - **状态**：五库账本 546×5 + schema 59×5 + 表级缺失 0×5 稳定；反向残余 6（5433）/74（prod）/72（prepare）/49（topems）挂账。
-
 
 ## 五库表级缺失全清零收官（prod 100 + prepare 96，2026-11-03）✅
 
@@ -191,7 +187,6 @@
 - **五库全景**：账本 546×5 一致、schema 59/59、**表级缺失 0×5**（test 有 目标无 = 0）；反向表 123+（运行时自建/残留）挂账待拍板。
 - **状态**：数据库多实例对齐治理主线**全部闭环**。
 
-
 ## 反向表 123 数据量调查 + 处置建议（2026-11-03）✅（处置待拍板）
 
 > 为反向表处置提供依据：逐表 count(*) 批量查询（UNION ALL 单次 psql）。
@@ -202,7 +197,6 @@
 - **建议**：5433 的 73 空表可清理（DROP，无数据无依赖）；topems 反向保留（含审计数据）。**处置需用户拍板**——当前继续挂账不删。
 - **状态**：门禁绿；五库 546/546 + schema 59/59 + 表级缺失 0 稳定。
 
-
 ## check-consistency 门禁 v2（表清单对比区分缺失/反向）+ 反向表来源甄别（2026-11-03）✅
 
 > 表级缺失清零后门禁恢复绿：全表清单对比（精确到表），方向语义化。
@@ -211,7 +205,6 @@
 - **甄别结论**：反向表（5433 74 + topems 49）**均非标准迁移建**（grep 迁移建表语句无匹配）——历史/验证残留（core_notification_* 等疑似运行时自建表）——保留挂账，不删。
 - **验证**：门禁现绿——版本一致 + 缺失 0 + 反向 74 警告（exit 0）。
 - **状态**：五库账本 546/546、schema 59/59、表级缺失 0（topems/5433）、门禁绿；反向 123 挂账 + B 批来源待决策为剩余挂账。
-
 
 ## 表级漂移补齐：topems@5432（452）+ 5433（130）缺失表闭环（2026-11-03）✅
 
@@ -225,7 +218,6 @@
 - **反向表挂账**：5433 独有 74 表（public 46/mes 6/ehs 6 等——含 core_notification_* 等新迁移表）、topems 独有 49 表——非缺失，保留待甄别（可能是验证/迁移差异）。
 - **门禁现状**：check-consistency 仍 exit 1（反向表数不等）——缺失方向已清零，反向差异挂账。
 
-
 ## check-consistency.sh 表级漂移门禁增强 + 5433 表级漂移新发现（2026-11-03）✅
 
 > 上轮教训固化：账本/最新版本一致 ≠ 表结构一致。增强脚本加逐业务 schema 表数对比。
@@ -234,7 +226,6 @@
 - **踩坑修复**：① GROUP BY 1 在 PG 解析为含聚合的表达式报错（须 GROUP BY table_schema 列名）；② psql -t 尾部空行误判空 schema（while 循环跳过空行）；③ 查询静默失败（2>/dev/null）会误报"一致"——**修正后需带错误输出的复测**。
 - **新发现（挂账）**：5433 也有表级漂移——vs topems_test 缺 56 表（flow 37→5、iam 78→26 等；部分 schema 反向多如 ehs/mes——结构不同步）；topems@5432 缺 403。**根因**：自愈/补登迁移（1007000006/0009 等）在 5432/5433 账本已登记但 DDL 未重放。表级对齐（重放缺失建表迁移）需后续专项，当前脚本门禁持续提示。
 - **验证**：脚本现报「迁移版本一致 + 表级漂移 exit 1」——门禁行为符合预期。
-
 
 ## topems@5432 schema 集补齐（34 个缺失全部补建）+ 表级漂移挂账（2026-11-03）✅
 
@@ -245,7 +236,6 @@
 - **关键事实**：topems-server(:8099) 进程环境 DATABASE_URL=**topems_prod@5432**（非 topems）——topems 主库漂移对运行系统**无实际影响**；topems_prod 已 546/59 schema 完整。
 - **表级漂移（挂账）**：topems 924 表 vs test 1328 表，**缺 404 表**（portal 118/lims 44/iam 等模块表缺）——补齐需逐迁移重放或备份后全量重建，成本高、当前无业务影响 → 挂账，建议后续备份后重放对齐。
 
-
 ## 5433 public.qa_lab_samples/tasks 标准表补建 + FK 对齐（2026-11-03）✅
 
 > 上轮挂账项②闭环：5433 缺 public 事实标准表（0004 迁移注释所指），qa_lab FK 全删未重建。
@@ -255,7 +245,6 @@
 - **验证**：5433 账本 546、check-consistency 一致、health 200。
 - **教训**：① ADD CONSTRAINT IF NOT EXISTS 为 MySQL 语法，PostgreSQL 需 DO 块+pg_constraint 检查；② 1007000009 的 public.qa_lab_tasks 建表段缺 PK（迁移缺陷，test 靠后续/手工补）——复制 DDL 补齐时须核对约束。
 - **遗留**：topems@5432 仍缺 33 个模块 schema（lims/plugin_* 等，挂账——建议备份后全量重放对齐 test，需用户拍板）。
-
 
 ## 并行线迁移 0001/0002/0004 五库应用 + schema 漂移治理（2026-11-03）✅
 
@@ -982,8 +971,6 @@
 - **顺带修复（存量）**：`NavigationRegistryV2.edge-cases.test.ts` 与 `NavigationRegistryV2.test.ts` 自 vitest.config 多 project 重构（2026-09-27）后不在任何 project include 中成为孤儿测试——unit project include 补 `src/lib/**/__tests__/**` 纳入。
 - **后续（批 4 未完）**：C1-C11 剩余重叠——合同×4（crm/hrm/pm/scm/srm 按业务类型归属，观察）与采购×3、物料业务项（mes 领料/aps 计划）、质量×2（mes 工序质量）、报表×2（report 并入 bi 前缀归一）、wms/scm 侧供应商入口；权限码 FE 413/BE 846 统一专项；车辆×3 中 oa-vehicles/erp-vehicle-request 业务保留判断。
 
-
-
 > 目标：WCS smoke（scripts/web_contract_smoke.py，BFF 8099 嵌入态）既有 14 项 handler 500 缺口复现、归因并核销。
 > 结论：**实测 21 个端点 FAIL（handler_error 500），根因 = 下游独立服务未运行（非代码缺陷）；启动 4 个下游服务后 4667/4667 PASS, 0 FAIL**（/tmp/wcs_today2.json）。
 
@@ -991,7 +978,6 @@
 - **根因（server 日志 /tmp/topems-server.log）**：monolith 8099 经 TypedServiceClient 调下游全部连接失败——erp example 调 `localhost:8020/api/hrm/*`（HRM 未运行）、mobile approvals 调 `localhost:8000/api/core/flow/tasks/*`（IAM 未运行）、attendance 调 `localhost:8020/api/hrm/*`、inventory 调 `localhost:8041/api/wms/*`（WMS 未运行）、production 调 `localhost:8030/api/mes/*`（MES 未运行）；部分先触发 503 circuit breaker open（半开试探失败）后归并 500。
 - **核销动作**：`topems.sh start iam(8000) hrm(8020) mes(8030) wms(8041)` 四服务拉起 → 复测 21 端点全 200 → WCS 全量 **4667/4667 PASS 0 FAIL**。
 - **登记/遗留**：本类 500 属"运行环境依赖"（monolith 需下游服务在线），**非契约/代码缺口**；与 TODO:4651（mobile 调 WMS/MES 未运行 → 6 FAIL）同源。建议后续：① server 启动前做下游依赖探活提示（缺失列出清单，避免 500 误判为代码问题）；② 可考虑 `topems.sh start server` 自动拉齐 iam/hrm/mes/wms 依赖（待排期）。
-
 
 > **redesign 补测线收尾批**：续 CrmCustomer/Contract/Opportunity 三例后，将 wms 域 ListPageTemplate 复杂/自绘形态页与剩余 redesign 大页一次性补齐（5 文件 / 38 用例）。wms 其余 1-hook 纯包装页（SupplierManagementPage 等）已有测试覆盖，不在本批。
 > - `InboundPage.test.tsx`（6 用例，ListPageTemplate 手写形态 13 hooks）：渲染（k18 title/queryKey 'wms-inbound-orders'）；InboundStats 4 卡（k0 total 4/k1 pending/k2 receiving|confirmed/k3 completed，三值同为 1 用 getAllByText）；crud.api 委托 wmsApi.inboundOrders；2 行操作（k16 confirm show pending / k17 complete show receiving|quality_check）；confirm 失败 k7 error toast
@@ -1571,7 +1557,6 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **CI 每日定时**：workflow `schedule: '0 2 * * *'`（UTC，北京时间 10:00）每晚全量重跑上述门禁
 - **live DB 不变量监控（新增）**：`scripts/dev/audit-date-types.sh` 断言 naive=0 / timestamptz=4058 / date=268（只读，可 `--sqlx`/`--offline` 叠加）；已在本地验证通过，并配 Doubao 每日定时任务对 live DB 执行、异常提醒
 - **本地入口**：`make sqlx-check`（缓存一致性，离线）/ `make check-offline`（全 workspace 离线 check）
-
 
 ---
 
@@ -2171,7 +2156,6 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 软删路径已带 tenant_id（delete_device 等）非缺口；ai delete_document 已带 `($2::uuid IS NULL OR tenant_id=$2)` 非缺口
 - 复核：gis check 0 error；SQL 事务内实测 5 表（真实行保真，各表行租户不同逐一按其租户）——本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
 
-
 ## 方案C 批2-Zi：pm 14 处（写路径租户约束）
 - 状态：代码已修改（pm check 通过 0 error），待提交
 - pm 14 处（projects / project_phases UPDATE+DELETE / project_members UPDATE+DELETE / project_milestones UPDATE+DELETE / project_expenses UPDATE+DELETE / budgets / budget_items UPDATE+DELETE / acceptance_items UPDATE+DELETE）：无 Claims，统一内联 current_setting
@@ -2460,8 +2444,6 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 
 - 活文档变更日志 v1.109 登记
 
-
-
 ## v1.107 smoke-prod 层2 H 指引对齐 + BFF WS 接线观察项（2026-10-23）
 - [x] **v1.102 观察项核销**：smoke-prod.sh 层2 H 指引过时（原文"unified-core WS 端点（mes_real_module 投影提供）"——U1-b1/U1-b2 已移除 unified-core mes 投影）→ 已修正为：`/ws/mes/dashboard` 由**独立 svc/mes** 提供（main.rs:259 dashboard_websocket）；BFF :8099 未接线如实标注（main.rs:532 注释登记"应由 mes_real_module 内嵌 topems_mes::dashboard_ws"）；BFF 核心 WS 保留 /ws/core/notifications、/ws/core/im
 - [x] **观察项（接线暂缓）已核销**（v1.110，2026-10-23）：解法为 dashboard_websocket 以独立 `Router<AppState>`（AppState: FromRef<AuthState> 已具备）构造 + `.route("/ws/mes/dashboard")` 后 `with_state` 固化 → `Router<()>`，再 merge 进顶层 Router<()>——规避 Module 契约限制，无需改 trait；认证语义对齐独立部署（URL token 自验）。生产拓扑仍由独立 svc/mes:8030 提供
@@ -2503,9 +2485,6 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - [x] **验证**：`cargo check/build -p topems-server --features module-lims` 通过；BFF 重启（kill -9 确认端口释放）后端到端：建检验单 → assign → submit → **lims_inspection_records 自动落库**（source_inspection_id=检验单 id，qualified/100%/completed）；lims lib 149 passed 无回归
 - [x] **数据清理**：lims 5 条（v1.102-104 测试 + 本轮联动）+ qms 2 单 + audits 4 条 → 0 残留
 - 活文档变更日志 v1.103 登记
-
-
-
 
 ## 审计修复实施登记 Phase A（2026-10-23，依据《TOPEMS全项目测试与审计报告-2026-10-23.md》第七节）
 - [x] **P0-1 plugin-registry SQL 注入**（`419770343`）：marketplace.rs/tenant_plugins.rs 的 category/search/page_size/offset 全改 $n 绑定参数 + 9 码枚举白名单；cargo check/clippy 0 error、单测 249 passed
@@ -2938,8 +2917,6 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 重扫：L1=0、L2=258（317→258）、L3=4743。
 ### 状态与下批
 - 下批：剩余 L2 值 ~39：hooks 7（useDataTable/useBatchSelection/useDeviceType/useThrottledCallback/useConsolidation 2）+ schemas 7 + pages hooks 13 + plugin-loader 3（ModuleLoadingOverlay/PluginRouteWrapper/PluginLoaderProvider）——页面 hook 高危（逐名复核消费链，防别名/动态引用误删）；api 3 保留（聚合对象）。
-
-
 
 ## 第二十轮（2026-10-24/25）：L2 测试引用批4·高危组
 - 删 50 真死导出：validation 9 常量 + utils 8（FILTER_URL_PREFIX/classifyError/createSpan/deserializeSSRData/getTraceHeaders/isMobileView/isTabletView/pluralize）+ hooks 7 + schemas 7（useXxxDashboardSchema）+ pages hooks 13 + plugin-loader 3（PluginRouteWrapper/PluginLoaderProvider/ModuleLoadingOverlay）。
