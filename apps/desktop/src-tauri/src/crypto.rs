@@ -4,7 +4,7 @@ use aes_gcm::{
     Aes256Gcm, Nonce,
 };
 use base64::{engine::general_purpose::STANDARD, Engine};
-use rand::RngCore;
+use rand::Rng;
 use sha2::{Digest, Sha256};
 use std::fs;
 use std::io::Write;
@@ -44,7 +44,7 @@ pub fn get_or_create_key() -> [u8; 32] {
     }
 
     let mut key = [0u8; 32];
-    rand::rngs::OsRng.fill_bytes(&mut key);
+    rand::rng().fill_bytes(&mut key);
 
     if let Some(parent) = key_path.parent() {
         let _ = fs::create_dir_all(parent);
@@ -62,11 +62,10 @@ pub fn encrypt_token(token: &str) -> Result<String, DesktopError> {
         .map_err(|e| DesktopError(format!("Failed to create cipher: {}", e)))?;
 
     let mut nonce_bytes = [0u8; 12];
-    rand::rngs::OsRng.fill_bytes(&mut nonce_bytes);
-    let nonce = Nonce::from_slice(&nonce_bytes);
-
+    rand::rng().fill_bytes(&mut nonce_bytes);
+    let nonce = Nonce::from(nonce_bytes);
     let ciphertext = cipher
-        .encrypt(nonce, token.as_bytes())
+        .encrypt(&nonce, token.as_bytes())
         .map_err(|e| DesktopError(format!("Encryption failed: {}", e)))?;
 
     let mut combined = Vec::with_capacity(12 + ciphertext.len());
@@ -90,10 +89,11 @@ pub fn decrypt_token(encrypted: &str) -> Result<String, DesktopError> {
     }
 
     let (nonce_bytes, ciphertext) = combined.split_at(12);
-    let nonce = Nonce::from_slice(nonce_bytes);
+    let nonce = Nonce::try_from(nonce_bytes)
+        .map_err(|e| DesktopError(format!("Failed to create nonce: {}", e)))?;
 
     let plaintext = cipher
-        .decrypt(nonce, ciphertext)
+        .decrypt(&nonce, ciphertext)
         .map_err(|e| DesktopError(format!("Decryption failed: {}", e)))?;
 
     String::from_utf8(plaintext)

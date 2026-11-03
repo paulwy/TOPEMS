@@ -3,7 +3,7 @@
 
 use crate::error::DesktopError;
 use base64::{engine::general_purpose::STANDARD, Engine};
-use rand::RngCore;
+use rand::Rng;
 
 use super::platform::PlatformKeyStore;
 use super::store::KeyStore;
@@ -28,7 +28,7 @@ pub fn get_or_create_master_key(platform: &PlatformKeyStore) -> Result<Vec<u8>, 
         Some(s) => Ok(s.into_bytes()),
         None => {
             let mut key = [0u8; 32];
-            rand::rngs::OsRng.fill_bytes(&mut key);
+            rand::rng().fill_bytes(&mut key);
             let encoded = STANDARD.encode(key);
             platform.set(MASTER_KEY_ENTRY, &encoded)?;
             Ok(encoded.into_bytes())
