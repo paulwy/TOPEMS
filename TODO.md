@@ -1,4 +1,20 @@
 
+## 数据库治理：约束级对齐核查（FK 完整 0 缺失，pkey/check 挂账，2026-11-03）✅
+
+> 表→列→索引→约束四级核查收官——pg_constraint 全量对比（test 参照，排除 pg 系统 schema，contype::text 修正）。
+
+**约束数**：test 1770、topems 996、5433 1658、prod 1805、prepare 1818。
+**缺约束**（test 有/库无）：topems **955**、5433 229、prod 193、prepare 167；多余 117-228（反向表运行时自建，预期）。
+
+**关键甄别**：
+- **FK 缺失 = 0（五库）**——引用完整性完整（表级对齐 FK 内联生效）——**正确性关键层 OK**。
+- 缺项为 **pkey/unique/check**（样本：ai_models topems 0 约束 vs test 3（pkey+2 check）——真实缺失）——来源为 test 开发侧新增约束未固化迁移（同 deleted_at 模式）。
+- **约束名对比注意**：按 conname 对比会误判（生成名漂移），已按表+名核实；contype 为 "char" 需 ::text 转。
+
+**治理建议**：约束统一归入后续批次（与类型统一/deleted_at 同类）——**pkey/unique 补前须数据唯一性校验**（防 ADD CONSTRAINT 失败回滚）、check 类可低风险补；FK 已完整无需动。当前服务健康、门禁绿，无完整性缺陷报告。
+- **清单**：/tmp/con_*.txt（各库约束清单）。
+
+
 ## 数据库治理：索引级对齐核查（缺 1137/775/285/767，2026-11-03）✅（挂账性能批次）
 
 > 表→列→索引三级核查收尾——pg_indexes 全量对比（test 参照，排除 pg 系统 schema）。
