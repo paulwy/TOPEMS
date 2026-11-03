@@ -153,10 +153,10 @@ impl FieldEncryptionService {
 
     pub fn encrypt(&self, plaintext: &str) -> EncryptionResult<EncryptedField> {
         let key = self.key_manager.current_key()?;
-        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
+        let cipher = Aes256Gcm::new(&Key::<Aes256Gcm>::from(*key));
         let mut nonce_bytes = [0u8; 12];
         rand::thread_rng().fill_bytes(&mut nonce_bytes);
-        let nonce = Nonce::from_slice(&nonce_bytes);
+        let nonce = Nonce::from(nonce_bytes);
         let ciphertext = cipher
             .encrypt(&nonce, plaintext.as_bytes())
             .map_err(|e| EncryptionError::EncryptionFailed(e.to_string()))?;
@@ -181,19 +181,22 @@ impl FieldEncryptionService {
             Ok(k) => k,
             Err(_) => self.key_manager.current_key()?,
         };
-        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key));
+        let cipher = Aes256Gcm::new(&Key::<Aes256Gcm>::from(*key));
 
         let nonce_bytes = STANDARD
             .decode(&field.nonce)
             .map_err(|e| EncryptionError::InvalidBase64(e.to_string()))?;
-        let nonce = Nonce::from_slice(&nonce_bytes);
+        let nonce = Nonce::from(
+            <[u8; 12]>::try_from(&nonce_bytes[..])
+                .map_err(|_| EncryptionError::DecryptionFailed("invalid nonce length".into()))?,
+        );
 
         let ciphertext = STANDARD
             .decode(&field.value)
             .map_err(|e| EncryptionError::InvalidBase64(e.to_string()))?;
 
         let plaintext = cipher
-            .decrypt(nonce, ciphertext.as_ref())
+            .decrypt(&nonce, ciphertext.as_ref())
             .map_err(|e| EncryptionError::DecryptionFailed(e.to_string()))?;
 
         String::from_utf8(plaintext).map_err(|e| EncryptionError::InvalidUtf8(e.to_string()))
