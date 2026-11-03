@@ -1,4 +1,20 @@
 
+## 类型批次安全子集：prepare/5433 同向项（2026-11-03）✅（164 项安全统一，挂账分类）
+
+> 类型批次——prepare 142/5433 194 中"同向项"（无 USING 自动转换、非时间戳/uuid 契约）安全统一。
+
+**执行**（ALTER COLUMN TYPE 试建，排除时间戳挂决策 + uuid 契约项）：
+- **prepare**：171 同列差异 → 安全子集 71 条 → **67 成功**（varchar 长度/text→varchar/jsonb→text 等）；4 失败（text→jsonb/text[] 需 USING）。
+- **5433**：226 同列差异 → 安全子集 103 条 → **97 成功**；6 失败（4 jsonb/text[] 需 USING + **iam.tenant_permissions.tenant_id 被 RLS 策略 rls_tenant_isolation 依赖不可改**——新发现挂账）。
+- 门禁绿、health 200。
+
+**剩余挂账（分类）**：
+- **时间戳**：prepare 82（80 timestamptz→ts + 2→date）/ 5433 94（86+5+3）——**挂 test 时区统一决策**（KEY_FACTS 既有）；
+- **uuid 契约**：prepare 13 / 5433 22（text↔uuid 需逐表契约甄别）；
+- **需 USING 转换**：text→jsonb/text[] 等 6 项（不做无 USING 转换）；
+- **RLS 策略依赖**：tenant_id 类列被策略引用不可 ALTER（新发现，需策略解耦先行）。
+
+
 ## 三库 pkey 补全（2026-11-03）✅（索引批次完全收官）
 
 > 索引延展剩余项——5433/prod/prepare pkey 补建（约束②同法）。
