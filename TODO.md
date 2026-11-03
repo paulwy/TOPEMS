@@ -1,3 +1,12 @@
+## AR-08 低破坏面依赖升级批 3：etcd-client 0.19→0.21 + opentelemetry 0.32→0.33（2026-11-03）✅
+
+> 承接 AR-08 批 1/2；本批含 lapin 确认（清单 4.10→4.12，workspace 与 lock 已 4.12.2，达标免动）。
+- **etcd-client 0.19→0.21**：仅 shared-event/src/etcd/mod.rs 使用（Client/ConnectOptions/PutOptions/GetOptions/LeaseClient/KvClient 8 个 API 点），**API 完全兼容零源码改动**。
+- **opentelemetry 0.32→0.33**（含 otlp/semantic-conventions/stdout/sdk 4 子 crate）：17 个编译错误集中于 shared-observability telemetry（`Context::span()`、SdkTracer trait bound、try_init bound 级联）——**根因是双版本共存**：`tracing-opentelemetry 0.33` 固定依赖 otel 0.32，升级 `tracing-opentelemetry 0.33→0.34` 后双版本消除（lock 仅 opentelemetry 0.33.1），**0 源码改动全绿**。
+- **验证全绿**：cargo check --workspace --all-targets **0 error**；3 crate **1066 测试 0 failed**（shared-observability 227/shared-service-client 73/shared-core 766）；clippy `-D correctness` 4 crate **0 error**。
+- **AR-08 进度 11/16**：批 1（6）+ 批 2（rand/brotli）+ 本批（etcd-client/opentelemetry）+ lapin 达标。
+- **未动**：sqlx（独立立项）、reqwest 0.12→0.13、redis 0.24→1.7、utoipa 4→6；desktop 14 条硬编码特例维持。
+
 ## AR-08 低破坏面依赖升级批 2：rand 0.8→0.10 + brotli 3.5→9（2026-11-03）✅
 
 > 承接 AR-08 低破坏面批 1（6 项已推送）；rand 为批 1 标注"另批评估"项，本批接手。prost 确认无直接依赖（workspace 键不存在、lock 0.14.4 仅传递版）→ 跳过。
