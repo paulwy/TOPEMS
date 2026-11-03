@@ -1,4 +1,18 @@
 
+## DB-04：5433 剩余 naive timestamp → timestamptz 统一（2026-11-03）✅（421 列一次重放）
+
+> 时间戳挂账收口——5433 恢复库剩余 naive timestamp 421 列统一为 timestamptz。
+
+**执行**：migration `20261103170000_db04_unify_remaining_naive_timestamps_5433.sql`（421 DO 块，幂等）。
+- **414 列空表**（0 行）直接 ALTER；
+- **7 列有数据共 999 行**：`public.core_login_logs.{login_time,created_at}`(22+22) / `public.core_roles.{created_at,updated_at}`(14+14) / `public.core_permissions.created_at`(925) / `qms.qa_eightd_reports.{created_at,updated_at}`(1+1)；
+- USING `col AT TIME ZONE 'UTC'`（样本值 2026-10-08 04:55 UTC = 北京 12:55，+8 偏移无损）；
+- 重跑验证：**naive 421→0**、timestamptz 3406→3827、date 228 不变；
+- 分布：ehs 104 / lims 90 / qms 78 / public 52 / pdm 50 / finance 23 / rs 8 / integration 6 / bi 5 / mobile 2 / erp 2 / flow 1。
+
+**剩余挂账**：prepare 库 naive 列未启动（连接串未定位）；prod 生产库 ALTER 单独评估。
+
+
 ## 门禁脚本 warning 修复 + 迁移账本对齐（2026-11-03）✅
 
 > 小项收尾——check-consistency.sh 版本段 `DEV_VER/DEP_VER: unbound variable` 长期非阻断 warning 根因修复。
