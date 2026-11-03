@@ -11,6 +11,7 @@ use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 use crate::shared::AppState;
 
@@ -1184,7 +1185,7 @@ pub struct MaturityHistoryQuery {
 
 // --- 工作流请求 ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateWorkflowRequest {
     pub name: String,
     pub workflow_type: String,

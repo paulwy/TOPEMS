@@ -170,7 +170,10 @@ pub async fn list_trainings(
            FROM ehs.qa_ehs_trainings WHERE {} ORDER BY updated_at DESC"#,
         tenant_filter
     );
-    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql)).fetch_all(&state.pool).await {
+    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
+        .fetch_all(&state.pool)
+        .await
+    {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list trainings: {}", e);
@@ -497,7 +500,11 @@ pub async fn delete_training(
         "UPDATE ehs.qa_ehs_trainings SET deleted_at = now() WHERE id = $1::uuid AND deleted_at IS NULL {}",
         tenant_clause
     );
-    let res = match sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id).execute(&state.pool).await {
+    let res = match sqlx::query(sqlx::AssertSqlSafe(sql))
+        .bind(&id)
+        .execute(&state.pool)
+        .await
+    {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete training {}: {}", id, e);

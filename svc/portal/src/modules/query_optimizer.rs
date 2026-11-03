@@ -23,6 +23,7 @@ use std::sync::LazyLock;
 use tokio::sync::Mutex;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 use crate::shared::AppState;
 
@@ -968,7 +969,7 @@ pub struct UpdateRuleRequest {
 
 // --- 查询计划 ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreatePlanRequest {
     pub query_hash: String,
     pub field_paths: Vec<String>,

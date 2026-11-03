@@ -151,7 +151,7 @@ where
     let subscriber_task = tokio::spawn(async move {
         // 连接与 SUBSCRIBE 均加超时：任一环节 hang（网络异常/Redis 半死/连接竞争）
         // 都必须在 SUBSCRIBE_READY_TIMEOUT_SECS 内失败，而不是无限挂起测试二进制。
-        let con = match tokio::time::timeout(
+        let _con = match tokio::time::timeout(
             Duration::from_secs(CONNECT_TIMEOUT_SECS),
             subscriber_client.get_multiplexed_async_connection(),
         )
@@ -161,7 +161,10 @@ where
             Ok(Err(e)) => panic!("订阅端 redis 连接失败: {e}"),
             Err(_) => panic!("订阅端 redis 连接超时（{CONNECT_TIMEOUT_SECS}s）"),
         };
-        let mut pubsub = subscriber_client.get_async_pubsub().await.expect("订阅端 pubsub 建立失败");
+        let mut pubsub = subscriber_client
+            .get_async_pubsub()
+            .await
+            .expect("订阅端 pubsub 建立失败");
         tokio::time::timeout(
             Duration::from_secs(CONNECT_TIMEOUT_SECS),
             pubsub.subscribe(&ch),

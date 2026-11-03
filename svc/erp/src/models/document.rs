@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
 pub struct Document {
     pub id: Uuid,
     pub title: String,
@@ -34,3 +34,4 @@ pub struct UpdateDocumentRequest {
     pub file_size: Option<i64>,
     pub uploader: Option<String>,
 }
+use utoipa::ToSchema;

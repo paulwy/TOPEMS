@@ -141,7 +141,7 @@ struct LoginResponseData {
     user: UserInfo,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 struct UserInfo {
     id: String,
     username: String,

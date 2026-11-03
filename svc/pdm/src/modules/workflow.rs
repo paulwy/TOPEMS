@@ -7,6 +7,7 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -60,7 +61,7 @@ pub struct WorkflowInstance {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateWorkflowRequest {
     pub name: String,
     pub description: Option<String>,
@@ -70,7 +71,7 @@ pub struct CreateWorkflowRequest {
     pub created_by: String,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, ToSchema)]
 pub struct WorkflowStep {
     pub step_name: String,
     pub step_type: String,
@@ -80,7 +81,7 @@ pub struct WorkflowStep {
     pub timeout_days: Option<i32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct StartWorkflowRequest {
     pub workflow_id: Uuid,
     /// 后端原生字段；前端使用 business_type 别名（serde alias 兼容）

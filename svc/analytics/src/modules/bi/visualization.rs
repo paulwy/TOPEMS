@@ -4,12 +4,13 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use tracing::info;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::modules::bi::chart_service::{ChartQuery, ChartService, ChartType};
 use crate::shared::AppState;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateVisualizationRequest {
     pub name: String,
     pub chart_type: String,

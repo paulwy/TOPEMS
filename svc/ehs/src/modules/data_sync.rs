@@ -20,6 +20,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 use crate::shared::AppState;
 
@@ -68,12 +69,12 @@ pub struct SyncQuery {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct SyncHazardToQmsRequest {
     pub hazard_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct SyncAccidentToLimsRequest {
     pub accident_id: String,
     pub test_items: Option<Vec<String>>,

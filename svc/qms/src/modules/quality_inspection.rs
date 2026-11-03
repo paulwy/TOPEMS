@@ -1,4 +1,5 @@
 //! Quality Inspection handlers
+use utoipa::ToSchema;
 
 use crate::models::quality_inspection::*;
 use crate::shared::fsm::inspection_can_transition;
@@ -281,7 +282,7 @@ pub async fn update_inspection(
         ("id" = String, Path, description = "检验ID"),
     ),
     responses(
-        (status = 200, description = "质量检查删除成功", body = ApiResponse<()>),
+        (status = 200, description = "质量检查删除成功"),
         (status = 400, description = "无效的检查ID"),
         (status = 500, description = "服务器内部错误"),
     ),
@@ -820,7 +821,7 @@ pub fn create_routes() -> Router<crate::AppState> {
 }
 
 /// APV-1 审批请求体
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, ToSchema)]
 pub struct ApprovalRequest {
     pub operator: String,
     pub comment: Option<String>,

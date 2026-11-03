@@ -139,7 +139,7 @@ fn rule_row_to_api(row: &sqlx::postgres::PgRow) -> QualityRule {
 
 // ==================== 自动修复 ====================
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum AutoFixActionType {
     Normalize,
@@ -149,7 +149,7 @@ pub enum AutoFixActionType {
     Standardize,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum FixStatus {
     Pending,
@@ -185,7 +185,7 @@ pub enum FixStrategy {
 
 // ==================== 数据治理 AI ====================
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SuggestionType {
     Standardize,
@@ -194,7 +194,7 @@ pub enum SuggestionType {
     Merge,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SuggestionStatus {
     Pending,

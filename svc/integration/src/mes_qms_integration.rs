@@ -9,6 +9,7 @@ use sqlx::{types::Uuid, FromRow, PgPool, Row};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use tracing::{error, info, warn};
+use utoipa::ToSchema;
 
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
 
@@ -60,7 +61,7 @@ pub struct CreateMesQmsSyncRequest {
     pub payload: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct TriggerInspectionRequest {
     pub production_record_id: String,
     pub inspection_type: Option<String>,
@@ -68,19 +69,19 @@ pub struct TriggerInspectionRequest {
     pub triggered_by: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct SyncQualityResultRequest {
     pub inspection_id: String,
     pub production_record_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct TraceChainSyncRequest {
     pub order_id: String,
     pub direction: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct DefectHandlingRequest {
     pub inspection_id: String,
     pub production_record_id: Option<String>,

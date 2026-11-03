@@ -34,7 +34,9 @@ where
         format!("SELECT COUNT(*) FROM {} WHERE {}", table_name, where_clause)
     };
 
-    let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(total_query)).fetch_one(pool).await?;
+    let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(total_query))
+        .fetch_one(pool)
+        .await?;
 
     let items_query = if where_clause.is_empty() {
         format!(
@@ -90,7 +92,9 @@ where
     };
 
     let total: i64 = if search_pattern.is_empty() {
-        sqlx::query_scalar(sqlx::AssertSqlSafe(total_query)).fetch_one(pool).await?
+        sqlx::query_scalar(sqlx::AssertSqlSafe(total_query))
+            .fetch_one(pool)
+            .await?
     } else {
         sqlx::query_scalar(sqlx::AssertSqlSafe(total_query))
             .bind(format!("%{}%", search_pattern))
@@ -130,7 +134,10 @@ where
 
 pub async fn delete(pool: &PgPool, table_name: &str, id: Uuid) -> Result<(), sqlx::Error> {
     let query = format!("DELETE FROM {} WHERE id = $1", table_name);
-    sqlx::query(sqlx::AssertSqlSafe(query)).bind(id).execute(pool).await?;
+    sqlx::query(sqlx::AssertSqlSafe(query))
+        .bind(id)
+        .execute(pool)
+        .await?;
     Ok(())
 }
 

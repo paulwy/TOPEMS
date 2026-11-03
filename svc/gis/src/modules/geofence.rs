@@ -217,19 +217,20 @@ pub async fn update_geofence(
         .map(|s| format!(" AND {s}"))
         .unwrap_or_default();
     let current_base = only_own_schema_query!("gis", "SELECT * FROM gis.geofences WHERE id = $1");
-    let current = match sqlx::query_as::<_, Geofence>(sqlx::AssertSqlSafe(format!("{current_base}{scope}")))
-        .bind(id)
-        .fetch_one(&pool)
-        .await
-    {
-        Ok(g) => g,
-        Err(sqlx::Error::RowNotFound) => {
-            return ApiResponse::not_found("地理围栏未找到");
-        }
-        Err(e) => {
-            return ApiResponse::from(TopemsError::internal("数据库查询失败", e));
-        }
-    };
+    let current =
+        match sqlx::query_as::<_, Geofence>(sqlx::AssertSqlSafe(format!("{current_base}{scope}")))
+            .bind(id)
+            .fetch_one(&pool)
+            .await
+        {
+            Ok(g) => g,
+            Err(sqlx::Error::RowNotFound) => {
+                return ApiResponse::not_found("地理围栏未找到");
+            }
+            Err(e) => {
+                return ApiResponse::from(TopemsError::internal("数据库查询失败", e));
+            }
+        };
 
     let name = payload.name.unwrap_or(current.name);
     let description = payload.description.or(current.description);

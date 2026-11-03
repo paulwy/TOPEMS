@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -18,7 +19,7 @@ pub struct Vehicle {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateVehicleRequest {
     pub plate_number: String,
     pub brand: Option<String>,
@@ -29,7 +30,7 @@ pub struct CreateVehicleRequest {
     pub fuel_type: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateVehicleRequest {
     pub plate_number: Option<String>,
     pub brand: Option<String>,
@@ -60,7 +61,7 @@ pub struct VehicleRequest {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateVehicleRequestRequest {
     pub vehicle_id: Uuid,
     pub requester: String,
@@ -70,7 +71,7 @@ pub struct CreateVehicleRequestRequest {
     pub driver_required: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateVehicleRequestRequest {
     pub status: Option<String>,
     pub approved_by: Option<String>,

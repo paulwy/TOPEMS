@@ -3,6 +3,7 @@
 //! Provides REST API endpoints for exporting and importing permission
 //! configurations. Supports JSON format for backup, migration, and
 //! bulk configuration.
+use utoipa::ToSchema;
 
 use axum::extract::{Query, State};
 use axum::http::{header, StatusCode};
@@ -20,7 +21,7 @@ use crate::shared::AppState;
 // ===== Export Types =====
 
 /// Export format for permissions.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ToSchema)]
 pub enum ExportFormat {
     /// JSON format.
     Json,

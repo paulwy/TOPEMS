@@ -8,6 +8,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -1339,7 +1340,7 @@ fn inspection_record_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Val
     })
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateInspectionRecordRequest {
     pub item_code: Option<String>,
     pub item_name: String,

@@ -306,7 +306,7 @@ pub async fn update_workflow(
         ("id" = Uuid, Path, description = "工作流ID"),
     ),
     responses(
-        (status = 200, description = "删除成功", body = ApiResponse<()>),
+        (status = 200, description = "删除成功"),
         (status = 404, description = "工作流不存在"),
         (status = 500, description = "删除失败"),
     ),
@@ -690,13 +690,13 @@ pub async fn rollback_workflow(
     ApiResponse::success(workflow, "回滚成功")
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct RollbackWorkflowRequest {
     pub to_version: String,
     pub reason: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateWorkflowVersionRequest {
     pub version: String,
     pub definition: Option<serde_json::Value>,

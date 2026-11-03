@@ -12,6 +12,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::resolve_create_tenant;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::commit_retry;
+use utoipa::ToSchema;
 
 use uuid::Uuid;
 
@@ -110,7 +111,7 @@ pub struct Investigation {
     pub tenant_id: Uuid,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct Event {
     pub time: String,
     pub description: String,
@@ -157,7 +158,7 @@ pub struct Review {
     pub tenant_id: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateAccidentRequest {
     pub title: String,
     pub description: Option<String>,
@@ -170,14 +171,14 @@ pub struct CreateAccidentRequest {
     pub reported_by: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateInvestigationRequest {
     pub team: Option<Vec<String>>,
     pub findings: Option<String>,
     pub root_cause: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateInvestigationRequest {
     pub findings: Option<String>,
     pub root_cause: Option<String>,
@@ -185,26 +186,26 @@ pub struct UpdateInvestigationRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateTreatmentRequest {
     pub actions: Vec<CreateTreatmentActionRequest>,
     pub responsible: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateTreatmentActionRequest {
     pub description: String,
     pub responsible: Option<String>,
     pub deadline: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateTreatmentActionRequest {
     pub status: Option<String>,
     pub completed_at: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateReviewRequest {
     pub summary: Option<String>,
     pub lessons_learned: Option<Vec<String>>,

@@ -10,6 +10,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
@@ -52,7 +53,7 @@ pub struct DocumentListParams {
     pub category: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateDocumentRequest {
     pub title: String,
     pub description: Option<String>,

@@ -267,16 +267,17 @@ pub async fn list_change_requests(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
-    let result: Result<Vec<ChangeRequest>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
-        "SELECT {CHANGE_REQUEST_RETURN} FROM rs.change_requests
+    let result: Result<Vec<ChangeRequest>, sqlx::Error> =
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
+            "SELECT {CHANGE_REQUEST_RETURN} FROM rs.change_requests
          WHERE ($1::text IS NULL OR status = $1)
          ORDER BY created_at DESC LIMIT $2 OFFSET $3"
-    )))
-    .bind(status_filter)
-    .bind(page_size)
-    .bind(offset)
-    .fetch_all(&mut **txn)
-    .await;
+        )))
+        .bind(status_filter)
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&mut **txn)
+        .await;
 
     let total: Result<i64, sqlx::Error> =
         sqlx::query_scalar("SELECT COUNT(*) FROM rs.change_requests")
@@ -331,9 +332,9 @@ pub async fn get_change_request(
             )
         }
     };
-    let result: Result<Option<ChangeRequest>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
-        "SELECT {CHANGE_REQUEST_RETURN} FROM rs.change_requests WHERE id = $1"
-    )))
+    let result: Result<Option<ChangeRequest>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(
+        format!("SELECT {CHANGE_REQUEST_RETURN} FROM rs.change_requests WHERE id = $1"),
+    ))
     .bind(id)
     .fetch_optional(&mut **txn)
     .await;
@@ -370,8 +371,9 @@ pub async fn update_change_request(
         }
     };
     let now = Utc::now();
-    let result: Result<Option<ChangeRequest>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
-        r#"UPDATE rs.change_requests SET
+    let result: Result<Option<ChangeRequest>, sqlx::Error> =
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
+            r#"UPDATE rs.change_requests SET
            title = COALESCE($2, title),
            description = COALESCE($3, description),
            change_type = COALESCE($4, change_type),
@@ -388,18 +390,18 @@ pub async fn update_change_request(
            updated_at = $9
            WHERE id = $1
            RETURNING {CHANGE_REQUEST_RETURN}"#
-    )))
-    .bind(id)
-    .bind(&req.title)
-    .bind(&req.description)
-    .bind(&req.change_type)
-    .bind(&req.priority)
-    .bind(req.scope_docs)
-    .bind(req.scope_phases)
-    .bind(&req.proposed_by)
-    .bind(now)
-    .fetch_optional(&mut **txn)
-    .await;
+        )))
+        .bind(id)
+        .bind(&req.title)
+        .bind(&req.description)
+        .bind(&req.change_type)
+        .bind(&req.priority)
+        .bind(req.scope_docs)
+        .bind(req.scope_phases)
+        .bind(&req.proposed_by)
+        .bind(now)
+        .fetch_optional(&mut **txn)
+        .await;
 
     match result {
         Ok(Some(cr)) => {
@@ -537,15 +539,16 @@ pub async fn transition_change_request(
     }
 
     let now = Utc::now();
-    let result: Result<Option<ChangeRequest>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
-        "UPDATE rs.change_requests SET status = $2, updated_at = $3 WHERE id = $1
+    let result: Result<Option<ChangeRequest>, sqlx::Error> =
+        sqlx::query_as(sqlx::AssertSqlSafe(format!(
+            "UPDATE rs.change_requests SET status = $2, updated_at = $3 WHERE id = $1
          RETURNING {CHANGE_REQUEST_RETURN}"
-    )))
-    .bind(id)
-    .bind(&req.to)
-    .bind(now)
-    .fetch_optional(&mut **txn)
-    .await;
+        )))
+        .bind(id)
+        .bind(&req.to)
+        .bind(now)
+        .fetch_optional(&mut **txn)
+        .await;
 
     match result {
         Ok(Some(cr)) => {
@@ -700,9 +703,9 @@ pub async fn list_change_orders(
             )
         }
     };
-    let result: Result<Vec<ChangeOrder>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
-        "SELECT {CHANGE_ORDER_RETURN} FROM rs.change_orders ORDER BY created_at DESC"
-    )))
+    let result: Result<Vec<ChangeOrder>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(
+        format!("SELECT {CHANGE_ORDER_RETURN} FROM rs.change_orders ORDER BY created_at DESC"),
+    ))
     .fetch_all(&mut **txn)
     .await;
 

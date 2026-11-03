@@ -454,7 +454,11 @@ pub async fn get_quality_rule(
         "SELECT {} FROM erp_master_data_quality_rules WHERE deleted_at IS NULL AND id = $1",
         QUALITY_RULE_COLUMNS
     );
-    match sqlx::query(sqlx::AssertSqlSafe(sql)).bind(rid).fetch_optional(&mut **txn).await {
+    match sqlx::query(sqlx::AssertSqlSafe(sql))
+        .bind(rid)
+        .fetch_optional(&mut **txn)
+        .await
+    {
         Ok(Some(row)) => match quality_rule_from_row(&row) {
             Ok(rule) => ApiResponse::success(rule, "质量规则详情"),
             Err(e) => {
@@ -854,9 +858,12 @@ async fn load_quality_rules(
         .fetch_all(&mut **txn)
         .await
     } else {
-        sqlx::query(sqlx::AssertSqlSafe(format!("{} WHERE is_active = TRUE", sql_base)))
-            .fetch_all(&mut **txn)
-            .await
+        sqlx::query(sqlx::AssertSqlSafe(format!(
+            "{} WHERE is_active = TRUE",
+            sql_base
+        )))
+        .fetch_all(&mut **txn)
+        .await
     };
 
     match rows {
@@ -1143,7 +1150,9 @@ async fn check_custom_sql(
         .get("suggestion")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let rows = sqlx::query(sqlx::AssertSqlSafe(sql_text)).fetch_all(&mut **txn).await;
+    let rows = sqlx::query(sqlx::AssertSqlSafe(sql_text))
+        .fetch_all(&mut **txn)
+        .await;
     match rows {
         Ok(rows) => {
             use sqlx::Row;

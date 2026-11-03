@@ -3,6 +3,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 
 /// Plugin entity
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -430,7 +431,7 @@ pub struct UpdatePluginRequest {
 }
 
 /// Request to create a plugin review
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateReviewRequest {
     pub rating: i16,
     pub title: Option<String>,

@@ -11,6 +11,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_success, ApiResponse};
 use topems_shared_core::TopemsError;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -84,7 +85,7 @@ pub struct CreateMaterialRequest {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateMaterialRequest {
     pub material_name: Option<String>,
     pub name_en: Option<String>,

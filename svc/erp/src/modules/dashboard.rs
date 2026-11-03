@@ -51,9 +51,12 @@ async fn count_table(txn: &mut sqlx::Transaction<'static, sqlx::Postgres>, table
     {
         Ok(v) => v,
         Err(_) => {
-            match sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COUNT(*) FROM {}", table)))
-                .fetch_one(&mut **txn)
-                .await
+            match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+                "SELECT COUNT(*) FROM {}",
+                table
+            )))
+            .fetch_one(&mut **txn)
+            .await
             {
                 Ok(v) => v,
                 Err(_) => 0,
@@ -80,10 +83,13 @@ async fn count_table_with_status(
     {
         Ok(v) => v,
         Err(_) => {
-            match sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COUNT(*) FROM {} WHERE status = $1", table)))
-                .bind(status)
-                .fetch_one(&mut **txn)
-                .await
+            match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
+                "SELECT COUNT(*) FROM {} WHERE status = $1",
+                table
+            )))
+            .bind(status)
+            .fetch_one(&mut **txn)
+            .await
             {
                 Ok(v) => v,
                 Err(_) => 0,

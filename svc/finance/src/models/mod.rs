@@ -852,7 +852,7 @@ pub struct CreateVoucherNoRuleRequest {
     pub rule: VoucherNoRule,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize, ToSchema)]
 #[sqlx(type_name = "export_format")]
 #[sqlx(rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -874,7 +874,7 @@ impl fmt::Display for ExportFormat {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ExportVoucherRequest {
     pub voucher_ids: Vec<Uuid>,
     pub format: ExportFormat,
@@ -885,7 +885,7 @@ pub struct ExportVoucherRequest {
     pub end_date: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct ExportVoucherResponse {
     pub file_name: String,
     pub format: ExportFormat,
@@ -1134,7 +1134,7 @@ pub struct ApprovalConfigResponse {
 
 // ==================== Reconciliation Models ====================
 
-#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize, ToSchema)]
 #[sqlx(type_name = "reconciliation_type")]
 #[sqlx(rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
@@ -1185,7 +1185,7 @@ impl fmt::Display for ItemSource {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, sqlx::Type, Deserialize, Serialize, ToSchema)]
 #[sqlx(type_name = "reconciliation_status")]
 #[sqlx(rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]

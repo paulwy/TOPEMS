@@ -5,6 +5,7 @@ use axum::extract::FromRef;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::AuthState;
@@ -26,7 +27,7 @@ pub struct IntegrationEvent {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateIntegrationEventRequest {
     pub source_system: String,
     pub target_system: String,
@@ -51,7 +52,7 @@ pub struct LimsQmsSync {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateLimsQmsSyncRequest {
     pub lims_sample_id: String,
     pub sample_name: String,
@@ -75,7 +76,7 @@ pub struct MesErpSync {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateMesErpSyncRequest {
     pub mes_order_id: String,
     pub order_number: String,
@@ -99,7 +100,7 @@ pub struct WmsScmSync {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateWmsScmSyncRequest {
     pub wms_inventory_id: String,
     pub item_name: String,

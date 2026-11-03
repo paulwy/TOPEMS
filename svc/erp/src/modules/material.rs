@@ -415,7 +415,7 @@ pub async fn delete_material(
     }
 }
 
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Serialize, ToSchema)]
 pub struct MaterialImportResult {
     pub succeeded: i64,
     pub failed: i64,
@@ -501,3 +501,4 @@ pub async fn import_materials(
     }
     ApiResponse::success(MaterialImportResult { succeeded, failed }, "物料导入完成")
 }
+use utoipa::ToSchema;

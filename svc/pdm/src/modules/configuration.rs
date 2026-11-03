@@ -2,6 +2,7 @@ use axum::{extract::Path, extract::Query, extract::State, routing::get, Extensio
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -37,7 +38,7 @@ pub struct Configuration {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateConfigurationRequest {
     pub config_no: String,
     pub name: String,
@@ -47,7 +48,7 @@ pub struct CreateConfigurationRequest {
     pub created_by: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateConfigurationRequest {
     pub config_no: Option<String>,
     pub name: Option<String>,

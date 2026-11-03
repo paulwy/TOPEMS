@@ -12,6 +12,7 @@ use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 use crate::AppState;
 
@@ -161,7 +162,7 @@ pub struct SamplingPlanResponse {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateInspectionPlanRequest {
     pub code: String,
     pub name: String,
@@ -652,18 +653,20 @@ async fn update_sampling_plan(
         WHERE id = $1 AND deleted_at IS NULL RETURNING id";
     let result = match filter {
         Some(t) => {
-            sqlx::query(sqlx::AssertSqlSafe(format!("{base_sql} AND tenant_id = $9")))
-                .bind(id)
-                .bind(&req.name)
-                .bind(&req.level)
-                .bind(req.sample_size)
-                .bind(&req.aql)
-                .bind(&req.inspection_level)
-                .bind(&req.status)
-                .bind(&req.description)
-                .bind(t)
-                .fetch_optional(&state.pool)
-                .await
+            sqlx::query(sqlx::AssertSqlSafe(format!(
+                "{base_sql} AND tenant_id = $9"
+            )))
+            .bind(id)
+            .bind(&req.name)
+            .bind(&req.level)
+            .bind(req.sample_size)
+            .bind(&req.aql)
+            .bind(&req.inspection_level)
+            .bind(&req.status)
+            .bind(&req.description)
+            .bind(t)
+            .fetch_optional(&state.pool)
+            .await
         }
         None => {
             sqlx::query(sqlx::AssertSqlSafe(base_sql))
@@ -892,17 +895,19 @@ async fn update_inspection_plan(
         updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id";
     let result = match filter {
         Some(t) => {
-            sqlx::query(sqlx::AssertSqlSafe(format!("{base_sql} AND tenant_id = $8")))
-                .bind(id)
-                .bind(&req.name)
-                .bind(&req.product_code)
-                .bind(&req.product_name)
-                .bind(req.sampling_plan_id)
-                .bind(&req.status)
-                .bind(&req.description)
-                .bind(t)
-                .fetch_optional(&state.pool)
-                .await
+            sqlx::query(sqlx::AssertSqlSafe(format!(
+                "{base_sql} AND tenant_id = $8"
+            )))
+            .bind(id)
+            .bind(&req.name)
+            .bind(&req.product_code)
+            .bind(&req.product_name)
+            .bind(req.sampling_plan_id)
+            .bind(&req.status)
+            .bind(&req.description)
+            .bind(t)
+            .fetch_optional(&state.pool)
+            .await
         }
         None => {
             sqlx::query(sqlx::AssertSqlSafe(base_sql))

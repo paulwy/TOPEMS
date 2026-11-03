@@ -1,3 +1,19 @@
+## AR-08 独立立项：utoipa 4→6（2026-11-03）✅
+
+> 用户拍板"utoipa 4→6"（workspace 键 `=4.2.3` → `"6"`，lock 解析 utoipa 6.0.0 / utoipa-gen 6.0.1）；全仓 684 文件、3629 处 `#[utoipa::path]` 引用，AR-08 16 项大版本升级至此全部闭环。
+- **feature 驱动解法**（6.x 显式化）：workspace 键 `utoipa = { version = "6", features = ["uuid", "chrono", "decimal", "bigdecimal"] }`——uuid/chrono/decimal/bigdecimal 在 4.x 隐含实现、6.x 需显式 feature（check1 44 → check2 668 错误暴露宏级 API 破坏）。
+- **宏级 API 破坏实录**：
+  - `#[derive(OpenApi)]` 对 paths() 块内重复 handler 从容忍变硬错（E0428/E0119）：9 个 openapi 文件 paths() 去重 **221 条**（去重脚本按逗号切分会把注释行粘进相邻条目致字节不等失效——mes 78/155 两处 `list_equipment` 实证——定稿按"去注释后路径"做 key）。
+  - `body = ApiResponse<()>` 在 6.x 宏 **panic**（Type::Tuple 空 elems 无法解析，unified-core workflow.rs:300 首爆）：全仓 5 处移除 body 属性。
+  - `security_schemes.insert` 期望 `RefOr<SecurityScheme>`（4.x 直接插）：unified-core main.rs:219 补 `.into()`。
+  - OpenAPI 版本默认 3.0.3→3.1.0：communication openapi.rs 测试断言更新。
+  - `serde_json::Value` 仅 ToSchema/PartialSchema、无 `__dev::ComposeSchema`（`ApiResponse<Vec<serde_json::Value>>` 的 Vec 组合链报错）：finance 2 处 body 改 `ApiResponse<serde_json::Value>`（与全仓 169 处风格一致）。
+- **ToSchema 批量补丁**：全仓缺 derive 类型 6 轮收敛（check4 65 类型/42 文件 → check6 79 → check7 64 → check9 28 → check10 12 → check11 4 → 0）；34+ 文件注入 `use utoipa::ToSchema;`；`#[serde(rename_all)]` 隔断的 enum 用"derive 行+属性行+类型名"正则二次补丁。
+- **验证全绿**：cargo check --workspace --all-targets **0 error**；cargo test --workspace --lib **41 crate 12748 passed 0 failed**（skip redis 挂起用例）；clippy `-D correctness` 全 workspace **0 error**。
+- **AR-08 16/16 全部完成**：批 1（6）+ 批 2（rand/brotli）+ 批 3（etcd-client/opentelemetry/lapin）+ 批 4（reqwest）+ sqlx 独立立项 + redis 独立立项 + 本批（utoipa）。
+- **遗留**：desktop 14 条硬编码特例维持；批 2 rand 遗留（encryption.rs `use rand::Rng;`、redis.rs `use rand::RngExt;`、service_client.rs `use rand::{Rng, RngExt};`）再动 rand 需注意。utoipa-swagger-ui 已从 workspace 移除（4.x 硬依赖 axum 0.6 与项目 axum 0.8 冲突；未来本地 Swagger UI 需另引 utoipa v5 + utoipa-swagger-ui v9）。
+- **push 门禁补记（2026-11-03 晚）**：pre-push 的 `RUSTFLAGS="-D warnings"` 拦下 sqlx 0.9 宏噪音——workspace sqlx 键 bigdecimal+rust_decimal 双 feature 下，`query!` 宏对 NUMERIC 无条件 emit `warn_on_ambiguous_inferred_numeric_crate` deprecation（crm 3/wms 4/mes 60 处）；源码确认 sqlx-macros-core `AmbiguousNumericType` 只看双 feature、**sqlx.toml `preferred-crates` 配置亦无法消除（0.9.0 实现缺陷）**（且 0.9 仅从 CARGO_MANIFEST_DIR 读 sqlx.toml，workspace 根不生效）。处置：svc/crm·mes·wms 的 lib.rs/main.rs 加 `#![allow(deprecated)]`（各 crate 内无其他 deprecated 使用，已核）。另：补丁脚本把 `use utoipa::ToSchema;` 追加在 test 模块后触发 clippy `items_after_test_module`——25 个文件把 use 移至文件头、2 个文件 `#![allow(dead_code)]` 错位已归位。check/fmt/clippy（-D warnings）全绿后推送。
+
 ## AR-08 独立立项：redis 0.24→1.7（2026-11-03）✅
 
 > 用户拍板"redis 0.24→1.7"；使用面 9 crate 依赖、29 文件 src 引用，集中于 shared-event（stream/dead_letter/redis 模块）。

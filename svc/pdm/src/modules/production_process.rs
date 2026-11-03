@@ -3,6 +3,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -37,7 +38,7 @@ pub struct ProductionProcess {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateProcessRequest {
     pub process_no: String,
     pub name: String,
@@ -48,7 +49,7 @@ pub struct CreateProcessRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateProcessRequest {
     pub process_no: Option<String>,
     pub name: Option<String>,

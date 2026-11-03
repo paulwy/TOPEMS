@@ -22,6 +22,7 @@
 //!    - 断线重连与恢复
 //!    - 心跳与保活
 //!    - 实时过滤与转换
+use utoipa::ToSchema;
 
 use axum::extract::{Json, Path, Query};
 use axum::http::StatusCode;
@@ -161,7 +162,7 @@ pub struct ConfigureStrategyRequest {
 
 // ==================== AI 查询优化类型 ====================
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
 pub enum SuggestionType {
     FieldPruning,
     QueryMerging,

@@ -1,6 +1,7 @@
 use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 /// 供应商送货预约状态
@@ -80,7 +81,7 @@ pub struct UpdateSupplierDeliveryAppointmentRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ApprovalRequest {
     pub approver_name: Option<String>,
     pub remarks: Option<String>,

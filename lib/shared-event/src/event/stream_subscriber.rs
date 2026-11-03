@@ -564,7 +564,9 @@ impl StreamEventSubscriber {
                             let payload_json: String = message
                                 .map
                                 .get("payload")
-                                .map(|v| redis::from_redis_value_ref::<String>(v).unwrap_or_default())
+                                .map(|v| {
+                                    redis::from_redis_value_ref::<String>(v).unwrap_or_default()
+                                })
                                 .unwrap_or_default();
 
                             if is_mdm {
@@ -681,7 +683,9 @@ impl StreamEventSubscriber {
                                                     }
                                                 };
                                                 if k == "payload" {
-                                                    if let redis::Value::BulkString(v) = &fields[i + 1] {
+                                                    if let redis::Value::BulkString(v) =
+                                                        &fields[i + 1]
+                                                    {
                                                         payload =
                                                             String::from_utf8_lossy(v).to_string();
                                                     }

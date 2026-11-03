@@ -246,16 +246,18 @@ async fn update_dictionary(
         WHERE id = $1 AND deleted_at IS NULL RETURNING id";
     let result = match tenant_opt {
         Some(t) => {
-            sqlx::query(sqlx::AssertSqlSafe(format!("{base_sql} AND tenant_id = $7")))
-                .bind(id)
-                .bind(&req.name)
-                .bind(&req.category)
-                .bind(&req.items)
-                .bind(&req.status)
-                .bind(&req.description)
-                .bind(t)
-                .fetch_optional(&state.db)
-                .await
+            sqlx::query(sqlx::AssertSqlSafe(format!(
+                "{base_sql} AND tenant_id = $7"
+            )))
+            .bind(id)
+            .bind(&req.name)
+            .bind(&req.category)
+            .bind(&req.items)
+            .bind(&req.status)
+            .bind(&req.description)
+            .bind(t)
+            .fetch_optional(&state.db)
+            .await
         }
         None => {
             sqlx::query(sqlx::AssertSqlSafe(base_sql))

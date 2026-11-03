@@ -4,6 +4,7 @@ use sqlx::{types::Uuid, Row};
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 use crate::shared::AppState;
 
@@ -31,7 +32,7 @@ pub struct InspectionProcess {
     pub updated_at: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateProcessRequest {
     pub name: String,
     pub description: Option<String>,

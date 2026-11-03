@@ -2,9 +2,10 @@ use crate::services::db::Database;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Document {
     pub id: Uuid,
     pub tenant_id: Uuid,

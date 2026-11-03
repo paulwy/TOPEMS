@@ -258,19 +258,21 @@ async fn update_analyte(
         updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id";
     let result = match filter {
         Some(t) => {
-            sqlx::query(sqlx::AssertSqlSafe(format!("{base_sql} AND tenant_id = $10")))
-                .bind(id)
-                .bind(&req.analyte_name)
-                .bind(&req.category)
-                .bind(&req.unit)
-                .bind(&req.method_reference)
-                .bind(&req.limit_value)
-                .bind(&req.accuracy)
-                .bind(&req.status)
-                .bind(&req.description)
-                .bind(t)
-                .fetch_optional(&state.pool)
-                .await
+            sqlx::query(sqlx::AssertSqlSafe(format!(
+                "{base_sql} AND tenant_id = $10"
+            )))
+            .bind(id)
+            .bind(&req.analyte_name)
+            .bind(&req.category)
+            .bind(&req.unit)
+            .bind(&req.method_reference)
+            .bind(&req.limit_value)
+            .bind(&req.accuracy)
+            .bind(&req.status)
+            .bind(&req.description)
+            .bind(t)
+            .fetch_optional(&state.pool)
+            .await
         }
         None => {
             sqlx::query(sqlx::AssertSqlSafe(base_sql))

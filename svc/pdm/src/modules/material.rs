@@ -2,6 +2,7 @@ use axum::{extract::Path, extract::Query, extract::State, routing::get, Extensio
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::services::mdm_event_service::MdmEventService;
@@ -60,7 +61,7 @@ pub struct Material {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateMaterialRequest {
     pub material_no: String,
     pub name: String,
@@ -69,7 +70,7 @@ pub struct CreateMaterialRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateMaterialRequest {
     pub material_no: Option<String>,
     pub name: Option<String>,

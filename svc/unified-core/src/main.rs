@@ -221,7 +221,8 @@ impl Modify for ApiDoc {
                     .scheme(utoipa::openapi::security::HttpAuthScheme::Bearer)
                     .bearer_format("JWT")
                     .build(),
-            ),
+            )
+            .into(),
         );
     }
 }

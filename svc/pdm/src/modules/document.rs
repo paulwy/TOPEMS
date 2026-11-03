@@ -8,6 +8,7 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -36,7 +37,7 @@ pub fn create_routes() -> Router<AppState> {
         .route("/documents/pending-approval", get(list_pending_documents))
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Document {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -53,7 +54,7 @@ pub struct Document {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateDocumentRequest {
     pub document_no: String,
     pub name: String,
@@ -66,7 +67,7 @@ pub struct CreateDocumentRequest {
     pub created_by: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateDocumentRequest {
     pub document_no: Option<String>,
     pub name: Option<String>,
@@ -624,7 +625,7 @@ pub async fn delete_document(
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct StartDocumentApprovalRequest {
     pub workflow_id: Uuid,
     pub created_by: String,

@@ -7,12 +7,13 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 // ==================== Conversion Rule Types ====================
 
 /// 转换规则状态
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum RuleStatus {
     Active,
@@ -40,7 +41,7 @@ impl RuleStatus {
 }
 
 /// 转换规则触发时机
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum TriggerType {
     /// 事件触发（如订单创建后）
@@ -129,7 +130,7 @@ pub struct ConversionRule {
 }
 
 /// 值映射表
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ValueMap {
     /// 值映射关系
     pub mappings: std::collections::HashMap<String, serde_json::Value>,
@@ -149,7 +150,7 @@ impl ValueMap {
 }
 
 /// 条件映射
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ConditionalMapping {
     /// 条件表达式
     pub condition: serde_json::Value,
@@ -158,7 +159,7 @@ pub struct ConditionalMapping {
 }
 
 /// 字段映射
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct FieldMapping {
     /// 源字段
     pub source_field: String,
@@ -175,7 +176,7 @@ pub struct FieldMapping {
 }
 
 /// 创建转换规则请求
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateConversionRuleRequest {
     pub tenant_id: Uuid,
     pub code: String,
@@ -196,7 +197,7 @@ pub struct CreateConversionRuleRequest {
 }
 
 /// 更新转换规则请求
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct UpdateConversionRuleRequest {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -232,7 +233,7 @@ pub struct ConversionExecution {
 }
 
 /// 转换执行请求
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ExecuteConversionRequest {
     pub rule_code: String,
     pub source_record_id: String,

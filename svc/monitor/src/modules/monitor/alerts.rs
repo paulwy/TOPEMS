@@ -4,6 +4,7 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -27,7 +28,7 @@ pub struct AlertRule {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct RuleCondition {
     pub field: String,
     pub operator: String,
@@ -35,14 +36,14 @@ pub struct RuleCondition {
     pub comparison_type: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct RuleAction {
     pub action_type: String,
     pub target: Option<String>,
     pub config: serde_json::Value,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AlertRuleRequest {
     pub name: String,
     pub description: Option<String>,
@@ -74,7 +75,7 @@ pub struct ServiceAlertCount {
 // Advanced Alert Rule Types
 
 /// Scheduled trigger configuration
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ScheduledTrigger {
     pub enabled: bool,
     pub cron_expression: Option<String>,
@@ -84,13 +85,13 @@ pub struct ScheduledTrigger {
 }
 
 /// Multi-level alert escalation
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AlertEscalation {
     pub enabled: bool,
     pub levels: Vec<EscalationLevel>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct EscalationLevel {
     pub level: i32,
     pub name: String,
@@ -101,12 +102,12 @@ pub struct EscalationLevel {
 }
 
 /// Alert routing configuration
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AlertRouting {
     pub rules: Vec<RoutingRule>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct RoutingRule {
     pub id: String,
     pub name: String,
@@ -116,7 +117,7 @@ pub struct RoutingRule {
     pub priority: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct RouteCondition {
     pub field: String,
     pub operator: String,
@@ -124,7 +125,7 @@ pub struct RouteCondition {
 }
 
 /// Alert template for notifications
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AlertTemplate {
     pub id: String,
     pub name: String,
@@ -135,7 +136,7 @@ pub struct AlertTemplate {
 }
 
 /// Alert suppression rule
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SuppressionRule {
     pub id: String,
     pub name: String,
@@ -145,7 +146,7 @@ pub struct SuppressionRule {
     pub enabled: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SuppressionCondition {
     pub field: String,
     pub operator: String,

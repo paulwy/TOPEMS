@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -133,7 +134,7 @@ pub struct RecordItem {
     pub tenant_id: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateInspectionPlanRequest {
     pub title: String,
     pub description: Option<String>,
@@ -146,7 +147,7 @@ pub struct CreateInspectionPlanRequest {
     pub items: Vec<CreateInspectionItemRequest>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateInspectionItemRequest {
     pub title: String,
     pub description: Option<String>,
@@ -155,7 +156,7 @@ pub struct CreateInspectionItemRequest {
     pub order_num: i32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateInspectionRecordRequest {
     pub plan_id: Option<String>,
     pub title: String,
@@ -167,7 +168,7 @@ pub struct CreateInspectionRecordRequest {
     pub items: Vec<CreateRecordItemRequest>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateRecordItemRequest {
     pub item_id: Option<String>,
     pub item_title: String,
@@ -176,7 +177,7 @@ pub struct CreateRecordItemRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateInspectionRecordRequest {
     pub result: Option<String>,
     pub status: Option<String>,

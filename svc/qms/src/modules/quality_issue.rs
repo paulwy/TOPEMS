@@ -17,6 +17,7 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::commit_retry;
 use topems_shared_event::event::EventType;
 use topems_shared_event::event::QmsQualityIssueCreatedPayload;
+use utoipa::ToSchema;
 
 use topems_shared_service_client::service_client::CreateInstanceRequest;
 
@@ -404,7 +405,7 @@ pub async fn delete_issue(
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct StartApprovalRequest {
     pub workflow_id: Uuid,
     pub comment: Option<String>,

@@ -447,7 +447,7 @@ pub async fn update_department(
         ("id" = Uuid, Path, description = "部门ID"),
     ),
     responses(
-        (status = 200, description = "部门删除成功", body = ApiResponse<()>),
+        (status = 200, description = "部门删除成功"),
         (status = 404, description = "部门不存在"),
         (status = 500, description = "服务器内部错误"),
     ),

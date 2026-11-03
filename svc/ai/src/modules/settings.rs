@@ -15,7 +15,7 @@ pub struct AiSettings {
     pub available_models: Vec<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateAiSettingsRequest {
     pub default_model: Option<String>,
     pub max_tokens: Option<i32>,
@@ -203,3 +203,4 @@ async fn get_tenant_id_from_header(_state: &AppState) -> Option<Uuid> {
     // 暂时返回None，后面我们再完善
     None
 }
+use utoipa::ToSchema;

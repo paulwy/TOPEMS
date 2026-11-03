@@ -385,7 +385,9 @@ pub async fn get_funnel_trend(
     );
 
     let result: Result<Vec<sqlx::postgres::PgRow>, sqlx::Error> =
-        sqlx::query(sqlx::AssertSqlSafe(query_str)).fetch_all(&mut **txn).await;
+        sqlx::query(sqlx::AssertSqlSafe(query_str))
+            .fetch_all(&mut **txn)
+            .await;
 
     match result {
         Ok(rows) => {

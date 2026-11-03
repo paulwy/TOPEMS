@@ -191,9 +191,12 @@ macro_rules! migration {
 
             async fn down(&self, pool: &sqlx::PgPool) -> Result<(), migration_sdk::MigrationError> {
                 if let Some(ref down_sql) = self.down_sql {
-                    sqlx::query(sqlx::AssertSqlSafe(down_sql)).execute(pool).await.map_err(|e| {
-                        migration_sdk::MigrationError::RollbackFailed(e.to_string())
-                    })?;
+                    sqlx::query(sqlx::AssertSqlSafe(down_sql))
+                        .execute(pool)
+                        .await
+                        .map_err(|e| {
+                            migration_sdk::MigrationError::RollbackFailed(e.to_string())
+                        })?;
                 }
                 Ok(())
             }

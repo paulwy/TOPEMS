@@ -5,6 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -927,7 +928,7 @@ pub async fn get_slow_queries(
     ApiResponse::success(filtered, "获取慢查询列表成功")
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ExportRequest {
     pub format: String,
     pub start_time: Option<String>,

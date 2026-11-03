@@ -705,12 +705,13 @@ impl RecommendationEngine {
         .await
         .map(|rows| rows.iter().map(interaction_from_row).collect())
         .unwrap_or_default();
-        let assets: Vec<DataAsset> =
-            sqlx::query(sqlx::AssertSqlSafe(format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets")))
-                .fetch_all(db)
-                .await
-                .map(|rows| rows.iter().map(asset_from_row).collect())
-                .unwrap_or_default();
+        let assets: Vec<DataAsset> = sqlx::query(sqlx::AssertSqlSafe(format!(
+            "SELECT {ASSET_COLS} FROM master_data.mdm_assets"
+        )))
+        .fetch_all(db)
+        .await
+        .map(|rows| rows.iter().map(asset_from_row).collect())
+        .unwrap_or_default();
 
         let limit = limit.unwrap_or(10) as usize;
 
@@ -859,12 +860,13 @@ impl RecommendationEngine {
         item_id: &str,
         limit: Option<i32>,
     ) -> Result<Vec<DataAsset>, TopemsError> {
-        let assets: Vec<DataAsset> =
-            sqlx::query(sqlx::AssertSqlSafe(format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets")))
-                .fetch_all(db)
-                .await
-                .map(|rows| rows.iter().map(asset_from_row).collect())
-                .unwrap_or_default();
+        let assets: Vec<DataAsset> = sqlx::query(sqlx::AssertSqlSafe(format!(
+            "SELECT {ASSET_COLS} FROM master_data.mdm_assets"
+        )))
+        .fetch_all(db)
+        .await
+        .map(|rows| rows.iter().map(asset_from_row).collect())
+        .unwrap_or_default();
         let target = assets
             .iter()
             .find(|a| a.id == item_id)
@@ -899,12 +901,13 @@ impl RecommendationEngine {
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     async fn get_popular_items(db: &sqlx::PgPool, limit: Option<i32>) -> Vec<DataAsset> {
-        let assets: Vec<DataAsset> =
-            sqlx::query(sqlx::AssertSqlSafe(format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets")))
-                .fetch_all(db)
-                .await
-                .map(|rows| rows.iter().map(asset_from_row).collect())
-                .unwrap_or_default();
+        let assets: Vec<DataAsset> = sqlx::query(sqlx::AssertSqlSafe(format!(
+            "SELECT {ASSET_COLS} FROM master_data.mdm_assets"
+        )))
+        .fetch_all(db)
+        .await
+        .map(|rows| rows.iter().map(asset_from_row).collect())
+        .unwrap_or_default();
         let interactions: Vec<InteractionRecord> = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {INTERACTION_COLS} FROM master_data.mdm_interactions"
         )))
@@ -941,12 +944,13 @@ impl RecommendationEngine {
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     async fn get_trending_items(db: &sqlx::PgPool, limit: Option<i32>) -> Vec<DataAsset> {
-        let assets: Vec<DataAsset> =
-            sqlx::query(sqlx::AssertSqlSafe(format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets")))
-                .fetch_all(db)
-                .await
-                .map(|rows| rows.iter().map(asset_from_row).collect())
-                .unwrap_or_default();
+        let assets: Vec<DataAsset> = sqlx::query(sqlx::AssertSqlSafe(format!(
+            "SELECT {ASSET_COLS} FROM master_data.mdm_assets"
+        )))
+        .fetch_all(db)
+        .await
+        .map(|rows| rows.iter().map(asset_from_row).collect())
+        .unwrap_or_default();
         let interactions: Vec<InteractionRecord> = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {INTERACTION_COLS} FROM master_data.mdm_interactions"
         )))
@@ -1061,12 +1065,13 @@ impl AssetCatalogManager {
         page: Option<i64>,
         page_size: Option<i64>,
     ) -> (Vec<DataAsset>, i64) {
-        let assets: Vec<DataAsset> =
-            sqlx::query(sqlx::AssertSqlSafe(format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets")))
-                .fetch_all(db)
-                .await
-                .map(|rows| rows.iter().map(asset_from_row).collect())
-                .unwrap_or_default();
+        let assets: Vec<DataAsset> = sqlx::query(sqlx::AssertSqlSafe(format!(
+            "SELECT {ASSET_COLS} FROM master_data.mdm_assets"
+        )))
+        .fetch_all(db)
+        .await
+        .map(|rows| rows.iter().map(asset_from_row).collect())
+        .unwrap_or_default();
 
         let mut filtered: Vec<DataAsset> = assets;
 
@@ -1192,12 +1197,13 @@ impl AssetCatalogManager {
         clippy::cast_precision_loss
     )]
     async fn get_asset_stats(db: &sqlx::PgPool) -> AssetStats {
-        let assets: Vec<DataAsset> =
-            sqlx::query(sqlx::AssertSqlSafe(format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets")))
-                .fetch_all(db)
-                .await
-                .map(|rows| rows.iter().map(asset_from_row).collect())
-                .unwrap_or_default();
+        let assets: Vec<DataAsset> = sqlx::query(sqlx::AssertSqlSafe(format!(
+            "SELECT {ASSET_COLS} FROM master_data.mdm_assets"
+        )))
+        .fetch_all(db)
+        .await
+        .map(|rows| rows.iter().map(asset_from_row).collect())
+        .unwrap_or_default();
 
         let total = assets.len() as i64;
         let mut by_type: HashMap<String, i64> = HashMap::new();

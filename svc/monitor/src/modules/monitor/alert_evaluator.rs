@@ -1,3 +1,4 @@
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use axum::{
@@ -28,7 +29,7 @@ pub struct AlertThreshold {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 pub enum MetricType {
     CpuUsage,
     MemoryUsage,
@@ -40,7 +41,7 @@ pub enum MetricType {
     DatabasePoolUsage,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 pub enum ThresholdOperator {
     GreaterThan,
     GreaterThanOrEqual,
@@ -50,7 +51,7 @@ pub enum ThresholdOperator {
     NotEqual,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct ThresholdRequest {
     pub name: String,
     pub metric_type: MetricType,

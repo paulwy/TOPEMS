@@ -2,6 +2,7 @@ use axum::{extract::Path, extract::Query, extract::State, routing::get, Extensio
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -31,7 +32,7 @@ pub struct Product {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateProductRequest {
     pub product_no: String,
     pub name: String,
@@ -40,7 +41,7 @@ pub struct CreateProductRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateProductRequest {
     pub product_no: Option<String>,
     pub name: Option<String>,

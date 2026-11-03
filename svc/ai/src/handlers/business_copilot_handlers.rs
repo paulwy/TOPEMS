@@ -130,7 +130,7 @@ pub struct FaqQuery {
 }
 
 /// FAQ 条目（字段对齐前端 businessCopilot.ts FAQItem）
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct FaqItem {
     pub question: String,
     pub answer: String,
@@ -141,7 +141,7 @@ pub struct FaqItem {
 // ==================== FAQ 管理端（admin CRUD）类型 ====================
 
 /// 管理端 FAQ 条目（含 id / tenant_id / status 等管理字段）
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct AdminFaqItem {
     pub id: String,
     pub tenant_id: String,
@@ -1448,3 +1448,4 @@ fn curated_faq(module: &BusinessModule) -> Vec<FaqItem> {
         ],
     }
 }
+use utoipa::ToSchema;

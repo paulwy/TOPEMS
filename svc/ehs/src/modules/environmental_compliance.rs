@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 use uuid::Uuid;
 
@@ -143,7 +144,7 @@ pub struct ComplianceAssessment {
     pub tenant_id: Uuid,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct DischargeLimit {
     pub pollutant_name: String,
     pub limit_value: f64,
@@ -265,7 +266,7 @@ pub struct ComplianceStatistics {
     pub tenant_id: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateRegulationRequest {
     pub title: String,
     pub category: String,
@@ -281,7 +282,7 @@ pub struct CreateRegulationRequest {
     pub version: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateRegulationRequest {
     pub title: Option<String>,
     pub category: Option<String>,
@@ -298,7 +299,7 @@ pub struct UpdateRegulationRequest {
     pub version: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateEvaluationRequest {
     pub title: String,
     pub assessment_type: String,
@@ -316,7 +317,7 @@ pub struct CreateEvaluationRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateEvaluationRequest {
     pub title: Option<String>,
     pub assessment_type: Option<String>,
@@ -334,7 +335,7 @@ pub struct UpdateEvaluationRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateMonitorRecordRequest {
     pub monitor_type: String,
     pub monitor_point: String,
@@ -352,7 +353,7 @@ pub struct CreateMonitorRecordRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreatePermitRequest {
     pub title: String,
     pub permit_type: String,
@@ -370,7 +371,7 @@ pub struct CreatePermitRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdatePermitRequest {
     pub title: Option<String>,
     pub permit_type: Option<String>,
@@ -388,7 +389,7 @@ pub struct UpdatePermitRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateIncidentRequest {
     pub title: String,
     pub incident_type: String,
@@ -401,7 +402,7 @@ pub struct CreateIncidentRequest {
     pub responsible_person: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateIncidentRequest {
     pub level: Option<String>,
     pub status: Option<String>,

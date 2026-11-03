@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 //! STATUS: WIRED | Routes registered + DB tables initialized + Handlers implemented
 //! V51.0 Finance 合规内控模块
 //!
@@ -21,8 +22,7 @@
 //! - GET  /compliance-v51/reports
 //! - GET  /compliance-v51/reports/{id}
 //! - GET  /compliance-v51/reports/{id}/export
-
-#![allow(dead_code)]
+use utoipa::ToSchema;
 
 use axum::{
     extract::{Extension, Json, Path, Query, State},
@@ -222,7 +222,7 @@ pub struct CreateRiskAssessmentRequest {
 }
 
 /// 风险评估查询参数
-#[derive(Debug, Deserialize, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, utoipa::IntoParams, ToSchema)]
 pub struct RiskAssessmentQueryParams {
     pub control_point_id: Option<Uuid>,
     pub risk_level: Option<String>,
@@ -280,7 +280,7 @@ pub struct GenerateComplianceReportRequest {
 }
 
 /// 合规报告查询参数
-#[derive(Debug, Deserialize, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, utoipa::IntoParams, ToSchema)]
 pub struct ComplianceReportQueryParams {
     pub report_type: Option<String>,
 }

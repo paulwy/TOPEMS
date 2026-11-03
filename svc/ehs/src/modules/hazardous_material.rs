@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 use uuid::Uuid;
 
@@ -185,7 +186,7 @@ pub struct MaterialStatistics {
     pub tenant_id: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateMaterialRequest {
     pub name: String,
     pub category: String,
@@ -203,7 +204,7 @@ pub struct CreateMaterialRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateMaterialRequest {
     pub name: Option<String>,
     pub category: Option<String>,
@@ -620,7 +621,10 @@ pub async fn list_stock_records(
            FROM ehs.qa_ehs_stock_records WHERE {} ORDER BY operation_time DESC NULLS LAST"#,
         tenant_filter
     );
-    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql)).fetch_all(&state.pool).await {
+    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
+        .fetch_all(&state.pool)
+        .await
+    {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list stock records: {}", e);

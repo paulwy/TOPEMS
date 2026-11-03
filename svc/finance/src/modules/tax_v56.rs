@@ -38,6 +38,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::collections::HashMap;
 use topems_shared_boundary::only_own_schema_query;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -759,8 +760,10 @@ impl AutoTaxFiler {
         }
         sql.push_str(" GROUP BY form_type");
 
-        let rows: Vec<(String, f64, i64)> =
-            sqlx::query_as(sqlx::AssertSqlSafe(sql)).bind(tenant_id).fetch_all(pool).await?;
+        let rows: Vec<(String, f64, i64)> = sqlx::query_as(sqlx::AssertSqlSafe(sql))
+            .bind(tenant_id)
+            .fetch_all(pool)
+            .await?;
 
         let mut summary = serde_json::json!({
             "total_tax_amount": 0.0,
@@ -1227,7 +1230,7 @@ impl TaxRateCalculator {
 
 pub struct TaxPlanner;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreatePlanRequest {
     pub entity: String,
     pub period: String,

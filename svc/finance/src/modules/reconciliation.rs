@@ -4,6 +4,7 @@ use axum::{
 };
 use serde::Deserialize;
 use topems_shared_core::error::TopemsError;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::*;
@@ -300,13 +301,13 @@ pub async fn update_diff_handler(
     }
 }
 
-#[derive(Debug, Clone, Deserialize, utoipa::IntoParams)]
+#[derive(Debug, Clone, Deserialize, utoipa::IntoParams, ToSchema)]
 pub struct ItemsQueryParams {
     pub source_type: Option<String>,
     pub match_status: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, utoipa::IntoParams)]
+#[derive(Debug, Clone, Deserialize, utoipa::IntoParams, ToSchema)]
 pub struct AgingQueryParams {
     pub as_of_date: Option<String>,
     pub direction: String,

@@ -3,6 +3,7 @@
 //! Provides REST API endpoints for exporting permission audit logs in
 //! CSV and JSON formats. Supports filtering and streaming export for
 //! large datasets.
+use utoipa::ToSchema;
 
 use axum::extract::{Query, State};
 use axum::http::{header, StatusCode};
@@ -17,7 +18,7 @@ use crate::shared::AppState;
 // ===== Export Format =====
 
 /// Export format for audit logs.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ToSchema)]
 pub enum ExportFormat {
     /// CSV format.
     Csv,

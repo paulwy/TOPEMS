@@ -7,6 +7,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
 use std::collections::HashMap;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -338,7 +339,7 @@ pub fn create_routes() -> Router<AppState> {
         )
 }
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct DocumentVersion {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -362,7 +363,7 @@ pub struct DocumentVersion {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateDocumentVersionRequest {
     pub document_id: Option<Uuid>,
     pub version_number: String,
@@ -376,7 +377,7 @@ pub struct CreateDocumentVersionRequest {
     pub created_by_name: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateDocumentVersionRequest {
     pub version_number: Option<String>,
     pub title: Option<String>,

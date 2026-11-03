@@ -23,6 +23,7 @@ use std::sync::LazyLock;
 use tokio::sync::Mutex;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 use crate::shared::AppState;
 
@@ -117,7 +118,7 @@ impl CanaryStatus {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum BreakingChangeType {
     FieldRemoved,
@@ -189,7 +190,7 @@ impl CanaryWinner {
 
 // --- API 版本管理 ---
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct BreakingChange {
     #[serde(rename = "type")]
     pub change_type: BreakingChangeType,
@@ -952,7 +953,7 @@ pub struct RegisterVersionRequest {
     pub breaking_changes: Option<Vec<BreakingChange>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateVersionRequest {
     pub changelog: Option<String>,
     pub breaking_changes: Option<Vec<BreakingChange>>,

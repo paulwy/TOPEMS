@@ -17,7 +17,7 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow, ToSchema)]
 pub struct Currency {
     pub id: Uuid,
     pub tenant_id: Option<Uuid>,
@@ -57,7 +57,7 @@ pub struct CurrencyQuery {
     pub is_active: Option<bool>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct PaginatedCurrencies {
     pub items: Vec<Currency>,
     pub total: i64,
@@ -286,7 +286,11 @@ pub async fn delete_currency(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     let sql = format!("DELETE FROM {} WHERE id = $1", TABLE);
-    match sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).execute(&state.pool).await {
+    match sqlx::query(sqlx::AssertSqlSafe(sql))
+        .bind(id)
+        .execute(&state.pool)
+        .await
+    {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(())),
         Ok(_) => Json(ApiResponse::error("币种不存在")),
         Err(e) => {
@@ -309,3 +313,4 @@ pub fn create_routes() -> axum::Router<AppState> {
 // 保持 PgPool 引用以避免未使用告警（后续租户过滤会用到）
 #[allow(dead_code)]
 fn _keep_pool(_pool: &PgPool) {}
+use utoipa::ToSchema;

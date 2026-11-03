@@ -805,11 +805,12 @@ impl AutoAuditEngine {
 
         if let Some(sql) = query {
             let sql_with_tenant = format!("{} AND tenant_id = ${}", sql, 1);
-            let rows: Vec<(Uuid, String, String)> = sqlx::query_as(sqlx::AssertSqlSafe(sql_with_tenant))
-                .bind(tenant_id)
-                .fetch_all(pool)
-                .await
-                .unwrap_or_default();
+            let rows: Vec<(Uuid, String, String)> =
+                sqlx::query_as(sqlx::AssertSqlSafe(sql_with_tenant))
+                    .bind(tenant_id)
+                    .fetch_all(pool)
+                    .await
+                    .unwrap_or_default();
 
             let mut findings = Vec::new();
             for (id, entity_type, description) in &rows {

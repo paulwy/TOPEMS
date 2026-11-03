@@ -82,7 +82,7 @@ pub struct AccountBalanceQueryParams {
     project_id: Option<String>,
 }
 
-#[derive(Debug, Deserialize, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, utoipa::IntoParams, ToSchema)]
 pub struct AuxQueryParams {
     pub aux_type: String,
     pub aux_id: Option<Uuid>,
@@ -1489,7 +1489,7 @@ pub struct VoucherTemplateQueryParams {
     tag = "Voucher Template",
     params(VoucherTemplateQueryParams),
     responses(
-        (status = 200, description = "获取凭证模板列表成功", body = ApiResponse<Vec<serde_json::Value>>),
+        (status = 200, description = "获取凭证模板列表成功", body = ApiResponse<serde_json::Value>),
         (status = 500, description = "服务器内部错误"),
     ),
 )]
@@ -2286,7 +2286,7 @@ pub struct GenerationRuleQueryParams {
     tag = "Voucher Generation Rule",
     params(GenerationRuleQueryParams),
     responses(
-        (status = 200, description = "获取凭证生成规则列表成功", body = ApiResponse<Vec<serde_json::Value>>),
+        (status = 200, description = "获取凭证生成规则列表成功", body = ApiResponse<serde_json::Value>),
         (status = 500, description = "服务器内部错误"),
     ),
 )]
@@ -3375,7 +3375,7 @@ pub async fn batch_write_off_payments_handler(
 
 // ========== V41.0 Phase 9: 账龄分析（Aging）==========
 
-#[derive(Debug, Deserialize, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, utoipa::IntoParams, ToSchema)]
 pub struct AgingQueryParams {
     pub direction: Option<String>,
     pub bucket: Option<String>,

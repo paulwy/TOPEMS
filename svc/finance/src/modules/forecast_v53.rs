@@ -17,6 +17,7 @@
 //! - GET    /forecast-v53/budget/report
 //! - POST   /forecast-v53/budget/anomalies
 //! - GET    /forecast-v53/budget/trends
+use utoipa::ToSchema;
 
 use axum::{
     extract::{Extension, Json, Query, State},
@@ -584,7 +585,9 @@ impl CashFlowPredictor {
             data_query.push_str(&format!(" AND scenario = ${}", base));
         }
 
-        let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(count_query)).fetch_one(pool).await?;
+        let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(count_query))
+            .fetch_one(pool)
+            .await?;
 
         data_query.push_str(" ORDER BY created_at DESC LIMIT $LIMIT OFFSET $OFFSET");
         let data_query = data_query.replace("$LIMIT", &page_size.to_string());
@@ -759,7 +762,7 @@ pub struct AnomalyDetection {
     pub actual_value: f64,
 }
 
-#[derive(Debug, Deserialize, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, utoipa::IntoParams, ToSchema)]
 pub struct VarianceQueryParams {
     pub entity_id: Option<String>,
     pub period: Option<String>,

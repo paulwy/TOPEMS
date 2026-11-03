@@ -7,6 +7,7 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -499,7 +500,7 @@ pub async fn delete_order(
     response
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ApprovalRequest {
     pub approver_id: Option<Uuid>,
     pub approver_name: Option<String>,

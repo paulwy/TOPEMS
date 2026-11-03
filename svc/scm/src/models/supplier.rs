@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
@@ -20,7 +21,7 @@ pub struct Supplier {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateSupplierRequest {
     pub name: String,
     /// 供应商编码：兼容前端/API 以 `code` 提交（S3），统一落库为 supplier_no
@@ -36,7 +37,7 @@ pub struct CreateSupplierRequest {
     pub tax_number: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateSupplierRequest {
     pub name: Option<String>,
     pub name_en: Option<String>,

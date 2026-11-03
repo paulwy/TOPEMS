@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 use uuid::Uuid;
 
@@ -99,7 +100,7 @@ pub struct HealthRecord {
     pub tenant_id: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateHealthRecordRequest {
     pub employee_id: String,
     pub employee_name: String,
@@ -116,7 +117,7 @@ pub struct CreateHealthRecordRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateHealthRecordRequest {
     pub employee_name: Option<String>,
     pub gender: Option<String>,
@@ -260,7 +261,7 @@ pub struct HealthStatistics {
     pub tenant_id: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateExamPlanRequest {
     pub title: String,
     pub description: Option<String>,
@@ -273,7 +274,7 @@ pub struct CreateExamPlanRequest {
     pub organizer: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateExamPlanRequest {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -286,7 +287,7 @@ pub struct UpdateExamPlanRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateExamRecordRequest {
     pub plan_id: Option<String>,
     pub employee_id: String,
@@ -314,7 +315,7 @@ pub struct CreateExamRecordRequest {
     pub doctor: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateExamRecordRequest {
     pub overall_result: Option<String>,
     pub blood_pressure: Option<String>,
@@ -334,7 +335,7 @@ pub struct UpdateExamRecordRequest {
     pub doctor: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateContraindicationRequest {
     pub employee_id: String,
     pub employee_name: String,
@@ -401,7 +402,10 @@ pub async fn list_exam_plans(
            FROM ehs.qa_ehs_health_exam_plans WHERE {} ORDER BY plan_date DESC NULLS LAST"#,
         tenant_filter
     );
-    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql)).fetch_all(&state.pool).await {
+    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
+        .fetch_all(&state.pool)
+        .await
+    {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list exam plans: {}", e);
@@ -601,7 +605,10 @@ pub async fn list_exam_records(
            FROM ehs.qa_ehs_health_exam_records WHERE {} ORDER BY exam_date DESC NULLS LAST"#,
         tenant_filter
     );
-    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql)).fetch_all(&state.pool).await {
+    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
+        .fetch_all(&state.pool)
+        .await
+    {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list exam records: {}", e);
@@ -833,7 +840,10 @@ pub async fn list_contraindications(
            FROM ehs.qa_ehs_contraindications WHERE {} ORDER BY diagnosed_at DESC NULLS LAST"#,
         tenant_filter
     );
-    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql)).fetch_all(&state.pool).await {
+    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
+        .fetch_all(&state.pool)
+        .await
+    {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list contraindications: {}", e);

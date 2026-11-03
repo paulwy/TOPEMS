@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -14,7 +15,7 @@ pub struct MeetingRoom {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateMeetingRoomRequest {
     pub name: String,
     pub capacity: i32,
@@ -22,7 +23,7 @@ pub struct CreateMeetingRoomRequest {
     pub facilities: Option<Vec<String>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateMeetingRoomRequest {
     pub name: Option<String>,
     pub capacity: Option<i32>,
@@ -45,7 +46,7 @@ pub struct MeetingBooking {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateMeetingBookingRequest {
     pub room_id: Uuid,
     pub title: String,
@@ -54,7 +55,7 @@ pub struct CreateMeetingBookingRequest {
     pub end_time: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateMeetingBookingRequest {
     pub title: Option<String>,
     pub organizer: Option<String>,

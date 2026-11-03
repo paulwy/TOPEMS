@@ -2,6 +2,7 @@ use axum::{extract::Path, extract::Query, extract::State, routing::get, Extensio
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -62,7 +63,7 @@ pub struct PdmProject {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreatePdmProjectRequest {
     pub project_no: String,
     pub name: String,
@@ -78,7 +79,7 @@ pub struct CreatePdmProjectRequest {
     pub created_by: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdatePdmProjectRequest {
     pub project_no: Option<String>,
     pub name: Option<String>,
@@ -101,12 +102,12 @@ pub struct ProjectQuery {
     pub phase: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateProjectStatusRequest {
     pub status: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateProjectPhaseRequest {
     pub phase: String,
 }
@@ -124,7 +125,7 @@ pub struct ProjectMember {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AddProjectMemberRequest {
     pub user_id: String,
     pub user_name: Option<String>,
@@ -132,7 +133,7 @@ pub struct AddProjectMemberRequest {
     pub role: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateProjectMemberRequest {
     pub user_name: Option<String>,
     pub user_email: Option<String>,
@@ -155,7 +156,7 @@ pub struct ProjectPhase {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateProjectPhaseRequest {
     pub phase: String,
     pub name: String,
@@ -166,7 +167,7 @@ pub struct CreateProjectPhaseRequest {
     pub deliverables: Option<Vec<String>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateProjectPhaseByIdRequest {
     pub phase: Option<String>,
     pub name: Option<String>,

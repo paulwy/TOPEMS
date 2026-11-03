@@ -161,7 +161,10 @@ pub async fn list_accounting_subjects(
 
     // 总数查询
     let count_sql = format!("SELECT COUNT(*) FROM {} WHERE {}", TABLE, where_clause);
-    let total: i64 = match sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql)).fetch_all(&state.pool).await {
+    let total: i64 = match sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql))
+        .fetch_all(&state.pool)
+        .await
+    {
         Ok(rows) => rows.first().copied().unwrap_or(0),
         Err(e) => {
             tracing::error!("查询会计科目总数失败: {}", e);
@@ -379,7 +382,11 @@ pub async fn delete_accounting_subject(
         TABLE
     );
 
-    match sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).execute(&state.pool).await {
+    match sqlx::query(sqlx::AssertSqlSafe(sql))
+        .bind(id)
+        .execute(&state.pool)
+        .await
+    {
         Ok(result) => {
             if result.rows_affected() > 0 {
                 Json(ApiResponse::success(

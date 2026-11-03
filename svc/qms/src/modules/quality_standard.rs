@@ -366,7 +366,7 @@ pub async fn update_standard(
         ("id" = String, Path, description = "标准ID"),
     ),
     responses(
-        (status = 200, description = "质量标准删除成功", body = ApiResponse<()>),
+        (status = 200, description = "质量标准删除成功"),
         (status = 400, description = "无效的标准ID"),
         (status = 500, description = "服务器内部错误"),
     ),

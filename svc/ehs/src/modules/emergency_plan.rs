@@ -127,7 +127,7 @@ pub struct PlanDetail {
     pub tenant_id: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreatePlanRequest {
     #[serde(alias = "name")]
     pub title: String,
@@ -151,7 +151,7 @@ pub struct CreatePlanRequest {
     pub version: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdatePlanRequest {
     #[serde(alias = "name")]
     pub title: Option<String>,
@@ -190,7 +190,7 @@ pub struct SubmitApprovalRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ApprovalRequest {
     pub opinion: Option<String>,
     pub result: String,
@@ -739,3 +739,4 @@ fn plan_approval_from_row(r: &sqlx::postgres::PgRow) -> PlanApproval {
         tenant_id: uuid::Uuid::parse_str(&tenant_id).unwrap_or_else(|_| uuid::Uuid::nil()),
     }
 }
+use utoipa::ToSchema;

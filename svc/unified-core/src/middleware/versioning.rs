@@ -12,6 +12,7 @@ use sqlx::PgPool;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::sync::{Arc, RwLock};
+use utoipa::ToSchema;
 
 use crate::AppState;
 
@@ -26,7 +27,7 @@ pub struct ApiVersion {
     pub changes: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, ToSchema)]
 pub enum VersionStatus {
     Active,
     Deprecated,
@@ -224,7 +225,7 @@ pub struct ApiVersionConfigRecord {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateVersionRequest {
     pub version: String,
     pub status: VersionStatus,

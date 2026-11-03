@@ -12,6 +12,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::commit_retry;
+use utoipa::ToSchema;
 
 use uuid::Uuid;
 
@@ -142,7 +143,7 @@ pub struct Verification {
     pub tenant_id: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateHazardRequest {
     pub title: String,
     pub description: Option<String>,
@@ -695,7 +696,7 @@ pub async fn delete_hazard(
     ApiResponse::success((), "隐患删除成功")
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct StartApprovalRequest {
     pub workflow_id: Uuid,
     pub comment: Option<String>,
@@ -1190,7 +1191,7 @@ pub struct SafetyHazard {
     pub tenant_id: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateSafetyHazardRequest {
     pub hazard_no: Option<String>,
     pub name: String,
@@ -1206,7 +1207,7 @@ pub struct CreateSafetyHazardRequest {
     pub likelihood: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateSafetyHazardRequest {
     pub name: Option<String>,
     pub category: Option<String>,
@@ -1706,7 +1707,7 @@ pub struct CreateRiskAssessmentRequest {
     pub recommendations: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateControlMeasureRequest {
     pub measure_type: String,
     pub description: Option<String>,

@@ -4,6 +4,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use topems_shared_boundary::only_own_schema_query;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -12,12 +13,12 @@ use crate::mes_erp_sync;
 use crate::models::{AppState, CreateMesErpSyncRequest, MesErpSync};
 use topems_shared_auth::get_tenant_id_from_claims;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct SyncErpToMesRequest {
     pub erp_order_id: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct SyncMesToErpRequest {
     pub mes_order_id: String,
 }

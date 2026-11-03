@@ -426,7 +426,9 @@ impl SchemaAwareAuditLogService {
             if trimmed.is_empty() {
                 continue;
             }
-            sqlx::query(sqlx::AssertSqlSafe(trimmed)).execute(&self.pool).await?;
+            sqlx::query(sqlx::AssertSqlSafe(trimmed))
+                .execute(&self.pool)
+                .await?;
         }
         Ok(ddl)
     }

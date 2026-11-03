@@ -75,7 +75,9 @@ impl RlsMiddleware {
                 "ALTER TABLE IF EXISTS {}.{} ENABLE ROW LEVEL SECURITY",
                 schema, table_name
             );
-            sqlx::query(sqlx::AssertSqlSafe(enable_rls)).execute(pool).await?;
+            sqlx::query(sqlx::AssertSqlSafe(enable_rls))
+                .execute(pool)
+                .await?;
 
             let policy_name = format!("tenant_isolation_{}", table_name);
             // PostgreSQL 18 不支持 CREATE POLICY IF NOT EXISTS（语法错误），
@@ -122,7 +124,9 @@ impl RlsMiddleware {
                     nil = nil_uuid
                 )
             };
-            sqlx::query(sqlx::AssertSqlSafe(policy_sql)).execute(pool).await?;
+            sqlx::query(sqlx::AssertSqlSafe(policy_sql))
+                .execute(pool)
+                .await?;
 
             debug!("Enabled RLS for table: {}", table_name);
         }

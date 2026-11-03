@@ -24,7 +24,7 @@ use crate::dsh::agent::ExecutionStep;
 use crate::shared::AppState;
 
 /// Agent 执行请求
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct DshAgentExecuteRequest {
     /// 用户查询
     pub query: String,
@@ -289,3 +289,4 @@ pub async fn active_sessions(State(state): State<AppState>) -> Json<ApiResponse<
     let count = orchestrator.active_sessions().await;
     Json(ApiResponse::success(count, "获取活跃会话数成功"))
 }
+use utoipa::ToSchema;

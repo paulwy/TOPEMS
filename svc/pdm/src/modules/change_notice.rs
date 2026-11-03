@@ -8,6 +8,7 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -51,7 +52,7 @@ pub struct ChangeNotice {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateChangeNoticeRequest {
     pub title: String,
     pub description: Option<String>,
@@ -73,7 +74,7 @@ pub struct ChangeNoticeQuery {
     pub priority: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateChangeNoticeRequest {
     pub title: Option<String>,
     pub description: Option<String>,

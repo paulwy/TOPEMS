@@ -1186,11 +1186,17 @@ async fn get_dashboard(State(db): State<PgPool>) -> ApiResponse<DashboardOvervie
 // ============ 辅助函数 ============
 
 async fn query_count(db: &PgPool, sql: &str) -> i64 {
-    sqlx::query_scalar(sqlx::AssertSqlSafe(sql)).fetch_one(db).await.unwrap_or(0)
+    sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
+        .fetch_one(db)
+        .await
+        .unwrap_or(0)
 }
 
 async fn query_sum(db: &PgPool, sql: &str) -> f64 {
-    sqlx::query_scalar(sqlx::AssertSqlSafe(sql)).fetch_one(db).await.unwrap_or(0.0)
+    sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
+        .fetch_one(db)
+        .await
+        .unwrap_or(0.0)
 }
 
 async fn query_status_counts(db: &PgPool, sql: &str) -> Vec<StatusCount> {

@@ -665,11 +665,12 @@ pub async fn update_appointment(
 
     let select_query =
         format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)");
-    let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(select_query))
-        .bind(id)
-        .bind(tenant_bind)
-        .fetch_optional(&mut **txn)
-        .await;
+    let existing =
+        sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(select_query))
+            .bind(id)
+            .bind(tenant_bind)
+            .fetch_optional(&mut **txn)
+            .await;
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => {
@@ -719,27 +720,28 @@ pub async fn update_appointment(
         "#
     );
 
-    let result = sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(update_query))
-        .bind(id)
-        .bind(purchase_order_id)
-        .bind(&purchase_order_no)
-        .bind(delivery_date)
-        .bind(delivery_time)
-        .bind(&delivery_method)
-        .bind(&vehicle_no)
-        .bind(&driver_name)
-        .bind(&driver_phone)
-        .bind(&cargo_description)
-        .bind(total_quantity)
-        .bind(total_weight)
-        .bind(&destination_warehouse)
-        .bind(expected_arrival_time)
-        .bind(&status)
-        .bind(&remarks)
-        .bind(now)
-        .bind(tenant_bind)
-        .fetch_one(&mut **txn)
-        .await;
+    let result =
+        sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(update_query))
+            .bind(id)
+            .bind(purchase_order_id)
+            .bind(&purchase_order_no)
+            .bind(delivery_date)
+            .bind(delivery_time)
+            .bind(&delivery_method)
+            .bind(&vehicle_no)
+            .bind(&driver_name)
+            .bind(&driver_phone)
+            .bind(&cargo_description)
+            .bind(total_quantity)
+            .bind(total_weight)
+            .bind(&destination_warehouse)
+            .bind(expected_arrival_time)
+            .bind(&status)
+            .bind(&remarks)
+            .bind(now)
+            .bind(tenant_bind)
+            .fetch_one(&mut **txn)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(apt) => (
@@ -927,11 +929,12 @@ pub async fn approve_appointment(
 
     let select_query =
         format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)");
-    let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(select_query))
-        .bind(id)
-        .bind(tenant_bind)
-        .fetch_optional(&mut **txn)
-        .await;
+    let existing =
+        sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(select_query))
+            .bind(id)
+            .bind(tenant_bind)
+            .fetch_optional(&mut **txn)
+            .await;
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => {
@@ -972,14 +975,15 @@ pub async fn approve_appointment(
         "#
     );
 
-    let result = sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(update_query))
-        .bind(id)
-        .bind(&approver)
-        .bind(now)
-        .bind(&new_remarks)
-        .bind(tenant_bind)
-        .fetch_one(&mut **txn)
-        .await;
+    let result =
+        sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(update_query))
+            .bind(id)
+            .bind(&approver)
+            .bind(now)
+            .bind(&new_remarks)
+            .bind(tenant_bind)
+            .fetch_one(&mut **txn)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(apt) => (
@@ -1077,11 +1081,12 @@ pub async fn reject_appointment(
 
     let select_query =
         format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)");
-    let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(select_query))
-        .bind(id)
-        .bind(tenant_bind)
-        .fetch_optional(&mut **txn)
-        .await;
+    let existing =
+        sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(select_query))
+            .bind(id)
+            .bind(tenant_bind)
+            .fetch_optional(&mut **txn)
+            .await;
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => {
@@ -1124,15 +1129,16 @@ pub async fn reject_appointment(
         "#
     );
 
-    let result = sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(update_query))
-        .bind(id)
-        .bind(&approver)
-        .bind(now)
-        .bind(&reject_reason)
-        .bind(&new_remarks)
-        .bind(tenant_bind)
-        .fetch_one(&mut **txn)
-        .await;
+    let result =
+        sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(update_query))
+            .bind(id)
+            .bind(&approver)
+            .bind(now)
+            .bind(&reject_reason)
+            .bind(&new_remarks)
+            .bind(tenant_bind)
+            .fetch_one(&mut **txn)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(apt) => (
@@ -1230,11 +1236,12 @@ pub async fn confirm_arrival(
 
     let select_query =
         format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)");
-    let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(select_query))
-        .bind(id)
-        .bind(tenant_bind)
-        .fetch_optional(&mut **txn)
-        .await;
+    let existing =
+        sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(select_query))
+            .bind(id)
+            .bind(tenant_bind)
+            .fetch_optional(&mut **txn)
+            .await;
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => {
@@ -1270,14 +1277,15 @@ pub async fn confirm_arrival(
         "#
     );
 
-    let result = sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(update_query))
-        .bind(id)
-        .bind(actual_arrival)
-        .bind(&new_remarks)
-        .bind(now)
-        .bind(tenant_bind)
-        .fetch_one(&mut **txn)
-        .await;
+    let result =
+        sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(update_query))
+            .bind(id)
+            .bind(actual_arrival)
+            .bind(&new_remarks)
+            .bind(now)
+            .bind(tenant_bind)
+            .fetch_one(&mut **txn)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(apt) => (
@@ -1370,11 +1378,12 @@ pub async fn complete_appointment(
 
     let select_query =
         format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)");
-    let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(select_query))
-        .bind(id)
-        .bind(tenant_bind)
-        .fetch_optional(&mut **txn)
-        .await;
+    let existing =
+        sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(select_query))
+            .bind(id)
+            .bind(tenant_bind)
+            .fetch_optional(&mut **txn)
+            .await;
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => {
@@ -1408,13 +1417,14 @@ pub async fn complete_appointment(
         "#
     );
 
-    let result = sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(update_query))
-        .bind(id)
-        .bind(&new_remarks)
-        .bind(now)
-        .bind(tenant_bind)
-        .fetch_one(&mut **txn)
-        .await;
+    let result =
+        sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(update_query))
+            .bind(id)
+            .bind(&new_remarks)
+            .bind(now)
+            .bind(tenant_bind)
+            .fetch_one(&mut **txn)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(apt) => (
@@ -1507,11 +1517,12 @@ pub async fn cancel_appointment(
 
     let select_query =
         format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)");
-    let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(select_query))
-        .bind(id)
-        .bind(tenant_bind)
-        .fetch_optional(&mut **txn)
-        .await;
+    let existing =
+        sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(select_query))
+            .bind(id)
+            .bind(tenant_bind)
+            .fetch_optional(&mut **txn)
+            .await;
     let existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => {
@@ -1545,13 +1556,14 @@ pub async fn cancel_appointment(
         "#
     );
 
-    let result = sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(update_query))
-        .bind(id)
-        .bind(&new_remarks)
-        .bind(now)
-        .bind(tenant_bind)
-        .fetch_one(&mut **txn)
-        .await;
+    let result =
+        sqlx::query_as::<_, SupplierDeliveryAppointment>(sqlx::AssertSqlSafe(update_query))
+            .bind(id)
+            .bind(&new_remarks)
+            .bind(now)
+            .bind(tenant_bind)
+            .fetch_one(&mut **txn)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(apt) => (

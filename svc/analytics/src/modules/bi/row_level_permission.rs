@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use topems_shared_core::error::TopemsError;
 use tracing::{info, warn};
+use utoipa::ToSchema;
 
 use crate::shared::AppState;
 
@@ -44,7 +45,7 @@ fn validate_table_name(table_name: &str) -> Result<(), TopemsError> {
     Ok(())
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreatePermissionRuleRequest {
     pub name: String,
     pub description: Option<String>,
@@ -58,7 +59,7 @@ pub struct CreatePermissionRuleRequest {
     pub created_by: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdatePermissionRuleRequest {
     pub name: Option<String>,
     pub description: Option<String>,

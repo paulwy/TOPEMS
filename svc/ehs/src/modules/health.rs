@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 use uuid::Uuid;
 
@@ -62,7 +63,7 @@ pub struct CreateHealthRecordRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateHealthRecordRequest {
     pub employee_name: Option<String>,
     pub employee_id: Option<String>,

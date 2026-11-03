@@ -18,7 +18,7 @@ pub fn create_routes() -> axum::Router<AppState> {
     axum::Router::new().route("/bootstrap", axum::routing::post(bootstrap_defaults))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct BootstrapRequest {
     /// 可选：仅补播指定租户；缺省时由服务端解析会话租户。
     tenant_id: Option<String>,
@@ -83,3 +83,4 @@ pub async fn bootstrap_defaults(
         "补播成功（幂等，缺失才插）",
     )
 }
+use utoipa::ToSchema;

@@ -104,7 +104,7 @@ mod tests {
     fn test_openapi_generates_valid_document() {
         let doc = CommunicationApiDoc::openapi();
         let json = serde_json::to_value(&doc).expect("openapi must serialize");
-        assert_eq!(json["openapi"], "3.0.3");
+        assert_eq!(json["openapi"], "3.1.0");
         assert_eq!(json["info"]["title"], "TOPEMS Communication API");
         assert_eq!(json["info"]["version"], "1.0.0");
     }

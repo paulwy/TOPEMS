@@ -23,6 +23,7 @@
 //! - POST   /finance-v54/compliance/workflow
 //! - PUT    /finance-v54/compliance/workflow/{id}/advance
 //! - GET    /finance-v54/compliance/report
+use utoipa::ToSchema;
 
 use axum::{
     extract::{Extension, Json, Path, Query, State},
@@ -1558,7 +1559,7 @@ pub async fn advance_workflow_handler(
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ComplianceReportQueryParams {
     pub entity_type: Option<String>,
     pub entity_id: Option<String>,

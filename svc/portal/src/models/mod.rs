@@ -36,7 +36,7 @@ pub struct NewTodo {
     pub priority: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct UserInfo {
     pub id: String,
     pub name: String,

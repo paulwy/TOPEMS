@@ -9,6 +9,7 @@ use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::Result;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::{
@@ -1229,7 +1230,7 @@ pub async fn record_audit_log(
 
 // ==================== Supplier Approval Workflow ====================
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct StartApprovalRequest {
     pub workflow_id: Uuid,
     pub comment: Option<String>,

@@ -995,7 +995,7 @@ fn format_period_date(dt: chrono::NaiveDateTime, group_by: &str) -> String {
 
 // ===== Dashboard 汇总 =====
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct DashboardSummary {
     pub warehouse_count: i64,
     pub inventory_total: f64,
@@ -1085,7 +1085,7 @@ pub async fn get_dashboard_summary(
 
 // ===== Dashboard 图表数据 =====
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct InventoryDistributionItem {
     pub warehouse_id: String,
     pub warehouse_name: String,
@@ -1093,14 +1093,14 @@ pub struct InventoryDistributionItem {
     pub sku_count: i64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct InventoryTypeItem {
     pub material_type: String,
     pub quantity: f64,
     pub percentage: f64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct DailyTrendItem {
     pub date: String,
     pub inbound: i64,
@@ -1292,3 +1292,4 @@ where
         .route("/analytics/inventory-types", get(get_inventory_types))
         .route("/analytics/daily-trend", get(get_daily_trend))
 }
+use utoipa::ToSchema;

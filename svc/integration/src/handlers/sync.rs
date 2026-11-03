@@ -9,19 +9,20 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::models::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct UpdateStatusRequest {
     pub status: String,
     pub error_message: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct TriggerSyncRequest {
     pub entity_id: String,
 }
@@ -46,7 +47,7 @@ pub struct SyncTask {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct CreateSyncTaskRequest {
     pub sync_type: String,
     pub source_module: String,
@@ -56,7 +57,7 @@ pub struct CreateSyncTaskRequest {
     pub source_code: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct RetryFailedRequest {
     pub sync_type: Option<String>,
     pub source_module: Option<String>,

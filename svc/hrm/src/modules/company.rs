@@ -443,7 +443,7 @@ pub async fn update_company(
         ("id" = Uuid, Path, description = "公司ID"),
     ),
     responses(
-        (status = 200, description = "公司删除成功", body = ApiResponse<()>),
+        (status = 200, description = "公司删除成功"),
         (status = 404, description = "公司不存在"),
         (status = 500, description = "服务器内部错误"),
     ),

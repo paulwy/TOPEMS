@@ -2,6 +2,7 @@ use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
@@ -18,7 +19,7 @@ pub struct PurchaseOrder {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreatePurchaseOrderRequest {
     pub order_number: String,
     pub supplier_id: Option<Uuid>,
@@ -28,7 +29,7 @@ pub struct CreatePurchaseOrderRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdatePurchaseOrderRequest {
     pub supplier_id: Option<Uuid>,
     pub delivery_date: Option<DateTime<Utc>>,

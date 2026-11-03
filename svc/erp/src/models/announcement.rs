@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -17,7 +18,7 @@ pub struct Announcement {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateAnnouncementRequest {
     pub title: String,
     pub content: Option<String>,
@@ -28,7 +29,7 @@ pub struct CreateAnnouncementRequest {
     pub expire_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateAnnouncementRequest {
     pub title: Option<String>,
     pub content: Option<String>,

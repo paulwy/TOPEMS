@@ -4,6 +4,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use utoipa::ToSchema;
 
 use crate::domain::async_projector::ProjectionProgress;
 use crate::domain::cqrs::*;
@@ -13,7 +14,7 @@ use crate::shared::AppState;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
-#[derive(Debug, Deserialize, utoipa::IntoParams)]
+#[derive(Debug, Deserialize, utoipa::IntoParams, ToSchema)]
 pub struct VoucherSummaryQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,

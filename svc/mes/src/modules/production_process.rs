@@ -14,6 +14,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use utoipa::ToSchema;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -40,7 +41,7 @@ pub struct ListProcessesQuery {
     status: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CreateProcessRequest {
     #[serde(alias = "process_name")]
     pub name: String,

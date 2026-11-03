@@ -2,6 +2,7 @@ use axum::{extract::Path, extract::Query, extract::State, routing::get, Extensio
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -31,7 +32,7 @@ pub struct ProductionStep {
     pub status: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateStepRequest {
     pub process_id: Uuid,
     pub step_no: i32,
@@ -43,7 +44,7 @@ pub struct CreateStepRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateStepRequest {
     pub process_id: Option<Uuid>,
     pub step_no: Option<i32>,

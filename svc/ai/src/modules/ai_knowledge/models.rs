@@ -6,6 +6,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 // ============================================================
@@ -122,7 +123,7 @@ pub struct CreateDocumentRequest {
     pub doc_type: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateDocumentRequest {
     pub title: Option<String>,
     pub content: Option<String>,

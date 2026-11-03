@@ -88,7 +88,7 @@ pub struct UpdatePlanRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ApprovalRequest {
     pub operator: String,
     pub comment: Option<String>,

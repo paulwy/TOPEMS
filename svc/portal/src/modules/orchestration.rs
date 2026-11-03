@@ -23,6 +23,7 @@ use std::sync::LazyLock;
 use tokio::sync::Mutex;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 use crate::shared::AppState;
 
@@ -62,7 +63,7 @@ impl PlanStatus {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum StepStatus {
     Pending,
@@ -131,7 +132,7 @@ impl HealthStatus {
 
 // ==================== 编排核心结构体 ====================
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ExecutionStep {
     pub id: String,
     pub service: String,
@@ -901,7 +902,7 @@ impl DynamicRouter {
 
 // --- 网关编排 ---
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreatePlanRequest {
     pub query_id: String,
     pub execution_steps: Vec<ExecutionStep>,

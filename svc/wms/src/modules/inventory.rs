@@ -14,6 +14,7 @@ use uuid::Uuid;
 
 use crate::models::{CreateInventoryItemRequest, InventoryItem, UpdateInventoryItemRequest};
 use crate::modules::audit::log_audit_event;
+use crate::modules::openapi::Inventory;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;

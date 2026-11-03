@@ -307,8 +307,10 @@ impl MasterDataRefService {
             self.table_name, where_clause, limit, offset
         );
 
-        let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql)).bind(tenant_id);
-        let mut list_query = sqlx::query_as::<_, MasterDataRef>(sqlx::AssertSqlSafe(list_sql)).bind(tenant_id);
+        let mut count_query =
+            sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql)).bind(tenant_id);
+        let mut list_query =
+            sqlx::query_as::<_, MasterDataRef>(sqlx::AssertSqlSafe(list_sql)).bind(tenant_id);
 
         if let Some(d) = domain {
             count_query = count_query.bind(d);

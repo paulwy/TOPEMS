@@ -1253,7 +1253,7 @@ struct CustomerFinanceRow {
     resolved_name: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateCustomerFinanceRequest {
     pub credit_limit: Option<f64>,
     pub credit_used: Option<f64>,

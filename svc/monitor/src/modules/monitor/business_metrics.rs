@@ -11,6 +11,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -182,7 +183,7 @@ pub struct KpiRequest {
     pub service_name: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct BusinessMetricRequest {
     pub name: String,
     pub code: String,

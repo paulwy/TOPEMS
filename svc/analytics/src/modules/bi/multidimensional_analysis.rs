@@ -555,7 +555,10 @@ pub async fn pivot_table(
     // S1.1: LIMIT 参数化绑定，杜绝 format! 硬编码数字。
     let query = format!("SELECT {} FROM analytics_data LIMIT $1", select_clause);
 
-    let data_result = sqlx::query(sqlx::AssertSqlSafe(query)).bind(limit).fetch_all(&state.pool).await;
+    let data_result = sqlx::query(sqlx::AssertSqlSafe(query))
+        .bind(limit)
+        .fetch_all(&state.pool)
+        .await;
 
     match data_result {
         Ok(rows) => {
@@ -674,7 +677,10 @@ pub async fn rank_data(
         dimension, measure, measure, sort_order
     );
 
-    let data_result = sqlx::query(sqlx::AssertSqlSafe(query)).bind(top_n).fetch_all(&state.pool).await;
+    let data_result = sqlx::query(sqlx::AssertSqlSafe(query))
+        .bind(top_n)
+        .fetch_all(&state.pool)
+        .await;
 
     match data_result {
         Ok(rows) => {

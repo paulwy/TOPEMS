@@ -3,6 +3,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::FromRow;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -35,7 +36,7 @@ pub struct ProductionBatch {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateBatchRequest {
     pub batch_no: String,
     pub product_id: Option<Uuid>,
@@ -48,7 +49,7 @@ pub struct CreateBatchRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateBatchRequest {
     pub batch_no: Option<String>,
     pub product_id: Option<Uuid>,

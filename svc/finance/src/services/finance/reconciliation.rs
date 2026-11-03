@@ -124,7 +124,8 @@ impl ReconciliationService {
             data_param_idx + 1
         ));
 
-        let mut sessions_qb = sqlx::query_as::<_, ReconciliationSession>(sqlx::AssertSqlSafe(query)).bind(tenant_id);
+        let mut sessions_qb =
+            sqlx::query_as::<_, ReconciliationSession>(sqlx::AssertSqlSafe(query)).bind(tenant_id);
         if let Some(rt) = reco_type_param {
             sessions_qb = sessions_qb.bind(rt);
         }

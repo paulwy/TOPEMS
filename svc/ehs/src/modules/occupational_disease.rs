@@ -11,6 +11,7 @@ use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 use uuid::Uuid;
 
@@ -206,7 +207,7 @@ pub struct DiseaseStatistics {
     pub tenant_id: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateHazardFactorRequest {
     pub name: String,
     pub factor_type: String,
@@ -221,7 +222,7 @@ pub struct CreateHazardFactorRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateHazardFactorRequest {
     pub name: Option<String>,
     pub factor_type: Option<String>,
@@ -237,7 +238,7 @@ pub struct UpdateHazardFactorRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateDetectionRecordRequest {
     pub factor_id: Option<String>,
     pub factor_name: String,
@@ -254,7 +255,7 @@ pub struct CreateDetectionRecordRequest {
     pub remarks: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateDiseaseCaseRequest {
     pub employee_id: String,
     pub employee_name: String,
@@ -277,7 +278,7 @@ pub struct CreateDiseaseCaseRequest {
     pub reported_at: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateDiseaseCaseRequest {
     pub employee_name: Option<String>,
     pub gender: Option<String>,
@@ -298,7 +299,7 @@ pub struct UpdateDiseaseCaseRequest {
     pub attachments: Option<Vec<String>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateProtectionMeasureRequest {
     pub title: String,
     pub measure_type: String,

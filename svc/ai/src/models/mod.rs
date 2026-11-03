@@ -126,7 +126,7 @@ pub struct DocumentChunk {
 }
 
 // 文档（内存存储用）
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Document {
     pub id: Uuid,
     pub title: String,

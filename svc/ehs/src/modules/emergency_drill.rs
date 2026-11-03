@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use utoipa::ToSchema;
 
 use uuid::Uuid;
 
@@ -189,7 +190,7 @@ pub struct DrillStatistics {
     pub tenant_id: Uuid,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateDrillPlanRequest {
     pub title: String,
     pub description: Option<String>,
@@ -217,7 +218,7 @@ pub struct UpdateDrillPlanRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateDrillRecordRequest {
     pub plan_id: Option<String>,
     pub drill_name: String,
@@ -231,7 +232,7 @@ pub struct CreateDrillRecordRequest {
     pub attachments: Option<Vec<String>>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateDrillRecordRequest {
     pub drill_name: Option<String>,
     pub drill_date: Option<String>,
@@ -245,7 +246,7 @@ pub struct UpdateDrillRecordRequest {
     pub status: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateEvaluationRequest {
     pub evaluator: Option<String>,
     pub overall_score: Option<i32>,

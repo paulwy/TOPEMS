@@ -235,8 +235,8 @@ impl RedisCacheService {
         let serialized = serde_json::to_string(&result).map_err(TopemsError::Serialization)?;
         let ttl_with_jitter = if self.protection_config.enable_random_ttl {
             ttl.map(|t| {
-                let jitter = rand::rng()
-                    .random_range(0..self.protection_config.random_ttl_jitter_seconds);
+                let jitter =
+                    rand::rng().random_range(0..self.protection_config.random_ttl_jitter_seconds);
                 t + jitter
             })
         } else {
