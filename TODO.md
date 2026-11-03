@@ -1,4 +1,18 @@
 
+## 门禁脚本 warning 修复 + 迁移账本对齐（2026-11-03）✅
+
+> 小项收尾——check-consistency.sh 版本段 `DEV_VER/DEP_VER: unbound variable` 长期非阻断 warning 根因修复。
+
+**根因**：macOS bash 3.2 将 `$DEP_VER，`（中文逗号紧跟变量）中的逗号纳入变量名解析 → nounset 下 unbound。修复：line 53 用 `${DEV_VER}`/`${DEP_VER}` 花括号显式隔离变量名边界。
+
+**修复暴露真实漂移（此前被 unbound 跳过版本比对，门禁实际只查表级）**：
+- 5433 缺 03/04/05 迁移账本（恢复库未跑后续迁移）→ **重放 03 fk indexes/04 pk backfill/05 check backfill 内容**（幂等无错）+ **补记账本 3 条**（checksum 取自主库）；
+- topems_test（MIGRATE_URL 指向的门禁主库）缺 05 → **应用 05 内容 + 补记账本 1 条**；
+- 重跑门禁：版本一致、表级一致、**exit 0 绿、无 unbound warning**；health 200。
+
+**挂账**：反向表 6 个（5433 有 test 无：finance.core_finance_currencies/public.mobile_users 等——非迁移残留，警告不阻断，甄别后续）。
+
+
 ## 类型批次安全子集：prepare/5433 同向项（2026-11-03）✅（164 项安全统一，挂账分类）
 
 > 类型批次——prepare 142/5433 194 中"同向项"（无 USING 自动转换、非时间戳/uuid 契约）安全统一。

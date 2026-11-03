@@ -50,7 +50,7 @@ if [ -n "$DEV_VER" ] && [ -n "$DEP_VER" ]; then
   if [ "$DEV_VER" = "$DEP_VER" ]; then
     echo "== 结论：迁移版本一致 =="
   else
-    echo "== 结论：迁移版本漂移！主库=$DEV_VER 验证库=$DEP_VER，需在两库补齐同一迁移 =="
+    echo "== 结论：迁移版本漂移！主库=${DEV_VER} 验证库=${DEP_VER}，需在两库补齐同一迁移 =="
     exit 1
   fi
 fi
