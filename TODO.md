@@ -1,4 +1,19 @@
 
+## DB-04-prod：prod 生产库 naive timestamp → timestamptz 统一（2026-11-03）✅（174 列一次重放）
+
+> prod 生产库时间戳统一——174 列 naive → timestamptz。
+
+**执行**：migration `20261103173000_db04_prod_unify_remaining_naive_timestamps_174cols.sql`（174 DO 块，幂等）。
+- **172 列空表**直接 ALTER；
+- **2 列有数据共 32 行**：`finance.core_finance_currencies.{created_at,updated_at}`(16+16)；
+- 样本 2026-10-26 06:03 UTC = 北京 14:03，`USING col AT TIME ZONE 'UTC'` 正确；
+- 备份：`/tmp/finance_currencies_backup_20261103.sql`（pg_dump --data-only 51 行）；
+- 重跑验证：**naive 174→0**、timestamptz 3465→3639、date 210 不变；
+- 分布：lims 90 / pdm 50 / public 8 / rs 8 / mes 6 / integration 6 / mobile 2 / erp 2 / finance 2。
+
+**时间戳挂账总闭环**：5432 test naive=0（基准）✅ / 5433 421→0 ✅ / prod 174→0 ✅ / prepare 未启动（连接串未定位）。
+
+
 ## DB-04：5433 剩余 naive timestamp → timestamptz 统一（2026-11-03）✅（421 列一次重放）
 
 > 时间戳挂账收口——5433 恢复库剩余 naive timestamp 421 列统一为 timestamptz。
