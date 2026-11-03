@@ -69,7 +69,7 @@ async fn test_pdm_material_event_publish_and_subscribe() {
     let pub_client = client.clone();
     let publish_task = tokio::spawn(async move {
         let mut con = pub_client
-            .get_async_connection()
+            .get_multiplexed_async_connection()
             .await
             .map_err(|e| Box::<dyn std::error::Error + Send + Sync>::from(e.to_string()))?;
         redis::AsyncCommands::publish::<_, _, ()>(&mut con, channel.as_str(), payload.as_str())
@@ -140,7 +140,7 @@ async fn test_pdm_material_event_concurrent_no_crosstalk() {
             let ch2 = ch.clone();
             let pub_task = tokio::spawn(async move {
                 let mut con = client
-                    .get_async_connection()
+                    .get_multiplexed_async_connection()
                     .await
                     .map_err(|e| Box::<dyn std::error::Error + Send + Sync>::from(e.to_string()))?;
                 redis::AsyncCommands::publish::<_, _, ()>(&mut con, ch2.as_str(), payload.as_str())

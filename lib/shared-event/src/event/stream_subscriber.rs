@@ -564,7 +564,7 @@ impl StreamEventSubscriber {
                             let payload_json: String = message
                                 .map
                                 .get("payload")
-                                .map(|v| redis::from_redis_value::<String>(v).unwrap_or_default())
+                                .map(|v| redis::from_redis_value_ref::<String>(v).unwrap_or_default())
                                 .unwrap_or_default();
 
                             if is_mdm {
@@ -653,26 +653,26 @@ impl StreamEventSubscriber {
                     .query_async(&mut con)
                     .await;
 
-                if let Ok(redis::Value::Bulk(items)) = claim_result {
+                if let Ok(redis::Value::Array(items)) = claim_result {
                     // items = [cursor, entries_array, deleted_array]
                     if items.len() >= 2 {
-                        if let redis::Value::Bulk(entries) = &items[1] {
+                        if let redis::Value::Array(entries) = &items[1] {
                             for entry in entries {
                                 // 每个 entry = Bulk([id, fields_array])
                                 let (message_id, payload_json) = match entry {
-                                    redis::Value::Bulk(pair) if pair.len() >= 2 => {
+                                    redis::Value::Array(pair) if pair.len() >= 2 => {
                                         let id = match &pair[0] {
-                                            redis::Value::Data(b) => {
+                                            redis::Value::BulkString(b) => {
                                                 String::from_utf8_lossy(b).to_string()
                                             }
                                             _ => continue,
                                         };
                                         let mut payload = String::new();
-                                        if let redis::Value::Bulk(fields) = &pair[1] {
+                                        if let redis::Value::Array(fields) = &pair[1] {
                                             let mut i = 0;
                                             while i + 1 < fields.len() {
                                                 let k = match &fields[i] {
-                                                    redis::Value::Data(b) => {
+                                                    redis::Value::BulkString(b) => {
                                                         String::from_utf8_lossy(b).to_string()
                                                     }
                                                     _ => {
@@ -681,7 +681,7 @@ impl StreamEventSubscriber {
                                                     }
                                                 };
                                                 if k == "payload" {
-                                                    if let redis::Value::Data(v) = &fields[i + 1] {
+                                                    if let redis::Value::BulkString(v) = &fields[i + 1] {
                                                         payload =
                                                             String::from_utf8_lossy(v).to_string();
                                                     }
@@ -971,7 +971,7 @@ mod tests {
                     let payload_json: String = message
                         .map
                         .get("payload")
-                        .map(|v| redis::from_redis_value::<String>(v).unwrap_or_default())
+                        .map(|v| redis::from_redis_value_ref::<String>(v).unwrap_or_default())
                         .unwrap_or_default();
                     if let Ok(event) = serde_json::from_str::<Event>(&payload_json) {
                         let _ = subscriber
@@ -1103,7 +1103,7 @@ mod tests {
                     let payload_json: String = message
                         .map
                         .get("payload")
-                        .map(|v| redis::from_redis_value::<String>(v).unwrap_or_default())
+                        .map(|v| redis::from_redis_value_ref::<String>(v).unwrap_or_default())
                         .unwrap_or_default();
                     if let Ok(mdm_event) = serde_json::from_str::<MasterDataEvent>(&payload_json) {
                         let _ = subscriber

@@ -246,8 +246,7 @@ impl EventSubscriber {
 
     /// 以 Pub/Sub 模式启动事件监听（持续运行）
     async fn start_listening_pubsub(self) -> EventResult<()> {
-        let con = self.redis_client.get_async_connection().await?;
-        let mut pubsub = con.into_pubsub();
+        let mut pubsub = self.redis_client.get_async_pubsub().await?;
 
         // 订阅所有感兴趣的标准事件频道
         let mut all_event_types = Vec::new();

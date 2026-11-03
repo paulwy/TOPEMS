@@ -138,7 +138,7 @@ impl WsEventBridge {
     /// Pub/Sub 消费模式（显式降级，`EVENT_BRIDGE_MODE=pubsub`）
     async fn start_pubsub(&mut self) -> Result<(), TopemsError> {
         let client = redis::Client::open(self.config.redis_url.clone())?;
-        let mut pubsub = client.get_async_connection().await?.into_pubsub();
+        let mut pubsub = client.get_async_pubsub().await?;
 
         // 订阅事件频道
         let mut channels = vec![];

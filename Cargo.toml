@@ -412,7 +412,7 @@ opentelemetry-semantic-conventions = "0.33"
 opentelemetry-stdout = "0.33"
 opentelemetry_sdk = "0.33"
 parking_lot = "0.12"
-redis = "0.24"
+redis = "1.7"
 serde_urlencoded = "0.7"
 # [2026-10-28] serde_yml 已官方弃用（unmaintained，依赖 noyalib 0.0.5 含 RUSTSEC-2026-0333），
 # 替换为维护活跃的 serde_yaml_ng 0.10（serde_yaml 后继 fork，API 兼容）

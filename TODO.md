@@ -1,3 +1,15 @@
+## AR-08 独立立项：redis 0.24→1.7（2026-11-03）✅
+
+> 用户拍板"redis 0.24→1.7"；使用面 9 crate 依赖、29 文件 src 引用，集中于 shared-event（stream/dead_letter/redis 模块）。
+- **破坏点实录**（lock 解析到 1.8.1，`"1.7"`=^1.7）：
+  - `Value::Bulk`→`Value::Array`、`Value::Data`→`Value::BulkString`（stream_subscriber/subscriber/redis_pubsub 等）
+  - `ErrorKind::TypeError`→`ErrorKind::UnexpectedReturnType`（官方改名，changelog 明示）
+  - `Client::get_async_connection`→`get_multiplexed_async_connection`；`con.into_pubsub()` 移除→`Client::get_async_pubsub()`（subscriber/ws_event_bridge/redis_pubsub 3 处）
+  - `Cmd::query_async` 由 2 泛型变 1 泛型（`::<_, T>`→`::<T>`）；`from_redis_value::<T>(&Value)` 改按值、&Value 版用 `from_redis_value_ref::<T>`（4 处）
+- **验证全绿**：cargo check --workspace --all-targets **0 error**；cargo test --workspace --lib **41 crate 12748 passed 0 failed**（skip redis 挂起用例）；clippy `-D correctness` **0 error**。
+- **AR-08 16/16 全部完成**：批 1（6）+ 批 2 + 批 3 + 批 4（reqwest）+ sqlx 独立立项 + redis 独立立项。
+- **遗留**：utoipa 4→6（681 文件 use 面最广）为清单最后一项，尚未立项；desktop 14 条硬编码特例维持。批 2 rand 遗留（encryption.rs `use rand::Rng;`、redis.rs `use rand::RngExt;`、service_client.rs `use rand::{Rng, RngExt};`）再动 rand 需注意。
+
 ## AR-08 独立立项：sqlx 0.8→0.9（2026-11-03）✅
 
 > 用户拍板"sqlx 留独立立项"且批 4 后明确"sqlx 优先"；使用面 15+ crate 依赖、914 文件 src 引用，全仓动态 SQL 注入审计收口。

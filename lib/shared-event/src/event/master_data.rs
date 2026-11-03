@@ -699,7 +699,7 @@ mod tests {
                 let payload_json: String = message
                     .map
                     .get("payload")
-                    .map(|v| redis::from_redis_value::<String>(v).unwrap_or_default())
+                    .map(|v| redis::from_redis_value_ref::<String>(v).unwrap_or_default())
                     .unwrap_or_default();
                 if let Ok(e) = serde_json::from_str::<MasterDataEvent>(&payload_json) {
                     found = Some(e);

@@ -1345,7 +1345,7 @@ mod tests {
             TopemsError::Sql(sqlx::Error::ColumnNotFound(SECRET.to_string())),
             TopemsError::Io(std::io::Error::other(SECRET)),
             TopemsError::RedisError(redis::RedisError::from((
-                redis::ErrorKind::TypeError,
+                redis::ErrorKind::UnexpectedReturnType,
                 SECRET,
             ))),
             TopemsError::Serialization(
