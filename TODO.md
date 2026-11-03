@@ -1,4 +1,28 @@
 
+## 约束批次 ①：CHECK 补链执行完成（2026-11-03）✅（pkey/unique 后续）
+
+> 批次规划第 1 项——CHECK 值域补链（prod 值域基准 + 数据校验守卫 + 幂等 DO 块）。
+
+**执行**（复用工作区现成脚本，归档 docs/database/db-governance-check-backfill-20261103.sql）：
+- **prepare**：16→**27**（补 11 项，0 错误，幂等重跑通过）；
+- **topems**：6→**20**（补 14 项，0 错误）；
+- **prod**：no-op 验证 0 错误（已 27 项）。
+- 三库服务 health **200**；crm.audit_logs 值域冲突（topems 'error' 11 条 vs prod 值域）按脚本注释另行登记，本轮不入补链。
+
+**剩余（约束批次 ②/③）**：topems 20 vs prod 27 仍差 7（未覆盖表/值域冲突项）→ pkey/unique 补建（先唯一性数据校验）→ FK 复核（当前 0）——**后续批**。
+
+
+## 后续批次规划：性能优化 / 索引 / 约束 / 类型（2026-11-03）✅（分批推进方案）
+
+> 用户点名推进四类后续批次——按风险/价值/依赖排序分批，逐批闭环登记。
+
+**批次顺序与范围**：
+1. **约束批次**（先——**低风险高确定性**）：① CHECK 补链（prod 25 值域基准、数据校验守卫、幂等 DO 块）——**prepare→topems→prod no-op** 执行；② pkey/unique 补建（先唯一性数据校验，防 ADD 失败）；③ FK 缺口复核（当前 0）。
+2. **索引批次**（安全 CREATE INDEX）：逐表甄别有效索引（test 超前 vs 真实缺）→ 分批补建（topems 1137 优先逐表、prod 285 最接近基线）；**性能层、不影响正确性**。
+3. **类型批次**（后续）：其他库安全子集（text/timestamptz 同向）→ 精度/契约类逐表甄别（不做无 USING 转换）；5433 timestamptz 反向 94 等待 test 时区统一决策。
+4. **性能优化**（独立工程）：MUI vendor 257KB + i18n locale 大包 → code-split/lazy 路由 → 再测基线（当前 prod 58/FCP 7.4s）。
+
+
 ## lighthouse 挂账处置：NO_FCP 根因确认 + lhci 配置固化（2026-11-03）✅（性能优化挂账后续）
 
 > 长期挂账 lighthouse——实测 dev vs prod 基线，NO_FCP 根因 = lhci 测 dev（未生产构建）。
