@@ -8,6 +8,17 @@
 - **验证**：seed SQL BEGIN/ROLLBACK 10/10 通过（列/约束合法）；真实执行后 10 spec preview :3100 **21 passed 1.2m 全绿**（srm/scm/mes/erp/finance/wms 六域）。
 - **文档**：报告 §5.3 建议项 5/5 标 ✅（首期边界段改写为二期完成）、附录补 CI 二期验证记录。
 
+## 数据库治理：topems RLS 缺口深挖（732 表，2026-11-03）✅（挂账后续批次）
+
+> 承接 114 显著低核查——topems@5432 vs test RLS 启用差异表集量化。
+
+- **缺口 = 732 表**（test RLS on / topems off）；反向仅 2（几乎无差异）。
+- **缺口分布**：public 98、finance 95、lims 44、wms 38、pm 38、erp 33、ai/ehs/portal 等——**全模块广泛**（非单一模块）。
+- **成因**：RLS 启用**非纯迁移驱动**——迁移文件含 241 条 ENABLE ROW LEVEL SECURITY（72 文件），但实际 RLS on 850+（test 844/prod 883）——部分启用来自运行时/建表路径；**topems 库未应用该部分**（开发库安全层缺口，非 test 超前——test 844 广泛）。迁移 DISABLE 0（无回退痕迹）。
+- **影响**：RLS 未启用 = 表级行级租户隔离缺失（多租户安全层弱化）；服务当前正常（应用层过滤或单租户使用，无访问异常）。
+- **治理建议**：挂账后续批次——topems RLS 对齐（732 表 ENABLE + 策略挂接）需应用层 tenant 上下文配合验证（大工程，与 EHS 47 表同属 RLS 治理批次）；当前不批量启用（避免未验证策略下破坏访问语义）。
+
+
 ## 数据库治理：RLS 策略覆盖状态五库对比（2026-11-03）✅（衔接 tenant_id 补列）
 
 > 承接 tenant_id 补列——RLS 启用现状（relrowsecurity）五库对比。
