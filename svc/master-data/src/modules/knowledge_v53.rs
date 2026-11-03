@@ -341,9 +341,9 @@ fn cosine_similarity(a: &[f64], b: &[f64]) -> f64 {
 // ==================== K1：真表读取与图谱重算助手 ====================
 
 async fn fetch_kg_nodes(db: &sqlx::PgPool) -> Vec<KGNode> {
-    sqlx::query(&format!(
+    sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {KG_NODE_COLS} FROM master_data.mdm_kg_nodes"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map(|rows| rows.iter().map(kg_node_from_row).collect())
@@ -351,9 +351,9 @@ async fn fetch_kg_nodes(db: &sqlx::PgPool) -> Vec<KGNode> {
 }
 
 async fn fetch_kg_edges(db: &sqlx::PgPool) -> Vec<KGEdge> {
-    sqlx::query(&format!(
+    sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {KG_EDGE_COLS} FROM master_data.mdm_kg_edges"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map(|rows| rows.iter().map(kg_edge_from_row).collect())
@@ -361,9 +361,9 @@ async fn fetch_kg_edges(db: &sqlx::PgPool) -> Vec<KGEdge> {
 }
 
 async fn fetch_kg_graph(db: &sqlx::PgPool) -> Option<KnowledgeGraph> {
-    sqlx::query(&format!(
+    sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {KG_GRAPH_COLS} FROM master_data.mdm_kg_graphs ORDER BY id LIMIT 1"
-    ))
+    )))
     .fetch_optional(db)
     .await
     .ok()
@@ -697,16 +697,16 @@ impl RecommendationEngine {
         limit: Option<i32>,
     ) -> Result<Vec<Recommendation>, TopemsError> {
         // K1：交互与资产从真表读。
-        let interactions: Vec<InteractionRecord> = sqlx::query(&format!(
+        let interactions: Vec<InteractionRecord> = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {INTERACTION_COLS} FROM master_data.mdm_interactions WHERE user_id = $1"
-        ))
+        )))
         .bind(user_id)
         .fetch_all(db)
         .await
         .map(|rows| rows.iter().map(interaction_from_row).collect())
         .unwrap_or_default();
         let assets: Vec<DataAsset> =
-            sqlx::query(&format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets"))
+            sqlx::query(sqlx::AssertSqlSafe(format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets")))
                 .fetch_all(db)
                 .await
                 .map(|rows| rows.iter().map(asset_from_row).collect())
@@ -860,7 +860,7 @@ impl RecommendationEngine {
         limit: Option<i32>,
     ) -> Result<Vec<DataAsset>, TopemsError> {
         let assets: Vec<DataAsset> =
-            sqlx::query(&format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets"))
+            sqlx::query(sqlx::AssertSqlSafe(format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets")))
                 .fetch_all(db)
                 .await
                 .map(|rows| rows.iter().map(asset_from_row).collect())
@@ -900,14 +900,14 @@ impl RecommendationEngine {
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     async fn get_popular_items(db: &sqlx::PgPool, limit: Option<i32>) -> Vec<DataAsset> {
         let assets: Vec<DataAsset> =
-            sqlx::query(&format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets"))
+            sqlx::query(sqlx::AssertSqlSafe(format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets")))
                 .fetch_all(db)
                 .await
                 .map(|rows| rows.iter().map(asset_from_row).collect())
                 .unwrap_or_default();
-        let interactions: Vec<InteractionRecord> = sqlx::query(&format!(
+        let interactions: Vec<InteractionRecord> = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {INTERACTION_COLS} FROM master_data.mdm_interactions"
-        ))
+        )))
         .fetch_all(db)
         .await
         .map(|rows| rows.iter().map(interaction_from_row).collect())
@@ -942,14 +942,14 @@ impl RecommendationEngine {
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     async fn get_trending_items(db: &sqlx::PgPool, limit: Option<i32>) -> Vec<DataAsset> {
         let assets: Vec<DataAsset> =
-            sqlx::query(&format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets"))
+            sqlx::query(sqlx::AssertSqlSafe(format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets")))
                 .fetch_all(db)
                 .await
                 .map(|rows| rows.iter().map(asset_from_row).collect())
                 .unwrap_or_default();
-        let interactions: Vec<InteractionRecord> = sqlx::query(&format!(
+        let interactions: Vec<InteractionRecord> = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {INTERACTION_COLS} FROM master_data.mdm_interactions"
-        ))
+        )))
         .fetch_all(db)
         .await
         .map(|rows| rows.iter().map(interaction_from_row).collect())
@@ -1062,7 +1062,7 @@ impl AssetCatalogManager {
         page_size: Option<i64>,
     ) -> (Vec<DataAsset>, i64) {
         let assets: Vec<DataAsset> =
-            sqlx::query(&format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets"))
+            sqlx::query(sqlx::AssertSqlSafe(format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets")))
                 .fetch_all(db)
                 .await
                 .map(|rows| rows.iter().map(asset_from_row).collect())
@@ -1105,9 +1105,9 @@ impl AssetCatalogManager {
     }
 
     async fn get_asset(db: &sqlx::PgPool, id: &str) -> Result<DataAsset, TopemsError> {
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {ASSET_COLS} FROM master_data.mdm_assets WHERE id = $1"
-        ))
+        )))
         .bind(id)
         .fetch_optional(db)
         .await
@@ -1125,9 +1125,9 @@ impl AssetCatalogManager {
         quality_score: Option<f64>,
         access_level: Option<String>,
     ) -> Result<DataAsset, TopemsError> {
-        let current = sqlx::query(&format!(
+        let current = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {ASSET_COLS} FROM master_data.mdm_assets WHERE id = $1"
-        ))
+        )))
         .bind(id)
         .fetch_optional(db)
         .await
@@ -1177,9 +1177,9 @@ impl AssetCatalogManager {
     }
 
     async fn list_categories(db: &sqlx::PgPool) -> Vec<AssetCategory> {
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {ASSET_CATEGORY_COLS} FROM master_data.mdm_asset_categories"
-        ))
+        )))
         .fetch_all(db)
         .await
         .map(|rows| rows.iter().map(asset_category_from_row).collect())
@@ -1193,7 +1193,7 @@ impl AssetCatalogManager {
     )]
     async fn get_asset_stats(db: &sqlx::PgPool) -> AssetStats {
         let assets: Vec<DataAsset> =
-            sqlx::query(&format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets"))
+            sqlx::query(sqlx::AssertSqlSafe(format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets")))
                 .fetch_all(db)
                 .await
                 .map(|rows| rows.iter().map(asset_from_row).collect())

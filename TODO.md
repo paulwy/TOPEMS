@@ -1,3 +1,14 @@
+## AR-08 独立立项：sqlx 0.8→0.9（2026-11-03）✅
+
+> 用户拍板"sqlx 留独立立项"且批 4 后明确"sqlx 优先"；使用面 15+ crate 依赖、914 文件 src 引用，全仓动态 SQL 注入审计收口。
+- **0.9 核心破坏**：新增 `SqlSafeStr` trait（sqlx-core-0.9.0/src/sql_str.rs:47）仅对 `&'static str` 实现——动态 SQL 字符串必须包 `pub struct AssertSqlSafe<T>(pub T)`（impl SqlSafeStr for AssertSqlSafe<&str>/<String>，语义=开发者已人工审计无注入，String 复制）。query! 宏仍编译期连库验证 SQL（需 DATABASE_URL）。
+- **替换实录**：workspace 键与 tools/migration-sdk 独立键均升 `"0.9"`；全仓动态 SQL 批量包 `sqlx::AssertSqlSafe(...)` **829 处/196 文件**（定稿脚本：函数名正则 + 括号配对扫描，排除 `query!` 宏与已包调用，跨距替换；`&format!/format!` 去 &、`&var`/裸标识/`.as_str()` 尾统一收口；migration-sdk 字段形态 `AssertSqlSafe(self.up_sql.as_str())` 手修）。
+- **0.9 API 连带修复**：`ArgumentBuffer<'q>`→`ArgumentBuffer`（rd 2 处，E0107）；移动后复用 `AssertSqlSafe(sql)`→`sql.as_str()` 借用版（lims/qms×4/erp×2/master-data 8 处，E0382）；sqlx 0.9 宏对 `::float8` 生成泛型 Float → `unwrap_or(0.0_f64)` 显式定类型（wms slotting，E0689）。
+- **环境恢复（本地开发）**：colima 停止致 PG 掉线 → `colima start` + deploy/docker compose 重建 topems-postgres（Host 5433，数据卷保留 1507 表）→ 重置 topems_app 密码；**dotenvy 0.15 对值含未引号空格的 .env 行报 LineParse**（sqlx 0.8 的 dotenvy 旧版容忍）→ wms/gis 的 `SEARCH_PATH=wms, shared, public` 加引号；磁盘 100% 满（target 141G 堆积）→ cargo clean 释放 164G。
+- **验证全绿**：cargo check --workspace --all-targets **0 error**；cargo test --workspace --lib **41 crate 12748 passed 0 failed**（skip redis 挂起用例）；clippy `-D correctness` 全 workspace **0 error**。
+- **AR-08 进度 15/16**：批 1（6）+ 批 2 + 批 3 + 批 4（reqwest）+ 本批（sqlx）。
+- **未动**：redis 0.24→1.7（重构级大件，建议独立立项）、utoipa 4→6（681 文件 use 面最广，建议独立立项）；desktop 14 条硬编码特例维持。批 2 rand 遗留（encryption.rs `use rand::Rng;`、redis.rs `use rand::RngExt;`、service_client.rs `use rand::{Rng, RngExt};`）再动 rand 需注意。
+
 ## AR-08 低破坏面依赖升级批 4：reqwest 0.12→0.13（2026-11-03）✅
 
 > 承接 AR-08 批 1/2/3；reqwest 使用面广（21 crate、55+ Client 调用点）但 0.13 破坏面集中在 feature 拆分。

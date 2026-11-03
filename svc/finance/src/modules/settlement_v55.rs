@@ -844,7 +844,7 @@ pub async fn init_settlement_v55_tables(pool: &PgPool) -> Result<(), sqlx::Error
     ];
 
     for sql in create_tables {
-        sqlx::query(sql).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
     }
     Ok(())
 }
@@ -1203,7 +1203,7 @@ impl AutoReconciler {
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 500");
 
-        let mut q = sqlx::query_as::<_, ReconciliationResult>(&query);
+        let mut q = sqlx::query_as::<_, ReconciliationResult>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);
@@ -1556,7 +1556,7 @@ impl InvoiceRecognizer {
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 500");
 
-        let mut q = sqlx::query_as::<_, Invoice>(&query);
+        let mut q = sqlx::query_as::<_, Invoice>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);
@@ -1852,7 +1852,7 @@ impl ElectronicPaymentProcessor {
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 500");
 
-        let mut q = sqlx::query_as::<_, PaymentRequest>(&query);
+        let mut q = sqlx::query_as::<_, PaymentRequest>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);

@@ -68,7 +68,7 @@ pub async fn list_issues(
                 "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND severity = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
                 cols
             );
-            sqlx::query_as::<_, QualityIssue>(&sql)
+            sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(sql))
                 .bind(tenant_opt)
                 .bind(st)
                 .bind(sv)
@@ -84,7 +84,7 @@ pub async fn list_issues(
                 "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
                 cols
             );
-            sqlx::query_as::<_, QualityIssue>(&sql)
+            sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(sql))
                 .bind(tenant_opt)
                 .bind(st)
                 .bind(page_size)
@@ -99,7 +99,7 @@ pub async fn list_issues(
                 "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
                 cols
             );
-            sqlx::query_as::<_, QualityIssue>(&sql)
+            sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(sql))
                 .bind(tenant_opt)
                 .bind(sv)
                 .bind(page_size)
@@ -114,7 +114,7 @@ pub async fn list_issues(
                 "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
                 cols
             );
-            sqlx::query_as::<_, QualityIssue>(&sql)
+            sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(sql))
                 .bind(tenant_opt)
                 .bind(page_size)
                 .bind(offset)
@@ -163,10 +163,10 @@ pub async fn create_issue(
 
     let locale = Locale::from_headers(&headers).as_sql();
     let returning_cols = issue_select_cols("$10");
-    let issue = sqlx::query_as::<_, QualityIssue>(&format!(
+    let issue = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
         "INSERT INTO qms.qa_quality_issues (tenant_id, issue_no, title, title_en, description, severity, source, related_inspection_id, status, created_by) VALUES ($1, $2, $3, $9, $4, $5, $6, $7, 'open', $8) RETURNING {}",
         returning_cols
-    )).bind(tenant_id).bind(issue_no).bind(req.title).bind(req.description).bind(req.severity).bind(req.source).bind(related_inspection_id).bind(req.created_by).bind(req.title_en.clone()).bind(locale)
+    ))).bind(tenant_id).bind(issue_no).bind(req.title).bind(req.description).bind(req.severity).bind(req.source).bind(related_inspection_id).bind(req.created_by).bind(req.title_en.clone()).bind(locale)
     .fetch_one(&state.pool)
     .await;
 
@@ -255,10 +255,10 @@ pub async fn get_issue(
     let locale = Locale::from_headers(&headers).as_sql();
 
     let cols = issue_select_cols("$3");
-    let issue = sqlx::query_as::<_, QualityIssue>(&format!(
+    let issue = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
         "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
         cols
-    )).bind(id).bind(tenant_opt).bind(locale)
+    ))).bind(id).bind(tenant_opt).bind(locale)
     .fetch_one(&state.pool)
     .await;
 
@@ -302,10 +302,10 @@ pub async fn update_issue(
     let locale = Locale::from_headers(&headers).as_sql();
 
     let returning_cols = issue_select_cols("$7");
-    let issue = sqlx::query_as::<_, QualityIssue>(&format!(
+    let issue = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
         "UPDATE qms.qa_quality_issues SET title = COALESCE($2, title), description = COALESCE($3, description), severity = COALESCE($4, severity), status = COALESCE($5, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $6 RETURNING {}",
         returning_cols
-    )).bind(id).bind(req.title).bind(req.description).bind(req.severity).bind(req.status).bind(tenant_id).bind(locale)
+    ))).bind(id).bind(req.title).bind(req.description).bind(req.severity).bind(req.status).bind(tenant_id).bind(locale)
     .fetch_one(&state.pool)
     .await;
 
@@ -344,10 +344,10 @@ pub async fn resolve_issue(
     let locale = Locale::from_headers(&headers).as_sql();
 
     let returning_cols = issue_select_cols("$3");
-    let issue = sqlx::query_as::<_, QualityIssue>(&format!(
+    let issue = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
         "UPDATE qms.qa_quality_issues SET status = 'resolved', resolved_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}",
         returning_cols
-    )).bind(id).bind(tenant_id).bind(locale)
+    ))).bind(id).bind(tenant_id).bind(locale)
     .fetch_one(&state.pool)
     .await;
 
@@ -477,10 +477,10 @@ pub async fn start_issue_approval(
 
     let locale = Locale::from_headers(&headers).as_sql();
     let cols = issue_select_cols("$3");
-    let issue = sqlx::query_as::<_, QualityIssue>(&format!(
+    let issue = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
         "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
         cols
-    ))
+    )))
         .bind(issue_id)
         .bind(tenant_opt)
         .bind(locale)
@@ -533,10 +533,10 @@ pub async fn approve_issue(
 
     let locale = Locale::from_headers(&headers).as_sql();
     let returning_cols = issue_select_cols("$3");
-    let result = sqlx::query_as::<_, QualityIssue>(&format!(
+    let result = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
         "UPDATE qms.qa_quality_issues SET status = 'approved', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}",
         returning_cols
-    ))
+    )))
         .bind(issue_id)
         .bind(tenant_id)
         .bind(locale)
@@ -589,10 +589,10 @@ pub async fn reject_issue(
 
     let locale = Locale::from_headers(&headers).as_sql();
     let returning_cols = issue_select_cols("$3");
-    let result = sqlx::query_as::<_, QualityIssue>(&format!(
+    let result = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!(
         "UPDATE qms.qa_quality_issues SET status = 'rejected', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}",
         returning_cols
-    ))
+    )))
         .bind(issue_id)
         .bind(tenant_id)
         .bind(locale)
@@ -681,8 +681,7 @@ pub async fn approve_issue_status(
                 return ApiResponse::bad_request("当前状态不允许审批通过");
             }
             let locale = Locale::from_headers(&headers).as_sql();
-            let issue = sqlx::query_as::<_, QualityIssue>(
-                format!("UPDATE qms.qa_quality_issues SET status = '{}', resolved_at = COALESCE(resolved_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CLOSED, issue_select_cols("$3")).as_str()
+            let issue = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_quality_issues SET status = '{}', resolved_at = COALESCE(resolved_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CLOSED, issue_select_cols("$3"))            )
             ).bind(id).bind(tenant_id).bind(locale).fetch_one(&state.pool).await;
             match issue {
                 Ok(data) => {
@@ -758,8 +757,7 @@ pub async fn reject_issue_status(
                 return ApiResponse::bad_request("当前状态不允许驳回");
             }
             let locale = Locale::from_headers(&headers).as_sql();
-            let issue = sqlx::query_as::<_, QualityIssue>(
-                format!("UPDATE qms.qa_quality_issues SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_IN_PROGRESS, issue_select_cols("$3")).as_str()
+            let issue = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_quality_issues SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_IN_PROGRESS, issue_select_cols("$3"))            )
             ).bind(id).bind(tenant_id).bind(locale).fetch_one(&state.pool).await;
             match issue {
                 Ok(data) => {
@@ -835,8 +833,7 @@ pub async fn cancel_issue(
                 return ApiResponse::bad_request("当前状态不允许取消");
             }
             let locale = Locale::from_headers(&headers).as_sql();
-            let issue = sqlx::query_as::<_, QualityIssue>(
-                format!("UPDATE qms.qa_quality_issues SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CANCELLED, issue_select_cols("$3")).as_str()
+            let issue = sqlx::query_as::<_, QualityIssue>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_quality_issues SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CANCELLED, issue_select_cols("$3"))            )
             ).bind(id).bind(tenant_id).bind(locale).fetch_one(&state.pool).await;
             match issue {
                 Ok(data) => {

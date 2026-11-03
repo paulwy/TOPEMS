@@ -223,7 +223,7 @@ pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::
             "CREATE TABLE IF NOT EXISTS \"{}\".\"{}\" (id UUID PRIMARY KEY DEFAULT gen_random_uuid())",
             SERVICE_SCHEMA, tbl
         );
-        sqlx::query(&ddl).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(ddl)).execute(pool).await?;
     }
     // 阶段 1+2：调用 shared-db 抽象
     run_schema_defense(pool, SERVICE_SCHEMA, TABLE_DEFS, SERVICE_TAG).await?;

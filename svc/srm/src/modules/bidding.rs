@@ -91,7 +91,7 @@ pub async fn list_biddings(
         "#,
     );
 
-    let result = sqlx::query_as::<_, Bidding>(&query)
+    let result = sqlx::query_as::<_, Bidding>(sqlx::AssertSqlSafe(query))
         .bind(&search_pattern)
         .bind(&status_filter)
         .bind(&category_filter)
@@ -111,7 +111,7 @@ pub async fn list_biddings(
                 "#,
             );
 
-            let total = sqlx::query_scalar::<_, i64>(&count_query)
+            let total = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query))
                 .bind(&search_pattern)
                 .bind(&status_filter)
                 .bind(&category_filter)

@@ -732,7 +732,7 @@ async fn fetch_pending_orders(
         .to_string()
     };
 
-    let mut query_builder = sqlx::query(&query);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(query));
     if let Some(ids) = order_ids {
         for id in ids {
             query_builder = query_builder.bind(*id);

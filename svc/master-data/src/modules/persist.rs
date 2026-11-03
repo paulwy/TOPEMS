@@ -36,7 +36,7 @@ pub async fn init(pool: PgPool) {
         "CREATE INDEX IF NOT EXISTS mdm_collections_module_idx
             ON master_data.mdm_collections (module)",
     ] {
-        if let Err(e) = sqlx::query(ddl).execute(&pool).await {
+        if let Err(e) = sqlx::query(sqlx::AssertSqlSafe(ddl)).execute(&pool).await {
             tracing::warn!("[master-data] persist 表 bootstrap 失败（将依赖迁移链）: {e}");
             break;
         }

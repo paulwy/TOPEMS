@@ -124,7 +124,7 @@ impl ReconciliationService {
             data_param_idx + 1
         ));
 
-        let mut sessions_qb = sqlx::query_as::<_, ReconciliationSession>(&query).bind(tenant_id);
+        let mut sessions_qb = sqlx::query_as::<_, ReconciliationSession>(sqlx::AssertSqlSafe(query)).bind(tenant_id);
         if let Some(rt) = reco_type_param {
             sessions_qb = sessions_qb.bind(rt);
         }
@@ -138,7 +138,7 @@ impl ReconciliationService {
             .await
             .map_err(|e| TopemsError::Database(e.to_string()))?;
 
-        let mut count_qb = sqlx::query_scalar(&count_query).bind(tenant_id);
+        let mut count_qb = sqlx::query_scalar(sqlx::AssertSqlSafe(count_query)).bind(tenant_id);
         if let Some(rt) = reco_type.clone() {
             count_qb = count_qb.bind(rt);
         }
@@ -524,7 +524,7 @@ impl ReconciliationService {
 
         query.push_str(" ORDER BY transaction_date, amount");
 
-        let mut qb = sqlx::query_as::<_, ReconciliationItem>(&query)
+        let mut qb = sqlx::query_as::<_, ReconciliationItem>(sqlx::AssertSqlSafe(query))
             .bind(session_id)
             .bind(tenant_id);
         if let Some(st) = source_type_param {

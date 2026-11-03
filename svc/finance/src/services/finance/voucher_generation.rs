@@ -94,7 +94,7 @@ impl FinanceService {
         }
         query.push_str(" ORDER BY priority ASC, created_at DESC");
 
-        let mut query_builder = sqlx::query_as::<_, VoucherGenerationRule>(&query).bind(tenant_id);
+        let mut query_builder = sqlx::query_as::<_, VoucherGenerationRule>(sqlx::AssertSqlSafe(query)).bind(tenant_id);
         if let Some(st) = &source_type {
             query_builder = query_builder.bind(st);
         }
@@ -355,7 +355,7 @@ impl FinanceService {
                 }
                 query.push_str(" ORDER BY payment_date ASC");
 
-                let mut q = sqlx::query_as::<_, (Uuid, String, f64)>(&query).bind(tenant_id);
+                let mut q = sqlx::query_as::<_, (Uuid, String, f64)>(sqlx::AssertSqlSafe(query)).bind(tenant_id);
                 if source_ids_bound {
                     q = q.bind(&ids);
                 }

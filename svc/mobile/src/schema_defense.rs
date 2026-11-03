@@ -404,10 +404,10 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
 
 pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::Error> {
     if SERVICE_SCHEMA != "public" {
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "CREATE SCHEMA IF NOT EXISTS \"{}\"",
             SERVICE_SCHEMA
-        ))
+        )))
         .execute(pool)
         .await?;
     }
@@ -417,7 +417,7 @@ pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::
             "CREATE TABLE IF NOT EXISTS \"{}\".\"{}\" (id UUID PRIMARY KEY DEFAULT gen_random_uuid())",
             SERVICE_SCHEMA, tbl
         );
-        sqlx::query(&ddl).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(ddl)).execute(pool).await?;
     }
 
     // 阶段 1+2：调用 shared-db 抽象完成增量迁移 + 一致性自检

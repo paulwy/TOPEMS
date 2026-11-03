@@ -167,7 +167,7 @@ pub async fn get_activity_trend(
         }
     };
 
-    match sqlx::query(sql)
+    match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(tenant_id)
         .bind(days)
         .fetch_all(&state.pool)
@@ -542,7 +542,7 @@ pub async fn get_model_usage(
         where_sql
     );
 
-    let mut total_query = sqlx::query(&total_sql).bind(tenant_id);
+    let mut total_query = sqlx::query(sqlx::AssertSqlSafe(total_sql)).bind(tenant_id);
     if let Some(ref sd) = params.start_date {
         total_query = total_query.bind(sd);
     }
@@ -576,7 +576,7 @@ pub async fn get_model_usage(
         where_sql
     );
 
-    let mut breakdown_query = sqlx::query(&breakdown_sql).bind(tenant_id);
+    let mut breakdown_query = sqlx::query(sqlx::AssertSqlSafe(breakdown_sql)).bind(tenant_id);
     if let Some(ref sd) = params.start_date {
         breakdown_query = breakdown_query.bind(sd);
     }

@@ -102,7 +102,7 @@ pub async fn init_reconciliation_tables(pool: &PgPool) -> Result<(), TopemsError
     ];
 
     for sql in create_tables {
-        sqlx::query(sql).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
     }
     Ok(())
 }

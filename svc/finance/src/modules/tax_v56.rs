@@ -434,7 +434,7 @@ pub async fn init_tax_v56_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     ];
 
     for sql in create_tables {
-        sqlx::query(sql).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
     }
     Ok(())
 }
@@ -618,7 +618,7 @@ impl AutoTaxFiler {
         }
         query.push_str(" ORDER BY period_end DESC LIMIT 500");
 
-        let mut q = sqlx::query_as::<_, TaxForm>(&query);
+        let mut q = sqlx::query_as::<_, TaxForm>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref ft) = form_type {
             q = q.bind(ft);
@@ -760,7 +760,7 @@ impl AutoTaxFiler {
         sql.push_str(" GROUP BY form_type");
 
         let rows: Vec<(String, f64, i64)> =
-            sqlx::query_as(&sql).bind(tenant_id).fetch_all(pool).await?;
+            sqlx::query_as(sqlx::AssertSqlSafe(sql)).bind(tenant_id).fetch_all(pool).await?;
 
         let mut summary = serde_json::json!({
             "total_tax_amount": 0.0,
@@ -958,7 +958,7 @@ impl TaxRateCalculator {
         }
         query.push_str(" ORDER BY effective_from DESC LIMIT 200");
 
-        let mut q = sqlx::query_as::<_, TaxRate>(&query);
+        let mut q = sqlx::query_as::<_, TaxRate>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref tt) = tax_type {
             q = q.bind(tt);
@@ -1364,7 +1364,7 @@ impl TaxPlanner {
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 200");
 
-        let mut q = sqlx::query_as::<_, TaxPlan>(&query);
+        let mut q = sqlx::query_as::<_, TaxPlan>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);
@@ -1408,7 +1408,7 @@ impl TaxPlanner {
         }
         query.push_str(" ORDER BY period_end ASC LIMIT 100");
 
-        let draft_forms: Vec<(Uuid, String, String)> = sqlx::query_as(&query)
+        let draft_forms: Vec<(Uuid, String, String)> = sqlx::query_as(sqlx::AssertSqlSafe(query))
             .bind(tenant_id)
             .fetch_all(pool)
             .await?;

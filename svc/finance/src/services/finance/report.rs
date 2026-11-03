@@ -38,7 +38,7 @@ impl FinanceService {
 
         query.push_str(" ORDER BY voucher_date, id");
 
-        let mut query_builder = sqlx::query_as(&query).bind(tenant_id);
+        let mut query_builder = sqlx::query_as(sqlx::AssertSqlSafe(query)).bind(tenant_id);
         if let Some(account_id) = params.account_id {
             query_builder = query_builder.bind(account_id);
         }
@@ -138,7 +138,7 @@ impl FinanceService {
             amount_expr
         );
 
-        let rows = sqlx::query(&query)
+        let rows = sqlx::query(sqlx::AssertSqlSafe(query))
             .bind(tenant_id)
             .bind(type_str)
             .bind(period)

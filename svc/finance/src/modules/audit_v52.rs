@@ -346,7 +346,7 @@ impl AutoAuditEngine {
         }
         query.push_str(" ORDER BY created_at DESC");
 
-        let mut q = sqlx::query_as::<_, AuditRule>(&query);
+        let mut q = sqlx::query_as::<_, AuditRule>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref cat) = category {
             q = q.bind(cat);
@@ -419,7 +419,7 @@ impl AutoAuditEngine {
             arg_idx + 2
         );
 
-        let mut q = sqlx::query_as::<_, AuditRule>(&query);
+        let mut q = sqlx::query_as::<_, AuditRule>(sqlx::AssertSqlSafe(query));
         q = q.bind(id);
         q = q.bind(tenant_id);
 
@@ -805,7 +805,7 @@ impl AutoAuditEngine {
 
         if let Some(sql) = query {
             let sql_with_tenant = format!("{} AND tenant_id = ${}", sql, 1);
-            let rows: Vec<(Uuid, String, String)> = sqlx::query_as(&sql_with_tenant)
+            let rows: Vec<(Uuid, String, String)> = sqlx::query_as(sqlx::AssertSqlSafe(sql_with_tenant))
                 .bind(tenant_id)
                 .fetch_all(pool)
                 .await
@@ -892,7 +892,7 @@ impl AutoAuditEngine {
             data_query.push_str(&format!(" AND entity_type = ${}", base_idx));
         }
 
-        let total: i64 = sqlx::query_scalar(&count_query)
+        let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(count_query))
             .bind(tenant_id)
             .fetch_one(pool)
             .await?;
@@ -902,7 +902,7 @@ impl AutoAuditEngine {
         let data_query = data_query.replace("$LIMIT", &page_size.to_string());
         let data_query = data_query.replace("$OFFSET", &offset.to_string());
 
-        let mut q = sqlx::query_as::<_, AuditFinding>(&data_query);
+        let mut q = sqlx::query_as::<_, AuditFinding>(sqlx::AssertSqlSafe(data_query));
         q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);
@@ -1376,7 +1376,7 @@ impl AnomalyDetector {
             data_query.push_str(&format!(" AND is_resolved = ${}", base));
         }
 
-        let total: i64 = sqlx::query_scalar(&count_query)
+        let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(count_query))
             .bind(tenant_id)
             .fetch_one(pool)
             .await?;
@@ -1385,7 +1385,7 @@ impl AnomalyDetector {
         let data_query = data_query.replace("$LIMIT", &page_size.to_string());
         let data_query = data_query.replace("$OFFSET", &offset.to_string());
 
-        let mut q = sqlx::query_as::<_, AnomalyAlert>(&data_query);
+        let mut q = sqlx::query_as::<_, AnomalyAlert>(sqlx::AssertSqlSafe(data_query));
         q = q.bind(tenant_id);
         if let Some(ref dt) = detection_type {
             q = q.bind(dt);
@@ -1598,7 +1598,7 @@ impl AlertManager {
             data_query.push_str(&format!(" AND is_acknowledged = ${}", base));
         }
 
-        let total: i64 = sqlx::query_scalar(&count_query)
+        let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(count_query))
             .bind(tenant_id)
             .fetch_one(pool)
             .await?;
@@ -1607,7 +1607,7 @@ impl AlertManager {
         let data_query = data_query.replace("$LIMIT", &page_size.to_string());
         let data_query = data_query.replace("$OFFSET", &offset.to_string());
 
-        let mut q = sqlx::query_as::<_, AlertHistory>(&data_query);
+        let mut q = sqlx::query_as::<_, AlertHistory>(sqlx::AssertSqlSafe(data_query));
         q = q.bind(tenant_id);
         if let Some(ref ch) = channel {
             q = q.bind(ch);

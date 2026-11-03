@@ -176,10 +176,10 @@ impl GovernanceMaturity {
             assessed_at: now.clone(),
         };
 
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "INSERT INTO master_data.mdm_maturity_assessments ({ASSESSMENT_COLS}, tenant_id)
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
-        ))
+        )))
         .bind(&assessment.id)
         .bind(dimension_str(&assessment.dimension))
         .bind(maturity_level_str(&assessment.current_level))
@@ -212,9 +212,9 @@ impl GovernanceMaturity {
         db: &sqlx::PgPool,
         id: &str,
     ) -> Result<Option<MaturityAssessment>, TopemsError> {
-        let row = sqlx::query(&format!(
+        let row = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {ASSESSMENT_COLS} FROM master_data.mdm_maturity_assessments WHERE id = $1"
-        ))
+        )))
         .bind(id)
         .fetch_optional(db)
         .await
@@ -242,10 +242,10 @@ impl GovernanceMaturity {
             status: "planned".to_string(),
         };
 
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "INSERT INTO master_data.mdm_improvement_plans ({IMPROVEMENT_PLAN_COLS}, tenant_id)
              VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
-        ))
+        )))
         .bind(&plan.id)
         .bind(dimension_str(&plan.dimension))
         .bind(maturity_level_str(&plan.target_level))
@@ -417,9 +417,9 @@ impl MDMWorkflowEngine {
             updated_at: now,
         };
 
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "INSERT INTO master_data.mdm_workflows ({WORKFLOW_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
-        ))
+        )))
         .bind(&workflow.id)
         .bind(&workflow.name)
         .bind(workflow_type_str(&workflow.workflow_type))
@@ -835,9 +835,9 @@ impl DataProductManager {
             updated_at: now,
         };
 
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "INSERT INTO master_data.mdm_data_products ({DATA_PRODUCT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
-        ))
+        )))
         .bind(&product.id)
         .bind(&product.name)
         .bind(&product.description)
@@ -911,9 +911,9 @@ impl DataProductManager {
             .begin()
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("开启事务失败: {e}")))?;
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "INSERT INTO master_data.mdm_data_contracts ({DATA_CONTRACT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
-        ))
+        )))
         .bind(&contract.product_id)
         .bind(serde_json::to_value(&contract.schema).unwrap_or_default())
         .bind(serde_json::to_value(&contract.quality_requirements).unwrap_or_default())
@@ -991,9 +991,9 @@ impl DataProductManager {
             created_at: chrono::Utc::now().to_rfc3339(),
         };
 
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "INSERT INTO master_data.mdm_api_exposures ({API_EXPOSURE_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
-        ))
+        )))
         .bind(&exposure.id)
         .bind(&exposure.product_id)
         .bind(&exposure.endpoint)
@@ -2168,9 +2168,9 @@ fn api_exposure_from_row(r: &sqlx::postgres::PgRow) -> ApiExposure {
 async fn fetch_maturity_assessments(
     db: &sqlx::PgPool,
 ) -> Result<Vec<MaturityAssessment>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {ASSESSMENT_COLS} FROM master_data.mdm_maturity_assessments"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询成熟度评估失败: {e}")))?;
@@ -2178,9 +2178,9 @@ async fn fetch_maturity_assessments(
 }
 
 async fn fetch_dimension_scores(db: &sqlx::PgPool) -> Result<Vec<DimensionScore>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {DIMENSION_SCORE_COLS} FROM master_data.mdm_dimension_scores"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询维度得分失败: {e}")))?;
@@ -2209,9 +2209,9 @@ async fn fetch_maturity_history(
 }
 
 async fn fetch_improvement_plans(db: &sqlx::PgPool) -> Result<Vec<ImprovementPlan>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {IMPROVEMENT_PLAN_COLS} FROM master_data.mdm_improvement_plans"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询改进计划失败: {e}")))?;
@@ -2219,9 +2219,9 @@ async fn fetch_improvement_plans(db: &sqlx::PgPool) -> Result<Vec<ImprovementPla
 }
 
 async fn fetch_workflows(db: &sqlx::PgPool) -> Result<Vec<WorkflowV58>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {WORKFLOW_COLS} FROM master_data.mdm_workflows"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询工作流失败: {e}")))?;
@@ -2229,9 +2229,9 @@ async fn fetch_workflows(db: &sqlx::PgPool) -> Result<Vec<WorkflowV58>, TopemsEr
 }
 
 async fn fetch_workflow_templates(db: &sqlx::PgPool) -> Result<Vec<WorkflowTemplate>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {WORKFLOW_TEMPLATE_COLS} FROM master_data.mdm_workflow_templates"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询工作流模板失败: {e}")))?;
@@ -2241,9 +2241,9 @@ async fn fetch_workflow_templates(db: &sqlx::PgPool) -> Result<Vec<WorkflowTempl
 async fn fetch_workflow_history(
     db: &sqlx::PgPool,
 ) -> Result<Vec<WorkflowHistoryEntry>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {WORKFLOW_HISTORY_COLS} FROM master_data.mdm_workflow_history"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询工作流历史失败: {e}")))?;
@@ -2251,9 +2251,9 @@ async fn fetch_workflow_history(
 }
 
 async fn fetch_data_products(db: &sqlx::PgPool) -> Result<Vec<DataProduct>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {DATA_PRODUCT_COLS} FROM master_data.mdm_data_products"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询数据产品失败: {e}")))?;
@@ -2261,9 +2261,9 @@ async fn fetch_data_products(db: &sqlx::PgPool) -> Result<Vec<DataProduct>, Tope
 }
 
 async fn fetch_data_contracts(db: &sqlx::PgPool) -> Result<Vec<DataContract>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {DATA_CONTRACT_COLS} FROM master_data.mdm_data_contracts"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询数据契约失败: {e}")))?;
@@ -2271,9 +2271,9 @@ async fn fetch_data_contracts(db: &sqlx::PgPool) -> Result<Vec<DataContract>, To
 }
 
 async fn fetch_api_exposures(db: &sqlx::PgPool) -> Result<Vec<ApiExposure>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {API_EXPOSURE_COLS} FROM master_data.mdm_api_exposures"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询 API 暴露失败: {e}")))?;

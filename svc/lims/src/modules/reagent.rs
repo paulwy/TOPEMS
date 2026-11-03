@@ -107,7 +107,7 @@ pub async fn list_reagents(
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut query_builder = sqlx::query(sql).bind(tenant_id);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
     match (query.status.as_ref(), query.name.as_ref()) {
         (Some(st), Some(nm)) => {
             query_builder = query_builder

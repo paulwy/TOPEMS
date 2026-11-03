@@ -416,14 +416,14 @@ pub async fn list_versions(
                 .unwrap_or_default(),
         )
     };
-    let result = sqlx::query_as::<_, DocumentVersion>(&format!(
+    let result = sqlx::query_as::<_, DocumentVersion>(sqlx::AssertSqlSafe(format!(
         r#"
         SELECT {VERSION_COLUMNS}
         FROM pdm_document_versions
         WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND document_id = $2
         ORDER BY created_at DESC
         "#
-    ))
+    )))
     .bind(tenant_id)
     .bind(document_id)
     .fetch_all(&state.pool)
@@ -461,7 +461,7 @@ pub async fn create_version(
     let changes = req.changes.unwrap_or_default();
     let created_by = req.created_by.unwrap_or_else(|| "system".to_string());
     let doc_type = get_document_type(&state, tenant_id, document_id).await;
-    let result = sqlx::query_as::<_, DocumentVersion>(&format!(
+    let result = sqlx::query_as::<_, DocumentVersion>(sqlx::AssertSqlSafe(format!(
         r#"
         INSERT INTO pdm_document_versions (
             tenant_id, document_id, document_type, version_number, title, description, status,
@@ -469,7 +469,7 @@ pub async fn create_version(
         ) VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10, $11, $12)
         RETURNING {VERSION_COLUMNS}
         "#
-    ))
+    )))
     .bind(tenant_id)
     .bind(document_id)
     .bind(doc_type)
@@ -512,13 +512,13 @@ pub async fn get_version(
                 .unwrap_or_default(),
         )
     };
-    let result = sqlx::query_as::<_, DocumentVersion>(&format!(
+    let result = sqlx::query_as::<_, DocumentVersion>(sqlx::AssertSqlSafe(format!(
         r#"
         SELECT {VERSION_COLUMNS}
         FROM pdm_document_versions
         WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND document_id = $2 AND id = $3
         "#
-    ))
+    )))
     .bind(tenant_id)
     .bind(document_id)
     .bind(version_id)
@@ -552,7 +552,7 @@ pub async fn update_version(
     };
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    let result = sqlx::query_as::<_, DocumentVersion>(&format!(
+    let result = sqlx::query_as::<_, DocumentVersion>(sqlx::AssertSqlSafe(format!(
         r#"
         UPDATE pdm_document_versions
         SET version_number = COALESCE($4, version_number),
@@ -571,7 +571,7 @@ pub async fn update_version(
         WHERE tenant_id = $1 AND document_id = $2 AND id = $3 AND deleted_at IS NULL
         RETURNING {VERSION_COLUMNS}
         "#
-    ))
+    )))
     .bind(tenant_id)
     .bind(document_id)
     .bind(version_id)
@@ -660,14 +660,14 @@ pub async fn publish_version(
         }
     };
 
-    let result = sqlx::query_as::<_, DocumentVersion>(&format!(
+    let result = sqlx::query_as::<_, DocumentVersion>(sqlx::AssertSqlSafe(format!(
         r#"
         UPDATE pdm_document_versions
         SET status = 'published', published_at = NOW(), updated_at = NOW()
         WHERE tenant_id = $1 AND document_id = $2 AND id = $3 AND deleted_at IS NULL
         RETURNING {VERSION_COLUMNS}
         "#
-    ))
+    )))
     .bind(tenant_id)
     .bind(document_id)
     .bind(version_id)
@@ -770,7 +770,7 @@ pub async fn upload_version(
     });
     let changes: Vec<String> = vec!["upload".to_string()];
 
-    let result = sqlx::query_as::<_, DocumentVersion>(&format!(
+    let result = sqlx::query_as::<_, DocumentVersion>(sqlx::AssertSqlSafe(format!(
         r#"
         INSERT INTO pdm_document_versions (
             tenant_id, document_id, document_type, version_number, title, status,
@@ -778,7 +778,7 @@ pub async fn upload_version(
         ) VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10, $11)
         RETURNING {VERSION_COLUMNS}
         "#
-    ))
+    )))
     .bind(tenant_id)
     .bind(document_id)
     .bind(doc_type)

@@ -376,7 +376,7 @@ pub async fn init_treasury_v58_tables(pool: &PgPool) -> Result<(), sqlx::Error> 
     ];
 
     for sql in create_tables {
-        sqlx::query(sql).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
     }
     Ok(())
 }

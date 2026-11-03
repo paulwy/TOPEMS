@@ -598,10 +598,10 @@ pub async fn create_snapshot(
     Json(req): Json<CreateSnapshotRequest>,
 ) -> ApiResponse<VersionSnapshot> {
     // K1：版本号基于真表现有快照推导（不再读内存 Store）。
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
          WHERE entity_type = $1 AND entity_id = $2"
-    ))
+    )))
     .bind(&req.entity_type)
     .bind(&req.entity_id)
     .fetch_all(&state.db)
@@ -692,11 +692,11 @@ pub async fn get_version(
 ) -> ApiResponse<VersionSnapshot> {
     // K1：真表读取。
     let row = if let Some(ref ver) = params.version {
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
              WHERE entity_type = $1 AND entity_id = $2 AND version = $3
              LIMIT 1"
-        ))
+        )))
         .bind(&entity_type)
         .bind(&entity_id)
         .bind(ver)
@@ -704,11 +704,11 @@ pub async fn get_version(
         .await
         .unwrap_or(None)
     } else {
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
              WHERE entity_type = $1 AND entity_id = $2
              ORDER BY version DESC, created_at DESC LIMIT 1"
-        ))
+        )))
         .bind(&entity_type)
         .bind(&entity_id)
         .fetch_optional(&state.db)
@@ -780,20 +780,20 @@ async fn run_version_diff(
     to_version: &str,
 ) -> ApiResponse<VersionDiff> {
     // K1：真表读取两个版本。
-    let from_row = sqlx::query(&format!(
+    let from_row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
          WHERE entity_type = $1 AND entity_id = $2 AND version = $3 LIMIT 1"
-    ))
+    )))
     .bind(entity_type)
     .bind(entity_id)
     .bind(from_version)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(None);
-    let to_row = sqlx::query(&format!(
+    let to_row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
          WHERE entity_type = $1 AND entity_id = $2 AND version = $3 LIMIT 1"
-    ))
+    )))
     .bind(entity_type)
     .bind(entity_id)
     .bind(to_version)
@@ -828,10 +828,10 @@ pub async fn restore_version(
     Json(req): Json<RestoreVersionRequest>,
 ) -> ApiResponse<VersionSnapshot> {
     // K1：目标版本从真表读取。
-    let target_row = sqlx::query(&format!(
+    let target_row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
          WHERE entity_type = $1 AND entity_id = $2 AND version = $3 LIMIT 1"
-    ))
+    )))
     .bind(&req.entity_type)
     .bind(&req.entity_id)
     .bind(&req.version)
@@ -844,10 +844,10 @@ pub async fn restore_version(
     };
 
     // 新版本号基于真表现有快照推导。
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
          WHERE entity_type = $1 AND entity_id = $2"
-    ))
+    )))
     .bind(&target.entity_type)
     .bind(&target.entity_id)
     .fetch_all(&state.db)
@@ -945,12 +945,12 @@ pub async fn list_history(
     let offset = (page - 1) * page_size;
 
     // K1：真表分页查询。
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
          WHERE entity_type = $1 AND entity_id = $2
          ORDER BY created_at DESC, version DESC
          LIMIT $3 OFFSET $4"
-    ))
+    )))
     .bind(&entity_type)
     .bind(&entity_id)
     .bind(page_size)
@@ -1060,12 +1060,12 @@ pub async fn merge_branch(
     }
 
     let now = chrono::Utc::now().to_rfc3339();
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE master_data.mdm_version_branches
          SET merged_at = $1, merged_by = $2, status = 'merged'
          WHERE name = $3 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
          RETURNING {BRANCH_COLS}"
-    ))
+    )))
     .bind(&now)
     .bind("current_user")
     .bind(&req.target_branch)
@@ -1107,7 +1107,7 @@ pub async fn query_audit_log(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {AUDIT_EVENT_COLS} FROM master_data.mdm_audit_events
          WHERE entity_type = COALESCE($1, entity_type)
            AND entity_id = COALESCE($2, entity_id)
@@ -1116,7 +1116,7 @@ pub async fn query_audit_log(
            AND user_id = COALESCE($5, user_id)
          ORDER BY timestamp DESC
          LIMIT $6 OFFSET $7"
-    ))
+    )))
     .bind(params.entity_type.as_deref())
     .bind(params.entity_id.as_deref())
     .bind(params.event_type.as_deref())
@@ -1186,12 +1186,12 @@ pub async fn get_user_activity(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {AUDIT_EVENT_COLS} FROM master_data.mdm_audit_events
          WHERE user_id = $1 AND event_type = COALESCE($2, event_type)
          ORDER BY timestamp DESC
          LIMIT $3 OFFSET $4"
-    ))
+    )))
     .bind(&user_id)
     .bind(params.event_type.as_deref())
     .bind(page_size)
@@ -1251,12 +1251,12 @@ pub async fn get_entity_history(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {AUDIT_EVENT_COLS} FROM master_data.mdm_audit_events
          WHERE entity_type = $1 AND entity_id = $2 AND event_type = COALESCE($3, event_type)
          ORDER BY timestamp DESC
          LIMIT $4 OFFSET $5"
-    ))
+    )))
     .bind(&entity_type)
     .bind(&entity_id)
     .bind(params.event_type.as_deref())
@@ -1312,11 +1312,11 @@ pub async fn export_audit_log(
         .and_then(|s| s.parse().ok())
         .unwrap_or_else(uuid::Uuid::nil);
 
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {AUDIT_EVENT_COLS} FROM master_data.mdm_audit_events
          WHERE entity_type = COALESCE($1, entity_type)
          ORDER BY timestamp DESC"
-    ))
+    )))
     .bind(req.entity_type.as_deref())
     .fetch_all(&state.db)
     .await
@@ -1371,9 +1371,9 @@ pub async fn get_compliance_audit(
     State(state): State<AppState>,
     Query(params): Query<ComplianceAuditQuery>,
 ) -> ApiResponse<serde_json::Value> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {AUDIT_EVENT_COLS} FROM master_data.mdm_audit_events ORDER BY timestamp DESC"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
@@ -1514,9 +1514,9 @@ pub async fn check_permission(
     State(state): State<AppState>,
     Query(params): Query<CheckPermissionQuery>,
 ) -> ApiResponse<serde_json::Value> {
-    let assignment_rows = sqlx::query(&format!(
+    let assignment_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {USER_ROLE_ASSIGNMENT_COLS} FROM master_data.mdm_user_role_assignments WHERE user_id = $1"
-    ))
+    )))
     .bind(&params.user_id)
     .fetch_all(&state.db)
     .await
@@ -1527,9 +1527,9 @@ pub async fn check_permission(
         .map(|a| a.role_id)
         .collect();
 
-    let role_rows = sqlx::query(&format!(
+    let role_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {PERMISSION_ROLE_COLS} FROM master_data.mdm_permission_roles"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
@@ -1544,9 +1544,9 @@ pub async fn check_permission(
         }
     }
 
-    let perm_rows = sqlx::query(&format!(
+    let perm_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {DATA_PERMISSION_COLS} FROM master_data.mdm_data_permissions"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
@@ -1603,9 +1603,9 @@ pub async fn get_user_permissions(
     Path(user_id): Path<String>,
     Query(params): Query<UserPermissionsQuery>,
 ) -> ApiResponse<Vec<DataPermission>> {
-    let assignment_rows = sqlx::query(&format!(
+    let assignment_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {USER_ROLE_ASSIGNMENT_COLS} FROM master_data.mdm_user_role_assignments WHERE user_id = $1"
-    ))
+    )))
     .bind(&user_id)
     .fetch_all(&state.db)
     .await
@@ -1616,9 +1616,9 @@ pub async fn get_user_permissions(
         .map(|a| a.role_id)
         .collect();
 
-    let role_rows = sqlx::query(&format!(
+    let role_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {PERMISSION_ROLE_COLS} FROM master_data.mdm_permission_roles"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
@@ -1633,9 +1633,9 @@ pub async fn get_user_permissions(
         }
     }
 
-    let perm_rows = sqlx::query(&format!(
+    let perm_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {DATA_PERMISSION_COLS} FROM master_data.mdm_data_permissions"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
@@ -1681,12 +1681,12 @@ pub async fn get_resource_permissions(
     State(state): State<AppState>,
     Query(params): Query<ResourcePermissionsQuery>,
 ) -> ApiResponse<Vec<DataPermission>> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {DATA_PERMISSION_COLS} FROM master_data.mdm_data_permissions
          WHERE resource_type = COALESCE($1, resource_type)
            AND action = COALESCE($2, action)
          ORDER BY role_id"
-    ))
+    )))
     .bind(params.resource_type.as_deref())
     .bind(params.action.as_deref())
     .fetch_all(&state.db)
@@ -1702,9 +1702,9 @@ pub async fn get_resource_permission(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> ApiResponse<DataPermission> {
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {DATA_PERMISSION_COLS} FROM master_data.mdm_data_permissions WHERE id = $1 LIMIT 1"
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await

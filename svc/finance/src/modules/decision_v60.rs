@@ -391,7 +391,7 @@ pub async fn init_decision_v60_tables(pool: &PgPool) -> Result<(), sqlx::Error> 
     ];
 
     for sql in create_tables {
-        sqlx::query(sql).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
     }
     Ok(())
 }
@@ -1021,7 +1021,7 @@ impl AlertEngine {
 
         query.push_str(" ORDER BY created_at DESC LIMIT 200");
 
-        let mut q = sqlx::query_as::<_, AlertV60>(&query);
+        let mut q = sqlx::query_as::<_, AlertV60>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref severity) = params.severity {
             q = q.bind(severity);
@@ -1236,7 +1236,7 @@ impl IntelligentScheduler {
 
         query.push_str(" ORDER BY priority DESC, created_at DESC LIMIT 200");
 
-        let mut q = sqlx::query_as::<_, ScheduleTask>(&query);
+        let mut q = sqlx::query_as::<_, ScheduleTask>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref task_type) = params.task_type {
             q = q.bind(task_type);
@@ -1353,7 +1353,7 @@ impl IntelligentScheduler {
 
         query.push_str(" ORDER BY started_at DESC LIMIT 200");
 
-        let mut q = sqlx::query_as::<_, ScheduleExecution>(&query);
+        let mut q = sqlx::query_as::<_, ScheduleExecution>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(tid) = task_id {
             q = q.bind(tid);

@@ -182,7 +182,7 @@ pub async fn list_plugins(
     let mut sql = String::from("SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true AND ($2::text IS NULL OR category = $2) AND ($3::text IS NULL OR (name ILIKE $3 OR description ILIKE $3)) AND ($4::boolean IS NULL OR is_free = $4) ORDER BY ");
     sql.push_str(sort_order);
     sql.push_str(" LIMIT $5 OFFSET $6");
-    let plugins: Vec<Plugin> = match sqlx::query_as::<_, Plugin>(&sql)
+    let plugins: Vec<Plugin> = match sqlx::query_as::<_, Plugin>(sqlx::AssertSqlSafe(sql))
         .bind(locale)
         .bind(category)
         .bind(search_pattern.as_deref())

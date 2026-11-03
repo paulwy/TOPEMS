@@ -257,7 +257,7 @@ pub async fn list_accidents(
         "#
     );
 
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }

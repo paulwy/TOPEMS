@@ -942,7 +942,7 @@ async fn batch_update_status(
         tenant_idx,
         SALES_ORDER_SELECT_COLS
     );
-    let mut query = sqlx::query_as::<_, SalesOrder>(&sql);
+    let mut query = sqlx::query_as::<_, SalesOrder>(sqlx::AssertSqlSafe(sql));
     query = query.bind(status);
     for id in ids {
         query = query.bind(id);

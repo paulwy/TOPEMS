@@ -244,7 +244,7 @@ pub async fn list_hazards(
         where_clause = where_clause,
     );
 
-    let mut fetch_query = sqlx::query(&fetch_sql);
+    let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
     for p in &params {
         fetch_query = fetch_query.bind(p);
     }
@@ -611,7 +611,7 @@ pub async fn update_hazard(
                   created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1276,7 +1276,7 @@ pub async fn list_safety_hazards(
         LIMIT {page_size} OFFSET {offset}
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1326,7 +1326,7 @@ pub async fn create_safety_hazard(
                   created_by, created_at::text AS created_at, updated_at::text AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&hazard_no)
         .bind(&req.name)
         .bind(&req.category)
@@ -1379,7 +1379,7 @@ pub async fn get_safety_hazard(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_optional(&state.pool)
@@ -1476,7 +1476,7 @@ pub async fn update_safety_hazard(
                   tenant_id::text AS tenant_id
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1519,7 +1519,7 @@ pub async fn delete_safety_hazard(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let result = match sqlx::query(sql)
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .execute(&state.pool)
@@ -1740,7 +1740,7 @@ pub async fn list_risk_assessments_db(
           AND deleted_at IS NULL
         ORDER BY created_at DESC
     "#;
-    let rows = match sqlx::query(sql)
+    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&hazard_id)
         .bind(&tenant_bind)
         .fetch_all(&state.pool)
@@ -1781,7 +1781,7 @@ pub async fn list_control_measures_db(
           AND deleted_at IS NULL
         ORDER BY created_at DESC
     "#;
-    let rows = match sqlx::query(sql)
+    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&hazard_id)
         .bind(&tenant_bind)
         .fetch_all(&state.pool)
@@ -1823,7 +1823,7 @@ pub async fn create_control_measure_db(
                   responsible, deadline::text AS deadline, status, effectiveness,
                   created_at::text AS created_at
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&hazard_id)
         .bind(&req.measure_type)
         .bind(&req.description)
@@ -1869,7 +1869,7 @@ pub async fn delete_control_measure_db(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let result = match sqlx::query(sql)
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&measure_id)
         .bind(&tenant_bind)
         .execute(&state.pool)

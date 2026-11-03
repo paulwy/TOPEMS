@@ -246,7 +246,7 @@ pub async fn list_work_stations(
         where_clause
     );
 
-    let mut count_query = sqlx::query_scalar(&count_sql);
+    let mut count_query = sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql));
     for p in &params {
         // params 仅由本函数 push 的 String 变体组成，as_str 恒有值；兜底空串仅为消除 unwrap（杜绝 panic），正常路径行为不变
         count_query = count_query.bind(p.as_str().unwrap_or(""));
@@ -284,7 +284,7 @@ pub async fn list_work_stations(
         params.len() + 3
     );
 
-    let mut fetch_query = sqlx::query(&fetch_sql);
+    let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
     for p in &params {
         // params 仅由本函数 push 的 String 变体组成，as_str 恒有值；兜底空串仅为消除 unwrap（杜绝 panic），正常路径行为不变
         fetch_query = fetch_query.bind(p.as_str().unwrap_or(""));

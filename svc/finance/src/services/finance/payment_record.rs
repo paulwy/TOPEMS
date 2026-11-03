@@ -59,8 +59,8 @@ impl FinanceService {
         sql.push_str(" OFFSET $");
         sql.push_str(&(limit_idx + 1).to_string());
 
-        let mut query = sqlx::query(&sql).bind(tenant_id);
-        let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql).bind(tenant_id);
+        let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
+        let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql)).bind(tenant_id);
 
         if let Some(ref s) = status {
             query = query.bind(s);

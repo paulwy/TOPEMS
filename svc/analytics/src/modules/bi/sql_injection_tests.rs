@@ -65,7 +65,7 @@ fn l1_rejects_semicolon_and_delete_keyword() {
 /// L3 防御 — LIMIT 参数 i64 强类型 + sqlx::query.bind 传递
 ///
 /// S1.4-4 Payload: limit = 999_999_999
-/// 风险前提是数值曾被 format! 当作字符串拼接；现在通过 bind(i64) 传递，
+/// 风险前提是数值曾被 format! 当作字符串拼接；现在通过 bind(sqlx::AssertSqlSafe(i64)) 传递，
 /// 用户无法通过类型系统注入 SQL 关键字。本测试验证：
 /// - i64::MAX 能被安全 bind
 /// - 任意非数字字符串无法作为 limit 类型通过 Rust 编译（这一点由 Rust 静态类型保证，

@@ -158,7 +158,7 @@ pub async fn list_files(
                 "SELECT COUNT(*) FROM public.core_files WHERE deleted_at IS NULL AND uploader_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"
             };
 
-            let total = match sqlx::query_scalar::<_, i64>(count_query)
+            let total = match sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query))
                 .bind(user_id)
                 .bind(tenant_uuid)
                 .fetch_one(&state.pool)
@@ -416,7 +416,7 @@ pub async fn update_file(
     );
 
     // 执行更新查询
-    let mut query_builder = sqlx::query(&query).bind(file_id);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(query)).bind(file_id);
 
     // 绑定额外参数
     for (_, value) in params {

@@ -268,13 +268,13 @@ pub async fn search_locations(
     };
 
     match if payload.location_type.is_some() {
-        sqlx::query_as::<_, Location>(query)
+        sqlx::query_as::<_, Location>(sqlx::AssertSqlSafe(query))
             .bind(&search_pattern)
             .bind(&payload.location_type)
             .fetch_all(&pool)
             .await
     } else {
-        sqlx::query_as::<_, Location>(query)
+        sqlx::query_as::<_, Location>(sqlx::AssertSqlSafe(query))
             .bind(&search_pattern)
             .fetch_all(&pool)
             .await

@@ -182,7 +182,7 @@ pub async fn list_processes(
         where_clause
     );
 
-    let mut count_query = sqlx::query_scalar(&count_sql);
+    let mut count_query = sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql));
     count_query = count_query.bind(tenant_id);
     for p in &params {
         count_query = count_query.bind(p.clone());
@@ -213,7 +213,7 @@ pub async fn list_processes(
         params.len() + 3
     );
 
-    let mut fetch_query = sqlx::query(&fetch_sql);
+    let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
     fetch_query = fetch_query.bind(tenant_id);
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());

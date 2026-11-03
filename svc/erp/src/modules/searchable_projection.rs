@@ -77,7 +77,7 @@ async fn fetch_snapshot_with_tenant(
                 "SELECT id, tenant_id, order_no, status, remark, updated_at FROM {} WHERE id = $1 AND deleted_at IS NULL",
                 table
             );
-            let row = sqlx::query(&sql)
+            let row = sqlx::query(sqlx::AssertSqlSafe(sql))
                 .bind(entity_id)
                 .fetch_optional(&mut *conn)
                 .await

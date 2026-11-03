@@ -811,7 +811,7 @@ pub async fn get_sync_history(
     ));
 
     // 全部条件参数化绑定，杜绝字符串拼接注入
-    let mut query = sqlx::query_as::<_, SyncHistoryRow>(&sql);
+    let mut query = sqlx::query_as::<_, SyncHistoryRow>(sqlx::AssertSqlSafe(sql));
     if let Some(st) = sync_type_param {
         query = query.bind(st);
     }

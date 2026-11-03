@@ -542,7 +542,7 @@ impl FinanceService {
             }
         }
 
-        let rows = sqlx::query_as::<_, Payment>(&query)
+        let rows = sqlx::query_as::<_, Payment>(sqlx::AssertSqlSafe(query))
             .bind(tenant_id)
             .fetch_all(&self.db_pool)
             .await?;

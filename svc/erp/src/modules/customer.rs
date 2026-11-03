@@ -609,7 +609,7 @@ pub async fn batch_list_customers(
         customer_select_cols(&locale_placeholder),
         placeholders.join(",")
     );
-    let mut query = sqlx::query_as::<_, Customer>(&sql);
+    let mut query = sqlx::query_as::<_, Customer>(sqlx::AssertSqlSafe(sql));
     for id in &uuids {
         query = query.bind(id);
     }
@@ -777,7 +777,7 @@ async fn batch_delete_customers(
         "UPDATE erp.customers SET deleted_at = NOW(), updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL AND (${filter_idx}::uuid IS NULL OR tenant_id = ${filter_idx}::uuid)",
         placeholders.join(",")
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for id in &body.ids {
         query = query.bind(id);
     }
@@ -921,7 +921,7 @@ pub async fn batch_change_status(
         "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL AND (${filter_idx}::uuid IS NULL OR tenant_id = ${filter_idx}::uuid) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, code AS customer_code, name AS customer_name, email AS contact_email, created_at, updated_at",
         placeholders.join(",")
     );
-    let mut query = sqlx::query_as::<_, Customer>(&sql);
+    let mut query = sqlx::query_as::<_, Customer>(sqlx::AssertSqlSafe(sql));
     query = query.bind(&body.status);
     for id in &body.ids {
         query = query.bind(id);
@@ -995,7 +995,7 @@ pub async fn batch_change_category(
         "UPDATE erp.customers SET customer_type = COALESCE($1, customer_type), industry = COALESCE($2, industry), updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL AND (${filter_idx}::uuid IS NULL OR tenant_id = ${filter_idx}::uuid) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, code AS customer_code, name AS customer_name, email AS contact_email, created_at, updated_at",
         placeholders.join(",")
     );
-    let mut query = sqlx::query_as::<_, Customer>(&sql);
+    let mut query = sqlx::query_as::<_, Customer>(sqlx::AssertSqlSafe(sql));
     query = query.bind(&body.category).bind(&body.industry);
     for id in &body.ids {
         query = query.bind(id);

@@ -111,7 +111,7 @@ impl FinanceService {
         }
         query.push_str(" ORDER BY created_at DESC");
 
-        let mut query_builder = sqlx::query_as::<_, VoucherTemplate>(&query).bind(tenant_id);
+        let mut query_builder = sqlx::query_as::<_, VoucherTemplate>(sqlx::AssertSqlSafe(query)).bind(tenant_id);
         if let Some(vt) = &voucher_type {
             query_builder = query_builder.bind(vt);
         }

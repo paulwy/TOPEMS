@@ -551,7 +551,7 @@ pub async fn list_quality_checks(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks
          WHERE entity_type = COALESCE($1, entity_type)
            AND entity_id = COALESCE($2, entity_id)
@@ -559,7 +559,7 @@ pub async fn list_quality_checks(
            AND rule_id = COALESCE($4, rule_id)
          ORDER BY checked_at DESC
          LIMIT $5 OFFSET $6"
-    ))
+    )))
     .bind(params.entity_type.as_deref())
     .bind(params.entity_id.as_deref())
     .bind(params.status.as_deref())
@@ -616,10 +616,10 @@ pub async fn get_quality_check_results(
     State(state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
 ) -> ApiResponse<Vec<QualityCheckV51>> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks
          WHERE entity_type = $1 AND entity_id = $2 ORDER BY checked_at DESC"
-    ))
+    )))
     .bind(&entity_type)
     .bind(&entity_id)
     .fetch_all(&state.db)
@@ -834,9 +834,9 @@ pub async fn delete_quality_rule(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_quality_score(State(state): State<AppState>) -> ApiResponse<QualityScore> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks ORDER BY checked_at DESC"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
@@ -903,34 +903,34 @@ pub async fn get_quality_score(State(state): State<AppState>) -> ApiResponse<Qua
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_quality_dashboard(State(state): State<AppState>) -> ApiResponse<QualityDashboard> {
-    let check_rows = sqlx::query(&format!(
+    let check_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks ORDER BY checked_at DESC"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
     let checks: Vec<QualityCheckV51> = check_rows.iter().map(quality_check_from_row).collect();
 
-    let fix_rows = sqlx::query(&format!(
+    let fix_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {AUTO_FIX_COLS} FROM master_data.mdm_auto_fix_actions"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
     let fix_actions: Vec<AutoFixAction> = fix_rows.iter().map(auto_fix_from_row).collect();
 
-    let sugg_rows = sqlx::query(&format!(
+    let sugg_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SUGGESTION_COLS} FROM master_data.mdm_governance_suggestions"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
     let suggestions: Vec<GovernanceSuggestion> =
         sugg_rows.iter().map(suggestion_from_row).collect();
 
-    let ins_rows = sqlx::query(&format!(
+    let ins_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {INSIGHT_COLS} FROM master_data.mdm_governance_insights"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
@@ -1053,14 +1053,14 @@ pub async fn get_fix_actions(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {AUTO_FIX_COLS} FROM master_data.mdm_auto_fix_actions
          WHERE entity_type = COALESCE($1, entity_type)
            AND entity_id = COALESCE($2, entity_id)
            AND status = COALESCE($3, status)
          ORDER BY applied_at DESC
          LIMIT $4 OFFSET $5"
-    ))
+    )))
     .bind(params.entity_type.as_deref())
     .bind(params.entity_id.as_deref())
     .bind(params.status.as_deref())
@@ -1129,12 +1129,12 @@ pub async fn revert_fix_action(
         return ApiResponse::bad_request("当前状态不可回滚");
     }
 
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE master_data.mdm_auto_fix_actions
          SET status = 'pending', after_value = NULL, applied_at = NULL
          WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
          RETURNING {AUTO_FIX_COLS}"
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await
@@ -1159,9 +1159,9 @@ pub async fn revert_fix_action(
     tag = "quality_v51"
 )]
 pub async fn get_fix_history(State(state): State<AppState>) -> ApiResponse<Vec<FixHistoryEntry>> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {AUTO_FIX_COLS} FROM master_data.mdm_auto_fix_actions ORDER BY applied_at DESC"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
@@ -1352,7 +1352,7 @@ pub async fn get_suggestions(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SUGGESTION_COLS} FROM master_data.mdm_governance_suggestions
          WHERE entity_type = COALESCE($1, entity_type)
            AND entity_id = COALESCE($2, entity_id)
@@ -1360,7 +1360,7 @@ pub async fn get_suggestions(
            AND status = COALESCE($4, status)
          ORDER BY created_at DESC
          LIMIT $5 OFFSET $6"
-    ))
+    )))
     .bind(params.entity_type.as_deref())
     .bind(params.entity_id.as_deref())
     .bind(params.suggestion_type.as_deref())
@@ -1432,12 +1432,12 @@ pub async fn approve_suggestion(
         return ApiResponse::bad_request("建议已处理");
     }
 
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE master_data.mdm_governance_suggestions
          SET status = 'approved'
          WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
          RETURNING {SUGGESTION_COLS}"
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await
@@ -1484,12 +1484,12 @@ pub async fn reject_suggestion(
         return ApiResponse::bad_request("建议已处理");
     }
 
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE master_data.mdm_governance_suggestions
          SET status = 'rejected'
          WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
          RETURNING {SUGGESTION_COLS}"
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await
@@ -1516,9 +1516,9 @@ pub async fn reject_suggestion(
 pub async fn get_governance_insights(
     State(state): State<AppState>,
 ) -> ApiResponse<Vec<GovernanceInsight>> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {INSIGHT_COLS} FROM master_data.mdm_governance_insights ORDER BY affected_records DESC"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
@@ -1580,9 +1580,9 @@ async fn build_quality_trend(
     entity_type: String,
     days: i32,
 ) -> Vec<QualityTrendPoint> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks WHERE entity_type = $1"
-    ))
+    )))
     .bind(&entity_type)
     .fetch_all(&state.db)
     .await

@@ -462,7 +462,7 @@ impl MaterializedView for PgReceivableAgingView {
                             "UPDATE mv_receivable_aging SET {} = $1, version = version + 1, updated_at = NOW() WHERE status != 'Settled'",
                             bucket_col
                         );
-                    sqlx::query(&query).bind(amount).execute(&self.pool).await?;
+                    sqlx::query(sqlx::AssertSqlSafe(query)).bind(amount).execute(&self.pool).await?;
                 }
             }
             _ => {}

@@ -423,7 +423,7 @@ impl ChartService {
             .join(", ");
         let sql = format!("SELECT {} FROM {} LIMIT 500", select_list, table);
 
-        let rows = match sqlx::query(&sql).fetch_all(&self.pool).await {
+        let rows = match sqlx::query(sqlx::AssertSqlSafe(sql)).fetch_all(&self.pool).await {
             Ok(rows) => rows,
             Err(e) => {
                 warn!("real dataset query failed（返回空集，不造假）: {}", e);

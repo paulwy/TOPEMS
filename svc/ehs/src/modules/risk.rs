@@ -145,7 +145,7 @@ pub async fn list_risks(
         where_clause = where_clause,
     );
 
-    let mut fetch_query = sqlx::query(&fetch_sql);
+    let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
     for p in &params {
         fetch_query = fetch_query.bind(p);
     }

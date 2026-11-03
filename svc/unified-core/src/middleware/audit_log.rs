@@ -107,7 +107,7 @@ async fn log_audit_entry(state: &AppState, audit_log: &Value) -> Result<(), sqlx
         "status_code": audit_log["status_code"].as_u64().unwrap_or(0),
         "duration_ms": audit_log["duration_ms"].as_u64().unwrap_or(0),
     });
-    sqlx::query(query)
+    sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(
             audit_log["user_id"]
                 .as_str()

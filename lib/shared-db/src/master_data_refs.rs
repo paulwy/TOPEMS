@@ -149,7 +149,7 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
-        sqlx::query(&sql)
+        sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(master_data_id)
             .bind(tenant_id)
             .bind(domain)
@@ -182,7 +182,7 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
-        let record = sqlx::query_as::<_, MasterDataRef>(&sql)
+        let record = sqlx::query_as::<_, MasterDataRef>(sqlx::AssertSqlSafe(sql))
             .bind(name)
             .bind(status)
             .bind(master_data_id)
@@ -208,7 +208,7 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
-        sqlx::query(&sql)
+        sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(master_data_id)
             .bind(tenant_id)
             .execute(&self.pool)
@@ -230,7 +230,7 @@ impl MasterDataRefService {
                FROM {} WHERE master_data_id = $1 AND tenant_id = $2"#,
             self.table_name
         );
-        let result = sqlx::query_as::<_, MasterDataRef>(&sql)
+        let result = sqlx::query_as::<_, MasterDataRef>(sqlx::AssertSqlSafe(sql))
             .bind(master_data_id)
             .bind(tenant_id)
             .fetch_optional(&self.pool)
@@ -253,7 +253,7 @@ impl MasterDataRefService {
                FROM {} WHERE tenant_id = $1 AND domain = $2 AND code = $3"#,
             self.table_name
         );
-        let result = sqlx::query_as::<_, MasterDataRef>(&sql)
+        let result = sqlx::query_as::<_, MasterDataRef>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .bind(code)
@@ -307,8 +307,8 @@ impl MasterDataRefService {
             self.table_name, where_clause, limit, offset
         );
 
-        let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql).bind(tenant_id);
-        let mut list_query = sqlx::query_as::<_, MasterDataRef>(&list_sql).bind(tenant_id);
+        let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql)).bind(tenant_id);
+        let mut list_query = sqlx::query_as::<_, MasterDataRef>(sqlx::AssertSqlSafe(list_sql)).bind(tenant_id);
 
         if let Some(d) = domain {
             count_query = count_query.bind(d);
@@ -340,7 +340,7 @@ impl MasterDataRefService {
             "SELECT COUNT(*) FROM {} WHERE tenant_id = $1",
             self.table_name
         );
-        let count = sqlx::query_scalar::<_, i64>(&sql)
+        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .fetch_one(&self.pool)
             .await?;
@@ -353,7 +353,7 @@ impl MasterDataRefService {
             "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND domain = $2",
             self.table_name
         );
-        let count = sqlx::query_scalar::<_, i64>(&sql)
+        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .fetch_one(&self.pool)
@@ -372,7 +372,7 @@ impl MasterDataRefService {
             "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND domain = $2 AND status = $3",
             self.table_name
         );
-        let count = sqlx::query_scalar::<_, i64>(&sql)
+        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .bind(status)
@@ -392,7 +392,7 @@ impl MasterDataRefService {
             "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND domain = $2 AND status != $3",
             self.table_name
         );
-        let count = sqlx::query_scalar::<_, i64>(&sql)
+        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .bind(status)
@@ -411,7 +411,7 @@ impl MasterDataRefService {
             "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND status = $2",
             self.table_name
         );
-        let count = sqlx::query_scalar::<_, i64>(&sql)
+        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(status)
             .fetch_one(&self.pool)
@@ -431,7 +431,7 @@ impl MasterDataRefService {
                WHERE tenant_id = $1 AND domain = $2 AND status = 'active' AND last_synced_at < $3"#,
             self.table_name
         );
-        let count = sqlx::query_scalar::<_, i64>(&sql)
+        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .bind(threshold)
@@ -451,7 +451,7 @@ impl MasterDataRefService {
                WHERE tenant_id = $1 AND status = 'active' AND last_synced_at < $2"#,
             self.table_name
         );
-        let count = sqlx::query_scalar::<_, i64>(&sql)
+        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(threshold)
             .fetch_one(&self.pool)
@@ -469,7 +469,7 @@ impl MasterDataRefService {
             "SELECT MAX(updated_at) FROM {} WHERE tenant_id = $1 AND domain = $2",
             self.table_name
         );
-        let result = sqlx::query_scalar::<_, Option<DateTime<Utc>>>(&sql)
+        let result = sqlx::query_scalar::<_, Option<DateTime<Utc>>>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .fetch_optional(&self.pool)
@@ -488,7 +488,7 @@ impl MasterDataRefService {
             "SELECT MAX(last_synced_at) FROM {} WHERE tenant_id = $1 AND domain = $2",
             self.table_name
         );
-        let result = sqlx::query_scalar::<_, Option<DateTime<Utc>>>(&sql)
+        let result = sqlx::query_scalar::<_, Option<DateTime<Utc>>>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .fetch_optional(&self.pool)
@@ -511,7 +511,7 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
-        let count = sqlx::query_scalar::<_, i64>(&sql)
+        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .fetch_one(&self.pool)
             .await?;
@@ -534,7 +534,7 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
-        let count = sqlx::query_scalar::<_, i64>(&sql)
+        let count = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .fetch_one(&self.pool)
@@ -558,7 +558,7 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
-        let rows = sqlx::query_as::<_, DuplicateRecord>(&sql)
+        let rows = sqlx::query_as::<_, DuplicateRecord>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .fetch_all(&self.pool)
             .await?;
@@ -581,7 +581,7 @@ impl MasterDataRefService {
             "#,
             self.table_name
         );
-        let rows = sqlx::query_as::<_, StaleRecord>(&sql)
+        let rows = sqlx::query_as::<_, StaleRecord>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(threshold)
             .fetch_all(&self.pool)
@@ -614,7 +614,7 @@ impl MasterDataRefService {
                    updated_at = NOW()"#,
             self.table_name
         );
-        let result = sqlx::query(&sql)
+        let result = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(&req.master_data_id)
             .bind(req.tenant_id)
             .bind(&req.domain)

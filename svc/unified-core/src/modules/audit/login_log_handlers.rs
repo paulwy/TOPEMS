@@ -262,7 +262,7 @@ pub async fn batch_delete_login_logs(
         placeholders
     );
 
-    let mut query = sqlx::query(&sql).bind(tenant_id);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
     for uuid in uuids {
         query = query.bind(uuid);
     }

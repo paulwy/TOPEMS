@@ -156,7 +156,7 @@ async fn fetch_named_counts(
     tenant_id: Option<Uuid>,
     sql: &str,
 ) -> Vec<NamedCount> {
-    sqlx::query_as::<_, NamedCountRow>(sql)
+    sqlx::query_as::<_, NamedCountRow>(sqlx::AssertSqlSafe(sql))
         .bind(tenant_id)
         .fetch_all(&state.pool)
         .await

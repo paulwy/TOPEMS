@@ -167,7 +167,7 @@ pub async fn list_prompt_templates(
          FROM ai.ai_prompt_templates WHERE {where_sql} ORDER BY updated_at DESC LIMIT $5 OFFSET $6"
     );
 
-    let total: i64 = match sqlx::query(&q_count)
+    let total: i64 = match sqlx::query(sqlx::AssertSqlSafe(q_count))
         .bind(tenant_id)
         .bind(&search)
         .bind(&category)
@@ -183,7 +183,7 @@ pub async fn list_prompt_templates(
         }
     };
 
-    let items = match sqlx::query(&q_list)
+    let items = match sqlx::query(sqlx::AssertSqlSafe(q_list))
         .bind(tenant_id)
         .bind(&search)
         .bind(&category)

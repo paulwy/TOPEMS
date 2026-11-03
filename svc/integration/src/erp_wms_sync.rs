@@ -141,7 +141,7 @@ pub async fn list_erp_wms_sync(
 
     sql.push_str(&format!(" ORDER BY created_at DESC LIMIT ${}", param_idx));
 
-    let mut query = sqlx::query_as::<_, ErpWmsSync>(&sql).bind(tenant_id);
+    let mut query = sqlx::query_as::<_, ErpWmsSync>(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
     for p in &params {
         query = query.bind(p);
     }

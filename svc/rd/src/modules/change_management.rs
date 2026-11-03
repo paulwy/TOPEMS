@@ -176,13 +176,13 @@ pub async fn create_change_request(
     let scope_phases = req.scope_phases.unwrap_or(0).max(0);
     let impact_score = assess_change_impact(&priority, scope_docs as u32, scope_phases as u32);
 
-    let result: Result<ChangeRequest, sqlx::Error> = sqlx::query_as(&format!(
+    let result: Result<ChangeRequest, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         r#"INSERT INTO rs.change_requests
             (id, tenant_id, project_id, title, description, change_type, priority, status,
              impact_score, scope_docs, scope_phases, proposed_by, created_at, updated_at)
             VALUES ($1,$2,$3,$4,$5,$6,$7,'submitted',$8,$9,$10,$11,$12,$12)
             RETURNING {CHANGE_REQUEST_RETURN}"#
-    ))
+    )))
     .bind(id)
     .bind(tenant_id)
     .bind(req.project_id)
@@ -267,11 +267,11 @@ pub async fn list_change_requests(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
-    let result: Result<Vec<ChangeRequest>, sqlx::Error> = sqlx::query_as(&format!(
+    let result: Result<Vec<ChangeRequest>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         "SELECT {CHANGE_REQUEST_RETURN} FROM rs.change_requests
          WHERE ($1::text IS NULL OR status = $1)
          ORDER BY created_at DESC LIMIT $2 OFFSET $3"
-    ))
+    )))
     .bind(status_filter)
     .bind(page_size)
     .bind(offset)
@@ -331,9 +331,9 @@ pub async fn get_change_request(
             )
         }
     };
-    let result: Result<Option<ChangeRequest>, sqlx::Error> = sqlx::query_as(&format!(
+    let result: Result<Option<ChangeRequest>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         "SELECT {CHANGE_REQUEST_RETURN} FROM rs.change_requests WHERE id = $1"
-    ))
+    )))
     .bind(id)
     .fetch_optional(&mut **txn)
     .await;
@@ -370,7 +370,7 @@ pub async fn update_change_request(
         }
     };
     let now = Utc::now();
-    let result: Result<Option<ChangeRequest>, sqlx::Error> = sqlx::query_as(&format!(
+    let result: Result<Option<ChangeRequest>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         r#"UPDATE rs.change_requests SET
            title = COALESCE($2, title),
            description = COALESCE($3, description),
@@ -388,7 +388,7 @@ pub async fn update_change_request(
            updated_at = $9
            WHERE id = $1
            RETURNING {CHANGE_REQUEST_RETURN}"#
-    ))
+    )))
     .bind(id)
     .bind(&req.title)
     .bind(&req.description)
@@ -537,10 +537,10 @@ pub async fn transition_change_request(
     }
 
     let now = Utc::now();
-    let result: Result<Option<ChangeRequest>, sqlx::Error> = sqlx::query_as(&format!(
+    let result: Result<Option<ChangeRequest>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         "UPDATE rs.change_requests SET status = $2, updated_at = $3 WHERE id = $1
          RETURNING {CHANGE_REQUEST_RETURN}"
-    ))
+    )))
     .bind(id)
     .bind(&req.to)
     .bind(now)
@@ -634,12 +634,12 @@ pub async fn create_change_order(
     let co_id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = Uuid::nil();
-    let result: Result<ChangeOrder, sqlx::Error> = sqlx::query_as(&format!(
+    let result: Result<ChangeOrder, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         r#"INSERT INTO rs.change_orders
         (id, change_request_id, title, execution_plan, status, executed_by, notes, created_at, updated_at, tenant_id)
         VALUES ($1,$2,$3,$4,'planned',$5,$6,$7,$7,$8)
         RETURNING {CHANGE_ORDER_RETURN}"#
-    ))
+    )))
     .bind(co_id)
     .bind(id)
     .bind(&req.title)
@@ -700,9 +700,9 @@ pub async fn list_change_orders(
             )
         }
     };
-    let result: Result<Vec<ChangeOrder>, sqlx::Error> = sqlx::query_as(&format!(
+    let result: Result<Vec<ChangeOrder>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         "SELECT {CHANGE_ORDER_RETURN} FROM rs.change_orders ORDER BY created_at DESC"
-    ))
+    )))
     .fetch_all(&mut **txn)
     .await;
 

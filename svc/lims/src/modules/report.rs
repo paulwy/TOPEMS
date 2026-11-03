@@ -75,7 +75,7 @@ pub async fn list_reports(
 
     let search_pattern = query.sample_name.as_ref().map(|n| format!("%{}%", n));
 
-    let rows = sqlx::query(base_sql)
+    let rows = sqlx::query(sqlx::AssertSqlSafe(base_sql))
         .bind(&search_pattern)
         .bind(&query.status)
         .bind(page_size)

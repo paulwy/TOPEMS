@@ -150,7 +150,7 @@ pub async fn list_materials(
         material_columns(&locale)
     );
 
-    let items: Vec<Material> = match sqlx::query_as(&sql)
+    let items: Vec<Material> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(query.material_type)
         .bind(query.status)
         .bind(query.search)
@@ -185,7 +185,7 @@ pub async fn get_material(
         r#"SELECT {} FROM master_data.materials WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
         material_columns(&locale)
     );
-    let row: Option<Material> = match sqlx::query_as(&sql)
+    let row: Option<Material> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .bind(req_tenant_id(&headers))
         .fetch_optional(&state.db)
@@ -423,7 +423,7 @@ pub async fn list_uoms(
         uom_columns(&locale)
     );
 
-    let items: Vec<Uom> = match sqlx::query_as(&sql)
+    let items: Vec<Uom> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(query.uom_type)
         .bind(query.status)
         .bind(query.search)
@@ -458,7 +458,7 @@ pub async fn get_uom(
         r#"SELECT {} FROM master_data.uoms WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
         uom_columns(&locale)
     );
-    let row: Option<Uom> = match sqlx::query_as(&sql)
+    let row: Option<Uom> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .bind(req_tenant_id(&headers))
         .fetch_optional(&state.db)
@@ -689,7 +689,7 @@ pub async fn list_samples(
         sample_columns(&locale)
     );
 
-    let items: Vec<Sample> = match sqlx::query_as(&sql)
+    let items: Vec<Sample> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(query.sample_type)
         .bind(query.status)
         .bind(query.search)
@@ -724,7 +724,7 @@ pub async fn get_sample(
         r#"SELECT {} FROM master_data.samples WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
         sample_columns(&locale)
     );
-    let row: Option<Sample> = match sqlx::query_as(&sql)
+    let row: Option<Sample> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .bind(req_tenant_id(&headers))
         .fetch_optional(&state.db)

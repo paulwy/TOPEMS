@@ -119,13 +119,13 @@ async fn list_typed(
         table, search_sql
     );
 
-    let total: i64 = sqlx::query_scalar(&count_sql)
+    let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql))
         .bind(&params.status)
         .bind(&params.search)
         .fetch_one(&mut *db)
         .await?;
 
-    let rows = sqlx::query(&list_sql)
+    let rows = sqlx::query(sqlx::AssertSqlSafe(list_sql))
         .bind(&params.status)
         .bind(&params.search)
         .bind(page_size)

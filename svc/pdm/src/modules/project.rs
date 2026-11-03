@@ -204,7 +204,7 @@ pub async fn list_projects(
     };
     let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
 
-    let result = sqlx::query_as::<_, PdmProject>(&format!(
+    let result = sqlx::query_as::<_, PdmProject>(sqlx::AssertSqlSafe(format!(
         r#"
         SELECT {PROJECT_COLUMNS}
         FROM pdm_projects p
@@ -214,7 +214,7 @@ pub async fn list_projects(
           AND ($4::text IS NULL OR p.phase = $4)
         ORDER BY p.created_at DESC
         "#
-    ))
+    )))
     .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&query.status)
@@ -258,7 +258,7 @@ pub async fn create_project(
     let phase = req.phase.unwrap_or_else(|| "initiation".to_string());
     let progress = req.progress.unwrap_or(0).clamp(0, 100);
 
-    let result = sqlx::query_as::<_, PdmProject>(&format!(
+    let result = sqlx::query_as::<_, PdmProject>(sqlx::AssertSqlSafe(format!(
         r#"
         INSERT INTO pdm_projects AS p (
             tenant_id, project_no, name, description, status, phase, start_date, end_date,
@@ -266,7 +266,7 @@ pub async fn create_project(
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING {PROJECT_COLUMNS}
         "#
-    ))
+    )))
     .bind(tenant_id)
     .bind(&req.project_no)
     .bind(&req.name)
@@ -314,13 +314,13 @@ pub async fn get_project(
                 .unwrap_or_default(),
         )
     };
-    let result = sqlx::query_as::<_, PdmProject>(&format!(
+    let result = sqlx::query_as::<_, PdmProject>(sqlx::AssertSqlSafe(format!(
         r#"
         SELECT {PROJECT_COLUMNS}
         FROM pdm_projects p
         WHERE p.deleted_at IS NULL AND p.id = $1 AND ($2::uuid IS NULL OR p.tenant_id = $2)
         "#
-    ))
+    )))
     .bind(id)
     .bind(tenant_id)
     .fetch_optional(&state.pool)
@@ -355,7 +355,7 @@ pub async fn update_project(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let progress = req.progress.map(|p| p.clamp(0, 100));
-    let result = sqlx::query_as::<_, PdmProject>(&format!(
+    let result = sqlx::query_as::<_, PdmProject>(sqlx::AssertSqlSafe(format!(
         r#"
         UPDATE pdm_projects p SET
             project_no = COALESCE($2, project_no),
@@ -374,7 +374,7 @@ pub async fn update_project(
         WHERE id = $1 AND tenant_id = $14 AND deleted_at IS NULL
         RETURNING {PROJECT_COLUMNS}
         "#
-    ))
+    )))
     .bind(id)
     .bind(req.project_no)
     .bind(req.name)
@@ -459,9 +459,9 @@ pub async fn update_project_status(
     if req.status.trim().is_empty() {
         return ApiResponse::bad_request("项目状态不能为空");
     }
-    let result = sqlx::query_as::<_, PdmProject>(&format!(
+    let result = sqlx::query_as::<_, PdmProject>(sqlx::AssertSqlSafe(format!(
         "UPDATE pdm_projects p SET status = $3, updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL RETURNING {PROJECT_COLUMNS}"
-    ))
+    )))
     .bind(id)
     .bind(tenant_id)
     .bind(&req.status)
@@ -498,9 +498,9 @@ pub async fn update_project_phase(
     if req.phase.trim().is_empty() {
         return ApiResponse::bad_request("项目阶段不能为空");
     }
-    let result = sqlx::query_as::<_, PdmProject>(&format!(
+    let result = sqlx::query_as::<_, PdmProject>(sqlx::AssertSqlSafe(format!(
         "UPDATE pdm_projects p SET phase = $3, updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL RETURNING {PROJECT_COLUMNS}"
-    ))
+    )))
     .bind(id)
     .bind(tenant_id)
     .bind(&req.phase)

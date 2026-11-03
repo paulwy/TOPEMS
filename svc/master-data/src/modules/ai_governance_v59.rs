@@ -1535,45 +1535,45 @@ fn classification_result_from_row(r: &sqlx::postgres::PgRow) -> ClassificationRe
 }
 
 async fn fetch_ai_suggestions(db: &PgPool) -> Result<Vec<GovernanceSuggestionV59>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {AI_SUGGESTION_COLS} FROM master_data.mdm_ai_suggestions"
-    ))
+    )))
     .fetch_all(db)
     .await?;
     Ok(rows.iter().map(ai_suggestion_from_row).collect())
 }
 
 async fn fetch_ai_models(db: &PgPool) -> Result<Vec<GovernanceModel>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {AI_MODEL_COLS} FROM master_data.mdm_ai_models"
-    ))
+    )))
     .fetch_all(db)
     .await?;
     Ok(rows.iter().map(ai_model_from_row).collect())
 }
 
 async fn fetch_match_rules(db: &PgPool) -> Result<Vec<MatchRule>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {MATCH_RULE_COLS} FROM master_data.mdm_match_rules"
-    ))
+    )))
     .fetch_all(db)
     .await?;
     Ok(rows.iter().map(match_rule_from_row).collect())
 }
 
 async fn fetch_match_results(db: &PgPool) -> Result<Vec<MatchResult>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {MATCH_RESULT_COLS} FROM master_data.mdm_match_results"
-    ))
+    )))
     .fetch_all(db)
     .await?;
     Ok(rows.iter().map(match_result_from_row).collect())
 }
 
 async fn fetch_classification_models(db: &PgPool) -> Result<Vec<ClassificationModel>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CLASSIFICATION_MODEL_COLS} FROM master_data.mdm_classification_models"
-    ))
+    )))
     .fetch_all(db)
     .await?;
     Ok(rows.iter().map(classification_model_from_row).collect())
@@ -1582,9 +1582,9 @@ async fn fetch_classification_models(db: &PgPool) -> Result<Vec<ClassificationMo
 async fn fetch_classification_results(
     db: &PgPool,
 ) -> Result<Vec<ClassificationResult>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CLASSIFICATION_RESULT_COLS} FROM master_data.mdm_classification_results"
-    ))
+    )))
     .fetch_all(db)
     .await?;
     Ok(rows.iter().map(classification_result_from_row).collect())

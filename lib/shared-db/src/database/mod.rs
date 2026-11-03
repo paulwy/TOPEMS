@@ -217,7 +217,7 @@ pub async fn ensure_master_data_refs_table(pool: &PgPool, service_prefix: &str) 
         )
         "#,
     );
-    sqlx::query(&sql)
+    sqlx::query(sqlx::AssertSqlSafe(sql))
         .execute(pool)
         .await
         .map_err(|e| TopemsError::Database(format!("Failed to create {table_name}: {e}")))?;

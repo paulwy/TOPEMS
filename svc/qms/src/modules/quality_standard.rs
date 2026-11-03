@@ -101,7 +101,7 @@ pub async fn list_standards(
         where_clause
     );
 
-    let count_query = sqlx::query_scalar(&count_sql).bind(tenant_opt);
+    let count_query = sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql)).bind(tenant_opt);
 
     let total: Option<i64> = match count_query.fetch_one(&state.pool).await {
         Ok(c) => c,
@@ -124,7 +124,7 @@ pub async fn list_standards(
         where_clause,
     );
 
-    let fetch_query = sqlx::query_as::<_, QualityStandard>(&fetch_sql)
+    let fetch_query = sqlx::query_as::<_, QualityStandard>(sqlx::AssertSqlSafe(fetch_sql))
         .bind(tenant_opt)
         .bind(page_size)
         .bind(offset);

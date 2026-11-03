@@ -36,7 +36,7 @@ impl Type<Postgres> for ProjectType {
 impl<'q> Encode<'q, Postgres> for ProjectType {
     fn encode_by_ref(
         &self,
-        buf: &mut <Postgres as sqlx::Database>::ArgumentBuffer<'q>,
+        buf: &mut <Postgres as sqlx::Database>::ArgumentBuffer,
     ) -> Result<sqlx::encode::IsNull, Box<dyn std::error::Error + Send + Sync + 'static>> {
         <&str as Encode<'q, Postgres>>::encode_by_ref(&self.to_string().as_str(), buf)
     }
@@ -98,7 +98,7 @@ impl Type<Postgres> for ProjectStatus {
 impl<'q> Encode<'q, Postgres> for ProjectStatus {
     fn encode_by_ref(
         &self,
-        buf: &mut <Postgres as sqlx::Database>::ArgumentBuffer<'q>,
+        buf: &mut <Postgres as sqlx::Database>::ArgumentBuffer,
     ) -> Result<sqlx::encode::IsNull, Box<dyn std::error::Error + Send + Sync + 'static>> {
         <&str as Encode<'q, Postgres>>::encode_by_ref(&self.to_string().as_str(), buf)
     }

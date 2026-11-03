@@ -169,7 +169,7 @@ pub async fn list_sync_records(
     sql.push_str(&format!("{} OFFSET ${}", limit_idx, limit_idx + 1));
 
     // Execute count query
-    let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
+    let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     if let Some(ds) = query.data_source_id {
         count_query = count_query.bind(ds);
     }
@@ -194,7 +194,7 @@ pub async fn list_sync_records(
     };
 
     // Execute list query
-    let mut list_query = sqlx::query_as::<_, SyncRecordRow>(&sql);
+    let mut list_query = sqlx::query_as::<_, SyncRecordRow>(sqlx::AssertSqlSafe(sql));
     if let Some(ds) = query.data_source_id {
         list_query = list_query.bind(ds);
     }

@@ -58,7 +58,7 @@ pub async fn list_parse_rules(
         }
     };
 
-    let mut query_builder = sqlx::query(sql);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql));
     match (query.status.as_ref(), query.protocol.as_ref()) {
         (Some(st), Some(pr)) => {
             query_builder = query_builder.bind(st).bind(pr).bind(page_size).bind(offset);

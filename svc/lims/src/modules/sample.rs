@@ -174,7 +174,7 @@ pub async fn list_samples(
         (None, None, None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
     };
 
-    let mut query_builder = sqlx::query(sql).bind(tenant_id);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
     match (
         query.status.as_ref(),
         query.sample_no.as_ref(),

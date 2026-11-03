@@ -401,7 +401,7 @@ pub async fn list_exam_plans(
            FROM ehs.qa_ehs_health_exam_plans WHERE {} ORDER BY plan_date DESC NULLS LAST"#,
         tenant_filter
     );
-    let rows = match sqlx::query(&sql).fetch_all(&state.pool).await {
+    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql)).fetch_all(&state.pool).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list exam plans: {}", e);
@@ -489,7 +489,7 @@ pub async fn get_exam_plan(
            FROM ehs.qa_ehs_health_exam_plans WHERE id = $1::uuid AND {}"#,
         tenant_clause
     );
-    let row = match sqlx::query(&sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .fetch_optional(&state.pool)
         .await
@@ -601,7 +601,7 @@ pub async fn list_exam_records(
            FROM ehs.qa_ehs_health_exam_records WHERE {} ORDER BY exam_date DESC NULLS LAST"#,
         tenant_filter
     );
-    let rows = match sqlx::query(&sql).fetch_all(&state.pool).await {
+    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql)).fetch_all(&state.pool).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list exam records: {}", e);
@@ -706,7 +706,7 @@ pub async fn get_exam_record(
            FROM ehs.qa_ehs_health_exam_records WHERE id = $1::uuid AND {}"#,
         tenant_clause
     );
-    let row = match sqlx::query(&sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .fetch_optional(&state.pool)
         .await
@@ -833,7 +833,7 @@ pub async fn list_contraindications(
            FROM ehs.qa_ehs_contraindications WHERE {} ORDER BY diagnosed_at DESC NULLS LAST"#,
         tenant_filter
     );
-    let rows = match sqlx::query(&sql).fetch_all(&state.pool).await {
+    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql)).fetch_all(&state.pool).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list contraindications: {}", e);
@@ -919,7 +919,7 @@ pub async fn get_contraindication(
            FROM ehs.qa_ehs_contraindications WHERE id = $1::uuid AND {}"#,
         tenant_clause
     );
-    let row = match sqlx::query(&sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .fetch_optional(&state.pool)
         .await
@@ -1011,50 +1011,50 @@ pub async fn get_health_statistics(
     let tenant_bind = resolve_health_tenant(&claims).to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
-    let total_employees: i64 = sqlx::query_scalar(&format!(
+    let total_employees: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_employees WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let exam_planned: i64 = sqlx::query_scalar(&format!(
+    let exam_planned: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_health_exam_plans WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let exam_completed: i64 = sqlx::query_scalar(&format!(
+    let exam_completed: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_health_exam_records WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let normal_count: i64 = sqlx::query_scalar(&format!(
+    let normal_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_health_exam_records WHERE {} AND overall_result = 'normal'",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let abnormal_count: i64 = sqlx::query_scalar(&format!(
+    let abnormal_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_health_exam_records WHERE {} AND overall_result != 'normal'",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let contraindication_count: i64 = sqlx::query_scalar(&format!(
+    let contraindication_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_contraindications WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
@@ -1146,7 +1146,7 @@ pub async fn list_health_records(
         LIMIT {page_size} OFFSET {offset}
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1195,7 +1195,7 @@ pub async fn create_health_record(
                   contact_info, status, created_at::text AS created_at,
                   updated_at::text AS updated_at, tenant_id::text AS tenant_id
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&record_no)
         .bind(&req.employee_id)
         .bind(&req.employee_name)
@@ -1250,7 +1250,7 @@ pub async fn get_health_record(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_optional(&state.pool)
@@ -1352,7 +1352,7 @@ pub async fn update_health_record(
                   updated_at::text AS updated_at, tenant_id::text AS tenant_id
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1395,7 +1395,7 @@ pub async fn delete_health_record(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let result = match sqlx::query(sql)
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .execute(&state.pool)

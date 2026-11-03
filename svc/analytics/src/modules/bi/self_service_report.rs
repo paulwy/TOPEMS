@@ -591,7 +591,7 @@ pub async fn query_report_data(
         select_clause, sort_by, sort_order
     );
 
-    let data_result = sqlx::query(&query)
+    let data_result = sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(page_size)
         .bind(offset)
         .fetch_all(&state.pool)

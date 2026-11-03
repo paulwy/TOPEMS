@@ -357,10 +357,10 @@ pub async fn list_quality_rules(
 
     let rows = match (params.domain.as_ref(), params.is_active) {
         (Some(domain), Some(is_active)) => {
-            sqlx::query(&format!(
+            sqlx::query(sqlx::AssertSqlSafe(format!(
             "{} WHERE domain = $1 AND is_active = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
             sql_base
-        ))
+        )))
             .bind(domain)
             .bind(is_active)
             .bind(page_size)
@@ -369,10 +369,10 @@ pub async fn list_quality_rules(
             .await
         }
         (Some(domain), None) => {
-            sqlx::query(&format!(
+            sqlx::query(sqlx::AssertSqlSafe(format!(
                 "{} WHERE domain = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
                 sql_base
-            ))
+            )))
             .bind(domain)
             .bind(page_size)
             .bind(offset)
@@ -380,10 +380,10 @@ pub async fn list_quality_rules(
             .await
         }
         (None, Some(is_active)) => {
-            sqlx::query(&format!(
+            sqlx::query(sqlx::AssertSqlSafe(format!(
                 "{} WHERE is_active = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
                 sql_base
-            ))
+            )))
             .bind(is_active)
             .bind(page_size)
             .bind(offset)
@@ -391,10 +391,10 @@ pub async fn list_quality_rules(
             .await
         }
         (None, None) => {
-            sqlx::query(&format!(
+            sqlx::query(sqlx::AssertSqlSafe(format!(
                 "{} ORDER BY created_at DESC LIMIT $1 OFFSET $2",
                 sql_base
-            ))
+            )))
             .bind(page_size)
             .bind(offset)
             .fetch_all(&mut **txn)
@@ -454,7 +454,7 @@ pub async fn get_quality_rule(
         "SELECT {} FROM erp_master_data_quality_rules WHERE deleted_at IS NULL AND id = $1",
         QUALITY_RULE_COLUMNS
     );
-    match sqlx::query(&sql).bind(rid).fetch_optional(&mut **txn).await {
+    match sqlx::query(sqlx::AssertSqlSafe(sql)).bind(rid).fetch_optional(&mut **txn).await {
         Ok(Some(row)) => match quality_rule_from_row(&row) {
             Ok(rule) => ApiResponse::success(rule, "质量规则详情"),
             Err(e) => {
@@ -502,7 +502,7 @@ pub async fn update_quality_rule(
         "SELECT {} FROM erp_master_data_quality_rules WHERE deleted_at IS NULL AND id = $1",
         QUALITY_RULE_COLUMNS
     );
-    let existing = match sqlx::query(&sql_select)
+    let existing = match sqlx::query(sqlx::AssertSqlSafe(sql_select))
         .bind(rid)
         .fetch_optional(&mut **txn)
         .await
@@ -840,21 +840,21 @@ async fn load_quality_rules(
         }
         let placeholders: Vec<String> = (1..=ids.len()).map(|i| format!("${}", i)).collect();
         let sql = format!("{} WHERE id IN ({})", sql_base, placeholders.join(", "));
-        let mut query = sqlx::query(&sql);
+        let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
         for id in ids {
             query = query.bind(id);
         }
         query.fetch_all(&mut **txn).await
     } else if let Some(d) = domain {
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "{} WHERE is_active = TRUE AND domain = $1",
             sql_base
-        ))
+        )))
         .bind(d)
         .fetch_all(&mut **txn)
         .await
     } else {
-        sqlx::query(&format!("{} WHERE is_active = TRUE", sql_base))
+        sqlx::query(sqlx::AssertSqlSafe(format!("{} WHERE is_active = TRUE", sql_base)))
             .fetch_all(&mut **txn)
             .await
     };
@@ -1101,7 +1101,7 @@ async fn check_reference(
             Some(v) if !v.is_empty() => v,
             _ => continue,
         };
-        let exists: Option<i32> = sqlx::query_scalar(&sql)
+        let exists: Option<i32> = sqlx::query_scalar(sqlx::AssertSqlSafe(sql.as_str()))
             .bind(&val)
             .fetch_optional(&mut **txn)
             .await
@@ -1143,7 +1143,7 @@ async fn check_custom_sql(
         .get("suggestion")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let rows = sqlx::query(sql_text).fetch_all(&mut **txn).await;
+    let rows = sqlx::query(sqlx::AssertSqlSafe(sql_text)).fetch_all(&mut **txn).await;
     match rows {
         Ok(rows) => {
             use sqlx::Row;

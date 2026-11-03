@@ -288,7 +288,7 @@ pub async fn list_plans(
         (None, None, None, None) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
     };
 
-    let mut query_builder = sqlx::query(sql);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql));
     match (
         query.status.as_ref(),
         query.year.as_ref(),

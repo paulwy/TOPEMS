@@ -42,9 +42,9 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             "id UUID PRIMARY KEY, status VARCHAR(20), deleted_at TIMESTAMPTZ",
         ),
     ] {
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "CREATE TABLE IF NOT EXISTS wms.{table} ({ddl})"
-        ))
+        )))
         .execute(pool)
         .await
         .unwrap();

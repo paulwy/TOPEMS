@@ -139,7 +139,7 @@ pub async fn list_records(
         LIMIT {page_size} OFFSET {offset}
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -299,7 +299,7 @@ pub async fn update_record(
         params.len() + 2
     );
 
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -352,44 +352,44 @@ pub async fn get_statistics(
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
-    let total_records: i64 = sqlx::query_scalar(&format!(
+    let total_records: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.health_records WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let normal_count: i64 = sqlx::query_scalar(&format!(
+    let normal_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.health_records WHERE {} AND result = '正常'",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let abnormal_count: i64 = sqlx::query_scalar(&format!(
+    let abnormal_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.health_records WHERE {} AND result IS NOT NULL AND result <> '正常'",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let pending_count: i64 = sqlx::query_scalar(&format!(
+    let pending_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.health_records WHERE {} AND (result IS NULL OR result = '')",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
     let mut by_check_type: Vec<serde_json::Value> = Vec::new();
-    if let Ok(rows) = sqlx::query(&format!(
+    if let Ok(rows) = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT COALESCE(check_type, '未分类') AS ct, COUNT(*)::int8 AS cnt FROM ehs.health_records WHERE {} GROUP BY 1 ORDER BY cnt DESC",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_all(&state.pool)
     .await
@@ -403,10 +403,10 @@ pub async fn get_statistics(
     }
 
     let mut by_department: Vec<serde_json::Value> = Vec::new();
-    if let Ok(rows) = sqlx::query(&format!(
+    if let Ok(rows) = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT COALESCE(department, '未分类') AS dept, COUNT(*)::int8 AS cnt FROM ehs.health_records WHERE {} GROUP BY 1 ORDER BY cnt DESC",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_all(&state.pool)
     .await

@@ -4456,7 +4456,7 @@ async fn paginated_deliveries(
         delivery_select_sql(),
         filter
     );
-    let mut q = sqlx::query(&sql);
+    let mut q = sqlx::query(sqlx::AssertSqlSafe(sql));
     q = q.bind(user_id);
     q = q.bind(&query.status);
     q = q.bind(&query.channel);
@@ -4471,7 +4471,7 @@ async fn paginated_deliveries(
         "SELECT COUNT(*) FROM core_notification_deliveries {}",
         filter
     );
-    let mut c = sqlx::query(&count_sql);
+    let mut c = sqlx::query(sqlx::AssertSqlSafe(count_sql));
     c = c.bind(user_id);
     c = c.bind(&query.status);
     c = c.bind(&query.channel);
@@ -4544,10 +4544,10 @@ pub async fn get_delivery(
         Ok(uid) => uid,
         Err(v) => return Json(v),
     };
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "{} WHERE id = $1 AND user_id = $2",
         delivery_select_sql()
-    ))
+    )))
     .bind(id)
     .bind(user_id)
     .fetch_optional(&pool)

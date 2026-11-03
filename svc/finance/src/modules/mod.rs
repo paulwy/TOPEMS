@@ -93,10 +93,10 @@ pub struct AuxQueryParams {
 }
 
 async fn count_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Option<Uuid>) -> i64 {
-    match sqlx::query_scalar(&format!(
+    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         table
-    ))
+    )))
     .bind(tenant_id)
     .fetch_one(pool)
     .await
@@ -112,10 +112,10 @@ async fn count_table_with_tenant_and_status(
     tenant_id: Option<Uuid>,
     status: &str,
 ) -> i64 {
-    match sqlx::query_scalar(&format!(
+    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2",
         table
-    ))
+    )))
     .bind(tenant_id)
     .bind(status)
     .fetch_one(pool)
@@ -127,10 +127,10 @@ async fn count_table_with_tenant_and_status(
 }
 
 async fn sum_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Option<Uuid>) -> i64 {
-    match sqlx::query_scalar(&format!(
+    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COALESCE(SUM(amount), 0) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         table
-    ))
+    )))
     .bind(tenant_id)
     .fetch_one(pool)
     .await
@@ -141,7 +141,7 @@ async fn sum_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Opti
 }
 
 async fn sum_overdue_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Option<Uuid>) -> i64 {
-    match sqlx::query_scalar(&format!("SELECT COALESCE(SUM(amount), 0) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND due_date < NOW() AND status = 'unpaid'", table))
+    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COALESCE(SUM(amount), 0) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND due_date < NOW() AND status = 'unpaid'", table)))
         .bind(tenant_id)
         .fetch_one(pool)
         .await

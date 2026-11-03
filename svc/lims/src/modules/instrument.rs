@@ -128,7 +128,7 @@ pub async fn list_instruments(
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let mut query_builder = sqlx::query(sql).bind(tenant_id);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
     match (query.status.as_ref(), query.name.as_ref()) {
         (Some(st), Some(nm)) => {
             query_builder = query_builder
@@ -861,10 +861,10 @@ pub async fn list_maintenance(
     } else {
         Some(ctx.tenant_id)
     };
-    let rows = sqlx::query(
-        &format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {MAINTENANCE_COLUMNS} FROM lims.maintenance_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND instrument_id = $2 AND deleted_at IS NULL ORDER BY performed_at DESC NULLS LAST, created_at DESC"
         ),
+    ),
     )
     .bind(ctx.tenant_id)
     .bind(id)

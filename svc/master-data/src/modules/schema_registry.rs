@@ -801,7 +801,7 @@ async fn create_dynamic_table(
         columns.join(", ")
     );
 
-    sqlx::query(&sql).execute(pool).await?;
+    sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
     Ok(())
 }
 

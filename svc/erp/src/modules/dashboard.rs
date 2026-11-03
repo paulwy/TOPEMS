@@ -42,16 +42,16 @@ async fn count_table(txn: &mut sqlx::Transaction<'static, sqlx::Postgres>, table
     let Some(table) = validate_table(table) else {
         return 0;
     };
-    match sqlx::query_scalar(&format!(
+    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM {} WHERE deleted_at IS NULL",
         table
-    ))
+    )))
     .fetch_one(&mut **txn)
     .await
     {
         Ok(v) => v,
         Err(_) => {
-            match sqlx::query_scalar(&format!("SELECT COUNT(*) FROM {}", table))
+            match sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COUNT(*) FROM {}", table)))
                 .fetch_one(&mut **txn)
                 .await
             {
@@ -70,17 +70,17 @@ async fn count_table_with_status(
     let Some(table) = validate_table(table) else {
         return 0;
     };
-    match sqlx::query_scalar(&format!(
+    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM {} WHERE status = $1 AND deleted_at IS NULL",
         table
-    ))
+    )))
     .bind(status)
     .fetch_one(&mut **txn)
     .await
     {
         Ok(v) => v,
         Err(_) => {
-            match sqlx::query_scalar(&format!("SELECT COUNT(*) FROM {} WHERE status = $1", table))
+            match sqlx::query_scalar(sqlx::AssertSqlSafe(format!("SELECT COUNT(*) FROM {} WHERE status = $1", table)))
                 .bind(status)
                 .fetch_one(&mut **txn)
                 .await

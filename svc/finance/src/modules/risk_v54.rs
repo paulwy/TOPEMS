@@ -498,7 +498,7 @@ pub async fn init_risk_v54_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     ];
 
     for sql in create_tables {
-        sqlx::query(sql).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
     }
     Ok(())
 }
@@ -536,7 +536,7 @@ impl RealTimeRiskMonitor {
             conditions.push(format!("'{}'", cat));
         }
 
-        let indicators: Vec<RiskIndicator> = sqlx::query_as(&query)
+        let indicators: Vec<RiskIndicator> = sqlx::query_as(sqlx::AssertSqlSafe(query))
             .bind(tenant_id)
             .fetch_all(pool)
             .await?;
@@ -1097,7 +1097,7 @@ impl AutoComplianceReviewer {
 
         query.push_str(" ORDER BY reviewed_at DESC LIMIT 500");
 
-        let mut q = sqlx::query_as::<_, ReviewResult>(&query);
+        let mut q = sqlx::query_as::<_, ReviewResult>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref et) = entity_type {
             q = q.bind(et);

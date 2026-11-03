@@ -8,7 +8,7 @@ where
     T: for<'r> FromRow<'r, sqlx::postgres::PgRow> + Send + Unpin,
 {
     let query = format!("SELECT * FROM {} WHERE id = $1", table_name);
-    sqlx::query_as::<sqlx::Postgres, T>(&query)
+    sqlx::query_as::<sqlx::Postgres, T>(sqlx::AssertSqlSafe(query))
         .bind(id)
         .fetch_one(pool)
         .await
@@ -34,7 +34,7 @@ where
         format!("SELECT COUNT(*) FROM {} WHERE {}", table_name, where_clause)
     };
 
-    let total: i64 = sqlx::query_scalar(&total_query).fetch_one(pool).await?;
+    let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(total_query)).fetch_one(pool).await?;
 
     let items_query = if where_clause.is_empty() {
         format!(
@@ -48,7 +48,7 @@ where
         )
     };
 
-    let items: Vec<T> = sqlx::query_as(&items_query)
+    let items: Vec<T> = sqlx::query_as(sqlx::AssertSqlSafe(items_query))
         .bind(page_size)
         .bind(offset)
         .fetch_all(pool)
@@ -90,9 +90,9 @@ where
     };
 
     let total: i64 = if search_pattern.is_empty() {
-        sqlx::query_scalar(&total_query).fetch_one(pool).await?
+        sqlx::query_scalar(sqlx::AssertSqlSafe(total_query)).fetch_one(pool).await?
     } else {
-        sqlx::query_scalar(&total_query)
+        sqlx::query_scalar(sqlx::AssertSqlSafe(total_query))
             .bind(format!("%{}%", search_pattern))
             .fetch_one(pool)
             .await?
@@ -111,13 +111,13 @@ where
     };
 
     let items: Vec<T> = if search_pattern.is_empty() {
-        sqlx::query_as(&items_query)
+        sqlx::query_as(sqlx::AssertSqlSafe(items_query))
             .bind(page_size)
             .bind(offset)
             .fetch_all(pool)
             .await?
     } else {
-        sqlx::query_as(&items_query)
+        sqlx::query_as(sqlx::AssertSqlSafe(items_query))
             .bind(format!("%{}%", search_pattern))
             .bind(page_size)
             .bind(offset)
@@ -130,7 +130,7 @@ where
 
 pub async fn delete(pool: &PgPool, table_name: &str, id: Uuid) -> Result<(), sqlx::Error> {
     let query = format!("DELETE FROM {} WHERE id = $1", table_name);
-    sqlx::query(&query).bind(id).execute(pool).await?;
+    sqlx::query(sqlx::AssertSqlSafe(query)).bind(id).execute(pool).await?;
     Ok(())
 }
 

@@ -118,7 +118,7 @@ pub async fn list_datasets(
     let offset = (page - 1) * page_size;
 
     let query = "SELECT id, name, description, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at FROM bi.analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid OR is_public = true) ORDER BY created_at DESC LIMIT $4 OFFSET $5";
-    let result = sqlx::query_as::<_, Dataset>(query)
+    let result = sqlx::query_as::<_, Dataset>(sqlx::AssertSqlSafe(query))
         .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
         .bind(params.status.as_deref())
         .bind(params.data_source_id)
@@ -739,7 +739,7 @@ async fn execute_bi_sql(
              FROM (SELECT * FROM ({}) __src LIMIT {} OFFSET {}) t",
             sql, limit, offset
         );
-        let row = sqlx::query(&wrapped)
+        let row = sqlx::query(sqlx::AssertSqlSafe(wrapped))
             .fetch_one(&mut *conn)
             .await
             // 用户 SQL 的语法/执行错误需回显给测试者（BI SQL 测试工具的核心反馈），

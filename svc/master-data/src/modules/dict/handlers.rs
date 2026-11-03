@@ -100,7 +100,7 @@ pub async fn list_dict_types(
         dict_type_columns("$6")
     );
 
-    let items: Vec<DictType> = match sqlx::query_as(&sql)
+    let items: Vec<DictType> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(category)
         .bind(status)
         .bind(search)
@@ -149,7 +149,7 @@ pub async fn get_dict_type(
         dict_type_columns("$2")
     );
 
-    let dict_type: Option<DictType> = match sqlx::query_as(&sql)
+    let dict_type: Option<DictType> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .bind(Locale::from_headers(&headers).as_sql())
         .fetch_optional(&state.db)
@@ -203,7 +203,7 @@ pub async fn create_dict_type(
         dict_type_columns("$6")
     );
 
-    let dict_type: DictType = match sqlx::query_as(&sql)
+    let dict_type: DictType = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(req.code)
         .bind(req.name)
         .bind(req.name_en)
@@ -258,7 +258,7 @@ pub async fn update_dict_type(
         dict_type_columns("$9")
     );
 
-    let dict_type: Option<DictType> = match sqlx::query_as(&sql)
+    let dict_type: Option<DictType> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(req.code)
         .bind(req.name)
         .bind(req.category)
@@ -378,7 +378,7 @@ pub async fn list_dict_items(
         dict_item_columns("$6")
     );
 
-    let items: Vec<DictItem> = match sqlx::query_as(&sql)
+    let items: Vec<DictItem> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(dict_type_id)
         .bind(status)
         .bind(search)
@@ -427,7 +427,7 @@ pub async fn get_dict_item(
         dict_item_columns("$2")
     );
 
-    let dict_item: Option<DictItem> = match sqlx::query_as(&sql)
+    let dict_item: Option<DictItem> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .bind(Locale::from_headers(&headers).as_sql())
         .fetch_optional(&state.db)
@@ -481,7 +481,7 @@ pub async fn create_dict_item(
         dict_item_columns("$9")
     );
 
-    let dict_item: DictItem = match sqlx::query_as(&sql)
+    let dict_item: DictItem = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(req.dict_type_id)
         .bind(req.code)
         .bind(req.name)
@@ -541,7 +541,7 @@ pub async fn update_dict_item(
         dict_item_columns("$11")
     );
 
-    let dict_item: Option<DictItem> = match sqlx::query_as(&sql)
+    let dict_item: Option<DictItem> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(req.code)
         .bind(req.name)
         .bind(req.value)
@@ -642,7 +642,7 @@ pub async fn batch_create_dict_items(
 
     let mut results: Vec<DictItem> = Vec::with_capacity(req.items.len());
     for item in req.items {
-        let dict_item: DictItem = match sqlx::query_as(&insert_sql)
+        let dict_item: DictItem = match sqlx::query_as(sqlx::AssertSqlSafe(insert_sql.as_str()))
             .bind(req.dict_type_id)
             .bind(item.code)
             .bind(item.name)
@@ -698,7 +698,7 @@ pub async fn export_dict_items(
         dict_item_columns("$2")
     );
 
-    let items: Vec<DictItem> = match sqlx::query_as(&sql)
+    let items: Vec<DictItem> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(dict_type_id)
         .bind(Locale::from_headers(&headers).as_sql())
         .fetch_all(&state.db)

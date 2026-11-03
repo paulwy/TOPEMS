@@ -398,7 +398,7 @@ pub async fn init_reports_v57_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     ];
 
     for sql in create_tables {
-        sqlx::query(sql).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
     }
     Ok(())
 }
@@ -519,7 +519,7 @@ impl AutomatedReportEngine {
         }
         query.push_str(" ORDER BY generated_at DESC LIMIT 500");
 
-        let mut q = sqlx::query_as::<_, GeneratedReport>(&query);
+        let mut q = sqlx::query_as::<_, GeneratedReport>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref s) = status {
             q = q.bind(s);
@@ -1106,7 +1106,7 @@ impl PredictiveInsightEngine {
         }
         query.push_str(" ORDER BY created_at DESC LIMIT 200");
 
-        let mut q = sqlx::query_as::<_, Insight>(&query);
+        let mut q = sqlx::query_as::<_, Insight>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref t) = insight_type {
             q = q.bind(t);

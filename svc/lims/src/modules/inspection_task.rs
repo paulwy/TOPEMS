@@ -150,10 +150,10 @@ pub async fn list_tasks_by_sample(
         Some(ctx.tenant_id)
     };
 
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND sample_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC",
         TASK_SELECT_COLS
-    ))
+    )))
     .bind(sample_uuid)
     .bind(tenant_id)
     .fetch_all(&state.pool)
@@ -242,10 +242,10 @@ pub async fn complete_step(
     }
 
     // 2) 更新任务结果
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE public.qa_lab_tasks SET result = $2, conclusion = $3, recorded_by = $4, updated_at = NOW() WHERE id = $1 AND tenant_id = $5 RETURNING {}",
         TASK_SELECT_COLS
-    ))
+    )))
     .bind(task_uuid)
     .bind(&test_data)
     .bind(&req.conclusion)
@@ -293,10 +293,10 @@ pub async fn list_tasks(
         }
     }
 
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC",
         TASK_SELECT_COLS
-    ))
+    )))
     .bind(ctx.tenant_id)
     .fetch_all(&state.pool)
     .await;
@@ -383,10 +383,10 @@ pub async fn create_task(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "INSERT INTO public.qa_lab_tasks (tenant_id, task_no, sample_id, sample_no, test_items, assigned_to, instrument_id, planned_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING {}",
         TASK_SELECT_COLS
-    ))
+    )))
     .bind(ctx.tenant_id)
     .bind(task_no)
     .bind(sample_id)
@@ -481,10 +481,10 @@ pub async fn get_task(
         }
     }
 
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
         TASK_SELECT_COLS
-    ))
+    )))
     .bind(id)
     .bind(tenant_id)
     .fetch_one(&state.pool)
@@ -542,10 +542,10 @@ pub async fn update_task(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE public.qa_lab_tasks SET status = COALESCE($2, status), assigned_to = COALESCE($3, assigned_to), instrument_id = COALESCE($4, instrument_id), actual_start_date = COALESCE($5::timestamp, actual_start_date), actual_end_date = COALESCE($6::timestamp, actual_end_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $7 RETURNING {}",
         TASK_SELECT_COLS
-    ))
+    )))
     .bind(id)
     .bind(&req.status)
     .bind(&req.assigned_to)
@@ -632,10 +632,10 @@ pub async fn submit_result(
         Err(_) => return ApiResponse::bad_request("无效的任务ID"),
     };
 
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE public.qa_lab_tasks SET result = $2, conclusion = $3, recorded_by = $4, status = 'completed', actual_end_date = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $5 RETURNING {}",
         TASK_SELECT_COLS
-    ))
+    )))
     .bind(id)
     .bind(req.result)
     .bind(&req.conclusion)

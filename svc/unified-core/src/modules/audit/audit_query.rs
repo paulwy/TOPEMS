@@ -550,7 +550,7 @@ async fn load_top_by_column(
         table = table,
         date_col = date_col,
     );
-    let rows = sqlx::query(&sql)
+    let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(start_date)
         .bind(end_date)
         .fetch_all(&state.pool)
@@ -632,7 +632,7 @@ async fn load_trend(
         table = table,
         date_col = date_col,
     );
-    let rows = sqlx::query(&sql)
+    let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(start_date)
         .bind(end_date)
         .fetch_all(&state.pool)

@@ -176,7 +176,7 @@ pub async fn list_barcodes(
         (None, None, None) => "SELECT id, tenant_id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_sample_barcodes ORDER BY created_at DESC LIMIT $1 OFFSET $2",
     };
 
-    let mut query_builder = sqlx::query(sql);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql));
     match (
         query.barcode_type.as_ref(),
         query.status.as_ref(),
@@ -796,7 +796,7 @@ pub async fn list_rfid_tags(
         (None, None) => "SELECT id, tag_id, tag_type, sample_id, sample_no, status, assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_rfid_tags ORDER BY created_at DESC LIMIT $1 OFFSET $2",
     };
 
-    let mut query_builder = sqlx::query(sql);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql));
     match (query.status.as_ref(), query.tag_id.as_ref()) {
         (Some(st), Some(tid)) => {
             query_builder = query_builder

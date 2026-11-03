@@ -452,7 +452,7 @@ pub async fn list_geofences(
 
     sql.push_str(" ORDER BY created_at DESC");
 
-    let mut query = sqlx::query_as::<_, ImGeofence>(&sql);
+    let mut query = sqlx::query_as::<_, ImGeofence>(sqlx::AssertSqlSafe(sql));
     if let Some(uid) = bind_chat_id {
         query = query.bind(uid);
     }

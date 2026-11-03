@@ -247,7 +247,7 @@ pub async fn list_feedbacks(
         where_clause
     );
 
-    let mut sqlx_query = sqlx::query_as::<_, Ticket>(&query);
+    let mut sqlx_query = sqlx::query_as::<_, Ticket>(sqlx::AssertSqlSafe(query));
     for arg in &args {
         sqlx_query = sqlx_query.bind(arg);
     }
@@ -259,7 +259,7 @@ pub async fn list_feedbacks(
 
     match tickets {
         Ok(tickets) => {
-            let mut count_sqlx = sqlx::query_scalar::<_, i64>(&count_query);
+            let mut count_sqlx = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query));
             for arg in &args {
                 count_sqlx = count_sqlx.bind(arg);
             }

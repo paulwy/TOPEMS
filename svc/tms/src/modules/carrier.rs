@@ -570,10 +570,10 @@ pub async fn submit_qualification(
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result = sqlx::query_as::<_, Carrier>(&format!(
+    let result = sqlx::query_as::<_, Carrier>(sqlx::AssertSqlSafe(format!(
         r#"SELECT {} FROM tms.tms_carriers WHERE id = $1 AND tenant_id = $2"#,
         carrier_return_columns("$3")
-    ))
+    )))
     .bind(id)
     .bind(tenant_id)
     .bind(Locale::from_headers(&headers).as_sql())
@@ -646,11 +646,11 @@ pub async fn approve_carrier(
                 ));
             }
             let requires_approval = carrier_requires_approval(&status, "active");
-            let result = sqlx::query_as::<_, Carrier>(&format!(
+            let result = sqlx::query_as::<_, Carrier>(sqlx::AssertSqlSafe(format!(
                 r#"UPDATE tms.tms_carriers SET status = 'active', updated_at = $2
                     WHERE id = $1 AND tenant_id = $3 AND status IN ('pending_review','suspended') RETURNING {}"#,
                 carrier_return_columns("$4")
-            ))
+            )))
             .bind(id)
             .bind(now)
             .bind(tenant_id)
@@ -740,11 +740,11 @@ pub async fn reject_carrier(
                     "当前状态不允许驳回".to_string(),
                 ));
             }
-            let result = sqlx::query_as::<_, Carrier>(&format!(
+            let result = sqlx::query_as::<_, Carrier>(sqlx::AssertSqlSafe(format!(
                 r#"UPDATE tms.tms_carriers SET status = 'rejected', updated_at = $2
                     WHERE id = $1 AND tenant_id = $3 AND status = 'pending_review' RETURNING {}"#,
                 carrier_return_columns("$4")
-            ))
+            )))
             .bind(id)
             .bind(now)
             .bind(tenant_id)

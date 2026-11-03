@@ -323,13 +323,13 @@ pub async fn list_thresholds(
 ) -> ApiResponse<Vec<AlertThreshold>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match sqlx::query(&format!(
+    match sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {cols} FROM public.monitor_thresholds
          WHERE {where} AND enabled = TRUE
          ORDER BY created_at",
         cols = THRESHOLD_COLUMNS,
         where = TENANT_SOFT_DELETED,
-    ))
+    )))
     .bind(tenant_id)
     .fetch_all(&state.pool)
     .await
@@ -361,13 +361,13 @@ pub async fn create_threshold(
 ) -> ApiResponse<AlertThreshold> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match sqlx::query(&format!(
+    match sqlx::query(sqlx::AssertSqlSafe(format!(
         "INSERT INTO public.monitor_thresholds
             (tenant_id, name, metric_type, operator, threshold_value, severity, service_name, enabled, description)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING {cols}",
         cols = THRESHOLD_COLUMNS,
-    ))
+    )))
     .bind(tenant_id)
     .bind(&req.name)
     .bind(req.metric_type.as_db())
@@ -408,12 +408,12 @@ pub async fn get_threshold(
 ) -> ApiResponse<AlertThreshold> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match sqlx::query(&format!(
+    match sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {cols} FROM public.monitor_thresholds
          WHERE {where} AND id = $2",
         cols = THRESHOLD_COLUMNS,
         where = TENANT_SOFT_DELETED,
-    ))
+    )))
     .bind(tenant_id)
     .bind(id)
     .fetch_optional(&state.pool)
@@ -450,7 +450,7 @@ pub async fn update_threshold(
 ) -> ApiResponse<AlertThreshold> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match sqlx::query(&format!(
+    match sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE public.monitor_thresholds SET
             name = $3, metric_type = $4, operator = $5, threshold_value = $6,
             severity = $7, service_name = $8, enabled = $9, description = $10,
@@ -459,7 +459,7 @@ pub async fn update_threshold(
          RETURNING {cols}",
         cols = THRESHOLD_COLUMNS,
         where = TENANT_SOFT_DELETED,
-    ))
+    )))
     .bind(tenant_id)
     .bind(id)
     .bind(&req.name)
@@ -503,11 +503,11 @@ pub async fn delete_threshold(
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     // 软删除：与 alerts 模块一致置 deleted_at，不物理删行
-    match sqlx::query(&format!(
+    match sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE public.monitor_thresholds SET deleted_at = NOW(), updated_at = NOW()
          WHERE {where} AND id = $2",
         where = TENANT_SOFT_DELETED,
-    ))
+    )))
     .bind(tenant_id)
     .bind(id)
     .execute(&state.pool)
@@ -538,13 +538,13 @@ pub async fn evaluate_thresholds(
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     // 1. 从库加载当前租户启用的阈值（不再使用空内存 Evaluator）
-    let thresholds: Vec<AlertThreshold> = match sqlx::query(&format!(
+    let thresholds: Vec<AlertThreshold> = match sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {cols} FROM public.monitor_thresholds
          WHERE {where} AND enabled = TRUE
          ORDER BY created_at",
         cols = THRESHOLD_COLUMNS,
         where = TENANT_SOFT_DELETED,
-    ))
+    )))
     .bind(tenant_id)
     .fetch_all(&state.pool)
     .await

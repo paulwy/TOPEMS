@@ -271,7 +271,7 @@ impl AuditLogService {
             6 + resource_filter_len,
         );
 
-        let mut q = sqlx::query_as::<_, AuditLogRecord>(&sql)
+        let mut q = sqlx::query_as::<_, AuditLogRecord>(sqlx::AssertSqlSafe(sql))
             .bind(query.action.as_deref())
             .bind(query.entity_type.as_deref())
             .bind(query.user_id.as_deref())
@@ -426,7 +426,7 @@ impl SchemaAwareAuditLogService {
             if trimmed.is_empty() {
                 continue;
             }
-            sqlx::query(trimmed).execute(&self.pool).await?;
+            sqlx::query(sqlx::AssertSqlSafe(trimmed)).execute(&self.pool).await?;
         }
         Ok(ddl)
     }
@@ -457,7 +457,7 @@ impl SchemaAwareAuditLogService {
             "#,
             tbl = tbl,
         );
-        let record = sqlx::query_as::<_, AuditLogRecord>(&sql)
+        let record = sqlx::query_as::<_, AuditLogRecord>(sqlx::AssertSqlSafe(sql))
             .bind(request.tenant_id)
             .bind(&request.action)
             .bind(&request.entity_type)
@@ -574,7 +574,7 @@ impl SchemaAwareAuditLogService {
             offset_placeholder = 6 + resource_filter_len,
         );
 
-        let mut q = sqlx::query_as::<_, AuditLogRecord>(&sql)
+        let mut q = sqlx::query_as::<_, AuditLogRecord>(sqlx::AssertSqlSafe(sql))
             .bind(query.action.as_deref())
             .bind(query.entity_type.as_deref())
             .bind(query.user_id.as_deref())

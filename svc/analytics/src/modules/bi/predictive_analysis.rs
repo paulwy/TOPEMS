@@ -295,7 +295,7 @@ pub async fn moving_average_forecast(
         time_q, value_q, time_q
     );
 
-    let _rows = match sqlx::query(&query)
+    let _rows = match sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(100_i64)
         .fetch_all(&state.pool)
         .await
@@ -416,7 +416,7 @@ pub async fn exponential_smoothing_forecast(
         time_q, value_q, time_q
     );
 
-    let _rows = match sqlx::query(&query)
+    let _rows = match sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(100_i64)
         .fetch_all(&state.pool)
         .await
@@ -517,7 +517,7 @@ pub async fn trend_analysis(
         time_q, value_q, time_q
     );
 
-    let _rows = match sqlx::query(&query)
+    let _rows = match sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(100_i64)
         .fetch_all(&state.pool)
         .await
@@ -605,7 +605,7 @@ pub async fn prediction_comparison(
         time_q, value_q, time_q
     );
 
-    let _rows = match sqlx::query(&query)
+    let _rows = match sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(100_i64)
         .fetch_all(&state.pool)
         .await

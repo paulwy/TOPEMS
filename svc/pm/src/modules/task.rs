@@ -107,7 +107,7 @@ pub async fn list_tasks(
     // 多语言：locale 追加为 $7，title 的 CASE 表达式引用它（既有 $1..$6 占位符不动）
     let locale = Locale::from_headers(&headers).as_sql();
     let return_cols = task_return_columns("$7");
-    let result: Result<Vec<Task>, sqlx::Error> = sqlx::query_as(&format!(
+    let result: Result<Vec<Task>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         "SELECT {return_cols} FROM pm.pm_tasks
          WHERE deleted_at IS NULL
            AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)
@@ -116,7 +116,7 @@ pub async fn list_tasks(
            AND ($3::text IS NULL OR priority = $3)
            AND ($4::text IS NULL OR assignee = $4)
          ORDER BY created_at DESC LIMIT $5 OFFSET $6"
-    ))
+    )))
     .bind(query.project_id)
     .bind(&query.status)
     .bind(&query.priority)
@@ -188,13 +188,13 @@ pub async fn list_tasks_by_project(
     // 多语言：locale 追加为 $5，title 的 CASE 表达式引用它（既有 $1..$4 占位符不动）
     let locale = Locale::from_headers(&headers).as_sql();
     let return_cols = task_return_columns("$5");
-    let result: Result<Vec<Task>, sqlx::Error> = sqlx::query_as(&format!(
+    let result: Result<Vec<Task>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         "SELECT {return_cols} FROM pm.pm_tasks
          WHERE project_id = $1 AND deleted_at IS NULL
            AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)
            AND ($2::text IS NULL OR status = $2)
          ORDER BY created_at DESC LIMIT $3 OFFSET $4"
-    ))
+    )))
     .bind(project_id)
     .bind(&query.status)
     .bind(page_size)
@@ -263,13 +263,13 @@ pub async fn create_task(
     // 多语言：title_en 追加为 $15，locale 追加为 $16，RETURNING 的 title CASE 引用 $16
     let locale = Locale::from_headers(&headers).as_sql();
     let return_cols = task_return_columns("$16");
-    let result: Result<Task, sqlx::Error> = sqlx::query_as(&format!(
+    let result: Result<Task, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         r#"INSERT INTO pm.pm_tasks
         (id, tenant_id, project_id, task_number, title, description, status, priority, assignee,
          start_date, end_date, progress, created_by, created_at, updated_at, title_en)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14,$15)
         RETURNING {return_cols}"#
-    ))
+    )))
     .bind(id)
     .bind(tenant_id)
     .bind(req.project_id)
@@ -330,9 +330,9 @@ pub async fn get_task(
     // 多语言：locale 追加为 $2，title 的 CASE 表达式引用它
     let locale = Locale::from_headers(&headers).as_sql();
     let return_cols = task_return_columns("$2");
-    let result: Result<Option<Task>, sqlx::Error> = sqlx::query_as(&format!(
+    let result: Result<Option<Task>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         "SELECT {return_cols} FROM pm.pm_tasks WHERE id = $1 AND deleted_at IS NULL AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)"
-    ))
+    )))
     .bind(id)
     .bind(locale)
     .fetch_optional(&mut **txn)
@@ -385,7 +385,7 @@ pub async fn update_task(
     // （既有 $1..$10 占位符与 progress 对 $4/$9 的引用均不动）
     let locale = Locale::from_headers(&headers).as_sql();
     let return_cols = task_return_columns("$12");
-    let result: Result<Option<Task>, sqlx::Error> = sqlx::query_as(&format!(
+    let result: Result<Option<Task>, sqlx::Error> = sqlx::query_as(sqlx::AssertSqlSafe(format!(
         r#"UPDATE pm.pm_tasks SET
            title = COALESCE($2, title),
            description = COALESCE($3, description),
@@ -402,7 +402,7 @@ pub async fn update_task(
            title_en = COALESCE($11, title_en)
            WHERE id = $1 AND deleted_at IS NULL AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)
            RETURNING {return_cols}"#
-    ))
+    )))
     .bind(id)
     .bind(&req.title)
     .bind(&req.description)

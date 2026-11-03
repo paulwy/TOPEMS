@@ -242,7 +242,7 @@ pub async fn list_projects(
         (None, None, None) => format!("{} ORDER BY p.created_at DESC LIMIT $1 OFFSET $2", base_sql),
     };
 
-    let mut query_builder = sqlx::query(&sql);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql));
     match (
         query.status.as_ref(),
         query.method_id.as_ref(),

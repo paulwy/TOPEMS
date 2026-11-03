@@ -576,9 +576,9 @@ pub async fn get_metadata(
     Path(id): Path<String>,
 ) -> ApiResponse<MetadataObject> {
     // K1：真表读取。
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects WHERE id = $1 LIMIT 1"
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await
@@ -605,11 +605,11 @@ pub async fn list_metadata(
     Query(params): Query<ListMetadataQuery>,
 ) -> ApiResponse<Vec<MetadataObject>> {
     // K1：真表读取，可选 object_type 过滤。
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects
              WHERE ($1::text IS NULL OR object_type = $1)
              ORDER BY updated_at DESC"
-    ))
+    )))
     .bind(params.object_type.as_deref())
     .fetch_all(&state.db)
     .await
@@ -634,11 +634,11 @@ pub async fn search_metadata(
 ) -> ApiResponse<Vec<MetadataObject>> {
     // K1：真表 LIKE 搜索。
     let pattern = format!("%{}%", params.q);
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects
            WHERE name ILIKE $1 OR description ILIKE $1 OR owner ILIKE $1
            ORDER BY created_at DESC"#,
-    ))
+    )))
     .bind(&pattern)
     .fetch_all(&state.db)
     .await;
@@ -656,11 +656,11 @@ pub async fn search_metadata_compat(
     Query(params): Query<CompatSearchMetadataQuery>,
 ) -> ApiResponse<Vec<MetadataObject>> {
     let pattern = format!("%{}%", params.q.unwrap_or_default());
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects
            WHERE name ILIKE $1 OR description ILIKE $1 OR owner ILIKE $1
            ORDER BY created_at DESC"#,
-    ))
+    )))
     .bind(&pattern)
     .fetch_all(&state.db)
     .await;
@@ -721,9 +721,9 @@ pub async fn update_metadata(
         Err(e) => return ApiResponse::server_error(&format!("更新元数据对象失败: {e}")),
     }
 
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects WHERE id = $1 LIMIT 1"
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await
@@ -879,9 +879,9 @@ pub async fn add_tag(
 )]
 pub async fn get_metadata_stats(State(state): State<AppState>) -> ApiResponse<MetadataStats> {
     // K1：数据源改真表（objects/attributes/tags），聚合逻辑保留。
-    let obj_rows = sqlx::query(&format!(
+    let obj_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects ORDER BY created_at DESC"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await;
     let objects: Vec<MetadataObject> = match obj_rows {
@@ -1059,9 +1059,9 @@ pub async fn get_lineage_graph(
     Path(id): Path<String>,
 ) -> ApiResponse<LineageGraph> {
     // K1：读真表。
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {GRAPH_COLS} FROM master_data.mdm_v60_lineage_graphs WHERE id = $1 LIMIT 1"#,
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await;
@@ -1130,9 +1130,9 @@ pub async fn get_path(
     Json(req): Json<GetPathRequest>,
 ) -> ApiResponse<Vec<LineageEdgeV60>> {
     // K1：真表全量加载 + 内存 BFS（逻辑保留）。
-    let edge_rows = sqlx::query(&format!(
+    let edge_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {EDGE_COLS} FROM master_data.mdm_v60_lineage_edges ORDER BY id"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await;
     let edges: Vec<LineageEdgeV60> = match edge_rows {
@@ -1229,9 +1229,9 @@ pub async fn get_lineage_impact(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_lineage_dashboard(State(state): State<AppState>) -> ApiResponse<LineageDashboard> {
     // K1：真表全量加载 + 聚合逻辑保留。
-    let graph_rows = sqlx::query(&format!(
+    let graph_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {GRAPH_COLS} FROM master_data.mdm_v60_lineage_graphs ORDER BY id"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await;
     let graphs: Vec<LineageGraph> = match graph_rows {
@@ -1239,9 +1239,9 @@ pub async fn get_lineage_dashboard(State(state): State<AppState>) -> ApiResponse
         Err(e) => return ApiResponse::server_error(&format!("查询血缘图谱失败: {e}")),
     };
 
-    let node_rows = sqlx::query(&format!(
+    let node_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {NODE_COLS} FROM master_data.mdm_v60_lineage_nodes ORDER BY id"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await;
     let nodes: Vec<LineageNodeV60> = match node_rows {
@@ -1249,9 +1249,9 @@ pub async fn get_lineage_dashboard(State(state): State<AppState>) -> ApiResponse
         Err(e) => return ApiResponse::server_error(&format!("查询血缘节点失败: {e}")),
     };
 
-    let edge_rows = sqlx::query(&format!(
+    let edge_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {EDGE_COLS} FROM master_data.mdm_v60_lineage_edges ORDER BY id"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await;
     let edges: Vec<LineageEdgeV60> = match edge_rows {
@@ -1299,9 +1299,9 @@ pub async fn export_lineage(
     Query(params): Query<ExportLineageQuery>,
 ) -> ApiResponse<serde_json::Value> {
     // K1：真表全量导出。
-    let graph_rows = sqlx::query(&format!(
+    let graph_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {GRAPH_COLS} FROM master_data.mdm_v60_lineage_graphs ORDER BY id"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await;
     let graphs: Vec<LineageGraph> = match graph_rows {
@@ -1309,9 +1309,9 @@ pub async fn export_lineage(
         Err(e) => return ApiResponse::server_error(&format!("查询血缘图谱失败: {e}")),
     };
 
-    let node_rows = sqlx::query(&format!(
+    let node_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {NODE_COLS} FROM master_data.mdm_v60_lineage_nodes ORDER BY id"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await;
     let nodes: Vec<LineageNodeV60> = match node_rows {
@@ -1319,9 +1319,9 @@ pub async fn export_lineage(
         Err(e) => return ApiResponse::server_error(&format!("查询血缘节点失败: {e}")),
     };
 
-    let edge_rows = sqlx::query(&format!(
+    let edge_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {EDGE_COLS} FROM master_data.mdm_v60_lineage_edges ORDER BY id"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await;
     let edges: Vec<LineageEdgeV60> = match edge_rows {
@@ -1468,10 +1468,10 @@ pub async fn get_lifecycle_history(
     Path(id): Path<String>,
 ) -> ApiResponse<Vec<LifecycleHistory>> {
     // K1：读真表。
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {HISTORY_COLS} FROM master_data.mdm_lifecycle_history
            WHERE entity_id = $1 ORDER BY changed_at DESC"#,
-    ))
+    )))
     .bind(&id)
     .fetch_all(&state.db)
     .await;
@@ -1545,10 +1545,10 @@ pub async fn get_policies(
     Query(params): Query<GetPoliciesQuery>,
 ) -> ApiResponse<Vec<LifecyclePolicy>> {
     // K1：真表 COALESCE 过滤。
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {POLICY_COLS} FROM master_data.mdm_lifecycle_policies
            WHERE ($1::text IS NULL OR entity_type = $1) ORDER BY entity_type"#,
-    ))
+    )))
     .bind(params.entity_type.as_deref())
     .fetch_all(&state.db)
     .await;
@@ -1565,9 +1565,9 @@ pub async fn get_policy(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> ApiResponse<LifecyclePolicy> {
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {POLICY_COLS} FROM master_data.mdm_lifecycle_policies WHERE id = $1 LIMIT 1"
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await
@@ -1591,9 +1591,9 @@ pub async fn get_policy(
 )]
 pub async fn auto_transition(State(state): State<AppState>) -> ApiResponse<Vec<LifecycleHistory>> {
     // K1：读真表 policies + stages，逐 transition 执行（逻辑保留）。
-    let policy_rows = sqlx::query(&format!(
+    let policy_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {POLICY_COLS} FROM master_data.mdm_lifecycle_policies ORDER BY entity_type"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await;
     let policies: Vec<LifecyclePolicy> = match policy_rows {
@@ -1741,9 +1741,9 @@ pub async fn get_lifecycle_dashboard(
             .fetch_one(&state.db)
             .await;
 
-    let hist_rows = sqlx::query(&format!(
+    let hist_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {HISTORY_COLS} FROM master_data.mdm_lifecycle_history ORDER BY changed_at DESC"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await;
     let history: Vec<LifecycleHistory> = match hist_rows {
@@ -1862,16 +1862,16 @@ async fn upstream_downstream(
     entity_id: &str,
     upstream: bool,
 ) -> Result<Vec<LineageNodeV60>, sqlx::Error> {
-    let edge_rows = sqlx::query(&format!(
+    let edge_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {EDGE_COLS} FROM master_data.mdm_v60_lineage_edges ORDER BY id"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await?;
     let edges: Vec<LineageEdgeV60> = edge_rows.iter().map(lineage_edge_from_row).collect();
 
-    let node_rows = sqlx::query(&format!(
+    let node_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {NODE_COLS} FROM master_data.mdm_v60_lineage_nodes ORDER BY id"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await?;
     let nodes: Vec<LineageNodeV60> = node_rows.iter().map(lineage_node_from_row).collect();

@@ -54,7 +54,7 @@ pub async fn list_comments(
         COMMENT_COLUMNS
     );
 
-    let items: Vec<Comment> = match sqlx::query_as(&sql)
+    let items: Vec<Comment> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(q.entity_type)
         .bind(q.entity_id)
         .bind(tenant_opt)
@@ -97,7 +97,7 @@ pub async fn create_comment(
         COMMENT_COLUMNS
     );
 
-    let comment: Comment = match sqlx::query_as(&sql)
+    let comment: Comment = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(tenant_id)
         .bind(req.content.trim())
         .bind(&claims.sub)
@@ -139,7 +139,7 @@ pub async fn update_comment(
         COMMENT_COLUMNS
     );
 
-    let comment: Option<Comment> = match sqlx::query_as(&sql)
+    let comment: Option<Comment> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(req.content.trim())
         .bind(id)
         .bind(&claims.sub)
@@ -205,7 +205,7 @@ pub async fn list_favorites(
         FAVORITE_COLUMNS
     );
 
-    let items: Vec<Favorite> = match sqlx::query_as(&sql)
+    let items: Vec<Favorite> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(&claims.sub)
         .bind(tenant_opt)
         .fetch_all(&state.pool)
@@ -252,11 +252,11 @@ pub async fn add_favorite(
         return ApiResponse::from(TopemsError::Internal("添加收藏失败".to_string()));
     }
 
-    let fav: Option<Favorite> = match sqlx::query_as(&format!(
+    let fav: Option<Favorite> = match sqlx::query_as(sqlx::AssertSqlSafe(format!(
         r#"SELECT {} FROM core_favorites
                WHERE tenant_id = $1 AND user_id = $2 AND entity_type = $3 AND entity_id = $4"#,
         FAVORITE_COLUMNS
-    ))
+    )))
     .bind(tenant_id)
     .bind(&claims.sub)
     .bind(req.entity_type.trim())

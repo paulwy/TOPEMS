@@ -112,7 +112,7 @@ async fn list_analytes(
         }
     }
     let count_sql = format!("SELECT COUNT(*) FROM lims.qa_lims_analytes {where_sql}");
-    let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
+    let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     for p in &params {
         count_query = count_query.bind(p);
     }
@@ -128,7 +128,7 @@ async fn list_analytes(
          FROM lims.qa_lims_analytes {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
         (page - 1) * page_size
     );
-    let mut fetch_query = sqlx::query(&fetch_sql);
+    let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
     for p in &params {
         fetch_query = fetch_query.bind(p);
     }
@@ -171,10 +171,10 @@ async fn get_analyte(
         "SELECT id, analyte_code, analyte_name, category, unit, method_reference, limit_value, accuracy, status, description \
          FROM lims.qa_lims_analytes WHERE id = $1 AND deleted_at IS NULL",
     );
-    let mut q = sqlx::query(&sql).bind(id);
+    let mut q = sqlx::query(sqlx::AssertSqlSafe(sql.as_str())).bind(id);
     if let Some(t) = filter {
         sql = format!("{sql} AND tenant_id = $2");
-        q = sqlx::query(&sql).bind(id).bind(t);
+        q = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).bind(t);
     }
     let row = q.fetch_optional(&state.pool).await;
     match row {
@@ -258,7 +258,7 @@ async fn update_analyte(
         updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id";
     let result = match filter {
         Some(t) => {
-            sqlx::query(&format!("{base_sql} AND tenant_id = $10"))
+            sqlx::query(sqlx::AssertSqlSafe(format!("{base_sql} AND tenant_id = $10")))
                 .bind(id)
                 .bind(&req.analyte_name)
                 .bind(&req.category)
@@ -273,7 +273,7 @@ async fn update_analyte(
                 .await
         }
         None => {
-            sqlx::query(base_sql)
+            sqlx::query(sqlx::AssertSqlSafe(base_sql))
                 .bind(id)
                 .bind(&req.analyte_name)
                 .bind(&req.category)

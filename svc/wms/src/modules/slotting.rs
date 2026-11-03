@@ -974,7 +974,7 @@ pub async fn get_impact_analysis(
         Err(e) => return ApiResponse::from(TopemsError::internal("分析失败", e)),
     };
 
-    let total_improvement = agg.total_improvement.unwrap_or(0.0);
+    let total_improvement = agg.total_improvement.unwrap_or(0.0_f64);
     let result = ImpactAnalysis {
         current_pick_distance: 1000.0,
         optimized_pick_distance: (1000.0 - total_improvement).max(0.0),

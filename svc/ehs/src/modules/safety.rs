@@ -443,7 +443,7 @@ pub async fn list_plans_db(
         LIMIT {page_size} OFFSET {offset}
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -484,7 +484,7 @@ pub async fn create_plan_db(
                   created_at::text AS created_at, updated_at::text AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&plan_no)
         .bind(&req.title)
         .bind(&req.description)
@@ -533,7 +533,7 @@ pub async fn get_plan_db(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_optional(&state.pool)
@@ -608,7 +608,7 @@ pub async fn update_plan_db(
                   tenant_id::text AS tenant_id
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -651,7 +651,7 @@ pub async fn delete_plan_db(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let result = match sqlx::query(sql)
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .execute(&state.pool)
@@ -723,7 +723,7 @@ pub async fn list_records_db(
         LIMIT {page_size} OFFSET {offset}
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -771,7 +771,7 @@ pub async fn create_record_db(
                   created_at::text AS created_at, updated_at::text AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&record_no)
         .bind(&req.plan_id)
         .bind(&req.title)
@@ -864,7 +864,7 @@ pub async fn update_record_db(
                   tenant_id::text AS tenant_id
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -907,7 +907,7 @@ pub async fn delete_record_db(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let result = match sqlx::query(sql)
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .execute(&state.pool)
@@ -954,7 +954,7 @@ pub async fn get_record_db(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let row = match sqlx::query(record_sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(record_sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_optional(&state.pool)
@@ -977,7 +977,7 @@ pub async fn get_record_db(
         WHERE record_id::text = $1
         ORDER BY created_at ASC
     "#;
-    let items: Vec<RecordItem> = match sqlx::query(items_sql)
+    let items: Vec<RecordItem> = match sqlx::query(sqlx::AssertSqlSafe(items_sql))
         .bind(&id)
         .fetch_all(&state.pool)
         .await
@@ -1054,7 +1054,7 @@ pub async fn list_safety_checks_db(
         LIMIT {page_size} OFFSET {offset}
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1093,7 +1093,7 @@ pub async fn get_safety_check_db(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_optional(&state.pool)
@@ -1169,7 +1169,7 @@ pub async fn update_safety_check_db(
                   created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1211,7 +1211,7 @@ pub async fn delete_safety_check_db(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let result = match sqlx::query(sql)
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .execute(&state.pool)

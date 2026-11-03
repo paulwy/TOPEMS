@@ -506,9 +506,9 @@ pub async fn create_api_product(
 )]
 pub async fn list_api_products(State(state): State<AppState>) -> ApiResponse<Vec<APIProduct>> {
     // K1：真表读取启用产品。
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE active = TRUE ORDER BY name"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
@@ -534,9 +534,9 @@ pub async fn get_api_product(
     Path(id): Path<String>,
 ) -> ApiResponse<APIProduct> {
     // K1：真表读取。
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1 LIMIT 1"
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await
@@ -563,9 +563,9 @@ pub async fn subscribe_tenant(
     Json(req): Json<SubscribeTenantRequest>,
 ) -> ApiResponse<Subscription> {
     // K1：产品从真表查找。
-    let product_row = sqlx::query(&format!(
+    let product_row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1 LIMIT 1"
-    ))
+    )))
     .bind(&req.api_product_id)
     .fetch_optional(&state.db)
     .await
@@ -635,9 +635,9 @@ pub async fn get_subscription(
     Path(id): Path<String>,
 ) -> ApiResponse<Subscription> {
     // K1：真表读取。
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1 LIMIT 1"
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await
@@ -664,12 +664,12 @@ pub async fn list_subscriptions(
     Query(params): Query<UsageSummaryQuery>,
 ) -> ApiResponse<Vec<Subscription>> {
     // K1：真表读取，可选 tenant_id / api_product_id 过滤。
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions
              WHERE ($1::text IS NULL OR tenant_id::text = $1)
                AND ($2::text IS NULL OR api_product_id = $2)
              ORDER BY starts_at DESC"
-    ))
+    )))
     .bind(&params.tenant_id)
     .bind(&params.api_product_id)
     .fetch_all(&state.db)
@@ -698,11 +698,11 @@ pub async fn cancel_subscription(
     Path(id): Path<String>,
 ) -> ApiResponse<Subscription> {
     // K1：写真表 master_data.mdm_subscriptions（UPDATE...RETURNING，无行 404）。
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"UPDATE master_data.mdm_subscriptions SET status = 'cancelled'
            WHERE id = $1::uuid AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000'::uuid))
            RETURNING {SUBSCRIPTION_COLS}"#,
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await;
@@ -735,9 +735,9 @@ pub async fn upgrade_tier(
     Json(req): Json<UpdateSubscriptionRequest>,
 ) -> ApiResponse<Subscription> {
     // K1：写真表（先查后更，无行 404）。
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"#,
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await;
@@ -765,9 +765,9 @@ pub async fn upgrade_tier(
         return ApiResponse::server_error(&format!("升级套餐失败: {e}"));
     }
 
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1::uuid LIMIT 1"#,
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await;
@@ -844,14 +844,14 @@ pub async fn get_usage_summary(
     Query(params): Query<UsageSummaryQuery>,
 ) -> ApiResponse<UsageSummary> {
     // K1：数据源改真表 master_data.mdm_usage_records，聚合逻辑保留。
-    let query = sqlx::query(&format!(
+    let query = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {USAGE_COLS} FROM master_data.mdm_usage_records
            WHERE ($1::text IS NULL OR tenant_id::text = $1)
              AND ($2::text IS NULL OR api_product_id = $2)
              AND ($3::text IS NULL OR recorded_at::text >= $3)
              AND ($4::text IS NULL OR recorded_at::text <= $4)
            ORDER BY recorded_at"#,
-    ))
+    )))
     .bind(params.tenant_id.as_deref())
     .bind(params.api_product_id.as_deref())
     .bind(params.start_time.as_deref())
@@ -907,11 +907,11 @@ pub async fn generate_bill(
         .period_end
         .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
 
-    let usage_rows = sqlx::query(&format!(
+    let usage_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {USAGE_COLS} FROM master_data.mdm_usage_records
            WHERE tenant_id = $1 AND recorded_at::text >= $2 AND recorded_at::text <= $3
            ORDER BY recorded_at"#,
-    ))
+    )))
     .bind(&req.tenant_id)
     .bind(&period_start)
     .bind(&period_end)
@@ -931,9 +931,9 @@ pub async fn generate_bill(
         0.0
     };
 
-    let rate_card_rows = sqlx::query(&format!(
+    let rate_card_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {RATE_CARD_COLS} FROM master_data.mdm_rate_cards ORDER BY tier LIMIT 1"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await;
     let rate_cards: Vec<RateCard> = match rate_card_rows {
@@ -949,9 +949,9 @@ pub async fn generate_bill(
         currency: "CNY".to_string(),
     });
 
-    let product_rows = sqlx::query(&format!(
+    let product_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE active = TRUE ORDER BY name"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await;
     let products: Vec<APIProduct> = match product_rows {
@@ -1047,12 +1047,12 @@ pub async fn get_billing_history(
         Err(e) => return ApiResponse::server_error(&format!("查询账单失败: {e}")),
     };
 
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {BILLING_COLS} FROM master_data.mdm_billing_records
            WHERE ($1::text IS NULL OR tenant_id::text = $1)
            ORDER BY period_end DESC
            LIMIT $2 OFFSET $3"#,
-    ))
+    )))
     .bind(params.tenant_id.as_deref())
     .bind(page_size)
     .bind((page - 1) * page_size)
@@ -1129,9 +1129,9 @@ pub async fn create_rate_card(
 )]
 pub async fn get_rate_cards(State(state): State<AppState>) -> ApiResponse<Vec<RateCard>> {
     // K1：读真表。
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {RATE_CARD_COLS} FROM master_data.mdm_rate_cards ORDER BY tier"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await;
     let cards: Vec<RateCard> = match rows {
@@ -1158,11 +1158,11 @@ pub async fn mark_bill_paid(
     Path(id): Path<String>,
 ) -> ApiResponse<BillingRecord> {
     // K1：写真表（UPDATE...RETURNING，无行 404）。
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"UPDATE master_data.mdm_billing_records SET status = 'paid'
            WHERE id = $1::uuid AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000'::uuid))
            RETURNING {BILLING_COLS}"#,
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await;
@@ -1235,9 +1235,9 @@ pub async fn measure_sla(
     Json(req): Json<MeasureSLARequest>,
 ) -> ApiResponse<SLAMeasurement> {
     // K1：先读真表 SLA 配置（无行 404），再写度量。
-    let config_row = sqlx::query(&format!(
+    let config_row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1 LIMIT 1"#,
-    ))
+    )))
     .bind(&req.config_id)
     .fetch_optional(&state.db)
     .await;
@@ -1305,10 +1305,10 @@ pub async fn get_sla_status(
     Query(params): Query<SLAStatusQuery>,
 ) -> ApiResponse<serde_json::Value> {
     // K1：数据源改真表（configs + measurements），聚合逻辑保留。
-    let config_rows = sqlx::query(&format!(
+    let config_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs
            WHERE ($1::text IS NULL OR id::text = $1) ORDER BY metric"#,
-    ))
+    )))
     .bind(params.config_id.as_deref())
     .fetch_all(&state.db)
     .await;
@@ -1317,10 +1317,10 @@ pub async fn get_sla_status(
         Err(e) => return ApiResponse::server_error(&format!("查询 SLA 配置失败: {e}")),
     };
 
-    let meas_rows = sqlx::query(&format!(
+    let meas_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_MEASUREMENT_COLS} FROM master_data.mdm_sla_measurements
            WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY measured_at"#,
-    ))
+    )))
     .bind(params.tenant_id.as_deref())
     .fetch_all(&state.db)
     .await;
@@ -1374,14 +1374,14 @@ pub async fn get_sla_history(
     Query(params): Query<SLAHistoryQuery>,
 ) -> ApiResponse<Vec<SLAMeasurement>> {
     // K1：真表 COALESCE 过滤。
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_MEASUREMENT_COLS} FROM master_data.mdm_sla_measurements
            WHERE ($1::text IS NULL OR tenant_id::text = $1)
              AND ($2::text IS NULL OR config_id = $2)
              AND ($3::text IS NULL OR measured_at::text >= $3)
              AND ($4::text IS NULL OR measured_at::text <= $4)
            ORDER BY measured_at"#,
-    ))
+    )))
     .bind(params.tenant_id.as_deref())
     .bind(params.config_id.as_deref())
     .bind(params.start_time.as_deref())
@@ -1415,9 +1415,9 @@ pub async fn calculate_penalty(
     Query(params): Query<SLAPenaltyQuery>,
 ) -> ApiResponse<serde_json::Value> {
     // K1：数据源改真表（config + measurements），逻辑保留。
-    let config_row = sqlx::query(&format!(
+    let config_row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1 LIMIT 1"#,
-    ))
+    )))
     .bind(&params.config_id)
     .fetch_optional(&state.db)
     .await;
@@ -1427,10 +1427,10 @@ pub async fn calculate_penalty(
         Err(e) => return ApiResponse::server_error(&format!("查询 SLA 配置失败: {e}")),
     };
 
-    let meas_rows = sqlx::query(&format!(
+    let meas_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_MEASUREMENT_COLS} FROM master_data.mdm_sla_measurements
            WHERE config_id = $1 AND tenant_id = $2 AND met = FALSE ORDER BY measured_at"#,
-    ))
+    )))
     .bind(&params.config_id)
     .bind(&params.tenant_id)
     .fetch_all(&state.db)
@@ -1540,12 +1540,12 @@ pub async fn get_incidents(
     Query(params): Query<SLAIncidentsQuery>,
 ) -> ApiResponse<Vec<SLAIncident>> {
     // K1：真表 COALESCE 过滤。
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_INCIDENT_COLS} FROM master_data.mdm_sla_incidents
            WHERE ($1::text IS NULL OR tenant_id::text = $1)
              AND ($2::text IS NULL OR status = $2)
            ORDER BY id"#,
-    ))
+    )))
     .bind(params.tenant_id.as_deref())
     .bind(params.status.as_deref())
     .fetch_all(&state.db)
@@ -1577,9 +1577,9 @@ pub async fn generate_sla_report(
     Query(params): Query<SLAReportQuery>,
 ) -> ApiResponse<serde_json::Value> {
     // K1：数据源改真表（configs / measurements / incidents），逻辑保留。
-    let config_rows = sqlx::query(&format!(
+    let config_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs ORDER BY metric"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await;
     let configs: Vec<SLAConfig> = match config_rows {
@@ -1587,9 +1587,9 @@ pub async fn generate_sla_report(
         Err(e) => return ApiResponse::server_error(&format!("查询 SLA 配置失败: {e}")),
     };
 
-    let meas_rows = sqlx::query(&format!(
+    let meas_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_MEASUREMENT_COLS} FROM master_data.mdm_sla_measurements ORDER BY measured_at"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await;
     let measurements: Vec<SLAMeasurement> = match meas_rows {
@@ -1597,9 +1597,9 @@ pub async fn generate_sla_report(
         Err(e) => return ApiResponse::server_error(&format!("查询 SLA 度量失败: {e}")),
     };
 
-    let incident_rows = sqlx::query(&format!(
+    let incident_rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"SELECT {SLA_INCIDENT_COLS} FROM master_data.mdm_sla_incidents ORDER BY id"#,
-    ))
+    )))
     .fetch_all(&state.db)
     .await;
     let incidents: Vec<SLAIncident> = match incident_rows {

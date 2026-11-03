@@ -584,13 +584,13 @@ impl CashFlowPredictor {
             data_query.push_str(&format!(" AND scenario = ${}", base));
         }
 
-        let total: i64 = sqlx::query_scalar(&count_query).fetch_one(pool).await?;
+        let total: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(count_query)).fetch_one(pool).await?;
 
         data_query.push_str(" ORDER BY created_at DESC LIMIT $LIMIT OFFSET $OFFSET");
         let data_query = data_query.replace("$LIMIT", &page_size.to_string());
         let data_query = data_query.replace("$OFFSET", &offset.to_string());
 
-        let mut q = sqlx::query_as::<_, CashFlowPrediction>(&data_query);
+        let mut q = sqlx::query_as::<_, CashFlowPrediction>(sqlx::AssertSqlSafe(data_query));
         if let Some(ref eid) = entity_id {
             q = q.bind(eid);
         }
@@ -1082,7 +1082,7 @@ impl BudgetAnalyzer {
 
         query.push_str(" ORDER BY created_at DESC LIMIT 500");
 
-        let mut q = sqlx::query_as::<_, BudgetVariance>(&query);
+        let mut q = sqlx::query_as::<_, BudgetVariance>(sqlx::AssertSqlSafe(query));
         if let Some(ref eid) = entity_id {
             q = q.bind(eid);
         }

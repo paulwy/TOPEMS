@@ -598,7 +598,7 @@ pub async fn compare_supplier_performance(
         locale_idx, placeholders_str
     );
 
-    let mut query_builder = sqlx::query_as::<_, SupplierPerformance>(&query);
+    let mut query_builder = sqlx::query_as::<_, SupplierPerformance>(sqlx::AssertSqlSafe(query));
     query_builder = query_builder.bind(tenant_opt);
     for id in &supplier_ids {
         query_builder = query_builder.bind(*id);

@@ -169,7 +169,7 @@ async fn create_type(
         TENANT_SQL = TENANT_SQL,
     );
 
-    let result = sqlx::query_as::<_, ProjectTypeConfig>(&sql)
+    let result = sqlx::query_as::<_, ProjectTypeConfig>(sqlx::AssertSqlSafe(sql))
         .bind(&req.type_code)
         .bind(&req.type_name)
         .bind(&req.name_en)

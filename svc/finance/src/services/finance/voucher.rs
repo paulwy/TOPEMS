@@ -486,7 +486,7 @@ impl FinanceService {
 
         query.push_str(" ORDER BY voucher_date DESC");
 
-        let mut query_builder = sqlx::query_as(&query).bind(tenant_id);
+        let mut query_builder = sqlx::query_as(sqlx::AssertSqlSafe(query)).bind(tenant_id);
         if let Some(s) = status {
             query_builder = query_builder.bind(s);
         }
@@ -648,7 +648,7 @@ impl FinanceService {
             query.push_str(&format!(" AND v.id = ANY(${}::uuid[])", param_idx));
         }
 
-        let mut qb = sqlx::query(&query).bind(tenant_id);
+        let mut qb = sqlx::query(sqlx::AssertSqlSafe(query)).bind(tenant_id);
         if let Some(s) = status_param {
             qb = qb.bind(s);
         }

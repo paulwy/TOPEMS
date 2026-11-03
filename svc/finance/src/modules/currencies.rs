@@ -140,7 +140,7 @@ pub async fn list_currencies(
     };
 
     let count_sql = format!("SELECT COUNT(*) FROM {} {}", TABLE, where_clause);
-    let mut count_qb = sqlx::query_scalar::<_, i64>(&count_sql);
+    let mut count_qb = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     for p in &params {
         count_qb = count_qb.bind(p);
     }
@@ -160,7 +160,7 @@ pub async fn list_currencies(
         params.len() + 1,
         params.len() + 2
     );
-    let mut qb = sqlx::query_as::<_, Currency>(&data_sql);
+    let mut qb = sqlx::query_as::<_, Currency>(sqlx::AssertSqlSafe(data_sql));
     for p in &params {
         qb = qb.bind(p);
     }
@@ -206,7 +206,7 @@ pub async fn create_currency(
          VALUES (NULL, $1, $2, $3, $4, $5) RETURNING id, tenant_id, code, name, symbol, exchange_rate::float8 AS exchange_rate, is_active, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at",
         TABLE
     );
-    match sqlx::query_as::<_, Currency>(&sql)
+    match sqlx::query_as::<_, Currency>(sqlx::AssertSqlSafe(sql))
         .bind(&code)
         .bind(&name)
         .bind(&req.symbol)
@@ -254,7 +254,7 @@ pub async fn update_currency(
          RETURNING id, tenant_id, code, name, symbol, exchange_rate::float8 AS exchange_rate, is_active, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at",
         TABLE
     );
-    match sqlx::query_as::<_, Currency>(&sql)
+    match sqlx::query_as::<_, Currency>(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .bind(&req.name)
         .bind(&req.symbol)
@@ -286,7 +286,7 @@ pub async fn delete_currency(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
     let sql = format!("DELETE FROM {} WHERE id = $1", TABLE);
-    match sqlx::query(&sql).bind(id).execute(&state.pool).await {
+    match sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).execute(&state.pool).await {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(())),
         Ok(_) => Json(ApiResponse::error("币种不存在")),
         Err(e) => {

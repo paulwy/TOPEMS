@@ -170,7 +170,7 @@ pub async fn list_trainings(
            FROM ehs.qa_ehs_trainings WHERE {} ORDER BY updated_at DESC"#,
         tenant_filter
     );
-    let rows = match sqlx::query(&sql).fetch_all(&state.pool).await {
+    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql)).fetch_all(&state.pool).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list trainings: {}", e);
@@ -254,7 +254,7 @@ pub async fn create_training(
                   training_type, duration_hours, scheduled_at::text AS scheduled_at,
                   status, tenant_id
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&training_no)
         .bind(&title)
         .bind(content)
@@ -326,7 +326,7 @@ pub async fn get_training(
            FROM ehs.qa_ehs_trainings WHERE id = $1::uuid AND {}"#,
         tenant_clause
     );
-    let row = match sqlx::query(&sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .fetch_optional(&state.pool)
         .await
@@ -428,7 +428,7 @@ pub async fn update_training(
                   status, tenant_id"#,
         tenant_clause
     );
-    let row = match sqlx::query(&sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(title)
         .bind(content)
         .bind(trainer)
@@ -497,7 +497,7 @@ pub async fn delete_training(
         "UPDATE ehs.qa_ehs_trainings SET deleted_at = now() WHERE id = $1::uuid AND deleted_at IS NULL {}",
         tenant_clause
     );
-    let res = match sqlx::query(&sql).bind(&id).execute(&state.pool).await {
+    let res = match sqlx::query(sqlx::AssertSqlSafe(sql)).bind(&id).execute(&state.pool).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete training {}: {}", id, e);
@@ -535,7 +535,7 @@ pub async fn get_training_plan(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_optional(&state.pool)
@@ -611,7 +611,7 @@ pub async fn update_training_plan(
                   status, created_at::text AS created_at, tenant_id::text AS tenant_id
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -654,7 +654,7 @@ pub async fn delete_training_plan(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let result = match sqlx::query(sql)
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .execute(&state.pool)
@@ -699,7 +699,7 @@ pub async fn get_training_record(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_optional(&state.pool)
@@ -813,7 +813,7 @@ pub async fn update_training_record(
                   tenant_id::text AS tenant_id
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -856,7 +856,7 @@ pub async fn delete_training_record(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let result = match sqlx::query(sql)
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .execute(&state.pool)
@@ -901,7 +901,7 @@ pub async fn get_certificate(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_optional(&state.pool)
@@ -987,7 +987,7 @@ pub async fn update_certificate(
                   tenant_id::text AS tenant_id
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1030,7 +1030,7 @@ pub async fn delete_certificate(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let result = match sqlx::query(sql)
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .execute(&state.pool)
@@ -1057,34 +1057,34 @@ pub async fn get_training_statistics(
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
-    let total_trainings: i64 = sqlx::query_scalar(&format!(
+    let total_trainings: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_trainings WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let total_plans: i64 = sqlx::query_scalar(&format!(
+    let total_plans: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.training_programs WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let total_records: i64 = sqlx::query_scalar(&format!(
+    let total_records: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.training_records WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let total_certificates: i64 = sqlx::query_scalar(&format!(
+    let total_certificates: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_training_certificates WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
@@ -1163,7 +1163,7 @@ pub async fn list_training_plans(
         "#
     );
 
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1232,7 +1232,7 @@ pub async fn create_training_plan(
                   training_type, start_date::text AS planned_date, instructor AS trainer,
                   status, created_at::text AS created_at, tenant_id::text AS tenant_id
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&program_no)
         .bind(&title)
         .bind(content)
@@ -1325,7 +1325,7 @@ pub async fn list_training_records(
         "#
     );
 
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1425,7 +1425,7 @@ pub async fn create_training_record(
                   created_at::text AS created_at, updated_at::text AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&record_no)
         .bind(plan_id)
         .bind(&title)
@@ -1524,7 +1524,7 @@ pub async fn list_certificates(
         "#
     );
 
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1614,7 +1614,7 @@ pub async fn create_certificate(
                   created_at::text AS created_at, updated_at::text AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&certificate_no)
         .bind(&employee_id)
         .bind(&employee_name)

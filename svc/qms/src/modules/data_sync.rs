@@ -96,7 +96,7 @@ pub async fn list_sync_records(
         }
     };
 
-    let mut query_builder = sqlx::query(sql);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql));
     query_builder = query_builder.bind(tenant_opt);
     match (query.sync_type.as_ref(), query.status.as_ref()) {
         (Some(ty), Some(st)) => {

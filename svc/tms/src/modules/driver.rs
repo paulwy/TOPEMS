@@ -532,11 +532,11 @@ pub async fn submit_verification(
                     "当前状态不允许提交审核".to_string(),
                 ));
             }
-            let result = sqlx::query_as::<_, Driver>(&format!(
+            let result = sqlx::query_as::<_, Driver>(sqlx::AssertSqlSafe(format!(
                 r#"UPDATE tms.tms_drivers SET status = 'suspended', updated_at = $2
                     WHERE id = $1 AND tenant_id = $3 AND status = 'active' RETURNING {}"#,
                 DRIVER_RETURN
-            ))
+            )))
             .bind(id)
             .bind(now)
             .bind(tenant_id)
@@ -624,11 +624,11 @@ pub async fn approve_driver(
                     "当前状态不允许审批通过".to_string(),
                 ));
             }
-            let result = sqlx::query_as::<_, Driver>(&format!(
+            let result = sqlx::query_as::<_, Driver>(sqlx::AssertSqlSafe(format!(
                 r#"UPDATE tms.tms_drivers SET status = 'active', updated_at = $2
                     WHERE id = $1 AND tenant_id = $3 AND status IN ('on_leave','suspended') RETURNING {}"#,
                 DRIVER_RETURN
-            ))
+            )))
             .bind(id)
             .bind(now)
             .bind(tenant_id)
@@ -717,11 +717,11 @@ pub async fn reject_driver(
                 ));
             }
             let requires_approval = driver_requires_approval(&status, "inactive");
-            let result = sqlx::query_as::<_, Driver>(&format!(
+            let result = sqlx::query_as::<_, Driver>(sqlx::AssertSqlSafe(format!(
                 r#"UPDATE tms.tms_drivers SET status = 'inactive', updated_at = $2
                     WHERE id = $1 AND tenant_id = $3 AND status IN ('suspended','on_leave') RETURNING {}"#,
                 DRIVER_RETURN
-            ))
+            )))
             .bind(id)
             .bind(now)
             .bind(tenant_id)

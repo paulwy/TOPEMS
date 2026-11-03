@@ -745,9 +745,9 @@ pub async fn list_recovery_points(
     State(state): State<AppState>,
     Query(params): Query<ListRecoveryPointsQuery>,
 ) -> ApiResponse<PaginatedResponse<RecoveryPoint>> {
-    let points: Vec<RecoveryPoint> = sqlx::query(&format!(
+    let points: Vec<RecoveryPoint> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .map(|rows| rows.iter().map(recovery_point_from_row).collect())
@@ -797,9 +797,9 @@ pub async fn get_recovery_point(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> ApiResponse<RecoveryPoint> {
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points WHERE id = $1 LIMIT 1"
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await
@@ -825,9 +825,9 @@ pub async fn restore_from_point(
     State(state): State<AppState>,
     Json(req): Json<RestoreRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let point = db_exec!(sqlx::query(&format!(
+    let point = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points WHERE id = $1"
-    ))
+    )))
     .bind(&req.recovery_point_id)
     .fetch_optional(&state.db)
     .await
@@ -865,16 +865,16 @@ pub async fn restore_from_point(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_recovery_status(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    let points: Vec<RecoveryPoint> = sqlx::query(&format!(
+    let points: Vec<RecoveryPoint> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .map(|rows| rows.iter().map(recovery_point_from_row).collect())
     .unwrap_or_default();
-    let plans: Vec<RecoveryPlan> = sqlx::query(&format!(
+    let plans: Vec<RecoveryPlan> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .map(|rows| rows.iter().map(recovery_plan_from_row).collect())
@@ -1015,9 +1015,9 @@ pub async fn execute_plan(
     State(state): State<AppState>,
     Json(req): Json<ExecutePlanRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let plan = db_exec!(sqlx::query(&format!(
+    let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans WHERE id = $1"
-    ))
+    )))
     .bind(&req.plan_id)
     .fetch_optional(&state.db)
     .await
@@ -1089,9 +1089,9 @@ pub async fn get_plan_progress(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
-    let plan = db_exec!(sqlx::query(&format!(
+    let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans WHERE id = $1"
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await
@@ -1150,17 +1150,17 @@ pub async fn test_recovery(
     let scope = req.test_scope.unwrap_or_else(|| "full".to_string());
 
     let point = if point_id == "auto-select" {
-        db_exec!(sqlx::query(&format!(
+        db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points ORDER BY created_at LIMIT 1"
-        ))
+        )))
         .fetch_optional(&state.db)
         .await
         .map_err(|e| TopemsError::internal("查询恢复点失败", e)))
         .map(|r| recovery_point_from_row(&r))
     } else {
-        db_exec!(sqlx::query(&format!(
+        db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points WHERE id = $1"
-        ))
+        )))
         .bind(&point_id)
         .fetch_optional(&state.db)
         .await
@@ -1274,9 +1274,9 @@ pub async fn create_continuity_plan(
     tag = "disaster_v56"
 )]
 pub async fn list_plans(State(state): State<AppState>) -> ApiResponse<Vec<ContinuityPlan>> {
-    let plans: Vec<ContinuityPlan> = sqlx::query(&format!(
+    let plans: Vec<ContinuityPlan> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .map(|rows| rows.iter().map(continuity_plan_from_row).collect())
@@ -1301,9 +1301,9 @@ pub async fn get_plan(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> ApiResponse<ContinuityPlan> {
-    let plan = db_exec!(sqlx::query(&format!(
+    let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await
@@ -1333,9 +1333,9 @@ pub async fn update_plan(
     Path(id): Path<String>,
     Json(req): Json<UpdateContinuityPlanRequest>,
 ) -> ApiResponse<ContinuityPlan> {
-    let plan = db_exec!(sqlx::query(&format!(
+    let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await
@@ -1406,9 +1406,9 @@ pub async fn test_plan(
     Path(id): Path<String>,
     _req: Json<TestPlanRequest>,
 ) -> ApiResponse<BCTest> {
-    let plan = db_exec!(sqlx::query(&format!(
+    let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
-    ))
+    )))
     .bind(&id)
     .fetch_optional(&state.db)
     .await
@@ -1466,9 +1466,9 @@ pub async fn get_test_results(
 ) -> ApiResponse<Vec<BCTest>> {
     let plan_id = params.get("plan_id").and_then(|v| v.as_str());
 
-    let tests: Vec<BCTest> = sqlx::query(&format!(
+    let tests: Vec<BCTest> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {BC_TEST_COLS} FROM master_data.mdm_bc_tests"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .map(|rows| rows.iter().map(bc_test_from_row).collect())
@@ -1508,9 +1508,9 @@ pub async fn assess_impact(
     State(state): State<AppState>,
     Query(params): Query<ImpactQuery>,
 ) -> ApiResponse<serde_json::Value> {
-    let plans: Vec<ContinuityPlan> = sqlx::query(&format!(
+    let plans: Vec<ContinuityPlan> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .map(|rows| rows.iter().map(continuity_plan_from_row).collect())
@@ -1588,16 +1588,16 @@ pub async fn assess_impact(
     clippy::cast_precision_loss
 )]
 pub async fn get_continuity_score(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    let plans: Vec<ContinuityPlan> = sqlx::query(&format!(
+    let plans: Vec<ContinuityPlan> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .map(|rows| rows.iter().map(continuity_plan_from_row).collect())
     .unwrap_or_default();
-    let tests: Vec<BCTest> = sqlx::query(&format!(
+    let tests: Vec<BCTest> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {BC_TEST_COLS} FROM master_data.mdm_bc_tests"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .map(|rows| rows.iter().map(bc_test_from_row).collect())
@@ -1726,9 +1726,9 @@ pub async fn start_replication(
     State(state): State<AppState>,
     Json(req): Json<ReplicationActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let config = db_exec!(sqlx::query(&format!(
+    let config = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs WHERE id = $1"
-    ))
+    )))
     .bind(&req.replication_id)
     .fetch_optional(&state.db)
     .await
@@ -1776,9 +1776,9 @@ pub async fn stop_replication(
     State(state): State<AppState>,
     Json(req): Json<ReplicationActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let config = db_exec!(sqlx::query(&format!(
+    let config = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs WHERE id = $1"
-    ))
+    )))
     .bind(&req.replication_id)
     .fetch_optional(&state.db)
     .await
@@ -1823,16 +1823,16 @@ pub async fn stop_replication(
 pub async fn get_replication_status(
     State(state): State<AppState>,
 ) -> ApiResponse<serde_json::Value> {
-    let configs: Vec<ReplicationConfig> = sqlx::query(&format!(
+    let configs: Vec<ReplicationConfig> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .map(|rows| rows.iter().map(replication_config_from_row).collect())
     .unwrap_or_default();
-    let regions: Vec<RegionConfig> = sqlx::query(&format!(
+    let regions: Vec<RegionConfig> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .map(|rows| rows.iter().map(region_config_from_row).collect())
@@ -1938,9 +1938,9 @@ pub async fn complete_failover(
     Path(id): Path<String>,
     Json(req): Json<CompleteFailoverRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let record = db_exec!(sqlx::query(&format!(
+    let record = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {FAILOVER_RECORD_COLS} FROM master_data.mdm_failover_records WHERE id = $1 OR id = $2"
-    ))
+    )))
     .bind(&id)
     .bind(&req.failover_id)
     .fetch_optional(&state.db)
@@ -2003,9 +2003,9 @@ pub async fn complete_failover(
 pub async fn get_failover_history(
     State(state): State<AppState>,
 ) -> ApiResponse<Vec<FailoverRecord>> {
-    let records: Vec<FailoverRecord> = sqlx::query(&format!(
+    let records: Vec<FailoverRecord> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {FAILOVER_RECORD_COLS} FROM master_data.mdm_failover_records"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .map(|rows| rows.iter().map(failover_record_from_row).collect())
@@ -2027,9 +2027,9 @@ pub async fn switch_regions(
     State(state): State<AppState>,
     Json(req): Json<SwitchRegionsRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let target = db_exec!(sqlx::query(&format!(
+    let target = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs WHERE region_id = $1"
-    ))
+    )))
     .bind(&req.primary_region)
     .fetch_optional(&state.db)
     .await
@@ -2058,9 +2058,9 @@ pub async fn switch_regions(
     .await
     .map_err(|e| TopemsError::internal("切换主地域失败", e)) { return ApiResponse::from(e); }
 
-    let regions: Vec<RegionConfig> = sqlx::query(&format!(
+    let regions: Vec<RegionConfig> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .map(|rows| rows.iter().map(region_config_from_row).collect())
@@ -2098,9 +2098,9 @@ pub async fn switch_regions(
     tag = "disaster_v56"
 )]
 pub async fn get_region_health(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    let regions: Vec<RegionConfig> = sqlx::query(&format!(
+    let regions: Vec<RegionConfig> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs"
-    ))
+    )))
     .fetch_all(&state.db)
     .await
     .map(|rows| rows.iter().map(region_config_from_row).collect())

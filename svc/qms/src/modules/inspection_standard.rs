@@ -251,7 +251,7 @@ async fn list_inspection_items(
         }
     }
     let count_sql = format!("SELECT COUNT(*) FROM qms.qa_inspection_items {where_sql}");
-    let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
+    let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     for p in &params {
         count_query = count_query.bind(p);
     }
@@ -267,7 +267,7 @@ async fn list_inspection_items(
          FROM qms.qa_inspection_items {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
         (page - 1) * page_size
     );
-    let mut fetch_query = sqlx::query(&fetch_sql);
+    let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
     for p in &params {
         fetch_query = fetch_query.bind(p);
     }
@@ -311,10 +311,10 @@ async fn get_inspection_item(
         "SELECT id, code, name, category, specification, method, unit, standard_value, tolerance, status, description \
          FROM qms.qa_inspection_items WHERE id = $1 AND deleted_at IS NULL",
     );
-    let mut q = sqlx::query(&sql).bind(id);
+    let mut q = sqlx::query(sqlx::AssertSqlSafe(sql.as_str())).bind(id);
     if let Some(t) = filter {
         sql = format!("{sql} AND tenant_id = $2");
-        q = sqlx::query(&sql).bind(id).bind(t);
+        q = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).bind(t);
     }
     let row = q.fetch_optional(&state.pool).await;
     match row {
@@ -510,7 +510,7 @@ async fn list_sampling_plans(
         }
     }
     let count_sql = format!("SELECT COUNT(*) FROM qms.qa_sampling_plans {where_sql}");
-    let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
+    let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     for p in &params {
         count_query = count_query.bind(p);
     }
@@ -526,7 +526,7 @@ async fn list_sampling_plans(
          FROM qms.qa_sampling_plans {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
         (page - 1) * page_size
     );
-    let mut fetch_query = sqlx::query(&fetch_sql);
+    let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
     for p in &params {
         fetch_query = fetch_query.bind(p);
     }
@@ -568,10 +568,10 @@ async fn get_sampling_plan(
         "SELECT id, code, name, level, sample_size, aql, inspection_level, status, description \
          FROM qms.qa_sampling_plans WHERE id = $1 AND deleted_at IS NULL",
     );
-    let mut q = sqlx::query(&sql).bind(id);
+    let mut q = sqlx::query(sqlx::AssertSqlSafe(sql.as_str())).bind(id);
     if let Some(t) = filter {
         sql = format!("{sql} AND tenant_id = $2");
-        q = sqlx::query(&sql).bind(id).bind(t);
+        q = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).bind(t);
     }
     let row = q.fetch_optional(&state.pool).await;
     match row {
@@ -652,7 +652,7 @@ async fn update_sampling_plan(
         WHERE id = $1 AND deleted_at IS NULL RETURNING id";
     let result = match filter {
         Some(t) => {
-            sqlx::query(&format!("{base_sql} AND tenant_id = $9"))
+            sqlx::query(sqlx::AssertSqlSafe(format!("{base_sql} AND tenant_id = $9")))
                 .bind(id)
                 .bind(&req.name)
                 .bind(&req.level)
@@ -666,7 +666,7 @@ async fn update_sampling_plan(
                 .await
         }
         None => {
-            sqlx::query(base_sql)
+            sqlx::query(sqlx::AssertSqlSafe(base_sql))
                 .bind(id)
                 .bind(&req.name)
                 .bind(&req.level)
@@ -754,7 +754,7 @@ async fn list_inspection_plans(
         }
     }
     let count_sql = format!("SELECT COUNT(*) FROM qms.qa_inspection_plans p {where_sql}");
-    let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
+    let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     for p in &params {
         count_query = count_query.bind(p);
     }
@@ -770,7 +770,7 @@ async fn list_inspection_plans(
          FROM qms.qa_inspection_plans p {where_sql} ORDER BY p.created_at DESC LIMIT {page_size} OFFSET {}",
         (page - 1) * page_size
     );
-    let mut fetch_query = sqlx::query(&fetch_sql);
+    let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
     for p in &params {
         fetch_query = fetch_query.bind(p);
     }
@@ -811,10 +811,10 @@ async fn get_inspection_plan(
         "SELECT id, code, name, product_code, product_name, sampling_plan_id, status, description \
          FROM qms.qa_inspection_plans WHERE id = $1 AND deleted_at IS NULL",
     );
-    let mut q = sqlx::query(&sql).bind(id);
+    let mut q = sqlx::query(sqlx::AssertSqlSafe(sql.as_str())).bind(id);
     if let Some(t) = filter {
         sql = format!("{sql} AND tenant_id = $2");
-        q = sqlx::query(&sql).bind(id).bind(t);
+        q = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).bind(t);
     }
     let row = q.fetch_optional(&state.pool).await;
     match row {
@@ -892,7 +892,7 @@ async fn update_inspection_plan(
         updated_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id";
     let result = match filter {
         Some(t) => {
-            sqlx::query(&format!("{base_sql} AND tenant_id = $8"))
+            sqlx::query(sqlx::AssertSqlSafe(format!("{base_sql} AND tenant_id = $8")))
                 .bind(id)
                 .bind(&req.name)
                 .bind(&req.product_code)
@@ -905,7 +905,7 @@ async fn update_inspection_plan(
                 .await
         }
         None => {
-            sqlx::query(base_sql)
+            sqlx::query(sqlx::AssertSqlSafe(base_sql))
                 .bind(id)
                 .bind(&req.name)
                 .bind(&req.product_code)
@@ -973,10 +973,10 @@ async fn list_plan_items(
          JOIN qms.qa_inspection_items i ON i.id = pi.item_id AND i.deleted_at IS NULL \
          WHERE pi.plan_id = $1",
     );
-    let mut q = sqlx::query(&sql).bind(id);
+    let mut q = sqlx::query(sqlx::AssertSqlSafe(sql.as_str())).bind(id);
     if let Some(t) = filter {
         sql = format!("{sql} AND i.tenant_id = $2");
-        q = sqlx::query(&sql).bind(id).bind(t);
+        q = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).bind(t);
     }
     let rows = match q.fetch_all(&state.pool).await {
         Ok(r) => r,

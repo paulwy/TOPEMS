@@ -16,10 +16,10 @@ use topems_shared_core::{
 };
 
 async fn count_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Option<Uuid>) -> i64 {
-    match sqlx::query_scalar(&format!(
+    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         table
-    ))
+    )))
     .bind(tenant_id)
     .fetch_one(pool)
     .await
@@ -35,10 +35,10 @@ async fn count_table_with_tenant_and_status(
     tenant_id: Option<Uuid>,
     status: &str,
 ) -> i64 {
-    match sqlx::query_scalar(&format!(
+    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2",
         table
-    ))
+    )))
     .bind(tenant_id)
     .bind(status)
     .fetch_one(pool)
@@ -55,10 +55,10 @@ async fn count_table_with_tenant_and_enabled(
     tenant_id: Option<Uuid>,
     is_enabled: bool,
 ) -> i64 {
-    match sqlx::query_scalar(&format!(
+    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND is_enabled = $2",
         table
-    ))
+    )))
     .bind(tenant_id)
     .bind(is_enabled)
     .fetch_one(pool)
@@ -75,10 +75,10 @@ async fn count_table_with_tenant_and_condition(
     tenant_id: Option<Uuid>,
     condition: &str,
 ) -> i64 {
-    match sqlx::query_scalar(&format!(
+    match sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND {}",
         table, condition
-    ))
+    )))
     .bind(tenant_id)
     .fetch_one(pool)
     .await

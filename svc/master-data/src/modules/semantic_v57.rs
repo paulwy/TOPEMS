@@ -116,9 +116,9 @@ fn tagged_entity_from_row(row: &sqlx::postgres::PgRow) -> TaggedEntity {
 const TAGGED_ENTITY_COLS: &str = "entity_type, entity_id, tag_ids, confidence, applied_at";
 
 async fn fetch_graph_nodes(db: &sqlx::PgPool) -> Result<Vec<GraphNodeV57>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {GRAPH_NODE_COLS} FROM master_data.mdm_graph_nodes ORDER BY id"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询图谱节点失败: {e}")))?;
@@ -126,9 +126,9 @@ async fn fetch_graph_nodes(db: &sqlx::PgPool) -> Result<Vec<GraphNodeV57>, Topem
 }
 
 async fn fetch_graph_edges(db: &sqlx::PgPool) -> Result<Vec<GraphEdgeV57>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {GRAPH_EDGE_COLS} FROM master_data.mdm_graph_edges"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询图谱边失败: {e}")))?;
@@ -136,9 +136,9 @@ async fn fetch_graph_edges(db: &sqlx::PgPool) -> Result<Vec<GraphEdgeV57>, Topem
 }
 
 async fn fetch_graph_communities(db: &sqlx::PgPool) -> Result<Vec<GraphCommunity>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {GRAPH_COMMUNITY_COLS} FROM master_data.mdm_graph_communities ORDER BY id"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询社区失败: {e}")))?;
@@ -146,9 +146,9 @@ async fn fetch_graph_communities(db: &sqlx::PgPool) -> Result<Vec<GraphCommunity
 }
 
 async fn fetch_search_indexes(db: &sqlx::PgPool) -> Result<Vec<SearchIndex>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SEARCH_INDEX_COLS} FROM master_data.mdm_semantic_search_indexes ORDER BY id"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询搜索索引失败: {e}")))?;
@@ -156,9 +156,9 @@ async fn fetch_search_indexes(db: &sqlx::PgPool) -> Result<Vec<SearchIndex>, Top
 }
 
 async fn fetch_tags(db: &sqlx::PgPool) -> Result<Vec<Tag>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {TAG_COLS} FROM master_data.mdm_tags ORDER BY id"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询标签失败: {e}")))?;
@@ -166,9 +166,9 @@ async fn fetch_tags(db: &sqlx::PgPool) -> Result<Vec<Tag>, TopemsError> {
 }
 
 async fn fetch_tag_rules(db: &sqlx::PgPool) -> Result<Vec<TagRule>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {TAG_RULE_COLS} FROM master_data.mdm_tag_rules ORDER BY id"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询标签规则失败: {e}")))?;
@@ -176,9 +176,9 @@ async fn fetch_tag_rules(db: &sqlx::PgPool) -> Result<Vec<TagRule>, TopemsError>
 }
 
 async fn fetch_tagged_entities(db: &sqlx::PgPool) -> Result<Vec<TaggedEntity>, TopemsError> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {TAGGED_ENTITY_COLS} FROM master_data.mdm_tagged_entities"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("查询实体标签失败: {e}")))?;
@@ -251,13 +251,13 @@ impl EnhancedKnowledgeGraph {
         .get::<i64, _>("c");
         node.degree = degree;
 
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "INSERT INTO master_data.mdm_graph_nodes ({GRAPH_NODE_COLS}, tenant_id)
              VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
              ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label, node_type = EXCLUDED.node_type,
                properties = EXCLUDED.properties, embeddings = EXCLUDED.embeddings,
                degree = EXCLUDED.degree, community_id = EXCLUDED.community_id"
-        ))
+        )))
         .bind(&node.id)
         .bind(&node.label)
         .bind(&node.node_type)
@@ -540,10 +540,10 @@ impl SemanticSearchEngine {
             metadata,
         };
 
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "INSERT INTO master_data.mdm_semantic_search_indexes ({SEARCH_INDEX_COLS}, tenant_id)
              VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
-        ))
+        )))
         .bind(&index.id)
         .bind(&index.entity_type)
         .bind(&index.entity_id)
@@ -712,9 +712,9 @@ struct SmartTagger;
 impl SmartTagger {
     async fn create_tag(db: &sqlx::PgPool, mut tag: Tag) -> Result<Tag, TopemsError> {
         tag.usage_count = 0;
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "INSERT INTO master_data.mdm_tags ({TAG_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
-        ))
+        )))
         .bind(&tag.id)
         .bind(&tag.name)
         .bind(&tag.category)

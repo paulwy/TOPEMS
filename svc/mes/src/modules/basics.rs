@@ -222,7 +222,7 @@ async fn list_workshops(
         });
     }
     let count_sql = format!("SELECT COUNT(*) FROM workshops {where_sql}");
-    let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
+    let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     if !status.is_empty() {
         count_query = count_query.bind(&status);
     }
@@ -242,7 +242,7 @@ async fn list_workshops(
         (page - 1) * page_size
     );
     let _ = &mut fetch_sql;
-    let mut fetch_query = sqlx::query(&fetch_sql);
+    let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
     if !status.is_empty() {
         fetch_query = fetch_query.bind(&status);
     }
@@ -432,7 +432,7 @@ async fn list_production_lines(
         });
     }
     let count_sql = format!("SELECT COUNT(*) FROM production_lines {where_sql}");
-    let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
+    let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     if !status.is_empty() {
         count_query = count_query.bind(&status);
     }
@@ -451,7 +451,7 @@ async fn list_production_lines(
          FROM production_lines {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
         (page - 1) * page_size
     );
-    let mut fetch_query = sqlx::query(&fetch_sql);
+    let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
     if !status.is_empty() {
         fetch_query = fetch_query.bind(&status);
     }
@@ -643,7 +643,7 @@ async fn list_shifts(
         });
     }
     let count_sql = format!("SELECT COUNT(*) FROM shifts {where_sql}");
-    let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
+    let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     if !status.is_empty() {
         count_query = count_query.bind(&status);
     }
@@ -662,7 +662,7 @@ async fn list_shifts(
          FROM shifts {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
         (page - 1) * page_size
     );
-    let mut fetch_query = sqlx::query(&fetch_sql);
+    let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
     if !status.is_empty() {
         fetch_query = fetch_query.bind(&status);
     }
@@ -857,7 +857,7 @@ async fn list_work_calendars(
         });
     }
     let count_sql = format!("SELECT COUNT(*) FROM work_calendars {where_sql}");
-    let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
+    let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     if !status.is_empty() {
         count_query = count_query.bind(&status);
     }
@@ -876,7 +876,7 @@ async fn list_work_calendars(
          FROM work_calendars {where_sql} ORDER BY work_date DESC LIMIT {page_size} OFFSET {}",
         (page - 1) * page_size
     );
-    let mut fetch_query = sqlx::query(&fetch_sql);
+    let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
     if !status.is_empty() {
         fetch_query = fetch_query.bind(&status);
     }

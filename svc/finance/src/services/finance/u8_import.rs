@@ -219,7 +219,7 @@ impl FinanceService {
 
         sql.push_str(" ORDER BY created_at DESC LIMIT 100");
 
-        let mut query_builder = sqlx::query_as::<_, U8ImportRecord>(&sql).bind(tenant_id);
+        let mut query_builder = sqlx::query_as::<_, U8ImportRecord>(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
         if let Some(s) = &query.status {
             query_builder = query_builder.bind(s);
         }

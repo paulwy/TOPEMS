@@ -232,7 +232,7 @@ pub async fn list_suppliers(
         sort_field, order_clause
     );
 
-    let result = sqlx::query_as::<_, Supplier>(&query)
+    let result = sqlx::query_as::<_, Supplier>(sqlx::AssertSqlSafe(query))
         .bind(tenant_opt)
         .bind(&search_pattern)
         .bind(&status_filter)
@@ -255,7 +255,7 @@ pub async fn list_suppliers(
                 "#,
             );
 
-            let count_result = sqlx::query_scalar::<_, i64>(&count_query)
+            let count_result = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_query))
                 .bind(tenant_opt)
                 .bind(&search_pattern)
                 .bind(&status_filter)

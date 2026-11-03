@@ -113,7 +113,7 @@ pub async fn list_geofences(
 
     sql.push_str(" ORDER BY created_at DESC");
 
-    let mut query = sqlx::query_as::<_, Geofence>(&sql);
+    let mut query = sqlx::query_as::<_, Geofence>(sqlx::AssertSqlSafe(sql));
     if let Some(chat_id) = params.chat_id {
         query = query.bind(chat_id);
     }
@@ -146,7 +146,7 @@ pub async fn get_geofence(
         .map(|s| format!(" AND {s}"))
         .unwrap_or_default();
     let base = only_own_schema_query!("gis", "SELECT * FROM gis.geofences WHERE id = $1");
-    match sqlx::query_as::<_, Geofence>(&format!("{base}{scope}"))
+    match sqlx::query_as::<_, Geofence>(sqlx::AssertSqlSafe(format!("{base}{scope}")))
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -217,7 +217,7 @@ pub async fn update_geofence(
         .map(|s| format!(" AND {s}"))
         .unwrap_or_default();
     let current_base = only_own_schema_query!("gis", "SELECT * FROM gis.geofences WHERE id = $1");
-    let current = match sqlx::query_as::<_, Geofence>(&format!("{current_base}{scope}"))
+    let current = match sqlx::query_as::<_, Geofence>(sqlx::AssertSqlSafe(format!("{current_base}{scope}")))
         .bind(id)
         .fetch_one(&pool)
         .await
@@ -265,7 +265,7 @@ pub async fn update_geofence(
         RETURNING *
         "#
     );
-    match sqlx::query_as::<_, Geofence>(&format!("{update_base}{scope}"))
+    match sqlx::query_as::<_, Geofence>(sqlx::AssertSqlSafe(format!("{update_base}{scope}")))
         .bind(&name)
         .bind(&description)
         .bind(&coordinates)
@@ -296,7 +296,7 @@ pub async fn delete_geofence(
         .map(|s| format!(" AND {s}"))
         .unwrap_or_default();
     let delete_base = only_own_schema_query!("gis", "DELETE FROM gis.geofences WHERE id = $1");
-    match sqlx::query(&format!("{delete_base}{scope}"))
+    match sqlx::query(sqlx::AssertSqlSafe(format!("{delete_base}{scope}")))
         .bind(id)
         .execute(&pool)
         .await

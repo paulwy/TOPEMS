@@ -732,7 +732,7 @@ async fn add_column_if_missing(
         r#"ALTER TABLE {} ADD COLUMN IF NOT EXISTS "{}" {}"#,
         qualified, column, definition
     );
-    sqlx::query(&ddl).execute(pool).await?;
+    sqlx::query(sqlx::AssertSqlSafe(ddl)).execute(pool).await?;
     Ok(())
 }
 
@@ -798,7 +798,7 @@ pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::
             )",
             SERVICE_SCHEMA, tbl
         );
-        sqlx::query(&ddl).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(ddl)).execute(pool).await?;
     }
 
     // 阶段 1：逐列 ADD COLUMN IF NOT EXISTS（增量迁移）

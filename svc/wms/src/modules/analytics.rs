@@ -176,7 +176,7 @@ async fn get_inventory_turnover(
         group_by, warehouse_filter
     );
 
-    let mut query = sqlx::query(&sql)
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(tenant_id)
         .bind(start.and_hms_opt(0, 0, 0).unwrap())
         .bind(end.and_hms_opt(23, 59, 59).unwrap());
@@ -315,7 +315,7 @@ async fn get_order_fulfillment(
         group_by, warehouse_filter
     );
 
-    let mut query = sqlx::query(&sql)
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(tenant_id)
         .bind(start.and_hms_opt(0, 0, 0).unwrap())
         .bind(end.and_hms_opt(23, 59, 59).unwrap());

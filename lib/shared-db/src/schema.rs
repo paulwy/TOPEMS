@@ -354,7 +354,7 @@ pub async fn add_column_if_missing(
     definition: &str,
 ) -> Result<(), sqlx::Error> {
     let ddl = build_add_column_sql(schema, table, column, definition);
-    sqlx::query(&ddl).execute(pool).await?;
+    sqlx::query(sqlx::AssertSqlSafe(ddl)).execute(pool).await?;
     Ok(())
 }
 

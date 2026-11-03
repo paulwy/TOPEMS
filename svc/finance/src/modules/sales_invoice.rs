@@ -298,9 +298,9 @@ pub async fn list_sales_invoices(
         AND ($5::date IS NULL OR invoice_date >= $5::date)
         AND ($6::date IS NULL OR invoice_date <= $6::date)";
 
-    let total: i64 = match sqlx::query(&format!(
+    let total: i64 = match sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM finance.sales_invoices WHERE {where_sql}"
-    ))
+    )))
     .bind(tenant_id)
     .bind(params.customer_id)
     .bind(&params.status)
@@ -319,7 +319,7 @@ pub async fn list_sales_invoices(
         }
     };
 
-    let items = match sqlx::query(&format!(
+    let items = match sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT id, invoice_number, customer_id, customer_name,
                 to_char(invoice_date, 'YYYY-MM-DD') AS invoice_date,
                 CASE WHEN due_date IS NULL THEN NULL ELSE to_char(due_date, 'YYYY-MM-DD') END AS due_date,
@@ -327,7 +327,7 @@ pub async fn list_sales_invoices(
                 status, invoice_type, cancel_reason, red_flush_of
          FROM finance.sales_invoices WHERE {where_sql}
          ORDER BY created_at DESC LIMIT $7 OFFSET $8"
-    ))
+    )))
     .bind(tenant_id)
     .bind(params.customer_id)
     .bind(&params.status)
@@ -789,9 +789,9 @@ pub async fn list_collections(
         AND ($4::date IS NULL OR collection_date <= $4::date)
         AND ($5::text IS NULL OR payment_method = $5)";
 
-    let total: i64 = match sqlx::query(&format!(
+    let total: i64 = match sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM finance.erp_collection_records WHERE {where_sql}"
-    ))
+    )))
     .bind(tenant_id)
     .bind(params.customer_id)
     .bind(&params.start_date)
@@ -809,7 +809,7 @@ pub async fn list_collections(
         }
     };
 
-    let items = match sqlx::query(&format!(
+    let items = match sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT id,
                 COALESCE(collection_no, '') AS collection_number,
                 (SELECT si.id FROM finance.sales_invoices si
@@ -820,7 +820,7 @@ pub async fn list_collections(
                 CASE WHEN confirmed_at IS NULL THEN NULL ELSE to_char(confirmed_at, 'YYYY-MM-DD\"T\"HH24:MI:SS') END AS confirmed_at
          FROM finance.erp_collection_records erc WHERE {where_sql}
          ORDER BY created_at DESC LIMIT $6 OFFSET $7"
-    ))
+    )))
     .bind(tenant_id)
     .bind(params.customer_id)
     .bind(&params.start_date)

@@ -342,10 +342,10 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
 pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::Error> {
     // 阶段 0：确保 schema 和表骨架存在
     if SERVICE_SCHEMA != "public" {
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "CREATE SCHEMA IF NOT EXISTS \"{}\"",
             SERVICE_SCHEMA
-        ))
+        )))
         .execute(pool)
         .await?;
     }
@@ -354,7 +354,7 @@ pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::
             "CREATE TABLE IF NOT EXISTS \"{}\".\"{}\" (id UUID PRIMARY KEY DEFAULT gen_random_uuid())",
             SERVICE_SCHEMA, tbl
         );
-        sqlx::query(&ddl).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(ddl)).execute(pool).await?;
     }
     run_schema_defense(pool, SERVICE_SCHEMA, TABLE_DEFS, SERVICE_TAG).await?;
     Ok(())

@@ -82,7 +82,7 @@ pub async fn list_quality_costs(
     }
 
     let count_sql = format!("SELECT COUNT(*) FROM qms.qa_quality_costs{}", where_clause);
-    let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
+    let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     for p in &params {
         count_query = count_query.bind(p.clone());
     }
@@ -102,7 +102,7 @@ pub async fn list_quality_costs(
         params.len() + 2
     );
 
-    let mut fetch_query = sqlx::query_as::<_, QualityCost>(&fetch_sql);
+    let mut fetch_query = sqlx::query_as::<_, QualityCost>(sqlx::AssertSqlSafe(fetch_sql));
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
@@ -376,7 +376,7 @@ pub async fn get_cost_statistics(
         "SELECT COALESCE(SUM(amount), 0) FROM qms.qa_quality_costs{}",
         where_clause
     );
-    let mut total_query = sqlx::query_scalar::<_, BigDecimal>(&total_sql);
+    let mut total_query = sqlx::query_scalar::<_, BigDecimal>(sqlx::AssertSqlSafe(total_sql));
     for p in &params {
         total_query = total_query.bind(p.clone());
     }
@@ -393,7 +393,7 @@ pub async fn get_cost_statistics(
         r#"SELECT cost_category as category, COALESCE(SUM(amount), 0) as total, COUNT(*) as count FROM qms.qa_quality_costs{} GROUP BY cost_category ORDER BY total DESC"#,
         where_clause
     );
-    let mut category_query = sqlx::query(&category_sql);
+    let mut category_query = sqlx::query(sqlx::AssertSqlSafe(category_sql));
     for p in &params {
         category_query = category_query.bind(p.clone());
     }
@@ -427,7 +427,7 @@ pub async fn get_cost_statistics(
         r#"SELECT COALESCE(department, '未分配') as department, COALESCE(SUM(amount), 0) as total, COUNT(*) as count FROM qms.qa_quality_costs{} GROUP BY department ORDER BY total DESC"#,
         where_clause
     );
-    let mut dept_query = sqlx::query(&dept_sql);
+    let mut dept_query = sqlx::query(sqlx::AssertSqlSafe(dept_sql));
     for p in &params {
         dept_query = dept_query.bind(p.clone());
     }
@@ -548,7 +548,7 @@ pub async fn get_cost_trend(
         where_clause
     );
 
-    let mut q = sqlx::query(&sql);
+    let mut q = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         q = q.bind(p.clone());
     }

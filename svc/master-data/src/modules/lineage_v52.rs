@@ -356,10 +356,10 @@ impl LineageTracker {
         let now = chrono::Utc::now().to_rfc3339();
 
         // K1：真表权威——节点按 (entity_type, entity_id) 查复用，缺则 INSERT。
-        let from_node = sqlx::query(&format!(
+        let from_node = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes
              WHERE entity_type = $1 AND entity_id = $2 LIMIT 1"
-        ))
+        )))
         .bind(&from_entity_type)
         .bind(&from_entity_id)
         .fetch_optional(db)
@@ -378,10 +378,10 @@ impl LineageTracker {
             node
         });
 
-        let to_node = sqlx::query(&format!(
+        let to_node = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes
              WHERE entity_type = $1 AND entity_id = $2 LIMIT 1"
-        ))
+        )))
         .bind(&to_entity_type)
         .bind(&to_entity_id)
         .fetch_optional(db)
@@ -447,9 +447,9 @@ impl LineageTracker {
     }
 
     async fn get_graph(db: &sqlx::PgPool) -> LineageGraph {
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {GRAPH_COLS} FROM master_data.mdm_lineage_graphs ORDER BY id LIMIT 1"
-        ))
+        )))
         .fetch_optional(db)
         .await
         .ok()
@@ -599,9 +599,9 @@ impl LineageTracker {
 // ==================== K1：图谱/节点/边 读取与重算助手 ====================
 
 async fn fetch_nodes(db: &sqlx::PgPool) -> Vec<LineageNode> {
-    sqlx::query(&format!(
+    sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map(|rows| rows.iter().map(node_from_row).collect())
@@ -609,9 +609,9 @@ async fn fetch_nodes(db: &sqlx::PgPool) -> Vec<LineageNode> {
 }
 
 async fn fetch_edges(db: &sqlx::PgPool) -> Vec<LineageEdge> {
-    sqlx::query(&format!(
+    sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {EDGE_COLS} FROM master_data.mdm_lineage_edges"
-    ))
+    )))
     .fetch_all(db)
     .await
     .map(|rows| rows.iter().map(edge_from_row).collect())
@@ -781,9 +781,9 @@ impl ImpactAnalyzer {
     }
 
     async fn get_report(db: &sqlx::PgPool, id: &str) -> Result<ImpactAnalysisResult, TopemsError> {
-        let row = sqlx::query(&format!(
+        let row = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {ANALYSIS_COLS} FROM master_data.mdm_impact_analyses WHERE id = $1"
-        ))
+        )))
         .bind(id)
         .fetch_optional(db)
         .await
@@ -954,10 +954,10 @@ impl ChangePropagator {
         };
 
         // K1：规则从真表读取。
-        let rules: Vec<PropagationRule> = sqlx::query(&format!(
+        let rules: Vec<PropagationRule> = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {RULE_COLS} FROM master_data.mdm_propagation_rules
              WHERE source_entity_type = $1"
-        ))
+        )))
         .bind(&entity_type)
         .fetch_all(db)
         .await
@@ -1020,9 +1020,9 @@ impl ChangePropagator {
     }
 
     async fn get_rules(db: &sqlx::PgPool) -> Vec<PropagationRule> {
-        sqlx::query(&format!(
+        sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {RULE_COLS} FROM master_data.mdm_propagation_rules"
-        ))
+        )))
         .fetch_all(db)
         .await
         .map(|rows| rows.iter().map(rule_from_row).collect())
@@ -1075,7 +1075,7 @@ impl ChangePropagator {
         if !conds.is_empty() {
             sql.push_str(&format!(" WHERE {}", conds.join(" AND ")));
         }
-        let mut q = sqlx::query(&sql);
+        let mut q = sqlx::query(sqlx::AssertSqlSafe(sql));
         for b in &binds {
             q = q.bind(b);
         }
@@ -1089,9 +1089,9 @@ impl ChangePropagator {
         db: &sqlx::PgPool,
         propagation_id: &str,
     ) -> Result<PropagationLog, TopemsError> {
-        let existing = sqlx::query(&format!(
+        let existing = sqlx::query(sqlx::AssertSqlSafe(format!(
             "SELECT {LOG_COLS} FROM master_data.mdm_propagation_logs WHERE id = $1"
-        ))
+        )))
         .bind(propagation_id)
         .fetch_optional(db)
         .await
@@ -1300,10 +1300,10 @@ pub async fn get_upstream(
     Query(params): Query<LineageQuery>,
 ) -> ApiResponse<Vec<LineageNode>> {
     // K1：目标节点从真表查询。
-    let target = sqlx::query(&format!(
+    let target = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes
          WHERE entity_type = $1 AND entity_id = $2 LIMIT 1"
-    ))
+    )))
     .bind(&entity_type)
     .bind(&id)
     .fetch_optional(&state.db)
@@ -1338,10 +1338,10 @@ pub async fn get_downstream(
     Query(params): Query<LineageQuery>,
 ) -> ApiResponse<Vec<LineageNode>> {
     // K1：目标节点从真表查询。
-    let target = sqlx::query(&format!(
+    let target = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes
          WHERE entity_type = $1 AND entity_id = $2 LIMIT 1"
-    ))
+    )))
     .bind(&entity_type)
     .bind(&id)
     .fetch_optional(&state.db)

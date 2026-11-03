@@ -104,10 +104,10 @@ pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::
     // （空表仅含 id PK）。新增的表如果老环境从未 CREATE 过，后续
     // ALTER TABLE ADD COLUMN 会因为 relation does not exist 直接报错。
     // 用 IF NOT EXISTS 建最小骨架即可。
-    sqlx::query(&format!(
+    sqlx::query(sqlx::AssertSqlSafe(format!(
         "CREATE SCHEMA IF NOT EXISTS \"{}\"",
         SERVICE_SCHEMA
-    ))
+    )))
     .execute(pool)
     .await?;
     for (tbl, _cols_arr) in TABLE_DEFS {
@@ -115,7 +115,7 @@ pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::
             "CREATE TABLE IF NOT EXISTS \"{}\".\"{}\" (id UUID PRIMARY KEY DEFAULT gen_random_uuid())",
             SERVICE_SCHEMA, tbl
         );
-        sqlx::query(&ddl).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(ddl)).execute(pool).await?;
     }
 
     // 阶段 1+2：调用 shared-db 抽象完成增量迁移 + 一致性自检

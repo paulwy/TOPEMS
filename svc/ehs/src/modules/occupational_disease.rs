@@ -749,7 +749,7 @@ pub async fn list_disease_cases(
         LIMIT {page_size} OFFSET {offset}
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -808,7 +808,7 @@ pub async fn create_disease_case(
                   reported_at::text AS reported_at, created_at::text AS created_at,
                   updated_at::text AS updated_at, tenant_id::text AS tenant_id
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&case_no)
         .bind(&req.employee_id)
         .bind(&req.employee_name)
@@ -873,7 +873,7 @@ pub async fn get_disease_case(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_optional(&state.pool)
@@ -1000,7 +1000,7 @@ pub async fn update_disease_case(
                   updated_at::text AS updated_at, tenant_id::text AS tenant_id
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1045,7 +1045,7 @@ pub async fn delete_disease_case(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let result = match sqlx::query(sql)
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .execute(&state.pool)

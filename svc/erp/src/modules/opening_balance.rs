@@ -659,7 +659,7 @@ pub async fn carry_forward_opening_balance(
             updated_at = NOW()
     "#;
 
-    let result = sqlx::query(query)
+    let result = sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(&req.from_period)
         .bind(&req.to_period)
         .execute(&mut **txn)

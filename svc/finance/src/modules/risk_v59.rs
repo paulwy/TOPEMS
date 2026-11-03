@@ -407,7 +407,7 @@ pub async fn init_risk_v59_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     ];
 
     for sql in create_tables {
-        sqlx::query(sql).execute(pool).await?;
+        sqlx::query(sqlx::AssertSqlSafe(sql)).execute(pool).await?;
     }
     Ok(())
 }
@@ -640,7 +640,7 @@ impl AntiFraudEngine {
 
         query.push_str(" ORDER BY detected_at DESC LIMIT 500");
 
-        let mut q = sqlx::query_as::<_, FraudSignal>(&query);
+        let mut q = sqlx::query_as::<_, FraudSignal>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref st) = signal_type {
             q = q.bind(st);

@@ -405,7 +405,7 @@ async fn add_column_if_missing(
         r#"ALTER TABLE {} ADD COLUMN IF NOT EXISTS "{}" {}"#,
         qualified, column, definition
     );
-    sqlx::query(&ddl).execute(pool).await?;
+    sqlx::query(sqlx::AssertSqlSafe(ddl)).execute(pool).await?;
     Ok(())
 }
 

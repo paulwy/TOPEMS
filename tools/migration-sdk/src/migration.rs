@@ -115,7 +115,7 @@ impl Migration for SqlMigration {
     }
 
     async fn up(&self, pool: &sqlx::PgPool) -> Result<(), crate::error::MigrationError> {
-        sqlx::query(&self.up_sql)
+        sqlx::query(sqlx::AssertSqlSafe(self.up_sql.as_str()))
             .execute(pool)
             .await
             .map_err(|e| crate::error::MigrationError::ScriptFailed(e.to_string()))?;
@@ -124,7 +124,7 @@ impl Migration for SqlMigration {
 
     async fn down(&self, pool: &sqlx::PgPool) -> Result<(), crate::error::MigrationError> {
         if let Some(down_sql) = &self.down_sql {
-            sqlx::query(down_sql)
+            sqlx::query(sqlx::AssertSqlSafe(down_sql.as_str()))
                 .execute(pool)
                 .await
                 .map_err(|e| crate::error::MigrationError::RollbackFailed(e.to_string()))?;

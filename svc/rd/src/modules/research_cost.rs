@@ -179,7 +179,7 @@ pub async fn list_costs(
 
     query.push_str(" ORDER BY cost_date DESC LIMIT $7 OFFSET $8");
 
-    let result = sqlx::query_as::<_, ResearchCost>(&query)
+    let result = sqlx::query_as::<_, ResearchCost>(sqlx::AssertSqlSafe(query))
         .bind(params.project_id)
         .bind(&params.category)
         .bind(&params.status)
@@ -234,7 +234,7 @@ pub async fn count_costs(db: &mut sqlx::PgConnection, params: &ListParams) -> i6
         query.push_str(" AND (description ILIKE $6 OR receipt_no ILIKE $6)");
     }
 
-    sqlx::query_scalar::<_, i64>(&query)
+    sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(query))
         .bind(params.project_id)
         .bind(&params.category)
         .bind(&params.status)
@@ -605,7 +605,7 @@ pub async fn get_cost_statistics(
 
     query.push_str(" GROUP BY category ORDER BY total_amount DESC");
 
-    let result = sqlx::query(&query)
+    let result = sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(params.project_id)
         .bind(&params.start_date)
         .bind(&params.end_date)

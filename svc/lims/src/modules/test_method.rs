@@ -256,7 +256,7 @@ pub async fn list_methods(
         offset_idx
     );
 
-    let mut query_builder = sqlx::query(&sql).bind(tenant_id);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
     if let Some(st) = query.status.as_ref() {
         query_builder = query_builder.bind(st);
     }
@@ -424,7 +424,7 @@ pub async fn get_method(
         return ApiResponse::success(cached, "从内存缓存获取检测方法成功");
     }
 
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         r#"
         SELECT {}
         FROM qa_lims_test_methods m
@@ -432,7 +432,7 @@ pub async fn get_method(
         WHERE m.id = $1 AND ($2::uuid IS NULL OR m.tenant_id = $2)
         "#,
         METHOD_SELECT_COLS
-    ))
+    )))
     .bind(id)
     .bind(tenant_id)
     .fetch_one(&state.pool)
@@ -642,7 +642,7 @@ pub async fn list_categories(
         None => "SELECT id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at::TEXT, updated_at::TEXT FROM qa_lims_method_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND parent_id IS NULL ORDER BY sort_order ASC, created_at DESC",
     };
 
-    let mut query_builder = sqlx::query(sql).bind(tenant_id);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
     if let Some(pid) = query.parent_id.as_ref() {
         let pid_uuid = Uuid::parse_str(pid).unwrap_or(Uuid::nil());
         query_builder = query_builder.bind(pid_uuid);
@@ -845,7 +845,7 @@ pub async fn list_validations(
         None => "SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at::TEXT FROM qa_lims_method_validations WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY validation_date DESC, created_at DESC LIMIT 100",
     };
 
-    let mut query_builder = sqlx::query(sql).bind(tenant_id);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
     if let Some(mid) = query.method_id.as_ref() {
         let mid_uuid = Uuid::parse_str(mid).unwrap_or(Uuid::nil());
         query_builder = query_builder.bind(mid_uuid);

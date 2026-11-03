@@ -272,7 +272,7 @@ impl AuditLogStore for DatabaseAuditLogStore {
             "SELECT COUNT(*) as count FROM permission_audit_logs {}",
             where_clause
         );
-        let count_row = sqlx::query(&count_sql)
+        let count_row = sqlx::query(sqlx::AssertSqlSafe(count_sql))
             .fetch_one(&*self.pool)
             .await
             .map_err(|e| AuditLogError::StoreError(format!("Failed to count audit logs: {}", e)))?;
@@ -287,7 +287,7 @@ impl AuditLogStore for DatabaseAuditLogStore {
             "SELECT * FROM permission_audit_logs {} ORDER BY changed_at DESC LIMIT {} OFFSET {}",
             where_clause, limit, offset
         );
-        let rows = sqlx::query(&entries_sql)
+        let rows = sqlx::query(sqlx::AssertSqlSafe(entries_sql))
             .fetch_all(&*self.pool)
             .await
             .map_err(|e| AuditLogError::StoreError(format!("Failed to query audit logs: {}", e)))?;

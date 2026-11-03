@@ -367,7 +367,7 @@ impl ControlPoint {
 
         query.push_str(" ORDER BY code, created_at DESC");
 
-        let mut q = sqlx::query_as::<_, Self>(&query);
+        let mut q = sqlx::query_as::<_, Self>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(ref cat) = category {
             q = q.bind(cat);
@@ -677,7 +677,7 @@ impl RiskAssessment {
         }
         query.push_str(" ORDER BY created_at DESC");
 
-        let mut q = sqlx::query_as::<_, Self>(&query);
+        let mut q = sqlx::query_as::<_, Self>(sqlx::AssertSqlSafe(query));
         q = q.bind(tenant_id);
         if let Some(cp_id) = control_point_id {
             q = q.bind(cp_id);

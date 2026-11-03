@@ -79,9 +79,9 @@ pub async fn get_current_subscription(
         .and_then(|t| Uuid::parse_str(t).ok())
         .unwrap_or_else(Uuid::nil);
 
-    let sub: std::result::Result<Option<Subscription>, sqlx::Error> = sqlx::query_as::<_, Subscription>(&format!(
+    let sub: std::result::Result<Option<Subscription>, sqlx::Error> = sqlx::query_as::<_, Subscription>(sqlx::AssertSqlSafe(format!(
         "SELECT {SUB_RETURN} FROM public.subscriptions WHERE tenant_id = $1 ORDER BY updated_at DESC LIMIT 1"
-    ))
+    )))
     .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
@@ -138,7 +138,7 @@ pub async fn upsert_subscription(
     let now = Utc::now();
 
     let result: std::result::Result<Subscription, sqlx::Error> =
-        sqlx::query_as::<_, Subscription>(&format!(
+        sqlx::query_as::<_, Subscription>(sqlx::AssertSqlSafe(format!(
             r#"INSERT INTO public.subscriptions
         (id, tenant_id, tier, status, started_at, expires_at, created_at, updated_at)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$7)
@@ -148,7 +148,7 @@ pub async fn upsert_subscription(
           expires_at = EXCLUDED.expires_at,
           updated_at = EXCLUDED.updated_at
         RETURNING {SUB_RETURN}"#
-        ))
+        )))
         .bind(Uuid::new_v4())
         .bind(tenant_id)
         .bind(&req.tier)
@@ -178,10 +178,10 @@ pub async fn cancel_subscription(
         .unwrap_or_else(Uuid::nil);
     let now = Utc::now();
     let result: std::result::Result<Option<Subscription>, sqlx::Error> =
-        sqlx::query_as::<_, Subscription>(&format!(
+        sqlx::query_as::<_, Subscription>(sqlx::AssertSqlSafe(format!(
             "UPDATE public.subscriptions SET status = 'canceled', updated_at = $3
          WHERE id = $1 AND tenant_id = $2 RETURNING {SUB_RETURN}"
-        ))
+        )))
         .bind(id)
         .bind(tenant_id)
         .bind(now)

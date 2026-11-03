@@ -98,7 +98,7 @@ pub async fn list_sync_records(
         }
     };
 
-    let mut query_builder = sqlx::query(sql);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql));
     match (query.sync_type.as_ref(), query.status.as_ref()) {
         (Some(ty), Some(st)) => {
             query_builder = query_builder.bind(ty).bind(st).bind(page_size).bind(offset);

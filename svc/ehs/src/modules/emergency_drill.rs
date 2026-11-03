@@ -340,7 +340,7 @@ pub async fn list_drill_plans(
         LIMIT {page_size} OFFSET {offset}
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -671,7 +671,7 @@ pub async fn list_drill_records(
         LIMIT {page_size} OFFSET {offset}
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -726,7 +726,7 @@ pub async fn create_drill_record(
                   created_at::text AS created_at, updated_at::text AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&record_no)
         .bind(&req.plan_id)
         .bind(&req.drill_name)
@@ -783,7 +783,7 @@ pub async fn get_drill_record(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_optional(&state.pool)
@@ -882,7 +882,7 @@ pub async fn update_drill_record(
                   tenant_id::text AS tenant_id
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -928,7 +928,7 @@ pub async fn delete_drill_record(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let result = match sqlx::query(sql)
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .execute(&state.pool)
@@ -961,60 +961,60 @@ pub async fn get_drill_statistics(
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
-    let total_drills: i64 = sqlx::query_scalar(&format!(
+    let total_drills: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_drill_records WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let planned_count: i64 = sqlx::query_scalar(&format!(
+    let planned_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_drill_plans WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let completed_count: i64 = sqlx::query_scalar(&format!(
+    let completed_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_drill_records WHERE {} AND status = 'completed'",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let average_score: Option<f64> = sqlx::query_scalar(&format!(
+    let average_score: Option<f64> = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT AVG(overall_score)::float8 FROM ehs.qa_ehs_drill_evaluations WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(None);
-    let problem_count: i64 = sqlx::query_scalar(&format!(
+    let problem_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_drill_problems WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let rectified_count: i64 = sqlx::query_scalar(&format!(
+    let rectified_count: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_drill_problems WHERE {} AND status = 'rectified'",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
     let mut by_type: Vec<serde_json::Value> = Vec::new();
-    if let Ok(rows) = sqlx::query(&format!(
+    if let Ok(rows) = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT drill_type, COUNT(*)::int8 AS cnt FROM ehs.qa_ehs_drill_records WHERE {} GROUP BY drill_type ORDER BY cnt DESC",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_all(&state.pool)
     .await
@@ -1029,10 +1029,10 @@ pub async fn get_drill_statistics(
     }
 
     let mut by_month: Vec<serde_json::Value> = Vec::new();
-    if let Ok(rows) = sqlx::query(&format!(
+    if let Ok(rows) = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT to_char(started_at, 'YYYY-MM') AS month, COUNT(*)::int8 AS cnt FROM ehs.qa_ehs_drill_records WHERE {} GROUP BY 1 ORDER BY 1",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_all(&state.pool)
     .await
@@ -1080,7 +1080,7 @@ pub async fn list_drill_types(
     let sql = format!(
         "SELECT drill_type FROM ehs.qa_ehs_drill_plans WHERE {tc} AND drill_type IS NOT NULL AND drill_type <> ''          UNION          SELECT drill_type FROM ehs.qa_ehs_drill_records WHERE {tc} AND drill_type IS NOT NULL AND drill_type <> ''          ORDER BY 1"
     );
-    if let Ok(rows) = sqlx::query(&sql)
+    if let Ok(rows) = sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&tenant_bind)
         .fetch_all(&state.pool)
         .await

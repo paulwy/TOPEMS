@@ -161,7 +161,7 @@ pub async fn list_accounting_subjects(
 
     // 总数查询
     let count_sql = format!("SELECT COUNT(*) FROM {} WHERE {}", TABLE, where_clause);
-    let total: i64 = match sqlx::query_scalar(&count_sql).fetch_all(&state.pool).await {
+    let total: i64 = match sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql)).fetch_all(&state.pool).await {
         Ok(rows) => rows.first().copied().unwrap_or(0),
         Err(e) => {
             tracing::error!("查询会计科目总数失败: {}", e);
@@ -178,7 +178,7 @@ pub async fn list_accounting_subjects(
         params.len() + 2
     );
 
-    let mut query_builder = sqlx::query_as::<_, AccountingSubject>(&data_sql);
+    let mut query_builder = sqlx::query_as::<_, AccountingSubject>(sqlx::AssertSqlSafe(data_sql));
     for p in &params {
         query_builder = query_builder.bind(p);
     }
@@ -219,7 +219,7 @@ pub async fn get_accounting_subject(
         TABLE
     );
 
-    match sqlx::query_as::<_, AccountingSubject>(&sql)
+    match sqlx::query_as::<_, AccountingSubject>(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .fetch_optional(&state.pool)
         .await
@@ -263,7 +263,7 @@ pub async fn create_accounting_subject(
         TABLE
     );
 
-    match sqlx::query_as::<_, AccountingSubject>(&sql)
+    match sqlx::query_as::<_, AccountingSubject>(sqlx::AssertSqlSafe(sql))
         .bind(org_id)
         .bind(&req.code)
         .bind(&req.name)
@@ -308,7 +308,7 @@ pub async fn update_accounting_subject(
         TABLE
     );
     let existing: Option<AccountingSubject> =
-        match sqlx::query_as::<_, AccountingSubject>(&existing_sql)
+        match sqlx::query_as::<_, AccountingSubject>(sqlx::AssertSqlSafe(existing_sql))
             .bind(id)
             .fetch_optional(&state.pool)
             .await
@@ -339,7 +339,7 @@ pub async fn update_accounting_subject(
         TABLE
     );
 
-    match sqlx::query_as::<_, AccountingSubject>(&sql)
+    match sqlx::query_as::<_, AccountingSubject>(sqlx::AssertSqlSafe(sql))
         .bind(&name)
         .bind(&category)
         .bind(level)
@@ -379,7 +379,7 @@ pub async fn delete_accounting_subject(
         TABLE
     );
 
-    match sqlx::query(&sql).bind(id).execute(&state.pool).await {
+    match sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).execute(&state.pool).await {
         Ok(result) => {
             if result.rows_affected() > 0 {
                 Json(ApiResponse::success(
@@ -425,7 +425,7 @@ pub async fn get_subject_name_by_code(pool: &PgPool, code: &str) -> Option<Strin
         TABLE
     );
 
-    sqlx::query_scalar(&sql)
+    sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
         .bind(code)
         .fetch_optional(pool)
         .await

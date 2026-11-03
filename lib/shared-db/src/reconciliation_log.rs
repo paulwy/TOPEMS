@@ -109,7 +109,7 @@ impl ReconciliationLogService {
             "#,
             self.table_name
         );
-        let record = sqlx::query_as::<_, ReconciliationLog>(&sql)
+        let record = sqlx::query_as::<_, ReconciliationLog>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(&req.domain)
             .bind(&req.master_data_id)
@@ -144,7 +144,7 @@ impl ReconciliationLogService {
             "#,
             self.table_name, self.refs_table_name
         );
-        let result = sqlx::query(&sql)
+        let result = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(domain)
             .execute(&self.pool)
@@ -179,7 +179,7 @@ impl ReconciliationLogService {
                 base
             )
         };
-        let rows = sqlx::query_as::<_, ReconciliationLog>(&sql)
+        let rows = sqlx::query_as::<_, ReconciliationLog>(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .bind(limit)
             .fetch_all(&self.pool)
@@ -204,7 +204,7 @@ impl ReconciliationLogService {
             "#,
             self.table_name
         );
-        let result = sqlx::query(&sql)
+        let result = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(issue_id)
             .bind(tenant_id)
             .execute(&self.pool)

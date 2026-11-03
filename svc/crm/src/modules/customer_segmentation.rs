@@ -601,7 +601,7 @@ async fn count_matching_customers(
         where_clause
     );
 
-    let mut sqlx_query = sqlx::query(&query);
+    let mut sqlx_query = sqlx::query(sqlx::AssertSqlSafe(query));
     for param in params {
         sqlx_query = sqlx_query.bind(param);
     }
@@ -721,7 +721,7 @@ async fn fetch_segment_customers(
         param_idx + 1
     );
 
-    let mut sqlx_query = sqlx::query_as::<_, SegmentedCustomer>(&query);
+    let mut sqlx_query = sqlx::query_as::<_, SegmentedCustomer>(sqlx::AssertSqlSafe(query));
     for param in params {
         sqlx_query = sqlx_query.bind(param);
     }

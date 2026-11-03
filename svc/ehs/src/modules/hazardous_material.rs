@@ -285,7 +285,7 @@ pub async fn list_materials(
         LIMIT 200
         "#
     );
-    let rows = match sqlx::query(&sql)
+    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&tenant_bind)
         .fetch_all(&state.pool)
         .await
@@ -335,7 +335,7 @@ pub async fn create_material(
                   created_at::text AS created_at, updated_at::text AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&material_no)
         .bind(&req.name)
         .bind(&req.category)
@@ -404,7 +404,7 @@ pub async fn get_material(
           AND deleted_at IS NULL
         "#
     );
-    let row = match sqlx::query(&sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_optional(&state.pool)
@@ -528,7 +528,7 @@ pub async fn update_material(
                   tenant_id::text AS tenant_id
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -573,7 +573,7 @@ pub async fn delete_material(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let result = match sqlx::query(sql)
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .execute(&state.pool)
@@ -620,7 +620,7 @@ pub async fn list_stock_records(
            FROM ehs.qa_ehs_stock_records WHERE {} ORDER BY operation_time DESC NULLS LAST"#,
         tenant_filter
     );
-    let rows = match sqlx::query(&sql).fetch_all(&state.pool).await {
+    let rows = match sqlx::query(sqlx::AssertSqlSafe(sql)).fetch_all(&state.pool).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list stock records: {}", e);
@@ -691,7 +691,7 @@ pub async fn get_stock_record(
            FROM ehs.qa_ehs_stock_records WHERE id = $1::uuid AND {}"#,
         tenant_clause
     );
-    let row = match sqlx::query(&sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .fetch_optional(&state.pool)
         .await
@@ -763,7 +763,7 @@ pub async fn get_material_msds(
         ORDER BY updated_at DESC
         LIMIT 1
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_optional(&state.pool)
@@ -794,50 +794,50 @@ pub async fn get_material_statistics(
     let tenant_bind = resolve_material_tenant(&claims).to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
-    let total_materials: i32 = sqlx::query_scalar(&format!(
+    let total_materials: i32 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
     // low_stock: current_stock IS NOT NULL AND min_stock IS NOT NULL AND current_stock < min_stock
-    let low_stock_count: i32 = sqlx::query_scalar(&format!(
+    let low_stock_count: i32 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {} AND current_stock IS NOT NULL AND min_stock IS NOT NULL AND current_stock < min_stock",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
     // over_stock: current_stock > max_stock
-    let over_stock_count: i32 = sqlx::query_scalar(&format!(
+    let over_stock_count: i32 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {} AND current_stock IS NOT NULL AND max_stock IS NOT NULL AND current_stock > max_stock",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
     // expired: materials with status = 'expired' (status column)
-    let expired_count: i32 = sqlx::query_scalar(&format!(
+    let expired_count: i32 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*)::int FROM ehs.qa_ehs_hazardous_materials WHERE {} AND status = 'expired'",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
 
     // by_category GROUP BY
-    let by_category: Vec<serde_json::Value> = sqlx::query(&format!(
+    let by_category: Vec<serde_json::Value> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT category, COUNT(*)::int AS cnt FROM ehs.qa_ehs_hazardous_materials WHERE {} GROUP BY category ORDER BY cnt DESC",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_all(&state.pool)
     .await
@@ -851,10 +851,10 @@ pub async fn get_material_statistics(
     .collect();
 
     // by_hazard_level GROUP BY
-    let by_hazard_level: Vec<serde_json::Value> = sqlx::query(&format!(
+    let by_hazard_level: Vec<serde_json::Value> = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT hazard_level, COUNT(*)::int AS cnt FROM ehs.qa_ehs_hazardous_materials WHERE {} AND hazard_level IS NOT NULL GROUP BY hazard_level ORDER BY cnt DESC",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_all(&state.pool)
     .await

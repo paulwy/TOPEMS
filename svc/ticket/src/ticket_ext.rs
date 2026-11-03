@@ -819,10 +819,10 @@ pub async fn batch_update_tickets(
     if req.priority.is_some() {
         set.push_str(", severity = $4");
     }
-    let affected = match sqlx::query(&format!(
+    let affected = match sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE ticket.core_tickets SET {} WHERE id = ANY($1) AND tenant_id = $2 AND deleted_at IS NULL",
         set
-    ))
+    )))
     .bind(&ids)
     .bind(tenant_id)
     .bind(&req.status)

@@ -477,7 +477,7 @@ pub async fn list_regulations(
         "#
     );
 
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -536,7 +536,7 @@ pub async fn create_regulation(
                   created_at::text AS created_at, updated_at::text AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&reg_no)
         .bind(&req.title)
         .bind(&req.category)
@@ -592,7 +592,7 @@ pub async fn get_regulation(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_optional(&state.pool)
@@ -699,7 +699,7 @@ pub async fn update_regulation(
                   tenant_id::text AS tenant_id
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -742,7 +742,7 @@ pub async fn delete_regulation(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let result = match sqlx::query(sql)
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .execute(&state.pool)
@@ -828,7 +828,7 @@ pub async fn update_monitor_record(
         params.len() + 2,
         params.len() + 2
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -869,7 +869,7 @@ pub async fn get_permit(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_optional(&state.pool)
@@ -980,7 +980,7 @@ pub async fn update_permit(
                   tenant_id::text AS tenant_id
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1023,7 +1023,7 @@ pub async fn delete_permit(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let result = match sqlx::query(sql)
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .execute(&state.pool)
@@ -1111,7 +1111,7 @@ pub async fn list_evaluations(
         LIMIT {page_size} OFFSET {offset}
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1165,7 +1165,7 @@ pub async fn create_evaluation(
                   created_at::text AS created_at, updated_at::text AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&eval_no)
         .bind(&req.title)
         .bind(&req.assessment_type)
@@ -1226,7 +1226,7 @@ pub async fn get_evaluation(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_optional(&state.pool)
@@ -1341,7 +1341,7 @@ pub async fn update_evaluation(
                   tenant_id::text AS tenant_id
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1387,7 +1387,7 @@ pub async fn delete_evaluation(
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
-    let result = match sqlx::query(sql)
+    let result = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .execute(&state.pool)
@@ -1448,7 +1448,7 @@ pub async fn list_monitor_records(
         LIMIT {page_size} OFFSET {offset}
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1595,7 +1595,7 @@ pub async fn list_permits(
         LIMIT {page_size} OFFSET {offset}
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1649,7 +1649,7 @@ pub async fn create_permit(
                   attachments, created_at::text AS created_at, updated_at::text AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
-    let row = match sqlx::query(sql)
+    let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&permit_no)
         .bind(&req.permit_type)
         .bind(&req.title)
@@ -1731,7 +1731,7 @@ pub async fn list_incidents(
         LIMIT {page_size} OFFSET {offset}
         "#
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1915,7 +1915,7 @@ pub async fn update_incident(
         params.len() + 2,
         params.len() + 2
     );
-    let mut query = sqlx::query(&sql);
+    let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         query = query.bind(p);
     }
@@ -1986,71 +1986,71 @@ pub async fn get_compliance_statistics(
     let tenant_bind = tenant_id.to_string();
     let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
 
-    let total_regulations: i64 = sqlx::query_scalar(&format!(
+    let total_regulations: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_environmental_regulations WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let active_regulations: i64 = sqlx::query_scalar(&format!(
+    let active_regulations: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_environmental_regulations WHERE {} AND status = 'active'",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let total_evaluations: i64 = sqlx::query_scalar(&format!(
+    let total_evaluations: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_compliance_evaluations WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let average_compliance_rate: Option<f64> = sqlx::query_scalar(&format!(
+    let average_compliance_rate: Option<f64> = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT AVG(compliance_rate)::float8 FROM ehs.qa_ehs_compliance_evaluations WHERE {} AND compliance_rate IS NOT NULL", tc
-    )).bind(&tenant_bind).fetch_one(&state.pool).await.ok().flatten();
-    let total_monitor_records: i64 = sqlx::query_scalar(&format!(
+    ))).bind(&tenant_bind).fetch_one(&state.pool).await.ok().flatten();
+    let total_monitor_records: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_env_monitor_records WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let qualified_monitor_records: i64 = sqlx::query_scalar(&format!(
+    let qualified_monitor_records: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_env_monitor_records WHERE {} AND result IN ('合格','达标')", tc
-    )).bind(&tenant_bind).fetch_one(&state.pool).await.unwrap_or(0);
-    let total_permits: i64 = sqlx::query_scalar(&format!(
+    ))).bind(&tenant_bind).fetch_one(&state.pool).await.unwrap_or(0);
+    let total_permits: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_discharge_permits WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let expiring_permits: i64 = sqlx::query_scalar(&format!(
+    let expiring_permits: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_discharge_permits WHERE {} AND valid_to BETWEEN NOW() AND NOW() + INTERVAL '30 days'", tc
-    )).bind(&tenant_bind).fetch_one(&state.pool).await.unwrap_or(0);
-    let total_incidents: i64 = sqlx::query_scalar(&format!(
+    ))).bind(&tenant_bind).fetch_one(&state.pool).await.unwrap_or(0);
+    let total_incidents: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_environment_incidents WHERE {}",
         tc
-    ))
+    )))
     .bind(&tenant_bind)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
-    let open_incidents: i64 = sqlx::query_scalar(&format!(
+    let open_incidents: i64 = sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
         "SELECT COUNT(*) FROM ehs.qa_ehs_environment_incidents WHERE {} AND status NOT IN ('closed','resolved')", tc
-    )).bind(&tenant_bind).fetch_one(&state.pool).await.unwrap_or(0);
+    ))).bind(&tenant_bind).fetch_one(&state.pool).await.unwrap_or(0);
 
     let mut by_monitor_type: Vec<serde_json::Value> = Vec::new();
-    if let Ok(rows) = sqlx::query(&format!(
+    if let Ok(rows) = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT COALESCE(monitor_type, '未分类') AS mt, COUNT(*)::int8 AS cnt, COUNT(*) FILTER (WHERE result IN ('合格','达标'))::int8 AS qc FROM ehs.qa_ehs_env_monitor_records WHERE {} GROUP BY 1 ORDER BY cnt DESC", tc
-    )).bind(&tenant_bind).fetch_all(&state.pool).await {
+    ))).bind(&tenant_bind).fetch_all(&state.pool).await {
         for r in rows {
             by_monitor_type.push(serde_json::json!({
                 "type": r.try_get::<String, _>("mt").unwrap_or_default(),
@@ -2060,9 +2060,9 @@ pub async fn get_compliance_statistics(
         }
     }
     let mut by_incident_type: Vec<serde_json::Value> = Vec::new();
-    if let Ok(rows) = sqlx::query(&format!(
+    if let Ok(rows) = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT COALESCE(incident_type, '未分类') AS it, COUNT(*)::int8 AS cnt FROM ehs.qa_ehs_environment_incidents WHERE {} GROUP BY 1 ORDER BY cnt DESC", tc
-    )).bind(&tenant_bind).fetch_all(&state.pool).await {
+    ))).bind(&tenant_bind).fetch_all(&state.pool).await {
         for r in rows {
             by_incident_type.push(serde_json::json!({
                 "type": r.try_get::<String, _>("it").unwrap_or_default(),

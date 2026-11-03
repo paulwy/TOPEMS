@@ -332,7 +332,7 @@ pub async fn get_device_tracking(
     let limit = query.limit.unwrap_or(100);
 
     match if query.start_time.is_some() && query.end_time.is_some() {
-        sqlx::query_as::<_, DeviceLocationRecord>(sql)
+        sqlx::query_as::<_, DeviceLocationRecord>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&query.start_time)
             .bind(&query.end_time)
@@ -340,21 +340,21 @@ pub async fn get_device_tracking(
             .fetch_all(&pool)
             .await
     } else if query.start_time.is_some() {
-        sqlx::query_as::<_, DeviceLocationRecord>(sql)
+        sqlx::query_as::<_, DeviceLocationRecord>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&query.start_time)
             .bind(limit)
             .fetch_all(&pool)
             .await
     } else if query.end_time.is_some() {
-        sqlx::query_as::<_, DeviceLocationRecord>(sql)
+        sqlx::query_as::<_, DeviceLocationRecord>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&query.end_time)
             .bind(limit)
             .fetch_all(&pool)
             .await
     } else {
-        sqlx::query_as::<_, DeviceLocationRecord>(sql)
+        sqlx::query_as::<_, DeviceLocationRecord>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(limit)
             .fetch_all(&pool)
@@ -429,7 +429,7 @@ pub async fn get_device_history(
     };
 
     match if query.start_time.is_some() && query.end_time.is_some() {
-        sqlx::query_as::<_, DeviceLocationRecord>(sql)
+        sqlx::query_as::<_, DeviceLocationRecord>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&query.start_time)
             .bind(&query.end_time)
@@ -437,7 +437,7 @@ pub async fn get_device_history(
             .fetch_all(&pool)
             .await
     } else {
-        sqlx::query_as::<_, DeviceLocationRecord>(sql)
+        sqlx::query_as::<_, DeviceLocationRecord>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(limit)
             .fetch_all(&pool)

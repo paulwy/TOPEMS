@@ -140,7 +140,7 @@ pub async fn list_crm_erp_sync(
 
     sql.push_str(&format!(" ORDER BY created_at DESC LIMIT ${}", param_idx));
 
-    let mut query = sqlx::query_as::<_, CrmErpSync>(&sql).bind(tenant_id);
+    let mut query = sqlx::query_as::<_, CrmErpSync>(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
     for p in &params {
         query = query.bind(p);
     }

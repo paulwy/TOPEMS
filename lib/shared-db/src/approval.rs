@@ -217,7 +217,7 @@ pub async fn execute_transition_and_log(
              WHERE id = $2 AND status = $3 AND deleted_at IS NULL",
             table
         );
-        sqlx::query(&sql)
+        sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(to_status)
             .bind(record_id)
             .bind(from_status)

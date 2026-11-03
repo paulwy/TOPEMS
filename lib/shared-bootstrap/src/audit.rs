@@ -166,7 +166,7 @@ async fn list_audit_logs_inner(
         "#
     );
 
-    let result = sqlx::query_as::<_, AuditLog>(&select_sql)
+    let result = sqlx::query_as::<_, AuditLog>(sqlx::AssertSqlSafe(select_sql))
         .bind(&params.action)
         .bind(&params.entity_type)
         .bind(&params.user_id)
@@ -192,7 +192,7 @@ async fn list_audit_logs_inner(
                 "#
             );
 
-            let count_result = sqlx::query_scalar::<_, i64>(&count_sql)
+            let count_result = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql))
                 .bind(&params.action)
                 .bind(&params.entity_type)
                 .bind(&params.user_id)
@@ -235,7 +235,7 @@ async fn get_audit_log_inner(
         "#
     );
 
-    let result = sqlx::query_as::<_, AuditLog>(&select_sql)
+    let result = sqlx::query_as::<_, AuditLog>(sqlx::AssertSqlSafe(select_sql))
         .bind(id)
         .fetch_optional(&db)
         .await;
@@ -299,7 +299,7 @@ pub async fn log_audit_event(
         "#
     );
 
-    let result = sqlx::query(&insert_sql)
+    let result = sqlx::query(sqlx::AssertSqlSafe(insert_sql))
         .bind(action)
         .bind(entity_type)
         .bind(entity_id)
@@ -363,7 +363,7 @@ pub async fn log_audit_event_with_id(
         "#
     );
 
-    let result = sqlx::query(&insert_sql)
+    let result = sqlx::query(sqlx::AssertSqlSafe(insert_sql))
         .bind(id)
         .bind(action)
         .bind(entity_type)

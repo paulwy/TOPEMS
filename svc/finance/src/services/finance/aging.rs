@@ -73,7 +73,7 @@ impl FinanceService {
 
         sql.push_str(" ORDER BY due_date ASC LIMIT 100");
 
-        let rows = sqlx::query(&sql)
+        let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
             .bind(tenant_id)
             .fetch_all(&self.db_pool)
             .await?;
@@ -142,7 +142,7 @@ impl FinanceService {
                 table, month_end
             );
 
-            let row = sqlx::query(&sql)
+            let row = sqlx::query(sqlx::AssertSqlSafe(sql))
                 .bind(tenant_id)
                 .fetch_one(&self.db_pool)
                 .await?;

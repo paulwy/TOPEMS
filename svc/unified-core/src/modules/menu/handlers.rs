@@ -68,7 +68,7 @@ pub async fn list_groups(
         MENU_GROUP_COLUMNS
     );
 
-    let items: Vec<MenuGroup> = match sqlx::query_as(&sql)
+    let items: Vec<MenuGroup> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(search)
         .bind(status)
         .bind(tenant_opt)
@@ -101,7 +101,7 @@ pub async fn get_group(
         MENU_GROUP_COLUMNS
     );
 
-    let group: Option<MenuGroup> = match sqlx::query_as(&sql)
+    let group: Option<MenuGroup> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .fetch_optional(&state.pool)
         .await
@@ -143,7 +143,7 @@ pub async fn create_group(
         MENU_GROUP_COLUMNS
     );
 
-    let group: MenuGroup = match sqlx::query_as(&sql)
+    let group: MenuGroup = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(tenant_id)
         .bind(req.name)
         .bind(req.code)
@@ -189,7 +189,7 @@ pub async fn update_group(
         MENU_GROUP_COLUMNS
     );
 
-    let group: Option<MenuGroup> = match sqlx::query_as(&sql)
+    let group: Option<MenuGroup> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(req.name)
         .bind(req.code)
         .bind(req.icon)
@@ -297,7 +297,7 @@ pub async fn list_menus(
         MENU_COLUMNS
     );
 
-    let items: Vec<Menu> = match sqlx::query_as(&sql)
+    let items: Vec<Menu> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(group_id)
         .bind(parent_id)
         .bind(search)
@@ -329,7 +329,7 @@ pub async fn get_menu(State(state): State<AppState>, Path(id): Path<Uuid>) -> Ap
         MENU_COLUMNS
     );
 
-    let menu: Option<Menu> = match sqlx::query_as(&sql)
+    let menu: Option<Menu> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .fetch_optional(&state.pool)
         .await
@@ -371,7 +371,7 @@ pub async fn create_menu(
         MENU_COLUMNS
     );
 
-    let menu: Menu = match sqlx::query_as(&sql)
+    let menu: Menu = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(tenant_id)
         .bind(req.group_id)
         .bind(req.parent_id)
@@ -425,7 +425,7 @@ pub async fn update_menu(
         MENU_COLUMNS
     );
 
-    let menu: Option<Menu> = match sqlx::query_as(&sql)
+    let menu: Option<Menu> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(req.group_id)
         .bind(req.parent_id)
         .bind(req.name)

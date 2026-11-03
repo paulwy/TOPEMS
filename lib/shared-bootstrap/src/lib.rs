@@ -2630,10 +2630,10 @@ mod tests {
         let prefix = "ut_v278_mref_ok";
 
         // 确保测试前没有残留（失败忽略）
-        let _ = sqlx::query(&format!(
+        let _ = sqlx::query(sqlx::AssertSqlSafe(format!(
             "DROP TABLE IF EXISTS {}_master_data_refs CASCADE",
             prefix
-        ))
+        )))
         .execute(&pool)
         .await;
 
@@ -2665,10 +2665,10 @@ mod tests {
         );
 
         // 清理
-        let _ = sqlx::query(&format!(
+        let _ = sqlx::query(sqlx::AssertSqlSafe(format!(
             "DROP TABLE IF EXISTS {}_master_data_refs CASCADE",
             prefix
-        ))
+        )))
         .execute(&pool)
         .await;
     }
@@ -2734,10 +2734,10 @@ mod tests {
         };
 
         let prefix = "ut_v278_idem";
-        let _ = sqlx::query(&format!(
+        let _ = sqlx::query(sqlx::AssertSqlSafe(format!(
             "DROP TABLE IF EXISTS {}_master_data_refs CASCADE",
             prefix
-        ))
+        )))
         .execute(&pool)
         .await;
 
@@ -2759,10 +2759,10 @@ mod tests {
             r2
         );
 
-        let _ = sqlx::query(&format!(
+        let _ = sqlx::query(sqlx::AssertSqlSafe(format!(
             "DROP TABLE IF EXISTS {}_master_data_refs CASCADE",
             prefix
-        ))
+        )))
         .execute(&pool)
         .await;
     }

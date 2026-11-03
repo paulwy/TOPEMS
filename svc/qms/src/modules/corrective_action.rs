@@ -80,7 +80,7 @@ pub async fn list_actions(
         where_clause
     );
 
-    let mut count_query = sqlx::query_scalar(&count_sql);
+    let mut count_query = sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql));
     for p in &params {
         count_query = count_query.bind(p.clone());
     }
@@ -106,7 +106,7 @@ pub async fn list_actions(
         params.len() + 2
     );
 
-    let mut fetch_query = sqlx::query_as::<_, CorrectiveAction>(&fetch_sql);
+    let mut fetch_query = sqlx::query_as::<_, CorrectiveAction>(sqlx::AssertSqlSafe(fetch_sql));
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }

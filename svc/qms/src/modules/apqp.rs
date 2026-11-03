@@ -690,7 +690,7 @@ pub async fn list_apqp_tasks(
 
     sql.push_str(" ORDER BY sort_order ASC, created_at DESC");
 
-    let mut query_builder = sqlx::query_as::<_, ApqpTask>(&sql);
+    let mut query_builder = sqlx::query_as::<_, ApqpTask>(sqlx::AssertSqlSafe(sql));
     for param in &params {
         query_builder = query_builder.bind(param);
     }
@@ -937,7 +937,7 @@ pub async fn list_apqp_risks(
 
     sql.push_str(" ORDER BY rpn DESC, created_at DESC");
 
-    let mut query_builder = sqlx::query_as::<_, ApqpRisk>(&sql);
+    let mut query_builder = sqlx::query_as::<_, ApqpRisk>(sqlx::AssertSqlSafe(sql));
     for param in &params {
         if param.is_string() {
             query_builder = query_builder.bind(param.as_str());
@@ -1458,8 +1458,7 @@ pub async fn approve_apqp(
             if apqp_can_transition(&current_status, STATUS_IN_PRODUCTION).is_err() {
                 return ApiResponse::bad_request("当前状态不允许审批通过");
             }
-            let project = sqlx::query_as::<_, ApqpProject>(
-                format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING {}", STATUS_IN_PRODUCTION, APQP_SELECT_COLS).as_str()
+            let project = sqlx::query_as::<_, ApqpProject>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING {}", STATUS_IN_PRODUCTION, APQP_SELECT_COLS)            )
             ).bind(id).bind(tenant_filter).fetch_one(&state.pool).await;
             match project {
                 Ok(data) => {
@@ -1544,8 +1543,7 @@ pub async fn complete_apqp(
             if apqp_can_transition(&current_status, STATUS_COMPLETED).is_err() {
                 return ApiResponse::bad_request("当前状态不允许完成");
             }
-            let project = sqlx::query_as::<_, ApqpProject>(
-                format!("UPDATE qms.qa_apqp_projects SET status = '{}', actual_end_date = COALESCE(actual_end_date, NOW()), progress = 100, updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING {}", STATUS_COMPLETED, APQP_SELECT_COLS).as_str()
+            let project = sqlx::query_as::<_, ApqpProject>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_apqp_projects SET status = '{}', actual_end_date = COALESCE(actual_end_date, NOW()), progress = 100, updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING {}", STATUS_COMPLETED, APQP_SELECT_COLS)            )
             ).bind(id).bind(tenant_filter).fetch_one(&state.pool).await;
             match project {
                 Ok(data) => {
@@ -1625,8 +1623,7 @@ pub async fn cancel_apqp(
             if apqp_can_transition(&current_status, STATUS_CANCELLED).is_err() {
                 return ApiResponse::bad_request("当前状态不允许取消");
             }
-            let project = sqlx::query_as::<_, ApqpProject>(
-                format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING {}", STATUS_CANCELLED, APQP_SELECT_COLS).as_str()
+            let project = sqlx::query_as::<_, ApqpProject>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING {}", STATUS_CANCELLED, APQP_SELECT_COLS)            )
             ).bind(id).bind(tenant_filter).fetch_one(&state.pool).await;
             match project {
                 Ok(data) => {

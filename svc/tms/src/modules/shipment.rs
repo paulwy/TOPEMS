@@ -781,11 +781,11 @@ pub async fn submit_approval(
                     "当前状态不允许提交审批".to_string(),
                 ));
             }
-            let result = sqlx::query_as::<_, Shipment>(&format!(
+            let result = sqlx::query_as::<_, Shipment>(sqlx::AssertSqlSafe(format!(
                 r#"UPDATE tms.tms_shipments SET status = 'pending', updated_at = $2
                     WHERE id = $1 AND tenant_id = $3 AND status = 'draft' RETURNING {}"#,
                 SHIPMENT_RETURN
-            ))
+            )))
             .bind(id)
             .bind(now)
             .bind(tenant_id)
@@ -874,12 +874,12 @@ pub async fn approve_shipment(
                 ));
             }
             let requires_approval = shipment_requires_approval(&status, "in_transit");
-            let result = sqlx::query_as::<_, Shipment>(
-                &format!(
+            let result = sqlx::query_as::<_, Shipment>(sqlx::AssertSqlSafe(format!(
                     r#"UPDATE tms.tms_shipments SET status = 'in_transit', actual_departure = $2, updated_at = $3
                     WHERE id = $1 AND tenant_id = $4 AND status = 'pending' RETURNING {}"#,
                     SHIPMENT_RETURN
                 ),
+            ),
             )
             .bind(id)
             .bind(now)
@@ -970,11 +970,11 @@ pub async fn reject_shipment(
                     "当前状态不允许驳回".to_string(),
                 ));
             }
-            let result = sqlx::query_as::<_, Shipment>(&format!(
+            let result = sqlx::query_as::<_, Shipment>(sqlx::AssertSqlSafe(format!(
                 r#"UPDATE tms.tms_shipments SET status = 'cancelled', updated_at = $2
                     WHERE id = $1 AND tenant_id = $3 AND status NOT IN ('delivered','cancelled') RETURNING {}"#,
                 SHIPMENT_RETURN
-            ))
+            )))
             .bind(id)
             .bind(now)
             .bind(tenant_id)

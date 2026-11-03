@@ -81,7 +81,7 @@ pub async fn list_eightd_reports(
         where_clause
     );
 
-    let mut count_query = sqlx::query_scalar(&count_sql);
+    let mut count_query = sqlx::query_scalar(sqlx::AssertSqlSafe(count_sql));
     for p in &params {
         count_query = count_query.bind(p.clone());
     }
@@ -112,7 +112,7 @@ pub async fn list_eightd_reports(
         params.len() + 2
     );
 
-    let mut fetch_query = sqlx::query_as::<_, EightDReport>(&fetch_sql);
+    let mut fetch_query = sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(fetch_sql));
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
@@ -739,8 +739,7 @@ pub async fn approve_eightd(
             if eight_d_can_transition(&current_status, STATUS_VERIFIED).is_err() {
                 return ApiResponse::bad_request("当前状态不允许审批通过");
             }
-            let report = sqlx::query_as::<_, EightDReport>(
-                format!("UPDATE qms.qa_eightd_reports SET status = '{}', d6_verified_at = COALESCE(d6_verified_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_VERIFIED, EIGHTD_SELECT_COLS).as_str()
+            let report = sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_eightd_reports SET status = '{}', d6_verified_at = COALESCE(d6_verified_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_VERIFIED, EIGHTD_SELECT_COLS)            )
             ).bind(id).bind(tenant_id).fetch_one(&state.pool).await;
             match report {
                 Ok(data) => {
@@ -820,8 +819,7 @@ pub async fn close_eightd_approval(
             if eight_d_can_transition(&current_status, STATUS_CLOSED).is_err() {
                 return ApiResponse::bad_request("当前状态不允许关闭");
             }
-            let report = sqlx::query_as::<_, EightDReport>(
-                format!("UPDATE qms.qa_eightd_reports SET status = '{}', d8_closed_at = COALESCE(d8_closed_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CLOSED, EIGHTD_SELECT_COLS).as_str()
+            let report = sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_eightd_reports SET status = '{}', d8_closed_at = COALESCE(d8_closed_at, NOW()), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CLOSED, EIGHTD_SELECT_COLS)            )
             ).bind(id).bind(tenant_id).fetch_one(&state.pool).await;
             match report {
                 Ok(data) => {
@@ -896,8 +894,7 @@ pub async fn cancel_eightd(
             if eight_d_can_transition(&current_status, STATUS_CANCELLED).is_err() {
                 return ApiResponse::bad_request("当前状态不允许取消");
             }
-            let report = sqlx::query_as::<_, EightDReport>(
-                format!("UPDATE qms.qa_eightd_reports SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CANCELLED, EIGHTD_SELECT_COLS).as_str()
+            let report = sqlx::query_as::<_, EightDReport>(sqlx::AssertSqlSafe(format!("UPDATE qms.qa_eightd_reports SET status = '{}', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING {}", STATUS_CANCELLED, EIGHTD_SELECT_COLS)            )
             ).bind(id).bind(tenant_id).fetch_one(&state.pool).await;
             match report {
                 Ok(data) => {

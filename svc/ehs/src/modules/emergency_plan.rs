@@ -234,7 +234,7 @@ pub async fn list_plans(
         "SELECT id, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at::text, effective_date::text, expiry_date::text, created_at::text, updated_at::text, tenant_id::text FROM ehs.qa_ehs_emergency_plans{} ORDER BY created_at DESC LIMIT {} OFFSET {}",
         where_clause, page_size, offset
     );
-    let mut qb = sqlx::query(&sql);
+    let mut qb = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         qb = qb.bind(p);
     }
@@ -281,7 +281,7 @@ pub async fn create_plan(
     let status = req.status.clone().unwrap_or_else(|| "planned".to_string());
     let version = req.version.clone().unwrap_or_else(|| "v1".to_string());
     let sql = "INSERT INTO ehs.qa_ehs_emergency_plans (plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, effective_date, expiry_date, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::date, $15::date, $16::uuid) RETURNING id, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at::text, effective_date::text, expiry_date::text, created_at::text, updated_at::text, tenant_id::text";
-    match sqlx::query(sql)
+    match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&plan_no)
         .bind(&req.title)
         .bind(&req.description)
@@ -324,7 +324,7 @@ pub async fn get_plan(
 ) -> ApiResponse<PlanDetail> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let plan_sql = "SELECT id, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at::text, effective_date::text, expiry_date::text, created_at::text, updated_at::text, tenant_id::text FROM ehs.qa_ehs_emergency_plans WHERE id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL";
-    let plan_row = match sqlx::query(plan_sql)
+    let plan_row = match sqlx::query(sqlx::AssertSqlSafe(plan_sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_optional(&state.pool)
@@ -470,7 +470,7 @@ pub async fn update_plan(
         set_clauses.join(", "), id_param, tenant_param, tenant_param
     );
     params.push(id.clone());
-    let mut qb = sqlx::query(&sql);
+    let mut qb = sqlx::query(sqlx::AssertSqlSafe(sql));
     for p in &params {
         qb = qb.bind(p);
     }
@@ -500,7 +500,7 @@ pub async fn delete_plan(
 ) -> ApiResponse<()> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let sql = "UPDATE ehs.qa_ehs_emergency_plans SET deleted_at = NOW() WHERE id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL";
-    match sqlx::query(sql)
+    match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .execute(&state.pool)
@@ -530,7 +530,7 @@ pub async fn list_plan_versions(
 ) -> ApiResponse<Vec<PlanVersion>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let sql = "SELECT id, plan_id::text, version, change_description, changed_by, changed_at::text, content, tenant_id::text FROM ehs.qa_ehs_emergency_plan_versions WHERE plan_id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL ORDER BY changed_at DESC";
-    match sqlx::query(sql)
+    match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
         .fetch_all(&state.pool)
@@ -571,7 +571,7 @@ pub async fn create_new_version(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
     let sql = "INSERT INTO ehs.qa_ehs_emergency_plan_versions (plan_id, version, change_description, changed_by, content, tenant_id) VALUES ($1::uuid, 'v' || (SELECT COUNT(*) + 1 FROM ehs.qa_ehs_emergency_plan_versions WHERE plan_id = $1::uuid AND deleted_at IS NULL), $2, $3, $4, $5::uuid) RETURNING id, plan_id::text, version, change_description, changed_by, changed_at::text, content, tenant_id::text";
-    match sqlx::query(sql)
+    match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&change_description)
         .bind(claims.username.clone())

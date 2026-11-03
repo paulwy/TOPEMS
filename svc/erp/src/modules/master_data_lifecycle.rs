@@ -766,7 +766,7 @@ pub async fn list_archived(
     binds.push(page_size.to_string());
     binds.push(offset.to_string());
 
-    let mut query = sqlx::query_as::<_, MasterDataRow>(&sql);
+    let mut query = sqlx::query_as::<_, MasterDataRow>(sqlx::AssertSqlSafe(sql));
     for bind in &binds {
         query = query.bind(bind);
     }
@@ -850,7 +850,7 @@ pub async fn list_pending_destruction(
     binds.push(page_size.to_string());
     binds.push(offset.to_string());
 
-    let mut query = sqlx::query_as::<_, MasterDataRow>(&sql);
+    let mut query = sqlx::query_as::<_, MasterDataRow>(sqlx::AssertSqlSafe(sql));
     for bind in &binds {
         query = query.bind(bind);
     }

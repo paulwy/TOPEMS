@@ -301,7 +301,7 @@ pub async fn download_offline_data(
         }
         query.push_str(" ORDER BY start_time DESC");
 
-        let mut q = sqlx::query_as::<_, TrackRecord>(&query).bind(tenant_id);
+        let mut q = sqlx::query_as::<_, TrackRecord>(sqlx::AssertSqlSafe(query)).bind(tenant_id);
         if let Some(ref date_from) = payload.track_date_from {
             q = q.bind(date_from);
         }

@@ -107,7 +107,7 @@ async fn list_dictionaries(
         }
     }
     let count_sql = format!("SELECT COUNT(*) FROM erp_dictionaries {where_sql}");
-    let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
+    let mut count_query = sqlx::query_scalar::<_, i64>(sqlx::AssertSqlSafe(count_sql));
     for p in &params {
         count_query = count_query.bind(p);
     }
@@ -123,7 +123,7 @@ async fn list_dictionaries(
          {where_sql} ORDER BY created_at DESC LIMIT {page_size} OFFSET {}",
         (page - 1) * page_size
     );
-    let mut fetch_query = sqlx::query(&fetch_sql);
+    let mut fetch_query = sqlx::query(sqlx::AssertSqlSafe(fetch_sql));
     for p in &params {
         fetch_query = fetch_query.bind(p);
     }
@@ -166,10 +166,10 @@ async fn get_dictionary(
         "SELECT id, code, name, category, items, status, description FROM erp_dictionaries \
          WHERE id = $1 AND deleted_at IS NULL",
     );
-    let mut q = sqlx::query(&sql).bind(id);
+    let mut q = sqlx::query(sqlx::AssertSqlSafe(sql.as_str())).bind(id);
     if let Some(t) = tenant_opt {
         sql = format!("{sql} AND tenant_id = $2");
-        q = sqlx::query(&sql).bind(id).bind(t);
+        q = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(id).bind(t);
     }
     let row = q.fetch_optional(&state.db).await;
     match row {
@@ -246,7 +246,7 @@ async fn update_dictionary(
         WHERE id = $1 AND deleted_at IS NULL RETURNING id";
     let result = match tenant_opt {
         Some(t) => {
-            sqlx::query(&format!("{base_sql} AND tenant_id = $7"))
+            sqlx::query(sqlx::AssertSqlSafe(format!("{base_sql} AND tenant_id = $7")))
                 .bind(id)
                 .bind(&req.name)
                 .bind(&req.category)
@@ -258,7 +258,7 @@ async fn update_dictionary(
                 .await
         }
         None => {
-            sqlx::query(base_sql)
+            sqlx::query(sqlx::AssertSqlSafe(base_sql))
                 .bind(id)
                 .bind(&req.name)
                 .bind(&req.category)

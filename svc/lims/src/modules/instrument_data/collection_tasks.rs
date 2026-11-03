@@ -210,7 +210,7 @@ pub async fn list_collection_tasks(
         }
     };
 
-    let mut query_builder = sqlx::query(sql);
+    let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql));
     match query.status.as_ref() {
         Some(status) => {
             query_builder = query_builder
