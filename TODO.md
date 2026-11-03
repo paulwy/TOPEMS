@@ -1,4 +1,14 @@
 
+## DB-05：5433 public.tenant_permissions.tenant_id varchar→uuid（2026-11-03）✅（RLS 策略解耦）
+
+> 类型批次 RLS 依赖列挂账收口——5433 tenant_permissions.tenant_id 对齐 prod uuid。
+
+**执行**：migration `20261103180000_db05_tenant_permissions_tenant_id_varchar_to_uuid.sql`。
+- **根因**：2 条 RLS 策略（rls_tenant_isolation / tenant_isolation_tenant_permissions）引用 tenant_id，直接 ALTER 报依赖错误。
+- **方案**：DROP POLICY ×2 → ALTER COLUMN TYPE uuid（空表 0 行）→ CREATE POLICY ×2（qual 不变，`(tenant_id)::text` 对 uuid 仍有效）。
+- prod 已为 uuid ✅；5433 对齐后也是 uuid ✅。
+
+
 ## DB-04 时间戳统一总闭环（2026-11-03）✅（四库 naive 全归零）
 
 > 时间戳挂账收尾——prepare 库空库确认，无需 ALTER。
