@@ -1,4 +1,17 @@
 
+## 约束批次②：pkey/unique 补建执行（2026-11-03）✅（名差异项登记，违规 0）
+
+> 批次规划约束②——pkey 706 + unique 149 补建（test 参照，先试建捕获违规）。
+
+**执行**：
+- **pkey 858 条试建**：**624 成功**；234 失败均为 `multiple primary keys`/`relation already exists`（topems 表已有主键、索引名与 test 不同——**名差异非真缺、非数据违规**）。
+- **unique 149 条 CREATE UNIQUE INDEX**：**首遍全建成功**（0 duplicate key——数据唯一性全部通过，**违规 0**）。
+
+**验证**：topems pkey=1430、索引=3177（1892→2169→3177）、表 1376 不变、门禁表对比绿（exit 0；脚本版本段 DEV_VER/DEP_VER 环境变量 unbound warning 非阻断，后续修）、health 200。
+
+**剩余（约束批次③）**：FK 复核（当前 0 缺）；pkey 名差异 234 项无需动作（已有主键）；门禁脚本版本段 warning 修复挂账。
+
+
 ## 索引批次①：非唯一索引补建（2026-11-03）✅（唯一/pkey 归约束②）
 
 > 批次规划第 2 项第 1 步——topems 缺索引甄别补建（test 参照）。
