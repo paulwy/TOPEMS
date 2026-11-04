@@ -426,6 +426,10 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
     //         require_permission("system:write"),
     //     ));
 
+    // Phase 1：角色化菜单读取（DB 运行时权威）。任意登录用户可用，内容按 Claims 权限裁剪；
+    // 不绑定 system:read（那是菜单 CRUD 管理台权限）。
+    let my_menus = Router::new().route("/menus", get(modules::menu::handlers::my_menu_tree));
+
     let menu_read = Router::new()
         .route("/menu/groups", get(modules::menu::handlers::list_groups))
         .route("/menu/groups/{id}", get(modules::menu::handlers::get_group))
@@ -549,6 +553,7 @@ pub fn master_routes(state: &AppState) -> Router<AppState> {
         // V68.1 A2.3: dict 路由合并到 svc/master-data
         // .merge(dict_read)
         // .merge(dict_write)
+        .merge(my_menus)
         .merge(menu_read)
         .merge(menu_write)
         .merge(engagement_read)

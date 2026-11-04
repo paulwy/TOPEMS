@@ -33,6 +33,29 @@ pub struct Menu {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MenuNode {
+    pub code: String,
+    /// 前端 i18n 标题 key，约定 `<module>.nav.<code>`；zh/en 双语文件需同时存在。
+    pub title_key: String,
+    /// DB name（中文兜底；titleKey 缺失时前端可用）。
+    pub title: String,
+    pub path: Option<String>,
+    pub order: i32,
+    pub visible: bool,
+    pub parent_code: Option<String>,
+    pub icon: Option<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub children: Vec<MenuNode>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MenuTreeResponse {
+    pub items: Vec<MenuNode>,
+    pub total: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateMenuGroupRequest {
     pub name: String,
     pub code: String,

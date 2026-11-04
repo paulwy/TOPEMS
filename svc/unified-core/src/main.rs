@@ -529,6 +529,7 @@ async fn main() -> anyhow::Result<()> {
         audit_retention_policy,
         retention_manager,
         config_store,
+        menu_cache: std::sync::Arc::new(crate::modules::menu::cache::MenuCache::new()),
         permission_notifier: std::sync::Arc::new(
             crate::routes::business_tools::permission_store::PermissionChangeNotifier::new(),
         ),

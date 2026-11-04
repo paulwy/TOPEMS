@@ -75,6 +75,7 @@ pub fn test_app_state(pool: sqlx::PgPool) -> AppState {
         audit_retention_policy: Arc::new(TokioMutex::new(retention_policy.clone())),
         retention_manager: Arc::new(RetentionManager::new(retention_policy, audit_logger)),
         config_store: ConfigStoreService::new(pool),
+        menu_cache: Arc::new(topems_unified_core::modules::menu::cache::MenuCache::new()),
         permission_notifier: Arc::new(PermissionChangeNotifier::new()),
     }
 }

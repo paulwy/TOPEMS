@@ -1,5 +1,9 @@
+use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
+
 use axum::{
     extract::{Extension, Path, Query, State},
+    http::HeaderMap,
     Json,
 };
 use topems_shared_core::TopemsError;
@@ -11,9 +15,11 @@ use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
 
+use super::cache::DbMenuRow;
 use super::models::{
     CreateMenuGroupRequest, CreateMenuRequest, Menu, MenuGroup, MenuGroupListResponse,
-    MenuGroupQuery, MenuListResponse, MenuQuery, UpdateMenuGroupRequest, UpdateMenuRequest,
+    MenuGroupQuery, MenuListResponse, MenuNode, MenuQuery, MenuTreeResponse,
+    UpdateMenuGroupRequest, UpdateMenuRequest,
 };
 
 const MENU_GROUP_COLUMNS: &str =
@@ -481,4 +487,214 @@ pub async fn delete_menu(
             ApiResponse::from(TopemsError::Internal("删除菜单项失败".to_string()))
         }
     }
+}
+
+// ============================================================================
+// Phase 1：角色化菜单读取（DB 运行时权威，前端可回退 config）
+// GET /api/core/menus
+// 任意已登录用户可访问；不绑定 system:read，返回内容按当前用户权限裁剪。
+// 缓存：租户级 60s TTL（AppState.menu_cache）；HTTP：ETag + If-None-Match → 304。
+// ============================================================================
+
+const MENU_READ_COLUMNS: &str =
+    "id, code, name, path, icon, sort_order, status, parent_id, permissions";
+
+fn menu_visible_to_claims(permissions: &Option<serde_json::Value>, claims: &Claims) -> bool {
+    if claims.is_superuser {
+        return true;
+    }
+    let Some(value) = permissions else {
+        return true;
+    };
+    if let Some(permission) = value.get("permission").and_then(|v| v.as_str()) {
+        return claims.has_permission(permission);
+    }
+    if let Some(roles) = value.get("roles").and_then(|v| v.as_array()) {
+        return roles
+            .iter()
+            .filter_map(|r| r.as_str())
+            .any(|role| claims.has_role(role));
+    }
+    if let Some(role) = value.get("role").and_then(|v| v.as_str()) {
+        return claims.has_role(role);
+    }
+    // 未声明权限点视为登录即可见
+    true
+}
+
+fn menu_title_key(code: &str) -> String {
+    let module = code.split('-').next().unwrap_or(code);
+    format!("{module}.nav.{code}")
+}
+
+fn build_menu_tree(rows: &[DbMenuRow]) -> Vec<MenuNode> {
+    let code_by_id: HashMap<Uuid, String> =
+        rows.iter().map(|row| (row.id, row.code.clone())).collect();
+
+    let mut nodes: HashMap<usize, MenuNode> = HashMap::with_capacity(rows.len());
+    let mut children: HashMap<usize, Vec<usize>> = HashMap::new();
+    let mut roots: Vec<usize> = Vec::new();
+
+    for (idx, row) in rows.iter().enumerate() {
+        let parent_code = row.parent_id.and_then(|pid| code_by_id.get(&pid).cloned());
+        nodes.insert(
+            idx,
+            MenuNode {
+                code: row.code.clone(),
+                title_key: menu_title_key(&row.code),
+                title: row.name.clone(),
+                path: row.path.clone(),
+                order: row.sort_order,
+                visible: row.status == "active",
+                parent_code,
+                icon: row.icon.clone(),
+                children: Vec::new(),
+            },
+        );
+    }
+
+    for (idx, row) in rows.iter().enumerate() {
+        match row.parent_id.and_then(|pid| {
+            code_by_id.get(&pid).and_then(|code| {
+                rows.iter()
+                    .position(|candidate| candidate.id == pid && candidate.code == *code)
+            })
+        }) {
+            Some(parent_idx) if parent_idx != idx => {
+                children.entry(parent_idx).or_default().push(idx);
+            }
+            _ => roots.push(idx),
+        }
+    }
+
+    fn build_node(
+        idx: usize,
+        nodes: &mut HashMap<usize, MenuNode>,
+        children: &HashMap<usize, Vec<usize>>,
+    ) -> Option<MenuNode> {
+        let mut node = nodes.remove(&idx)?;
+        let mut child_indexes = children.get(&idx).cloned().unwrap_or_default();
+        child_indexes.sort_by_key(|child_idx| {
+            nodes
+                .get(child_idx)
+                .map(|n| (n.order, n.code.clone()))
+                .unwrap_or((i32::MAX, String::new()))
+        });
+        node.children = child_indexes
+            .into_iter()
+            .filter_map(|child_idx| build_node(child_idx, nodes, children))
+            .collect();
+        Some(node)
+    }
+
+    roots.sort_by_key(|idx| {
+        nodes
+            .get(idx)
+            .map(|n| (n.order, n.code.clone()))
+            .unwrap_or((i32::MAX, String::new()))
+    });
+
+    roots
+        .into_iter()
+        .filter_map(|idx| build_node(idx, &mut nodes, &children))
+        .collect()
+}
+
+fn menu_cache_key(claims: &Claims) -> String {
+    if claims.is_superuser {
+        return "menus:global".to_string();
+    }
+    match claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+    {
+        Some(tenant) => format!("menus:tenant:{tenant}"),
+        None => "menus:global".to_string(),
+    }
+}
+
+fn menu_etag(payload: &[u8]) -> String {
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    payload.hash(&mut hasher);
+    format!("W/\"{:016x}\"", hasher.finish())
+}
+
+pub async fn my_menu_tree(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+) -> axum::response::Response {
+    use axum::http::{header, HeaderValue, StatusCode};
+    use axum::response::IntoResponse;
+
+    let cache_key = menu_cache_key(&claims);
+    let rows = match state.menu_cache.get(&cache_key) {
+        Some(rows) => rows,
+        None => {
+            let tenant_opt: Option<Uuid> = if claims.is_superuser {
+                None
+            } else {
+                claims
+                    .tenant_id
+                    .as_deref()
+                    .and_then(|t| Uuid::parse_str(t).ok())
+            };
+            let sql = format!(
+                r#"SELECT {} FROM core_menus
+                   WHERE deleted_at IS NULL
+                     AND ($1::uuid IS NULL OR tenant_id = $1)
+                   ORDER BY sort_order ASC, code ASC"#,
+                MENU_READ_COLUMNS
+            );
+            match sqlx::query_as::<_, DbMenuRow>(sqlx::AssertSqlSafe(sql))
+                .bind(tenant_opt)
+                .fetch_all(&state.pool)
+                .await
+            {
+                Ok(rows) => {
+                    let rows = std::sync::Arc::new(rows);
+                    state.menu_cache.put(cache_key, rows.as_ref().clone());
+                    rows
+                }
+                Err(e) => {
+                    tracing::error!("查询角色化菜单失败: {}", e);
+                    return ApiResponse::<MenuTreeResponse>::from(TopemsError::Internal(
+                        "查询角色化菜单失败".to_string(),
+                    ))
+                    .into_response();
+                }
+            }
+        }
+    };
+
+    let visible_rows: Vec<DbMenuRow> = rows
+        .iter()
+        .filter(|row| menu_visible_to_claims(&row.permissions, &claims))
+        .cloned()
+        .collect();
+    let total = visible_rows.len();
+    let items = build_menu_tree(&visible_rows);
+    let data = MenuTreeResponse { items, total };
+
+    let payload = serde_json::to_vec(&data).unwrap_or_default();
+    let etag = menu_etag(&payload);
+    if let Some(if_none_match) = headers
+        .get(header::IF_NONE_MATCH)
+        .and_then(|v| v.to_str().ok())
+    {
+        if if_none_match == etag || if_none_match == "*" {
+            let mut response = StatusCode::NOT_MODIFIED.into_response();
+            if let Ok(value) = HeaderValue::from_str(&etag) {
+                response.headers_mut().insert(header::ETAG, value);
+            }
+            return response;
+        }
+    }
+
+    let mut response = api_success(data).into_response();
+    if let Ok(value) = HeaderValue::from_str(&etag) {
+        response.headers_mut().insert(header::ETAG, value);
+    }
+    response
 }

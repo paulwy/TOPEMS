@@ -76,6 +76,8 @@ pub struct AppState {
     >,
     /// V465: Configuration store for persistent system configurations.
     pub config_store: ConfigStoreService,
+    /// Phase 1: 角色化菜单读取的租户级短 TTL 缓存（60s）。
+    pub menu_cache: Arc<crate::modules::menu::cache::MenuCache>,
     /// V530f: Permission change event bus (bulk ops publish events to subscribers).
     pub permission_notifier:
         Arc<crate::routes::business_tools::permission_store::PermissionChangeNotifier>,
