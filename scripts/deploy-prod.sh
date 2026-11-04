@@ -18,7 +18,6 @@ set -e
 PROD_HOST="xingzhai@192.168.110.115"
 PROD_BIN_DIR="/Users/xingzhai/topems/bin"
 PROD_REPO_DIR="/Users/xingzhai/TOPEMS"
-PROD_LOG_DIR="/Users/xingzhai/topems/logs"
 LOCAL_BIN="./target/release/topems-server"
 LOCAL_REPO="/Users/air/TOPEMS"
 LAUNCHD_LABEL="com.topems.server"
