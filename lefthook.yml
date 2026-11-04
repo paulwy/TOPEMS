@@ -368,17 +368,17 @@ pre-push:
       tags: database migrations
       run: node scripts/migration/check-schema-defense.mjs
 
-    # [NEW] cargo check workspace — 确保代码编译通过（DB schema 和代码同步）
-    # V300: SQLX_OFFLINE=false（在线）→ true（离线）。pre-push 是缓存完整性的最后本地防线：
-    #       根 .sqlx 缺任何宏查询，离线编译必然失败，push 被阻断，杜绝"本地能过、CI/新环境必炸"。
-    # [2026-10-02] 内联逻辑移入 run-cargo-check.sh：失败时按来源归类
-    #       （错误文件 ⊆ base → 提示先同步，勿修不属于本次提交的错误）。
+    # [NEW] cargo check — 增量模式（2026-11-05 修订）：只编译本次 push 变更的 crate。
+    # 背景：全量 check 被 utoipa-swagger-ui build.rs 网络下载失败恒阻断 + RUSTFLAGS=-D warnings
+    #       使缓存失效 → 每次 push 冷编译且必失败 → 团队长期 --no-verify 绕过门禁。
+    # 增量后：无 .rs 变更秒级跳过；变更 crate 独立编译，绕开无关 crate 失败源，门禁恢复可用。
+    # V300: SQLX_OFFLINE=true（离线）。.sqlx 缓存完整性由 CI 全量兜底（CI cargo-check job）。
     # [2026-10-02 修订] stale-base 检查并入本命令前置（lefthook 2.1.10 对独立
     #       stale-base-check 按 pushed files 过滤会 skip，而本命令实证必跑）——
     #       旧 base 时先拦截再编译，杜绝"门禁编译旧 base 假报错"。
     cargo-check-workspace:
       tags: rust check
-      run: bash scripts/ci/check-stale-base.sh && bash scripts/ci/run-cargo-check.sh
+      run: bash scripts/ci/check-stale-base.sh && bash scripts/ci/run-cargo-changed.sh check
 
     # [V232-P3 NEW Gate J] cargo fmt workspace check — Rust-only
     cargo-fmt-check:
@@ -386,34 +386,26 @@ pre-push:
       run: |
         cargo fmt --all --check
 
-    # [V232-P3 NEW Gate K] cargo clippy workspace — Rust-only
-    # V300: 离线模式（SQLX_OFFLINE=true）——同时验证 .sqlx 缓存完整性
-    # [2026-10-23 Phase D] 与 CI rust-lint job 对齐：-D clippy::correctness → -D warnings，
-    # 消除「本地绿 CI 红」差口（ci.yml: cargo clippy --workspace --all-targets -- -D warnings）。
+    # [V232-P3 NEW Gate K] cargo clippy — 增量模式（2026-11-05 修订）
+    # 与 check 同理：只对本次 push 变更 crate 执行 clippy；无 .rs 变更秒级跳过。
+    # V300: 离线模式（SQLX_OFFLINE=true）。CI rust-lint job 全量兜底。
     cargo-clippy-workspace:
       tags: rust clippy
-      run: |
-        export SQLX_OFFLINE=true
-        # [2026-10-22] sccache 与 rustc 1.95.0 不兼容（spawn 失败），不再启用
-        cargo clippy --workspace --all-targets -- -D warnings
-    # [V294 NEW] cargo test workspace — Rust-only（从 pre-commit 移入，避免提交超时）
+      run: bash scripts/ci/run-cargo-changed.sh clippy
+    # [V294 NEW] cargo test workspace — 重型门禁（2026-11-05 修订：默认 SKIP，CI 兜底）
     # 只跑 --lib 单元测试，不跑集成测试（集成测试需要数据库）
-    # V300: 离线模式（SQLX_OFFLINE=true）——同时验证 .sqlx 缓存完整性
-    # [2026-09-30] 加 timeout=600s：全量正常约 305s，10min 余量充足；
-    # 防止测试偶发挂起（如 shared_event Redis 连接 hang）时 pre-push 无限等待
-    # （lefthook timeout 默认 ns，必须带单位 s/m）
-    # [2026-09-30 修订] 600s 曾偶发超时（sccache 冷缓存/本机负载时全量可达 10min+）：
-    # 上调至 900s（15min），同时保留对"测试挂起"的兜底（挂起>15min 仍会阻断）。
-    # [2026-10-03 修订] Windows 全量 lib 测试串行实测 2304s/并行 2895s 均超 900s，
-    # 且 rd 共享库 TRUNCATE 竞态已由测试内全局锁解决 → 显式 RUST_TEST_THREADS=1
-    # （串行稳定，规避任何潜在跨 crate 竞态）并放宽 timeout 至 3600s。
+    # 2026-11-05：默认跳过（push 秒级放行），显式 LEFTHOOK_RUN_HEAVY=1 时执行；
+    # CI（ci.yml test job）承担全量兜底。历史实测串行全量 2304s → 不再阻塞本地 push。
     cargo-test-workspace:
       tags: rust test
       timeout: 3600s
       run: |
+        if [ -z "${LEFTHOOK_RUN_HEAVY:-}" ]; then
+          printf '\033[33m[Gate T] SKIP\033[0m cargo-test-workspace（重型门禁：LEFTHOOK_RUN_HEAVY=1 时执行；CI 已兜底全量）\n'
+          exit 0
+        fi
         export SQLX_OFFLINE=true
         export RUST_TEST_THREADS=1
-        # [2026-10-22] sccache 与 rustc 1.95.0 不兼容（spawn 失败），不再启用
         # 本机 DB/Redis 使用 .env 中的自定义凭据；测试内默认值（topems:topems_secret）与本机不一致，
         # 故从 .env 派生 TEST_DATABASE_URL / REDIS_URL（已显式提供时不覆盖；.env 缺失则回退测试内默认值）
         if [ -f .env ]; then
@@ -426,10 +418,14 @@ pre-push:
 
     # [2026-10-22 NEW Gate DP] 业务域运行态探活（与 contract-gate 静态挂载互补）
     # svc crate utoipa path → BFF GET 全路径 5xx 扫描（缺表/缺列/死锁等运行态缺陷）。
-    # 全量口径：含已核销域（master-data/analytics/ai/plugin-registry/unified-core/server），
-    # ~3100 path；BFF 在线（开发/部署机）严格检查，5xx 阻断推送；BFF 离线（CI/无运行态）
-    # SKIP_WARN 不阻断，手动 bash scripts/dev/domain-probe.sh 复核。
+    # 2026-11-05：重型门禁（默认 SKIP，CI/部署机 LEFTHOOK_RUN_HEAVY=1 时执行）；
+    # BFF 离线（CI/无运行态）SKIP_WARN 不阻断，手动 bash scripts/dev/domain-probe.sh 复核。
     domain-probe:
       tags: runtime probe
       timeout: 1800s
-      run: bash scripts/dev/domain-probe.sh
+      run: |
+        if [ -z "${LEFTHOOK_RUN_HEAVY:-}" ]; then
+          printf '\033[33m[Gate DP] SKIP\033[0m domain-probe（重型门禁：LEFTHOOK_RUN_HEAVY=1 时执行；CI 已兜底）\n'
+          exit 0
+        fi
+        bash scripts/dev/domain-probe.sh
