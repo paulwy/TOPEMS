@@ -146,12 +146,29 @@ if [ "$DO_RESET_DB" = true ]; then
     [ "$ans" = "y" ] || exit 0
   fi
 
-  # 生成初始部门 SQL（内嵌）
-  cat > /tmp/topems-init-depts.sql << 'SQL_EOF'
--- 清空旧测试数据
-DELETE FROM hrm.departments WHERE code LIKE 'DEPT-RD-%' OR name LIKE '%R&D Engineering%';
+  # 生成重置 SQL（内嵌）
+  cat > /tmp/topems-init-reset.sql << 'SQL_EOF'
+-- =============================================
+-- 重置系统初始化状态（回到全新部署状态）
+-- =============================================
 
--- 顶级部门
+-- 1. 初始化状态表
+TRUNCATE hrm.initialization_status CASCADE;
+TRUNCATE hrm.initialization_logs CASCADE;
+
+-- 2. 业务数据（按外键依赖顺序倒序删除）
+TRUNCATE hrm.positions CASCADE;
+TRUNCATE hrm.departments CASCADE;
+TRUNCATE hrm.companies CASCADE;
+
+-- 3. 员工数据（保留 admin 用户，只删其他测试员工）
+DELETE FROM hrm.employees WHERE username != 'admin';
+
+-- =============================================
+-- 插入标准部门树（英文，23 个）
+-- =============================================
+
+-- 顶级部门（12 个）
 INSERT INTO hrm.departments (id, name, code, description, status, tenant_id, name_en, organization_id) VALUES
 ('11111111-1111-1111-1111-111111111001', 'Executive Office', 'DEPT-EXEC-001', 'Executive management team', 'active', '00000000-0000-0000-0000-000000000001', 'Executive Office', '00000000-0000-0000-0000-000000000001'),
 ('11111111-1111-1111-1111-111111111002', 'Human Resources', 'DEPT-HR-001', 'HR and people operations', 'active', '00000000-0000-0000-0000-000000000001', 'Human Resources', '00000000-0000-0000-0000-000000000001'),
@@ -166,7 +183,7 @@ INSERT INTO hrm.departments (id, name, code, description, status, tenant_id, nam
 ('11111111-1111-1111-1111-111111111011', 'Research & Development', 'DEPT-RD-001', 'R&D and product innovation', 'active', '00000000-0000-0000-0000-000000000001', 'Research & Development', '00000000-0000-0000-0000-000000000001'),
 ('11111111-1111-1111-1111-111111111012', 'Maintenance', 'DEPT-MAINT-001', 'Equipment maintenance and repair', 'active', '00000000-0000-0000-0000-000000000001', 'Maintenance', '00000000-0000-0000-0000-000000000001');
 
--- 二级子部门
+-- 二级子部门（11 个）
 INSERT INTO hrm.departments (id, name, code, parent_id, description, status, tenant_id, name_en, organization_id) VALUES
 ('11111111-1111-1111-1111-111111111101', 'Software Engineering', 'DEPT-RD-SW-001', '11111111-1111-1111-1111-111111111011', 'Software development team', 'active', '00000000-0000-0000-0000-000000000001', 'Software Engineering', '00000000-0000-0000-0000-000000000001'),
 ('11111111-1111-1111-1111-111111111102', 'Hardware Engineering', 'DEPT-RD-HW-001', '11111111-1111-1111-1111-111111111011', 'Hardware design and engineering', 'active', '00000000-0000-0000-0000-000000000001', 'Hardware Engineering', '00000000-0000-0000-0000-000000000001'),
@@ -180,11 +197,13 @@ INSERT INTO hrm.departments (id, name, code, parent_id, description, status, ten
 ('11111111-1111-1111-1111-111111111110', 'Recruiting', 'DEPT-HR-REC-001', '11111111-1111-1111-1111-111111111002', 'Talent acquisition', 'active', '00000000-0000-0000-0000-000000000001', 'Recruiting', '00000000-0000-0000-0000-000000000001'),
 ('11111111-1111-1111-1111-111111111111', 'Training & Development', 'DEPT-HR-TRN-001', '11111111-1111-1111-1111-111111111002', 'Employee training and development', 'active', '00000000-0000-0000-0000-000000000001', 'Training & Development', '00000000-0000-0000-0000-000000000001');
 
-SELECT count(*) AS total_departments FROM hrm.departments WHERE deleted_at IS NULL;
+-- 验证
+SELECT 'departments' AS tbl, count(*) FROM hrm.departments WHERE deleted_at IS NULL
+UNION ALL SELECT 'init_status', count(*) FROM hrm.initialization_status;
 SQL_EOF
 
-  scp /tmp/topems-init-depts.sql $PROD_HOST:/tmp/topems-init-depts.sql
-  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/topems-init-depts.sql"
+  scp /tmp/topems-init-reset.sql $PROD_HOST:/tmp/topems-init-reset.sql
+  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/topems-init-reset.sql"
   info "数据库重置完成"
 fi
 
