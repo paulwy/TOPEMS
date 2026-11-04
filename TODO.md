@@ -6,8 +6,9 @@
 - **mes 93→0**：`equipment_oee.rs`（78 处）prod 全 float8/timestamptz，代码误用 BigDecimal/NaiveDate——绑定、响应映射、`try_get` 全改 f64/DateTime<Utc>；`production_order.rs` 计划/实际日期列为 `date`，绑定改 `date_naive()`；`team.rs` `leader_id` prod varchar 改按字符串绑定（含动态查询 try_get 同类修复）；`wip.rs`/`process_flow.rs`/`quality_traceability.rs` 可空列与 date→DateTime 转换。
 - **unified-core 6→0**：`database_permission_store.rs` `tenant_id` 依 V448 迁移 `iam.tenant_permissions VARCHAR(64)` 改绑 `&str`（原误绑 Uuid，命中 public 影子表定义）。
 - **server**：自身零代码错误；失败全因 prepare 时单连接 search_path 把依赖 crate 的未限定表名解析到 public 旧表。`sqlx-search-path.map` 新增 `topems-server` 宽 search_path 条目（iam/mes/analytics 等服务 schema 全前置、public 殿后；碰撞表经 prod information_schema 核对）。
-- **验证**：三包 prepare 全过（mes 152 / unified-core 11 / server 163 queries）；根 `.sqlx` 295→296；全量 `--check` + `SQLX_OFFLINE cargo check --workspace` exit 0。
-- **`.sqlx` diff**：122 变更 + 1 新增；净类型迁移 Numeric−52→Float8+52（equipment_oee 浮点列归位）、Timestamptz+1/Date−1（record_date）、Varchar+4（tenant_id 等）。
+- **验证**：**全量 prepare 39/39 成功**（544 子目录缓存合并，根 `.sqlx` 296 条）；全量 `--check` 通过、`SQLX_OFFLINE cargo check --workspace` exit 0（0 error/0 warning）。
+- **`.sqlx` diff**：首轮 107 变更 / 0 增删 → 三包修复后 122 变更 + 1 新增；净迁移 Numeric−52→Float8+52（equipment_oee 浮点列归位）、Timestamptz+1/Date−1（record_date）、Varchar+4（tenant_id 等）。
+- **类型收紧**：按 prod `information_schema` 的可空性——NOT NULL 列（record_date/created_at/updated_at、planned_production_time/actual_run_time/ideal_cycle_time/actual_output/good_output）直接 `try_get::<f64|DateTime<Utc>>`，不用 `Option` 兜底；可空列（downtime/defective_output/availability/performance/quality_rate/oee）保留 `Option`。
 - **遗留**：`wms.stock_take.rs` `try_get::<f64>` 对 prod numeric 动态解码风险仍待复核。
 
 ## sqlx 宏查询缓存基线校准（2026-11-05）✅

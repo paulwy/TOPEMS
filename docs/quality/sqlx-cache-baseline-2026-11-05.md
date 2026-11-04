@@ -9,8 +9,8 @@
 |---|---|
 | 直接根因 | `sqlx prepare` 只用**单连接**、单 `search_path`；monorepo 各服务运行时 `SEARCH_PATH` 不同。本地库角色默认 `mes, public` 把 analytics 的未限定表名解析到 `public` 下的**影子表**（时间戳 nullable），而运行/缓存契约是 `analytics,shared,public`（NOT NULL）→ 75 处 `Option<DateTime<Utc>>` 类型错误。 |
 | 路径选择 | **B 不可行**：迁移链无法在空库干净重放（3 处硬错误，见 §2.2）。改走 **A 的可复现变体**：按 package 注入运行时 `search_path`，以 **prod 只读**作为权威基线 prepare；不修整库、不删缓存。 |
-| prepare 结果 | 36/39 package 成功，130 个子目录缓存合并，根 `.sqlx` 295 条不变；**3 个失败**：`topems-mes`(93 错)、`topems-unified-core`(6 错)、`topems-server`(13 错)，均为**代码与 prod 列类型/可空性不符**，非缓存缺失。 |
-| `.sqlx` 变化 | **107 变更 / 0 新增 / 0 删除**；其中 101 条仅新增 `origin` 元数据（同类型/可空），**6 条有真实类型变化**（9 列 `Float8→Numeric`、2 列 `Varchar→Text`，方向=旧缓存 → prod 真值）。 |
+| prepare 结果 | **最终 39/39 package 全绿**（544 个子目录缓存合并，根 `.sqlx` 296 条）。首轮 36/39 失败的 `topems-mes`(93 错)、`topems-unified-core`(6 错)、`topems-server`(13 错) 已按 prod schema 修代码/补 search_path 收敛（见 §6）。 |
+| `.sqlx` 变化 | 首轮 **107 变更 / 0 新增 / 0 删除**（101 条仅新增 `origin`，**6 条真实类型变化**：9 列 `Float8→Numeric`、2 列 `Varchar→Text`）；三包修复后 **122 变更 / 1 新增**（净迁移 `Numeric−52→Float8+52`、`Timestamptz+1/Date−1`、`Varchar+4`）；本条记录最终稳定态 296 条、无待提交 diff。 |
 | 门禁 | `./scripts/dev/sqlx-prepare.sh --check` 通过；`SQLX_OFFLINE=true cargo check --workspace` exit 0。 |
 | prod | **零变更**（仅 SSH 隧道读 + PREPARE 语句，无 DDL/DML）。 |
 
@@ -112,7 +112,13 @@ SQLX_OFFLINE=true cargo check --workspace    # 全仓离线编译
 
 ## 6. 未完成 / 未实证
 
-- ~~`topems-mes` / `topems-unified-core` / `topems-server` 未生成新缓存~~ **已闭环（2026-11-05 同日）**：以 prod schema 为权威修代码——mes 93→0（`equipment_oee` 全 float8/timestamptz、production_orders 日期列 `date` 绑定、`teams.leader_id` varchar、若干可空列）、unified-core 6→0（`tenant_id` 依 V448 迁移 `iam` 表 varchar 绑 `&str`）、server 零代码错误（map 新增 `topems-server` 宽 search_path 条目，依赖 crate 未限定名解析归位）。三包 prepare 全绿（152/11/163 queries），根 `.sqlx` 295→296，净类型迁移 Numeric−52→Float8+52；全量 `--check` 与 `SQLX_OFFLINE cargo check --workspace` 均 exit 0。
+- ~~`topems-mes` / `topems-unified-core` / `topems-server` 未生成新缓存~~ **已闭环（2026-11-05 同日）**：以 prod schema 为权威修代码——mes 93→0、unified-core 6→0、server 零代码错误（map 新增 `topems-server` 宽 search_path 条目）。修复依据（prod `information_schema` 实测）：
+  - `mes.equipment_oee`：`record_date`/`created_at`/`updated_at` = `timestamptz NOT NULL`；`planned_production_time`/`actual_run_time`/`ideal_cycle_time`/`actual_output`/`good_output` = `double precision NOT NULL`；`downtime`/`defective_output`/`availability`/`performance`/`quality_rate`/`oee` = `double precision NULL`。
+  - `mes.production_orders`：四个 `*_date` 列均 `date NULL`（绑定改 `date_naive()`；读取路径 SQL 已显式 `::timestamptz`，保留 `DateTime<Utc>`）。
+  - `mes.teams.leader_id` = `varchar NULL`（绑定/读取均按 `String`）。
+  - `iam.tenant_permissions.tenant_id` = `varchar NOT NULL`（unified-core 改绑 `&str`）。
+  - **收紧原则**：NOT NULL 列一律直接 `try_get::<f64 / DateTime<Utc>>`，不保留 `Option` 兜底；仅 prod 可空列保持 `Option` + `unwrap_or`。
+- **最终覆盖率**：全量 `./scripts/dev/sqlx-prepare.sh` = **39/39 成功**，544 子目录缓存合并，根 `.sqlx` **296 条**；全量 `--check` 通过、`SQLX_OFFLINE cargo check --workspace` exit 0（0 error / 0 warning）。
 - scratch 库 `topems_sqlx_scratch` 停在 `20260831190000`，后续迁移未执行；保留供复现，可随时删除。
 - prod 基线依赖本机 SSH 隧道与只读角色；CI 无 DB，门禁仍为纯离线 `--check`。
 - 本地 `public` 13 张影子表**未删除**（保留给本地单体 dev），因此不带 `search_path` 的裸 `cargo sqlx prepare` 仍会复现 analytics 错误——必须走脚本。
