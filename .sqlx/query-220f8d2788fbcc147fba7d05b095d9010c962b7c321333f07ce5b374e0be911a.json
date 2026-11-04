@@ -6,62 +6,134 @@
       {
         "ordinal": 0,
         "name": "id",
-        "type_info": "Uuid"
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "quality_standards",
+            "name": "id"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "code",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "quality_standards",
+            "name": "code"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "quality_standards",
+            "name": "name"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "product_code",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "quality_standards",
+            "name": "product_code"
+          }
+        }
       },
       {
         "ordinal": 4,
         "name": "product_name",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "quality_standards",
+            "name": "product_name"
+          }
+        }
       },
       {
         "ordinal": 5,
         "name": "inspection_type",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "quality_standards",
+            "name": "inspection_type"
+          }
+        }
       },
       {
         "ordinal": 6,
         "name": "status",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "quality_standards",
+            "name": "status"
+          }
+        }
       },
       {
         "ordinal": 7,
         "name": "version",
-        "type_info": "Int4"
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "quality_standards",
+            "name": "version"
+          }
+        }
       },
       {
         "ordinal": 8,
         "name": "effective_date",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "quality_standards",
+            "name": "effective_date"
+          }
+        }
       },
       {
         "ordinal": 9,
         "name": "description",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "quality_standards",
+            "name": "description"
+          }
+        }
       },
       {
         "ordinal": 10,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "quality_standards",
+            "name": "created_at"
+          }
+        }
       },
       {
         "ordinal": 11,
         "name": "updated_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "quality_standards",
+            "name": "updated_at"
+          }
+        }
       }
     ],
     "parameters": {

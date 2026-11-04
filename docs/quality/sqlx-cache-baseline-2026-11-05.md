@@ -112,7 +112,7 @@ SQLX_OFFLINE=true cargo check --workspace    # 全仓离线编译
 
 ## 6. 未完成 / 未实证
 
-- `topems-mes` / `topems-unified-core` / `topems-server` 未生成新缓存（旧条目保留），需代码侧契约修复后才能校准。
+- ~~`topems-mes` / `topems-unified-core` / `topems-server` 未生成新缓存~~ **已闭环（2026-11-05 同日）**：以 prod schema 为权威修代码——mes 93→0（`equipment_oee` 全 float8/timestamptz、production_orders 日期列 `date` 绑定、`teams.leader_id` varchar、若干可空列）、unified-core 6→0（`tenant_id` 依 V448 迁移 `iam` 表 varchar 绑 `&str`）、server 零代码错误（map 新增 `topems-server` 宽 search_path 条目，依赖 crate 未限定名解析归位）。三包 prepare 全绿（152/11/163 queries），根 `.sqlx` 295→296，净类型迁移 Numeric−52→Float8+52；全量 `--check` 与 `SQLX_OFFLINE cargo check --workspace` 均 exit 0。
 - scratch 库 `topems_sqlx_scratch` 停在 `20260831190000`，后续迁移未执行；保留供复现，可随时删除。
 - prod 基线依赖本机 SSH 隧道与只读角色；CI 无 DB，门禁仍为纯离线 `--check`。
 - 本地 `public` 13 张影子表**未删除**（保留给本地单体 dev），因此不带 `search_path` 的裸 `cargo sqlx prepare` 仍会复现 analytics 错误——必须走脚本。
