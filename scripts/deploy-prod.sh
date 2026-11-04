@@ -161,8 +161,9 @@ TRUNCATE hrm.positions CASCADE;
 TRUNCATE hrm.departments CASCADE;
 TRUNCATE hrm.companies CASCADE;
 
--- 3. 员工数据（保留 admin 用户，只删其他测试员工）
-DELETE FROM hrm.employees WHERE username != 'admin';
+-- 3. 员工数据（清空所有测试员工档案）
+-- 注意：iam.users 里的 admin 账号保留不动，这里清的是 hrm.employees 员工档案
+TRUNCATE hrm.employees CASCADE;
 
 -- =============================================
 -- 插入标准部门树（英文，23 个）
