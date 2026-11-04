@@ -3828,3 +3828,46 @@ P2（2-4 周后）
 - **经验**：① RLS 策略依赖列需先 DROP POLICY → ALTER → CREATE POLICY；② USER-DEFINED enum 需先 CREATE TYPE 再 ALTER COLUMN TYPE；③ ARRAY↔jsonb 不能直接 cast，需 to_jsonb() 或临时列方案；④ pgvector vector 类型需指定 schema（ai.vector）。
 ### 状态
 - 类型批次主体完成，差异归零。剩余：prod 生产库 ALTER 单独评估（未执行）。
+
+## 第三十四轮（2026-11-04）：前端页面测试补测批量推进 ✅
+
+> erp → crm → scm → qms → pm → mes 六域批量补测 CrudPage 包装型页面。
+
+- **erp 域**：7 → **20** / 28（+13：MeetingRoom/VehicleRequest/Customer/Supplier/Asset/BankAccount/Announcement/Material/Voucher/InventoryManagement/Accounting/Budget/ReceivablePayable）
+- **crm 域**：0 → **4** / 22（+4：Return/Contact/Interaction/Dashboard）
+- **scm 域**：1 → **16** / 20（+15：Evaluation/Supplier/PurchaseRequisition/PurchaseContract/PurchaseOrder/PurchaseItem/IncomingNotice/PriceComparison/InventoryTurnover/QuotaTemplate/PurchaseThreshold/SourcingStrategy/SupplierTier/IncomingInspection/SupplierAdmission）
+- **qms 域**：1 → **7** / 28（+6：Apqp/Fmea/Spc/CorrectiveAction/AuditManagement/QualityCost）
+- **pm 域**：2 → **3** / 24（+1：ProjectTimelinePage）
+- **mes 域**：3 → **5** / 45（+2：Quality/ApsConfig/BomVersionPolicy/QualityTemplate）
+- **合计补测**：**+41 页**
+- **挂账**：依赖 shared-components（StatusBadge 等）的页面 mock 成本高，暂不补测（erp 8 页/crm 18 页/scm 4 页/qms 21 页）
+- **经验**：① CrudPage 包装型页面 mock 模板成熟（mock CrudPage + schema + api + i18n）；② 设置页（SettingsPageTemplate）mock 更简单；③ Dashboard/MRP 型页面 mock 成本高（依赖 useQuery 复杂数据结构）。
+
+## 第三十五轮（2026-11-04）：生产机部署流程固化 ✅
+
+> 生产机 192.168.110.115（xingzhai@Mac.lan）部署与自启配置。
+
+- **部署架构**：
+  - 本地（air 的 Mac）编译 release 二进制 → scp 上传 → 生产机替换重启
+  - **生产机无 brew/protoc**，禁止原地编译
+  - 二进制路径：`/Users/xingzhai/topems/bin/topems-server`（~184MB）
+  - 仓库路径：`/Users/xingzhai/TOPEMS`（仅 git pull）
+- **launchd 托管**（已配置，KeepAlive=true）：
+  - `com.topems.server` → Rust 后端（端口 8099）
+  - `com.topems.nginx` → 反向代理（端口 80）
+  - `com.topems.nginx-logrotate` → 日志轮转
+  - `com.topems.backup` → 数据库备份
+- **nginx 反代**（`/opt/homebrew/etc/nginx/servers/topems.conf`）：
+  - 80 → 静态文件 `/Users/xingzhai/TOPEMS/dist/topems-*/web`
+  - `/api/` → `127.0.0.1:8099`
+  - `/ws/` → WebSocket 升级
+  - SPA fallback + 静态资源 7d 缓存
+- **访问方式**：
+  - 局域网浏览器：`http://192.168.110.115/`
+  - 后端直连：`http://192.168.110.115:8099/api/...`
+- **踩坑**：
+  1. 生产机 protoc/brew 未装，不能 `build-all`，必须本地编译
+  2. `pkill` 杀不干净 → 必须 `pkill -9` + sleep 3 再启动，否则 Address already in use
+  3. nohup 启动会与 launchd 冲突——**正确做法是直接 `launchctl kickstart -k gui/$(id -u)/com.topems.server`**
+  4. nginx 二进制在 `/opt/homebrew/bin/nginx`，不在默认 PATH
+- **回滚**：`cp topems-server-<commit>-<时间戳>.bak topems-server && launchctl kickstart -k gui/$(id -u)/com.topems.server`

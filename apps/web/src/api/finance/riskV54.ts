@@ -4,9 +4,8 @@ import type { ApiResponse } from '../client';
 // ==================== 类型定义 ====================
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
-export type RiskCategory =
-  'credit' | 'market' | 'liquidity' | 'operational' | 'compliance' | 'fraud';
-export type Regulation = 'sox' | 'gdpr' | 'pci_dss' | 'hipaa' | 'internal';
+type RiskCategory = 'credit' | 'market' | 'liquidity' | 'operational' | 'compliance' | 'fraud';
+type Regulation = 'sox' | 'gdpr' | 'pci_dss' | 'hipaa' | 'internal';
 
 export interface RiskAlert {
   id: string;
