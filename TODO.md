@@ -3993,3 +3993,11 @@ P2（2-4 周后）
   3. 末项解耦：`DROP POLICY tenant_isolation_permission_audit_logs` → ALTER → 按原语义重建策略（`(tenant_id)::text` 比较形式，uuid 后仍合法）
 - **验证**：prod vs test 同名列类型差异 **109 → 0**；prepare vs test 复验 0；门禁 exit 0；health 200
 - 无 git 代码改动（纯库 DDL）
+
+## 第四十轮（2026-11-05）：varchar 长度口径对齐（573 项归零）✅
+
+- **背景**：prod vs test varchar 长度差异 **573 项**（143 表）——主体方向 `NULL → 有长度`（约 545 项：prod 无长度限制 vs test 权威限制 8~512），少数反向 `有长度 → NULL`（约 28 项）
+- **口径**：test 为权威目标态；prod 逐列 `ALTER COLUMN TYPE varchar(n)` 对齐（PG 收紧长度自动校验数据，超长会报错——实测 0 失败，表数据绝大部分为空/未超长）
+- **执行**：573 条逐语句（572 + 末行补跑 1 = 573/573 成功，0 失败）
+- **验证**：prod vs test（类型+varchar 长度双重口径）差异 **0**；prepare vs test 复验 **0**；门禁 exit 0；health 200
+- 无 git 代码改动（纯库 DDL）
