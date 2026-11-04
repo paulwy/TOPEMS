@@ -31,6 +31,9 @@ const PAGES_ROOT = join(WEB_ROOT, 'pages');
 const ROUTES_V2_INDEX = join(WEB_ROOT, 'routes/v2/index.ts');
 const PERMISSIONS_CONFIG = join(WEB_ROOT, 'config/permissions.ts');
 
+// --json 模式：只输出机器可读 JSON（不打印人类可读校验过程）
+const JSON_MODE = process.argv.includes('--json');
+
 const MODULE_CODES = [
   'iam',
   'admin',
@@ -617,7 +620,9 @@ function loadNavTree() {
     }
   }
 
-  console.log(`[A1 loadNavTree] 扫描模块配置: ${totalConfigs} 个, 提取导航项: ${totalNavItems} 条`);
+  if (!JSON_MODE) {
+    console.log(`[A1 loadNavTree] 扫描模块配置: ${totalConfigs} 个, 提取导航项: ${totalNavItems} 条`);
+  }
   return result;
 }
 
@@ -1123,13 +1128,22 @@ function main() {
   const strict = args.includes('--strict');
   const verbose = args.includes('--verbose');
 
-  console.log('============================================');
-  console.log('  V68.0 Iteration2 Task5: 导航三联校验');
-  console.log('============================================');
-  console.log('');
+  if (!JSON_MODE) {
+    console.log('============================================');
+    console.log('  V68.0 Iteration2 Task5: 导航三联校验');
+    console.log('============================================');
+    console.log('');
+  }
 
   const navTree = loadNavTree();
   const flattened = flattenPaths(navTree);
+
+  // --json：仅输出机器可读导航声明（供 scripts/db/verify_menu_authority.sh 对账），
+  // 保持与三联校验完全同源的解析结果（395 条可解析 path 的 navItem）。
+  if (args.includes('--json')) {
+    process.stdout.write(`${JSON.stringify(flattened, null, 2)}\n`);
+    process.exit(0);
+  }
 
   console.log(`📊 导航声明总数: ${flattened.length} 条`);
   console.log('');
