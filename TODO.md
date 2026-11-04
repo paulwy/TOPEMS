@@ -3982,3 +3982,14 @@ P2（2-4 周后）
 - **前置**：4 列均无 DEFAULT、索引不涉及目标列、RLS 策略仅引用 tenant_id → 可直接 ALTER
 - **验证**：prepare vs test 同名列类型差异 → **0**（累计 21 + 4 项全部归零）；门禁 exit 0；health 200
 - 无 git 代码改动（纯库 DDL）
+
+## 第三十九轮（2026-11-05）：prod 类型批次（1B/2B 镜像，109 项归零）✅
+
+- **背景**：历史 1B/2B 已治理 test 库，本地主库 prod(topems) 仍为旧态——prod vs test 同名列类型差异 **109 项**（86 timestamp→timestamptz + 19 text→uuid + 4 varchar→uuid，跨 51 表）
+- **前置侦察**：51 表实际仅 `master_data.mdm_api_products` 1 行（id=合法 UUID），其余全 0 行 → rewrite 成本可忽略；时间戳 DEFAULT `now()` 可自动保留（试跑 1 列验证）；5 个 uuid 列 DEFAULT `''::text` 需先解耦
+- **执行**：
+  1. 86 时间戳 `TYPE timestamptz`（逐语句，86/86 成功，DEFAULT now() 自动保留）
+  2. 23 uuid 列：5 列 `DROP DEFAULT` → `TYPE uuid USING ::uuid`（22/23 成功；`iam.permission_audit_logs.tenant_id` 因 RLS 策略引用报 `cannot alter type of a column used in a policy definition`）→ 5 列 `SET DEFAULT '00000000-0000-0000-0000-000000000001'::uuid`（对齐 test）
+  3. 末项解耦：`DROP POLICY tenant_isolation_permission_audit_logs` → ALTER → 按原语义重建策略（`(tenant_id)::text` 比较形式，uuid 后仍合法）
+- **验证**：prod vs test 同名列类型差异 **109 → 0**；prepare vs test 复验 0；门禁 exit 0；health 200
+- 无 git 代码改动（纯库 DDL）
