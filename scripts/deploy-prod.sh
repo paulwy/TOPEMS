@@ -14,6 +14,7 @@
 #   ./scripts/deploy-prod.sh --seed-roles        # 只插入默认角色（不清库）
 #   ./scripts/deploy-prod.sh --seed-dict         # 只插入系统字典（不清库）
 #   ./scripts/deploy-prod.sh --seed-coding-rules # 只插入编码规则（员工编号/采购单号，不清库）
+#   ./scripts/deploy-prod.sh --seed-settings   # 只插入系统参数（密码策略/会话超时/上传限制，不清库）
 #   ./scripts/deploy-prod.sh --force             # 跳过所有确认提示
 # =============================================
 
@@ -66,6 +67,7 @@ for arg in "$@"; do
     --seed-roles)       SEED_ROLES=true ;;
     --seed-dict)        SEED_DICT=true ;;
     --seed-coding-rules) SEED_CODING_RULES=true ;;
+    --seed-settings)     SEED_SETTINGS=true ;;
     --force)           FORCE=true ;;
     -h|--help)
       grep '^#' "$0" | head -20
@@ -194,12 +196,14 @@ SQL_EOF
   scp $LOCAL_REPO/database/seeds/default_roles.sql $PROD_HOST:/tmp/seed_roles.sql
   scp $LOCAL_REPO/database/seeds/default_dict_data.sql $PROD_HOST:/tmp/seed_dict.sql
   scp $LOCAL_REPO/database/seeds/coding_rules.sql $PROD_HOST:/tmp/seed_coding_rules.sql
+  scp $LOCAL_REPO/database/seeds/system_settings.sql $PROD_HOST:/tmp/seed_settings.sql
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_departments.sql"
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_positions.sql"
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_roles.sql"
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_dict.sql"
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_coding_rules.sql"
-  info "标准部门+岗位+角色+字典+编码规则 seed 完成"
+  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_settings.sql"
+  info "标准部门+岗位+角色+字典+编码规则+系统参数 seed 完成"
 fi
 
 # ── 只插入标准部门（不清库）──
@@ -240,6 +244,14 @@ if [ "$SEED_CODING_RULES" = true ]; then
   scp $LOCAL_REPO/database/seeds/coding_rules.sql $PROD_HOST:/tmp/seed_coding_rules.sql
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_coding_rules.sql"
   info "编码规则 seed 完成"
+fi
+
+# ── 只插入系统参数（密码策略/会话超时/上传限制，不清库）──
+if [ "$SEED_SETTINGS" = true ]; then
+  info "=== 插入系统参数 seed ==="
+  scp $LOCAL_REPO/database/seeds/system_settings.sql $PROD_HOST:/tmp/seed_settings.sql
+  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_settings.sql"
+  info "系统参数 seed 完成"
 fi
 
 # ── 环境变量检查 ──

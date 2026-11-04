@@ -12,6 +12,7 @@
 | `database/seeds/default_roles.sql` | 默认角色（super_admin / dept_manager / employee） | 3 个系统内置角色 |
 | `database/seeds/default_dict_data.sql` | 系统字典（性别/员工状态/部门类型/岗位职级/婚姻状况/学历） | 6 类 26 项 |
 | `database/seeds/coding_rules.sql` | 编码规则（员工编号 EMP-YYYY-0001、采购单号 PO-YYYY-0001 + 配套序列） | 2 条规则 + 2 序列 |
+| `database/seeds/system_settings.sql` | 系统参数（密码策略、会话超时 60min、上传限制 50MB） | 4 条参数 |
 
 **部署脚本参数：**
 
@@ -23,14 +24,14 @@
 | `--seed-roles` | 只插入角色（不清库） |
 | `--seed-dict` | 只插入字典（不清库） |
 | `--seed-coding-rules` | 只插入编码规则（不清库） |
+| `--seed-settings` | 只插入系统参数（密码策略/会话超时/上传限制，不清库） |
 
 **命名规范：** name=中文（默认语言），name_en=英文（多语言对照），code=英文编码（稳定不变）。
 
-**挂账（P2-P3）：**
+**挂账（P3）：**
 
 | 优先级 | 项 | 说明 |
 |---|---|---|
-| P2 | 系统参数配置 | 默认密码策略、会话超时、文件上传大小限制 |
 | P3 | 监控告警 | 服务挂了自动重启、磁盘空间告警 |
 
 **已完成（P2 运维）：**
