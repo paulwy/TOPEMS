@@ -1,47 +1,17 @@
 -- ============================================================
--- P3-PK: prod 补齐 10 条 PRIMARY KEY
+-- P3-PK: prod 补齐 5 条 PRIMARY KEY
 --
 -- 依据：prod vs topems_test 只读盘点 2026-11-04，按 (schema.table, contype, conname)
---   取差集并按表分组；本文件为其中 10 条。约束名取自 test 侧实测定义（prod 尚无同名约束），
+--   取差集并按表分组；本文件为其中 5 条。约束名取自 test 侧实测定义（prod 尚无同名约束），
 --   列清单由 pg_constraint.conkey/confkey 解析，非猜测。
+-- 排除：5 张 *.schema_defense_ledger 为运行时 CREATE IF NOT EXISTS 自建表（不在 sqlx 迁移链，
+--   见 scripts/migration/check-schema-defense.mjs 的自建白名单），其 PK 不在本迁移内。
 -- 守卫：表不存在 / 约束已存在 / 数据不满足时均跳过并 RAISE NOTICE，不中断后续条目。
 -- 幂等：重复执行时约束已存在即跳过。
 -- 回滚：DROP CONSTRAINT <name> ON <schema.table>（逐条可逆，无数据改写）。
 -- ============================================================
 
 SET lock_timeout = '5s';
-
--- communication.schema_defense_ledger.schema_defense_ledger_pkey：PRIMARY KEY (service_schema)
-DO $$
-BEGIN
-  IF to_regclass('communication.schema_defense_ledger') IS NOT NULL
-     AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'communication.schema_defense_ledger'::regclass AND conname = 'schema_defense_ledger_pkey')
-     AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'communication.schema_defense_ledger'::regclass AND contype = 'p') THEN
-    IF EXISTS (SELECT 1 FROM communication.schema_defense_ledger WHERE service_schema IS NULL) THEN
-      RAISE NOTICE 'SKIP communication.schema_defense_ledger PK schema_defense_ledger_pkey: NULL in service_schema';
-    ELSIF EXISTS (SELECT 1 FROM communication.schema_defense_ledger GROUP BY service_schema HAVING count(*) > 1) THEN
-      RAISE NOTICE 'SKIP communication.schema_defense_ledger PK schema_defense_ledger_pkey: duplicate service_schema';
-    ELSE
-      ALTER TABLE communication.schema_defense_ledger ADD CONSTRAINT schema_defense_ledger_pkey PRIMARY KEY (service_schema);
-    END IF;
-  END IF;
-END $$;
-
--- ehs.schema_defense_ledger.schema_defense_ledger_pkey：PRIMARY KEY (service_schema)
-DO $$
-BEGIN
-  IF to_regclass('ehs.schema_defense_ledger') IS NOT NULL
-     AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'ehs.schema_defense_ledger'::regclass AND conname = 'schema_defense_ledger_pkey')
-     AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'ehs.schema_defense_ledger'::regclass AND contype = 'p') THEN
-    IF EXISTS (SELECT 1 FROM ehs.schema_defense_ledger WHERE service_schema IS NULL) THEN
-      RAISE NOTICE 'SKIP ehs.schema_defense_ledger PK schema_defense_ledger_pkey: NULL in service_schema';
-    ELSIF EXISTS (SELECT 1 FROM ehs.schema_defense_ledger GROUP BY service_schema HAVING count(*) > 1) THEN
-      RAISE NOTICE 'SKIP ehs.schema_defense_ledger PK schema_defense_ledger_pkey: duplicate service_schema';
-    ELSE
-      ALTER TABLE ehs.schema_defense_ledger ADD CONSTRAINT schema_defense_ledger_pkey PRIMARY KEY (service_schema);
-    END IF;
-  END IF;
-END $$;
 
 -- flow.core_master_data_refs.core_master_data_refs_pkey：PRIMARY KEY (master_data_id)
 DO $$
@@ -123,50 +93,4 @@ BEGIN
   END IF;
 END $$;
 
--- integration.schema_defense_ledger.schema_defense_ledger_pkey：PRIMARY KEY (service_schema)
-DO $$
-BEGIN
-  IF to_regclass('integration.schema_defense_ledger') IS NOT NULL
-     AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'integration.schema_defense_ledger'::regclass AND conname = 'schema_defense_ledger_pkey')
-     AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'integration.schema_defense_ledger'::regclass AND contype = 'p') THEN
-    IF EXISTS (SELECT 1 FROM integration.schema_defense_ledger WHERE service_schema IS NULL) THEN
-      RAISE NOTICE 'SKIP integration.schema_defense_ledger PK schema_defense_ledger_pkey: NULL in service_schema';
-    ELSIF EXISTS (SELECT 1 FROM integration.schema_defense_ledger GROUP BY service_schema HAVING count(*) > 1) THEN
-      RAISE NOTICE 'SKIP integration.schema_defense_ledger PK schema_defense_ledger_pkey: duplicate service_schema';
-    ELSE
-      ALTER TABLE integration.schema_defense_ledger ADD CONSTRAINT schema_defense_ledger_pkey PRIMARY KEY (service_schema);
-    END IF;
-  END IF;
-END $$;
 
--- mobile.schema_defense_ledger.schema_defense_ledger_pkey：PRIMARY KEY (service_schema)
-DO $$
-BEGIN
-  IF to_regclass('mobile.schema_defense_ledger') IS NOT NULL
-     AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'mobile.schema_defense_ledger'::regclass AND conname = 'schema_defense_ledger_pkey')
-     AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'mobile.schema_defense_ledger'::regclass AND contype = 'p') THEN
-    IF EXISTS (SELECT 1 FROM mobile.schema_defense_ledger WHERE service_schema IS NULL) THEN
-      RAISE NOTICE 'SKIP mobile.schema_defense_ledger PK schema_defense_ledger_pkey: NULL in service_schema';
-    ELSIF EXISTS (SELECT 1 FROM mobile.schema_defense_ledger GROUP BY service_schema HAVING count(*) > 1) THEN
-      RAISE NOTICE 'SKIP mobile.schema_defense_ledger PK schema_defense_ledger_pkey: duplicate service_schema';
-    ELSE
-      ALTER TABLE mobile.schema_defense_ledger ADD CONSTRAINT schema_defense_ledger_pkey PRIMARY KEY (service_schema);
-    END IF;
-  END IF;
-END $$;
-
--- pdm.schema_defense_ledger.schema_defense_ledger_pkey：PRIMARY KEY (service_schema)
-DO $$
-BEGIN
-  IF to_regclass('pdm.schema_defense_ledger') IS NOT NULL
-     AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'pdm.schema_defense_ledger'::regclass AND conname = 'schema_defense_ledger_pkey')
-     AND NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'pdm.schema_defense_ledger'::regclass AND contype = 'p') THEN
-    IF EXISTS (SELECT 1 FROM pdm.schema_defense_ledger WHERE service_schema IS NULL) THEN
-      RAISE NOTICE 'SKIP pdm.schema_defense_ledger PK schema_defense_ledger_pkey: NULL in service_schema';
-    ELSIF EXISTS (SELECT 1 FROM pdm.schema_defense_ledger GROUP BY service_schema HAVING count(*) > 1) THEN
-      RAISE NOTICE 'SKIP pdm.schema_defense_ledger PK schema_defense_ledger_pkey: duplicate service_schema';
-    ELSE
-      ALTER TABLE pdm.schema_defense_ledger ADD CONSTRAINT schema_defense_ledger_pkey PRIMARY KEY (service_schema);
-    END IF;
-  END IF;
-END $$;

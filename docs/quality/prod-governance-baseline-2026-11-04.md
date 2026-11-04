@@ -11,7 +11,7 @@
 | 只读盘点 | ✅ 完成（可连库、可 SELECT，不可写） |
 | P1 类型安全加宽（17 列） | 迁移已生成；本地临时库双跑通过；**prod 待执行（需窗口）** |
 | P2 NULLIF 统一（29 条 master_data 策略） | 迁移已生成；本地临时库双跑通过（29→29、纯文本比较 0）；**prod 待执行（需窗口）** |
-| P3 约束补齐（10 PK / 48 UNIQUE / 45 FK） | 三个迁移已生成；本地临时库双跑通过（pk=10/uq=48/fk=45/notvalid=0）；**prod 待执行（需窗口）** |
+| P3 约束补齐（5 PK / 48 UNIQUE / 45 FK） | 三个迁移已生成；本地临时库双跑通过（pk=5/uq=48/fk=45/notvalid=0）；**prod 待执行（需窗口）**。prod 实测 10 条缺 PK 中 5 条属 `schema_defense_ledger` 运行时自建表，不纳入迁移 |
 | P4 反向表收敛（74 张，22 个 FK 依赖） | **待业务确认**（不可自动执行） |
 | P5 时间戳 + status_standard + 账本 | 迁移已生成；本地验证通过；**prod 待执行（需窗口）** |
 
@@ -26,10 +26,10 @@
 | 类型差异（同名列） | **296**（101 表） | 164 项 prod 已为 timestamptz（无需动）/ 12+3 方向安全 / 13 项 prod 更短 / 62 numeric 混合 / 其余零星 |
 | NULLIF 纯文本比较策略 | **29**（全部 `master_data`） | `qual LIKE '%::text = current_setting%' AND qual NOT LIKE '%NULLIF%'` |
 | 缺索引（按名比对，排除 pg_toast） | **10** | 全部为反向表 pkey；旧口径 285 含系统 schema 噪声 |
-| 约束缺口 | **103**（10 PK / 48 UNIQUE / 45 FK，91 表） | 依据 test 侧 `pg_constraint` 结构实测 |
+| 约束缺口 | **103**（10 PK / 48 UNIQUE / 45 FK，91 表） | 依据 test 侧 `pg_constraint` 结构实测；其中 5 条 PK 属运行时自建 `schema_defense_ledger`，P3 迁移仅覆盖剩余 5 条 |
 | naive timestamp 残留 | **5 列** | `public.equipment` 4 列 + `iam.core_plugin_instances.last_heartbeat` |
 | status_standard 残留 CHECK | **3** 条 | `crm.audit_logs` / `integration.external_erp_sync_logs` / `srm.inquiries`（迁移 0002 清单未覆盖） |
-| 无 PK 表 | 11 | 其中 10 张属 P3 PK 补齐范围（1 张反向表） |
+| 无 PK 表 | 11 | 10 张缺 PK 差异中：5 张纳入 P3 迁移，5 张为运行时自建 `schema_defense_ledger`（不纳入），1 张反向表随 P4 |
 | 反向表行数 | 74 张中 73 张 0 行；`finance.core_finance_currencies` 16 行 | 22 个 FK 引用这些反向表 |
 | 服务连接库 | launchd `com.topems.server.plist` → `topems_prod` | 仓库 `.env` 指向 `topems_test`，属运维陷阱 |
 
@@ -52,7 +52,7 @@
 | P5a | [20261104100000_p5a_prod_naive_timestamps_5cols.sql](database/migrations/20261104100000_p5a_prod_naive_timestamps_5cols.sql#L1-L109) | 109 | 5 列 naive→timestamptz，`USING col AT TIME ZONE 'UTC'` | scratch 双跑 exit 0；UTC→+08 抽样正确 |
 | P5b | [20261104110000_p5b_prod_status_standard_checks_3.sql](database/migrations/20261104110000_p5b_prod_status_standard_checks_3.sql#L1-L49) | 49 | 3 条实测名 CHECK（`ck_audit_logs_status_standard` / `ck_external_erp_sync_logs_status_standard` / `ck_inquiries_status_standard`） | scratch 双跑 exit 0；残留计数 0 |
 | P2 | [20261104120000_p2_nullif_29policies.sql](database/migrations/20261104120000_p2_nullif_29policies.sql#L1-L403) | 403 | 29 个 DO 守卫块；按 `pg_policies` 原始表达式逐条 NULLIF 包装，成对 `USING ... WITH CHECK ...` | scratch `p2_dryrun_tmp` 双跑：`policies=29 / textcmp=0 / rls_tables=29 / nullif=29` |
-| P3-PK | [20261104130000_p3_pk_10.sql](database/migrations/20261104130000_p3_pk_10.sql#L1-L172) | 172 | 10 个 PK；NULL/重复前置校验，不满足则 `RAISE NOTICE` 跳过 | scratch 双跑：pk=10 |
+| P3-PK | [20261104130000_p3_pk_5.sql](database/migrations/20261104130000_p3_pk_5.sql#L1-L96) | 96 | 5 个 PK；NULL/重复前置校验，不满足则 `RAISE NOTICE` 跳过。排除 5 张 `*.schema_defense_ledger`（运行时 `CREATE IF NOT EXISTS` 自建表，不在迁移链） | scratch 双跑：pk=5 |
 | P3-UQ | [20261104140000_p3_unique_48.sql](database/migrations/20261104140000_p3_unique_48.sql#L1-L684) | 684 | 48 个 UNIQUE；`to_regclass` 守卫 + `GROUP BY ... HAVING count(*)>1` 前置校验 | scratch 双跑：uq=48（另有 29 个 parent 唯一键用于支撑 FK 验证） |
 | P3-FK | [20261104150000_p3_fk_45.sql](database/migrations/20261104150000_p3_fk_45.sql#L1-L777) | 777 | 45 个 FK；孤儿行前置检查 + `ADD CONSTRAINT ... NOT VALID` → `VALIDATE CONSTRAINT` | scratch 双跑：fk=45、`convalidated=false`=0 |
 | 辅助 | [scripts/db/verify_prod_ledger.sh](scripts/db/verify_prod_ledger.sh#L1-L76) | 76 | 账本只读核对（禁止手工 checksum / INSERT） | 本机只读运行 |
@@ -64,7 +64,7 @@
 | 批次 | 前置 | 窗口建议 | 回滚条件 / 回滚方式 |
 |---|---|---|---|
 | P2 NULLIF | prod 备份完成；确认 `master_data` 29 张表存在 | 低峰 30 分钟内；纯策略重设，秒级 | 迁移文件内每条注释保留原始 `qual`，可逐条 `ALTER POLICY ... USING (<原 qual>)` 回滚；策略数/RLS 表数应不变 |
-| P3-PK | 备份；10 张表数据量确认（PK 会建索引，锁表） | 低峰；单表 `lock_timeout=5s` | PK 不能 NOT VALID；失败即整表事务回滚。若某表 NULL/重复守卫触发，只跳过该表并 `NOTICE`，不影响其他表 |
+| P3-PK | 备份；5 张表数据量确认（PK 会建索引，锁表） | 低峰；单表 `lock_timeout=5s` | PK 不能 NOT VALID；失败即整表事务回滚。若某表 NULL/重复守卫触发，只跳过该表并 `NOTICE`，不影响其他表 |
 | P3-UQ | 备份；48 表重复校验通过 | 低峰 | `DROP CONSTRAINT IF EXISTS <name>`；重复数据存在时迁移自动跳过该表 |
 | P3-FK | 备份；45 组孤儿行检查为 0 | 低峰（`VALIDATE` 会短暂持锁） | `DROP CONSTRAINT IF EXISTS <name>`；`NOT VALID` 阶段失败不阻塞后续 |
 | P4 反向表 | **业务确认 22 个 FK 依赖归属** | 独立变更窗口 | 只允许 DROP 空表且无依赖者；禁止 `CASCADE`；`finance.core_finance_currencies` 先导出数据 |

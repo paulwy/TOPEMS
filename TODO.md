@@ -116,7 +116,7 @@
 | 类型差异 | prod 215 | **296**（101 表；179 项 prod 无需动 / 14 项安全加宽 / 103 项人工） | P1 已落迁移 17 列（安全加宽子集）；余项挂账 |
 | NULLIF 文本比较 | 11 表 | **29 条策略，全部 master_data** | P2 迁移已落（待执行） |
 | 缺索引 | prod 285 | **10**（全为反向表 pkey）；无二级索引表 665 = test 665 | 随 P4 反向表收敛处理 |
-| 约束缺口 | 193 | **103 条**（10 PK / 48 UNIQUE / 45 FK，91 表） | P3 三迁移已落（待执行） |
+| 约束缺口 | 193 | **103 条**（10 PK / 48 UNIQUE / 45 FK，91 表） | P3 三迁移已落（5 PK + 48 UNIQUE + 45 FK，待执行）；5 张 `schema_defense_ledger` 运行时自建表不纳入迁移 |
 | 账本 | 546×5 | prod **549** / 文件 565 / 未登记 17 | 不补手工 checksum；见 `scripts/db/verify_prod_ledger.sh` |
 | db04-prod | 174→0 | **残留 5 列**（`public.equipment` 4 + `iam.core_plugin_instances.last_heartbeat`） | P5a 迁移已落（待执行） |
 | status_standard | 迁移已登记 success | **3 条残留**（crm.audit_logs / integration.external_erp_sync_logs / srm.inquiries） | P5b 迁移已落（待执行） |
