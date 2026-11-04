@@ -4025,3 +4025,7 @@ P2（2-4 周后）
 - **验证**：5433 vs test **缺失列 0、类型/长度差异 0**；门禁 exit 0（5433 恢复后可跑双库比对，仅提示反向表 6 个挂账不阻断）；health 200
 - **挂账**：反向残留列 5433 837（不删）；反向表 6 项（5433 有 test 无：`finance.core_finance_currencies`、`public.mobile_users`、`public.qa_ehs_compliance_evaluations` 等）待甄别
 - 无 git 代码改动（纯库 DDL）
+- **反向表甄别结果（6 → 5）**：
+  1. `finance.core_finance_currencies` **不是残壳而是活表**（16 行币种基础数据 CNY/USD/EUR/JPY/HKD…，`svc/finance/src/modules/currencies.rs` 明确使用）→ **test 缺失该表**（迁移未固化），已 `pg_dump --schema-only` 从 5433 复刻建表 + 导入 16 行数据；后续需补迁移文件固化
+  2. 剩余 5 张为 **public schema 历史残壳**：`public.mobile_users`（test 对应 `mobile.mobile_users`）、`public.qa_ehs_compliance_evaluations` / `qa_ehs_environmental_regulations` / `qa_ehs_hazard_factors` / `qa_ehs_inspection_records`（test 对应 `ehs.qa_ehs_*`）——均 0 行、代码引用全部指向 ehs/mobile schema、无 public 版本引用 → **待拍板删除**
+- **门禁复验**：exit 0；反向表提示降为 5 个；health 200
