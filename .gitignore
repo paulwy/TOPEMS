@@ -355,3 +355,7 @@ backups/
 # 防止 180MB 二进制与构建包误入库；2026-10-30 统一基线补充）
 /bin/
 /releases/
+
+# 一次性审计导出与截图产物（2026-11-05 菜单权威收口清理；保留脚本，忽略输出）
+scripts/audit/type-only-*.json
+_shots/
