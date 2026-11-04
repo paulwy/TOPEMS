@@ -154,7 +154,8 @@ pub async fn list_forecasts(
     let result = sqlx::query_as::<_, DemandForecast>(
         r#"
         SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date,
-               forecast_quantity, actual_quantity, accuracy_rate, method, confidence_level,
+               forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8,
+               method, confidence_level::float8,
                notes, status, tenant_id, created_at, updated_at
         FROM demand_forecasts
         WHERE tenant_id = $1
@@ -237,7 +238,8 @@ pub async fn get_forecast(
     let result = sqlx::query_as::<_, DemandForecast>(
         r#"
         SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date,
-               forecast_quantity, actual_quantity, accuracy_rate, method, confidence_level,
+               forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8,
+               method, confidence_level::float8,
                notes, status, tenant_id, created_at, updated_at
         FROM demand_forecasts
         WHERE id = $1 AND tenant_id = $2
@@ -276,7 +278,8 @@ pub async fn create_forecast(
              notes, status, tenant_id, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'draft', $13, $14, $15)
         RETURNING id, forecast_no, product_id, product_name, forecast_period, forecast_date,
-                  forecast_quantity, actual_quantity, accuracy_rate, method, confidence_level,
+                  forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8,
+                  method, confidence_level::float8,
                   notes, status, tenant_id, created_at, updated_at
         "#,
     )
@@ -316,7 +319,7 @@ pub async fn update_forecast(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = sqlx::query_as::<_, DemandForecast>(
-        "SELECT * FROM demand_forecasts WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM demand_forecasts WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -349,7 +352,8 @@ pub async fn update_forecast(
             method = $7, confidence_level = $8, notes = $9, status = $10, updated_at = $11
         WHERE id = $12 AND tenant_id = $13
         RETURNING id, forecast_no, product_id, product_name, forecast_period, forecast_date,
-                  forecast_quantity, actual_quantity, accuracy_rate, method, confidence_level,
+                  forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8,
+                  method, confidence_level::float8,
                   notes, status, tenant_id, created_at, updated_at
         "#,
     )
@@ -426,7 +430,7 @@ pub async fn calculate_forecast(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, DemandForecast>(
-        "SELECT * FROM demand_forecasts WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM demand_forecasts WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -453,7 +457,8 @@ pub async fn calculate_forecast(
             forecast_quantity = $1, accuracy_rate = $2, status = 'calculated', updated_at = $3
         WHERE id = $4 AND tenant_id = $5
         RETURNING id, forecast_no, product_id, product_name, forecast_period, forecast_date,
-                  forecast_quantity, actual_quantity, accuracy_rate, method, confidence_level,
+                  forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8,
+                  method, confidence_level::float8,
                   notes, status, tenant_id, created_at, updated_at
         "#,
     )
@@ -495,7 +500,7 @@ pub async fn validate_forecast(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, DemandForecast>(
-        "SELECT * FROM demand_forecasts WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM demand_forecasts WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -522,7 +527,8 @@ pub async fn validate_forecast(
         UPDATE demand_forecasts SET status = 'validated', updated_at = $1
         WHERE id = $2 AND tenant_id = $3
         RETURNING id, forecast_no, product_id, product_name, forecast_period, forecast_date,
-                  forecast_quantity, actual_quantity, accuracy_rate, method, confidence_level,
+                  forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8,
+                  method, confidence_level::float8,
                   notes, status, tenant_id, created_at, updated_at
         "#,
     )
@@ -562,7 +568,7 @@ pub async fn adopt_forecast(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, DemandForecast>(
-        "SELECT * FROM demand_forecasts WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, forecast_no, product_id, product_name, forecast_period, forecast_date, forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8, method, confidence_level::float8, notes, status, tenant_id, created_at, updated_at FROM demand_forecasts WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -584,7 +590,8 @@ pub async fn adopt_forecast(
         UPDATE demand_forecasts SET status = 'adopted', updated_at = $1
         WHERE id = $2 AND tenant_id = $3
         RETURNING id, forecast_no, product_id, product_name, forecast_period, forecast_date,
-                  forecast_quantity, actual_quantity, accuracy_rate, method, confidence_level,
+                  forecast_quantity::float8, actual_quantity::float8, accuracy_rate::float8,
+                  method, confidence_level::float8,
                   notes, status, tenant_id, created_at, updated_at
         "#,
     )

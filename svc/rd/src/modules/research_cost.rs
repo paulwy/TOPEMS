@@ -25,7 +25,7 @@ pub struct ResearchCost {
     pub payment_method: Option<String>,
     pub receipt_no: Option<String>,
     pub status: String,
-    pub created_by: String,
+    pub created_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

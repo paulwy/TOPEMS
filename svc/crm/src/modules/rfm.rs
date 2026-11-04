@@ -613,8 +613,8 @@ async fn get_customer_rfm(
 
     let row_result = sqlx::query_as::<_, RfmResultRow>(
         r#"
-        SELECT customer_id, recency_days, frequency, monetary,
-               r_score, f_score, m_score, rfm_score, segment
+        SELECT customer_id, recency_days, frequency,
+               monetary::float8, r_score, f_score, m_score, rfm_score::float8, segment
         FROM crm.rfm_results
         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND customer_id = $2
         "#,

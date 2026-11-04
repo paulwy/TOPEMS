@@ -195,7 +195,7 @@ mod tests {
 
         let result = sqlx::query_as::<_, PurchaseOrderRow>(
             r#"
-            SELECT id, po_no, supplier_id, status, order_date, expected_date, actual_date, total_amount, currency, created_at, updated_at
+            SELECT id, po_no, supplier_id, status, order_date, expected_date, actual_date, total_amount::float8, currency, created_at, updated_at
             FROM scm.purchase_orders
             ORDER BY created_at DESC
             LIMIT 10

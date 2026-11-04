@@ -138,7 +138,7 @@ pub async fn list_plans(
     let result = sqlx::query_as::<_, ProductionPlan>(
         r#"
         SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status,
-               product_id, product_name, target_quantity, notes, tenant_id, created_at, updated_at
+               product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at
         FROM production_plans
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR plan_no ILIKE $2 OR plan_name ILIKE $2)
@@ -212,7 +212,7 @@ pub async fn get_plan(
     let result = sqlx::query_as::<_, ProductionPlan>(
         r#"
         SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status,
-               product_id, product_name, target_quantity, notes, tenant_id, created_at, updated_at
+               product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at
         FROM production_plans
         WHERE id = $1 AND tenant_id = $2
         "#,
@@ -248,7 +248,7 @@ pub async fn create_plan(
              product_id, product_name, target_quantity, notes, tenant_id, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10, $11, $12, $13)
         RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status,
-                  product_id, product_name, target_quantity, notes, tenant_id, created_at, updated_at
+                  product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -287,7 +287,7 @@ pub async fn update_plan(
     let existing = sqlx::query_as::<_, ProductionPlan>(
         r#"
         SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status,
-               product_id, product_name, target_quantity, notes, tenant_id, created_at, updated_at
+               product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at
         FROM production_plans
         WHERE id = $1 AND tenant_id = $2
         "#,
@@ -322,7 +322,7 @@ pub async fn update_plan(
             notes = $9, updated_at = $10
         WHERE id = $11 AND tenant_id = $12
         RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status,
-                  product_id, product_name, target_quantity, notes, tenant_id, created_at, updated_at
+                  product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at
         "#,
     )
     .bind(&plan_name)
@@ -397,7 +397,7 @@ pub async fn submit_plan(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
-        "SELECT * FROM production_plans WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -415,7 +415,7 @@ pub async fn submit_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE production_plans SET status = 'pending_approval', updated_at = $1 WHERE id = $2 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000') RETURNING *",
+        "UPDATE production_plans SET status = 'pending_approval', updated_at = $1 WHERE id = $2 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000') RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
     )
     .bind(now)
     .bind(id)
@@ -453,7 +453,7 @@ pub async fn approve_plan(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
-        "SELECT * FROM production_plans WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -471,7 +471,7 @@ pub async fn approve_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE production_plans SET status = 'approved', updated_at = $1 WHERE id = $2 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000') RETURNING *",
+        "UPDATE production_plans SET status = 'approved', updated_at = $1 WHERE id = $2 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000') RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
     )
     .bind(now)
     .bind(id)
@@ -509,7 +509,7 @@ pub async fn reject_plan(
     let tenant_id = get_tenant_id(&claims);
 
     let existing = match sqlx::query_as::<_, ProductionPlan>(
-        "SELECT * FROM production_plans WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at FROM production_plans WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
@@ -527,7 +527,7 @@ pub async fn reject_plan(
 
     let now = Utc::now();
     let result = sqlx::query_as::<_, ProductionPlan>(
-        "UPDATE production_plans SET status = 'draft', updated_at = $1 WHERE id = $2 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000') RETURNING *",
+        "UPDATE production_plans SET status = 'draft', updated_at = $1 WHERE id = $2 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000') RETURNING id, plan_no, plan_name, plan_type, start_date, end_date, status, product_id, product_name, target_quantity::float8, notes, tenant_id, created_at, updated_at",
     )
     .bind(now)
     .bind(id)
