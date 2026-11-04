@@ -13,6 +13,7 @@
 #   ./scripts/deploy-prod.sh --seed-positions    # 只插入标准岗位（不清库）
 #   ./scripts/deploy-prod.sh --seed-roles        # 只插入默认角色（不清库）
 #   ./scripts/deploy-prod.sh --seed-dict         # 只插入系统字典（不清库）
+#   ./scripts/deploy-prod.sh --seed-coding-rules # 只插入编码规则（员工编号/采购单号，不清库）
 #   ./scripts/deploy-prod.sh --force             # 跳过所有确认提示
 # =============================================
 
@@ -64,6 +65,7 @@ for arg in "$@"; do
     --seed-positions)   SEED_POSITIONS=true ;;
     --seed-roles)       SEED_ROLES=true ;;
     --seed-dict)        SEED_DICT=true ;;
+    --seed-coding-rules) SEED_CODING_RULES=true ;;
     --force)           FORCE=true ;;
     -h|--help)
       grep '^#' "$0" | head -20
@@ -185,17 +187,19 @@ SQL_EOF
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/topems-reset-only.sql"
   info "数据库重置完成"
 
-  # 重置后自动 seed 部门+岗位+角色+字典
-  info "插入标准部门+岗位+角色+字典 seed..."
+  # 重置后自动 seed 部门+岗位+角色+字典+编码规则
+  info "插入标准部门+岗位+角色+字典+编码规则 seed..."
   scp $LOCAL_REPO/database/seeds/standard_departments.sql $PROD_HOST:/tmp/seed_departments.sql
   scp $LOCAL_REPO/database/seeds/standard_positions.sql $PROD_HOST:/tmp/seed_positions.sql
   scp $LOCAL_REPO/database/seeds/default_roles.sql $PROD_HOST:/tmp/seed_roles.sql
   scp $LOCAL_REPO/database/seeds/default_dict_data.sql $PROD_HOST:/tmp/seed_dict.sql
+  scp $LOCAL_REPO/database/seeds/coding_rules.sql $PROD_HOST:/tmp/seed_coding_rules.sql
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_departments.sql"
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_positions.sql"
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_roles.sql"
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_dict.sql"
-  info "标准部门+岗位+角色+字典 seed 完成"
+  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_coding_rules.sql"
+  info "标准部门+岗位+角色+字典+编码规则 seed 完成"
 fi
 
 # ── 只插入标准部门（不清库）──
@@ -228,6 +232,14 @@ if [ "$SEED_DICT" = true ]; then
   scp $LOCAL_REPO/database/seeds/default_dict_data.sql $PROD_HOST:/tmp/seed_dict.sql
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_dict.sql"
   info "系统字典 seed 完成"
+fi
+
+# ── 只插入编码规则（员工编号/采购单号，不清库）──
+if [ "$SEED_CODING_RULES" = true ]; then
+  info "=== 插入编码规则 seed ==="
+  scp $LOCAL_REPO/database/seeds/coding_rules.sql $PROD_HOST:/tmp/seed_coding_rules.sql
+  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_coding_rules.sql"
+  info "编码规则 seed 完成"
 fi
 
 # ── 环境变量检查 ──
