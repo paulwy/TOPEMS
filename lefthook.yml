@@ -206,6 +206,7 @@ pre-commit:
     migration-validate:
       tags: database migrations
       run: |
+        set -e
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^database/migrations/.*\.sql$|^database/checksums\.txt$" || true)
         [ -z "$STAGED" ] && exit 0
         node scripts/check-migration-names.mjs --strict

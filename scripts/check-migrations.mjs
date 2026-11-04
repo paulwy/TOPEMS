@@ -120,6 +120,27 @@ function collapseRanges(nums) {
   return parts.join(', ');
 }
 
+/**
+ * 版本号全局唯一性（2026-11-05 新增）：
+ * 同一 14 位版本号被多个迁移文件共用时，sqlx 迁移器视为冲突、账本也只能存一条。
+ * 与 checkNewSeq 的序号连续性检查互补，此处输出完整版本号 + 冲突文件清单。
+ */
+function checkVersionUniqueness(neu) {
+  const byVersion = new Map();
+  for (const item of neu) {
+    const version = `${item.date}${pad6(item.seq)}`;
+    if (!byVersion.has(version)) byVersion.set(version, []);
+    byVersion.get(version).push(item.file);
+  }
+  for (const [version, files] of byVersion) {
+    if (files.length > 1) {
+      errors.push(
+        `重复迁移版本号 ${version}: ${files.join(' | ')}（账本每个版本只允许一条，请为其中一方分配未使用的唯一时间戳）`
+      );
+    }
+  }
+}
+
 function checkNewSeq(neu) {
   const byDate = new Map();
   for (const item of neu) {
@@ -129,13 +150,8 @@ function checkNewSeq(neu) {
   for (const [date, items] of byDate) {
     const sorted = [...items].sort((a, b) => a.seq - b.seq);
     const seen = new Set();
-    const dups = [];
     for (const it of sorted) {
-      if (seen.has(it.seq)) dups.push(it.seq);
       seen.add(it.seq);
-    }
-    if (dups.length > 0) {
-      errors.push(`新格式 ${date} 重复序号: ${dups.map(pad6).join(', ')}`);
     }
     const seqs = sorted.map((x) => x.seq);
     const min = seqs[0];
@@ -278,6 +294,7 @@ checkNonSql(nonSql);
 const { early, neu, unrecognized } = classify(files);
 checkNaming(unrecognized);
 checkEarlySeq(early);
+checkVersionUniqueness(neu);
 checkNewSeq(neu);
 checkNoModify();
 
