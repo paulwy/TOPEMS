@@ -1304,6 +1304,8 @@
   "components.dashboard_sections.k2": "项，点击",
   "components.dashboard_sections.k3": "展开全部",
   "components.track_panel.50_0": "显示前 50 个点，共",
+  "components.track_panel.no_track_data": "该设备暂无轨迹数据",
+  "components.track_panel.track_load_failed": "轨迹数据加载失败",
   "report_viewer.k0": "\n                第 {{v0}}/{{v1}} 页\n              ",
   "report_viewer.k1": "\n                显示 {{v0}}-{{v1}} 共 {{v2}}\n              ",
   "report_viewer.k2": "\n                  {{v0}} 列\n                ",

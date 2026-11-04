@@ -1303,6 +1303,8 @@
   "components.dashboard_sections.k2": "Item, Click",
   "components.dashboard_sections.k3": "Expand All",
   "components.track_panel.50_0": "Before Display 50 Points, Total",
+  "components.track_panel.no_track_data": "No track data for this device",
+  "components.track_panel.track_load_failed": "Failed to load track data",
   "report_viewer.k0": "No. {{v0}}/{{v1}} Page",
   "report_viewer.k1": "Show {{v0}}-{{v1}} Total {{v2}}",
   "report_viewer.k2": "{{v0}} Column",

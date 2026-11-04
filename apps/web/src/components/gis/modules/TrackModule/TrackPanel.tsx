@@ -1,9 +1,19 @@
 import { designTokens } from '@topems/tokens';
 // modules/TrackModule/TrackPanel.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Search, Calendar, MapPin } from 'lucide-react';
-import { Box, Typography, TextField, IconButton, Button, useTheme } from '@mui/material';
-import type { DevicePoint } from '../../../../api/gis';
+import {
+  Box,
+  Typography,
+  TextField,
+  IconButton,
+  Button,
+  useTheme,
+  CircularProgress,
+  Alert,
+} from '@mui/material';
+import { deviceApi } from '@/api/gis/device';
+import type { DevicePoint, DeviceLocationRecord } from '@/api/gis';
 import type { TrackRecord, TrackStatistics, TrackPoint } from './types';
 import TrackPlayer from './TrackPlayer';
 import { logger } from '@/utils/logger';
@@ -14,25 +24,20 @@ interface TrackPanelProps {
   onClose: () => void;
 }
 
-// Mock track data generator for demonstration
-const generateMockTrack = (device: DevicePoint): TrackRecord => {
-  const points: TrackPoint[] = [];
-  const numPoints = 20 + Math.floor(Math.random() * 30);
-  let lat = device.latitude;
-  let lng = device.longitude;
+// 后端 DeviceLocationRecord → 前端 TrackRecord 映射
+const mapRecordsToTrack = (
+  device: DevicePoint,
+  records: DeviceLocationRecord[]
+): TrackRecord | null => {
+  if (records.length === 0) return null;
 
-  for (let i = 0; i < numPoints; i++) {
-    lat += (Math.random() - 0.5) * 0.001;
-    lng += (Math.random() - 0.5) * 0.001;
-    const point: TrackPoint = {
-      position: [lat, lng],
-      timestamp: new Date(Date.now() - (numPoints - i) * 60000).toISOString(),
-      speed: 20 + Math.random() * 40,
-      heading: Math.random() * 360,
-      batterylevel: 100 - Math.floor((i / numPoints) * 100),
-    };
-    points.push(point);
-  }
+  const points: TrackPoint[] = records.map((r) => ({
+    position: [r.latitude, r.longitude],
+    timestamp: r.timestamp,
+    speed: r.speed,
+    heading: r.heading,
+    batterylevel: r.batterylevel,
+  }));
 
   return {
     id: `track-${device.id}`,
@@ -41,7 +46,7 @@ const generateMockTrack = (device: DevicePoint): TrackRecord => {
     points,
     start_time: points[0].timestamp,
     end_time: points[points.length - 1].timestamp,
-    total_distance: Math.random() * 5000 + 1000,
+    total_distance: 0, // calculateStatistics 会重新计算
   };
 };
 
@@ -93,6 +98,8 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [statistics, setStatistics] = useState<TrackStatistics | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Filter devices based on search
   const filteredDevices = useMemo(() => {
@@ -106,14 +113,35 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
     );
   }, [devicePoints, searchQuery]);
 
-  // Handle device selection
-  const handleDeviceSelect = (device: DevicePoint) => {
+  // Handle device selection — 接真：调后端 getDeviceTrack
+  const handleDeviceSelect = useCallback(async (device: DevicePoint) => {
     setSelectedDevice(device);
-    const track = generateMockTrack(device);
-    setCurrentTrack(track);
-    setStatistics(calculateStatistics(track));
+    setCurrentTrack(null);
+    setStatistics(null);
+    setErrorMsg(null);
     setIsPlaying(false);
-  };
+    setIsLoading(true);
+
+    try {
+      const res = await deviceApi.getDeviceTrack({
+        device_id: device.id,
+        page_size: 200,
+      });
+      const records = (res.data?.items ?? []) as DeviceLocationRecord[];
+      const track = mapRecordsToTrack(device, records);
+      if (track) {
+        setCurrentTrack(track);
+        setStatistics(calculateStatistics(track));
+      } else {
+        setErrorMsg(i18n.t('components.track_panel.no_track_data'));
+      }
+    } catch (err) {
+      logger.error('[TrackPanel] 加载轨迹失败', err);
+      setErrorMsg(i18n.t('components.track_panel.track_load_failed'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // Handle play/pause
   const handlePlay = () => setIsPlaying(true);
@@ -276,7 +304,23 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
 
         {/* Track Player */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {currentTrack ? (
+          {isLoading ? (
+            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CircularProgress size={32} />
+            </Box>
+          ) : errorMsg ? (
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                p: 4,
+              }}
+            >
+              <Alert severity='info'>{errorMsg}</Alert>
+            </Box>
+          ) : currentTrack ? (
             <Box sx={{ flex: 1, p: 4, overflowY: 'auto' }}>
               <TrackPlayer
                 track={currentTrack}
