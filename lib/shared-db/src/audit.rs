@@ -3,6 +3,21 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 
+/// 审计日志 status 标准值集合（与 DB `ck_audit_logs_status_standard` 保持同步）。
+///
+/// 包含 `error`：审计日志必须能记录失败结果，禁止把失败写成 success 或旁路到其他表。
+/// `active`/`inactive`/`archived` 为历史 CHECK 兼容值；`failed`/`failure`/`pending`/`unknown`
+/// 为运行时既有写入值（4xx 中间件、同步任务、SRM 审计）。
+pub const AUDIT_LOG_STATUS_STANDARD: &[&str] = &[
+    "active", "inactive", "archived", "success", "failure", "failed", "error", "pending",
+    "unknown",
+];
+
+/// 判断审计日志 status 是否属于标准值集合。
+pub fn is_valid_audit_log_status(status: &str) -> bool {
+    AUDIT_LOG_STATUS_STANDARD.contains(&status)
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 pub struct AuditLog {
     pub id: Uuid,
@@ -597,6 +612,15 @@ impl SchemaAwareAuditLogService {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn test_audit_log_status_standard_includes_error() {
+        assert!(is_valid_audit_log_status("error"));
+        assert!(is_valid_audit_log_status("success"));
+        assert!(is_valid_audit_log_status("failed"));
+        assert!(is_valid_audit_log_status("failure"));
+        assert!(!is_valid_audit_log_status("bogus"));
+    }
 
     #[test]
     fn test_create_audit_log_request_new_defaults() {

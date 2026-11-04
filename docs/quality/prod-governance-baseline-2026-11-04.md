@@ -74,14 +74,14 @@
 | 0–13 | `create schemas` … `login log` | 对应仓库 `000`–`013` 短版本号文件，checksum 全部匹配 | 正常，无需处理 |
 | `20261103000005` | `db governance check backfill` | 无对应文件；installed_on 2026-11-03 10:02，仓库与文档无引用，无法证明为旧占位 | **待确认，不 DELETE** |
 
-**治理后**：账本 556→**557**（+1：`20261103173000`）；未登记降为 **16**（11 个 5433 + 4 个 test + 1 个未执行的 db19）；真孤儿仍 1 个。禁止在任意库执行 `sqlx migrate run`。
+**治理后**：账本 556→**557**（+1：`20261103173000`）；后续 P4 登记 `20261105100000` → **558**，`crm.audit_logs` 登记 `20261105130000` → **559**（checksum 均与仓库文件 SHA-384 一致）。仓库迁移文件 576 个（562 个 14 位版本 + 14 个短版本号）；未登记为 **18**（11 个 5433 + 6 个 test 定向：`20261103200000/210000/220000/04030000/05110000/05120000` + 1 个未执行的 db19）；真孤儿仍 1 个。禁止在任意库执行 `sqlx migrate run`。
 
 ## 2. prod 实测基线（2026-11-04）
 
 | 维度 | 实测值 | 说明 |
 |---|---|---|
 | 表数量 | prod 1402 / test 1328（执行前） | 反向表（**prod 有、test 无**）74；P4 首批后 prod 1391、反向表 63 |
-| 迁移账本 | prod **549** 条 / 仓库文件 **558** 个（执行前） | **17 个版本未登记**（DB-04-prod～DB-19）；治理后 557 条 / 未登记 16；"孤儿"中 14 个实为短版本号文件，真孤儿 1 个 |
+| 迁移账本 | prod **549** 条 / 仓库文件 **558** 个（执行前） | **17 个版本未登记**（DB-04-prod～DB-19）；治理后 P1 补登 →557，P4 `20261105100000` →558，`crm.audit_logs` `20261105130000` →**559** / 文件 **576** / 未登记 **18**（11 个 5433 + 6 个 test 定向 + db19 未执行）；"孤儿"中 14 个实为短版本号文件，真孤儿 1 个 |
 | 类型差异（同名列） | **296**（101 表） | 164 项 prod 已为 timestamptz（无需动）/ 12+3 方向安全 / 13 项 prod 更短 / 62 numeric 混合 / 其余零星 |
 | NULLIF 纯文本比较策略 | **29**（全部 `master_data`） | `qual LIKE '%::text = current_setting%' AND qual NOT LIKE '%NULLIF%'` |
 | 缺索引（按名比对，排除 pg_toast） | **10** | 全部为反向表 pkey；旧口径 285 含系统 schema 噪声 |
@@ -154,8 +154,8 @@
 
 1. **P4 剩余 63 张**：首批 11 张已删（§5.1）；保留 qms 3 张（无明确权威表）、`finance.core_finance_currencies`（运行时 CRUD）、60 张业务未确认。确认前不动。
 2. **执行后仍有 99 项类型差异**（284→99，2026-11-05 test 侧对齐后）：62 数值族混用、13 varchar test 更宽（prod 更短）、5 jsonb↔text/text[]、5 UUID 契约、5 timestamptz↔text、4 date↔timestamptz、2 numeric↔text、2 varchar↔text、1 varchar↔jsonb。均属契约/语义类，只分类不执行（见 §7）。
-3. **未登记 16 个 + 真孤儿 1 个**（治理后）：16 个为 5433/test 定向或未执行的 db19，均不登记；`20261103000005` 来源不明，保留待确认、不 DELETE。`db08` 无守卫，禁止直接重放。
-4. **`crm.audit_logs` 值域**：prod CHECK 不含 `'error'`，而应用真实写入 `'error'`（test 侧 11 条）；P5b 落的是 prod 实测 CHECK，是否扩值域需业务拍板。
+3. **未登记 18 个 + 真孤儿 1 个**（治理后）：11 个 5433 定向、5 个既有 test 定向 + 2 个 2026-11-05 新增 test 定向（db20/db21），及未执行的 db19；均不登记。`20261103000005` 来源不明，保留待确认、不 DELETE。`db08` 无守卫，禁止直接重放。
+4. **`crm.audit_logs` 值域**：✅ **已按业务决策执行（2026-11-05，允许 `'error'`）**；prod 执行前 17 行均为 `success`、无非标准值；CHECK 已重建并 `VALIDATE`，见 §8。
 5. **索引批次**：prod 实缺 10 个（反向表 pkey），随 P4 收敛；其余库（topems 1137）另行性能批次。
 
 ## 7. test 侧类型对齐（2026-11-05）
@@ -185,7 +185,37 @@
 
 **执行**：`BEGIN; \i db20; \i db21; COMMIT;`，`ON_ERROR_STOP=1`、`lock_timeout=5s`，exit 0；先在同事务 `ROLLBACK` 预演 185 个 DO 全通过。执行后 prod-vs-test 类型差异 **284→99**（=86 只分类 + 13 prod 更短），prod 类型快照逐行比对无变化。两个文件不登记 prod 账本（属 test 定向，与 db07–db09/db14 同口径）。
 
-## 8. 参考
+## 8. crm.audit_logs status 值域扩展（2026-11-05）
+
+**决策**：允许 `'error'`。审计日志必须能记录失败结果；禁止把失败伪造成 `success`，也禁止旁路到其他表。
+
+**执行前只读核对**
+
+| 库 | status 分布 | 结论 |
+|---|---|---|
+| prod `crm.audit_logs` | `success` 17 行 | 无非标准值，可安全加约束 |
+| test `crm.audit_logs` | `success` 121 + `error` 12 | 应用真实写入 `error`，与本次决策一致 |
+
+**代码侧核对**：`AuditLog.status` 为自由文本 `String`，无状态枚举/DTO 校验；实际写入值来自
+`shared-auth` 中间件（`success` / `error`(5xx) / `failed`(4xx) / `unknown`）、CRM handlers（`success` / `error`）、
+SRM 审计（`pending`）。历史标准值另有 `active/inactive/archived/failure`。
+据此在 [audit.rs](lib/shared-db/src/audit.rs#L6-L19) 增加 `AUDIT_LOG_STATUS_STANDARD` 常量与
+`is_valid_audit_log_status()`，显式纳入 `'error'`，保持既有写入值与历史值全部合法（向后兼容、不改 API 契约）。
+
+**DB 侧迁移**：[20261105130000_p4_audit_logs_status_check_error.sql](database/migrations/20261105130000_p4_audit_logs_status_check_error.sql#L1-L61)
+（账本 version `20261105130000`，success=true，checksum `0f9f2c45249b…`；账本 **558→559**）。
+
+**值域**：`status IS NULL OR status IN ('active','inactive','archived','success','failure','failed','error','pending','unknown')`。
+
+**执行**：备份 `~/topems/backups/topems_prod_pre_p4_audit_20261105.dump`（4,150,530 字节，TOC 8265 行）；
+先在事务内 `ROLLBACK` 预演，再单事务 `lock_timeout=5s` 执行 exit 0；`convalidated=true`。
+
+**验证**：
+- `INSERT ... status='error'` 成功（事务内插入后 `ROLLBACK`，不落库）；
+- `INSERT ... status='bogus'` 被拒：`violates check constraint "ck_audit_logs_status_standard"`（exit 3）；
+- 表行数保持 **17**；prod `/health` = **200**。
+
+## 9. 参考
 
 - 账本核对：[verify_prod_ledger.sh](scripts/db/verify_prod_ledger.sh#L1-L76)
 - 迁移门禁：[check-migrations.mjs](scripts/check-migrations.mjs)、[check-migration-names.mjs](scripts/check-migration-names.mjs)、[validate.sh](scripts/migration/validate.sh)

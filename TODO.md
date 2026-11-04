@@ -117,7 +117,7 @@
 | NULLIF 文本比较 | 11 表 | **29 条策略，全部 master_data** | P2 已执行，29→0；策略 1083 / RLS 883 不变 |
 | 缺索引 | prod 285 | **10**（全为反向表 pkey）；无二级索引表 665 = test 665 | 随 P4 反向表收敛处理 |
 | 约束缺口 | 193 | **103 条**（10 PK / 48 UNIQUE / 45 FK，91 表） | P3 已执行，缺口 103→**5**；p/u/f=1396/281/298，`NOT VALID`=0；5 张 `schema_defense_ledger` 运行时自建表不纳入迁移，其主键由 `ensure_ledger_table` 幂等守卫在服务启动时补齐 |
-| 账本 | 546×5 | prod **549** / 文件 558 / 未登记 17 | 已增至 **557**（+7 执行 +1 治理补登 `20261103173000`，checksum 均与文件一致）；未登记降为 16（5433/test 定向 + 未执行 db19）；真孤儿 1 个（`20261103000005`）保留待确认 |
+| 账本 | 546×5 | prod **549** / 文件 558 / 未登记 17 | 已增至 **559**（+7 执行 +1 治理补登 `20261103173000` +1 P4 `20261105100000` +1 audit `20261105130000`，checksum 均与文件一致）；文件 576，未登记 18（11 个 5433 + 6 个 test 定向 + db19）；真孤儿 1 个（`20261103000005`）保留待确认 |
 | db04-prod | 174→0 | **残留 5 列**（`public.equipment` 4 + `iam.core_plugin_instances.last_heartbeat`） | P5a 已执行，5→0 |
 | status_standard | 迁移已登记 success | **3 条残留**（crm.audit_logs / integration.external_erp_sync_logs / srm.inquiries） | P5b 已执行，3→0 |
 | 反向表 | prod 74 | **74 确认**；73 张 0 行，`finance.core_finance_currencies` 16 行；**22 个 FK 依赖** | P4 首批 **2026-11-05 已执行**：删 11 张（3 直接删 + 8 重指向 18 条 FK 后删），表数 1402→1391、FK 298→295；保留 qms 3 张 + currencies + 60 张待业务确认（余 63 张） |
