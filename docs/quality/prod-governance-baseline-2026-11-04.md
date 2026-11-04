@@ -153,12 +153,39 @@
 ## 6. 剩余决策项
 
 1. **P4 剩余 63 张**：首批 11 张已删（§5.1）；保留 qms 3 张（无明确权威表）、`finance.core_finance_currencies`（运行时 CRUD）、60 张业务未确认。确认前不动。
-2. **执行后仍有 284 项类型差异**：其中 5 项是 P5a 有意引入（prod `timestamptz` vs test naive，`public.equipment` 4 列 + `iam.core_plugin_instances.last_heartbeat`），**应改 test 侧而非回退 prod**；其余人工项（prod 更短 varchar / numeric 混合 / uuid / date 等）需逐表契约判断方向。
+2. **执行后仍有 99 项类型差异**（284→99，2026-11-05 test 侧对齐后）：62 数值族混用、13 varchar test 更宽（prod 更短）、5 jsonb↔text/text[]、5 UUID 契约、5 timestamptz↔text、4 date↔timestamptz、2 numeric↔text、2 varchar↔text、1 varchar↔jsonb。均属契约/语义类，只分类不执行（见 §7）。
 3. **未登记 16 个 + 真孤儿 1 个**（治理后）：16 个为 5433/test 定向或未执行的 db19，均不登记；`20261103000005` 来源不明，保留待确认、不 DELETE。`db08` 无守卫，禁止直接重放。
 4. **`crm.audit_logs` 值域**：prod CHECK 不含 `'error'`，而应用真实写入 `'error'`（test 侧 11 条）；P5b 落的是 prod 实测 CHECK，是否扩值域需业务拍板。
 5. **索引批次**：prod 实缺 10 个（反向表 pkey），随 P4 收敛；其余库（topems 1137）另行性能批次。
 
-## 7. 参考
+## 7. test 侧类型对齐（2026-11-05）
+
+**范围**：仅 `topems_test`（prod 机同实例），prod 未做任何变更（执行前后 prod 类型快照 `diff` 一致，`/health`=200）。
+
+**前置只读核对**：185 个目标列在 test 中 **FK / 视图 / 生成列依赖均为 0**，**默认值 0**，RLS 策略引用 0；169 个 timestamp 列 **非空行数全部为 0**。
+
+| 分类 | 数量 | 处置 | 证据 |
+|---|---:|---|---|
+| prod `timestamptz` / test `timestamp` | **169** | ✅ 执行 test→timestamptz，`USING col AT TIME ZONE 'UTC'`（含 P5a 引入 5 列） | 169 列全 NULL，无依赖 |
+| varchar 加宽（含 1 项 varchar→text） | **13** | ✅ 执行（`varchar(200)→(256)` 等） | 无依赖，加宽不截断 |
+| numeric 加宽 | **3** | ✅ 执行（`numeric(12,2)→(15,3)`，`qa_ehs_hazardous_materials`） | 精度/整数位均不缩 |
+| 数值族混用（double precision / numeric / int） | 62 | ⏸ 只分类 | 精度语义不同，需业务定方向 |
+| varchar test 更宽（prod 更短） | 13 | ⏸ 不执行 | 对齐会收窄 test，存在截断风险 |
+| jsonb ↔ text/text[] | 5 | ⏸ 只分类 | 需数据合法性甄别 |
+| UUID 契约（uuid ↔ varchar/bigint） | 5 | ⏸ 只分类 | 跨库契约 |
+| timestamptz ↔ text | 5 | ⏸ 只分类 | `mdm_sla_measurements` 字段族 |
+| date ↔ timestamptz | 4 | ⏸ 只分类 | 语义方向待定 |
+| numeric ↔ text / varchar ↔ text / varchar ↔ jsonb | 5 | ⏸ 只分类 | 类型族不同 |
+| **合计** | **284** | 执行 185 / 不执行 99 | |
+
+**迁移文件**（test 定向，禁止在 prod 执行）：
+
+- [20261105110000_db20_test_timestamptz_align_prod_169cols.sql](database/migrations/20261105110000_db20_test_timestamptz_align_prod_169cols.sql#L1-L182)（169 个 DO 守卫块）
+- [20261105120000_db21_test_varchar_numeric_widen_16cols.sql](database/migrations/20261105120000_db21_test_varchar_numeric_widen_16cols.sql#L1-L28)（16 个 DO 守卫块，按 `format_type` 精确匹配旧类型）
+
+**执行**：`BEGIN; \i db20; \i db21; COMMIT;`，`ON_ERROR_STOP=1`、`lock_timeout=5s`，exit 0；先在同事务 `ROLLBACK` 预演 185 个 DO 全通过。执行后 prod-vs-test 类型差异 **284→99**（=86 只分类 + 13 prod 更短），prod 类型快照逐行比对无变化。两个文件不登记 prod 账本（属 test 定向，与 db07–db09/db14 同口径）。
+
+## 8. 参考
 
 - 账本核对：[verify_prod_ledger.sh](scripts/db/verify_prod_ledger.sh#L1-L76)
 - 迁移门禁：[check-migrations.mjs](scripts/check-migrations.mjs)、[check-migration-names.mjs](scripts/check-migration-names.mjs)、[validate.sh](scripts/migration/validate.sh)
