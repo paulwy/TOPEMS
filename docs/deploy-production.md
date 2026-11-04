@@ -98,6 +98,12 @@ cd /Users/air/TOPEMS
 
 # 回滚到上一个备份
 ./scripts/deploy-prod.sh --rollback
+
+# 跳过所有确认提示（非交互模式/后台运行）
+./scripts/deploy-prod.sh --skip-build --force
+
+# 重置数据库（清空测试部门 + 插入标准部门树，首次部署用）
+./scripts/deploy-prod.sh --skip-build --force --reset-db
 ```
 
 ### 脚本做了什么
@@ -113,6 +119,61 @@ cd /Users/air/TOPEMS
 | (可选) 前端 | pnpm build + rsync dist + nginx reload | ~2min |
 
 **失败自动回滚**：健康检查超时会自动恢复上一个备份并重启。
+
+**环境变量预检**：部署前自动检查 plist 里的 `ENCRYPTION_MASTER_KEY` / `JWT_SECRET` / `JWT_REFRESH_SECRET` 是否配置。未配置会警告——否则每次重启后端都会生成随机密钥，导致已加密的密码哈希解不开，登录 401。
+
+---
+
+## 4.5 首次部署初始化（重要）
+
+第一次部署到全新生产机时，除了跑部署脚本，还需要做以下初始化：
+
+### 4.5.1 配置环境变量（plist）
+
+后端 plist（`~/Library/LaunchAgents/com.topems.server.plist`）必须包含以下环境变量，否则登录会 401：
+
+| 变量 | 说明 | 生成方式 |
+|---|---|---|
+| `ENCRYPTION_MASTER_KEY` | 数据库字段加密主密钥，固定值不能变 | `openssl rand -hex 32` |
+| `JWT_SECRET` | JWT 签名密钥 | `openssl rand -hex 32` |
+| `JWT_REFRESH_SECRET` | JWT refresh token 密钥 | `openssl rand -hex 32` |
+| `DATABASE_URL` | PostgreSQL 连接串 | `postgres://topems_prod:***@localhost:5432/topems_prod` |
+
+**为什么重要**：`ENCRYPTION_MASTER_KEY` 不配置的话，每次重启后端都会生成随机密钥，数据库里加密的密码哈希就解不开了，登录直接 401。
+
+### 4.5.2 重置 admin 密码
+
+```bash
+# 生成 bcrypt 哈希（注意 $ 符号必须用 SQL 文件方式传，不能直接 shell 双引号）
+python3 -c "import bcrypt; print(bcrypt.hashpw(b'admin123', bcrypt.gensalt()).decode())"
+
+# 写到 SQL 文件再 scp 到生产机执行
+cat > /tmp/update-pwd.sql << 'EOF'
+UPDATE iam.users 
+SET password_hash='$2b$12$xxx...xxx', 
+    must_change_password=false 
+WHERE username='admin';
+EOF
+scp /tmp/update-pwd.sql xingzhai@192.168.110.115:/tmp/
+ssh xingzhai@192.168.110.115 "/opt/homebrew/bin/psql -U topems_prod -d topems_prod -f /tmp/update-pwd.sql"
+```
+
+### 4.5.3 初始化部门数据
+
+```bash
+./scripts/deploy-prod.sh --skip-build --force --reset-db
+```
+
+会清空旧测试部门，插入 23 个标准部门（12 顶级 + 11 二级子部门），全部英文命名。
+
+### 4.5.4 验证登录
+
+```bash
+ssh xingzhai@192.168.110.115 "curl -s -X POST http://localhost:8099/api/core/iam/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{\"username\":\"admin\",\"password\":\"admin123\"}'"
+# 返回 success=true + access_token 即成功
+```
 
 ---
 
@@ -248,6 +309,14 @@ A: 脚本会自动回滚。手动排查：
 ```bash
 ssh xingzhai@192.168.110.115 "tail -50 /Users/xingzhai/topems/logs/server.err"
 ```
+
+### Q: 登录报 401「用户名或密码错误」
+A: 两个常见原因：
+1. **ENCRYPTION_MASTER_KEY 未配置** → 每次重启生成随机密钥，密码哈希解不开。检查 plist 里有没有这个变量，没有就加上。
+2. **密码哈希被 shell 转义吃掉** → `$2b$12$...` 在 shell 双引号里 `$2b` 等会被当成变量展开。更新密码必须用 SQL 文件方式（scp + psql -f），不能直接 shell -c。
+
+### Q: scp 上传偶发 Broken pipe
+A: 局域网网络抖动，重试即可。脚本没有自动重试——手动重跑 `scp` 那一步。
 
 ### Q: `Address already in use`
 A: 旧进程没杀干净。launchd 模式下不会出现——如果手动 nohup 启动过，先 `pkill -9 -f topems-server`。
