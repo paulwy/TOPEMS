@@ -4012,3 +4012,16 @@ P2（2-4 周后）
 - **验证**：列存在性缺失 **prod 135 → 0、prepare 104 → 0**（注：验证须 `LC_ALL=C sort` 统一排序，PG `ORDER BY` 与 `comm` collation 不一致会误报 5 项伪缺失）；类型/长度差异复验 0；门禁 exit 0；health 200
 - **挂账**：反向残留列（prod 790 / prepare 1247，`目标库有 / test 无`）不删除，留待后续甄别（历史残壳/测试未固化）
 - 无 git 代码改动（纯库 DDL）
+
+## 第四十二轮（2026-11-05）：5433 第二库恢复 + 列级契约全量对齐 ✅
+
+- **背景**：5433 实例自 2026-11-02 不可达，`pg_ctl -D /opt/homebrew/var/postgresql@18_5433 -l /tmp/pg5433.log start` 启动成功（PG 18.4）；启动后 vs test 差异：类型/长度 202、缺失列 115、反向列 837
+- **执行**：
+  1. **169 时间戳** `timestamp → timestamptz`（逐语句，169/169 成功）
+  2. **13 varchar 长度**（12 OK；`iam.tenant_permissions.tenant_id` 被 RLS 策略 `rls_tenant_isolation` 引用 → DROP POLICY → `TYPE varchar(64)` → 按 test 同构重建策略，0 行表）
+  3. **13 项特殊类型**（按 test 配方）：`text[]→jsonb`/`text→jsonb`/`varchar→jsonb` 用 `USING NULL::jsonb`（0 行表）、`varchar→uuid` 4 项用 `USING NULL::uuid`、`jsonb→text[]`（`USING NULL::text[]` + DROP DEFAULT）、`uuid→int8`（DROP DEFAULT → `USING NULL::bigint` → `CREATE SEQUENCE iam.permission_audit_logs_id_seq` → `SET DEFAULT nextval`）、`date→timestamptz`、`varchar→text`——全 OK
+  4. **8 项反向差异甄别**：mdm 5 列（5433 timestamptz vs test text）经代码核实 `measured_at: String` + `to_rfc3339()` + `measured_at::text` 比较 → **test 的 text 是应用真态**（迁移 `20261027130000` 声明 timestamptz 但被运行时覆盖）；date 3 项（equipment_oee/work_reports/portal_todos）test=date 且迁移 `20261104010000_db12_5433_date_timestamptz_21cols` 明确对齐 test——8 项全部按 test 对齐（`timestamptz→text`、`timestamptz→date`）
+  5. **缺失列 115**：deleted_at 95 + 零星 20（training_programs/portal_todos/core_* 等）按 test 类型+长度补齐（115/115）
+- **验证**：5433 vs test **缺失列 0、类型/长度差异 0**；门禁 exit 0（5433 恢复后可跑双库比对，仅提示反向表 6 个挂账不阻断）；health 200
+- **挂账**：反向残留列 5433 837（不删）；反向表 6 项（5433 有 test 无：`finance.core_finance_currencies`、`public.mobile_users`、`public.qa_ehs_compliance_evaluations` 等）待甄别
+- 无 git 代码改动（纯库 DDL）
