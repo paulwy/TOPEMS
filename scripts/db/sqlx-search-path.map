@@ -1,0 +1,29 @@
+# sqlx prepare 逐 package search_path（与运行时 SEARCH_PATH 对齐）
+# 背景：monorepo 共用一份根 .sqlx，但 sqlx prepare 只用单连接；
+# 未限定 schema 的表名会按连接 search_path 解析，默认 "$user",public /
+# 或角色默认 mes,public 会命中本地影子表，生成与实际运行不一致的缓存。
+# 本文件为每个 package 声明 prepare 时应使用的 search_path（逗号分隔）。
+# 未列出的 package 不追加 options，沿用 DATABASE_URL 默认 search_path。
+# 维护要求：新增服务时按 config/env/_template.env.example 的 SEARCH_PATH 补齐。
+topems-ai=ai,shared,public
+topems-analytics=analytics,shared,public
+topems-communication=communication,shared,public
+topems-crm=crm,shared,public
+topems-ehs=ehs,shared,public
+topems-erp=erp,shared,public
+topems-finance=finance,shared,public
+topems-gis=gis,shared,public
+topems-hrm=hrm,shared,public
+topems-integration=integration,shared,public
+topems-mes=mes,shared,public
+topems-mobile=mobile,shared,public
+topems-pm=pm,shared,public
+topems-portal=portal,shared,public
+topems-qms=qms,shared,public
+topems-scm=scm,shared,public
+topems-search=search,shared,public
+topems-srm=srm,shared,public
+topems-unified-core=iam,shared,public
+topems-wms=wms,shared,public
+topems-shared-boundary=shared,public
+topems-shared-core=shared,public
