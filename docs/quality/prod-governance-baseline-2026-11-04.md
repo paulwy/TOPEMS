@@ -2,7 +2,7 @@
 
 > 对象：`topems_prod` @ `192.168.110.115`（PostgreSQL 17.11，1402 表）。
 > 对照基线：同实例 `topems_test`（1328 表）。
-> 口径：全部数字来自 `pg_catalog` 实测；§2 保留 2026-11-04 执行前基线，§1.1 记录 2026-11-05 的 prod 执行结果与执行后复核。P1/P2/P3/P5 已于 prod 执行，P4 仍为只读决策阶段。
+> 口径：全部数字来自 `pg_catalog` 实测；§2 保留 2026-11-04 执行前基线，§1.1 记录 2026-11-05 的 prod 执行结果与执行后复核。P1/P2/P3/P5 已于 prod 执行；P4 已完成首批 11 张（3 张直接删 + 8 张重指向 FK 后删），余 63 张待确认。
 
 ## 1. 结论摘要
 
@@ -12,7 +12,7 @@
 | P1 类型安全加宽（17 列） | ✅ **已执行 2026-11-05**；类型差异 296→279（P5a 后总差 284） |
 | P2 NULLIF 统一（29 条 master_data 策略） | ✅ **已执行 2026-11-05**；纯文本比较 29→0；策略 1083 / RLS 表 883 均不变 |
 | P3 约束补齐（5 PK / 48 UNIQUE / 45 FK） | ✅ **已执行 2026-11-05**；p/u/f 1391/233/253→**1396/281/298**，`NOT VALID`=0。5 张 `schema_defense_ledger` 运行时自建表 PK 仍由启动守卫补齐 |
-| P4 反向表收敛（74 张，22 个 FK 依赖） | **待业务确认**（已出三分类决策单，未执行 DROP） |
+| P4 反向表收敛（74 张，22 个 FK 依赖） | ✅ **首批 2026-11-05**：删 11 张（3 张直接删 + 8 张重指向 18 条 FK 后删）；保留 qms 3 张 + `core_finance_currencies`（运行时 CRUD）+ 60 张待业务确认 |
 | P5 时间戳 + status_standard + 账本 | ✅ **已执行 2026-11-05**；naive 5→0、3 条 `*_status_standard` CHECK 已删；账本 549→556 |
 
 **核心结论：账本 `success = true` ≠ DDL 到位。** 执行前 prod 账本已登记 `20261103000002`（success），但 3 条 `status_standard` CHECK 仍存在；`db04-prod` 头部声称已执行，实测仍残留 5 个 naive timestamp 列。该现象已由 2026-11-05 的 P5a/P5b 修正，但"以 `pg_catalog` 实测为准、不以账本判 DDL"的原则继续适用。
@@ -43,7 +43,7 @@
 | 约束缺口 | 103 | **5**（仅 5 张运行时自建 `*.schema_defense_ledger` 的 PK） |
 | p / u / f 约束数 | 1391 / 233 / 253 | **1396 / 281 / 298** |
 | `NOT VALID` 约束 | — | **0** |
-| 反向表（prod 独有） | 74 | **74** |
+| 反向表（prod 独有） | 74 | **63**（P4 首批删 11 张后） |
 | 账本条数 | 549 | **556** |
 
 **P3-UNIQUE 守卫缺陷与 checksum 重同步（单独说明）**
@@ -80,7 +80,7 @@
 
 | 维度 | 实测值 | 说明 |
 |---|---|---|
-| 表数量 | prod 1402 / test 1328 | 反向表（**prod 有、test 无**）确认 **74** |
+| 表数量 | prod 1402 / test 1328（执行前） | 反向表（**prod 有、test 无**）74；P4 首批后 prod 1391、反向表 63 |
 | 迁移账本 | prod **549** 条 / 仓库文件 **558** 个（执行前） | **17 个版本未登记**（DB-04-prod～DB-19）；治理后 557 条 / 未登记 16；"孤儿"中 14 个实为短版本号文件，真孤儿 1 个 |
 | 类型差异（同名列） | **296**（101 表） | 164 项 prod 已为 timestamptz（无需动）/ 12+3 方向安全 / 13 项 prod 更短 / 62 numeric 混合 / 其余零星 |
 | NULLIF 纯文本比较策略 | **29**（全部 `master_data`） | `qual LIKE '%::text = current_setting%' AND qual NOT LIKE '%NULLIF%'` |
@@ -89,10 +89,10 @@
 | naive timestamp 残留 | **5 列** | `public.equipment` 4 列 + `iam.core_plugin_instances.last_heartbeat` |
 | status_standard 残留 CHECK | **3** 条 | `crm.audit_logs` / `integration.external_erp_sync_logs` / `srm.inquiries`（迁移 0002 清单未覆盖） |
 | 无 PK 表 | 11 | 10 张缺 PK 差异中：5 张纳入 P3 迁移，5 张为运行时自建 `schema_defense_ledger`（不纳入），1 张反向表随 P4 |
-| 反向表行数 | 74 张中 73 张 0 行；`finance.core_finance_currencies` 16 行 | 22 个 FK 引用这些反向表 |
+| 反向表行数 | 执行前 74 张中 73 张 0 行；`finance.core_finance_currencies` 16 行 | P4 首批后 63 张中 62 张 0 行；22 个 FK 引用（18 条已重指向权威表） |
 | 服务连接库 | launchd `com.topems.server.plist` → `topems_prod` | 仓库 `.env` 指向 `topems_test`，属运维陷阱 |
 
-> 访问方式：SSH 免密 `xingzhai@192.168.110.115` + `/opt/homebrew/bin/psql`；本次全部会话仅执行 `SELECT`。
+> 访问方式：SSH 免密 `xingzhai@192.168.110.115` + `/opt/homebrew/bin/psql`；基线盘点仅执行 `SELECT`，2026-11-05 的执行会话见 §1.1/§5.1（所有 prod DDL 均单事务 + 备份 + `/health` 校验）。
 
 ## 3. 问题清单（按风险序）
 
@@ -100,7 +100,7 @@
 2. **NULLIF 缺口导致 RLS 崩溃**：`app.tenant_id=''` 时 `::uuid` cast 报 `invalid input syntax for type uuid: ""`；29 条 master_data 策略仍是裸 `current_setting` 比较。
 3. **约束缺口影响正确性**：10 张表无 PK；48 UNIQUE / 45 FK 缺失（test 侧已有）。FK 缺失在并发写入下可产生孤儿行。
 4. **账本与 DDL 漂移**：17 个版本未登记；已登记版本存在未生效 DDL（status_standard 3 条、db04-prod 5 列）。
-5. **反向表与 FK 依赖**：74 张反向表为运行时自建/历史残留，其中 22 个 FK 依赖，直接 DROP 会因 RESTRICT 失败或破坏引用；`finance.core_finance_currencies` 有 16 行真实数据。
+5. **反向表与 FK 依赖**：74 张反向表为运行时自建/历史残留，其中 22 个 FK 依赖，直接 DROP 会因 RESTRICT 失败或破坏引用；`finance.core_finance_currencies` 有 16 行真实数据。首批 11 张已于 2026-11-05 处理（§5.1），余 63 张。
 6. **索引噪声**：旧口径 285 含 `pg_toast`/生成名漂移，实测缺 10（仅反向表 pkey），不属正确性问题。
 
 ## 4. 迁移清单（本地验证记录；prod 已于 2026-11-05 全部执行）
@@ -128,13 +128,31 @@
 | P3-PK | 备份；5 张表数据量确认（PK 会建索引，锁表） | 低峰；单表 `lock_timeout=5s` | PK 不能 NOT VALID；失败即整表事务回滚。若某表 NULL/重复守卫触发，只跳过该表并 `NOTICE`，不影响其他表 |
 | P3-UQ | 备份；48 表重复校验通过 | 低峰 | `DROP CONSTRAINT IF EXISTS <name>`；重复数据存在时迁移自动跳过该表 |
 | P3-FK | 备份；45 组孤儿行检查为 0 | 低峰（`VALIDATE` 会短暂持锁） | `DROP CONSTRAINT IF EXISTS <name>`；`NOT VALID` 阶段失败不阻塞后续 |
-| P4 反向表 | **业务确认 22 个 FK 依赖归属** | 独立变更窗口 | 只允许 DROP 空表且无依赖者；禁止 `CASCADE`；`finance.core_finance_currencies` 先导出数据 |
+| P4 反向表 | 首批已完成 2026-11-05（§5.1）；余 63 张需业务确认 | 独立变更窗口 | 只允许 DROP 空表且无依赖者；禁止 `CASCADE`；`finance.core_finance_currencies` 保留（运行时 CRUD） |
 
 执行顺序：P5a/P5b（低风险）→ P2 → P3-PK → P3-UQ → P3-FK → P1（类型，锁表时间最长，最后做）。每批执行后立刻用 `pg_catalog` 复核：naive 计数、纯文本比较策略数、`convalidated=false` 计数、PK/UNIQUE/FK 计数与 test 对齐。
 
+## 5.1 P4 首批执行记录（2026-11-05）
+
+**迁移文件**：[20261105100000_p4_drop_shadow_tables_and_repoint_fks.sql](database/migrations/20261105100000_p4_drop_shadow_tables_and_repoint_fks.sql#L1-L432)（账本 version `20261105100000`，success=true，checksum `06c29710d690…`）。
+
+**备份**：`~/topems/backups/topems_prod_pre_p4_20261105_014629.dump`（`pg_dump -Fc`，4,178,289 字节，`pg_restore -l` 8320 行 TOC）。
+
+| 动作 | 对象 | 当场复核证据 |
+|---|---|---|
+| 直接 DROP | `core.core_plugin_pricing`、`finance.core_finance_account_opening_balances`、`srm.supplier_users` | 0 行；入站 FK 0；运行时（`svc/lib/web`）引用 0；依赖视图 0 |
+| FK 重指向后 DROP | `mes.tenant_permissions`、`public.mobile_users`、`public.qa_ehs_{compliance_evaluations,drill_plans,drill_records,environmental_regulations,hazard_factors,inspection_records}` | 8 张均 0 行、0 依赖视图；19 条入站 FK 逐一删除后按同一约束名重建到权威表（`NOT VALID` + `VALIDATE`），其中 1 条的宿主表随后整体删除，最终保留 **18 条** |
+| 保留 | `qms.qa_inspection_items/plans/qa_sampling_plans` | 无明确权威表，3 条 FK 未动 |
+| 保留 | `finance.core_finance_currencies` | 16 行；`svc/finance/src/modules/currencies.rs` 有完整 CRUD（`TABLE = "finance.core_finance_currencies"`） |
+| 保留 | 其余 60 张 | 业务未确认，仅出清单 |
+
+**执行结果**：单事务（`lock_timeout=5s`、`statement_timeout=60s`）exit 0；表数 **1402→1391**（-11）；FK **298→295**（-19 旧约束 +19 新约束，再随 3 张被删表带走 3 条出站 FK）；`notvalid=0`；11 张目标表 `to_regclass` 均为 NULL。执行后 prod `/health` = **200**。
+
+**验证方式**：先在恢复同一 dump 的 scratch 库连跑两遍（exit 0、第二遍零变更、终态校验通过），再在 prod 单事务执行；脚本内置终态校验（11 表不存在 / `NOT VALID`=0 / 18 条重指向 FK），任一不满足即 `RAISE EXCEPTION` 回滚。
+
 ## 6. 剩余决策项
 
-1. **P4 反向表 22 个 FK 依赖**：需业务确认这 74 张表（尤其 `finance.core_finance_currencies` 16 行）是"临时残留可删"还是"未来模块预留"。确认前不动。
+1. **P4 剩余 63 张**：首批 11 张已删（§5.1）；保留 qms 3 张（无明确权威表）、`finance.core_finance_currencies`（运行时 CRUD）、60 张业务未确认。确认前不动。
 2. **执行后仍有 284 项类型差异**：其中 5 项是 P5a 有意引入（prod `timestamptz` vs test naive，`public.equipment` 4 列 + `iam.core_plugin_instances.last_heartbeat`），**应改 test 侧而非回退 prod**；其余人工项（prod 更短 varchar / numeric 混合 / uuid / date 等）需逐表契约判断方向。
 3. **未登记 16 个 + 真孤儿 1 个**（治理后）：16 个为 5433/test 定向或未执行的 db19，均不登记；`20261103000005` 来源不明，保留待确认、不 DELETE。`db08` 无守卫，禁止直接重放。
 4. **`crm.audit_logs` 值域**：prod CHECK 不含 `'error'`，而应用真实写入 `'error'`（test 侧 11 条）；P5b 落的是 prod 实测 CHECK，是否扩值域需业务拍板。
