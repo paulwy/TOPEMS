@@ -203,6 +203,35 @@ pub async fn ensure_ledger_table(pool: &PgPool) -> Result<(), sqlx::Error> {
     )
     .execute(pool)
     .await?;
+
+    // 历史库兼容：早期版本建表未带主键，而 CREATE TABLE IF NOT EXISTS 不会补约束，
+    // 导致后续 upsert 的 ON CONFLICT (service_schema) 失败。这里幂等补齐主键：
+    // 已有主键则跳过；service_schema 存在 NULL 或重复时跳过并记 warning，不中断启动。
+    sqlx::query(
+        r#"
+        DO $$
+        BEGIN
+            IF to_regclass('schema_defense_ledger') IS NOT NULL
+               AND NOT EXISTS (
+                   SELECT 1 FROM pg_constraint
+                   WHERE conrelid = to_regclass('schema_defense_ledger') AND contype = 'p'
+               ) THEN
+                IF EXISTS (SELECT 1 FROM schema_defense_ledger WHERE service_schema IS NULL) THEN
+                    RAISE WARNING 'schema_defense_ledger 补主键跳过：service_schema 存在 NULL';
+                ELSIF EXISTS (
+                    SELECT 1 FROM schema_defense_ledger GROUP BY service_schema HAVING count(*) > 1
+                ) THEN
+                    RAISE WARNING 'schema_defense_ledger 补主键跳过：service_schema 存在重复';
+                ELSE
+                    ALTER TABLE schema_defense_ledger
+                        ADD CONSTRAINT schema_defense_ledger_pkey PRIMARY KEY (service_schema);
+                END IF;
+            END IF;
+        END $$;
+        "#,
+    )
+    .execute(pool)
+    .await?;
     Ok(())
 }
 
