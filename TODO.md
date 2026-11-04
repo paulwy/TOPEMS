@@ -4039,3 +4039,13 @@ P2（2-4 周后）
 - **验证**：5433 反向表 **5 → 0**；门禁 **"表级一致（业务表清单相同）"** exit 0；health 200
 - **遗留**：prepare 反向表 52 / prod 48（其他 schema 残壳，属 P4 反向表收敛批次，远端并行推进中，避免冲突本次不动）；CASCADE 顺带删除的 FK 约束待约束批次复核补建
 - 无 git 代码改动（纯库 DDL）
+
+## 第四十四轮（2026-11-05）：finance.core_finance_currencies 迁移固化 ✅
+
+- **背景**：第四十二轮甄别发现该表是活表（`svc/finance/src/modules/currencies.rs` 使用）但 **test 缺失**，此前按 5433 `pg_dump --schema-only` 手工建表 + `\copy` 导入 16 行——手工建表不可重放，空库重建会丢表
+- **执行**：新建 `database/migrations/20261105130000_finance_currency_master_fix.sql`
+  1. `CREATE TABLE IF NOT EXISTS finance.core_finance_currencies`（按 5433 结构：id uuid gen_random_uuid、code varchar(10)、name varchar(100)、exchange_rate numeric(18,8) DEFAULT 1 等）
+  2. 约束 DO 块幂等补建（`core_finance_currencies_pkey`、`uk_core_finance_currencies_tenant_code UNIQUE (tenant_id, code)`）
+  3. 币种基础数据 16 行（8 币种 × 无 tenant + default tenant `00000000-…-0001`）`INSERT … ON CONFLICT DO NOTHING`
+- **验证**：迁移在 test / 5433 各执行一次——`NOTICE: relation already exists, skipping` + `INSERT 0 0`（完全幂等，test 仍 16 行）；`bash scripts/migration/validate.sh` → **Errors 0 / Checksum errors 0**，`database/checksums.txt` 自动更新含新版本
+- 提交：迁移文件 + checksums
