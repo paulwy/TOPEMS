@@ -85,10 +85,10 @@
 |---|---|---|
 | 5432 test（基准） | 0 | ✅ 本就为 0 |
 | 5433（colima 开发库） | 421→0 | ✅ DB-04 migration |
-| prod topems_prod（192.168.110.115） | 174→0 | ✅ DB-04-prod migration |
+| prod topems_prod（192.168.110.115） | 174→**5** | ⚠️ DB-04-prod 有覆盖缺口（2026-11-04 实测残留 5 列，见 P5a） |
 | topems_prepare | 0（空库无表） | ✅ 无需 ALTER |
 
-**结论**：时间戳挂账全闭环，无遗留。
+**结论**：DB-04 主体闭环；prod 残留 5 列（2026-11-04 实测）由 P5a 迁移补齐，**待执行（需窗口）**。
 
 
 ## DB-04-prod：prod 生产库 naive timestamp → timestamptz 统一（2026-11-03）✅（174 列一次重放）
@@ -103,7 +103,28 @@
 - 重跑验证：**naive 174→0**、timestamptz 3465→3639、date 210 不变；
 - 分布：lims 90 / pdm 50 / public 8 / rs 8 / mes 6 / integration 6 / mobile 2 / erp 2 / finance 2。
 
-**时间戳挂账总闭环**：5432 test naive=0（基准）✅ / 5433 421→0 ✅ / prod 174→0 ✅ / prepare 未启动（连接串未定位）。
+**时间戳挂账总闭环**：5432 test naive=0（基准）✅ / 5433 421→0 ✅ / prod 174→0（DB-04 主体）✅ / prepare 未启动（连接串未定位）。
+
+## ⚠️ prod 实测复核修正（2026-11-04，只读盘点）
+
+> 本节数字以 **实测** 为准，覆盖此前基于旧基线的推算；未执行项一律标 "待执行（需窗口）"。
+
+**基线**：prod `topems_prod` 1402 表 / 对照 `topems_test` 1328 表（差 74 张反向表）；账本 549 条 vs 仓库迁移文件 565 个（**17 个未登记**，DB-04-prod~DB-19）；服务实际连 `topems_prod`（launchd 环境变量），仓库 `.env` 指向 `topems_test`（运维陷阱）。
+
+| 项 | 原记录 | 实测（2026-11-04） | 处置 |
+|---|---|---|---|
+| 类型差异 | prod 215 | **296**（101 表；179 项 prod 无需动 / 14 项安全加宽 / 103 项人工） | P1 已落迁移 17 列（安全加宽子集）；余项挂账 |
+| NULLIF 文本比较 | 11 表 | **29 条策略，全部 master_data** | P2 迁移已落（待执行） |
+| 缺索引 | prod 285 | **10**（全为反向表 pkey）；无二级索引表 665 = test 665 | 随 P4 反向表收敛处理 |
+| 约束缺口 | 193 | **103 条**（10 PK / 48 UNIQUE / 45 FK，91 表） | P3 三迁移已落（待执行） |
+| 账本 | 546×5 | prod **549** / 文件 565 / 未登记 17 | 不补手工 checksum；见 `scripts/db/verify_prod_ledger.sh` |
+| db04-prod | 174→0 | **残留 5 列**（`public.equipment` 4 + `iam.core_plugin_instances.last_heartbeat`） | P5a 迁移已落（待执行） |
+| status_standard | 迁移已登记 success | **3 条残留**（crm.audit_logs / integration.external_erp_sync_logs / srm.inquiries） | P5b 迁移已落（待执行） |
+| 反向表 | prod 74 | **74 确认**；73 张 0 行，`finance.core_finance_currencies` 16 行；**22 个 FK 依赖** | P4 待业务确认 |
+
+**关键结论：账本 success ≠ DDL 到位**。prod 账本登记 `20261103000002 success=true`，但 3 条 CHECK 仍在；db04-prod 头部称"已执行"，实测漏 5 列。治理核验必须以 `pg_catalog` 实测为准，禁止仅凭账本判定。
+
+**方案入口**：[docs/quality/prod-governance-baseline-2026-11-04.md](docs/quality/prod-governance-baseline-2026-11-04.md)（P1–P5 分批窗口、回滚条件、剩余决策项）。
 
 
 ## DB-04：5433 剩余 naive timestamp → timestamptz 统一（2026-11-03）✅（421 列一次重放）
@@ -457,7 +478,7 @@
 - numeric 39/uuid 24/varchar 23/double 16 + 零星——精度/契约类（与 topems 88 同类）。
 - **踩坑**：cols 清单为 schema.table|col 两段键——生成 ALTER 时表名直接取键首段（勿拼列名），否则 `master_data.materials.specification` 三段误拼接（"未实现跨数据库关联"）。
 
-**prod（215）/prepare（142）类型差异未启动**：prod 运行库 ALTER 需单独评估；prepare 同 5433 方向混合。**其他库类型统一挂账后续批次**（复用 /tmp/alter_typediff_topems.sql 思路 + 5433 教训）。
+**prod（实测 296，2026-11-04）/prepare（142）类型差异**：prod 296 项中 179 项 prod 已领先或无需动、14 项属安全加宽、103 项需人工契约甄别。P1 已落 [20261104090000_p1_prod_type_widen_17cols.sql](database/migrations/20261104090000_p1_prod_type_widen_17cols.sql)（17 列安全加宽，**待执行**）；**严禁把 prod 的 timestamptz 降级为 naive**（164 项应由 test 侧追平）。prepare 同 5433 方向混合，挂账后续批次。
 
 ## 数据库治理：类型统一完全收官（topems 633→0，id 契约闭环，2026-11-03）✅
 
@@ -469,7 +490,7 @@
 
 **验证**：同名类型差异 **633→0**（五级核查中最深层类型层完全对齐 test）；门禁 exit 0 绿；FK 引用 0 冲突、数据全空无损。
 
-**类型统一批次终态**：topems@5432 与 test 类型完全一致；其他库（5433 212/prod 215/prepare 142）差异未动（可复用 /tmp/alter_typediff_topems.sql 思路分批，prod 运行库需单独评估）。数据库治理全层级收官：表/列/索引/约束/RLS/类型。
+**类型统一批次终态**：topems@5432 与 test 类型完全一致；其他库（5433 212/**prod 296（2026-11-04 实测，原 215 已过时）**/prepare 142）差异未动，prod 仅对安全加宽子集落了 P1 迁移（17 列，**待执行**）。
 
 ## 数据库治理：类型统一补充——permission_audit_logs tenant_id/user_id 对齐（2026-11-03）✅（类型差异 633→3）
 
@@ -513,7 +534,7 @@
 
 **验证**：同口径重算——同名类型差异 633→**88**（545 全消除）；门禁 exit 0 绿（表级不受影响）。
 
-**剩余 88 项挂账（精度/契约类）**：numeric 43、date 15、double precision 11、uuid 6、integer 3、inet 2 + 零星——需逐表契约甄别（精度/数据转换规则，不做无 USING 转换）。**其他库**（5433 212/prod 215/prepare 142）类型差异未动（prod 运行库 ALTER 需单独评估）。
+**剩余 88 项挂账（精度/契约类）**：numeric 43、date 15、double precision 11、uuid 6、integer 3、inet 2 + 零星——需逐表契约甄别（精度/数据转换规则，不做无 USING 转换）。**其他库**（5433 212/**prod 296（实测）**/prepare 142）类型差异未动，prod 运行库 ALTER 需单独评估。
 - **脚本**：/tmp/alter_typediff_topems.sql（545 条可复用）、/tmp/typediff_skip_topems.txt（88 挂账）。
 
 ## 数据库治理：RLS 批次前置定论（应用上下文未入库 + 数据 tenant 稀疏，挂账等应用 tenant 化立项，2026-11-03）✅
@@ -592,7 +613,9 @@
 > 表→列→索引三级核查收尾——pg_indexes 全量对比（test 参照，排除 pg 系统 schema）。
 
 **索引数**：test 2733、topems 1892、5433 2040、prod 2650、prepare 2151。
-**缺索引**（test 有/库无）：topems **1137**（820 表）、5433 775、prod **285**（最接近）、prepare 767；多余索引 82-296（反向表/运行时自建）。
+**缺索引**（test 有/库无）：topems **1137**（820 表）、5433 775、prod ~~285~~、prepare 767；多余索引 82-296（反向表/运行时自建）。
+
+**2026-11-04 复核（prod 只读）**：按索引名比对并排除 `pg_toast` 后，prod 实缺仅 **10** 个，且全部为反向表 pkey；旧口径 285 含系统 schema/生成名漂移噪声，**以 10 为准**。
 
 **性质**：索引属**性能层**（非正确性——缺索引不影响查询结果，仅潜在慢查询）；缺项多为每表 1-2 个（permission_audit_logs/mes_qms_sync/sales_invoices/tms_shipments/core_tickets 等 8-5 个）；来源为 test 开发侧新增索引未固化迁移或主库历史缺失。
 
@@ -601,7 +624,7 @@
 
 ## 数据库治理：列级类型差异甄别（633 项模式分类，2026-11-03）✅（挂账后续批次）
 
-> 列级核查剩余的同名列类型差异（topems 633 项；5433/prod/prepare 同模式 212/215/142）——模式分类与治理建议。
+> 列级核查剩余的同名列类型差异（topems 633 项；5433/prod/prepare 同模式 212/**296**（prod 2026-11-04 实测，原 215 过时）/142）——模式分类与治理建议。
 
 **差异模式 top（topems）**：
 | 数量 | test | topems | 性质 |
@@ -645,7 +668,7 @@
 |---|---|---|
 | topems@5432 | 139 | 637 |
 | topems@5433 | 115 | 212 |
-| topems_prod | 123 | 215 |
+| topems_prod | 123 | **296**（2026-11-04 实测；原 215 为旧口径） |
 | topems_prepare | 158 | 142 |
 
 **性质甄别（关键）**：
@@ -719,6 +742,7 @@
 - **修正**：原文件无前缀 UPDATE（依赖 search_path，但 core_menus 各库不同 schema——prod/public、test/iam——仍会失败）→ **DO 块双 schema 探测**（显式 public + iam，不依赖 search_path；任一存在即 UPDATE，均无则 NOTICE 跳过，幂等可重跑）。
 - **五库权限码核验 + 实修**：test/prod/5433 已正确；**topems/prepare 仍是错误码（crm:segmentation:read）——修正版实测修复 → crm:customer_segmentation:read 五库一致**。
 - **账本 checksum 同步**：该迁移五库已登记（success=true）但 checksum 为旧文件——UPDATE 为修正版（6526411c...），五库一致；计数仍 546。
+- **2026-11-04 账本基线修正**：prod 实测 **549** 条（非 546），仓库迁移文件 **565** 个，**17 个版本未登记**（DB-04-prod～DB-19）；且存在"账本 success=true 但 DDL 未到位"（见 status_standard 3 条残留），账本数字仅作参考，治理核验以 `pg_catalog` 实测为准。
 - **坑**：先前查账本误用含 error 列的 SELECT（_sqlx_migrations 无此列）→ 2>/dev/null 吞错误误判"账本无记录"——实际已登记。
 - **验证**：五库权限码正确、checksum 一致、门禁绿。
 
@@ -1036,9 +1060,11 @@
 - **现状**：mobile health 200；KNOWN 500 清单已清零（inventory/production 不再保留豁免）。
 - **结论**：长尾项核销，无待办。
 
-## 残留 11 表 NULLIF 统一决策（2026-11-02）✅
+## 残留 11 表 NULLIF 统一决策（2026-11-02）✅（2026-11-04 修正：prod 实为 29 条策略）
 
 > 承接「master 15 根因闭环」遗留决策项（残留 11 表文本比较形式策略是否统一 NULLIF）。
+>
+> **2026-11-04 只读实测修正**：prod 上 `qual LIKE '%::text = current_setting%' AND qual NOT LIKE '%NULLIF%'` 的策略共 **29 条**，全部在 `master_data` schema（旧记录"11 表"为早期抽样口径）。已落迁移 [20261104120000_p2_nullif_29policies.sql](database/migrations/20261104120000_p2_nullif_29policies.sql)（29 个 DO 守卫块，按原始表达式逐条 NULLIF 包装，成对 USING/WITH CHECK），本地临时库双跑验证通过（策略 29→29、纯文本比较 0、RLS 表数不减）——**prod 待执行（需窗口）**。
 
 - **test 库核对**：11 表中 core_dict_items / core_dict_types 策略已为 NULLIF 形式（`tenant_id = (NULLIF(current_setting(...))::uuid)`）；mdm_recovery_points/plans/tags/improvement_plans/failover_records/v60_lineage_nodes/critical_functions/bc_tests/api_exposures 在 test 无 RLS 策略（无 `current_setting` 引用）。
 - **决策**：**test 库已安全，无需统一**。残留"文本比较"记录为 prod 库形态（`(tenant_id)::text = current_setting(...)`，不触发 uuid 崩溃）；统一 NULLIF 列入 prod 部署/后续工程项（若 prod 该 11 表确有策略再做迁移，需 DO 块动态判策略存在，避免 ALTER POLICY 不存在报错）。
