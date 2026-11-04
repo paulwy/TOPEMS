@@ -3,13 +3,14 @@
 
 > 生产机首次部署后发现：角色/权限为空、部门/岗位无标准数据。已建立 seed 文件体系并接入部署脚本。
 
-**已完成（P0）：**
+**已完成（P0 + P1 字典）：**
 
 | seed 文件 | 内容 | 数量 |
 |---|---|---|
 | `database/seeds/standard_departments.sql` | 标准部门树（中文 name + 英文 name_en） | 23 个（12 顶级 + 11 二级） |
 | `database/seeds/standard_positions.sql` | 标准岗位 | 20 个（覆盖 10 个部门） |
 | `database/seeds/default_roles.sql` | 默认角色（super_admin / dept_manager / employee） | 3 个系统内置角色 |
+| `database/seeds/default_dict_data.sql` | 系统字典（性别/员工状态/部门类型/岗位职级/婚姻状况/学历） | 6 类 26 项 |
 
 **部署脚本参数：**
 
@@ -26,7 +27,6 @@
 
 | 优先级 | 项 | 说明 |
 |---|---|---|
-| P1 | 系统字典 seed | 性别、员工状态、部门类型、岗位职级等基础枚举 |
 | P1 | 编码规则 seed | 员工编号、采购单号、生产工单号自动生成规则 |
 | P2 | 系统参数配置 | 默认密码策略、会话超时、文件上传大小限制 |
 | P2 | 日志轮转+备份策略 | launchd 日志大小限制、每日数据库备份脚本 |

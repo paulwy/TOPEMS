@@ -8,10 +8,11 @@
 #   ./scripts/deploy-prod.sh --rollback   # 回滚到上一个备份
 #   ./scripts/deploy-prod.sh --status     # 只看状态
 #   ./scripts/deploy-prod.sh --skip-build  # 跳过本地编译（用现有二进制）
-#   ./scripts/deploy-prod.sh --reset-db   # 重置数据库（清空测试数据+插入标准部门+岗位）
+#   ./scripts/deploy-prod.sh --reset-db   # 重置数据库（清空测试数据+插入部门+岗位+角色+字典）
 #   ./scripts/deploy-prod.sh --seed-departments  # 只插入标准部门（不清库）
 #   ./scripts/deploy-prod.sh --seed-positions    # 只插入标准岗位（不清库）
 #   ./scripts/deploy-prod.sh --seed-roles        # 只插入默认角色（不清库）
+#   ./scripts/deploy-prod.sh --seed-dict         # 只插入系统字典（不清库）
 #   ./scripts/deploy-prod.sh --force             # 跳过所有确认提示
 # =============================================
 
@@ -49,6 +50,7 @@ DO_RESET_DB=false
 SEED_DEPTS=false
 SEED_POSITIONS=false
 SEED_ROLES=false
+SEED_DICT=false
 FORCE=false
 
 for arg in "$@"; do
@@ -61,6 +63,7 @@ for arg in "$@"; do
     --seed-departments) SEED_DEPTS=true ;;
     --seed-positions)   SEED_POSITIONS=true ;;
     --seed-roles)       SEED_ROLES=true ;;
+    --seed-dict)        SEED_DICT=true ;;
     --force)           FORCE=true ;;
     -h|--help)
       grep '^#' "$0" | head -20
@@ -182,15 +185,17 @@ SQL_EOF
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/topems-reset-only.sql"
   info "数据库重置完成"
 
-  # 重置后自动 seed 部门+岗位+角色
-  info "插入标准部门+岗位+角色 seed..."
+  # 重置后自动 seed 部门+岗位+角色+字典
+  info "插入标准部门+岗位+角色+字典 seed..."
   scp $LOCAL_REPO/database/seeds/standard_departments.sql $PROD_HOST:/tmp/seed_departments.sql
   scp $LOCAL_REPO/database/seeds/standard_positions.sql $PROD_HOST:/tmp/seed_positions.sql
   scp $LOCAL_REPO/database/seeds/default_roles.sql $PROD_HOST:/tmp/seed_roles.sql
+  scp $LOCAL_REPO/database/seeds/default_dict_data.sql $PROD_HOST:/tmp/seed_dict.sql
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_departments.sql"
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_positions.sql"
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_roles.sql"
-  info "标准部门+岗位+角色 seed 完成"
+  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_dict.sql"
+  info "标准部门+岗位+角色+字典 seed 完成"
 fi
 
 # ── 只插入标准部门（不清库）──
@@ -215,6 +220,14 @@ if [ "$SEED_ROLES" = true ]; then
   scp $LOCAL_REPO/database/seeds/default_roles.sql $PROD_HOST:/tmp/seed_roles.sql
   ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_roles.sql"
   info "默认角色 seed 完成"
+fi
+
+# ── 只插入系统字典（不清库）──
+if [ "$SEED_DICT" = true ]; then
+  info "=== 插入系统字典 seed ==="
+  scp $LOCAL_REPO/database/seeds/default_dict_data.sql $PROD_HOST:/tmp/seed_dict.sql
+  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_dict.sql"
+  info "系统字典 seed 完成"
 fi
 
 # ── 环境变量检查 ──

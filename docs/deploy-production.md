@@ -275,6 +275,7 @@ ssh xingzhai@192.168.110.115 "/opt/homebrew/bin/psql -U topems_prod -d topems_pr
 | `--seed-departments` | 只插入标准部门（不清库，适合已有数据但缺部门的场景） |
 | `--seed-positions` | 只插入标准岗位（不清库，需要先有部门） |
 | `--seed-roles` | 只插入默认角色（不清库，3 个系统内置角色） |
+| `--seed-dict` | 只插入系统字典（不清库，6 类 HR 枚举） |
 
 #### 默认角色（3 个）
 
@@ -284,7 +285,18 @@ ssh xingzhai@192.168.110.115 "/opt/homebrew/bin/psql -U topems_prod -d topems_pr
 | `dept_manager` | 部门经理 | 本部门员工管理、审批（hrm/attendance/recruitment 读写） |
 | `employee` | 普通员工 | 基础自助（个人信息查看、请假申请、工资条查看） |
 
-seed 文件位置：`database/seeds/standard_departments.sql`、`database/seeds/standard_positions.sql`、`database/seeds/default_roles.sql`
+#### 系统字典（6 类，26 项）
+
+| 字典类型 | 编码 | 包含项 |
+|---|---|---|
+| 性别 | `gender` | 男、女、未知 |
+| 员工状态 | `employee_status` | 试用期、正式、离职、退休 |
+| 部门类型 | `department_type` | 职能部门、业务部门、生产部门、研发部门 |
+| 岗位职级 | `position_level` | 基层员工、主管、经理、总监、高管 |
+| 婚姻状况 | `marital_status` | 未婚、已婚、离异、丧偶 |
+| 学历 | `education` | 大专、本科、硕士、博士 |
+
+seed 文件位置：`database/seeds/standard_departments.sql`、`database/seeds/standard_positions.sql`、`database/seeds/default_roles.sql`、`database/seeds/default_dict_data.sql`
 
 ### 4.5.4 验证登录
 
