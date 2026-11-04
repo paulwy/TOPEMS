@@ -3950,3 +3950,13 @@ P2（2-4 周后）
   3. nohup 启动会与 launchd 冲突——**正确做法是直接 `launchctl kickstart -k gui/$(id -u)/com.topems.server`**
   4. nginx 二进制在 `/opt/homebrew/bin/nginx`，不在默认 PATH
 - **回滚**：`cp topems-server-<commit>-<时间戳>.bak topems-server && launchctl kickstart -k gui/$(id -u)/com.topems.server`
+
+## 第三十六轮（2026-11-05）：pre-push 门禁增量改造，消除 --no-verify 惯例 ✅
+
+- **根因**：全量 `cargo check` 被 `utoipa-swagger-ui` build.rs **网络下载失败（curl HTTP2 framing）恒阻断** + `RUSTFLAGS=-D warnings` 使编译缓存失效 → 每次 push 冷编译且必失败（"卡住/恒红"）→ 团队长期 `--no-verify` 绕过门禁。
+- **改造**（提交 `f6c6b869e`）：
+  1. 新增 `scripts/ci/run-cargo-changed.sh`：check/clippy 只编译**本次 push 变更的 crate**（无 .rs 变更秒级 SKIP；workspace 级/无法归属变更全量兜底）；`RUSTFLAGS=-D warnings` 仅作用于变更 crate，存量 warning 不误伤
+  2. `cargo-check-workspace` / `cargo-clippy-workspace` 改用增量脚本（保留 stale-base 前置）
+  3. `cargo-test-workspace` / `domain-probe` 重型门禁改 `LEFTHOOK_RUN_HEAVY=1` 门控（默认 SKIP，CI 全量兜底）
+- **验证**：commit + push **不带 --no-verify 全绿**——pre-commit 门禁秒级全过（gitleaks/shellcheck 等）；pre-push 36.63s 全过（shellcheck 全量 112 脚本 0 告警、fmt 5.9s、增量 SKIP 0.02s）；增量编译 21.41s vs 全量 1m49s 失败
+- **后续**：全量 check/clippy/test 由 CI 兜底；sccache 与 rustc 兼容性可后续实测（增量后非必需）；`--no-verify` 仅作已知故障时临时手段
