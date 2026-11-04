@@ -226,10 +226,6 @@ pub struct OeeStatisticsQuery {
     pub end_date: Option<String>,
 }
 
-fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
-    dt.unwrap_or_else(Utc::now)
-}
-
 fn calculate_oee(
     planned_time: f64,
     run_time: f64,
@@ -401,40 +397,20 @@ pub async fn list_oee_records(
                 .ok()
                 .flatten(),
             record_date: r
-                .try_get::<Option<DateTime<Utc>>, _>("record_date")
-                .ok()
-                .flatten()
-                .unwrap_or_else(Utc::now),
+                .try_get::<DateTime<Utc>, _>("record_date")
+                .unwrap_or_else(|_| Utc::now()),
             planned_production_time: r
-                .try_get::<Option<f64>, _>("planned_production_time")
-                .ok()
-                .flatten()
+                .try_get::<f64, _>("planned_production_time")
                 .unwrap_or(0.0),
-            run_time: r
-                .try_get::<Option<f64>, _>("actual_run_time")
-                .ok()
-                .flatten()
-                .unwrap_or(0.0),
+            run_time: r.try_get::<f64, _>("actual_run_time").unwrap_or(0.0),
             downtime: r
                 .try_get::<Option<f64>, _>("downtime")
                 .ok()
                 .flatten()
                 .unwrap_or(0.0),
-            ideal_cycle_time: r
-                .try_get::<Option<f64>, _>("ideal_cycle_time")
-                .ok()
-                .flatten()
-                .unwrap_or(0.0),
-            total_count: r
-                .try_get::<Option<f64>, _>("actual_output")
-                .ok()
-                .flatten()
-                .unwrap_or(0.0),
-            good_count: r
-                .try_get::<Option<f64>, _>("good_output")
-                .ok()
-                .flatten()
-                .unwrap_or(0.0),
+            ideal_cycle_time: r.try_get::<f64, _>("ideal_cycle_time").unwrap_or(0.0),
+            total_count: r.try_get::<f64, _>("actual_output").unwrap_or(0.0),
+            good_count: r.try_get::<f64, _>("good_output").unwrap_or(0.0),
             reject_count: r
                 .try_get::<Option<f64>, _>("defective_output")
                 .ok()
@@ -467,16 +443,12 @@ pub async fn list_oee_records(
             shift: r.try_get::<Option<String>, _>("shift").ok().flatten(),
             operator: r.try_get::<Option<String>, _>("operator").ok().flatten(),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
-            created_at: naive_to_utc(
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
-                    .ok()
-                    .flatten(),
-            ),
-            updated_at: naive_to_utc(
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
-                    .ok()
-                    .flatten(),
-            ),
+            created_at: r
+                .try_get::<DateTime<Utc>, _>("created_at")
+                .unwrap_or_else(|_| Utc::now()),
+            updated_at: r
+                .try_get::<DateTime<Utc>, _>("updated_at")
+                .unwrap_or_else(|_| Utc::now()),
         })
         .collect();
 
