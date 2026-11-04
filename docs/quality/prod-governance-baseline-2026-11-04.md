@@ -81,14 +81,14 @@
 | 维度 | 实测值 | 说明 |
 |---|---|---|
 | 表数量 | prod 1402 / test 1328（执行前） | 反向表（**prod 有、test 无**）74；P4 首批后 prod 1391、反向表 63 |
-| 迁移账本 | prod **549** 条 / 仓库文件 **558** 个（执行前） | **17 个版本未登记**（DB-04-prod～DB-19）；治理后 P1 补登 →557，P4 `20261105100000` →558，`crm.audit_logs` `20261105130000` →559，db19 `20261104080000` →560，P6 `20261105140000` →561，P7 `20261105160000` →**562** / 文件 **580** / 未登记 **18**（11 个 5433 + 7 个 test 定向）；"孤儿"中 14 个实为短版本号文件，真孤儿 1 个 |
+| 迁移账本 | prod **549** 条 / 仓库文件 **558** 个（执行前） | **17 个版本未登记**（DB-04-prod～DB-19）；治理后 P1 补登 →557，P4 `20261105100000` →558，`crm.audit_logs` `20261105130000` →559，db19 `20261104080000` →560，P6 `20261105140000` →561，P7 `20261105160000` →562，P8 `20261105170000` →**563** / 文件 **581** / 未登记 **18**（11 个 5433 + 7 个 test 定向）；"孤儿"中 14 个实为短版本号文件，真孤儿 1 个 |
 | 类型差异（同名列） | **296**（101 表） | 164 项 prod 已为 timestamptz（无需动）/ 12+3 方向安全 / 13 项 prod 更短 / 62 numeric 混合 / 其余零星；P6 加宽 3 列后总差 **98**、数值族 **59**；本轮 6 项收敛后总差 **92**、数值族 **53** |
 | NULLIF 纯文本比较策略 | **29**（全部 `master_data`） | `qual LIKE '%::text = current_setting%' AND qual NOT LIKE '%NULLIF%'` |
-| 缺索引（按名比对，排除 pg_toast） | **10** | 全部为反向表 pkey；旧口径 285 含系统 schema 噪声 |
+| 缺索引（按名比对，排除 pg_toast） | **0** | 2026-11-05 实测：5 条 P3 主键 + 5 条运行时账本主键已全部补齐（P3 + P8）；旧口径 285/10 含系统 schema 与反向表历史残留噪声 |
 | 约束缺口 | **103**（10 PK / 48 UNIQUE / 45 FK，91 表） | 依据 test 侧 `pg_constraint` 结构实测；其中 5 条 PK 属运行时自建 `schema_defense_ledger`，P3 迁移仅覆盖剩余 5 条 |
 | naive timestamp 残留 | **5 列** | `public.equipment` 4 列 + `iam.core_plugin_instances.last_heartbeat` |
 | status_standard 残留 CHECK | **3** 条 | `crm.audit_logs` / `integration.external_erp_sync_logs` / `srm.inquiries`（迁移 0002 清单未覆盖） |
-| 无 PK 表 | 11 | 10 张缺 PK 差异中：5 张纳入 P3 迁移，5 张为运行时自建 `schema_defense_ledger`（不纳入），1 张反向表随 P4 |
+| 无 PK 表 | **1** | 5 张 P3 主键 + 5 张运行时账本主键已补齐（P8，共 10 条）；仅剩 `public.core_chat_members`（反向表，0 行，与 `iam.core_chat_members` 重复且后者已有 PK），随 P4 删除处置，不单独补 PK |
 | 反向表行数 | 执行前 74 张中 73 张 0 行；`finance.core_finance_currencies` 16 行 | P4 首批后 63 张中 62 张 0 行；22 个 FK 引用（18 条已重指向权威表） |
 | 服务连接库 | launchd `com.topems.server.plist` → `topems_prod` | 仓库 `.env` 指向 `topems_test`，属运维陷阱 |
 
@@ -98,10 +98,10 @@
 
 1. **类型收窄/降级不可逆**：296 项中 164 项 prod 已是 timestamptz，若照旧记录"prod 215"批量对齐 test 会把时区语义降级为 naive——禁止。只做安全加宽（varchar→text、numeric 加宽）。
 2. **NULLIF 缺口导致 RLS 崩溃**：`app.tenant_id=''` 时 `::uuid` cast 报 `invalid input syntax for type uuid: ""`；29 条 master_data 策略仍是裸 `current_setting` 比较。
-3. **约束缺口影响正确性**：10 张表无 PK；48 UNIQUE / 45 FK 缺失（test 侧已有）。FK 缺失在并发写入下可产生孤儿行。
+3. **约束缺口影响正确性**：执行前 10 张表无 PK（P3 补 5 + P8 补 5 后实测仅剩 1 张反向表 `public.core_chat_members`，随 P4 删除）；48 UNIQUE / 45 FK 缺失（test 侧已有），FK 缺失在并发写入下可产生孤儿行。
 4. **账本与 DDL 漂移**：17 个版本未登记；已登记版本存在未生效 DDL（status_standard 3 条、db04-prod 5 列）。
 5. **反向表与 FK 依赖**：74 张反向表为运行时自建/历史残留，其中 22 个 FK 依赖，直接 DROP 会因 RESTRICT 失败或破坏引用；`finance.core_finance_currencies` 有 16 行真实数据。首批 11 张已于 2026-11-05 处理（§5.1），余 63 张。
-6. **索引噪声**：旧口径 285 含 `pg_toast`/生成名漂移，实测缺 10（仅反向表 pkey），不属正确性问题。
+6. **索引噪声**：旧口径 285 含 `pg_toast`/生成名漂移；按名比对的历史"缺 10"实为 5 条 P3 主键 + 5 条运行时账本主键，2026-11-05 已由 P3 + P8 补齐，实测缺 **0**；剩余 prod 独有索引均为反向表自带，随 P4 处置，不属正确性问题。
 
 ## 4. 迁移清单（本地验证记录；prod 已于 2026-11-05 全部执行）
 
@@ -185,6 +185,18 @@
 **执行**：P6 [20261105140000_p6_numeric_int_to_bigint_3cols.sql](database/migrations/20261105140000_p6_numeric_int_to_bigint_3cols.sql#L1-L66)；本轮 prod [20261105160000_p7_prod_type_align_4cols.sql](database/migrations/20261105160000_p7_prod_type_align_4cols.sql#L1-L213)、test [20261105150000_db23_test_type_align_4cols.sql](database/migrations/20261105150000_db23_test_type_align_4cols.sql#L1-L235)。test 先行预演 + 提交；prod 备份 `~/topems/backups/topems_prod_pre_p7_20261105.dump`（4,151,188 字节 / TOC 8265 行）后单事务 exit 0；行数 0/0 不变；类型 101→**92**、数值族 62→**53**；账本 `20261105160000`（checksum `55b8df6ca894…`）→ 总 **562**。
 
 **证据**：62 列无 PK/UNIQUE/FK/CHECK 参与、0 视图/生成列依赖；默认值仅 `production_orders.completed_quantity`(0) 与 `rs.project_members.allocation`(1.0)；代码侧 WMS 用 `rust_decimal::Decimal`、MES 工单显式 `::float8`、Mobile `file_size: i64`（prod int4 存在解码缺口，bigint 修复）。
+
+## 6.3 P4 余量 pkey 索引处置（P8，2026-11-05）
+
+**复核口径**：以 `pg_catalog` 实测替代历史"缺索引 10"口径。prod 共 62 张反向表，61 张已有主键；全库无唯一索引的表仅 6 张 = 5 张运行时账本 + 1 张反向表。
+
+| 组 | 对象 | 实测 | 处置 |
+|---|---|---|---|
+| P3 主键（5 条） | `flow.core_master_data_refs`、`iam._sqlx_migrations`、`iam.core_chat_members`、`iam.core_role_permissions`、`iam.core_user_roles` | prod 5/5 已存在（`20261104130000` 已执行） | ✅ 无需重做 |
+| 运行时账本（5 条） | `communication/ehs/integration/mobile/pdm.schema_defense_ledger` | prod 5 张均无 PK、0 行；test 23/23 全部有 PK | ✅ P8 补齐 `PRIMARY KEY (service_schema)` |
+| 反向表（1 条） | `public.core_chat_members` | 0 行、无 PK；与 `iam.core_chat_members` 重复且后者有 PK | ⏸ 随 P4 删除，不单独补 PK（禁止凑数量造冗余索引） |
+
+**执行**：[20261105170000_p8_prod_ledger_pkeys_5.sql](database/migrations/20261105170000_p8_prod_ledger_pkeys_5.sql#L1-L103)。test 预演 5/5 NOOP；prod 备份 `~/topems/backups/topems_prod_pre_p8_20261105.dump`（4,151,293 字节 / TOC 8265 行）后单事务 exit 0，5/5 ALTERED；`indisvalid=false` 索引 0；`/health`=200；账本 `20261105170000`（checksum `06b89b59e326…`）→ 总 **563**。执行后 prod 无唯一索引表仅剩 `public.core_chat_members`。
 
 ## 7. test 侧类型对齐（2026-11-05）
 
