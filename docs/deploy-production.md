@@ -194,30 +194,88 @@ scp /tmp/update-pwd.sql xingzhai@192.168.110.115:/tmp/
 ssh xingzhai@192.168.110.115 "/opt/homebrew/bin/psql -U topems_prod -d topems_prod -f /tmp/update-pwd.sql"
 ```
 
-### 4.5.3 重置数据库 + 初始化部门
+### 4.5.3 重置数据库 + 初始化部门+岗位
 
-
-
-```
+```bash
 ./scripts/deploy-prod.sh --skip-build --force --reset-db
 ```
 
-会清空所有测试数据并插入标准部门树：
+#### 清理范围
 
-
-
-| 清理的表                        | 说明    |
-| --------------------------- | ----- |
+| 清理的表 | 说明 |
+|---|---|
 | `hrm.initialization_status` | 初始化状态 |
-| `hrm.initialization_logs`   | 初始化日志 |
-| `hrm.positions`             | 岗位    |
-| `hrm.departments`           | 部门    |
-| `hrm.companies`             | 公司信息  |
-| `hrm.employees`             | 员工档案  |
+| `hrm.initialization_logs` | 初始化日志 |
+| `hrm.positions` | 岗位 |
+| `hrm.departments` | 部门 |
+| `hrm.companies` | 公司信息 |
+| `hrm.employees` | 员工档案 |
 
 **保留不动**：`iam.users`（admin 账号）、数据库结构、环境变量配置。
 
-清空后自动插入 23 个标准部门（12 顶级 + 11 二级子部门），**中文命名**（`name` 字段），同时保留英文对照（`name_en` 字段），符合项目中文为主、多语言支持的定位。
+#### 标准部门树（23 个，中文命名）
+
+`name` 字段为中文（默认语言），`name_en` 字段为英文（多语言对照）。
+
+| 层级 | 部门名称 | 编码 | 上级部门 |
+|---|---|---|---|
+| 顶级 | 总裁办公室 | DEPT-EXEC-001 | - |
+| 顶级 | 人力资源部 | DEPT-HR-001 | - |
+| 顶级 | 财务部 | DEPT-FIN-001 | - |
+| 顶级 | 信息技术部 | DEPT-IT-001 | - |
+| 顶级 | 法务合规部 | DEPT-LEG-001 | - |
+| 顶级 | 销售市场部 | DEPT-SALES-001 | - |
+| 顶级 | 客户服务部 | DEPT-CS-001 | - |
+| 顶级 | 生产部 | DEPT-PROD-001 | - |
+| 顶级 | 质量管理部 | DEPT-QMS-001 | - |
+| 顶级 | 供应链部 | DEPT-SCM-001 | - |
+| 顶级 | 研发部 | DEPT-RD-001 | - |
+| 顶级 | 设备维护部 | DEPT-MAINT-001 | - |
+| 二级 | 软件工程组 | DEPT-RD-SW-001 | 研发部 |
+| 二级 | 硬件工程组 | DEPT-RD-HW-001 | 研发部 |
+| 二级 | 产品设计组 | DEPT-RD-PD-001 | 研发部 |
+| 二级 | 采购组 | DEPT-SCM-PROC-001 | 供应链部 |
+| 二级 | 仓储组 | DEPT-SCM-WH-001 | 供应链部 |
+| 二级 | 物流组 | DEPT-SCM-LOG-001 | 供应链部 |
+| 二级 | 装配线 | DEPT-PROD-ASM-001 | 生产部 |
+| 二级 | 机加工组 | DEPT-PROD-MACH-001 | 生产部 |
+| 二级 | 包装组 | DEPT-PROD-PKG-001 | 生产部 |
+| 二级 | 招聘组 | DEPT-HR-REC-001 | 人力资源部 |
+| 二级 | 培训发展组 | DEPT-HR-TRN-001 | 人力资源部 |
+
+#### 标准岗位（20 个）
+
+| 岗位名称 | 编码 | 所属部门 | 职级 |
+|---|---|---|---|
+| 首席执行官 | POS-CEO-001 | 总裁办公室 | 5（高管） |
+| 总裁助理 | POS-EXEC-AST-001 | 总裁办公室 | 3（经理） |
+| HR经理 | POS-HR-MGR-001 | 人力资源部 | 3（经理） |
+| 招聘专员 | POS-HR-REC-001 | 招聘组 | 1（基层） |
+| 财务经理 | POS-FIN-MGR-001 | 财务部 | 3（经理） |
+| 会计 | POS-FIN-ACC-001 | 财务部 | 2（主管） |
+| 出纳 | POS-FIN-CSH-001 | 财务部 | 1（基层） |
+| IT经理 | POS-IT-MGR-001 | 信息技术部 | 3（经理） |
+| 前端工程师 | POS-IT-FE-001 | 软件工程组 | 2（主管） |
+| 后端工程师 | POS-IT-BE-001 | 软件工程组 | 2（主管） |
+| 运维工程师 | POS-IT-OPS-001 | 信息技术部 | 2（主管） |
+| 销售经理 | POS-SALES-MGR-001 | 销售市场部 | 3（经理） |
+| 销售代表 | POS-SALES-REP-001 | 销售市场部 | 1（基层） |
+| 生产经理 | POS-PROD-MGR-001 | 生产部 | 3（经理） |
+| 生产线组长 | POS-PROD-LDR-001 | 装配线 | 2（主管） |
+| 质量经理 | POS-QMS-MGR-001 | 质量管理部 | 3（经理） |
+| 质检专员 | POS-QMS-QC-001 | 质量管理部 | 1（基层） |
+| 供应链经理 | POS-SCM-MGR-001 | 供应链部 | 3（经理） |
+| 采购专员 | POS-SCM-PUR-001 | 采购组 | 1（基层） |
+| 仓储专员 | POS-SCM-WH-001 | 仓储组 | 1（基层） |
+
+#### 其他 seed 参数
+
+| 参数 | 说明 |
+|---|---|
+| `--seed-departments` | 只插入标准部门（不清库，适合已有数据但缺部门的场景） |
+| `--seed-positions` | 只插入标准岗位（不清库，需要先有部门） |
+
+seed 文件位置：`database/seeds/standard_departments.sql`、`database/seeds/standard_positions.sql`
 
 ### 4.5.4 验证登录
 

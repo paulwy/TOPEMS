@@ -7,9 +7,11 @@
 #   ./scripts/deploy-prod.sh --frontend   # 同时部署前端（编译 dist + rsync）
 #   ./scripts/deploy-prod.sh --rollback   # 回滚到上一个备份
 #   ./scripts/deploy-prod.sh --status     # 只看状态
-#   ./scripts/deploy-prod.sh --skip-build # 跳过本地编译（用现有二进制）
-#   ./scripts/deploy-prod.sh --reset-db   # 重置数据库（清空测试数据+初始化部门）
-#   ./scripts/deploy-prod.sh --force      # 跳过所有确认提示
+#   ./scripts/deploy-prod.sh --skip-build  # 跳过本地编译（用现有二进制）
+#   ./scripts/deploy-prod.sh --reset-db   # 重置数据库（清空测试数据+插入标准部门+岗位）
+#   ./scripts/deploy-prod.sh --seed-departments  # 只插入标准部门（不清库）
+#   ./scripts/deploy-prod.sh --seed-positions    # 只插入标准岗位（不清库）
+#   ./scripts/deploy-prod.sh --force       # 跳过所有确认提示
 # =============================================
 
 set -e
@@ -43,16 +45,20 @@ DO_FRONTEND=false
 DO_ROLLBACK=false
 DO_STATUS=false
 DO_RESET_DB=false
+SEED_DEPTS=false
+SEED_POSITIONS=false
 FORCE=false
 
 for arg in "$@"; do
   case $arg in
-    --frontend)   DO_FRONTEND=true ;;
-    --rollback)   DO_ROLLBACK=true ;;
-    --skip-build) DO_BUILD=false ;;
-    --status)     DO_STATUS=true ;;
-    --reset-db)   DO_RESET_DB=true ;;
-    --force)      FORCE=true ;;
+    --frontend)        DO_FRONTEND=true ;;
+    --rollback)        DO_ROLLBACK=true ;;
+    --skip-build)      DO_BUILD=false ;;
+    --status)          DO_STATUS=true ;;
+    --reset-db)        DO_RESET_DB=true ;;
+    --seed-departments) SEED_DEPTS=true ;;
+    --seed-positions)   SEED_POSITIONS=true ;;
+    --force)           FORCE=true ;;
     -h|--help)
       grep '^#' "$0" | head -20
       exit 0 ;;
@@ -140,14 +146,14 @@ info "SSH OK"
 # ── 数据库重置（可选）──
 if [ "$DO_RESET_DB" = true ]; then
   info "=== 重置数据库 ==="
-  warn "将清空 hrm.departments 测试数据并插入初始部门树"
+  warn "将清空 hrm 测试数据并插入标准部门+岗位"
   if [ "$FORCE" = false ]; then
     read -p "确认重置？(y/N) " ans
     [ "$ans" = "y" ] || exit 0
   fi
 
-  # 生成重置 SQL（内嵌）
-  cat > /tmp/topems-init-reset.sql << 'SQL_EOF'
+  # 生成重置 SQL（只清数据，不 seed）
+  cat > /tmp/topems-reset-only.sql << 'SQL_EOF'
 -- =============================================
 -- 重置系统初始化状态（回到全新部署状态）
 -- =============================================
@@ -161,51 +167,41 @@ TRUNCATE hrm.positions CASCADE;
 TRUNCATE hrm.departments CASCADE;
 TRUNCATE hrm.companies CASCADE;
 
--- 3. 员工数据（清空所有测试员工档案）
--- 注意：iam.users 里的 admin 账号保留不动，这里清的是 hrm.employees 员工档案
+-- 3. 员工档案（iam.users 的 admin 账号保留不动）
 TRUNCATE hrm.employees CASCADE;
 
--- =============================================
--- 插入标准部门树（英文，23 个）
--- =============================================
-
--- 顶级部门（12 个）
-INSERT INTO hrm.departments (id, name, code, description, status, tenant_id, name_en, organization_id) VALUES
-('11111111-1111-1111-1111-111111111001', '总裁办公室', 'DEPT-EXEC-001', '公司高层管理团队', 'active', '00000000-0000-0000-0000-000000000001', 'Executive Office', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111002', '人力资源部', 'DEPT-HR-001', '人力资源与员工运营', 'active', '00000000-0000-0000-0000-000000000001', 'Human Resources', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111003', '财务部', 'DEPT-FIN-001', '财务与会计核算', 'active', '00000000-0000-0000-0000-000000000001', 'Finance', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111004', '信息技术部', 'DEPT-IT-001', 'IT基础设施与技术支持', 'active', '00000000-0000-0000-0000-000000000001', 'Information Technology', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111005', '法务合规部', 'DEPT-LEG-001', '法务事务与合规管理', 'active', '00000000-0000-0000-0000-000000000001', 'Legal & Compliance', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111006', '销售市场部', 'DEPT-SALES-001', '销售与市场营销运营', 'active', '00000000-0000-0000-0000-000000000001', 'Sales & Marketing', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111007', '客户服务部', 'DEPT-CS-001', '客户支持与服务', 'active', '00000000-0000-0000-0000-000000000001', 'Customer Service', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111008', '生产部', 'DEPT-PROD-001', '制造与生产管理', 'active', '00000000-0000-0000-0000-000000000001', 'Production', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111009', '质量管理部', 'DEPT-QMS-001', '质量保证与控制', 'active', '00000000-0000-0000-0000-000000000001', 'Quality Management', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111010', '供应链部', 'DEPT-SCM-001', '供应链管理', 'active', '00000000-0000-0000-0000-000000000001', 'Supply Chain', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111011', '研发部', 'DEPT-RD-001', '研发与产品创新', 'active', '00000000-0000-0000-0000-000000000001', 'Research & Development', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111012', '设备维护部', 'DEPT-MAINT-001', '设备维护与维修', 'active', '00000000-0000-0000-0000-000000000001', 'Maintenance', '00000000-0000-0000-0000-000000000001');
-
--- 二级子部门（11 个）
-INSERT INTO hrm.departments (id, name, code, parent_id, description, status, tenant_id, name_en, organization_id) VALUES
-('11111111-1111-1111-1111-111111111101', '软件工程组', 'DEPT-RD-SW-001', '11111111-1111-1111-1111-111111111011', '软件开发团队', 'active', '00000000-0000-0000-0000-000000000001', 'Software Engineering', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111102', '硬件工程组', 'DEPT-RD-HW-001', '11111111-1111-1111-1111-111111111011', '硬件设计与工程', 'active', '00000000-0000-0000-0000-000000000001', 'Hardware Engineering', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111103', '产品设计组', 'DEPT-RD-PD-001', '11111111-1111-1111-1111-111111111011', '产品设计与用户体验', 'active', '00000000-0000-0000-0000-000000000001', 'Product Design', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111104', '采购组', 'DEPT-SCM-PROC-001', '11111111-1111-1111-1111-111111111010', '采购与物资供应', 'active', '00000000-0000-0000-0000-000000000001', 'Procurement', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111105', '仓储组', 'DEPT-SCM-WH-001', '11111111-1111-1111-1111-111111111010', '仓库与库存管理', 'active', '00000000-0000-0000-0000-000000000001', 'Warehouse', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111106', '物流组', 'DEPT-SCM-LOG-001', '11111111-1111-1111-1111-111111111010', '运输与物流配送', 'active', '00000000-0000-0000-0000-000000000001', 'Logistics', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111107', '装配线', 'DEPT-PROD-ASM-001', '11111111-1111-1111-1111-111111111008', '装配生产线', 'active', '00000000-0000-0000-0000-000000000001', 'Assembly Line', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111108', '机加工组', 'DEPT-PROD-MACH-001', '11111111-1111-1111-1111-111111111008', 'CNC与机械加工', 'active', '00000000-0000-0000-0000-000000000001', 'Machining', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111109', '包装组', 'DEPT-PROD-PKG-001', '11111111-1111-1111-1111-111111111008', '包装与总装', 'active', '00000000-0000-0000-0000-000000000001', 'Packaging', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111110', '招聘组', 'DEPT-HR-REC-001', '11111111-1111-1111-1111-111111111002', '人才招聘与获取', 'active', '00000000-0000-0000-0000-000000000001', 'Recruiting', '00000000-0000-0000-0000-000000000001'),
-('11111111-1111-1111-1111-111111111111', '培训发展组', 'DEPT-HR-TRN-001', '11111111-1111-1111-1111-111111111002', '员工培训与发展', 'active', '00000000-0000-0000-0000-000000000001', 'Training & Development', '00000000-0000-0000-0000-000000000001');
-
 -- 验证
-SELECT 'departments' AS tbl, count(*) FROM hrm.departments WHERE deleted_at IS NULL
-UNION ALL SELECT 'init_status', count(*) FROM hrm.initialization_status;
+SELECT 'after reset: departments' AS tbl, count(*) FROM hrm.departments WHERE deleted_at IS NULL
+UNION ALL SELECT 'after reset: positions', count(*) FROM hrm.positions WHERE deleted_at IS NULL;
 SQL_EOF
 
-  scp /tmp/topems-init-reset.sql $PROD_HOST:/tmp/topems-init-reset.sql
-  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/topems-init-reset.sql"
+  scp /tmp/topems-reset-only.sql $PROD_HOST:/tmp/topems-reset-only.sql
+  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/topems-reset-only.sql"
   info "数据库重置完成"
+
+  # 重置后自动 seed 部门+岗位
+  info "插入标准部门+岗位 seed..."
+  scp $LOCAL_REPO/database/seeds/standard_departments.sql $PROD_HOST:/tmp/seed_departments.sql
+  scp $LOCAL_REPO/database/seeds/standard_positions.sql $PROD_HOST:/tmp/seed_positions.sql
+  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_departments.sql"
+  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_positions.sql"
+  info "标准部门+岗位 seed 完成"
+fi
+
+# ── 只插入标准部门（不清库）──
+if [ "$SEED_DEPTS" = true ]; then
+  info "=== 插入标准部门 seed ==="
+  scp $LOCAL_REPO/database/seeds/standard_departments.sql $PROD_HOST:/tmp/seed_departments.sql
+  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_departments.sql"
+  info "标准部门 seed 完成"
+fi
+
+# ── 只插入标准岗位（不清库）──
+if [ "$SEED_POSITIONS" = true ]; then
+  info "=== 插入标准岗位 seed ==="
+  scp $LOCAL_REPO/database/seeds/standard_positions.sql $PROD_HOST:/tmp/seed_positions.sql
+  ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -f /tmp/seed_positions.sql"
+  info "标准岗位 seed 完成"
 fi
 
 # ── 环境变量检查 ──
