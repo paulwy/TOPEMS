@@ -196,24 +196,28 @@ ssh xingzhai@192.168.110.115 "/opt/homebrew/bin/psql -U topems_prod -d topems_pr
 
 ### 4.5.3 重置数据库 + 初始化部门
 
-```bash
+
+
+```
 ./scripts/deploy-prod.sh --skip-build --force --reset-db
 ```
 
 会清空所有测试数据并插入标准部门树：
 
-| 清理的表 | 说明 |
-|---|---|
+
+
+| 清理的表                        | 说明    |
+| --------------------------- | ----- |
 | `hrm.initialization_status` | 初始化状态 |
-| `hrm.initialization_logs` | 初始化日志 |
-| `hrm.positions` | 岗位 |
-| `hrm.departments` | 部门 |
-| `hrm.companies` | 公司信息 |
-| `hrm.employees` | 员工档案 |
+| `hrm.initialization_logs`   | 初始化日志 |
+| `hrm.positions`             | 岗位    |
+| `hrm.departments`           | 部门    |
+| `hrm.companies`             | 公司信息  |
+| `hrm.employees`             | 员工档案  |
 
 **保留不动**：`iam.users`（admin 账号）、数据库结构、环境变量配置。
 
-清空后自动插入 23 个标准部门（12 顶级 + 11 二级子部门），全部英文命名。
+清空后自动插入 23 个标准部门（12 顶级 + 11 二级子部门），**中文命名**（`name` 字段），同时保留英文对照（`name_en` 字段），符合项目中文为主、多语言支持的定位。
 
 ### 4.5.4 验证登录
 
