@@ -3960,3 +3960,14 @@ P2（2-4 周后）
   3. `cargo-test-workspace` / `domain-probe` 重型门禁改 `LEFTHOOK_RUN_HEAVY=1` 门控（默认 SKIP，CI 全量兜底）
 - **验证**：commit + push **不带 --no-verify 全绿**——pre-commit 门禁秒级全过（gitleaks/shellcheck 等）；pre-push 36.63s 全过（shellcheck 全量 112 脚本 0 告警、fmt 5.9s、增量 SKIP 0.02s）；增量编译 21.41s vs 全量 1m49s 失败
 - **后续**：全量 check/clippy/test 由 CI 兜底；sccache 与 rustc 兼容性可后续实测（增量后非必需）；`--no-verify` 仅作已知故障时临时手段
+
+## 第三十七轮（2026-11-05）：prepare 反向/其他差异批次收尾（21/21 归零）✅
+
+- **批次**：prepare 与 test 同名表列类型差异 21 项全部对齐——时间戳 8（6 timestamptz 同向 + 2 date 语义：mes.equipment_oee.record_date、mes.work_reports.report_date）+ uuid 15（14 同向 + 1 契约）+ 收尾项 `iam.permission_audit_logs.id`
+- **收尾项执行**：uuid + `gen_random_uuid()` → bigint + `nextval('iam.permission_audit_logs_id_seq')`：
+  1. `CREATE SEQUENCE IF NOT EXISTS iam.permission_audit_logs_id_seq`（prepare 原无 iam 序列，仅有 public/mes 同名残留）
+  2. `DROP DEFAULT` → 3. `ALTER COLUMN id TYPE bigint USING NULL::bigint`（**PG 不支持 uuid→bigint 直接 cast**；表 0 行用 NULL 兜底）→ 4. `SET DEFAULT nextval('iam.permission_audit_logs_id_seq'::regclass)`
+  - 逐语句独立事务执行（避免 psql `-c` 多语句整批回滚连带）
+- **验证**：同名列类型差异 **21→4**；剩余 4 项为既有「需 USING」jsonb↔text 独立挂账（ehs.qa_ehs_hazard_factors.affected_positions/sources → text、ehs.qa_ehs_hazardous_materials.hazard_class → varchar、pm.projects.tags → jsonb vs _text）
+- **门禁/健康**：`check-consistency.sh` exit 0（5433 不可达按设计跳过，已知状态 2026-11-02 起需 pg_ctl 启动）；health 200
+- 无 git 代码改动（纯库 DDL）
