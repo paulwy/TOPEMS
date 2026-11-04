@@ -279,11 +279,7 @@ pub async fn list_teams(
                     Some(ws_name)
                 }
             },
-            leader_id: r
-                .try_get::<Option<Uuid>, _>("leader_id")
-                .ok()
-                .flatten()
-                .map(|u| u.to_string()),
+            leader_id: r.try_get::<Option<String>, _>("leader_id").ok().flatten(),
             leader_name: r.try_get::<Option<String>, _>("leader_name").ok().flatten(),
             member_count: r
                 .try_get::<Option<i32>, _>("member_count")
@@ -375,7 +371,7 @@ pub async fn get_team(
                 team_name: r.team_name,
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
-                work_station_name: Some(r.work_station_name),
+                work_station_name: r.work_station_name,
                 leader_id: r.leader_id.map(|u| u.to_string()),
                 leader_name: r.leader_name,
                 member_count: r.member_count,
@@ -407,8 +403,6 @@ pub async fn create_team(
         .work_station_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    let leader_id: Option<Uuid> = req.leader_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
-
     let result = sqlx::query!(
         r#"
         INSERT INTO teams (
@@ -416,7 +410,7 @@ pub async fn create_team(
             leader_id, leader_name, member_count, status, description,
             created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, 0, 'active', $7, $8, $8)
-        RETURNING 
+        RETURNING
             id, team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
             created_at, updated_at
@@ -425,7 +419,7 @@ pub async fn create_team(
         req.team_name,
         req.team_type,
         work_station_id,
-        leader_id,
+        req.leader_id.as_deref(),
         req.leader_name,
         req.description,
         Utc::now(),
@@ -482,7 +476,7 @@ pub async fn create_team(
         team_type: result.team_type,
         work_station_id: result.work_station_id.map(|u| u.to_string()),
         work_station_name: None,
-        leader_id: result.leader_id.map(|u| u.to_string()),
+        leader_id: result.leader_id,
         leader_name: result.leader_name,
         member_count: result.member_count,
         status: result.status,

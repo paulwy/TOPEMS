@@ -27,3 +27,8 @@ topems-unified-core=iam,shared,public
 topems-wms=wms,shared,public
 topems-shared-boundary=shared,public
 topems-shared-core=shared,public
+# topems-server 为模块化单体（default features 编译全部业务模块），prepare 时
+# 依赖crate的未限定表名需在单连接内解析：各服务 schema 全部前置、public 殿后。
+# 顺序依据：碰撞检查（iam.tenant_permissions 优先于 public/mes 同名表；
+# mes.equipment 优先于 rs/public；analytics.report_templates 优先于 pm/bi/public）。
+topems-server=iam,mes,analytics,qms,wms,scm,srm,hrm,pm,pdm,crm,erp,finance,portal,master_data,communication,ticket,ai,search,ehs,gis,integration,lims,mobile,rd,tms,flow,rs,feedback,notification,doc,workflow,shared,public
