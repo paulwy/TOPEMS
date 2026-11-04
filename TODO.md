@@ -109,7 +109,7 @@
 
 > 本节保留 2026-11-04 的**执行前**实测；P1/P2/P3/P5 已于 **2026-11-05** 在 prod 执行，执行后数字与记录见下方"执行记录（2026-11-05）"。P4 仍待业务确认。
 
-**基线**：prod `topems_prod` 1402 表 / 对照 `topems_test` 1328 表（差 74 张反向表）；执行前账本 549 条 vs 仓库迁移文件 558 个（**17 个未登记**，DB-04-prod~DB-19；另有 15 个账本孤儿版本）；服务实际连 `topems_prod`（launchd 环境变量），仓库 `.env` 指向 `topems_test`（运维陷阱）。
+**基线**：prod `topems_prod` 1402 表 / 对照 `topems_test` 1328 表（差 74 张反向表）；执行前账本 549 条 vs 仓库迁移文件 558 个（**17 个未登记**，DB-04-prod~DB-19；另"孤儿"中 14 个实为 000–013 短版本号文件，真孤儿 1 个）；服务实际连 `topems_prod`（launchd 环境变量），仓库 `.env` 指向 `topems_test`（运维陷阱）。
 
 | 项 | 原记录 | 实测（2026-11-04，执行前） | 处置（2026-11-05） |
 |---|---|---|---|
@@ -117,7 +117,7 @@
 | NULLIF 文本比较 | 11 表 | **29 条策略，全部 master_data** | P2 已执行，29→0；策略 1083 / RLS 883 不变 |
 | 缺索引 | prod 285 | **10**（全为反向表 pkey）；无二级索引表 665 = test 665 | 随 P4 反向表收敛处理 |
 | 约束缺口 | 193 | **103 条**（10 PK / 48 UNIQUE / 45 FK，91 表） | P3 已执行，缺口 103→**5**；p/u/f=1396/281/298，`NOT VALID`=0；5 张 `schema_defense_ledger` 运行时自建表不纳入迁移，其主键由 `ensure_ledger_table` 幂等守卫在服务启动时补齐 |
-| 账本 | 546×5 | prod **549** / 文件 558 / 未登记 17 | 已增至 **556**（+7，success=true，checksum 与文件一致）；17 未登记 / 15 孤儿**未解决** |
+| 账本 | 546×5 | prod **549** / 文件 558 / 未登记 17 | 已增至 **557**（+7 执行 +1 治理补登 `20261103173000`，checksum 均与文件一致）；未登记降为 16（5433/test 定向 + 未执行 db19）；真孤儿 1 个（`20261103000005`）保留待确认 |
 | db04-prod | 174→0 | **残留 5 列**（`public.equipment` 4 + `iam.core_plugin_instances.last_heartbeat`） | P5a 已执行，5→0 |
 | status_standard | 迁移已登记 success | **3 条残留**（crm.audit_logs / integration.external_erp_sync_logs / srm.inquiries） | P5b 已执行，3→0 |
 | 反向表 | prod 74 | **74 确认**；73 张 0 行，`finance.core_finance_currencies` 16 行；**22 个 FK 依赖** | P4 仍待业务确认（已出三类决策单，未 DROP） |
