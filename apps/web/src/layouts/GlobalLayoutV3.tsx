@@ -13,6 +13,8 @@ import { getUnreadCount } from '@/api/notification';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import { lucideIcons } from '@/lib/iconMapping';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import type { DbMenuItem } from '@/api/core/menus';
+import { useMenuAuthority } from '@/hooks/useMenuAuthority';
 import i18n, { ensureNamespacesLoaded, subscribeResourceVersion, getResourceVersion } from '@/i18n';
 
 /**
@@ -94,7 +96,8 @@ function useI18nResourceVersion(): number {
  */
 function buildSidebarItems(
   checkPermission: (permission: string) => boolean,
-  unreadCount: number
+  unreadCount: number,
+  dbMenus: Map<string, DbMenuItem> | null
 ): NavItem[] {
   // P2-1 mobile 模块 Web 侧隐藏：mobile 为移动端专用入口（MobileNav 独立渲染，
   // 移动端导航仍展示），Web 侧边栏不再显示 mobile 模块组。
@@ -129,12 +132,29 @@ function buildSidebarItems(
     );
     const children = navigationRegistryV2
       .getSidebarNavItems(moduleItem.code, checkPermission)
-      .map<NavItem>((child) => ({
-        id: `${moduleItem.code}:${child.code}`,
-        label: child.labelKey ? i18n.t(child.labelKey) : child.label,
-        icon: resolveIcon(child.icon),
-        path: child.path,
-      }));
+      .filter((child) => {
+        if (!dbMenus) return true;
+        const dbItem = dbMenus.get(child.code);
+        return Boolean(dbItem) && dbItem?.visible !== false;
+      })
+      .slice()
+      .sort((a, b) => {
+        if (!dbMenus) return 0;
+        const orderA = dbMenus.get(a.code)?.order ?? Number.MAX_SAFE_INTEGER;
+        const orderB = dbMenus.get(b.code)?.order ?? Number.MAX_SAFE_INTEGER;
+        return orderA - orderB;
+      })
+      .map<NavItem>((child) => {
+        const dbItem = dbMenus?.get(child.code);
+        const labelKey =
+          dbItem?.titleKey && i18n.exists(dbItem.titleKey) ? dbItem.titleKey : child.labelKey;
+        return {
+          id: `${moduleItem.code}:${child.code}`,
+          label: labelKey ? i18n.t(labelKey) : child.label,
+          icon: resolveIcon(dbItem?.icon || child.icon),
+          path: dbItem?.path || child.path,
+        };
+      });
 
     // 配置了二级菜单但全部被权限过滤掉：不展示空组
     if (configuredChildren.length > 0 && children.length === 0) {
@@ -163,6 +183,8 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
   // P1-4 前端权限守卫：侧边栏菜单按权限过滤（无权限的模块组/入口不展示）
   const { checkPermission } = usePermission();
   const resourceVersion = useI18nResourceVersion();
+  // Phase 1：默认优先消费 DB 菜单接口；?menu_authority=config 或接口失败时回退 config。
+  const { dbMenus } = useMenuAuthority();
 
   // P5: 未读数轮询写入 store，消息中心徽标实时跟随；无未读时徽标自动隐藏
   const unreadCount = useUnreadNotificationCount();
@@ -205,9 +227,9 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
   // 菜单内容完全由 navigationRegistryV2 动态生成：
   // P1-4：模块/子项权限均在 registry 查询时过滤；未读数注入 notification 组徽标
   const items = useMemo<NavItem[]>(
-    () => buildSidebarItems(checkPermission, unreadCount),
+    () => buildSidebarItems(checkPermission, unreadCount, dbMenus),
     // resourceVersion 变化代表模块命名空间翻译已异步注入，需要重新解析 label
-    [checkPermission, unreadCount, resourceVersion]
+    [checkPermission, unreadCount, resourceVersion, dbMenus]
   );
 
   // 根据当前路径计算激活的导航项（优先匹配子菜单，再匹配模块组）
