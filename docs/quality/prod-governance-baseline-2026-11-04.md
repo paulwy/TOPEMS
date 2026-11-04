@@ -9,7 +9,7 @@
 | 项 | 状态 |
 |---|---|
 | 只读盘点 | ✅ 完成（可连库、可 SELECT，不可写） |
-| P1 类型安全加宽（17 列） | ✅ **已执行 2026-11-05**；类型差异 296→279（P5a 后总差 284；P3 后 99；P6 数值族加宽 3 列后 **98**） |
+| P1 类型安全加宽（17 列） | ✅ **已执行 2026-11-05**；类型差异 296→279（P5a 后总差 284；P3 后 99；P6 数值族加宽 3 列后 **98**；本轮 6 项数值族收敛后 **92**） |
 | P2 NULLIF 统一（29 条 master_data 策略） | ✅ **已执行 2026-11-05**；纯文本比较 29→0；策略 1083 / RLS 表 883 均不变 |
 | P3 约束补齐（5 PK / 48 UNIQUE / 45 FK） | ✅ **已执行 2026-11-05**；p/u/f 1391/233/253→**1396/281/298**，`NOT VALID`=0。5 张 `schema_defense_ledger` 运行时自建表 PK 仍由启动守卫补齐 |
 | P4 反向表收敛（74 张，22 个 FK 依赖） | ✅ **首批 2026-11-05**：删 11 张（3 张直接删 + 8 张重指向 18 条 FK 后删）；保留 qms 3 张 + `core_finance_currencies`（运行时 CRUD）+ 60 张待业务确认 |
@@ -37,7 +37,7 @@
 
 | 指标 | 执行前 | 执行后 |
 |---|---:|---:|
-| prod-vs-test 类型差异 | 296 | **284**（P1 后 279，P5a 有意新增 5 处 prod timestamptz vs test naive；P3 后 99，P6 后 **98**） |
+| prod-vs-test 类型差异 | 296 | **284**（P1 后 279，P5a 有意新增 5 处 prod timestamptz vs test naive；P3 后 99，P6 后 **98**，本轮 6 项后 **92**） |
 | NULLIF 纯文本比较策略 | 29 | **0** |
 | naive timestamp（5 列口径） | 5 | **0** |
 | 约束缺口 | 103 | **5**（仅 5 张运行时自建 `*.schema_defense_ledger` 的 PK） |
@@ -81,8 +81,8 @@
 | 维度 | 实测值 | 说明 |
 |---|---|---|
 | 表数量 | prod 1402 / test 1328（执行前） | 反向表（**prod 有、test 无**）74；P4 首批后 prod 1391、反向表 63 |
-| 迁移账本 | prod **549** 条 / 仓库文件 **558** 个（执行前） | **17 个版本未登记**（DB-04-prod～DB-19）；治理后 P1 补登 →557，P4 `20261105100000` →558，`crm.audit_logs` `20261105130000` →559，db19 `20261104080000` →560，P6 `20261105140000` →**561** / 文件 **577** / 未登记 **17**（11 个 5433 + 6 个 test 定向）；"孤儿"中 14 个实为短版本号文件，真孤儿 1 个 |
-| 类型差异（同名列） | **296**（101 表） | 164 项 prod 已为 timestamptz（无需动）/ 12+3 方向安全 / 13 项 prod 更短 / 62 numeric 混合 / 其余零星；P6 加宽 3 列后总差 **98**、数值族 **59** |
+| 迁移账本 | prod **549** 条 / 仓库文件 **558** 个（执行前） | **17 个版本未登记**（DB-04-prod～DB-19）；治理后 P1 补登 →557，P4 `20261105100000` →558，`crm.audit_logs` `20261105130000` →559，db19 `20261104080000` →560，P6 `20261105140000` →561，P7 `20261105160000` →**562** / 文件 **580** / 未登记 **18**（11 个 5433 + 7 个 test 定向）；"孤儿"中 14 个实为短版本号文件，真孤儿 1 个 |
+| 类型差异（同名列） | **296**（101 表） | 164 项 prod 已为 timestamptz（无需动）/ 12+3 方向安全 / 13 项 prod 更短 / 62 numeric 混合 / 其余零星；P6 加宽 3 列后总差 **98**、数值族 **59**；本轮 6 项收敛后总差 **92**、数值族 **53** |
 | NULLIF 纯文本比较策略 | **29**（全部 `master_data`） | `qual LIKE '%::text = current_setting%' AND qual NOT LIKE '%NULLIF%'` |
 | 缺索引（按名比对，排除 pg_toast） | **10** | 全部为反向表 pkey；旧口径 285 含系统 schema 噪声 |
 | 约束缺口 | **103**（10 PK / 48 UNIQUE / 45 FK，91 表） | 依据 test 侧 `pg_constraint` 结构实测；其中 5 条 PK 属运行时自建 `schema_defense_ledger`，P3 迁移仅覆盖剩余 5 条 |
@@ -153,8 +153,8 @@
 ## 6. 剩余决策项
 
 1. **P4 剩余 63 张**：首批 11 张已删（§5.1）；保留 qms 3 张（无明确权威表）、`finance.core_finance_currencies`（运行时 CRUD）、60 张业务未确认。确认前不动。
-2. **执行后仍有 98 项类型差异**（284→99→98，2026-11-05）：**59 数值族混用**（P6 已加宽 3 列）、13 varchar test 更宽（prod 更短）、5 jsonb↔text/text[]、5 UUID 契约、5 timestamptz↔text、4 date↔timestamptz、2 numeric↔text、2 varchar↔text、1 varchar↔jsonb。均属契约/语义类，只分类不执行（见 §7 与 [数值族逐列判定](docs/quality/numeric-family-62-2026-11-05.md)）。
-3. **未登记 17 个 + 真孤儿 1 个**（治理后）：11 个 5433 定向、6 个 test 定向（含新增 db20/db21），均不登记；db19 已收敛（1 条已存在 + 3 条评估不建）并登记账本。`20261103000005` 来源不明，保留待确认、不 DELETE。`db08` 无守卫，禁止直接重放。
+2. **执行后仍有 92 项类型差异**（284→99→98→92，2026-11-05）：**53 数值族混用**（P6 加宽 3 列 + 本轮 6 项收敛）、13 varchar test 更宽（prod 更短）、5 jsonb↔text/text[]、5 UUID 契约、5 timestamptz↔text、4 date↔timestamptz、2 numeric↔text、2 varchar↔text、1 varchar↔jsonb。均属契约/语义类，只分类不执行（见 §7 与 [数值族逐列判定](docs/quality/numeric-family-62-2026-11-05.md)）。
+3. **未登记 18 个 + 真孤儿 1 个**（治理后）：11 个 5433 定向、7 个 test 定向（含新增 db20/db21/db23），均不登记；db19 已收敛（1 条已存在 + 3 条评估不建）并登记账本。`20261103000005` 来源不明，保留待确认、不 DELETE。`db08` 无守卫，禁止直接重放。
 4. **`crm.audit_logs` 值域**：✅ **已按业务决策执行（2026-11-05，允许 `'error'`）**；prod 执行前 17 行均为 `success`、无非标准值；CHECK 已重建并 `VALIDATE`，见 §8。
 5. **索引批次**：prod 实缺 10 个（反向表 pkey），随 P4 收敛；db19 四索引已在 §6.1 逐项收口；其余库（topems 1137）另行性能批次。
 
@@ -179,10 +179,10 @@
 |---|---:|---|
 | 不动（prod 语义正确/更宽） | 53 | 37 项 prod numeric vs test double（改 double 属精度降级）；16 项 prod double vs test numeric(p,s)（改 numeric 属范围收窄） |
 | 可安全加宽（已执行） | 3 | `mes.production_orders.quantity/completed_quantity`、`mobile.documents.file_size`：integer→bigint，单事务 + 备份 + `/health` 200 |
-| 需改代码后同步 | 6 | `mes.production_records.completed_quantity`、`mes.process_flow_steps.wait_time/standard_time/transfer_time`、`crm.rfm_results.recency_days/frequency` |
+| 已双向收敛（本轮 P7 + DB-23） | 6 | 按"代码契约 + 迁移明文"判定权威侧：prod 修 4 列（`production_records.completed_quantity` → numeric(12,2)；`process_flow_steps.standard_time/wait_time` → double precision、`transfer_time` → text），test 修 4 列（`process_flow_steps.wait_time` → double precision、`transfer_time` → text；`crm.rfm_results.recency_days/frequency` → integer） |
 | 需业务确认 | 0 | — |
 
-**执行**：迁移 [20261105140000_p6_numeric_int_to_bigint_3cols.sql](database/migrations/20261105140000_p6_numeric_int_to_bigint_3cols.sql#L1-L66)；test 先行（幂等跳过，exit 0）；prod 备份 `~/topems/backups/topems_prod_pre_p6_20261105.dump`（4,151,097 字节 / TOC 8265 行）；prod 单事务 exit 0；三表 0 行不变；类型 101→**98**、数值族 62→**59**；账本 `20261105140000`（checksum `3459695e9acb…`）→ 总 **561**。
+**执行**：P6 [20261105140000_p6_numeric_int_to_bigint_3cols.sql](database/migrations/20261105140000_p6_numeric_int_to_bigint_3cols.sql#L1-L66)；本轮 prod [20261105160000_p7_prod_type_align_4cols.sql](database/migrations/20261105160000_p7_prod_type_align_4cols.sql#L1-L213)、test [20261105150000_db23_test_type_align_4cols.sql](database/migrations/20261105150000_db23_test_type_align_4cols.sql#L1-L235)。test 先行预演 + 提交；prod 备份 `~/topems/backups/topems_prod_pre_p7_20261105.dump`（4,151,188 字节 / TOC 8265 行）后单事务 exit 0；行数 0/0 不变；类型 101→**92**、数值族 62→**53**；账本 `20261105160000`（checksum `55b8df6ca894…`）→ 总 **562**。
 
 **证据**：62 列无 PK/UNIQUE/FK/CHECK 参与、0 视图/生成列依赖；默认值仅 `production_orders.completed_quantity`(0) 与 `rs.project_members.allocation`(1.0)；代码侧 WMS 用 `rust_decimal::Decimal`、MES 工单显式 `::float8`、Mobile `file_size: i64`（prod int4 存在解码缺口，bigint 修复）。
 
@@ -197,7 +197,7 @@
 | prod `timestamptz` / test `timestamp` | **169** | ✅ 执行 test→timestamptz，`USING col AT TIME ZONE 'UTC'`（含 P5a 引入 5 列） | 169 列全 NULL，无依赖 |
 | varchar 加宽（含 1 项 varchar→text） | **13** | ✅ 执行（`varchar(200)→(256)` 等） | 无依赖，加宽不截断 |
 | numeric 加宽 | **3** | ✅ 执行（`numeric(12,2)→(15,3)`，`qa_ehs_hazardous_materials`） | 精度/整数位均不缩 |
-| 数值族混用（double precision / numeric / int） | 62 | ⏸ 只分类 | 精度语义不同，需业务定方向 |
+| 数值族混用（double precision / numeric / int） | 62 | ✅ 已处置（3 加宽 + 6 双向收敛），余 53 不动 | 精度语义不同，不动项保持 prod 现状 |
 | varchar test 更宽（prod 更短） | 13 | ⏸ 不执行 | 对齐会收窄 test，存在截断风险 |
 | jsonb ↔ text/text[] | 5 | ⏸ 只分类 | 需数据合法性甄别 |
 | UUID 契约（uuid ↔ varchar/bigint） | 5 | ⏸ 只分类 | 跨库契约 |
