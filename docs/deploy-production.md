@@ -274,8 +274,17 @@ ssh xingzhai@192.168.110.115 "/opt/homebrew/bin/psql -U topems_prod -d topems_pr
 |---|---|
 | `--seed-departments` | 只插入标准部门（不清库，适合已有数据但缺部门的场景） |
 | `--seed-positions` | 只插入标准岗位（不清库，需要先有部门） |
+| `--seed-roles` | 只插入默认角色（不清库，3 个系统内置角色） |
 
-seed 文件位置：`database/seeds/standard_departments.sql`、`database/seeds/standard_positions.sql`
+#### 默认角色（3 个）
+
+| 角色编码 | 角色名称 | 权限范围 |
+|---|---|---|
+| `super_admin` | 超级管理员 | 所有权限（`["*"]`），admin 用户默认关联 |
+| `dept_manager` | 部门经理 | 本部门员工管理、审批（hrm/attendance/recruitment 读写） |
+| `employee` | 普通员工 | 基础自助（个人信息查看、请假申请、工资条查看） |
+
+seed 文件位置：`database/seeds/standard_departments.sql`、`database/seeds/standard_positions.sql`、`database/seeds/default_roles.sql`
 
 ### 4.5.4 验证登录
 
