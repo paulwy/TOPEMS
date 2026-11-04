@@ -313,7 +313,99 @@ ssh xingzhai@192.168.110.115 "curl -s -X POST http://localhost:8099/api/core/iam
 
 ***
 
-## 5. 手动部署（不推荐，了解即可）
+## 5. 运维与备份
+
+### 5.1 数据库每日自动备份
+
+**备份策略：**
+- 每天凌晨 3:00 自动执行
+- 备份文件：`/Users/xingzhai/topems/backups/topems_prod_YYYYMMDD_HHMMSS.sql.gz`
+- 保留最近 7 天，自动清理更早的
+
+**首次部署需手动安装：**
+
+```bash
+# 1. 上传备份脚本到生产机
+scp scripts/backup-db.sh xingzhai@192.168.110.115:/Users/xingzhai/topems/scripts/
+ssh xingzhai@192.168.110.115 "chmod +x /Users/xingzhai/topems/scripts/backup-db.sh"
+
+# 2. 安装 launchd plist
+scp scripts/com.topems.backup-db.plist xingzhai@192.168.110.115:~/Library/LaunchAgents/
+ssh xingzhai@192.168.110.115 "launchctl load ~/Library/LaunchAgents/com.topems.backup-db.plist"
+
+# 3. 验证
+ssh xingzhai@192.168.110.115 "launchctl list | grep topems.backup"
+# 应输出: -  0  com.topems.backup-db
+```
+
+**手动执行备份：**
+
+```bash
+ssh xingzhai@192.168.110.115 "/Users/xingzhai/topems/scripts/backup-db.sh"
+```
+
+**恢复备份：**
+
+```bash
+# 解压并恢复
+gunzip -c /Users/xingzhai/topems/backups/topems_prod_20261104_030000.sql.gz | \
+  /opt/homebrew/bin/psql -U topems_prod -d topems_prod
+```
+
+### 5.2 日志位置
+
+| 日志 | 路径 |
+|---|---|
+| 后端服务日志 | `/Users/xingzhai/topems/logs/server.log` |
+| 后端错误日志 | `/Users/xingzhai/topems/logs/server.err.log` |
+| Nginx 访问日志 | `/opt/homebrew/var/log/nginx/access.log` |
+| Nginx 错误日志 | `/opt/homebrew/var/log/nginx/error.log` |
+| 数据库备份日志 | `/Users/xingzhai/topems/logs/backup-db.log` |
+| 日志轮转日志 | `/Users/xingzhai/topems/logs/log-rotate.log` |
+
+### 5.3 日志轮转
+
+**轮转策略：**
+- 每天凌晨 3:30 自动执行（避开 3:00 数据库备份）
+- 日志超过 50MB 即 gzip 归档（不中断应用写入）
+- 每个日志保留最近 7 个归档，自动清理更早的
+
+**首次部署需手动安装：**
+
+```bash
+# 1. 上传轮转脚本到生产机
+scp scripts/rotate-logs.sh xingzhai@192.168.110.115:/Users/xingzhai/topems/scripts/
+ssh xingzhai@192.168.110.115 "chmod +x /Users/xingzhai/topems/scripts/rotate-logs.sh"
+
+# 2. 安装 launchd plist
+scp scripts/com.topems.log-rotate.plist xingzhai@192.168.110.115:~/Library/LaunchAgents/
+ssh xingzhai@192.168.110.115 "launchctl load ~/Library/LaunchAgents/com.topems.log-rotate.plist"
+
+# 3. 验证
+ssh xingzhai@192.168.110.115 "launchctl list | grep topems.log"
+# 应输出: -  0  com.topems.log-rotate
+```
+
+### 5.4 常用运维命令
+
+```bash
+# 查看后端服务状态
+ssh xingzhai@192.168.110.115 "launchctl list | grep topems"
+
+# 重启后端
+ssh xingzhai@192.168.110.115 "launchctl kickstart -k gui/$(id -u)/com.topems.server"
+
+# 重启 Nginx
+ssh xingzhai@192.168.110.115 "launchctl kickstart -k gui/$(id -u)/com.topems.nginx"
+
+# 实时查看后端日志
+ssh xingzhai@192.168.110.115 "tail -f /Users/xingzhai/topems/logs/server.log"
+```
+
+
+***
+
+## 6. 手动部署（不推荐，了解即可）
 
 
 

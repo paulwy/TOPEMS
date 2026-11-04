@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.topems.log-rotate</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/xingzhai/topems/scripts/rotate-logs.sh</string>
+    </array>
+
+    <!-- 每天凌晨 3:30 执行（避开 3:00 数据库备份） -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>3</integer>
+        <key>Minute</key>
+        <integer>30</integer>
+    </dict>
+
+    <!-- 日志 -->
+    <key>StandardOutPath</key>
+    <string>/Users/xingzhai/topems/logs/log-rotate.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/xingzhai/topems/logs/log-rotate.err.log</string>
+
+    <!-- 后台运行 -->
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>
