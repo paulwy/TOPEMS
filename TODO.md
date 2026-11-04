@@ -4029,3 +4029,13 @@ P2（2-4 周后）
   1. `finance.core_finance_currencies` **不是残壳而是活表**（16 行币种基础数据 CNY/USD/EUR/JPY/HKD…，`svc/finance/src/modules/currencies.rs` 明确使用）→ **test 缺失该表**（迁移未固化），已 `pg_dump --schema-only` 从 5433 复刻建表 + 导入 16 行数据；后续需补迁移文件固化
   2. 剩余 5 张为 **public schema 历史残壳**：`public.mobile_users`（test 对应 `mobile.mobile_users`）、`public.qa_ehs_compliance_evaluations` / `qa_ehs_environmental_regulations` / `qa_ehs_hazard_factors` / `qa_ehs_inspection_records`（test 对应 `ehs.qa_ehs_*`）——均 0 行、代码引用全部指向 ehs/mobile schema、无 public 版本引用 → **待拍板删除**
 - **门禁复验**：exit 0；反向表提示降为 5 个；health 200
+
+## 第四十三轮（2026-11-05）：public 历史残壳表清理（CASCADE 删 24 张）✅
+
+- **决策依据**（用户拍板"按建议执行"）：残壳表 0 行、test 对应表已迁 `ehs`/`mobile` schema、代码引用全部指向新 schema（`svc/ehs` 用 `ehs.qa_ehs_*`、`svc/mobile` 用 `mobile.mobile_users`）
+- **范围核对**：prod 无同名残壳（已清理过）；prepare 19 张（`public.mobile_users` + 18 张 `public.qa_ehs_*`）；5433 5 张
+- **删除受阻排查**：直接 DROP 报 `other objects depend on it` —— 依赖为**残壳表之间的 FK 网**（如 `devices -> mobile_users`、`qa_ehs_hazards -> qa_ehs_inspection_records`、`qa_ehs_compliance_items -> qa_ehs_compliance_evaluations`、`user_settings -> mobile_users` 等 26 条）；用 OID 精确匹配（`SET search_path=pg_catalog,public` + `confrelid IN (SELECT oid ...)`）避免 `regclass::text` 受 search_path 影响的空结果
+- **执行**：`DROP TABLE IF EXISTS <t> CASCADE`（CASCADE 仅删指向残壳的 FK 约束，不删引用表本身）——prepare 19/19、5433 5/5 成功
+- **验证**：5433 反向表 **5 → 0**；门禁 **"表级一致（业务表清单相同）"** exit 0；health 200
+- **遗留**：prepare 反向表 52 / prod 48（其他 schema 残壳，属 P4 反向表收敛批次，远端并行推进中，避免冲突本次不动）；CASCADE 顺带删除的 FK 约束待约束批次复核补建
+- 无 git 代码改动（纯库 DDL）
