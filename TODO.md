@@ -1,4 +1,16 @@
 
+## db 类型 ↔ Rust 解码契约审计 + rfm 两列收敛（2026-11-05）✅
+
+> 承接 `crm.rfm_results.monetary / rfm_score`（prod numeric vs test double）与全仓"DB 类型与 Rust 解码类型不匹配"扫描。
+
+**结论**：prod `numeric(15,2)/(10,2)` 为权威（金额/分值语义），**prod 零变更**；破损侧在代码（`RfmResultRow` 以 `f64` 解 NUMERIC，sqlx 0.8 实测 `ColumnDecode "mismatched types"`，必然失败非静默截断）→ 查询补 `::float8`，DB 保留 NUMERIC 精度、API 仍为 JSON number。test 侧 DB-24 收敛为 numeric，37 行值不变。
+
+- **扫描**：4 种方法交叉（`SQLX_OFFLINE` 编译门禁覆盖 3155 个 `query!` 调用点 + 295 个 `.sqlx` 缓存 `type_info`；新脚本 `scripts/ci/check-decode-contract.mjs` 比对 1818 个动态 `query_as::<_, S>` 与 prod `pg_attribute` 列目录；本地运行时探针；迁移 DDL 交叉）。
+- **结果**：21 个候选 → **13 项高危**（8 项为显式 cast 误报），全部修复，复扫 **high=0**；未实证项见报告 §9。
+- **修复**：`crm/rfm.rs`、`mes/demand_forecast.rs`、`mes/production_plan.rs`、`rd/project_report.rs`、`rd/material.rs`、`rd/patent.rs`、`rd/research_cost.rs`、`scm/tests/integration_tests.rs`。
+- **文档**：[decode-contract-audit-2026-11-05.md](docs/quality/decode-contract-audit-2026-11-05.md)；数值族差异 **92→90**、数值族 **53→51**。
+- **账本/迁移**：prod 账本仍 **563**（DB-24 为 test 定向、不登记）；文件 **582**、未登记 **19**；`/health`=200。
+
 ## 生产部署 seed 体系完善（2026-11-04）✅（P0/P1/P2/P3 全部完成）
 
 > 生产机首次部署后发现：角色/权限为空、部门/岗位无标准数据。已建立 seed 文件体系并接入部署脚本。
@@ -113,11 +125,11 @@
 
 | 项 | 原记录 | 实测（2026-11-04，执行前） | 处置（2026-11-05） |
 |---|---|---|---|
-| 类型差异 | prod 215 | **296**（101 表；179 项 prod 无需动 / 14 项安全加宽 / 103 项人工） | P1 已执行 17 列；执行后 284（P5a 有意新增 5 项）；P3 已执行 test 侧对齐 185 列，差异 **284→99**；P6 数值族逐列判定后加宽 3 列（int→bigint），差异 **99→98**；本轮 6 项双向收敛后差异 **92**，数值族 62→53（53 不动 + 3 加宽 + 6 已收敛 + 0 待业务确认） |
+| 类型差异 | prod 215 | **296**（101 表；179 项 prod 无需动 / 14 项安全加宽 / 103 项人工） | P1 已执行 17 列；执行后 284（P5a 有意新增 5 项）；P3 已执行 test 侧对齐 185 列，差异 **284→99**；P6 数值族逐列判定后加宽 3 列（int→bigint），差异 **99→98**；6 项双向收敛后差异 **92**，数值族 62→53；decode 审计 DB-24 后差异 **90**、数值族 **51**（51 不动 + 3 加宽 + 8 已收敛 + 0 待业务确认） |
 | NULLIF 文本比较 | 11 表 | **29 条策略，全部 master_data** | P2 已执行，29→0；策略 1083 / RLS 883 不变 |
 | 缺索引 | prod 285 | **0**（5 条 P3 主键 + 5 条运行时账本主键已补，P8）；无二级索引表 665 = test 665 | ✅ 2026-11-05 收敛；仅剩反向表 `public.core_chat_members` 无 PK（0 行、与 iam 重复），随 P4 删除 |
 | 约束缺口 | 193 | **103 条**（10 PK / 48 UNIQUE / 45 FK，91 表） | P3 已执行，缺口 103→**5**；p/u/f=1396/281/298，`NOT VALID`=0；5 张 `schema_defense_ledger` 运行时自建表不纳入迁移，其主键由 `ensure_ledger_table` 幂等守卫在服务启动时补齐 |
-| 账本 | 546×5 | prod **549** / 文件 558 / 未登记 17 | 已增至 **563**（+7 执行 +1 治理补登 `20261103173000` +1 P4 `20261105100000` +1 audit `20261105130000` +1 db19 `20261104080000` +1 P6 `20261105140000` +1 P7 `20261105160000` +1 P8 `20261105170000`，checksum 均与文件一致）；文件 **581**，未登记 18（11 个 5433 + 7 个 test 定向）；db19 四索引收敛为 1 条已存在 + 3 条评估不建；真孤儿 1 个（`20261103000005`）保留待确认 |
+| 账本 | 546×5 | prod **549** / 文件 558 / 未登记 17 | 已增至 **563**（+7 执行 +1 治理补登 `20261103173000` +1 P4 `20261105100000` +1 audit `20261105130000` +1 db19 `20261104080000` +1 P6 `20261105140000` +1 P7 `20261105160000` +1 P8 `20261105170000`，checksum 均与文件一致）；文件 **582**，未登记 19（11 个 5433 + 8 个 test 定向，新增 DB-24 `20261105180000`）；db19 四索引收敛为 1 条已存在 + 3 条评估不建；真孤儿 1 个（`20261103000005`）保留待确认 |
 | db04-prod | 174→0 | **残留 5 列**（`public.equipment` 4 + `iam.core_plugin_instances.last_heartbeat`） | P5a 已执行，5→0 |
 | status_standard | 迁移已登记 success | **3 条残留**（crm.audit_logs / integration.external_erp_sync_logs / srm.inquiries） | P5b 已执行，3→0 |
 | 反向表 | prod 74 | **74 确认**；73 张 0 行，`finance.core_finance_currencies` 16 行；**22 个 FK 依赖** | P4 首批 **2026-11-05 已执行**：删 11 张（3 直接删 + 8 重指向 18 条 FK 后删），表数 1402→1391、FK 298→295；保留 qms 3 张 + currencies + 60 张待业务确认（余 63 张） |

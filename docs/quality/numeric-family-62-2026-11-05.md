@@ -4,17 +4,18 @@
 > 口径：`pg_attribute` + `format_type()` 同名列比对；本轮只处理 int/smallint/bigint/numeric/real/double precision 之间的差异。
 > 实测同列类型差异 **101**（历史记录 99，以实测为准；差额来自新增迁移/新表列），其中数值族 **62**。
 > 本轮 6 项"需改代码"处置完成：同列类型差异 **98 → 92**，数值族 **59 → 53**（6 项全部消除）。
+> 追加（decode-contract 审计，2026-11-05）：`crm.rfm_results.monetary / rfm_score` 收敛后 **92 → 90**，数值族 **53 → 51**。
 
 ## 1. 结论分布
 
 | 类别 | 数量 | 说明 |
 |---|---:|---|
-| 不动（prod 语义正确或更宽） | **53** | 37 项 prod numeric vs test double（prod 为精确十进制，改 double 属精度降级）；16 项 prod double vs test numeric(p,s)（改 numeric 属范围收窄，禁止） |
+| 不动（prod 语义正确或更宽） | **51** | 35 项 prod numeric vs test double（prod 为精确十进制，改 double 属精度降级）；16 项 prod double vs test numeric(p,s)（改 numeric 属范围收窄，禁止） |
 | 可安全加宽（已执行） | **3** | `mes.production_orders.quantity`、`mes.production_orders.completed_quantity`、`mobile.documents.file_size`：integer → bigint |
-| 已双向收敛（本轮 P7 + DB-23） | **6** | 按"代码契约 + 迁移明文"判定权威侧：prod 修 4 列、test 修 4 列，6 项差异全部消除 |
+| 已双向收敛（P7 + DB-23 + DB-24） | **8** | 按"代码契约 + 迁移明文 + prod 线上行为"判定权威侧：prod 修 4 列、test 修 6 列，8 项差异全部消除 |
 | 需业务确认 | **0** | 本轮无 |
 
-执行后：同列类型差异 **101 → 92**（P6 后 98，本轮 6 项消除），数值族 **62 → 53**（减少量 = 实际消除差异列数 6）。
+执行后：同列类型差异 **101 → 90**（P6 后 98，6 项 92，rfm monetary/rfm_score 后 90），数值族 **62 → 51**（减少量 = 实际消除差异列数 8）。
 
 ## 2. 执行记录（prod）
 
@@ -49,9 +50,9 @@
 |---|---|---|---:|---:|---|
 | `crm.customers.revenue` | numeric(15,2) | double precision | 0 | 37 | 不动（prod 语义正确/更宽） |
 | `crm.rfm_results.frequency` | integer | double precision | 0 | 37 | 已收敛：test → integer（prod 不动） |
-| `crm.rfm_results.monetary` | numeric(15,2) | double precision | 0 | 37 | 不动（prod 语义正确/更宽） |
+| `crm.rfm_results.monetary` | numeric(15,2) | double precision | 0 | 37 | 已收敛：test → numeric(15,2)（DB-24；prod 不动） |
 | `crm.rfm_results.recency_days` | integer | double precision | 0 | 37 | 已收敛：test → integer（prod 不动） |
-| `crm.rfm_results.rfm_score` | numeric(10,2) | double precision | 0 | 37 | 不动（prod 语义正确/更宽） |
+| `crm.rfm_results.rfm_score` | numeric(10,2) | double precision | 0 | 37 | 已收敛：test → numeric(10,2)（DB-24；prod 不动） |
 | `erp.bank_accounts.balance` | numeric(20,4) | double precision | 0 | 0 | 不动（prod 语义正确/更宽） |
 | `erp.fixed_assets.monthly_depreciation` | numeric(20,4) | double precision | 0 | 0 | 不动（prod 语义正确/更宽） |
 | `erp.fixed_assets.net_value` | numeric(20,4) | double precision | 0 | 0 | 不动（prod 语义正确/更宽） |
@@ -131,8 +132,8 @@
 | mes | `production_records.completed_quantity` | ✅ 已收敛（prod → numeric(12,2)）；代码 BigDecimal 契约本就正确，无需改代码 |
 | mes | `process_flow_steps.standard_time / wait_time / transfer_time` | ✅ 已收敛（prod → double/double/text，test → double/text）；`::int4` cast 已移除 |
 | crm | `rfm_results.recency_days / frequency` | ✅ 已收敛（test → integer）；prod 本就正确 |
-| crm | `rfm_results.monetary / rfm_score` | ⚠️ 未纳入本轮 6 项：prod numeric(15,2)/(10,2)，但 `RfmResultRow` 以 `f64` 解码，prod 非空后存在解码缺口；需业务确认按"改代码为 Decimal"或"改 prod 为 double"另立一项 |
-| wms/erp/rs | 其余 53 项 | 保持 prod 现状；test 侧（double）若要对齐需另评估"double→numeric"的收窄风险，不在本轮 |
+| crm | `rfm_results.monetary / rfm_score` | ✅ 已收敛（DB-24：test double → numeric(15,2)/(10,2)，prod 本就正确）；代码读路径补 `::float8`，详见 [decode-contract-audit-2026-11-05.md](docs/quality/decode-contract-audit-2026-11-05.md) |
+| wms/erp/rs | 其余 51 项 | 保持 prod 现状；test 侧（double）若要对齐需另评估"double→numeric"的收窄风险，不在本轮 |
 
 ## 6. 与基线文档的关系
 
