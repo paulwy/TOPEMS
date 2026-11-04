@@ -9,8 +9,7 @@ use uuid::Uuid;
 /// `active`/`inactive`/`archived` 为历史 CHECK 兼容值；`failed`/`failure`/`pending`/`unknown`
 /// 为运行时既有写入值（4xx 中间件、同步任务、SRM 审计）。
 pub const AUDIT_LOG_STATUS_STANDARD: &[&str] = &[
-    "active", "inactive", "archived", "success", "failure", "failed", "error", "pending",
-    "unknown",
+    "active", "inactive", "archived", "success", "failure", "failed", "error", "pending", "unknown",
 ];
 
 /// 判断审计日志 status 是否属于标准值集合。
