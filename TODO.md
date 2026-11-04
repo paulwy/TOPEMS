@@ -3971,3 +3971,14 @@ P2（2-4 周后）
 - **验证**：同名列类型差异 **21→4**；剩余 4 项为既有「需 USING」jsonb↔text 独立挂账（ehs.qa_ehs_hazard_factors.affected_positions/sources → text、ehs.qa_ehs_hazardous_materials.hazard_class → varchar、pm.projects.tags → jsonb vs _text）
 - **门禁/健康**：`check-consistency.sh` exit 0（5433 不可达按设计跳过，已知状态 2026-11-02 起需 pg_ctl 启动）；health 200
 - 无 git 代码改动（纯库 DDL）
+
+## 第三十八轮（2026-11-05）：jsonb↔text 4 项 USING 转换，prepare/test 类型差异归零 ✅
+
+- **批次**：prepare 与 test 剩余 4 项「需 USING」类型差异，迁移权威 DDL 全部指向 test 侧：
+  1. `ehs.qa_ehs_hazard_factors.affected_positions` text→jsonb（`USING affected_positions::jsonb`）
+  2. `ehs.qa_ehs_hazard_factors.sources` text→jsonb（同上）
+  3. `ehs.qa_ehs_hazardous_materials.hazard_class` varchar→jsonb（**varchar→jsonb 无直接 cast**，`USING hazard_class::text::jsonb`）
+  4. `pm.projects.tags` jsonb→text[]（迁移 `20261027100000_scenario_fix_contract_align.sql` 明确 `Project.tags: Option<Vec<String>>`；prepare 表 0 行，`USING NULL::text[]` 兜底）
+- **前置**：4 列均无 DEFAULT、索引不涉及目标列、RLS 策略仅引用 tenant_id → 可直接 ALTER
+- **验证**：prepare vs test 同名列类型差异 → **0**（累计 21 + 4 项全部归零）；门禁 exit 0；health 200
+- 无 git 代码改动（纯库 DDL）
