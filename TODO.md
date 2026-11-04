@@ -4001,3 +4001,14 @@ P2（2-4 周后）
 - **执行**：573 条逐语句（572 + 末行补跑 1 = 573/573 成功，0 失败）
 - **验证**：prod vs test（类型+varchar 长度双重口径）差异 **0**；prepare vs test 复验 **0**；门禁 exit 0；health 200
 - 无 git 代码改动（纯库 DDL）
+
+## 第四十一轮（2026-11-05）：列存在性对齐（deleted_at + 零星列归零）✅
+
+- **背景**：列级契约最后一维——列存在性对比：prod 缺失 135 列 / prepare 缺失 104 列（`test 有 / 目标库无`），主体为 `deleted_at` 软删列（prod 114 / prepare 95，对应 soft delete 功能）
+- **执行**：
+  1. `deleted_at` 按 test 实际类型（timestamptz 主体 + 个别 timestamp）逐列 `ADD COLUMN IF NOT EXISTS`：prod 114/114、prepare 95/95 成功
+  2. 零星缺失列 23 项（prod 21 / prepare 9 去重，含 `created_by`/`flow_id`/`item_name`/`attachment_ids` 等）按 test 类型+长度补列：23/23 成功
+  3. 3 列 DEFAULT 对齐（两库各 3）：`core_workflow_tasks.updated_at` now()、`core_tenant_modules.tier` 'basic'、`erp.erp_master_data_refs.id` gen_random_uuid()
+- **验证**：列存在性缺失 **prod 135 → 0、prepare 104 → 0**（注：验证须 `LC_ALL=C sort` 统一排序，PG `ORDER BY` 与 `comm` collation 不一致会误报 5 项伪缺失）；类型/长度差异复验 0；门禁 exit 0；health 200
+- **挂账**：反向残留列（prod 790 / prepare 1247，`目标库有 / test 无`）不删除，留待后续甄别（历史残壳/测试未固化）
+- 无 git 代码改动（纯库 DDL）
