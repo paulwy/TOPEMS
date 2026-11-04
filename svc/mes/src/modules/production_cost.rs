@@ -320,9 +320,15 @@ async fn calculate_work_order_cost_detail_db(
         FROM mes.bom_items bi
         JOIN mes.material_boms b ON bi.bom_id = b.id
         WHERE b.product_code = $1
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+               OR EXISTS (
+                   SELECT 1 FROM mes.production_orders po
+                   WHERE po.product_code = b.product_code AND po.tenant_id = $2::uuid
+               ))
         "#,
     )
     .bind(&product_code)
+    .bind(tenant_id)
     .fetch_all(pool)
     .await;
 
@@ -549,9 +555,11 @@ pub async fn calculate_production_order_cost(
     let work_order_ids = sqlx::query(
         r#"
         SELECT id FROM mes.work_orders WHERE order_id = $1
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 

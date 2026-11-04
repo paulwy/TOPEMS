@@ -18,6 +18,17 @@ use super::auth_utils::extract_user_id_from_token;
 use topems_shared_auth::auth::{AuthState, Claims};
 use topems_shared_core::response::ApiResponse;
 
+fn tenant_filter(claims: &Claims) -> Option<Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct MobileTask {
     pub id: Uuid,
@@ -136,6 +147,7 @@ pub fn sort_task_titles_by_priority_str(titles: &[(String, String)]) -> Vec<(Str
 
 pub async fn get_all_tasks(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
 ) -> impl IntoResponse {
@@ -152,10 +164,11 @@ pub async fn get_all_tasks(
     let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
-         WHERE deleted_at IS NULL AND (assignee = $1 OR assignee IS NULL) 
+         WHERE deleted_at IS NULL AND (assignee = $1 OR assignee IS NULL) AND ($2::uuid IS NULL OR tenant_id = $2::uuid) 
          ORDER BY due_date NULLS LAST, created_at DESC")
     )
     .bind(&user_id)
+    .bind(tenant_filter(&claims))
     .fetch_all(&pool)
     .await
     {
@@ -174,6 +187,7 @@ pub async fn get_all_tasks(
 
 pub async fn get_task(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -191,10 +205,11 @@ pub async fn get_task(
     let task = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
-         WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL")
+         WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)")
     )
     .bind(id)
     .bind(&user_id)
+    .bind(tenant_filter(&claims))
     .fetch_optional(&pool)
     .await
     {
@@ -520,6 +535,7 @@ pub async fn delete_task(
 /// 我的任务（仅本人 assignee，较 get_all_tasks 更严格）
 pub async fn get_my_tasks(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
 ) -> impl IntoResponse {
@@ -536,10 +552,11 @@ pub async fn get_my_tasks(
     let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
-         WHERE deleted_at IS NULL AND assignee = $1 
+         WHERE deleted_at IS NULL AND assignee = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) 
          ORDER BY due_date NULLS LAST, created_at DESC"),
     )
     .bind(&user_id)
+    .bind(tenant_filter(&claims))
     .fetch_all(&pool)
     .await
     {
@@ -565,6 +582,7 @@ pub async fn get_my_tasks(
 /// 待办任务（status = pending）
 pub async fn get_pending_tasks(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
 ) -> impl IntoResponse {
@@ -581,10 +599,11 @@ pub async fn get_pending_tasks(
     let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
-         WHERE deleted_at IS NULL AND status = 'pending' AND (assignee = $1 OR assignee IS NULL) 
+         WHERE deleted_at IS NULL AND status = 'pending' AND (assignee = $1 OR assignee IS NULL) AND ($2::uuid IS NULL OR tenant_id = $2::uuid) 
          ORDER BY due_date NULLS LAST, created_at DESC"),
     )
     .bind(&user_id)
+    .bind(tenant_filter(&claims))
     .fetch_all(&pool)
     .await
     {
@@ -610,6 +629,7 @@ pub async fn get_pending_tasks(
 /// 逾期任务（due_date 已过且未完成）
 pub async fn get_overdue_tasks(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
 ) -> impl IntoResponse {
@@ -626,10 +646,11 @@ pub async fn get_overdue_tasks(
     let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
-         WHERE deleted_at IS NULL AND due_date < NOW() AND status != 'completed' AND (assignee = $1 OR assignee IS NULL) 
+         WHERE deleted_at IS NULL AND due_date < NOW() AND status != 'completed' AND (assignee = $1 OR assignee IS NULL) AND ($2::uuid IS NULL OR tenant_id = $2::uuid) 
          ORDER BY due_date NULLS LAST, created_at DESC"),
     )
     .bind(&user_id)
+    .bind(tenant_filter(&claims))
     .fetch_all(&pool)
     .await
     {
@@ -759,6 +780,7 @@ pub async fn reopen_task(
 /// 搜索任务（标题模糊匹配）
 pub async fn search_tasks(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Query(params): Query<SearchTasksParams>,
@@ -777,11 +799,12 @@ pub async fn search_tasks(
     let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
-         WHERE deleted_at IS NULL AND title ILIKE '%' || $2 || '%' AND (assignee = $1 OR assignee IS NULL) 
+         WHERE deleted_at IS NULL AND title ILIKE '%' || $2 || '%' AND (assignee = $1 OR assignee IS NULL) AND ($3::uuid IS NULL OR tenant_id = $3::uuid) 
          ORDER BY created_at DESC"),
     )
     .bind(&user_id)
     .bind(&keyword)
+    .bind(tenant_filter(&claims))
     .fetch_all(&pool)
     .await
     {

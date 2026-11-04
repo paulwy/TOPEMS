@@ -2,11 +2,12 @@
 //! 移动端 OA 办公协同（缺口#14）
 //! meetings / calendar/events / tasks / announcements / oa/stats
 
-use axum::extract::{Path, Query, State};
+use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use chrono::{DateTime, Datelike, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
@@ -15,6 +16,17 @@ use uuid::Uuid;
 /// `operator does not exist: uuid = text`，故统一用默认租户 UUID。
 fn tenant_id() -> Uuid {
     Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap_or(Uuid::nil())
+}
+
+fn tenant_filter(claims: &Claims) -> Option<Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    }
 }
 
 // ===== 模型 =====
@@ -224,14 +236,16 @@ pub async fn list_meetings(
     tag = "meetings"
 )]
 pub async fn get_meeting(
+    Extension(claims): Extension<Claims>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<OaMeeting> {
     match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
-        "SELECT * FROM mobile.oa_meetings WHERE id = $1"
+        "SELECT * FROM mobile.oa_meetings WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter(&claims))
     .fetch_optional(&pool)
     .await
     {
@@ -281,6 +295,7 @@ pub async fn create_meeting(
 }
 
 pub async fn update_meeting(
+    Extension(claims): Extension<Claims>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
@@ -300,7 +315,7 @@ pub async fn update_meeting(
         "mobile",
         "UPDATE mobile.oa_meetings SET title = COALESCE($1, title), description = COALESCE($2, description), \
          status = COALESCE($3, status), location = COALESCE($4, location), video_url = COALESCE($5, video_url), \
-         updated_at = NOW() WHERE id = $6 RETURNING *"
+         updated_at = NOW() WHERE id = $6 AND ($7::uuid IS NULL OR tenant_id = $7::uuid) RETURNING *"
     ))
     .bind(title)
     .bind(description)
@@ -308,6 +323,7 @@ pub async fn update_meeting(
     .bind(location)
     .bind(video_url)
     .bind(id)
+    .bind(tenant_filter(&claims))
     .fetch_optional(&pool)
     .await
     {
@@ -317,12 +333,17 @@ pub async fn update_meeting(
     }
 }
 
-pub async fn delete_meeting(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> ApiResponse<()> {
+pub async fn delete_meeting(
+    Extension(claims): Extension<Claims>,
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<()> {
     match sqlx::query(only_own_schema_query!(
         "mobile",
-        "DELETE FROM mobile.oa_meetings WHERE id = $1"
+        "DELETE FROM mobile.oa_meetings WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter(&claims))
     .execute(&pool)
     .await
     {
@@ -346,14 +367,16 @@ pub async fn delete_meeting(State(pool): State<PgPool>, Path(id): Path<Uuid>) ->
     tag = "meetings"
 )]
 pub async fn join_meeting(
+    Extension(claims): Extension<Claims>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<OaMeeting> {
     match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
-        "UPDATE mobile.oa_meetings SET status = 'in_progress', updated_at = NOW() WHERE id = $1 RETURNING *"
+        "UPDATE mobile.oa_meetings SET status = 'in_progress', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING *"
     ))
     .bind(id)
+    .bind(tenant_filter(&claims))
     .fetch_optional(&pool)
     .await
     {
@@ -377,14 +400,16 @@ pub async fn join_meeting(
     tag = "meetings"
 )]
 pub async fn leave_meeting(
+    Extension(claims): Extension<Claims>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<OaMeeting> {
     match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
-        "UPDATE mobile.oa_meetings SET status = 'completed', updated_at = NOW() WHERE id = $1 RETURNING *"
+        "UPDATE mobile.oa_meetings SET status = 'completed', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING *"
     ))
     .bind(id)
+    .bind(tenant_filter(&claims))
     .fetch_optional(&pool)
     .await
     {
@@ -717,6 +742,7 @@ pub async fn create_calendar_event(
     tag = "calendar"
 )]
 pub async fn update_calendar_event(
+    Extension(claims): Extension<Claims>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
@@ -732,13 +758,14 @@ pub async fn update_calendar_event(
     match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_calendar_events SET title = COALESCE($1, title), description = COALESCE($2, description), \
-         location = COALESCE($3, location), color = COALESCE($4, color), updated_at = NOW() WHERE id = $5 RETURNING *"
+         location = COALESCE($3, location), color = COALESCE($4, color), updated_at = NOW() WHERE id = $5 AND ($6::uuid IS NULL OR tenant_id = $6::uuid) RETURNING *"
     ))
     .bind(title)
     .bind(description)
     .bind(location)
     .bind(color)
     .bind(id)
+    .bind(tenant_filter(&claims))
     .fetch_optional(&pool)
     .await
     {
@@ -749,14 +776,16 @@ pub async fn update_calendar_event(
 }
 
 pub async fn delete_calendar_event(
+    Extension(claims): Extension<Claims>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
     match sqlx::query(only_own_schema_query!(
         "mobile",
-        "DELETE FROM mobile.oa_calendar_events WHERE id = $1"
+        "DELETE FROM mobile.oa_calendar_events WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter(&claims))
     .execute(&pool)
     .await
     {
@@ -832,12 +861,17 @@ pub async fn list_oa_tasks(
     ),
     tag = "tasks"
 )]
-pub async fn get_oa_task(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> ApiResponse<OaTask> {
+pub async fn get_oa_task(
+    Extension(claims): Extension<Claims>,
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<OaTask> {
     match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
-        "SELECT * FROM mobile.oa_tasks WHERE id = $1"
+        "SELECT * FROM mobile.oa_tasks WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter(&claims))
     .fetch_optional(&pool)
     .await
     {
@@ -885,6 +919,7 @@ pub async fn create_oa_task(
 }
 
 pub async fn update_oa_task(
+    Extension(claims): Extension<Claims>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
@@ -904,7 +939,7 @@ pub async fn update_oa_task(
         "mobile",
         "UPDATE mobile.oa_tasks SET title = COALESCE($1, title), description = COALESCE($2, description), \
          status = COALESCE($3, status), priority = COALESCE($4, priority), assignee = COALESCE($5, assignee), \
-         updated_at = NOW() WHERE id = $6 RETURNING *"
+         updated_at = NOW() WHERE id = $6 AND ($7::uuid IS NULL OR tenant_id = $7::uuid) RETURNING *"
     ))
     .bind(title)
     .bind(description)
@@ -912,6 +947,7 @@ pub async fn update_oa_task(
     .bind(priority)
     .bind(assignee)
     .bind(id)
+    .bind(tenant_filter(&claims))
     .fetch_optional(&pool)
     .await
     {
@@ -921,12 +957,17 @@ pub async fn update_oa_task(
     }
 }
 
-pub async fn delete_oa_task(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> ApiResponse<()> {
+pub async fn delete_oa_task(
+    Extension(claims): Extension<Claims>,
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> ApiResponse<()> {
     match sqlx::query(only_own_schema_query!(
         "mobile",
-        "DELETE FROM mobile.oa_tasks WHERE id = $1"
+        "DELETE FROM mobile.oa_tasks WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter(&claims))
     .execute(&pool)
     .await
     {
@@ -950,14 +991,16 @@ pub async fn delete_oa_task(State(pool): State<PgPool>, Path(id): Path<Uuid>) ->
     tag = "tasks"
 )]
 pub async fn complete_oa_task(
+    Extension(claims): Extension<Claims>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<OaTask> {
     match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
-        "UPDATE mobile.oa_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING *"
+        "UPDATE mobile.oa_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING *"
     ))
     .bind(id)
+    .bind(tenant_filter(&claims))
     .fetch_optional(&pool)
     .await
     {
@@ -1032,14 +1075,16 @@ pub async fn list_announcements(
     tag = "announcements"
 )]
 pub async fn get_announcement(
+    Extension(claims): Extension<Claims>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<OaAnnouncement> {
     match sqlx::query_as::<_, OaAnnouncement>(only_own_schema_query!(
         "mobile",
-        "SELECT * FROM mobile.oa_announcements WHERE id = $1"
+        "SELECT * FROM mobile.oa_announcements WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter(&claims))
     .fetch_optional(&pool)
     .await
     {

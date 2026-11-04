@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Json, State},
+    extract::{Extension, Json, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
@@ -10,8 +10,19 @@ use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
-use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::auth::{AuthState, Claims};
 use topems_shared_core::response::ApiResponse;
+
+fn tenant_filter(claims: &Claims) -> Option<Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OfflineSyncRequest {
@@ -81,6 +92,7 @@ impl OfflineSyncRecord {
 )]
 pub async fn sync_offline_data(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Json(payload): Json<OfflineSyncRequest>,
@@ -115,7 +127,7 @@ pub async fn sync_offline_data(
         .bind("pending")
         .bind(0)
         .bind(0)
-        .bind(Uuid::nil())
+        .bind(tenant_filter(&claims))
         .execute(&pool)
         .await
     {
@@ -166,6 +178,7 @@ pub async fn sync_offline_data(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn get_offline_status(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
 ) -> impl IntoResponse {
@@ -189,8 +202,9 @@ pub async fn get_offline_status(
         }
     };
 
-    let last_sync = match sqlx::query(only_own_schema_query!("mobile", "SELECT completed_at FROM mobile.offline_sync_records WHERE user_id = $1 AND status = 'completed' ORDER BY completed_at DESC LIMIT 1"))
+    let last_sync = match sqlx::query(only_own_schema_query!("mobile", "SELECT completed_at FROM mobile.offline_sync_records WHERE user_id = $1 AND status = 'completed' AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY completed_at DESC LIMIT 1"))
         .bind(user_id)
+        .bind(tenant_filter(&claims))
         .fetch_optional(&pool)
         .await
     {
@@ -203,9 +217,10 @@ pub async fn get_offline_status(
     };
 
     let pending_count = match sqlx::query(
-        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM mobile.offline_sync_records WHERE user_id = $1 AND status = 'pending'"),
+        only_own_schema_query!("mobile", "SELECT COUNT(*) FROM mobile.offline_sync_records WHERE user_id = $1 AND status = 'pending' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"),
     )
     .bind(user_id)
+    .bind(tenant_filter(&claims))
     .fetch_one(&pool)
     .await
     {

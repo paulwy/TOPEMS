@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Json, State},
+    extract::{Extension, Json, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
@@ -10,8 +10,19 @@ use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
-use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::auth::{AuthState, Claims};
 use topems_shared_core::response::ApiResponse;
+
+fn tenant_filter(claims: &Claims) -> Option<Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Shortcut {
@@ -65,6 +76,7 @@ pub struct CreateShortcutRequest {
 )]
 pub async fn get_shortcuts(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
 ) -> impl IntoResponse {
@@ -90,9 +102,10 @@ pub async fn get_shortcuts(
 
     let shortcuts: Vec<Shortcut> = match sqlx::query_as::<_, Shortcut>(
         only_own_schema_query!("mobile", "SELECT id, user_id, name, icon, action_type, action_params, sort_order, is_active, created_at, updated_at 
-         FROM mobile.shortcuts WHERE user_id = $1 AND is_active = true ORDER BY sort_order ASC")
+         FROM mobile.shortcuts WHERE user_id = $1 AND is_active = true AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY sort_order ASC")
     )
     .bind(user_id_uuid)
+    .bind(tenant_filter(&claims))
     .fetch_all(&pool)
     .await
     {
@@ -111,6 +124,7 @@ pub async fn get_shortcuts(
 
 pub async fn create_shortcut(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Json(payload): Json<CreateShortcutRequest>,
@@ -143,9 +157,10 @@ pub async fn create_shortcut(
                 next_order: Option<i32>,
             }
             match sqlx::query_as::<_, NextOrder>(
-                only_own_schema_query!("mobile", "SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM mobile.shortcuts WHERE user_id = $1")
+                only_own_schema_query!("mobile", "SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM mobile.shortcuts WHERE user_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)")
             )
             .bind(user_id_uuid)
+            .bind(tenant_filter(&claims))
             .fetch_one(&pool)
             .await
             {
@@ -168,7 +183,7 @@ pub async fn create_shortcut(
         .bind(&payload.action_params)
         .bind(sort_order)
         .bind(true)
-        .bind(Uuid::nil())
+        .bind(tenant_filter(&claims))
         .execute(&pool)
         .await
     {
@@ -178,9 +193,10 @@ pub async fn create_shortcut(
 
     let shortcut = match sqlx::query_as::<_, Shortcut>(
         only_own_schema_query!("mobile", "SELECT id, user_id, name, icon, action_type, action_params, sort_order, is_active, created_at, updated_at 
-         FROM mobile.shortcuts WHERE id = $1")
+         FROM mobile.shortcuts WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)")
     )
     .bind(shortcut_id)
+    .bind(tenant_filter(&claims))
     .fetch_one(&pool)
     .await
     {

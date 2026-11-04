@@ -4,14 +4,26 @@
 //! 与既有的 offline_sync 模块互补：offline_sync 负责通用数据同步策略，
 //! 本模块负责离线操作记录的 CRUD（上传、查询、标记完成、清理）。
 
-use axum::extract::{Json, State};
+use axum::extract::{Extension, Json, State};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+
+fn tenant_filter(claims: &Claims) -> Option<Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    }
+}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct MobileSyncRequest {
@@ -203,14 +215,18 @@ pub async fn mark_synced(
     responses((status = 200, description = "clear_synced OK")),
     tag = "offline_records"
 )]
-pub async fn clear_synced(State(pool): State<PgPool>) -> ApiResponse<()> {
+pub async fn clear_synced(
+    Extension(claims): Extension<Claims>,
+    State(pool): State<PgPool>,
+) -> ApiResponse<()> {
     match sqlx::query(only_own_schema_query!(
         "mobile",
         r#"
         DELETE FROM mobile.core_mobile_offline_records
-        WHERE status = 'synced'
+        WHERE status = 'synced' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
         "#
     ))
+    .bind(tenant_filter(&claims))
     .execute(&pool)
     .await
     {

@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Json, Path, Query, State},
+    extract::{Extension, Json, Path, Query, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
@@ -11,8 +11,19 @@ use uuid::Uuid;
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
 use crate::db::repository::*;
 use crate::models::{CreatePushDevice, CreatePushNotification, PushNotification};
-use topems_shared_auth::auth::{verify_jwt_token, AuthState};
+use topems_shared_auth::auth::{verify_jwt_token, AuthState, Claims};
 use topems_shared_core::response::ApiResponse;
+
+fn tenant_filter(claims: &Claims) -> Option<Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PushStats {
@@ -395,6 +406,7 @@ pub async fn send_broadcast(
 
 pub async fn get_notification_list(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Query(params): Query<NotificationListQuery>,
@@ -426,8 +438,9 @@ pub async fn get_notification_list(
 
     let total = match sqlx::query_scalar(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) FROM mobile.push_notifications"
+        "SELECT COUNT(*) FROM mobile.push_notifications WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
+    .bind(tenant_filter(&claims))
     .fetch_one(&pool)
     .await
     {
@@ -462,6 +475,7 @@ pub struct NotificationListQuery {
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_notification_stats(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
 ) -> impl IntoResponse {
@@ -469,8 +483,9 @@ pub async fn get_notification_stats(
 
     let total_sent: i64 = match sqlx::query_scalar(only_own_schema_query!(
         "mobile",
-        "SELECT COALESCE(SUM(sent_count), 0) FROM mobile.push_notifications WHERE status = 'sent'"
+        "SELECT COALESCE(SUM(sent_count), 0) FROM mobile.push_notifications WHERE status = 'sent' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
+    .bind(tenant_filter(&claims))
     .fetch_one(&pool)
     .await
     {
@@ -479,8 +494,9 @@ pub async fn get_notification_stats(
     };
 
     let delivered_count: i64 = match sqlx::query_scalar(
-        only_own_schema_query!("mobile", "SELECT COALESCE(SUM(delivered_count), 0) FROM mobile.push_notifications WHERE status = 'sent'"),
+        only_own_schema_query!("mobile", "SELECT COALESCE(SUM(delivered_count), 0) FROM mobile.push_notifications WHERE status = 'sent' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"),
     )
+    .bind(tenant_filter(&claims))
     .fetch_one(&pool)
     .await
     {
@@ -489,8 +505,9 @@ pub async fn get_notification_stats(
     };
 
     let clicked_count: i64 = match sqlx::query_scalar(
-        only_own_schema_query!("mobile", "SELECT COALESCE(SUM(clicked_count), 0) FROM mobile.push_notifications WHERE status = 'sent'"),
+        only_own_schema_query!("mobile", "SELECT COALESCE(SUM(clicked_count), 0) FROM mobile.push_notifications WHERE status = 'sent' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"),
     )
+    .bind(tenant_filter(&claims))
     .fetch_one(&pool)
     .await
     {

@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Json, Multipart, Path, Query, State},
+    extract::{Extension, Json, Multipart, Path, Query, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
@@ -12,8 +12,19 @@ use super::auth_utils::extract_user_id_from_token;
 use crate::db::repository::*;
 use crate::models::{CreatePhotoUpload, PhotoUpload};
 use sqlx::Row;
-use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::auth::{AuthState, Claims};
 use topems_shared_core::response::ApiResponse;
+
+fn tenant_filter(claims: &Claims) -> Option<Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PhotoUploadRequest {
@@ -508,6 +519,7 @@ pub async fn get_photo_by_id(
 )]
 pub async fn get_upload_progress(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -516,9 +528,10 @@ pub async fn get_upload_progress(
 
     let row = match sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT upload_progress, upload_status, file_path FROM mobile.photo_uploads WHERE id = $1"
+        "SELECT upload_progress, upload_status, file_path FROM mobile.photo_uploads WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter(&claims))
     .fetch_optional(&pool)
     .await
     {
@@ -553,6 +566,7 @@ pub async fn get_upload_progress(
 
 pub async fn delete_photo(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -579,10 +593,11 @@ pub async fn delete_photo(
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "DELETE FROM mobile.photo_uploads WHERE id = $1 AND user_id = $2"
+        "DELETE FROM mobile.photo_uploads WHERE id = $1 AND user_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"
     ))
     .bind(id)
     .bind(user_id)
+    .bind(tenant_filter(&claims))
     .execute(&pool)
     .await;
 

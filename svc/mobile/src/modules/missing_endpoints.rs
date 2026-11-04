@@ -9,7 +9,7 @@
 #![allow(dead_code)]
 
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
     Json,
@@ -19,8 +19,19 @@ use sqlx::{Pool, Postgres, Row};
 use uuid::Uuid;
 
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
-use topems_shared_auth::auth::verify_jwt_token;
+use topems_shared_auth::auth::{verify_jwt_token, Claims};
 use topems_shared_core::response::ApiResponse;
+
+fn tenant_filter(claims: &Claims) -> Option<Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    }
+}
 
 #[utoipa::path(
     get,
@@ -34,6 +45,7 @@ use topems_shared_core::response::ApiResponse;
 )]
 pub async fn list_inspection_tasks(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<topems_shared::AuthState>,
     State(pool): State<Pool<Postgres>>,
 ) -> impl IntoResponse {
@@ -41,9 +53,10 @@ pub async fn list_inspection_tasks(
     let rows = match sqlx::query(
         r#"SELECT id, title, description, patrol_type, status, checked_by::text AS checked_by, checked_at, created_at
            FROM mobile.patrol_records
-           WHERE deleted_at IS NULL
+           WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
            ORDER BY created_at DESC"#,
     )
+    .bind(tenant_filter(&claims))
     .fetch_all(&pool)
     .await
     {
@@ -89,17 +102,19 @@ pub async fn list_inspection_tasks(
 )]
 pub async fn get_usage_stats(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<topems_shared::AuthState>,
     State(pool): State<Pool<Postgres>>,
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
     let stats = sqlx::query(
         r#"SELECT
-             (SELECT COUNT(*) FROM mobile.mobile_tasks WHERE deleted_at IS NULL) AS task_count,
+             (SELECT COUNT(*) FROM mobile.mobile_tasks WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1::uuid)) AS task_count,
              (SELECT COUNT(*) FROM mobile.mobile_attendance) AS attendance_count,
-             (SELECT COUNT(*) FROM mobile.patrol_records WHERE deleted_at IS NULL) AS patrol_count,
-             (SELECT COUNT(*) FROM mobile.push_notifications) AS notification_count"#,
+             (SELECT COUNT(*) FROM mobile.patrol_records WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1::uuid)) AS patrol_count,
+             (SELECT COUNT(*) FROM mobile.push_notifications WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)) AS notification_count"#,
     )
+    .bind(tenant_filter(&claims))
     .fetch_one(&pool)
     .await;
     let v = match stats {
@@ -156,12 +171,16 @@ pub async fn get_user_settings(
 )]
 pub async fn get_push_config(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<topems_shared::AuthState>,
     State(pool): State<Pool<Postgres>>,
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
-    let row = sqlx::query(r#"SELECT channel_config FROM mobile.push_config LIMIT 1"#)
-        .fetch_optional(&pool)
+    let row = sqlx::query(
+        r#"SELECT channel_config FROM mobile.push_config WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid) LIMIT 1"#,
+    )
+    .bind(tenant_filter(&claims))
+    .fetch_optional(&pool)
         .await;
     let v = match row {
         Ok(Some(r)) => r.get::<Value, _>("channel_config"),
