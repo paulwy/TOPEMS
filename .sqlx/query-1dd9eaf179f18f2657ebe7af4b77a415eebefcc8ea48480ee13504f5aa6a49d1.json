@@ -6,52 +6,112 @@
       {
         "ordinal": 0,
         "name": "id",
-        "type_info": "Uuid"
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "analytics_drilldown_history",
+            "name": "id"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "user_id",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "analytics_drilldown_history",
+            "name": "user_id"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "path_id",
-        "type_info": "Uuid"
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "analytics_drilldown_history",
+            "name": "path_id"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "action",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "analytics_drilldown_history",
+            "name": "action"
+          }
+        }
       },
       {
         "ordinal": 4,
         "name": "from_level",
-        "type_info": "Int4"
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "analytics_drilldown_history",
+            "name": "from_level"
+          }
+        }
       },
       {
         "ordinal": 5,
         "name": "to_level",
-        "type_info": "Int4"
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "analytics_drilldown_history",
+            "name": "to_level"
+          }
+        }
       },
       {
         "ordinal": 6,
         "name": "drill_dimension",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "analytics_drilldown_history",
+            "name": "drill_dimension"
+          }
+        }
       },
       {
         "ordinal": 7,
         "name": "drill_value",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "analytics_drilldown_history",
+            "name": "drill_value"
+          }
+        }
       },
       {
         "ordinal": 8,
         "name": "filters",
-        "type_info": "Jsonb"
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "analytics_drilldown_history",
+            "name": "filters"
+          }
+        }
       },
       {
         "ordinal": 9,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "analytics_drilldown_history",
+            "name": "created_at"
+          }
+        }
       }
     ],
     "parameters": {

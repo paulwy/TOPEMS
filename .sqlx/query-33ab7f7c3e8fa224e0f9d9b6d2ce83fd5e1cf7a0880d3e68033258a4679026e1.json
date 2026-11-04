@@ -6,107 +6,228 @@
       {
         "ordinal": 0,
         "name": "credit_limit",
-        "type_info": "Numeric"
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "credit_limit"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "credit_used",
-        "type_info": "Numeric"
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "credit_used"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "credit_available",
-        "type_info": "Numeric"
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "credit_available"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "credit_term_days",
-        "type_info": "Int4"
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "credit_term_days"
+          }
+        }
       },
       {
         "ordinal": 4,
         "name": "receivable_balance",
-        "type_info": "Numeric"
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "receivable_balance"
+          }
+        }
       },
       {
         "ordinal": 5,
         "name": "accounts_receivable",
-        "type_info": "Numeric"
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "accounts_receivable"
+          }
+        }
       },
       {
         "ordinal": 6,
         "name": "overdue_amount",
-        "type_info": "Numeric"
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "overdue_amount"
+          }
+        }
       },
       {
         "ordinal": 7,
         "name": "overdue_receivable",
-        "type_info": "Numeric"
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "overdue_receivable"
+          }
+        }
       },
       {
         "ordinal": 8,
         "name": "avg_collection_days",
-        "type_info": "Int4"
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "avg_collection_days"
+          }
+        }
       },
       {
         "ordinal": 9,
         "name": "total_sales",
-        "type_info": "Numeric"
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "total_sales"
+          }
+        }
       },
       {
         "ordinal": 10,
         "name": "total_received",
-        "type_info": "Numeric"
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "total_received"
+          }
+        }
       },
       {
         "ordinal": 11,
         "name": "last_transaction_date",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "last_transaction_date"
+          }
+        }
       },
       {
         "ordinal": 12,
         "name": "payment_terms",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "payment_terms"
+          }
+        }
       },
       {
         "ordinal": 13,
         "name": "risklevel",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "risklevel"
+          }
+        }
       },
       {
         "ordinal": 14,
         "name": "status",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "status"
+          }
+        }
       },
       {
         "ordinal": 15,
         "name": "bank_name",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "bank_name"
+          }
+        }
       },
       {
         "ordinal": 16,
         "name": "bank_account",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "bank_account"
+          }
+        }
       },
       {
         "ordinal": 17,
         "name": "account_name",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "account_name"
+          }
+        }
       },
       {
         "ordinal": 18,
         "name": "tax_number",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "tax_number"
+          }
+        }
       },
       {
         "ordinal": 19,
         "name": "customer_name",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "customer_finance",
+            "name": "customer_name"
+          }
+        }
       },
       {
         "ordinal": 20,
         "name": "resolved_name",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": "Expression"
       }
     ],
     "parameters": {

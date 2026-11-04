@@ -1,4 +1,16 @@
 
+## sqlx 宏查询缓存基线校准（2026-11-05）✅（3 个 package 待代码修复）
+
+> 对象：`cargo sqlx prepare` 被 schema drift 阻塞；目标是把"缓存新鲜度"变成可重复动作。
+
+- **直接根因**：prepare 只用单连接 search_path；本地默认 `mes, public` 将 analytics 未限定表名解析到 `public` 影子表（nullable），与运行时 `analytics,shared,public`（NOT NULL）冲突 → 75 个 `Option<DateTime<Utc>>` 错误。
+- **路径 B 否决**：scratch 空库重放 3 处硬错误（`vector` 需超级用户、`20260827000002` `organization_id` 列缺失、`20260831190000` 关系重名）。
+- **采用 A 变体**：不修整库，按运行时 search_path 分 package prepare + prod 只读基线；36/39 成功；`topems-mes`(93)、`topems-unified-core`(6)、`topems-server`(13) 因代码与 prod 列类型不符仍失败，缓存条目保留不删。
+- **`.sqlx`**：295→295，107 变更 / 0 新增 / 0 删除；101 条仅新增 `origin`，6 条真实类型变化（9 列 Float8→Numeric、2 列 Varchar→Text）。
+- **固化**：[sqlx-search-path.map](scripts/db/sqlx-search-path.map) + [sqlx-prepare.sh](scripts/dev/sqlx-prepare.sh)（`SQLX_PREPARE_DB_URL`、逐 package search_path、失败子目录清理）。
+- **文档**：[sqlx-cache-baseline-2026-11-05.md](docs/quality/sqlx-cache-baseline-2026-11-05.md)。
+- **后续**：mes/unified-core/server 需单独代码契约修复；`wms.stock_take.rs` `try_get::<f64>` 对 prod numeric 属动态解码风险。
+
 ## db 类型 ↔ Rust 解码契约审计 + rfm 两列收敛（2026-11-05）✅
 
 > 承接 `crm.rfm_results.monetary / rfm_score`（prod numeric vs test double）与全仓"DB 类型与 Rust 解码类型不匹配"扫描。

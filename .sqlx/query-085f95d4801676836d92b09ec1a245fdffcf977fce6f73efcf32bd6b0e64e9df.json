@@ -6,27 +6,57 @@
       {
         "ordinal": 0,
         "name": "name",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "analytics_dashboards",
+            "name": "name"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "description",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "analytics_dashboards",
+            "name": "description"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "layout",
-        "type_info": "Jsonb"
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "analytics_dashboards",
+            "name": "layout"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "owner_id",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "analytics_dashboards",
+            "name": "owner_id"
+          }
+        }
       },
       {
         "ordinal": 4,
         "name": "is_public",
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "analytics_dashboards",
+            "name": "is_public"
+          }
+        }
       }
     ],
     "parameters": {
