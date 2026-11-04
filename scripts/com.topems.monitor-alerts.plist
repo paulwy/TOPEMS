@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  TOPEMS 监控告警 launchd 配置（P3）
+  每 5 分钟执行一次健康检查 + 磁盘告警
+
+  安装：
+    cp scripts/com.topems.monitor-alerts.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.topems.monitor-alerts.plist
+    # 或手动触发验证：
+    launchctl start com.topems.monitor-alerts
+
+  卸载：
+    launchctl unload ~/Library/LaunchAgents/com.topems.monitor-alerts.plist
+    rm ~/Library/LaunchAgents/com.topems.monitor-alerts.plist
+
+  手动运行（调试）：
+    ./scripts/monitor-alerts.sh
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.topems.monitor-alerts</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/xingzhai/topems/scripts/monitor-alerts.sh</string>
+    </array>
+
+    <!-- 每 5 分钟跑一次 -->
+    <key>StartInterval</key>
+    <integer>300</integer>
+
+    <!-- 运行目录 -->
+    <key>WorkingDirectory</key>
+    <string>/Users/xingzhai/topems</string>
+
+    <!-- 超时 30s 防止卡死 -->
+    <key>TimeOut</key>
+    <integer>30</integer>
+
+    <!-- 标准输出/错误日志 -->
+    <key>StandardOutPath</key>
+    <string>/Users/xingzhai/topems/logs/monitor-alerts.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/xingzhai/topems/logs/monitor-alerts.err.log</string>
+
+    <!-- 环境变量（覆盖脚本默认值）-->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>ALERT_LOG</key>
+        <string>/Users/xingzhai/topems/logs/alerts.log</string>
+    </dict>
+
+    <!-- 跳过 macOS 睡眠期间的执行，醒来后立即补跑 -->
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

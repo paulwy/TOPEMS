@@ -1,5 +1,5 @@
 
-## 生产部署 seed 体系完善（2026-11-04）✅（P0/P1 完成，P2-P3 挂账）
+## 生产部署 seed 体系完善（2026-11-04）✅（P0/P1/P2/P3 全部完成）
 
 > 生产机首次部署后发现：角色/权限为空、部门/岗位无标准数据。已建立 seed 文件体系并接入部署脚本。
 
@@ -28,20 +28,20 @@
 
 **命名规范：** name=中文（默认语言），name_en=英文（多语言对照），code=英文编码（稳定不变）。
 
-**挂账（P3）：**
+**已完成（P2 运维 + P3 监控）：**
 
-| 优先级 | 项 | 说明 |
+| 优先级 | 产物 | 内容 |
 |---|---|---|
-| P3 | 监控告警 | 服务挂了自动重启、磁盘空间告警 |
+| P2 | `scripts/backup-db.sh` | 每日数据库备份脚本（pg_dump + gzip，保留 7 天） |
+| P2 | `scripts/com.topems.backup-db.plist` | launchd 配置（每天凌晨 3:00 自动执行） |
+| P2 | `scripts/rotate-logs.sh` | 日志轮转脚本（>50MB gzip 归档，保留 7 个归档） |
+| P2 | `scripts/com.topems.log-rotate.plist` | launchd 配置（每天凌晨 3:30 自动执行） |
+| P3 | `scripts/monitor-alerts.sh` | 健康检查（28 服务批量 curl /health 端点）+ 磁盘空间告警（阈值 90%）+ 告警日志 + 可选 webhook |
+| P3 | `scripts/com.topems.monitor-alerts.plist` | launchd 配置（每 5 分钟执行一次） |
+| — | deploy/systemd/*.service | 已配置 `Restart=on-failure` + `RestartSec=5`，**服务自动重启由 systemd 覆盖**，监控脚本聚焦检测+告警 |
 
-**已完成（P2 运维）：**
+**告警渠道：** 必选写 ALERT_LOG + 可选 ALERT_WEBHOOK_URL（飞书/钉钉 webhook）。
 
-| 产物 | 内容 |
-|---|---|
-| `scripts/backup-db.sh` | 每日数据库备份脚本（pg_dump + gzip，保留 7 天） |
-| `scripts/com.topems.backup-db.plist` | launchd 配置（每天凌晨 3:00 自动执行） |
-| `scripts/rotate-logs.sh` | 日志轮转脚本（>50MB gzip 归档，保留 7 个归档） |
-| `scripts/com.topems.log-rotate.plist` | launchd 配置（每天凌晨 3:30 自动执行） |
 | 部署手册第 5 章 | 运维与备份（备份策略、日志轮转、日志位置、常用运维命令） |
 
 

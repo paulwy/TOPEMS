@@ -43,6 +43,7 @@ rotate() {
   fi
 
   # 清理旧归档（保留最近 KEEP_ARCHIVES 个）
+  # shellcheck disable=SC2012
   ls -1t "${file}".*.gz 2>/dev/null | tail -n +$((KEEP_ARCHIVES + 1)) | xargs -r rm -f
 }
 
@@ -52,5 +53,6 @@ rotate "$LOG_DIR/server.log"
 rotate "$LOG_DIR/server.err.log"
 
 # ── 汇总 ──
+# shellcheck disable=SC2012
 TOTAL=$(ls -1 "$LOG_DIR"/*.gz 2>/dev/null | wc -l | tr -d ' ')
 echo "[$(date)] 日志轮转完成，当前归档 $TOTAL 个"
