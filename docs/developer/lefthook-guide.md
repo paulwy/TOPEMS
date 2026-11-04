@@ -154,11 +154,11 @@ npx lefthook run pre-commit --command <gate-name> --force
 | 属性 | 值 |
 |---|---|
 | **触发文件** | `.(rs\|ts\|tsx)$` + permissions.ts + modules/*/config.ts + navigation/ + routes/v2.tsx |
-| **执行命令** | `node scripts/ci/perm-matrix-toolkit.cjs ci-report --dry-run` |
+| **执行命令** | `node scripts/ci/perm-matrix-toolkit.cjs ci-report` |
 | **脚本** | [scripts/ci/perm-matrix-toolkit.cjs](../../scripts/ci/perm-matrix-toolkit.cjs) |
 | **tags** | `permission security` |
 
-**作用**: 权限矩阵三方对齐检查（dry-run 模式，不阻止提交）：
+**作用**: 权限矩阵三方对齐检查（STRICT 模式，R1/R4/R5/R6 阻断提交）：
 - **R1 (FAIL)**: 后端 lib.rs 缺少 `pub mod permission;`
 - **R2 (WARN)**: 服务缺少路由级权限守卫中间件
 - **R3 (WARN)**: admin-only 端点缺少显式 gate 注解
@@ -166,7 +166,7 @@ npx lefthook run pre-commit --command <gate-name> --force
 - **R5 (FAIL)**: utoipa path 缺少 security()/permission() 属性
 - **R6 (FAIL)**: handler 函数体使用 `PERM_SCOPE "*"` 通配符
 
-**失败行为**: dry-run 模式仅报告，不 exit 1。R1/R4/R5/R6 违规时输出详情。
+**失败行为**: STRICT 模式在 R1/R4/R5/R6 任一命中时 exit 1；R2/R3/R7 仅 WARN 报告，不阻断。需要人工查看时可用 `--dry-run` 手动执行，钩子本身不再使用 dry-run。
 
 ---
 

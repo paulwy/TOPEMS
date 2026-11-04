@@ -20,7 +20,7 @@ export interface LoginResponse {
  * Attempts to authenticate against the IAM service and returns a bearer token.
  *
  * Tries the new `/api/core/iam/auth/login` path first, then falls back to the
- * legacy `/api/v1/iam/auth/login` path. If `TEST_TOKEN` is provided in the
+ * embedded `/api/iam/auth/login` mount. If `TEST_TOKEN` is provided in the
  * environment it is returned immediately (useful for CI or local mocking).
  */
 export async function getAuthToken(

@@ -24,6 +24,7 @@ pub struct PlanInfo {
     get,
     path = "/subscriptions/plans",
     tag = "Subscription",
+    security(("BearerAuth" = [])),
     responses(
         (status = 200, description = "列出全部订阅计划及模块覆盖")
     )

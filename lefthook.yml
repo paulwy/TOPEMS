@@ -71,14 +71,14 @@ pre-commit:
         [ -z "$STAGED" ] && exit 0
         python3 scripts/dev/contract-gate.py
 
-    # [Gate G] Permission matrix 3-way gate (dry-run)
+    # [Gate G] Permission matrix 3-way gate (blocking: R1/R4/R5/R6)
     perm-matrix:
       tags: permission security
       run: |
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|ts|tsx)$' || true)
         [ -z "$STAGED" ] && exit 0
         if [ -f "scripts/ci/perm-matrix-toolkit.cjs" ]; then
-          node scripts/ci/perm-matrix-toolkit.cjs ci-report --dry-run
+          node scripts/ci/perm-matrix-toolkit.cjs ci-report
         fi
 
     # [Gate M] Axum Layer Order Gate (dry-run)
