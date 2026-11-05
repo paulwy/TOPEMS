@@ -1816,7 +1816,11 @@ pub async fn get_security_settings() -> Json<serde_json::Value> {
     }))
 }
 
-fn verify_password(password: &str, password_hash: &str) -> bool {
+/// 密码校验（登录 / 初始管理员工具共用同一实现）
+///
+/// 对外公开以便 `topems-admin-pass` 在生成哈希后做正向自校验，
+/// 保证「供给写入的哈希」与「登录校验」使用同一函数，而非另写一套 bcrypt 调用。
+pub fn verify_password(password: &str, password_hash: &str) -> bool {
     match bcrypt::verify(password, password_hash) {
         Ok(result) => result,
         Err(e) => {

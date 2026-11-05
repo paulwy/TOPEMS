@@ -55,6 +55,10 @@ bytes.workspace = true
 [[bin]]
 name = "topems-unified-core"
 path = "src/main.rs"
+
+[[bin]]
+name = "topems-admin-pass"
+path = "src/bin/admin_pass.rs"
 [lints.rust]
 unknown_lints = "allow"
 renamed_and_removed_lints = "allow"
