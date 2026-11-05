@@ -3,6 +3,7 @@ use axum::{
     routing::get,
     Json, Router,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_core::response::ApiResponse;
@@ -24,8 +25,10 @@ pub struct ProjectTypeConfig {
     pub default_milestones: Option<String>,
     pub default_workflow: Option<Uuid>,
     pub is_active: bool,
-    pub created_at: String,
-    pub updated_at: String,
+    #[serde(deserialize_with = "topems_shared_db::datetime_text::deserialize")]
+    pub created_at: DateTime<Utc>,
+    #[serde(deserialize_with = "topems_shared_db::datetime_text::deserialize")]
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -99,7 +102,7 @@ async fn list_types(
         r#"
         SELECT id, type_code, type_name, name_en, description,
                default_phases::text, default_milestones::text, default_workflow,
-               is_active, created_at::text, updated_at::text
+               is_active, created_at, updated_at
         FROM pm.project_type_configs
         WHERE deleted_at IS NULL
           AND ($1::text IS NULL OR type_code ILIKE $1 OR type_name ILIKE $1 OR COALESCE(name_en, '') ILIKE $1)
@@ -164,7 +167,7 @@ async fn create_type(
             ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, {TENANT_SQL})
         RETURNING id, type_code, type_name, name_en, description,
                   default_phases::text, default_milestones::text, default_workflow,
-                  is_active, created_at::text, updated_at::text
+                  is_active, created_at, updated_at
         "#,
         TENANT_SQL = TENANT_SQL,
     );
@@ -216,7 +219,7 @@ async fn get_type(
         r#"
         SELECT id, type_code, type_name, name_en, description,
                default_phases::text, default_milestones::text, default_workflow,
-               is_active, created_at::text, updated_at::text
+               is_active, created_at, updated_at
         FROM pm.project_type_configs
         WHERE id = $1 AND deleted_at IS NULL
         "#,
@@ -260,7 +263,7 @@ async fn update_type(
         WHERE id = $1 AND deleted_at IS NULL
         RETURNING id, type_code, type_name, name_en, description,
                   default_phases::text, default_milestones::text, default_workflow,
-                  is_active, created_at::text, updated_at::text
+                  is_active, created_at, updated_at
         "#,
     )
     .bind(id)

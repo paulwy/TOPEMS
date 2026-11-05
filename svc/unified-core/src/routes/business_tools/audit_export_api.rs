@@ -156,7 +156,7 @@ fn entries_to_csv(entries: &[AuditLogEntry]) -> String {
             escape_csv_field(&entry.user_id),
             escape_csv_field(&entry.action.to_string()),
             escape_csv_field(&entry.changed_by),
-            escape_csv_field(&entry.changed_at),
+            escape_csv_field(&entry.changed_at.to_rfc3339()),
             escape_csv_field(&entry.ip_address.clone().unwrap_or_default()),
             escape_csv_field(&entry.user_agent.clone().unwrap_or_default()),
             escape_csv_field(&old_value),
@@ -434,7 +434,9 @@ mod tests {
             old_value: None,
             new_value: Some(serde_json::json!({"role": "admin"})),
             changed_by: "admin".to_string(),
-            changed_at: "2026-01-01T00:00:00Z".to_string(),
+            changed_at: chrono::DateTime::parse_from_rfc3339("2026-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
             ip_address: Some("127.0.0.1".to_string()),
             user_agent: Some("TestAgent".to_string()),
             metadata: HashMap::new(),
@@ -464,7 +466,9 @@ mod tests {
             old_value: None,
             new_value: None,
             changed_by: "admin".to_string(),
-            changed_at: "2026-01-01T00:00:00Z".to_string(),
+            changed_at: chrono::DateTime::parse_from_rfc3339("2026-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
             ip_address: None,
             user_agent: None,
             metadata: HashMap::new(),

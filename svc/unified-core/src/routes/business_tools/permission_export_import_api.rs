@@ -10,6 +10,7 @@ use axum::http::{header, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use axum::Router;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use topems_shared_core::error::TopemsError;
 
@@ -114,7 +115,7 @@ pub struct PermissionExportData {
     /// Export version.
     pub version: String,
     /// Export timestamp (RFC3339).
-    pub exported_at: String,
+    pub exported_at: DateTime<Utc>,
     /// Number of permissions.
     pub count: usize,
     /// Permission configurations.
@@ -310,7 +311,7 @@ pub async fn export_permissions(
 
     let export_data = PermissionExportData {
         version: "1.0".to_string(),
-        exported_at: chrono::Utc::now().to_rfc3339(),
+        exported_at: chrono::Utc::now(),
         count: export_items.len(),
         permissions: export_items.clone(),
     };
@@ -635,7 +636,9 @@ mod tests {
     fn test_permission_export_data_serialization() {
         let data = PermissionExportData {
             version: "1.0".to_string(),
-            exported_at: "2026-01-01T00:00:00Z".to_string(),
+            exported_at: DateTime::parse_from_rfc3339("2026-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&Utc),
             count: 1,
             permissions: vec![PermissionExportItem {
                 tenant_id: "t1".to_string(),

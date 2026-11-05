@@ -27,8 +27,8 @@ pub struct SyncRecord {
     pub payload: Option<serde_json::Value>,
     pub response: Option<serde_json::Value>,
     pub error_msg: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -83,16 +83,16 @@ pub async fn list_sync_records(
 
     let sql = match (query.sync_type.as_ref(), query.status.as_ref()) {
         (Some(_), Some(_)) => {
-            "SELECT id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND sync_type = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
+            "SELECT id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND sync_type = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"
         }
         (Some(_), None) => {
-            "SELECT id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND sync_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+            "SELECT id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND sync_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
         }
         (None, Some(_)) => {
-            "SELECT id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+            "SELECT id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
         }
         (None, None) => {
-            "SELECT id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+            "SELECT id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         }
     };
 
@@ -176,7 +176,7 @@ pub async fn get_sync_record(
     let _tenant_id = get_tenant_id(&claims, &headers);
 
     let row = sqlx::query(
-        only_own_schema_query!("qms", "SELECT id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qms.qa_qms_sync_records WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
+        only_own_schema_query!("qms", "SELECT id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM qms.qa_qms_sync_records WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
     )
     .bind(id)
     .bind(tenant_opt)
@@ -287,7 +287,7 @@ pub async fn retry_sync(
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let row = sqlx::query(
-        only_own_schema_query!("qms", "UPDATE qms.qa_qms_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
+        only_own_schema_query!("qms", "UPDATE qms.qa_qms_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at")
     )
     .bind(id)
     .bind(tenant_id)
