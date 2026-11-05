@@ -1844,6 +1844,13 @@
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.132 审计整改第九批：P4 tier 激活机制落地（批 11，2026-11-06）✅（DB 修复完成）
+
+- **真因修正**：批 8 判断"无 tier 列"不准确——`public.core_tenant_modules` 一直有 tier（default 'basic'），`mes` 副本才是旧 8 列结构。应用 `search_path=mes,public` 命中 mes → 500。批 10 删 mes 副本后根因已消除。
+- **落地**：`20261107000002_tenant_modules_tier_column.sql` 幂等补 iam 的 tier 列（public 为 no-op）；`06_iam_schema.sql:841` 建表定义同步加 tier，保证空库重建一致。BE 无需改代码（`BASIC_MODULE_CODES` 50 条 + `activate_basic_modules` + `TenantModule.tier` 早已实现）。
+- **验证**：三条 handler SQL（activate/deactivate/list）事务回滚实测全通过（tier='basic' 正确落位，无脏数据）。
+- **未落地（登记）**：① FE 菜单按激活状态过滤——`module_code` 是 `erp:/pm:` 功能级（50 条，仅两个前缀），FE 一级菜单是 35 个业务域 code，体系不匹配，强行按前缀过滤会只剩 erp/pm 两组，**会打挂应用**，不做；需先定 module_code→nav code 映射或改到业务域级。② tier 三级命名代码注释为 advanced/infrastructure，与拍板 basic/standard/enterprise 不一致，随上述体系一并统一。③ `core_tenant_modules` 0 行（703 租户无激活记录），按兜底放行当前行为不变。
+
 ## v1.131 审计整改第八批：P5 副本归一 + 立即清理（批 10，2026-11-06）✅
 
 > 用户拍板"一步到位"后执行：public 唯一权威、search_path 归一、归一验证通过后立即清理冗余副本。

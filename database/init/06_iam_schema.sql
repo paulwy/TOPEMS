@@ -847,6 +847,7 @@ CREATE TABLE IF NOT EXISTS iam.core_tenant_modules (
     activated_at timestamp with time zone DEFAULT now(),
     expires_at timestamp with time zone,
     deleted_at timestamp with time zone,
+    tier character varying(32) DEFAULT 'basic'::character varying NOT NULL,
     CONSTRAINT core_tenant_modules_pkey PRIMARY KEY (id),
     CONSTRAINT core_tenant_modules_tenant_id_module_code_key UNIQUE (tenant_id, module_code)
 );
