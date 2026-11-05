@@ -14,7 +14,7 @@ use axum::{
     Json, Router,
 };
 use serde_json::{json, Value};
-use sqlx::PgPool;
+use topems_shared_db::scope::Db;
 use topems_shared_mcp::jsonrpc::{JsonRpcError, JsonRpcRequest, JsonRpcResponse};
 use topems_shared_mcp::protocol::{McpCapability, McpProtocolVersion, McpTool};
 
@@ -27,8 +27,8 @@ const AUTH_HEADER: &str = "authorization";
 const SERVER_NAME: &str = "topems-search";
 const MAX_RESULTS: i64 = 50;
 
-/// MCP 路由（有状态：需 PgPool）
-pub fn mcp_routes() -> Router<PgPool> {
+/// MCP 路由（有状态：需 Db，模块侧无直接 PgPool 访问）
+pub fn mcp_routes() -> Router<Db> {
     Router::new().route("/mcp", post(handle_mcp))
 }
 
@@ -77,7 +77,7 @@ fn resp_value(resp: JsonRpcResponse) -> Value {
 
 /// POST /mcp —— 认证 + JSON-RPC 分派
 async fn handle_mcp(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     headers: HeaderMap,
     Json(req): Json<Value>,
 ) -> (StatusCode, Json<Value>) {
@@ -110,7 +110,7 @@ async fn handle_mcp(
     let resp = match rq.method.as_str() {
         "initialize" => handle_initialize(id),
         "tools/list" => handle_tools_list(id),
-        "tools/call" => handle_tools_call(&pool, id, rq.params).await,
+        "tools/call" => handle_tools_call(&db, id, rq.params).await,
         "ping" => JsonRpcResponse::success(id, json!({})),
         m => JsonRpcResponse::error(id, JsonRpcError::method_not_found(m)),
     };
@@ -202,7 +202,7 @@ fn text_result(inner: Value) -> Value {
 }
 
 /// tools/call：按工具名分发到 handlers 查询
-async fn handle_tools_call(pool: &PgPool, id: Value, params: Option<Value>) -> JsonRpcResponse {
+async fn handle_tools_call(db: &Db, id: Value, params: Option<Value>) -> JsonRpcResponse {
     let params = params.unwrap_or_else(|| json!({}));
     let tool = params
         .get("name")
@@ -233,19 +233,16 @@ async fn handle_tools_call(pool: &PgPool, id: Value, params: Option<Value>) -> J
                     .map(String::from)
                     .collect()
             });
-            let mut conn = match pool.acquire().await {
-                Ok(c) => c,
+            let mut scope = match db.scope_read().await {
+                Ok(s) => s,
                 Err(e) => {
                     return JsonRpcResponse::error(
                         id,
-                        JsonRpcError::internal_error(
-                            format!("acquire connection failed: {e}"),
-                            None,
-                        ),
+                        JsonRpcError::internal_error(format!("scope begin failed: {e}"), None),
                     );
                 }
             };
-            let results = search_all(&mut *conn, query, &modules, limit).await;
+            let results = search_all(&mut scope, query, &modules, limit).await;
             let items: Vec<Value> = results
                 .into_iter()
                 .map(|r| {
@@ -272,7 +269,13 @@ async fn handle_tools_call(pool: &PgPool, id: Value, params: Option<Value>) -> J
                 .map(str::trim)
                 .map(String::from);
             let limit = extract_limit(&args);
-            let suggestions = suggest_terms(pool, q.as_deref(), limit).await;
+            let Ok(mut scope) = db.scope_read().await else {
+                return JsonRpcResponse::error(
+                    id,
+                    JsonRpcError::internal_error("scope begin failed".to_string(), None),
+                );
+            };
+            let suggestions = suggest_terms(&mut scope, q.as_deref(), limit).await;
             JsonRpcResponse::success(id, text_result(json!({ "suggestions": suggestions })))
         }
         TOOL_DOCUMENTS => {
@@ -288,19 +291,16 @@ async fn handle_tools_call(pool: &PgPool, id: Value, params: Option<Value>) -> J
                 );
             };
             let limit = extract_limit(&args);
-            let mut conn = match pool.acquire().await {
-                Ok(c) => c,
+            let mut scope = match db.scope_read().await {
+                Ok(s) => s,
                 Err(e) => {
                     return JsonRpcResponse::error(
                         id,
-                        JsonRpcError::internal_error(
-                            format!("acquire connection failed: {e}"),
-                            None,
-                        ),
+                        JsonRpcError::internal_error(format!("scope begin failed: {e}"), None),
                     );
                 }
             };
-            let results = search_documents(&mut *conn, query, limit).await;
+            let results = search_documents(&mut scope, query, limit).await;
             let items: Vec<Value> = results
                 .into_iter()
                 .map(|r| {

@@ -14,9 +14,9 @@
 //! 重试 3 次进 DLQ）、CREATE INDEX 报 must be owner。现仅探测表存在性：缺失即告警
 //! （migration 未应用），不阻塞订阅（待事件追平或 backfill 时由 migration 补齐后恢复）。
 
-use sqlx::PgPool;
 use std::time::Duration;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{EventSubscriber, EventType, SearchableEntityChangedPayload};
 use uuid::Uuid;
 
@@ -25,10 +25,11 @@ const ZERO_TENANT: &str = "00000000-0000-0000-0000-000000000000";
 
 /// 启动时探测投影表（migration 版本化后不再自举建表）。表缺失返回 Err，由
 /// 调用方告警（migration 未应用）；投影未就绪时搜索为空结果，待事件/backfill 追平。
-pub async fn init_projection_table(pool: &PgPool) -> Result<(), sqlx::Error> {
+pub async fn init_projection_table(db: &Db) -> Result<(), sqlx::Error> {
+    let mut scope = db.scope_read().await?;
     let exists: Option<String> =
         sqlx::query_scalar("SELECT to_regclass('public.search_entity_projections')::text")
-            .fetch_optional(pool)
+            .fetch_optional(&mut scope)
             .await?;
     match exists {
         Some(_) => Ok(()),
@@ -41,13 +42,15 @@ pub async fn init_projection_table(pool: &PgPool) -> Result<(), sqlx::Error> {
 }
 
 /// 把事件快照 UPSERT / DELETE 到投影表（幂等）。
-async fn apply_event(
-    pool: &PgPool,
-    payload: SearchableEntityChangedPayload,
-) -> Result<(), TopemsError> {
+async fn apply_event(db: &Db, payload: SearchableEntityChangedPayload) -> Result<(), TopemsError> {
     let tenant = payload
         .tenant_id
         .unwrap_or_else(|| Uuid::parse_str(ZERO_TENANT).unwrap_or_default());
+
+    let mut scope = db
+        .scope()
+        .await
+        .map_err(|e| TopemsError::Internal(format!("search 投影 scope begin 失败: {}", e)))?;
 
     if payload.op == "delete" {
         sqlx::query(
@@ -57,9 +60,13 @@ async fn apply_event(
         .bind(tenant)
         .bind(&payload.entity_type)
         .bind(payload.entity_id)
-        .execute(pool)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::Internal(format!("search 投影 delete 失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::Internal(format!("search 投影 commit 失败: {}", e)))?;
         return Ok(());
     }
 
@@ -93,24 +100,28 @@ async fn apply_event(
     .bind(&payload.status)
     .bind(&payload.remark)
     .bind(payload.source_updated_at)
-    .execute(pool)
+    .execute(&mut scope)
     .await
     .map_err(|e| TopemsError::Internal(format!("search 投影 upsert 失败: {}", e)))?;
 
+    scope
+        .commit()
+        .await
+        .map_err(|e| TopemsError::Internal(format!("search 投影 commit 失败: {}", e)))?;
     Ok(())
 }
 
 /// 启动实体事件订阅者（失败不阻塞 search 启动；对齐 erp start_event_subscribers）。
-pub async fn start_projection_subscriber(pool: PgPool) -> Result<(), TopemsError> {
+pub async fn start_projection_subscriber(db: Db) -> Result<(), TopemsError> {
     let subscriber = EventSubscriber::new("search")
         .map_err(|e| TopemsError::internal("构建事件订阅者失败", e))?;
 
     let sub =
         subscriber.subscribe_handler(vec![EventType::SearchableEntityChanged], move |event| {
-            let pool = pool.clone();
+            let db = db.clone();
             Box::pin(async move {
                 match event.parse_payload::<SearchableEntityChangedPayload>() {
-                    Ok(payload) => apply_event(&pool, payload).await,
+                    Ok(payload) => apply_event(&db, payload).await,
                     Err(e) => {
                         tracing::error!("[search] 解析 SearchableEntityChanged 失败: {}", e);
                         // 载荷不可恢复错误不应无限重试进 DLQ 风暴；返回 Ok 让其 ACK。
@@ -151,17 +162,22 @@ pub async fn start_projection_subscriber(pool: PgPool) -> Result<(), TopemsError
 /// 用途：补齐"停消费期间/历史未发事件"造成的投影缺口。读模型重建走 erp HTTP
 /// 快照（不直读 erp schema，守住 schema 边界）；best-effort——erp 不可达仅告警，
 /// 不阻塞 search 启动，后续增量仍由事件流收敛。
-pub async fn backfill_projections(pool: &PgPool) {
+pub async fn backfill_projections(db: &Db) {
     let erp_base = std::env::var("ERP_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
     let url = format!("{}/api/erp/internal/searchable-snapshot", erp_base);
 
     // backfill 前差距：投影已有行数
-    let before: i64 = sqlx::query_scalar("SELECT count(*) FROM public.search_entity_projections")
-        .fetch_optional(pool)
-        .await
-        .ok()
-        .flatten()
-        .unwrap_or(0);
+    let before: i64 = match db.scope_read().await {
+        Ok(mut scope) => {
+            sqlx::query_scalar("SELECT count(*) FROM public.search_entity_projections")
+                .fetch_optional(&mut scope)
+                .await
+                .ok()
+                .flatten()
+                .unwrap_or(0)
+        }
+        Err(_) => 0,
+    };
 
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(10))
@@ -192,18 +208,22 @@ pub async fn backfill_projections(pool: &PgPool) {
                     if let Ok(payload) =
                         serde_json::from_value::<SearchableEntityChangedPayload>(item)
                     {
-                        if apply_event(pool, payload).await.is_ok() {
+                        if apply_event(db, payload).await.is_ok() {
                             upserted += 1;
                         }
                     }
                 }
-                let after: i64 =
-                    sqlx::query_scalar("SELECT count(*) FROM public.search_entity_projections")
-                        .fetch_optional(pool)
-                        .await
-                        .ok()
-                        .flatten()
-                        .unwrap_or(0);
+                let after: i64 = match db.scope_read().await {
+                    Ok(mut scope) => {
+                        sqlx::query_scalar("SELECT count(*) FROM public.search_entity_projections")
+                            .fetch_optional(&mut scope)
+                            .await
+                            .ok()
+                            .flatten()
+                            .unwrap_or(0)
+                    }
+                    Err(_) => 0,
+                };
                 tracing::info!(
                     "[search] backfill 对账完成: 源快照 {} 条, 投影补写 {} 行, 投影行数 {} -> {}",
                     upserted,

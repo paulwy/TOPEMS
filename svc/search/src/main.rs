@@ -5,6 +5,7 @@
 use axum::{routing::get, Router};
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
+use topems_shared_db::scope::Db;
 
 mod handlers;
 mod mcp;
@@ -31,16 +32,19 @@ async fn main() -> anyhow::Result<()> {
     let ctx = bootstrap_service(&config).await?;
     tracing::info!("🚀 TOPEMS Search Service starting...");
 
+    // 连接治理 B 试点：模块只拿到 Db（PgPool 私有），所有查询走事务级 search_path。
+    let db = Db::new(ctx.db.clone(), "public");
+
     // B1/F-37 终态：自举实体投影表 + 启动事件订阅者（erp 发事件 → search 本地投影）。
     // 失败不阻塞启动——投影未就绪时客户/订单搜索为空结果，待事件追平。
-    if let Err(e) = projection::init_projection_table(&ctx.db).await {
+    if let Err(e) = projection::init_projection_table(&db).await {
         tracing::warn!("⚠️ search 投影表自举失败: {}", e);
     }
-    if let Err(e) = projection::start_projection_subscriber(ctx.db.clone()).await {
+    if let Err(e) = projection::start_projection_subscriber(db.clone()).await {
         tracing::warn!("⚠️ search 投影订阅者启动失败: {}", e);
     }
     // B1 启动时差距对账：从 erp 快照拉全量补投影（best-effort，erp 不可达不阻塞）
-    projection::backfill_projections(&ctx.db).await;
+    projection::backfill_projections(&db).await;
 
     // ── public_routes（无状态） ──────────────────────────────────────
     let public_routes = Router::new()
@@ -52,9 +56,13 @@ async fn main() -> anyhow::Result<()> {
         )
         .route("/health", get(handlers::health_handler));
 
-    // ── protected_routes（业务路由：需要 State<PgPool>） ──────────────
+    // ── protected_routes（业务路由：模块 State 为 Db，无直接 PgPool） ──
+    // 注意：根检索端点不在此处 nest 挂载——nest 剥离前缀后路径为 "/"，命中
+    // is_public_path 的 "/" 公开豁免，tenant_middleware 跳过注入请求级 RLS 事务，
+    // search_handler 提取 Extension<RlsTxnArc> 失败 500（既有 bug，试点验证发现）。
+    // 根端点改为 build_application 之后以全路径 merge（见下），与嵌入形态
+    // search_real_module 的挂载方式一致。
     let protected_routes = Router::new()
-        .route("/", get(handlers::search_handler))
         .route("/suggestions", get(handlers::suggestions_handler))
         // P3：standalone 与 embedded（search_real_module）对齐挂载 /recent
         .route(
@@ -64,7 +72,7 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn(require_permission(
             "search:admin",
         )))
-        .with_state(ctx.db.clone())
+        .with_state(db.clone())
         .layer(axum::middleware::from_fn_with_state(
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
@@ -73,14 +81,34 @@ async fn main() -> anyhow::Result<()> {
     // ── 组装 Application ─────────────────────────────────────────────
     let app = build_application(&ctx, &config, public_routes, protected_routes, None);
 
+    // 根检索端点（全路径挂载，不经 nest）：兼容无尾斜杠 /api/search 与带尾斜杠
+    // /api/search/ 两种形态（axum 0.8 route 严格匹配）。层顺序自外向内：
+    // auth（注入 Claims）→ tenant（开启请求级 RLS 事务并注入 RlsTxnArc）→
+    // require_permission → handler。该路由同 MCP 一样不受 build_application 内层
+    // rate_limit/metrics 层覆盖（试点单端点，与嵌入形态行为对齐）。
+    let root_search_routes = Router::new()
+        .route("/api/search", get(handlers::search_handler))
+        .route("/api/search/", get(handlers::search_handler))
+        .layer(axum::middleware::from_fn(require_permission(
+            "search:admin",
+        )))
+        .with_state(db.clone())
+        .layer(axum::middleware::from_fn_with_state(
+            ctx.db.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            ctx.auth_state.clone(),
+            topems_shared_auth::auth::auth_middleware,
+        ));
+    let mut app = app;
+    app.router = app.router.merge(root_search_routes);
+
     // Phase 3 B 档第 1 步：MCP 端点（POST /mcp，Streamable HTTP）。
     // build_application 返回后 merge 有状态路由：MCP 走 server token 认证（MCP_SERVER_TOKEN），
     // 不套业务 JWT/tenant 中间件；注意此路由不受 build_application 内层 rate_limit/metrics 层覆盖
     // （端点是内网 server-token 面，第 1 步不叠加额外限流）。
-    let mut app = app;
-    app.router = app
-        .router
-        .merge(mcp::mcp_routes().with_state(ctx.db.clone()));
+    app.router = app.router.merge(mcp::mcp_routes().with_state(db.clone()));
 
     tracing::info!(
         "✅ Search Service is running at http://0.0.0.0:{} (prefix: {}, legacy: {:?}, mcp: /mcp)",

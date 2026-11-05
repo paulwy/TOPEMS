@@ -1,8 +1,9 @@
 use axum::extract::{Extension, Query, State};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::FromRow;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::TopemsError;
+use topems_shared_db::scope::{Db, ScopedTxn};
 use uuid::Uuid;
 
 use topems_shared_boundary::only_own_schema_query;
@@ -58,7 +59,7 @@ struct ProjectionRow {
 
 /// 按实体类型检索本地投影（tenant 隔离 + ILIKE）。失败降级为空结果。
 async fn query_projection(
-    conn: &mut sqlx::PgConnection,
+    conn: &mut ScopedTxn<'_>,
     entity_type: &str,
     keyword: &str,
     limit: i64,
@@ -90,11 +91,7 @@ async fn query_projection(
     }
 }
 
-async fn search_users(
-    conn: &mut sqlx::PgConnection,
-    keyword: &str,
-    limit: i64,
-) -> Vec<SearchResult> {
+async fn search_users(conn: &mut ScopedTxn<'_>, keyword: &str, limit: i64) -> Vec<SearchResult> {
     let keyword_like = format!("%{}%", keyword);
 
     // 表归属（DB 分片侦察）：unqualified `iam.users` 命中 iam.users（认证身份权威表，
@@ -136,7 +133,7 @@ async fn search_users(
 }
 
 async fn search_customers(
-    conn: &mut sqlx::PgConnection,
+    conn: &mut ScopedTxn<'_>,
     keyword: &str,
     limit: i64,
 ) -> Vec<SearchResult> {
@@ -173,11 +170,7 @@ async fn search_customers(
         .collect()
 }
 
-async fn search_orders(
-    conn: &mut sqlx::PgConnection,
-    keyword: &str,
-    limit: i64,
-) -> Vec<SearchResult> {
+async fn search_orders(conn: &mut ScopedTxn<'_>, keyword: &str, limit: i64) -> Vec<SearchResult> {
     // B1/F-37 终态：销售/采购订单均读本地投影
     let mut results: Vec<SearchResult> = Vec::new();
 
@@ -209,7 +202,7 @@ async fn search_orders(
 }
 
 pub(crate) async fn search_documents(
-    conn: &mut sqlx::PgConnection,
+    conn: &mut ScopedTxn<'_>,
     keyword: &str,
     limit: i64,
 ) -> Vec<SearchResult> {
@@ -258,7 +251,7 @@ pub(crate) async fn search_documents(
     clippy::cast_sign_loss
 )]
 pub(crate) async fn search_all(
-    conn: &mut sqlx::PgConnection,
+    conn: &mut ScopedTxn<'_>,
     keyword: &str,
     modules: &Option<Vec<String>>,
     limit: i64,
@@ -310,7 +303,7 @@ pub(crate) async fn search_all(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn search_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Query(req): Query<SearchRequest>,
     Extension(claims): Extension<Claims>,
@@ -319,6 +312,11 @@ pub async fn search_handler(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    // 复用请求级 RLS 事务，只叠加事务级 search_path（不新开事务，保留租户上下文）。
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::server_error(&format!("scope begin failed: {e}")),
     };
 
     let keyword = normalize_query(&req.keyword);
@@ -335,7 +333,7 @@ pub async fn search_handler(
 
     let query_terms = tokenize(&keyword);
 
-    let mut results = search_all(&mut **txn, &keyword, &req.modules, page_size).await;
+    let mut results = search_all(&mut scope, &keyword, &req.modules, page_size).await;
 
     for r in &mut results {
         let doc_fields = vec![
@@ -405,16 +403,20 @@ pub async fn search_handler(
     // 本批顺手改道 search_recent（有真实列，且支撑 /search/recent 读回）。
     let recent_user_id: Uuid = claims.sub.parse().unwrap_or_else(|_| Uuid::nil());
     let recent_keyword = keyword.clone();
-    let recent_pool = pool.clone();
+    let recent_db = db.clone();
     tokio::spawn(async move {
+        let Ok(mut scope) = recent_db.scope().await else {
+            return;
+        };
         let _ = sqlx::query(
             "INSERT INTO public.search_recent (user_id, keyword, searched_at) VALUES ($1, $2, now()) \
              ON CONFLICT (user_id, keyword) DO UPDATE SET searched_at = now()",
         )
         .bind(recent_user_id)
         .bind(recent_keyword)
-        .execute(&recent_pool)
+        .execute(&mut scope)
         .await;
+        let _ = scope.commit().await;
     });
 
     api_success(SearchResponse {
@@ -466,7 +468,11 @@ pub struct SuggestionsResponse {
 )]
 /// 搜索建议词聚合（供 HTTP handler 与 MCP 工具共用）：有前缀匹配历史搜索词 ILIKE，
 /// 无前缀返回最近 7 天热门搜索词；按频次排序。查询失败返回空列表（best-effort）。
-pub(crate) async fn suggest_terms(pool: &PgPool, q: Option<&str>, limit: i64) -> Vec<String> {
+pub(crate) async fn suggest_terms(
+    scope: &mut ScopedTxn<'_>,
+    q: Option<&str>,
+    limit: i64,
+) -> Vec<String> {
     if let Some(q) = q.map(str::trim).filter(|s| !s.is_empty()) {
         // 有前缀：匹配历史搜索词中以该前缀开头的，按频次排序
         match sqlx::query_scalar::<_, String>(
@@ -478,7 +484,7 @@ pub(crate) async fn suggest_terms(pool: &PgPool, q: Option<&str>, limit: i64) ->
         )
         .bind(format!("{}%", q))
         .bind(limit)
-        .fetch_all(pool)
+        .fetch_all(&mut *scope)
         .await
         {
             Ok(rows) => rows,
@@ -494,7 +500,7 @@ pub(crate) async fn suggest_terms(pool: &PgPool, q: Option<&str>, limit: i64) ->
              LIMIT $1",
         )
         .bind(limit)
-        .fetch_all(pool)
+        .fetch_all(&mut *scope)
         .await
         {
             Ok(rows) => rows,
@@ -504,12 +510,16 @@ pub(crate) async fn suggest_terms(pool: &PgPool, q: Option<&str>, limit: i64) ->
 }
 
 pub async fn suggestions_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Query(params): Query<SuggestionsQuery>,
 ) -> ApiResponse<SuggestionsResponse> {
     let limit = params.limit.unwrap_or(10).clamp(1, 50);
 
-    let suggestions = suggest_terms(&pool, params.q.as_deref(), limit).await;
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => return ApiResponse::server_error(&format!("scope begin failed: {e}")),
+    };
+    let suggestions = suggest_terms(&mut scope, params.q.as_deref(), limit).await;
 
     api_success(SuggestionsResponse { suggestions })
 }
@@ -526,16 +536,19 @@ pub async fn suggestions_handler(
     ),
 )]
 pub async fn list_recent(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<String>> {
     let user_id: Uuid = claims.sub.parse().unwrap_or_else(|_| Uuid::nil());
+    let Ok(mut scope) = db.scope_read().await else {
+        return api_success(Vec::new());
+    };
     let rows = sqlx::query_as::<_, (String,)>(
         "SELECT keyword FROM public.search_recent \
          WHERE user_id = $1 ORDER BY searched_at DESC LIMIT 10",
     )
     .bind(user_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
     api_success(rows.into_iter().map(|(k,)| k).collect())
@@ -551,13 +564,17 @@ pub async fn list_recent(
     ),
 )]
 pub async fn clear_recent(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<String> {
     let user_id: Uuid = claims.sub.parse().unwrap_or_else(|_| Uuid::nil());
+    let Ok(mut scope) = db.scope().await else {
+        return api_success("cleared".to_string());
+    };
     let _ = sqlx::query("DELETE FROM public.search_recent WHERE user_id = $1")
         .bind(user_id)
-        .execute(&pool)
+        .execute(&mut scope)
         .await;
+    let _ = scope.commit().await;
     api_success("cleared".to_string())
 }

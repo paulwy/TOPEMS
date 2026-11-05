@@ -1,6 +1,6 @@
 # 数据库连接治理（A 全局预算 / B 单池 + ScopedConn）
 
-> 状态：A 已实现并本地验证；B 设计完成、试点进行中。
+> 状态：A 已实现并本地验证；B 设计完成、试点（search）已完成并验证。
 > 关联：`docs/database/database-primary-instance.md`、`plan` 第四十九轮连接排查。
 
 ## 0. 结论速览
@@ -211,3 +211,51 @@ impl<'c> Executor<'c> for &'c mut ScopedTxn<'_> { /* 委托给 &mut PgConnection
    否则会二次 BEGIN（sqlx 会开新连接，等于多占 1 连接且丢失 `app.tenant_id`）。
 6. **`ReadWritePool`**：只是对已有 `PgPool` 的包装（无副本时零新增池），迁移时改为持有 `Db`
    即可，不构成额外工作量。
+
+### B.8 试点验证（search，2026-11-06）
+
+范围：`svc/search` 双形态（standalone `svc/search` + 嵌入 `svc/server/modules/search_real_module.rs`），
+13 处 SQL 全部改走 `ScopedTxn`；模块 state 只持有 `Db`（`PgPool` 字段私有、不实现 `Deref`，
+编译期拿不到池）。`tenant_middleware` 仍收 `ctx.db: PgPool`（中间件需要 `begin` 请求事务），属设计内。
+
+**DB 层集成测试**（`lib/shared-db/tests/scope_search_path_it.rs`，3 passed，真实 test 库）：
+
+- `scope_sets_and_restores_search_path`：基线 `SHOW search_path = iam,shared,public` →
+  scope（读/写）内 `= public`、`current_schema() = public` → commit/rollback 后同一物理连接
+  恢复基线（`SET LOCAL` 不残留，max_connections=1 保证同一条连接）。
+- `concurrent_scopes_do_not_leak_schema`：`public` 与 `information_schema` 两个 `Db` 并发
+  各取连接，互不串味。
+- `scope_with_reuses_request_txn`：复用外部事务时 `SHOW search_path = public` 且
+  `current_setting('app.tenant_id')` 保留（RLS 上下文不丢）；`commit` 为空操作，由中间件提交。
+
+运行命令：
+
+```bash
+TOPEMS_IT_DATABASE_URL='postgresql://xingzhai@127.0.0.1:15432/topems_test' \
+  cargo test -p topems-shared-db --test scope_search_path_it -- --nocapture
+```
+
+**HTTP 端到端**（standalone，18082 端口，test 库 + HS256 测试 JWT，实测响应摘录）：
+
+| 请求 | 结果 | 覆盖路径 |
+| --- | --- | --- |
+| `GET /api/search?keyword=test` | 200，命中 1 条投影数据（含高亮/facets/suggestions） | `scope_with`（复用 RLS 请求事务） |
+| `GET /api/search/suggestions?q=t` | 200 `{"suggestions":[]}` | `scope_read` |
+| `GET /api/search/recent`（搜索后） | 200 `["test"]` | 写入链路 `scope()` + `commit`（fire-and-forget） |
+| `DELETE /api/search/recent` | 200 `"cleared"` | `scope()` + `commit` |
+| `POST /mcp` initialize / `search.global` / `search.suggest` | 200，`search.global` 命中同一条数据 | `scope_read`（MCP server-token 面） |
+| 无 JWT 请求受保护端点 | 401 | 认证链未受改造影响 |
+| MCP 无 token | 401 `-32001` | fail-closed 未变 |
+| `pg_stat_activity`（`application_name='search-service'`） | 2 连接 | 远低于预算 grant，池未膨胀 |
+
+**试点中发现的既有 bug（非本次改动引入，已随试点修复）**：standalone `GET /api/search`
+此前稳定 500。根因：axum `nest` 剥离前缀后内层路径为 `/`，命中 `is_public_path` 的 `/`
+公开豁免 → `tenant_middleware` 跳过注入请求级 RLS 事务 → `search_handler` 提取
+`Extension<RlsTxnArc>` 失败（改动前 HEAD 代码同样依赖该扩展，嵌入形态走全路径挂载不受影响，
+故仅 standalone 触发）。修复：根检索端点改为 `build_application` 之后全路径 merge
+（`/api/search` + `/api/search/`），与嵌入形态 `search_real_module` 挂载方式一致；
+修复后同请求 200 且真实命中。
+
+**双路径共存实测**：试点模块与其余 27 个模块同进程运行时共用同一 bootstrap 池
+（A 已把总额封顶），`Db` 与直接 `PgPool` 写法并存但指向同一池，未发现连接归属冲突；
+`search_path` 的作用域化只影响本模块自身事务，不改其他模块的会话基线。

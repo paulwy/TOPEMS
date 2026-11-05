@@ -37,6 +37,7 @@ pub use database::{
     check_pool_health, create_database_pool, ensure_master_data_refs_table,
     test_database_connection, HealthCheckResult, ReadWriteConfig, ReadWritePool,
 };
+pub mod scope;
 pub use database::budget::{
     snapshot as connection_budget_snapshot, BudgetConfig, BudgetSnapshot, Ledger, PoolReservation,
     DEFAULT_TOTAL_CONNECTION_BUDGET,
@@ -64,4 +65,5 @@ pub use schema::{
     INTEGRATION_SCHEMA, LIMS_SCHEMA, MAIL_SCHEMA, MES_SCHEMA, MOBILE_SCHEMA, PDM_SCHEMA, PM_SCHEMA,
     PORTAL_SCHEMA, QMS_SCHEMA, RS_SCHEMA, SCM_SCHEMA, SRM_SCHEMA, WMS_SCHEMA,
 };
+pub use scope::{Db, ScopedTxn};
 pub use storage::{FileMetadata, LocalStorage, StorageConfig, StorageService};
