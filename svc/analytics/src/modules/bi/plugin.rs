@@ -73,15 +73,15 @@ pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
                 action: "write".to_string(),
             },
             PermissionDef {
-                code: "bi:datasource:read".to_string(),
+                code: "bi:data_source:read".to_string(),
                 name: "查看数据源".to_string(),
-                resource_type: "datasource".to_string(),
+                resource_type: "data_source".to_string(),
                 action: "read".to_string(),
             },
             PermissionDef {
-                code: "bi:datasource:write".to_string(),
+                code: "bi:data_source:write".to_string(),
                 name: "管理数据源".to_string(),
-                resource_type: "datasource".to_string(),
+                resource_type: "data_source".to_string(),
                 action: "write".to_string(),
             },
             PermissionDef {

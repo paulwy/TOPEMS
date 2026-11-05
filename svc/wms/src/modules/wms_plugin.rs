@@ -129,15 +129,15 @@ pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
                 action: "approve".to_string(),
             },
             PermissionDef {
-                code: "wms:stock_take:read".to_string(),
+                code: "wms:stocktake:read".to_string(),
                 name: "查看盘点".to_string(),
-                resource_type: "stock_take".to_string(),
+                resource_type: "stocktake".to_string(),
                 action: "read".to_string(),
             },
             PermissionDef {
-                code: "wms:stock_take:write".to_string(),
+                code: "wms:stocktake:write".to_string(),
                 name: "管理盘点".to_string(),
-                resource_type: "stock_take".to_string(),
+                resource_type: "stocktake".to_string(),
                 action: "write".to_string(),
             },
             PermissionDef {

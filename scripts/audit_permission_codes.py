@@ -48,6 +48,13 @@ def scan_codes(root: str, exts: Iterable[str], limit_per_code: int = 5) -> Dict[
         except OSError:
             continue
         for lineno, line in enumerate(lines, 1):
+            stripped = line.strip()
+            # SQL 注释与"旧码改写条件"不构成注册：跳过 -- 注释、
+            # 以及 UPDATE/DELETE 中 WHERE code = '<旧码>' 的改写判定（统一迁移据此兼容历史库）。
+            if stripped.startswith('--'):
+                continue
+            if re.search(r"WHERE\s+(?:[a-z_]+\\.)?code\s*=\s*['\"]", line, re.IGNORECASE):
+                continue
             for match in CODE_RE.finditer(line):
                 code = match.group(0)[1:-1]
                 if len(found[code]) < limit_per_code:
