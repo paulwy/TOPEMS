@@ -1793,7 +1793,7 @@ pub async fn create_incident(
     .bind(req.location.as_deref())
     .bind(req.occurred_at.as_deref())
     .bind(req.reported_by.as_deref())
-    .bind(&reported_at)
+    .bind(reported_at)
     .bind(req.description.as_deref())
     .bind(req.immediate_measures.as_deref())
     .bind(req.responsible_person.as_deref())
