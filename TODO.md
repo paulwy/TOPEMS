@@ -1844,6 +1844,19 @@
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.127 审计整改第四批：P2-2 侧边栏分组折叠工程（2026-11-06）✅
+
+> 承接 v1.126 遗留项 P2-2（analytics 90 项折叠 / setting 61 项合并）：完成侧边栏分组折叠能力建设，analytics/setting 全部折叠呈现，数据层不动。
+
+- **分组折叠能力** ✅：`SideRail` 的 NavItem 增加 `group` 字段，模块二级菜单按 NavGroup 标准顺序（overview→master→process→business→analytics→report→setting→other）聚合成可折叠分组；多组才渲染组头（单组保持原平铺观感）；组头沿用既有 tokens（`--text-tertiary`/`--text-xs`/ChevronRight），与 SideRail 既有模块组样式一致。
+- **默认展开策略** ✅：当前所在模块与其 group 自动展开（由 activeId 前缀解析 moduleCode 与子项 group），其余按存储/折叠状态；侧边栏收窄（expanded=false）时组头与子项不渲染（沿用原逻辑）。
+- **状态持久化** ✅：`localStorage('topems.sidebar.expand.v1')` 记录 `{ modules: [], groups: [] }`，跨会话记忆用户展开位置；存储不可用/内容损坏时回退默认折叠。
+- **analytics/setting 折叠呈现** ✅：analytics 90 项（24 模块：mes 14/qms 8/wms 8/aps 7/bi 7/crm 7）与 setting 61 项（21 模块：admin 9/hrm 5/notification 5/bi 4/mes 4/pdm 4）全部纳入分组折叠，34/35 模块含多组（仅 master 模块单组），组折叠全面生效；不删除任何业务页面。
+- **数据层不动** ✅：navItems 与 DB 种子均未改动，对账基线（449/184/dup 0/orphan_db 2）与改动前一致，无迁移文件；数据层删除仍留 P5。
+- **验证** ✅：tsc typecheck、eslint 0 errors、vitest `src/components/redesign/layout/__tests__/` 6 文件 22 用例全过（SideRail 新增 3 用例：多组组头渲染+当前模块自动展开、点击折叠+持久化写入、localStorage 状态恢复）；pre-commit 17 钩子全绿。
+- **提交**：`3d14517a22`（5 files，+287/-42）。本条目（v1.127）为核销提交。
+- **遗留/观察项**：setting 61 项的"同模块设置页入口合并"未执行（跨页面语义聚合需逐页评估合并影响面，本批仅折叠呈现，符合"不确定则仅折叠"约束）；组内子项缩进与图标沿用既有样式，未做视觉改版；侧边栏组头折叠状态与模块组展开状态共用一套 localStorage 记录，后续如做 P5 DB 菜单权威可迁移为服务端偏好。
+
 ## v1.126 审计整改第三批：P2 域裁剪（一）——死代码清理 + dashboard 下沉 + mobile 隐藏（2026-11-01）✅
 
 > 承接 v1.125 遗留（批 3：wms 孤儿组件死代码 + P2 域裁剪 dashboard/analytics/setting/mobile）。完成盘点与可安全执行部分，analytics/setting 折叠登记 UI 工程子任务。
