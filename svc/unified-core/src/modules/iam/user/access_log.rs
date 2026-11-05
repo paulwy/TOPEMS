@@ -107,7 +107,7 @@ pub async fn get_login_history(
                 "ip_address": l.ip_address,
                 "user_agent": l.user_agent,
                 "success": l.status == "success",
-                "created_at": l.login_time.to_string(),
+                "created_at": l.login_time,
             })
         })
         .collect();
@@ -202,7 +202,7 @@ pub async fn list_access_logs(
                 "user_agent": r.get::<Option<String>, _>("user_agent"),
                 "success": success,
                 "error_message": if success { None } else { Some("操作失败") },
-                "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at").to_string(),
+                "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
             })
         })
         .collect();
@@ -288,7 +288,7 @@ pub async fn get_user_access_logs(
                 "user_agent": r.get::<Option<String>, _>("user_agent"),
                 "success": success,
                 "error_message": if success { None } else { Some("操作失败") },
-                "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at").to_string(),
+                "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
             })
         })
         .collect();
@@ -393,7 +393,7 @@ pub async fn create_access_log(
                 "user_agent": user_agent,
                 "success": success,
                 "error_message": error_message,
-                "created_at": created_at.to_string(),
+                "created_at": created_at,
             });
 
             let response_body = serde_json::json!({

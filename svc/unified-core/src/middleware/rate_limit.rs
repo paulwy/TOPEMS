@@ -48,7 +48,7 @@ pub struct RateLimitConfig {
     pub path_rules: HashMap<String, RateLimitRule>,
     pub skip_paths: Vec<String>,
     #[serde(default)]
-    pub updated_at: Option<String>,
+    pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 impl Default for RateLimitConfig {

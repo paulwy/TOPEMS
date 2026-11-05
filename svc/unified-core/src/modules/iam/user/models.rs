@@ -73,7 +73,7 @@ pub(crate) struct UserResponse {
     #[serde(rename = "isactive", alias = "is_active")]
     pub is_active: bool,
     pub is_superuser: bool,
-    pub created_at: Option<String>,
+    pub created_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(sqlx::FromRow)]
@@ -200,7 +200,11 @@ mod tests {
             permissions: vec!["doc:read".to_string()],
             is_active: true,
             is_superuser: false,
-            created_at: Some("2024-01-15T10:30:00Z".to_string()),
+            created_at: Some(
+                chrono::DateTime::parse_from_rfc3339("2024-01-15T10:30:00Z")
+                    .unwrap()
+                    .with_timezone(&chrono::Utc),
+            ),
         };
         let cloned = ur.clone();
         assert_eq!(cloned.username, "testuser");

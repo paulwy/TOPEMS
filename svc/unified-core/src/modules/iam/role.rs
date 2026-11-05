@@ -25,7 +25,7 @@ struct RoleResponse {
     id: String,
     name: String,
     description: Option<String>,
-    created_at: Option<String>,
+    created_at: Option<chrono::DateTime<chrono::Utc>>,
     permission_count: i64,
 }
 
@@ -82,7 +82,7 @@ pub async fn list_roles(
                     id: r.id.to_string(),
                     name: r.name,
                     description: r.description,
-                    created_at: r.created_at.map(|t| t.to_string()),
+                    created_at: r.created_at,
                     permission_count: perm_count,
                 });
             }
@@ -275,7 +275,7 @@ pub async fn get_role(
                     "id": r.id.to_string(),
                     "name": r.name,
                     "description": r.description,
-                    "created_at": r.created_at.map(|t| t.to_string()),
+                    "created_at": r.created_at,
                     "permissions": permissions
                 }
             }))

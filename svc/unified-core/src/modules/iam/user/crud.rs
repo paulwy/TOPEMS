@@ -138,7 +138,7 @@ pub async fn list_users(
                         permissions,
                         is_active: u.status == "active",
                         is_superuser: u.is_superuser,
-                        created_at: u.created_at.map(|t| t.to_string()),
+                        created_at: u.created_at,
                     }
                 })
                 .collect();
@@ -499,7 +499,7 @@ pub async fn get_user(
                 permissions,
                 is_active: u.status == "active",
                 is_superuser: u.is_superuser,
-                created_at: u.created_at.map(|t| t.to_string()),
+                created_at: u.created_at,
             };
 
             (
