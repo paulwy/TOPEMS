@@ -10,6 +10,10 @@
       "ledger_sha256": "f832e5ed60630c1e9fc703ee70d8ce853f6a37ab249a6cbba91fbd2f4c5312a2",
       "table_count": 1349,
       "ledger_rows": 576,
+      "data_file": "baseline_20261105235700_data.sql.gz",
+      "data_sha256": "0f438732a2aa768a6c701bd57aea14aaf2b109a7569b9cb8bd2fa470dc5334d2",
+      "data_table_count": 11,
+      "data_rows": 2277,
       "migrations_manifest": "migrations_at_anchor.json"
     }
   ]

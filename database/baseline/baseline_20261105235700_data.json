@@ -1,0 +1,19 @@
+{
+  "anchor_version": 20261105235700,
+  "source_db": "topems_prod",
+  "source_host": "xingzhai@192.168.110.115",
+  "source_server_version": "18.4 (Homebrew)",
+  "generated_at_utc": "2026-11-05T09:18:31Z",
+  "table_count": 11,
+  "total_rows": 2277,
+  "tables": ["public.core_tenants","public.core_tenant_settings","public.core_roles","public.core_permissions","public.core_role_permissions","public.core_menu_groups","public.core_menus","public.core_dict_types","public.core_dict_items","hrm.departments","hrm.positions"],
+  "row_counts": {"public.core_tenants": 1,"public.core_tenant_settings": 4,"public.core_roles": 15,"public.core_permissions": 986,"public.core_role_permissions": 653,"public.core_menu_groups": 122,"public.core_menus": 423,"public.core_dict_types": 6,"public.core_dict_items": 24,"hrm.departments": 23,"hrm.positions": 20},
+  "restore_order": ["hrm.departments","hrm.positions","public.core_dict_types","public.core_dict_items","public.core_menu_groups","public.core_menus","public.core_permissions","public.core_roles","public.core_role_permissions","public.core_tenants","public.core_tenant_settings"],
+  "data_file": "baseline_20261105235700_data.sql.gz",
+  "data_sha256": "0f438732a2aa768a6c701bd57aea14aaf2b109a7569b9cb8bd2fa470dc5334d2",
+  "pii_review": {
+    "method": "column-name regex (email/phone/address/name/id_card/password/secret/token) + user-ref columns must be NULL",
+    "checked_tables": 11,
+    "findings": []
+  }
+}
