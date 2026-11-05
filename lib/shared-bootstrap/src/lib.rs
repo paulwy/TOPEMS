@@ -82,7 +82,16 @@ use topems_shared_core::{
     response::ApiResponse,
 };
 
-use topems_shared_db::database::{create_database_pool, create_migrate_pool};
+use topems_shared_db::database::{
+    create_database_pool, create_migrate_pool, create_shared_database_pool,
+};
+
+/// 已迁移到共享运行时池的模块数（连接治理 B 批次进度）。
+///
+/// 共享池只占 **1 个物理池**，但在预算公平分摊中按本权重参与
+/// （`svc/server/src/main.rs::derived_db_pools()` 同步按本权重计数）。
+/// 每完成一个模块迁移，这里 +1，并把该模块在 `derived_db_pools()` 中的 `+1` 改为 0。
+pub const SHARED_POOL_MODULE_WEIGHT: u32 = 3;
 use topems_shared_db::rls::rls_middleware;
 
 use topems_shared_auth::auth::{auth_middleware, AuthState};
@@ -710,8 +719,47 @@ pub struct Application {
     pub name: &'static str,
 }
 
+/// 进程级共享运行时池（连接治理 B）。
+static SHARED_RUNTIME_POOL: tokio::sync::OnceCell<sqlx::PgPool> =
+    tokio::sync::OnceCell::const_new();
+
 /// 初始化通用资源：telemetry、数据库连接池、metrics、auth_state、event_publisher
 pub async fn bootstrap_service(config: &ServiceConfig) -> Result<ServiceContext> {
+    bootstrap_service_inner(config, false).await
+}
+
+/// 连接治理 B：嵌入模式下复用**进程级共享运行时池**，模块不再单独建池。
+///
+/// 共享池的会话基线 `search_path` 固定为 `public`（中性值），模块的真实 schema 作用域
+/// 由 `topems_shared_db::scope::Db::new(pool, "<module search_path>")` 在事务内
+/// `SET LOCAL` 提供。因此本函数不读取/不依赖全局 `SEARCH_PATH` 决定模块语义。
+///
+/// 仅用于已迁移到 `ScopedTxn` 的模块；未迁移模块继续用 [`bootstrap_service`] 独立建池。
+pub async fn bootstrap_service_shared(config: &ServiceConfig) -> Result<ServiceContext> {
+    bootstrap_service_inner(config, true).await
+}
+
+async fn shared_runtime_pool(config: &DatabaseConfig) -> Result<sqlx::PgPool> {
+    SHARED_RUNTIME_POOL
+        .get_or_try_init(|| async {
+            // 共享池的 application_name 固定，便于 pg_stat_activity 按「共享运行时池」归因；
+            // 各模块的模块名不再出现在连接标签里（它们不再拥有连接池）。
+            env::set_var("DB_APPLICATION_NAME", "topems-shared-runtime");
+            let pool =
+                create_shared_database_pool(config, "public", SHARED_POOL_MODULE_WEIGHT).await?;
+            tracing::info!(
+                "🔗 [db-shared] 进程级共享运行时池已创建（后续已迁移模块复用，不再单独建池）"
+            );
+            Ok(pool)
+        })
+        .await
+        .cloned()
+}
+
+async fn bootstrap_service_inner(
+    config: &ServiceConfig,
+    shared_pool: bool,
+) -> Result<ServiceContext> {
     dotenv::dotenv().ok();
 
     // B15: 出站调用边指标（topems_service_to_service_calls_total）调用方身份注入。
@@ -750,12 +798,6 @@ pub async fn bootstrap_service(config: &ServiceConfig) -> Result<ServiceContext>
     // 会把测试库/运维连接挤掉。嵌入模式下按小上限 + 零预热带宽收敛，并给连接打
     // 可区分的 application_name 便于 pg_stat_activity 归因。
     let (max_connections, min_connections) = embedded_pool_limits(config.max_db_connections);
-    if is_embedded() {
-        env::set_var(
-            "DB_APPLICATION_NAME",
-            format!("{}-module", derive_service_tag(config.name).to_lowercase()),
-        );
-    }
 
     let db_config = DatabaseConfig {
         url: db_url,
@@ -764,7 +806,19 @@ pub async fn bootstrap_service(config: &ServiceConfig) -> Result<ServiceContext>
         ..Default::default()
     };
 
-    let db = create_database_pool(&db_config).await?;
+    let db = if shared_pool {
+        // B：模块不再拥有连接池，复用进程级共享池（application_name / 基线 search_path
+        // 只在首次创建时设置，模块名不再写入连接标签）。
+        shared_runtime_pool(&db_config).await?
+    } else {
+        if is_embedded() {
+            env::set_var(
+                "DB_APPLICATION_NAME",
+                format!("{}-module", derive_service_tag(config.name).to_lowercase()),
+            );
+        }
+        create_database_pool(&db_config).await?
+    };
 
     // MIGRATE_URL 双轨：DDL 走 owner 迁移池，运行时查询走受限用户池（未配置回退 None）
     let migrate_pool = create_migrate_pool().await.unwrap_or_else(|e| {
@@ -1367,6 +1421,33 @@ pub async fn build_detailed_health_response(
         Err(_) => "unhealthy",
     };
 
+    detailed_health_json(db_status, service, modules, version, extra_fields)
+}
+
+/// 连接治理 B：已迁移模块的详细健康检查（经作用域封装，不暴露池）。
+pub async fn build_detailed_health_response_db(
+    db: &topems_shared_db::scope::Db,
+    service: &str,
+    modules: serde_json::Value,
+    version: &str,
+    extra_fields: serde_json::Value,
+) -> serde_json::Value {
+    let db_status = if db.check_health().await.is_ok() {
+        "healthy"
+    } else {
+        "unhealthy"
+    };
+
+    detailed_health_json(db_status, service, modules, version, extra_fields)
+}
+
+fn detailed_health_json(
+    db_status: &str,
+    service: &str,
+    modules: serde_json::Value,
+    version: &str,
+    extra_fields: serde_json::Value,
+) -> serde_json::Value {
     let mut response = serde_json::json!({
         "service": service,
         "status": db_status,

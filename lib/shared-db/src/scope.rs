@@ -94,6 +94,17 @@ impl Db {
         scope.commit().await
     }
 
+    /// 池内统计（只读快照，不暴露池本身）。
+    ///
+    /// 供模块健康 / metrics 端点使用，避免为了读 `size()/num_idle()` 而绕过作用域封装。
+    pub fn stats(&self) -> DbPoolStats {
+        DbPoolStats {
+            size: self.pool.size(),
+            idle: self.pool.num_idle(),
+            max: self.pool.options().get_max_connections(),
+        }
+    }
+
     /// 复用请求级 RLS 事务：只叠加 `SET LOCAL search_path`，不接管提交/回滚。
     pub async fn scope_with<'a>(
         &self,
@@ -106,6 +117,22 @@ impl Db {
         scope.apply_search_path().await?;
         Ok(scope)
     }
+}
+
+impl std::fmt::Debug for Db {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Db")
+            .field("search_path", &self.search_path)
+            .finish_non_exhaustive()
+    }
+}
+
+/// 池内统计快照。
+#[derive(Debug, Clone, Copy)]
+pub struct DbPoolStats {
+    pub size: u32,
+    pub idle: usize,
+    pub max: u32,
 }
 
 enum TxRef<'a> {

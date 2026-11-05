@@ -16,11 +16,48 @@ pub use read_write::{ReadWriteConfig, ReadWritePool};
 pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
     let search_path =
         std::env::var("SEARCH_PATH").unwrap_or_else(|_| "rs, erp, public".to_string());
-    debug!("create_database_pool: search_path = {}", search_path);
+    create_database_pool_with_search_path(config, &search_path).await
+}
 
+/// 与 [`create_database_pool`] 相同，但显式指定**会话基线** `search_path`。
+///
+/// 仅供连接治理 B 的「进程共享运行时池」使用：共享池的基线固定为 `public`（中性值），
+/// 各模块的真实作用域由 [`crate::scope::Db`] 在事务内 `SET LOCAL` 提供，不再依赖建池时的
+/// 全局 `SEARCH_PATH`。
+pub async fn create_database_pool_with_search_path(
+    config: &DatabaseConfig,
+    search_path: &str,
+) -> Result<PgPool> {
     // 连接治理 A：建池前先向进程级预算申请额度（Total ≤ DB_TOTAL_CONNECTION_BUDGET）。
     // 预算只压「总额天花板」，单池申请值仍作为上限参与 min 计算。
     let reservation = budget::reserve_pool("business", config.max_connections)?;
+    create_database_pool_from_reservation(config, search_path, reservation).await
+}
+
+/// 创建「进程共享运行时池」（连接治理 B）。
+///
+/// 与普通模块池的唯一区别是预算权重：该池合并了 `weight` 个已迁移模块，
+/// 公平分摊时按 `weight` 个预算单位参与，避免共享池被压到单模块额度。
+pub async fn create_shared_database_pool(
+    config: &DatabaseConfig,
+    search_path: &str,
+    weight: u32,
+) -> Result<PgPool> {
+    let weight = weight.max(1);
+    // 共享池承载 weight 个模块，申请上限按模块上限 × weight（仍被公平份额与余额夹住）。
+    let requested = config.max_connections.saturating_mul(weight);
+    let reservation = budget::reserve_pool_weighted("shared-runtime", requested, weight)?;
+    create_database_pool_from_reservation(config, search_path, reservation).await
+}
+
+async fn create_database_pool_from_reservation(
+    config: &DatabaseConfig,
+    search_path: &str,
+    reservation: budget::PoolReservation,
+) -> Result<PgPool> {
+    let search_path = search_path.to_string();
+    debug!("create_database_pool: search_path = {}", search_path);
+
     let max_connections = reservation.granted();
     let min_connections = config.min_connections.unwrap_or(5).min(max_connections);
     let connect_timeout = config.connect_timeout.unwrap_or(30);

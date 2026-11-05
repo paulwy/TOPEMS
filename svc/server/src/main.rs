@@ -133,14 +133,19 @@ fn derived_db_pools() -> u32 {
     {
         pools += 1;
     }
-    #[cfg(feature = "module-monitor")]
+    // 连接治理 B 批次 1：monitor / plugin-registry / subscription 已迁移到共享运行时池
+    // （`bootstrap_service_shared`），不再各自建池。它们只占 1 个物理池，但在预算
+    // 公平分摊中按「模块数」权重参与，因此这里计入 SHARED_POOL_MODULE_WEIGHT 个预算单位。
+    #[cfg(any(
+        feature = "module-monitor",
+        feature = "module-plugin-registry",
+        feature = "module-subscription"
+    ))]
     {
-        pools += 1;
+        pools += topems_shared_bootstrap::SHARED_POOL_MODULE_WEIGHT;
     }
-    #[cfg(feature = "module-plugin-registry")]
-    {
-        pools += 1;
-    }
+    // 注意：上面 3 个模块各占 1 个物理池已消失，物理池数 = 本函数返回值
+    // - (SHARED_POOL_MODULE_WEIGHT - 1)。
     #[cfg(feature = "module-integration")]
     {
         pools += 1;
@@ -161,10 +166,7 @@ fn derived_db_pools() -> u32 {
     {
         pools += 1;
     }
-    #[cfg(feature = "module-subscription")]
-    {
-        pools += 1;
-    }
+    // module-subscription 已迁移到共享运行时池（计在 SHARED_POOL_MODULE_WEIGHT 中）。
 
     pools
 }
@@ -704,28 +706,30 @@ async fn main() -> Result<()> {
         } else {
             0
         };
-        let expected_actual = derived_pools
+        let physical_expected = derived_pools
             .saturating_sub(1)
-            .saturating_add(migrate_expected);
+            .saturating_add(migrate_expected)
+            .saturating_sub(topems_shared_bootstrap::SHARED_POOL_MODULE_WEIGHT - 1);
         tracing::info!(
-            "[db-budget] 启动核对：注册表推导 {} 池，实际建池 {}，降级 {}，预算 {}，已分配 {}",
+            "[db-budget] 启动核对：注册表推导 {} 预算单位（物理池 {}），实际建池 {}，降级 {}，预算 {}，已分配 {}",
             derived_pools,
-            snap.pools,
+            physical_expected,
+            snap.physical_pools,
             degraded,
             snap.total,
             snap.allocated
         );
-        if snap.pools > expected_actual {
+        if snap.physical_pools > physical_expected {
             tracing::warn!(
                 "[db-budget] 实际建池数 {} 超过注册表推导值 {}：derived_db_pools() 与 build 列表不一致（预算分母偏小）",
-                snap.pools,
-                expected_actual
+                snap.physical_pools,
+                physical_expected
             );
-        } else if degraded == 0 && snap.pools < expected_actual {
+        } else if degraded == 0 && snap.physical_pools < physical_expected {
             tracing::warn!(
                 "[db-budget] 实际建池 {} < 推导 {}：有模块未建池却未在 derived_db_pools() 中显式排除（无降级可解释）",
-                snap.pools,
-                expected_actual
+                snap.physical_pools,
+                physical_expected
             );
         }
     }
