@@ -11,7 +11,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 import { useTranslation } from 'react-i18next';
 import { QUERY_KEYS } from '@/lib/reactQuery';
-import i18n from '@/i18n';
 
 import { TabPanel } from './components/InventoryReportFilters';
 import InventoryReportSummary from './components/InventoryReportSummary';
