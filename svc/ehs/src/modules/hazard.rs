@@ -1,5 +1,6 @@
 //! Hazard management handlers - Reporting, classification, rectification, verification, and closure
 
+use chrono::{DateTime, Utc};
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
@@ -93,13 +94,13 @@ pub struct Hazard {
     pub source: String,
     pub location: Option<String>,
     pub reported_by: Option<String>,
-    pub reported_at: Option<String>,
+    pub reported_at: Option<DateTime<Utc>>,
     pub status: String,
     pub inspection_id: Option<String>,
     pub approval_workflow_id: Option<String>,
     pub approval_status: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -122,10 +123,10 @@ pub struct Rectification {
     pub deadline: Option<String>,
     pub status: String,
     pub progress: i32,
-    pub started_at: Option<String>,
-    pub completed_at: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub started_at: Option<DateTime<Utc>>,
+    pub completed_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -137,8 +138,8 @@ pub struct Verification {
     pub verifier: Option<String>,
     pub result: String,
     pub remarks: Option<String>,
-    pub verified_at: Option<String>,
-    pub created_at: Option<String>,
+    pub verified_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -233,9 +234,9 @@ pub async fn list_hazards(
             id::text AS id, hazard_no,
             CASE WHEN ${locale} = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
             description, category, level, source, location, reported_by,
-            reported_at::TEXT AS reported_at, status,
+            reported_at AS reported_at, status,
             inspection_id::text AS inspection_id,
-            created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+            created_at AS created_at, updated_at AS updated_at
         FROM ehs.qa_ehs_hazards
         {where_clause}
         ORDER BY created_at DESC
@@ -282,7 +283,7 @@ pub async fn list_hazards(
                 .unwrap_or_else(|| "inspection".to_string()),
             location: r.try_get::<Option<String>, _>("location").ok().flatten(),
             reported_by: r.try_get::<Option<String>, _>("reported_by").ok().flatten(),
-            reported_at: r.try_get::<Option<String>, _>("reported_at").ok().flatten(),
+            reported_at: r.try_get::<Option<DateTime<Utc>>, _>("reported_at").ok().flatten(),
             status: r
                 .try_get::<Option<String>, _>("status")
                 .ok()
@@ -294,8 +295,8 @@ pub async fn list_hazards(
                 .flatten(),
             approval_workflow_id: None,
             approval_status: None,
-            created_at: r.try_get::<Option<String>, _>("created_at").ok().flatten(),
-            updated_at: r.try_get::<Option<String>, _>("updated_at").ok().flatten(),
+            created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten(),
+            updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten(),
             tenant_id: uuid::Uuid::nil(),
         })
         .collect();
@@ -332,7 +333,7 @@ pub async fn create_hazard(
 
     let hazard_id = uuid::Uuid::new_v4();
     let hazard_no = format!("HZ-{}", hazard_id.to_string()[..8].to_uppercase());
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
 
     let mut hazard = Hazard {
         id: hazard_id.to_string(),
@@ -465,9 +466,9 @@ pub async fn get_hazard(
             id::text AS id, hazard_no,
             CASE WHEN $2 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
             description, category, level, source, location, reported_by,
-            reported_at::TEXT AS reported_at, status,
+            reported_at AS reported_at, status,
             inspection_id::text AS inspection_id,
-            created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+            created_at AS created_at, updated_at AS updated_at
         FROM ehs.qa_ehs_hazards
         WHERE ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3) AND id = $1::uuid AND deleted_at IS NULL
         "#,
@@ -519,7 +520,7 @@ pub async fn get_hazard(
             .ok()
             .flatten(),
         reported_at: row
-            .try_get::<Option<String>, _>("reported_at")
+            .try_get::<Option<DateTime<Utc>>, _>("reported_at")
             .ok()
             .flatten(),
         status: row
@@ -534,11 +535,11 @@ pub async fn get_hazard(
         approval_workflow_id: None,
         approval_status: None,
         created_at: row
-            .try_get::<Option<String>, _>("created_at")
+            .try_get::<Option<DateTime<Utc>>, _>("created_at")
             .ok()
             .flatten(),
         updated_at: row
-            .try_get::<Option<String>, _>("updated_at")
+            .try_get::<Option<DateTime<Utc>>, _>("updated_at")
             .ok()
             .flatten(),
         tenant_id: uuid::Uuid::nil(),
@@ -607,9 +608,9 @@ pub async fn update_hazard(
           AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
           AND deleted_at IS NULL
         RETURNING id::text AS id, hazard_no, title, description, category, level, source,
-                  location, reported_by, reported_at::TEXT AS reported_at, status,
+                  location, reported_by, reported_at AS reported_at, status,
                   inspection_id::text AS inspection_id,
-                  created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+                  created_at AS created_at, updated_at AS updated_at
         "#
     );
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
@@ -870,8 +871,8 @@ pub async fn create_rectification(
         VALUES ($1::uuid, $2, $3, $4::date, 'pending', 0, $5)
         RETURNING id::text AS id, hazard_id::text AS hazard_id, description, responsible,
                   deadline::text AS deadline, status, progress,
-                  started_at::text AS started_at, completed_at::text AS completed_at,
-                  created_at::text AS created_at, updated_at::text AS updated_at
+                  started_at AS started_at, completed_at AS completed_at,
+                  created_at AS created_at, updated_at AS updated_at
         "#,
     )
     .bind(&id)
@@ -918,10 +919,10 @@ pub async fn create_rectification(
             "deadline": row.try_get::<Option<String>, _>("deadline").ok().flatten(),
             "status": row.try_get::<String, _>("status").unwrap_or_else(|_| "pending".to_string()),
             "progress": row.try_get::<i32, _>("progress").unwrap_or(0),
-            "started_at": row.try_get::<Option<String>, _>("started_at").ok().flatten(),
-            "completed_at": row.try_get::<Option<String>, _>("completed_at").ok().flatten(),
-            "created_at": row.try_get::<String, _>("created_at").unwrap_or_default(),
-            "updated_at": row.try_get::<String, _>("updated_at").unwrap_or_default(),
+            "started_at": row.try_get::<Option<DateTime<Utc>>, _>("started_at").ok().flatten(),
+            "completed_at": row.try_get::<Option<DateTime<Utc>>, _>("completed_at").ok().flatten(),
+            "created_at": row.try_get::<DateTime<Utc>, _>("created_at").unwrap_or_default(),
+            "updated_at": row.try_get::<DateTime<Utc>, _>("updated_at").unwrap_or_default(),
             "tenant_id": tenant_id.to_string(),
         }),
         "整改方案创建成功",
@@ -963,8 +964,8 @@ pub async fn update_rectification(
           AND deleted_at IS NULL
         RETURNING id::text AS id, hazard_id::text AS hazard_id, description, responsible,
                   deadline::text AS deadline, status, progress,
-                  started_at::text AS started_at, completed_at::text AS completed_at,
-                  created_at::text AS created_at, updated_at::text AS updated_at
+                  started_at AS started_at, completed_at AS completed_at,
+                  created_at AS created_at, updated_at AS updated_at
         "#,
     )
     .bind(&id)
@@ -1003,10 +1004,10 @@ pub async fn update_rectification(
             "deadline": row.try_get::<Option<String>, _>("deadline").ok().flatten(),
             "status": row.try_get::<String, _>("status").unwrap_or_else(|_| "in_progress".to_string()),
             "progress": row.try_get::<i32, _>("progress").unwrap_or(0),
-            "started_at": row.try_get::<Option<String>, _>("started_at").ok().flatten(),
-            "completed_at": row.try_get::<Option<String>, _>("completed_at").ok().flatten(),
-            "created_at": row.try_get::<String, _>("created_at").unwrap_or_default(),
-            "updated_at": row.try_get::<String, _>("updated_at").unwrap_or_default(),
+            "started_at": row.try_get::<Option<DateTime<Utc>>, _>("started_at").ok().flatten(),
+            "completed_at": row.try_get::<Option<DateTime<Utc>>, _>("completed_at").ok().flatten(),
+            "created_at": row.try_get::<DateTime<Utc>, _>("created_at").unwrap_or_default(),
+            "updated_at": row.try_get::<DateTime<Utc>, _>("updated_at").unwrap_or_default(),
             "tenant_id": tenant_id.to_string(),
         }),
         "整改方案更新成功",
@@ -1067,7 +1068,7 @@ pub async fn submit_rectification(
         serde_json::json!({
             "hazard_id": id,
             "status": "submitted",
-            "submitted_at": chrono::Utc::now().to_rfc3339(),
+            "submitted_at": chrono::Utc::now(),
             "tenant_id": tenant_id.to_string(),
         }),
         "整改已提交",
@@ -1108,7 +1109,7 @@ pub async fn verify_hazard(
             (hazard_id, verifier, result, remarks, verified_at, tenant_id)
         VALUES ($1::uuid, $2, $3, $4, now(), $5)
         RETURNING id::text AS id, hazard_id::text AS hazard_id, verifier, result, remarks,
-                  verified_at::text AS verified_at, created_at::text AS created_at
+                  verified_at AS verified_at, created_at AS created_at
         "#,
     )
     .bind(&id)
@@ -1159,8 +1160,8 @@ pub async fn verify_hazard(
             "verifier": row.try_get::<Option<String>, _>("verifier").ok().flatten(),
             "result": row.try_get::<String, _>("result").unwrap_or_default(),
             "remarks": row.try_get::<Option<String>, _>("remarks").ok().flatten(),
-            "verified_at": row.try_get::<String, _>("verified_at").unwrap_or_default(),
-            "created_at": row.try_get::<String, _>("created_at").unwrap_or_default(),
+            "verified_at": row.try_get::<DateTime<Utc>, _>("verified_at").unwrap_or_default(),
+            "created_at": row.try_get::<DateTime<Utc>, _>("created_at").unwrap_or_default(),
             "tenant_id": tenant_id.to_string(),
         }),
         "隐患验证完成",
@@ -1185,8 +1186,8 @@ pub struct SafetyHazard {
     pub exposure: Option<String>,
     pub likelihood: Option<String>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -1269,7 +1270,7 @@ pub async fn list_safety_hazards(
         r#"
         SELECT id::text AS id, hazard_no, name, category, level, description, location,
                risk_assessment, control_measures, status, severity, exposure, likelihood,
-               created_by, created_at::text AS created_at, updated_at::text AS updated_at,
+               created_by, created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.safety_hazards
         {where_clause}
@@ -1324,7 +1325,7 @@ pub async fn create_safety_hazard(
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING id::text AS id, hazard_no, name, category, level, description, location,
                   risk_assessment, control_measures, status, severity, exposure, likelihood,
-                  created_by, created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_by, created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
@@ -1373,7 +1374,7 @@ pub async fn get_safety_hazard(
     let sql = r#"
         SELECT id::text AS id, hazard_no, name, category, level, description, location,
                risk_assessment, control_measures, status, severity, exposure, likelihood,
-               created_by, created_at::text AS created_at, updated_at::text AS updated_at,
+               created_by, created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.safety_hazards
         WHERE id::text = $1
@@ -1473,7 +1474,7 @@ pub async fn update_safety_hazard(
           AND deleted_at IS NULL
         RETURNING id::text AS id, hazard_no, name, category, level, description, location,
                   risk_assessment, control_measures, status, severity, exposure, likelihood,
-                  created_by, created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_by, created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
         "#
     );
@@ -1577,8 +1578,8 @@ fn safety_hazard_from_row(r: &sqlx::postgres::PgRow) -> SafetyHazard {
         exposure: r.try_get("exposure").ok().flatten(),
         likelihood: r.try_get("likelihood").ok().flatten(),
         created_by: r.try_get("created_by").ok().flatten(),
-        created_at: r.try_get::<String, _>("created_at").ok(),
-        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        created_at: r.try_get::<DateTime<Utc>, _>("created_at").ok(),
+        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }
@@ -1614,7 +1615,7 @@ fn hazard_from_row(row: &sqlx::postgres::PgRow) -> Hazard {
             .ok()
             .flatten(),
         reported_at: row
-            .try_get::<Option<String>, _>("reported_at")
+            .try_get::<Option<DateTime<Utc>>, _>("reported_at")
             .ok()
             .flatten(),
         status: row
@@ -1629,11 +1630,11 @@ fn hazard_from_row(row: &sqlx::postgres::PgRow) -> Hazard {
         approval_workflow_id: None,
         approval_status: None,
         created_at: row
-            .try_get::<Option<String>, _>("created_at")
+            .try_get::<Option<DateTime<Utc>>, _>("created_at")
             .ok()
             .flatten(),
         updated_at: row
-            .try_get::<Option<String>, _>("updated_at")
+            .try_get::<Option<DateTime<Utc>>, _>("updated_at")
             .ok()
             .flatten(),
         tenant_id: uuid::Uuid::nil(),
@@ -1649,9 +1650,9 @@ async fn fetch_hazard_row(
     let row = sqlx::query(
         r#"
         SELECT id::text AS id, hazard_no, title, description, category, level, source,
-               location, reported_by, reported_at::TEXT AS reported_at, status,
+               location, reported_by, reported_at AS reported_at, status,
                inspection_id::text AS inspection_id,
-               created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+               created_at AS created_at, updated_at AS updated_at
         FROM ehs.qa_ehs_hazards
         WHERE id = $1::uuid
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
@@ -1681,7 +1682,7 @@ pub struct RiskAssessment {
     pub likelihood: String,
     pub risklevel: Option<String>,
     pub recommendations: Option<String>,
-    pub created_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -1694,7 +1695,7 @@ pub struct ControlMeasure {
     pub deadline: Option<String>,
     pub status: String,
     pub effectiveness: Option<String>,
-    pub created_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -1734,7 +1735,7 @@ pub async fn list_risk_assessments_db(
     let sql = r#"
         SELECT id::text AS id, hazard_id::text AS hazard_id,
                assessment_date::text AS assessment_date, assessor, severity, likelihood,
-               risklevel, recommendations, created_at::text AS created_at
+               risklevel, recommendations, created_at AS created_at
         FROM ehs.hazard_risk_assessments
         WHERE hazard_id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
@@ -1775,7 +1776,7 @@ pub async fn list_control_measures_db(
     let sql = r#"
         SELECT id::text AS id, hazard_id::text AS hazard_id, measure_type, description,
                responsible, deadline::text AS deadline, status, effectiveness,
-               created_at::text AS created_at
+               created_at AS created_at
         FROM ehs.hazard_control_measures
         WHERE hazard_id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
@@ -1822,7 +1823,7 @@ pub async fn create_control_measure_db(
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id::text AS id, hazard_id::text AS hazard_id, measure_type, description,
                   responsible, deadline::text AS deadline, status, effectiveness,
-                  created_at::text AS created_at
+                  created_at AS created_at
     "#;
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&hazard_id)
@@ -1903,7 +1904,7 @@ fn hazard_risk_assessment_from_row(r: &sqlx::postgres::PgRow) -> RiskAssessment 
             .unwrap_or_else(|_| "medium".to_string()),
         risklevel: r.try_get("risklevel").ok().flatten(),
         recommendations: r.try_get("recommendations").ok().flatten(),
-        created_at: r.try_get::<String, _>("created_at").ok(),
+        created_at: r.try_get::<DateTime<Utc>, _>("created_at").ok(),
     }
 }
 
@@ -1922,6 +1923,6 @@ fn hazard_control_measure_from_row(r: &sqlx::postgres::PgRow) -> ControlMeasure 
             .try_get("status")
             .unwrap_or_else(|_| "pending".to_string()),
         effectiveness: r.try_get("effectiveness").ok().flatten(),
-        created_at: r.try_get::<String, _>("created_at").ok(),
+        created_at: r.try_get::<DateTime<Utc>, _>("created_at").ok(),
     }
 }

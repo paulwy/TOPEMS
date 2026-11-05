@@ -1,5 +1,6 @@
 //! Safety handlers - Inspection plans, items, and records
 
+use chrono::{DateTime, Utc};
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
@@ -77,8 +78,8 @@ pub struct InspectionPlan {
     pub end_date: Option<String>,
     pub inspector: Option<String>,
     pub status: String,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
     pub tenant_id: Uuid,
 }
 
@@ -104,13 +105,13 @@ pub struct InspectionRecord {
     pub inspection_type: String,
     pub location: Option<String>,
     pub inspector: Option<String>,
-    pub inspected_at: Option<String>,
+    pub inspected_at: Option<DateTime<Utc>>,
     pub result: Option<String>,
     pub issues: Option<Vec<String>>,
     pub attachments: Option<Vec<String>>,
     pub status: String,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
     pub tenant_id: Uuid,
 }
 
@@ -238,8 +239,8 @@ pub async fn create_plan_item(
          (plan_id, item_no, title, category, description, standard, order_num, tenant_id) \
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8) \
          RETURNING id::text AS id, plan_id::text AS plan_id, item_no, title, category, \
-                   description, standard, order_num, created_at::text AS created_at, \
-                   updated_at::text AS updated_at, tenant_id::text AS tenant_id",
+                   description, standard, order_num, created_at AS created_at, \
+                   updated_at AS updated_at, tenant_id::text AS tenant_id",
     )
     .bind(plan_id)
     .bind(&item_no)
@@ -263,8 +264,8 @@ pub async fn create_plan_item(
                 "description": row.try_get::<Option<String>, _>("description").unwrap_or_default(),
                 "standard": row.try_get::<Option<String>, _>("standard").unwrap_or_default(),
                 "order_num": row.try_get::<i32, _>("order_num").unwrap_or(0),
-                "created_at": row.try_get::<String, _>("created_at").unwrap_or_default(),
-                "updated_at": row.try_get::<String, _>("updated_at").unwrap_or_default(),
+                "created_at": row.try_get::<DateTime<Utc>, _>("created_at").unwrap_or_default(),
+                "updated_at": row.try_get::<DateTime<Utc>, _>("updated_at").unwrap_or_default(),
             });
             ApiResponse::success(obj, "检查项创建成功")
         }
@@ -353,7 +354,7 @@ pub async fn create_safety_check(
         "INSERT INTO ehs.safety_checks \
          (check_no, check_type, inspector, check_date, location, result, issues, attachments, status, tenant_id) \
          VALUES ($1, $2, $3, $4::timestamptz, $5, $6, $7, $8, $9, $10) \
-         RETURNING id, check_no, check_type, inspector, check_date::TEXT, location, result, issues, attachments, status, created_at::TEXT, updated_at::TEXT",
+         RETURNING id, check_no, check_type, inspector, check_date::TEXT, location, result, issues, attachments, status, created_at, updated_at",
     )
     .bind(&req.check_no)
     .bind(&req.check_type)
@@ -436,7 +437,7 @@ pub async fn list_plans_db(
         r#"
         SELECT id::text AS id, plan_no, title, description, inspection_type, frequency,
                start_date::text AS start_date, end_date::text AS end_date, inspector, status,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_inspection_plans
         {where_clause}
@@ -482,7 +483,7 @@ pub async fn create_plan_db(
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id::text AS id, plan_no, title, description, inspection_type, frequency,
                   start_date::text AS start_date, end_date::text AS end_date, inspector, status,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
@@ -527,7 +528,7 @@ pub async fn get_plan_db(
     let sql = r#"
         SELECT id::text AS id, plan_no, title, description, inspection_type, frequency,
                start_date::text AS start_date, end_date::text AS end_date, inspector, status,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_inspection_plans
         WHERE id::text = $1
@@ -605,7 +606,7 @@ pub async fn update_plan_db(
           AND deleted_at IS NULL
         RETURNING id::text AS id, plan_no, title, description, inspection_type, frequency,
                   start_date::text AS start_date, end_date::text AS end_date, inspector, status,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
         "#
     );
@@ -714,9 +715,9 @@ pub async fn list_records_db(
     let sql = format!(
         r#"
         SELECT id::text AS id, record_no, plan_id::text AS plan_id, title, inspection_type,
-               location, inspector, inspected_at::text AS inspected_at, result,
+               location, inspector, inspected_at AS inspected_at, result,
                issues, attachments, status,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_inspection_records
         {where_clause}
@@ -767,9 +768,9 @@ pub async fn create_record_db(
              issues, status, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id::text AS id, record_no, plan_id::text AS plan_id, title, inspection_type,
-                  location, inspector, inspected_at::text AS inspected_at, result,
+                  location, inspector, inspected_at AS inspected_at, result,
                   issues, attachments, status,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
@@ -859,9 +860,9 @@ pub async fn update_record_db(
           AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
           AND deleted_at IS NULL
         RETURNING id::text AS id, record_no, plan_id::text AS plan_id, title, inspection_type,
-                  location, inspector, inspected_at::text AS inspected_at, result,
+                  location, inspector, inspected_at AS inspected_at, result,
                   issues, attachments, status,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
         "#
     );
@@ -946,9 +947,9 @@ pub async fn get_record_db(
     let tenant_bind = tenant_id.to_string();
     let record_sql = r#"
         SELECT id::text AS id, record_no, plan_id::text AS plan_id, title, inspection_type,
-               location, inspector, inspected_at::text AS inspected_at, result,
+               location, inspector, inspected_at AS inspected_at, result,
                issues, attachments, status,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_inspection_records
         WHERE id::text = $1
@@ -1048,7 +1049,7 @@ pub async fn list_safety_checks_db(
         r#"
         SELECT id, check_no, check_type, inspector, check_date::TEXT AS check_date, location,
                result, issues, attachments, status,
-               created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+               created_at AS created_at, updated_at AS updated_at
         FROM ehs.safety_checks
         {where_clause}
         ORDER BY created_at DESC
@@ -1088,7 +1089,7 @@ pub async fn get_safety_check_db(
     let sql = r#"
         SELECT id, check_no, check_type, inspector, check_date::TEXT AS check_date, location,
                result, issues, attachments, status,
-               created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+               created_at AS created_at, updated_at AS updated_at
         FROM ehs.safety_checks
         WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
@@ -1167,7 +1168,7 @@ pub async fn update_safety_check_db(
           AND deleted_at IS NULL
         RETURNING id, check_no, check_type, inspector, check_date::TEXT AS check_date, location,
                   result, issues, attachments, status,
-                  created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+                  created_at AS created_at, updated_at AS updated_at
         "#
     );
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
@@ -1275,8 +1276,8 @@ fn inspection_plan_from_row(r: &sqlx::postgres::PgRow) -> InspectionPlan {
         end_date: r.try_get("end_date").ok().flatten(),
         inspector: r.try_get("inspector").ok().flatten(),
         status: r.try_get("status").unwrap_or_else(|_| "active".to_string()),
-        created_at: r.try_get::<String, _>("created_at").ok(),
-        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        created_at: r.try_get::<DateTime<Utc>, _>("created_at").ok(),
+        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }
@@ -1315,8 +1316,8 @@ fn inspection_record_from_row(r: &sqlx::postgres::PgRow) -> InspectionRecord {
         status: r
             .try_get("status")
             .unwrap_or_else(|_| "in_progress".to_string()),
-        created_at: r.try_get::<String, _>("created_at").ok(),
-        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        created_at: r.try_get::<DateTime<Utc>, _>("created_at").ok(),
+        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }
