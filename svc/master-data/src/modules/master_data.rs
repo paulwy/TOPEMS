@@ -6,6 +6,7 @@ use axum::{
     http::HeaderMap,
     Extension, Json,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
@@ -27,21 +28,21 @@ fn req_tenant_id(headers: &HeaderMap) -> Uuid {
 
 fn material_columns(locale: &str) -> String {
     format!(
-        "id::text, material_code, CASE WHEN '{}' = 'en' THEN COALESCE(name_en, material_name) ELSE material_name END AS material_name, material_type, specification, unit, uom_id::text, status, description, created_at::text, updated_at::text",
+        "id::text, material_code, CASE WHEN '{}' = 'en' THEN COALESCE(name_en, material_name) ELSE material_name END AS material_name, material_type, specification, unit, uom_id::text, status, description, created_at, updated_at",
         locale
     )
 }
 
 fn uom_columns(locale: &str) -> String {
     format!(
-        "id::text, uom_code, CASE WHEN '{}' = 'en' THEN COALESCE(name_en, uom_name) ELSE uom_name END AS uom_name, uom_type, category, status, description, created_at::text, updated_at::text",
+        "id::text, uom_code, CASE WHEN '{}' = 'en' THEN COALESCE(name_en, uom_name) ELSE uom_name END AS uom_name, uom_type, category, status, description, created_at, updated_at",
         locale
     )
 }
 
 fn sample_columns(locale: &str) -> String {
     format!(
-        "id::text, sample_code, CASE WHEN '{}' = 'en' THEN COALESCE(name_en, sample_name) ELSE sample_name END AS sample_name, sample_type, source, status, description, created_at::text, updated_at::text",
+        "id::text, sample_code, CASE WHEN '{}' = 'en' THEN COALESCE(name_en, sample_name) ELSE sample_name END AS sample_name, sample_type, source, status, description, created_at, updated_at",
         locale
     )
 }
@@ -59,8 +60,10 @@ pub struct Material {
     pub uom_id: Option<String>,
     pub status: Option<String>,
     pub description: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    #[serde(deserialize_with = "topems_shared_db::datetime_text::option::deserialize")]
+    pub created_at: Option<DateTime<Utc>>,
+    #[serde(deserialize_with = "topems_shared_db::datetime_text::option::deserialize")]
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -214,7 +217,7 @@ pub async fn create_material(
         r#"INSERT INTO master_data.materials
             (material_code, material_name, name_en, material_type, specification, unit, uom_id, status, description, tenant_id, created_by)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, '00000000-0000-0000-0000-000000000000'), $11)
-           RETURNING id::text, material_code, material_name, material_type, specification, unit, uom_id::text, status, description, created_at::text, updated_at::text"#,
+           RETURNING id::text, material_code, material_name, material_type, specification, unit, uom_id::text, status, description, created_at, updated_at"#,
     )
     .bind(&req.material_code)
     .bind(&req.material_name)
@@ -264,7 +267,7 @@ pub async fn update_material(
              updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
              AND ($10::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $10::uuid)
-           RETURNING id::text, material_code, material_name, material_type, specification, unit, uom_id::text, status, description, created_at::text, updated_at::text"#,
+           RETURNING id::text, material_code, material_name, material_type, specification, unit, uom_id::text, status, description, created_at, updated_at"#,
     )
     .bind(id)
     .bind(&req.material_name)
@@ -336,8 +339,10 @@ pub struct Uom {
     pub category: Option<String>,
     pub status: Option<String>,
     pub description: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    #[serde(deserialize_with = "topems_shared_db::datetime_text::option::deserialize")]
+    pub created_at: Option<DateTime<Utc>>,
+    #[serde(deserialize_with = "topems_shared_db::datetime_text::option::deserialize")]
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -487,7 +492,7 @@ pub async fn create_uom(
         r#"INSERT INTO master_data.uoms
             (uom_code, uom_name, name_en, uom_type, category, status, description, tenant_id, created_by)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, '00000000-0000-0000-0000-000000000000')
-           RETURNING id::text, uom_code, uom_name, uom_type, category, status, description, created_at::text, updated_at::text"#,
+           RETURNING id::text, uom_code, uom_name, uom_type, category, status, description, created_at, updated_at"#,
     )
     .bind(&req.uom_code)
     .bind(&req.uom_name)
@@ -532,7 +537,7 @@ pub async fn update_uom(
              updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
              AND ($8::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $8::uuid)
-           RETURNING id::text, uom_code, uom_name, uom_type, category, status, description, created_at::text, updated_at::text"#,
+           RETURNING id::text, uom_code, uom_name, uom_type, category, status, description, created_at, updated_at"#,
     )
     .bind(id)
     .bind(&req.uom_name)
@@ -602,8 +607,10 @@ pub struct Sample {
     pub source: Option<String>,
     pub status: Option<String>,
     pub description: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    #[serde(deserialize_with = "topems_shared_db::datetime_text::option::deserialize")]
+    pub created_at: Option<DateTime<Utc>>,
+    #[serde(deserialize_with = "topems_shared_db::datetime_text::option::deserialize")]
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -753,7 +760,7 @@ pub async fn create_sample(
         r#"INSERT INTO master_data.samples
             (sample_code, sample_name, name_en, sample_type, source, status, description, tenant_id, created_by)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, '00000000-0000-0000-0000-000000000000')
-           RETURNING id::text, sample_code, sample_name, sample_type, source, status, description, created_at::text, updated_at::text"#,
+           RETURNING id::text, sample_code, sample_name, sample_type, source, status, description, created_at, updated_at"#,
     )
     .bind(&req.sample_code)
     .bind(&req.sample_name)
@@ -798,7 +805,7 @@ pub async fn update_sample(
              updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL
              AND ($8::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $8::uuid)
-           RETURNING id::text, sample_code, sample_name, sample_type, source, status, description, created_at::text, updated_at::text"#,
+           RETURNING id::text, sample_code, sample_name, sample_type, source, status, description, created_at, updated_at"#,
     )
     .bind(id)
     .bind(&req.sample_name)

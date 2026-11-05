@@ -110,10 +110,11 @@ fn tagged_entity_from_row(row: &sqlx::postgres::PgRow) -> TaggedEntity {
         tag_ids: serde_json::from_value(row.get::<serde_json::Value, _>("tag_ids"))
             .unwrap_or_default(),
         confidence: row.get::<f64, _>("confidence"),
-        applied_at: row.get::<String, _>("applied_at"),
+        applied_at: row.get::<chrono::DateTime<chrono::Utc>, _>("applied_at"),
     }
 }
-const TAGGED_ENTITY_COLS: &str = "entity_type, entity_id, tag_ids, confidence, applied_at";
+const TAGGED_ENTITY_COLS: &str =
+    "entity_type, entity_id, tag_ids, confidence, applied_at::timestamptz AS applied_at";
 
 async fn fetch_graph_nodes(db: &sqlx::PgPool) -> Result<Vec<GraphNodeV57>, TopemsError> {
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -702,7 +703,7 @@ pub struct TaggedEntity {
     pub entity_id: String,
     pub tag_ids: Vec<String>,
     pub confidence: f64,
-    pub applied_at: String,
+    pub applied_at: chrono::DateTime<chrono::Utc>,
 }
 
 // ==================== 智能标签引擎 ====================
@@ -734,7 +735,7 @@ impl SmartTagger {
         entity_id: String,
         tag_id: String,
     ) -> Result<TaggedEntity, TopemsError> {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let tagged = fetch_tagged_entities(db).await?;
         let mut tag_ids: Vec<String> = tagged
             .iter()
@@ -755,7 +756,7 @@ impl SmartTagger {
         .bind(&entity_id)
         .bind(serde_json::to_value(&tag_ids).unwrap_or_default())
         .bind(1.0)
-        .bind(&now)
+        .bind(now.to_rfc3339())
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入实体标签失败: {e}")))?;

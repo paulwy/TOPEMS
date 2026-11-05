@@ -35,13 +35,12 @@ fn metadata_from_row(row: &sqlx::postgres::PgRow) -> MetadataObject {
         owner: row.get::<String, _>("owner"),
         tags: serde_json::from_value(row.get::<serde_json::Value, _>("tags")).unwrap_or_default(),
         attributes: row.get::<serde_json::Value, _>("attributes"),
-        created_at: row.get::<String, _>("created_at"),
-        updated_at: row.get::<String, _>("updated_at"),
+        created_at: row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+        updated_at: row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
     }
 }
 
-const METADATA_COLS: &str =
-    "id, name, object_type, description, owner, tags, attributes, created_at, updated_at";
+const METADATA_COLS: &str = "id, name, object_type, description, owner, tags, attributes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at";
 
 // ==================== 纯函数（无副作用，可单测） ====================
 
@@ -126,8 +125,8 @@ pub struct MetadataObject {
     pub owner: String,
     pub tags: Vec<String>,
     pub attributes: serde_json::Value,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -199,7 +198,7 @@ pub struct LineageGraph {
     pub nodes: Vec<LineageNodeV60>,
     pub edges: Vec<LineageEdgeV60>,
     pub root_ids: Vec<String>,
-    pub updated_at: String,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -251,7 +250,7 @@ pub struct LifecycleHistory {
     pub stage: LifecycleStage,
     pub from_stage: Option<LifecycleStage>,
     pub reason: String,
-    pub changed_at: String,
+    pub changed_at: chrono::DateTime<chrono::Utc>,
     pub changed_by: String,
 }
 
@@ -447,7 +446,7 @@ pub async fn create_metadata(
         None => return ApiResponse::bad_request("无效的元数据对象类型"),
     };
 
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     let obj = MetadataObject {
         id: uuid::Uuid::new_v4().to_string(),
         name: req.name,
@@ -473,8 +472,8 @@ pub async fn create_metadata(
     .bind(&obj.owner)
     .bind(serde_json::to_value(&obj.tags).unwrap_or(serde_json::json!([])))
     .bind(&obj.attributes)
-    .bind(&obj.created_at)
-    .bind(&obj.updated_at)
+    .bind(obj.created_at.to_rfc3339())
+    .bind(obj.updated_at.to_rfc3339())
     .execute(&state.db)
     .await
     {
@@ -499,7 +498,7 @@ pub async fn create_metadata_compat(
         None => MetadataObjectType::Table,
     };
 
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     let obj = MetadataObject {
         id: uuid::Uuid::new_v4().to_string(),
         name: req
@@ -547,8 +546,8 @@ pub async fn create_metadata_compat(
     .bind(&obj.owner)
     .bind(serde_json::to_value(&obj.tags).unwrap_or(serde_json::json!([])))
     .bind(&obj.attributes)
-    .bind(&obj.created_at)
-    .bind(&obj.updated_at)
+    .bind(obj.created_at.to_rfc3339())
+    .bind(obj.updated_at.to_rfc3339())
     .execute(&state.db)
     .await
     {
@@ -938,7 +937,7 @@ pub async fn build_lineage_graph(
     Json(req): Json<BuildLineageGraphRequest>,
 ) -> ApiResponse<LineageGraph> {
     // K1：算法照搬，写入真表（nodes/edges/graphs）。
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     let graph_id = uuid::Uuid::new_v4().to_string();
     let max_depth = i64::from(req.max_depth.unwrap_or(3));
 
@@ -1034,7 +1033,7 @@ pub async fn build_lineage_graph(
     .bind(serde_json::to_value(&graph.nodes).unwrap_or(serde_json::json!([])))
     .bind(serde_json::to_value(&graph.edges).unwrap_or(serde_json::json!([])))
     .bind(serde_json::to_value(&graph.root_ids).unwrap_or(serde_json::json!([])))
-    .bind(&graph.updated_at)
+    .bind(graph.updated_at.to_rfc3339())
     .execute(&state.db)
     .await
     {
@@ -1393,7 +1392,7 @@ pub async fn transition_stage(
 ) -> ApiResponse<LifecycleHistory> {
     // K1：写真表（UPSERT stages + INSERT history）。
     let new_stage = parse_lifecycle_stage(&req.new_stage).unwrap_or(LifecycleStage::Created);
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
 
     let from_row = sqlx::query(
         "SELECT stage FROM master_data.mdm_lifecycle_stages WHERE entity_id = $1 LIMIT 1",
@@ -1440,7 +1439,7 @@ pub async fn transition_stage(
     .bind(lifecycle_stage_str(&history.stage))
     .bind(history.from_stage.as_ref().map(lifecycle_stage_str))
     .bind(&history.reason)
-    .bind(&history.changed_at)
+    .bind(history.changed_at.to_rfc3339())
     .bind(&history.changed_by)
     .execute(&state.db)
     .await
@@ -1637,7 +1636,7 @@ pub async fn auto_transition(State(state): State<AppState>) -> ApiResponse<Vec<L
 
                     for entity_id in matching {
                         if let Some(to_stage) = parse_lifecycle_stage(to) {
-                            let now = chrono::Utc::now().to_rfc3339();
+                            let now = chrono::Utc::now();
                             let from_stage = current.get(&entity_id).cloned();
 
                             let history = LifecycleHistory {
@@ -1675,7 +1674,7 @@ pub async fn auto_transition(State(state): State<AppState>) -> ApiResponse<Vec<L
                             .bind(lifecycle_stage_str(&history.stage))
                             .bind(history.from_stage.as_ref().map(lifecycle_stage_str))
                             .bind(&history.reason)
-                            .bind(&history.changed_at)
+                            .bind(history.changed_at.to_rfc3339())
                             .bind(&history.changed_by)
                             .execute(&state.db)
                             .await
@@ -1797,7 +1796,7 @@ pub async fn bulk_transition(
     let mut results = Vec::new();
 
     for entity_id in req.entity_ids {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
 
         let from_row = sqlx::query(
             "SELECT stage FROM master_data.mdm_lifecycle_stages WHERE entity_id = $1 LIMIT 1",
@@ -1844,7 +1843,7 @@ pub async fn bulk_transition(
         .bind(lifecycle_stage_str(&history.stage))
         .bind(history.from_stage.as_ref().map(lifecycle_stage_str))
         .bind(&history.reason)
-        .bind(&history.changed_at)
+        .bind(history.changed_at.to_rfc3339())
         .bind(&history.changed_by)
         .execute(&state.db)
         .await
@@ -1919,9 +1918,9 @@ const TAG_COLS: &str = "id, name, color, description, usage_count";
 const NODE_COLS: &str = "id, entity_id, entity_type, name, attributes, level, position";
 const EDGE_COLS: &str =
     "id, source_id, target_id, transformation_type, transformation_details, confidence";
-const GRAPH_COLS: &str = "id, nodes, edges, root_ids, updated_at";
+const GRAPH_COLS: &str = "id, nodes, edges, root_ids, updated_at::timestamptz AS updated_at";
 const POLICY_COLS: &str = "id, entity_type, transitions, duration_days, actions";
-const HISTORY_COLS: &str = "id, entity_id, stage, from_stage, reason, changed_at, changed_by";
+const HISTORY_COLS: &str = "id, entity_id, stage, from_stage, reason, changed_at::timestamptz AS changed_at, changed_by";
 
 fn parse_transformation_type(s: &str) -> TransformationType {
     match s {
@@ -2007,7 +2006,7 @@ fn lineage_graph_from_row(row: &sqlx::postgres::PgRow) -> LineageGraph {
         edges: serde_json::from_value(row.get::<serde_json::Value, _>("edges")).unwrap_or_default(),
         root_ids: serde_json::from_value(row.get::<serde_json::Value, _>("root_ids"))
             .unwrap_or_default(),
-        updated_at: row.get::<String, _>("updated_at"),
+        updated_at: row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
     }
 }
 
@@ -2040,7 +2039,7 @@ fn lifecycle_history_from_row(row: &sqlx::postgres::PgRow) -> LifecycleHistory {
             .unwrap_or(LifecycleStage::Created),
         from_stage: from_stage.and_then(|s| parse_lifecycle_stage(&s)),
         reason: row.get::<String, _>("reason"),
-        changed_at: row.get::<String, _>("changed_at"),
+        changed_at: row.get::<chrono::DateTime<chrono::Utc>, _>("changed_at"),
         changed_by: row.get::<String, _>("changed_by"),
     }
 }
