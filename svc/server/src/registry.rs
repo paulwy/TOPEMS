@@ -18,12 +18,24 @@ use std::sync::Arc;
 use topems_shared_core::response::ApiResponse;
 use tower_http::catch_panic::CatchPanicLayer;
 
+/// 构建失败、未注册的模块（降级状态）
+///
+/// `build()` 失败时统一入口仍继续启动（演示/其它模块兜底），但降级必须在
+/// 健康检查里可见，否则「依赖挂了」看起来和「服务正常」一样。
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct DegradedModule {
+    pub name: &'static str,
+    pub error: String,
+}
+
 /// 模块注册表
 pub struct ModuleRegistry {
     /// 已注册模块：name -> Box<dyn Module>
     modules: HashMap<&'static str, Box<dyn Module>>,
     /// 进程内 provider：TypeId -> InProcProvider
     providers: HashMap<TypeId, InProcProvider>,
+    /// 构建失败被降级的模块（只增不减，供健康检查暴露）
+    degraded: Vec<DegradedModule>,
     /// 模块共享上下文
     context: ModuleContext,
 }
@@ -33,8 +45,22 @@ impl ModuleRegistry {
         Self {
             modules: HashMap::new(),
             providers: HashMap::new(),
+            degraded: Vec::new(),
             context: ModuleContext::default(),
         }
+    }
+
+    /// 记录一个降级模块（build 失败不阻塞启动，但健康检查必须可见）
+    pub fn mark_degraded(&mut self, name: &'static str, error: impl Into<String>) {
+        self.degraded.push(DegradedModule {
+            name,
+            error: error.into(),
+        });
+    }
+
+    /// 当前处于降级状态的模块（空 = 全部真实模块构建成功）
+    pub fn degraded_modules(&self) -> Vec<DegradedModule> {
+        self.degraded.clone()
     }
 
     // ================================================

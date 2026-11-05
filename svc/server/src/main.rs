@@ -18,6 +18,17 @@ use topems_server::ModuleRegistry;
 use topems_shared_bootstrap::shutdown_signal;
 use topems_shared_core::logging::init_logging;
 
+/// 记录模块降级：构建失败不阻塞启动（既有设计），但健康检查必须能看到。
+fn note_degraded(
+    registry: &Arc<Mutex<ModuleRegistry>>,
+    name: &'static str,
+    err: impl std::fmt::Display,
+) {
+    let msg = format!("{err:#}");
+    tracing::error!("⚠️ 模块 {name} 构建失败（降级运行）: {msg}");
+    registry.lock().unwrap().mark_degraded(name, msg);
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     // 初始化日志：LOG_FORMAT=text|json|file 控制格式（默认 text），RUST_LOG 控制级别
@@ -59,7 +70,7 @@ async fn main() -> Result<()> {
             }
             Err(e) => {
                 // 真实服务依赖数据库，构建失败时降级运行（不阻塞统一入口）
-                tracing::error!("⚠️ 真实 finance 服务构建失败（降级为演示模块）: {:#}", e);
+                note_degraded(&registry, "finance", e);
             }
         }
     }
@@ -74,7 +85,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 erp 服务已注册（erp-real，含数据库/事件总线）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 erp 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "erp", e);
             }
         }
     }
@@ -89,7 +100,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 qms 服务已注册（qms-real，含数据库/事件总线）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 qms 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "qms", e);
             }
         }
     }
@@ -104,7 +115,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 crm 服务已注册（crm-real，含数据库/事件总线）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 crm 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "crm", e);
             }
         }
     }
@@ -119,7 +130,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 hrm 服务已注册（hrm-real，含数据库/事件总线）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 hrm 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "hrm", e);
             }
         }
     }
@@ -134,7 +145,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 scm 服务已注册（scm-real，含数据库/事件总线）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 scm 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "scm", e);
             }
         }
     }
@@ -149,7 +160,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 wms 服务已注册（wms-real，含数据库/事件总线）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 wms 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "wms", e);
             }
         }
     }
@@ -166,7 +177,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 pm 服务已注册（pm-real，含数据库/事件总线）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 pm 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "pm", e);
             }
         }
     }
@@ -181,7 +192,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 mes 服务已注册（mes-real，含数据库/事件总线）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 mes 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "mes", e);
             }
         }
     }
@@ -196,7 +207,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 ehs 服务已注册（ehs-real，含数据库/事件总线）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 ehs 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "ehs", e);
             }
         }
     }
@@ -211,7 +222,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 lims 服务已注册（lims-real，含数据库/事件总线）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 lims 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "lims", e);
             }
         }
     }
@@ -226,7 +237,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 tms 服务已注册（tms-real，含数据库/事件总线）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 tms 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "tms", e);
             }
         }
     }
@@ -241,7 +252,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 pdm 服务已注册（pdm-real，含数据库/事件总线）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 pdm 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "pdm", e);
             }
         }
     }
@@ -256,7 +267,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 gis 服务已注册（gis-real，含数据库）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 gis 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "gis", e);
             }
         }
     }
@@ -274,7 +285,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 ticket 服务已注册（ticket-real，含数据库/事件总线）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 ticket 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "ticket", e);
             }
         }
     }
@@ -289,7 +300,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 rd 服务已注册（rd-real，含数据库/事件总线）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 rd 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "rd", e);
             }
         }
     }
@@ -304,7 +315,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 srm 服务已注册（srm-real，含数据库/事件总线）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 srm 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "srm", e);
             }
         }
     }
@@ -321,7 +332,7 @@ async fn main() -> Result<()> {
                 );
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 master-data 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "master-data", e);
             }
         }
     }
@@ -336,7 +347,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 analytics 服务已注册（analytics-real，含数据库/BI 路由）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 analytics 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "analytics", e);
             }
         }
     }
@@ -353,7 +364,7 @@ async fn main() -> Result<()> {
                 );
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 communication 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "communication", e);
             }
         }
     }
@@ -371,7 +382,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 search 服务已注册（search-real，含数据库/全文搜索路由）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 search 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "search", e);
             }
         }
     }
@@ -389,7 +400,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 monitor 服务已注册（monitor-real，含数据库/监控告警路由）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 monitor 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "monitor", e);
             }
         }
     }
@@ -404,7 +415,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 plugin-registry 服务已注册（plugin-registry-real，含数据库/插件注册路由）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 plugin-registry 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "plugin-registry", e);
             }
         }
     }
@@ -421,7 +432,7 @@ async fn main() -> Result<()> {
                 );
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 integration 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "integration", e);
             }
         }
     }
@@ -439,7 +450,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 mobile 服务已注册（mobile-real，含数据库/移动端路由）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 mobile 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "mobile", e);
             }
         }
     }
@@ -455,7 +466,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 真实 ai 服务已注册（ai-real，含知识库/QA/Analysis/Agent 路由）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 ai 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "ai", e);
             }
         }
     }
@@ -473,7 +484,7 @@ async fn main() -> Result<()> {
                 );
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 unified-core 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "unified-core", e);
             }
         }
     }
@@ -495,7 +506,7 @@ async fn main() -> Result<()> {
                 );
             }
             Err(e) => {
-                tracing::error!("⚠️ 真实 portal 服务构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "portal", e);
             }
         }
     }
@@ -510,7 +521,7 @@ async fn main() -> Result<()> {
                 tracing::info!("✅ 订阅模块已注册（subscription，含数据库）");
             }
             Err(e) => {
-                tracing::error!("⚠️ 订阅模块构建失败（降级运行）: {:#}", e);
+                note_degraded(&registry, "subscription", e);
             }
         }
     }

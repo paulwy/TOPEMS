@@ -36,9 +36,13 @@ impl Module for PlatformModule {
     fn routes(&self, _state: ModuleContext) -> Router {
         let registry = self.registry.clone();
         let registry2 = self.registry.clone();
+        let registry3 = self.registry.clone();
 
         Router::new()
             // 统一入口健康检查（聚合所有已注册模块）
+            //
+            // `status` 与 HTTP 200 语义保持不变（现有探针依赖），只**增加**
+            // `degraded_modules` / `degraded_count`：build 失败的模块不再「静默消失」。
             .route(
                 "/api/server/health",
                 get({
@@ -46,13 +50,44 @@ impl Module for PlatformModule {
                     move || {
                         let reg = registry.lock().unwrap();
                         let modules = reg.list_modules();
+                        let degraded = reg.degraded_modules();
                         async move {
                             Json(json!({
                                 "status": "ok",
                                 "server": "topems-server",
                                 "modules": modules.len(),
                                 "module_list": modules,
+                                "degraded_count": degraded.len(),
+                                "degraded_modules": degraded,
                             }))
+                        }
+                    }
+                }),
+            )
+            // 就绪探针：全部真实模块构建成功才 200；有降级返回 503。
+            // 与 /api/server/health 分离，避免改变后者的 200 语义。
+            .route(
+                "/api/server/ready",
+                get({
+                    let registry = registry3;
+                    move || {
+                        let degraded = registry.lock().unwrap().degraded_modules();
+                        async move {
+                            if degraded.is_empty() {
+                                (
+                                    axum::http::StatusCode::OK,
+                                    Json(json!({ "status": "ready", "degraded_modules": [] })),
+                                )
+                            } else {
+                                (
+                                    axum::http::StatusCode::SERVICE_UNAVAILABLE,
+                                    Json(json!({
+                                        "status": "degraded",
+                                        "degraded_count": degraded.len(),
+                                        "degraded_modules": degraded,
+                                    })),
+                                )
+                            }
                         }
                     }
                 }),
