@@ -29,7 +29,9 @@ export async function loginViaUi(
   page: Page,
   user: TestUser = TEST_USERS.admin
 ): Promise<void> {
-  await page.goto('/login', { waitUntil: 'networkidle' });
+  // networkidle 在 dev server + HMR 下不可靠（并行构建时 >30s 不静默），
+  // 改等 DOM 就绪，后续表单/跳转断言仍会等待真实元素
+  await page.goto('/login', { waitUntil: 'domcontentloaded' });
   await page.getByLabel(/用户名|username|账号/i).fill(user.username);
   await page.getByLabel(/密码|password/i).fill(user.password);
   await page.getByRole('button', { name: /登录|login|sign in/i }).click();

@@ -14,9 +14,14 @@ test.describe('MES - Create', () => {
   test('can open the create-production-order dialog and submit', async ({ page }) => {
     await page.goto('/mes/production-orders');
     const newButton = page
-      .getByRole('button', { name: /新建|新增|create|new/i })
+      .getByRole('main')
+      .getByRole('button', { name: /新建|新增|创建|create|new/i })
       .first();
-    const hasCreate = await newButton.isVisible({ timeout: 5_000 }).catch(() => false);
+    // isVisible() 不会等待元素挂载（页面还在渲染时会误判不存在），用 waitFor 正确等待
+    const hasCreate = await newButton
+      .waitFor({ state: 'visible', timeout: 5_000 })
+      .then(() => true)
+      .catch(() => false);
     if (!hasCreate) {
       test.skip(true, '新建 button not present on MES production order list');
       return;
@@ -55,11 +60,16 @@ test.describe('MES - Create', () => {
   });
 
   test('can open the create-work-order dialog', async ({ page }) => {
-    await page.goto('/mes/work-orders');
+    await page.goto('/mes/work-order');
     const newButton = page
-      .getByRole('button', { name: /新建|新增|create|new/i })
+      .getByRole('main')
+      .getByRole('button', { name: /新建|新增|创建|create|new/i })
       .first();
-    const hasCreate = await newButton.isVisible({ timeout: 5_000 }).catch(() => false);
+    // isVisible() 不会等待元素挂载（页面还在渲染时会误判不存在），用 waitFor 正确等待
+    const hasCreate = await newButton
+      .waitFor({ state: 'visible', timeout: 5_000 })
+      .then(() => true)
+      .catch(() => false);
     if (!hasCreate) {
       test.skip(true, '新建 button not present on MES work order list');
       return;
@@ -83,14 +93,14 @@ test.describe('MES Production Order Create - API', () => {
     await ctx?.dispose();
   });
 
-  test('POST /api/mes/production-orders creates an order (or skips if unavailable)', async () => {
+  test('POST /api/mes/orders creates an order (or skips if unavailable)', async () => {
     let created: { id?: string } | null = null;
     try {
+      // 实测：必填字段是 product_name/product_code/quantity（缺 product_code 返回 422）
       created = await apiPost<{ id?: string }>(ctx, API_PATHS.mes.productionOrder, {
-        order_no: `E2E-PO-${Date.now()}`,
         product_name: 'E2E-Test-Product',
+        product_code: 'E2E-PRODUCT-CODE',
         quantity: 100,
-        unit: '个',
       });
     } catch {
       test.skip(true, 'MES production order create API not available');

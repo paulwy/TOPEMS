@@ -23,14 +23,11 @@ test.describe('HRM - List', () => {
   });
 
   test('can navigate to the organization list page', async ({ page }) => {
-    await page.goto('/hrm/organizations');
-    await expect(page).toHaveURL(/hrm/i, { timeout: 15_000 });
-    await expect(
-      page
-        .getByRole('table')
-        .or(page.getByText(/暂无数据|no data|empty/i))
-        .first()
-    ).toBeVisible({ timeout: 15_000 });
+    // 路由改名：/hrm/organizations → /hrm/organization（组织架构页，树形结构，非表格）
+    await page.goto('/hrm/organization');
+    await expect(page).toHaveURL(/\/hrm\/organization/i, { timeout: 15_000 });
+    await expect(page.getByRole('main')).toContainText('组织架构', { timeout: 15_000 });
+    await expect(page.getByRole('button', { name: '新增节点' })).toBeVisible({ timeout: 15_000 });
   });
 
   test('search filters the employee list (when search box exists)', async ({ page }) => {

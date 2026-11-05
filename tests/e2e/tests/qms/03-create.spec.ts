@@ -12,11 +12,18 @@ test.describe('QMS - Create', () => {
   });
 
   test('can open the create-quality-issue dialog and submit', async ({ page }) => {
-    await page.goto('/qms/quality-issues');
+    // 路由改名：/qms/quality-issues → /qms/quality-control（页面提供「新增不合格品」入口）
+    await page.goto('/qms/quality-control');
+    // 限定在 main 区域内，避免命中侧边栏 / 顶部栏同名按钮
     const newButton = page
-      .getByRole('button', { name: /新建|新增|create|new/i })
+      .getByRole('main')
+      .getByRole('button', { name: /新建|新增|创建|create|new/i })
       .first();
-    const hasCreate = await newButton.isVisible({ timeout: 5_000 }).catch(() => false);
+    // isVisible() 不会等待元素挂载（页面还在渲染时会误判不存在），用 waitFor 正确等待
+    const hasCreate = await newButton
+      .waitFor({ state: 'visible', timeout: 5_000 })
+      .then(() => true)
+      .catch(() => false);
     if (!hasCreate) {
       test.skip(true, '新建 button not present on QMS quality-issue list');
       return;

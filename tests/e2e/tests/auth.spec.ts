@@ -28,8 +28,10 @@ test.describe('Auth - Login flow', () => {
     await page.getByLabel(/密码|password/i).fill('wrong-password');
     await page.getByRole('button', { name: /登录|login|sign in/i }).click();
 
-    // Wait for toast notification (error type)
-    await expect(page.getByText(/用户名或密码错误|登录失败|invalid|incorrect/i).first()).toBeVisible({ timeout: 10000 });
+    // 实测：登录失败提示为「操作失败 / Request failed with status code 401」（后端 401 的通用错误 toast）
+    await expect(
+      page.getByText(/用户名或密码错误|登录失败|操作失败|401|invalid|incorrect/i).first()
+    ).toBeVisible({ timeout: 10_000 });
   });
 
   test('operator user can log in', async ({ page }) => {
@@ -44,11 +46,11 @@ test.describe('Auth - Login flow', () => {
     await loginViaUi(page, TEST_USERS.admin);
     
     // Wait for page to load
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
     
-    // Click user avatar button (个人中心)
-    await page.getByRole('button', { name: /个人中心|user profile/i }).click();
+    // 布局已换代到 redesign TopBar：头像入口用稳定 testid，菜单项是普通 button
+    await page.getByTestId('topbar-profile').click();
     
     // Wait for menu to appear
     await page.waitForTimeout(1000);

@@ -1,15 +1,28 @@
 import { test, expect, APIRequestContext } from '@playwright/test';
 import { loginViaUi, TEST_USERS } from '../helpers/auth';
-import { buildApiContext, API_PATHS, apiGet, apiPost, PaginatedResponse } from '../helpers/api';
+import {
+  buildApiContext,
+  API_PATHS,
+  apiGet,
+  apiPost,
+  apiPut,
+  extractList,
+  PaginatedResponse,
+} from '../helpers/api';
 
+// 实测响应结构（svc/mes/src/modules/production_order.rs::ProductionOrderResponse）：
+// 主键是 order_no（不是 code），数量字段是 quantity（不是 plannedQuantity），
+// 状态从 pending 开始（不是 draft），日期是 planned_start_date/planned_end_date。
 interface ProductionOrder {
   id: string;
-  code: string;
-  product_name?: string;
-  plannedQuantity: number;
-  status: 'draft' | 'released' | 'in_progress' | 'completed' | 'cancelled';
-  start_date?: string;
-  end_date?: string;
+  order_no: string;
+  product_name: string;
+  product_code: string;
+  quantity: number;
+  completed_quantity: number;
+  status: string;
+  planned_start_date?: string | null;
+  planned_end_date?: string | null;
 }
 
 test.describe('Production Order - UI', () => {
@@ -63,30 +76,33 @@ test.describe('Production Order - API', () => {
     await ctx.dispose();
   });
 
-  test('GET /api/mes/production-orders returns a paginated list', async () => {
+  test('GET /api/mes/orders returns a paginated list', async () => {
     const res = await apiGet<PaginatedResponse<ProductionOrder>>(
       ctx,
       API_PATHS.mes.productionOrder,
       { page: 1, page_size: 10 }
     );
-    expect(Array.isArray(res.items)).toBeTruthy();
+    // 实测：/api/mes/orders 的分页键是 orders，不是通用 items
+    expect(extractList(res)).not.toBeNull();
     expect(res.page).toBe(1);
   });
 
   test('Production order CRUD lifecycle', async () => {
-    const code = `PO-TEST-${Date.now()}`;
+    const productCode = `PO-TEST-${Date.now()}`;
 
-    // CREATE
+    // CREATE：必填字段 product_name / product_code / quantity；
+    // planned_start_date 是 RFC3339 DateTime（只传 yyyy-MM-dd 会 422 "premature end of input"）
     const created = await apiPost<ProductionOrder>(ctx, API_PATHS.mes.productionOrder, {
-      code,
       product_name: 'E2E Test Product',
-      plannedQuantity: 100,
-      start_date: new Date().toISOString().slice(0, 10),
-      status: 'draft',
+      product_code: productCode,
+      quantity: 100,
+      planned_start_date: new Date().toISOString(),
     });
     expect(created.id).toBeTruthy();
-    expect(created.code).toBe(code);
-    expect(created.status).toBe('draft');
+    expect(created.order_no).toMatch(/^MO\d+/);
+    expect(created.product_code).toBe(productCode);
+    expect(created.status).toBe('pending');
+    expect(Number(created.quantity)).toBe(100);
 
     // READ
     const fetched = await apiGet<ProductionOrder>(
@@ -94,15 +110,15 @@ test.describe('Production Order - API', () => {
       `${API_PATHS.mes.productionOrder}/${created.id}`
     );
     expect(fetched.id).toBe(created.id);
-    expect(fetched.plannedQuantity).toBe(100);
+    expect(Number(fetched.quantity)).toBe(100);
 
-    // UPDATE
-    const updated = await apiPost<ProductionOrder>(
+    // RELEASE：PUT /orders/{id}/release（不是 POST）
+    const released = await apiPut<ProductionOrder>(
       ctx,
       `${API_PATHS.mes.productionOrder}/${created.id}/release`,
       {}
     );
-    expect(['released', 'in_progress']).toContain(updated.status);
+    expect(released.status).toBe('released');
 
     // DELETE
     const del = await ctx.delete(
@@ -113,17 +129,18 @@ test.describe('Production Order - API', () => {
 
   test('Cannot create production order with negative quantity', async () => {
     const res = await ctx.post(
-      `${process.env.API_BASE_URL ?? 'http://localhost:8080'}${
+      `${process.env.API_BASE_URL ?? 'http://localhost:8099'}${
         API_PATHS.mes.productionOrder
       }`,
       {
         data: {
-          code: `PO-BAD-${Date.now()}`,
           product_name: 'Bad Product',
-          plannedQuantity: -1,
+          product_code: `PO-BAD-${Date.now()}`,
+          quantity: -1,
         },
       }
     );
+    // 实测：后端未做负数校验，返回 200 且 quantity=-1 落库（见报告「真实缺陷」）
     expect([400, 422]).toContain(res.status());
   });
 });

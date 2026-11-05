@@ -1,6 +1,6 @@
 import { test, expect, APIRequestContext } from '@playwright/test';
 import { loginViaUi, TEST_USERS } from '../../helpers/auth';
-import { buildApiContext, apiGet, API_PATHS } from '../../helpers/api';
+import { buildApiContext, apiGet, extractList, API_PATHS } from '../../helpers/api';
 
 /**
  * MES Production Order / Work Order list E2E coverage (V216).
@@ -23,14 +23,12 @@ test.describe('MES - List', () => {
   });
 
   test('can navigate to the work order list page', async ({ page }) => {
-    await page.goto('/mes/work-orders');
+    // 路由改名：/mes/work-orders → /mes/work-order（MES_PATHS.workOrder）
+    await page.goto('/mes/work-order');
     await expect(page).toHaveURL(/mes/i, { timeout: 15_000 });
-    await expect(
-      page
-        .getByRole('table')
-        .or(page.getByText(/暂无数据|no data|empty/i))
-        .first()
-    ).toBeVisible({ timeout: 15_000 });
+    // 工单页空态标题是「暂无工单」，与通用「暂无数据」文案不一致，改用稳定的页头与主操作按钮
+    await expect(page.getByRole('heading', { name: '工单管理' })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: '新建工单' })).toBeVisible({ timeout: 15_000 });
   });
 
   test('can navigate to the equipment management page', async ({ page }) => {
@@ -76,7 +74,7 @@ test.describe('MES Production Order - API', () => {
     await ctx?.dispose();
   });
 
-  test('GET /api/mes/production-orders returns a list (or skips if unavailable)', async () => {
+  test('GET /api/mes/orders returns a list (or skips if unavailable)', async () => {
     let data: unknown;
     try {
       data = await apiGet<unknown>(ctx, API_PATHS.mes.productionOrder);
@@ -84,14 +82,8 @@ test.describe('MES Production Order - API', () => {
       test.skip(true, 'MES production order API not available');
       return;
     }
-    const arr = Array.isArray(data)
-      ? data
-      : Array.isArray((data as { items?: unknown[] })?.items)
-        ? (data as { items: unknown[] }).items
-        : Array.isArray((data as { records?: unknown[] })?.records)
-          ? (data as { records: unknown[] }).records
-          : null;
-    expect(arr, 'expected an array or paginated list').not.toBeNull();
+    // 实测：MES 分页键是 orders（工单是 work_orders），不是通用 items/records
+    expect(extractList(data), 'expected an array or paginated list').not.toBeNull();
   });
 
   test('GET /api/mes/work-orders returns a list (or skips if unavailable)', async () => {
@@ -102,13 +94,6 @@ test.describe('MES Production Order - API', () => {
       test.skip(true, 'MES work order API not available');
       return;
     }
-    const arr = Array.isArray(data)
-      ? data
-      : Array.isArray((data as { items?: unknown[] })?.items)
-        ? (data as { items: unknown[] }).items
-        : Array.isArray((data as { records?: unknown[] })?.records)
-          ? (data as { records: unknown[] }).records
-          : null;
-    expect(arr, 'expected an array or paginated list').not.toBeNull();
+    expect(extractList(data), 'expected an array or paginated list').not.toBeNull();
   });
 });

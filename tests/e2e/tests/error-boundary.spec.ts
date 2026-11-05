@@ -15,6 +15,7 @@ import {
   buildApiContext,
   API_PATHS,
   apiGet,
+  extractList,
   PaginatedResponse,
 } from '../helpers/api';
 import { loginViaUi, TEST_USERS } from '../helpers/auth';
@@ -83,7 +84,7 @@ test.describe('Error Boundary - API Error Responses', () => {
   test('empty list response returns valid envelope', async () => {
     const res = await apiGet<PaginatedResponse<unknown>>(
       ctx,
-      '/api/hrm/organizations',
+      '/api/hrm/departments',
       { page: 9999, page_size: 1 }
     );
     expect(res).toBeTruthy();
@@ -92,7 +93,7 @@ test.describe('Error Boundary - API Error Responses', () => {
   });
 
   test('null data handling - get by id with non-existent valid shape', async () => {
-    const res = await ctx.get(`${API_BASE_URL}/api/core/iam/auth/me`);
+    const res = await ctx.get(`${API_BASE_URL}/api/core/iam/users/me`);
     expect(res.ok(), 'GET /me should succeed with valid token').toBeTruthy();
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -308,7 +309,7 @@ test.describe('Error Boundary - Recovery Flows', () => {
     let shouldError = true;
 
     await page.route(
-      '**/api/mes/production-orders**',
+      '**/api/mes/orders**',
       async (route) => {
         if (shouldError) {
           await route.abort();
@@ -563,7 +564,7 @@ test.describe('Error Boundary - Empty Data & Edge Cases', () => {
   test('empty array response is handled gracefully', async () => {
     const res = await apiGet<PaginatedResponse<unknown>>(
       ctx,
-      '/api/hrm/organizations',
+      '/api/hrm/departments',
       { page: 9999, page_size: 10 }
     );
     expect(res).toBeTruthy();
@@ -572,19 +573,20 @@ test.describe('Error Boundary - Empty Data & Edge Cases', () => {
   });
 
   test('null/undefined data field does not crash boundary', async () => {
-    const res = await ctx.get(`${API_BASE_URL}/api/core/iam/auth/me`);
+    const res = await ctx.get(`${API_BASE_URL}/api/core/iam/users/me`);
     const body = await res.json();
     expect(body).toBeTruthy();
     expect(body.success).toBe(true);
   });
 
   test('large payload response does not trigger boundary failure', async () => {
-    const res = await apiGet<PaginatedResponse<unknown>>(ctx, '/api/mes/production-orders', {
+    const res = await apiGet<PaginatedResponse<unknown>>(ctx, '/api/mes/orders', {
       page: 1,
       page_size: 100,
     });
     expect(res).toBeTruthy();
-    expect(Array.isArray(res.items)).toBeTruthy();
+    // 实测：/api/mes/orders 的分页键是 orders
+    expect(extractList(res), 'expected a paginated list').not.toBeNull();
   });
 
   test('special characters in request do not break boundary', async () => {
@@ -597,7 +599,7 @@ test.describe('Error Boundary - Empty Data & Edge Cases', () => {
 
   test('concurrent errors across multiple resources are handled', async () => {
     const endpoints = [
-      '/api/mes/production-orders',
+      '/api/mes/orders',
       '/api/finance/vouchers',
       '/api/scm/purchase-orders',
       '/api/wms/areas',
@@ -639,9 +641,18 @@ test.describe('Error Boundary - Auth Error & Redirect', () => {
   });
 
   test('403 forbidden shows permission error', async ({ page }) => {
+    // 先真实登录，再对业务接口注入 403。
+    // 原实现把 **/api/** 全部 mock 成 403（含登录接口），导致 loginViaUi 无法提交
+    // 表单直接 15s 超时；鉴权接口必须放行，才能验证业务接口 403 的前端表现。
+    await loginViaUi(page, TEST_USERS.admin);
+
     await page.route(
       '**/api/**',
       async (route) => {
+        if (route.request().url().includes('/api/core/iam/')) {
+          await route.continue();
+          return;
+        }
         await route.fulfill({
           status: 403,
           contentType: 'application/json',
@@ -654,8 +665,7 @@ test.describe('Error Boundary - Auth Error & Redirect', () => {
       }
     );
 
-    await loginViaUi(page, TEST_USERS.admin);
-    await page.goto('/dashboard');
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
 
     const forbiddenVisible = await page
       .getByText(/forbidden|无权限|403|permission denied|访问被拒绝/i)
@@ -663,7 +673,10 @@ test.describe('Error Boundary - Auth Error & Redirect', () => {
       .isVisible({ timeout: 10_000 })
       .catch(() => false);
 
-    expect(forbiddenVisible || true).toBeTruthy();
+    // 无论是否渲染出 403 文案，页面都必须仍然可用（不能白屏/崩溃）
+    await expect(page.getByRole('main')).toBeVisible();
+    await expect(page).toHaveURL(/\/dashboard/i);
+    expect(forbiddenVisible).toBe(true);
   });
 
   test('session expired redirects to login page', async ({ page }) => {
@@ -715,7 +728,7 @@ test.describe('Error Boundary - Cross-Module Integration Smoke', () => {
     let errorCount = 0;
 
     await page.route(
-      '**/api/mes/production-orders**',
+      '**/api/mes/orders**',
       async (route) => {
         errorCount++;
         if (errorCount <= 5) {

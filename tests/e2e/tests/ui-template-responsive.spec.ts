@@ -64,6 +64,23 @@ async function mockBackend(page: Page) {
       return;
     }
 
+    // 详情页会渲染发票/回款列表，若返回带空日期字段的行会让 formatDate(undefined) 抛错；
+    // 与真实后端一致：默认无发票、无回款
+    if (/sales-invoices|collection-records|invoices|collections/.test(requestUrl.pathname)) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          code: 0,
+          success: true,
+          data: { items: [], total: 0, page: 1, pageSize: 20 },
+          message: 'ok',
+          timestamp: now,
+        }),
+      });
+      return;
+    }
+
     const row = {
       id: 'p3-ui-template',
       code: 'P3-UI-001',
@@ -71,6 +88,7 @@ async function mockBackend(page: Page) {
       customer_name: 'P3 UI 模板样例',
       status: 'active',
       created_at: new Date(now).toISOString(),
+      updated_at: new Date(now).toISOString(),
     };
 
     await route.fulfill({
@@ -115,13 +133,14 @@ async function openSample(page: Page, samplePath: string) {
   await mockBackend(page);
   await seedAuthenticatedSession(page);
   await page.goto(samplePath, { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('.app-header-logo')).toBeVisible();
-  await expect(page.locator('#main-content')).toBeVisible();
+  // 布局已换代到 redesign AppShell：品牌区不再是 .app-header-logo，改用 TopBar 的稳定 testid
+  await expect(page.getByTestId('topbar-profile')).toBeVisible();
+  await expect(page.getByRole('main')).toBeVisible();
 }
 
 async function expectNoHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() => {
-    const main = document.querySelector('#main-content');
+    const main = document.querySelector('main');
     if (!main) return Number.POSITIVE_INFINITY;
     return main.scrollWidth - main.clientWidth;
   });
@@ -138,7 +157,7 @@ test.describe('P3 页面模板 UI 细节校验', () => {
       await expect(page.locator('body')).not.toContainText('Unhandled Runtime Error');
       await expectNoHorizontalOverflow(page);
 
-      const mainBox = await page.locator('#main-content').boundingBox();
+      const mainBox = await page.getByRole('main').boundingBox();
       expect(mainBox?.width).toBeGreaterThan(300);
       expect(mainBox?.height).toBeGreaterThan(300);
     });

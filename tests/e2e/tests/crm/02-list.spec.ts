@@ -36,10 +36,12 @@ test.describe('CRM - List', () => {
   test('can navigate to the opportunity list page', async ({ page }) => {
     await page.goto('/crm/opportunities');
     await expect(page).toHaveURL(/crm/i, { timeout: 15_000 });
+    // 实测：商机页空态文案是「暂无商机」（不是通用的「暂无数据」），
+    // 有数据时渲染表格，因此两者取其一
     await expect(
       page
         .getByRole('table')
-        .or(page.getByText(/暂无数据|no data|empty/i))
+        .or(page.getByText(/暂无数据|暂无商机|no data|empty/i))
         .first()
     ).toBeVisible({ timeout: 15_000 });
   });
