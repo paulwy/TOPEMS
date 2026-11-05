@@ -114,6 +114,100 @@ python3 -c "import json,glob,collections;c=collections.Counter();[c.update(x['ty
 
 | 项 | 说明 |
 |---|---|
-| 宏查询相对 prod 的新鲜度 | 依赖 `scripts/ci/check-sqlx-cache-freshness.cjs` 与离线编译；未做全量 `cargo sqlx prepare`（既有 schema drift 阻塞，超出本次范围） |
+| 宏查询相对 prod 的新鲜度 | 全量 prepare 已于本日 39/39 成功（见 [sqlx-cache-baseline-2026-11-05.md](sqlx-cache-baseline-2026-11-05.md)）；本轮无 `query!` 宏改动，缓存无需刷新 |
 | 复杂 CTE/别名漏报 | 扫描器按 `FROM/JOIN` 表名 + 字段名匹配；若列经 CTE/表达式别名返回且字段名与列名不同，按"未判定"跳过，未实证 |
 | 前端展示 | f64 输出格式不变，无需改前端；如后续改 Decimal 字符串输出，须先评审 API 契约 |
+
+## 10. 第二轮：动态解码点全仓审计（同日）
+
+> 触发：`svc/wms/src/modules/stock_take.rs` 的 `try_get::<f64>` 解 prod `numeric`。本轮把扫描口径从 `query_as` 静态结构扩展到**动态解码点**，并覆盖 raw `GET`/`try_get`。
+
+### 10.1 单点核实（stock_take）
+
+| 项 | 结论 |
+|---|---|
+| 真实列 | prod：`wms.stock_take_items.system_quantity / counted_quantity / discrepancy_quantity` 均为 `numeric(15,2)` 可空；`wms.stock_takes.total_quantity / counted_quantity / discrepancy_quantity` 为 `numeric(15,2)`、`accuracy_rate numeric(5,2)` |
+| 行数 | `wms.stock_take_items` = 0，`wms.stock_takes` = 0（2026-11-05 实测） |
+| test 侧 | 仍为 `double precision`，与 test 迁移链不一致，**待 DB 治理**（不改代码迁就） |
+| 运行时探针 | sqlx 0.9 二进制协议：`numeric -> f64` 返回 `Err(ColumnDecode { index: "\"v\"", source: "mismatched types; Rust type f64 (as SQL type FLOAT8) is not compatible with SQL type NUMERIC" })`；`numeric -> i64`、`uuid -> String`、`jsonb -> String`、`bigint -> BigDecimal` 同类。**必然解码失败，不是静默截断** |
+| 权威判定 | DB 权威（金额/数量/分值保 NUMERIC，迁移 `20261029200000_schema_defense_type_align.sql` 明文目标）；代码用 API JSON number（f64），故**只读路径加 `::float8`**，不降 DB 精度、不改字段类型 |
+| 修复 | `stock_take.rs` 9 处 SELECT/RETURNING/`query_scalar`/SUM 表达式补 `::float8`（L813/926/1053/1134/1192/1254/1462-1464/1640） |
+
+### 10.2 扫描器扩展（`scripts/ci/check-decode-contract.mjs`）
+
+1. 新增动态点：`row.try_get::<T,_>("col")`、`row.get::<T,_>("col")`、`query_scalar::<_, T>`；helper 无 SQL 时回溯调用方 SQL（含多调用方并集）。
+2. 别名表达式回溯：`AS name`、内联 `::type`、`CAST`、`SUM/AVG/COUNT/MAX/MIN`、`CASE ... THEN`。
+3. **类型标注式推断解码**：`let x: T = row.try_get("col")`（无 turbofish，容易被遗漏）；仅认 `row/r/rec/record/pg_row/sql_row` 接收者，避免把 `req.get("fiscal_year")` 之类的 JSON 取值误判为行解码。
+4. **修复三类系统性误报**：`SELECT` 列表范围收敛（不把 WHERE / INSERT 列清单当解码来源）；调用方仅取 SELECT/RETURNING；`query_scalar` 跳过 `let ... = format!(...)` 的后续动态 SQL；新增 `const X: &str = "..."` 展开（原先 `{PRODUCT_COLS}` 会遮住 cast 与列类型）。
+
+### 10.3 结果
+
+| 指标 | 值 |
+|---|---|
+| 修前 high | **156**（wms 58 / lims 40 / mes 13 / ehs 12 / master-data 8 / crm 6 / analytics 5 / qms 3 / unified-core 2 / scm 2 / pm 2 / finance 2 / erp 2 / mobile 1） |
+| 常量展开后新暴露 | 11 列同类隐患（master-data 5 个 `*_COLS` 常量内 uuid/timestamptz 列，已一并修复） |
+| 推断式解码新暴露 | 7 个字段 13 条 high：ehs `emergency_plan` 各表 `id`（9 个查询）、finance `cqrs_events.aggregate_id`、mes `equipment_inspections.temperature/vibration/noiselevel`、unified-core `audit_logs.status`、wms 低库存 `current_quantity/threshold_quantity`；全部已修 |
+| 修后 high | **3（均为已人工核实的扫描器误报）**；medium 633（可空性差异，非本轮范围）；动态点 3895 / 可定位 462 / 未定位 200 |
+| 修复方式 | 读路径显式 cast：`numeric→::float8`、`uuid/timestamptz/int→::text`、`int8/float→::numeric`；SQL 里对 `Option<Uuid>` 误加的 `::text` 删除；无 `unwrap_or`/`Option<>` 放宽 |
+| 编译/门禁 | `SQLX_OFFLINE=true cargo check --workspace` exit 0；13 个受影响 crate `clippy --all-targets -D warnings` exit 0；`cargo fmt --all --check` exit 0 |
+| 缓存 | 本轮未改 `query!`/`query_as!` 宏 → 无 `.sqlx` 变化，无需 prepare |
+
+### 10.4 逐文件处置（文件#行 → 动作）
+
+| 文件 | 行 | prod 证据 | 处置 |
+|---|---|---|---|
+| wms/inbound_order.rs | 59-61/796/979/1378 | `inbound_order_items.expected_quantity/received_quantity/rejected_quantity numeric(15,2)` | list/create RETURNING/update RETURNING/明细校验 `::float8` |
+| wms/inventory_alert.rs | 953/1054/1151/1245/1485/1560 | `inventory_alert_rules.threshold_value`、`inventory_alert_records.current_quantity` numeric(15,2) | 6 处 `::float8`；2 处 `RETURNING *` 改显式列 |
+| wms/inventory.rs | 163/584/587/604/610/657/965/969 | `inventory.quantity/available_quantity/min_quantity/max_quantity/total_value`、`warehouses.utilization_rate` numeric | `AVG(...)::float8`；消费 f64 的查询加 cast；BigDecimal helper 保留原列，另取 `_f8` 别名 |
+| wms/outbound_order.rs | 680/693/694/806/911 | `outbound_order_items.requested_quantity/shipped_quantity numeric(15,2)` | `::float8` |
+| wms/smart_replenishment/{orders,rules,safety_stock,suggestions}.rs | 28-31/76/77-80/155-158/263-266/284/374/511-512/30-37 | `replenishment_orders/replenishment_order_items/replenishment_rules/replenishment_suggestions/safety_stock_settings` numeric(18,4)/(10,4) | 所有 list/get/create/update/confirm 行源 `::float8`（suggestions 额外补前置查询 1 处） |
+| wms/wave_pick.rs | 1135-1136/1213-1215 | `wave_pick_items.planned_quantity/picked_quantity numeric(15,2)` | `::float8`；list 查询额外补 1 处 |
+| wms/stock_take.rs | 813/926/1053/1134/1192/1254/1462-1464/1640 | `stock_take_items/takes` numeric(15,2)/(5,2) | 9 处 `::float8` |
+| lims/instrument_data/collection_tasks.rs | 45 | `qa_lims_collection_tasks.instrument_id uuid` | 删除误加 `::text`（字段 `Option<Uuid>`） |
+| lims/proficiency_testing.rs | 1135/1138 | `qa_lims_pt_results.sample_id uuid`、`test_result numeric(18,6)` | 删 `::text`；`test_result::float8` |
+| lims/instrument.rs | 720/776 | `qa_lab_instruments.id uuid`（别名 instrument_id） | `id::text` |
+| lims/report.rs | 92-103/140-151/275-286/372-383/426 | `public.qa_lab_inspection_reports.id/sample_id uuid`、`inspection_date/created_at timestamptz` | 5 组查询 `::text` |
+| lims/sample_barcode.rs | 1116/1121/1153/1156 | `qa_lab_samples.id uuid / quantity numeric(12,2)`；`qa_lims_barcode_scan_records.id/sample_id uuid` | `::text` / `quantity::float8` |
+| lims/uncertainty.rs | 1313/1364/1429-1444/1465-1470/1497-1504 | 项目/来源/分量三表 uuid + numeric(18,6)/(10,4) | 1313 推断式解码三列补 `::float8`；其余 `::text` + `::float8` |
+| mes/anomaly_detection.rs | 487/694/961-966 | `equipment_inspections.temperature/vibration/noiselevel numeric`；`equipment_oee.oee double precision`；`production_orders.quantity/completed_quantity bigint` | 巡检三列 `::float8`；`AVG(oee)::numeric`；`quantity::numeric`；删除失效的 i64 兜底 |
+| mes/aps_scheduling.rs | 756/761/1147 | `production_orders.quantity bigint`、`priority varchar(20)` | `::numeric`；`priority` 字段 `Option<i32>` → `Option<String>`（列为枚举文本，JSON 由 number 变 string/null） |
+| mes/material_plan.rs | 107 | `material_plans.tenant_id uuid` | 5 处行源 `tenant_id::text` |
+| mes/process_flow.rs | 341 | `process_flows.capacity double precision` | `::numeric` |
+| mes/production_cost.rs | 550 | `production_orders.quantity bigint` | `::numeric` |
+| mes/production_record.rs | 264 | `production_records.rejected_quantity integer` | `::numeric AS quantity_defective` |
+| mes/quality_management/standard.rs | 276 | `quality_standards.version integer` | `::text` |
+| mes/work_order.rs | 464 | `work_orders.priority integer` | `::text` |
+| crm/sales_forecast.rs | 725/859-860/1011-1012 | `crm.sales_forecasts.accuracy/confidence_level numeric(6,3)` | `::float8` |
+| crm/analytics.rs | 72 | `billing_records.amount` 的 float8 行只走 `rows_to_name_value_f64` | **no-change（已核误报）** |
+| ehs/emergency_plan.rs | 234/283/326/345/360/375/469/532/573 | `qa_ehs_emergency_plans/supplies/versions/approvals.id uuid` | 9 个 SELECT/RETURNING `id::text`（字段为 String，JSON 契约不变） |
+| ehs/emergency_drill.rs | 383/495/612 | `qa_ehs_drill_plans/qa_ehs_drill_evaluations.tenant_id uuid` | 删除 SELECT/RETURNING 的 `::text`（WHERE 过滤保留） |
+| ehs/environmental_compliance.rs | 2305/2341 | `qa_ehs_env_monitor_records/qa_ehs_environment_incidents.tenant_id uuid` | 行源（3+4 处）删除 `::text` |
+| ehs/health.rs | 466 | `health_records.tenant_id uuid` | 4 处删除 `::text` |
+| ehs/risk.rs | 946/1101/1236 | `qa_ehs_risk_controls.created_at timestamptz` | `created_at::text` |
+| ehs/hazard.rs | 1589/1636 | 行源已 `id::text`/`updated_at::text` | **no-change（已核误报）** |
+| ehs/safety.rs | 1318 | mapper 消费的 `qa_ehs_inspection_records` 已 `created_at::text` | **no-change（已核误报，表名同文件误归类）** |
+| erp/master_data_audit.rs | 177/182 | `erp_master_data_audit_trail.master_data_id/changed_by uuid` | `::text` |
+| finance/operational.rs | 1275 | `budgets.fiscal_year integer` | 4 处 `fiscal_year::text` |
+| finance/periods.rs | 237 | `core_finance_periods.status period_status`（枚举） | `status::text` |
+| mobile/workbench.rs | 219 | `shortcuts.id uuid` | `id::text` |
+| wms/event_handlers/mod.rs | 319/322 | `inventory.quantity/min_quantity/reorder_point numeric(15,2)` | `quantity::float8`、`COALESCE(...)::float8` |
+| finance/domain/pg_event_store.rs | 38/74/82/128/207/236/246 | `finance.cqrs_events.aggregate_id uuid` | 7 个 SELECT/RETURNING `aggregate_id::text`（字段 String，JSON 契约不变） |
+| unified-core/iam/user/access_log.rs | 188/270 | `public.audit_logs.status varchar(20)`（值为 `success`/`failed`） | `Option<i16>` → `Option<String>`，success 判断兼容文本与 HTTP 码 |
+| analytics/report/report.rs | 79/277 | `bi.reports.created_by uuid` | `created_by::text` |
+| analytics/report/subscription.rs | 123/169/221 | `analytics.report_subscriptions.user_id uuid` | `user_id::text` |
+| scm/incoming_inspection.rs | 1331-1332 | `inspection_records.quantity/samplesize numeric(15,3)` | 4 个行源 `::float8` |
+| pm/report.rs | 273-274 | `budgets.total_amount/spent_amount double precision` | `::numeric`（Decimal 解码） |
+| master-data/commercial_v55.rs | 71-74/1688-1699 | `mdm_api_products/mdm_subscriptions/mdm_usage_records/mdm_rate_cards/mdm_billing_records/mdm_sla_configs/mdm_sla_measurements/mdm_sla_incidents`：uuid / timestamptz / text 混合 | 5 个 `*_COLS` 常量补齐 `id/tenant_id/expires_at/measured_at/window_*::text`（常量展开后新暴露的 11 列） |
+| unified-core/audit/audit_query.rs | 833/838/862 | `permission_audit_logs.id bigint`、`audit_logs.user_id uuid` | permission 分支 `id` 改 `i64`；audit_logs 分支 SELECT `user_id::text`；login_logs 分支 `Option<Uuid>` **no-change（已核误报，分支级扫描器不可区分）** |
+| qms/inspection_standard.rs | 255/514/760 | `COUNT(*)::bigint`（非 `qa_*_plans.id`） | **no-change（已核误报，scalar 后紧跟 fetch SQL）** |
+
+### 10.5 剩余未实证 / 待治理
+
+| 项 | 说明 |
+|---|---|
+| 3 条 high 残留 | `crm/analytics.rs:72`、`unified-core/audit_query.rs:833/862`，均为扫描器按函数级/尾随 SQL 归因的误报；代码已核实正确（见 10.4） |
+| medium 633 | DB 可空 + Rust 非 `Option`（NULL 会 ColumnDecode，现有 `.ok()` 静默为 null）；属可空性契约问题，未在本轮批量放宽 |
+| 未定位 200 | 解码列名为变量/拼接、CTE 动态别名等，扫描器无法静态定位；需运行时探针或人工抽查 |
+| test 库 stock_take numeric | test 仍 `double precision`，与迁移链不一致，**待 DB 治理**（不改代码迁就） |
+| unified-core permission 分支 | SELECT 未取 `created_at`（列为 `changed_at`）且 `target_id`/`target_type`/`reason` 不存在；`target_id` 的 `?` 会短路，属非类型类缺陷，**待人工** |
+| 无单测覆盖 | 动态解码错误只能在运行时触发；本轮以 prod 列目录交叉 + 编译 + 运行时探针（§3）验证，未新增集成测试 |

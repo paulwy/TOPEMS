@@ -1,4 +1,15 @@
 
+## 动态解码点全仓收敛（stock_take numeric 根因，2026-11-05）✅
+
+> 承接 `wms.stock_take.rs` `try_get::<f64>` 解 prod `numeric` 的遗留；口径扩到 `try_get/get::<T>`、`query_scalar`、helper 间接行源。
+
+- **单点根因**：`wms.stock_take_items/takes` 数量列为 `numeric(15,2)/(5,2)`（prod 实测，各表 0 行；test 仍 double precision 待治理）。sqlx 0.9 探针实测 `numeric→f64` = `ColumnDecode "mismatched types; Rust type f64 (as SQL type FLOAT8) is not compatible with SQL type NUMERIC"`，属必然失败非静默截断。判定 DB 权威（金额/数量保 NUMERIC），读路径补 `::float8`，API 仍 JSON number。
+- **扫描器扩展**：`scripts/ci/check-decode-contract.mjs` 覆盖动态解码点/`query_scalar`/helper 调用方；修复 SELECT 范围（排除 WHERE/INSERT 列清单）、scalar 尾随 SQL 误挂、`const *_COLS` 展开三类系统性误报。
+- **结果**：修前 high **156**（wms 58 / lims 40 / mes 13 / ehs 12 / master-data 8 / crm 6 / analytics 5 / qms 3 / unified-core 2 / scm 2 / pm 2 / finance 2 / erp 2 / mobile 1）；常量展开后新暴露 11 列（master-data）、推断式解码（`let x: T = row.get`）新暴露 7 字段 13 条 high（ehs emergency_plan id、finance cqrs_events.aggregate_id、mes 巡检三列、unified-core audit_logs.status、wms 低库存两列），全部修复；修后 high **3（均为已核扫描器误报）**，medium 633、未定位 200。
+- **验证**：`SQLX_OFFLINE=true cargo check --workspace` exit 0；13 个受影响 crate `clippy --all-targets -D warnings` exit 0；`cargo fmt --all --check` exit 0。本轮无 `query!` 宏改动，`.sqlx` 无需刷新（prepare 39/39 仍为当日基线）。
+- **文档**：[decode-contract-audit-2026-11-05.md](docs/quality/decode-contract-audit-2026-11-05.md) §10（逐文件处置 + 证据 + 剩余项）。
+- **待治理**：test 库 stock_take 列仍 double precision；unified-core permission 导出分支 SELECT 缺 `changed_at AS created_at` / `target_*`（非类型类缺陷，`target_id` 的 `?` 会短路）；medium 633 可空性未批量放宽；未定位 200。
+
 ## mes/unified-core/server 代码契约修复（2026-11-05）✅
 
 > 承接上节"3 个 package 待代码修复"：以 prod schema 为权威修代码（prod 零变更），三包 prepare 全绿。
@@ -9,7 +20,7 @@
 - **验证**：**全量 prepare 39/39 成功**（544 子目录缓存合并，根 `.sqlx` 296 条）；全量 `--check` 通过、`SQLX_OFFLINE cargo check --workspace` exit 0（0 error/0 warning）。
 - **`.sqlx` diff**：首轮 107 变更 / 0 增删 → 三包修复后 122 变更 + 1 新增；净迁移 Numeric−52→Float8+52（equipment_oee 浮点列归位）、Timestamptz+1/Date−1（record_date）、Varchar+4（tenant_id 等）。
 - **类型收紧**：按 prod `information_schema` 的可空性——NOT NULL 列（record_date/created_at/updated_at、planned_production_time/actual_run_time/ideal_cycle_time/actual_output/good_output）直接 `try_get::<f64|DateTime<Utc>>`，不用 `Option` 兜底；可空列（downtime/defective_output/availability/performance/quality_rate/oee）保留 `Option`。
-- **遗留**：`wms.stock_take.rs` `try_get::<f64>` 对 prod numeric 动态解码风险仍待复核。
+- **遗留已清零**：`wms.stock_take.rs` `try_get::<f64>` 对 prod numeric 的动态解码风险已在下一节全仓动态点审计中修复。
 
 ## sqlx 宏查询缓存基线校准（2026-11-05）✅
 
@@ -21,7 +32,7 @@
 - **`.sqlx`**：295→295，107 变更 / 0 新增 / 0 删除；101 条仅新增 `origin`，6 条真实类型变化（9 列 Float8→Numeric、2 列 Varchar→Text）。
 - **固化**：[sqlx-search-path.map](scripts/db/sqlx-search-path.map) + [sqlx-prepare.sh](scripts/dev/sqlx-prepare.sh)（`SQLX_PREPARE_DB_URL`、逐 package search_path、失败子目录清理）。
 - **文档**：[sqlx-cache-baseline-2026-11-05.md](docs/quality/sqlx-cache-baseline-2026-11-05.md)。
-- **后续**：`wms.stock_take.rs` `try_get::<f64>` 对 prod numeric 属动态解码风险。
+- **后续已闭环**：`wms.stock_take.rs` `try_get::<f64>` 对 prod numeric 的动态解码风险，见顶部"动态解码点全仓收敛"节。
 
 ## db 类型 ↔ Rust 解码契约审计 + rfm 两列收敛（2026-11-05）✅
 
