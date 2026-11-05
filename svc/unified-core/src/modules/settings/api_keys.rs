@@ -13,6 +13,7 @@ use crate::modules::settings::{decrypt_secret, encrypt_secret, tenant_uuid};
 use crate::AppState;
 use axum::extract::{Path, State};
 use axum::{Extension, Json};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
@@ -30,8 +31,8 @@ pub struct ApiKeyEntry {
     pub name: String,
     pub key_type: String,
     pub secret: String,
-    pub created_at: String,
-    pub last_used: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub last_used: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -91,7 +92,7 @@ pub async fn list_api_keys(
             for row in rows {
                 let setting_key: String = row.get("setting_key");
                 let raw: String = row.get("setting_value");
-                let updated_at: chrono::NaiveDateTime = row.get("updated_at");
+                let updated_at: chrono::DateTime<chrono::Utc> = row.get("updated_at");
                 let id = setting_key
                     .strip_prefix(API_KEY_PREFIX)
                     .unwrap_or(&setting_key)
@@ -106,7 +107,7 @@ pub async fn list_api_keys(
                 // Decrypt the stored secret (no-op for legacy plain text) before
                 // applying the response mask.
                 entry.secret = mask_secret(&decrypt_secret(&state, &entry.secret));
-                entry.created_at = updated_at.and_utc().to_rfc3339();
+                entry.created_at = updated_at;
                 entries.push(entry);
             }
             ApiResponse::success(entries, "获取 API Key 列表成功")
@@ -140,7 +141,7 @@ pub async fn create_api_key(
     let tenant_id = tenant_uuid(&claims);
     let id = Uuid::new_v4().to_string();
     let key = setting_key(&id);
-    let created_at = chrono::Utc::now().to_rfc3339();
+    let created_at = chrono::Utc::now();
 
     // Keep the plaintext secret around so the response can mask the real value
     // rather than the ciphertext.
@@ -151,7 +152,7 @@ pub async fn create_api_key(
         name: payload.name,
         key_type: payload.key_type,
         secret: encrypt_secret(&state, &plaintext_secret),
-        created_at: created_at.clone(),
+        created_at,
         last_used: None,
     };
 
@@ -235,7 +236,7 @@ pub async fn get_api_key(
         Ok(row) => {
             let setting_key: String = row.get("setting_key");
             let raw: String = row.get("setting_value");
-            let updated_at: chrono::NaiveDateTime = row.get("updated_at");
+            let updated_at: chrono::DateTime<chrono::Utc> = row.get("updated_at");
 
             let mut entry = match serde_json::from_str::<ApiKeyEntry>(&raw) {
                 Ok(e) => e,
@@ -248,7 +249,7 @@ pub async fn get_api_key(
                 .unwrap_or(&setting_key)
                 .to_string();
             entry.secret = mask_secret(&decrypt_secret(&state, &entry.secret));
-            entry.created_at = updated_at.and_utc().to_rfc3339();
+            entry.created_at = updated_at;
             ApiResponse::success(entry, "获取 API Key 详情成功")
         }
         Err(sqlx::error::Error::RowNotFound) => ApiResponse::not_found("API Key 不存在"),
@@ -297,7 +298,7 @@ pub async fn update_api_key(
 
     let setting_key: String = row.get("setting_key");
     let raw: String = row.get("setting_value");
-    let updated_at: chrono::NaiveDateTime = row.get("updated_at");
+    let updated_at: chrono::DateTime<chrono::Utc> = row.get("updated_at");
 
     let mut entry = match serde_json::from_str::<ApiKeyEntry>(&raw) {
         Ok(e) => e,
@@ -352,7 +353,7 @@ pub async fn update_api_key(
                 .unwrap_or(&setting_key)
                 .to_string();
             response.secret = mask_secret(&decrypt_secret(&state, &response.secret));
-            response.created_at = updated_at.and_utc().to_rfc3339();
+            response.created_at = updated_at;
             ApiResponse::success(response, "更新 API Key 成功")
         }
         Ok(_) => ApiResponse::not_found("API Key 不存在"),

@@ -312,7 +312,7 @@ pub async fn update_push_template(
                 "titleTemplate": row.get::<String, _>("title_template"),
                 "bodyTemplate": row.get::<String, _>("body_template"),
                 "isActive": row.get::<bool, _>("is_active"),
-                "createdAt": row.get::<chrono::NaiveDateTime, _>("created_at"),
+                "createdAt": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
             });
             (
                 StatusCode::OK,

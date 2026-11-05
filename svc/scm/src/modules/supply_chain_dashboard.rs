@@ -333,15 +333,19 @@ pub async fn purchase_inbound_outbound_stats(
         match rows {
             Ok(rows) => rows
                 .iter()
-                .map(|row| {
-                    let date: chrono::NaiveDateTime = row.try_get("date").unwrap_or_default();
+                .filter_map(|row| {
+                    let date: Option<chrono::DateTime<chrono::Utc>> = row.try_get("date").ok();
+                    let Some(date) = date else {
+                        tracing::warn!("趋势数据缺少 date 列值，跳过该行");
+                        return None;
+                    };
                     let order_count: i64 = row.try_get("order_count").unwrap_or(0);
                     let amount: f64 = row.try_get(amount_field).unwrap_or(0.0);
-                    serde_json::json!({
+                    Some(serde_json::json!({
                         "date": date.format("%Y-%m-%d").to_string(),
                         "order_count": order_count,
                         "amount": amount
-                    })
+                    }))
                 })
                 .collect(),
             Err(e) => {

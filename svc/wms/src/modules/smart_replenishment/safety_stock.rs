@@ -80,7 +80,7 @@ pub async fn list_safety_stock(
                 "safety_factor": row.try_get::<Option<f64>, _>("safety_factor").ok(),
                 "lead_time_days": row.try_get::<Option<i32>, _>("lead_time_days").ok(),
                 "consumption_days": row.try_get::<Option<i32>, _>("consumption_days").ok(),
-                "updated_at": row.try_get::<chrono::NaiveDateTime, _>("updated_at").ok().map(|t| t.to_string()),
+                "updated_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("updated_at").ok(),
             })).collect();
 
             ApiResponse::success(
@@ -158,8 +158,8 @@ pub async fn get_safety_stock(
                 "safety_factor": row.try_get::<Option<f64>, _>("safety_factor").ok(),
                 "lead_time_days": row.try_get::<Option<i32>, _>("lead_time_days").ok(),
                 "consumption_days": row.try_get::<Option<i32>, _>("consumption_days").ok(),
-                "created_at": row.try_get::<chrono::NaiveDateTime, _>("created_at").ok().map(|t| t.to_string()),
-                "updated_at": row.try_get::<chrono::NaiveDateTime, _>("updated_at").ok().map(|t| t.to_string()),
+                "created_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("created_at").ok(),
+                "updated_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("updated_at").ok(),
             }),
             "获取安全库存设置详情成功",
         ),

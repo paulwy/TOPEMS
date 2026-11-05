@@ -1243,7 +1243,7 @@ pub async fn get_turnover(
                 .iter()
                 .map(|row| {
                     let period: Option<String> = row
-                        .try_get::<Option<chrono::NaiveDateTime>, _>("period")
+                        .try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("period")
                         .ok()
                         .flatten()
                         .map(|dt| dt.format("%Y-%m").to_string());
