@@ -2410,30 +2410,9 @@
         }
       }
     },
-    "dictionaries": {
-      "title": "数据字典",
-      "titleDesc": "维护 ERP 业务数据字典",
-      "searchPlaceholder": "搜索字典",
-      "create": "新建字典",
-      "edit": "编辑字典",
-      "actions": "操作",
-      "cancel": "取消",
-      "save": "保存",
-      "saveSuccess": "字典保存成功",
-      "saveFailed": "字典保存失败",
-      "deleteSuccess": "字典删除成功",
-      "deleteFailed": "字典删除失败",
-      "code": "字典编码",
-      "name": "字典名称",
-      "category": "分类",
-      "status": "状态",
-      "description": "描述"
-    },
     "nav": {
       "erp-dictionaries": "数据字典",
-      "erp-dictionaries_desc": "ERP 业务数据字典管理",
-      "erp-data-dictionaries": "数据字典(管理)",
-      "erp-data-dictionaries_desc": "ERP 数据字典管理（/erp/data-dictionaries）"
+      "erp-dictionaries_desc": "ERP 业务数据字典管理"
     }
   },
   "erp.voucher.batchAction.batchSubmit.success": "Success",
@@ -3240,6 +3219,5 @@
   "erp.demo.remark_urgent": "紧急采购，需尽快审批",
   "erp.demo.remark_overbudget": "预算超标，已驳回",
   "erp.purchase_order.department.unassigned": "未分配",
-  "erp.nav.erp-sales-orders_desc": "销售订单",
-  "erp.dictionaries.empty": "暂无数据字典"
+  "erp.nav.erp-sales-orders_desc": "销售订单"
 }

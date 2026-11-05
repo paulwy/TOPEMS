@@ -18,7 +18,6 @@ export const ERP_PATHS = {
   salesOrder: '/erp/sales-orders',
   financialReport: '/erp/financial-report',
   dictManagement: '/erp/dict-management',
-  dictionaries: '/erp/data-dictionaries',
   databaseManagement: '/erp/database-management',
   auditLog: '/erp/audit-log',
   officeSupplies: '/erp/office-supplies',
@@ -556,18 +555,6 @@ export const erpModuleConfig: RouteModuleConfig = {
     financialAnalysisRoute,
     erpSalesOrdersRoute,
     erpInventoryRoute,
-    {
-      path: ERP_PATHS.dictionaries,
-      element: lazyWithRetry(() => import('@/pages/erp/DictionaryPage'), 'DictionaryPage'),
-      module: 'erp',
-      code: 'erp-data-dictionaries',
-      title: i18n.t('erp.nav.erp-data-dictionaries'),
-      titleKey: 'erp.nav.erp-data-dictionaries',
-      template: 'list',
-      group: 'master',
-      requiredPermissions: ['erp:dashboard:read'],
-      action: 'read',
-    } as unknown as RouteConfigV2<Record<string, unknown>>,
   ],
 };
 
@@ -865,17 +852,6 @@ export const erpNavConfig: ModuleNavConfig = {
       // P3 批4：财务域唯一归属 finance（erp-financial-analysis 页面实为调用 finance financeReportApi）。
       showInSidebar: false,
       description: i18n.t('erp.nav.erp-financial-analysis_desc'),
-    },
-    {
-      code: 'erp-data-dictionaries',
-      label: i18n.t('erp.nav.erp-data-dictionaries'),
-      labelKey: 'erp.nav.erp-data-dictionaries',
-      icon: 'BookOpen',
-      path: ERP_PATHS.dictionaries,
-      permission: 'erp:dashboard:read',
-      order: 20,
-      group: 'master',
-      description: i18n.t('erp.nav.erp-data-dictionaries_desc'),
     },
   ],
 };

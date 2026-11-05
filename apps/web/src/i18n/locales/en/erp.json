@@ -2729,30 +2729,9 @@
         }
       }
     },
-    "dictionaries": {
-      "title": "Data Dictionaries",
-      "titleDesc": "Manage ERP business dictionaries",
-      "searchPlaceholder": "Search dictionary",
-      "create": "New Dictionary",
-      "edit": "Edit Dictionary",
-      "actions": "Actions",
-      "cancel": "Cancel",
-      "save": "Save",
-      "saveSuccess": "Dictionary saved",
-      "saveFailed": "Failed to save dictionary",
-      "deleteSuccess": "Dictionary deleted",
-      "deleteFailed": "Failed to delete dictionary",
-      "code": "Code",
-      "name": "Name",
-      "category": "Category",
-      "status": "Status",
-      "description": "Description"
-    },
     "nav": {
       "erp-dictionaries": "Data Dictionaries",
-      "erp-dictionaries_desc": "ERP business dictionaries",
-      "erp-data-dictionaries": "Data Dictionaries (Admin)",
-      "erp-data-dictionaries_desc": "ERP data dictionaries (/erp/data-dictionaries)"
+      "erp-dictionaries_desc": "ERP business dictionaries"
     }
   },
   "financial_analysis_page": {
@@ -3722,6 +3701,5 @@
   "erp.demo.remark_urgent": "Urgent procurement, approval needed ASAP",
   "erp.demo.remark_overbudget": "Over budget, rejected",
   "erp.purchase_order.department.unassigned": "Unassigned",
-  "erp.nav.erp-sales-orders_desc": "Sales Orders",
-  "erp.dictionaries.empty": "No dictionaries yet"
+  "erp.nav.erp-sales-orders_desc": "Sales Orders"
 }
