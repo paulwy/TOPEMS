@@ -149,7 +149,7 @@ struct UserInfo {
     full_name: Option<String>,
     is_active: bool,
     is_superuser: bool,
-    created_at: Option<String>,
+    created_at: Option<chrono::DateTime<chrono::Utc>>,
     roles: Vec<String>,
     permissions: Vec<String>,
     must_change_password: bool,
@@ -484,7 +484,7 @@ pub async fn login(
             full_name: user.full_name,
             is_active: user.is_active,
             is_superuser: user.is_superuser,
-            created_at: user.created_at.map(|t| t.to_string()),
+            created_at: user.created_at,
             roles: user_roles,
             permissions: user_permissions,
             must_change_password: user.must_change_password,
@@ -1930,7 +1930,11 @@ mod tests {
                 full_name: Some("Alice".to_string()),
                 is_active: true,
                 is_superuser: false,
-                created_at: Some("2024-01-01".to_string()),
+                created_at: Some(
+                    chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                        .unwrap()
+                        .with_timezone(&chrono::Utc),
+                ),
                 roles: vec!["user".to_string()],
                 permissions: vec!["iam:read".to_string()],
                 must_change_password: false,

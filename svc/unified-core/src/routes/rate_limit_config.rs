@@ -45,7 +45,7 @@ pub async fn update_rate_limit_config(
     next.ip_default.requests = next.ip_default.requests.max(1);
     next.tenant_default.requests = next.tenant_default.requests.max(1);
     next.global_default.requests = next.global_default.requests.max(1);
-    next.updated_at = Some(now_rfc3339());
+    next.updated_at = Some(chrono::Utc::now());
     state.rate_limit_middleware.update_config(next).await;
     let cfg = state.rate_limit_middleware.config().await;
     Json(ApiResponse::success(cfg, "更新成功"))
@@ -67,11 +67,3 @@ pub async fn update_anti_replay_config(
     Json(ApiResponse::success(cfg, "更新成功"))
 }
 
-fn now_rfc3339() -> String {
-    let secs = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0);
-    // 简化 RFC3339（UTC，秒精度）
-    format!("{}", secs)
-}

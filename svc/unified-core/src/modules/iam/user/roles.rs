@@ -158,7 +158,7 @@ pub async fn get_user_permissions(
         permissions: permission_codes,
         is_active: u.status == "active",
         is_superuser: u.is_superuser,
-        created_at: u.created_at.map(|t| t.to_string()),
+        created_at: u.created_at,
     };
 
     let roles_json: Vec<serde_json::Value> = roles
@@ -168,7 +168,7 @@ pub async fn get_user_permissions(
                 "id": r.id.to_string(),
                 "name": r.name,
                 "description": r.description,
-                "created_at": r.created_at.map(|t| t.to_string()),
+                "created_at": r.created_at,
             })
         })
         .collect();
@@ -278,7 +278,7 @@ pub async fn get_user_roles(
                 "id": r.id.to_string(),
                 "name": r.name,
                 "description": r.description,
-                "created_at": r.created_at.map(|t| t.to_string()),
+                "created_at": r.created_at,
             })
         })
         .collect();

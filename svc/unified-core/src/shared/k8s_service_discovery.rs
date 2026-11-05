@@ -345,8 +345,8 @@ impl K8sServiceDiscovery {
                 tags,
                 metadata,
                 enabled: true,
-                registered_at: chrono::Utc::now().to_rfc3339(),
-                last_heartbeat: chrono::Utc::now().to_rfc3339(),
+                registered_at: chrono::Utc::now(),
+                last_heartbeat: chrono::Utc::now(),
             });
         }
 
@@ -406,8 +406,8 @@ impl K8sServiceDiscovery {
             tags,
             metadata,
             enabled: true,
-            registered_at: chrono::Utc::now().to_rfc3339(),
-            last_heartbeat: chrono::Utc::now().to_rfc3339(),
+            registered_at: chrono::Utc::now(),
+            last_heartbeat: chrono::Utc::now(),
         })
     }
 

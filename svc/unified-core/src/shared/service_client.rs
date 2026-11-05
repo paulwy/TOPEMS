@@ -340,17 +340,21 @@ pub struct ServiceRegistration {
     #[serde(default = "default_enabled")]
     pub enabled: bool,
     /// Registration timestamp (RFC3339 format).
-    #[serde(default)]
-    pub registered_at: String,
+    #[serde(default = "default_now")]
+    pub registered_at: chrono::DateTime<chrono::Utc>,
     /// Last heartbeat timestamp (RFC3339 format).
-    #[serde(default)]
-    pub last_heartbeat: String,
+    #[serde(default = "default_now")]
+    pub last_heartbeat: chrono::DateTime<chrono::Utc>,
+}
+
+fn default_now() -> chrono::DateTime<chrono::Utc> {
+    chrono::Utc::now()
 }
 
 impl ServiceRegistration {
     /// Create a new service registration.
     pub fn new(name: &str, base_url: &str) -> Self {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         Self {
             name: name.to_string(),
             base_url: base_url.to_string(),
@@ -359,7 +363,7 @@ impl ServiceRegistration {
             tags: Vec::new(),
             metadata: HashMap::new(),
             enabled: true,
-            registered_at: now.clone(),
+            registered_at: now,
             last_heartbeat: now,
         }
     }
@@ -389,7 +393,7 @@ impl ServiceRegistration {
 
     /// Update the heartbeat timestamp.
     pub fn heartbeat(&mut self) {
-        self.last_heartbeat = chrono::Utc::now().to_rfc3339();
+        self.last_heartbeat = chrono::Utc::now();
     }
 }
 
@@ -467,8 +471,8 @@ impl StaticServiceDiscovery {
                 tags: Vec::new(),
                 metadata: HashMap::new(),
                 enabled: config.enabled,
-                registered_at: chrono::Utc::now().to_rfc3339(),
-                last_heartbeat: chrono::Utc::now().to_rfc3339(),
+                registered_at: chrono::Utc::now(),
+                last_heartbeat: chrono::Utc::now(),
             };
             discovery
                 .services
@@ -691,7 +695,7 @@ impl EnvServiceDiscovery {
             .map(|v| v.split(',').map(|s| s.trim().to_string()).collect())
             .unwrap_or_default();
 
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
 
         Some(ServiceRegistration {
             name: name.to_string(),
@@ -701,7 +705,7 @@ impl EnvServiceDiscovery {
             tags,
             metadata: HashMap::new(),
             enabled,
-            registered_at: now.clone(),
+            registered_at: now,
             last_heartbeat: now,
         })
     }
@@ -1015,11 +1019,11 @@ pub struct RequestStatistics {
     /// Client uptime in seconds.
     pub uptime_secs: u64,
     /// Last request timestamp (RFC3339 format).
-    pub last_request_at: Option<String>,
+    pub last_request_at: Option<chrono::DateTime<chrono::Utc>>,
     /// Last successful request timestamp (RFC3339 format).
-    pub last_success_at: Option<String>,
+    pub last_success_at: Option<chrono::DateTime<chrono::Utc>>,
     /// Last failed request timestamp (RFC3339 format).
-    pub last_failure_at: Option<String>,
+    pub last_failure_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 impl RequestStatistics {
@@ -1051,8 +1055,8 @@ impl RequestStatistics {
         self.total_response_time_ms += response_time_ms;
         self.min_response_time_ms = self.min_response_time_ms.min(response_time_ms);
         self.max_response_time_ms = self.max_response_time_ms.max(response_time_ms);
-        self.last_request_at = Some(chrono::Utc::now().to_rfc3339());
-        self.last_success_at = Some(chrono::Utc::now().to_rfc3339());
+        self.last_request_at = Some(chrono::Utc::now());
+        self.last_success_at = Some(chrono::Utc::now());
         self.update_calculated_fields();
     }
 
@@ -1063,8 +1067,8 @@ impl RequestStatistics {
         self.total_response_time_ms += response_time_ms;
         self.min_response_time_ms = self.min_response_time_ms.min(response_time_ms);
         self.max_response_time_ms = self.max_response_time_ms.max(response_time_ms);
-        self.last_request_at = Some(chrono::Utc::now().to_rfc3339());
-        self.last_failure_at = Some(chrono::Utc::now().to_rfc3339());
+        self.last_request_at = Some(chrono::Utc::now());
+        self.last_failure_at = Some(chrono::Utc::now());
         self.update_calculated_fields();
     }
 
@@ -1072,7 +1076,7 @@ impl RequestStatistics {
     pub fn record_rate_limited(&mut self) {
         self.total_requests += 1;
         self.rate_limited_requests += 1;
-        self.last_request_at = Some(chrono::Utc::now().to_rfc3339());
+        self.last_request_at = Some(chrono::Utc::now());
         self.update_calculated_fields();
     }
 
@@ -1080,7 +1084,7 @@ impl RequestStatistics {
     pub fn record_circuit_breaker_rejected(&mut self) {
         self.total_requests += 1;
         self.circuit_breaker_rejected += 1;
-        self.last_request_at = Some(chrono::Utc::now().to_rfc3339());
+        self.last_request_at = Some(chrono::Utc::now());
         self.update_calculated_fields();
     }
 
@@ -1138,7 +1142,7 @@ pub struct CircuitBreakerStatus {
     /// Number of consecutive successes.
     pub success_count: u32,
     /// Timestamp when the circuit was opened (RFC3339 format).
-    pub opened_at: Option<String>,
+    pub opened_at: Option<chrono::DateTime<chrono::Utc>>,
     /// Whether the circuit breaker is enabled.
     pub enabled: bool,
 }
@@ -1506,7 +1510,7 @@ impl ServiceClient {
             state: format!("{:?}", cb.state),
             failure_count: cb.failure_count,
             success_count: cb.success_count,
-            opened_at: cb.opened_at.map(|t| t.to_rfc3339()),
+            opened_at: cb.opened_at,
             enabled: self.config.circuit_breaker_enabled,
         }
     }
@@ -1759,7 +1763,7 @@ impl ServiceRegistry {
                 healthy: response.success,
                 status_code: response.status,
                 response_time_ms: duration_ms,
-                last_checked: chrono::Utc::now().to_rfc3339(),
+                last_checked: chrono::Utc::now(),
                 error: None,
             }),
             Err(e) => Ok(ServiceHealth {
@@ -1767,7 +1771,7 @@ impl ServiceRegistry {
                 healthy: false,
                 status_code: 0,
                 response_time_ms: duration_ms,
-                last_checked: chrono::Utc::now().to_rfc3339(),
+                last_checked: chrono::Utc::now(),
                 error: Some(e.to_string()),
             }),
         }
@@ -1849,7 +1853,7 @@ pub struct ServiceHealth {
     /// Response time in milliseconds.
     pub response_time_ms: u64,
     /// Timestamp of the last health check (RFC3339 format).
-    pub last_checked: String,
+    pub last_checked: chrono::DateTime<chrono::Utc>,
     /// Error message if the health check failed.
     pub error: Option<String>,
 }

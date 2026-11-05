@@ -85,7 +85,7 @@ pub async fn get_my_permissions(
         permissions: permission_codes.clone(),
         is_active: u.status == "active",
         is_superuser: u.is_superuser,
-        created_at: u.created_at.map(|t| t.to_string()),
+        created_at: u.created_at,
     };
 
     let roles: Vec<serde_json::Value> = role_names
@@ -95,7 +95,7 @@ pub async fn get_my_permissions(
                 "id": name,
                 "name": name,
                 "description": null,
-                "created_at": u.created_at.map(|t| t.to_string()),
+                "created_at": u.created_at,
             })
         })
         .collect();
@@ -298,7 +298,7 @@ pub async fn update_current_user(
                         permissions,
                         is_active: u.status == "active",
                         is_superuser: u.is_superuser,
-                        created_at: u.created_at.map(|t| t.to_string()),
+                        created_at: u.created_at,
                     })
                 }
                 None => serde_json::Value::Null,
@@ -608,7 +608,7 @@ pub async fn update_my_avatar(
                         permissions,
                         is_active: u.status == "active",
                         is_superuser: u.is_superuser,
-                        created_at: u.created_at.map(|t| t.to_string()),
+                        created_at: u.created_at,
                     })
                 }
                 None => serde_json::Value::Null,
