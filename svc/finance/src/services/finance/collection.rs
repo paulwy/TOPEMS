@@ -151,7 +151,7 @@ impl FinanceService {
 
         let row = sqlx::query(
             only_own_schema_query!("finance", "INSERT INTO erp_collection_records (tenant_id, collection_no, customer_name, amount, status, created_by)
-             VALUES ($1, $2, $3, $4, NULL, $5)
+             VALUES ($1, $2, $3, $4, 'pending', $5)
              RETURNING id, collection_no, customer_name, amount, status::text AS status, created_at"),
         )
         .bind(tenant_id)
@@ -195,7 +195,7 @@ impl FinanceService {
                  status = COALESCE($3, status),
                  updated_at = CURRENT_TIMESTAMP
              WHERE tenant_id = $4 AND id = $5
-             RETURNING id, collection_no, customer_name, amount, status, updated_at"
+             RETURNING id, collection_no, customer_name, amount, COALESCE(status, 'pending') AS status, updated_at"
         ))
         .bind(customer_name)
         .bind(amount)
@@ -253,7 +253,7 @@ impl FinanceService {
             "UPDATE erp_collection_records
              SET status = 'written_off', updated_at = CURRENT_TIMESTAMP
              WHERE tenant_id = $1 AND id = $2
-             RETURNING id, collection_no, status"
+             RETURNING id, collection_no, COALESCE(status, 'pending') AS status"
         ))
         .bind(tenant_id)
         .bind(collection_id)

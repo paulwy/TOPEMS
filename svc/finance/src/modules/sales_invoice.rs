@@ -943,7 +943,7 @@ pub async fn create_collection(
         "INSERT INTO finance.erp_collection_records
             (tenant_id, collection_no, customer_id, customer_name, invoice_no, collection_date,
              amount, payment_method, remark, status, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6::date, $7, $8, $9, NULL, NULL)
+         VALUES ($1, $2, $3, $4, $5, $6::date, $7, $8, $9, 'pending', NULL)
          RETURNING id",
     )
     .bind(tenant_id)
@@ -1000,7 +1000,7 @@ pub async fn confirm_collection(
     };
 
     let rec = match sqlx::query(
-        "SELECT erc.amount, erc.status,
+        "SELECT erc.amount, COALESCE(erc.status, 'pending') AS status,
                 (SELECT si.id FROM finance.sales_invoices si WHERE si.invoice_number = erc.invoice_no AND si.tenant_id = erc.tenant_id) AS invoice_id
          FROM finance.erp_collection_records erc
          WHERE erc.id = $1 AND erc.tenant_id = $2 AND erc.deleted_at IS NULL
@@ -1123,7 +1123,7 @@ pub async fn batch_confirm_collections(
     for rid in payload.record_ids {
         // 与单条 confirm_collection 1011-1027 相同的读取口径：金额 + 匹配发票 + 状态
         let rec = match sqlx::query(
-            "SELECT amount, (SELECT si.id FROM finance.sales_invoices si WHERE si.invoice_number = erc.invoice_no AND si.tenant_id = erc.tenant_id) AS invoice_id, status FROM finance.erp_collection_records erc
+            "SELECT amount, (SELECT si.id FROM finance.sales_invoices si WHERE si.invoice_number = erc.invoice_no AND si.tenant_id = erc.tenant_id) AS invoice_id, COALESCE(status, 'pending') AS status FROM finance.erp_collection_records erc
              WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
         )
         .bind(rid)
