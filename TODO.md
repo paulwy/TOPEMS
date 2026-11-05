@@ -1844,6 +1844,17 @@
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.130 审计整改第七批（批7/8/9）：P3-3 首约束补齐 + P4 tier 方案 + P5 副本归一方案（2026-11-06）✅
+
+> 三批连续推进。批 7 落地（wms 首批前端约束）；批 8、批 9 按"评估后不具备可控落地条件"停在方案阶段并标注评审项。
+
+- **批 7（已落地，`ddbf272893`）**：be_only 456 项按模块盘点（portal 58 / mobile 44 / mes 36 / scm 24 / wms 24 / crm 22…），选 wms 首批，补 3 个码：`wms:inbound_order:write`（入库单新建按钮）、`wms:stocktake:write`（录入/完成/提交盘点按钮）、`wms:stocktake:admin`（调整库存按钮）。落点规则：只补有 UI 按钮的码、只做隐藏/禁用、零模板改动。门禁 tsc/eslint/vitest（wms 17 用例）全绿。
+- **批 7 未落地（登记）**：approve 类无独立审核按钮；行操作编辑/删除需 `ListPageTemplate` 加可选 `writePermission`（影响数十页面，单独批次 + 回归）；mes 36 项等下一批。
+- **批 8（停方案，`docs/audit/P4_tier激活机制_方案_2026-11-06.md`）**：取证发现 tier 机制半实现——`core_tenant_modules` 建表（`06_iam_schema.sql:841`）无 `tier` 列，但 BE `tenant/handlers.rs:402,727` 引用 tier；路由已挂载（`routes/master.rs:24,189,193`），调用会 500；表在 public/iam/flow/mes 四副本且均空。给出 tier 三级语义、菜单/权限双层联动、兜底放行、幂等迁移与特性开关回滚。**停方案理由**：tier 分级属产品决策、四副本漂移需先归一、存量租户影响不可评估。
+- **批 9（停方案，`docs/audit/P5_core_permissions副本归一_方案_2026-11-06.md`）**：实测五表 × 三 schema 漂移——`core_permissions` mes 647 / public 1033 / iam 0；`core_roles` mes 空、public 有 superadmin+admin；public 含 2 条运行时不可见的授权。判定无单一完整副本；推荐 public 权威 + search_path 归一主路径（改配置即可回滚），备选 mes 权威需先查明 roles 空表原因。给出 S1 备份 / S2 连接层归一 / S3 数据对齐 / 清理延后 的三阶段草案与回滚。**停方案理由**：search_path 属登录/权限/租户隔离关键配置，当前 core_users=0 无法验证真实行为。
+- **评审待拍板**：① tier 分级与模块归属；② 菜单过滤灰度策略；③ 权威副本选型（public vs mes）；④ 是否允许调整 search_path；⑤ 副本清理时间点。
+- **下一批建议**：批 7 第二批（mes 36 项）；或 `ListPageTemplate` 行操作权限开关（影响面大，需回归）。
+
 ## v1.129 审计整改第六批：P3-2 三组权限码统一（bi/mes/wms）（2026-11-06）✅
 
 > 承接 v1.128 遗留第一项。先出方案（命名决策 + 影响面实测 + 迁移/回滚设计）再执行，三端同步收敛。
