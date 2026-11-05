@@ -1,10 +1,14 @@
-use axum::{extract::Path, routing::get, Extension, Json, Router};
+use axum::{
+    extract::{Path, State},
+    routing::get,
+    Extension, Json, Router,
+};
 use chrono::Utc;
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::models::project_member::{CreateMemberRequest, ProjectMember, UpdateMemberRequest};
@@ -13,7 +17,7 @@ use crate::modules::effective_tenant_id;
 type RlsTxnArc =
     std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
-pub fn create_routes(pool: PgPool) -> Router {
+pub fn create_routes(db: Db) -> Router {
     Router::new()
         .route(
             "/projects/{project_id}/members",
@@ -23,7 +27,7 @@ pub fn create_routes(pool: PgPool) -> Router {
             "/projects/{project_id}/members/{id}",
             get(get_member).put(update_member).delete(delete_member),
         )
-        .with_state(pool)
+        .with_state(db)
 }
 
 #[utoipa::path(
@@ -41,6 +45,7 @@ pub fn create_routes(pool: PgPool) -> Router {
     ),
 )]
 async fn list_members(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<ProjectMember>> {
@@ -49,11 +54,18 @@ async fn list_members(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query_as::<_, ProjectMember>(
         only_own_schema_query!("pm", "SELECT id, project_id, user_id, role, responsibilities, start_date, end_date, created_at, updated_at FROM pm.project_members WHERE project_id = $1 ORDER BY role ASC"),
     )
     .bind(project_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -82,6 +94,7 @@ async fn list_members(
     ),
 )]
 async fn create_member(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
@@ -92,6 +105,13 @@ async fn create_member(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -118,7 +138,7 @@ async fn create_member(
     .bind(req.end_date)
     .bind(now)
     .bind(now)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -148,6 +168,7 @@ async fn create_member(
     ),
 )]
 async fn get_member(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<ProjectMember> {
@@ -156,12 +177,19 @@ async fn get_member(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query_as::<_, ProjectMember>(
         only_own_schema_query!("pm", "SELECT id, project_id, user_id, role, responsibilities, start_date, end_date, created_at, updated_at FROM pm.project_members WHERE project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -192,6 +220,7 @@ async fn get_member(
     ),
 )]
 async fn update_member(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateMemberRequest>,
@@ -200,6 +229,13 @@ async fn update_member(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let now = Utc::now();
 
@@ -223,7 +259,7 @@ async fn update_member(
     .bind(now)
     .bind(project_id)
     .bind(id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -253,6 +289,7 @@ async fn update_member(
     ),
 )]
 async fn delete_member(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<bool> {
@@ -261,13 +298,20 @@ async fn delete_member(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "DELETE FROM pm.project_members WHERE project_id = $1 AND id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(project_id)
     .bind(id)
-    .execute(&mut **txn)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -284,6 +328,7 @@ async fn delete_member(
 mod tests {
     use super::*;
     use sqlx::postgres::PgConnectOptions;
+    use sqlx::PgPool;
     use std::str::FromStr;
 
     fn make_pool() -> PgPool {
@@ -293,7 +338,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_routes_returns_router() {
-        let router = create_routes(make_pool());
+        let router = create_routes(Db::new(make_pool(), "pm, public, shared"));
         let _ = router;
     }
 }

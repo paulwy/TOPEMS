@@ -13,8 +13,9 @@ use std::sync::Arc;
 use topems_pm::modules;
 use topems_shared_auth::middleware::require_module_access;
 use topems_shared_auth::tenant_middleware;
-use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_shared, default_init_db, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
 use topems_shared_service_client::TypedServiceClient;
@@ -22,16 +23,13 @@ use topems_shared_service_client::TypedServiceClient;
 /// 真实 PM 模块：持有数据库连接池 + 完整业务路由
 pub struct PmRealModule {
     routes: Router,
-    db: sqlx::PgPool,
+    db: Db,
     event_publisher: Option<Arc<EventPublisher>>,
 }
 
 impl PmRealModule {
     /// 异步构建真实 PM 模块
     pub async fn build() -> Result<Self> {
-        // search_path 优先 pm schema
-        std::env::set_var("SEARCH_PATH", "pm, public, shared");
-
         let config = ServiceConfig {
             name: "topems-pm",
             port: 8023,
@@ -48,7 +46,7 @@ impl PmRealModule {
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标
-        let ctx = bootstrap_service(&config).await?;
+        let ctx = bootstrap_service_shared(&config).await?;
 
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
@@ -80,13 +78,18 @@ impl PmRealModule {
         // 4. 业务路由（pool 直传 + 租户上下文中间件 + 权限中间件）
         // tenant_middleware 从 Claims 派生 TenantContext（业务写 handler 直接
         // Extension<TenantContext> 提取），并开启 RLS 事务；与 crm/mes 等真实模块一致。
-        let protected_routes =
-            modules::create_routes(ctx.db.clone(), ctx.event_publisher.clone(), workflow_client)
-                .layer(axum::middleware::from_fn_with_state(
-                    ctx.db.clone(),
-                    tenant_middleware(),
-                ))
-                .layer(axum::middleware::from_fn(require_module_access("pm")));
+        let db = Db::new(ctx.db.clone(), "pm, public, shared");
+        let protected_routes = modules::create_routes(
+            db.clone(),
+            ctx.db.clone(),
+            ctx.event_publisher.clone(),
+            workflow_client,
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            ctx.db.clone(),
+            tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn(require_module_access("pm")));
 
         // 5. 组装路由：api_prefix + 统一 JWT 认证（与独立部署一致）
         let routes = axum::Router::new()
@@ -109,7 +112,7 @@ impl PmRealModule {
 
         Ok(Self {
             routes,
-            db: ctx.db.clone(),
+            db,
             event_publisher: ctx.event_publisher.clone(),
         })
     }
@@ -132,11 +135,12 @@ impl Module for PmRealModule {
 
     async fn health_check(&self) -> ModuleHealth {
         let mut health = ModuleHealth::healthy("pm-real", ModuleGroup::Wms);
-        let db_ok = self.db.size() > 0;
+        let stats = self.db.stats();
+        let db_ok = stats.size > 0;
         health.dependencies.push(crate::module::DependencyHealth {
             name: "PostgreSQL",
             healthy: db_ok,
-            detail: format!("连接池大小 {}", self.db.size()),
+            detail: format!("连接池大小 {}", stats.size),
         });
         if self.event_publisher.is_some() {
             health.dependencies.push(crate::module::DependencyHealth {

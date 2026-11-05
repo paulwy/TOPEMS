@@ -5,17 +5,17 @@
 //! - `task_progress_for_status`：状态派生进度（done→100 / todo→0）
 
 use axum::{
-    extract::{Extension, Path, Query},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::get,
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_db::scope::Db;
 use tracing;
 use uuid::Uuid;
 
@@ -90,6 +90,7 @@ fn task_return_columns(locale_placeholder: &str) -> String {
     tag = "task"
 )]
 pub async fn list_tasks(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(_ctx): Extension<TenantContext>,
     Query(query): Query<TaskQuery>,
@@ -99,6 +100,13 @@ pub async fn list_tasks(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
 
     let page = query.page.unwrap_or(1).max(1);
@@ -124,33 +132,25 @@ pub async fn list_tasks(
     .bind(page_size)
     .bind((page - 1) * page_size)
     .bind(locale)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     let total: Result<i64, sqlx::Error> = sqlx::query_scalar(
         "SELECT COUNT(*) FROM pm.pm_tasks WHERE deleted_at IS NULL AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)",
     )
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match (result, total) {
-        (Ok(items), Ok(total)) => {
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-                    return ApiResponse::server_error("事务提交失败");
-                }
-            }
-            ApiResponse::success(
-                TaskListResponse {
-                    items,
-                    total,
-                    page,
-                    page_size,
-                },
-                "任务列表获取成功",
-            )
-        }
+        (Ok(items), Ok(total)) => ApiResponse::success(
+            TaskListResponse {
+                items,
+                total,
+                page,
+                page_size,
+            },
+            "任务列表获取成功",
+        ),
         (Err(e), _) | (_, Err(e)) => {
             ApiResponse::from(TopemsError::internal("获取任务列表失败", e))
         }
@@ -171,6 +171,7 @@ pub async fn list_tasks(
     tag = "task"
 )]
 pub async fn list_tasks_by_project(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(_ctx): Extension<TenantContext>,
     Path(project_id): Path<Uuid>,
@@ -181,6 +182,13 @@ pub async fn list_tasks_by_project(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
@@ -200,34 +208,26 @@ pub async fn list_tasks_by_project(
     .bind(page_size)
     .bind((page - 1) * page_size)
     .bind(locale)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     let total: Result<i64, sqlx::Error> = sqlx::query_scalar(
         "SELECT COUNT(*) FROM pm.pm_tasks WHERE project_id = $1 AND deleted_at IS NULL AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)",
     )
     .bind(project_id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match (result, total) {
-        (Ok(items), Ok(total)) => {
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-                    return ApiResponse::server_error("事务提交失败");
-                }
-            }
-            ApiResponse::success(
-                TaskListResponse {
-                    items,
-                    total,
-                    page,
-                    page_size,
-                },
-                "项目任务列表获取成功",
-            )
-        }
+        (Ok(items), Ok(total)) => ApiResponse::success(
+            TaskListResponse {
+                items,
+                total,
+                page,
+                page_size,
+            },
+            "项目任务列表获取成功",
+        ),
         (Err(e), _) | (_, Err(e)) => {
             ApiResponse::from(TopemsError::internal("获取项目任务列表失败", e))
         }
@@ -235,6 +235,7 @@ pub async fn list_tasks_by_project(
 }
 
 pub async fn create_task(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     headers: HeaderMap,
     Extension(ctx): Extension<TenantContext>,
@@ -245,6 +246,13 @@ pub async fn create_task(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let id = Uuid::new_v4();
     let tenant_id = effective_tenant_id(&ctx, &claims);
@@ -286,19 +294,11 @@ pub async fn create_task(
     .bind(now)
     .bind(&req.title_en)
     .bind(locale)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
-        Ok(task) => {
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-                    return ApiResponse::server_error("事务提交失败");
-                }
-            }
-            ApiResponse::success(task, "任务创建成功")
-        }
+        Ok(task) => ApiResponse::success(task, "任务创建成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("创建任务失败", e)),
     }
 }
@@ -317,6 +317,7 @@ pub async fn create_task(
     tag = "task"
 )]
 pub async fn get_task(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(_ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
@@ -327,6 +328,13 @@ pub async fn get_task(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     // 多语言：locale 追加为 $2，title 的 CASE 表达式引用它
     let locale = Locale::from_headers(&headers).as_sql();
     let return_cols = task_return_columns("$2");
@@ -335,25 +343,18 @@ pub async fn get_task(
     )))
     .bind(id)
     .bind(locale)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(Some(task)) => {
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-                    return ApiResponse::server_error("事务提交失败");
-                }
-            }
-            ApiResponse::success(task, "任务获取成功")
-        }
+        Ok(Some(task)) => ApiResponse::success(task, "任务获取成功"),
         Ok(None) => ApiResponse::not_found("任务不存在"),
         Err(e) => ApiResponse::from(TopemsError::internal("获取任务失败", e)),
     }
 }
 
 pub async fn update_task(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(_ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
@@ -365,6 +366,13 @@ pub async fn update_task(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let now = Utc::now();
     // 若仅更新状态，校验状态机（todo/in_progress/review/done/blocked）
     if let Some(to) = &req.status {
@@ -372,7 +380,7 @@ pub async fn update_task(
             "SELECT status FROM pm.pm_tasks WHERE id = $1 AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::UUID)",
         )
         .bind(id)
-        .fetch_optional(&mut **txn)
+        .fetch_optional(&mut scope)
         .await;
         if let Ok(Some(from)) = from {
             if !task_status_transition_valid(&from, to) {
@@ -415,25 +423,18 @@ pub async fn update_task(
     .bind(now)
     .bind(&req.title_en)
     .bind(locale)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(Some(task)) => {
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-                    return ApiResponse::server_error("事务提交失败");
-                }
-            }
-            ApiResponse::success(task, "任务更新成功")
-        }
+        Ok(Some(task)) => ApiResponse::success(task, "任务更新成功"),
         Ok(None) => ApiResponse::not_found("任务不存在"),
         Err(e) => ApiResponse::from(TopemsError::internal("更新任务失败", e)),
     }
 }
 
 pub async fn delete_task(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(_ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
@@ -443,20 +444,21 @@ pub async fn delete_task(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query(
         "UPDATE pm.pm_tasks SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(id)
-    .execute(&mut **txn)
+    .execute(&mut scope)
     .await;
     match result {
         Ok(res) if res.rows_affected() > 0 => {
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-                    return ApiResponse::server_error("事务提交失败");
-                }
-            }
             ApiResponse::success(serde_json::json!({"deleted": true}), "任务已删除")
         }
         Ok(_) => ApiResponse::not_found("任务不存在"),
@@ -464,7 +466,7 @@ pub async fn delete_task(
     }
 }
 
-pub fn create_routes(pool: PgPool) -> Router {
+pub fn create_routes(db: Db) -> Router {
     Router::new()
         .route("/tasks", get(list_tasks).post(create_task))
         .route(
@@ -472,7 +474,7 @@ pub fn create_routes(pool: PgPool) -> Router {
             get(get_task).put(update_task).delete(delete_task),
         )
         .route("/projects/{project_id}/tasks", get(list_tasks_by_project))
-        .with_state(pool)
+        .with_state(db)
 }
 
 // ==================== Tests ====================

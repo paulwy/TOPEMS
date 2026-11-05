@@ -4,12 +4,12 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
     commit_retry, EventPublisher, EventType, SettlementApprovedPayload, SettlementCreatedPayload,
 };
@@ -24,13 +24,13 @@ use crate::modules::effective_tenant_id;
 
 #[derive(Clone)]
 struct SettlementState {
-    pool: PgPool,
+    pool: Db,
     event_publisher: Option<Arc<EventPublisher>>,
 }
 
-pub fn create_routes(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Router {
+pub fn create_routes(db: Db, event_publisher: Option<Arc<EventPublisher>>) -> Router {
     let state = SettlementState {
-        pool,
+        pool: db,
         event_publisher,
     };
     Router::new()
@@ -79,15 +79,29 @@ async fn get_project_settlements(
     State(state): State<SettlementState>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<Settlement>> {
+    let mut scope = match state.pool.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let settlements = sqlx::query_as::<_, Settlement>(
         only_own_schema_query!("pm", "SELECT id, project_id, settlement_no, settlement_name, settlement_type, status, settlement_date, amount, currency, remarks, settlement_period_start, settlement_period_end, approved_at, created_by, created_at, updated_at FROM pm.settlements WHERE project_id = $1 ORDER BY settlement_date DESC"),
     )
     .bind(project_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match settlements {
-        Ok(s) => ApiResponse::success(s, "获取决算列表成功"),
+        Ok(s) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交数据库事务失败: {}", e);
+                return ApiResponse::server_error("提交数据库事务失败");
+            }
+            ApiResponse::success(s, "获取决算列表成功")
+        }
         Err(e) => {
             tracing::error!("获取决算失败: {}", e);
             ApiResponse::server_error("获取决算失败")
@@ -112,14 +126,28 @@ async fn get_settlement(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Settlement> {
+    let mut scope = match state.pool.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let settlement =
         sqlx::query_as::<_, Settlement>(only_own_schema_query!("pm", "SELECT id, project_id, settlement_no, settlement_name, settlement_type, status, settlement_date, amount, currency, remarks, settlement_period_start, settlement_period_end, approved_at, created_by, created_at, updated_at FROM pm.settlements WHERE id = $1"))
             .bind(id)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await;
 
     match settlement {
-        Ok(s) => ApiResponse::success(s, "获取决算详情成功"),
+        Ok(s) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交数据库事务失败: {}", e);
+                return ApiResponse::server_error("提交数据库事务失败");
+            }
+            ApiResponse::success(s, "获取决算详情成功")
+        }
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("决算不存在"),
         Err(e) => {
             tracing::error!("获取决算失败: {}", e);
@@ -141,6 +169,14 @@ async fn create_settlement(
 
     // 列对齐真库：settlement_code->settlement_no, description->remarks, actual_amount->amount；
     // 补 NOT NULL：settlement_date=now, amount=0, currency='CNY'。
+    let mut scope = match state.pool.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let settlement = sqlx::query_as::<_, Settlement>(
         only_own_schema_query!("pm", "INSERT INTO pm.settlements (id, project_id, settlement_no, settlement_name, settlement_type, status, settlement_date, amount, currency, remarks, settlement_period_start, settlement_period_end, approved_at, created_by, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *")
@@ -161,11 +197,15 @@ async fn create_settlement(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match settlement {
         Ok(s) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交数据库事务失败: {}", e);
+                return ApiResponse::server_error("提交数据库事务失败");
+            }
             if let Some(ref publisher) = state.event_publisher {
                 let payload = SettlementCreatedPayload {
                     id,
@@ -192,6 +232,7 @@ async fn create_settlement(
             ApiResponse::success(s, "创建决算成功")
         }
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("创建决算失败: {}", e);
             ApiResponse::server_error("创建决算失败")
         }
@@ -204,6 +245,14 @@ async fn update_settlement(
     Json(req): Json<UpdateSettlementRequest>,
 ) -> ApiResponse<Settlement> {
     // actual_amount->amount, description->remarks。
+    let mut scope = match state.pool.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let settlement = sqlx::query_as::<_, Settlement>(only_own_schema_query!(
         "pm",
         "UPDATE pm.settlements SET
@@ -220,13 +269,23 @@ async fn update_settlement(
     .bind(req.description)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match settlement {
-        Ok(s) => ApiResponse::success(s, "更新决算成功"),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("决算不存在"),
+        Ok(s) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交数据库事务失败: {}", e);
+                return ApiResponse::server_error("提交数据库事务失败");
+            }
+            ApiResponse::success(s, "更新决算成功")
+        }
+        Err(sqlx::Error::RowNotFound) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("决算不存在")
+        }
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("更新决算失败: {}", e);
             ApiResponse::server_error("更新决算失败")
         }
@@ -257,6 +316,14 @@ async fn approve_settlement(
     // 操作人取 JWT 真实 sub（与 pdm created_by 写法一致），不再写死 "system"。
     let tenant_id = effective_tenant_id(&ctx, &claims);
     let approved_by = claims.sub.clone();
+    let mut scope = match state.pool.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let settlement = sqlx::query_as::<_, Settlement>(only_own_schema_query!(
         "pm",
         "UPDATE pm.settlements SET
@@ -266,11 +333,15 @@ async fn approve_settlement(
         WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match settlement {
         Ok(s) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交数据库事务失败: {}", e);
+                return ApiResponse::server_error("提交数据库事务失败");
+            }
             if let Some(ref publisher) = state.event_publisher {
                 let payload = SettlementApprovedPayload {
                     id,
@@ -289,8 +360,12 @@ async fn approve_settlement(
             }
             ApiResponse::success(s, "决算审批通过")
         }
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("决算不存在"),
+        Err(sqlx::Error::RowNotFound) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("决算不存在")
+        }
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("审批决算失败: {}", e);
             ApiResponse::server_error("审批决算失败")
         }
@@ -314,15 +389,29 @@ async fn get_settlement_items(
     State(state): State<SettlementState>,
     Path(settlement_id): Path<Uuid>,
 ) -> ApiResponse<Vec<SettlementItem>> {
+    let mut scope = match state.pool.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let items = sqlx::query_as::<_, SettlementItem>(
         only_own_schema_query!("pm", "SELECT id, settlement_id, item_code, item_name, category, budget_amount, actual_amount, variance_amount, variance_percent, description, expense_ref_id, contract_ref_id, created_at FROM pm.settlement_items WHERE settlement_id = $1 ORDER BY category, item_name"),
     )
     .bind(settlement_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match items {
-        Ok(i) => ApiResponse::success(i, "获取决算项列表成功"),
+        Ok(i) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交数据库事务失败: {}", e);
+                return ApiResponse::server_error("提交数据库事务失败");
+            }
+            ApiResponse::success(i, "获取决算项列表成功")
+        }
         Err(e) => {
             tracing::error!("获取决算项失败: {}", e);
             ApiResponse::server_error("获取决算项失败")
@@ -346,6 +435,14 @@ async fn create_settlement_item(
         None
     };
 
+    let mut scope = match state.pool.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let item = sqlx::query_as::<_, SettlementItem>(
         only_own_schema_query!("pm", "INSERT INTO pm.settlement_items (id, settlement_id, item_code, item_name, category, budget_amount, actual_amount, variance_amount, variance_percent, description, expense_ref_id, contract_ref_id, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *")
@@ -365,12 +462,19 @@ async fn create_settlement_item(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match item {
-        Ok(i) => ApiResponse::success(i, "创建决算项成功"),
+        Ok(i) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交数据库事务失败: {}", e);
+                return ApiResponse::server_error("提交数据库事务失败");
+            }
+            ApiResponse::success(i, "创建决算项成功")
+        }
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("创建决算项失败: {}", e);
             ApiResponse::server_error("创建决算项失败")
         }
@@ -395,6 +499,14 @@ async fn update_settlement_item(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSettlementItemRequest>,
 ) -> ApiResponse<SettlementItem> {
+    let mut scope = match state.pool.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let item = sqlx::query_as::<_, SettlementItem>(
         only_own_schema_query!("pm", "UPDATE pm.settlement_items SET
             item_name = COALESCE($1, item_name),
@@ -412,13 +524,23 @@ async fn update_settlement_item(
     .bind(req.description)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match item {
-        Ok(i) => ApiResponse::success(i, "更新决算项成功"),
-        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("决算项不存在"),
+        Ok(i) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交数据库事务失败: {}", e);
+                return ApiResponse::server_error("提交数据库事务失败");
+            }
+            ApiResponse::success(i, "更新决算项成功")
+        }
+        Err(sqlx::Error::RowNotFound) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("决算项不存在")
+        }
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("更新决算项失败: {}", e);
             ApiResponse::server_error("更新决算项失败")
         }
@@ -429,18 +551,36 @@ async fn delete_settlement_item(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
+    let mut scope = match state.pool.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "DELETE FROM pm.settlement_items WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除决算项成功"),
-        Ok(_) => ApiResponse::not_found("决算项不存在"),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交数据库事务失败: {}", e);
+                return ApiResponse::server_error("提交数据库事务失败");
+            }
+            ApiResponse::success((), "删除决算项成功")
+        }
+        Ok(_) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("决算项不存在")
+        }
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("删除决算项失败: {}", e);
             ApiResponse::server_error("删除决算项失败")
         }
@@ -464,15 +604,29 @@ async fn get_settlement_adjustments(
     State(state): State<SettlementState>,
     Path(settlement_id): Path<Uuid>,
 ) -> ApiResponse<Vec<SettlementAdjustment>> {
+    let mut scope = match state.pool.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let adjustments = sqlx::query_as::<_, SettlementAdjustment>(
         only_own_schema_query!("pm", "SELECT id, settlement_id, adjustment_type, adjustment_code, description, amount, reason, supporting_documents, created_by, created_at FROM pm.settlement_adjustments WHERE settlement_id = $1 ORDER BY created_at"),
     )
     .bind(settlement_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match adjustments {
-        Ok(a) => ApiResponse::success(a, "获取调整项列表成功"),
+        Ok(a) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交数据库事务失败: {}", e);
+                return ApiResponse::server_error("提交数据库事务失败");
+            }
+            ApiResponse::success(a, "获取调整项列表成功")
+        }
         Err(e) => {
             tracing::error!("获取调整项失败: {}", e);
             ApiResponse::server_error("获取调整项失败")
@@ -490,6 +644,14 @@ async fn create_settlement_adjustment(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
+    let mut scope = match state.pool.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let adjustment = sqlx::query_as::<_, SettlementAdjustment>(
         only_own_schema_query!("pm", "INSERT INTO pm.settlement_adjustments (id, settlement_id, adjustment_type, adjustment_code, description, amount, reason, supporting_documents, created_by, created_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *")
@@ -505,12 +667,19 @@ async fn create_settlement_adjustment(
     .bind(req.created_by)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match adjustment {
-        Ok(a) => ApiResponse::success(a, "创建调整项成功"),
+        Ok(a) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交数据库事务失败: {}", e);
+                return ApiResponse::server_error("提交数据库事务失败");
+            }
+            ApiResponse::success(a, "创建调整项成功")
+        }
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("创建调整项失败: {}", e);
             ApiResponse::server_error("创建调整项失败")
         }
@@ -529,6 +698,7 @@ mod tests {
     use super::*;
     use chrono::Datelike;
     use sqlx::postgres::PgConnectOptions;
+    use sqlx::PgPool;
     use std::str::FromStr;
 
     fn make_pool() -> PgPool {
@@ -538,7 +708,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_routes_returns_router() {
-        let router = create_routes(make_pool(), None);
+        let router = create_routes(Db::new(make_pool(), "pm, public, shared"), None);
         let _ = router;
     }
 

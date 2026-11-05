@@ -4,8 +4,8 @@ use axum::{
     Router,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::{Db, ScopedTxn};
 use utoipa::ToSchema;
 
 use topems_shared_core::response::ApiResponse;
@@ -299,7 +299,7 @@ pub struct StatsQuery {
 
 // ============ 路由 ============
 
-pub fn create_routes(db: PgPool) -> Router {
+pub fn create_routes(db: Db) -> Router {
     Router::new()
         .route("/statistics", get(get_statistics))
         .route("/statistics/projects", get(get_project_statistics))
@@ -316,6 +316,7 @@ pub fn create_routes(db: PgPool) -> Router {
 mod tests {
     use super::*;
     use sqlx::postgres::PgConnectOptions;
+    use sqlx::PgPool;
     use std::str::FromStr;
 
     fn make_pool() -> PgPool {
@@ -325,7 +326,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_routes_returns_router() {
-        let router = create_routes(make_pool());
+        let router = create_routes(Db::new(make_pool(), "pm, public, shared"));
         let _ = router;
     }
 
@@ -670,7 +671,7 @@ mod tests {
 
 // ============ Handler（内部逻辑抽取，避免 extractor 直接调用） ============
 
-async fn build_pm_statistics(db: &PgPool) -> PmStatistics {
+async fn build_pm_statistics(db: &mut ScopedTxn<'_>) -> PmStatistics {
     PmStatistics {
         total_projects: query_count(db, "SELECT COUNT(*) FROM pm.projects").await,
         draft_projects: query_count(
@@ -753,7 +754,7 @@ async fn build_pm_statistics(db: &PgPool) -> PmStatistics {
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-async fn build_project_statistics(db: &PgPool) -> ProjectStatistics {
+async fn build_project_statistics(db: &mut ScopedTxn<'_>) -> ProjectStatistics {
     let total_projects = query_count(db, "SELECT COUNT(*) FROM pm.projects").await;
 
     let by_status = query_status_counts(
@@ -766,7 +767,7 @@ async fn build_project_statistics(db: &PgPool) -> ProjectStatistics {
         "pm",
         "SELECT project_type, COUNT(*) as count FROM pm.projects GROUP BY project_type"
     ))
-    .fetch_all(db)
+    .fetch_all(&mut *db)
     .await
     .unwrap_or_default()
     .into_iter()
@@ -779,7 +780,7 @@ async fn build_project_statistics(db: &PgPool) -> ProjectStatistics {
     let by_leader: Vec<LeaderCount> = sqlx::query_as::<_, (String, i64)>(
         only_own_schema_query!("pm", "SELECT leader as leader, COUNT(*) as count FROM pm.projects WHERE leader IS NOT NULL GROUP BY leader ORDER BY count DESC"),
     )
-    .fetch_all(db)
+    .fetch_all(&mut *db)
     .await
     .unwrap_or_default()
     .into_iter()
@@ -790,7 +791,7 @@ async fn build_project_statistics(db: &PgPool) -> ProjectStatistics {
         "pm",
         "SELECT COALESCE(AVG(progress), 0) FROM pm.projects WHERE status = 'active'"
     ))
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await
     .unwrap_or(0.0);
 
@@ -827,7 +828,7 @@ async fn build_project_statistics(db: &PgPool) -> ProjectStatistics {
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-async fn build_contract_statistics(db: &PgPool) -> ContractStatistics {
+async fn build_contract_statistics(db: &mut ScopedTxn<'_>) -> ContractStatistics {
     let total_contracts = query_count(db, "SELECT COUNT(*) FROM pm.contracts").await;
 
     let by_status = query_status_counts(
@@ -840,7 +841,7 @@ async fn build_contract_statistics(db: &PgPool) -> ContractStatistics {
         "pm",
         "SELECT contract_type, COUNT(*) as count FROM pm.contracts GROUP BY contract_type"
     ))
-    .fetch_all(db)
+    .fetch_all(&mut *db)
     .await
     .unwrap_or_default()
     .into_iter()
@@ -854,7 +855,7 @@ async fn build_contract_statistics(db: &PgPool) -> ContractStatistics {
         "pm",
         "SELECT COALESCE(SUM(amount), 0) FROM pm.contracts"
     ))
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await
     .unwrap_or(0.0);
 
@@ -873,12 +874,12 @@ async fn build_contract_statistics(db: &PgPool) -> ContractStatistics {
     }
 }
 
-async fn build_budget_statistics(db: &PgPool) -> BudgetStatistics {
+async fn build_budget_statistics(db: &mut ScopedTxn<'_>) -> BudgetStatistics {
     let total_budget: f64 = sqlx::query_scalar(only_own_schema_query!(
         "pm",
         "SELECT COALESCE(SUM(total_amount), 0) FROM pm.budgets"
     ))
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await
     .unwrap_or(0.0);
 
@@ -886,7 +887,7 @@ async fn build_budget_statistics(db: &PgPool) -> BudgetStatistics {
         "pm",
         "SELECT COALESCE(SUM(allocated_amount), 0) FROM pm.budgets"
     ))
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await
     .unwrap_or(0.0);
 
@@ -894,7 +895,7 @@ async fn build_budget_statistics(db: &PgPool) -> BudgetStatistics {
         "pm",
         "SELECT COALESCE(SUM(spent_amount), 0) FROM pm.budgets"
     ))
-    .fetch_one(db)
+    .fetch_one(&mut *db)
     .await
     .unwrap_or(0.0);
 
@@ -908,7 +909,7 @@ async fn build_budget_statistics(db: &PgPool) -> BudgetStatistics {
     let by_category: Vec<CategoryCount> = sqlx::query_as::<_, (String, f64, f64)>(
         only_own_schema_query!("pm", "SELECT COALESCE(category, 'uncategorized'), SUM(budget_amount), SUM(spent_amount) FROM pm_budget_items GROUP BY category"),
     )
-    .fetch_all(db)
+    .fetch_all(&mut *db)
     .await
     .unwrap_or_default()
     .into_iter()
@@ -926,7 +927,7 @@ async fn build_budget_statistics(db: &PgPool) -> BudgetStatistics {
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-async fn build_risk_statistics(db: &PgPool) -> RiskStatistics {
+async fn build_risk_statistics(db: &mut ScopedTxn<'_>) -> RiskStatistics {
     let total_risks = query_count(db, "SELECT COUNT(*) FROM pm.risks").await;
     let open_risks = query_count(
         db,
@@ -940,7 +941,7 @@ async fn build_risk_statistics(db: &PgPool) -> RiskStatistics {
         "pm",
         "SELECT COALESCE(risk_level, 'unknown'), COUNT(*) FROM pm.risks GROUP BY risk_level"
     ))
-    .fetch_all(db)
+    .fetch_all(&mut *db)
     .await
     .unwrap_or_default()
     .into_iter()
@@ -950,7 +951,7 @@ async fn build_risk_statistics(db: &PgPool) -> RiskStatistics {
     let by_category: Vec<CategoryCount> = sqlx::query_as::<_, (String, i64, i64)>(
         only_own_schema_query!("pm", "SELECT COALESCE(risk_type, 'uncategorized'), COUNT(*), SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) FROM pm.risks GROUP BY risk_type"),
     )
-    .fetch_all(db)
+    .fetch_all(&mut *db)
     .await
     .unwrap_or_default()
     .into_iter()
@@ -971,7 +972,7 @@ async fn build_risk_statistics(db: &PgPool) -> RiskStatistics {
 }
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-async fn build_task_statistics(db: &PgPool) -> TaskStatistics {
+async fn build_task_statistics(db: &mut ScopedTxn<'_>) -> TaskStatistics {
     let total_tasks = query_count(db, "SELECT COUNT(*) FROM pm_tasks").await;
 
     let by_status = query_status_counts(
@@ -985,7 +986,7 @@ async fn build_task_statistics(db: &PgPool) -> TaskStatistics {
             "pm",
             "SELECT COALESCE(priority, 'normal'), COUNT(*) FROM pm_tasks GROUP BY priority"
         ))
-        .fetch_all(db)
+        .fetch_all(&mut *db)
         .await
         .unwrap_or_default()
         .into_iter()
@@ -1030,8 +1031,19 @@ async fn build_task_statistics(db: &PgPool) -> TaskStatistics {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn get_statistics(State(db): State<PgPool>) -> ApiResponse<PmStatistics> {
-    let stats = build_pm_statistics(&db).await;
+async fn get_statistics(State(db): State<Db>) -> ApiResponse<PmStatistics> {
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+    let stats = build_pm_statistics(&mut scope).await;
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交数据库事务失败: {}", e);
+        return ApiResponse::server_error("提交数据库事务失败");
+    }
     ApiResponse::success(stats, "统计数据获取成功")
 }
 
@@ -1052,10 +1064,21 @@ async fn get_statistics(State(db): State<PgPool>) -> ApiResponse<PmStatistics> {
     ),
 )]
 async fn get_project_statistics(
-    State(db): State<PgPool>,
+    State(db): State<Db>,
     Query(_params): Query<StatsQuery>,
 ) -> ApiResponse<ProjectStatistics> {
-    let stats = build_project_statistics(&db).await;
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+    let stats = build_project_statistics(&mut scope).await;
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交数据库事务失败: {}", e);
+        return ApiResponse::server_error("提交数据库事务失败");
+    }
     ApiResponse::success(stats, "项目统计数据获取成功")
 }
 
@@ -1076,10 +1099,21 @@ async fn get_project_statistics(
     ),
 )]
 async fn get_contract_statistics(
-    State(db): State<PgPool>,
+    State(db): State<Db>,
     Query(_params): Query<StatsQuery>,
 ) -> ApiResponse<ContractStatistics> {
-    let stats = build_contract_statistics(&db).await;
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+    let stats = build_contract_statistics(&mut scope).await;
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交数据库事务失败: {}", e);
+        return ApiResponse::server_error("提交数据库事务失败");
+    }
     ApiResponse::success(stats, "合同统计数据获取成功")
 }
 
@@ -1100,10 +1134,21 @@ async fn get_contract_statistics(
     ),
 )]
 async fn get_budget_statistics(
-    State(db): State<PgPool>,
+    State(db): State<Db>,
     Query(_params): Query<StatsQuery>,
 ) -> ApiResponse<BudgetStatistics> {
-    let stats = build_budget_statistics(&db).await;
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+    let stats = build_budget_statistics(&mut scope).await;
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交数据库事务失败: {}", e);
+        return ApiResponse::server_error("提交数据库事务失败");
+    }
     ApiResponse::success(stats, "预算统计数据获取成功")
 }
 
@@ -1124,10 +1169,21 @@ async fn get_budget_statistics(
     ),
 )]
 async fn get_risk_statistics(
-    State(db): State<PgPool>,
+    State(db): State<Db>,
     Query(_params): Query<StatsQuery>,
 ) -> ApiResponse<RiskStatistics> {
-    let stats = build_risk_statistics(&db).await;
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+    let stats = build_risk_statistics(&mut scope).await;
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交数据库事务失败: {}", e);
+        return ApiResponse::server_error("提交数据库事务失败");
+    }
     ApiResponse::success(stats, "风险统计数据获取成功")
 }
 
@@ -1148,10 +1204,21 @@ async fn get_risk_statistics(
     ),
 )]
 async fn get_task_statistics(
-    State(db): State<PgPool>,
+    State(db): State<Db>,
     Query(_params): Query<StatsQuery>,
 ) -> ApiResponse<TaskStatistics> {
-    let stats = build_task_statistics(&db).await;
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+    let stats = build_task_statistics(&mut scope).await;
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交数据库事务失败: {}", e);
+        return ApiResponse::server_error("提交数据库事务失败");
+    }
     ApiResponse::success(stats, "任务统计数据获取成功")
 }
 
@@ -1165,12 +1232,24 @@ async fn get_task_statistics(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn get_dashboard(State(db): State<PgPool>) -> ApiResponse<DashboardOverview> {
-    let projects = build_project_statistics(&db).await;
-    let contracts = build_contract_statistics(&db).await;
-    let budget = build_budget_statistics(&db).await;
-    let risks = build_risk_statistics(&db).await;
-    let tasks = build_task_statistics(&db).await;
+async fn get_dashboard(State(db): State<Db>) -> ApiResponse<DashboardOverview> {
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+    let projects = build_project_statistics(&mut scope).await;
+    let contracts = build_contract_statistics(&mut scope).await;
+    let budget = build_budget_statistics(&mut scope).await;
+    let risks = build_risk_statistics(&mut scope).await;
+    let tasks = build_task_statistics(&mut scope).await;
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交数据库事务失败: {}", e);
+        return ApiResponse::server_error("提交数据库事务失败");
+    }
 
     let dashboard = DashboardOverview {
         projects,
@@ -1185,23 +1264,23 @@ async fn get_dashboard(State(db): State<PgPool>) -> ApiResponse<DashboardOvervie
 
 // ============ 辅助函数 ============
 
-async fn query_count(db: &PgPool, sql: &str) -> i64 {
+async fn query_count(db: &mut ScopedTxn<'_>, sql: &str) -> i64 {
     sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
-        .fetch_one(db)
+        .fetch_one(&mut *db)
         .await
         .unwrap_or(0)
 }
 
-async fn query_sum(db: &PgPool, sql: &str) -> f64 {
+async fn query_sum(db: &mut ScopedTxn<'_>, sql: &str) -> f64 {
     sqlx::query_scalar(sqlx::AssertSqlSafe(sql))
-        .fetch_one(db)
+        .fetch_one(&mut *db)
         .await
         .unwrap_or(0.0)
 }
 
-async fn query_status_counts(db: &PgPool, sql: &str) -> Vec<StatusCount> {
+async fn query_status_counts(db: &mut ScopedTxn<'_>, sql: &str) -> Vec<StatusCount> {
     sqlx::query_as::<_, (String, i64)>(sqlx::AssertSqlSafe(sql))
-        .fetch_all(db)
+        .fetch_all(&mut *db)
         .await
         .unwrap_or_default()
         .into_iter()

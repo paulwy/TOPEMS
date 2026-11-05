@@ -1,14 +1,14 @@
 use axum::{
-    extract::{Extension, Path},
+    extract::{Extension, Path, State},
     routing::get,
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::models::project_benefit::{CreateBenefitRequest, ProjectBenefit};
@@ -46,7 +46,7 @@ pub fn calculate_payback_period(initial_cost: f64, monthly_savings: f64) -> f64 
     initial_cost / monthly_savings
 }
 
-pub fn create_routes(pool: PgPool) -> Router {
+pub fn create_routes(db: Db) -> Router {
     Router::new()
         .route(
             "/projects/{project_id}/benefits",
@@ -56,7 +56,7 @@ pub fn create_routes(pool: PgPool) -> Router {
             "/projects/{project_id}/benefits/analysis",
             get(get_analysis),
         )
-        .with_state(pool)
+        .with_state(db)
 }
 
 #[utoipa::path(
@@ -74,6 +74,7 @@ pub fn create_routes(pool: PgPool) -> Router {
     ),
 )]
 async fn get_benefits(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<ProjectBenefit>> {
@@ -82,12 +83,19 @@ async fn get_benefits(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
 
     let result = sqlx::query_as::<_, ProjectBenefit>(
         only_own_schema_query!("pm", "SELECT id, project_id, period_type, period_date, planned_cost, actual_cost, planned_progress, actual_progress, planned_value, earned_value, actual_cost_eva, cpi, spi, cv, sv, eac, etc, roi, notes, created_by, created_at, updated_at FROM pm.project_benefits WHERE project_id = $1 ORDER BY period_type ASC, period_date ASC")
     )
     .bind(project_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -114,6 +122,7 @@ async fn get_benefits(
     ),
 )]
 async fn get_analysis(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
@@ -122,12 +131,19 @@ async fn get_analysis(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
 
     let benefits_result = sqlx::query_as::<_, ProjectBenefit>(
         only_own_schema_query!("pm", "SELECT id, project_id, period_type, period_date, planned_cost, actual_cost, planned_progress, actual_progress, planned_value, earned_value, actual_cost_eva, cpi, spi, cv, sv, eac, etc, roi, notes, created_by, created_at, updated_at FROM pm.project_benefits WHERE project_id = $1"),
     )
     .bind(project_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     let benefits = match benefits_result {
@@ -224,6 +240,7 @@ async fn get_analysis(
     ),
 )]
 async fn calculate_benefits(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
@@ -234,6 +251,13 @@ async fn calculate_benefits(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
 
     let id = Uuid::new_v4();
@@ -321,7 +345,7 @@ async fn calculate_benefits(
     .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match result {

@@ -7,9 +7,10 @@ use axum::routing::get;
 use prometheus::{default_registry, Gauge};
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, create_health_state, create_standard_health_routes, run,
-    ServiceConfig,
+    bootstrap_service_shared, build_application, create_health_state,
+    create_standard_health_routes, run, ServiceConfig,
 };
+use topems_shared_db::scope::Db;
 use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
 use topems_shared_service_client::TypedServiceClient;
 use utoipa::OpenApi;
@@ -27,9 +28,6 @@ use modules::pm_plugin;
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    // 设置search_path环境变量（供lib使用）
-    std::env::set_var("SEARCH_PATH", "pm, public, shared");
-
     // ── ServiceConfig ──────────────────────────────────────────────
     let config = ServiceConfig {
         name: "topems-pm",
@@ -44,7 +42,7 @@ async fn main() -> Result<()> {
         init_telemetry: true,
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_shared(&config).await?;
     tracing::info!("🚀 TOPEMS-PM 统一项目管理系统启动...");
 
     // ── 自定义 Prometheus Gauge ───────────────────────────────────────
@@ -111,7 +109,9 @@ async fn main() -> Result<()> {
     // ── protected_routes（业务路由：create_routes 直接调用） ─────────
     // 注：auth / rls / rate_limit 三层中间件由 build_application 自动给 protected 层叠加，
     // 这里保持 modules::create_routes 的 Router 裸返回即可
+    let db = Db::new(ctx.db.clone(), "pm, public, shared");
     let protected_routes = modules::create_routes(
+        db,
         ctx.db.clone(),
         ctx.event_publisher.clone(),
         workflow_client.clone(),

@@ -1,14 +1,14 @@
 use axum::{
-    extract::{Extension, Path},
+    extract::{Extension, Path, State},
     routing::get,
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::models::project_expense::{CreateExpenseRequest, ProjectExpense, UpdateExpenseRequest};
@@ -29,7 +29,7 @@ pub fn should_approve_expense(amount: f64, threshold: f64, budget_remaining: f64
 type RlsTxnArc =
     std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
-pub fn create_routes(pool: PgPool) -> Router {
+pub fn create_routes(db: Db) -> Router {
     Router::new()
         .route(
             "/projects/{project_id}/expenses",
@@ -39,7 +39,7 @@ pub fn create_routes(pool: PgPool) -> Router {
             "/projects/{project_id}/expenses/{id}",
             get(get_expense).put(update_expense).delete(remove_expense),
         )
-        .with_state(pool)
+        .with_state(db)
 }
 
 /// 列对齐 pm.project_expenses 真库（含补列）：expense_type/amount/currency/expense_date/
@@ -61,6 +61,7 @@ pub fn create_routes(pool: PgPool) -> Router {
     ),
 )]
 async fn list_expenses(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<ProjectExpense>> {
@@ -69,11 +70,18 @@ async fn list_expenses(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query_as::<_, ProjectExpense>(
         only_own_schema_query!("pm", "SELECT id, project_id, phase_id, expense_type, description, amount, currency, expense_date, approved_date, budget_item_id, resource_id, expense_ref_id, status, approval_workflow_id, attachment_ids, created_by, approver, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) ORDER BY expense_date DESC"),
     )
     .bind(project_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -101,6 +109,7 @@ async fn list_expenses(
     ),
 )]
 async fn add_expense(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
@@ -111,6 +120,13 @@ async fn add_expense(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -149,7 +165,7 @@ async fn add_expense(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -178,6 +194,7 @@ async fn add_expense(
     ),
 )]
 async fn get_expense(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<ProjectExpense> {
@@ -186,12 +203,19 @@ async fn get_expense(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query_as::<_, ProjectExpense>(
         only_own_schema_query!("pm", "SELECT id, project_id, phase_id, expense_type, description, amount, currency, expense_date, approved_date, budget_item_id, resource_id, expense_ref_id, status, approval_workflow_id, attachment_ids, created_by, approver, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 AND id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"),
     )
     .bind(project_id)
     .bind(id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -222,6 +246,7 @@ async fn get_expense(
     ),
 )]
 async fn update_expense(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateExpenseRequest>,
@@ -230,6 +255,13 @@ async fn update_expense(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let now = Utc::now();
 
@@ -258,7 +290,7 @@ async fn update_expense(
     .bind(now)
     .bind(project_id)
     .bind(id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -288,6 +320,7 @@ async fn update_expense(
     ),
 )]
 async fn remove_expense(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<bool> {
@@ -296,13 +329,20 @@ async fn remove_expense(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "DELETE FROM pm.project_expenses WHERE project_id = $1 AND id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(project_id)
     .bind(id)
-    .execute(&mut **txn)
+    .execute(&mut scope)
     .await;
 
     match result {

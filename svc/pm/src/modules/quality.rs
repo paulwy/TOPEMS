@@ -1,14 +1,14 @@
 use axum::{
-    extract::{Extension, Path},
+    extract::{Extension, Path, State},
     routing::get,
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::models::quality::{
@@ -37,7 +37,7 @@ pub fn calculate_quality_score(defects: u32, total_items: u32) -> f64 {
     score.clamp(0.0, 100.0)
 }
 
-pub fn create_routes(pool: PgPool) -> Router {
+pub fn create_routes(db: Db) -> Router {
     Router::new()
         .route(
             "/projects/{project_id}/quality-checks",
@@ -55,7 +55,7 @@ pub fn create_routes(pool: PgPool) -> Router {
             "/defects/{id}",
             get(get_defect).put(update_defect).delete(delete_defect),
         )
-        .with_state(pool)
+        .with_state(db)
 }
 
 /// 列对齐 pm.quality_checks 真库（含补列）：check_name/check_type/check_date/checker/result/
@@ -76,6 +76,7 @@ pub fn create_routes(pool: PgPool) -> Router {
     tag = "quality"
 )]
 async fn get_project_quality_checks(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<QualityCheck>> {
@@ -84,11 +85,18 @@ async fn get_project_quality_checks(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let checks = sqlx::query_as::<_, QualityCheck>(
         only_own_schema_query!("pm", "SELECT id, project_id, check_name, check_type, phase_id, milestone_id, issues, acceptance_standard, result, status, check_date, checker, result_details, nonconformities, corrective_actions, follow_up_date, created_at, updated_at FROM pm.quality_checks WHERE project_id = $1 ORDER BY created_at DESC"),
     )
     .bind(project_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match checks {
@@ -114,6 +122,7 @@ async fn get_project_quality_checks(
     tag = "quality"
 )]
 async fn get_quality_check(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<QualityCheck> {
@@ -122,10 +131,17 @@ async fn get_quality_check(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let check =
         sqlx::query_as::<_, QualityCheck>(only_own_schema_query!("pm", "SELECT id, project_id, check_name, check_type, phase_id, milestone_id, issues, acceptance_standard, result, status, check_date, checker, result_details, nonconformities, corrective_actions, follow_up_date, created_at, updated_at FROM pm.quality_checks WHERE id = $1"))
             .bind(id)
-            .fetch_one(&mut **txn)
+            .fetch_one(&mut scope)
             .await;
 
     match check {
@@ -139,6 +155,7 @@ async fn get_quality_check(
 }
 
 async fn create_quality_check(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
@@ -149,6 +166,13 @@ async fn create_quality_check(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -173,7 +197,7 @@ async fn create_quality_check(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match check {
@@ -186,6 +210,7 @@ async fn create_quality_check(
 }
 
 async fn update_quality_check(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateQualityCheckRequest>,
@@ -194,6 +219,13 @@ async fn update_quality_check(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     // check_criteria->issues, checked_by->checker。
     let check = sqlx::query_as::<_, QualityCheck>(only_own_schema_query!(
@@ -226,7 +258,7 @@ async fn update_quality_check(
     .bind(parse_date_opt(&req.follow_up_date))
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match check {
@@ -253,6 +285,7 @@ async fn update_quality_check(
     tag = "quality"
 )]
 async fn get_project_defects(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<Defect>> {
@@ -261,11 +294,18 @@ async fn get_project_defects(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let defects = sqlx::query_as::<_, Defect>(
         only_own_schema_query!("pm", "SELECT id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_at, updated_at FROM pm.defects WHERE deleted_at IS NULL AND project_id = $1 ORDER BY severity DESC, priority DESC"),
     )
     .bind(project_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match defects {
@@ -291,6 +331,7 @@ async fn get_project_defects(
     tag = "quality"
 )]
 async fn get_defect(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Defect> {
@@ -299,11 +340,18 @@ async fn get_defect(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let defect = sqlx::query_as::<_, Defect>(
         only_own_schema_query!("pm", "SELECT id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_at, updated_at FROM pm.defects WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match defect {
@@ -317,6 +365,7 @@ async fn get_defect(
 }
 
 async fn create_defect(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
@@ -327,6 +376,13 @@ async fn create_defect(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -349,7 +405,7 @@ async fn create_defect(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match defect {
@@ -362,6 +418,7 @@ async fn create_defect(
 }
 
 async fn update_defect(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDefectRequest>,
@@ -370,6 +427,13 @@ async fn update_defect(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let defect = sqlx::query_as::<_, Defect>(
         only_own_schema_query!("pm", "UPDATE pm.defects SET
@@ -395,7 +459,7 @@ async fn update_defect(
     .bind(req.resolution)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match defect {
@@ -409,6 +473,7 @@ async fn update_defect(
 }
 
 async fn delete_defect(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
@@ -417,12 +482,19 @@ async fn delete_defect(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "UPDATE pm.defects SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&mut **txn)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -447,6 +519,7 @@ mod tests {
     use super::*;
     use chrono::Datelike;
     use sqlx::postgres::PgConnectOptions;
+    use sqlx::PgPool;
     use std::str::FromStr;
 
     fn make_pool() -> PgPool {
@@ -456,7 +529,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_routes_returns_router() {
-        let router = create_routes(make_pool());
+        let router = create_routes(Db::new(make_pool(), "pm, public, shared"));
         let _ = router;
     }
 
