@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { PageHeader, type PageHeaderProps } from '../layout';
 import { DataTable, type DataTableProps, type DataTableColumn } from '../data';
 import { EmptyState } from '../feedback';
+import { usePermission } from '@/hooks/usePermission';
 
 export interface ListPageTemplateProps<T extends object> extends Omit<
   React.HTMLAttributes<HTMLDivElement>,
@@ -24,6 +25,11 @@ export interface ListPageTemplateProps<T extends object> extends Omit<
   footer?: React.ReactNode;
   /** 操作区（不传递给 DOM 元素） */
   action?: React.ReactNode;
+  /**
+   * 写操作权限码（批 12）：提供时按 checkPermission 判定，
+   * 无权限则隐藏所有 writeOnly 列（操作列），未提供时不过滤（默认行为不变）。
+   */
+  writePermission?: string;
 }
 
 export function ListPageTemplate<T extends object>({
@@ -42,9 +48,15 @@ export function ListPageTemplate<T extends object>({
   className,
 
   action: _action, // 显式排除 action，避免传递给非 form 元素
+  writePermission,
   ...rest
 }: ListPageTemplateProps<T>) {
   const { t } = useTranslation();
+  const { checkPermission } = usePermission();
+  // 批 12：写操作列按权限收敛。writePermission 未提供 → canWrite 恒 true → 不过滤，
+  // 保证存量页面零回归。
+  const canWrite = !writePermission || checkPermission(writePermission);
+  const visibleColumns = canWrite ? columns : columns.filter((c) => !c.writeOnly);
   return (
     <div
       className={cx(className, styles.il1)}
@@ -77,7 +89,7 @@ export function ListPageTemplate<T extends object>({
         />
       ) : (
         <DataTable<T>
-          columns={columns}
+          columns={visibleColumns}
           data={data}
           rowKey={rowKey}
           loading={loading}

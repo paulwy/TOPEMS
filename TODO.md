@@ -1844,6 +1844,14 @@
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.133 审计整改第十批：ListPageTemplate 行操作权限开关 + mes 首批约束（批 12，2026-11-06）✅
+
+- **通用能力**：`DataTableColumn.writeOnly?: boolean`（标记写操作列）+ `ListPageTemplateProps.writePermission?: string`；模板内 `canWrite = !writePermission || checkPermission(...)`，无权限时整列隐藏。**不传 writePermission 则不过滤**——存量数十页面零回归，可增量采用。
+- **mes 落地（MesWorkOrderPage）**：操作列（编辑/删除）按 `mes:work_order:write` 整列隐藏；详情抽屉「开始生产」按 `mes:production_order:start`、「完工」按 `mes:production_order:complete` 条件渲染。
+- **mes 36 项未落地（登记）**：纯后端无 UI 落点 10 项；语义重叠码（`mes:process:*` vs `mes:production_process:*`）需先判定废弃；`CrudPage` 适配类页面（anomaly/aps/capacity/cost/energy/forecast/equipment/quality 等）需按 `showCreateButton` 等入口逐页确认，下一批处理。
+- **门禁**：tsc ✅；eslint 0 error（--fix 12 处 prettier）；vitest ListPageTemplate 6 passed（新增 3 用例）；`src/pages/mes` 7 files/28 tests passed。
+- **下一批建议**：`CrudPage` 写权限入口专项（`canEdit`/`canDelete`，覆盖 mes/erp/scm 数十页面）。
+
 ## v1.132 审计整改第九批：P4 tier 激活机制落地（批 11，2026-11-06）✅（DB 修复完成）
 
 - **真因修正**：批 8 判断"无 tier 列"不准确——`public.core_tenant_modules` 一直有 tier（default 'basic'），`mes` 副本才是旧 8 列结构。应用 `search_path=mes,public` 命中 mes → 500。批 10 删 mes 副本后根因已消除。
