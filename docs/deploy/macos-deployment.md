@@ -64,15 +64,12 @@ git clone git@github.com:paulwy/TOPEMS.git && cd TOPEMS
 # 1) 构建（release）
 cargo build --release -p topems-server --bin topems-server
 
-# 2) 建库（--create-user --create-db 按需；密码按 config/env 模板）
-sudo bash scripts/deploy/setup-db.sh --create-user --create-db --init-schema \
+# 2) 建库（仅建用户/库；schema 供给见下）
+sudo bash scripts/deploy/setup-db.sh --create-user --create-db \
   --password '<TOPEMS_PG_PASSWORD>'
 
-# 守卫：本工具仅用于「全新空库初始化」。--init-schema 前会探测目标库：
-#   非空（已有业务表或 _sqlx_migrations 成功记录）或命中 prod 特征
-#   （topems_prod / 192.168.110.115 / xingzhai）→ exit 1 中止；探测失败同样 exit 1。
-#   已有库升级用 scripts/migration/apply-forward.sh --prod，勿用本脚本重放整链。
-#   仅本地/测试库可显式 --force-nonempty（打印 ⚠️ WARN；prod 不放行）。
+# 新环境 schema：基线 + 前向迁移（--init-schema 已停用，历史链不可从零重放）
+bash scripts/db/provision-env.sh --env staging --db topems --skip-prod-fingerprint
 
 # 3) 安装（systemd 注册；本脚本即 Linux 生产主链路）
 sudo bash scripts/deploy/install.sh

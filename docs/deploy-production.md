@@ -348,21 +348,22 @@ bash scripts/deploy/production-deploy.sh --migrate-only --env .env.production \
 | 账本落后 | 不检查 | 账本最大版本 < 基线锚点 → 中止（提示先恢复基线） |
 | 定向/无守卫 pending | 会被重放 | 硬拒绝；仅 `--allow-pending` 显式放行并告警 |
 
-**空库初始化工具（`scripts/deploy/setup-db.sh`）的新增守卫**：该工具只用于全新库初始化。`--init-schema` 执行前会探测目标库，任一命中即 exit 1 中止：
-
-- 库名/host 命中 prod 特征（`topems_prod` / `192.168.110.115` / `xingzhai`）——不可绕过，`--force-nonempty` 也不放行；
-- 已存在 `public._sqlx_migrations` 成功记录，或存在任何非系统 schema 的业务表（`relkind='r'`）；
-- 探测失败（连接/权限/5s `statement_timeout` 超时）同样 exit 1（fail-closed，不默认放行）。
+**环境供给入口（2026-11-05 起）**：`scripts/deploy/setup-db.sh` 已降级为仅建用户/建库（`--init-schema` 直接 exit 1）；
+新环境 schema 一律走 `scripts/db/provision-env.sh`——恢复基线快照（schema + 账本）→ 只应用 `version > 锚点` 的前向迁移：
 
 ```bash
-# 全新库初始化（唯一适用场景）
-bash scripts/deploy/setup-db.sh --create-user --create-db --init-schema --password '<PWD>'
+# 1) 仅建用户/库
+bash scripts/deploy/setup-db.sh --create-user --create-db --password '<PWD>'
 
-# 仅本地/测试库、确认风险后显式绕过（打印 ⚠️ WARN；prod 不可用）
-bash scripts/deploy/setup-db.sh --init-schema --force-nonempty
+# 2) 基线 + 前向（dev/test/staging/prod-replica；默认库名不同）
+bash scripts/db/provision-env.sh --env staging --db topems --skip-prod-fingerprint
+
+# 本地/测试库重复供给：非空库默认 exit 1，确认重建需显式 --force-nonempty（打印 ⚠️ WARN）
 ```
 
-已有库（含 prod）升级一律走上面的 `apply-forward.sh --prod`（基线 + 前向迁移），不要用 `setup-db.sh` 重放整链。
+原因：历史链存在断点（`20261005000004` 依赖 `public.qa_lab_tasks`，该表由更晚的 `20261007000009` 才创建），
+从零全链 `sqlx migrate run` 必然失败。锚点定义、前移流程与新迁移规则见
+[environment-provisioning.md](quality/environment-provisioning.md)。已有库（含 prod）升级仍只走 `apply-forward.sh --prod`。
 
 ***
 

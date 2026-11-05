@@ -66,13 +66,10 @@ ls -la target/release/topems-server   # 确认二进制存在
 ```bash
 # 建表/角色（已建则跳过 --create-user/--create-db）
 bash scripts/deploy/setup-db.sh --host localhost --port 5432 --user topems \
-  --password "$(cat ~/topems/secret/pg.txt)" --create-db --init-schema
+  --password "$(cat ~/topems/secret/pg.txt)" --create-db
 
-# 守卫：--init-schema 只允许在「全新空库」执行。若 topems 库已有业务表或
-#   _sqlx_migrations 成功记录 → exit 1（输出库名/表数/账本最大版本，prohibited on
-#   existing DB）；库名/host 命中 prod 特征 → 一律拒绝（--force-nonempty 也不放行）。
-#   已有库升级走 scripts/migration/apply-forward.sh --prod；仅本地/测试库可显式
-#   --force-nonempty（打印 ⚠️ WARN）。
+# schema 供给（基线 + 前向迁移；--init-schema 已停用，历史链不可从零重放）
+bash scripts/db/provision-env.sh --env staging --db topems --skip-prod-fingerprint
 
 # 迁移校验：必须 0 errors / 0 checksum errors
 bash scripts/migration/validate.sh
