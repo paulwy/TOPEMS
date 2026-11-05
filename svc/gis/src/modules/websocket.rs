@@ -16,6 +16,7 @@ use tokio::sync::{mpsc, RwLock};
 use tokio::time::{timeout, Duration};
 use topems_shared_auth::auth::{verify_jwt_token, AuthState, Claims};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 type ConnectionId = Uuid;
@@ -196,7 +197,7 @@ pub async fn websocket_handler(
     ws: WebSocketUpgrade,
     State(ws_manager): State<SharedWebSocketManager>,
     State(auth_state): State<AuthState>,
-    State(pool): State<sqlx::PgPool>,
+    State(db): State<Db>,
     Query(params): Query<WsQueryParams>,
 ) -> impl IntoResponse {
     let config = ws_manager.get_config();
@@ -204,7 +205,7 @@ pub async fn websocket_handler(
     let token = params.token;
     ws.max_frame_size(config.max_frame_size)
         .max_message_size(config.max_message_size)
-        .on_upgrade(move |socket| handle_socket(socket, ws_manager, jwt_secret, token, pool))
+        .on_upgrade(move |socket| handle_socket(socket, ws_manager, jwt_secret, token, db))
 }
 
 async fn handle_socket(
@@ -212,7 +213,7 @@ async fn handle_socket(
     ws_manager: SharedWebSocketManager,
     jwt_secret: String,
     token: Option<String>,
-    pool: sqlx::PgPool,
+    db: Db,
 ) {
     let conn_id = Uuid::new_v4();
     let (tx, mut rx) = mpsc::channel(100);
@@ -271,17 +272,25 @@ async fn handle_socket(
                                                     .as_deref()
                                                     .and_then(|t| Uuid::parse_str(t).ok())
                                             };
-                                            let allowed: Vec<String> = sqlx::query_scalar(
-                                                only_own_schema_query!(
-                                                    "gis",
-                                                    "SELECT device_code FROM gis.devices WHERE deleted_at IS NULL AND device_code = ANY($1) AND ($2::uuid IS NULL OR tenant_id = $2)"
-                                                ),
-                                            )
-                                            .bind(&device_codes)
-                                            .bind(tenant_filter)
-                                            .fetch_all(&pool)
-                                            .await
-                                            .unwrap_or_default();
+                                            // 后台 WS 任务只持有 Db 句柄，订阅校验时开只读作用域并按需提交。
+                                            let allowed: Vec<String> = match db.scope_read().await {
+                                                Ok(mut scope) => {
+                                                    let rows = sqlx::query_scalar(
+                                                        only_own_schema_query!(
+                                                            "gis",
+                                                            "SELECT device_code FROM gis.devices WHERE deleted_at IS NULL AND device_code = ANY($1) AND ($2::uuid IS NULL OR tenant_id = $2)"
+                                                        ),
+                                                    )
+                                                    .bind(&device_codes)
+                                                    .bind(tenant_filter)
+                                                    .fetch_all(&mut scope)
+                                                    .await
+                                                    .unwrap_or_default();
+                                                    let _ = scope.commit().await;
+                                                    rows
+                                                }
+                                                Err(_) => Vec::new(),
+                                            };
                                             let rejected: Vec<&str> = device_codes
                                                 .iter()
                                                 .filter(|c| !allowed.contains(c))
@@ -359,7 +368,7 @@ where
     S: Clone + Send + Sync + 'static,
     SharedWebSocketManager: FromRef<S>,
     AuthState: FromRef<S>,
-    sqlx::PgPool: FromRef<S>,
+    Db: FromRef<S>,
 {
     Router::new()
         .route("/ws/gis/map", get(websocket_handler))
@@ -375,7 +384,7 @@ pub async fn websocket_device_handler(
     ws: WebSocketUpgrade,
     State(ws_manager): State<SharedWebSocketManager>,
     State(auth_state): State<AuthState>,
-    State(pool): State<sqlx::PgPool>,
+    State(db): State<Db>,
     Path(device_code): Path<String>,
     Query(params): Query<WsQueryParams>,
 ) -> impl IntoResponse {
@@ -385,7 +394,7 @@ pub async fn websocket_device_handler(
     ws.max_frame_size(config.max_frame_size)
         .max_message_size(config.max_message_size)
         .on_upgrade(move |socket| {
-            handle_device_socket(socket, ws_manager, device_code, jwt_secret, token, pool)
+            handle_device_socket(socket, ws_manager, device_code, jwt_secret, token, db)
         })
 }
 
@@ -395,7 +404,7 @@ async fn handle_device_socket(
     device_code: String,
     jwt_secret: String,
     token: Option<String>,
-    pool: sqlx::PgPool,
+    db: Db,
 ) {
     let conn_id = Uuid::new_v4();
 
@@ -413,15 +422,22 @@ async fn handle_device_socket(
                         .as_deref()
                         .and_then(|t| Uuid::parse_str(t).ok())
                 };
-                let status: Option<String> = sqlx::query_scalar(only_own_schema_query!(
-                    "gis",
-                    "SELECT status FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
-                ))
-                .bind(&device_code)
-                .bind(tenant_filter)
-                .fetch_optional(&pool)
-                .await
-                .unwrap_or(None);
+                let status: Option<String> = match db.scope_read().await {
+                    Ok(mut scope) => {
+                        let status = sqlx::query_scalar(only_own_schema_query!(
+                            "gis",
+                            "SELECT status FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
+                        ))
+                        .bind(&device_code)
+                        .bind(tenant_filter)
+                        .fetch_optional(&mut scope)
+                        .await
+                        .unwrap_or(None);
+                        let _ = scope.commit().await;
+                        status
+                    }
+                    Err(_) => None,
+                };
                 match status {
                     Some(s) if s == "active" => None,
                     Some(_) => Some("设备未启用".to_string()),

@@ -12,10 +12,11 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row};
+use sqlx::Row;
 use topems_shared_auth::auth::{verify_jwt_token, AuthState, Claims};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -67,16 +68,20 @@ pub struct TrackingQuery {
 
 /// 注册设备
 pub async fn register_device(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<RegisterDevice>,
 ) -> ApiResponse<Device> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::DeviceLocationWrite).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
 
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
-    match sqlx::query_as::<_, Device>(
+    let result = sqlx::query_as::<_, Device>(
         only_own_schema_query!("gis", r#"
         INSERT INTO gis.devices (device_code, device_name, device_type, description, properties, registered_by, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -90,9 +95,16 @@ pub async fn register_device(
     .bind(&payload.properties)
     .bind(claims.sub.parse::<Uuid>().ok())
     .bind(tenant_id)
-    .fetch_one(&pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(device) => ApiResponse::success(device, "注册设备成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("注册设备失败", e)),
     }
@@ -110,9 +122,13 @@ pub async fn register_device(
     )
 )]
 pub async fn list_devices(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -121,11 +137,18 @@ pub async fn list_devices(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    match sqlx::query_as::<_, Device>(only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"))
+    let result = sqlx::query_as::<_, Device>(only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"))
         .bind(tenant_opt)
-        .fetch_all(&pool)
-        .await
-    {
+        .fetch_all(&mut scope)
+        .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(devices) => ApiResponse::success(
             serde_json::json!({
                 "items": devices,
@@ -153,10 +176,14 @@ pub async fn list_devices(
     )
 )]
 pub async fn get_device(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Device> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -165,14 +192,21 @@ pub async fn get_device(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    match sqlx::query_as::<_, Device>(
+    let result = sqlx::query_as::<_, Device>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
     )
     .bind(id)
     .bind(tenant_opt)
-    .fetch_one(&pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(device) => ApiResponse::success(device, "获取设备成功"),
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("设备未找到"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
@@ -181,14 +215,18 @@ pub async fn get_device(
 
 /// 更新设备信息
 pub async fn update_device(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateDevice>,
 ) -> ApiResponse<Device> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::DeviceLocationWrite).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -198,7 +236,7 @@ pub async fn update_device(
             .and_then(|s| Uuid::parse_str(s).ok())
     };
 
-    match sqlx::query_as::<_, Device>(only_own_schema_query!(
+    let result = sqlx::query_as::<_, Device>(only_own_schema_query!(
         "gis",
         r#"
         UPDATE gis.devices 
@@ -215,9 +253,16 @@ pub async fn update_device(
     .bind(&payload.status)
     .bind(id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(device) => ApiResponse::success(device, "更新设备成功"),
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("设备未找到"),
         Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
@@ -226,24 +271,35 @@ pub async fn update_device(
 
 /// 删除设备
 pub async fn delete_device(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<bool> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::DeviceLocationWrite).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
 
-    match sqlx::query(only_own_schema_query!(
+    let result = sqlx::query(only_own_schema_query!(
         "gis",
         "UPDATE gis.devices SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(id)
     .bind(tenant_id)
-    .execute(&pool)
-    .await
-    {
+    .execute(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(result) => {
             if result.rows_affected() > 0 {
                 ApiResponse::success(true, "删除设备成功")
@@ -257,23 +313,27 @@ pub async fn delete_device(
 
 /// 更新设备位置
 pub async fn update_device_location(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     State(ws_manager): State<SharedWebSocketManager>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateDeviceLocation>,
 ) -> ApiResponse<DeviceLocationRecord> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::DeviceLocationWrite).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
 
-    match sqlx::query_as::<_, Device>(only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1"))
+    let result = sqlx::query_as::<_, Device>(only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1"))
         .bind(id)
-        .fetch_one(&pool)
-        .await
-    {
+        .fetch_one(&mut scope)
+        .await;
+    match result {
         Ok(device) => {
-            match sqlx::query_as::<_, DeviceLocationRecord>(
+            let record_result = sqlx::query_as::<_, DeviceLocationRecord>(
                 only_own_schema_query!("gis", r#"
                 INSERT INTO gis.device_location_records 
                 (device_id, tenant_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength)
@@ -290,10 +350,13 @@ pub async fn update_device_location(
             .bind(&payload.altitude)
             .bind(&payload.battery_level)
             .bind(&payload.signal_strength)
-            .fetch_one(&pool)
-            .await
-            {
+            .fetch_one(&mut scope)
+            .await;
+            match record_result {
                 Ok(record) => {
+                    if let Err(e) = scope.commit().await {
+                        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+                    }
                     let ws_msg = WebSocketMessage::LocationUpdate {
                         device_code: device.device_code.clone(),
                         device_name: device.device_name.clone(),
@@ -314,10 +377,14 @@ pub async fn update_device_location(
 
 /// 获取设备轨迹
 pub async fn get_device_tracking(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
     Query(query): Query<TrackingQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     // Build query based on time range
     let sql = if query.start_time.is_some() && query.end_time.is_some() {
         "id, tenant_id, device_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength, recorded_at, created_at FROM gis.device_location_records WHERE device_id = $1 AND recorded_at >= $2 AND recorded_at <= $3 ORDER BY recorded_at DESC LIMIT $4"
@@ -331,35 +398,39 @@ pub async fn get_device_tracking(
 
     let limit = query.limit.unwrap_or(100);
 
-    match if query.start_time.is_some() && query.end_time.is_some() {
+    let result = if query.start_time.is_some() && query.end_time.is_some() {
         sqlx::query_as::<_, DeviceLocationRecord>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&query.start_time)
             .bind(&query.end_time)
             .bind(limit)
-            .fetch_all(&pool)
+            .fetch_all(&mut scope)
             .await
     } else if query.start_time.is_some() {
         sqlx::query_as::<_, DeviceLocationRecord>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&query.start_time)
             .bind(limit)
-            .fetch_all(&pool)
+            .fetch_all(&mut scope)
             .await
     } else if query.end_time.is_some() {
         sqlx::query_as::<_, DeviceLocationRecord>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&query.end_time)
             .bind(limit)
-            .fetch_all(&pool)
+            .fetch_all(&mut scope)
             .await
     } else {
         sqlx::query_as::<_, DeviceLocationRecord>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(limit)
-            .fetch_all(&pool)
+            .fetch_all(&mut scope)
             .await
-    } {
+    };
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(records) => {
             // Build trajectory LineString
             let coordinates: Vec<Vec<f64>> = records
@@ -415,10 +486,14 @@ pub async fn get_device_tracking(
 )]
 /// 获取设备历史位置
 pub async fn get_device_history(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
     Query(query): Query<TrackingQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     // Similar to tracking but returns all location records
     let limit = query.limit.unwrap_or(50);
 
@@ -428,21 +503,25 @@ pub async fn get_device_history(
         "id, tenant_id, device_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength, recorded_at, created_at FROM gis.device_location_records WHERE device_id = $1 ORDER BY recorded_at DESC LIMIT $2"
     };
 
-    match if query.start_time.is_some() && query.end_time.is_some() {
+    let result = if query.start_time.is_some() && query.end_time.is_some() {
         sqlx::query_as::<_, DeviceLocationRecord>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(&query.start_time)
             .bind(&query.end_time)
             .bind(limit)
-            .fetch_all(&pool)
+            .fetch_all(&mut scope)
             .await
     } else {
         sqlx::query_as::<_, DeviceLocationRecord>(sqlx::AssertSqlSafe(sql))
             .bind(id)
             .bind(limit)
-            .fetch_all(&pool)
+            .fetch_all(&mut scope)
             .await
-    } {
+    };
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(records) => {
             // Calculate statistics
             let total_records = records.len();
@@ -472,17 +551,24 @@ pub async fn get_device_history(
 /// 前端 trackApi.getTrackStatistics(deviceId) → 返回单设备轨迹统计汇总。
 /// 复用 services::track_stats::TrackStatisticsCalculator 计算距离/速度。
 pub async fn get_device_track_statistics(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(_claims): Extension<Claims>,
     Path(device_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let records = sqlx::query_as::<_, DeviceLocationRecord>(
         "SELECT id, tenant_id, device_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength, recorded_at, created_at FROM gis.device_location_records WHERE device_id = $1 ORDER BY recorded_at ASC",
     )
     .bind(device_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
 
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
     match records {
         Ok(records) if records.is_empty() => ApiResponse::success(
             serde_json::json!({
@@ -536,17 +622,24 @@ pub async fn get_device_track_statistics(
 /// GET /device-tracks/devices
 /// 前端 trackApi.listDevicesWithTracks() → 返回最近有轨迹上报的设备列表（含最新位置）。
 pub async fn list_devices_with_tracks(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let rows = sqlx::query(
         "SELECT DISTINCT ON (device_id) device_id, position, speed, recorded_at \
          FROM gis.device_location_records \
          ORDER BY device_id, recorded_at DESC",
     )
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
 
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
     match rows {
         Ok(rows) => {
             let items: Vec<serde_json::Value> = rows
@@ -594,13 +687,17 @@ fn sha256_token_hex(plain: &str) -> String {
 /// 两通道均缺失/无效 → 401；设备存在但凭证错误（token 通道）→ 401；
 /// JWT 通道下设备不存在 → 404（与原行为一致，避免枚举设备存在性）。
 pub async fn report_device_location(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     State(ws_manager): State<SharedWebSocketManager>,
     State(auth_state): State<AuthState>,
     headers: HeaderMap,
     Path(device_code): Path<String>,
     Json(payload): Json<UpdateDeviceLocation>,
 ) -> ApiResponse<DeviceLocationRecord> {
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     // 1) 双通道认证解析出设备行
     let device = if let Some(Ok(token)) = headers.get("X-Device-Token").map(|v| v.to_str()) {
         // 1a) 设备级凭证通道：sha256(hex) 比对存储摘要列
@@ -610,7 +707,7 @@ pub async fn report_device_location(
         )
         .bind(&device_code)
         .bind(&digest)
-        .fetch_one(&pool)
+        .fetch_one(&mut scope)
         .await
         {
             Ok(d) => d,
@@ -643,7 +740,7 @@ pub async fn report_device_location(
             only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND device_code = $1"),
         )
         .bind(&device_code)
-        .fetch_one(&pool)
+        .fetch_one(&mut scope)
         .await
         {
             Ok(d) => {
@@ -678,7 +775,7 @@ pub async fn report_device_location(
     }
 
     // 4) 写入上报记录并广播（租户取设备归属租户）
-    match sqlx::query_as::<_, DeviceLocationRecord>(
+    let result = sqlx::query_as::<_, DeviceLocationRecord>(
         only_own_schema_query!("gis", r#"
         INSERT INTO gis.device_location_records
         (device_id, tenant_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength)
@@ -695,9 +792,16 @@ pub async fn report_device_location(
     .bind(&payload.altitude)
     .bind(&payload.battery_level)
     .bind(&payload.signal_strength)
-    .fetch_one(&pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(record) => {
             let ws_msg = WebSocketMessage::LocationUpdate {
                 device_code: device.device_code.clone(),

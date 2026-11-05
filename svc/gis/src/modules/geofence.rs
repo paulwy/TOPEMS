@@ -3,10 +3,11 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::FromRow;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -89,10 +90,14 @@ pub struct GeofenceQuery {
 }
 
 pub async fn list_geofences(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<GeofenceQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut db_scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let mut sql = String::from("SELECT * FROM gis.geofences WHERE 1=1");
 
     if let Some(ref _chat_id) = params.chat_id {
@@ -123,8 +128,11 @@ pub async fn list_geofences(
     if let Some(shape_type) = params.shape_type {
         query = query.bind(shape_type);
     }
-    let result = query.fetch_all(&pool).await;
+    let result = query.fetch_all(&mut db_scope).await;
 
+    if let Err(e) = db_scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
     match result {
         Ok(geofences) => ApiResponse::success(
             serde_json::json!({
@@ -138,19 +146,30 @@ pub async fn list_geofences(
 }
 
 pub async fn get_geofence(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Geofence> {
+    let mut db_scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let scope = tenant_scope(&claims)
         .map(|s| format!(" AND {s}"))
         .unwrap_or_default();
     let base = only_own_schema_query!("gis", "SELECT * FROM gis.geofences WHERE id = $1");
-    match sqlx::query_as::<_, Geofence>(sqlx::AssertSqlSafe(format!("{base}{scope}")))
+    let result = sqlx::query_as::<_, Geofence>(sqlx::AssertSqlSafe(format!("{base}{scope}")))
         .bind(id)
-        .fetch_one(&pool)
-        .await
-    {
+        .fetch_one(&mut db_scope)
+        .await;
+    let commit_res = match &result {
+        Ok(_) => db_scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(geofence) => ApiResponse::success(geofence, "获取地理围栏成功"),
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("地理围栏未找到"),
         Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
@@ -158,10 +177,14 @@ pub async fn get_geofence(
 }
 
 pub async fn create_geofence(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateGeofenceRequest>,
 ) -> ApiResponse<Geofence> {
+    let mut db_scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let event_types = serde_json::json!(payload
         .event_types
         .unwrap_or_else(|| vec!["enter".to_string()]));
@@ -171,7 +194,7 @@ pub async fn create_geofence(
     let notify_users = serde_json::json!(payload.notify_users.unwrap_or_default());
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match sqlx::query_as::<_, Geofence>(only_own_schema_query!(
+    let result = sqlx::query_as::<_, Geofence>(only_own_schema_query!(
         "gis",
         r#"
         INSERT INTO gis.geofences (
@@ -199,20 +222,31 @@ pub async fn create_geofence(
     .bind(payload.start_at)
     .bind(payload.end_at)
     .bind(tenant_id)
-    .fetch_one(&pool)
-    .await
-    {
+    .fetch_one(&mut db_scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => db_scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(geofence) => ApiResponse::success(geofence, "创建地理围栏成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("数据库插入失败", e)),
     }
 }
 
 pub async fn update_geofence(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateGeofenceRequest>,
 ) -> ApiResponse<Geofence> {
+    let mut db_scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let scope = tenant_scope(&claims)
         .map(|s| format!(" AND {s}"))
         .unwrap_or_default();
@@ -220,7 +254,7 @@ pub async fn update_geofence(
     let current =
         match sqlx::query_as::<_, Geofence>(sqlx::AssertSqlSafe(format!("{current_base}{scope}")))
             .bind(id)
-            .fetch_one(&pool)
+            .fetch_one(&mut db_scope)
             .await
         {
             Ok(g) => g,
@@ -266,42 +300,61 @@ pub async fn update_geofence(
         RETURNING *
         "#
     );
-    match sqlx::query_as::<_, Geofence>(sqlx::AssertSqlSafe(format!("{update_base}{scope}")))
-        .bind(&name)
-        .bind(&description)
-        .bind(&coordinates)
-        .bind(radius)
-        .bind(&event_types)
-        .bind(&status)
-        .bind(trigger_cooldown)
-        .bind(&notify_channels)
-        .bind(&notify_users)
-        .bind(gis_fence_id)
-        .bind(start_at)
-        .bind(end_at)
-        .bind(id)
-        .fetch_one(&pool)
-        .await
-    {
+    let result =
+        sqlx::query_as::<_, Geofence>(sqlx::AssertSqlSafe(format!("{update_base}{scope}")))
+            .bind(&name)
+            .bind(&description)
+            .bind(&coordinates)
+            .bind(radius)
+            .bind(&event_types)
+            .bind(&status)
+            .bind(trigger_cooldown)
+            .bind(&notify_channels)
+            .bind(&notify_users)
+            .bind(gis_fence_id)
+            .bind(start_at)
+            .bind(end_at)
+            .bind(id)
+            .fetch_one(&mut db_scope)
+            .await;
+    let commit_res = match &result {
+        Ok(_) => db_scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(geofence) => ApiResponse::success(geofence, "更新地理围栏成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("数据库更新失败", e)),
     }
 }
 
 pub async fn delete_geofence(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<bool> {
+    let mut db_scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let scope = tenant_scope(&claims)
         .map(|s| format!(" AND {s}"))
         .unwrap_or_default();
     let delete_base = only_own_schema_query!("gis", "DELETE FROM gis.geofences WHERE id = $1");
-    match sqlx::query(sqlx::AssertSqlSafe(format!("{delete_base}{scope}")))
+    let result = sqlx::query(sqlx::AssertSqlSafe(format!("{delete_base}{scope}")))
         .bind(id)
-        .execute(&pool)
-        .await
-    {
+        .execute(&mut db_scope)
+        .await;
+    let commit_res = match &result {
+        Ok(_) => db_scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(result) => {
             if result.rows_affected() > 0 {
                 ApiResponse::success(true, "删除地理围栏成功")

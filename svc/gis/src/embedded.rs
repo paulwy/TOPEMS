@@ -8,12 +8,12 @@ use axum::routing::get;
 use axum::{Json, Router};
 use std::sync::Arc;
 
-use sqlx::PgPool;
 use topems_shared_auth::auth::{AuthState, Claims};
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_db::scope::Db;
 
 use crate::models::DeviceLocation;
 use crate::modules;
@@ -23,7 +23,8 @@ use crate::shared;
 /// GIS 业务路由状态（独立部署与嵌入式共用）
 #[derive(Clone)]
 pub struct AppState {
-    pub pool: PgPool,
+    /// 连接治理 B：模块不再持有连接池，所有查询经 `Db` 的作用域（事务内 SET LOCAL search_path=gis, public）。
+    pub pool: Db,
     pub auth_state: AuthState,
     pub ws_manager: Arc<WebSocketManager>,
 }
@@ -34,7 +35,7 @@ impl FromRef<AppState> for AuthState {
     }
 }
 
-impl FromRef<AppState> for sqlx::PgPool {
+impl FromRef<AppState> for Db {
     fn from_ref(state: &AppState) -> Self {
         state.pool.clone()
     }
@@ -57,7 +58,7 @@ impl FromRef<AppState> for Arc<WebSocketManager> {
 ///   - POST /devices/{device_code}/report：路由 public，handler 内部强制
 ///     JWT 认证 + 设备归属租户校验（P1-22）
 /// - 受保护路由：写操作，tenant 中间件 + auth 中间件 + `gis:admin` 权限 + 限流
-pub fn build_business_router(state: &AppState) -> Router<AppState> {
+pub fn build_business_router(state: &AppState, rls_pool: sqlx::PgPool) -> Router<AppState> {
     // 认证查询路由（需登录，无需 gis:admin；按 claims 租户过滤）
     let authed_query_routes = Router::new()
         .route("/health", get(modules::gis_plugin::plugin_health_check))
@@ -189,7 +190,7 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
             axum::routing::get(modules::device::get_device),
         )
         .layer(axum::middleware::from_fn_with_state(
-            state.pool.clone(),
+            rls_pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn_with_state(
@@ -417,7 +418,7 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
         )
         .layer(axum::middleware::from_fn(require_permission("gis:admin")))
         .layer(axum::middleware::from_fn_with_state(
-            state.pool.clone(),
+            rls_pool,
             topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn_with_state(
@@ -443,10 +444,14 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
 }
 
 async fn list_device_locations_by_map(
-    State(pool): State<sqlx::PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(map_id): Path<uuid::Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -455,14 +460,17 @@ async fn list_device_locations_by_map(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    match sqlx::query_as::<_, DeviceLocation>(
+    let result = sqlx::query_as::<_, DeviceLocation>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE map_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),
     )
     .bind(map_id)
     .bind(tenant_opt)
-    .fetch_all(&pool)
-    .await
-    {
+    .fetch_all(&mut scope)
+    .await;
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("数据库查询失败", e));
+    }
+    match result {
         Ok(locations) => ApiResponse::success(
             serde_json::json!({
                 "device_locations": locations,
@@ -475,12 +483,12 @@ async fn list_device_locations_by_map(
 }
 
 async fn create_device_location(
-    State(pool): State<sqlx::PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<modules::device::CreateDeviceLocation>,
 ) -> ApiResponse<DeviceLocation> {
     if let Err(e) = shared::permission::check_permission(
-        &pool,
+        &db,
         &claims,
         &shared::permission::GisPermission::DeviceLocationWrite,
     )
@@ -488,8 +496,12 @@ async fn create_device_location(
     {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
-    match sqlx::query_as::<_, DeviceLocation>(
+    let result = sqlx::query_as::<_, DeviceLocation>(
         only_own_schema_query!("gis", r#"
         INSERT INTO gis.device_locations (map_id, device_name, device_code, device_type, position, status, description, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -504,22 +516,25 @@ async fn create_device_location(
     .bind(&payload.status)
     .bind(&payload.description)
     .bind(tenant_id)
-    .fetch_one(&pool)
-    .await
-    {
-        Ok(location) => ApiResponse::success(location, "创建设备位置成功"),
+    .fetch_one(&mut scope)
+    .await;
+    match result {
+        Ok(location) => match scope.commit().await {
+            Ok(()) => ApiResponse::success(location, "创建设备位置成功"),
+            Err(e) => ApiResponse::from(TopemsError::internal("提交事务失败", e)),
+        },
         Err(e) => ApiResponse::from(TopemsError::internal("数据库插入失败", e)),
     }
 }
 
 async fn update_device_location(
-    State(pool): State<sqlx::PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<uuid::Uuid>,
     Json(payload): Json<modules::device::CreateDeviceLocation>,
 ) -> ApiResponse<DeviceLocation> {
     if let Err(e) = shared::permission::check_permission(
-        &pool,
+        &db,
         &claims,
         &shared::permission::GisPermission::DeviceLocationWrite,
     )
@@ -527,6 +542,10 @@ async fn update_device_location(
     {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_filter: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -535,7 +554,7 @@ async fn update_device_location(
             .as_deref()
             .and_then(|s| uuid::Uuid::parse_str(s).ok())
     };
-    match sqlx::query_as::<_, DeviceLocation>(
+    let result = sqlx::query_as::<_, DeviceLocation>(
         only_own_schema_query!("gis", r#"
         UPDATE gis.device_locations
         SET map_id = $1, device_name = $2, device_code = $3, device_type = $4, position = $5, status = $6, description = $7, updated_at = NOW()
@@ -552,24 +571,25 @@ async fn update_device_location(
     .bind(&payload.description)
     .bind(id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
-    .await
-    {
-        Ok(location) => ApiResponse::success(location, "更新设备位置成功"),
-        Err(sqlx::Error::RowNotFound) => {
-            ApiResponse::not_found("设备位置未找到")
-        }
+    .fetch_one(&mut scope)
+    .await;
+    match result {
+        Ok(location) => match scope.commit().await {
+            Ok(()) => ApiResponse::success(location, "更新设备位置成功"),
+            Err(e) => ApiResponse::from(TopemsError::internal("提交事务失败", e)),
+        },
+        Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("设备位置未找到"),
         Err(e) => ApiResponse::from(TopemsError::internal("数据库更新失败", e)),
     }
 }
 
 async fn delete_device_location(
-    State(pool): State<sqlx::PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<uuid::Uuid>,
 ) -> ApiResponse<bool> {
     if let Err(e) = shared::permission::check_permission(
-        &pool,
+        &db,
         &claims,
         &shared::permission::GisPermission::DeviceLocationWrite,
     )
@@ -577,6 +597,10 @@ async fn delete_device_location(
     {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_filter: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -585,22 +609,25 @@ async fn delete_device_location(
             .as_deref()
             .and_then(|s| uuid::Uuid::parse_str(s).ok())
     };
-    match sqlx::query(only_own_schema_query!(
+    let result = sqlx::query(only_own_schema_query!(
         "gis",
         "DELETE FROM gis.device_locations WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
     ))
     .bind(id)
     .bind(tenant_filter)
-    .execute(&pool)
-    .await
-    {
-        Ok(result) => {
-            if result.rows_affected() > 0 {
-                ApiResponse::success(true, "删除设备位置成功")
-            } else {
-                ApiResponse::not_found("设备位置未找到")
+    .execute(&mut scope)
+    .await;
+    match result {
+        Ok(result) => match scope.commit().await {
+            Ok(()) => {
+                if result.rows_affected() > 0 {
+                    ApiResponse::success(true, "删除设备位置成功")
+                } else {
+                    ApiResponse::not_found("设备位置未找到")
+                }
             }
-        }
+            Err(e) => ApiResponse::from(TopemsError::internal("提交事务失败", e)),
+        },
         Err(e) => ApiResponse::from(TopemsError::internal("数据库删除失败", e)),
     }
 }

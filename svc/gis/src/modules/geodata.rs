@@ -7,10 +7,10 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -43,13 +43,17 @@ pub struct ConvertRequest {
 )]
 /// 上传地理数据
 pub async fn upload_geodata(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
 ) -> ApiResponse<GeoData> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
 
     let mut file_data: Vec<u8> = Vec::new();
     let mut name = String::new();
@@ -121,7 +125,7 @@ pub async fn upload_geodata(
     });
 
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
-    match sqlx::query_as::<_, GeoData>(only_own_schema_query!(
+    let result = sqlx::query_as::<_, GeoData>(only_own_schema_query!(
         "gis",
         r#"
         INSERT INTO gis.geodata (name, data_type, format, geojson_data, feature_count, uploaded_by, tenant_id)
@@ -136,19 +140,24 @@ pub async fn upload_geodata(
     .bind(feature_count)
     .bind(claims.sub.parse::<Uuid>().ok())
     .bind(tenant_id)
-    .fetch_one(&pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    match result {
         Ok(geodata) => {
             // Parse and store features if GeoJSON
             if let Some(geojson) = geojson_data {
                 if let Some(features) = geojson.get("features").and_then(|f| f.as_array()) {
                     for feature in features {
-                        if let Err(e) = insert_feature(&pool, &geodata.id, feature, tenant_id).await {
+                        if let Err(e) =
+                            insert_feature(&mut scope, &geodata.id, feature, tenant_id).await
+                        {
                             tracing::error!("插入要素失败: {}", e);
                         }
                     }
                 }
+            }
+            if let Err(e) = scope.commit().await {
+                return ApiResponse::from(TopemsError::internal("事务提交失败", e));
             }
             ApiResponse::success(geodata, "上传地理数据成功")
         }
@@ -157,7 +166,7 @@ pub async fn upload_geodata(
 }
 
 async fn insert_feature(
-    pool: &PgPool,
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
     geodata_id: &Uuid,
     feature: &serde_json::Value,
     tenant_id: Uuid,
@@ -184,7 +193,7 @@ async fn insert_feature(
     .bind(geometry)
     .bind(properties)
     .bind(tenant_id)
-    .execute(pool)
+    .execute(scope)
     .await?;
 
     Ok(())
@@ -192,9 +201,13 @@ async fn insert_feature(
 
 /// 获取地理数据列表
 pub async fn list_geodata(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -203,11 +216,18 @@ pub async fn list_geodata(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    match sqlx::query_as::<_, GeoData>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"))
+    let result = sqlx::query_as::<_, GeoData>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"))
         .bind(tenant_opt)
-        .fetch_all(&pool)
-        .await
-    {
+        .fetch_all(&mut scope)
+        .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(data) => ApiResponse::success(
             serde_json::json!({
                 "geodata": data,
@@ -221,10 +241,14 @@ pub async fn list_geodata(
 
 /// 获取地理数据详情
 pub async fn get_geodata(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<GeoData> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -233,14 +257,21 @@ pub async fn get_geodata(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    match sqlx::query_as::<_, GeoData>(
+    let result = sqlx::query_as::<_, GeoData>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
     )
     .bind(id)
     .bind(tenant_opt)
-    .fetch_one(&pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(data) => ApiResponse::success(data, "获取地理数据成功"),
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("地理数据未找到"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
@@ -249,14 +280,18 @@ pub async fn get_geodata(
 
 /// 更新地理数据
 pub async fn update_geodata(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateGeoData>,
 ) -> ApiResponse<GeoData> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -266,7 +301,7 @@ pub async fn update_geodata(
             .and_then(|s| Uuid::parse_str(s).ok())
     };
 
-    match sqlx::query_as::<_, GeoData>(
+    let result = sqlx::query_as::<_, GeoData>(
         only_own_schema_query!("gis", r#"
         UPDATE gis.geodata 
         SET name = $1, data_type = $2, metadata = $3, status = COALESCE($4, status), updated_at = NOW()
@@ -280,9 +315,16 @@ pub async fn update_geodata(
     .bind(&payload.status)
     .bind(id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(data) => ApiResponse::success(data, "更新地理数据成功"),
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("地理数据未找到"),
         Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
@@ -291,24 +333,35 @@ pub async fn update_geodata(
 
 /// 删除地理数据
 pub async fn delete_geodata(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<bool> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
 
-    match sqlx::query(only_own_schema_query!(
+    let result = sqlx::query(only_own_schema_query!(
         "gis",
         "UPDATE gis.geodata SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(id)
     .bind(tenant_id)
-    .execute(&pool)
-    .await
-    {
+    .execute(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(result) => {
             if result.rows_affected() > 0 {
                 ApiResponse::success(true, "删除地理数据成功")
@@ -322,23 +375,34 @@ pub async fn delete_geodata(
 
 /// 数据格式转换
 pub async fn convert_geodata(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<ConvertRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
 
     // Get source data
-    match sqlx::query_as::<_, GeoData>(
+    let result = sqlx::query_as::<_, GeoData>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .fetch_one(&pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(geodata) => {
             // Perform conversion (simplified - just return GeoJSON for now)
             match payload.target_format.as_str() {
@@ -412,10 +476,14 @@ fn convert_geojson_to_csv(geojson: &serde_json::Value) -> String {
 
 /// 获取地理要素列表
 pub async fn list_geofeatures(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -424,14 +492,21 @@ pub async fn list_geofeatures(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    match sqlx::query_as::<_, GeoFeature>(
+    let result = sqlx::query_as::<_, GeoFeature>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, geodata_id, feature_type, geometry, properties, centroid, area, length, created_at, updated_at FROM gis.geofeatures WHERE geodata_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),
     )
     .bind(id)
     .bind(tenant_opt)
-    .fetch_all(&pool)
-    .await
-    {
+    .fetch_all(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(features) => ApiResponse::success(
             serde_json::json!({
                 "features": features,

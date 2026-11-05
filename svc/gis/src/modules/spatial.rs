@@ -9,10 +9,10 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -70,13 +70,17 @@ pub struct ClusterRequest {
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 缓冲区分析
 pub async fn buffer_analysis(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<BufferRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
 
     let start_time = Utc::now();
 
@@ -101,9 +105,12 @@ pub async fn buffer_analysis(
     .bind(execution_time)
     .bind(claims.sub.parse::<Uuid>().ok())
     .bind(tenant_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await;
 
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
     match analysis {
         Ok(_) => ApiResponse::success(
             serde_json::json!({
@@ -161,13 +168,17 @@ fn create_circle_buffer(x: f64, y: f64, radius: f64) -> Vec<Vec<f64>> {
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 相交分析
 pub async fn intersect_analysis(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<IntersectRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
 
     let start_time = Utc::now();
 
@@ -190,9 +201,12 @@ pub async fn intersect_analysis(
     .bind(execution_time)
     .bind(claims.sub.parse::<Uuid>().ok())
     .bind(tenant_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await;
 
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
     ApiResponse::success(
         serde_json::json!({
             "intersects": intersects,
@@ -232,13 +246,17 @@ fn check_intersection(geom1: &serde_json::Value, geom2: &serde_json::Value) -> b
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 合并分析
 pub async fn union_analysis(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<UnionRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
 
     let start_time = Utc::now();
 
@@ -276,9 +294,12 @@ pub async fn union_analysis(
     .bind(execution_time)
     .bind(claims.sub.parse::<Uuid>().ok())
     .bind(tenant_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await;
 
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
     ApiResponse::success(
         serde_json::json!({
             "result": result,
@@ -290,11 +311,11 @@ pub async fn union_analysis(
 
 /// 差异分析
 pub async fn difference_analysis(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<DifferenceRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
 
@@ -310,11 +331,11 @@ pub async fn difference_analysis(
 
 /// 包含分析
 pub async fn within_analysis(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<WithinRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
 
@@ -382,11 +403,11 @@ fn point_in_polygon(x: f64, y: f64, polygon: &[serde_json::Value]) -> bool {
 
 /// 距离计算
 pub async fn distance_calculation(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<DistanceRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
 
@@ -435,23 +456,34 @@ fn calculate_distance(geom1: &serde_json::Value, geom2: &serde_json::Value) -> f
 
 /// 最近邻查询
 pub async fn nearest_query(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<NearestRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
 
     // Query features from geodata
-    match sqlx::query_as::<_, crate::models::GeoFeature>(
+    let result = sqlx::query_as::<_, crate::models::GeoFeature>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, geodata_id, feature_type, geometry, properties, centroid, area, length, created_at, updated_at FROM gis.geofeatures WHERE geodata_id = $1 ORDER BY created_at DESC LIMIT $2"),
     )
     .bind(&payload.geodata_id)
     .bind(payload.limit.unwrap_or(10))
-    .fetch_all(&pool)
-    .await
-    {
+    .fetch_all(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(features) => {
             // Calculate distances and sort
             let mut results: Vec<(crate::models::GeoFeature, f64)> = features
@@ -492,11 +524,11 @@ pub async fn nearest_query(
 
 /// 空间聚类分析
 pub async fn cluster_analysis(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<ClusterRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::All).await {
         return e.0;
     }
 
