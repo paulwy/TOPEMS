@@ -2,8 +2,17 @@
 # =============================================================================
 # 环境供给入口（基线即唯一供给入口）
 #
-# 流程：建库（不存在时）→ 恢复基线快照（schema + ledger）→
-#       apply-forward.sh 只应用 version > anchor → 终态校验（账本/表数/锚点/指纹）。
+# 流程：建库（不存在时）→ 恢复结构基线（schema + ledger）→ 恢复参考数据基线
+#       （baseline_<anchor>_data.sql.gz，默认开启）→ apply-forward.sh 只应用
+#       version > anchor → 终态校验（账本/表数/锚点/参考数据行数/核心表指纹）。
+#
+# 顺序理由：先结构后数据，避免数据写入时缺列；前向迁移在数据之后执行，
+# 因此 > anchor 的增量（如新增菜单/权限）叠加在快照之上，不会被快照回退。
+# 若前向迁移改动纳入表的列/约束导致数据不兼容，本脚本 fail-closed，需重生成基线。
+#
+# 参考数据范围：11 张配置性表（租户/角色/权限点/菜单/字典/组织岗位），
+# 明确排除含 PII、业务单据、日志、事件流、队列、缓存、账本类数据。
+# 详见 docs/quality/environment-provisioning.md。
 #
 # 为什么不再全链 `sqlx migrate run`：历史链存在断点（如 20261005000004 依赖
 # public.qa_lab_tasks，而该表由更晚的 20261007000009 才创建），从零重放必然失败；
@@ -26,6 +35,10 @@
 #   --dsn DSN          目标 DSN（与 --db 二选一）
 #   --db NAME          目标库名（未给时取 --env 默认库名）
 #   --anchor VERSION   覆盖基线锚点（必须存在 baseline_VERSION.json 且 sha256 校验通过）
+#   --with-reference-data    恢复参考数据基线（默认开启）
+#   --no-reference-data      跳过参考数据恢复（⚠️ 角色/权限/菜单缺失，环境可能不可登录）
+#   --data-only              仅恢复参考数据（要求目标库结构已存在且 max(version)=anchor；
+#                            对 11 张纳入表按依赖逆序 DELETE 后恢复，禁止 CASCADE）
 #   --force-nonempty   显式允许覆盖已非空库（会 DROP + CREATE；打印 ⚠️ WARN；prod 形态不可用）
 #   --skip-prod-fingerprint  跳过与 prod 的 10 张核心表指纹比对（仅 dev/test/staging 可跳过）
 #   --prod-ssh USER@HOST      prod 只读比对入口（ssh 执行 psql -d topems_prod）
@@ -48,6 +61,8 @@ DB=""
 ANCHOR_OVERRIDE=""
 FORCE_NONEMPTY=0
 SKIP_FP=0
+WITH_DATA=1
+DATA_ONLY=0
 PROD_SSH=""
 PROD_DSN=""
 PROD_DB="topems_prod"
@@ -69,12 +84,15 @@ while [[ $# -gt 0 ]]; do
     --dsn) DSN="$2"; shift 2 ;;
     --db) DB="$2"; shift 2 ;;
     --anchor) ANCHOR_OVERRIDE="$2"; shift 2 ;;
+    --with-reference-data) WITH_DATA=1; shift ;;
+    --no-reference-data) WITH_DATA=0; shift ;;
+    --data-only) DATA_ONLY=1; WITH_DATA=1; shift ;;
     --force-nonempty) FORCE_NONEMPTY=1; shift ;;
     --skip-prod-fingerprint) SKIP_FP=1; shift ;;
     --prod-ssh) PROD_SSH="$2"; shift 2 ;;
     --prod-dsn) PROD_DSN="$2"; shift 2 ;;
     --prod-db) PROD_DB="$2"; shift 2 ;;
-    -h|--help) sed -n '2,45p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,51p' "$0"; exit 0 ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
 done
@@ -152,6 +170,8 @@ else
   LATEST=0
   for f in "$BASELINE_DIR"/baseline_*.json; do
     [[ -e "$f" ]] || continue
+    # 仅结构基线元数据（排除 baseline_<anchor>_data.json）
+    [[ "$(basename "$f")" =~ ^baseline_[0-9]{14}\.json$ ]] || continue
     v="$(meta_get "$f" anchor_version)"
     [[ "$v" =~ ^[0-9]{14}$ ]] || continue
     if (( 10#$v > 10#$LATEST )); then LATEST="$v"; META_FILE="$f"; fi
@@ -176,12 +196,129 @@ ACT_LEDGER_SHA="$(sha256_of "$LEDGER_FILE")"
 [[ "$ACT_LEDGER_SHA" == "$LEDGER_SHA" ]] || die "基线 ledger sha256 不匹配：${ACT_LEDGER_SHA} ≠ ${LEDGER_SHA}"
 
 info "env=${ENV_NAME} db=${DB} host=${TARGET_HOST} anchor=${ANCHOR}"
-info "基线资产校验通过：$(basename "$SCHEMA_FILE") / $(basename "$LEDGER_FILE")（表 ${META_TABLES}，账本 ${META_ROWS}）"
+info "结构基线校验通过：$(basename "$SCHEMA_FILE") / $(basename "$LEDGER_FILE")（表 ${META_TABLES}，账本 ${META_ROWS}）"
+
+# ── 参考数据基线（默认开启；缺失即失败，不静默跳过） ───────────────────────
+DATA_META="$BASELINE_DIR/baseline_${ANCHOR}_data.json"
+DATA_FILE=""
+DATA_SHA=""
+DATA_TABLES=0
+DATA_TOTAL=0
+DATA_ROWS=""
+DATA_RESTORE_ORDER=""
+DATA_REV_ORDER=""
+if (( WITH_DATA == 1 )); then
+  [[ -f "$DATA_META" ]] || die "参考数据基线元数据缺失：${DATA_META}（如确不需参考数据，请显式 --no-reference-data）"
+  DATA_FILE="$BASELINE_DIR/$(meta_get "$DATA_META" data_file)"
+  DATA_SHA="$(meta_get "$DATA_META" data_sha256)"
+  DATA_TABLES="$(meta_get "$DATA_META" table_count)"
+  DATA_TOTAL="$(meta_get "$DATA_META" total_rows)"
+  [[ -f "$DATA_FILE" ]] || die "参考数据资产缺失：${DATA_FILE}"
+  ACT_DATA_SHA="$(sha256_of "$DATA_FILE")"
+  [[ "$ACT_DATA_SHA" == "$DATA_SHA" ]] || die "参考数据 sha256 不匹配：${ACT_DATA_SHA} ≠ ${DATA_SHA}"
+  DATA_ROWS="$(node -e 'const m=require(process.argv[1]); for (const t of m.tables) console.log(t+"|"+m.row_counts[t])' "$DATA_META")" \
+    || die "参考数据行数元数据解析失败"
+  DATA_RESTORE_ORDER="$(node -e 'const m=require(process.argv[1]); console.log(m.restore_order.join(","))' "$DATA_META")" \
+    || die "参考数据恢复顺序解析失败"
+  DATA_REV_ORDER="$(node -e 'const m=require(process.argv[1]); console.log([...m.restore_order].reverse().join(","))' "$DATA_META")" \
+    || die "参考数据 TRUNCATE 顺序解析失败"
+  [[ -n "$DATA_ROWS" ]] || die "参考数据行数清单为空"
+  ok "参考数据校验通过：$(basename "$DATA_FILE")（${DATA_TABLES} 张表 / ${DATA_TOTAL} 行）"
+else
+  warn "--no-reference-data：跳过参考数据恢复（角色/权限/菜单缺失，环境可能不可登录）"
+fi
+
+# 逐表行数：恢复后必须与元数据完全一致
+verify_data_exact() {
+  local t expected actual
+  while IFS='|' read -r t expected; do
+    [[ -z "$t" ]] && continue
+    actual="$("${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc "SELECT count(*) FROM $t" 2>/dev/null)" \
+      || die "参考数据行数探测失败：${t}（fail-closed）"
+    actual="${actual//[^0-9]/}"
+    [[ "$actual" == "$expected" ]] || die "参考数据行数不符：${t} 实际 ${actual} ≠ 元数据 ${expected}"
+  done <<< "$DATA_ROWS"
+  ok "参考数据行数与元数据一致（${DATA_TABLES} 张表 / ${DATA_TOTAL} 行）"
+}
+
+# 前向迁移之后：允许「可增量追加」的表 >= 快照行数；其余必须精确一致
+verify_data_after_forward() {
+  local t expected actual deltas="" appendable=" public.core_menus public.core_permissions public.core_role_permissions public.core_dict_types public.core_dict_items public.core_menu_groups "
+  while IFS='|' read -r t expected; do
+    [[ -z "$t" ]] && continue
+    actual="$("${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc "SELECT count(*) FROM $t" 2>/dev/null)" \
+      || die "前向后参考数据行数探测失败：${t}"
+    actual="${actual//[^0-9]/}"
+    if [[ "$appendable" == *" $t "* ]]; then
+      (( actual >= expected )) || die "前向后参考数据行数少于快照：${t} ${actual} < ${expected}"
+      (( actual == expected )) || deltas+=" ${t}:${expected}→${actual}"
+    else
+      [[ "$actual" == "$expected" ]] || die "前向迁移改动了不可增量表：${t} ${actual} ≠ ${expected}"
+    fi
+  done <<< "$DATA_ROWS"
+  if [[ -n "$deltas" ]]; then
+    ok "参考数据校验通过（前向增量已叠加）：${deltas# }"
+  else
+    ok "参考数据校验通过（前向后行数未变）"
+  fi
+}
+
+# 关键参考数据完整性（登录/鉴权最小集）
+verify_key_data() {
+  local admin_role admin_perms perms menus dicts
+  admin_role="$("${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc "SELECT count(*) FROM public.core_roles WHERE name='admin'" 2>/dev/null)" \
+    || die "admin 角色探测失败"
+  admin_role="${admin_role//[^0-9]/}"
+  (( admin_role >= 1 )) || die "参考数据缺少 admin 角色"
+  admin_perms="$("${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc "SELECT count(*) FROM public.core_role_permissions rp JOIN public.core_roles r ON r.id=rp.role_id WHERE r.name='admin'" 2>/dev/null)" \
+    || die "admin 角色权限探测失败"
+  admin_perms="${admin_perms//[^0-9]/}"
+  (( admin_perms >= 1 )) || die "admin 角色无任何权限点（鉴权最小集不完整）"
+  perms="$("${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc "SELECT count(*) FROM public.core_permissions" 2>/dev/null)" || die "权限点探测失败"
+  perms="${perms//[^0-9]/}"
+  menus="$("${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc "SELECT count(*) FROM public.core_menus" 2>/dev/null)" || die "菜单探测失败"
+  menus="${menus//[^0-9]/}"
+  dicts="$("${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc "SELECT count(*) FROM public.core_dict_types" 2>/dev/null)" || die "字典探测失败"
+  dicts="${dicts//[^0-9]/}"
+  (( perms >= 1 )) || die "权限点为空"
+  (( menus >= 1 )) || die "菜单为空"
+  (( dicts >= 1 )) || die "字典类型为空"
+  ok "关键数据完整：admin 角色权限 ${admin_perms} 条；权限点 ${perms}；菜单 ${menus}；字典类型 ${dicts}"
+}
 
 # ── 建库 / 非空守卫 ─────────────────────────────────────────────────────────
 exists="$("${ADMIN_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc \
   "SELECT 1 FROM pg_database WHERE datname='${DB}'" 2>/dev/null)" \
   || die "无法连接维护库/查询 pg_database（连接或权限失败，fail-closed）"
+
+# ── 仅数据恢复（--data-only）：结构必须已存在，且未应用 > anchor 的前向迁移 ──
+if (( DATA_ONLY == 1 )); then
+  [[ -n "$exists" ]] || die "--data-only 要求目标库已存在：${DB}（请先跑完整供给）"
+  MAX_DATA="$("${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc \
+    "SELECT COALESCE(max(version),0) FROM public._sqlx_migrations WHERE success" 2>/dev/null)" \
+    || die "--data-only 读取账本失败（fail-closed）"
+  MAX_DATA="${MAX_DATA//[^0-9]/}"; MAX_DATA="${MAX_DATA:-0}"
+  [[ "$MAX_DATA" == "$ANCHOR" ]] || die "--data-only 要求账本 max(version)=${ANCHOR}（当前 ${MAX_DATA}）；已应用前向迁移时请改跑完整供给 --force-nonempty"
+  for t in ${DATA_RESTORE_ORDER//,/ }; do
+    present="$("${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc "SELECT COALESCE(to_regclass('$t')::text,'')" 2>/dev/null)" \
+      || die "--data-only 表存在性探测失败：${t}"
+    [[ -n "$(printf '%s' "$present" | tr -d '[:space:]')" ]] || die "--data-only 要求结构已存在，缺少表：${t}"
+  done
+  DELETE_SQL=""
+  for t in ${DATA_REV_ORDER//,/ }; do
+    DELETE_SQL+="DELETE FROM ${t}; "
+  done
+  info "--data-only：按依赖逆序 DELETE 纳入表（不 CASCADE）：${DATA_REV_ORDER}"
+  "${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -c "$DELETE_SQL" \
+    || die "--data-only 清理失败：纳入表可能被外部表引用（如 core_finance_approval_workflows → core_tenants），fail-closed；请先处理引用或改跑完整供给 --force-nonempty"
+  info "恢复参考数据..."
+  gunzip -c "$DATA_FILE" | "${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 \
+    || die "参考数据恢复失败（${DATA_FILE}）"
+  verify_data_exact
+  verify_key_data
+  ok "--data-only 完成：db=${DB}，参考数据 ${DATA_TABLES} 张表 / ${DATA_TOTAL} 行"
+  exit 0
+fi
 
 if [[ -z "$exists" ]]; then
   info "目标库不存在，创建：${DB}"
@@ -240,6 +377,16 @@ info "恢复基线账本（${META_ROWS} 条）..."
   || die "账本恢复失败（${LEDGER_FILE}）"
 ok "基线快照恢复完成"
 
+# ── 恢复参考数据（结构之后、前向之前） ─────────────────────────────────────
+if (( WITH_DATA == 1 )); then
+  info "恢复参考数据（${DATA_TABLES} 张表 / ${DATA_TOTAL} 行）..."
+  gunzip -c "$DATA_FILE" | "${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 \
+    || die "参考数据恢复失败（${DATA_FILE}）"
+  verify_data_exact
+else
+  warn "跳过参考数据恢复（--no-reference-data）"
+fi
+
 # ── 恢复后锚点校验 ─────────────────────────────────────────────────────────
 probe() { "${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc "$1" 2>/dev/null; }
 
@@ -281,6 +428,12 @@ if (( APPLIED == 0 )); then
   [[ "$MAX_POST" == "$ANCHOR" ]] || die "无前向迁移但 max(version)=${MAX_POST} ≠ 锚点 ${ANCHOR}"
 fi
 ok "前向完成：新增 ${APPLIED} 条；账本 ${ROWS_POST} 条；表 ${TABLES_POST}；max(version) ${MAX_POST}"
+
+# ── 参考数据终态校验（前向增量叠加后） ─────────────────────────────────────
+if (( WITH_DATA == 1 )); then
+  verify_data_after_forward
+  verify_key_data
+fi
 
 # ── 与 prod 的 10 张核心表结构指纹比对（只读） ─────────────────────────────
 CORE_TABLES=(
@@ -352,4 +505,9 @@ echo "  基线锚点    : ${ANCHOR}"
 echo "  表数        : ${TABLES_POST}（基线 ${META_TABLES}）"
 echo "  账本        : ${ROWS_POST} 条（基线 ${META_ROWS} + 前向 ${APPLIED}）"
 echo "  max(version): ${MAX_POST}"
+if (( WITH_DATA == 1 )); then
+  echo "  参考数据    : ${DATA_TABLES} 张表 / ${DATA_TOTAL} 行（基线快照 + 前向增量）"
+else
+  echo "  参考数据    : 已跳过（--no-reference-data）"
+fi
 exit 0
