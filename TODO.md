@@ -1,3 +1,77 @@
+## 第四十五轮（2026-11-05）：第 1 档收口——过期清单核销 + A5 账本对账 + A8 NULLIF 同步 ✅
+
+> 承接"第三十四轮补测"与"第四十四轮 prod 治理"，本轮只做三件事：核销过期排期、收敛迁移账本、统一 RLS NULLIF 策略。**未改任何业务代码**。
+
+### 1. 过期清单核销（4 项假待办清零）
+
+| 原挂账条目 | 核销证据 |
+|---|---|
+| mui-x 拆分 | `apps/web/vite.config.ts:561-562` 已拆 mui-x-date / mui-x-tree 独立 chunk |
+| 首屏 API 并行化 | `apps/web/src/main.tsx:24-33` 已 `Promise.all` 并行 |
+| 内联样式迁移（882→787 处） | 全仓仅剩 2 处 `style={{`（`apps/web/src/pages/pdm/PdmProductConfigPage.tsx`） |
+| topems.sh 拆分（4063 行） | `scripts/topems.sh` 494 行 + service/build/db/deploy.sh 已拆出 |
+| crm.audit_logs 值域 | commit `2c569d3f4` 已扩 `error` 并重加 CHECK |
+| 附录 P0/P1/P2 + 三个"专门排期" | 已改写为"历史排期清单（2026-10-28 基线）— 2026-11-05 核销"，开放项并入本表 |
+
+### 2. A5 迁移账本对账（终态）
+
+**backup**：`/tmp/topems_test_schema_before_ledger_20261105_100326.sql`（pg_dump -s，2.5MB）。
+
+| 库 | 账本 | 文件 | 未登记 | 孤儿 | 处置 |
+|---|---|---|---|---|---|
+| `topems_test` | 549→**557** | 577 | **21**（11 个 5433 定向 + 10 个 prod 定向，按设计不应登记） | 1 | ✅ 补登 7 条 test 定向 + P2 |
+| `topems_prod` | **563** | 577 | **17**（11 个 5433 + 6 个 test 定向，按设计不应登记） | 3 | ✅ 无需变更 |
+| `topems`（dev 副本） | 549 | 577 | 29 | 1 | 未对齐（db20/21 未应用），不登记 |
+| `topems_prepare` | 549→**550** | 577 | 28 | 1 | 仅补登 P2（db20/21 未应用） |
+
+- **test 补登 7 条**（checksum=SHA-384 与文件一致，`ON CONFLICT DO NOTHING`）：`20261103200000` db07 / `20261103210000` db08 / `20261103220000` db09 / `20261104030000` db14 / `20261105110000` db20 / `20261105120000` db21 / `20261105140000` finance_currency。
+  - 登记前逐列核验 DDL 已到位：db07 32/32、db09 4/4、db14 7/7、db20 169/169、db21 16/16；db08 173/190（其余 17 列所在表在 test 不存在，不适用）。
+- **孤儿保留待确认（3 条，均为无文件的手工治理行）**：`20261103000005`（db governance check backfill，四库共有）、`20261105160000`（p7 prod type align 4cols）、`20261105170000`（p8 prod ledger pkeys 5，仅 prod）。**不删除**，避免误伤 P7/P8 治理轨迹。
+- **5433 未对账**：仓库无 5433 连接串，本轮无法核验（缺凭据，挂账）。
+- 说明：存量库一律 `psql` 直执行 + 手工登记，禁止 `sqlx migrate run`（`scripts/migration/legacy-ledger-cleanup.sql` 已明示该约束）。
+
+### 3. A8 NULLIF 策略同步（test + prepare）
+
+- 判据：`qual/with_check LIKE '%::text = current_setting%' AND NOT LIKE '%NULLIF%'`。
+- 执行前备份 29 条策略原文：`/tmp/p2_nullif_backup_topems_test_20261105_100426.psv`、`/tmp/p2_nullif_backup_topems_prepare_20261105_100426.psv`（两库 29 条完全一致）。
+- 执行 `database/migrations/20261104120000_p2_nullif_29policies.sql`（幂等 ALTER POLICY，仅包 `NULLIF(current_setting(...), '')`）：
+  - `topems_test`：非 NULLIF 策略 **29→0**，策略总数 1006 不变；
+  - `topems_prepare`：**29→0**，总数 1079 不变；
+  - `topems_prod`：原本已 0（P2 已执行）。
+- 账本补登 `20261104120000` 于 test/prepare（prod 已有），checksum 与文件一致。
+
+### 4. 待办总表（去重后 26 条）
+
+| # | 条目 | 状态 | 前置/依赖 | 工作量 |
+|---|---|---|---|---|
+| A1 | prod 反向表 63 张收敛（60 待业务确认 + qms 3 + currencies） | 决策 | 业务确认是否活表 | 逐表 0.5–1d |
+| A2 | prepare 反向表 52 / prod 48 残壳 | 决策 | 同 A1 口径 | 1–2d |
+| A3 | 反向残留列甄别（prod 790 / prepare 1247 / 5433 837） | 决策 | 定"留/删/补迁移" | 2–3d |
+| A4 | CASCADE 删残壳顺带删的 FK 约束复核补建 | **可开工** | 无 | 0.5d |
+| A5 | 迁移账本对账 | ✅ 本轮完成 | — | — |
+| A6 | 类型延展代码侧 236 项（INT 4 可先行；DOUBLE 22 待语义决策） | 部分可开工 | DOUBLE 需复核 | INT 0.5d；全量 3–5d |
+| A7 | 残留 11 表文本比较策略统一 NULLIF | 决策 | 是否统一 | 0.5d |
+| A8 | `fix_tenant_policy_nullif` 同步 test | ✅ 本轮完成（test+prepare 29→0） | — | — |
+| A9 | RLS 应用 tenant 上下文 | 阻塞 | tenant 化架构立项 | 立项后估 |
+| A10 | prod 服务连 `topems_prod` / 仓库 `.env` 指 `topems_test` 口径统一 | **可开工** | 无 | 0.5h |
+| B1 | ListPageTemplate 拆分（3863 行） | **可开工**（另一线进行中） | 131 页面测试兜底 | 3–4d |
+| B2 | 巨型组件拆分 5 个（AIOps 2487 / RuntimeDashboard 1890 / devtools 1533 / TemplateDemo 1436 / Observability 1370） | **可开工** | 无 | 6–8d |
+| B3 | 浏览器回归测试 | 有条件可开工 | 需起前端服务 | 2h |
+| B4 | E2E 跑通 | 阻塞 | 后端 release server | 4h |
+| B5 | SSR/SSG | 决策·未开始 | 架构决策 | 5d |
+| B6 | WCAG 2.1 AA | 未开始（低优先） | 无 | 5d |
+| B7 | 移动端响应式 | 未开始（低优先） | 无 | 3d |
+| B8 | 页面测试补测 51 页（erp 8 / crm 18 / scm 4 / qms 21） | **可开工** | 沿用 CrudPage mock 范本 | 3–4d |
+| B9 | v74 P1 89 前端绑定缺口（+P2 57） | 决策·产品 | 确认端点价值 | 抽样 1d；全量 5d+ |
+| B10 | v74 下线候选 690（低风险 ~8） | 决策·破坏性 | 人工逐条确认 | ~8 条 0.5d |
+| C1 | im/mail/mobile BFF 未挂载（404） | **可开工** | 无 | 1d |
+| C2 | mobile inventory/attendance 契约错位 | 先核对 | 定调用口径 | 0.5–1d |
+| C3 | menu 种子迁移 `20261102*` 应用 | 有条件 | 部署窗口 | 部署时顺带 |
+| D1 | GitHub CI Billing | 阻塞·外部 | 平台计费 | — |
+| D2 | EAS 真机验证 | 阻塞·外部 | 构建额度 | — |
+| D3 | 生产 nginx reload | 阻塞·外部 | 目标机 | — |
+| D4 | 5433 账本对账 | 阻塞·外部 | 缺连接串 | — |
+
 
 ## 生产部署 seed 体系完善（2026-11-04）✅（P0/P1/P2/P3 全部完成）
 
@@ -3689,157 +3763,21 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 
 ---
 
-## P0（本周必做）
+## 历史排期清单（2026-10-28 基线）— 2026-11-05 核销
 
-- [ ] **1. 浏览器回归测试**（2h）
-  - 验证暗色主题切换（7 个模块）
-  - 验证 DataTable 虚拟滚动（61 个列表页）
-  - 验证 bi/dashboard 模板切换
-  - 验证 Excel 导出功能
-  - 风险：低
+> 本段原为 P0/P1/P2 与三个"专门排期"清单。2026-11-05 逐条实测核销 4 项已完成，其余开放项统一并入"第四十五轮待办总表"（见文件顶部），不再在此重复维护。
 
-- [ ] **2. E2E 测试跑通**（4h）
-  - 前提：后端 release server 启动
-  - 跑 bi-dashboard.spec.ts（3 个测试）
-  - 跑 datatable-virtual.spec.ts（2 个测试）
-  - 风险：低
+| 原条目 | 核销结论（2026-11-05 实测） |
+|---|---|
+| **5. mui-x 拆分**（1d） | ✅ 已完成：`apps/web/vite.config.ts:561-562` 已把 mui-x-date / mui-x-tree 拆为独立 chunk |
+| **6. 首屏 API 并行化**（4h） | ✅ 已完成：`apps/web/src/main.tsx:24-33` 已用 `Promise.all` 并行用户+权限请求 |
+| 内联样式迁移（882→787 处） | ✅ 已完成：全仓仅剩 **2 处** `style={{`（`apps/web/src/pages/pdm/PdmProductConfigPage.tsx`） |
+| topems.sh 拆分（4063 行 / 3d） | ✅ 已完成：`scripts/topems.sh` 494 行 + `service.sh` / `build.sh` / `db.sh` / `deploy.sh` 已拆出 |
+| **1. 浏览器回归测试** / **2. E2E 跑通** | 仍开放（E2E 依赖后端 release server），并入待办总表 |
+| **3. ListPageTemplate 拆分**（实测 3863 行） | 仍开放，并入待办总表 |
+| **4. 巨型组件拆分**（实测剩 5 个 >1300 行） | 仍开放，并入待办总表 |
+| **7. SSR/SSG** / **8. WCAG 2.1 AA** / **9. 移动端响应式** | 仍开放（P2，未开始），并入待办总表 |
 
-- [ ] **3. ListPageTemplate 拆分**（3-4d）
-  - 3979 行 → 5-8 个子模块
-  - useListPageState（~800 行）
-  - ListPageHeader（~400 行）
-  - ListPageToolbar（~500 行）
-  - ListPageTable（~600 行）
-  - ListPagePagination（~300 行）
-  - ListPageBatchActionBar（~400 行）
-  - 预期收益：运行时渲染性能 +20%，可维护性提升
-  - 风险：中（所有列表页依赖）
-
----
-
-## P1（下周）
-
-- [ ] **4. 10 个巨型组件拆分**（10d）
-  - AIOpsPanel.tsx（2487 行）
-  - v53-platform-console.tsx（2290 行）
-  - V55AutomationPanel.tsx（2223 行）
-  - RuntimeDashboard.tsx（1889 行）
-  - v56-ops-panel.tsx（1610 行）
-  - FormPageTemplate.tsx（1584 行）
-  - devtools-panel.tsx（1532 行）
-  - TemplateDemoPage.tsx（1436 行）
-  - ObservabilityDashboard.tsx（1370 行）
-
-- [ ] **5. mui-x 拆分**（1d）
-  - date-pickers vs tree-view 拆成两个 chunk
-  - 预期收益：-50KB gzip
-
-- [ ] **6. 首屏 API 并行化**（4h）
-  - 用户信息 + 权限请求并行
-  - 预期收益：-100ms TTFB
-
----
-
-## P2（2-4 周后）
-
-- [ ] **7. SSR / SSG**（5d）— LCP -1s，SEO
-- [ ] **8. WCAG 2.1 AA 合规**（5d）— 可访问性达标
-- [ ] **9. 移动端响应式优化**（3d）— 移动端体验
-
----
-
-**当前进度**：P0 进行中，下一步 P0-1 浏览器回归测试
-**阻塞**：后端 release server 未启动（E2E 测试跑不通）
-
----
-
-## ListPageTemplate 拆分排期（专门排期）
-
-### 拆分设计（1d）
-- [ ] 写拆分设计文档
-- [ ] 确定子模块边界（5-8 个）
-- [ ] 确定 props 传递方案
-- [ ] 写 typecheck + 回归测试计划
-
-### 逐步拆分（2-3d）
-- [ ] Step 1: 抽 ListPageHeader（标题 + 操作按钮）
-- [ ] Step 2: 抽 ListPageToolbar（搜索 + 筛选）
-- [ ] Step 3: 抽 ListPageTable（DataTable 配置）
-- [ ] Step 4: 抽 ListPagePagination（分页栏）
-- [ ] Step 5: 抽 ListPageBatchActionBar（批量操作栏）
-
-### 回归测试（1d）
-- [ ] typecheck 0 错误
-- [ ] 61 个列表页浏览器回归
-- [ ] E2E 测试通过
-
-**总工作量：3-4d**
-**风险：中**（所有列表页依赖）
-**预期收益：运行时渲染性能 +20%，可维护性提升**
-
----
-
-## 内联样式迁移排期（专门排期）
-
-### 目标
-将 882 处内联样式（style={{}}）迁移到 sx prop 或 MUI 组件。
-
-### 拆分策略
-- [ ] Step 1: lucide 图标 size prop 迁移（~200 处）
-- [ ] Step 2: MUI 组件内联样式 -> sx prop（~300 处）
-- [ ] Step 3: 普通 div -> Box 组件（~300 处）
-- [ ] Step 4: 验证 + typecheck
-
-### 工作量
-- 总工作量：5d
-- 风险：低（样式不改变）
-- 预期收益：代码可维护性提升
-
-### 优先级
-P2（2-4 周后）
-
----
-
-## 内联样式迁移排期（专门排期）- 更新
-
-### 当前进度
-- [x] Step 1: lucide 图标 size prop 迁移（91 处）✅ 已完成
-- [ ] Step 2: 普通 div flex 布局 -> MUI Box + sx prop（~200 处）
-- [ ] Step 3: 其他内联样式 -> sx prop（~500 处）
-- [ ] Step 4: 验证 + typecheck
-
-### 剩余工作量
-- 总工作量：5d
-- 已完成：91 处
-- 剩余：~787 处
-- 风险：低（样式不改变）
-- 预期收益：代码可维护性提升
-
-### 优先级
-P2（2-4 周后）
-
----
-
-## topems.sh 脚本拆分排期（专门排期）
-
-### 目标
-将 4063 行的 topems.sh 按功能模块拆分。
-
-### 拆分策略
-- [ ] Step 1: 服务管理模块（start/stop/restart/status/logs）-> service.sh
-- [ ] Step 2: 编译模块（build/build-all/build-backend/build-frontend）-> build.sh
-- [ ] Step 3: 数据库模块（db start/stop/status/migrate/backup/restore）-> db.sh
-- [ ] Step 4: 部署模块（deploy/run/run-stop）-> deploy.sh
-- [ ] Step 5: 工具模块（doctor/clean/check）-> utils.sh
-- [ ] Step 6: 主脚本 topems.sh 只保留命令分发
-
-### 工作量
-- 总工作量：3d
-- 风险：中（需要测试所有命令）
-- 预期收益：可维护性提升
-
-### 优先级
-P2（2-4 周后）
 
 ## 批 5 第二十批：v74 绑定池刷新 + 方法提取修复（2026-11-02）✅
 
