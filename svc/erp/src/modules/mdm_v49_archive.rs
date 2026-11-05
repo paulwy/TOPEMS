@@ -106,7 +106,7 @@ pub async fn create_archive_policy(
     let store = get_lifecycle_store();
     let mut policies = store.archive_policies.lock().await;
 
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     let tier = match req.archive_tier.as_str() {
         "hot" => ArchiveTier::Hot,
         "warm" => ArchiveTier::Warm,
@@ -208,7 +208,7 @@ pub async fn update_archive_policy(
     if let Some(n) = req.notify_on_archive {
         policy.notify_on_archive = n;
     }
-    policy.updated_at = chrono::Utc::now().to_rfc3339();
+    policy.updated_at = chrono::Utc::now();
 
     ApiResponse::success(policy.clone(), "归档策略已更新")
 }
@@ -293,11 +293,7 @@ pub async fn run_archive(
             if entity.stage.order() >= LifecycleStage::Archived.order() {
                 continue;
             }
-            let age_days = (now
-                - chrono::DateTime::parse_from_rfc3339(&entity.last_transition_at)
-                    .map(|dt| dt.with_timezone(&chrono::Utc))
-                    .unwrap_or(now))
-            .num_days();
+            let age_days = (now - entity.last_transition_at).num_days();
             if age_days < policy.archive_age_days as i64 {
                 if let Some(max_age) = req.max_age_days {
                     if age_days < max_age as i64 {
@@ -316,7 +312,7 @@ pub async fn run_archive(
                 entity_code: entity.entity_code.clone(),
                 entity_name: entity.entity_name.clone(),
                 archive_tier: policy.archive_tier.clone(),
-                archived_at: now.to_rfc3339(),
+                archived_at: now,
                 archived_by: "auto_archive".to_string(),
                 archive_reason: format!(
                     "policy: {}, age {}d >= {}d",
@@ -352,7 +348,7 @@ pub async fn run_archive(
         for (mid, _et, _ec, _en) in &to_archive {
             if let Some(e) = ents.get_mut(mid) {
                 e.stage = LifecycleStage::Archived;
-                e.last_transition_at = now.to_rfc3339();
+                e.last_transition_at = now;
                 e.transition_count += 1;
             }
         }
@@ -510,7 +506,7 @@ pub async fn restore_archive_record(
         }
 
         record.restore_count += 1;
-        record.last_restored_at = Some(chrono::Utc::now().to_rfc3339());
+        record.last_restored_at = Some(chrono::Utc::now());
         record.status = "restored".to_string();
 
         (
@@ -524,7 +520,7 @@ pub async fn restore_archive_record(
     let mut entities = store.entities.lock().await;
     if let Some(entity) = entities.get_mut(&master_data_id) {
         entity.stage = LifecycleStage::Operative;
-        entity.last_transition_at = chrono::Utc::now().to_rfc3339();
+        entity.last_transition_at = chrono::Utc::now();
         entity.transition_count += 1;
         entity.sla_breached = false;
     }
@@ -640,7 +636,7 @@ pub async fn create_archive_policy_verb(
         _ => ArchiveTier::Warm,
     };
 
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     let policy = ArchivePolicy {
         id: uuid::Uuid::new_v4().to_string(),
         domain: json_first_str(&payload, &["scope", "domain"])
@@ -738,7 +734,7 @@ pub async fn update_archive_policy_verb(
     if let Some(n) = json_first_bool(&payload, &["notify_on_archive"]) {
         policy.notify_on_archive = n;
     }
-    policy.updated_at = chrono::Utc::now().to_rfc3339();
+    policy.updated_at = chrono::Utc::now();
 
     ApiResponse::success(policy.clone(), "归档策略已更新")
 }
@@ -801,7 +797,7 @@ pub async fn restore_archive_record_verb(
         }
 
         record.restore_count += 1;
-        record.last_restored_at = Some(chrono::Utc::now().to_rfc3339());
+        record.last_restored_at = Some(chrono::Utc::now());
         record.status = "restored".to_string();
 
         (
@@ -815,7 +811,7 @@ pub async fn restore_archive_record_verb(
     let mut entities = store.entities.lock().await;
     if let Some(entity) = entities.get_mut(&master_data_id) {
         entity.stage = LifecycleStage::Operative;
-        entity.last_transition_at = chrono::Utc::now().to_rfc3339();
+        entity.last_transition_at = chrono::Utc::now();
         entity.transition_count += 1;
         entity.sla_breached = false;
     }

@@ -455,7 +455,7 @@ mod tests {
         assert_eq!(last.triggered_by_type, "system");
         assert!(last.metadata.is_some());
         assert!(!last.id.is_empty());
-        assert!(!last.created_at.is_empty());
+        assert!(last.created_at <= chrono::Utc::now());
     }
 
     // --- enum (de)serialization ---

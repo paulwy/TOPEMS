@@ -20,7 +20,7 @@ pub struct DataLineageNode {
     pub status: String,
     pub local_entity_type: Option<String>,
     pub local_entity_id: Option<String>,
-    pub last_synced_at: String,
+    pub last_synced_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Serialize)]
@@ -79,9 +79,17 @@ pub async fn get_data_lineage(
             let local_entity_type: Option<String> = row.try_get("local_entity_type").ok().flatten();
             let local_entity_id: Option<uuid::Uuid> =
                 row.try_get("local_entity_id").unwrap_or(None);
-            let last_synced_at: chrono::DateTime<chrono::Utc> = row
-                .try_get("last_synced_at")
-                .unwrap_or_else(|_| chrono::Utc::now());
+            let last_synced_at: chrono::DateTime<chrono::Utc> =
+                match row.try_get("last_synced_at") {
+                    Ok(v) => v,
+                    Err(e) => {
+                        tracing::warn!("[erp-mdm] 解析 last_synced_at 失败: {}", e);
+                        return ApiResponse::from(TopemsError::internal(
+                            "解析 last_synced_at 失败",
+                            e,
+                        ));
+                    }
+                };
             let status: String = row.try_get("status").unwrap_or_default();
 
             // 构建血缘节点：来源服务 → ERP 本地引用
@@ -96,7 +104,7 @@ pub async fn get_data_lineage(
                 status: status.clone(),
                 local_entity_type: None,
                 local_entity_id: None,
-                last_synced_at: last_synced_at.to_rfc3339(),
+                last_synced_at,
             });
 
             // ERP 本地引用节点
@@ -108,7 +116,7 @@ pub async fn get_data_lineage(
                 status,
                 local_entity_type,
                 local_entity_id: local_entity_id.map(|id| id.to_string()),
-                last_synced_at: last_synced_at.to_rfc3339(),
+                last_synced_at,
             });
 
             let total = references.len() as i64;
@@ -149,7 +157,9 @@ mod tests {
             status: "active".to_string(),
             local_entity_type: Some("customer".to_string()),
             local_entity_id: Some("123".to_string()),
-            last_synced_at: "2024-01-01T00:00:00Z".to_string(),
+            last_synced_at: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
         };
         let json = serde_json::to_value(&node).unwrap();
         assert_eq!(json["service"], "crm");
@@ -170,7 +180,9 @@ mod tests {
             status: "inactive".to_string(),
             local_entity_type: None,
             local_entity_id: None,
-            last_synced_at: "2024-01-02T00:00:00Z".to_string(),
+            last_synced_at: "2024-01-02T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
         };
         let json = serde_json::to_value(&node).unwrap();
         assert_eq!(json["service"], "erp");
@@ -208,7 +220,9 @@ mod tests {
             status: "active".to_string(),
             local_entity_type: None,
             local_entity_id: None,
-            last_synced_at: "2024-01-01T00:00:00Z".to_string(),
+            last_synced_at: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
         };
         let response = DataLineageResponse {
             master_data_id: "md1".to_string(),

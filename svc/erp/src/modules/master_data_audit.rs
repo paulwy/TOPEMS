@@ -25,7 +25,28 @@ pub struct MasterDataAuditEvent {
     pub changed_by: Option<String>,
     pub old_values: Option<serde_json::Value>,
     pub new_values: Option<serde_json::Value>,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+fn audit_event_from_row(r: &sqlx::postgres::PgRow) -> Result<MasterDataAuditEvent, sqlx::Error> {
+    Ok(MasterDataAuditEvent {
+        id: r.try_get::<uuid::Uuid, _>("id").unwrap_or_default().to_string(),
+        master_data_id: r.try_get::<String, _>("master_data_id").unwrap_or_default(),
+        domain: r.try_get::<String, _>("domain").unwrap_or_default(),
+        action: r.try_get::<String, _>("action").unwrap_or_default(),
+        source_service: r.try_get::<String, _>("source_service").unwrap_or_default(),
+        target_service: r.try_get::<String, _>("target_service").unwrap_or_default(),
+        changed_by: r.try_get::<Option<String>, _>("changed_by").ok().flatten(),
+        old_values: r
+            .try_get::<Option<serde_json::Value>, _>("old_values")
+            .ok()
+            .flatten(),
+        new_values: r
+            .try_get::<Option<serde_json::Value>, _>("new_values")
+            .ok()
+            .flatten(),
+        created_at: r.try_get::<chrono::DateTime<chrono::Utc>, _>("created_at")?,
+    })
 }
 
 #[derive(Debug, Deserialize)]
@@ -110,7 +131,7 @@ pub async fn record_audit_event(
                     changed_by: req.changed_by,
                     old_values: req.old_values,
                     new_values: req.new_values,
-                    created_at: now.to_rfc3339(),
+                    created_at: now,
                 },
                 "审计事件记录成功",
             )
@@ -167,33 +188,17 @@ pub async fn get_audit_trail(
 
     match rows {
         Ok(rows) => {
-            let items: Vec<MasterDataAuditEvent> = rows
+            let items: Vec<MasterDataAuditEvent> = match rows
                 .iter()
-                .map(|r| MasterDataAuditEvent {
-                    id: r
-                        .try_get::<uuid::Uuid, _>("id")
-                        .unwrap_or_default()
-                        .to_string(),
-                    master_data_id: r.try_get::<String, _>("master_data_id").unwrap_or_default(),
-                    domain: r.try_get::<String, _>("domain").unwrap_or_default(),
-                    action: r.try_get::<String, _>("action").unwrap_or_default(),
-                    source_service: r.try_get::<String, _>("source_service").unwrap_or_default(),
-                    target_service: r.try_get::<String, _>("target_service").unwrap_or_default(),
-                    changed_by: r.try_get::<Option<String>, _>("changed_by").ok().flatten(),
-                    old_values: r
-                        .try_get::<Option<serde_json::Value>, _>("old_values")
-                        .ok()
-                        .flatten(),
-                    new_values: r
-                        .try_get::<Option<serde_json::Value>, _>("new_values")
-                        .ok()
-                        .flatten(),
-                    created_at: r
-                        .try_get::<chrono::DateTime<chrono::Utc>, _>("created_at")
-                        .unwrap_or_else(|_| chrono::Utc::now())
-                        .to_rfc3339(),
-                })
-                .collect();
+                .map(audit_event_from_row)
+                .collect::<Result<Vec<_>, sqlx::Error>>()
+            {
+                Ok(items) => items,
+                Err(e) => {
+                    tracing::warn!("[erp-mdm] 解析审计追踪失败: {}", e);
+                    return ApiResponse::from(TopemsError::internal("解析审计追踪失败", e));
+                }
+            };
             let total = items.len() as i64;
             ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
@@ -227,7 +232,9 @@ mod tests {
             changed_by: Some("admin".to_string()),
             old_values: Some(serde_json::json!({"name": "旧名称"})),
             new_values: Some(serde_json::json!({"name": "新名称"})),
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
         };
         let json = serde_json::to_value(&event).unwrap();
         assert_eq!(json["id"], "audit1");
@@ -253,7 +260,9 @@ mod tests {
             changed_by: None,
             old_values: None,
             new_values: None,
-            created_at: "2024-01-02T00:00:00Z".to_string(),
+            created_at: "2024-01-02T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
         };
         let json = serde_json::to_value(&event).unwrap();
         assert_eq!(json["action"], "create");

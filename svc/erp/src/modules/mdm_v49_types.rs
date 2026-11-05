@@ -101,8 +101,8 @@ pub struct LifecycleTask {
     pub description: String,
     pub owner: Option<String>,
     pub status: TaskStatus,
-    pub due_at: Option<String>,
-    pub completed_at: Option<String>,
+    pub due_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub completed_at: Option<chrono::DateTime<chrono::Utc>>,
     pub approved_by: Option<String>,
 }
 
@@ -129,8 +129,8 @@ pub struct LifecycleEntity {
     pub stage: LifecycleStage,
     pub owner: Option<String>,
     pub steward: Option<String>,
-    pub stage_entered_at: String,
-    pub last_transition_at: String,
+    pub stage_entered_at: chrono::DateTime<chrono::Utc>,
+    pub last_transition_at: chrono::DateTime<chrono::Utc>,
     pub tasks: Vec<LifecycleTask>,
     pub transition_count: i32,
     pub sla_deadline: Option<String>,
@@ -147,19 +147,19 @@ pub struct RetirementPlan {
     pub entity_type: String,
     pub entity_code: String,
     pub entity_name: String,
-    pub planned_sunset_at: String,
-    pub planned_archived_at: Option<String>,
+    pub planned_sunset_at: chrono::DateTime<chrono::Utc>,
+    pub planned_archived_at: Option<chrono::DateTime<chrono::Utc>>,
     pub impact_assessment: ImpactAssessment,
     pub notify_channels: Vec<String>,
     pub notify_status: String,
     pub status: RetirementStatus,
     pub initiated_by: String,
-    pub initiated_at: String,
+    pub initiated_at: chrono::DateTime<chrono::Utc>,
     pub confirmed_by: Option<String>,
-    pub confirmed_at: Option<String>,
-    pub executed_at: Option<String>,
+    pub confirmed_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub executed_at: Option<chrono::DateTime<chrono::Utc>>,
     pub rollback_window_days: i32,
-    pub post_retirement_review_at: Option<String>,
+    pub post_retirement_review_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -203,8 +203,8 @@ pub struct ArchivePolicy {
     pub restore_window_days: i32,
     pub auto_archive: bool,
     pub notify_on_archive: bool,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -256,13 +256,13 @@ pub struct ArchiveRecord {
     pub entity_code: String,
     pub entity_name: String,
     pub archive_tier: ArchiveTier,
-    pub archived_at: String,
+    pub archived_at: chrono::DateTime<chrono::Utc>,
     pub archived_by: String,
     pub archive_reason: String,
     pub policy_id: Option<String>,
     pub retention_until: String,
     pub restore_count: i32,
-    pub last_restored_at: Option<String>,
+    pub last_restored_at: Option<chrono::DateTime<chrono::Utc>>,
     pub status: String,
     pub record_size_bytes: i64,
     pub checksum: String,
@@ -281,7 +281,7 @@ pub struct LifecycleEvent {
     pub triggered_by: String,
     pub triggered_by_type: String,
     pub metadata: Option<serde_json::Value>,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 // ==================== 内存存储 ====================
@@ -317,7 +317,6 @@ pub async fn ensure_initialized() {
     }
 
     let now = chrono::Utc::now();
-    let now_str = now.to_rfc3339();
 
     let policies = vec![
         ArchivePolicy {
@@ -333,8 +332,8 @@ pub async fn ensure_initialized() {
             restore_window_days: 30,
             auto_archive: true,
             notify_on_archive: true,
-            created_at: now_str.clone(),
-            updated_at: now_str.clone(),
+            created_at: now,
+            updated_at: now,
         },
         ArchivePolicy {
             id: uuid::Uuid::new_v4().to_string(),
@@ -349,8 +348,8 @@ pub async fn ensure_initialized() {
             restore_window_days: 90,
             auto_archive: true,
             notify_on_archive: true,
-            created_at: now_str.clone(),
-            updated_at: now_str.clone(),
+            created_at: now,
+            updated_at: now,
         },
         ArchivePolicy {
             id: uuid::Uuid::new_v4().to_string(),
@@ -365,8 +364,8 @@ pub async fn ensure_initialized() {
             restore_window_days: 60,
             auto_archive: true,
             notify_on_archive: false,
-            created_at: now_str.clone(),
-            updated_at: now_str.clone(),
+            created_at: now,
+            updated_at: now,
         },
     ];
 
@@ -381,8 +380,8 @@ pub async fn ensure_initialized() {
             stage: LifecycleStage::Operative,
             owner: Some("zhangsan".to_string()),
             steward: Some("lisi".to_string()),
-            stage_entered_at: now_str.clone(),
-            last_transition_at: now_str.clone(),
+            stage_entered_at: now,
+            last_transition_at: now,
             tasks: default_tasks_for(&LifecycleStage::Operative),
             transition_count: 4,
             sla_deadline: None,
@@ -399,8 +398,8 @@ pub async fn ensure_initialized() {
             stage: LifecycleStage::Sunset,
             owner: Some("wangwu".to_string()),
             steward: Some("lisi".to_string()),
-            stage_entered_at: now_str.clone(),
-            last_transition_at: now_str.clone(),
+            stage_entered_at: now,
+            last_transition_at: now,
             tasks: default_tasks_for(&LifecycleStage::Sunset),
             transition_count: 6,
             sla_deadline: Some((now + chrono::Duration::days(14)).to_rfc3339()),
@@ -417,8 +416,8 @@ pub async fn ensure_initialized() {
             stage: LifecycleStage::Testing,
             owner: Some("zhaoliu".to_string()),
             steward: None,
-            stage_entered_at: now_str.clone(),
-            last_transition_at: now_str.clone(),
+            stage_entered_at: now,
+            last_transition_at: now,
             tasks: default_tasks_for(&LifecycleStage::Testing),
             transition_count: 2,
             sla_deadline: Some((now + chrono::Duration::days(30)).to_rfc3339()),
@@ -435,7 +434,7 @@ pub async fn ensure_initialized() {
         entity_code: "C-OLD-001".to_string(),
         entity_name: "历史客户 X".to_string(),
         archive_tier: ArchiveTier::Cold,
-        archived_at: (now - chrono::Duration::days(400)).to_rfc3339(),
+        archived_at: now - chrono::Duration::days(400),
         archived_by: "system".to_string(),
         archive_reason: "5 年无交易自动归档".to_string(),
         policy_id: None,
@@ -453,8 +452,8 @@ pub async fn ensure_initialized() {
         entity_type: "supplier".to_string(),
         entity_code: "S0001".to_string(),
         entity_name: "华东电子供应商".to_string(),
-        planned_sunset_at: (now + chrono::Duration::days(30)).to_rfc3339(),
-        planned_archived_at: Some((now + chrono::Duration::days(90)).to_rfc3339()),
+        planned_sunset_at: now + chrono::Duration::days(30),
+        planned_archived_at: Some(now + chrono::Duration::days(90)),
         impact_assessment: ImpactAssessment {
             total_references: 12,
             referencing_services: vec!["purchase".to_string(), "finance".to_string()],
@@ -473,9 +472,9 @@ pub async fn ensure_initialized() {
         notify_status: "sent".to_string(),
         status: RetirementStatus::Confirmed,
         initiated_by: "lisi".to_string(),
-        initiated_at: now_str.clone(),
+        initiated_at: now,
         confirmed_by: Some("manager".to_string()),
-        confirmed_at: Some(now_str.clone()),
+        confirmed_at: Some(now),
         executed_at: None,
         rollback_window_days: 14,
         post_retirement_review_at: None,
@@ -577,7 +576,7 @@ pub fn record_event(
         triggered_by,
         triggered_by_type,
         metadata,
-        created_at: chrono::Utc::now().to_rfc3339(),
+        created_at: chrono::Utc::now(),
     };
     let store_ref = get_lifecycle_store();
     if let Ok(mut events) = store_ref.events.lock() {

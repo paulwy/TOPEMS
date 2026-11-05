@@ -75,8 +75,8 @@ pub struct MetadataSchema {
     pub domain: String,
     pub fields: Vec<MetadataField>,
     pub constraints: Vec<String>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 元数据记录
@@ -87,8 +87,8 @@ pub struct MetadataRecord {
     pub entity_type: String,
     pub entity_id: String,
     pub values: serde_json::Value,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
     pub version: i32,
 }
 
@@ -214,7 +214,7 @@ async fn ensure_metadata_initialized() {
         return;
     }
     let now = chrono::Utc::now();
-    let rfc = |days_ago: i64| (now - chrono::Duration::days(days_ago)).to_rfc3339();
+    let rfc = |days_ago: i64| now - chrono::Duration::days(days_ago);
 
     // 预置客户域 Schema
     let customer_schema = MetadataSchema {
@@ -356,7 +356,7 @@ async fn create_schema(req: &SchemaRequest) -> MetadataSchema {
     ensure_metadata_initialized().await;
     let store = get_metadata_store();
     let mut schemas = store.schemas.lock().await;
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     let id = format!("schema-{}-v1", req.name);
     let fields: Vec<MetadataField> = req
         .fields
@@ -418,7 +418,7 @@ async fn update_schema(schema_id: &str, req: &SchemaRequest) -> Option<MetadataS
     let idx = schemas.iter().position(|s| s.schema_id == schema_id)?;
     let old = &schemas[idx];
     let new_version = old.version + 1;
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     let fields: Vec<MetadataField> = req
         .fields
         .iter()
@@ -523,7 +523,7 @@ async fn upsert_record(req: &RecordUpsertRequest) -> Result<MetadataRecord, Vec<
     }
 
     let mut records = store.records.lock().await;
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     if let Some(existing) = records
         .iter_mut()
         .find(|r| r.schema_id == req.schema_id && r.entity_id == req.entity_id)

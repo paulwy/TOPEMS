@@ -140,7 +140,7 @@ pub struct AuditFinding {
     pub evidence: serde_json::Value,
     pub recommendation: String,
     pub status: FindingStatus,
-    pub found_at: String,
+    pub found_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 合规审计报告
@@ -154,7 +154,7 @@ pub struct ComplianceAuditReport {
     pub findings: Vec<AuditFinding>,
     pub overall_status: ComplianceStatus,
     pub score: f64,
-    pub generated_at: String,
+    pub generated_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 审计评分卡
@@ -492,7 +492,7 @@ async fn ensure_compliance_audit_initialized() {
             }),
             recommendation: rec.to_string(),
             status: status.clone(),
-            found_at: rfc(*days_ago),
+            found_at: now - chrono::Duration::days(*days_ago),
         });
     }
 
@@ -545,7 +545,7 @@ async fn run_compliance_check(req: &ComplianceCheckRequest) -> Vec<AuditFinding>
     ensure_compliance_audit_initialized().await;
     let store = get_compliance_audit_store();
     let rules = store.rules.lock().await.clone();
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
 
     let target_fw = req.framework.as_deref().and_then(parse_audit_framework);
     let filtered_rules: Vec<ComplianceRule> = match target_fw.as_ref() {
@@ -562,7 +562,7 @@ async fn run_compliance_check(req: &ComplianceCheckRequest) -> Vec<AuditFinding>
                     continue;
                 }
             }
-            rule.last_checked = Some(now.clone());
+            rule.last_checked = Some(now.to_rfc3339());
         }
     }
 
@@ -750,7 +750,7 @@ async fn generate_audit_report(framework: Option<&str>) -> ComplianceAuditReport
         findings: filtered_findings.into_iter().cloned().collect(),
         overall_status,
         score,
-        generated_at: now.to_rfc3339(),
+        generated_at: now,
     }
 }
 

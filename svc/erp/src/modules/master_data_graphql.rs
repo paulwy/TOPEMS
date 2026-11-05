@@ -15,8 +15,8 @@ pub struct MasterDataEntity {
     pub domain: String,
     pub status: String,
     pub source_service: String,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
     pub properties: serde_json::Value,
 }
 
@@ -45,7 +45,7 @@ pub struct MasterDataConnection {
 pub struct QualityInfo {
     pub score: f64,
     pub issues_count: i64,
-    pub last_check_at: String,
+    pub last_check_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, Deserialize)]
@@ -159,7 +159,7 @@ pub struct MdmGraphqlStore {
 impl MdmGraphqlStore {
     fn new() -> Self {
         let mut entities = HashMap::new();
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let domains = [
             "customer",
             "supplier",
@@ -426,7 +426,7 @@ async fn handle_master_data_quality(req: &GraphqlRequest) -> Json<GraphqlRespons
     let quality = QualityInfo {
         score: 85.5 + (id.len() as f64 % 15.0),
         issues_count: (id.len() as i64 % 5),
-        last_check_at: chrono::Utc::now().to_rfc3339(),
+        last_check_at: chrono::Utc::now(),
     };
 
     Json(GraphqlResponse {
@@ -661,7 +661,7 @@ async fn handle_create_master_data(req: &GraphqlRequest) -> Json<GraphqlResponse
         .unwrap_or("graphql");
 
     let id = uuid::Uuid::new_v4().to_string();
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
 
     let entity = MasterDataEntity {
         id: id.clone(),
@@ -713,7 +713,7 @@ async fn handle_update_master_data(req: &GraphqlRequest) -> Json<GraphqlResponse
     if let Some(props) = input.get("properties") {
         entity.properties = props.clone();
     }
-    entity.updated_at = chrono::Utc::now().to_rfc3339();
+    entity.updated_at = chrono::Utc::now();
 
     let updated = entity.clone();
 
@@ -778,7 +778,7 @@ async fn handle_merge_master_data(req: &GraphqlRequest) -> Json<GraphqlResponse>
             });
         }
     };
-    target.updated_at = chrono::Utc::now().to_rfc3339();
+    target.updated_at = chrono::Utc::now();
     target.properties = serde_json::json!({
         "merged_from": source.id,
         "original_name": source.name,
@@ -843,8 +843,12 @@ mod tests {
             domain: "customer".to_string(),
             status: "active".to_string(),
             source_service: "crm".to_string(),
-            created_at: "2024-01-01T00:00:00Z".to_string(),
-            updated_at: "2024-01-02T00:00:00Z".to_string(),
+            created_at: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
+            updated_at: "2024-01-02T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
             properties: serde_json::json!({"email": "test@example.com"}),
         };
         let json = serde_json::to_value(&entity).unwrap();
@@ -895,7 +899,9 @@ mod tests {
         let info = QualityInfo {
             score: 95.5,
             issues_count: 3,
-            last_check_at: "2024-01-01T00:00:00Z".to_string(),
+            last_check_at: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
         };
         let json = serde_json::to_value(&info).unwrap();
         assert_eq!(json["score"], 95.5);

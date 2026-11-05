@@ -103,12 +103,9 @@ pub async fn get_archive_stats(State(_state): State<ApiState>) -> ApiResponse<Ar
         }
         *by_domain.entry(r.domain.clone()).or_insert(0) += 1;
 
-        if let Some(last) = &r.last_restored_at {
-            if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(last) {
-                let dt = dt.with_timezone(&chrono::Utc);
-                if (now - dt).num_days() <= 30 {
-                    restored_last_30d += 1;
-                }
+        if let Some(dt) = &r.last_restored_at {
+            if (now - *dt).num_days() <= 30 {
+                restored_last_30d += 1;
             }
         }
 
@@ -372,11 +369,9 @@ pub async fn get_lifecycle_dashboard_verb(
                 .or_insert((0, 0));
             entry.0 += 1;
             entry.1 += r.record_size_bytes;
-            if let Some(last) = &r.last_restored_at {
-                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(last) {
-                    if (now - dt.with_timezone(&chrono::Utc)).num_days() <= 30 {
-                        restored_last_30d += 1;
-                    }
+            if let Some(dt) = &r.last_restored_at {
+                if (now - *dt).num_days() <= 30 {
+                    restored_last_30d += 1;
                 }
             }
         }

@@ -107,7 +107,7 @@ pub struct KnowledgeTriple {
     pub object: String,
     pub confidence: f64,
     pub source: String,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -254,7 +254,7 @@ async fn ensure_knowledge_graph_initialized() {
         return;
     }
 
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
 
     let domains = vec![
         (
@@ -1601,7 +1601,7 @@ pub async fn run_inference(
     let max_depth = req.max_depth.unwrap_or(2);
     let mut inferred: Vec<KnowledgeTriple> = Vec::new();
     let mut used_rules: HashSet<String> = HashSet::new();
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
 
     let enabled_rules: Vec<&InferenceRule> = rules
         .iter()
@@ -2006,7 +2006,9 @@ mod tests {
             object: "产品B".to_string(),
             confidence: 0.95,
             source: "transaction_log".to_string(),
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
         };
         let json = serde_json::to_value(&triple).unwrap();
         assert_eq!(json["subject"], "客户A");

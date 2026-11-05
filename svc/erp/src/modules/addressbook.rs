@@ -49,8 +49,8 @@ pub struct AddressbookEntry {
     department_name: Option<String>,
     department_code: Option<String>,
     status: String,
-    created_at: String,
-    updated_at: String,
+    created_at: chrono::DateTime<chrono::Utc>,
+    updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Serialize)]
@@ -66,8 +66,8 @@ pub struct AddressbookDetail {
     department_name: Option<String>,
     department_code: Option<String>,
     status: String,
-    created_at: String,
-    updated_at: String,
+    created_at: chrono::DateTime<chrono::Utc>,
+    updated_at: chrono::DateTime<chrono::Utc>,
     hire_date: Option<String>,
 }
 
@@ -93,8 +93,8 @@ impl From<HrmEmployee> for AddressbookEntry {
             department_name: None,
             department_code: None,
             status: e.status,
-            created_at: e.created_at.to_rfc3339(),
-            updated_at: e.updated_at.to_rfc3339(),
+            created_at: e.created_at,
+            updated_at: e.updated_at,
         }
     }
 }
@@ -113,8 +113,8 @@ impl From<HrmDepartment> for AddressbookEntry {
             department_name: None,
             department_code: None,
             status: "ACTIVE".to_string(),
-            created_at: d.created_at.to_rfc3339(),
-            updated_at: d.updated_at.to_rfc3339(),
+            created_at: d.created_at,
+            updated_at: d.updated_at,
         }
     }
 }
@@ -133,8 +133,8 @@ impl From<HrmCompany> for AddressbookEntry {
             department_name: None,
             department_code: None,
             status: "ACTIVE".to_string(),
-            created_at: c.created_at.to_rfc3339(),
-            updated_at: c.updated_at.to_rfc3339(),
+            created_at: c.created_at,
+            updated_at: c.updated_at,
         }
     }
 }
@@ -523,8 +523,8 @@ pub async fn export_contacts(
                 escape_csv(&entry.department_id.unwrap_or_default()),
                 escape_csv(&entry.department_name.unwrap_or_default()),
                 escape_csv(&entry.status),
-                escape_csv(&entry.created_at),
-                escape_csv(&entry.updated_at),
+                escape_csv(&entry.created_at.to_rfc3339()),
+                escape_csv(&entry.updated_at.to_rfc3339()),
             ));
         }
         csv_lines.join("\n")

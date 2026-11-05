@@ -128,7 +128,7 @@ pub async fn create_lifecycle_entity(
         .unwrap_or(&uuid::Uuid::new_v4().to_string())
         .to_string();
 
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     let entity = LifecycleEntity {
         id: uuid::Uuid::new_v4().to_string(),
         master_data_id: master_data_id.clone(),
@@ -224,7 +224,7 @@ pub async fn transition_lifecycle_stage(
     }
 
     let prev = entity.stage.clone();
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     entity.stage = target.clone();
     entity.stage_entered_at = now.clone();
     entity.last_transition_at = now;
@@ -281,19 +281,23 @@ pub async fn update_lifecycle_task(
             _ => TaskStatus::Todo,
         };
         if matches!(task.status, TaskStatus::Done) {
-            task.completed_at = Some(chrono::Utc::now().to_rfc3339());
+            task.completed_at = Some(chrono::Utc::now());
         }
     }
     if let Some(o) = req.owner {
         task.owner = Some(o);
     }
     if let Some(d) = req.due_at {
-        task.due_at = Some(d);
+        let due_at = match d.parse::<chrono::DateTime<chrono::Utc>>() {
+            Ok(v) => v,
+            Err(_) => return ApiResponse::bad_request("无效的 due_at，需为 RFC3339 时间"),
+        };
+        task.due_at = Some(due_at);
     }
     if let Some(a) = req.approved_by {
         task.approved_by = Some(a);
         task.status = TaskStatus::Done;
-        task.completed_at = Some(chrono::Utc::now().to_rfc3339());
+        task.completed_at = Some(chrono::Utc::now());
     }
 
     ApiResponse::success(entity.clone(), "任务已更新")
