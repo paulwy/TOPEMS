@@ -1,0 +1,183 @@
+{
+  "_comment": "既存破坏性语句基线（仅报告不阻断）。仅记录已存在违规的文件 sha256 + 命中数；新增/修改文件自动进入阻断档。重生成：node scripts/ci/check-destructive-sql.mjs --write-baseline",
+  "guardWindowLines": 60,
+  "generatedAt": "2026-11-05T07:15:13.752Z",
+  "files": {
+    "database/migrations/20260813000001_v76_uuid_cleanup.sql": {
+      "sha256": "f7ad5979eae8a958e067c860f9bed36e84ac03077aee48b91a70687d6d5b5bf1",
+      "hits": 11,
+      "kinds": {
+        "alter_column_type": 11
+      }
+    },
+    "database/migrations/20260918000029_srm_amount_float8.sql": {
+      "sha256": "538324597be50185eb0b7dd4dcc37a2a0686427eb7700a7568c852ee9dc61ad0",
+      "hits": 3,
+      "kinds": {
+        "alter_column_type": 3
+      }
+    },
+    "database/migrations/20260918000032_wms_inbound_amount_float8.sql": {
+      "sha256": "18f39ae73def490194f2715d91c9f1fdf6422536fc8c5f071e5ef751e60f03ff",
+      "hits": 6,
+      "kinds": {
+        "alter_column_type": 6
+      }
+    },
+    "database/migrations/20260923140000_core_users_timestamptz.sql": {
+      "sha256": "2d9a4cf0b0247cdf3e636f283850e4e53b63bc4f4a759b21f3b65977d085109d",
+      "hits": 1,
+      "kinds": {
+        "alter_column_type": 1
+      }
+    },
+    "database/migrations/20260923150000_flow_public_tenant_rls.sql": {
+      "sha256": "87afb4f815d3d12be9fdf602fe02f21e9b1866d86d02375d35e37bf056cafb83",
+      "hits": 3,
+      "kinds": {
+        "alter_column_type": 3
+      }
+    },
+    "database/migrations/20261003000004_r4_plugin_heartbeat_instances.sql": {
+      "sha256": "1d3bbafd6db1234bcdb2f2e629b9874abfd34802469abbb02d1997306aa062c9",
+      "hits": 1,
+      "kinds": {
+        "alter_column_type": 1
+      }
+    },
+    "database/migrations/20261007140000_align_stub_tables_handler_contract.sql": {
+      "sha256": "49dfd69cda266478399328987950ca047525ad4f7c762ce4cc5913798c4d01b6",
+      "hits": 2,
+      "kinds": {
+        "alter_column_type": 2
+      }
+    },
+    "database/migrations/20261015000078_ai_knowledge_objects.sql": {
+      "sha256": "bdb2cd93ff96541d9dc328da93442cb04dde7f16716893c0bdca424bb0cea7a8",
+      "hits": 1,
+      "kinds": {
+        "alter_column_type": 1
+      }
+    },
+    "database/migrations/20261015000085_fix_qms_inspection_timestamptz.sql": {
+      "sha256": "67ce7500ee3efc59d8eb9531cc2affc4726e0f6c1b394f11b72d0b115ba4591b",
+      "hits": 4,
+      "kinds": {
+        "alter_column_type": 4
+      }
+    },
+    "database/migrations/20261016000086_fix_finance_ehs_timestamptz.sql": {
+      "sha256": "d6cb6cf6d06036ba407c358dc07f7b770c5712b107a86a910eb0a9533027e019",
+      "hits": 129,
+      "kinds": {
+        "alter_column_type": 129
+      }
+    },
+    "database/migrations/20261016000087_fix_qms_remaining_timestamptz.sql": {
+      "sha256": "5da61c302d7006c02e054b31abc69cd0176ef05488f2b2e19646b1b4dbc3ea09",
+      "hits": 46,
+      "kinds": {
+        "alter_column_type": 46
+      }
+    },
+    "database/migrations/20261020000010_rd_experiments_created_by_varchar_results_jsonb.sql": {
+      "sha256": "341a57dabac6571015f084f3d6ac19fa1c7596bcc264af26a755f3a4d460415d",
+      "hits": 2,
+      "kinds": {
+        "alter_column_type": 2
+      }
+    },
+    "database/migrations/20261027130000_fix_ehs_columns_and_mdm_v55_types.sql": {
+      "sha256": "dd0140dbbd76012e7eabfd447e9756104063b4a50ce3bd28f5da9ad0d8a49e31",
+      "hits": 4,
+      "kinds": {
+        "alter_column_type": 4
+      }
+    },
+    "database/migrations/20261029200000_schema_defense_type_align.sql": {
+      "sha256": "d1185774273b8ce1b871e031d6287cea3c6df2294a3533c8ae1f7ceb35618382",
+      "hits": 86,
+      "kinds": {
+        "alter_column_type": 86
+      }
+    },
+    "database/migrations/20261103200000_db07_test_timestamp_uuid_align_prod.sql": {
+      "sha256": "b00d793cc6c7d40170d60c56685f154226570932c8911b5fe0def501a82f1c8a",
+      "hits": 32,
+      "kinds": {
+        "alter_column_type": 32
+      }
+    },
+    "database/migrations/20261103210000_db08_test_varchar_to_text_190cols.sql": {
+      "sha256": "4ae104028c5b523e0412cf544d17ff5dbcb6c36779ec55f941669d9125e1966f",
+      "hits": 190,
+      "kinds": {
+        "alter_column_type": 190
+      }
+    },
+    "database/migrations/20261103220000_db09_test_iam_position_id_bigint_to_uuid.sql": {
+      "sha256": "67129bde93f369b8c0f72776d7ed4a486c04f0727e4cc03bf9e9e89a041ea588",
+      "hits": 4,
+      "kinds": {
+        "alter_column_type": 4
+      }
+    },
+    "database/migrations/20261103230000_db10_5433_varchar_text_to_uuid_19cols.sql": {
+      "sha256": "775b5a7dcf28f93f2fb31d0c3e43232d4879c5303926156256fcaf4075b193a8",
+      "hits": 19,
+      "kinds": {
+        "alter_column_type": 19
+      }
+    },
+    "database/migrations/20261104000000_db11_5433_varchar_to_text_24cols.sql": {
+      "sha256": "13998eaa751cd0d7aecf332272ab4c97f6d59ad50fc57e08c01403331da4bd48",
+      "hits": 24,
+      "kinds": {
+        "alter_column_type": 24
+      }
+    },
+    "database/migrations/20261104010000_db12_5433_date_timestamptz_21cols.sql": {
+      "sha256": "c77a11607a13335f8376b14d5e15c572f3270cdd9c57eadcd03c0540686df413",
+      "hits": 21,
+      "kinds": {
+        "alter_column_type": 21
+      }
+    },
+    "database/migrations/20261104020000_db13_5433_numeric_double_20cols.sql": {
+      "sha256": "e7d5fecbb502f29461147013edb975d832d67e0c99792ec7ef13ca45e5d9c8ed",
+      "hits": 20,
+      "kinds": {
+        "alter_column_type": 20
+      }
+    },
+    "database/migrations/20261104030000_db14_test_varchar_to_uuid_7cols_with_data.sql": {
+      "sha256": "ce87f88607315ddaf9e780b21fe01b0a9dbb99738d0882178b10a3f23ab3678d",
+      "hits": 7,
+      "kinds": {
+        "alter_column_type": 7
+      }
+    },
+    "database/migrations/20261104040000_db15_5433_integer_bigint_16cols.sql": {
+      "sha256": "40e74328a493d087683f7815a3daec3837d6afa7f2360275f5cb519c71c8d302",
+      "hits": 16,
+      "kinds": {
+        "alter_column_type": 16
+      }
+    },
+    "database/migrations/20261104060000_db17_5433_misc_12cols.sql": {
+      "sha256": "49e3daf8316a82f19096fb0e0f4fd24d1c121242eb377673fc22aac0f2e2353b",
+      "hits": 11,
+      "kinds": {
+        "alter_column_type": 11
+      }
+    },
+    "database/migrations/20261104070000_db18_5433_special_types_8cols.sql": {
+      "sha256": "40ede0ab9e711a4d6abfc17d25eb01f2625db84c4eaefaefd7de7e8fe1a100d3",
+      "hits": 8,
+      "kinds": {
+        "alter_column_type": 7,
+        "drop_column": 1
+      }
+    }
+  }
+}

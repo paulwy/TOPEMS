@@ -245,6 +245,10 @@ jobs:
       - name: Run shellcheck (all tracked scripts)
         run: bash scripts/ci/check-shellcheck.sh
 
+      # prod 迁移入口防线：脚本/workflow 中禁止硬编码 prod DSN 直接调用 sqlx migrate run
+      - name: Scan prod migration entry
+        run: node scripts/ci/check-prod-migration-entry.mjs
+
   # ──────────────────────────────────────────────────────────────────────────
   # [V232-P3 NEW Gate J] Cargo fmt workspace (Rust only, standalone job)
   # ──────────────────────────────────────────────────────────────────────────
@@ -1849,6 +1853,15 @@ jobs:
 
       - name: Static check — migration integrity
         run: node scripts/check-migrations.mjs
+
+      # prod 误跑防线（2026-11-05）：定向命名禁止新增（既存 19 条白名单）；
+      # 破坏性语句仅阻断新增/修改文件（既存 25 文件/651 条记录在 destructive-sql-baseline.json，
+      # 仅报告，保证 main 为绿）。
+      - name: Static check — directed migration naming
+        run: node scripts/ci/check-directed-migrations.mjs
+
+      - name: Static check — destructive SQL guards
+        run: node scripts/ci/check-destructive-sql.mjs
 
       - uses: ./.github/actions/setup-rust
         with:

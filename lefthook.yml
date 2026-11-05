@@ -213,6 +213,27 @@ pre-commit:
         node scripts/check-migrations.mjs
         bash scripts/migration/validate.sh
 
+    # [Gate MIG-PROD] 定向迁移命名 + 破坏性语句守卫（prod 误跑防线，2026-11-05）
+    # 触发：迁移文件 / 本组校验脚本 / 基线变更；无变更秒级跳过。
+    # 既有违规由 destructive-sql-baseline.json 记录（仅报告），只有新增/修改文件阻断。
+    migration-prod-guard:
+      tags: database migrations
+      run: |
+        set -e
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^database/migrations/.*\.sql$|^scripts/ci/check-(directed|destructive)-sql\.mjs$|^scripts/ci/destructive-sql-baseline\.json$" || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-directed-migrations.mjs --changed-only
+        node scripts/ci/check-destructive-sql.mjs
+
+    # [Gate MIG-ENTRY] prod 迁移入口扫描：禁止脚本硬编码 prod DSN 直接 sqlx migrate run
+    # 触发：scripts/** 或 CI workflow 变更；纯消息行/注释行/文档不计。
+    prod-migration-entry:
+      tags: database deploy
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^scripts/.*\.(sh|mjs|py)$|^\.github/workflows/' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-prod-migration-entry.mjs
+
     # [Gate O] Sensitive information scan — migrated from husky #2
     sensitive-info:
       tags: security secrets
