@@ -17,6 +17,7 @@
 //!    - MaskedField: 脱敏结果记录
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -233,7 +234,7 @@ pub struct TrustDecision {
     pub risk_score: f64,
     pub decision: TrustDecisionType,
     pub reason: String,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -301,7 +302,7 @@ pub struct MaskedField {
     pub original: String,
     pub masked: String,
     pub rule_id: String,
-    pub applied_at: String,
+    pub applied_at: DateTime<Utc>,
 }
 
 // ==================== 内存存储 ====================
@@ -652,7 +653,7 @@ impl ZeroTrustEngine {
             risk_score,
             decision,
             reason,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         };
 
         let mut decisions = store.trust_decisions.lock().await;
@@ -779,7 +780,7 @@ impl DataMasker {
                     original,
                     masked: masked_str,
                     rule_id: rule.id.clone(),
-                    applied_at: chrono::Utc::now().to_rfc3339(),
+                    applied_at: chrono::Utc::now(),
                 });
             }
         }
@@ -1549,7 +1550,7 @@ mod tests {
             risk_score: 0.1,
             decision: TrustDecisionType::Allow,
             reason: "ok".to_string(),
-            created_at: "2025-01-01T00:00:00Z".to_string(),
+            created_at: Utc::now(),
         };
         roundtrip(&d);
     }
@@ -1599,7 +1600,7 @@ mod tests {
             original: "secret".to_string(),
             masked: "******".to_string(),
             rule_id: "mr1".to_string(),
-            applied_at: "2025-01-01T00:00:00Z".to_string(),
+            applied_at: Utc::now(),
         };
         roundtrip(&f);
     }

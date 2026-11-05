@@ -4,6 +4,7 @@
 //! 包含 GraphQL 聚合层使用的基础数据类型定义。
 
 use async_graphql::SimpleObject;
+use chrono::{DateTime, Utc};
 
 // ==================== GraphQL 类型定义 ====================
 
@@ -32,7 +33,7 @@ pub struct UnifiedTodoGql {
     pub source: String,
     pub priority: i32,
     pub status: String,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(SimpleObject, Clone)]

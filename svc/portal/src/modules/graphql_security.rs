@@ -449,7 +449,7 @@ pub struct DiscoveredQueryGql {
     pub source_ip_count: i32,
     pub status: String,
     pub reviewer: Option<String>,
-    pub reviewed_at: Option<String>,
+    pub reviewed_at: Option<DateTime<Utc>>,
     pub auto_approved: bool,
 }
 
@@ -626,7 +626,7 @@ pub fn get_discovered_queries(status: Option<DiscoveryStatus>) -> Vec<Discovered
             source_ip_count: q.source_ip_count() as i32,
             status: q.status.as_str().to_string(),
             reviewer: q.reviewer.clone(),
-            reviewed_at: q.reviewed_at.map(|t| t.to_rfc3339()),
+            reviewed_at: q.reviewed_at,
             auto_approved: q.auto_approved,
         })
         .collect()

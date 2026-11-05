@@ -1809,7 +1809,7 @@ pub struct PlanExecutionTraceGql {
     pub cache_hits: i32,
     pub services_used: Vec<String>,
     pub errors: Vec<String>,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 /// V44.0: 计划步骤轨迹 GQL
@@ -2708,7 +2708,7 @@ pub fn get_v3_traces(limit: usize) -> Vec<PlanExecutionTraceGql> {
             cache_hits: t.cache_hits as i32,
             services_used: t.services_used.clone(),
             errors: t.errors.clone(),
-            created_at: t.created_at.to_rfc3339(),
+            created_at: t.created_at,
         })
         .collect()
 }

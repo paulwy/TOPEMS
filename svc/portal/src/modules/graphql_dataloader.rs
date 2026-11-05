@@ -91,7 +91,7 @@ impl Loader<uuid::Uuid> for TodoLoader {
                         source: "portal".into(),
                         priority: 0,
                         status: "pending".into(),
-                        created_at: created_at.to_rfc3339(),
+                        created_at,
                     },
                 );
             }
@@ -105,7 +105,7 @@ impl Loader<uuid::Uuid> for TodoLoader {
                 source: "portal".into(),
                 priority: 0,
                 status: "not_found".into(),
-                created_at: chrono::Utc::now().to_rfc3339(),
+                created_at: chrono::Utc::now(),
             });
         }
 

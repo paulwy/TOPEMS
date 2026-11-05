@@ -60,8 +60,8 @@ pub struct PersistedQueryGql {
     pub operation_name: Option<String>,
     pub status: QueryStatus,
     pub version: u32,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
     pub created_by: String,
     pub tags: Vec<String>,
     pub usage_count: u64,
@@ -190,7 +190,7 @@ pub struct QueryQuotaGql {
     pub period: QuotaPeriod,
     pub current_usage: u64,
     pub remaining: u64,
-    pub reset_at: String,
+    pub reset_at: DateTime<Utc>,
     pub enforcement: bool,
 }
 
@@ -225,11 +225,11 @@ pub struct QueryApprovalRequestGql {
     pub team_id: Option<String>,
     pub org_id: Option<String>,
     pub status: ApprovalStatus,
-    pub requested_at: String,
-    pub reviewed_at: Option<String>,
+    pub requested_at: DateTime<Utc>,
+    pub reviewed_at: Option<DateTime<Utc>>,
     pub reviewer_id: Option<String>,
     pub review_notes: Option<String>,
-    pub expires_at: Option<String>,
+    pub expires_at: Option<DateTime<Utc>>,
     pub reason: String,
 }
 
@@ -268,8 +268,8 @@ pub struct GovernancePolicyGql {
     pub compliance_level: ComplianceLevel,
     pub enabled: bool,
     pub rules: Vec<GovernanceRuleGql>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, SimpleObject)]
@@ -371,8 +371,8 @@ impl PersistedQueryEntry {
             operation_name: self.operation_name.clone(),
             status: self.status,
             version: self.version,
-            created_at: self.created_at.to_rfc3339(),
-            updated_at: self.updated_at.to_rfc3339(),
+            created_at: self.created_at,
+            updated_at: self.updated_at,
             created_by: self.created_by.clone(),
             tags: self.tags.clone(),
             usage_count: usage,
@@ -850,16 +850,15 @@ impl QueryQuotaTracker {
         })
     }
 
-    fn calculate_reset_at(period: &QuotaPeriod) -> String {
+    fn calculate_reset_at(period: &QuotaPeriod) -> DateTime<Utc> {
         let now = Utc::now();
-        let reset = match period {
+        match period {
             QuotaPeriod::Second => now + chrono::Duration::seconds(1),
             QuotaPeriod::Minute => now + chrono::Duration::minutes(1),
             QuotaPeriod::Hour => now + chrono::Duration::hours(1),
             QuotaPeriod::Day => now + chrono::Duration::days(1),
             QuotaPeriod::Month => now + chrono::Duration::days(30),
-        };
-        reset.to_rfc3339()
+        }
     }
 }
 
@@ -886,7 +885,7 @@ impl ApprovalWorkflow {
             team_id: input.team_id,
             org_id: input.org_id,
             status: ApprovalStatus::Pending,
-            requested_at: Utc::now().to_rfc3339(),
+            requested_at: Utc::now(),
             reviewed_at: None,
             reviewer_id: None,
             review_notes: None,
@@ -908,12 +907,11 @@ impl ApprovalWorkflow {
         } else {
             ApprovalStatus::Rejected
         };
-        request.reviewed_at = Some(Utc::now().to_rfc3339());
+        request.reviewed_at = Some(Utc::now());
         request.reviewer_id = Some(input.reviewer_id);
         request.review_notes = input.review_notes;
         if let Some(hours) = input.expires_in_hours {
-            request.expires_at =
-                Some((Utc::now() + chrono::Duration::hours(hours as i64)).to_rfc3339());
+            request.expires_at = Some(Utc::now() + chrono::Duration::hours(hours as i64));
         }
         Some(request.clone())
     }
@@ -936,12 +934,7 @@ impl ApprovalWorkflow {
                 && r.requester_id == user_id
                 && r.status == ApprovalStatus::Approved
                 && r.expires_at
-                    .as_ref()
-                    .map(|e| {
-                        chrono::DateTime::parse_from_rfc3339(e)
-                            .map(|dt| dt.with_timezone(&Utc) > Utc::now())
-                            .unwrap_or(false)
-                    })
+                    .map(|e| e > Utc::now())
                     .unwrap_or(true)
         })
     }
@@ -993,8 +986,8 @@ impl GovernanceEngine {
             compliance_level: input.compliance_level,
             enabled: input.enabled.unwrap_or(true),
             rules,
-            created_at: now.to_rfc3339(),
-            updated_at: now.to_rfc3339(),
+            created_at: now,
+            updated_at: now,
         };
         self.policies.insert(policy_id, policy.clone());
         policy
@@ -2081,10 +2074,7 @@ mod tests {
             QuotaPeriod::Day,
             QuotaPeriod::Month,
         ] {
-            let reset_str = QueryQuotaTracker::calculate_reset_at(&period);
-            let reset_dt = chrono::DateTime::parse_from_rfc3339(&reset_str)
-                .unwrap()
-                .with_timezone(&Utc);
+            let reset_dt = QueryQuotaTracker::calculate_reset_at(&period);
             assert!(reset_dt > now);
         }
     }

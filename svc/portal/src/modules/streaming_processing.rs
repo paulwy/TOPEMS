@@ -17,6 +17,7 @@
 //!    - BackpressureState: 实时状态监控
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -200,7 +201,7 @@ pub struct StreamStats {
     pub event_count: u64,
     pub subscriber_count: u64,
     pub last_sequence: u64,
-    pub last_event_at: Option<String>,
+    pub last_event_at: Option<DateTime<Utc>>,
 }
 
 // ==================== 消息去重结构体 ====================
@@ -242,7 +243,7 @@ pub struct DedupHistoryEntry {
     pub original_id: String,
     pub duplicate_of: Option<String>,
     pub action: DedupAction,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 // ==================== 背压控制结构体 ====================
@@ -265,7 +266,7 @@ pub struct BackpressureState {
     pub utilization: f64,
     pub dropped_count: u64,
     pub last_drop_reason: Option<String>,
-    pub updated_at: String,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -285,7 +286,7 @@ pub struct DroppedEvent {
     pub stream_id: String,
     pub event_id: String,
     pub reason: String,
-    pub dropped_at: String,
+    pub dropped_at: DateTime<Utc>,
 }
 
 // ==================== 内存存储 ====================
@@ -511,7 +512,10 @@ impl StreamManagerV2 {
 
         let event_count = stream_events.len() as u64;
         let last_sequence = stream_events.iter().map(|e| e.sequence).max().unwrap_or(0);
-        let last_event_at = stream_events.last().map(|e| e.timestamp.clone());
+        let last_event_at = stream_events
+            .last()
+            .and_then(|e| DateTime::parse_from_rfc3339(&e.timestamp).ok())
+            .map(|t| t.with_timezone(&Utc));
 
         drop(events);
 
@@ -778,7 +782,7 @@ impl DeduplicationEngine {
                 original_id: r.original_id.clone(),
                 duplicate_of: r.duplicate_of.clone(),
                 action: r.action.clone(),
-                created_at: chrono::Utc::now().to_rfc3339(),
+                created_at: chrono::Utc::now(),
             })
             .collect()
     }
@@ -887,7 +891,7 @@ impl BackpressureController {
                 utilization: 0.0,
                 dropped_count: 0,
                 last_drop_reason: None,
-                updated_at: chrono::Utc::now().to_rfc3339(),
+                updated_at: chrono::Utc::now(),
             });
 
         state.queue_depth += 1;
@@ -897,7 +901,7 @@ impl BackpressureController {
         } else {
             0.0
         };
-        state.updated_at = chrono::Utc::now().to_rfc3339();
+        state.updated_at = chrono::Utc::now();
 
         let utilization = state.utilization;
         let queue_depth = state.queue_depth;
@@ -922,7 +926,7 @@ impl BackpressureController {
                 stream_id: stream_id.to_string(),
                 event_id,
                 reason: "queue_overflow".to_string(),
-                dropped_at: chrono::Utc::now().to_rfc3339(),
+                dropped_at: chrono::Utc::now(),
             });
             if dropped.len() > 10000 {
                 dropped.truncate(5000);
@@ -961,7 +965,7 @@ impl BackpressureController {
         let drained = state.queue_depth;
         state.queue_depth = 0;
         state.utilization = 0.0;
-        state.updated_at = chrono::Utc::now().to_rfc3339();
+        state.updated_at = chrono::Utc::now();
 
         Ok(drained)
     }
@@ -1039,7 +1043,7 @@ impl BackpressureController {
                 state.utilization = 0.0;
                 state.dropped_count = 0;
                 state.last_drop_reason = None;
-                state.updated_at = chrono::Utc::now().to_rfc3339();
+                state.updated_at = chrono::Utc::now();
             }
 
             Ok(true)
@@ -1795,7 +1799,7 @@ mod tests {
             event_count: 1000,
             subscriber_count: 5,
             last_sequence: 999,
-            last_event_at: Some("2025-01-01T00:00:00Z".into()),
+            last_event_at: Some(Utc::now()),
         };
         roundtrip(&s);
     }
@@ -1847,7 +1851,7 @@ mod tests {
             original_id: "evt-1".into(),
             duplicate_of: None,
             action: DedupAction::Pass,
-            created_at: "2025-01-01T00:00:00Z".into(),
+            created_at: Utc::now(),
         };
         roundtrip(&e);
     }
@@ -1874,7 +1878,7 @@ mod tests {
             utilization: 0.05,
             dropped_count: 0,
             last_drop_reason: None,
-            updated_at: "2025-01-01T00:00:00Z".into(),
+            updated_at: Utc::now(),
         };
         roundtrip(&s);
     }
@@ -1900,7 +1904,7 @@ mod tests {
             stream_id: "st-1".into(),
             event_id: "evt-99".into(),
             reason: "queue_full".into(),
-            dropped_at: "2025-01-01T00:00:00Z".into(),
+            dropped_at: Utc::now(),
         };
         roundtrip(&e);
     }

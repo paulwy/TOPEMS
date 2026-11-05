@@ -88,7 +88,7 @@ pub struct DistV4ExecutionTraceGql {
     pub nodes_used: Vec<String>,
     pub failed_nodes: Vec<String>,
     pub retries: i32,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 /// V47.0: 执行策略 V4（避免与 V44 ExecutionStrategy 冲突）
@@ -424,7 +424,7 @@ impl DistributedExecutionEngine {
                     nodes_used: Vec::new(),
                     failed_nodes: Vec::new(),
                     retries: 0,
-                    created_at: Utc::now().to_rfc3339(),
+                    created_at: Utc::now(),
                 };
             }
         };
@@ -706,7 +706,7 @@ impl DistributedExecutionEngine {
             nodes_used: t.nodes_used.clone(),
             failed_nodes: t.failed_nodes.clone(),
             retries: t.retries as i32,
-            created_at: t.created_at.to_rfc3339(),
+            created_at: t.created_at,
         }
     }
 }
@@ -1271,7 +1271,7 @@ pub struct CrossClusterQueryGql {
     pub fan_out: i32,
     pub merge_strategy: String,
     pub estimated_time_ms: i32,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 /// V47.0: 多集群统计 GQL
@@ -1732,7 +1732,7 @@ impl MultiClusterRouter {
             fan_out: q.fan_out as i32,
             merge_strategy: q.merge_strategy.clone(),
             estimated_time_ms: q.estimated_time_ms as i32,
-            created_at: q.created_at.to_rfc3339(),
+            created_at: q.created_at,
         }
     }
 }

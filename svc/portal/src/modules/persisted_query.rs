@@ -16,6 +16,7 @@
 //!    - 缓存复制 + 同步状态 + 复制策略
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -125,8 +126,8 @@ pub struct PersistedEntryV2 {
     pub version: u32,
     pub status: QueryStatus,
     pub created_by: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
     pub access_count: u64,
 }
 
@@ -144,7 +145,7 @@ pub struct PersistedVersionInfo {
     pub query_text: String,
     pub status: QueryStatus,
     pub created_by: Option<String>,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 // ==================== 版本化缓存结构体 ====================
@@ -155,8 +156,8 @@ pub struct CacheEntryV2 {
     pub value: serde_json::Value,
     pub version: String,
     pub checksum: Option<String>,
-    pub created_at: String,
-    pub expires_at: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub expires_at: Option<DateTime<Utc>>,
     pub size_bytes: u64,
     pub tags: Vec<String>,
 }
@@ -166,7 +167,7 @@ pub struct CacheVersion {
     pub version_id: String,
     pub description: Option<String>,
     pub entry_count: u32,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
     pub active: bool,
 }
 
@@ -187,7 +188,7 @@ pub struct EdgeEntry {
     pub value: serde_json::Value,
     pub location: EdgeCacheLocation,
     pub ttl_ms: u64,
-    pub replicated_at: String,
+    pub replicated_at: DateTime<Utc>,
     pub sync_status: SyncStatus,
 }
 
@@ -236,7 +237,7 @@ fn get_persisted_query_store() -> &'static PersistedQueryStore {
             version_id: uuid::Uuid::new_v4().to_string(),
             description: Some("初始版本".to_string()),
             entry_count: 0,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
             active: true,
         };
         let version_id = default_version.version_id.clone();
@@ -281,7 +282,7 @@ impl PersistedQueryV2 {
             )));
         }
 
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let entry = PersistedEntryV2 {
             id: uuid::Uuid::new_v4().to_string(),
             query_hash: query_hash.clone(),
@@ -290,7 +291,7 @@ impl PersistedQueryV2 {
             version: 1,
             status: QueryStatus::Active,
             created_by,
-            created_at: now.clone(),
+            created_at: now,
             updated_at: now,
             access_count: 0,
         };
@@ -306,7 +307,7 @@ impl PersistedQueryV2 {
                 query_text: entry.query_text.clone(),
                 status: QueryStatus::Active,
                 created_by: entry.created_by.clone(),
-                created_at: entry.created_at.clone(),
+                created_at: entry.created_at,
             }],
         );
 
@@ -335,7 +336,7 @@ impl PersistedQueryV2 {
         }
 
         entry.access_count += 1;
-        entry.updated_at = chrono::Utc::now().to_rfc3339();
+        entry.updated_at = chrono::Utc::now();
 
         Ok(entry.clone())
     }
@@ -390,7 +391,7 @@ impl PersistedQueryV2 {
         let new_version = entry.version + 1;
         entry.query_text = new_query_text.clone();
         entry.version = new_version;
-        entry.updated_at = chrono::Utc::now().to_rfc3339();
+        entry.updated_at = chrono::Utc::now();
         if let Some(user) = created_by {
             entry.created_by = Some(user);
         }
@@ -405,7 +406,7 @@ impl PersistedQueryV2 {
                 query_text: new_query_text,
                 status: QueryStatus::Active,
                 created_by: updated.created_by.clone(),
-                created_at: updated.updated_at.clone(),
+                created_at: updated.updated_at,
             });
         }
 
@@ -424,7 +425,7 @@ impl PersistedQueryV2 {
             .ok_or_else(|| format!("查询哈希不存在: {}", query_hash))?;
 
         entry.status = status.clone();
-        entry.updated_at = chrono::Utc::now().to_rfc3339();
+        entry.updated_at = chrono::Utc::now();
 
         let updated = entry.clone();
         drop(queries);
@@ -484,8 +485,7 @@ impl VersionedCache {
         drop(active_version);
 
         let now = chrono::Utc::now();
-        let expires_at =
-            ttl_seconds.map(|sec| (now + chrono::Duration::seconds(sec as i64)).to_rfc3339());
+        let expires_at = ttl_seconds.map(|sec| now + chrono::Duration::seconds(sec as i64));
 
         let size_bytes = serde_json::to_string(&value)
             .map(|s| s.len() as u64)
@@ -498,7 +498,7 @@ impl VersionedCache {
             value,
             version: version_id,
             checksum,
-            created_at: now.to_rfc3339(),
+            created_at: now,
             expires_at,
             size_bytes,
             tags: tags.unwrap_or_default(),
@@ -547,7 +547,7 @@ impl VersionedCache {
             version_id: uuid::Uuid::new_v4().to_string(),
             description,
             entry_count: 0,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
             active: true,
         };
 
@@ -585,8 +585,6 @@ impl VersionedCache {
             .values()
             .filter(|e| {
                 e.expires_at
-                    .as_ref()
-                    .and_then(|t| chrono::DateTime::parse_from_rfc3339(t).ok())
                     .map(|exp| now > exp)
                     .unwrap_or(false)
             })
@@ -611,8 +609,6 @@ impl VersionedCache {
         let now = chrono::Utc::now();
         entries.retain(|_, v| {
             v.expires_at
-                .as_ref()
-                .and_then(|t| chrono::DateTime::parse_from_rfc3339(t).ok())
                 .map(|exp| now <= exp)
                 .unwrap_or(true)
         });
@@ -655,7 +651,7 @@ impl EdgePersistence {
             value,
             location,
             ttl_ms: ttl,
-            replicated_at: chrono::Utc::now().to_rfc3339(),
+            replicated_at: chrono::Utc::now(),
             sync_status: SyncStatus::Synced,
         };
 
@@ -716,7 +712,7 @@ impl EdgePersistence {
                     value: source.value.clone(),
                     location: target.clone(),
                     ttl_ms: source.ttl_ms,
-                    replicated_at: chrono::Utc::now().to_rfc3339(),
+                    replicated_at: chrono::Utc::now(),
                     sync_status: SyncStatus::Synced,
                 },
             );
@@ -1482,8 +1478,8 @@ mod tests {
             version: 1,
             status: QueryStatus::Active,
             created_by: None,
-            created_at: "2025-01-01T00:00:00Z".to_string(),
-            updated_at: "2025-01-01T00:00:00Z".to_string(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
+            updated_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
             access_count: 42,
         };
         roundtrip(&e);
@@ -1507,7 +1503,7 @@ mod tests {
             query_text: "{ me { name } }".to_string(),
             status: QueryStatus::Deprecated,
             created_by: Some("admin".to_string()),
-            created_at: "2025-01-01T00:00:00Z".to_string(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&info);
     }
@@ -1519,7 +1515,7 @@ mod tests {
             value: Value::String("cached".to_string()),
             version: "v1".to_string(),
             checksum: None,
-            created_at: "2025-01-01T00:00:00Z".to_string(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
             expires_at: None,
             size_bytes: 256,
             tags: vec!["hot".to_string()],
@@ -1533,7 +1529,7 @@ mod tests {
             version_id: "cv1".to_string(),
             description: Some("initial".to_string()),
             entry_count: 50,
-            created_at: "2025-01-01T00:00:00Z".to_string(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
             active: true,
         };
         roundtrip(&cv);
@@ -1558,7 +1554,7 @@ mod tests {
             value: Value::Null,
             location: EdgeCacheLocation::CDN,
             ttl_ms: 3600000,
-            replicated_at: "2025-01-01T00:00:00Z".to_string(),
+            replicated_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
             sync_status: SyncStatus::Synced,
         };
         roundtrip(&ee);

@@ -17,6 +17,7 @@
 //!    - 背压处理 (Backpressure handling)
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -144,7 +145,7 @@ pub struct Subscriber {
     pub client_id: String,
     pub channels: Vec<SubscriptionChannel>,
     pub last_seen: String,
-    pub connected_at: String,
+    pub connected_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -153,7 +154,7 @@ pub struct SubscriptionMessage {
     pub channel: SubscriptionChannel,
     pub payload: serde_json::Value,
     pub seq: u64,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -161,7 +162,7 @@ pub struct ChannelStats {
     pub channel: SubscriptionChannel,
     pub subscriber_count: usize,
     pub message_count: u64,
-    pub last_message_at: Option<String>,
+    pub last_message_at: Option<DateTime<Utc>>,
 }
 
 // ==================== 消息队列结构体 ====================
@@ -215,8 +216,8 @@ pub struct DeadLetterEntry {
     pub retry_count: u32,
     pub max_retries: u32,
     pub status: String,
-    pub last_retry_at: Option<String>,
-    pub created_at: String,
+    pub last_retry_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
 }
 
 // ==================== 推送优化结构体 ====================
@@ -224,7 +225,7 @@ pub struct DeadLetterEntry {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PushBatch {
     pub messages: Vec<SubscriptionMessage>,
-    pub aggregated_at: String,
+    pub aggregated_at: DateTime<Utc>,
     pub target_subscribers: usize,
     pub size_estimate: usize,
 }
@@ -301,12 +302,12 @@ impl SubscriptionGateway {
         let store = get_subscription_store();
         let mut subscribers = store.subscribers.lock().await;
 
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let subscriber = Subscriber {
             id: uuid::Uuid::new_v4().to_string(),
             client_id,
             channels,
-            last_seen: now.clone(),
+            last_seen: now.to_rfc3339(),
             connected_at: now,
         };
 
@@ -339,7 +340,7 @@ impl SubscriptionGateway {
             channel: channel.clone(),
             payload,
             seq: current_seq,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         };
 
         let mut messages = store.messages.lock().await;
@@ -387,7 +388,7 @@ impl SubscriptionGateway {
             let last_msg = messages
                 .iter()
                 .rfind(|m| m.channel == channel)
-                .map(|m| m.created_at.clone());
+                .map(|m| m.created_at);
 
             stats.push(ChannelStats {
                 channel,
@@ -557,7 +558,7 @@ impl MessageQueueBridge {
             max_retries: 3,
             status: "pending".to_string(),
             last_retry_at: None,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         };
 
         dlq.push(entry.clone());
@@ -598,7 +599,7 @@ impl PushOptimizer {
 
         let batch = PushBatch {
             messages: sorted_messages,
-            aggregated_at: chrono::Utc::now().to_rfc3339(),
+            aggregated_at: chrono::Utc::now(),
             target_subscribers: target_count,
             size_estimate,
         };
@@ -1092,7 +1093,7 @@ mod tests {
             client_id: "c1".to_string(),
             channels: vec![SubscriptionChannel::TicketUpdates],
             last_seen: "2025-01-01T00:00:00Z".to_string(),
-            connected_at: "2025-01-01T00:00:00Z".to_string(),
+            connected_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&s);
     }
@@ -1104,7 +1105,7 @@ mod tests {
             channel: SubscriptionChannel::AuditLogs,
             payload: Value::Null,
             seq: 1,
-            created_at: "2025-01-01T00:00:00Z".to_string(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&m);
     }
@@ -1169,7 +1170,7 @@ mod tests {
             max_retries: 5,
             status: "failed".to_string(),
             last_retry_at: None,
-            created_at: "2025-01-01T00:00:00Z".to_string(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&d);
     }
@@ -1178,7 +1179,7 @@ mod tests {
     fn test_push_batch_roundtrip() {
         let pb = PushBatch {
             messages: vec![],
-            aggregated_at: "2025-01-01T00:00:00Z".to_string(),
+            aggregated_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
             target_subscribers: 5,
             size_estimate: 1024,
         };

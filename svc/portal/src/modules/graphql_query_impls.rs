@@ -88,7 +88,7 @@ pub async fn impl_unified_todos(ctx: &Context<'_>) -> async_graphql::Result<Vec<
                     .and_then(|p| p.parse::<i32>().ok())
                     .unwrap_or(0),
                 status: task.status,
-                created_at: task.created_at.to_rfc3339(),
+                created_at: task.created_at,
             });
         }
     }
@@ -116,7 +116,7 @@ pub async fn impl_unified_todos(ctx: &Context<'_>) -> async_graphql::Result<Vec<
                     source: "portal".into(),
                     priority: 0,
                     status: "pending".into(),
-                    created_at: created_at.to_rfc3339(),
+                    created_at,
                 });
             }
         }
@@ -142,8 +142,9 @@ pub async fn impl_unified_todos(ctx: &Context<'_>) -> async_graphql::Result<Vec<
                 created_at: n
                     .get("created_at")
                     .and_then(|v| v.as_str())
-                    .unwrap_or("")
-                    .to_string(),
+                    .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+                    .map(|t| t.with_timezone(&chrono::Utc))
+                    .unwrap_or_else(chrono::Utc::now),
             });
         }
     }

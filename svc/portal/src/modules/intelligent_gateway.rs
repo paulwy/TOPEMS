@@ -15,6 +15,7 @@
 //!    - Schema 版本兼容性检查
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
+use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -231,7 +232,7 @@ pub struct RoutingTableEntry {
     pub confidence: f64,
     pub reason: String,
     pub alternatives: Vec<RoutingAlternative>,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 // ==================== 自动 Schema Stitching ====================
@@ -253,7 +254,7 @@ pub struct TypeConflict {
     pub conflicting_fields: Vec<serde_json::Value>,
     pub resolution: ResolutionStrategy,
     pub status: ConflictStatus,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -264,7 +265,7 @@ pub struct StitchPlan {
     pub conflicts: Vec<TypeConflict>,
     pub resolution_strategy: ResolutionStrategy,
     pub status: StitchStatus,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -274,7 +275,7 @@ pub struct StitchLogEntry {
     pub action: String,
     pub status: String,
     pub details: Option<serde_json::Value>,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -287,7 +288,7 @@ pub struct StitchStatusReport {
     pub conflict_count: usize,
     pub resolved_conflicts: usize,
     pub last_action: Option<String>,
-    pub updated_at: String,
+    pub updated_at: DateTime<Utc>,
 }
 
 // ==================== 请求 / 响应结构 ====================
@@ -675,7 +676,7 @@ impl AIQueryRouter {
             confidence: decision.confidence,
             reason: decision.reason.clone(),
             alternatives: decision.alternatives.clone(),
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         };
 
         let mut table = store.routing_table.lock().await;
@@ -907,7 +908,7 @@ impl AutoSchemaStitcher {
                     conflicting_fields: fields.clone(),
                     resolution: ResolutionStrategy::MergeFields,
                     status: ConflictStatus::Pending,
-                    created_at: chrono::Utc::now().to_rfc3339(),
+                    created_at: chrono::Utc::now(),
                 });
 
                 merged_types.push(serde_json::json!({
@@ -940,7 +941,7 @@ impl AutoSchemaStitcher {
             conflicts: conflicts.clone(),
             resolution_strategy: strategy,
             status: StitchStatus::Planning,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         };
 
         let mut plans = store.stitch_plans.lock().await;
@@ -1050,7 +1051,7 @@ impl AutoSchemaStitcher {
                 "merged_type_count": plan.merged_types.len(),
                 "resolved_conflicts": plan.conflicts.iter().filter(|c| c.status == ConflictStatus::Resolved).count(),
             })),
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         });
 
         Ok(plan.clone())
@@ -1160,7 +1161,7 @@ impl AutoSchemaStitcher {
             conflict_count: plan.conflicts.len(),
             resolved_conflicts: resolved,
             last_action,
-            updated_at: chrono::Utc::now().to_rfc3339(),
+            updated_at: chrono::Utc::now(),
         })
     }
 
@@ -1191,7 +1192,7 @@ impl AutoSchemaStitcher {
             action: "rollback_stitch".to_string(),
             status: "rolled_back".to_string(),
             details: None,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         });
 
         Ok(plan_cloned)
@@ -1780,7 +1781,7 @@ mod tests {
             confidence: 0.9,
             reason: "cache hit".into(),
             alternatives: vec![],
-            created_at: "2025-01-01T00:00:00Z".into(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         assert!(roundtrip(&v));
     }
@@ -1806,7 +1807,7 @@ mod tests {
             conflicting_fields: vec![serde_json::json!({"field": "phone"})],
             resolution: ResolutionStrategy::MergeFields,
             status: ConflictStatus::Pending,
-            created_at: "2025-01-01T00:00:00Z".into(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         assert!(roundtrip(&v));
     }
@@ -1820,7 +1821,7 @@ mod tests {
             conflicts: vec![],
             resolution_strategy: ResolutionStrategy::TakeFirst,
             status: StitchStatus::Pending,
-            created_at: "2025-01-01T00:00:00Z".into(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         assert!(roundtrip(&v));
     }
@@ -1833,7 +1834,7 @@ mod tests {
             action: "discover".into(),
             status: "ok".into(),
             details: Some(serde_json::json!({"count": 10})),
-            created_at: "2025-01-01T00:00:00Z".into(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         assert!(roundtrip(&v));
     }
@@ -1849,7 +1850,7 @@ mod tests {
             conflict_count: 2,
             resolved_conflicts: 1,
             last_action: Some("merged User".into()),
-            updated_at: "2025-01-01T00:00:00Z".into(),
+            updated_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         assert!(roundtrip(&v));
     }

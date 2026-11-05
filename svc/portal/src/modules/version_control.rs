@@ -17,6 +17,7 @@
 //!    - BreakingChange: 破坏性变更详情（字段移除/类型变更/枚举变更等）
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -204,9 +205,9 @@ pub struct BreakingChange {
 pub struct APIVersion {
     pub version: String,
     pub status: APIVersionStatus,
-    pub released_at: String,
-    pub deprecated_at: Option<String>,
-    pub sunset_at: Option<String>,
+    pub released_at: DateTime<Utc>,
+    pub deprecated_at: Option<DateTime<Utc>>,
+    pub sunset_at: Option<DateTime<Utc>>,
     pub changelog: Option<String>,
     pub breaking_changes: Vec<BreakingChange>,
 }
@@ -258,7 +259,7 @@ pub struct CanaryResult {
     pub error_rate_canary: f64,
     pub error_rate_baseline: f64,
     pub winner: Option<CanaryWinner>,
-    pub recorded_at: String,
+    pub recorded_at: DateTime<Utc>,
 }
 
 // --- 向后兼容保证 ---
@@ -272,7 +273,7 @@ pub struct CompatibilityReport {
     pub deprecated_fields: Vec<String>,
     pub compatible: bool,
     pub migration_path: Option<Vec<String>>,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -359,11 +360,11 @@ impl APIVersionManager {
             )));
         }
 
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let api_version = APIVersion {
             version: version.clone(),
             status: APIVersionStatus::Active,
-            released_at: now.clone(),
+            released_at: now,
             deprecated_at: None,
             sunset_at: None,
             changelog,
@@ -419,7 +420,7 @@ impl APIVersionManager {
             .ok_or_else(|| format!("版本 '{}' 不存在", version))?;
 
         v.status = APIVersionStatus::Deprecated;
-        v.deprecated_at = Some(chrono::Utc::now().to_rfc3339());
+        v.deprecated_at = Some(chrono::Utc::now());
 
         let updated = v.clone();
         Ok(updated)
@@ -440,7 +441,7 @@ impl APIVersionManager {
         }
 
         v.status = APIVersionStatus::Sunset;
-        v.sunset_at = Some(chrono::Utc::now().to_rfc3339());
+        v.sunset_at = Some(chrono::Utc::now());
 
         let updated = v.clone();
         Ok(updated)
@@ -721,7 +722,7 @@ impl CanaryManager {
                 error_rate_canary: error_canary,
                 error_rate_baseline: error_baseline,
                 winner: Some(winner),
-                recorded_at: chrono::Utc::now().to_rfc3339(),
+                recorded_at: chrono::Utc::now(),
             });
         }
 
@@ -808,7 +809,7 @@ impl CompatibilityChecker {
             deprecated_fields,
             compatible,
             migration_path,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         };
 
         let mut reports = store.compatibility_reports.lock().await;
@@ -1694,7 +1695,7 @@ mod tests {
         let v = APIVersion {
             version: "v1".into(),
             status: APIVersionStatus::Active,
-            released_at: "2025-01-01".into(),
+            released_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
             deprecated_at: None,
             sunset_at: None,
             changelog: Some("init".into()),
@@ -1756,7 +1757,7 @@ mod tests {
             error_rate_canary: 0.01,
             error_rate_baseline: 0.02,
             winner: Some(CanaryWinner::Canary),
-            recorded_at: "2025-01-01T00:00:00Z".into(),
+            recorded_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         assert!(roundtrip(&v));
     }
@@ -1771,7 +1772,7 @@ mod tests {
             deprecated_fields: vec![],
             compatible: true,
             migration_path: Some(vec!["step1".into()]),
-            created_at: "2025-01-01T00:00:00Z".into(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         assert!(roundtrip(&v));
     }

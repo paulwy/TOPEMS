@@ -652,9 +652,9 @@ pub struct SubscriptionInfoGql {
     pub variables: Option<serde_json::Value>,
     pub channel: String,
     pub filter: Option<SubscriptionFilterGql>,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
     pub events_received: u64,
-    pub last_event_at: Option<String>,
+    pub last_event_at: Option<DateTime<Utc>>,
 }
 
 /// 订阅会话 GraphQL 类型
@@ -665,7 +665,7 @@ pub struct SubscriptionSessionGql {
     pub user_id: Option<String>,
     pub subscription_count: u64,
     pub subscriptions: Vec<SubscriptionInfoGql>,
-    pub connected_at: String,
+    pub connected_at: DateTime<Utc>,
     pub last_active: String,
 }
 
@@ -750,9 +750,9 @@ impl From<SubscriptionInfo> for SubscriptionInfoGql {
             variables: info.variables,
             channel: channel_name(info.channel),
             filter: info.filter.map(|f| f.into()),
-            created_at: info.created_at.to_rfc3339(),
+            created_at: info.created_at,
             events_received: info.events_received,
-            last_event_at: info.last_event_at.map(|t| t.to_rfc3339()),
+            last_event_at: info.last_event_at,
         }
     }
 }
@@ -772,7 +772,7 @@ impl From<SubscriptionSession> for SubscriptionSessionGql {
             user_id: session.user_id,
             subscription_count: session.subscriptions.len() as u64,
             subscriptions,
-            connected_at: session.connected_at.to_rfc3339(),
+            connected_at: session.connected_at,
             last_active: session.last_active.to_rfc3339(),
         }
     }

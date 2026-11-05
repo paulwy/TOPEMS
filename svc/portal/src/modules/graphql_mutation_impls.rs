@@ -121,7 +121,7 @@ pub async fn impl_create_todo(
         source: "portal".into(),
         priority: 0,
         status: "pending".into(),
-        created_at: created_at.to_rfc3339(),
+        created_at,
     })
 }
 

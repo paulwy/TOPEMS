@@ -21,7 +21,7 @@
 //! 6. IntelligentCache — 智能缓存策略（访问模式学习 + 自适应失效）
 
 use async_graphql::{Context, Enum, InputObject, Object, SimpleObject};
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -1388,7 +1388,7 @@ pub struct SubSchemaEntryGql {
     pub subscription_root: Option<String>,
     pub version: String,
     pub health_status: String,
-    pub merged_at: String,
+    pub merged_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, InputObject)]
@@ -1416,7 +1416,7 @@ impl SubSchemaEntryInput {
             subscription_root: self.subscription_root.clone(),
             version: self.version.clone().unwrap_or_else(|| "1.0.0".to_string()),
             health_status: "healthy".to_string(),
-            merged_at: Utc::now().to_rfc3339(),
+            merged_at: Utc::now(),
         }
     }
 }
@@ -1429,7 +1429,7 @@ pub struct StitchedSchemaGql {
     pub sub_schemas: Vec<SubSchemaEntryGql>,
     pub total_types: u32,
     pub field_mappings: Vec<FieldMappingRuleGql>,
-    pub stitched_at: String,
+    pub stitched_at: DateTime<Utc>,
 }
 
 // ---------- 智能缓存类型 ----------
@@ -1484,10 +1484,10 @@ pub struct CachePolicyGql {
 pub struct CacheEntryGql {
     pub key: String,
     pub size_bytes: u64,
-    pub created_at: String,
-    pub expires_at: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub expires_at: Option<DateTime<Utc>>,
     pub access_count: u64,
-    pub last_accessed_at: String,
+    pub last_accessed_at: DateTime<Utc>,
     pub invalidation_reason: Option<String>,
 }
 
@@ -1757,7 +1757,7 @@ impl SchemaStitcher {
             sub_schemas,
             total_types,
             field_mappings: self.field_mappings.clone(),
-            stitched_at: Utc::now().to_rfc3339(),
+            stitched_at: Utc::now(),
         }
     }
 
@@ -1972,10 +1972,10 @@ impl IntelligentCache {
         self.entries.get(key).map(|e| CacheEntryGql {
             key: e.key.clone(),
             size_bytes: e.size_bytes,
-            created_at: e.created_at.to_rfc3339(),
-            expires_at: e.expires_at.map(|t| t.to_rfc3339()),
+            created_at: e.created_at,
+            expires_at: e.expires_at,
             access_count: e.access_count,
-            last_accessed_at: e.last_accessed_at.to_rfc3339(),
+            last_accessed_at: e.last_accessed_at,
             invalidation_reason: e.invalidation_reason.clone(),
         })
     }
@@ -1990,10 +1990,10 @@ impl IntelligentCache {
             .map(|e| CacheEntryGql {
                 key: e.key.clone(),
                 size_bytes: e.size_bytes,
-                created_at: e.created_at.to_rfc3339(),
-                expires_at: e.expires_at.map(|t| t.to_rfc3339()),
+                created_at: e.created_at,
+                expires_at: e.expires_at,
                 access_count: e.access_count,
-                last_accessed_at: e.last_accessed_at.to_rfc3339(),
+                last_accessed_at: e.last_accessed_at,
                 invalidation_reason: e.invalidation_reason.clone(),
             })
             .collect()

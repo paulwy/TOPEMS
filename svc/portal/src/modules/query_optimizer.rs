@@ -17,6 +17,7 @@
 //!    - AccelerationResult: 加速结果 + 提速倍数
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -152,8 +153,8 @@ pub struct CompilationRule {
     pub rule_type: CompilationRuleType,
     pub description: Option<String>,
     pub enabled: bool,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -165,7 +166,7 @@ pub struct CompiledQuery {
     pub complexity_score: f64,
     pub estimated_cost: f64,
     pub optimizations_applied: Vec<String>,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -197,7 +198,7 @@ pub struct ExecutionPlan {
     pub estimated_cost: f64,
     pub parallelism: u32,
     pub score: f64,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -228,7 +229,7 @@ pub struct AccelerationResult {
     pub optimized_time_ms: u64,
     pub speedup_factor: f64,
     pub steps_saved: u32,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -237,7 +238,7 @@ pub struct AccelerationConfig {
     pub strategy: AccelerationStrategy,
     pub enabled: bool,
     pub parameters: serde_json::Value,
-    pub updated_at: String,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -264,7 +265,7 @@ struct QueryOptimizerStore {
 fn get_query_optimizer_store() -> &'static QueryOptimizerStore {
     static STORE: LazyLock<QueryOptimizerStore> = LazyLock::new(|| {
         let mut compilation_rules = HashMap::new();
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
 
         for rule_type in CompilationRuleType::all() {
             let id = uuid::Uuid::new_v4().to_string();
@@ -282,8 +283,8 @@ fn get_query_optimizer_store() -> &'static QueryOptimizerStore {
                     rule_type,
                     description: Some(description),
                     enabled: true,
-                    created_at: now.clone(),
-                    updated_at: now.clone(),
+                    created_at: now,
+                    updated_at: now,
                 },
             );
         }
@@ -297,7 +298,7 @@ fn get_query_optimizer_store() -> &'static QueryOptimizerStore {
                     strategy,
                     enabled: true,
                     parameters: serde_json::json!({}),
-                    updated_at: now.clone(),
+                    updated_at: now,
                 },
             );
         }
@@ -361,7 +362,7 @@ impl QueryCompiler {
         let complexity_score = Self::estimate_complexity(&optimized_query);
         let estimated_cost = Self::estimate_cost(&optimized_query, complexity_score);
 
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let compiled = CompiledQuery {
             id: uuid::Uuid::new_v4().to_string(),
             original_query,
@@ -408,7 +409,7 @@ impl QueryCompiler {
             .get_mut(&key)
             .ok_or_else(|| format!("规则不存在: {}", key))?;
         rule.enabled = true;
-        rule.updated_at = chrono::Utc::now().to_rfc3339();
+        rule.updated_at = chrono::Utc::now();
         Ok(rule.clone())
     }
 
@@ -423,7 +424,7 @@ impl QueryCompiler {
             .get_mut(&key)
             .ok_or_else(|| format!("规则不存在: {}", key))?;
         rule.enabled = false;
-        rule.updated_at = chrono::Utc::now().to_rfc3339();
+        rule.updated_at = chrono::Utc::now();
         Ok(rule.clone())
     }
 
@@ -588,7 +589,7 @@ impl QueryPlanner {
         let parallelism = Self::calculate_parallelism(&steps);
         let score = Self::calculate_plan_score(&steps, estimated_cost, parallelism);
 
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let plan = ExecutionPlan {
             id: uuid::Uuid::new_v4().to_string(),
             query_hash,
@@ -836,7 +837,7 @@ impl ExecutionAccelerator {
 
         let optimized_time_ms = (original_time_ms as f64 / total_speedup) as u64;
 
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let result = AccelerationResult {
             id: uuid::Uuid::new_v4().to_string(),
             strategy: selected_strategy,
@@ -896,7 +897,7 @@ impl ExecutionAccelerator {
         if let Some(params) = parameters {
             config.parameters = params;
         }
-        config.updated_at = chrono::Utc::now().to_rfc3339();
+        config.updated_at = chrono::Utc::now();
 
         Ok(config.clone())
     }
@@ -1399,8 +1400,8 @@ mod tests {
             rule_type: CompilationRuleType::FieldPruning,
             description: Some("prune unused".to_string()),
             enabled: true,
-            created_at: "2025-01-01T00:00:00Z".to_string(),
-            updated_at: "2025-01-01T00:00:00Z".to_string(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
+            updated_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&r);
     }
@@ -1415,7 +1416,7 @@ mod tests {
             complexity_score: 3.5,
             estimated_cost: 1.2,
             optimizations_applied: vec!["field_pruning".to_string()],
-            created_at: "2025-01-01T00:00:00Z".to_string(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&q);
     }
@@ -1454,7 +1455,7 @@ mod tests {
             estimated_cost: 2.5,
             parallelism: 4,
             score: 0.85,
-            created_at: "2025-01-01T00:00:00Z".to_string(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&ep);
     }
@@ -1468,7 +1469,7 @@ mod tests {
             estimated_cost: 3.0,
             parallelism: 2,
             score: 0.7,
-            created_at: "".to_string(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         let plan_b = ExecutionPlan {
             id: "pb".to_string(),
@@ -1477,7 +1478,7 @@ mod tests {
             estimated_cost: 1.5,
             parallelism: 8,
             score: 0.9,
-            created_at: "".to_string(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         let r = PlanCompareResult {
             plan_a,
@@ -1510,7 +1511,7 @@ mod tests {
             optimized_time_ms: 250,
             speedup_factor: 4.0,
             steps_saved: 3,
-            created_at: "2025-01-01T00:00:00Z".to_string(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&r);
     }
@@ -1522,7 +1523,7 @@ mod tests {
             strategy: AccelerationStrategy::BatchExecution,
             enabled: true,
             parameters: Value::Null,
-            updated_at: "2025-01-01T00:00:00Z".to_string(),
+            updated_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&c);
     }

@@ -46,8 +46,8 @@ pub struct FederatedCacheEntryGql {
     pub query_hash: String,
     pub data: serde_json::Value,
     pub tier: CacheTierGql,
-    pub created_at: String,
-    pub expires_at: String,
+    pub created_at: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
     pub hit_count: i64,
     pub size_bytes: i64,
     pub partial: bool,
@@ -465,8 +465,8 @@ impl FederatedQueryCacheV2 {
             query_hash: entry.query_hash.clone(),
             data: entry.data.clone(),
             tier: entry.tier,
-            created_at: entry.created_at.to_rfc3339(),
-            expires_at: entry.expires_at.to_rfc3339(),
+            created_at: entry.created_at,
+            expires_at: entry.expires_at,
             hit_count: entry.hit_count as i64,
             size_bytes: entry.size_bytes as i64,
             partial: entry.partial,
@@ -496,7 +496,7 @@ pub struct PrefetchRuleGql {
     pub confidence_threshold: f64,
     pub min_occurrences: i32,
     pub enabled: bool,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
     pub hit_count: i64,
 }
 
@@ -806,7 +806,7 @@ impl PrefetchEngine {
                 confidence_threshold: r.confidence_threshold,
                 min_occurrences: r.min_occurrences as i32,
                 enabled: r.enabled,
-                created_at: r.created_at.to_rfc3339(),
+                created_at: r.created_at,
                 hit_count: r.hit_count as i64,
             })
             .collect()
@@ -843,7 +843,7 @@ impl PrefetchEngine {
             confidence_threshold: rule.confidence_threshold,
             min_occurrences: rule.min_occurrences as i32,
             enabled: rule.enabled,
-            created_at: rule.created_at.to_rfc3339(),
+            created_at: rule.created_at,
             hit_count: rule.hit_count as i64,
         };
         state.rules.push(rule);
@@ -939,8 +939,8 @@ pub struct EdgeOrchFunctionGql {
     pub entry_point: String,
     pub timeout_ms: i64,
     pub memory_mb: i32,
-    pub created_at: String,
-    pub last_deployed: String,
+    pub created_at: DateTime<Utc>,
+    pub last_deployed: DateTime<Utc>,
     pub enabled: bool,
     pub version: String,
 }
@@ -970,9 +970,9 @@ pub struct EdgeExecutionPlanGql {
     pub functions: Vec<EdgeOrchFunctionGql>,
     pub target_node_id: Option<String>,
     pub target_node: Option<EdgeOrchNodeGql>,
-    pub created_at: String,
-    pub started_at: Option<String>,
-    pub completed_at: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub started_at: Option<DateTime<Utc>>,
+    pub completed_at: Option<DateTime<Utc>>,
     pub duration_ms: Option<i64>,
     pub error_message: Option<String>,
 }
@@ -1305,8 +1305,8 @@ impl EdgeFunctionOrchestrator {
             entry_point: f.entry_point.clone(),
             timeout_ms: f.timeout_ms as i64,
             memory_mb: f.memory_mb as i32,
-            created_at: f.created_at.to_rfc3339(),
-            last_deployed: f.last_deployed.to_rfc3339(),
+            created_at: f.created_at,
+            last_deployed: f.last_deployed,
             enabled: f.enabled,
             version: f.version.clone(),
         }
@@ -1355,9 +1355,9 @@ impl EdgeFunctionOrchestrator {
             functions,
             target_node_id: p.target_node_id.clone(),
             target_node,
-            created_at: p.created_at.to_rfc3339(),
-            started_at: p.started_at.map(|t| t.to_rfc3339()),
-            completed_at: p.completed_at.map(|t| t.to_rfc3339()),
+            created_at: p.created_at,
+            started_at: p.started_at,
+            completed_at: p.completed_at,
             duration_ms,
             error_message: p.error_message.clone(),
         }
@@ -1763,7 +1763,7 @@ pub struct SchemaDiffGql {
     pub breaking_changes_count: i32,
     pub safe_changes_count: i32,
     pub changes: Vec<BreakingChangeGql>,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 /// V46.0: 破坏性变更
@@ -1792,7 +1792,7 @@ pub struct MigrationScriptGql {
     pub language: String,
     pub is_auto_generated: bool,
     pub requires_manual_review: bool,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 /// V46.0: 兼容性检查结果
@@ -1962,7 +1962,7 @@ impl MigrationToolkit {
             breaking_changes_count: 0,
             safe_changes_count: 0,
             changes: vec![],
-            created_at: Utc::now().to_rfc3339(),
+            created_at: Utc::now(),
         }
     }
 
@@ -2022,7 +2022,7 @@ impl MigrationToolkit {
             language: "javascript".into(),
             is_auto_generated: true,
             requires_manual_review: true,
-            created_at: now.to_rfc3339(),
+            created_at: now,
         }
     }
 
@@ -2103,7 +2103,7 @@ impl MigrationToolkit {
             breaking_changes_count: breaking as i32,
             safe_changes_count: (d.changes.len() - breaking) as i32,
             changes: d.changes.iter().map(Self::change_to_gql).collect(),
-            created_at: d.created_at.to_rfc3339(),
+            created_at: d.created_at,
         }
     }
 
@@ -2132,7 +2132,7 @@ impl MigrationToolkit {
             language: s.language.clone(),
             is_auto_generated: s.is_auto_generated,
             requires_manual_review: s.requires_manual_review,
-            created_at: s.created_at.to_rfc3339(),
+            created_at: s.created_at,
         }
     }
 }
@@ -2185,9 +2185,9 @@ pub struct DeploymentRecordGql {
     pub status: DeploymentStatusGql,
     pub canary_percent: i32,
     pub traffic_percent: i32,
-    pub created_at: String,
-    pub started_at: Option<String>,
-    pub completed_at: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub started_at: Option<DateTime<Utc>>,
+    pub completed_at: Option<DateTime<Utc>>,
     pub duration_ms: Option<i64>,
     pub error_count: i64,
     pub total_requests: i64,
@@ -2580,9 +2580,9 @@ impl DeploymentManager {
             status: d.status,
             canary_percent: d.canary_percent as i32,
             traffic_percent: d.traffic_percent as i32,
-            created_at: d.created_at.to_rfc3339(),
-            started_at: d.started_at.map(|t| t.to_rfc3339()),
-            completed_at: d.completed_at.map(|t| t.to_rfc3339()),
+            created_at: d.created_at,
+            started_at: d.started_at,
+            completed_at: d.completed_at,
             duration_ms,
             error_count: d.error_count as i64,
             total_requests: d.total_requests as i64,
