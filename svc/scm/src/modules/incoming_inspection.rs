@@ -1393,7 +1393,7 @@ pub async fn list_inspection_records(
         "scm",
         r#"
         SELECT id, inspection_id, item_code, item_name, specification, unit,
-               batch_no, quantity, samplesize, inspectionitems, inspection_method,
+               batch_no, quantity::float8, samplesize::float8, inspectionitems, inspection_method,
                inspection_standard, result, defect_details, created_at, updated_at
         FROM scm.inspection_records
         WHERE inspection_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
@@ -1457,7 +1457,7 @@ pub async fn create_inspection_record(
              inspection_standard, result, defect_details)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, 0), $10, $11, $12, $13, $14)
         RETURNING id, inspection_id, item_code, item_name, specification, unit,
-                  batch_no, quantity, samplesize, inspectionitems, inspection_method,
+                  batch_no, quantity::float8, samplesize::float8, inspectionitems, inspection_method,
                   inspection_standard, result, defect_details, created_at, updated_at
         "#
     ))
@@ -1533,7 +1533,7 @@ pub async fn get_inspection_record(
         "scm",
         r#"
         SELECT id, inspection_id, item_code, item_name, specification, unit,
-               batch_no, quantity, samplesize, inspectionitems, inspection_method,
+               batch_no, quantity::float8, samplesize::float8, inspectionitems, inspection_method,
                inspection_standard, result, defect_details, created_at, updated_at
         FROM scm.inspection_records
         WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
@@ -1598,7 +1598,7 @@ pub async fn update_inspection_record(
             updated_at = NOW()
         WHERE id = $1 AND ($14 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $14::uuid)
         RETURNING id, inspection_id, item_code, item_name, specification, unit,
-                  batch_no, quantity, samplesize, inspectionitems, inspection_method,
+                  batch_no, quantity::float8, samplesize::float8, inspectionitems, inspection_method,
                   inspection_standard, result, defect_details, created_at, updated_at
         "#
     ))

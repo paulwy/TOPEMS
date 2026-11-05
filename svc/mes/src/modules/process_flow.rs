@@ -284,7 +284,7 @@ pub async fn list_process_flows(
         r#"
         SELECT 
             pf.id, pf.code, pf.name, pf.description, pf.version, pf.status,
-            pf.route_id, pf.production_line, pf.capacity, pf.unit,
+            pf.route_id, pf.production_line, pf.capacity::numeric, pf.unit,
             pf.created_at, pf.updated_at,
             pr.route_name as route_name
         FROM process_flows pf

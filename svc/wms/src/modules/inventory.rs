@@ -153,7 +153,7 @@ pub async fn get_wms_dashboard(
     // 库位利用率：取仓库存量利用率均值（无数据则 0）
     let utilization_row = sqlx::query(only_own_schema_query!(
         "wms",
-        "SELECT AVG(utilization_rate) AS avg_util FROM wms.warehouses WHERE deleted_at IS NULL"
+        "SELECT AVG(utilization_rate)::float8 AS avg_util FROM wms.warehouses WHERE deleted_at IS NULL"
     ))
     .fetch_one(&mut **txn)
     .await;
@@ -543,8 +543,8 @@ pub async fn update_inventory(
 
     let existing_result = sqlx::query(
         only_own_schema_query!("wms", r#"
-        SELECT id, material_code, material_name, specification, unit, quantity, 
-               available_quantity, location_id, warehouse_id, min_quantity, max_quantity, quality_status
+        SELECT id, material_code, material_name, specification, unit, quantity::float8, 
+               available_quantity::float8, location_id, warehouse_id, min_quantity::float8, max_quantity::float8, quality_status
         FROM wms.inventory WHERE id = $1 AND deleted_at IS NULL
         "#),
     )
@@ -626,9 +626,9 @@ pub async fn update_inventory(
             quantity = $6, available_quantity = $7, location_id = $8, warehouse_id = $9, 
             min_quantity = $10, max_quantity = $11, quality_status = $12, updated_at = $13
         WHERE id = $1 AND deleted_at IS NULL AND ($14::uuid IS NULL OR tenant_id = $14::uuid)
-        RETURNING id, material_code as sku, material_name as name, specification, unit, quantity, 
+        RETURNING id, material_code as sku, material_name as name, specification, unit, quantity,
                   location_id, warehouse_id, min_quantity, max_quantity, quality_status as status,
-                  created_at, updated_at
+                  created_at, updated_at, quantity::float8 AS quantity_f8
         "#
     ))
     .bind(id)
@@ -946,7 +946,8 @@ pub async fn list_inventory_by_warehouse(
         r#"
         SELECT id, material_code as sku, material_name as name, specification, unit, quantity, 
                available_quantity, reserved_quantity, location_id, min_quantity, max_quantity, 
-               quality_status as status, batch_number, expiry_date, total_value
+               quality_status as status, batch_number, expiry_date, total_value,
+               quantity::float8 AS quantity_f8, total_value::float8 AS total_value_f8
         FROM wms.inventory
         WHERE warehouse_id = $1 AND deleted_at IS NULL
         ORDER BY material_code ASC
@@ -962,11 +963,11 @@ pub async fn list_inventory_by_warehouse(
                 items.iter().map(inventory_row_to_json).collect();
             let total_quantity: f64 = items
                 .iter()
-                .filter_map(|r| r.try_get::<f64, _>("quantity").ok())
+                .filter_map(|r| r.try_get::<f64, _>("quantity_f8").ok())
                 .sum();
             let total_value: f64 = items
                 .iter()
-                .filter_map(|r| r.try_get::<f64, _>("total_value").ok())
+                .filter_map(|r| r.try_get::<f64, _>("total_value_f8").ok())
                 .sum();
 
             ApiResponse::success(

@@ -823,7 +823,7 @@ pub async fn update_monitor_record(
             id::text AS id, record_no, monitor_type, monitor_point, monitor_date::text AS monitor_date,
             monitor_agency, monitor_method, pollutant, concentration, unit, standard_value, standard_type,
             result, flow_rate, emission_rate, status, remarks, attachments::text AS attachments,
-            created_at::text AS created_at, updated_at::text AS updated_at, tenant_id::text AS tenant_id
+            created_at::text AS created_at, updated_at::text AS updated_at, tenant_id AS tenant_id
         "#,
         params.len() + 1,
         params.len() + 2,
@@ -1442,7 +1442,7 @@ pub async fn list_monitor_records(
         SELECT id::text AS id, record_no, monitor_type, monitor_point, monitor_date::text AS monitor_date,
                monitor_agency, monitor_method, pollutant, concentration, unit, standard_value, standard_type,
                result, flow_rate, emission_rate, status, remarks, attachments::text AS attachments,
-               created_at::text AS created_at, updated_at::text AS updated_at, tenant_id::text AS tenant_id
+               created_at::text AS created_at, updated_at::text AS updated_at, tenant_id AS tenant_id
         FROM ehs.qa_ehs_env_monitor_records
         {where_clause}
         ORDER BY created_at DESC
@@ -1496,7 +1496,7 @@ pub async fn create_monitor_record(
             id::text AS id, record_no, monitor_type, monitor_point, monitor_date::text AS monitor_date,
             monitor_agency, monitor_method, pollutant, concentration, unit, standard_value, standard_type,
             result, flow_rate, emission_rate, status, remarks, attachments::text AS attachments,
-            created_at::text AS created_at, updated_at::text AS updated_at, tenant_id::text AS tenant_id
+            created_at::text AS created_at, updated_at::text AS updated_at, tenant_id AS tenant_id
         "#
     )
     .bind(&record_no)
@@ -1725,7 +1725,7 @@ pub async fn list_incidents(
                description, cause, impact, immediate_measures, status, responsible_person,
                investigation_result, corrective_actions, preventive_measures, closed_at::text AS closed_at,
                attachments::text AS attachments, created_at::text AS created_at, updated_at::text AS updated_at,
-               tenant_id::text AS tenant_id
+               tenant_id AS tenant_id
         FROM ehs.qa_ehs_environment_incidents
         {where_clause}
         ORDER BY created_at DESC
@@ -1782,7 +1782,7 @@ pub async fn create_incident(
             description, cause, impact, immediate_measures, status, responsible_person,
             investigation_result, corrective_actions, preventive_measures, closed_at::text AS closed_at,
             attachments::text AS attachments, created_at::text AS created_at, updated_at::text AS updated_at,
-            tenant_id::text AS tenant_id
+            tenant_id AS tenant_id
         "#
     )
     .bind(&incident_no)
@@ -1834,7 +1834,7 @@ pub async fn get_incident(
                description, cause, impact, immediate_measures, status, responsible_person,
                investigation_result, corrective_actions, preventive_measures, closed_at::text AS closed_at,
                attachments::text AS attachments, created_at::text AS created_at, updated_at::text AS updated_at,
-               tenant_id::text AS tenant_id
+               tenant_id AS tenant_id
         FROM ehs.qa_ehs_environment_incidents
         WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
@@ -1910,7 +1910,7 @@ pub async fn update_incident(
             description, cause, impact, immediate_measures, status, responsible_person,
             investigation_result, corrective_actions, preventive_measures, closed_at::text AS closed_at,
             attachments::text AS attachments, created_at::text AS created_at, updated_at::text AS updated_at,
-            tenant_id::text AS tenant_id
+            tenant_id AS tenant_id
         "#,
         params.len() + 1,
         params.len() + 2,

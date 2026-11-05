@@ -271,8 +271,8 @@ pub async fn emit_low_stock_alerts(
             w.warehouse_name,
             i.material_code,
             i.material_name,
-            i.quantity AS current_quantity,
-            COALESCE(i.min_quantity, i.reorder_point) AS threshold_quantity,
+            i.quantity::float8 AS current_quantity,
+            COALESCE(i.min_quantity, i.reorder_point)::float8 AS threshold_quantity,
             CASE
                 WHEN i.quantity <= 0 THEN 'out_of_stock'
                 WHEN i.min_quantity IS NOT NULL AND i.quantity < i.min_quantity THEN 'below_min'

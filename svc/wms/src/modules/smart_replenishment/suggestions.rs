@@ -83,9 +83,9 @@ pub async fn list_suggestions(
     let result = sqlx::query(
         r#"
         SELECT id, suggestion_number, material_code, material_name, specification, unit,
-               warehouse_id, warehouse_name, location_id, current_stock, available_stock,
-               safety_stock, reorder_point, max_stock, consumption_rate, lead_time_days,
-               suggested_quantity, supplier_id, supplier_name, status, priority,
+               warehouse_id, warehouse_name, location_id, current_stock::float8, available_stock::float8,
+               safety_stock::float8, reorder_point::float8, max_stock::float8, consumption_rate::float8, lead_time_days,
+               suggested_quantity::float8, supplier_id, supplier_name, status, priority,
                trigger_type, remarks, created_at, updated_at
         FROM wms.replenishment_suggestions
         WHERE ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
@@ -173,9 +173,9 @@ pub async fn get_suggestion(
     let result = sqlx::query(
         r#"
         SELECT id, suggestion_number, material_code, material_name, specification, unit,
-               warehouse_id, warehouse_name, location_id, current_stock, available_stock,
-               safety_stock, reorder_point, max_stock, consumption_rate, lead_time_days,
-               suggested_quantity, supplier_id, supplier_name, status, priority,
+               warehouse_id, warehouse_name, location_id, current_stock::float8, available_stock::float8,
+               safety_stock::float8, reorder_point::float8, max_stock::float8, consumption_rate::float8, lead_time_days,
+               suggested_quantity::float8, supplier_id, supplier_name, status, priority,
                trigger_type, remarks, created_at, updated_at
         FROM wms.replenishment_suggestions WHERE id = $1
         "#,
@@ -332,9 +332,9 @@ pub async fn compute_replenishment(
           ) > 0
         )
         RETURNING id, suggestion_number, material_code, material_name, specification, unit,
-                  warehouse_id, warehouse_name, location_id, current_stock, available_stock,
-                  safety_stock, reorder_point, max_stock, consumption_rate, lead_time_days,
-                  suggested_quantity, supplier_id, supplier_name, status, priority,
+                  warehouse_id, warehouse_name, location_id, current_stock::float8, available_stock::float8,
+                  safety_stock::float8, reorder_point::float8, max_stock::float8, consumption_rate::float8, lead_time_days,
+                  suggested_quantity::float8, supplier_id, supplier_name, status, priority,
                   trigger_type, remarks, created_at, updated_at
         "#,
     )
@@ -450,7 +450,7 @@ pub async fn confirm_suggestion(
     let now = Utc::now().naive_utc();
 
     let existing = sqlx::query(
-        "SELECT id, status, suggested_quantity FROM wms.replenishment_suggestions WHERE id = $1",
+        "SELECT id, status, suggested_quantity::float8 FROM wms.replenishment_suggestions WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&mut **txn)
@@ -489,9 +489,9 @@ pub async fn confirm_suggestion(
             updated_at = $5
         WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, suggestion_number, material_code, material_name, specification, unit,
-                  warehouse_id, warehouse_name, location_id, current_stock, available_stock,
-                  safety_stock, reorder_point, max_stock, consumption_rate, lead_time_days,
-                  suggested_quantity, supplier_id, supplier_name, status, priority,
+                  warehouse_id, warehouse_name, location_id, current_stock::float8, available_stock::float8,
+                  safety_stock::float8, reorder_point::float8, max_stock::float8, consumption_rate::float8, lead_time_days,
+                  suggested_quantity::float8, supplier_id, supplier_name, status, priority,
                   trigger_type, remarks, created_at, updated_at
         "#,
     )

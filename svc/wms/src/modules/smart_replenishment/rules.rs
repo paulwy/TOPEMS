@@ -75,8 +75,8 @@ pub async fn list_rules(
     let result = sqlx::query(
         r#"
         SELECT id, rule_name, rule_type, warehouse_id, warehouse_name,
-               material_category, material_code, safety_stock, reorder_point,
-               max_stock, safety_factor, lead_time_days, consumption_days,
+               material_category, material_code, safety_stock::float8, reorder_point::float8,
+               max_stock::float8, safety_factor::float8, lead_time_days, consumption_days,
                enabled, priority_order, remarks, created_at, updated_at
         FROM wms.replenishment_rules
         WHERE ($1::text IS NULL OR rule_name ILIKE $1 OR material_code ILIKE $1)
@@ -165,8 +165,8 @@ pub async fn create_rule(
          enabled, priority_order, remarks, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
         RETURNING id, rule_name, rule_type, warehouse_id, warehouse_name,
-                  material_category, material_code, safety_stock, reorder_point,
-                  max_stock, safety_factor, lead_time_days, consumption_days,
+                  material_category, material_code, safety_stock::float8, reorder_point::float8,
+                  max_stock::float8, safety_factor::float8, lead_time_days, consumption_days,
                   enabled, priority_order, remarks, created_at, updated_at
         "#,
     )
@@ -268,8 +268,8 @@ pub async fn get_rule(
     let result = sqlx::query(
         r#"
         SELECT id, rule_name, rule_type, warehouse_id, warehouse_name,
-               material_category, material_code, safety_stock, reorder_point,
-               max_stock, safety_factor, lead_time_days, consumption_days,
+               material_category, material_code, safety_stock::float8, reorder_point::float8,
+               max_stock::float8, safety_factor::float8, lead_time_days, consumption_days,
                enabled, priority_order, remarks, created_at, updated_at
         FROM wms.replenishment_rules WHERE id = $1
         "#,
@@ -354,8 +354,8 @@ pub async fn update_rule(
             updated_at = $13
         WHERE id = $1
         RETURNING id, rule_name, rule_type, warehouse_id, warehouse_name,
-                  material_category, material_code, safety_stock, reorder_point,
-                  max_stock, safety_factor, lead_time_days, consumption_days,
+                  material_category, material_code, safety_stock::float8, reorder_point::float8,
+                  max_stock::float8, safety_factor::float8, lead_time_days, consumption_days,
                   enabled, priority_order, remarks, created_at, updated_at
         "#,
     )

@@ -675,7 +675,7 @@ pub async fn get_calibration_schedule(
     let rows = sqlx::query(
         r#"
         SELECT 
-            i.id as instrument_id,
+            i.id::TEXT as instrument_id,
             i.instrument_no,
             i.name as instrument_name,
             cs.frequency_days,
@@ -744,7 +744,7 @@ pub async fn get_overdue_calibrations(
     let rows = sqlx::query(
         r#"
         SELECT 
-            i.id as instrument_id,
+            i.id::TEXT as instrument_id,
             i.instrument_no,
             i.name as instrument_name,
             90 as frequency_days,

@@ -57,7 +57,7 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
 
     let reports = sqlx::query(
         r#"
-        SELECT id, name, description, report_type, status, template_id, created_by, created_at
+        SELECT id, name, description, report_type, status, template_id, created_by::text AS created_by, created_at
         FROM bi.reports
         ORDER BY created_at DESC
         "#,
@@ -255,7 +255,7 @@ pub async fn get_report(
 
     let report = sqlx::query(
         r#"
-        SELECT id, name, description, report_type, config, template_id, created_by, status, last_run_at, created_at, updated_at
+        SELECT id, name, description, report_type, config, template_id, created_by::text AS created_by, status, last_run_at, created_at, updated_at
         FROM bi.reports
         WHERE id = $1
         "#,

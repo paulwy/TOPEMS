@@ -185,8 +185,12 @@ pub async fn list_access_logs(
     let logs_json: Vec<serde_json::Value> = rows
         .iter()
         .map(|r| {
-            let status: Option<i16> = r.try_get("status").ok().flatten();
-            let success = status.map(|s| s < 400).unwrap_or(true);
+            // prod public.audit_logs.status 为 varchar(20)（"success"/"failed" 或 HTTP 码）
+            let status: Option<String> = r.try_get("status").ok().flatten();
+            let success = status
+                .as_deref()
+                .map(|s| s == "success" || s.parse::<i32>().map(|c| c < 400).unwrap_or(false))
+                .unwrap_or(true);
             serde_json::json!({
                 "id": r.get::<Uuid, _>("id").to_string(),
                 "user_id": r.get::<Option<Uuid>, _>("user_id").map(|u| u.to_string()).unwrap_or_default(),
@@ -267,8 +271,12 @@ pub async fn get_user_access_logs(
     let logs_json: Vec<serde_json::Value> = rows
         .iter()
         .map(|r| {
-            let status: Option<i16> = r.try_get("status").ok().flatten();
-            let success = status.map(|s| s < 400).unwrap_or(true);
+            // prod public.audit_logs.status 为 varchar(20)（"success"/"failed" 或 HTTP 码）
+            let status: Option<String> = r.try_get("status").ok().flatten();
+            let success = status
+                .as_deref()
+                .map(|s| s == "success" || s.parse::<i32>().map(|c| c < 400).unwrap_or(false))
+                .unwrap_or(true);
             serde_json::json!({
                 "id": r.get::<Uuid, _>("id").to_string(),
                 "user_id": r.get::<Option<Uuid>, _>("user_id").map(|u| u.to_string()).unwrap_or_default(),

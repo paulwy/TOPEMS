@@ -179,7 +179,7 @@ pub async fn list_standards(
         r#"
         SELECT
             qs.id, qs.code, qs.name, qs.product_code, qs.product_name,
-            qs.inspection_type, qs.status, qs.version,
+            qs.inspection_type, qs.status, qs.version::text,
             qs.effective_date, qs.description,
             qs.created_at, qs.updated_at
         FROM quality_standards qs

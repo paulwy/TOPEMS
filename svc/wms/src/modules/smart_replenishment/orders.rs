@@ -46,7 +46,7 @@ pub async fn list_orders(
     let result = sqlx::query(
         r#"
         SELECT id, order_number, warehouse_id, warehouse_name, status,
-               total_quantity, total_amount, created_at, updated_at
+               total_quantity, total_amount::float8, created_at, updated_at
         FROM wms.replenishment_orders
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
@@ -264,7 +264,7 @@ pub async fn get_order(
     let result = sqlx::query(
         r#"
         SELECT id, order_number, warehouse_id, warehouse_name, status,
-               total_quantity, total_amount, created_at, updated_at
+               total_quantity, total_amount::float8, created_at, updated_at
         FROM wms.replenishment_orders WHERE id = $1
         "#,
     )
@@ -343,7 +343,7 @@ pub async fn update_order(
             updated_at = $5
         WHERE id = $1 AND ($6::uuid IS NULL OR tenant_id = $6::uuid)
         RETURNING id, order_number, warehouse_id, warehouse_name, status,
-                  total_quantity, total_amount, created_at, updated_at
+                  total_quantity, total_amount::float8, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -487,7 +487,7 @@ pub async fn list_order_items(
     let result = sqlx::query(
         r#"
         SELECT id, order_id, line_number, sku, material_name, specification,
-               unit, quantity, unit_price, total_amount, status,
+               unit, quantity, unit_price::float8, total_amount::float8, status,
                created_at, updated_at
         FROM wms.replenishment_order_items WHERE order_id = $1
         ORDER BY line_number

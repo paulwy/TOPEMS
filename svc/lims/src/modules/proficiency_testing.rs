@@ -1123,7 +1123,7 @@ pub async fn evaluate_result(
     };
 
     let result_row = sqlx::query(
-        "SELECT plan_no, sample_id::TEXT, sample_code, test_item, test_result FROM qa_lims_pt_results WHERE id = $1"
+        "SELECT plan_no, sample_id, sample_code, test_item, test_result::FLOAT8 AS test_result FROM qa_lims_pt_results WHERE id = $1"
     )
     .bind(result_id)
     .fetch_optional(&state.pool)

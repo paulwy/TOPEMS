@@ -907,7 +907,7 @@ pub async fn list_control_measures(
 
     let result = sqlx::query(
         r#"
-        SELECT id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at
+        SELECT id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at::text AS created_at
         FROM ehs.qa_ehs_risk_controls
         WHERE risk_id = $1::uuid AND deleted_at IS NULL
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
@@ -1051,7 +1051,7 @@ pub async fn create_control_measure(
         r#"
         INSERT INTO ehs.qa_ehs_risk_controls (risk_id, measure_no, title, description, measure_type, status, tenant_id)
         VALUES ($1::uuid, $2, $3, $4, $5, 'active', $6::uuid)
-        RETURNING id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at
+        RETURNING id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at::text AS created_at
         "#,
     )
     .bind(&id)
@@ -1185,7 +1185,7 @@ pub async fn update_control_measure(
             updated_at = NOW()
         WHERE risk_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
           AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $7)
-        RETURNING id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at
+        RETURNING id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at::text AS created_at
         "#,
     )
     .bind(&id)

@@ -261,7 +261,7 @@ async fn generate_report(
 
     let budget_data = sqlx::query(only_own_schema_query!(
         "pm",
-        "SELECT total_amount, spent_amount, remaining_amount FROM pm.budgets WHERE project_id = $1"
+        "SELECT total_amount::numeric, spent_amount::numeric, remaining_amount FROM pm.budgets WHERE project_id = $1"
     ))
     .bind(project_id)
     .fetch_all(&mut **txn)

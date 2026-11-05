@@ -794,7 +794,7 @@ async fn fetch_export_rows(
         _ => {
             sqlx::query(
                 r#"
-                SELECT id, user_id, user_name, action, entity_type, entity_id,
+                SELECT id, user_id::text, user_name, action, entity_type, entity_id,
                        status, error_message, ip_address, user_agent, created_at
                 FROM public.audit_logs
                 WHERE ($1::timestamptz IS NULL OR created_at >= $1)
@@ -829,14 +829,13 @@ async fn fetch_export_rows(
 
         let entry = match source {
             "permission_audit_logs" => ExportRow {
-                id: row.try_get::<Uuid, _>("id")?.to_string(),
+                // prod permission_audit_logs.id 为 bigint（非 uuid）
+                id: row.try_get::<i64, _>("id")?.to_string(),
                 source: source.to_string(),
                 tenant_id: row
                     .try_get::<Option<Uuid>, _>("tenant_id")?
                     .map(|v| v.to_string()),
-                user_id: row
-                    .try_get::<Option<Uuid>, _>("user_id")?
-                    .map(|v| v.to_string()),
+                user_id: row.try_get::<Option<String>, _>("user_id")?,
                 username: None,
                 action: row.try_get::<String, _>("action").unwrap_or_default(),
                 entity_type: row

@@ -810,7 +810,7 @@ pub async fn list_stock_take_items(
         r#"
         SELECT id, stock_take_id, line_number, material_code, material_name, specification,
                batch_number, location_id, location_code, location_name,
-               system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
+               system_quantity::float8, counted_quantity::float8, discrepancy_quantity::float8, discrepancy_type,
                unit, unit_price, discrepancy_value, quality_status,
                counter, counting_time, recount_required, recount_quantity,
                discrepancy_reason, discrepancy_notes, adjustment_required, adjustment_quantity,
@@ -923,7 +923,7 @@ pub async fn create_stock_take_item(
                                           notes, created_at, updated_at, tenant_id)
         VALUES ($1, $18, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING id, stock_take_id, material_code, material_name, specification, batch_number,
-                  system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
+                  system_quantity::float8, counted_quantity::float8, discrepancy_quantity::float8, discrepancy_type,
                   unit, unit_price, discrepancy_value, notes as remarks, created_at, updated_at
         "#),
     )
@@ -1050,7 +1050,7 @@ pub async fn count_stock_take(
     for item in &items {
         let system_qty_result = sqlx::query_scalar::<_, f64>(only_own_schema_query!(
             "wms",
-            r#"SELECT system_quantity FROM wms.stock_take_items WHERE id = $1"#
+            r#"SELECT system_quantity::float8 FROM wms.stock_take_items WHERE id = $1"#
         ))
         .bind(item.item_id)
         .fetch_one(&mut *tx)
@@ -1131,7 +1131,7 @@ pub async fn get_stock_take_item(
         r#"
         SELECT id, stock_take_id, line_number, material_code, material_name, specification,
                batch_number, location_id, location_code, location_name,
-               system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
+               system_quantity::float8, counted_quantity::float8, discrepancy_quantity::float8, discrepancy_type,
                unit, unit_price, discrepancy_value, quality_status,
                counter, counting_time, recount_required, recount_quantity,
                discrepancy_reason, discrepancy_notes, adjustment_required, adjustment_quantity,
@@ -1189,7 +1189,7 @@ pub async fn update_stock_take_item(
     let existing = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, stock_take_id, system_quantity, counted_quantity, discrepancy_quantity, 
+        SELECT id, stock_take_id, system_quantity::float8, counted_quantity::float8, discrepancy_quantity::float8, 
                discrepancy_type, status, notes FROM wms.stock_take_items 
         WHERE stock_take_id = $1 AND id = $2 AND deleted_at IS NULL
         "#
@@ -1251,7 +1251,7 @@ pub async fn update_stock_take_item(
             status = $4, notes = $5, updated_at = $6
         WHERE stock_take_id = $7 AND id = $8 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, stock_take_id, material_code, material_name, specification, batch_number,
-                  system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
+                  system_quantity::float8, counted_quantity::float8, discrepancy_quantity::float8, discrepancy_type,
                   unit, unit_price, discrepancy_value, notes as remarks, created_at, updated_at
         "#
     ))
@@ -1459,9 +1459,9 @@ pub async fn complete_stock_take(
             COUNT(*) as total_items,
             COUNT(CASE WHEN counted_quantity IS NOT NULL THEN 1 END) as counted_items,
             COUNT(CASE WHEN discrepancy_type != 'none' AND discrepancy_type IS NOT NULL THEN 1 END) as discrepancy_items,
-            SUM(system_quantity) as total_quantity,
-            SUM(counted_quantity) as counted_quantity,
-            SUM(CASE WHEN discrepancy_type IS NOT NULL THEN discrepancy_quantity ELSE 0 END) as discrepancy_quantity
+            SUM(system_quantity)::float8 as total_quantity,
+            SUM(counted_quantity)::float8 as counted_quantity,
+            SUM(CASE WHEN discrepancy_type IS NOT NULL THEN discrepancy_quantity ELSE 0 END)::float8 as discrepancy_quantity
         FROM wms.stock_take_items
         WHERE stock_take_id = $1 AND deleted_at IS NULL
         "#),
@@ -1637,7 +1637,7 @@ pub async fn adjust_stock_take(
     let discrepancies = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
-        SELECT material_code, batch_number, discrepancy_quantity
+        SELECT material_code, batch_number, discrepancy_quantity::float8
         FROM wms.stock_take_items
         WHERE stock_take_id = $1 AND discrepancy_type != 'none' AND discrepancy_type IS NOT NULL
           AND deleted_at IS NULL

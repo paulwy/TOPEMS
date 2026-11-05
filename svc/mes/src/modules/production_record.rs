@@ -203,7 +203,7 @@ pub async fn list_records(
         SELECT 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, operator, start_time, end_time,
-            completed_quantity AS quantity_produced, rejected_quantity AS quantity_defective, status, notes,
+            completed_quantity AS quantity_produced, rejected_quantity::numeric AS quantity_defective, status, notes,
             created_at, updated_at
         FROM mes.production_records
         {}

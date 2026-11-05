@@ -598,7 +598,7 @@ pub async fn list_wave_pick_items(
         r#"
         SELECT id, wave_pick_id, outbound_order_id, outbound_order_number,
                material_code, material_name, location_id, location_code,
-               planned_quantity, picked_quantity, status, remarks,
+               planned_quantity::float8, picked_quantity::float8, status, remarks,
                created_at, updated_at
         FROM wms.wave_pick_items
         WHERE wave_pick_id = $1 AND deleted_at IS NULL
@@ -1110,7 +1110,7 @@ pub async fn pick_line(
             WHERE id = $1 AND wave_pick_id = $2 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
             RETURNING id, wave_pick_id, outbound_order_id, outbound_order_number,
                       material_code, material_name, location_id, location_code,
-                      planned_quantity, picked_quantity, status, remarks
+                      planned_quantity::float8, picked_quantity::float8, status, remarks
             "#
     ))
     .bind(line_id)
@@ -1188,7 +1188,7 @@ pub async fn short_pick_line(
             WHERE id = $1 AND wave_pick_id = $2 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
             RETURNING id, wave_pick_id, outbound_order_id, outbound_order_number,
                       material_code, material_name, location_id, location_code,
-                      planned_quantity, picked_quantity, status, remarks
+                      planned_quantity::float8, picked_quantity::float8, status, remarks
             "#
     ))
     .bind(line_id)

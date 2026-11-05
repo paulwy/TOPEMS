@@ -64,8 +64,8 @@ pub async fn list_reports(
     let offset = (page - 1) * page_size;
 
     let base_sql = r#"
-        SELECT id, report_no, sample_id, sample_no, sample_name, inspection_date,
-               inspector, inspection_items, conclusion, remark, status, created_at
+        SELECT id::text, report_no, sample_id::text, sample_no, sample_name, inspection_date::text,
+               inspector, inspection_items, conclusion, remark, status, created_at::text
         FROM public.qa_lab_inspection_reports
         WHERE ($1::text IS NULL OR sample_name LIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -124,8 +124,8 @@ pub async fn get_report(
 
     let row = sqlx::query(
         r#"
-        SELECT id, report_no, sample_id, sample_no, sample_name, inspection_date,
-               inspector, inspection_items, conclusion, remark, status, created_at
+        SELECT id::text, report_no, sample_id::text, sample_no, sample_name, inspection_date::text,
+               inspector, inspection_items, conclusion, remark, status, created_at::text
         FROM public.qa_lab_inspection_reports
         WHERE id = $1
         "#,
@@ -243,8 +243,8 @@ pub async fn generate_report(
             id, report_no, sample_id, sample_no, sample_name, inspection_date,
             inspector, inspection_items, conclusion, remark, status, created_at, tenant_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'draft', NOW(), $11)
-        RETURNING id, report_no, sample_id, sample_no, sample_name, inspection_date,
-                  inspector, inspection_items, conclusion, remark, status, created_at
+        RETURNING id::text, report_no, sample_id::text, sample_no, sample_name, inspection_date::text,
+                  inspector, inspection_items, conclusion, remark, status, created_at::text
         "#,
     )
     .bind(report_id)
@@ -358,8 +358,8 @@ pub async fn approve_report(
         SET status = 'approved', updated_at = NOW()
         WHERE id = $1 AND status = 'draft'
           AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
-        RETURNING id, report_no, sample_id, sample_no, sample_name, inspection_date,
-                  inspector, inspection_items, conclusion, remark, status, created_at
+        RETURNING id::text, report_no, sample_id::text, sample_no, sample_name, inspection_date::text,
+                  inspector, inspection_items, conclusion, remark, status, created_at::text
         "#,
     )
     .bind(id)
@@ -403,7 +403,7 @@ pub async fn export_report_pdf(
 
     let row = sqlx::query(
         r#"
-        SELECT id, report_no, sample_id, sample_no, sample_name, inspection_date,
+        SELECT id, report_no, sample_id, sample_no, sample_name, inspection_date::text,
                inspector, inspection_items, conclusion, remark, status
         FROM public.qa_lab_inspection_reports
         WHERE id = $1

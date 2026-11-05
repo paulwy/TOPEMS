@@ -776,7 +776,7 @@ pub async fn list_inbound_order_items(
     let result = sqlx::query(
         only_own_schema_query!("wms", r#"
         SELECT id, line_number, material_code, material_name, specification, batch_number,
-               expected_quantity, received_quantity, rejected_quantity, unit, 
+               expected_quantity::float8, received_quantity::float8, rejected_quantity::float8, unit, 
                location_id, location_code, quality_status, unit_price, total_value, notes as remarks,
                created_at, updated_at
         FROM wms.inbound_order_items
@@ -869,7 +869,7 @@ pub async fn create_inbound_order_item(
         VALUES ($1, $20, $20, $2, $3, $4, $5, $6, $7, $8, $9, $10,
                 $11, $12, $13, $14, $15, $16, $17, $18, $19)
         RETURNING id, line_number, material_code, material_name, specification, batch_number,
-                  expected_quantity, received_quantity, rejected_quantity, unit,
+                  expected_quantity::float8, received_quantity::float8, rejected_quantity::float8, unit,
                   location_id, quality_status, unit_price, total_value, notes as remarks,
                   created_at, updated_at
         "#
@@ -979,7 +979,7 @@ pub async fn update_inbound_order_item(
     let expected_qty: Option<f64> = sqlx::query_scalar::<_, f64>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT expected_quantity FROM wms.inbound_order_items
+        SELECT expected_quantity::float8 FROM wms.inbound_order_items
         WHERE order_id = $1 AND id = $2 AND deleted_at IS NULL
           AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL
                OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
@@ -1019,7 +1019,7 @@ pub async fn update_inbound_order_item(
             received_quantity = $1, quality_status = $2, notes = $3, updated_at = $4
         WHERE order_id = $5 AND id = $6 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, line_number, material_code, material_name, specification, batch_number,
-                  expected_quantity, received_quantity, rejected_quantity, unit, 
+                  expected_quantity::float8, received_quantity::float8, rejected_quantity::float8, unit, 
                   location_id, quality_status, unit_price, total_value, notes as remarks,
                   created_at, updated_at
         "#
@@ -1352,7 +1352,7 @@ pub async fn receive_inbound_order(
         let lines = sqlx::query(only_own_schema_query!(
             "wms",
             r#"
-            SELECT id, expected_quantity FROM wms.inbound_order_items
+            SELECT id, expected_quantity::float8 FROM wms.inbound_order_items
             WHERE order_id = $1 AND id = ANY($2) AND deleted_at IS NULL
               AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL
                    OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))

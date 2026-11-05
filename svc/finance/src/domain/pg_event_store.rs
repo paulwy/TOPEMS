@@ -71,7 +71,7 @@ impl PgEventStore {
             let last_uuid = Uuid::parse_str(last_id)
                 .map_err(|e| TopemsError::ValidationFailed(format!("无效UUID: {e}")))?;
             sqlx::query(
-                only_own_schema_query!("finance", "SELECT id, aggregate_id, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events WHERE id > $1 ORDER BY occurred_at ASC, id ASC LIMIT $2"),
+                only_own_schema_query!("finance", "SELECT id, aggregate_id::text, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events WHERE id > $1 ORDER BY occurred_at ASC, id ASC LIMIT $2"),
             )
             .bind(last_uuid)
             .bind(batch_i64)
@@ -79,7 +79,7 @@ impl PgEventStore {
             .await
             ?
         } else {
-            sqlx::query(only_own_schema_query!("finance", "SELECT id, aggregate_id, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events ORDER BY occurred_at ASC, id ASC LIMIT $1"))
+            sqlx::query(only_own_schema_query!("finance", "SELECT id, aggregate_id::text, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events ORDER BY occurred_at ASC, id ASC LIMIT $1"))
                 .bind(batch_i64)
                 .fetch_all(&self.pool)
                 .await
@@ -125,7 +125,7 @@ impl PgEventStore {
         let total: i64 = count_row.try_get("count")?;
 
         let rows = sqlx::query(
-            only_own_schema_query!("finance", "SELECT id, aggregate_id, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events WHERE aggregate_type = $1 ORDER BY occurred_at DESC LIMIT $2 OFFSET $3"),
+            only_own_schema_query!("finance", "SELECT id, aggregate_id::text, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events WHERE aggregate_type = $1 ORDER BY occurred_at DESC LIMIT $2 OFFSET $3"),
         )
         .bind(aggregate_type)
         .bind(limit)
@@ -204,7 +204,7 @@ impl EventStore for PgEventStore {
             let row = sqlx::query(
                 only_own_schema_query!("finance", "INSERT INTO cqrs_events (id, aggregate_id, aggregate_type, event_type, version, payload, metadata, occurred_at, tenant_id)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
-                 RETURNING id, aggregate_id, aggregate_type, event_type, version, payload, metadata, occurred_at"),
+                 RETURNING id, aggregate_id::text, aggregate_type, event_type, version, payload, metadata, occurred_at"),
             )
             .bind(id)
             .bind(aggregate_id)
@@ -233,7 +233,7 @@ impl EventStore for PgEventStore {
     ) -> Result<Vec<EventRecord>, TopemsError> {
         let rows = if let Some(to_ver) = to_version {
             sqlx::query(
-                only_own_schema_query!("finance", "SELECT id, aggregate_id, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events WHERE aggregate_id = $1 AND version >= $2 AND version <= $3 ORDER BY version ASC"),
+                only_own_schema_query!("finance", "SELECT id, aggregate_id::text, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events WHERE aggregate_id = $1 AND version >= $2 AND version <= $3 ORDER BY version ASC"),
             )
             .bind(aggregate_id)
             .bind(from_version as i64)
@@ -243,7 +243,7 @@ impl EventStore for PgEventStore {
             ?
         } else {
             sqlx::query(
-                only_own_schema_query!("finance", "SELECT id, aggregate_id, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events WHERE aggregate_id = $1 AND version >= $2 ORDER BY version ASC"),
+                only_own_schema_query!("finance", "SELECT id, aggregate_id::text, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events WHERE aggregate_id = $1 AND version >= $2 ORDER BY version ASC"),
             )
             .bind(aggregate_id)
             .bind(from_version as i64)

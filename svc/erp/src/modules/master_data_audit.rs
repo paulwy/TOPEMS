@@ -152,8 +152,8 @@ pub async fn get_audit_trail(
 
     let rows = sqlx::query(only_own_schema_query!(
         "erp",
-        r#"SELECT id, master_data_id, domain, action, source_service, target_service,
-                  changed_by, old_values, new_values, created_at
+        r#"SELECT id, master_data_id::text AS master_data_id, domain, action, source_service, target_service,
+                  changed_by::text AS changed_by, old_values, new_values, created_at
            FROM erp_master_data_audit_trail
            WHERE master_data_id = $1
            ORDER BY created_at DESC

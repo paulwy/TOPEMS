@@ -231,7 +231,7 @@ pub async fn list_plans(
         }
     }
     let sql = format!(
-        "SELECT id, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at::text, effective_date::text, expiry_date::text, created_at::text, updated_at::text, tenant_id::text FROM ehs.qa_ehs_emergency_plans{} ORDER BY created_at DESC LIMIT {} OFFSET {}",
+        "SELECT id::text, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at::text, effective_date::text, expiry_date::text, created_at::text, updated_at::text, tenant_id::text FROM ehs.qa_ehs_emergency_plans{} ORDER BY created_at DESC LIMIT {} OFFSET {}",
         where_clause, page_size, offset
     );
     let mut qb = sqlx::query(sqlx::AssertSqlSafe(sql));
@@ -280,7 +280,7 @@ pub async fn create_plan(
     });
     let status = req.status.clone().unwrap_or_else(|| "planned".to_string());
     let version = req.version.clone().unwrap_or_else(|| "v1".to_string());
-    let sql = "INSERT INTO ehs.qa_ehs_emergency_plans (plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, effective_date, expiry_date, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::date, $15::date, $16::uuid) RETURNING id, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at::text, effective_date::text, expiry_date::text, created_at::text, updated_at::text, tenant_id::text";
+    let sql = "INSERT INTO ehs.qa_ehs_emergency_plans (plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, effective_date, expiry_date, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::date, $15::date, $16::uuid) RETURNING id::text, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at::text, effective_date::text, expiry_date::text, created_at::text, updated_at::text, tenant_id::text";
     match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&plan_no)
         .bind(&req.title)
@@ -323,7 +323,7 @@ pub async fn get_plan(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<PlanDetail> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
-    let plan_sql = "SELECT id, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at::text, effective_date::text, expiry_date::text, created_at::text, updated_at::text, tenant_id::text FROM ehs.qa_ehs_emergency_plans WHERE id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL";
+    let plan_sql = "SELECT id::text, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at::text, effective_date::text, expiry_date::text, created_at::text, updated_at::text, tenant_id::text FROM ehs.qa_ehs_emergency_plans WHERE id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL";
     let plan_row = match sqlx::query(sqlx::AssertSqlSafe(plan_sql))
         .bind(&id)
         .bind(&tenant_bind)
@@ -342,7 +342,7 @@ pub async fn get_plan(
     let plan = plan_from_row(&plan_row);
 
     let supplies: Vec<PlanSupply> = match sqlx::query(
-        "SELECT id, plan_id::text, name, specification, quantity, unit, storage_location, responsible_person, remarks, created_at::text, tenant_id::text FROM ehs.qa_ehs_emergency_plan_supplies WHERE plan_id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL ORDER BY created_at DESC",
+        "SELECT id::text, plan_id::text, name, specification, quantity, unit, storage_location, responsible_person, remarks, created_at::text, tenant_id::text FROM ehs.qa_ehs_emergency_plan_supplies WHERE plan_id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL ORDER BY created_at DESC",
     )
     .bind(&id)
     .bind(&tenant_bind)
@@ -357,7 +357,7 @@ pub async fn get_plan(
     };
 
     let versions: Vec<PlanVersion> = match sqlx::query(
-        "SELECT id, plan_id::text, version, change_description, changed_by, changed_at::text, content, tenant_id::text FROM ehs.qa_ehs_emergency_plan_versions WHERE plan_id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL ORDER BY changed_at DESC",
+        "SELECT id::text, plan_id::text, version, change_description, changed_by, changed_at::text, content, tenant_id::text FROM ehs.qa_ehs_emergency_plan_versions WHERE plan_id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL ORDER BY changed_at DESC",
     )
     .bind(&id)
     .bind(&tenant_bind)
@@ -372,7 +372,7 @@ pub async fn get_plan(
     };
 
     let approvals: Vec<PlanApproval> = match sqlx::query(
-        "SELECT id, plan_id::text, approver, approver_role, status, opinion, approved_at::text, order_num, tenant_id::text FROM ehs.qa_ehs_emergency_plan_approvals WHERE plan_id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL ORDER BY order_num ASC",
+        "SELECT id::text, plan_id::text, approver, approver_role, status, opinion, approved_at::text, order_num, tenant_id::text FROM ehs.qa_ehs_emergency_plan_approvals WHERE plan_id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL ORDER BY order_num ASC",
     )
     .bind(&id)
     .bind(&tenant_bind)
@@ -466,7 +466,7 @@ pub async fn update_plan(
     let id_param = params.len() + 1;
     let tenant_param = params.len() + 2;
     let sql = format!(
-        "UPDATE ehs.qa_ehs_emergency_plans SET {} WHERE id = ${}::uuid AND (${} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${}) AND deleted_at IS NULL RETURNING id, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at::text, effective_date::text, expiry_date::text, created_at::text, updated_at::text, tenant_id::text",
+        "UPDATE ehs.qa_ehs_emergency_plans SET {} WHERE id = ${}::uuid AND (${} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${}) AND deleted_at IS NULL RETURNING id::text, plan_no, title, description, category, version, status, scope, emergency_level, responsible_dept, responsible_person, contact_phone, content, created_by, approved_by, approved_at::text, effective_date::text, expiry_date::text, created_at::text, updated_at::text, tenant_id::text",
         set_clauses.join(", "), id_param, tenant_param, tenant_param
     );
     params.push(id.clone());
@@ -529,7 +529,7 @@ pub async fn list_plan_versions(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<Vec<PlanVersion>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
-    let sql = "SELECT id, plan_id::text, version, change_description, changed_by, changed_at::text, content, tenant_id::text FROM ehs.qa_ehs_emergency_plan_versions WHERE plan_id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL ORDER BY changed_at DESC";
+    let sql = "SELECT id::text, plan_id::text, version, change_description, changed_by, changed_at::text, content, tenant_id::text FROM ehs.qa_ehs_emergency_plan_versions WHERE plan_id = $1::uuid AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL ORDER BY changed_at DESC";
     match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&tenant_bind)
@@ -570,7 +570,7 @@ pub async fn create_new_version(
         .get("content")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let sql = "INSERT INTO ehs.qa_ehs_emergency_plan_versions (plan_id, version, change_description, changed_by, content, tenant_id) VALUES ($1::uuid, 'v' || (SELECT COUNT(*) + 1 FROM ehs.qa_ehs_emergency_plan_versions WHERE plan_id = $1::uuid AND deleted_at IS NULL), $2, $3, $4, $5::uuid) RETURNING id, plan_id::text, version, change_description, changed_by, changed_at::text, content, tenant_id::text";
+    let sql = "INSERT INTO ehs.qa_ehs_emergency_plan_versions (plan_id, version, change_description, changed_by, content, tenant_id) VALUES ($1::uuid, 'v' || (SELECT COUNT(*) + 1 FROM ehs.qa_ehs_emergency_plan_versions WHERE plan_id = $1::uuid AND deleted_at IS NULL), $2, $3, $4, $5::uuid) RETURNING id::text, plan_id::text, version, change_description, changed_by, changed_at::text, content, tenant_id::text";
     match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&id)
         .bind(&change_description)

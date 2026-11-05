@@ -519,7 +519,7 @@ pub async fn calculate_production_order_cost(
 
     let order = sqlx::query(
         r#"
-        SELECT id, order_number AS order_no, product_code, product_name, quantity, status
+        SELECT id, order_number AS order_no, product_code, product_name, quantity::numeric, status
         FROM mes.production_orders
         WHERE id = $1
           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)

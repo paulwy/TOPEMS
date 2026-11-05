@@ -484,7 +484,7 @@ async fn detect_equipment_anomalies(
     if let Ok(rows) = sqlx::query(
         r#"
         SELECT e.id, e.equipment_code AS equipment_no, e.equipment_name AS name,
-               ei.temperature, ei.vibration, ei.noiselevel, ei.inspection_date,
+               ei.temperature::float8, ei.vibration::float8, ei.noiselevel::float8, ei.inspection_date,
                ei.status
         FROM mes.equipment_inspections ei
         JOIN mes.equipment e ON e.id = ei.equipment_id
@@ -671,7 +671,7 @@ async fn detect_equipment_anomalies(
     if let Ok(rows) = sqlx::query(
         r#"
         SELECT e.id, e.equipment_code AS equipment_no, e.equipment_name AS name,
-               AVG(eo.oee) as avg_oee,
+               AVG(eo.oee)::numeric as avg_oee,
                MAX(eo.oee) as max_oee,
                MIN(eo.oee) as min_oee,
                COUNT(eo.id) as record_count
@@ -939,7 +939,7 @@ async fn detect_production_anomalies(
         r#"
         SELECT id, order_number AS order_no, product_name, status,
                planned_end_date, actual_end_date,
-               quantity, completed_quantity
+               quantity::numeric, completed_quantity::numeric
         FROM mes.production_orders
         WHERE status NOT IN ('completed', 'cancelled')
           AND planned_end_date IS NOT NULL
@@ -956,11 +956,10 @@ async fn detect_production_anomalies(
             let order_no: String = row.get("order_no");
             let product_name: String = row.get("product_name");
             let planned_end: Option<chrono::NaiveDate> = row.get("planned_end_date");
-            // quantity 可能是 integer 或 numeric，completed_quantity 是 numeric——统一容错解码
+            // quantity/completed_quantity 在 prod 均为 bigint，统一经 ::numeric 后按 BigDecimal 解码
             let quantity: f64 = row
                 .try_get::<sqlx::types::BigDecimal, _>("quantity")
                 .map(|b| b.to_string().parse().unwrap_or(0.0))
-                .or_else(|_| row.try_get::<i32, _>("quantity").map(|v| v as f64))
                 .unwrap_or(0.0);
             let completed: f64 = row
                 .try_get::<sqlx::types::BigDecimal, _>("completed_quantity")
