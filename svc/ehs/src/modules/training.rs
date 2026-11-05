@@ -1,5 +1,6 @@
 //! Training handlers
 
+use chrono::{DateTime, Utc};
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
@@ -72,7 +73,7 @@ pub struct Training {
     pub trainer: Option<String>,
     pub training_type: Option<String>,
     pub duration_hours: Option<i32>,
-    pub scheduled_at: Option<String>,
+    pub scheduled_at: Option<DateTime<Utc>>,
     pub status: String,
 
     pub tenant_id: Uuid,
@@ -88,7 +89,7 @@ pub struct TrainingPlan {
     pub planned_date: Option<String>,
     pub trainer: Option<String>,
     pub status: String,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 
     pub tenant_id: Uuid,
 }
@@ -112,8 +113,8 @@ pub struct TrainingRecord {
     pub pass_rate: Option<f64>,
     pub status: String,
     pub created_by: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 
     pub tenant_id: Uuid,
 }
@@ -132,8 +133,8 @@ pub struct TrainingCertificate {
     pub status: String,
     pub record_id: Option<String>,
     pub attachments: Option<Vec<String>>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 
     pub tenant_id: Uuid,
 }
@@ -165,7 +166,7 @@ pub async fn list_trainings(
     };
     let sql = format!(
         r#"SELECT id::text AS id, training_no, title, content, trainer,
-                  training_type, duration_hours, scheduled_at::text AS scheduled_at,
+                  training_type, duration_hours, scheduled_at AS scheduled_at,
                   status, tenant_id
            FROM ehs.qa_ehs_trainings WHERE {} ORDER BY updated_at DESC"#,
         tenant_filter
@@ -195,7 +196,7 @@ pub async fn list_trainings(
                 .try_get::<Option<i32>, _>("duration_hours")
                 .unwrap_or(None),
             scheduled_at: r
-                .try_get::<Option<String>, _>("scheduled_at")
+                .try_get::<Option<DateTime<Utc>>, _>("scheduled_at")
                 .unwrap_or(None),
             status: r.try_get::<String, _>("status").unwrap_or_default(),
             tenant_id: r.try_get::<Uuid, _>("tenant_id").unwrap_or_default(),
@@ -254,7 +255,7 @@ pub async fn create_training(
              duration_hours, status, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id::text AS id, training_no, title, content, trainer,
-                  training_type, duration_hours, scheduled_at::text AS scheduled_at,
+                  training_type, duration_hours, scheduled_at AS scheduled_at,
                   status, tenant_id
     "#;
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
@@ -288,7 +289,7 @@ pub async fn create_training(
             .try_get::<Option<i32>, _>("duration_hours")
             .unwrap_or(None),
         scheduled_at: row
-            .try_get::<Option<String>, _>("scheduled_at")
+            .try_get::<Option<DateTime<Utc>>, _>("scheduled_at")
             .unwrap_or(None),
         status: row.try_get::<String, _>("status").unwrap_or_default(),
         tenant_id: row.try_get::<Uuid, _>("tenant_id").unwrap_or_default(),
@@ -324,7 +325,7 @@ pub async fn get_training(
     };
     let sql = format!(
         r#"SELECT id::text AS id, training_no, title, content, trainer,
-                  training_type, duration_hours, scheduled_at::text AS scheduled_at,
+                  training_type, duration_hours, scheduled_at AS scheduled_at,
                   status, tenant_id
            FROM ehs.qa_ehs_trainings WHERE id = $1::uuid AND {}"#,
         tenant_clause
@@ -354,7 +355,7 @@ pub async fn get_training(
             .try_get::<Option<i32>, _>("duration_hours")
             .unwrap_or(None),
         scheduled_at: row
-            .try_get::<Option<String>, _>("scheduled_at")
+            .try_get::<Option<DateTime<Utc>>, _>("scheduled_at")
             .unwrap_or(None),
         status: row.try_get::<String, _>("status").unwrap_or_default(),
         tenant_id: row.try_get::<Uuid, _>("tenant_id").unwrap_or_default(),
@@ -427,7 +428,7 @@ pub async fn update_training(
                   updated_at = now()
             WHERE id = $7::uuid AND deleted_at IS NULL {}
           RETURNING id::text AS id, training_no, title, content, trainer,
-                  training_type, duration_hours, scheduled_at::text AS scheduled_at,
+                  training_type, duration_hours, scheduled_at AS scheduled_at,
                   status, tenant_id"#,
         tenant_clause
     );
@@ -462,7 +463,7 @@ pub async fn update_training(
             .try_get::<Option<i32>, _>("duration_hours")
             .unwrap_or(None),
         scheduled_at: row
-            .try_get::<Option<String>, _>("scheduled_at")
+            .try_get::<Option<DateTime<Utc>>, _>("scheduled_at")
             .unwrap_or(None),
         status: row.try_get::<String, _>("status").unwrap_or_default(),
         tenant_id: row.try_get::<Uuid, _>("tenant_id").unwrap_or_default(),
@@ -536,7 +537,7 @@ pub async fn get_training_plan(
     let sql = r#"
         SELECT id::text AS id, program_no AS plan_no, title, content AS description,
                training_type, start_date::text AS planned_date, instructor AS trainer,
-               status, created_at::text AS created_at, tenant_id::text AS tenant_id
+               status, created_at AS created_at, tenant_id::text AS tenant_id
         FROM ehs.training_programs
         WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
@@ -615,7 +616,7 @@ pub async fn update_training_plan(
           AND deleted_at IS NULL
         RETURNING id::text AS id, program_no AS plan_no, title, content AS description,
                   training_type, start_date::text AS planned_date, instructor AS trainer,
-                  status, created_at::text AS created_at, tenant_id::text AS tenant_id
+                  status, created_at AS created_at, tenant_id::text AS tenant_id
         "#
     );
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
@@ -699,7 +700,7 @@ pub async fn get_training_record(
         SELECT id::text AS id, record_no, program_id::text AS plan_id, title, training_type,
                category, trainer, training_date::text AS training_date, location, duration_hours,
                participants, content, materials, result, pass_rate, status, created_by,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.training_records
         WHERE id::text = $1
@@ -816,7 +817,7 @@ pub async fn update_training_record(
         RETURNING id::text AS id, record_no, program_id::text AS plan_id, title, training_type,
                   category, trainer, training_date::text AS training_date, location, duration_hours,
                   participants, content, materials, result, pass_rate, status, created_by,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
         "#
     );
@@ -901,7 +902,7 @@ pub async fn get_certificate(
         SELECT id::text AS id, certificate_no, employee_id, employee_name, training_type,
                certificate_type, issue_date::text AS issue_date, expiry_date::text AS expiry_date,
                issuing_authority, status, record_id::text AS record_id, attachments,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_training_certificates
         WHERE id::text = $1
@@ -990,7 +991,7 @@ pub async fn update_certificate(
         RETURNING id::text AS id, certificate_no, employee_id, employee_name, training_type,
                   certificate_type, issue_date::text AS issue_date, expiry_date::text AS expiry_date,
                   issuing_authority, status, record_id::text AS record_id, attachments,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
         "#
     );
@@ -1162,7 +1163,7 @@ pub async fn list_training_plans(
         r#"
         SELECT id::text AS id, program_no AS plan_no, title, content AS description,
                training_type, start_date::text AS planned_date, instructor AS trainer,
-               status, created_at::text AS created_at, tenant_id::text AS tenant_id
+               status, created_at AS created_at, tenant_id::text AS tenant_id
         FROM ehs.training_programs
         {where_clause}
         ORDER BY created_at DESC
@@ -1237,7 +1238,7 @@ pub async fn create_training_plan(
         VALUES ($1, $2, $3, $4, $5, $6::timestamptz, $7, $8::uuid)
         RETURNING id::text AS id, program_no AS plan_no, title, content AS description,
                   training_type, start_date::text AS planned_date, instructor AS trainer,
-                  status, created_at::text AS created_at, tenant_id::text AS tenant_id
+                  status, created_at AS created_at, tenant_id::text AS tenant_id
     "#;
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&program_no)
@@ -1323,7 +1324,7 @@ pub async fn list_training_records(
         SELECT id::text AS id, record_no, program_id::text AS plan_id, title, training_type,
                category, trainer, training_date::text AS training_date, location, duration_hours,
                participants, content, materials, result, pass_rate, status, created_by,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.training_records
         {where_clause}
@@ -1429,7 +1430,7 @@ pub async fn create_training_record(
         RETURNING id::text AS id, record_no, program_id::text AS plan_id, title, training_type,
                   category, trainer, training_date::text AS training_date, location, duration_hours,
                   participants, content, materials, result, pass_rate, status, created_by,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
@@ -1522,7 +1523,7 @@ pub async fn list_certificates(
         SELECT id::text AS id, certificate_no, employee_id, employee_name, training_type,
                certificate_type, issue_date::text AS issue_date, expiry_date::text AS expiry_date,
                issuing_authority, status, record_id::text AS record_id, attachments,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_training_certificates
         {where_clause}
@@ -1618,7 +1619,7 @@ pub async fn create_certificate(
         RETURNING id::text AS id, certificate_no, employee_id, employee_name, training_type,
                   certificate_type, issue_date::text AS issue_date, expiry_date::text AS expiry_date,
                   issuing_authority, status, record_id::text AS record_id, attachments,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
@@ -1672,7 +1673,7 @@ fn training_plan_from_row(r: &sqlx::postgres::PgRow) -> TrainingPlan {
         planned_date: r.try_get("planned_date").ok().flatten(),
         trainer: r.try_get("trainer").ok().flatten(),
         status: r.try_get("status").unwrap_or_else(|_| "draft".to_string()),
-        created_at: r.try_get::<String, _>("created_at").unwrap_or_default(),
+        created_at: r.try_get::<DateTime<Utc>, _>("created_at").unwrap_or_default(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }
@@ -1701,8 +1702,8 @@ fn training_certificate_from_row(r: &sqlx::postgres::PgRow) -> TrainingCertifica
         status: r.try_get("status").unwrap_or_else(|_| "valid".to_string()),
         record_id: r.try_get("record_id").ok().flatten(),
         attachments,
-        created_at: r.try_get::<String, _>("created_at").unwrap_or_default(),
-        updated_at: r.try_get::<String, _>("updated_at").unwrap_or_default(),
+        created_at: r.try_get::<DateTime<Utc>, _>("created_at").unwrap_or_default(),
+        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").unwrap_or_default(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }
@@ -1746,8 +1747,8 @@ fn training_record_from_row(r: &sqlx::postgres::PgRow) -> TrainingRecord {
             .try_get("status")
             .unwrap_or_else(|_| "ongoing".to_string()),
         created_by: r.try_get("created_by").ok().flatten(),
-        created_at: r.try_get::<String, _>("created_at").unwrap_or_default(),
-        updated_at: r.try_get::<String, _>("updated_at").unwrap_or_default(),
+        created_at: r.try_get::<DateTime<Utc>, _>("created_at").unwrap_or_default(),
+        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").unwrap_or_default(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }

@@ -1,5 +1,6 @@
 //! Accident handlers - Reporting, investigation, treatment, and review
 
+use chrono::{DateTime, Utc};
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
@@ -73,13 +74,13 @@ pub struct Accident {
     pub accident_type: Option<String>,
     pub severity: String,
     pub location: Option<String>,
-    pub occurred_at: Option<String>,
+    pub occurred_at: Option<DateTime<Utc>>,
     pub casualties: Option<i32>,
     pub economic_loss: Option<f64>,
     pub status: String,
     pub reported_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -103,10 +104,10 @@ pub struct Investigation {
     pub root_cause: Option<String>,
     pub timeline: Option<Vec<Event>>,
     pub status: String,
-    pub started_at: Option<String>,
-    pub completed_at: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub started_at: Option<DateTime<Utc>>,
+    pub completed_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -124,10 +125,10 @@ pub struct Treatment {
     pub actions: Vec<TreatmentAction>,
     pub responsible: Option<String>,
     pub status: String,
-    pub started_at: Option<String>,
-    pub completed_at: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub started_at: Option<DateTime<Utc>>,
+    pub completed_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -139,7 +140,7 @@ pub struct TreatmentAction {
     pub responsible: Option<String>,
     pub deadline: Option<String>,
     pub status: String,
-    pub completed_at: Option<String>,
+    pub completed_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -152,8 +153,8 @@ pub struct Review {
     pub lessons_learned: Option<Vec<String>>,
     pub recommendations: Option<Vec<String>>,
     pub reviewer: Option<String>,
-    pub reviewed_at: Option<String>,
-    pub created_at: Option<String>,
+    pub reviewed_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -247,9 +248,9 @@ pub async fn list_accidents(
     let sql = format!(
         r#"
         SELECT id::text AS id, accident_no, title, description, accident_type, severity,
-               location, occurred_at::text AS occurred_at, casualties,
+               location, occurred_at AS occurred_at, casualties,
                economic_loss::text AS economic_loss, status, reported_by,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_accidents
         {where_clause}
@@ -328,7 +329,11 @@ pub async fn report_accident(
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
     );
     let id = uuid::Uuid::new_v4();
-    let occurred_at = req.occurred_at.clone();
+    let occurred_at = req
+        .occurred_at
+        .as_deref()
+        .and_then(|t| chrono::DateTime::parse_from_rfc3339(t).ok())
+        .map(|d| d.with_timezone(&chrono::Utc));
     let accident = Accident {
         id: id.to_string(),
         accident_no: accident_no.clone(),
@@ -342,8 +347,8 @@ pub async fn report_accident(
         economic_loss: req.economic_loss.or(Some(0.0)),
         status: "reported".to_string(),
         reported_by: req.reported_by.clone(),
-        created_at: Some(chrono::Utc::now().to_rfc3339()),
-        updated_at: Some(chrono::Utc::now().to_rfc3339()),
+        created_at: Some(chrono::Utc::now()),
+        updated_at: Some(chrono::Utc::now()),
         tenant_id,
     };
 
@@ -361,11 +366,7 @@ pub async fn report_accident(
     .bind(&accident.accident_type)
     .bind(&accident.severity)
     .bind(&accident.location)
-    .bind(accident.occurred_at.clone().and_then(|t| {
-        chrono::DateTime::parse_from_rfc3339(&t)
-            .ok()
-            .map(|d| d.with_timezone(&chrono::Utc))
-    }))
+    .bind(accident.occurred_at)
     .bind(accident.casualties)
     .bind(accident.economic_loss)
     .bind(&accident.status)
@@ -384,7 +385,7 @@ pub async fn report_accident(
         let title = accident.title.clone();
         let severity = accident.severity.clone();
         let location = accident.location.clone();
-        let occurred_at = accident.occurred_at.clone();
+        let occurred_at = accident.occurred_at.map(|d| d.to_rfc3339());
         tokio::spawn(async move {
             let payload = topems_shared_event::event::EhsAccidentReportedPayload {
                 accident_id,
@@ -437,9 +438,9 @@ pub async fn get_accident(
 
     let row = sqlx::query(
         r#"SELECT id::text AS id, accident_no, title, description, accident_type, severity,
-                  location, occurred_at::text AS occurred_at, casualties,
+                  location, occurred_at AS occurred_at, casualties,
                   economic_loss::text AS economic_loss, status, reported_by,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
            FROM ehs.qa_ehs_accidents
            WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
@@ -503,9 +504,9 @@ pub async fn update_accident(
            WHERE ($9 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $9)
              AND id = $10::uuid AND deleted_at IS NULL
            RETURNING id::text AS id, accident_no, title, description, accident_type, severity,
-                     location, occurred_at::text AS occurred_at, casualties,
+                     location, occurred_at AS occurred_at, casualties,
                      economic_loss::text AS economic_loss, status, reported_by,
-                     created_at::text AS created_at, updated_at::text AS updated_at,
+                     created_at AS created_at, updated_at AS updated_at,
                      tenant_id::text AS tenant_id"#,
     )
     .bind(&req.title)
@@ -590,8 +591,8 @@ pub async fn start_investigation(
         r#"INSERT INTO ehs.qa_ehs_investigations (id, accident_id, team, findings, root_cause, status, started_at, tenant_id)
            VALUES ($1, $2, $3::jsonb, $4, $5, 'in_progress', now(), $6)
            RETURNING id::text AS id, accident_id::text AS accident_id, team, findings, root_cause,
-                     timeline, status, started_at::text AS started_at, completed_at::text AS completed_at,
-                     created_at::text AS created_at, updated_at::text AS updated_at, tenant_id::text AS tenant_id"#,
+                     timeline, status, started_at AS started_at, completed_at AS completed_at,
+                     created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#,
     )
     .bind(inv_id)
     .bind(Uuid::parse_str(&id).unwrap_or_default())
@@ -663,8 +664,8 @@ pub async fn update_investigation(
            WHERE ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $5)
              AND accident_id = $6::uuid AND deleted_at IS NULL
            RETURNING id::text AS id, accident_id::text AS accident_id, team, findings, root_cause,
-                     timeline, status, started_at::text AS started_at, completed_at::text AS completed_at,
-                     created_at::text AS created_at, updated_at::text AS updated_at, tenant_id::text AS tenant_id"#,
+                     timeline, status, started_at AS started_at, completed_at AS completed_at,
+                     created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#,
     )
     .bind(&req.findings)
     .bind(&req.root_cause)
@@ -759,10 +760,10 @@ pub async fn create_treatment(
             actions,
             responsible: req.responsible,
             status: "in_progress".to_string(),
-            started_at: Some(chrono::Utc::now().to_rfc3339()),
+            started_at: Some(chrono::Utc::now()),
             completed_at: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            created_at: Some(chrono::Utc::now()),
+            updated_at: Some(chrono::Utc::now()),
             tenant_id,
         },
         "处理方案已创建",
@@ -796,7 +797,7 @@ pub async fn update_treatment_action(
            WHERE ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
              AND id = $4::uuid AND deleted_at IS NULL
            RETURNING id::text AS id, description, responsible, deadline::text AS deadline,
-                     status, completed_at::text AS completed_at, tenant_id::text AS tenant_id"#,
+                     status, completed_at AS completed_at, tenant_id::text AS tenant_id"#,
     )
     .bind(&req.status)
     .bind(req.completed_at.and_then(|d| {
@@ -855,9 +856,9 @@ pub async fn close_accident(
            WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
              AND id = $1::uuid AND deleted_at IS NULL
            RETURNING id::text AS id, accident_no, title, description, accident_type, severity,
-                     location, occurred_at::text AS occurred_at, casualties,
+                     location, occurred_at AS occurred_at, casualties,
                      economic_loss::text AS economic_loss, status, reported_by,
-                     created_at::text AS created_at, updated_at::text AS updated_at,
+                     created_at AS created_at, updated_at AS updated_at,
                      tenant_id::text AS tenant_id"#,
     )
     .bind(&id)
@@ -900,8 +901,8 @@ pub async fn complete_investigation(
            WHERE ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
              AND accident_id = $1::uuid AND deleted_at IS NULL
            RETURNING id::text AS id, accident_id::text AS accident_id, team, findings, root_cause,
-                     timeline, status, started_at::text AS started_at, completed_at::text AS completed_at,
-                     created_at::text AS created_at, updated_at::text AS updated_at, tenant_id::text AS tenant_id"#,
+                     timeline, status, started_at AS started_at, completed_at AS completed_at,
+                     created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#,
     )
     .bind(&id)
     .bind(&tenant_bind)
@@ -944,8 +945,8 @@ pub async fn complete_treatment(
            WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
              AND accident_id = $1::uuid AND deleted_at IS NULL
            RETURNING id::text AS id, accident_id::text AS accident_id, responsible, status,
-                     started_at::text AS started_at, completed_at::text AS completed_at,
-                     created_at::text AS created_at, updated_at::text AS updated_at, tenant_id::text AS tenant_id"#,
+                     started_at AS started_at, completed_at AS completed_at,
+                     created_at AS created_at, updated_at AS updated_at, tenant_id::text AS tenant_id"#,
     )
     .bind(&id)
     .bind(&tenant_bind)
@@ -1014,7 +1015,7 @@ pub async fn create_review(
            VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6, now(), $7)
            RETURNING id::text AS id, accident_id::text AS accident_id, summary,
                      lessons_learned, recommendations, reviewer,
-                     reviewed_at::text AS reviewed_at, created_at::text AS created_at, tenant_id::text AS tenant_id"#,
+                     reviewed_at AS reviewed_at, created_at AS created_at, tenant_id::text AS tenant_id"#,
     )
     .bind(rev_id)
     .bind(Uuid::parse_str(&id).unwrap_or_default())
@@ -1063,7 +1064,7 @@ pub async fn list_incident_actions(
 ) -> ApiResponse<Vec<serde_json::Value>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let rows = sqlx::query(
-        r#"SELECT id::text AS id, title, status, created_at::text AS created_at
+        r#"SELECT id::text AS id, title, status, created_at AS created_at
            FROM ehs.qa_ehs_incident_actions
            WHERE ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
              AND accident_id = $1::uuid AND deleted_at IS NULL
@@ -1083,7 +1084,7 @@ pub async fn list_incident_actions(
                         "id": row.try_get::<String, _>("id").unwrap_or_default(),
                         "title": row.try_get::<String, _>("title").unwrap_or_default(),
                         "status": row.try_get::<String, _>("status").unwrap_or_default(),
-                        "created_at": row.try_get::<String, _>("created_at").ok(),
+                        "created_at": row.try_get::<DateTime<Utc>, _>("created_at").ok(),
                     })
                 })
                 .collect();
@@ -1130,7 +1131,7 @@ pub async fn create_incident_action(
             "title": title,
             "status": "pending",
             "tenant_id": tenant_id.to_string(),
-            "created_at": chrono::Utc::now().to_rfc3339(),
+            "created_at": chrono::Utc::now(),
         }),
         "事故行动创建成功",
     )
@@ -1163,7 +1164,7 @@ pub async fn update_incident_action(
             serde_json::json!({
                 "id": action_id,
                 "status": status,
-                "updated_at": chrono::Utc::now().to_rfc3339(),
+                "updated_at": chrono::Utc::now(),
             }),
             "事故行动更新成功",
         ),

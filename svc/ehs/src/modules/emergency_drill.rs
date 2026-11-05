@@ -6,7 +6,7 @@ use axum::{
     routing::*,
     Extension, Json, Router,
 };
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
@@ -100,8 +100,8 @@ pub struct DrillPlan {
     pub organizer: Option<String>,
     pub status: String,
     pub related_plan_id: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -112,7 +112,7 @@ pub struct DrillRecord {
     pub drill_no: String,
     pub plan_id: Option<String>,
     pub drill_name: String,
-    pub drill_date: Option<String>,
+    pub drill_date: Option<DateTime<Utc>>,
     pub participants: Option<Vec<String>>,
     pub duration_hours: Option<f64>,
     pub location: Option<String>,
@@ -122,8 +122,8 @@ pub struct DrillRecord {
     pub attachments: Option<Vec<String>>,
     pub status: String,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -140,8 +140,8 @@ pub struct DrillEvaluation {
     pub coordination_score: Option<i32>,
     pub procedure_score: Option<i32>,
     pub equipment_score: Option<i32>,
-    pub evaluated_at: Option<String>,
-    pub created_at: Option<String>,
+    pub evaluated_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -157,11 +157,11 @@ pub struct DrillProblem {
     pub deadline: Option<String>,
     pub status: String,
     pub rectification_measures: Option<String>,
-    pub rectified_at: Option<String>,
+    pub rectified_at: Option<DateTime<Utc>>,
     pub verifier: Option<String>,
-    pub verified_at: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub verified_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -333,7 +333,7 @@ pub async fn list_drill_plans(
         SELECT id::text AS id, plan_no, title, description, drill_type,
                plan_date::text AS plan_date, location, participants, estimated_duration,
                content, organizer, status, related_plan_id::text AS related_plan_id,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id AS tenant_id
         FROM ehs.qa_ehs_drill_plans
         {where_clause}
@@ -377,8 +377,8 @@ pub async fn list_drill_plans(
                 .try_get::<Option<String>, _>("related_plan_id")
                 .ok()
                 .flatten(),
-            created_at: r.try_get::<Option<String>, _>("created_at").ok().flatten(),
-            updated_at: r.try_get::<Option<String>, _>("updated_at").ok().flatten(),
+            created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten(),
+            updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten(),
             tenant_id: r
                 .try_get::<Option<Uuid>, _>("tenant_id")
                 .ok()
@@ -431,7 +431,7 @@ pub async fn create_drill_plan(
             id::text AS id, plan_no, title, description, drill_type,
             plan_date::text AS plan_date, location, participants, estimated_duration,
             content, organizer, status, related_plan_id::text AS related_plan_id,
-            created_at::text AS created_at, updated_at::text AS updated_at,
+            created_at AS created_at, updated_at AS updated_at,
             tenant_id AS tenant_id
         "#
     )
@@ -484,11 +484,11 @@ pub async fn create_drill_plan(
             .ok()
             .flatten(),
         created_at: row
-            .try_get::<Option<String>, _>("created_at")
+            .try_get::<Option<DateTime<Utc>>, _>("created_at")
             .ok()
             .flatten(),
         updated_at: row
-            .try_get::<Option<String>, _>("updated_at")
+            .try_get::<Option<DateTime<Utc>>, _>("updated_at")
             .ok()
             .flatten(),
         tenant_id: row
@@ -543,8 +543,8 @@ pub async fn submit_drill_evaluation(
         RETURNING
             id::text AS id, drill_id::text AS drill_id, evaluator, overall_score,
             overall_comment, objectives_met, response_time_score, coordination_score,
-            procedure_score, equipment_score, evaluated_at::text AS evaluated_at,
-            created_at::text AS created_at, tenant_id AS tenant_id
+            procedure_score, equipment_score, evaluated_at AS evaluated_at,
+            created_at AS created_at, tenant_id AS tenant_id
         "#,
     )
     .bind(&id)
@@ -601,11 +601,11 @@ pub async fn submit_drill_evaluation(
             .ok()
             .flatten(),
         evaluated_at: row
-            .try_get::<Option<String>, _>("evaluated_at")
+            .try_get::<Option<DateTime<Utc>>, _>("evaluated_at")
             .ok()
             .flatten(),
         created_at: row
-            .try_get::<Option<String>, _>("created_at")
+            .try_get::<Option<DateTime<Utc>>, _>("created_at")
             .ok()
             .flatten(),
         tenant_id: row
@@ -661,10 +661,10 @@ pub async fn list_drill_records(
     let sql = format!(
         r#"
         SELECT id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
-               started_at::text AS drill_date, participant_list AS participants,
+               started_at AS drill_date, participant_list AS participants,
                duration::float8 AS duration_hours, location, actual_content AS summary,
                issues_found, improvements, attachments, status, created_by,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_drill_records
         {where_clause}
@@ -721,10 +721,10 @@ pub async fn create_drill_record(
              status, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
-                  started_at::text AS drill_date, participant_list AS participants,
+                  started_at AS drill_date, participant_list AS participants,
                   duration::float8 AS duration_hours, location, actual_content AS summary,
                   issues_found, improvements, attachments, status, created_by,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
@@ -774,10 +774,10 @@ pub async fn get_drill_record(
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     let sql = r#"
         SELECT id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
-               started_at::text AS drill_date, participant_list AS participants,
+               started_at AS drill_date, participant_list AS participants,
                duration::float8 AS duration_hours, location, actual_content AS summary,
                issues_found, improvements, attachments, status, created_by,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_drill_records
         WHERE id::text = $1
@@ -876,10 +876,10 @@ pub async fn update_drill_record(
           AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
           AND deleted_at IS NULL
         RETURNING id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
-                  started_at::text AS drill_date, participant_list AS participants,
+                  started_at AS drill_date, participant_list AS participants,
                   duration::float8 AS duration_hours, location, actual_content AS summary,
                   issues_found, improvements, attachments, status, created_by,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
         "#
     );
@@ -1146,8 +1146,8 @@ fn drill_record_from_row(r: &sqlx::postgres::PgRow) -> DrillRecord {
             .try_get("status")
             .unwrap_or_else(|_| "in_progress".to_string()),
         created_by: r.try_get("created_by").ok().flatten(),
-        created_at: r.try_get::<String, _>("created_at").ok(),
-        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        created_at: r.try_get::<DateTime<Utc>, _>("created_at").ok(),
+        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }

@@ -1,5 +1,6 @@
 //! Health handlers
 
+use chrono::{DateTime, Utc};
 use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
@@ -45,8 +46,8 @@ pub struct HealthRecord {
     pub result: Option<String>,
     pub status: String,
     pub remarks: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -132,7 +133,7 @@ pub async fn list_records(
         r#"
         SELECT id::text AS id, record_no, employee_name, employee_id, department,
                check_type, check_date::text AS check_date, result, status, remarks,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id AS tenant_id
         FROM ehs.health_records
         {where_clause}
@@ -187,7 +188,7 @@ pub async fn create_record(
         RETURNING
             id::text AS id, record_no, employee_name, employee_id, department,
             check_type, check_date::text AS check_date, result, status, remarks,
-            created_at::text AS created_at, updated_at::text AS updated_at,
+            created_at AS created_at, updated_at AS updated_at,
             tenant_id AS tenant_id
         "#,
     )
@@ -226,7 +227,7 @@ pub async fn get_record(
         r#"
         SELECT id::text AS id, record_no, employee_name, employee_id, department,
                check_type, check_date::text AS check_date, result, status, remarks,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id AS tenant_id
         FROM ehs.health_records
         WHERE id::text = $1
@@ -292,7 +293,7 @@ pub async fn update_record(
         RETURNING
             id::text AS id, record_no, employee_name, employee_id, department,
             check_type, check_date::text AS check_date, result, status, remarks,
-            created_at::text AS created_at, updated_at::text AS updated_at,
+            created_at AS created_at, updated_at AS updated_at,
             tenant_id AS tenant_id
         "#,
         params.len() + 1,

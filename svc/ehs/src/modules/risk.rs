@@ -1,5 +1,6 @@
 //! Risk handlers
 
+use chrono::{DateTime, Utc};
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
@@ -64,7 +65,7 @@ pub struct RiskControlMeasure {
     pub description: Option<String>,
     pub measure_type: Option<String>,
     pub status: String,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 
     pub tenant_id: Uuid,
 }
@@ -135,8 +136,8 @@ pub async fn list_risks(
         SELECT
             id::text AS id, risk_no, title, description, risk_type, hazard_factor,
             likelihood, severity, risk_level, control_measures, status,
-            assessed_by, assessed_at::TEXT AS assessed_at,
-            created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+            assessed_by, assessed_at AS assessed_at,
+            created_at AS created_at, updated_at AS updated_at
         FROM ehs.qa_ehs_risks
         {where_clause}
         ORDER BY created_at DESC
@@ -271,7 +272,7 @@ pub async fn create_risk(
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id::text AS id, risk_no, title, description, risk_type, hazard_factor,
             likelihood, severity, risk_level, control_measures, status, tenant_id::text AS tenant_id,
-            created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+            created_at AS created_at, updated_at AS updated_at
         "#,
     )
     .bind(risk_id)
@@ -391,8 +392,8 @@ pub async fn get_risk(
         SELECT
             id::text AS id, risk_no, title, description, risk_type, hazard_factor,
             likelihood, severity, risk_level, control_measures, status,
-            assessed_by, assessed_at::TEXT AS assessed_at,
-            created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+            assessed_by, assessed_at AS assessed_at,
+            created_at AS created_at, updated_at AS updated_at
         FROM ehs.qa_ehs_risks
         WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND id = $1::uuid AND deleted_at IS NULL
         "#,
@@ -533,7 +534,7 @@ pub async fn update_risk(
         WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND id = $2::uuid AND deleted_at IS NULL
         RETURNING id::text AS id, risk_no, title, description, risk_type, hazard_factor,
             likelihood, severity, risk_level, control_measures, status,
-            created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+            created_at AS created_at, updated_at AS updated_at
         "#,
     )
     .bind(&tenant_bind)
@@ -684,8 +685,8 @@ pub async fn assess_risk(
         WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND id = $2::uuid AND deleted_at IS NULL
         RETURNING id::text AS id, risk_no, title, description, risk_type, hazard_factor,
             likelihood, severity, risk_level, control_measures, status,
-            assessed_by, assessed_at::TEXT AS assessed_at,
-            created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+            assessed_by, assessed_at AS assessed_at,
+            created_at AS created_at, updated_at AS updated_at
         "#,
     )
     .bind(&tenant_bind)
@@ -907,7 +908,7 @@ pub async fn list_control_measures(
 
     let result = sqlx::query(
         r#"
-        SELECT id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at::text AS created_at
+        SELECT id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at AS created_at
         FROM ehs.qa_ehs_risk_controls
         WHERE risk_id = $1::uuid AND deleted_at IS NULL
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
@@ -943,7 +944,7 @@ pub async fn list_control_measures(
                 .flatten()
                 .unwrap_or_else(|| "active".to_string()),
             created_at: r
-                .try_get::<Option<String>, _>("created_at")
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
                 .flatten()
                 .unwrap_or_default(),
@@ -1051,7 +1052,7 @@ pub async fn create_control_measure(
         r#"
         INSERT INTO ehs.qa_ehs_risk_controls (risk_id, measure_no, title, description, measure_type, status, tenant_id)
         VALUES ($1::uuid, $2, $3, $4, $5, 'active', $6::uuid)
-        RETURNING id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at::text AS created_at
+        RETURNING id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at AS created_at
         "#,
     )
     .bind(&id)
@@ -1098,7 +1099,7 @@ pub async fn create_control_measure(
                 .flatten()
                 .unwrap_or_else(|| "active".to_string()),
             created_at: row
-                .try_get::<Option<String>, _>("created_at")
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
                 .flatten()
                 .unwrap_or_default(),
@@ -1185,7 +1186,7 @@ pub async fn update_control_measure(
             updated_at = NOW()
         WHERE risk_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
           AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $7)
-        RETURNING id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at::text AS created_at
+        RETURNING id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at AS created_at
         "#,
     )
     .bind(&id)
@@ -1233,7 +1234,7 @@ pub async fn update_control_measure(
                 .flatten()
                 .unwrap_or_else(|| "active".to_string()),
             created_at: row
-                .try_get::<Option<String>, _>("created_at")
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
                 .flatten()
                 .unwrap_or_default(),
@@ -1542,7 +1543,7 @@ mod tests {
             description: Some("在平台边缘安装1.2m高防护栏".to_string()),
             measure_type: Some("engineering".to_string()),
             status: "active".to_string(),
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: "2024-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
             tenant_id,
         };
         let json = serde_json::to_string(&measure).unwrap();

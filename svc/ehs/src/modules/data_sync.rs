@@ -11,6 +11,7 @@
 //! ehs:read / ehs:write / ehs:delete 权限点收敛（运维级），与 lims/qms 同族
 //! qa_*_sync_records 表治理口径一致。
 
+use chrono::{DateTime, Utc};
 use axum::{
     extract::State,
     routing::{get, post},
@@ -57,8 +58,8 @@ pub struct SyncRecord {
     pub payload: Option<serde_json::Value>,
     pub response: Option<serde_json::Value>,
     pub error_msg: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -99,16 +100,16 @@ pub async fn list_sync_records(
 
     let sql = match (query.sync_type.as_ref(), query.status.as_ref()) {
         (Some(_), Some(_)) => {
-            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM ehs.qa_ehs_sync_records WHERE sync_type = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM ehs.qa_ehs_sync_records WHERE sync_type = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
         }
         (Some(_), None) => {
-            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM ehs.qa_ehs_sync_records WHERE sync_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM ehs.qa_ehs_sync_records WHERE sync_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         }
         (None, Some(_)) => {
-            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM ehs.qa_ehs_sync_records WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM ehs.qa_ehs_sync_records WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         }
         (None, None) => {
-            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM ehs.qa_ehs_sync_records ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM ehs.qa_ehs_sync_records ORDER BY created_at DESC LIMIT $1 OFFSET $2"
         }
     };
 
@@ -177,7 +178,7 @@ pub async fn get_sync_record(
     };
 
     let row = sqlx::query(
-        only_own_schema_query!("ehs", "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM ehs.qa_ehs_sync_records WHERE id = $1")
+        only_own_schema_query!("ehs", "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at FROM ehs.qa_ehs_sync_records WHERE id = $1")
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -263,7 +264,7 @@ pub async fn retry_sync(
     };
 
     let row = sqlx::query(
-        only_own_schema_query!("ehs", "UPDATE ehs.qa_ehs_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
+        only_own_schema_query!("ehs", "UPDATE ehs.qa_ehs_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at, updated_at")
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -340,7 +341,7 @@ pub struct SyncConfig {
     pub lims_url: String,
     pub auto_sync: bool,
     pub sync_interval: i32,
-    pub last_sync_at: Option<String>,
+    pub last_sync_at: Option<DateTime<Utc>>,
 }
 
 #[utoipa::path(

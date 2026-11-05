@@ -1,5 +1,6 @@
 //! Hazardous material management - Materials, inventory, MSDS, and warehouse records
 
+use chrono::{DateTime, Utc};
 use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
@@ -83,8 +84,8 @@ pub struct HazardousMaterial {
     pub emergency_measures: Option<String>,
     pub msds_url: Option<String>,
     pub status: String,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -103,8 +104,8 @@ pub struct MaterialStock {
     pub supplier: Option<String>,
     pub status: String,
     pub remarks: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -126,7 +127,7 @@ pub struct StockRecord {
     pub to_location: Option<String>,
     pub recipient: Option<String>,
     pub remarks: Option<String>,
-    pub created_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -156,8 +157,8 @@ pub struct MsdsData {
     pub regulatory_info: Option<String>,
     pub other_info: Option<String>,
     pub file_url: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -278,7 +279,7 @@ pub async fn list_materials(
                un_number, cas_no, specification, unit, description, hazards::text AS hazards,
                storage_requirements, handling_requirements, emergency_measures,
                safety_data_sheet AS msds_url, status,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_hazardous_materials
         WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL
@@ -333,7 +334,7 @@ pub async fn create_material(
                   un_number, cas_no, specification, unit, description, hazards::text AS hazards,
                   storage_requirements, handling_requirements, emergency_measures,
                   safety_data_sheet AS msds_url, status,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
@@ -397,7 +398,7 @@ pub async fn get_material(
                un_number, cas_no, specification, unit, description, hazards::text AS hazards,
                storage_requirements, handling_requirements, emergency_measures,
                safety_data_sheet AS msds_url, status,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_hazardous_materials
         WHERE id::text = $1
@@ -525,7 +526,7 @@ pub async fn update_material(
                   un_number, cas_no, specification, unit, description, hazards::text AS hazards,
                   storage_requirements, handling_requirements, emergency_measures,
                   safety_data_sheet AS msds_url, status,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
         "#
     );
@@ -759,7 +760,7 @@ pub async fn get_material_msds(
                exposure_control AS exposure_controls, physical_chemical_properties,
                stability_reactivity AS reactivity_info, toxicological_info, ecological_info,
                disposal_considerations, transport_info, regulatory_info, other_info,
-               updated_at::text AS updated_at, tenant_id::text AS tenant_id
+               updated_at AS updated_at, tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_msds
         WHERE material_id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
@@ -1159,8 +1160,8 @@ fn material_from_row(r: &sqlx::postgres::PgRow) -> HazardousMaterial {
         emergency_measures: r.try_get("emergency_measures").ok().flatten(),
         msds_url: r.try_get("msds_url").ok().flatten(),
         status: r.try_get("status").unwrap_or_else(|_| "active".to_string()),
-        created_at: r.try_get::<String, _>("created_at").ok(),
-        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        created_at: r.try_get::<DateTime<Utc>, _>("created_at").ok(),
+        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }
@@ -1192,8 +1193,8 @@ fn msds_from_row(r: &sqlx::postgres::PgRow) -> MsdsData {
         regulatory_info: r.try_get("regulatory_info").ok().flatten(),
         other_info: r.try_get("other_info").ok().flatten(),
         file_url: None,
-        created_at: r.try_get::<String, _>("updated_at").ok(),
-        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        created_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
+        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }

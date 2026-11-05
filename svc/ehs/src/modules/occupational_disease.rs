@@ -1,5 +1,6 @@
 //! Occupational disease prevention - Hazard factors, detection records, cases, protection, and training
 
+use chrono::{DateTime, Utc};
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
@@ -89,8 +90,8 @@ pub struct HazardFactor {
     pub affected_count: Option<i32>,
     pub status: String,
     pub remarks: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -114,8 +115,8 @@ pub struct DetectionRecord {
     pub status: String,
     pub remarks: Option<String>,
     pub attachments: Option<Vec<String>>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -142,9 +143,9 @@ pub struct DiseaseCase {
     pub treatment: Option<String>,
     pub compensation: Option<String>,
     pub attachments: Option<Vec<String>>,
-    pub reported_at: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub reported_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -164,8 +165,8 @@ pub struct ProtectionMeasure {
     pub effectiveness: Option<String>,
     pub inspection_date: Option<String>,
     pub remarks: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -185,8 +186,8 @@ pub struct HealthTraining {
     pub status: String,
     pub pass_rate: Option<f64>,
     pub attachments: Option<Vec<String>>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -356,7 +357,7 @@ pub async fn list_hazard_factors(
             factor_type, category, description, hazard_level, exposure_limit, unit,
             sources::text AS sources, affected_positions::text AS affected_positions,
             affected_count, status, remarks,
-            created_at::text AS created_at, updated_at::text AS updated_at
+            created_at AS created_at, updated_at AS updated_at
         FROM ehs.qa_ehs_hazard_factors
         WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL
         ORDER BY created_at DESC
@@ -414,8 +415,8 @@ pub async fn list_hazard_factors(
                     .flatten()
                     .unwrap_or_else(|| "active".to_string()),
                 remarks: r.try_get::<Option<String>, _>("remarks").ok().flatten(),
-                created_at: r.try_get::<Option<String>, _>("created_at").ok().flatten(),
-                updated_at: r.try_get::<Option<String>, _>("updated_at").ok().flatten(),
+                created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten(),
+                updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten(),
                 tenant_id: uuid::Uuid::nil(),
             }
         })
@@ -479,7 +480,7 @@ pub async fn get_hazard_factor(
             factor_type, category, description, hazard_level, exposure_limit, unit,
             sources::text AS sources, affected_positions::text AS affected_positions,
             affected_count, status, remarks,
-            created_at::text AS created_at, updated_at::text AS updated_at
+            created_at AS created_at, updated_at AS updated_at
         FROM ehs.qa_ehs_hazard_factors
         WHERE ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3) AND id = $1::uuid AND deleted_at IS NULL
         "#,
@@ -544,11 +545,11 @@ pub async fn get_hazard_factor(
             .unwrap_or_else(|| "active".to_string()),
         remarks: row.try_get::<Option<String>, _>("remarks").ok().flatten(),
         created_at: row
-            .try_get::<Option<String>, _>("created_at")
+            .try_get::<Option<DateTime<Utc>>, _>("created_at")
             .ok()
             .flatten(),
         updated_at: row
-            .try_get::<Option<String>, _>("updated_at")
+            .try_get::<Option<DateTime<Utc>>, _>("updated_at")
             .ok()
             .flatten(),
         tenant_id: uuid::Uuid::nil(),
@@ -742,8 +743,8 @@ pub async fn list_disease_cases(
                diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
                diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
                compensation_status AS compensation, attachments,
-               reported_at::text AS reported_at, created_at::text AS created_at,
-               updated_at::text AS updated_at, tenant_id::text AS tenant_id
+               reported_at AS reported_at, created_at AS created_at,
+               updated_at AS updated_at, tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_disease_cases
         {where_clause}
         ORDER BY created_at DESC
@@ -806,8 +807,8 @@ pub async fn create_disease_case(
                   diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
                   diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
                   compensation_status AS compensation, attachments,
-                  reported_at::text AS reported_at, created_at::text AS created_at,
-                  updated_at::text AS updated_at, tenant_id::text AS tenant_id
+                  reported_at AS reported_at, created_at AS created_at,
+                  updated_at AS updated_at, tenant_id::text AS tenant_id
     "#;
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&case_no)
@@ -867,8 +868,8 @@ pub async fn get_disease_case(
                diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
                diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
                compensation_status AS compensation, attachments,
-               reported_at::text AS reported_at, created_at::text AS created_at,
-               updated_at::text AS updated_at, tenant_id::text AS tenant_id
+               reported_at AS reported_at, created_at AS created_at,
+               updated_at AS updated_at, tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_disease_cases
         WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
@@ -997,8 +998,8 @@ pub async fn update_disease_case(
                   diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
                   diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
                   compensation_status AS compensation, attachments,
-                  reported_at::text AS reported_at, created_at::text AS created_at,
-                  updated_at::text AS updated_at, tenant_id::text AS tenant_id
+                  reported_at AS reported_at, created_at AS created_at,
+                  updated_at AS updated_at, tenant_id::text AS tenant_id
         "#
     );
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
@@ -1237,8 +1238,8 @@ fn disease_case_from_row(r: &sqlx::postgres::PgRow) -> DiseaseCase {
         compensation: r.try_get("compensation").ok().flatten(),
         attachments,
         reported_at: r.try_get("reported_at").ok().flatten(),
-        created_at: r.try_get::<String, _>("created_at").ok(),
-        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        created_at: r.try_get::<DateTime<Utc>, _>("created_at").ok(),
+        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }

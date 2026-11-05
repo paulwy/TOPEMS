@@ -1,5 +1,6 @@
 //! Occupational health records - Physical exams, health plans, contraindications, and follow-up
 
+use chrono::{DateTime, Utc};
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
@@ -94,8 +95,8 @@ pub struct HealthRecord {
     pub medical_history: Option<String>,
     pub contact_info: Option<String>,
     pub status: String,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -147,8 +148,8 @@ pub struct HealthExamPlan {
     pub participants_count: Option<i32>,
     pub status: String,
     pub organizer: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -182,8 +183,8 @@ pub struct HealthExamRecord {
     pub doctor_advice: Option<String>,
     pub doctor: Option<String>,
     pub attachments: Option<Vec<String>>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -204,8 +205,8 @@ pub struct Contraindication {
     pub advised_position: Option<String>,
     pub follow_up_date: Option<String>,
     pub remarks: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -225,8 +226,8 @@ pub struct HealthAbnormality {
     pub follow_up_date: Option<String>,
     pub follow_up_result: Option<String>,
     pub responsible_person: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -1148,7 +1149,7 @@ pub async fn list_health_records(
                hazard_factors, blood_type,
                allergy_history AS allergy_history,
                medical_history, contact_info, status,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.health_records
         {where_clause}
@@ -1202,8 +1203,8 @@ pub async fn create_health_record(
         RETURNING id::text AS id, record_no, employee_id, employee_name, gender,
                   birth_date::text AS birthday, department, position, workplace,
                   hazard_factors, blood_type, allergy_history, medical_history,
-                  contact_info, status, created_at::text AS created_at,
-                  updated_at::text AS updated_at, tenant_id::text AS tenant_id
+                  contact_info, status, created_at AS created_at,
+                  updated_at AS updated_at, tenant_id::text AS tenant_id
     "#;
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(&record_no)
@@ -1253,8 +1254,8 @@ pub async fn get_health_record(
         SELECT id::text AS id, record_no, employee_id, employee_name, gender,
                birth_date::text AS birthday, department, position, workplace,
                hazard_factors, blood_type, allergy_history, medical_history,
-               contact_info, status, created_at::text AS created_at,
-               updated_at::text AS updated_at, tenant_id::text AS tenant_id
+               contact_info, status, created_at AS created_at,
+               updated_at AS updated_at, tenant_id::text AS tenant_id
         FROM ehs.health_records
         WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
@@ -1358,8 +1359,8 @@ pub async fn update_health_record(
         RETURNING id::text AS id, record_no, employee_id, employee_name, gender,
                   birth_date::text AS birthday, department, position, workplace,
                   hazard_factors, blood_type, allergy_history, medical_history,
-                  contact_info, status, created_at::text AS created_at,
-                  updated_at::text AS updated_at, tenant_id::text AS tenant_id
+                  contact_info, status, created_at AS created_at,
+                  updated_at AS updated_at, tenant_id::text AS tenant_id
         "#
     );
     let mut query = sqlx::query(sqlx::AssertSqlSafe(sql));
@@ -1463,8 +1464,8 @@ fn health_record_from_row(r: &sqlx::postgres::PgRow) -> HealthRecord {
         medical_history: r.try_get("medical_history").ok().flatten(),
         contact_info: r.try_get("contact_info").ok().flatten(),
         status: r.try_get("status").unwrap_or_else(|_| "active".to_string()),
-        created_at: r.try_get::<String, _>("created_at").ok(),
-        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        created_at: r.try_get::<DateTime<Utc>, _>("created_at").ok(),
+        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }

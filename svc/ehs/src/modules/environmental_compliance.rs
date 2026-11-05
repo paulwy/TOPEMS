@@ -1,5 +1,6 @@
 //! Environmental compliance management - Regulations, compliance evaluation, monitoring, permits, and incidents
 
+use chrono::{DateTime, Utc};
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
@@ -114,8 +115,8 @@ pub struct EnvironmentalRegulation {
     pub attachments: Option<Vec<String>>,
     pub version: Option<String>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -130,7 +131,7 @@ pub struct ComplianceAssessment {
     pub period_start: Option<String>,
     pub period_end: Option<String>,
     pub assessor: Option<String>,
-    pub assessment_date: Option<String>,
+    pub assessment_date: Option<DateTime<Utc>>,
     pub result: Option<String>,
     pub score: Option<f64>,
     pub findings: Option<String>,
@@ -138,8 +139,8 @@ pub struct ComplianceAssessment {
     pub corrective_actions: Option<String>,
     pub status: String,
     pub attachments: Option<Vec<String>>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -190,8 +191,8 @@ pub struct EnvironmentMonitor {
     pub status: String,
     pub remarks: Option<String>,
     pub attachments: Option<Vec<String>>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -214,8 +215,8 @@ pub struct DischargePermit {
     pub monitoring_requirements: Option<String>,
     pub status: String,
     pub attachments: Option<Vec<String>>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -228,9 +229,9 @@ pub struct EnvironmentIncident {
     pub incident_type: String,
     pub level: Option<String>,
     pub location: Option<String>,
-    pub occurred_at: Option<String>,
+    pub occurred_at: Option<DateTime<Utc>>,
     pub reported_by: Option<String>,
-    pub reported_at: Option<String>,
+    pub reported_at: Option<DateTime<Utc>>,
     pub description: Option<String>,
     pub cause: Option<String>,
     pub impact: Option<String>,
@@ -240,10 +241,10 @@ pub struct EnvironmentIncident {
     pub investigation_result: Option<String>,
     pub corrective_actions: Option<String>,
     pub preventive_measures: Option<String>,
-    pub closed_at: Option<String>,
+    pub closed_at: Option<DateTime<Utc>>,
     pub attachments: Option<Vec<String>>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 
     pub tenant_id: Uuid,
 }
@@ -469,7 +470,7 @@ pub async fn list_regulations(
                issuing_authority, issued_date::text AS issue_date, effective_date::text AS effective_date,
                expiry_date::text AS expiry_date, status, content, keywords, applicable_scopes,
                related_files AS attachments, version, created_by,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_environmental_regulations
         {where_clause}
@@ -534,7 +535,7 @@ pub async fn create_regulation(
                   issuing_authority, issued_date::text AS issue_date, effective_date::text AS effective_date,
                   expiry_date::text AS expiry_date, status, content, keywords, applicable_scopes,
                   related_files AS attachments, version, created_by,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
@@ -586,7 +587,7 @@ pub async fn get_regulation(
                issuing_authority, issued_date::text AS issue_date, effective_date::text AS effective_date,
                expiry_date::text AS expiry_date, status, content, keywords, applicable_scopes,
                related_files AS attachments, version, created_by,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_environmental_regulations
         WHERE id::text = $1
@@ -696,7 +697,7 @@ pub async fn update_regulation(
                   issuing_authority, issued_date::text AS issue_date, effective_date::text AS effective_date,
                   expiry_date::text AS expiry_date, status, content, keywords, applicable_scopes,
                   related_files AS attachments, version, created_by,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
         "#
     );
@@ -823,7 +824,7 @@ pub async fn update_monitor_record(
             id::text AS id, record_no, monitor_type, monitor_point, monitor_date::text AS monitor_date,
             monitor_agency, monitor_method, pollutant, concentration, unit, standard_value, standard_type,
             result, flow_rate, emission_rate, status, remarks, attachments::text AS attachments,
-            created_at::text AS created_at, updated_at::text AS updated_at, tenant_id AS tenant_id
+            created_at AS created_at, updated_at AS updated_at, tenant_id AS tenant_id
         "#,
         params.len() + 1,
         params.len() + 2,
@@ -863,7 +864,7 @@ pub async fn get_permit(
                holder, issued_date::text AS issue_date, valid_from::text AS effective_date,
                valid_to::text AS expiry_date, issuing_authority, discharge_location,
                discharge_standard, discharge_limits, monitoring_requirements, status,
-               attachments, created_at::text AS created_at, updated_at::text AS updated_at,
+               attachments, created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_discharge_permits
         WHERE id::text = $1
@@ -977,7 +978,7 @@ pub async fn update_permit(
                   holder, issued_date::text AS issue_date, valid_from::text AS effective_date,
                   valid_to::text AS expiry_date, issuing_authority, discharge_location,
                   discharge_standard, discharge_limits, monitoring_requirements, status,
-                  attachments, created_at::text AS created_at, updated_at::text AS updated_at,
+                  attachments, created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
         "#
     );
@@ -1101,10 +1102,10 @@ pub async fn list_evaluations(
         r#"
         SELECT id::text AS id, eval_no AS assessment_no, title, eval_type AS assessment_type,
                eval_period AS scope, start_date::text AS period_start, end_date::text AS period_end,
-               evaluator AS assessor, evaluated_at::text AS assessment_date, overall_result AS result,
+               evaluator AS assessor, evaluated_at AS assessment_date, overall_result AS result,
                compliance_rate::float8 AS score, findings, non_complianceitems,
                corrective_actions, status, attachments,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_compliance_evaluations
         {where_clause}
@@ -1160,10 +1161,10 @@ pub async fn create_evaluation(
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING id::text AS id, eval_no AS assessment_no, title, eval_type AS assessment_type,
                   eval_period AS scope, start_date::text AS period_start, end_date::text AS period_end,
-                  evaluator AS assessor, evaluated_at::text AS assessment_date, overall_result AS result,
+                  evaluator AS assessor, evaluated_at AS assessment_date, overall_result AS result,
                   compliance_rate::float8 AS score, findings, non_complianceitems,
                   corrective_actions, status, attachments,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
@@ -1217,10 +1218,10 @@ pub async fn get_evaluation(
     let sql = r#"
         SELECT id::text AS id, eval_no AS assessment_no, title, eval_type AS assessment_type,
                eval_period AS scope, start_date::text AS period_start, end_date::text AS period_end,
-               evaluator AS assessor, evaluated_at::text AS assessment_date, overall_result AS result,
+               evaluator AS assessor, evaluated_at AS assessment_date, overall_result AS result,
                compliance_rate::float8 AS score, findings, non_complianceitems,
                corrective_actions, status, attachments,
-               created_at::text AS created_at, updated_at::text AS updated_at,
+               created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_compliance_evaluations
         WHERE id::text = $1
@@ -1335,10 +1336,10 @@ pub async fn update_evaluation(
           AND deleted_at IS NULL
         RETURNING id::text AS id, eval_no AS assessment_no, title, eval_type AS assessment_type,
                   eval_period AS scope, start_date::text AS period_start, end_date::text AS period_end,
-                  evaluator AS assessor, evaluated_at::text AS assessment_date, overall_result AS result,
+                  evaluator AS assessor, evaluated_at AS assessment_date, overall_result AS result,
                   compliance_rate::float8 AS score, findings, non_complianceitems,
                   corrective_actions, status, attachments,
-                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
         "#
     );
@@ -1442,7 +1443,7 @@ pub async fn list_monitor_records(
         SELECT id::text AS id, record_no, monitor_type, monitor_point, monitor_date::text AS monitor_date,
                monitor_agency, monitor_method, pollutant, concentration, unit, standard_value, standard_type,
                result, flow_rate, emission_rate, status, remarks, attachments::text AS attachments,
-               created_at::text AS created_at, updated_at::text AS updated_at, tenant_id AS tenant_id
+               created_at AS created_at, updated_at AS updated_at, tenant_id AS tenant_id
         FROM ehs.qa_ehs_env_monitor_records
         {where_clause}
         ORDER BY created_at DESC
@@ -1496,7 +1497,7 @@ pub async fn create_monitor_record(
             id::text AS id, record_no, monitor_type, monitor_point, monitor_date::text AS monitor_date,
             monitor_agency, monitor_method, pollutant, concentration, unit, standard_value, standard_type,
             result, flow_rate, emission_rate, status, remarks, attachments::text AS attachments,
-            created_at::text AS created_at, updated_at::text AS updated_at, tenant_id AS tenant_id
+            created_at AS created_at, updated_at AS updated_at, tenant_id AS tenant_id
         "#
     )
     .bind(&record_no)
@@ -1588,7 +1589,7 @@ pub async fn list_permits(
                holder, issued_date::text AS issue_date, valid_from::text AS effective_date,
                valid_to::text AS expiry_date, issuing_authority, discharge_location,
                discharge_standard, discharge_limits, monitoring_requirements, status,
-               attachments, created_at::text AS created_at, updated_at::text AS updated_at,
+               attachments, created_at AS created_at, updated_at AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_discharge_permits
         {where_clause}
@@ -1647,7 +1648,7 @@ pub async fn create_permit(
                   holder, issued_date::text AS issue_date, valid_from::text AS effective_date,
                   valid_to::text AS expiry_date, issuing_authority, discharge_location,
                   discharge_standard, discharge_limits, monitoring_requirements, status,
-                  attachments, created_at::text AS created_at, updated_at::text AS updated_at,
+                  attachments, created_at AS created_at, updated_at AS updated_at,
                   tenant_id::text AS tenant_id
     "#;
     let row = match sqlx::query(sqlx::AssertSqlSafe(sql))
@@ -1721,10 +1722,10 @@ pub async fn list_incidents(
     let sql = format!(
         r#"
         SELECT id::text AS id, incident_no, title, incident_type, level, location,
-               occurred_at::text AS occurred_at, reported_by, reported_at::text AS reported_at,
+               occurred_at AS occurred_at, reported_by, reported_at AS reported_at,
                description, cause, impact, immediate_measures, status, responsible_person,
-               investigation_result, corrective_actions, preventive_measures, closed_at::text AS closed_at,
-               attachments::text AS attachments, created_at::text AS created_at, updated_at::text AS updated_at,
+               investigation_result, corrective_actions, preventive_measures, closed_at AS closed_at,
+               attachments::text AS attachments, created_at AS created_at, updated_at AS updated_at,
                tenant_id AS tenant_id
         FROM ehs.qa_ehs_environment_incidents
         {where_clause}
@@ -1767,7 +1768,7 @@ pub async fn create_incident(
         now.format("%Y%m%d"),
         &Uuid::new_v4().simple().to_string()[..6]
     );
-    let reported_at = now.to_rfc3339();
+    let reported_at = now;
 
     let result = sqlx::query(
         r#"
@@ -1778,10 +1779,10 @@ pub async fn create_incident(
         ) VALUES ($1, $2, $3, $4, $5, $6::timestamptz, $7, $8::timestamptz, $9, $10, 'reported', $11, $12, NOW(), NOW())
         RETURNING
             id::text AS id, incident_no, title, incident_type, level, location,
-            occurred_at::text AS occurred_at, reported_by, reported_at::text AS reported_at,
+            occurred_at AS occurred_at, reported_by, reported_at AS reported_at,
             description, cause, impact, immediate_measures, status, responsible_person,
-            investigation_result, corrective_actions, preventive_measures, closed_at::text AS closed_at,
-            attachments::text AS attachments, created_at::text AS created_at, updated_at::text AS updated_at,
+            investigation_result, corrective_actions, preventive_measures, closed_at AS closed_at,
+            attachments::text AS attachments, created_at AS created_at, updated_at AS updated_at,
             tenant_id AS tenant_id
         "#
     )
@@ -1830,10 +1831,10 @@ pub async fn get_incident(
     let result = sqlx::query(
         r#"
         SELECT id::text AS id, incident_no, title, incident_type, level, location,
-               occurred_at::text AS occurred_at, reported_by, reported_at::text AS reported_at,
+               occurred_at AS occurred_at, reported_by, reported_at AS reported_at,
                description, cause, impact, immediate_measures, status, responsible_person,
-               investigation_result, corrective_actions, preventive_measures, closed_at::text AS closed_at,
-               attachments::text AS attachments, created_at::text AS created_at, updated_at::text AS updated_at,
+               investigation_result, corrective_actions, preventive_measures, closed_at AS closed_at,
+               attachments::text AS attachments, created_at AS created_at, updated_at AS updated_at,
                tenant_id AS tenant_id
         FROM ehs.qa_ehs_environment_incidents
         WHERE id::text = $1
@@ -1906,10 +1907,10 @@ pub async fn update_incident(
           AND deleted_at IS NULL
         RETURNING
             id::text AS id, incident_no, title, incident_type, level, location,
-            occurred_at::text AS occurred_at, reported_by, reported_at::text AS reported_at,
+            occurred_at AS occurred_at, reported_by, reported_at AS reported_at,
             description, cause, impact, immediate_measures, status, responsible_person,
-            investigation_result, corrective_actions, preventive_measures, closed_at::text AS closed_at,
-            attachments::text AS attachments, created_at::text AS created_at, updated_at::text AS updated_at,
+            investigation_result, corrective_actions, preventive_measures, closed_at AS closed_at,
+            attachments::text AS attachments, created_at AS created_at, updated_at AS updated_at,
             tenant_id AS tenant_id
         "#,
         params.len() + 1,
@@ -2182,8 +2183,8 @@ fn environmental_regulation_from_row(r: &sqlx::postgres::PgRow) -> Environmental
         attachments,
         version: r.try_get("version").ok().flatten(),
         created_by: r.try_get("created_by").ok().flatten(),
-        created_at: r.try_get::<String, _>("created_at").ok(),
-        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        created_at: r.try_get::<DateTime<Utc>, _>("created_at").ok(),
+        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }
@@ -2227,8 +2228,8 @@ fn compliance_assessment_from_row(r: &sqlx::postgres::PgRow) -> ComplianceAssess
             .try_get("status")
             .unwrap_or_else(|_| "in_progress".to_string()),
         attachments,
-        created_at: r.try_get::<String, _>("created_at").ok(),
-        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        created_at: r.try_get::<DateTime<Utc>, _>("created_at").ok(),
+        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }
@@ -2269,8 +2270,8 @@ fn discharge_permit_from_row(r: &sqlx::postgres::PgRow) -> DischargePermit {
         monitoring_requirements: r.try_get("monitoring_requirements").ok().flatten(),
         status: r.try_get("status").unwrap_or_else(|_| "valid".to_string()),
         attachments,
-        created_at: r.try_get::<String, _>("created_at").ok(),
-        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        created_at: r.try_get::<DateTime<Utc>, _>("created_at").ok(),
+        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }

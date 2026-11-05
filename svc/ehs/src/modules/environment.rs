@@ -4,6 +4,7 @@
 //! 契约），后端曾把 monitors/records 都映射到一个 EnvironmentRecord 内存桩。现统一按监测点表接真，
 //! runtime sqlx + 应用层 tenant 过滤，对齐 accident.rs/hazard.rs 范式。
 
+use chrono::{DateTime, Utc};
 use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
@@ -64,8 +65,8 @@ pub struct EnvironmentMonitor {
     pub alarm_threshold: Option<f64>,
     pub unit: Option<String>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[utoipa::path(
@@ -87,7 +88,7 @@ pub async fn list_records(
                   warning_threshold::text AS warning_threshold,
                   alarm_threshold::text AS alarm_threshold,
                   unit, created_by,
-                  created_at::text AS created_at, updated_at::text AS updated_at
+                  created_at AS created_at, updated_at AS updated_at
            FROM ehs.qa_ehs_environment_monitors
            WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1)
              AND deleted_at IS NULL
@@ -140,11 +141,11 @@ pub async fn list_records(
                         .ok()
                         .flatten(),
                     created_at: row
-                        .try_get::<Option<String>, _>("created_at")
+                        .try_get::<Option<DateTime<Utc>>, _>("created_at")
                         .ok()
                         .flatten(),
                     updated_at: row
-                        .try_get::<Option<String>, _>("updated_at")
+                        .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                         .ok()
                         .flatten(),
                 })
@@ -262,8 +263,8 @@ pub async fn create_record(
             alarm_threshold,
             unit,
             created_by: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            created_at: Some(chrono::Utc::now()),
+            updated_at: Some(chrono::Utc::now()),
         },
         "环境监测点创建成功",
     )
@@ -282,7 +283,7 @@ pub async fn get_record(
                   warning_threshold::text AS warning_threshold,
                   alarm_threshold::text AS alarm_threshold,
                   unit, created_by,
-                  created_at::text AS created_at, updated_at::text AS updated_at
+                  created_at AS created_at, updated_at AS updated_at
            FROM ehs.qa_ehs_environment_monitors
            WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1)
              AND id = $2::uuid AND deleted_at IS NULL"#,
@@ -323,8 +324,8 @@ pub async fn get_record(
                     .and_then(|v| v.parse::<f64>().ok()),
                 unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
                 created_by: r.try_get::<Option<String>, _>("created_by").ok().flatten(),
-                created_at: r.try_get::<Option<String>, _>("created_at").ok().flatten(),
-                updated_at: r.try_get::<Option<String>, _>("updated_at").ok().flatten(),
+                created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten(),
+                updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten(),
             },
             "获取环境监测点成功",
         ),
@@ -426,7 +427,7 @@ pub async fn update_record(
             unit: unit.map(|s| s.to_string()),
             created_by: None,
             created_at: None,
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now()),
         },
         "环境监测点更新成功",
     )
