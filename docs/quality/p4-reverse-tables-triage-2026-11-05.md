@@ -716,7 +716,7 @@ pg_restore --no-owner --no-privileges -h 127.0.0.1 -p 5432 -U xingzhai \
 | CI e2e | 只对 CI 临时库执行 `sqlx migrate run`（这些定向迁移在 5433/test 环境本就适用） |
 | 文件内守卫 | **无**：db08 等直接 `ALTER TABLE`，没有 `current_database()`/`to_regclass` 环境判断 |
 
-**缺口**：没有任何机制阻止人对 prod DSN 手工执行 `sqlx migrate run`；而 prod 账本恰好缺 16 条 14 位迁移，sqlx 会把它们当 pending 重新执行。**已加防线**：`scripts/migration/apply-forward.sh` 只应用 `version > anchor` 的文件（从机制上跳过锚点前的全部历史），并对 `--prod` 启用命名拒绝（`dbNN_test` / `dbNN_5433` / `5433_` / `test_`）。**剩余缺口**：无法强制外部工具，需靠流程约定「生产迁移只走 apply-forward.sh」；建议后续 CI 禁止再新增定向迁移命名。
+**缺口**：没有任何机制阻止人对 prod DSN 手工执行 `sqlx migrate run`；而 prod 账本恰好缺 16 条 14 位迁移，sqlx 会把它们当 pending 重新执行。**已加防线**：`scripts/migration/apply-forward.sh` 只应用 `version > anchor` 的文件（从机制上跳过锚点前的全部历史），并对 `--prod` 启用命名拒绝（`dbNN_test` / `dbNN_5433` / `5433_` / `test_`）。**剩余缺口**：无法强制外部工具，需靠流程约定「生产迁移只走 apply-forward.sh」；已由 §19 的三道防线补齐 CI/pre-commit 与入口层强制拦截。
 
 ### 18.3 方案取舍
 
@@ -757,6 +757,66 @@ pg_restore --no-owner --no-privileges -h 127.0.0.1 -p 5432 -U xingzhai \
 ### 18.6 剩余无解项
 
 - **纯链历史重放**仍有 16 SKIP（仅审计用途，`rebuild-verify-classified.sh` 保留）；基线流程为 0 SKIP。
-- 8 条定向迁移仍在仓库中，且 prod 账本缺其中多条；`apply-forward.sh` 是唯一推荐入口，但无法阻止外部工具直接 `sqlx migrate run`。
+- 8 条定向迁移仍在仓库中，且 prod 账本缺其中多条；`apply-forward.sh` 是唯一推荐入口，但无法阻止外部工具直接 `sqlx migrate run`（已由 §19 补齐 CI/pre-commit 与入口层拦截）。
 - 未新增任何追加迁移（本方案不需要）；`finance_currency_master_fix` 在 prod 未入账但表已存在，由基线固化。
-- 建议后续：禁止新增 `dbNN_test` / `dbNN_5433` 命名迁移；为 prod 迁移增加 CI 白名单校验。
+- 后续建议已落地：禁止新增 `dbNN_test` / `dbNN_5433` 命名迁移、破坏性语句守卫、prod 入口硬拦截，见 §19。
+
+## 19. prod 误跑 `sqlx migrate run` 的三道防线（2026-11-05）
+
+> 背景：§18 确认 `deploy-prod.sh` 不调用 `sqlx migrate run`，缺口是「人手工执行」。本节固化三道强制拦截。
+> 约束：prod 只读；未修改任何既存迁移文件字节，`database/checksums.txt` 未变化。
+
+### 19.1 防线清单
+
+| # | 防线 | 实现 | 接入点 | 阻断口径 |
+|---|---|---|---|---|
+| 1 | 定向迁移命名 | `scripts/ci/check-directed-migrations.mjs` | pre-commit（`--changed-only`）+ CI `migration-test` | 新增 `dbNN_test` / `dbNN_5433` / `test_*` / `5433_*`；既存 19 条白名单 |
+| 2 | 破坏性语句守卫 | `scripts/ci/check-destructive-sql.mjs` + `scripts/ci/destructive-sql-baseline.json` | pre-commit + CI `migration-test` + `apply-forward.sh --prod` | 新增/修改文件中的无守卫 `ALTER COLUMN TYPE` / `DROP TABLE CASCADE` / `DROP COLUMN` / `DROP CONSTRAINT` / `DROP TABLE` |
+| 3 | prod 执行入口 | `scripts/migration/apply-forward.sh --prod` | 人工执行 | pending 中「定向命名」或「无守卫高危语句」且不在 `--allow-pending` 白名单 → 硬失败并列出清单 |
+| 补充 | 硬编码 prod DSN | `scripts/ci/check-prod-migration-entry.mjs` | pre-commit + CI `shellcheck` job | 脚本同一行出现 `sqlx migrate run` 与 prod DSN / prod 部署脚本中出现 `sqlx migrate run` |
+
+### 19.2 判定口径
+
+- **语句切分**：按 `;` 切分，忽略注释与单引号字符串（保留 `DO $$` 块内代码），避免注释/提示文案中的关键词误判。
+- **守卫**：语句本身或同一文件前 60 行内出现 `to_regclass` / `relkind` / `pg_class` / `pg_constraint` / `pg_attribute` / `information_schema` / `IF EXISTS` / `DO $$ ... EXISTS`。
+- **两档**：文件 sha256 与基线一致 → 既存违规仅报告；文件新增或 sha256 变化（本次新增/修改）→ 阻断。
+- **白名单**：19 条既存定向迁移写死在检查脚本（8 条 prod 账本缺失 + 11 条历史）；只豁免「已存在文件」，新增文件不受影响。白名单陈旧条目会告警。
+
+### 19.3 全仓既存统计（后续收敛依据）
+
+| 项 | 值 |
+|---|---|
+| 扫描文件 | 592 |
+| 含无守卫高危语句文件 | 25 |
+| 无守卫高危语句 | 651（`alter_column_type` 650 / `drop_column` 1 / `drop_table_cascade` 0 / `drop_constraint` 0） |
+| 集中度 | db08 190、`fix_finance_ehs_timestamptz` 129、`schema_defense_type_align` 86、`fix_qms_remaining_timestamptz` 46；定向迁移 11 个文件合计 352（其中 8 条 prod 账本缺失文件合计 296） |
+| 典型误报样例 | `20260813000001_v76_uuid_cleanup.sql` 11 条 `DO $$ EXECUTE 'ALTER ...' EXCEPTION WHEN OTHERS THEN NULL`（异常吞噬而非存在性守卫，仍计入既存违规）；`20260918000066` / `20261005000004` 的 `DROP CONSTRAINT` 由 `pg_constraint` 目录循环驱动（已加入守卫词表，当前 0 命中） |
+| 结论 | 先宽后严：既存违规全部落报告档，仅新增/修改阻断；不追求清零 |
+
+### 19.4 验证
+
+| 场景 | 结果 |
+|---|---|
+| 正向：main 现状（三件套 + 新增检查） | 命名 PASS（19 白名单 / 0 违规）、破坏性 PASS（25 文件 / 651 条仅报告、0 阻断）、入口扫描 PASS（0 命中 / 1 已知豁免） |
+| 正向：`check-migrations.mjs` / `check-migration-names.mjs --strict` / `validate.sh` | exit 0（592 文件、checksum 0 错） |
+| 反向：`20261106120001_db99_test_sample.sql`（定向命名 + 无守卫 ALTER） | 命名 gate exit 1；破坏性 gate exit 1 |
+| 反向：`20261106120003_forward_unguarded_sample.sql`（非定向命名 + 无守卫 ALTER） | 破坏性 gate exit 1 |
+| 正向对照：`20261106120002_forward_guarded_sample.sql`（`to_regclass` 守卫） | 破坏性 gate exit 0 |
+| 入口：`apply-forward.sh --prod --anchor 20261105235700` | exit 1，列出「定向命名」与「无守卫高危语句 1 条」 |
+| 入口：`--allow-pending 20261106120001` | exit 0（人工放行生效） |
+| 入口：非 `--prod` | exit 0（不改变既有用法） |
+| 清理 | 3 个临时样例已删除，main 恢复全绿 |
+
+### 19.5 prod 迁移唯一入口
+
+**唯一入口：`bash scripts/migration/apply-forward.sh --prod`（基线 + 前向迁移）。禁止在 prod 执行 `sqlx migrate run`。**
+
+- `scripts/deploy-prod.sh` 账本预检追加一行入口提示（不改变既有 warning 行为）。
+- 仓库内脚本出现「硬编码 prod DSN + `sqlx migrate run`」或 prod 部署脚本直接调用 → CI/pre-commit 阻断。
+
+### 19.6 剩余风险
+
+1. **外部工具**无法被仓库内校验拦住：直接对 prod 手工执行 `sqlx migrate run` 仍可能发生；本防线只能拦截仓库内脚本与推荐入口。
+2. **判定误差**：60 行窗口内的无关守卫会漏报；`EXCEPTION WHEN OTHERS` 类「伪守卫」会误报（当前均落既存报告档）。
+3. **基线腐化**：`destructive-sql-baseline.json` 需在「合法新增/修复」后人工 `--write-baseline` 重生；不重生会持续阻断新增文件（符合预期）。
+4. **遗留脚本**：`scripts/deploy/production-deploy.sh` 仍调用 `sqlx migrate run`，已在扫描白名单登记（遗留 systemd 部署，非当前 prod 主机链路）；迁到 apply-forward 后应移除豁免。
