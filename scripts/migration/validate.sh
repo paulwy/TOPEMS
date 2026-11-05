@@ -200,7 +200,7 @@ for dir in "${MIGRATION_DIRS[@]}"; do
       done < <(git -C "$REPO_ROOT" diff-tree --no-commit-id --name-only -r "$commit" -- "$dir/*.sql" 2>/dev/null)
 
       # Sort versions within the commit numerically
-      if (( ${#commit_versions[@]:-0} > 0 )); then
+      if (( ${#commit_versions[@]} > 0 )); then
         while IFS= read -r v; do
           ordered_versions+=("$v")
         done < <(printf '%s\n' "${commit_versions[@]}" | sort -n)
@@ -209,7 +209,7 @@ for dir in "${MIGRATION_DIRS[@]}"; do
   fi
 
   # Fallback to filesystem order if git is unavailable or no tracked files
-  if (( ${#ordered_versions[@]:-0} == 0 )); then
+  if (( ${#ordered_versions[@]} == 0 )); then
     while IFS= read -r -d '' file; do
       version="$(extract_version "$(basename "$file")")"
       [[ -z "$version" ]] && continue
@@ -218,7 +218,7 @@ for dir in "${MIGRATION_DIRS[@]}"; do
   fi
 
   prev_version=""
-  if (( ${#ordered_versions[@]:-0} > 0 )); then
+  if (( ${#ordered_versions[@]} > 0 )); then
     for version in "${ordered_versions[@]}"; do
       if [[ -n "$prev_version" ]] && (( 10#$version <= 10#$prev_version )); then
         ORDER_ISSUES+=("$dir: $version <= previous ($prev_version)")
