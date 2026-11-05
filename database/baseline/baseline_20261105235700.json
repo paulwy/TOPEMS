@@ -1,0 +1,15 @@
+{
+  "anchor_version": 20261105235700,
+  "source_db": "topems_prod",
+  "source_host": "127.0.0.1/32",
+  "source_server_version": "18.4 (Homebrew)",
+  "generated_at_utc": "2026-11-05T06:55:50Z",
+  "table_count": 1349,
+  "ledger_rows": 576,
+  "schema_file": "prod_schema_20261105235700.sql.gz",
+  "ledger_file": "prod_ledger_20261105235700.sql",
+  "schema_sha256": "769b81e0f9ccb502a989e35d403bc90ce03992b454ff99a58e0deb81bada7352",
+  "ledger_sha256": "f832e5ed60630c1e9fc703ee70d8ce853f6a37ab249a6cbba91fbd2f4c5312a2",
+  "known_not_applied_versions": ["20261103210000","20261103220000","20261103230000","20261104000000","20261104010000","20261104020000","20261104030000","20261104040000","20261104050000","20261104060000","20261104070000","20261105110000","20261105120000","20261105145000","20261105150000","20261105180000"],
+  "drift": {"chain_db":"p4_rebuild_verify","prod_only":136,"chain_only":16}
+}
