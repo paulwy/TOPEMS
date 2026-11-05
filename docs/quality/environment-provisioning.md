@@ -9,7 +9,9 @@
   依赖 `public.qa_lab_tasks`，该表由**更晚**的 `20261007000009` 才创建 → 空库全链 `sqlx migrate run` 必然失败。
 - 唯一受支持供给路径：**恢复基线快照（schema + `_sqlx_migrations` 账本 + 参考数据）→ 只应用 `version > anchor` 的前向迁移**。
 - 参考数据（角色/权限点/菜单/字典/组织岗位等 11 张配置表）已纳入基线，默认随供给恢复；
-  新环境无需手工补权限数据即可登录与鉴权（用户主体仍由 seeds/初始化流程创建）。
+  新环境无需手工补权限数据即可登录与鉴权。
+- 用户主体可选由 `--with-admin` 创建（**默认关闭**）：生产/复刻环境必须显式决定是否建管理员；
+  默认随机密码、哈希复用登录校验同一 `verify_password`、在**前向迁移之后**写入，避免被迁移覆盖。
 - `scripts/deploy/setup-db.sh` 已降级：仅保留 `--create-user` / `--create-db`；`--init-schema` 直接 exit 1 并指向 `provision-env.sh`。
 
 ## 2. 锚点定义与当前值
@@ -56,6 +58,13 @@ bash scripts/db/provision-env.sh --env prod-replica --db topems_prod_replica \
 | `--with-reference-data` | **默认开启**：恢复参考数据基线（`baseline_<anchor>_data.sql.gz`） |
 | `--no-reference-data` | 跳过参考数据；⚠️ 角色/权限/菜单缺失，环境可能不可登录 |
 | `--data-only` | 仅数据恢复：要求结构已存在且 `max(version)=anchor`；按依赖逆序 `DELETE` 11 张纳入表后恢复（不 CASCADE） |
+| `--with-admin` | **默认关闭**：供给完成后创建初始管理员（`admin` / `admin@topems.com`） |
+| `--admin-username` / `--admin-email` | 覆盖管理员默认用户名/邮箱（须配合 `--with-admin`） |
+| `--admin-password-stdin` | 从 stdin 读取密码（不回显、不走 argv）；不传则随机生成 20 位 |
+| `--admin-password-file <path>` | 额外把密码写入 0600 文件（默认不写；禁止仓库内路径） |
+| `--reset-admin-password` | 已存在同名/同邮箱用户时显式重置密码；默认跳过且不改密码 |
+| `--admin-only` | 仅对已供给库执行管理员创建/校验/重置，不改结构/数据/迁移（幂等与运维重置入口） |
+| `--allow-prod-admin` | 仅 `prod-replica` 显式允许管理员操作（强警告；真 prod 永不可用） |
 | `--force-nonempty` | 显式允许覆盖非空库：`DROP DATABASE ... WITH (FORCE)` + 重建，打印 ⚠️ WARN；**prod 形态一律不可用** |
 | `--prod-ssh` / `--prod-dsn` | prod 只读比对入口（仅 `SELECT` information_schema） |
 | `--skip-prod-fingerprint` | 跳过 10 表指纹比对；`prod-replica` 不允许 |
@@ -63,10 +72,13 @@ bash scripts/db/provision-env.sh --env prod-replica --db topems_prod_replica \
 流程（固定顺序）：建库（不存在）→ 非空守卫 → 恢复 schema（`gunzip | psql`，`ON_ERROR_STOP=1`）→ 恢复账本 →
 **恢复参考数据**（逐表行数与元数据精确一致）→ 校验「表数 1349 / 账本 576 / max(version)=anchor」→
 `apply-forward.sh --anchor <anchor>`（只应用 `version > anchor`）→
-终态校验（表数 ≥ 基线、`max(version) ≥ anchor`、参考数据行数允许前向增量、admin 权限最小集、10 表结构指纹与 prod 比对）。
+终态校验（表数 ≥ 基线、`max(version) ≥ anchor`、参考数据行数允许前向增量、admin 权限最小集、10 表结构指纹与 prod 比对）
+→（可选 `--with-admin`）创建/校验初始管理员。管理员放在**前向迁移与终态校验之后**：避免任何 `> anchor`
+迁移改写 `iam.users` 时覆盖管理员，也避免在结构/数据异常环境里先写入用户。
 
 **幂等**：完整供给重复执行命中非空库 → 默认 **exit 1**（不静默覆盖）；确认重建必须显式 `--force-nonempty`。
 `--data-only` 可重复执行：仅清理并恢复 11 张纳入表，不触碰其他表；外部表引用导致删除失败时 fail-closed。
+`--admin-only` 可重复执行：管理员已存在 → **exit 0** 并打印「已存在，跳过」，不改密码；重置必须显式 `--reset-admin-password`。
 **fail-closed**：探测失败、sha256 不匹配、账本/表数/锚点/指纹任一不符 → exit 1；**永不回退 `sqlx migrate run`**。
 **prod 特征**：库名 `topems_prod`、host `192.168.110.115`/`xingzhai`/含 `prod` → 在任何连接前拒绝
 （`prod-replica` 除外，但要求库名含 `replica`）。
@@ -160,6 +172,8 @@ git commit -m "chore(baseline): 锚点前移至 <new-anchor> 并入库结构+参
 3. 锚点为 14 位合法时间戳；
 4. `anchors.json` 单调不减，最新锚点 = 最新元数据；最新条目的 data_* 字段与数据元数据一致；
 5. 新增迁移（不在清单内）版本必须 > 锚点。
+6. `scripts/ci/check-hardcoded-passwords.mjs`：扫描仓库内硬编码管理员/默认密码常量
+   （`DEFAULT_ADMIN_PASSWORD`、`admin_password = "..."`、`admin123` 等）；测试夹具与 `#[cfg(test)]` 段除外。
 
 接入：
 - **pre-commit**（`lefthook.yml` → `baseline-integrity`）：仅当暂存区含 `database/migrations|baseline` 或本校验脚本时执行
@@ -185,6 +199,11 @@ git commit -m "chore(baseline): 锚点前移至 <new-anchor> 并入库结构+参
 | 临时前向迁移插入 1 条权限（> anchor） | exit 0：前向后权限点 986 → 987，增量未被快照回退（验后删除） |
 | 临时前向迁移新增 `NOT NULL` 无默认列 | exit 1（数据已恢复、前向失败，fail-closed；验后删除） |
 | prod 内容指纹比对 | `core_permissions` 986（md5 `f0a8e5e5…`）、`core_menus` 423（md5 `a8d85925…`）、`core_roles` 15、`core_role_permissions` 653，与 prod 一致 |
+| 全量供给 + `--with-admin`（`--db p5_admin_full`） | exit 0：用户行 / `core_user_roles→admin` / 哈希正反例校验通过；密码仅 stderr 一次 |
+| `--admin-only` 重复执行 | exit 0：打印「已存在，跳过」，密码未变更（新密码仍可校验、旧密码被拒） |
+| `--admin-only --reset-admin-password --admin-password-stdin` | exit 0：密码更新、密码文件 0600、旧密码失效 |
+| 真实 HTTP 登录（`POST /api/core/iam/auth/login`） | 正例 **HTTP 200**（`roles=["admin"]`、`permissions=["*"]`）；错误密码 **HTTP 401** |
+| prod / prod-replica / data-only 组合 / 仓库内密码文件 | 全部 exit 1（0s，未写入用户） |
 
 > prod 仅只读：指纹与内容比对使用 `ssh + psql -d topems_prod`，无任何 DDL/DML；数据快照为 `pg_dump --data-only`。
 
@@ -247,3 +266,49 @@ git commit -m "chore(baseline): 锚点前移至 <new-anchor> 并入库结构+参
 - 实测 2（不兼容迁移，`ADD COLUMN ... NOT NULL` 无默认）：数据恢复成功、前向迁移失败 → exit 1。
   说明此类迁移无法靠调整顺序规避（先前向也会因快照缺列失败），必须重生成 data 快照或改写迁移；
   脚本保持 fail-closed，不静默跳过。
+
+## 10. 初始管理员（--with-admin）
+
+### 10.1 实测契约（依据：`baseline_20261105235700.sql.gz` + prod 只读查询 + Rust 代码）
+
+| 项 | 实测结论 |
+|---|---|
+| 登录用户表 | **`iam.users`**（不是 `public.users`）；`SELECT ... WHERE (username=$1 OR email=$1) AND deleted_at IS NULL` |
+| 密码哈希 | **bcrypt**，`bcrypt::DEFAULT_COST`（`hash_password`）；校验 `verify_password` → `bcrypt::verify`，损坏哈希返回 false |
+| id | `uuid`，DB 默认 `gen_random_uuid()`；代码侧用 `Uuid::new_v4()` |
+| 必填列 | `username`、`email`、`password_hash`；其余（`status` 默认 `active`、`is_active`、`is_superuser`、`roles`、`created_at`/`updated_at`）均有默认值 |
+| 唯一约束 | `username` 与 `email` 各自**全局唯一**；软删除行仍占用唯一键（同名已删 → fail-closed，要求人工处理） |
+| 软删除 | `deleted_at`；登录只接受 `deleted_at IS NULL` 且 `status='active'` |
+| 角色绑定 | `public.core_user_roles(user_id, role_id)`，PK `(user_id, role_id)`，FK `role_id → core_roles(id)`；**基线无 `tenant_id` 列** |
+| 管理员角色 | `public.core_roles.name = 'admin'`（prod 快照唯一）；不按 id 硬编码，按 name 查询 |
+| 超级管理员 | `iam.users.is_superuser = true` → 登录短路 `permissions=["*"]`；prod 的 `admin` 角色本身仅绑 2 个权限点，故必须置为 true |
+| 其他初始化数据 | `core_tenant_users` **非必需**（prod 0 行；登录回落默认租户）；会话/刷新令牌表在登录时按需写入，无需预置 |
+
+### 10.2 密码策略与传递
+
+- 策略与代码实际校验一致：**6–64 字节**（`password.len()`）。自动生成固定 **20 位**，保证大写/小写/数字各至少一个；
+  若通过 `--admin-password-stdin` 传入，则按 6–64 字节校验，不做额外复杂度拒绝（与产品创建/改密入口一致）。
+- 密码**默认随机生成**；`--admin-password-stdin` 从 stdin 读取（不走 argv、不回显）；`--admin-password-file`
+  额外写入 0600 文件（默认不写）。
+- 生成后**只在 stderr 打印一次**并提示「仅本次显示」；stdin 模式不回显。
+- 哈希：`topems-admin-pass` 调用 `topems_unified_core::modules::iam::auth::verify_password` 对生成值做
+  **正例（必须接受）+ 反例（错误密码必须拒绝）** 自校验；供给阶段再从 `iam.users` 读回哈希做同样正反校验。
+  「同一实现」由 Rust 编译器保证：工具与登录handler 引用同一个函数符号，而非另写 bcrypt 调用。
+- 临时材料：`mktemp -d` + `chmod 700`，哈希/密码文件 0600；退出时覆写并删除；**禁止** stdout、仓库文件、
+  `.env` 模板、日志文件；`--admin-password-file` 路径若落在仓库根下直接拒绝。
+
+### 10.3 幂等与重置
+
+- 已存在同名/同邮箱（含软删除探测）：默认 **exit 0**，打印「已存在，跳过」，**不改密码**；仅补齐 `core_user_roles` 绑定并校验。
+- 重置必须显式 `--reset-admin-password`：更新 `password_hash`、`password_changed_at`、清空失败次数/锁定，
+  并重新执行正/反例校验。
+- 命中多个用户（一个 username、另一个 email）或已软删除同名 → **exit 1**，要求人工处理。
+- 邮箱已属其他用户名（仅 email 命中）→ **exit 1**，拒绝把既有普通用户提升为管理员。
+- 已供给库可用 `--admin-only` 重复执行上述语义，不改结构/参考数据/迁移。
+
+### 10.4 prod 禁用策略
+
+- 真 prod（库名 `topems_prod`、prod 主机特征）在**任何连接前**拒绝，`--force` 不放行。
+- `prod-replica` 默认拒绝管理员操作；确需演练必须 `--allow-prod-admin` 并打印强警告。
+- 管理员步骤位于**前向迁移与终态校验之后**：只有结构/数据/账本/指纹全部通过后才会写入 `iam.users`，
+  且 `> anchor` 迁移不可能覆盖该用户。

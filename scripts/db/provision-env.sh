@@ -4,11 +4,17 @@
 #
 # 流程：建库（不存在时）→ 恢复结构基线（schema + ledger）→ 恢复参考数据基线
 #       （baseline_<anchor>_data.sql.gz，默认开启）→ apply-forward.sh 只应用
-#       version > anchor → 终态校验（账本/表数/锚点/参考数据行数/核心表指纹）。
+#       version > anchor → 终态校验（账本/表数/锚点/参考数据行数/核心表指纹）
+#       →（可选 --with-admin）创建/重置初始管理员并校验。
 #
 # 顺序理由：先结构后数据，避免数据写入时缺列；前向迁移在数据之后执行，
 # 因此 > anchor 的增量（如新增菜单/权限）叠加在快照之上，不会被快照回退。
+# 初始管理员放在**前向迁移之后**，避免任何 > anchor 迁移对 iam.users 的改动覆盖它。
 # 若前向迁移改动纳入表的列/约束导致数据不兼容，本脚本 fail-closed，需重生成基线。
+#
+# 初始管理员（--with-admin，默认关闭）：生产/复刻环境必须显式决定是否创建用户；
+# 密码默认随机生成且只在 stderr 显示一次；哈希由 topems-admin-pass 调用登录校验用的
+# 同一个 verify_password 做正/反向自校验后写入；绝不写 stdout / 仓库文件 / .env / 日志。
 #
 # 参考数据范围：11 张配置性表（租户/角色/权限点/菜单/字典/组织岗位），
 # 明确排除含 PII、业务单据、日志、事件流、队列、缓存、账本类数据。
@@ -39,6 +45,15 @@
 #   --no-reference-data      跳过参考数据恢复（⚠️ 角色/权限/菜单缺失，环境可能不可登录）
 #   --data-only              仅恢复参考数据（要求目标库结构已存在且 max(version)=anchor；
 #                            对 11 张纳入表按依赖逆序 DELETE 后恢复，禁止 CASCADE）
+#   --with-admin             供给完成后创建初始管理员（默认关闭；不与 --data-only 组合）
+#   --admin-only             仅对已供给库执行管理员创建/校验/重置（不改结构/数据/迁移；
+#                            用于幂等跳过与 --reset-admin-password 运维）
+#   --admin-username NAME    管理员用户名（默认 admin；须先用 --with-admin）
+#   --admin-email ADDR       管理员邮箱（默认 admin@topems.com）
+#   --admin-password-stdin   从 stdin 读取管理员密码（不回显、不走 argv）
+#   --admin-password-file PATH  额外把密码写入 0600 文件（默认不写；禁止仓库内路径）
+#   --reset-admin-password   已存在同名/同邮箱用户时显式重置密码（默认跳过、不改密码）
+#   --allow-prod-admin       仅 prod-replica 显式允许创建/重置管理员（强警告；真 prod 永不可用）
 #   --force-nonempty   显式允许覆盖已非空库（会 DROP + CREATE；打印 ⚠️ WARN；prod 形态不可用）
 #   --skip-prod-fingerprint  跳过与 prod 的 10 张核心表指纹比对（仅 dev/test/staging 可跳过）
 #   --prod-ssh USER@HOST      prod 只读比对入口（ssh 执行 psql -d topems_prod）
@@ -66,6 +81,22 @@ DATA_ONLY=0
 PROD_SSH=""
 PROD_DSN=""
 PROD_DB="topems_prod"
+WITH_ADMIN=0
+ADMIN_ONLY=0
+ADMIN_USERNAME="admin"
+ADMIN_EMAIL="admin@topems.com"
+ADMIN_PASSWORD_STDIN=0
+ADMIN_PASSWORD_FILE=""
+ADMIN_PASSWORD_FILE_ABS=""
+RESET_ADMIN_PASSWORD=0
+ALLOW_PROD_ADMIN=0
+ADMIN_TMP=""
+ADMIN_HASH_FILE=""
+ADMIN_PASS_FILE=""
+ADMIN_WRONG_FILE=""
+ADMIN_HASH=""
+NEW_ID=""
+ROLE_ID=""
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -87,12 +118,20 @@ while [[ $# -gt 0 ]]; do
     --with-reference-data) WITH_DATA=1; shift ;;
     --no-reference-data) WITH_DATA=0; shift ;;
     --data-only) DATA_ONLY=1; WITH_DATA=1; shift ;;
+    --with-admin) WITH_ADMIN=1; shift ;;
+    --admin-only) ADMIN_ONLY=1; WITH_ADMIN=1; shift ;;
+    --admin-username) ADMIN_USERNAME="$2"; shift 2 ;;
+    --admin-email) ADMIN_EMAIL="$2"; shift 2 ;;
+    --admin-password-stdin) ADMIN_PASSWORD_STDIN=1; shift ;;
+    --admin-password-file) ADMIN_PASSWORD_FILE="$2"; shift 2 ;;
+    --reset-admin-password) RESET_ADMIN_PASSWORD=1; shift ;;
+    --allow-prod-admin) ALLOW_PROD_ADMIN=1; shift ;;
     --force-nonempty) FORCE_NONEMPTY=1; shift ;;
     --skip-prod-fingerprint) SKIP_FP=1; shift ;;
     --prod-ssh) PROD_SSH="$2"; shift 2 ;;
     --prod-dsn) PROD_DSN="$2"; shift 2 ;;
     --prod-db) PROD_DB="$2"; shift 2 ;;
-    -h|--help) sed -n '2,51p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,61p' "$0"; exit 0 ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
 done
@@ -156,6 +195,38 @@ if [[ "$ENV_NAME" == "prod-replica" ]]; then
   [[ "$DB_LC" =~ replica ]] || die "--env prod-replica 要求库名含 replica（收到 ${DB}），避免误指 prod"
 elif [[ "$DB_LC" =~ (^|_)(prod|production)(_|$) ]]; then
   die "目标库名命中 prod 特征（${DB}）；如确为本地副本请显式 --env prod-replica 且库名含 replica"
+fi
+
+# ── 初始管理员参数校验（默认关闭；prod-replica 需显式放行） ──────────────────
+if (( ADMIN_ONLY == 1 )); then
+  (( DATA_ONLY == 0 )) || die "--admin-only 不能与 --data-only 组合"
+  (( FORCE_NONEMPTY == 0 )) || die "--admin-only 不接受 --force-nonempty（不会重建库）"
+fi
+if (( WITH_ADMIN == 1 )); then
+  (( DATA_ONLY == 0 )) || die "--with-admin 不能与 --data-only 组合；请执行完整供给或 --admin-only"
+  [[ "$ADMIN_USERNAME" =~ ^[A-Za-z0-9._-]{3,100}$ ]] \
+    || die "--admin-username 仅允许字母/数字/点/下划线/连字符，长度 3-100：${ADMIN_USERNAME}"
+  [[ "$ADMIN_EMAIL" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]] \
+    || die "--admin-email 格式非法：${ADMIN_EMAIL}"
+  if [[ "$ENV_NAME" == "prod-replica" ]]; then
+    (( ALLOW_PROD_ADMIN == 1 )) \
+      || die "prod-replica 默认拒绝创建管理员；如确需演练请显式 --allow-prod-admin（会打印强警告）"
+    warn "⚠️ 在 prod 副本上创建/重置管理员：该用户只存在于副本，绝不可回写 prod"
+  elif (( ALLOW_PROD_ADMIN == 1 )); then
+    die "--allow-prod-admin 仅适用于 --env prod-replica"
+  fi
+  if [[ -n "$ADMIN_PASSWORD_FILE" ]]; then
+    ADMIN_PASSWORD_DIR="$(dirname "$ADMIN_PASSWORD_FILE")"
+    [[ -d "$ADMIN_PASSWORD_DIR" ]] || die "--admin-password-file 父目录不存在：${ADMIN_PASSWORD_DIR}"
+    ADMIN_PASSWORD_FILE_ABS="$(cd "$ADMIN_PASSWORD_DIR" && pwd)/$(basename "$ADMIN_PASSWORD_FILE")"
+    [[ "$ADMIN_PASSWORD_FILE_ABS" != "$ROOT"/* ]] \
+      || die "--admin-password-file 不得位于仓库内（禁止密码进入 git 工作区）：${ADMIN_PASSWORD_FILE_ABS}"
+  fi
+else
+  (( ADMIN_PASSWORD_STDIN == 0 )) || die "--admin-password-stdin 需要同时指定 --with-admin"
+  [[ -z "$ADMIN_PASSWORD_FILE" ]] || die "--admin-password-file 需要同时指定 --with-admin"
+  (( RESET_ADMIN_PASSWORD == 0 )) || die "--reset-admin-password 需要同时指定 --with-admin"
+  (( ALLOW_PROD_ADMIN == 0 )) || die "--allow-prod-admin 需要同时指定 --with-admin"
 fi
 
 # ── 解析基线（元数据 → 资产 → sha256） ─────────────────────────────────────
@@ -286,7 +357,10 @@ verify_key_data() {
   ok "关键数据完整：admin 角色权限 ${admin_perms} 条；权限点 ${perms}；菜单 ${menus}；字典类型 ${dicts}"
 }
 
-# ── 建库 / 非空守卫 ─────────────────────────────────────────────────────────
+probe() { "${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc "$1" 2>/dev/null; }
+
+# ── 建库 / 非空守卫（--admin-only 跳过全部供给阶段，仅执行末尾管理员步骤） ──
+if (( ADMIN_ONLY == 0 )); then
 exists="$("${ADMIN_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc \
   "SELECT 1 FROM pg_database WHERE datname='${DB}'" 2>/dev/null)" \
   || die "无法连接维护库/查询 pg_database（连接或权限失败，fail-closed）"
@@ -388,8 +462,6 @@ else
 fi
 
 # ── 恢复后锚点校验 ─────────────────────────────────────────────────────────
-probe() { "${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc "$1" 2>/dev/null; }
-
 TABLES_AFTER="$(probe "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind IN ('r','p') AND n.nspname NOT IN ('pg_catalog','information_schema','pg_toast')")" \
   || die "恢复后表数探测失败"
 ROWS_AFTER="$(probe "SELECT count(*) FROM public._sqlx_migrations WHERE success")" || die "恢复后账本探测失败"
@@ -496,6 +568,209 @@ if [[ "${FP_STATUS:-}" != "skipped" ]]; then
   (( mismatch == 0 )) || die "10 张核心表结构指纹与 prod 不一致"
   ok "10 张核心表结构指纹与 prod 一致"
 fi
+fi  # ADMIN_ONLY == 0
+
+# ── 初始管理员（--with-admin；前向迁移与终态校验之后执行） ────────────────────
+admin_tool() {
+  if [[ -n "${TOPEMS_ADMIN_PASS_BIN:-}" ]]; then
+    "$TOPEMS_ADMIN_PASS_BIN" "$@"
+  else
+    command -v cargo >/dev/null 2>&1 \
+      || die "未找到 cargo；无法构建 topems-admin-pass（可用 TOPEMS_ADMIN_PASS_BIN 指定已构建二进制）"
+    SQLX_OFFLINE=true cargo run --quiet --manifest-path "$ROOT/Cargo.toml" \
+      -p topems-unified-core --bin topems-admin-pass -- "$@"
+  fi
+}
+
+# shellcheck disable=SC2329  # 通过 trap 间接调用
+admin_temp_cleanup() {
+  if [[ -n "$ADMIN_TMP" && -d "$ADMIN_TMP" ]]; then
+    if [[ -f "$ADMIN_HASH_FILE" ]]; then : > "$ADMIN_HASH_FILE"; fi
+    if [[ -f "$ADMIN_PASS_FILE" ]]; then : > "$ADMIN_PASS_FILE"; fi
+    if [[ -f "$ADMIN_WRONG_FILE" ]]; then : > "$ADMIN_WRONG_FILE"; fi
+    rm -rf "$ADMIN_TMP"
+  fi
+}
+
+admin_temp_init() {
+  ADMIN_TMP="$(mktemp -d "${TMPDIR:-/tmp}/topems-admin.XXXXXX")" || die "创建管理员临时目录失败"
+  chmod 700 "$ADMIN_TMP"
+  ADMIN_HASH_FILE="$ADMIN_TMP/password_hash"
+  ADMIN_PASS_FILE="$ADMIN_TMP/password"
+  ADMIN_WRONG_FILE="$ADMIN_TMP/wrong_password"
+  trap 'admin_temp_cleanup' EXIT
+}
+
+admin_prepare_material() {
+  admin_temp_init
+  if (( ADMIN_PASSWORD_STDIN == 1 )); then
+    if [[ -t 0 ]]; then
+      warn "从 stdin 读取管理员密码（输入后回车；不会回显）"
+    fi
+    admin_tool hash --out "$ADMIN_HASH_FILE" --password-out "$ADMIN_PASS_FILE" < /dev/stdin \
+      || die "管理员密码不符合产品校验规则（6-64 字节）或哈希自校验失败"
+  else
+    admin_tool hash --generate --out "$ADMIN_HASH_FILE" --password-out "$ADMIN_PASS_FILE" \
+      || die "随机密码生成或哈希自校验失败"
+  fi
+  ADMIN_HASH="$(cat "$ADMIN_HASH_FILE")" || die "读取临时哈希失败"
+  case "$ADMIN_HASH" in
+    \$2*) : ;;
+    *) die "生成的哈希不是 bcrypt 格式" ;;
+  esac
+  if (( ADMIN_PASSWORD_STDIN == 0 )); then
+    ADMIN_PLAIN="$(cat "$ADMIN_PASS_FILE")" || die "读取临时密码失败"
+    printf '\n%s\n' "初始管理员密码（仅本次显示）：${ADMIN_PLAIN}" >&2
+    printf '%s\n' "⚠️  请立即保存；本脚本不会再次显示，也不会写入仓库/日志。" >&2
+    unset ADMIN_PLAIN
+  else
+    printf '%s\n' "初始管理员密码来自 stdin（未回显）；如需落盘请使用 --admin-password-file。" >&2
+  fi
+  if [[ -n "$ADMIN_PASSWORD_FILE_ABS" ]]; then
+    install -m 600 "$ADMIN_PASS_FILE" "$ADMIN_PASSWORD_FILE_ABS" || die "写入管理员密码文件失败"
+    ok "管理员密码已写入 0600 文件：${ADMIN_PASSWORD_FILE_ABS}"
+  fi
+}
+
+admin_binding_ensure() {
+  local uid="$1"
+  "${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -c \
+    "INSERT INTO public.core_user_roles (user_id, role_id) VALUES ('${uid}', '${ROLE_ID}') ON CONFLICT DO NOTHING" \
+    || die "写入 core_user_roles 失败"
+}
+
+admin_verify_row() {
+  local uid="$1" require_super="$2" row status superuser live
+  row="$(probe "SELECT status||'|'||is_superuser::text||'|'||(deleted_at IS NULL)::text FROM iam.users WHERE id='${uid}'")" \
+    || die "读取管理员用户行失败"
+  [[ -n "$row" ]] || die "管理员用户行不存在：${uid}"
+  IFS='|' read -r status superuser live <<< "$row"
+  [[ "$live" == "true" ]] || die "管理员用户已被软删除：${uid}"
+  [[ "$status" == "active" ]] || die "管理员用户状态非 active（${status}）"
+  if [[ "$superuser" != "true" ]]; then
+    (( require_super == 0 )) || die "新建管理员 is_superuser 非 true"
+    warn "既有用户 is_superuser=false：角色权限以 core_user_roles 为准，可能不足以管理环境"
+  fi
+  ok "用户行校验通过：status=active / deleted_at IS NULL"
+}
+
+admin_verify_binding() {
+  local uid="$1" n
+  n="$(probe "SELECT count(*) FROM public.core_user_roles ur JOIN public.core_roles r ON r.id=ur.role_id WHERE ur.user_id='${uid}' AND r.name='admin' AND r.deleted_at IS NULL")" \
+    || die "管理员角色绑定探测失败"
+  [[ "$n" == "1" ]] || die "管理员角色绑定异常（期望 1，实际 ${n}）"
+  ok "角色绑定校验通过：core_user_roles → core_roles(name=admin)"
+}
+
+admin_verify_password() {
+  local uid="$1" db_hash_file="$ADMIN_TMP/db_hash" lines
+  "${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc \
+    "SELECT password_hash FROM iam.users WHERE id='${uid}' AND deleted_at IS NULL" > "$db_hash_file" \
+    || die "读取 iam.users.password_hash 失败"
+  lines="$(wc -l < "$db_hash_file" | tr -d '[:space:]')"
+  [[ "$lines" == "1" ]] || die "password_hash 行数异常：${lines}"
+  admin_tool verify --hash-file "$db_hash_file" < "$ADMIN_PASS_FILE" \
+    || die "正例失败：登录校验函数不接受库内哈希"
+  { cat "$ADMIN_PASS_FILE"; printf 'x'; } > "$ADMIN_WRONG_FILE" || die "构造错误密码失败"
+  local wrong_rc=0
+  admin_tool verify --hash-file "$db_hash_file" < "$ADMIN_WRONG_FILE" || wrong_rc=$?
+  (( wrong_rc == 1 )) || die "反例校验异常（期望退出 1，实际 ${wrong_rc}）"
+  rm -f "$db_hash_file"
+  ok "密码哈希正/反向校验通过（verify_password 同一实现）"
+}
+
+provision_admin() {
+  local role_count match_ids uid deleted existing_username
+  info "初始管理员：username=${ADMIN_USERNAME} email=${ADMIN_EMAIL}"
+
+  role_count="$(probe "SELECT count(*) FROM public.core_roles WHERE name='admin' AND deleted_at IS NULL")" \
+    || die "admin 角色探测失败（参考数据未恢复？）"
+  [[ "$role_count" == "1" ]] || die "参考数据中 admin 角色应唯一存在（实际 ${role_count}）；请先恢复参考数据"
+  ROLE_ID="$(probe "SELECT id FROM public.core_roles WHERE name='admin' AND deleted_at IS NULL")" \
+    || die "读取 admin 角色 id 失败"
+
+  match_ids="$(probe "SELECT COALESCE(string_agg(DISTINCT id::text, ','), '') FROM iam.users WHERE username='${ADMIN_USERNAME}' OR email='${ADMIN_EMAIL}'")" \
+    || die "管理员存在性探测失败"
+  if [[ -n "$match_ids" ]]; then
+    [[ "$match_ids" != *,* ]] \
+      || die "username/email 命中多个用户（${match_ids}），无法安全判定，请人工处理"
+    uid="$match_ids"
+    deleted="$(probe "SELECT CASE WHEN deleted_at IS NULL THEN '0' ELSE '1' END FROM iam.users WHERE id='${uid}'")" \
+      || die "读取用户删除状态失败"
+    [[ "$deleted" == "0" ]] \
+      || die "同名/同邮箱用户已软删除并占用唯一约束；请人工恢复或更换 --admin-username/--admin-email"
+
+    # 安全护栏：仅按 email 命中（用户名不同）时不得把既有普通用户提升为管理员
+    existing_username="$(probe "SELECT username FROM iam.users WHERE id='${uid}'")" \
+      || die "读取既有用户名失败"
+    [[ "$existing_username" == "$ADMIN_USERNAME" ]] \
+      || die "邮箱 ${ADMIN_EMAIL} 已被用户 ${existing_username} 占用；拒绝将其提升为管理员，请更换 --admin-email"
+
+    if (( RESET_ADMIN_PASSWORD == 0 )); then
+      info "用户已存在，跳过创建与密码修改（如需重置请显式 --reset-admin-password）"
+      admin_binding_ensure "$uid"
+      admin_verify_row "$uid" 0
+      admin_verify_binding "$uid"
+      ok "已存在，跳过（未修改密码）"
+      return 0
+    fi
+
+    info "已显式 --reset-admin-password：重置既有用户密码"
+    admin_prepare_material
+    "${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -c \
+      "UPDATE iam.users SET password_hash='${ADMIN_HASH}', password_changed_at=now(), updated_at=now(), failed_login_attempts=0, locked_until=NULL WHERE id='${uid}'" \
+      || die "重置管理员密码失败"
+    admin_binding_ensure "$uid"
+    admin_verify_row "$uid" 0
+    admin_verify_binding "$uid"
+    admin_verify_password "$uid"
+    ok "管理员密码已重置并校验通过"
+    return 0
+  fi
+
+  info "创建初始管理员..."
+  admin_prepare_material
+  NEW_ID="$("${TARGET_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tA <<SQL
+INSERT INTO iam.users (username, email, password_hash, full_name, full_name_en, status, is_superuser, is_active, roles)
+VALUES ('${ADMIN_USERNAME}', '${ADMIN_EMAIL}', '${ADMIN_HASH}', 'System Administrator', 'System Administrator', 'active', true, true, ARRAY['admin'])
+RETURNING id;
+SQL
+)" || die "创建管理员用户失败"
+  NEW_ID="$(printf '%s' "$NEW_ID" | tr -d '[:space:]')"
+  [[ "$NEW_ID" =~ ^[0-9a-fA-F-]{36}$ ]] || die "创建后返回的用户 id 异常"
+
+  admin_binding_ensure "$NEW_ID"
+  admin_verify_row "$NEW_ID" 1
+  admin_verify_binding "$NEW_ID"
+  admin_verify_password "$NEW_ID"
+  ok "初始管理员创建并校验通过：${ADMIN_USERNAME} <${ADMIN_EMAIL}>"
+}
+
+if (( ADMIN_ONLY == 1 )); then
+  ADMIN_EXISTS="$("${ADMIN_PSQL[@]}" -X -q -v ON_ERROR_STOP=1 -tAc \
+    "SELECT 1 FROM pg_database WHERE datname='${DB}'" 2>/dev/null)" \
+    || die "--admin-only 无法查询 pg_database（fail-closed）"
+  [[ -n "$ADMIN_EXISTS" ]] || die "--admin-only 要求目标库已存在：${DB}（请先执行完整供给）"
+  MAX_ADMIN="$(probe "SELECT COALESCE(max(version),0) FROM public._sqlx_migrations WHERE success")" \
+    || die "--admin-only 读取账本失败（库未供给或缺少 _sqlx_migrations）"
+  MAX_ADMIN="${MAX_ADMIN//[^0-9]/}"; MAX_ADMIN="${MAX_ADMIN:-0}"
+  (( 10#$MAX_ADMIN >= 10#$ANCHOR )) \
+    || die "--admin-only 要求库已供给到锚点（max(version)=${MAX_ADMIN} < ${ANCHOR}）"
+  verify_key_data
+  provision_admin
+
+  echo ""
+  echo -e "${GREEN}========================================${NC}"
+  echo -e "${GREEN}管理员步骤完成（admin-only）：${ENV_NAME} / ${DB}${NC}"
+  echo -e "${GREEN}========================================${NC}"
+  echo "  模式        : admin-only（未改动结构/参考数据/迁移）"
+  echo "  初始管理员  : ${ADMIN_USERNAME} <${ADMIN_EMAIL}>"
+  exit 0
+fi
+
+if (( WITH_ADMIN == 1 )); then
+  provision_admin
+fi
 
 echo ""
 echo -e "${GREEN}========================================${NC}"
@@ -509,5 +784,10 @@ if (( WITH_DATA == 1 )); then
   echo "  参考数据    : ${DATA_TABLES} 张表 / ${DATA_TOTAL} 行（基线快照 + 前向增量）"
 else
   echo "  参考数据    : 已跳过（--no-reference-data）"
+fi
+if (( WITH_ADMIN == 1 )); then
+  echo "  初始管理员  : ${ADMIN_USERNAME} <${ADMIN_EMAIL}>（密码仅上方显示一次）"
+else
+  echo "  初始管理员  : 未创建（--with-admin 未启用）"
 fi
 exit 0
