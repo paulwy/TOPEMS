@@ -1844,6 +1844,21 @@
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.129 审计整改第六批：P3-2 三组权限码统一（bi/mes/wms）（2026-11-06）✅
+
+> 承接 v1.128 遗留第一项。先出方案（命名决策 + 影响面实测 + 迁移/回滚设计）再执行，三端同步收敛。
+
+- **命名决策** ✅：统一为 DB 种子/FE 现行拼写 `bi:data_source:*` / `mes:work_order:*` / `wms:stocktake:*`。理由：DB 与 FE 已是目标拼写、仅 BE 4 处声明偏离，改 BE 即收敛，**授权数据迁移量为零**；反向方案需改 FE 多处 + DB 授权迁移，不采用。
+- **影响面（本地库实测，非估算）**：`mes:work_order:read` 授权角色 `mes_manager`、角色下用户 0；`core_users` 总数 0；bi/wms 目标码迁移前缺失、旧拼写三组 DB 均为 0 行 → 不影响实际用户。`mes:work_order:write` 仍无角色授权（既有缺口，登记业务方，不擅自授权）。
+- **BE 改动** ✅：`work_order.rs` read(2)/write(8) → `mes:work_order:*`；`bi/plugin.rs` datasource → data_source（code+resource_type）；`wms_plugin.rs` stock_take → stocktake（code+resource_type）。旧拼写残留 0。
+- **DB 迁移** ✅：`database/migrations/20261106000001_permission_code_unify_bi_mes_wms.sql`——幂等改名（目标不存在才改）+ 幂等补种 5 条缺码（`NOT EXISTS`，无唯一约束故不用 `ON CONFLICT`）；不 DELETE、不动授权关系；文末附 ROLLBACK 段。实测第一次 `INSERT 0 5`（mes 642→647）、第二次 `INSERT 0 0`。
+- **FE** ✅ 零改动（已全部使用目标拼写）。
+- **对账** ✅：`scripts/audit_permission_codes.py` 复跑 **`rename_groups = 0`**；脚本同步改进（DB 扫描跳过 `--` 注释与 `WHERE code='旧码'` 改写条件，避免迁移兼容逻辑误计为注册）。
+- **重大发现（登记 P5）**：`core_permissions` 三副本漂移——`mes` 647（`search_path=mes,public` 优先，事实权威）/ `public` 1033（历史迁移显式写 public 造成，含 `bi:data_source:read` 及 2 条不生效授权）/ `iam` 0。首版迁移误写 public 已回滚并改为不带 schema 前缀，后续需副本归一。
+- **验证** ✅：cargo check（topems-mes/analytics/wms 1m15s）通过；`check-migration-names.mjs --strict` PASS；`validate.sh` Errors 0 / Checksum 0 / Drift 0；RLS PASS；vitest 权限用例 9 过。
+- **提交**：`3d7395b6c1`（7 files，+215/-18）。本条目（v1.129）为核销提交。
+- **下一批候选**：P4 tier 激活机制（`core_tenant_modules`）/ 移动端路由统一；或 ① 45X 项 BE-only 前端约束补充分批（建议优先 ③ 类已收敛后按影响面排序）。
+
 ## v1.128 审计整改第五批：P3 权限码三端盘点 + :view→:read 兼容回退（2026-11-06）✅
 
 > 承接 v1.127 建议推进 P3（权限码 FE/BE 统一 + 跨模块归属）。按"先盘点后动手"约束，本批产出可复跑对账脚本与盘点报告，落地零破坏的兼容回退，其余登记专项。
