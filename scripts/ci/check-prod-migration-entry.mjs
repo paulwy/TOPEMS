@@ -32,13 +32,9 @@ const COMMENT_RE = /^\s*(#|\/\/|\*|--)/;
 // 纯消息输出行（echo/warn/info/printf）中的提示文字不算执行入口
 const MESSAGE_RE = /^\s*(echo|printf|warn|info|error|log_[a-z_]+|log_[A-Z_]+|die|fail)\b/;
 
-// 已知豁免：需带原因与退出条件，避免白名单腐化
-const ALLOWLIST = new Map([
-  [
-    'scripts/deploy/production-deploy.sh',
-    '遗留 systemd 一键部署脚本（deploy/README 标注现用，但当前 prod 主机走 deploy-prod.sh + apply-forward.sh）；迁到 apply-forward 后移除本条豁免',
-  ],
-]);
+// 已知豁免：需带原因与退出条件，避免白名单腐化。
+// 2026-11-05：production-deploy.sh 已切换到 apply-forward.sh，豁免移除；当前无豁免项。
+const ALLOWLIST = new Map();
 
 const args = process.argv.slice(2);
 const JSON_MODE = args.includes('--json');
