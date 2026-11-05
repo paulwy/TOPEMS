@@ -207,6 +207,22 @@ git commit -m "chore(baseline): 锚点前移至 <new-anchor> 并入库结构+参
 
 > prod 仅只读：指纹与内容比对使用 `ssh + psql -d topems_prod`，无任何 DDL/DML；数据快照为 `pg_dump --data-only`。
 
+### 8.1 真实环境重建（2026-11-05，`topems_test@192.168.110.115`）
+
+| 项 | 值 |
+|---|---|
+| 入口 | `bash scripts/db/provision-env.sh --env test --dsn "postgresql://xingzhai@127.0.0.1:15432/topems_test" --force-nonempty --skip-prod-fingerprint`（本地 SSH 隧道；host=127.0.0.1 以避开远端 prod 特征守卫） |
+| 前置全库备份 | `/Users/air/topems_backups/topems_test_before_g1_20261105.dump`（4.3MB，`pg_restore -l` 9313 项 / 1349 TABLE DATA） |
+| 逐表归档 | `/Users/air/topems/backups/g1_test_tables_20261105_182939/`（141 个 `<schema>_<table>.dump`，1.4MB，抽查 4 份 `pg_restore -l` 可读） |
+| 终态 | 表 1349 / 账本 576 / max(version) `20261105235700` / 参考数据 11 表 2277 行 / 10 表结构指纹 10/10 |
+| 参考数据逐表 | tenants 1 / tenant_settings 4 / roles 15 / permissions 986 / role_permissions 653 / menu_groups 122 / menus 423 / dict_types 6 / dict_items 24 / departments 23 / positions 20 |
+| test 独有账本 | 重建前 6 条（孤儿 `20261103000005` + 5 条 5433 定向）→ 重建后 **0** 条 |
+| 丢失数据 | 13,422 行 / 141 张非空表（审计日志 5,885 行、会话 229、回款 151 等）；参考数据 11 表按基线恢复 |
+| 校验 | `validate.sh` / `check-migrations` / `check-migration-names --strict` 全 exit 0；psql 连接 + 9 个主要 schema 存在 + 关键表可读 |
+| 首次失败 | `ERROR: relation "core_api_version_configs" already exists`——重建窗口内有外部客户端在新库抢先建表（非 dump 自身问题：同一 dump 在本地空库完整恢复 1349 表）；清理并发后原命令重跑一次通过，未改用 `sqlx migrate run` 或手工 DROP |
+
+> prod 全程零操作（未连接、未比对）。后续新环境与 test 复位统一走 `provision-env.sh`。
+
 ## 9. 参考数据基线（reference data）
 
 ### 9.1 范围清单（纳入 11 张，2277 行）

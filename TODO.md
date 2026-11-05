@@ -1,6 +1,6 @@
 ## 第四十八轮（2026-11-05）：test 环境自洽盘点（G1）+ medium 解码抽检（G2）
 
-### G1. test 账本/结构自洽（⏸ 待确认：重建）
+### G1. test 账本/结构自洽（✅ 已完成：已重建）
 
 **只读盘点（`topems_test@192.168.110.115`）**：
 
@@ -19,9 +19,18 @@
 
 **副本验证（已通过）**：`provision-env.sh --env test --db g1_scratch_test` → 表 1349 / 账本 576 / max `20261105235700` / 参考数据 11 表 2277 行；核心表行数 986/423/15/653 与 prod 一致。
 
-**备份**：`/Users/air/topems_backups/topems_test_before_g1_20261105.dump`（4.3MB，`pg_restore -l` 9313 项、1349 张 TABLE DATA 可读）。
+**备份**：
 
-**待确认风险**：重建会丢失 test 现有 **13,422 行 / 141 张非空表**（审计日志 5,885 行、权限/菜单副本、`crm_master_data_refs` 282、会话 229、回款 151 等）；参考数据 11 表将按基线恢复。**test 尚未改动**。
+- 全库：`/Users/air/topems_backups/topems_test_before_g1_20261105.dump`（4.3MB，`pg_restore -l` 9313 项、1349 张 TABLE DATA 可读）。
+- 逐表归档：`/Users/air/topems/backups/g1_test_tables_20261105_182939/`（141 个 `<schema>_<table>.dump`、1.4MB，抽查 4 份 `pg_restore -l` 可读），可按单表恢复。
+
+**执行（2026-11-05）**：`bash scripts/db/provision-env.sh --env test --dsn "postgresql://xingzhai@127.0.0.1:15432/topems_test" --force-nonempty --skip-prod-fingerprint`（本地 SSH 隧道）。首次失败于 `ERROR: relation "core_api_version_configs" already exists`——重建窗口有外部客户端在新库抢先建表（同一 dump 本地空库可完整恢复 1349 表，非资产问题）；清理并发后原命令重跑一次通过，未改用 `sqlx migrate run` 或手工 DROP。
+
+**终态**：表 **1349** / 账本 **576**（success 576）/ max(version) **`20261105235700`** / 参考数据 **11 表 2277 行** / 10 张核心表指纹 **10/10**；`core_permissions` 986、`core_menus` 423。重建前 6 条 test 独有账本（孤儿 `20261103000005` + 5 条 5433 定向）已 **归零**。
+
+**校验**：`validate.sh`、`check-migrations`、`check-migration-names --strict` 全 exit 0；psql 连接 + 主要 schema + 关键表可读。
+
+**丢失数据**：test 原有 **13,422 行 / 141 张非空表**（审计日志 5,885 行、权限/菜单副本、`crm_master_data_refs` 282、会话 229、回款 151 等）；参考数据 11 表已按基线恢复。后续新环境与 test 复位统一走 `provision-env.sh`。
 
 ### G2. medium 解码风险抽检（✅ 完成）
 
