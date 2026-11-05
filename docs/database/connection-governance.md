@@ -485,6 +485,80 @@ C.4 的既有 5 项白名单未变。
    共享池 grant = (62/28).max(1) × 4 = 8（27 个非共享池 × 2 + 8 = 62），否则会出现
    「池数降了但预算分配仍按旧 weight」的不自洽。
 
+### B.10 批次前置：search_path 归属核对（2026-11-06，仅核对不改代码）
+
+#### B.10.1 证据来源与限制
+
+| 证据 | 来源 | 性质 |
+| --- | --- | --- |
+| prod 表存在性 / 列结构 | `database/baseline/prod_schema_20261105235700.sql.gz`（prod `pg_dump`，2026-11-05 23:57） | **prod 快照**，非本地库 |
+| prod 运行形态 | prod 只跑聚合二进制 `topems-server`（plist），以嵌入式路径为准（[p4 判定](../quality/p4-reverse-tables-triage-2026-11-05.md#L90)） | prod 事实 |
+| 代码引用的表 | 仓库 SQL 字符串静态扫描（`FROM/JOIN/INSERT INTO/UPDATE/DELETE FROM`），按各模块嵌入路径解析 | 代码事实 |
+| **未取得的证据** | `pg_isready 192.168.110.115:5432` 无响应；仓库与 `.env.production` 均无 prod DSN | **未连接 prod** |
+
+因此：**“表在哪个 schema、结构如何”有 prod 快照支撑；“哪份副本里有活数据/行数/FK”未实测**，列入 B.10.5 待确认。
+本地库仅用于辅助确认 schema 存在（`rd`/`rs` 本地并存），不作为 prod 结论。prod 只读约束未触碰：未执行任何 DDL/DML、未重启部署。
+
+#### B.10.2 逐模块核对结果（19 个，已去重）
+
+| 模块 | 原嵌入路径 | 原独立路径 | prod 归属（代码实际读写的表） | 建议固化值 | 会改变解析？ | 风险 / 备注 |
+| --- | --- | --- | --- | --- | --- | --- |
+| subscription | `public` | `public` | `public.subscriptions` | `public` | 否 | 一致 |
+| monitor | `public` | `public` | `public.alerts` / `monitor_settings` / `monitor_thresholds` | `public` | 否 | 裸表为远端模块 SQL 模板，不在本库执行 |
+| plugin-registry | `public` | `public` | `core.core_plugin_*`（8 张全限定） | `public` | 否 | 全部 `core.` 限定；`schema_boundary.json` 的 `core, public` 仅为门禁配置，非运行值 |
+| search | `public`（`Db::new`） | `public` | `public.search_entity_projections`、`iam.users`、裸 `core_files`→`public.core_files` | `public` | 否 | `iam.core_files` 为 prod-only（迁移链未回放）；[handlers.rs#L211](../../svc/search/src/handlers.rs#L211) 已注明归属 public |
+| tms | `tms, public` | `tms, public, shared` | `tms.tms_*`（5）+ 裸 `vehicles`→`public.vehicles` | `tms, public` | 否（prod 不变；独立去 shared 无差异） | [main.rs#L124](../../svc/tms/src/main.rs#L124) 预热查 `vehicles`，而业务表是 `tms.tms_vehicles`，需确认是否有意 |
+| ticket | `ticket, public` | `ticket, public, shared` | `ticket.*`（7） | `ticket, public` | 否 | `sla` 命中为注释，非表 |
+| gis | `gis, public` | `gis, public, shared` | `gis.*`（19）+ `gis.gis_map_markers` | `gis, public` | 否 | 单 schema |
+| pm | `pm, public, shared` | `pm, public, shared` | `pm.*`（34）+ `pm.pm_budget_items`/`pm_tasks` | `pm, public, shared` | 否 | 一致 |
+| mobile | **未声明**（继承进程 env） | `mobile, public, shared` | `mobile.*`（24 张，**全部限定**） | `mobile, public, shared` | 否 | 嵌入态实际基线随构建顺序变化（prod 聚合 `flow,mobile,rs,erp,public,iam,shared`）；全限定故当前无影响，但需显式固化 |
+| portal | `public, portal` | `portal, public, shared` | `portal.portal_todos/quick_actions` + 裸 `core_faqs`/`core_guides`/`core_guide_lessons`→**public** | `public, portal`（两种形态统一） | **是（仅独立形态）** | 唯一写入方是 portal（[faq.rs#L198](../../svc/portal/src/modules/help/faq.rs#L198)、[guide.rs#L248](../../svc/portal/src/modules/help/guide.rs#L248)）；prod 嵌入写 public，独立写 portal，两库副本已分裂 |
+| pdm | `pdm, public` | `pdm, public, shared` | `pdm.*`（19）+ 裸 `pdm_products`/`pdm_materials`/`pdm_change_notices`→**pdm** | `pdm, public` | 否 | `public.pdm_products` 列不同（`name/code` vs `product_no/version`），**不是同一模型**，不可合并 |
+| lims | `lims, public` | `lims, public, shared` | `lims.*` + `public.qa_lab_*`（显式）+ 裸 `qa_lab_*`→**lims** | `lims, public` | 否（路径不变） | **模块内已分裂**：裸写 `qa_lab_instruments`→lims；[inspection_task.rs#L229](../../svc/lims/src/modules/inspection_task.rs#L229) 显式写 `public.qa_lab_records`，[inspection_record.rs#L130](../../svc/lims/src/modules/inspection_record.rs#L130) 裸写→lims；统计读 `public.qa_lab_instruments` |
+| ehs | `ehs, public` | `ehs, public, shared` | `ehs.*`（36 张全限定） | `ehs, public` | 否 | 裸表命中均为别名/注释；`schema_boundary.json` 记 `schema=public` 已过时 |
+| erp | `erp, public` | `erp, public, shared` | `erp.*`（32）+ 显式 `crm.core_crm_customers`/`finance.core_finance_accounts`/`public.audit_logs`；裸 `announcements`/`vehicles`/`meeting_*`→erp | `erp, public` | 否 | 裸同名表 erp/public 并存，erp 优先是既有语义 |
+| finance | `finance, public` | `finance, public, shared` | `finance.*`（约 68）+ 显式 `erp.opening_balances`；裸 `payables`/`receivables`/`expenses`→**finance** | `finance, public` | 否 | 写入方为 finance（[operational.rs#L1055](../../svc/finance/src/modules/operational.rs#L1055)）；erp 另有同名副本，二者独立 |
+| ai | `ai, public` | `ai, public, shared` | `ai.*`（11）+ `core.*`（6）+ `public.audit_logs` | `ai, public` | 否 | 裸 `FROM users` 只出现在注入测试/示例串，非真实查询；`schema_boundary.json` 的 `ai_service` 已过时 |
+| communication | `communication, public` | `communication, public, shared` | `communication.core_notifications/templates/geofences`（裸写）+ `public.core_emails` + `iam.users` + 裸 `core_users`→**public.core_users** | `communication, public` | 否 | **身份源两套**：显式 `iam.users` 与裸 `public.core_users` 并存 |
+| analytics | `bi, public` | `bi, public, shared` | 裸 `analytics_*`→**bi**（写入）；显式 `analytics.report_execution_records`（写入）；裸 `core_users/roles`→public | `bi, public` | 否 | 双表：`bi.report_execution_records` 无人使用（重复）；`public.core_roles` 由 unified-core 写；`iam.users` 另存 |
+| rd | `rs, public` | `rs, public` | `rs.*`（16）+ 显式 `rd.bugs` | `rs, rd, public` | 否（当前无裸 `bugs`） | `rs` 是权威业务 schema；`rd` schema 仅 4 张表，`bugs` 由其承载（[rd_ci_cd.rs#L202](../../svc/rd/src/rd_ci_cd.rs#L202)） |
+
+#### B.10.3 差异清单（会改变行为的逐条说明）
+
+1. **portal（唯一会改变解析的模块）**：3 张裸表 `core_faqs`/`core_guides`/`core_guide_lessons` 在 `iam`、`portal`、`public` 三处都存在。嵌入 `public, portal` → public；独立 `portal, public, shared` → portal。prod 跑嵌入，故 **prod 活数据在 public**。统一为 `public, portal` 后：prod 不变；独立部署会把这 3 张表的读写从 `portal` 切到 `public`，**portal schema 内的存量数据将不可见**，必须先做一次性数据迁移或明确弃用。
+2. **`shared` 缺失（tms/ticket/gis/pdm/lims/ehs/erp/finance/ai/communication/analytics）**：prod `shared` 只有 `audit_logs`，而这些模块都没有裸查 `audit_logs`（erp/finance/analytics 用的是显式 `public.audit_logs`）。**去掉 `shared` 不改变任何解析**，属纯配置收敛。
+3. **mobile 未声明**：嵌入态没有模块级 `SEARCH_PATH`，基线取决于前面模块对进程 env 的覆盖（prod 聚合为 `flow,mobile,rs,erp,public,iam,shared`），独立态为 `mobile, public, shared`。因 24 张表全部 `mobile.*` 限定，**当前解析不受影响**；但这是顺序依赖隐患，批 2 必须显式固化。
+4. **rd / rs 落点（明确结论）**：**`rs` 是权威**（16 张 `rs.*` 全限定 + 裸 `rs_*` 解析到 rs）；**`rd` 只承载 `bugs`**（4 张表，代码仅一处显式读）。建议 `rs, rd, public`：`rs` 优先保证既有解析，`rd` 仅作补充；当前没有裸 `bugs`，所以**不改变现有结果**。
+5. **lims 的内部裂开（不是路径问题）**：`qa_lab_instruments` 写在 `lims`，但部分查询显式读 `public.qa_lab_instruments`；`qa_lab_records` 同一模块内一处写 `public.`、一处写裸名（→lims）。改 search_path 解决不了，必须在批 4 前统一前缀（先确认 public 副本是否还有写入方）。
+6. **analytics 双表**：`bi.analytics_dashboards` 等由裸名写入（权威）；`analytics.report_execution_records` 由显式写入（权威）；`bi.report_execution_records` 无任何引用（重复表）。
+7. **communication / analytics 的身份源**：`iam.users`（显式）与 `public.core_users`（裸名）并存；`public.core_roles` 由 unified-core 写入。路径保持现状即可，但“以哪张为权威”需数据核对。
+
+#### B.10.4 先修配置 vs 先修代码
+
+| 类别 | 模块 | 动作 |
+| --- | --- | --- |
+| **先修配置**（仅固化路径，无 SQL 改动） | tms、ticket、gis、pm、mobile、ehs、erp、finance、ai、communication、analytics、pdm、lims、rd | 把路径写死到 `Db::new`；停止 `std::env::set_var("SEARCH_PATH", …)` 的进程级突变（B 的 `SET LOCAL` 已按作用域生效） |
+| **先修代码**（路径解决不了） | lims（前缀统一）、analytics（重复表取舍）、communication（身份源）、tms（`vehicles` 是否应为 `tms.tms_vehicles`）、portal 独立形态（数据迁移） | 各自排入所属批次前置；不得用改 search_path 掩盖 |
+| **必须先补 prod 凭据** | portal、lims、analytics、communication | 需 prod 只读 `SELECT count(*)`/FK 核对“活数据在哪份副本” |
+
+#### B.10.5 待确认（卡点明确，不编结论）
+
+1. **prod 无连接**：`pg_isready 192.168.110.115:5432` 无响应，仓库无 DSN/凭据。所需形式：
+   `TOPEMS_PROD_DSN='postgresql://<只读用户>:<pwd>@192.168.110.115:5432/topems'`（仅需 `CONNECT` + `information_schema`/`pg_catalog` 与下列表的 `SELECT`，无需 DDL/DML）；
+   若网络隔离，需 VPN/跳板或 `ssh -L 15432:127.0.0.1:5432` 隧道。**表存在性已由 prod 快照确定，缺的只是活数据分布**。
+2. `public.core_faqs` vs `portal.core_faqs` 行数与最近更新时间（决定 portal 迁移方向与是否需要搬数据）。
+3. `public.qa_lab_instruments/records` vs `lims.qa_lab_instruments/records` 的写入方与行数（lims 统一前缀的前提）。
+4. `bi.report_execution_records` 是否曾有写入（决定是否可删重复表）。
+5. `iam.users` vs `public.core_users` 的写入方与行数（communication/analytics 身份源）。
+
+#### B.10.6 批 2 前置结论
+
+- 批 2 的 5 个模块（tms/ticket/gis/pm/mobile）+ search 并池**可以按 B.10.2 的固化值执行**：prod 解析结果全部不变。
+- `mobile` 必须显式声明 `mobile, public, shared`，不得继续依赖进程 env。
+- `tms` 固化值必须保留 `public`（否则 `main.rs#L124` 的裸 `vehicles` 会解析失败/改变）。
+- `search` 并池同时把 `SHARED_POOL_MODULE_WEIGHT` 改 4、`derived_db_pools()` 去掉 search 的 `+1`。
+- portal（批 3）/lims（批 4）/analytics（批 6）的代码项与 prod 活数据核对，作为各自批次的前置门禁，不阻塞批 2。
+
 ## C. schema 前缀规则（可执行门禁）
 
 ### C.1 规则
