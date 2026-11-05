@@ -11,6 +11,21 @@ import { logger } from '@/utils/logger';
 const PERMISSION_CACHE_KEY = 'permission_cache';
 const CACHE_TTL = 5 * 60 * 1000;
 
+/**
+ * P3 权限码兼容层（2026-11-06）：
+ * 历史前端引用存在 `*:*:view` 与后端校验 / DB 授权实码 `*:*:read` 不一致的情况
+ * （如 crm:dashboard:view、finance:account:view），按原码检查会恒假，导致菜单/按钮被误隐藏。
+ * 这里对 `:view` 做等价 action 回退（先原码、后 `:read`），原引用保持不变，
+ * 待后端权限表与 DB 授权收敛后再统一（登记于整改计划 P3）。
+ */
+const resolvePermissionAliases = (permission: string): string[] => {
+  const parts = permission.split(':');
+  if (parts.length === 3 && parts[2] === 'view') {
+    return [permission, `${parts[0]}:${parts[1]}:read`];
+  }
+  return [permission];
+};
+
 interface PermissionCache {
   permissions: string[];
   inheritedPermissions: string[];
@@ -98,10 +113,9 @@ export const usePermission = () => {
   const checkPermission = useCallback(
     (permission: string, useInheritance = true): boolean => {
       if (user?.is_superuser) return true;
-      if (useInheritance) {
-        return hasPermissionWithInheritance(permissions, permission);
-      }
-      return hasPermission(permission);
+      return resolvePermissionAliases(permission).some((code) =>
+        useInheritance ? hasPermissionWithInheritance(permissions, code) : hasPermission(code)
+      );
     },
     [hasPermission, permissions, user?.is_superuser]
   );
@@ -109,10 +123,13 @@ export const usePermission = () => {
   const checkAnyPermission = useCallback(
     (permissionList: string[], useInheritance = true): boolean => {
       if (user?.is_superuser) return true;
-      if (useInheritance) {
-        return permissionList.some((perm) => hasPermissionWithInheritance(permissions, perm));
-      }
-      return hasAnyPermission(permissionList);
+      return permissionList.some((perm) =>
+        resolvePermissionAliases(perm).some((code) =>
+          useInheritance
+            ? hasPermissionWithInheritance(permissions, code)
+            : hasAnyPermission([code])
+        )
+      );
     },
     [hasAnyPermission, permissions, user?.is_superuser]
   );
@@ -120,10 +137,13 @@ export const usePermission = () => {
   const checkAllPermissions = useCallback(
     (permissionList: string[], useInheritance = true): boolean => {
       if (user?.is_superuser) return true;
-      if (useInheritance) {
-        return permissionList.every((perm) => hasPermissionWithInheritance(permissions, perm));
-      }
-      return hasAllPermissions(permissionList);
+      return permissionList.every((perm) =>
+        resolvePermissionAliases(perm).some((code) =>
+          useInheritance
+            ? hasPermissionWithInheritance(permissions, code)
+            : hasAllPermissions([code])
+        )
+      );
     },
     [hasAllPermissions, permissions, user?.is_superuser]
   );
