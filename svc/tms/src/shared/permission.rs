@@ -2,13 +2,9 @@
 //!
 //! 权限检查模块，用于验证用户对TMS资源的访问权限
 
-use sqlx::PgPool;
-use topems_shared_auth::auth::Claims;
 use topems_shared_auth::permission::{
-    check_module_permission, ModuleCode, ModulePermission as SharedModulePermission,
-    PermissionAction,
+    ModuleCode, ModulePermission as SharedModulePermission, PermissionAction,
 };
-use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TmsPermission {
@@ -93,15 +89,6 @@ impl std::fmt::Display for TmsPermission {
 }
 
 pub type ModulePermission = TmsPermission;
-
-pub async fn check_permission<T>(
-    db: &PgPool,
-    claims: &Claims,
-    permission: &TmsPermission,
-) -> Result<(), axum::Json<ApiResponse<T>>> {
-    let shared_perm = permission.to_shared();
-    check_module_permission(db, claims, &shared_perm).await
-}
 
 #[cfg(test)]
 mod tests {

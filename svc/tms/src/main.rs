@@ -12,23 +12,34 @@ use utoipa::OpenApi;
 
 use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, create_health_state, create_standard_health_routes,
-    default_init_db, run, ServiceConfig,
+    bootstrap_service_shared, build_application, create_health_state,
+    create_standard_health_routes, default_init_db, run, ServiceConfig,
 };
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
 };
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler, L2CacheConfig};
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{CacheInvalidatedPayload, EventSubscriber, EventType};
 
 use modules::tms_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
 use shared::AppState;
 
+/// 缓存预热查询：经 `Db` 只读事务作用域执行（事务级 `search_path = "tms, public"`）。
+///
+/// 预热 SQL 中的 **未限定 `vehicles`** 保持未限定：prod 实测 `public.vehicles`
+/// 与 `tms.tms_vehicles` 均 0 行，选表待业务确认，当前保持现状解析 → `public.vehicles`。
+async fn warm_query(db: &Db, sql: &'static str) -> Result<Option<serde_json::Value>, sqlx::Error> {
+    let mut scope = db.scope_read().await?;
+    let result = sqlx::query_scalar::<_, serde_json::Value>(sql)
+        .fetch_optional(&mut scope)
+        .await?;
+    scope.commit().await?;
+    Ok(result)
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
-    // 设置search_path环境变量（供lib使用）
-    std::env::set_var("SEARCH_PATH", "tms, public, shared");
-
     let config = ServiceConfig {
         name: "topems-tms",
         port: 8073,
@@ -40,7 +51,7 @@ async fn main() -> Result<()> {
         ..Default::default()
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_shared(&config).await?;
 
     if let Err(e) = default_init_db(
         ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),
@@ -52,6 +63,9 @@ async fn main() -> Result<()> {
     {
         tracing::warn!("数据库初始化警告: {}", e);
     }
+
+    // 连接治理 B：共享池之上按模块固化 search_path（显式传值，不依赖 .env）
+    let db = Db::new(ctx.db.clone(), "tms, public");
 
     // 多级缓存初始化（L1: moka 进程内缓存 + L2: Redis 分布式缓存）
     let l2_config = L2CacheConfig {
@@ -81,12 +95,13 @@ async fn main() -> Result<()> {
     // 缓存预热：服务启动时异步加载常用字典数据，避免首次请求缓存未命中
     {
         let cache = dict_cache.clone();
-        let pool = ctx.db.clone();
+        let db = db.clone();
         tokio::spawn(async move {
             tracing::info!("[tms] 开始缓存预热...");
 
             // 预热司机列表（第一页，默认参数）
-            match sqlx::query_scalar::<_, serde_json::Value>(
+            match warm_query(
+                &db,
                 r#"
                 SELECT json_build_object(
                     'items', COALESCE(json_agg(t), '[]'::json),
@@ -102,7 +117,6 @@ async fn main() -> Result<()> {
                 ) t
                 "#,
             )
-            .fetch_optional(&pool)
             .await
             {
                 Ok(Some(data)) => {
@@ -120,7 +134,11 @@ async fn main() -> Result<()> {
             }
 
             // 预热车辆列表（第一页，默认参数）
-            match sqlx::query_scalar::<_, serde_json::Value>(
+            // 注意：下表名 `vehicles` 保持未限定（不补 tms. 前缀）。prod 实测
+            // `public.vehicles` 与 `tms.tms_vehicles` 均 0 行，选表待业务确认，
+            // 当前保持现状解析 → `public.vehicles`（由事务级 search_path "tms, public" 决定）。
+            match warm_query(
+                &db,
                 r#"
                 SELECT json_build_object(
                     'items', COALESCE(json_agg(t), '[]'::json),
@@ -136,7 +154,6 @@ async fn main() -> Result<()> {
                 ) t
                 "#,
             )
-            .fetch_optional(&pool)
             .await
             {
                 Ok(Some(data)) => {
@@ -154,7 +171,8 @@ async fn main() -> Result<()> {
             }
 
             // 预热承运商列表（第一页，默认参数）
-            match sqlx::query_scalar::<_, serde_json::Value>(
+            match warm_query(
+                &db,
                 r#"
                 SELECT json_build_object(
                     'items', COALESCE(json_agg(t), '[]'::json),
@@ -170,7 +188,6 @@ async fn main() -> Result<()> {
                 ) t
                 "#,
             )
-            .fetch_optional(&pool)
             .await
             {
                 Ok(Some(data)) => {
@@ -250,7 +267,7 @@ async fn main() -> Result<()> {
     }
 
     let app_state = AppState {
-        db: ctx.db.clone(),
+        db,
         auth_state: ctx.auth_state.clone(),
         metrics: ctx.metrics.clone(),
         start_time: ctx.start_time,
