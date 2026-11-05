@@ -743,8 +743,9 @@ async fn fetch_export_rows(
         "permission_audit_logs" => {
             sqlx::query(
                 r#"
-                SELECT id, tenant_id, user_id, action, old_value, new_value,
-                       changed_by, changed_at
+                SELECT id, tenant_id, user_id, action, changed_by,
+                       host(ip_address) AS ip_address, user_agent,
+                       changed_at AS created_at
                 FROM public.permission_audit_logs
                 WHERE ($1::timestamptz IS NULL OR changed_at >= $1)
                   AND ($2::timestamptz IS NULL OR changed_at <= $2)
@@ -836,20 +837,24 @@ async fn fetch_export_rows(
                     .try_get::<Option<Uuid>, _>("tenant_id")?
                     .map(|v| v.to_string()),
                 user_id: row.try_get::<Option<String>, _>("user_id")?,
-                username: None,
-                action: row.try_get::<String, _>("action").unwrap_or_default(),
-                entity_type: row
-                    .try_get::<Option<String>, _>("target_type")
+                // 该分支真实可用列为旧/新值 + 操作者；无 target_type/target_id/reason，
+                // 语义差异见 docs/quality/decode-contract-audit-2026-11-05.md §10.6。
+                username: row
+                    .try_get::<Option<String>, _>("changed_by")
                     .unwrap_or(None),
-                entity_id: row
-                    .try_get::<Option<Uuid>, _>("target_id")?
-                    .map(|v| v.to_string()),
+                action: row.try_get::<String, _>("action").unwrap_or_default(),
+                entity_type: None,
+                entity_id: None,
                 resource: None,
-                ip_address: None,
-                user_agent: None,
+                ip_address: row
+                    .try_get::<Option<String>, _>("ip_address")
+                    .unwrap_or(None),
+                user_agent: row
+                    .try_get::<Option<String>, _>("user_agent")
+                    .unwrap_or(None),
                 status: None,
                 success: None,
-                error_message: row.try_get::<Option<String>, _>("reason").unwrap_or(None),
+                error_message: None,
                 created_at: created_at.to_rfc3339(),
             },
             "login_logs" => ExportRow {
