@@ -60,13 +60,13 @@ pub struct MemoryItem {
     /// 访问次数
     pub access_count: u64,
     /// 创建时间
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
     /// 最后更新时间
-    pub updated_at: String,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
     /// 最后访问时间
-    pub last_accessed_at: String,
+    pub last_accessed_at: chrono::DateTime<chrono::Utc>,
     /// 过期时间（可选，None 表示永不过期）
-    pub expires_at: Option<String>,
+    pub expires_at: Option<chrono::DateTime<chrono::Utc>>,
     /// 会话 ID（短期记忆关联的会话）
     pub session_id: Option<String>,
     /// 用户 ID
@@ -78,7 +78,7 @@ pub struct MemoryItem {
 impl MemoryItem {
     /// 创建新的记忆条目
     pub fn new(memory_type: MemoryType, content: &str) -> Self {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         Self {
             id: format!("memory_{}", uuid::Uuid::new_v4()),
             memory_type,
@@ -128,16 +128,14 @@ impl MemoryItem {
     /// 设置过期时间（秒）
     pub fn with_ttl(mut self, ttl_seconds: u64) -> Self {
         let expires = chrono::Utc::now() + chrono::Duration::seconds(ttl_seconds as i64);
-        self.expires_at = Some(expires.to_rfc3339());
+        self.expires_at = Some(expires);
         self
     }
 
     /// 检查是否已过期
     pub fn is_expired(&self) -> bool {
-        if let Some(expires) = &self.expires_at {
-            if let Ok(expires_time) = chrono::DateTime::parse_from_rfc3339(expires) {
-                return expires_time < chrono::Utc::now();
-            }
+        if let Some(expires_time) = self.expires_at {
+            return expires_time < chrono::Utc::now();
         }
         false
     }
@@ -412,7 +410,7 @@ impl MemorySystem {
             }
             // 更新访问计数和时间
             memory.access_count += 1;
-            memory.last_accessed_at = chrono::Utc::now().to_rfc3339();
+            memory.last_accessed_at = chrono::Utc::now();
             let result = memory.clone();
             drop(memories);
 
@@ -569,7 +567,7 @@ impl MemorySystem {
                 memory.memory_type = MemoryType::LongTerm;
                 memory.expires_at = None; // 长期记忆不过期
                 memory.importance = (memory.importance + 0.3).min(1.0);
-                memory.updated_at = chrono::Utc::now().to_rfc3339();
+                memory.updated_at = chrono::Utc::now();
 
                 // 更新统计
                 let mut stats = self.stats.lock();

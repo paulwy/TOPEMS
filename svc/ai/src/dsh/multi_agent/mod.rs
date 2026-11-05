@@ -158,11 +158,11 @@ pub struct TaskDefinition {
     /// 分配的 Agent ID
     pub assigned_agent_id: Option<String>,
     /// 创建时间
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
     /// 开始时间
-    pub started_at: Option<String>,
+    pub started_at: Option<chrono::DateTime<chrono::Utc>>,
     /// 完成时间
-    pub completed_at: Option<String>,
+    pub completed_at: Option<chrono::DateTime<chrono::Utc>>,
     /// 任务结果
     pub result: Option<serde_json::Value>,
     /// 错误信息
@@ -184,7 +184,7 @@ impl TaskDefinition {
             subtask_ids: Vec::new(),
             status: TaskStatus::Pending,
             assigned_agent_id: None,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
             started_at: None,
             completed_at: None,
             result: None,
@@ -572,7 +572,7 @@ impl MultiAgentCoordinator {
                 if let Some(task) = tasks.get_mut(task_id) {
                     task.status = TaskStatus::Assigned;
                     task.assigned_agent_id = Some(agent_id.clone());
-                    task.started_at = Some(chrono::Utc::now().to_rfc3339());
+                    task.started_at = Some(chrono::Utc::now());
                 }
             }
 
@@ -677,12 +677,12 @@ impl MultiAgentCoordinator {
                     Ok(r) => {
                         t.status = TaskStatus::Completed;
                         t.result = Some(r.clone());
-                        t.completed_at = Some(chrono::Utc::now().to_rfc3339());
+                        t.completed_at = Some(chrono::Utc::now());
                     }
                     Err(e) => {
                         t.status = TaskStatus::Failed;
                         t.error = Some(e.to_string());
-                        t.completed_at = Some(chrono::Utc::now().to_rfc3339());
+                        t.completed_at = Some(chrono::Utc::now());
                     }
                 }
             }

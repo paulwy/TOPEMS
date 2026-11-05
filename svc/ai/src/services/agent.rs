@@ -759,8 +759,8 @@ pub struct WorkflowExecution {
     pub workflow_id: String,
     pub execution_id: String,
     pub status: String,
-    pub started_at: String,
-    pub completed_at: Option<String>,
+    pub started_at: chrono::DateTime<chrono::Utc>,
+    pub completed_at: Option<chrono::DateTime<chrono::Utc>>,
     pub current_step: Option<usize>,
     pub results: Vec<StepResult>,
     pub context: HashMap<String, serde_json::Value>,
@@ -1519,7 +1519,9 @@ mod tests {
             workflow_id: "wf-1".into(),
             execution_id: "exec-1".into(),
             status: "running".into(),
-            started_at: "2025-01-01T00:00:00Z".into(),
+            started_at: chrono::DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
             completed_at: None,
             current_step: Some(2),
             results: vec![],

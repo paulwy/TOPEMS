@@ -75,8 +75,8 @@ pub struct CreateSessionResponse {
     pub selected_records: Vec<SelectedRecord>,
     pub conversation_history: Vec<ConversationMessage>,
     pub context_data: serde_json::Value,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 发送消息请求
@@ -94,8 +94,8 @@ pub struct SessionInfoResponse {
     pub module: String,
     pub user_id: String,
     pub message_count: usize,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 活跃会话列表响应
@@ -151,7 +151,7 @@ pub struct AdminFaqItem {
     pub keywords: Vec<String>,
     pub category: String,
     pub status: String,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 管理端 FAQ 列表查询参数
@@ -290,8 +290,8 @@ pub async fn create_session(
             selected_records: vec![],
             conversation_history: vec![],
             context_data: serde_json::json!({}),
-            created_at: row.1.to_rfc3339(),
-            updated_at: row.2.to_rfc3339(),
+            created_at: row.1,
+            updated_at: row.2,
         }),
     )
         .into_response()
@@ -316,8 +316,14 @@ pub async fn get_session(
         }
     };
     // A-2b：真表查询
-    let row: Option<(String, String, i32, String, String)> = sqlx::query_as(
-        "SELECT module, user_id, jsonb_array_length(messages), created_at::text, updated_at::text
+    let row: Option<(
+        String,
+        String,
+        i32,
+        chrono::DateTime<chrono::Utc>,
+        chrono::DateTime<chrono::Utc>,
+    )> = sqlx::query_as(
+        "SELECT module, user_id, jsonb_array_length(messages), created_at, updated_at
          FROM core.ai_conversations WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(sid)
@@ -827,14 +833,14 @@ pub async fn list_admin_faqs(
             serde_json::Value,
             String,
             String,
-            String,
+            chrono::DateTime<chrono::Utc>,
         )>,
         sqlx::Error,
     > = if claims.is_superuser {
         match query.q.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
                 Some(q) => {
                     sqlx::query_as(
-                        "SELECT id, tenant_id, module, question, answer, keywords, category, status, created_at::text
+                        "SELECT id, tenant_id, module, question, answer, keywords, category, status, created_at
                          FROM core.ai_faqs
                          WHERE deleted_at IS NULL
                            AND ($1::text IS NULL OR module = $1)
@@ -848,7 +854,7 @@ pub async fn list_admin_faqs(
                 }
                 None => {
                     sqlx::query_as(
-                        "SELECT id, tenant_id, module, question, answer, keywords, category, status, created_at::text
+                        "SELECT id, tenant_id, module, question, answer, keywords, category, status, created_at
                          FROM core.ai_faqs
                          WHERE deleted_at IS NULL
                            AND ($1::text IS NULL OR module = $1)
@@ -863,7 +869,7 @@ pub async fn list_admin_faqs(
         match query.q.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
                 Some(q) => {
                     sqlx::query_as(
-                        "SELECT id, tenant_id, module, question, answer, keywords, category, status, created_at::text
+                        "SELECT id, tenant_id, module, question, answer, keywords, category, status, created_at
                          FROM core.ai_faqs
                          WHERE deleted_at IS NULL AND tenant_id = $1
                            AND ($2::text IS NULL OR module = $2)
@@ -878,7 +884,7 @@ pub async fn list_admin_faqs(
                 }
                 None => {
                     sqlx::query_as(
-                        "SELECT id, tenant_id, module, question, answer, keywords, category, status, created_at::text
+                        "SELECT id, tenant_id, module, question, answer, keywords, category, status, created_at
                          FROM core.ai_faqs
                          WHERE deleted_at IS NULL AND tenant_id = $1
                            AND ($2::text IS NULL OR module = $2)
@@ -1000,10 +1006,10 @@ pub async fn create_admin_faq(
     let keywords_json = serde_json::to_value(&keywords_vec).unwrap_or(serde_json::json!([]));
     let category = req.category.unwrap_or_default();
 
-    let row: Result<(Uuid, String), sqlx::Error> = sqlx::query_as(
+    let row: Result<(Uuid, chrono::DateTime<chrono::Utc>), sqlx::Error> = sqlx::query_as(
         "INSERT INTO core.ai_faqs (tenant_id, module, question, answer, keywords, category)
          VALUES ($1, $2, $3, $4, $5::jsonb, $6)
-         RETURNING id, created_at::text",
+         RETURNING id, created_at",
     )
     .bind(tenant_uuid)
     .bind(req.module.trim())
@@ -1219,7 +1225,7 @@ pub async fn update_admin_faq(
             serde_json::Value,
             String,
             String,
-            String,
+            chrono::DateTime<chrono::Utc>,
         )>,
         sqlx::Error,
     > = if claims.is_superuser {
@@ -1233,7 +1239,7 @@ pub async fn update_admin_faq(
                  status = COALESCE($7, status),
                  updated_at = now()
              WHERE id = $1 AND deleted_at IS NULL
-             RETURNING id, tenant_id, module, question, answer, keywords, category, status, created_at::text",
+             RETURNING id, tenant_id, module, question, answer, keywords, category, status, created_at",
         )
         .bind(faq_id)
         .bind(req.module.as_deref())
@@ -1255,7 +1261,7 @@ pub async fn update_admin_faq(
                  status = COALESCE($7, status),
                  updated_at = now()
              WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $8
-             RETURNING id, tenant_id, module, question, answer, keywords, category, status, created_at::text",
+             RETURNING id, tenant_id, module, question, answer, keywords, category, status, created_at",
         )
         .bind(faq_id)
         .bind(req.module.as_deref())

@@ -34,9 +34,9 @@ pub struct PromptTemplate {
     /// 模板状态（draft/active/deprecated）
     pub status: TemplateStatus,
     /// 创建时间
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
     /// 更新时间
-    pub updated_at: String,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
     /// 创建者
     pub created_by: String,
 }
@@ -74,7 +74,7 @@ pub struct TemplateVersion {
     /// 版本说明
     pub changelog: String,
     /// 创建时间
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
     /// 创建者
     pub created_by: String,
 }
@@ -116,7 +116,7 @@ pub struct AbTestConfig {
     /// 是否启用
     pub enabled: bool,
     /// 创建时间
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// A/B 测试结果统计
@@ -220,7 +220,7 @@ impl PromptEngine {
             content: template.content.clone(),
             variables: template.variables.clone(),
             changelog: format!("注册模板 v{}", version),
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
             created_by: template.created_by.clone(),
         };
         versions.push(template_version);
@@ -295,7 +295,7 @@ impl PromptEngine {
                     .clone()
                     .unwrap_or_else(|| template.variables.clone()),
                 changelog: changelog.to_string(),
-                created_at: chrono::Utc::now().to_rfc3339(),
+                created_at: chrono::Utc::now(),
                 created_by: updated_by.to_string(),
             });
 
@@ -315,7 +315,7 @@ impl PromptEngine {
             template.variables = v;
         }
         template.version = new_version;
-        template.updated_at = chrono::Utc::now().to_rfc3339();
+        template.updated_at = chrono::Utc::now();
         drop(templates);
 
         info!(
@@ -605,8 +605,8 @@ mod tests {
             variables,
             tags: vec!["test".to_string()],
             status: TemplateStatus::Active,
-            created_at: chrono::Utc::now().to_rfc3339(),
-            updated_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
             created_by: "test_user".to_string(),
         }
     }
@@ -795,7 +795,7 @@ mod tests {
             template_b_version: "1".to_string(),
             traffic_ratio_a: 0.5,
             enabled: true,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         };
 
         let result = engine.create_ab_test(config);
@@ -821,7 +821,7 @@ mod tests {
             template_b_version: "1".to_string(),
             traffic_ratio_a: 0.5,
             enabled: true,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         };
         engine.create_ab_test(config).unwrap();
 

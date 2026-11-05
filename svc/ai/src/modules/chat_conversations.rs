@@ -26,8 +26,8 @@ use crate::shared::AppState;
 pub struct ConversationDto {
     pub id: String,
     pub title: String,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 impl From<&sqlx::postgres::PgRow> for ConversationDto {
@@ -35,12 +35,8 @@ impl From<&sqlx::postgres::PgRow> for ConversationDto {
         ConversationDto {
             id: r.get::<uuid::Uuid, _>("id").to_string(),
             title: r.get("title"),
-            created_at: r
-                .get::<chrono::DateTime<chrono::Utc>, _>("created_at")
-                .to_rfc3339(),
-            updated_at: r
-                .get::<chrono::DateTime<chrono::Utc>, _>("updated_at")
-                .to_rfc3339(),
+            created_at: r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+            updated_at: r.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
         }
     }
 }

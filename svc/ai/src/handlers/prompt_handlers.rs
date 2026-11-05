@@ -40,8 +40,8 @@ pub struct PromptTemplateOut {
     pub prompt_template: String,
     pub is_favorite: bool,
     pub usage_count: i64,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -118,12 +118,8 @@ fn to_out(row: &sqlx::postgres::PgRow) -> Result<PromptTemplateOut, TopemsError>
         prompt_template: row.try_get("prompt_template")?,
         is_favorite: row.try_get("is_favorite")?,
         usage_count: row.try_get("usage_count")?,
-        created_at: row
-            .try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at")?
-            .map(|t| t.to_rfc3339()),
-        updated_at: row
-            .try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("updated_at")?
-            .map(|t| t.to_rfc3339()),
+        created_at: row.try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at")?,
+        updated_at: row.try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("updated_at")?,
     })
 }
 

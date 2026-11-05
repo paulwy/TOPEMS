@@ -45,9 +45,9 @@ pub struct WorkflowDefinition {
     /// 标签
     pub tags: Vec<String>,
     /// 创建时间
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
     /// 更新时间
-    pub updated_at: String,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
     /// 是否启用
     pub enabled: bool,
 }
@@ -271,9 +271,9 @@ pub struct WorkflowExecution {
     /// 错误信息
     pub error_message: Option<String>,
     /// 开始时间
-    pub started_at: String,
+    pub started_at: chrono::DateTime<chrono::Utc>,
     /// 结束时间
-    pub finished_at: Option<String>,
+    pub finished_at: Option<chrono::DateTime<chrono::Utc>>,
     /// 总耗时（毫秒）
     pub duration_ms: u64,
     /// 重试次数
@@ -294,9 +294,9 @@ pub struct ExecutedNode {
     /// 执行状态
     pub status: NodeExecutionStatus,
     /// 开始时间
-    pub started_at: String,
+    pub started_at: chrono::DateTime<chrono::Utc>,
     /// 结束时间
-    pub finished_at: String,
+    pub finished_at: chrono::DateTime<chrono::Utc>,
     /// 耗时（毫秒）
     pub duration_ms: u64,
     /// 重试次数
@@ -340,7 +340,7 @@ pub struct WorkflowTemplate {
     /// 是否为系统模板
     pub is_system: bool,
     /// 创建时间
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 工作流引擎配置
@@ -523,8 +523,8 @@ impl WorkflowEngine {
             timeout_seconds: 120,
             max_retries: 3,
             tags: vec!["llm".to_string(), "qa".to_string()],
-            created_at: chrono::Utc::now().to_rfc3339(),
-            updated_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
             enabled: true,
         };
 
@@ -536,7 +536,7 @@ impl WorkflowEngine {
             definition: llm_qa_workflow,
             usage_count: 0,
             is_system: true,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         };
 
         self.templates
@@ -699,7 +699,7 @@ impl WorkflowEngine {
             input_params: input_params.clone(),
             output_result: None,
             error_message: None,
-            started_at: chrono::Utc::now().to_rfc3339(),
+            started_at: chrono::Utc::now(),
             finished_at: None,
             duration_ms: 0,
             retry_count: 0,
@@ -744,8 +744,8 @@ impl WorkflowEngine {
                 node_name: node.name.clone(),
                 node_type: node.node_type,
                 status,
-                started_at: chrono::Utc::now().to_rfc3339(),
-                finished_at: chrono::Utc::now().to_rfc3339(),
+                started_at: chrono::Utc::now(),
+                finished_at: chrono::Utc::now(),
                 duration_ms: 1,
                 retry_count: 0,
                 input_data: None,
@@ -783,7 +783,7 @@ impl WorkflowEngine {
             execution.error_message = Some("工作流执行步数超过上限".to_string());
         }
 
-        execution.finished_at = Some(chrono::Utc::now().to_rfc3339());
+        execution.finished_at = Some(chrono::Utc::now());
         execution.duration_ms = start_time.elapsed().as_millis() as u64;
 
         // 保存执行实例
@@ -979,7 +979,7 @@ impl WorkflowEngine {
             || execution.status == WorkflowExecutionStatus::Pending
         {
             execution.status = WorkflowExecutionStatus::Cancelled;
-            execution.finished_at = Some(chrono::Utc::now().to_rfc3339());
+            execution.finished_at = Some(chrono::Utc::now());
             info!(execution_id = %execution_id, "Workflow execution cancelled");
             Ok(())
         } else {
@@ -1029,8 +1029,8 @@ impl WorkflowEngine {
         let mut definition = template.definition.clone();
         definition.id = new_workflow_id.to_string();
         definition.name = new_name.to_string();
-        definition.created_at = chrono::Utc::now().to_rfc3339();
-        definition.updated_at = chrono::Utc::now().to_rfc3339();
+        definition.created_at = chrono::Utc::now();
+        definition.updated_at = chrono::Utc::now();
 
         drop(templates);
 
@@ -1162,8 +1162,8 @@ mod tests {
             timeout_seconds: 120,
             max_retries: 3,
             tags: vec!["test".to_string()],
-            created_at: chrono::Utc::now().to_rfc3339(),
-            updated_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
             enabled: true,
         }
     }

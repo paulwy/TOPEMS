@@ -6,7 +6,7 @@ use crate::models::{
 };
 use axum::extract::{Query, State};
 use axum::{extract::Extension, Json};
-use std::time::{SystemTime, UNIX_EPOCH};
+
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -99,11 +99,7 @@ pub async fn create_connector(
         serde_json::json!({"name": req.name, "connector_type": req.connector_type, "database_type": req.database_type}),
     );
     if let Some(connectors) = CONNECTORS.get() {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs()
-            .to_string();
+        let now = chrono::Utc::now();
 
         let new_connector = DataConnector {
             id: Uuid::new_v4(),
@@ -227,11 +223,7 @@ pub async fn update_connector(
                         if let Some(is_active) = req.is_active {
                             connector.is_active = is_active;
                         }
-                        connector.updated_at = SystemTime::now()
-                            .duration_since(UNIX_EPOCH)
-                            .unwrap_or_default()
-                            .as_secs()
-                            .to_string();
+                        connector.updated_at = chrono::Utc::now();
                         Ok(Some(connector.clone()))
                     } else {
                         Ok(None)
