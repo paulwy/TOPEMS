@@ -1,12 +1,12 @@
 //! Occupational health records - Physical exams, health plans, contraindications, and follow-up
 
-use chrono::{DateTime, Utc};
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
     routing::*,
     Extension, Json, Router,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;

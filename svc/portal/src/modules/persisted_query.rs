@@ -583,11 +583,7 @@ impl VersionedCache {
         let now = chrono::Utc::now();
         let expired_entries = entries
             .values()
-            .filter(|e| {
-                e.expires_at
-                    .map(|exp| now > exp)
-                    .unwrap_or(false)
-            })
+            .filter(|e| e.expires_at.map(|exp| now > exp).unwrap_or(false))
             .count() as u64;
 
         let total_size: u64 = entries.values().map(|e| e.size_bytes).sum();
@@ -607,11 +603,7 @@ impl VersionedCache {
         let mut entries = store.cache_entries.lock().await;
         let before = entries.len();
         let now = chrono::Utc::now();
-        entries.retain(|_, v| {
-            v.expires_at
-                .map(|exp| now <= exp)
-                .unwrap_or(true)
-        });
+        entries.retain(|_, v| v.expires_at.map(|exp| now <= exp).unwrap_or(true));
         (before - entries.len()) as u64
     }
 

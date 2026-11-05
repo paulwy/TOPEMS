@@ -1973,7 +1973,8 @@ const WORKFLOW_COLS: &str =
 const WORKFLOW_INSERT_COLS: &str =
     "id, name, workflow_type, steps, triggers, status, created_at, updated_at";
 const WORKFLOW_TEMPLATE_COLS: &str = "id, name, description, workflow_type, steps";
-const WORKFLOW_HISTORY_COLS: &str = "id, workflow_id, action, step_id, actor, comment, recorded_at::timestamptz AS recorded_at";
+const WORKFLOW_HISTORY_COLS: &str =
+    "id, workflow_id, action, step_id, actor, comment, recorded_at::timestamptz AS recorded_at";
 const DATA_PRODUCT_COLS: &str = "id, name, description, owner, domain, consumers, data_contract, sla_level, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at";
 const DATA_PRODUCT_INSERT_COLS: &str = "id, name, description, owner, domain, consumers, data_contract, sla_level, status, created_at, updated_at";
 const DATA_CONTRACT_COLS: &str =

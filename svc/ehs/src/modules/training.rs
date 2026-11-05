@@ -1,12 +1,12 @@
 //! Training handlers
 
-use chrono::{DateTime, Utc};
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
     routing::*,
     Extension, Json, Router,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
@@ -1673,7 +1673,9 @@ fn training_plan_from_row(r: &sqlx::postgres::PgRow) -> TrainingPlan {
         planned_date: r.try_get("planned_date").ok().flatten(),
         trainer: r.try_get("trainer").ok().flatten(),
         status: r.try_get("status").unwrap_or_else(|_| "draft".to_string()),
-        created_at: r.try_get::<DateTime<Utc>, _>("created_at").unwrap_or_default(),
+        created_at: r
+            .try_get::<DateTime<Utc>, _>("created_at")
+            .unwrap_or_default(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }
@@ -1702,8 +1704,12 @@ fn training_certificate_from_row(r: &sqlx::postgres::PgRow) -> TrainingCertifica
         status: r.try_get("status").unwrap_or_else(|_| "valid".to_string()),
         record_id: r.try_get("record_id").ok().flatten(),
         attachments,
-        created_at: r.try_get::<DateTime<Utc>, _>("created_at").unwrap_or_default(),
-        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").unwrap_or_default(),
+        created_at: r
+            .try_get::<DateTime<Utc>, _>("created_at")
+            .unwrap_or_default(),
+        updated_at: r
+            .try_get::<DateTime<Utc>, _>("updated_at")
+            .unwrap_or_default(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }
@@ -1747,8 +1753,12 @@ fn training_record_from_row(r: &sqlx::postgres::PgRow) -> TrainingRecord {
             .try_get("status")
             .unwrap_or_else(|_| "ongoing".to_string()),
         created_by: r.try_get("created_by").ok().flatten(),
-        created_at: r.try_get::<DateTime<Utc>, _>("created_at").unwrap_or_default(),
-        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").unwrap_or_default(),
+        created_at: r
+            .try_get::<DateTime<Utc>, _>("created_at")
+            .unwrap_or_default(),
+        updated_at: r
+            .try_get::<DateTime<Utc>, _>("updated_at")
+            .unwrap_or_default(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }

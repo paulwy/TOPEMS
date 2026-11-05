@@ -1835,7 +1835,8 @@ const BRANCH_COLS: &str =
 const AUDIT_EVENT_COLS: &str = "id, event_type, category, entity_type, entity_id, user_id, old_value, new_value, ip_address, timestamp, session_id";
 const AUDIT_EXPORT_LOG_COLS: &str =
     "id, user_id, export_type, record_count, exported_at::timestamptz AS exported_at, ip_address";
-const PERMISSION_ROLE_COLS: &str = "id, name, description, inherited_from, created_at::timestamptz AS created_at";
+const PERMISSION_ROLE_COLS: &str =
+    "id, name, description, inherited_from, created_at::timestamptz AS created_at";
 const DATA_PERMISSION_COLS: &str =
     "id, role_id, resource_type, resource_id, action, condition, inherited";
 const USER_ROLE_ASSIGNMENT_COLS: &str =

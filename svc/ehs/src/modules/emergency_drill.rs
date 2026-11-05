@@ -377,8 +377,14 @@ pub async fn list_drill_plans(
                 .try_get::<Option<String>, _>("related_plan_id")
                 .ok()
                 .flatten(),
-            created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten(),
-            updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten(),
+            created_at: r
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .ok()
+                .flatten(),
+            updated_at: r
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .ok()
+                .flatten(),
             tenant_id: r
                 .try_get::<Option<Uuid>, _>("tenant_id")
                 .ok()

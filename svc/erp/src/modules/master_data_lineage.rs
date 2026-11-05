@@ -79,17 +79,14 @@ pub async fn get_data_lineage(
             let local_entity_type: Option<String> = row.try_get("local_entity_type").ok().flatten();
             let local_entity_id: Option<uuid::Uuid> =
                 row.try_get("local_entity_id").unwrap_or(None);
-            let last_synced_at: chrono::DateTime<chrono::Utc> =
-                match row.try_get("last_synced_at") {
-                    Ok(v) => v,
-                    Err(e) => {
-                        tracing::warn!("[erp-mdm] 解析 last_synced_at 失败: {}", e);
-                        return ApiResponse::from(TopemsError::internal(
-                            "解析 last_synced_at 失败",
-                            e,
-                        ));
-                    }
-                };
+            let last_synced_at: chrono::DateTime<chrono::Utc> = match row.try_get("last_synced_at")
+            {
+                Ok(v) => v,
+                Err(e) => {
+                    tracing::warn!("[erp-mdm] 解析 last_synced_at 失败: {}", e);
+                    return ApiResponse::from(TopemsError::internal("解析 last_synced_at 失败", e));
+                }
+            };
             let status: String = row.try_get("status").unwrap_or_default();
 
             // 构建血缘节点：来源服务 → ERP 本地引用

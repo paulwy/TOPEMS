@@ -519,7 +519,8 @@ pub async fn get_flow_trend(
 
     if let Ok(rows) = inbound_result {
         for row in rows {
-            let period: Option<chrono::DateTime<chrono::Utc>> = row.try_get("period").ok().flatten();
+            let period: Option<chrono::DateTime<chrono::Utc>> =
+                row.try_get("period").ok().flatten();
             let qty: f64 = big_decimal_to_f64(
                 row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty")
                     .ok()
@@ -545,7 +546,8 @@ pub async fn get_flow_trend(
 
     if let Ok(rows) = outbound_result {
         for row in rows {
-            let period: Option<chrono::DateTime<chrono::Utc>> = row.try_get("period").ok().flatten();
+            let period: Option<chrono::DateTime<chrono::Utc>> =
+                row.try_get("period").ok().flatten();
             let qty: f64 = big_decimal_to_f64(
                 row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty")
                     .ok()

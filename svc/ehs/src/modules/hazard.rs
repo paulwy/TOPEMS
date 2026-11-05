@@ -1,12 +1,12 @@
 //! Hazard management handlers - Reporting, classification, rectification, verification, and closure
 
-use chrono::{DateTime, Utc};
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
     routing::*,
     Extension, Json, Router,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
@@ -283,7 +283,10 @@ pub async fn list_hazards(
                 .unwrap_or_else(|| "inspection".to_string()),
             location: r.try_get::<Option<String>, _>("location").ok().flatten(),
             reported_by: r.try_get::<Option<String>, _>("reported_by").ok().flatten(),
-            reported_at: r.try_get::<Option<DateTime<Utc>>, _>("reported_at").ok().flatten(),
+            reported_at: r
+                .try_get::<Option<DateTime<Utc>>, _>("reported_at")
+                .ok()
+                .flatten(),
             status: r
                 .try_get::<Option<String>, _>("status")
                 .ok()
@@ -295,8 +298,14 @@ pub async fn list_hazards(
                 .flatten(),
             approval_workflow_id: None,
             approval_status: None,
-            created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten(),
-            updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten(),
+            created_at: r
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .ok()
+                .flatten(),
+            updated_at: r
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .ok()
+                .flatten(),
             tenant_id: uuid::Uuid::nil(),
         })
         .collect();

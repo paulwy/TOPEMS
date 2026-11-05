@@ -4,8 +4,8 @@
 //! 契约），后端曾把 monitors/records 都映射到一个 EnvironmentRecord 内存桩。现统一按监测点表接真，
 //! runtime sqlx + 应用层 tenant 过滤，对齐 accident.rs/hazard.rs 范式。
 
-use chrono::{DateTime, Utc};
 use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
@@ -324,8 +324,14 @@ pub async fn get_record(
                     .and_then(|v| v.parse::<f64>().ok()),
                 unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
                 created_by: r.try_get::<Option<String>, _>("created_by").ok().flatten(),
-                created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten(),
-                updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten(),
+                created_at: r
+                    .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                    .ok()
+                    .flatten(),
+                updated_at: r
+                    .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                    .ok()
+                    .flatten(),
             },
             "获取环境监测点成功",
         ),

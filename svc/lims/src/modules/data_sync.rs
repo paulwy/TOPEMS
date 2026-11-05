@@ -1,11 +1,11 @@
 //! LIMS Data Sync module - Sync lab data with QMS and EHS
 
-use chrono::{DateTime, Utc};
 use axum::{
     extract::State,
     routing::{get, post},
     Json, Router,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_core::response::ApiResponse;

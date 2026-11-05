@@ -30,7 +30,10 @@ pub struct MasterDataVersion {
 
 fn version_from_row(r: &sqlx::postgres::PgRow) -> Result<MasterDataVersion, sqlx::Error> {
     Ok(MasterDataVersion {
-        id: r.try_get::<uuid::Uuid, _>("id").unwrap_or_default().to_string(),
+        id: r
+            .try_get::<uuid::Uuid, _>("id")
+            .unwrap_or_default()
+            .to_string(),
         master_data_id: r.try_get::<String, _>("master_data_id").unwrap_or_default(),
         version_number: r.try_get::<i32, _>("version_number").unwrap_or(0),
         domain: r.try_get::<String, _>("domain").unwrap_or_default(),

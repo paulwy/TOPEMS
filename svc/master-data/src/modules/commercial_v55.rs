@@ -2251,8 +2251,12 @@ mod tests {
             api_product_id: "prod-1".to_string(),
             tenant_id: "t-1".to_string(),
             tier: ProductTier::Professional,
-            starts_at: "2024-01-01T00:00:00Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap(),
-            expires_at: "2024-02-01T00:00:00Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap(),
+            starts_at: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
+            expires_at: "2024-02-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
             status: SubscriptionStatus::Active,
         };
         let json = serde_json::to_string(&s).unwrap();
@@ -2271,7 +2275,9 @@ mod tests {
             requests: 1000,
             errors: 10,
             data_transferred: 5.5,
-            recorded_at: "2024-01-01T00:00:00Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap(),
+            recorded_at: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
         };
         let json = serde_json::to_string(&r).unwrap();
         let back: UsageRecord = serde_json::from_str(&json).unwrap();
@@ -2357,9 +2363,15 @@ mod tests {
             measured_value: 99.95,
             target_value: 99.9,
             met: true,
-            measured_at: "2024-01-01T00:00:00Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap(),
-            window_start: "2024-01-01T00:00:00Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap(),
-            window_end: "2024-01-01T01:00:00Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap(),
+            measured_at: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
+            window_start: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
+            window_end: "2024-01-01T01:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
         };
         let json = serde_json::to_string(&m).unwrap();
         let back: SLAMeasurement = serde_json::from_str(&json).unwrap();

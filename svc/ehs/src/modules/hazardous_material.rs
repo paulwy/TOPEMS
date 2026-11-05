@@ -1,7 +1,7 @@
 //! Hazardous material management - Materials, inventory, MSDS, and warehouse records
 
-use chrono::{DateTime, Utc};
 use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;

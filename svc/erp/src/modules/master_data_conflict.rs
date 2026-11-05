@@ -49,7 +49,10 @@ pub struct MasterDataConflict {
 
 fn conflict_from_row(r: &sqlx::postgres::PgRow) -> Result<MasterDataConflict, sqlx::Error> {
     Ok(MasterDataConflict {
-        id: r.try_get::<uuid::Uuid, _>("id").unwrap_or_default().to_string(),
+        id: r
+            .try_get::<uuid::Uuid, _>("id")
+            .unwrap_or_default()
+            .to_string(),
         master_data_id: r.try_get::<String, _>("master_data_id").unwrap_or_default(),
         domain: r.try_get::<String, _>("domain").unwrap_or_default(),
         conflict_type: r.try_get::<String, _>("conflict_type").unwrap_or_default(),

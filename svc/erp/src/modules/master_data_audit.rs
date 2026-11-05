@@ -30,7 +30,10 @@ pub struct MasterDataAuditEvent {
 
 fn audit_event_from_row(r: &sqlx::postgres::PgRow) -> Result<MasterDataAuditEvent, sqlx::Error> {
     Ok(MasterDataAuditEvent {
-        id: r.try_get::<uuid::Uuid, _>("id").unwrap_or_default().to_string(),
+        id: r
+            .try_get::<uuid::Uuid, _>("id")
+            .unwrap_or_default()
+            .to_string(),
         master_data_id: r.try_get::<String, _>("master_data_id").unwrap_or_default(),
         domain: r.try_get::<String, _>("domain").unwrap_or_default(),
         action: r.try_get::<String, _>("action").unwrap_or_default(),
