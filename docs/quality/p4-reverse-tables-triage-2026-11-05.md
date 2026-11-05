@@ -1,0 +1,450 @@
+# P4 反向表余量归属核查与分类处置方案（2026-11-05）
+
+> 对象：`topems_prod` @ `192.168.110.115`（PostgreSQL **18.4**，`pg_class` 实测 **1392** 张普通/分区表）。
+> 对照：同实例 `topems_test`（**1329** 张）。
+> 口径：`prod 独有 = prod 表集合 − test 表集合`，按 `schema.table` 精确比较；`relkind IN ('r','p')`，排除 `pg_catalog / information_schema / pg_toast`。
+> 本轮**只读**：仅 `SELECT` / `pg_catalog` / `information_schema`，未执行任何 DDL/DML，未改迁移账本。
+> 上一轮处置单为临时文件 `/tmp/p4_mapping.md`，未入库；本文件的全部数字均由 2026-11-05 的 `pg_catalog` 实测重建，不依赖 `/tmp`。
+
+## 1. 结论摘要
+
+| 项 | 实测值 |
+|---|---|
+| prod 表数 / test 表数 | 1392 / 1329 |
+| **prod 独有（真实余量）** | **63** |
+| 可直删 | **39** |
+| 需先重指向 FK 再删 | **0** |
+| 需迁移数据再删 | **0** |
+| 应保留 | **20** |
+| 待业务确认 | **4** |
+| 可直删 + 可重指向合计 | **39** |
+| 有真实数据行的表 | **1**（`public.core_coding_rules`，2 行；其余 62 张 0 行，合计 2 行） |
+| 入站 FK | **3 条**，全部落在保留簇 `qms` 内部 |
+| 视图 / 物化视图 / 函数依赖 | **0** |
+| 触发器依赖 | **1 个**（`public.tenant_permissions`，属保留表） |
+| `search_path` 歧义（结构层面） | **6 张**；当前影响运行时解析 **0 张**（见 §9） |
+| `relkind` | 63/63 为 `r`（普通表）；无分区表、无外部表 |
+
+**与「62 张」的差异（必须说明）**：上一轮处置单为 74 张；P4 首批已删 11 张（3 直接删 + 8 重指向后删），旧单剩余 **62** 张；本轮实测新增 1 张旧单未列出的 `public.core_coding_rules`（由 `database/seeds/coding_rules.sql` 在部署时创建），故真实总数 **63 = 62 + 1**。其中 `public.core_chat_members` 在 P8 文档已登记「随 P4 删除」，不单独补 PK。
+
+## 2. 取证口径与方法
+
+### 2.1 连接与只读约束
+
+```bash
+ssh -f -N -L 15432:127.0.0.1:5432 xingzhai@192.168.110.115
+psql "postgres://xingzhai@127.0.0.1:15432/topems_prod"          # 只读
+ssh xingzhai@192.168.110.115 "/opt/homebrew/bin/psql -d topems_test -tA -F'|' -f -"
+```
+
+prod 侧未设置 DB/角色级 `search_path` 覆盖；psql 会话默认 `"$user", public`，各服务在 `main.rs` / 嵌入式模块内以 `SEARCH_PATH` 环境变量显式设定（见 §2.4）。
+
+### 2.2 表差集
+
+```sql
+SELECT n.nspname||'|'||c.relname||'|'||c.relkind::text
+FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+WHERE c.relkind IN ('r','p')
+  AND n.nspname NOT IN ('pg_catalog','information_schema','pg_toast')
+ORDER BY 1;
+```
+
+两侧导出后 `comm -23`。结果 63 张，清单与逐表证据见附录 §13.1。
+
+### 2.3 列结构比对（判断「真影子」还是「test 缺失的独立表」）
+
+- 以 **列名集合** 计算 Jaccard，再统计 **列类型精确一致数**，并核对主键列名；
+- 候选来源只限 **test 侧同名表（跨 schema）**；另对 `cand = NONE` 的表做 **全 test 表列集合最近邻** 搜索，用于发现「改名对应」；
+- 「严格影子」判据：列名集合一致（Jaccard=1.00）或 ≥0.90 且主键一致；
+- 「骨架表」判据：仅 `id/tenant_id/created_at/updated_at` 等 4–5 列，列集合 Jaccard 低但语义可由权威表覆盖（由 `k1_missing_table_baselines` / `rebuild_orphan_tables` 生成）。
+
+### 2.4 代码引用检索口径（关键：不能只看字符串命中）
+
+```bash
+# 限定名 + 裸名合并（注意 POSIX ERE 不支持 \b，改用 -w）
+git grep -n -I -F "schema.table" -- svc lib apps packages cli scripts config deploy database tests docs
+git grep -n -I -w "table"        -- svc lib apps packages cli scripts config deploy database tests docs
+```
+
+- 路径分桶：`database/**` = 迁移/初始化/seeds（非运行时）；`docs/**`、`tests/**` = 文档/测试；`scripts/**`、`config/**`、`deploy/**` = 运维脚本；其余（`svc/ lib/ apps/ packages/ cli/`）才参与运行时判定。
+- **裸表名按服务真实 `search_path` 解析**，而不是按字符串所在目录猜测。各服务实测值：
+
+| 服务 | SEARCH_PATH |
+|---|---|
+| `communication` | `communication, public, shared` |
+| `ehs` | `ehs, public, shared` |
+| `erp` | `erp, public` |
+| `finance` | `finance, public, shared` |
+| `lims` | `lims, public, shared` |
+| `mes` | `mes, public, shared` |
+| `mobile` | `mobile, public, shared` |
+| `monitor` | `public` |
+| `pdm` | `pdm, public, shared` |
+| `qms` | `qms, public, shared` |
+| `unified-core`（嵌入式，prod 实际形态） | `flow, public`（`svc/unified-core/src/embedded.rs`） |
+| `svc/server` 其余聚合代码 | `flow, mobile, rs, erp, public, iam, shared` |
+
+> 说明：`svc/unified-core/src/main.rs` 曾有 `SEARCH_PATH=public` 的独立形态，但 prod 只运行聚合二进制 `topems-server`（`com.topems.server.plist`），嵌入式路径为 `flow, public`；本轮按 prod 实际形态判定。
+- 判定顺序：① 行内存在 `x.<table>` 限定名 → 只有 `x == 本表 schema` 才算命中；② 否则要求命中 SQL 关键字（`FROM/JOIN/INTO/UPDATE/DELETE FROM/TRUNCATE/TABLE`）且裸名按该文件所属服务的 `search_path` 解析到本表；③ 纯注释行排除。
+
+### 2.5 迁移来源
+
+`git grep -l -i -E 'create table [if not exists] (schema\.)?table' -- database`，取首个命中。63 张来源分布：**44 张版本化迁移** + **18 张 `database/init`** + **1 张 `database/seeds`**。
+
+## 3. 分类汇总
+
+| 类别 | 数量 | 处置边界 |
+|---|---:|---|
+| 可直删 | **39** | 0 行 + 0 入站 FK + 运行时 0 命中本表 + test 侧有权威对应表 |
+| 需先重指向 FK 再删 | **0** | 无集合外入站 FK；3 条入站 FK 全在保留的 `qms` 簇内部 |
+| 需迁移数据再删 | **0** | 唯一有数据的表无权威对应表，转入「待业务确认」 |
+| 应保留 | **20** | 有真实运行时读写，且 test 侧无同名/同构权威表 |
+| 待业务确认 | **4** | 权威归属或结构无法判定的具体问题见 §8 |
+| 合计 | **63** | — |
+
+补充事实：
+
+- 63 张中 **61 张 0 行**，仅 `public.core_coding_rules` 有 2 行（`employee_no` / `purchase_order_no` 规则），全集合合计 **2 行**。
+- 出站 FK 共 **18 条**（可直删表） + 5 条（保留表）；可直删表的出站 FK 全部指向保留表（`mobile.mobile_users`、`iam.tenant_permissions`、`public.qa_ehs_emergency_plans`、`public.qa_ehs_inspection_items`、`public.qa_ehs_hazardous_materials`、`ehs.qa_ehs_drill_records`、`ehs.qa_ehs_inspection_records`），删除子表只会移除子表侧约束，不影响父表。
+- 63 张 `relkind` 全为 `r`；无分区父表/子表、无外部表。
+
+## 4. 可直删（39 张）
+
+统一依据（每张均满足）：`count(*) = 0`、无入站 FK、运行时检索 0 命中本表（裸名按所属服务 `search_path` 均解析到另一张权威表或根本没有代码引用）、test 侧存在结构等价或可覆盖的权威表。
+
+### 4.1 `public.qa_ehs_*` 影子（12 张）→ 权威 `ehs.*`
+
+每条代码引用（`svc/ehs/**`）在 `ehs, public, shared` 下均解析到 `ehs.*`，`public` 副本零命中。其中 `emergency_plan_*` 的出站 FK 指向 `public.qa_ehs_emergency_plans`（该父表在 test 中存在，保留）。
+
+| 表 | schema | 行数 | 入站FK | 出站FK | 代码引用 | 迁移来源 | 判定 |
+|---|---|--:|--:|---|---|---|---|
+| `qa_ehs_discharge_permits` | public | 0 | 0 | 0 | 0 运行时（迁移 40 处） | `20261007000006_rebuild_orphan_tables.sql` | 直删 |
+| `qa_ehs_disease_cases` | public | 0 | 0 | 0 | 0 运行时（迁移 39 处） | 同上 | 直删 |
+| `qa_ehs_drill_evaluations` | public | 0 | 0 | 1 → `ehs.qa_ehs_drill_records` | 0 运行时（迁移 57 处） | 同上 | 直删 |
+| `qa_ehs_drill_problems` | public | 0 | 0 | 1 → `ehs.qa_ehs_drill_records` | 0 运行时（迁移 55 处） | 同上 | 直删 |
+| `qa_ehs_emergency_plan_approvals` | public | 0 | 0 | 1 → `public.qa_ehs_emergency_plans` | 0 运行时（迁移 37 处） | 同上 | 直删 |
+| `qa_ehs_emergency_plan_supplies` | public | 0 | 0 | 1 → `public.qa_ehs_emergency_plans` | 0 运行时（迁移 31 处） | 同上 | 直删 |
+| `qa_ehs_emergency_plan_versions` | public | 0 | 0 | 1 → `public.qa_ehs_emergency_plans` | 0 运行时（迁移 35 处） | 同上 | 直删 |
+| `qa_ehs_employees` | public | 0 | 0 | 0 | 0 运行时（迁移 41 处） | 同上 | 直删 |
+| `qa_ehs_env_monitor_records` | public | 0 | 0 | 0 | 0 运行时（迁移 36 处） | 同上 | 直删 |
+| `qa_ehs_environment_incidents` | public | 0 | 0 | 0 | 0 运行时（迁移 48 处） | 同上 | 直删 |
+| `qa_ehs_inspection_record_items` | public | 0 | 0 | 2 → `public.qa_ehs_inspection_items`、`ehs.qa_ehs_inspection_records` | 0 运行时（迁移 53 处） | 同上 | 直删 |
+| `qa_ehs_msds` | public | 0 | 0 | 1 → `public.qa_ehs_hazardous_materials` | 0 运行时（迁移 38 处） | 同上 | 直删 |
+
+权威对应（test）：`ehs.qa_ehs_discharge_permits`（19/19 类型一致，j=0.95）、`disease_cases`（22/22，1.00）、`drill_evaluations`（13/13，0.93；test 45 行）、`drill_problems`（15/15，1.00）、`emergency_plan_approvals`（10/10，1.00）、`emergency_plan_supplies`（11/11，1.00）、`emergency_plan_versions`（9/9，1.00）、`employees`（12/12，1.00；test 12 行）、`env_monitor_records`（21/21，0.95）、`environment_incidents`（23/23，0.96）、`inspection_record_items`（9/9，1.00）、`msds`（21/21，1.00）。
+
+### 4.2 `public` 移动端影子（12 张）→ 权威 `mobile.*`
+
+`svc/mobile/**` 的裸名在 `mobile, public, shared` 下均解析到 `mobile.*`；`public` 副本零命中。12 张全部由 `database/init/05_mobile_init.sql` 创建（不在迁移链）。
+
+| 表 | schema | 行数 | 入站FK | 出站FK | 代码引用 | 迁移来源 | 判定 |
+|---|---|--:|--:|---|---|---|---|
+| `barcode_scans` | public | 0 | 0 | 1 → `mobile.mobile_users` | 0 命中本表 | `database/init/05_mobile_init.sql` | 直删 |
+| `devices` | public | 0 | 0 | 1 → `mobile.mobile_users` | 0 命中本表 | 同上 | 直删 |
+| `media_files` | public | 0 | 0 | 0 | 0 命中本表 | 同上 | 直删 |
+| `mobile_scan_records` | public | 0 | 0 | 1 → `mobile.mobile_users` | 0 命中本表 | 同上 | 直删 |
+| `offline_operations` | public | 0 | 0 | 1 → `mobile.mobile_users` | 0 命中本表 | 同上 | 直删 |
+| `offline_sync_records` | public | 0 | 0 | 1 → `mobile.mobile_users` | 0 命中本表 | 同上 | 直删 |
+| `photo_uploads` | public | 0 | 0 | 1 → `mobile.mobile_users` | 0 命中本表 | 同上 | 直删 |
+| `push_devices` | public | 0 | 0 | 1 → `mobile.mobile_users` | 0 命中本表 | 同上 | 直删 |
+| `push_notifications` | public | 0 | 0 | 0 | 0 命中本表 | 同上 | 直删 |
+| `push_templates` | public | 0 | 0 | 0 | 0 命中本表 | 同上 | 直删 |
+| `shortcuts` | public | 0 | 0 | 1 → `mobile.mobile_users` | 0 命中本表 | 同上 | 直删 |
+| `sync_policies` | public | 0 | 0 | 1 → `mobile.mobile_users` | 0 命中本表 | 同上 | 直删 |
+
+权威对应（test，列类型一致/j）：`barcode_scans` 9/12，0.92（test 2 行）、`devices` 7/14，0.93（1 行）、`media_files` 6/12，0.92、`mobile_scan_records` 8/9，0.90（2 行）、`offline_operations` 8/12，0.92（1 行）、`offline_sync_records` 8/10，0.91（1 行）、`photo_uploads` 13/19，0.95、`push_devices` 6/11，0.92（1 行）、`push_notifications` 10/14，0.82（4 行）、`push_templates` 8/10，0.91（2 行）、`shortcuts` 11/11，0.92、`sync_policies` 8/9，0.90（1 行）。类型差异为历史收窄/加宽，不影响「0 行删除」。
+
+### 4.3 协作 / 邮件 / 离线影子（4 张）
+
+| 表 | schema | 行数 | 入站FK | 出站FK | 代码引用 | 迁移来源 | 权威（test） | 判定 |
+|---|---|--:|--:|---|---|---|---|---|
+| `core_comments` | public | 0 | 0 | 0 | 0（裸名在 `flow, public` 下解析到 `flow.core_comments`） | `20261029120000_schema_defense_orphan_tables_to_authoritative.sql` | `flow.core_comments` 11/11，1.00 | 直删 |
+| `core_favorites` | public | 0 | 0 | 0 | 同上 → `flow.core_favorites` | 同上 | `flow.core_favorites` 7/7，0.88 | 直删 |
+| `core_email_templates` | public | 0 | 0 | 0 | 0（`communication` 启动期由 `schema_defense` 建 `communication.core_email_templates`） | `007_communication.sql` | `communication.core_email_templates` 9/9，0.90 | 直删 |
+| `core_mobile_offline_records` | public | 0 | 0 | 0 | 0（裸名解析到 `mobile.core_mobile_offline_records`） | `009_sync.sql` | `mobile.core_mobile_offline_records` 13/13，0.81 | 直删 |
+
+> `core_comments` / `core_favorites` 是 `20261029120000` 依据「迁移缺表」判断时补建的 `public` 副本；实际运行时 `unified-core`（嵌入式 `flow, public`）解析到 `flow.*`，故该副本从未被写入（0 行）。删除前提是 `flow.*` 存在（prod/test 均存在，已实测）。
+
+### 4.4 聊天影子（3 张）→ 权威 `iam.*`
+
+| 表 | schema | 行数 | 入站FK | 出站FK | 代码引用 | 迁移来源 | 权威（test） | 判定 |
+|---|---|--:|--:|---|---|---|---|---|
+| `core_chat_members` | public | 0 | 0 | 0 | 0（仅 `schema_defense` 注释列举，无 SQL） | `007_communication.sql` | `iam.core_chat_members` 5/5，1.00 | 直删 |
+| `core_chat_messages` | public | 0 | 0 | 0 | 同上 | `007_communication.sql` | `iam.core_chat_messages` 11/11，1.00 | 直删 |
+| `core_chat_rooms` | public | 0 | 0 | 0 | 同上 | `007_communication.sql` | `iam.core_chat_rooms` 8/8，1.00 | 直删 |
+
+`public.core_chat_members` 是 P8 文档中唯一未补 PK 的反向表；删除后 prod 无 PK 表清零（其余运行时账本表已在 P8 补齐）。
+
+### 4.5 空库重建链骨架与历史对齐骨架（5 张）
+
+| 表 | schema | 行数 | 入站FK | 出站FK | 代码引用 | 迁移来源 | 权威（test） | 判定 |
+|---|---|--:|--:|---|---|---|---|---|
+| `reports` | public | 0 | 0 | 0 | 0（`analytics` 裸名解析到 `bi.reports`） | `20261015000074_k1_missing_table_baselines.sql` | `bi.reports` 5/5 列名一致（j=0.26，test 1 行） | 直删 |
+| `report_templates` | public | 0 | 0 | 0 | 0 → `bi.report_templates` | 同上 | `bi.report_templates` 4/4（j=0.19） | 直删 |
+| `report_schedules` | public | 0 | 0 | 0 | 0 → `bi.report_schedules` | 同上 | `bi.report_schedules` 4/4（j=0.20） | 直删 |
+| `cqrs_projection_progress` | public | 0 | 0 | 0 | 0（`finance` 裸名解析到 `finance.cqrs_projection_progress`） | `20261015000074_k1_missing_table_baselines.sql` | `finance.cqrs_projection_progress`（prod 4 列中 2 列同名同位，test 2 行） | 直删 |
+| `quality_records` | public | 0 | 0 | 0 | 0（`mes` 代码显式 `mes.quality_records`） | `20260920000094_public_schema_align.sql` | `mes.quality_records` 列名 20/20（j=1.00），类型仅 9/20 一致 | 直删 |
+
+> 前 4 张是 4–5 列的最小骨架（`id/tenant_id/created_at/updated_at`），由空库重建链补齐，不是业务表；`quality_records` 列名全覆盖但 11 列类型与 `mes` 权威表不同，因 0 行且零引用，删除不涉及数据损失；类型差异本身属 test 侧漂移，另行治理。
+
+### 4.6 `mes` 影子（3 张）
+
+| 表 | schema | 行数 | 入站FK | 出站FK | 代码引用 | 迁移来源 | 权威 | 判定 |
+|---|---|--:|--:|---|---|---|---|---|
+| `permission_audit_logs` | mes | 0 | 0 | 0 | 0（代码显式 `public.permission_audit_logs`） | `20260825000000_rebuild_permission_tables.sql` | `public.permission_audit_logs` 13/13，1.00（prod/test 均存在） | 直删 |
+| `schema_registry` | mes | 0 | 0 | 0 | 0（`master-data` 代码显式 `public.schema_registry`） | `20260725000001_create_schema_registry.sql` | `public.schema_registry`（与 `iam.schema_registry` 11/11，1.00） | 直删 |
+| `tool_permissions` | mes | 0 | 0 | 1 → `iam.tenant_permissions` | 0 | `20260825000000_rebuild_permission_tables.sql` | `iam.tool_permissions` 8/9，0.89 | 直删 |
+
+## 5. 需先重指向 FK 再删（0 张）
+
+全库 63 张的入站 FK 仅 3 条，且全部位于 **保留簇** 内部，不存在「指向待删表的外部引用」，因此本类为空：
+
+| 入站 FK | 子表（待删？） | 父表（待删？） |
+|---|---|---|
+| `qa_inspection_plan_items_item_id_fkey` | `qms.qa_inspection_plan_items`（保留） | `qms.qa_inspection_items`（保留） |
+| `qa_inspection_plan_items_plan_id_fkey` | `qms.qa_inspection_plan_items`（保留） | `qms.qa_inspection_plans`（保留） |
+| `qa_inspection_plans_sampling_plan_id_fkey` | `qms.qa_inspection_plans`（保留） | `qms.qa_sampling_plans`（保留） |
+
+可直删表的 **18 条出站 FK** 属子表侧约束，`DROP TABLE` 时随表消失，不需要重指向（父表均保留）。P4 首批已完成 19 条「外部入站 FK → 权威表」的重指向，本轮无同类工作。
+
+## 6. 需迁移数据再删（0 张）
+
+63 张合计仅 **2 行**（`public.core_coding_rules`），且该表在 test 无同名/同构候选，不具备「迁移到权威表」的目标，故并入「待业务确认」（§8.4）。
+
+## 7. 应保留（20 张）
+
+判据：全仓存在**运行时读写**，且 test 侧无同名表、全表列集合最近邻 Jaccard ≤0.30（无改名等价物）。**同时说明：这 20 张在 `topems_test` 中不存在，属 test 侧缺表**（§12 问题 5）。
+
+| 表 | schema | 行数 | 入站FK | 出站FK | 运行时引用（文件 / 处数） | 迁移来源 | 判定 |
+|---|---|--:|--:|---|---|---|---|
+| `core_notification_deliveries` | communication | 0 | 0 | 0 | `svc/communication/src/notification.rs`（10） | `20261020000003_notification_deliveries.sql` | 保留 |
+| `core_notification_preferences` | communication | 0 | 0 | 0 | 同上（7） | `20261020000001_notification_preferences.sql` | 保留 |
+| `core_notification_subscriptions` | communication | 0 | 0 | 0 | 同上（11） | `20261020000002_notification_subscriptions.sql` | 保留 |
+| `hazard_control_measures` | ehs | 0 | 0 | 1 → `ehs.qa_ehs_hazards` | `svc/ehs/src/modules/hazard.rs`（3） | `database/init/10_ehs_schema.sql` | 保留 |
+| `hazard_risk_assessments` | ehs | 0 | 0 | 1 → `ehs.qa_ehs_hazards` | 同上（1） | 同上 | 保留 |
+| `qa_ehs_alerts` | ehs | 0 | 0 | 0 | `svc/ehs/src/modules/integration.rs`（1） | 同上 | 保留 |
+| `qa_ehs_risk_controls` | ehs | 0 | 0 | 0 | `svc/ehs/src/modules/risk.rs`（4） | 同上 | 保留 |
+| `qa_ehs_treatments` | ehs | 0 | 0 | 0 | `svc/ehs/src/modules/accident.rs`（3） | 同上 | 保留 |
+| `qa_ehs_treatment_actions` | ehs | 0 | 0 | 0 | 同上（3） | 同上 | 保留 |
+| `announcements` | erp | 0 | 0 | 0 | `svc/erp/src/modules/announcement.rs`（9） | `20260907000001_erp_public_business_tables.sql` | 保留 |
+| `cqrs_events` | finance | 0 | 0 | 0 | `svc/finance/src/domain/pg_event_store.rs`（10，事件存储读写） | `20260915000001_create_cqrs_projection_progress.sql` | 保留 |
+| `qa_lims_analytes` | lims | 0 | 0 | 0 | `svc/lims/src/modules/analyte.rs`（7） | `20261021000007_qms_lims_inspection_tables.sql` | 保留 |
+| `pdm_drawings` | pdm | 0 | 0 | 0 | `svc/pdm/src/modules/drawings.rs`（6） | `20261021000011_p2_11_remainder.sql` | 保留 |
+| `core_email_queue` | public | 0 | 0 | 0 | `svc/communication/src/mail.rs`（5，裸名在 `communication, public` 下无同名前置表） | `007_communication.sql` | 保留 |
+| `monitor_thresholds` | public | 0 | 0 | 0 | `svc/monitor/src/modules/monitor/alert_evaluator.rs`（6） | `20261023000006_monitor_thresholds_table.sql` | 保留 |
+| `tenant_permissions` | public | 0 | 0 | 0 | `svc/unified-core/src/routes/business_tools/database_permission_store.rs`（8） | `20260725000000_business_base_tables.sql` | 保留 |
+| `qa_inspection_items` | qms | 0 | 1（集合内） | 0 | `svc/qms/src/modules/inspection_standard.rs`（9） | `20261021000007_qms_lims_inspection_tables.sql` | 保留 |
+| `qa_inspection_plan_items` | qms | 0 | 0 | 2（集合内） | 同上（3） | 同上 | 保留 |
+| `qa_inspection_plans` | qms | 0 | 1（集合内） | 1（集合内） | 同上（8） | 同上 | 保留 |
+| `qa_sampling_plans` | qms | 0 | 1（集合内） | 0 | 同上（7） | 同上 | 保留 |
+
+注：
+
+- `public.tenant_permissions` 拥有序列 `public.tenant_permissions_id_seq`（`DROP TABLE` 会连带删除），这也是「保留」的理由之一；其与 `iam.tenant_permissions` 列结构等价，但代码未显式限定 schema。
+- `public.core_email_queue`、`public.tenant_permissions` 与 `iam.core_email_queue`、`iam.tenant_permissions` **列结构等价（Jaccard=1.00）**，但运行时代码未显式限定 schema，按 `search_path` 解析到 `public` 副本。删除前必须先改代码显式指定 schema 或迁移数据；本轮不动，仅登记「后续可归并」。
+- `finance.cqrs_events` 在 test 侧曾被「双表统一」按「空壳」删除，但 prod 代码 `pg_event_store.rs` 仍以 `finance.cqrs_events` 读写事件存储——**test 侧删除属回归，不能作为 prod 删除依据**。
+
+## 8. 待业务确认（4 张）
+
+### 8.1 `finance.settlements`（0 行 / 迁移 29 处 / 前端 60 处 API 字符串）
+
+- 结构：`settlement_no, settlement_type, items(jsonb), amount, status, project_id, ...`（12 列），**无** `settlement_name / settlement_period_* / currency / approved_at`。
+- 对比 `pm.settlements`（test 存在，18 列）：列交集 11，类型一致 7/12，Jaccard 0.58；语义也不同（`pm` 为周期结算，本表为「items 明细 + 类型」）。
+- 代码侧：`svc/finance/src/modules/settlement_center/**` 明确注释「聚合自 `pm.settlements` 与 `erp.fin_reconciliations`」，**无任何 SQL 读写 `finance.settlements`**；前端 `apps/web/src/api/finance/settlementCenter.ts` 仅命中 API 路径片段。
+- **待确认问题**：结算中心是否最终要落地 `finance.settlements`（当前只有契约占位，由 `20261007140000_align_stub_tables_handler_contract.sql` 创建）？
+- **倾向建议**：若结算中心已改用 `pm.settlements` 聚合，则**直删**；若仍计划独立结算明细，应补数据写入路径后再保留，不能只留空壳。
+
+### 8.2 `mes.inspection_records`（0 行 / 迁移 68 处 / 服务端无 SQL）
+
+- 结构：`category, item_name, inspector, inspection_time, issues, status`（10 列，MES 车间巡检语义）。
+- test 侧同名表：`lims.inspection_records`（21 列，检验任务/样本语义）、`scm.inspection_records`（18 列，来料/批次检验语义）；与本表列交集仅 4–5 列，Jaccard 0.22，均非等价。
+- 代码侧：`svc/mes/**` 无 `inspection_records` SQL（`mes.equipment_inspection_records` 是另一张表，且存在）。
+- **待确认问题**：MES 车间巡检记录是否已并入 `mes.equipment_inspection_records` 或 `ehs.qa_ehs_inspection_records`？
+- **倾向建议**：若巡检功能已迁至设备巡检/EHS 巡检，则**直删**；否则需明确唯一承载表，避免三套巡检数据并行。
+
+### 8.3 `mes.erp_dictionaries`（0 行 / 迁移 2 处 / **裸名解析失败**）
+
+- 唯一副本，test 侧完全无 `erp_dictionaries`（任何 schema）。
+- `svc/erp/src/modules/dictionaries.rs` 以裸名 `FROM erp_dictionaries` 访问，`SEARCH_PATH=erp, public`（`svc/erp/src/main.rs` L57；聚合模块 `erp_real_module.rs` L38 同为 `erp, public`）。实测：
+
+  ```sql
+  SET search_path TO erp,public,shared;
+  SELECT count(*) FROM erp_dictionaries;
+  -- ERROR: relation "erp_dictionaries" does not exist
+  ```
+
+- **待确认问题**：ERP 字典功能是否启用、应由哪张表承载？（现状是「代码调用会直接报错，prod 仅 mes 一张空表」）
+- **倾向建议**：确认功能是否上线——若上线，先在 `erp` schema 建表（或把 SQL 改为 `mes.erp_dictionaries` 并纳入 `mes` 连接路径）后**再删本表/改指向**；若未上线，则**直删** `mes.erp_dictionaries` 并清理 handler。
+
+### 8.4 `public.core_coding_rules`（2 行 / `database/seeds/coding_rules.sql` / 代码 0 引用）
+
+- 2 行为真实配置（`employee_no` / `purchase_order_no` 编码规则），配套序列 `public.employee_no_seq`、`public.purchase_order_no_seq` 在 prod 存在；`deploy-prod.sh` 每次部署会重跑 seeds，**删表后下次部署会原样重建**。
+- 全仓 `svc/lib` 无任何 `core_coding_rules` 引用（仅 seeds 自身）。
+- **待确认问题**：编码规则功能是否仍规划？若删，是否同时从 `scripts/deploy-prod.sh` 移除 seeds 执行？
+- **倾向建议**：功能未落地则「删表 + 移除 seed」成对处理；否则补代码引用后再保留。仅删表不删 seed 等于每轮部署自动回滚，**不建议**。
+
+## 9. `search_path` 歧义清单（6 张结构性歧义，当前 0 张影响运行时）
+
+判定方法：对每张待删表，沿每个服务 `search_path` 计算「当前解析目标」与「删表后解析目标」；若删后落到另一 schema 的同名表，即为**静默回落**。
+
+| 待删表 | 受影响路径 | 当前解析 | 删后回落 | 实际代码影响 | 结论 |
+|---|---|---|---|---|---|
+| `mes.permission_audit_logs` | `mes, public, shared` | `mes.permission_audit_logs` | `public.permission_audit_logs`（存在，13/13 同构） | 实测无裸名 SQL；唯一引用在 `unified-core` 且显式 `public.` | 潜在风险，不阻断 |
+| `mes.schema_registry` | `mes, public, shared` | `mes.schema_registry` | `public.schema_registry`（存在） | 无裸名 SQL（master-data 显式 `public.`） | 潜在风险，不阻断 |
+| `public.core_chat_members` | `flow, mobile, rs, erp, public, iam, shared` | `public.core_chat_members` | `iam.core_chat_members`（存在） | 无运行时 SQL（仅 `schema_defense` 注释列举） | 潜在风险，不阻断 |
+| `public.core_chat_messages` | 同上 | `public.core_chat_messages` | `iam.core_chat_messages` | 同上 | 潜在风险，不阻断 |
+| `public.core_chat_rooms` | 同上 | `public.core_chat_rooms` | `iam.core_chat_rooms` | 同上 | 潜在风险，不阻断 |
+| `public.core_email_templates` | `flow, mobile, rs, erp, public, iam, shared` | `public.core_email_templates` | `iam.core_email_templates` | 真实引用均在 `communication`，其路径 `communication, public` 在 `public` 之前已命中 `communication.core_email_templates` | 无影响 |
+
+要点：
+
+1. **真正会改变行为的是「删后静默落到另一张结构不同的表」**。上表 6 张的回落目标都是**同构或等价表**（Jaccard ≥0.90），且当前没有裸名 SQL 会走到它们，故本轮 39 张直删**不会**产生静默改道。
+2. 其余 33 张直删表之所以安全，是因为同名的权威表在 `search_path` 中**排在 `public` 之前**（`mobile/ehs/mes/finance/communication/flow` 等），裸名从不会落到 `public` 副本；删除后同样不改变解析。
+3. **最隐蔽的一类**是 §8.3：`mes.erp_dictionaries` 之所以「有运行时代码却 rt=0」，是因为裸名在当前 `search_path` 下**根本解析不到任何表**（实测报错），不是被别的 schema 抢走。此类不能用「字符串命中数」判断归属，必须按 `search_path` 实算。
+
+## 10. 额外风险核查（针对可直删 39 张）
+
+| 检查项 | 结果 | 证据 |
+|---|---|---|
+| 视图 / 物化视图依赖 | **0** | `pg_depend` join `pg_rewrite`，`relkind IN ('v','m')` 无命中 |
+| 函数依赖 | **0** | `pg_depend.classid='pg_proc'` 无命中 |
+| 触发器 | **1 个**，在 `public.tenant_permissions`（保留表） | `pg_trigger` 依赖查询 |
+| RLS 策略 | 仅表自身策略，随 `DROP TABLE` 一并删除；无跨表策略引用 | `pg_policy` 依赖查询 |
+| 序列 | 仅 `public.tenant_permissions_id_seq`（保留表 owned）；无可直删表拥有序列；无跨表 `nextval` 引用 | 双向 `pg_depend` 序列查询 |
+| 默认值 / 约束 / 索引 | 表自身对象，随表删除 | `pg_constraint` 无外部入站 FK |
+| `relkind` | 63/63 = `r` | `pg_class.relkind::text` 实测 |
+| 分区表 | 0（无 `relkind='p'`，无 `pg_inherits` 子表） | 同上 |
+| 外部表 | 0 | 同上 |
+
+**删除「不可永久生效」提醒**：可直删的 39 张**全部**在仓库有建表来源（27 张版本化迁移 + 12 张 `database/init/**`），prod 删除后，**空库重建链仍会把它们建回来**。要根治需同步修改这些基线迁移（本轮不做 DDL，也不改迁移文件）；因此本轮删除定位是「prod 现网收敛」，不是「迁移链纠偏」。
+
+## 11. 建议执行批次与顺序
+
+> 前置：本轮只读，未执行任何批次。真正执行时遵循 `prod 只读盘点 → 单事务 DDL → `/health` 校验 → 账本登记`。
+
+### 11.1 批次划分
+
+| 批次 | 内容 | 张数 | 依据 |
+|---|---|---:|---|
+| **A1** | `public.qa_ehs_*` 12 张 | 12 | 同族、同迁移来源、权威 `ehs.*` 齐备 |
+| **A2** | `public` 移动端 12 张 | 12 | 同源 `05_mobile_init.sql`、权威 `mobile.*` 齐备 |
+| **A3** | 其余 15 张：协作 4 + 聊天 3 + 骨架 5 + `mes` 影子 3 | 15 | 逐表独立、无集合外 FK |
+| **B** | 需先重指向 | 0 | — |
+| **C** | 待业务确认 4 张 | 4 | 决策后单独迁移 |
+
+顺序理由：先删「同族 + 零依赖」的 A1/A2（风险最低、可批量校验），再删 A3（含结构性歧义的 6 张，需单独确认），最后处理 C（涉及功能归属）。
+
+### 11.2 单批前置校验（对批次清单逐表执行，任一不满足即中止）
+
+```sql
+-- {tbl} = schema.table；{auth} = 权威表 schema.table
+-- 1) 表存在且为普通表
+SELECT relkind::text FROM pg_class WHERE oid = '{tbl}'::regclass;              -- 期望 r
+-- 2) 精确 0 行
+SELECT count(*) FROM {tbl};                                                    -- 期望 0
+-- 3) 无入站 FK
+SELECT conname, conrelid::regclass AS child
+  FROM pg_constraint WHERE contype='f' AND confrelid='{tbl}'::regclass;        -- 期望 0 行
+-- 4) 无视图/物化视图依赖
+SELECT DISTINCT c.relkind::text, c.relnamespace::regnamespace||'.'||c.relname
+  FROM pg_depend d JOIN pg_class c ON c.oid = d.objid
+ WHERE d.refobjid = '{tbl}'::regclass AND c.relkind IN ('v','m');              -- 期望 0 行
+-- 5) 无函数依赖
+SELECT p.proname FROM pg_depend d JOIN pg_proc p ON p.oid = d.objid
+ WHERE d.refobjid = '{tbl}'::regclass AND d.classid = 'pg_proc'::regclass;     -- 期望 0 行
+-- 6) 权威表存在（test 与 prod 都要有）
+SELECT to_regclass('{auth}');                                                  -- 期望非空
+-- 7) 同名跨 schema 清单（search_path 歧义复核）
+SELECT n.nspname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+ WHERE c.relname = '{table}' AND c.relkind IN ('r','p') ORDER BY 1;
+```
+
+批量脚本（只读，逐表打印 PASS/FAIL）：
+
+```bash
+while IFS='|' read -r tbl auth; do
+  psql "$PROD_URL" -tA -v ON_ERROR_STOP=1 \
+    -c "SELECT '${tbl}', count(*) FROM ${tbl};" \
+    -c "SELECT '${tbl}', count(*) FROM pg_constraint WHERE contype='f' AND confrelid='${tbl}'::regclass;" \
+    >/dev/null && echo "PASS ${tbl} -> ${auth}" || echo "FAIL ${tbl}"
+done < batch_a1.txt
+```
+
+### 11.3 回退方式（单表归档）
+
+删除前先按表归档（0 行表归档体积极小，可用 `-Fc`）：
+
+```bash
+# prod 机执行（或经隧道在本地）
+pg_dump -Fc -h 127.0.0.1 -p 5432 -U xingzhai -d topems_prod \
+  -t 'public.qa_ehs_msds' -t 'public.qa_ehs_employees' \
+  -f ~/topems/backups/p4_rem_a1_$(date +%Y%m%d_%H%M%S).dump
+```
+
+回退（重建被删表并恢复数据）：
+
+```bash
+pg_restore --no-owner --no-privileges -h 127.0.0.1 -p 5432 -U xingzhai \
+  -d topems_prod ~/topems/backups/p4_rem_a1_<ts>.dump
+```
+
+> 注意：`pg_restore` 对已存在的同名表会报错，回退前无需手动删表（本批表已被删）；若表仍存在，说明该批未执行或已部分回退，应先核对。
+
+### 11.4 迁移与账本
+
+- 每批一个迁移文件（`20261105xxxxxx_p4_remove_<batch>_<n>tables.sql`），结构参照首批 [`20261105100000_p4_drop_shadow_tables_and_repoint_fks.sql`](../../database/migrations/20261105100000_p4_drop_shadow_tables_and_repoint_fks.sql) 的 `DO $$ ... RAISE EXCEPTION ... DROP TABLE ...` 守卫块；
+- 每条 `DROP TABLE` **不带 `CASCADE`**；
+- 执行前 `pg_dump` 备份 + `BEGIN ... ROLLBACK` 预演；执行后 `success=true` 且 checksum 与仓库文件一致，`/health`=200；
+- 禁止 `sqlx migrate run`。
+
+## 12. 待拍板问题清单（按重要性）
+
+| # | 问题 | 影响 | 我的倾向 |
+|---|---|---|---|
+| 1 | `mes.erp_dictionaries`：ERP 字典功能是否启用？裸名在 `erp, public` 下**实测解析失败**，prod 仅 `mes` 一份空表 | 功能实际不可用，或需补建 `erp.erp_dictionaries` | 若功能上线：先建权威表/改 SQL，再删本表；若未上线：直删并清理 handler（**不建议继续保留空壳**） |
+| 2 | `finance.settlements`：结算中心是否要落地独立结算明细？现仅契约占位，代码聚合自 `pm.settlements` | 决定 1 张表的去留 | 已聚合 `pm.settlements` → **直删**；若确认要独立明细，须补写路径 |
+| 3 | `mes.inspection_records`：车间巡检记录的唯一承载表是哪一个（`mes.equipment_inspection_records` / `ehs.qa_ehs_inspection_records` / 保留本表） | 决定 1 张表去留，且影响三套巡检数据边界 | 已有设备巡检与 EHS 巡检 → **直删本表** |
+| 4 | `public.core_coding_rules`：编码规则功能是否仍规划？`deploy-prod.sh` 每轮重跑 seeds，**删表不删 seed 会立即重建** | 2 行配置 + 2 个序列 | 未落地 →「删表 + 移除 seed」成对；落地 → 补代码引用 |
+| 5 | 20 张「应保留」表在 `topems_test` **不存在**（代码在用） | test 覆盖缺口：新环境/回归会缺表 | 建议将 20 张补建进 test（按 prod 结构），但需确认「test 是否仍是有效对照基线」；本轮不动 |
+| 6 | 39 张可直删表全部有仓库建表来源（27 张迁移 + 12 张 `database/init`），删除后**空库重建会全部重建** | 删除只在 prod 生效，重建链仍冗余 | 建议后续单独立项同步基线迁移；本轮先删现网，不扩大 DDL 范围 |
+
+## 13. 附录
+
+### 13.1 复算命令
+
+```sql
+-- 差集（两侧分别执行后 comm）
+SELECT n.nspname||'|'||c.relname||'|'||c.relkind::text
+FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+WHERE c.relkind IN ('r','p') AND n.nspname NOT IN ('pg_catalog','information_schema','pg_toast')
+ORDER BY 1;
+
+-- 逐表精确行数（63 条 UNION ALL）
+-- 见本轮 /tmp/p4_cnt2.sql 生成方式：对每张表 SELECT '<schema.table>', count(*) FROM <schema.table>
+```
+
+```bash
+# 入站 / 出站 FK
+WITH tgt(sch,tbl) AS (VALUES ('public','qa_ehs_msds'), ...) SELECT ...
+```
+
+```bash
+# 代码引用（限定名 + 裸名）
+git grep -n -I -F "schema.table" -- svc lib apps packages cli scripts config deploy database tests docs
+git grep -n -I -w  "table"        -- svc lib apps packages cli scripts config deploy database tests docs
+# 裸名归属需按 §2.4 的 search_path 解析，不能直接按命中计数
+```
+
+### 13.2 本轮取证中的口径修正（防止重犯）
+
+1. **`git grep -E '\b'` 无效**：POSIX ERE 不支持 `\b`，首轮全部 0 命中；改用 `-w` / `-F`。
+2. **JS 正则 `[[:space:]]` 无效**：JavaScript 不支持 POSIX 字符类，导致 `FROM table` 匹配失败；改用 `\s`。
+3. **裸名不能按「服务目录 ≈ schema」直接推断**：`unified-core` 的 prod 形态是嵌入式 `flow, public`（不是 `public`）；`analytics` 是 `bi, public`；`rd` 是 `rs`。误判会把 `flow.core_comments` 的引用算到 `public.core_comments` 上。
+4. **`public.` 限定名不能算作其他 schema 表的引用**：首版把 `public.schema_registry` 的引用错配给 `mes.schema_registry`（导致误判「应保留」）。
+5. **`pg_class.relkind` / `pg_constraint.contype` / `pg_depend.deptype` 是 `"char"`**，在 `||` 拼接与 `ORDER BY` 前必须 `::text`。
+6. **`n_live_tup` 不可作行数**：全部改为 `count(*)`（63 张合计 2 行）。
+
+### 13.3 相关文档
+
+- [prod-governance-baseline-2026-11-04.md](prod-governance-baseline-2026-11-04.md)（P4 首批 11 张执行记录 §5.1；P8 `public.core_chat_members` 无 PK 处置 §6.3）
+- [decode-contract-audit-2026-11-05.md](decode-contract-audit-2026-11-05.md)
