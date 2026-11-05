@@ -1,10 +1,11 @@
 //! TOPEMS Ticket Service
 //!
-//! V2 shared-bootstrap 模板：bootstrap_service + build_application + run
+//! V2 shared-bootstrap 模板：bootstrap_service_shared + build_application + run
 
 use axum::{routing::get, Router};
 use topems_shared_auth::middleware::require_permission;
-use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_shared, build_application, run, ServiceConfig};
+use topems_shared_db::scope::Db;
 use utoipa::OpenApi;
 
 mod feedback_compat;
@@ -18,8 +19,6 @@ mod util;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "ticket, public, shared");
-
     let config = ServiceConfig {
         name: "topems-ticket",
         port: 8086,
@@ -33,7 +32,9 @@ async fn main() -> anyhow::Result<()> {
         init_telemetry: true,
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_shared(&config).await?;
+    // 连接治理 B：共享池之上固化本模块 search_path（显式传值，不依赖 .env）
+    let db = Db::new(ctx.db.clone(), "ticket, public");
     tracing::info!("🚀 TOPEMS Ticket Service starting...");
 
     // ── 模块级数据库初始化（DDL 走 owner 迁移连接池，受限业务用户无表 owner 权限）────
@@ -54,7 +55,7 @@ async fn main() -> anyhow::Result<()> {
             get(|| async move { axum::Json(openapi::TicketApiDoc::openapi()) }),
         );
 
-    // ── protected_routes（业务路由：需要 State<PgPool>） ──────────────
+    // ── protected_routes（业务路由：需要 State<Db>） ──────────────
     let protected_routes = handlers::ticket_routes()
         .merge(feedback_compat::feedback_compat_routes())
         .merge(ticket_ext::ticket_ext_routes())
@@ -65,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn(require_permission(
             "ticket:admin",
         )))
-        .with_state(ctx.db.clone());
+        .with_state(db);
 
     // ── 组装 Application ─────────────────────────────────────────────
     let app = build_application(&ctx, &config, public_routes, protected_routes, None);

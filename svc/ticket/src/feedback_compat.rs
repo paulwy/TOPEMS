@@ -12,7 +12,8 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::FromRow;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
@@ -126,7 +127,7 @@ pub struct ListFeedbackParams {
 )]
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn create_feedback(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateFeedbackRequest>,
 ) -> ApiResponse<FeedbackCompat> {
@@ -140,6 +141,13 @@ pub async fn create_feedback(
         "response": "",
     });
 
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open scope: {}", e);
+            return ApiResponse::server_error("创建反馈失败");
+        }
+    };
     let result = sqlx::query_as::<_, Ticket>(
         r#"INSERT INTO ticket.core_tickets (ticket_no, tenant_id, title, description, ticket_type, severity, status, source_service, reporter_id, tags, metadata)
            VALUES ($1, $2, $3, $4, 'customer_feedback', 'medium', 'open', 'feedback', $5, $6, $7)
@@ -152,12 +160,16 @@ pub async fn create_feedback(
     .bind(Uuid::parse_str(&claims.sub).ok())
     .bind(None::<Vec<String>>)
     .bind(metadata)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
-        Ok(ticket) => ApiResponse::success(ticket.into(), "创建反馈成功"),
+        Ok(ticket) => {
+            let _ = scope.commit().await;
+            ApiResponse::success(ticket.into(), "创建反馈成功")
+        }
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("Failed to create feedback via ticket: {}", e);
             ApiResponse::server_error("创建反馈失败")
         }
@@ -179,21 +191,35 @@ pub async fn create_feedback(
     tag = "FeedbackCompat"
 )]
 pub async fn get_feedback(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<FeedbackCompat> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open scope: {}", e);
+            return ApiResponse::server_error("获取反馈失败");
+        }
+    };
     let result = sqlx::query_as::<_, Ticket>(
         r#"SELECT id, ticket_no, tenant_id, title, description, ticket_type, severity, status, source_service, source_business_id, assignee_id, reporter_id, sla_due_at, resolved_at, closed_at, created_at, updated_at, tags, metadata
            FROM ticket.core_tickets WHERE id = $1 AND ticket_type = 'customer_feedback'"#,
     )
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(Some(ticket)) => ApiResponse::success(ticket.into(), "获取反馈成功"),
-        Ok(None) => ApiResponse::not_found("反馈不存在"),
+        Ok(Some(ticket)) => {
+            let _ = scope.commit().await;
+            ApiResponse::success(ticket.into(), "获取反馈成功")
+        }
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("反馈不存在")
+        }
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("Failed to get feedback: {}", e);
             ApiResponse::server_error("获取反馈失败")
         }
@@ -202,7 +228,7 @@ pub async fn get_feedback(
 
 /// 反馈列表（兼容端点）
 pub async fn list_feedbacks(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListFeedbackParams>,
 ) -> ApiResponse<serde_json::Value> {
@@ -247,6 +273,13 @@ pub async fn list_feedbacks(
         where_clause
     );
 
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open scope: {}", e);
+            return ApiResponse::server_error("获取反馈列表失败");
+        }
+    };
     let mut sqlx_query = sqlx::query_as::<_, Ticket>(sqlx::AssertSqlSafe(query));
     for arg in &args {
         sqlx_query = sqlx_query.bind(arg);
@@ -254,7 +287,7 @@ pub async fn list_feedbacks(
     let tickets = sqlx_query
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&pool)
+        .fetch_all(&mut scope)
         .await;
 
     match tickets {
@@ -263,7 +296,8 @@ pub async fn list_feedbacks(
             for arg in &args {
                 count_sqlx = count_sqlx.bind(arg);
             }
-            let total = count_sqlx.fetch_one(&pool).await.unwrap_or(0);
+            let total = count_sqlx.fetch_one(&mut scope).await.unwrap_or(0);
+            let _ = scope.commit().await;
             let feedbacks: Vec<FeedbackCompat> = tickets.into_iter().map(Into::into).collect();
 
             ApiResponse::success(
@@ -277,6 +311,7 @@ pub async fn list_feedbacks(
             )
         }
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("Failed to list feedbacks: {}", e);
             ApiResponse::server_error("获取反馈列表失败")
         }
@@ -285,7 +320,7 @@ pub async fn list_feedbacks(
 
 /// 响应反馈（兼容端点，更新 ticket.metadata.response 并标记 resolved）
 pub async fn response_feedback(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<ResponseFeedbackRequest>,
@@ -294,6 +329,13 @@ pub async fn response_feedback(
         return ApiResponse::forbidden("无权限回复反馈");
     }
 
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open scope: {}", e);
+            return ApiResponse::server_error("回复反馈失败");
+        }
+    };
     let result = sqlx::query(
         r#"UPDATE ticket.core_tickets
            SET status = 'resolved',
@@ -308,12 +350,16 @@ pub async fn response_feedback(
     .bind(&payload.response)
     .bind(&claims.sub)
     .bind(id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => ApiResponse::success(true, "回复反馈成功"),
+        Ok(_) => {
+            let _ = scope.commit().await;
+            ApiResponse::success(true, "回复反馈成功")
+        }
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("Failed to response feedback: {}", e);
             ApiResponse::server_error("回复反馈失败")
         }
@@ -322,22 +368,30 @@ pub async fn response_feedback(
 
 /// 删除反馈（兼容端点，软删除 ticket）
 pub async fn delete_feedback(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<bool> {
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open scope: {}", e);
+            return ApiResponse::server_error("删除反馈失败");
+        }
+    };
     let ticket = sqlx::query_as::<_, Ticket>(
         r#"SELECT id, ticket_no, tenant_id, title, description, ticket_type, severity, status, source_service, source_business_id, assignee_id, reporter_id, sla_due_at, resolved_at, closed_at, created_at, updated_at, tags, metadata
            FROM ticket.core_tickets WHERE id = $1 AND ticket_type = 'customer_feedback'"#,
     )
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match ticket {
         Ok(Some(t)) => {
             let reporter_str = t.reporter_id.map(|u| u.to_string()).unwrap_or_default();
             if reporter_str != claims.sub && !claims.is_superuser {
+                let _ = scope.rollback().await;
                 return ApiResponse::forbidden("无权限删除反馈");
             }
 
@@ -346,26 +400,34 @@ pub async fn delete_feedback(
                    WHERE id = $1"#,
             )
             .bind(id)
-            .execute(&pool)
+            .execute(&mut scope)
             .await;
 
             match result {
-                Ok(_) => ApiResponse::success(true, "删除反馈成功"),
+                Ok(_) => {
+                    let _ = scope.commit().await;
+                    ApiResponse::success(true, "删除反馈成功")
+                }
                 Err(e) => {
+                    let _ = scope.rollback().await;
                     tracing::error!("Failed to delete feedback: {}", e);
                     ApiResponse::server_error("删除反馈失败")
                 }
             }
         }
-        Ok(None) => ApiResponse::not_found("反馈不存在"),
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("反馈不存在")
+        }
         Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("Failed to delete feedback: {}", e);
             ApiResponse::server_error("删除反馈失败")
         }
     }
 }
 
-pub fn feedback_compat_routes() -> Router<PgPool> {
+pub fn feedback_compat_routes() -> Router<Db> {
     Router::new()
         .route("/feedbacks", post(create_feedback).get(list_feedbacks))
         .route(

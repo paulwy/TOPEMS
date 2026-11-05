@@ -9,7 +9,8 @@ use axum::{
 };
 use serde::Deserialize;
 use serde_json::json;
-use sqlx::{PgPool, Row};
+use sqlx::Row;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
@@ -35,7 +36,7 @@ fn user_of(claims: &Claims) -> Option<Uuid> {
     Uuid::parse_str(&claims.sub).ok()
 }
 
-pub fn ticket_ext_routes() -> Router<PgPool> {
+pub fn ticket_ext_routes() -> Router<Db> {
     Router::new()
         // ---- 工作流（静态状态机）----
         .route("/workflows", get(get_workflows))
@@ -126,7 +127,7 @@ pub fn ticket_ext_routes() -> Router<PgPool> {
     ),
     tag = "TicketExt"
 )]
-pub async fn get_workflows(State(_pool): State<PgPool>) -> ApiResponse<serde_json::Value> {
+pub async fn get_workflows(State(_db): State<Db>) -> ApiResponse<serde_json::Value> {
     let mut transitions: Vec<serde_json::Value> = Vec::new();
     for from in ALL_STATUSES {
         for to in ALL_STATUSES {
@@ -203,7 +204,7 @@ pub struct WorkflowRuleView {
     tag = "TicketExt"
 )]
 pub async fn list_workflow_automation_rules(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<WorkflowRuleView>> {
@@ -213,16 +214,21 @@ pub async fn list_workflow_automation_rules(
         Some(tenant_of(&claims))
     };
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     match sqlx::query(
         "SELECT id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, condition_field, action_type, enabled
          FROM ticket.ticket_automation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY priority ASC, created_at ASC",
     )
     .bind(opt_tenant_id)
     .bind(locale)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => {
+            let _ = scope.commit().await;
             let views = rows
                 .iter()
                 .map(|row| WorkflowRuleView {
@@ -235,10 +241,13 @@ pub async fn list_workflow_automation_rules(
                 .collect();
             ApiResponse::success(views, "工作流自动化规则列表")
         }
-        Err(e) => ApiResponse::from(TopemsError::internal(
-            "获取工作流自动化规则失败",
-            e,
-        )),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal(
+                "获取工作流自动化规则失败",
+                e,
+            ))
+        }
     }
 }
 
@@ -261,12 +270,16 @@ pub struct WorkflowToggleRequest {
     tag = "TicketExt"
 )]
 pub async fn toggle_workflow_automation_rule(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<WorkflowToggleRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     match sqlx::query(
         "UPDATE ticket.ticket_automation_rules SET enabled = $1, updated_at = now()
          WHERE id = $2 AND tenant_id = $3",
@@ -274,14 +287,17 @@ pub async fn toggle_workflow_automation_rule(
     .bind(req.is_active)
     .bind(id)
     .bind(tenant_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         Ok(res) => {
             if res.rows_affected() == 0 {
+                let _ = scope.rollback().await;
                 ApiResponse::from(TopemsError::DatabaseRecordNotFound(
                     "自动化规则不存在".into(),
                 ))
+            } else if let Err(e) = scope.commit().await {
+                ApiResponse::from(TopemsError::internal("提交失败", e))
             } else {
                 ApiResponse::success(
                     json!({"id": id, "is_active": req.is_active}),
@@ -289,7 +305,10 @@ pub async fn toggle_workflow_automation_rule(
                 )
             }
         }
-        Err(e) => ApiResponse::from(TopemsError::internal("更新自动化规则失败", e)),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("更新自动化规则失败", e))
+        }
     }
 }
 
@@ -318,7 +337,7 @@ fn build_static_workflow(id: Uuid) -> serde_json::Value {
 
 /// GET /workflows/{id}
 pub async fn get_workflow_by_id(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     ApiResponse::success(build_static_workflow(id), "工作流详情")
@@ -326,7 +345,7 @@ pub async fn get_workflow_by_id(
 
 /// PUT /workflows/{id} —— 静态状态机暂不落库更新（待上游支持）
 pub async fn update_workflow(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<Uuid>,
     Json(_body): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
@@ -335,7 +354,7 @@ pub async fn update_workflow(
 
 /// DELETE /workflows/{id} —— 默认静态工作流不可删除，契约上回显成功（待上游支持）
 pub async fn delete_workflow(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     ApiResponse::success(json!({"id": id, "deleted": true}), "工作流已删除")
@@ -343,7 +362,7 @@ pub async fn delete_workflow(
 
 /// GET /workflows/{id}/transitions
 pub async fn list_workflow_transitions(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let wf = build_static_workflow(id);
@@ -352,7 +371,7 @@ pub async fn list_workflow_transitions(
 
 /// POST /workflows/{id}/transitions —— 追加流转不落库，回显契约结构（待上游支持）
 pub async fn add_workflow_transition(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<Uuid>,
     mut body: Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
@@ -385,7 +404,7 @@ pub struct TransitionRequest {
     tag = "TicketExt"
 )]
 pub async fn get_ticket_transitions(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
@@ -394,21 +413,30 @@ pub async fn get_ticket_transitions(
     } else {
         Some(tenant_of(&claims))
     };
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let row = sqlx::query(
         "SELECT status FROM ticket.core_tickets WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(opt_tenant_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let row = match row {
         Ok(Some(r)) => r,
         Ok(None) => {
+            let _ = scope.rollback().await;
             return ApiResponse::not_found("工单不存在");
         }
-        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("查询失败", e));
+        }
     };
+    let _ = scope.commit().await;
     let current: String = row.get("status");
     let mut targets: Vec<String> = Vec::new();
     for to in ALL_STATUSES {
@@ -436,28 +464,39 @@ pub async fn get_ticket_transitions(
     tag = "TicketExt"
 )]
 pub async fn apply_transition(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<TransitionRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let user_id = user_of(&claims);
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
 
     let current: String = match sqlx::query_scalar::<_, String>(
         "SELECT status FROM ticket.core_tickets WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(s)) => s,
-        Ok(None) => return ApiResponse::not_found("工单不存在"),
-        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::not_found("工单不存在");
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("查询失败", e));
+        }
     };
 
     if !is_valid_ticket_transition(&current, &req.to_status) {
+        let _ = scope.rollback().await;
         return ApiResponse::bad_request(&format!("非法流转: {} -> {}", current, req.to_status));
     }
 
@@ -473,11 +512,6 @@ pub async fn apply_transition(
         None
     };
 
-    let mut txn = match pool.begin().await {
-        Ok(t) => t,
-        Err(e) => return ApiResponse::from(TopemsError::internal("事务失败", e)),
-    };
-
     if let Err(e) = sqlx::query(
         "UPDATE ticket.core_tickets SET status = $1, resolved_at = COALESCE($2, resolved_at), \
          closed_at = COALESCE($3, closed_at), updated_at = now() \
@@ -488,9 +522,10 @@ pub async fn apply_transition(
     .bind(closed_at)
     .bind(id)
     .bind(tenant_id)
-    .execute(&mut *txn)
+    .execute(&mut scope)
     .await
     {
+        let _ = scope.rollback().await;
         return ApiResponse::from(TopemsError::internal("更新失败", e));
     }
 
@@ -504,9 +539,10 @@ pub async fn apply_transition(
     .bind(user_id)
     .bind(&current)
     .bind(&req.to_status)
-    .execute(&mut *txn)
+    .execute(&mut scope)
     .await
     {
+        let _ = scope.rollback().await;
         return ApiResponse::from(TopemsError::internal("活动记录失败", e));
     }
 
@@ -520,15 +556,16 @@ pub async fn apply_transition(
             .bind(tenant_id)
             .bind(user_id)
             .bind(comment.trim())
-            .execute(&mut *txn)
+            .execute(&mut scope)
             .await
             {
+                let _ = scope.rollback().await;
                 return ApiResponse::from(TopemsError::internal("备注失败", e));
             }
         }
     }
 
-    if let Err(e) = txn.commit().await {
+    if let Err(e) = scope.commit().await {
         return ApiResponse::from(TopemsError::internal("提交失败", e));
     }
 
@@ -559,7 +596,7 @@ struct TagRequest {
     tag = "TicketExt"
 )]
 pub async fn get_ticket_tags(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
@@ -568,23 +605,34 @@ pub async fn get_ticket_tags(
     } else {
         Some(tenant_of(&claims))
     };
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tags: Option<Vec<String>> = match sqlx::query_scalar(
         "SELECT tags FROM ticket.core_tickets WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(opt_tenant_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(t)) => t,
-        Ok(None) => return ApiResponse::not_found("工单不存在"),
-        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::not_found("工单不存在");
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("查询失败", e));
+        }
     };
+    let _ = scope.commit().await;
     ApiResponse::success(json!({"tags": tags.unwrap_or_default()}), "工单标签")
 }
 
 async fn add_ticket_tag(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<TagRequest>,
@@ -594,17 +642,27 @@ async fn add_ticket_tag(
     if tag.is_empty() {
         return ApiResponse::bad_request("标签不能为空");
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let current: Option<Vec<String>> = match sqlx::query_scalar(
         "SELECT tags FROM ticket.core_tickets WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(t)) => t,
-        Ok(None) => return ApiResponse::not_found("工单不存在"),
-        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::not_found("工单不存在");
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("查询失败", e));
+        }
     };
     let mut tags = current.unwrap_or_default();
     if !tags.iter().any(|t| t == &tag) {
@@ -616,10 +674,14 @@ async fn add_ticket_tag(
     .bind(&tags)
     .bind(id)
     .bind(tenant_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
+        let _ = scope.rollback().await;
         return ApiResponse::from(TopemsError::internal("更新失败", e));
+    }
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("提交失败", e));
     }
     ApiResponse::success(json!({"tags": tags}), "标签已添加")
 }
@@ -639,22 +701,32 @@ async fn add_ticket_tag(
     tag = "TicketExt"
 )]
 pub async fn remove_ticket_tag(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path((id, tag)): Path<(Uuid, String)>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let current: Option<Vec<String>> = match sqlx::query_scalar(
         "SELECT tags FROM ticket.core_tickets WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(t)) => t,
-        Ok(None) => return ApiResponse::not_found("工单不存在"),
-        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::not_found("工单不存在");
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("查询失败", e));
+        }
     };
     let tags: Vec<String> = current
         .unwrap_or_default()
@@ -667,10 +739,14 @@ pub async fn remove_ticket_tag(
     .bind(&tags)
     .bind(id)
     .bind(tenant_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
+        let _ = scope.rollback().await;
         return ApiResponse::from(TopemsError::internal("更新失败", e));
+    }
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("提交失败", e));
     }
     ApiResponse::success(json!({"tags": tags}), "标签已移除")
 }
@@ -686,7 +762,7 @@ pub async fn remove_ticket_tag(
     tag = "TicketExt"
 )]
 pub async fn list_tag_directory(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -694,17 +770,27 @@ pub async fn list_tag_directory(
     } else {
         Some(tenant_of(&claims))
     };
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let rows = sqlx::query(
         "SELECT unnest(tags) AS tag, count(*) AS count \
          FROM ticket.core_tickets WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL \
          GROUP BY tag ORDER BY count DESC",
     )
     .bind(opt_tenant_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
     let rows = match rows {
-        Ok(r) => r,
-        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
+        Ok(r) => {
+            let _ = scope.commit().await;
+            r
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("查询失败", e));
+        }
     };
     let items: Vec<serde_json::Value> = rows
         .iter()
@@ -737,7 +823,7 @@ async fn create_tag_stub() -> ApiResponse<serde_json::Value> {
     tag = "TicketExt"
 )]
 pub async fn get_tag_stub(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(tag): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
@@ -746,18 +832,26 @@ pub async fn get_tag_stub(
     } else {
         Some(tenant_of(&claims))
     };
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let count: i64 = match sqlx::query_scalar(
         "SELECT count(*) FROM ticket.core_tickets \
          WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND $2 = ANY(tags)",
     )
     .bind(opt_tenant_id)
     .bind(&tag)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(c) => c,
-        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("查询失败", e));
+        }
     };
+    let _ = scope.commit().await;
     ApiResponse::success(json!({"name": tag, "count": count}), "标签")
 }
 
@@ -803,7 +897,7 @@ fn ids_param(req: &BatchIdsRequest) -> Vec<Uuid> {
     tag = "TicketExt"
 )]
 pub async fn batch_update_tickets(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -812,6 +906,10 @@ pub async fn batch_update_tickets(
     if ids.is_empty() {
         return ApiResponse::bad_request("ids 不能为空");
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let mut set = "updated_at = now()".to_string();
     if req.status.is_some() {
         set.push_str(", status = $3");
@@ -827,12 +925,18 @@ pub async fn batch_update_tickets(
     .bind(tenant_id)
     .bind(&req.status)
     .bind(&req.priority)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return ApiResponse::from(TopemsError::internal("批量更新失败", e)),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("批量更新失败", e));
+        }
     };
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("提交失败", e));
+    }
     ApiResponse::success(json!({"updated": affected}), "批量更新完成")
 }
 
@@ -847,7 +951,7 @@ pub async fn batch_update_tickets(
     tag = "TicketExt"
 )]
 pub async fn batch_assign_tickets(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
 ) -> ApiResponse<serde_json::Value> {
@@ -857,6 +961,10 @@ pub async fn batch_assign_tickets(
         Some(a) => a,
         None => return ApiResponse::bad_request("assignee_id 必填"),
     };
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let affected = match sqlx::query(
         "UPDATE ticket.core_tickets SET assignee_id = $1, updated_at = now() \
          WHERE id = ANY($2) AND tenant_id = $3 AND deleted_at IS NULL",
@@ -864,12 +972,18 @@ pub async fn batch_assign_tickets(
     .bind(assignee)
     .bind(&ids)
     .bind(tenant_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return ApiResponse::from(TopemsError::internal("批量指派失败", e)),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("批量指派失败", e));
+        }
     };
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("提交失败", e));
+    }
     ApiResponse::success(json!({"updated": affected}), "批量指派完成")
 }
 
@@ -884,24 +998,34 @@ pub async fn batch_assign_tickets(
     tag = "TicketExt"
 )]
 pub async fn batch_close_tickets(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let ids = ids_param(&req);
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let affected = match sqlx::query(
         "UPDATE ticket.core_tickets SET status = 'closed', closed_at = now(), updated_at = now() \
          WHERE id = ANY($1) AND tenant_id = $2 AND deleted_at IS NULL",
     )
     .bind(&ids)
     .bind(tenant_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return ApiResponse::from(TopemsError::internal("批量关闭失败", e)),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("批量关闭失败", e));
+        }
     };
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("提交失败", e));
+    }
     ApiResponse::success(json!({"closed": affected}), "批量关闭完成")
 }
 
@@ -916,24 +1040,34 @@ pub async fn batch_close_tickets(
     tag = "TicketExt"
 )]
 pub async fn batch_delete_tickets(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let ids = ids_param(&req);
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let affected = match sqlx::query(
         "UPDATE ticket.core_tickets SET deleted_at = now(), updated_at = now() \
          WHERE id = ANY($1) AND tenant_id = $2 AND deleted_at IS NULL",
     )
     .bind(&ids)
     .bind(tenant_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return ApiResponse::from(TopemsError::internal("批量删除失败", e)),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("批量删除失败", e));
+        }
     };
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("提交失败", e));
+    }
     ApiResponse::success(json!({"deleted": affected}), "批量删除完成")
 }
 
@@ -948,24 +1082,34 @@ pub async fn batch_delete_tickets(
     tag = "TicketExt"
 )]
 pub async fn batch_escalate_tickets(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
     let ids = ids_param(&req);
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let affected = match sqlx::query(
         "UPDATE ticket.core_tickets SET severity = 'critical', updated_at = now() \
          WHERE id = ANY($1) AND tenant_id = $2 AND deleted_at IS NULL",
     )
     .bind(&ids)
     .bind(tenant_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return ApiResponse::from(TopemsError::internal("批量升级失败", e)),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("批量升级失败", e));
+        }
     };
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("提交失败", e));
+    }
     ApiResponse::success(json!({"escalated": affected}), "批量升级完成")
 }
 
@@ -1011,7 +1155,7 @@ fn decode_file_data(raw: &str) -> Vec<u8> {
     tag = "TicketExt"
 )]
 pub async fn list_attachments(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1020,6 +1164,10 @@ pub async fn list_attachments(
     } else {
         Some(tenant_of(&claims))
     };
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let rows = match sqlx::query(
         "SELECT id, file_name, mime_type, file_size, file_type, created_by, created_at \
          FROM ticket.ticket_attachments \
@@ -1027,11 +1175,17 @@ pub async fn list_attachments(
     )
     .bind(id)
     .bind(opt_tenant_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await
     {
-        Ok(r) => r,
-        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
+        Ok(r) => {
+            let _ = scope.commit().await;
+            r
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("查询失败", e));
+        }
     };
     let items: Vec<serde_json::Value> = rows
         .iter()
@@ -1052,7 +1206,7 @@ pub async fn list_attachments(
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn upload_attachment(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UploadAttachmentRequest>,
@@ -1067,6 +1221,10 @@ async fn upload_attachment(
         .as_deref()
         .map(decode_file_data)
         .unwrap_or_default();
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let row = match sqlx::query(
         "INSERT INTO ticket.ticket_attachments \
          (ticket_id, tenant_id, file_name, mime_type, file_size, file_type, file_data, created_by) \
@@ -1080,12 +1238,18 @@ async fn upload_attachment(
     .bind(&req.file_type)
     .bind(&data)
     .bind(user_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(r) => r,
-        Err(e) => return ApiResponse::from(TopemsError::internal("上传失败", e)),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("上传失败", e));
+        }
     };
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("提交失败", e));
+    }
     let attachment_id: Uuid = row.get("id");
     ApiResponse::success(
         json!({"id": attachment_id, "file_name": req.file_name, "file_size": data.len()}),
@@ -1108,7 +1272,7 @@ async fn upload_attachment(
     tag = "TicketExt"
 )]
 pub async fn get_attachment(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1116,6 +1280,10 @@ pub async fn get_attachment(
         None
     } else {
         Some(tenant_of(&claims))
+    };
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
     let row = match sqlx::query(
         "SELECT id, file_name, mime_type, file_size, file_type, created_at \
@@ -1125,13 +1293,20 @@ pub async fn get_attachment(
     .bind(attachment_id)
     .bind(id)
     .bind(opt_tenant_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return ApiResponse::not_found("附件不存在"),
-        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::not_found("附件不存在");
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("查询失败", e));
+        }
     };
+    let _ = scope.commit().await;
     ApiResponse::success(
         json!({
             "id": row.get::<Uuid, _>("id"),
@@ -1147,7 +1322,7 @@ pub async fn get_attachment(
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn update_attachment(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UploadAttachmentRequest>,
@@ -1158,6 +1333,10 @@ async fn update_attachment(
         .as_deref()
         .map(decode_file_data)
         .unwrap_or_default();
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let affected = match sqlx::query(
         "UPDATE ticket.ticket_attachments SET file_name = $1, mime_type = $2, file_type = $3, \
          file_size = $4, file_data = $5, updated_at = now() \
@@ -1171,24 +1350,35 @@ async fn update_attachment(
     .bind(attachment_id)
     .bind(id)
     .bind(tenant_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return ApiResponse::from(TopemsError::internal("更新失败", e)),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("更新失败", e));
+        }
     };
     if affected == 0 {
+        let _ = scope.rollback().await;
         return ApiResponse::not_found("附件不存在");
+    }
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("提交失败", e));
     }
     ApiResponse::success(json!({"id": attachment_id}), "附件已更新")
 }
 
 async fn delete_attachment(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_of(&claims);
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let affected = match sqlx::query(
         "UPDATE ticket.ticket_attachments SET deleted_at = now(), updated_at = now() \
          WHERE id = $1 AND ticket_id = $2 AND tenant_id = $3 AND deleted_at IS NULL",
@@ -1196,14 +1386,21 @@ async fn delete_attachment(
     .bind(attachment_id)
     .bind(id)
     .bind(tenant_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return ApiResponse::from(TopemsError::internal("删除失败", e)),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("删除失败", e));
+        }
     };
     if affected == 0 {
+        let _ = scope.rollback().await;
         return ApiResponse::not_found("附件不存在");
+    }
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("提交失败", e));
     }
     ApiResponse::success(json!({"id": attachment_id}), "附件已删除")
 }
@@ -1223,7 +1420,7 @@ async fn delete_attachment(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn batch_upload_attachments(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<BatchUploadRequest>,
@@ -1231,7 +1428,7 @@ pub async fn batch_upload_attachments(
     let tenant_id = tenant_of(&claims);
     let user_id = user_of(&claims);
     let mut created = 0usize;
-    let mut txn = match pool.begin().await {
+    let mut scope = match db.scope().await {
         Ok(t) => t,
         Err(e) => return ApiResponse::from(TopemsError::internal("事务失败", e)),
     };
@@ -1254,14 +1451,15 @@ pub async fn batch_upload_attachments(
         .bind(&item.file_type)
         .bind(&data)
         .bind(user_id)
-        .execute(&mut *txn)
+        .execute(&mut scope)
         .await
         {
+            let _ = scope.rollback().await;
             return ApiResponse::from(TopemsError::internal("批量上传失败", e));
         }
         created += 1;
     }
-    if let Err(e) = txn.commit().await {
+    if let Err(e) = scope.commit().await {
         return ApiResponse::from(TopemsError::internal("提交失败", e));
     }
     ApiResponse::success(json!({"created": created}), "批量上传完成")
@@ -1281,7 +1479,7 @@ pub async fn batch_upload_attachments(
     tag = "TicketExt"
 )]
 pub async fn batch_delete_attachments(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<BatchDeleteAttachmentsRequest>,
@@ -1290,6 +1488,10 @@ pub async fn batch_delete_attachments(
     if req.ids.is_empty() {
         return ApiResponse::bad_request("ids 不能为空");
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let affected = match sqlx::query(
         "UPDATE ticket.ticket_attachments SET deleted_at = now(), updated_at = now() \
          WHERE ticket_id = $1 AND tenant_id = $2 AND id = ANY($3) AND deleted_at IS NULL",
@@ -1297,12 +1499,18 @@ pub async fn batch_delete_attachments(
     .bind(id)
     .bind(tenant_id)
     .bind(&req.ids)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         Ok(r) => r.rows_affected(),
-        Err(e) => return ApiResponse::from(TopemsError::internal("批量删除失败", e)),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("批量删除失败", e));
+        }
     };
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("提交失败", e));
+    }
     ApiResponse::success(json!({"deleted": affected}), "批量删除完成")
 }
 
@@ -1320,7 +1528,7 @@ pub async fn batch_delete_attachments(
     tag = "TicketExt"
 )]
 pub async fn get_attachment_stats(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1329,6 +1537,10 @@ pub async fn get_attachment_stats(
     } else {
         Some(tenant_of(&claims))
     };
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let row = match sqlx::query(
         "SELECT count(*) AS total, COALESCE(sum(file_size), 0)::bigint AS total_bytes \
          FROM ticket.ticket_attachments \
@@ -1336,12 +1548,16 @@ pub async fn get_attachment_stats(
     )
     .bind(id)
     .bind(opt_tenant_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(r) => r,
-        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("查询失败", e));
+        }
     };
+    let _ = scope.commit().await;
     ApiResponse::success(
         json!({
             "total": row.get::<i64, _>("total"),
@@ -1366,7 +1582,7 @@ pub async fn get_attachment_stats(
     tag = "TicketExt"
 )]
 pub async fn get_attachments_by_type(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path((id, file_type)): Path<(Uuid, String)>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1374,6 +1590,10 @@ pub async fn get_attachments_by_type(
         None
     } else {
         Some(tenant_of(&claims))
+    };
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
     let rows = match sqlx::query(
         "SELECT id, file_name, mime_type, file_size, created_at \
@@ -1384,11 +1604,17 @@ pub async fn get_attachments_by_type(
     .bind(id)
     .bind(opt_tenant_id)
     .bind(&file_type)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await
     {
-        Ok(r) => r,
-        Err(e) => return ApiResponse::from(TopemsError::internal("查询失败", e)),
+        Ok(r) => {
+            let _ = scope.commit().await;
+            r
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("查询失败", e));
+        }
     };
     let items: Vec<serde_json::Value> = rows
         .iter()
@@ -1421,7 +1647,7 @@ pub async fn get_attachments_by_type(
     tag = "TicketExt"
 )]
 pub async fn download_attachment_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
 ) -> Result<axum::response::Response, axum::response::Response> {
@@ -1430,6 +1656,10 @@ pub async fn download_attachment_handler(
     } else {
         Some(tenant_of(&claims))
     };
+    let mut scope = db
+        .scope_read()
+        .await
+        .map_err(|_| axum::response::Response::new(axum::body::Body::from("数据库连接失败")))?;
     let row = sqlx::query(
         "SELECT file_name, mime_type, file_data FROM ticket.ticket_attachments \
          WHERE id = $1 AND ticket_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3) AND deleted_at IS NULL",
@@ -1437,10 +1667,11 @@ pub async fn download_attachment_handler(
     .bind(attachment_id)
     .bind(id)
     .bind(opt_tenant_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     .map_err(|_| axum::response::Response::new(axum::body::Body::from("查询失败")))?;
 
+    let _ = scope.commit().await;
     let row =
         row.ok_or_else(|| axum::response::Response::new(axum::body::Body::from("附件不存在")))?;
     let file_name: String = row.get("file_name");
