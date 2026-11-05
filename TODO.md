@@ -1844,6 +1844,20 @@
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.128 审计整改第五批：P3 权限码三端盘点 + :view→:read 兼容回退（2026-11-06）✅
+
+> 承接 v1.127 建议推进 P3（权限码 FE/BE 统一 + 跨模块归属）。按"先盘点后动手"约束，本批产出可复跑对账脚本与盘点报告，落地零破坏的兼容回退，其余登记专项。
+
+- **权限码三端盘点** ✅：FE 433 / BE 578 / DB 890（FE∩BE 119）。四类差异——①BE-only 459、②FE-only 314、③命名不一致 3 组、④FE 孤儿 32。证据（文件:行号）由脚本输出，报告落 `docs/audit/权限码与跨模块归属盘点_2026-11-06.md`。
+- **③ 三组同义双码（真实缺陷）**：`bi:datasource:read`(BE) vs `bi:data_source:read`(DB+FE)；`mes:workorder:read`(BE，svc/mes/src/modules/work_order.rs:266,492) vs `mes:work_order:read`(DB 种子+FE)；`wms:stocktake:read` vs `wms:stock_take:read`(BE 内部)。三端同步改涉及角色授权数据迁移 → 登记 P3 专项，本轮不动。
+- **④ FE 孤儿 32 拆解**：17 个 `:view` action 差异（14 项有对应 `:read` 实码）、7 项未实现模块预留（lowcode/network/session）、4 项疑似事件码误用。
+- **落地 ① 对账脚本** ✅：`scripts/audit_permission_codes.py`（三端扫描 + 四类分类 + 归一化命名冲突 + 证据，`--json/--summary`），可复跑、可接入 CI。
+- **落地 ② :view→:read 兼容层** ✅：`usePermission` 的 checkPermission/checkAnyPermission/checkAllPermissions 对 `*:*:view` 做等价回退（先原码后 `:read`），修复 14 项历史引用导致的权限恒假（菜单/按钮被误隐藏）；原引用不改、无授权放宽（无对应 read 权限仍拒绝）。
+- **跨模块归属盘点** ✅：scm/srm 供应商按业务环节分域合理（主数据权威缺失→登记）；资产 `mdm_assets` 权威、`mdm_asset_categories` 与 `erp.asset_categories` 分类双份（登记）；tms 无跨 schema 双写证据（原审计表述不成立）；report/bi 已收敛（`svc/analytics/src/main.rs` 统一 `/api/bi`）。
+- **验证** ✅：tsc typecheck、eslint 0 errors、vitest usePermission 5 用例 + permission-matrix-guard 4 用例全过；pre-commit 17 钩子全绿。
+- **提交**：`7e39bcd62c`（4 files，+360/-12）。本条目（v1.128）为核销提交。
+- **未落地/登记**：③ 三组双码三端改名（P3 专项，需设计评审 + 授权数据迁移）；① 459 项 BE-only 前端约束补齐（P3 分批）；`core:role:view→iam:role:read` 等 3 项；供应商主数据下沉 mdm / 资产分类归并（P3/P5）；lowcode/network/session 预留码保留。
+
 ## v1.127 审计整改第四批：P2-2 侧边栏分组折叠工程（2026-11-06）✅
 
 > 承接 v1.126 遗留项 P2-2（analytics 90 项折叠 / setting 61 项合并）：完成侧边栏分组折叠能力建设，analytics/setting 全部折叠呈现，数据层不动。
