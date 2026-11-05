@@ -47,6 +47,10 @@ db_dsn() {
 seed_e2e_account() {
   IFS='|' read -r pw host db <<<"$(db_dsn)"
   if [ -z "${pw:-}" ]; then warn "未取到 DATABASE_URL，跳过 test_admin 种子"; return 0; fi
+  # 生产库护栏：本函数把 admin 的 password_hash 复制给 e2e 账号，跑在生产库等于造出持有 admin 凭据的账号
+  if [ "${db:-}" = "topems_prod" ] && [ "${E2E_ALLOW_PROD:-0}" != "1" ]; then
+    die "拒绝向生产库 ${db} 种子 e2e 账号（会复制 admin 凭据）。改用测试库，或显式设置 E2E_ALLOW_PROD=1"
+  fi
   info "种子 e2e 账号 test_admin（复制 admin 凭据哈希）..."
   PGPASSWORD="$pw" psql -h "${host:-127.0.0.1}" -U topems_app -d "${db:-topems}" -q -c \
     "INSERT INTO iam.users (username,email,password_hash,full_name,role_id,status,email_verified,is_superuser)
