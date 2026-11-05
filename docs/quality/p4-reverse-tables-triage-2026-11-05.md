@@ -4,6 +4,7 @@
 > 对照：同实例 `topems_test`（**1329** 张）。
 > 口径：`prod 独有 = prod 表集合 − test 表集合`，按 `schema.table` 精确比较；`relkind IN ('r','p')`，排除 `pg_catalog / information_schema / pg_toast`。
 > 本轮**只读**：仅 `SELECT` / `pg_catalog` / `information_schema`，未执行任何 DDL/DML，未改迁移账本。
+> **执行状态（2026-11-05 12:22–12:26）**：用户已确认按本文件倾向执行，§4 的 39 张 + `finance.settlements` + `mes.inspection_records` + `public.core_coding_rules` 共 **42 张已删除**；`mes.erp_dictionaries` 与 §7 的 20 张保留未动。逐表状态见 [§14](#14-执行记录2026-11-05)。
 > 上一轮处置单为临时文件 `/tmp/p4_mapping.md`，未入库；本文件的全部数字均由 2026-11-05 的 `pg_catalog` 实测重建，不依赖 `/tmp`。
 
 ## 1. 结论摘要
@@ -24,6 +25,7 @@
 | 触发器依赖 | **1 个**（`public.tenant_permissions`，属保留表） |
 | `search_path` 歧义（结构层面） | **6 张**；当前影响运行时解析 **0 张**（见 §9） |
 | `relkind` | 63/63 为 `r`（普通表）；无分区表、无外部表 |
+| **执行后（2026-11-05 12:26）** | prod 表数 **1350**（删除 42 张）；FK 277；`/health` 200；账本 571 |
 
 **与「62 张」的差异（必须说明）**：上一轮处置单为 74 张；P4 首批已删 11 张（3 直接删 + 8 重指向后删），旧单剩余 **62** 张；本轮实测新增 1 张旧单未列出的 `public.core_coding_rules`（由 `database/seeds/coding_rules.sql` 在部署时创建），故真实总数 **63 = 62 + 1**。其中 `public.core_chat_members` 在 P8 文档已登记「随 P4 删除」，不单独补 PK。
 
@@ -321,6 +323,7 @@ git grep -n -I -w "table"        -- svc lib apps packages cli scripts config dep
 ## 11. 建议执行批次与顺序
 
 > 前置：本轮只读，未执行任何批次。真正执行时遵循 `prod 只读盘点 → 单事务 DDL → `/health` 校验 → 账本登记`。
+> **已执行（2026-11-05）**：A1/A2/A3/B 四批按序完成，结果见 [§14](#14-执行记录2026-11-05)。
 
 ### 11.1 批次划分
 
@@ -402,9 +405,9 @@ pg_restore --no-owner --no-privileges -h 127.0.0.1 -p 5432 -U xingzhai \
 | # | 问题 | 影响 | 我的倾向 |
 |---|---|---|---|
 | 1 | `mes.erp_dictionaries`：ERP 字典功能是否启用？裸名在 `erp, public` 下**实测解析失败**，prod 仅 `mes` 一份空表 | 功能实际不可用，或需补建 `erp.erp_dictionaries` | 若功能上线：先建权威表/改 SQL，再删本表；若未上线：直删并清理 handler（**不建议继续保留空壳**） |
-| 2 | `finance.settlements`：结算中心是否要落地独立结算明细？现仅契约占位，代码聚合自 `pm.settlements` | 决定 1 张表的去留 | 已聚合 `pm.settlements` → **直删**；若确认要独立明细，须补写路径 |
-| 3 | `mes.inspection_records`：车间巡检记录的唯一承载表是哪一个（`mes.equipment_inspection_records` / `ehs.qa_ehs_inspection_records` / 保留本表） | 决定 1 张表去留，且影响三套巡检数据边界 | 已有设备巡检与 EHS 巡检 → **直删本表** |
-| 4 | `public.core_coding_rules`：编码规则功能是否仍规划？`deploy-prod.sh` 每轮重跑 seeds，**删表不删 seed 会立即重建** | 2 行配置 + 2 个序列 | 未落地 →「删表 + 移除 seed」成对；落地 → 补代码引用 |
+| 2 | `finance.settlements`：结算中心是否要落地独立结算明细？现仅契约占位，代码聚合自 `pm.settlements` | 决定 1 张表的去留 | **已按倾向执行：直删**（2026-11-05，见 §14） |
+| 3 | `mes.inspection_records`：车间巡检记录的唯一承载表是哪一个（`mes.equipment_inspection_records` / `ehs.qa_ehs_inspection_records` / 保留本表） | 决定 1 张表去留，且影响三套巡检数据边界 | **已按倾向执行：直删**（2026-11-05，见 §14）；巡检由设备巡检 + EHS 巡检承载 |
+| 4 | `public.core_coding_rules`：编码规则功能是否仍规划？`deploy-prod.sh` 每轮重跑 seeds，**删表不删 seed 会立即重建** | 2 行配置 + 2 个序列 | **已按倾向执行：删表 + 移除 `deploy-prod.sh` 内 seed 调用**（2026-11-05，见 §14）；两序列保留 |
 | 5 | 20 张「应保留」表在 `topems_test` **不存在**（代码在用） | test 覆盖缺口：新环境/回归会缺表 | 建议将 20 张补建进 test（按 prod 结构），但需确认「test 是否仍是有效对照基线」；本轮不动 |
 | 6 | 39 张可直删表全部有仓库建表来源（27 张迁移 + 12 张 `database/init`），删除后**空库重建会全部重建** | 删除只在 prod 生效，重建链仍冗余 | 建议后续单独立项同步基线迁移；本轮先删现网，不扩大 DDL 范围 |
 
@@ -448,3 +451,75 @@ git grep -n -I -w  "table"        -- svc lib apps packages cli scripts config de
 
 - [prod-governance-baseline-2026-11-04.md](prod-governance-baseline-2026-11-04.md)（P4 首批 11 张执行记录 §5.1；P8 `public.core_chat_members` 无 PK 处置 §6.3）
 - [decode-contract-audit-2026-11-05.md](decode-contract-audit-2026-11-05.md)
+
+## 14. 执行记录（2026-11-05）
+
+> 执行窗口 12:22–12:26（Asia/Shanghai）。范围严格限定为：§4 可直删 39 张 + `finance.settlements` + `mes.inspection_records` + `public.core_coding_rules` = **42 张**。
+> 明确未动：`mes.erp_dictionaries`、§7 的 20 张「应保留」、test 库（5433/test 基线）、迁移重建链纠偏。
+
+### 14.1 总览
+
+| 项 | 结果 |
+|---|---|
+| 实际删除 | **42 张**（A1 12 / A2 12 / A3 15 / B 3） |
+| 跳过 / 挂账 | **0 张**（42/42 前置校验 PASS；DDL 无依赖报错，均为 `RESTRICT` 成功） |
+| prod 表数 | **1392 → 1350**（-42） |
+| FK 总数 | 295 → 277（-18，全部为被删表自身出站 FK；删除集合无入站 FK） |
+| FK 有效性 | `convalidated` 全 true（invalid=0）；无 `confrelid` 悬空 |
+| `/health`（`:8099`） | **200**（每批后各一次 + 收尾一次，共 5 次） |
+| 迁移账本 | 567 → **571**（4 条，`success=true`，checksum=SHA-384(文件原始字节)） |
+| 差异复核 | 备份 TOC（1392）− 当前（1350）= 恰好 42 张目标表，无其它表消失 |
+
+### 14.2 分批执行记录
+
+| 批次 | 迁移文件（版本） | 表数 | 关键校验 | 结果 |
+|---|---|---:|---|---|
+| A1 | [`20261105200000_p4a1_drop_12_public_qa_ehs_shadows.sql`](../../database/migrations/20261105200000_p4a1_drop_12_public_qa_ehs_shadows.sql) | 12 | 1392→1380；FK 295→287；invalid 0；TOC 差集恰 12；health 200 | **通过** |
+| A2 | [`20261105203000_p4a2_drop_12_public_mobile_shadows.sql`](../../database/migrations/20261105203000_p4a2_drop_12_public_mobile_shadows.sql) | 12 | 1380→1368；FK 287→278；invalid 0；累计差集 24；health 200 | **通过** |
+| A3 | [`20261105210000_p4a3_drop_15_remaining_shadows.sql`](../../database/migrations/20261105210000_p4a3_drop_15_remaining_shadows.sql) | 15 | 1368→1353；FK 278→277；invalid 0；累计差集 39；health 200 | **通过** |
+| B | [`20261105213000_p4b_drop_3_confirmed_tables.sql`](../../database/migrations/20261105213000_p4b_drop_3_confirmed_tables.sql) | 3 | 1353→1350；FK 277→277；invalid 0；累计差集 42；health 200 | **通过** |
+
+每批均：单事务（`psql -1`）+ `SET lock_timeout='5s'` + `SET statement_timeout='60s'`；逐表 `to_regclass` / `relkind='r'` / `count(*)`（预期值）/ 入站 FK=0 / 视图=0 / 函数依赖=0 守卫，`DROP TABLE ... RESTRICT`（**无 CASCADE**），失败即 `NOTICE` 跳过。
+
+### 14.3 逐表状态（已删 42 张）
+
+执行时间统一为 2026-11-05 12:22–12:26；单表归档路径均为 `~/topems/backups/p4_rem_20261105/<schema>_<table>_20261105_122001.dump`（prod 机 `xingzhai` 账户下）。
+
+| # | 表 | 批次 | 行数 | 状态 |
+|---:|---|---|---:|---|
+| 1–12 | `public.qa_ehs_discharge_permits` / `disease_cases` / `drill_evaluations` / `drill_problems` / `emergency_plan_approvals` / `emergency_plan_supplies` / `emergency_plan_versions` / `employees` / `env_monitor_records` / `environment_incidents` / `inspection_record_items` / `msds`（均 `public.qa_ehs_*`） | A1 | 0 | 已删 |
+| 13–24 | `public.barcode_scans` / `devices` / `media_files` / `mobile_scan_records` / `offline_operations` / `offline_sync_records` / `photo_uploads` / `push_devices` / `push_notifications` / `push_templates` / `shortcuts` / `sync_policies` | A2 | 0 | 已删 |
+| 25–28 | `public.core_comments` / `core_favorites` / `core_email_templates` / `core_mobile_offline_records` | A3 | 0 | 已删 |
+| 29–31 | `public.core_chat_members` / `core_chat_messages` / `core_chat_rooms` | A3 | 0 | 已删 |
+| 32–36 | `public.reports` / `report_templates` / `report_schedules` / `cqrs_projection_progress` / `quality_records` | A3 | 0 | 已删 |
+| 37–39 | `mes.permission_audit_logs` / `mes.schema_registry` / `mes.tool_permissions` | A3 | 0 | 已删 |
+| 40 | `finance.settlements` | B | 0 | 已删 |
+| 41 | `mes.inspection_records` | B | 0 | 已删 |
+| 42 | `public.core_coding_rules` | B | **2** | 已删（先单表归档；`deploy-prod.sh` 的同名 seed 调用已同步移除） |
+
+### 14.4 未删（保留）21 张
+
+- `mes.erp_dictionaries` —— 用户未确认功能去留，**保留不动**（仍挂 §12 问题 1）。
+- §7 的 20 张「应保留」：`communication.core_notification_deliveries / _preferences / _subscriptions`、`ehs.hazard_control_measures / hazard_risk_assessments / qa_ehs_alerts / qa_ehs_risk_controls / qa_ehs_treatments / qa_ehs_treatment_actions`、`erp.announcements`、`finance.cqrs_events`、`lims.qa_lims_analytes`、`pdm.pdm_drawings`、`public.core_email_queue`、`public.monitor_thresholds`、`public.tenant_permissions`、`qms.qa_inspection_items / qa_inspection_plan_items / qa_inspection_plans / qa_sampling_plans`。
+
+### 14.5 备份与回退
+
+| 类型 | 路径（prod 机） | 体积 / 校验 |
+|---|---|---|
+| 全库 `pg_dump -Fc` | `~/topems/backups/topems_prod_pre_p4rem_20261105_122001.dump` | 4,226,439 字节；`pg_restore -l` TOC 8279 行；TOC 表条目 1392 |
+| 单表归档 42 份 | `~/topems/backups/p4_rem_20261105/<schema>_<table>_20261105_122001.dump` | 每份 2.2–4.7 KB（0 行表）；`public_core_coding_rules_*` 含 2 行 |
+
+定点回退（单表）：
+
+```bash
+pg_restore --no-owner --no-privileges -h 127.0.0.1 -p 5432 -U xingzhai \
+  -d topems_prod -t 'public.core_coding_rules' \
+  ~/topems/backups/p4_rem_20261105/public_core_coding_rules_20261105_122001.dump
+```
+
+### 14.6 本轮遗留（未做）
+
+1. `database/seeds/coding_rules.sql` **文件本身仍在**（仅移除 `deploy-prod.sh` 的调用与 `--seed-coding-rules` 参数）；手工执行该 seed 仍会重建表 —— 是否删除该文件待确认。
+2. 39 张的建表来源（27 迁移 + 12 `database/init`）未动，空库重建仍会重建（§12 问题 6）。
+3. 20 张「应保留」表在 test 不存在（§12 问题 5）。
+4. `mes.erp_dictionaries` 功能归属未定（§12 问题 1）。

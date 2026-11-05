@@ -307,12 +307,12 @@
 |---|---|---|---|
 | 类型差异 | prod 215 | **296**（101 表；179 项 prod 无需动 / 14 项安全加宽 / 103 项人工） | P1 已执行 17 列；执行后 284（P5a 有意新增 5 项）；P3 已执行 test 侧对齐 185 列，差异 **284→99**；P6 数值族逐列判定后加宽 3 列（int→bigint），差异 **99→98**；6 项双向收敛后差异 **92**，数值族 62→53；decode 审计 DB-24 后差异 **90**、数值族 **51**（51 不动 + 3 加宽 + 8 已收敛 + 0 待业务确认） |
 | NULLIF 文本比较 | 11 表 | **29 条策略，全部 master_data** | P2 已执行，29→0；策略 1083 / RLS 883 不变 |
-| 缺索引 | prod 285 | **0**（5 条 P3 主键 + 5 条运行时账本主键已补，P8）；无二级索引表 665 = test 665 | ✅ 2026-11-05 收敛；仅剩反向表 `public.core_chat_members` 无 PK（0 行、与 iam 重复），随 P4 删除 |
+| 缺索引 | prod 285 | **0**（5 条 P3 主键 + 5 条运行时账本主键已补，P8）；无二级索引表 665 = test 665 | ✅ 2026-11-05 收敛；反向表 `public.core_chat_members`（0 行、与 iam 重复）已随 P4 删除（2026-11-05） |
 | 约束缺口 | 193 | **103 条**（10 PK / 48 UNIQUE / 45 FK，91 表） | P3 已执行，缺口 103→**5**；p/u/f=1396/281/298，`NOT VALID`=0；5 张 `schema_defense_ledger` 运行时自建表不纳入迁移，其主键由 `ensure_ledger_table` 幂等守卫在服务启动时补齐 |
 | 账本 | 546×5 | prod **549** / 文件 558 / 未登记 17 | 已增至 **563**（+7 执行 +1 治理补登 `20261103173000` +1 P4 `20261105100000` +1 audit `20261105130000` +1 db19 `20261104080000` +1 P6 `20261105140000` +1 P7 `20261105160000` +1 P8 `20261105170000`，checksum 均与文件一致）；文件 **582**，未登记 19（11 个 5433 + 8 个 test 定向，新增 DB-24 `20261105180000`）；db19 四索引收敛为 1 条已存在 + 3 条评估不建；真孤儿 1 个（`20261103000005`）保留待确认 |
 | db04-prod | 174→0 | **残留 5 列**（`public.equipment` 4 + `iam.core_plugin_instances.last_heartbeat`） | P5a 已执行，5→0 |
 | status_standard | 迁移已登记 success | **3 条残留**（crm.audit_logs / integration.external_erp_sync_logs / srm.inquiries） | P5b 已执行，3→0 |
-| 反向表 | prod 74 | **74 确认**；73 张 0 行，`finance.core_finance_currencies` 16 行；**22 个 FK 依赖** | P4 首批 **2026-11-05 已执行**：删 11 张（3 直接删 + 8 重指向 18 条 FK 后删），表数 1402→1391、FK 298→295；保留 qms 3 张 + currencies + 60 张待业务确认（余 63 张） |
+| 反向表 | prod 74 | **74 确认**；73 张 0 行，`finance.core_finance_currencies` 16 行；**22 个 FK 依赖** | P4 首批 **2026-11-05 已执行**：删 11 张（3 直接删 + 8 重指向 18 条 FK 后删）；**P4 反向表清理（2026-11-05 12:22–12:26）再删 42 张**（A1 12 + A2 12 + A3 15 + `finance.settlements` + `mes.inspection_records` + `public.core_coding_rules`），表数 **1392→1350**、FK 295→277、`/health` 200；跳过 0 张；保留 `mes.erp_dictionaries` + 20 张「应保留」。明细见 [p4-reverse-tables-triage §14](docs/quality/p4-reverse-tables-triage-2026-11-05.md) |
 
 **关键结论：账本 success ≠ DDL 到位**。执行前 prod 账本登记 `20261103000002 success=true`，但 3 条 CHECK 仍在；db04-prod 头部称"已执行"，实测漏 5 列。该漂移已由 2026-11-05 P5a/P5b 修正；治理核验仍必须以 `pg_catalog` 实测为准，禁止仅凭账本判定。
 
@@ -320,6 +320,7 @@
 
 - 备份：`~/topems/backups/topems_prod_pre_p1235_20261105_004312.dump`（`pg_dump -Fc`，4,151,219 字节，`pg_restore -l` 8270 行 TOC）；每步执行后 prod `/health` = 200。
 - 逐文件执行 7 个迁移（未用 `sqlx migrate run`，未 DROP/CASCADE）：p1 / p5a / p5b / p2 / p3_pk_5 / p3_unique_48 / p3_fk_45；账本 549→556。
+- **P4 反向表清理（2026-11-05）**：42 张已删（A1/A2/A3/B 四批），账本 +4 → **571**；`database/checksums.txt` 同步 +4 行（SHA-256），prod 账本 checksum 与文件 SHA-384 复算一致；全库备份 `~/topems/backups/topems_prod_pre_p4rem_20261105_122001.dump`（4,226,439 字节，TOC 8279 行）+ 42 份单表归档 `~/topems/backups/p4_rem_20261105/`。`deploy-prod.sh` 已移除 `--seed-coding-rules` 与 `coding_rules.sql` 调用（`database/seeds/coding_rules.sql` 文件本身未删）。
 - **P3-UQ 守卫缺陷修复**：原文件 `to_regclass('<约束名>')` 误把约束名当关系名，prod 同名唯一索引存在导致 48 条全跳过；改为"无约束时优先 `UNIQUE USING INDEX` 接管同名索引，否则普通 ADD"。scratch 库 24+24 两组双跑 exit 0，24 条接管索引 OID 不变、48/48 约束存在、第二遍零变更；prod `BEGIN...ROLLBACK` 只读幂等验证通过。
 - **账本 checksum 重同步**：`20261104140000` 由 `8966e81a85c7…` 更新为 `42fb0738646e…`，prod 复算与仓库文件 SHA-384 一致（DDL 终态已达成，账本应与文件一致，避免 sqlx integrity 误报）。
 
