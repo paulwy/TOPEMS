@@ -1,4 +1,5 @@
 use axum::{extract::State, http::HeaderMap, routing::get, Extension, Json, Router};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_core::locale::Locale;
@@ -39,9 +40,9 @@ pub struct Reagent {
     pub quantity: Option<f64>,
     pub unit: Option<String>,
     pub status: String,
-    pub expired_at: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub expired_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -100,10 +101,10 @@ pub async fn list_reagents(
     };
 
     let sql = match (query.status.as_ref(), query.name.as_ref()) {
-        (Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, None) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at FROM qa_lab_reagents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at FROM qa_lab_reagents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at FROM qa_lab_reagents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at FROM qa_lab_reagents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
@@ -189,7 +190,7 @@ pub async fn create_reagent(
     let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "INSERT INTO qa_lab_reagents (tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'normal', $9) RETURNING id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "INSERT INTO qa_lab_reagents (tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'normal', $9) RETURNING id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at"
     )
     .bind(tenant_id)
     .bind(reagent_no)
@@ -222,16 +223,15 @@ pub async fn create_reagent(
             };
 
             // 发布端补全：LimsReagentAlert（试剂已过期 → EHS 告警联动）
-            if let Some(expired) = reagent.expired_at.as_deref() {
-                if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(expired) {
-                    if dt.with_timezone(&chrono::Utc) < chrono::Utc::now() {
-                        if let Some(ref publisher) = state.event_publisher {
-                            let publisher = publisher.clone();
-                            let rid = Uuid::parse_str(&reagent.id).unwrap_or_else(|_| Uuid::nil());
-                            let rno = reagent.reagent_no.clone();
-                            let rname = reagent.name.clone();
-                            let stock = reagent.quantity.map(|q| q as i32);
-                            let expiry = Some(expired.to_string());
+            if let Some(expired) = reagent.expired_at {
+                if expired < chrono::Utc::now() {
+                    if let Some(ref publisher) = state.event_publisher {
+                        let publisher = publisher.clone();
+                        let rid = Uuid::parse_str(&reagent.id).unwrap_or_else(|_| Uuid::nil());
+                        let rno = reagent.reagent_no.clone();
+                        let rname = reagent.name.clone();
+                        let stock = reagent.quantity.map(|q| q as i32);
+                        let expiry = Some(expired.to_rfc3339());
                             tokio::spawn(async move {
                                 let payload = topems_shared_event::event::LimsReagentAlertPayload {
                                     reagent_id: rid,
@@ -254,7 +254,6 @@ pub async fn create_reagent(
                                     commit_retry::push_retry_typed("lims", et, &payload).await;
                                 }
                             });
-                        }
                     }
                 }
             }
@@ -300,7 +299,7 @@ pub async fn get_reagent(
 
     let locale = Locale::from_headers(&headers).as_sql();
     let row = sqlx::query(
-        "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
+        "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at FROM qa_lab_reagents WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
     )
     .bind(id)
     .bind(tenant_id)
@@ -349,7 +348,7 @@ pub async fn update_reagent(
     let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "UPDATE qa_lab_reagents SET name = COALESCE($3, name), specification = COALESCE($4, specification), manufacturer = COALESCE($5, manufacturer), batch_no = COALESCE($6, batch_no), quantity = COALESCE($7, quantity), unit = COALESCE($8, unit), status = COALESCE($9, status), expired_at = COALESCE($10, expired_at), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "UPDATE qa_lab_reagents SET name = COALESCE($3, name), specification = COALESCE($4, specification), manufacturer = COALESCE($5, manufacturer), batch_no = COALESCE($6, batch_no), quantity = COALESCE($7, quantity), unit = COALESCE($8, unit), status = COALESCE($9, status), expired_at = COALESCE($10, expired_at), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at, created_at, updated_at"
     )
     .bind(id)
     .bind(tenant_id)

@@ -3,6 +3,7 @@ use axum::{
     routing::{get, post},
     Extension, Json, Router,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -76,10 +77,10 @@ pub struct Sample {
     pub quantity: Option<f64>,
     pub unit: Option<String>,
     pub status: String,
-    pub received_at: Option<String>,
-    pub expired_at: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub received_at: Option<DateTime<Utc>>,
+    pub expired_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -164,14 +165,14 @@ pub async fn list_samples(
     }
 
     let sql = match (query.status.as_ref(), query.sample_no.as_ref(), query.sample_name.as_ref()) {
-        (Some(_), Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND sample_no LIKE $3 AND sample_name LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
-        (Some(_), Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND sample_no LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND sample_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), None, None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND sample_no LIKE $2 AND sample_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (None, Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND sample_no LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND sample_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, None, None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (Some(_), Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND sample_no LIKE $3 AND sample_name LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
+        (Some(_), Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND sample_no LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND sample_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None, None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND sample_no LIKE $2 AND sample_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (None, Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND sample_no LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND sample_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None, None) => "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
     };
 
     let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
@@ -305,7 +306,7 @@ pub async fn register_sample(
     }
 
     let row = sqlx::query(
-        "INSERT INTO public.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, 'received') RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "INSERT INTO public.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, 'received') RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at"
     )
     .bind(tenant_id)
     .bind(sample_no)
@@ -425,7 +426,7 @@ pub async fn get_sample(
     }
 
     let row = sqlx::query(
-        "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
+        "SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
     )
     .bind(id)
     .bind(tenant_id)
@@ -501,7 +502,7 @@ pub async fn update_sample(
     }
 
     let row = sqlx::query(
-        "UPDATE public.qa_lab_samples SET sample_name = COALESCE($3, sample_name), sample_type = COALESCE($4, sample_type), source = COALESCE($5, source), quantity = COALESCE($6, quantity), unit = COALESCE($7, unit), status = COALESCE($8, status), expired_at = COALESCE($9::timestamp, expired_at), updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "UPDATE public.qa_lab_samples SET sample_name = COALESCE($3, sample_name), sample_type = COALESCE($4, sample_type), source = COALESCE($5, source), quantity = COALESCE($6, quantity), unit = COALESCE($7, unit), status = COALESCE($8, status), expired_at = COALESCE($9::timestamp, expired_at), updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit, status, received_at, expired_at, created_at, updated_at"
     )
     .bind(id)
     .bind(tenant_id)
@@ -662,7 +663,7 @@ pub struct SampleLifecycleRecord {
     pub operator: Option<String>,
     pub notes: Option<String>,
     pub location: Option<String>,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -737,7 +738,7 @@ pub async fn get_sample_lifecycle(
     let rows = sqlx::query(
         r#"
         SELECT id::TEXT, tenant_id::TEXT, sample_id::TEXT, sample_no, lifecycle_stage, stage_description,
-               operator, notes, location, created_at::TEXT
+               operator, notes, location, created_at
         FROM public.qa_lab_sample_lifecycle
         WHERE sample_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         ORDER BY created_at ASC
@@ -852,7 +853,7 @@ pub async fn record_lifecycle_event(
             operator, notes, location, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
         RETURNING id::TEXT, tenant_id::TEXT, sample_id::TEXT, sample_no, lifecycle_stage, stage_description,
-                  operator, notes, location, created_at::TEXT
+                  operator, notes, location, created_at
         "#,
     )
     .bind(record_id)
@@ -1023,7 +1024,7 @@ pub async fn transition_sample_stage(
             operator, notes, location, created_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
         RETURNING id::TEXT, tenant_id::TEXT, sample_id::TEXT, sample_no, lifecycle_stage, stage_description,
-                  operator, notes, location, created_at::TEXT
+                  operator, notes, location, created_at
         "#,
     )
     .bind(record_id)
@@ -1167,7 +1168,7 @@ pub async fn get_sample_traceability(
     let sample_row = sqlx::query(
         r#"
         SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity::float8 AS quantity, unit,
-               status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT
+               status, received_at, expired_at, created_at, updated_at
         FROM public.qa_lab_samples WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
@@ -1198,7 +1199,7 @@ pub async fn get_sample_traceability(
 
     let lifecycle_rows = sqlx::query(
         r#"
-        SELECT id::TEXT, lifecycle_stage, stage_description, operator, notes, location, created_at::TEXT
+        SELECT id::TEXT, lifecycle_stage, stage_description, operator, notes, location, created_at
         FROM public.qa_lab_sample_lifecycle
         WHERE sample_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         ORDER BY created_at ASC

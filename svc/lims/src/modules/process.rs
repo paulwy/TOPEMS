@@ -1,4 +1,5 @@
 use axum::{extract::State, http::HeaderMap, routing::get, Extension, Json, Router};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::middleware::tenant::TenantContext;
@@ -28,8 +29,8 @@ pub struct InspectionProcess {
     pub status: String,
     pub created_by: Option<String>,
     pub updated_by: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -63,7 +64,7 @@ pub async fn list_processes(
 ) -> ApiResponse<Vec<InspectionProcess>> {
     let locale = Locale::from_headers(&headers).as_sql();
     let rows = sqlx::query(
-        "SELECT id::TEXT, CASE WHEN $1 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lab_processes ORDER BY created_at DESC",
+        "SELECT id::TEXT, CASE WHEN $1 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at, updated_at, tenant_id FROM qa_lab_processes ORDER BY created_at DESC",
     )
     .bind(locale)
     .fetch_all(&state.pool)
@@ -124,7 +125,7 @@ pub async fn get_process(
 
     let locale = Locale::from_headers(&headers).as_sql();
     let row = sqlx::query(
-        "SELECT id::TEXT, CASE WHEN $2 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lab_processes WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id::TEXT, CASE WHEN $2 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at, updated_at, tenant_id FROM qa_lab_processes WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(uuid)
     .bind(locale)
@@ -163,7 +164,7 @@ pub async fn create_process(
     Json(req): Json<CreateProcessRequest>,
 ) -> ApiResponse<InspectionProcess> {
     let row = sqlx::query(
-        "INSERT INTO qa_lab_processes (process_name, description, steps, is_active, created_at, updated_at, tenant_id) VALUES ($1, $2, $3, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $4) RETURNING id::TEXT, tenant_id::TEXT, process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT",
+        "INSERT INTO qa_lab_processes (process_name, description, steps, is_active, created_at, updated_at, tenant_id) VALUES ($1, $2, $3, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $4) RETURNING id::TEXT, tenant_id::TEXT, process_name, description, steps, is_active, created_at, updated_at",
     )
     .bind(req.name)
     .bind(req.description)
@@ -210,7 +211,7 @@ pub async fn update_process(
     let is_active: Option<bool> = req.status.as_ref().map(|s| s == "active");
 
     let row = sqlx::query(
-        "UPDATE qa_lab_processes SET process_name = COALESCE($2, process_name), description = COALESCE($3, description), steps = COALESCE($4, steps), is_active = COALESCE($5, is_active), updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT",
+        "UPDATE qa_lab_processes SET process_name = COALESCE($2, process_name), description = COALESCE($3, description), steps = COALESCE($4, steps), is_active = COALESCE($5, is_active), updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, process_name, description, steps, is_active, created_at, updated_at",
     )
     .bind(uuid)
     .bind(req.name)

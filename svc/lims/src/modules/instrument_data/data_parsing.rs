@@ -65,8 +65,8 @@ pub async fn parse_instrument_data(
         WHERE id = $1
         RETURNING id, data_no, instrument_id, batch_no, protocol,
                   raw_data, parsed_data, status, quality_score,
-                  error_msg, collected_at::TEXT, parsed_at::TEXT,
-                  created_by, created_at::TEXT, updated_at::TEXT, tenant_id
+                  error_msg, collected_at, parsed_at,
+                  created_by, created_at, updated_at, tenant_id
         "#,
     )
     .bind(id)
