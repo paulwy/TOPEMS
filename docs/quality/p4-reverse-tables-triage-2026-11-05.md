@@ -520,6 +520,63 @@ pg_restore --no-owner --no-privileges -h 127.0.0.1 -p 5432 -U xingzhai \
 ### 14.6 本轮遗留（未做）
 
 1. ~~`database/seeds/coding_rules.sql` 文件本身仍在~~ —— **已处理（2026-11-05）**：全仓复核确认无任何可执行调用路径（`deploy-prod.sh` 调用与 `--seed-coding-rules` 参数已在前一提交移除，无通配遍历、无 workflow/Makefile/package.json 引用），文件已 `git rm`。
-2. 39 张的建表来源（27 迁移 + 12 `database/init`）未动，空库重建仍会重建（§12 问题 6）。
-3. 20 张「应保留」表在 test 不存在（§12 问题 5）。
-4. `mes.erp_dictionaries` 功能归属未定（§12 问题 1）。
+2. ~~39 张的建表来源（27 迁移 + 12 `database/init`）未动，空库重建仍会重建~~ —— **已处理（2026-11-05）**：追加删除段迁移 + 移除 init 建表语句，scratch 重建终态 39/39 不存在，见 §15.1。
+3. ~~20 张「应保留」表在 test 不存在~~ —— **已处理（2026-11-05）**：test 定向迁移补建 20 张，test 表数 1329→1349，见 §15.2。
+4. `mes.erp_dictionaries` 功能归属未定（§12 问题 1）—— **仍待用户确认**，本轮未动。
+
+## 15. 迁移链纠偏与 test 基线补齐（2026-11-05）
+
+### 15.1 迁移链纠偏：空库重建不再产出 39 张已删表
+
+**为什么追加删除段而不是改写历史迁移**：已发布迁移的文件字节即 `_sqlx_migrations.checksum`（SHA-384），改写会让所有已应用该迁移的库（prod 571 条账本）核对失败，且无法区分「内容变更」与「文件被改」。追加迁移不触碰历史 checksum，任何按 version 升序重建的库都会在末尾收敛到同一状态。
+
+**两层处置**
+
+| 层 | 处置 | 说明 |
+|---|---|---|
+| 迁移链（早期迁移会建出这 39 张） | **追加** [`20261105230000_p4a4_drop_shadows_in_rebuild_chain.sql`](../../database/migrations/20261105230000_p4a4_drop_shadows_in_rebuild_chain.sql) | 39 个 `DO` 块，逐表 `to_regclass` + `relkind` + 行数守卫；`DROP TABLE ... RESTRICT`（无 CASCADE）；末尾断言 39 张全部不存在，否则 `RAISE EXCEPTION` |
+| `database/init`（部署时重跑，重建即复活） | **直接移除** `database/init/05_mobile_init.sql` 中 12 处 `CREATE TABLE` + 19 条相关索引 | 仅删该文件的建表与索引；未发现其它对象依赖（无 FK/视图/策略引用） |
+
+**建表来源逐条处置**
+
+| 建表来源（文件#行） | 涉及表 | 处置 |
+|---|---|---|
+| [20261007000006_rebuild_orphan_tables.sql](../../database/migrations/20261007000006_rebuild_orphan_tables.sql) #3024–#3568 | `public.qa_ehs_*` 12 张（discharge_permits / disease_cases / drill_evaluations / drill_problems / emergency_plan_approvals / emergency_plan_supplies / emergency_plan_versions / employees / env_monitor_records / environment_incidents / inspection_record_items / msds） | 追加 DROP |
+| 同上 #2311–#2880、#4216–#4245 | `public.barcode_scans / devices / media_files / mobile_scan_records / offline_operations / offline_sync_records / photo_uploads / push_devices / push_notifications / push_templates / shortcuts / sync_policies`（12 张） | 追加 DROP |
+| 同上 #565–#850、#1487–#1772 | `public.core_chat_members / core_chat_messages / core_chat_rooms / core_email_templates / core_mobile_offline_records`（5 张，两处幂等重复） | 追加 DROP（chat 子表先删） |
+| 同上 #2208–#2269 | `mes.permission_audit_logs / mes.schema_registry / mes.tool_permissions`（3 张） | 追加 DROP |
+| [20261104070000_db18_5433_special_types_8cols.sql](../../database/migrations/20261104070000_db18_5433_special_types_8cols.sql) #2169 / #454 | `public.qa_ehs_environment_incidents` / `public.core_mobile_offline_records` | 追加 DROP |
+| [007_communication.sql](../../database/migrations/007_communication.sql) #30 / #40 / #49 / #79 | `public.core_chat_rooms / core_chat_members / core_chat_messages / core_email_templates`（未限定名按默认 `search_path` 落 public） | 追加 DROP |
+| [009_sync.sql](../../database/migrations/009_sync.sql) #20 | `public.core_mobile_offline_records` | 追加 DROP |
+| [20261029120000_schema_defense_orphan_tables_to_authoritative.sql](../../database/migrations/20261029120000_schema_defense_orphan_tables_to_authoritative.sql) #19 / #33 | `public.core_comments / core_favorites` | 追加 DROP |
+| [20261015000074_k1_missing_table_baselines.sql](../../database/migrations/20261015000074_k1_missing_table_baselines.sql) #32 / #38 / #44 / #50 | `public.cqrs_projection_progress / report_schedules / report_templates / reports` | 追加 DROP |
+| [20260920000094_public_schema_align.sql](../../database/migrations/20260920000094_public_schema_align.sql) #24 | `public.quality_records` | 追加 DROP |
+| [database/init/05_mobile_init.sql](../../database/init/05_mobile_init.sql)（12 处 CREATE） | `public.devices / mobile_scan_records / offline_sync_records / shortcuts / offline_operations / sync_policies / push_devices / push_notifications / push_templates / barcode_scans / photo_uploads / media_files` | **移除建表 + 19 条索引** |
+
+> 口径修正：实际建表来源为 **8 个迁移文件 + 1 个 init 文件**（同一张表常被 2–3 个迁移幂等重复创建），而非先前记录的「27 条迁移」——后者统计的是「提及」而非「建表」，此处按 `CREATE TABLE` 实测重算。另有两类**不属本轮 39 张**的未限定名建表（`20260825000000` / `20260827000000` 的 `tool_permissions` / `permission_audit_logs`，`20260725000001` 的 `schema_registry`，都落 public）：它们在 prod 侧已于更早批次处置/保留，scratch 与 prod 终态一致（`public.schema_registry`、`public.permission_audit_logs` 两边都在），本轮不动。
+
+**顺序陷阱与解依赖**
+
+- `core_chat_members / core_chat_messages` 出站 FK → `core_chat_rooms`，故删除段子表在前、父表在后。
+- 其余目标表出站 FK 全部指向**保留表**（`iam.tenant_permissions`、`ehs.qa_ehs_*`、`mobile.mobile_users` 等），无表间删除依赖。
+- 一类「仅重建路径可能出现」的入站 FK（`20261007000006` 在 `iam./mes.core_chat_*` 上追加 → `public.core_chat_rooms`）：删除段**先自动解除**指向目标表的入站 FK（`ALTER TABLE ... DROP CONSTRAINT`），再执行 DROP，避免 `RESTRICT` 失败。prod 无此类约束，该步骤为 no-op。
+- 视图/物化视图/RLS 策略/触发器引用：`grep` 实测 0 处引用这 39 张表（策略随表一起消失）。
+
+**scratch 重建验证**（库 `p4_rebuild_verify`，本地 5432，**保留**）
+
+- 重建方式：按文件名版本升序逐文件 `psql --single-transaction -v ON_ERROR_STOP=1`；结果 **573 OK / 16 FAIL**，表数 1229（迁移链不含 init 建表部分）。
+- **39 张目标表终态：`remaining_count=0`（全部不存在）** —— 迁移链末尾断言 `P4 chain OK: 39 shadow tables absent` 通过。
+- **10 张核心表抽样**（`iam.users / iam.roles / iam.permissions / mes.production_orders / ehs.qa_ehs_hazards / erp.customers / pdm.pdm_drawings / qms.qa_inspection_items / srm.suppliers / wms.warehouses`）：列名+类型+可空 **236/236 一致**，主键 **完全一致**。
+- 16 个失败均为**既有链问题**，与本次 39 张无关，分三类：
+  1. **8 个 test/5433 定向迁移**（`db07/db08/db10/db11/db14/db15/db16/db18`）：依赖 test 库既有数据/列形态或 5433 专属对象，空库无数据故必然失败；
+  2. **7 个 schema-defense / align 迁移**：目标对象由 `database/init` 建立（如 `flow.core_workflow_versions`、`iam.tenant_permissions`、`public.qa_lab_tasks`），纯迁移链不含 init 时缺失；
+  3. **1 个 P4 首批迁移**（`20261105100000`）：同因——`iam.tenant_permissions` 由 init 建立，缺失时 FK 重指向步骤被跳过，导致 `mes.tenant_permissions` 仍有入站 FK 而 `ABORT`。该批目标不在本轮 39 张内，未做改动。
+- 复用命令：`createdb -h /tmp p4_rebuild_verify` → 对 `database/migrations/*.sql` 按 `LC_ALL=C sort` 逐文件 `psql --single-transaction -v ON_ERROR_STOP=1 -f`；断言 SQL 见迁移文件末尾。
+
+### 15.2 test 基线补齐：20 张「应保留」表
+
+- 新增 test 定向迁移 [`20261105235000_test_baseline_20_reverse_tables.sql`](../../database/migrations/20261105235000_test_baseline_20_reverse_tables.sql)（130 条语句）：DDL 来源为 **prod 2026-11-05 实测** `pg_dump --schema-only`（20 个 `-t` 逐表导出，含列/类型/可空/默认值/PK/UNIQUE/索引/FK/RLS 策略/触发器/注释，prod 无表注释）。
+- 已确认 test 侧 **20/20 全部不存在**（无部分结构），故按整表建；守卫仍保留 `to_regclass` 判重 + 索引 `IF NOT EXISTS` + 约束/策略/触发器按名称判重，重复执行不会冲突。
+- 执行结果：test 表数 **1329 → 1349**（+20），20/20 存在；出站 FK 5 条，`convalidated` **invalid=0**。
+- 结构对比（prod vs test）：**252 个列的名字/类型/可空完全一致，20 个主键完全一致**。
+- 对照基线有效性：prod-only 表差 **63 → 1**（仅剩 `mes.erp_dictionaries`），test-only **0**；后续 prod-vs-test 比对噪声从 63 项降到 1 项。
