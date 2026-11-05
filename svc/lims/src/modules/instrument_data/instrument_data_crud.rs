@@ -32,8 +32,8 @@ pub async fn list_instrument_data(
         r#"
         SELECT d.id, d.data_no, d.instrument_id, d.batch_no, d.protocol,
                d.raw_data, d.parsed_data, d.status, d.quality_score,
-               d.error_msg, d.collected_at::TEXT, d.parsed_at::TEXT,
-               d.created_by, d.created_at::TEXT, d.updated_at::TEXT,
+               d.error_msg, d.collected_at, d.parsed_at,
+               d.created_by, d.created_at, d.updated_at,
                i.instrument_no, CASE WHEN
         "#,
     );
@@ -132,8 +132,8 @@ pub async fn get_instrument_data(
         r#"
         SELECT d.id, d.data_no, d.instrument_id, d.batch_no, d.protocol,
                d.raw_data, d.parsed_data, d.status, d.quality_score,
-               d.error_msg, d.collected_at::TEXT, d.parsed_at::TEXT,
-               d.created_by, d.created_at::TEXT, d.updated_at::TEXT, d.tenant_id,
+               d.error_msg, d.collected_at, d.parsed_at,
+               d.created_by, d.created_at, d.updated_at, d.tenant_id,
                i.instrument_no, CASE WHEN $2 = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END AS instrument_name
         FROM qa_lims_instrument_data d
         LEFT JOIN qa_lab_instruments i ON d.instrument_id = i.id
@@ -206,8 +206,8 @@ pub async fn create_instrument_data(
         VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'system', $7)
         RETURNING id, data_no, instrument_id, batch_no, protocol,
                   raw_data, parsed_data, status, quality_score,
-                  error_msg, collected_at::TEXT, parsed_at::TEXT,
-                  created_by, created_at::TEXT, updated_at::TEXT, tenant_id
+                  error_msg, collected_at, parsed_at,
+                  created_by, created_at, updated_at, tenant_id
         "#,
     )
     .bind(data_id)
@@ -271,8 +271,8 @@ pub async fn update_instrument_data(
         WHERE id = $1
         RETURNING id, data_no, instrument_id, batch_no, protocol,
                   raw_data, parsed_data, status, quality_score,
-                  error_msg, collected_at::TEXT, parsed_at::TEXT,
-                  created_by, created_at::TEXT, updated_at::TEXT, tenant_id
+                  error_msg, collected_at, parsed_at,
+                  created_by, created_at, updated_at, tenant_id
         "#,
     )
     .bind(id)

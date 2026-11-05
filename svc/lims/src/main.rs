@@ -118,7 +118,7 @@ async fn main() -> anyhow::Result<()> {
 
             // 预热样品列表（最近 10 条）
             match sqlx::query_scalar::<_, serde_json::Value>(
-                "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_samples WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 10 OFFSET 0) t"
+                "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at, expired_at, created_at, updated_at FROM public.qa_lab_samples WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 10 OFFSET 0) t"
             )
             .fetch_optional(&pool)
             .await
@@ -133,7 +133,7 @@ async fn main() -> anyhow::Result<()> {
 
             // 预热任务列表（最近 10 条）
             match sqlx::query_scalar::<_, serde_json::Value>(
-                "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT id::TEXT, tenant_id::TEXT, task_no, sample_id::TEXT, sample_no, test_items, status, assigned_to, instrument_id::TEXT, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at::TEXT, updated_at::TEXT FROM public.qa_lab_tasks WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 10 OFFSET 0) t"
+                "SELECT COALESCE(json_agg(t), '[]'::json) FROM (SELECT id::TEXT, tenant_id::TEXT, task_no, sample_id::TEXT, sample_no, test_items, status, assigned_to, instrument_id::TEXT, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at, updated_at FROM public.qa_lab_tasks WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 10 OFFSET 0) t"
             )
             .fetch_optional(&pool)
             .await

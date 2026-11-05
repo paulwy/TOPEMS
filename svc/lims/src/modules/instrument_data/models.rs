@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
@@ -24,11 +25,11 @@ pub struct InstrumentData {
     pub status: String,
     pub quality_score: Option<f64>,
     pub error_msg: Option<String>,
-    pub collected_at: Option<String>,
-    pub parsed_at: Option<String>,
+    pub collected_at: Option<DateTime<Utc>>,
+    pub parsed_at: Option<DateTime<Utc>>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -97,14 +98,14 @@ pub struct CollectionTask {
     pub interval_minutes: Option<i32>,
     pub parse_rule_id: Option<String>,
     pub status: String,
-    pub last_run_at: Option<String>,
-    pub next_run_at: Option<String>,
+    pub last_run_at: Option<DateTime<Utc>>,
+    pub next_run_at: Option<DateTime<Utc>>,
     pub total_collections: i64,
     pub success_count: i64,
     pub failed_count: i64,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -149,8 +150,8 @@ pub struct ParseRule {
     pub version: String,
     pub description: Option<String>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize)]

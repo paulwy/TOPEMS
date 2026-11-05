@@ -58,10 +58,10 @@ pub struct Instrument {
     pub manufacturer: Option<String>,
     pub status: String,
     pub location: Option<String>,
-    pub last_calibration_at: Option<String>,
-    pub next_calibration_at: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub last_calibration_at: Option<DateTime<Utc>>,
+    pub next_calibration_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -121,10 +121,10 @@ pub async fn list_instruments(
     };
 
     let sql = match (query.status.as_ref(), query.name.as_ref()) {
-        (Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, None) => "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at FROM qa_lab_instruments WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at FROM qa_lab_instruments WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at FROM qa_lab_instruments WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None) => "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at FROM qa_lab_instruments WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
@@ -208,7 +208,7 @@ pub async fn create_instrument(
     let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "INSERT INTO qa_lab_instruments (tenant_id, instrument_no, name, model, manufacturer, status, location) VALUES ($1, $2, $3, $4, $5, 'normal', $6) RETURNING id::TEXT, tenant_id::TEXT, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "INSERT INTO qa_lab_instruments (tenant_id, instrument_no, name, model, manufacturer, status, location) VALUES ($1, $2, $3, $4, $5, 'normal', $6) RETURNING id::TEXT, tenant_id::TEXT, instrument_no, name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at"
     )
     .bind(tenant_id)
     .bind(instrument_no)
@@ -276,7 +276,7 @@ pub async fn get_instrument(
 
     let locale = Locale::from_headers(&headers).as_sql();
     let row = sqlx::query(
-        "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
+        "SELECT id::TEXT, tenant_id::TEXT, instrument_no, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at FROM qa_lab_instruments WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
     )
     .bind(id)
     .bind(tenant_id)
@@ -324,7 +324,7 @@ pub async fn update_instrument(
     let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "UPDATE qa_lab_instruments SET name = COALESCE($2, name), model = COALESCE($3, model), manufacturer = COALESCE($4, manufacturer), status = COALESCE($5, status), location = COALESCE($6, location), next_calibration_at = COALESCE($7::timestamp, next_calibration_at), updated_at = NOW() WHERE id = $1 AND tenant_id = $8 RETURNING id::TEXT, tenant_id::TEXT, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "UPDATE qa_lab_instruments SET name = COALESCE($2, name), model = COALESCE($3, model), manufacturer = COALESCE($4, manufacturer), status = COALESCE($5, status), location = COALESCE($6, location), next_calibration_at = COALESCE($7::timestamp, next_calibration_at), updated_at = NOW() WHERE id = $1 AND tenant_id = $8 RETURNING id::TEXT, tenant_id::TEXT, instrument_no, name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at"
     )
     .bind(id)
     .bind(&req.name)
@@ -390,7 +390,7 @@ pub async fn calibrate(
     let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "UPDATE qa_lab_instruments SET last_calibration_at = NOW(), next_calibration_at = COALESCE($2, next_calibration_at), status = 'calibrated', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "UPDATE qa_lab_instruments SET last_calibration_at = NOW(), next_calibration_at = COALESCE($2, next_calibration_at), status = 'calibrated', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id::TEXT, tenant_id::TEXT, instrument_no, name, model, manufacturer, status, location, last_calibration_at, next_calibration_at, created_at, updated_at"
     )
     .bind(id)
     .bind(&req.next_calibration_at)
@@ -468,7 +468,7 @@ pub struct CalibrationRecord {
     pub parameters: Option<serde_json::Value>,
     pub notes: Option<String>,
     pub certificate_no: Option<String>,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize)]
@@ -532,7 +532,7 @@ pub async fn get_calibration_history(
                calibrated_by AS performed_by,
                calibration_date::TEXT, next_calibration_date::TEXT,
                calibration_result AS result,
-               parameters, notes, certificate_no, created_at::TEXT
+               parameters, notes, certificate_no, created_at
         FROM qa_lab_calibration_records
         WHERE instrument_id = $1
         ORDER BY calibration_date DESC
@@ -614,7 +614,7 @@ pub async fn create_calibration_record(
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), $12)
         RETURNING id::TEXT, instrument_id::TEXT, instrument_no, instrument_name, calibrated_by,
                   calibration_date::TEXT, next_calibration_date::TEXT, calibration_result,
-                  parameters, notes, certificate_no, created_at::TEXT
+                  parameters, notes, certificate_no, created_at
         "#,
     )
     .bind(record_id)

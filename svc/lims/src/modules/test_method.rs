@@ -3,6 +3,7 @@ use axum::{
     routing::{get, post, put},
     Extension, Json, Router,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
@@ -72,11 +73,11 @@ pub struct TestMethod {
     pub uncertainty_ref: Option<String>,
     pub status: String,
     pub validated: bool,
-    pub validated_at: Option<String>,
+    pub validated_at: Option<DateTime<Utc>>,
     pub validated_by: Option<String>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -126,8 +127,8 @@ pub struct MethodCategory {
     pub sort_order: i32,
     pub description: Option<String>,
     pub status: String,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -169,7 +170,7 @@ pub struct MethodValidationRecord {
     pub report_url: Option<String>,
     pub notes: Option<String>,
     pub status: String,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -194,10 +195,10 @@ pub struct MethodVersion {
     pub change_log: Option<String>,
     pub is_current: bool,
     pub created_by: Option<String>,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
-const METHOD_SELECT_COLS: &str = "m.id::TEXT, m.tenant_id::TEXT, m.method_code, m.method_name, m.category_id::TEXT, c.category_name, m.standard, m.version, m.description, m.principle, m.instruments, m.reagents, m.parameters, m.steps, m.calculation_formula, m.uncertainty_ref, m.status, m.validated, m.validated_at::TEXT, m.validated_by, m.created_by, m.created_at::TEXT, m.updated_at::TEXT";
+const METHOD_SELECT_COLS: &str = "m.id::TEXT, m.tenant_id::TEXT, m.method_code, m.method_name, m.category_id::TEXT, c.category_name, m.standard, m.version, m.description, m.principle, m.instruments, m.reagents, m.parameters, m.steps, m.calculation_formula, m.uncertainty_ref, m.status, m.validated, m.validated_at, m.validated_by, m.created_by, m.created_at, m.updated_at";
 
 #[utoipa::path(
     get,
@@ -328,8 +329,8 @@ pub async fn create_method(
         RETURNING id::TEXT, tenant_id::TEXT, method_code, method_name, category_id::TEXT,
                   NULL as category_name, standard, version, description, principle,
                   instruments, reagents, parameters, steps, calculation_formula,
-                  uncertainty_ref, status, validated, validated_at::TEXT, validated_by,
-                  created_by, created_at::TEXT, updated_at::TEXT
+                  uncertainty_ref, status, validated, validated_at, validated_by,
+                  created_by, created_at, updated_at
         "#,
     )
     .bind(&req.method_code)
@@ -508,8 +509,8 @@ pub async fn update_method(
         RETURNING id::TEXT, tenant_id::TEXT, method_code, method_name, category_id::TEXT,
                   NULL as category_name, standard, version, description, principle,
                   instruments, reagents, parameters, steps, calculation_formula,
-                  uncertainty_ref, status, validated, validated_at::TEXT, validated_by,
-                  created_by, created_at::TEXT, updated_at::TEXT
+                  uncertainty_ref, status, validated, validated_at, validated_by,
+                  created_by, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -638,8 +639,8 @@ pub async fn list_categories(
         Some(ctx.tenant_id)
     };
     let sql = match query.parent_id.as_ref() {
-        Some(_) => "SELECT id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at::TEXT, updated_at::TEXT FROM qa_lims_method_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND parent_id = $2 ORDER BY sort_order ASC, created_at DESC",
-        None => "SELECT id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at::TEXT, updated_at::TEXT FROM qa_lims_method_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND parent_id IS NULL ORDER BY sort_order ASC, created_at DESC",
+        Some(_) => "SELECT id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at, updated_at FROM qa_lims_method_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND parent_id = $2 ORDER BY sort_order ASC, created_at DESC",
+        None => "SELECT id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at, updated_at FROM qa_lims_method_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND parent_id IS NULL ORDER BY sort_order ASC, created_at DESC",
     };
 
     let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
@@ -685,7 +686,7 @@ pub async fn create_category(
         r#"
         INSERT INTO qa_lims_method_categories (category_code, category_name, parent_id, sort_order, description, status, tenant_id)
         VALUES ($1, $2, $3, $4, $5, 'active', $6)
-        RETURNING id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at::TEXT, updated_at::TEXT
+        RETURNING id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at, updated_at
         "#
     )
     .bind(&req.category_code)
@@ -754,7 +755,7 @@ pub async fn update_category(
             status = COALESCE($6, status),
             updated_at = NOW()
         WHERE id = $1 AND tenant_id = $7
-        RETURNING id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at::TEXT, updated_at::TEXT
+        RETURNING id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at, updated_at
         "#
     )
     .bind(id)
@@ -841,8 +842,8 @@ pub async fn list_validations(
         Some(ctx.tenant_id)
     };
     let sql = match query.method_id.as_ref() {
-        Some(_) => "SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at::TEXT FROM qa_lims_method_validations WHERE method_id = $2 AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY validation_date DESC, created_at DESC",
-        None => "SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at::TEXT FROM qa_lims_method_validations WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY validation_date DESC, created_at DESC LIMIT 100",
+        Some(_) => "SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at FROM qa_lims_method_validations WHERE method_id = $2 AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY validation_date DESC, created_at DESC",
+        None => "SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at FROM qa_lims_method_validations WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY validation_date DESC, created_at DESC LIMIT 100",
     };
 
     let mut query_builder = sqlx::query(sqlx::AssertSqlSafe(sql)).bind(tenant_id);
@@ -922,7 +923,7 @@ pub async fn create_validation(
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'completed', $12)
         RETURNING id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version,
                   validation_type, validation_date::TEXT, validated_by, conclusion, parameters,
-                  report_url, notes, status, created_at::TEXT
+                  report_url, notes, status, created_at
         "#,
     )
     .bind(method_id)
@@ -1012,7 +1013,7 @@ pub async fn list_method_versions(
 
     let rows = sqlx::query(
         r#"
-        SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, version, version_description, change_log, is_current, created_by, created_at::TEXT
+        SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, version, version_description, change_log, is_current, created_by, created_at
         FROM qa_lims_method_versions
         WHERE method_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         ORDER BY created_at DESC
@@ -1123,8 +1124,8 @@ pub async fn create_new_version(
         RETURNING id::TEXT, tenant_id::TEXT, method_code, method_name, category_id::TEXT,
                   NULL as category_name, standard, version, description, principle,
                   instruments, reagents, parameters, steps, calculation_formula,
-                  uncertainty_ref, status, validated, validated_at::TEXT, validated_by,
-                  created_by, created_at::TEXT, updated_at::TEXT
+                  uncertainty_ref, status, validated, validated_at, validated_by,
+                  created_by, created_at, updated_at
         "#,
     )
     .bind(id)

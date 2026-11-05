@@ -3,6 +3,7 @@ use axum::{
     routing::{get, post},
     Extension, Json, Router,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
@@ -13,7 +14,7 @@ use utoipa::ToSchema;
 
 use crate::shared::AppState;
 
-const TASK_SELECT_COLS: &str = "id::TEXT, tenant_id::TEXT, task_no, sample_id::TEXT, sample_no, test_items, status, assigned_to, instrument_id::TEXT, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at::TEXT, updated_at::TEXT";
+const TASK_SELECT_COLS: &str = "id::TEXT, tenant_id::TEXT, task_no, sample_id::TEXT, sample_no, test_items, status, assigned_to, instrument_id::TEXT, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at, updated_at";
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -61,8 +62,8 @@ pub struct InspectionTask {
     pub result: Option<serde_json::Value>,
     pub conclusion: Option<String>,
     pub recorded_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]

@@ -28,7 +28,7 @@ pub async fn list_parse_rules(
         (Some(_), Some(_)) => {
             "SELECT id, rule_no, rule_name, protocol, instrument_type, \
              parse_config, quality_rules, status, version, description, \
-             created_by, created_at::TEXT, updated_at::TEXT, tenant_id \
+             created_by, created_at, updated_at, tenant_id \
              FROM qa_lims_parse_rules \
              WHERE status = $1 AND protocol = $2 \
              ORDER BY created_at DESC LIMIT $3 OFFSET $4"
@@ -36,7 +36,7 @@ pub async fn list_parse_rules(
         (Some(_), None) => {
             "SELECT id, rule_no, rule_name, protocol, instrument_type, \
              parse_config, quality_rules, status, version, description, \
-             created_by, created_at::TEXT, updated_at::TEXT, tenant_id \
+             created_by, created_at, updated_at, tenant_id \
              FROM qa_lims_parse_rules \
              WHERE status = $1 \
              ORDER BY created_at DESC LIMIT $2 OFFSET $3"
@@ -44,7 +44,7 @@ pub async fn list_parse_rules(
         (None, Some(_)) => {
             "SELECT id, rule_no, rule_name, protocol, instrument_type, \
              parse_config, quality_rules, status, version, description, \
-             created_by, created_at::TEXT, updated_at::TEXT, tenant_id \
+             created_by, created_at, updated_at, tenant_id \
              FROM qa_lims_parse_rules \
              WHERE protocol = $1 \
              ORDER BY created_at DESC LIMIT $2 OFFSET $3"
@@ -52,7 +52,7 @@ pub async fn list_parse_rules(
         (None, None) => {
             "SELECT id, rule_no, rule_name, protocol, instrument_type, \
              parse_config, quality_rules, status, version, description, \
-             created_by, created_at::TEXT, updated_at::TEXT, tenant_id \
+             created_by, created_at, updated_at, tenant_id \
              FROM qa_lims_parse_rules \
              ORDER BY created_at DESC LIMIT $1 OFFSET $2"
         }
@@ -130,7 +130,7 @@ pub async fn get_parse_rule(
         r#"
         SELECT id, rule_no, rule_name, protocol, instrument_type,
                parse_config, quality_rules, status, version, description,
-               created_by, created_at::TEXT, updated_at::TEXT, tenant_id
+               created_by, created_at, updated_at, tenant_id
         FROM qa_lims_parse_rules
         WHERE id = $1
         "#,
@@ -183,7 +183,7 @@ pub async fn create_parse_rule(
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', '1.0', $8, 'system', $9)
         RETURNING id, rule_no, rule_name, protocol, instrument_type,
                   parse_config, quality_rules, status, version, description,
-                  created_by, created_at::TEXT, updated_at::TEXT, tenant_id
+                  created_by, created_at, updated_at, tenant_id
         "#,
     )
     .bind(rule_id)
@@ -248,7 +248,7 @@ pub async fn update_parse_rule(
         WHERE id = $1
         RETURNING id, rule_no, rule_name, protocol, instrument_type,
                   parse_config, quality_rules, status, version, description,
-                  created_by, created_at::TEXT, updated_at::TEXT, tenant_id
+                  created_by, created_at, updated_at, tenant_id
         "#,
     )
     .bind(id)

@@ -12,12 +12,12 @@ pub struct InspectionReport {
     pub sample_id: String,
     pub sample_no: String,
     pub sample_name: String,
-    pub inspection_date: String,
+    pub inspection_date: chrono::DateTime<chrono::Utc>,
     pub inspector: String,
     pub inspection_items: Vec<InspectionItem>,
     pub conclusion: String,
     pub remark: Option<String>,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Serialize)]
@@ -64,8 +64,8 @@ pub async fn list_reports(
     let offset = (page - 1) * page_size;
 
     let base_sql = r#"
-        SELECT id::text, report_no, sample_id::text, sample_no, sample_name, inspection_date::text,
-               inspector, inspection_items, conclusion, remark, status, created_at::text
+        SELECT id::text, report_no, sample_id::text, sample_no, sample_name, inspection_date,
+               inspector, inspection_items, conclusion, remark, status, created_at
         FROM public.qa_lab_inspection_reports
         WHERE ($1::text IS NULL OR sample_name LIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -94,13 +94,13 @@ pub async fn list_reports(
                         "sample_id": row.get::<String, _>("sample_id"),
                         "sample_no": row.get::<String, _>("sample_no"),
                         "sample_name": row.get::<String, _>("sample_name"),
-                        "inspection_date": row.get::<Option<String>, _>("inspection_date"),
+                        "inspection_date": row.get::<Option<chrono::DateTime<chrono::Utc>>, _>("inspection_date"),
                         "inspector": row.get::<Option<String>, _>("inspector"),
                         "inspection_items": row.get::<Option<serde_json::Value>, _>("inspection_items"),
                         "conclusion": row.get::<Option<String>, _>("conclusion"),
                         "remark": row.get::<Option<String>, _>("remark"),
                         "status": row.get::<Option<String>, _>("status"),
-                        "created_at": row.get::<Option<String>, _>("created_at"),
+                        "created_at": row.get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
                     })
                 })
                 .collect();
@@ -124,8 +124,8 @@ pub async fn get_report(
 
     let row = sqlx::query(
         r#"
-        SELECT id::text, report_no, sample_id::text, sample_no, sample_name, inspection_date::text,
-               inspector, inspection_items, conclusion, remark, status, created_at::text
+        SELECT id::text, report_no, sample_id::text, sample_no, sample_name, inspection_date,
+               inspector, inspection_items, conclusion, remark, status, created_at
         FROM public.qa_lab_inspection_reports
         WHERE id = $1
         "#,
@@ -142,13 +142,13 @@ pub async fn get_report(
                 "sample_id": r.get::<String, _>("sample_id"),
                 "sample_no": r.get::<String, _>("sample_no"),
                 "sample_name": r.get::<String, _>("sample_name"),
-                "inspection_date": r.get::<Option<String>, _>("inspection_date"),
+                "inspection_date": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("inspection_date"),
                 "inspector": r.get::<Option<String>, _>("inspector"),
                 "inspection_items": r.get::<Option<serde_json::Value>, _>("inspection_items"),
                 "conclusion": r.get::<Option<String>, _>("conclusion"),
                 "remark": r.get::<Option<String>, _>("remark"),
                 "status": r.get::<Option<String>, _>("status"),
-                "created_at": r.get::<Option<String>, _>("created_at"),
+                "created_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
             });
             ApiResponse::success(report, "获取检测报告成功")
         }
@@ -235,7 +235,7 @@ pub async fn generate_report(
 
     let report_no = format!("RPT-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let report_id = Uuid::new_v4();
-    let inspection_date = chrono::Utc::now().to_rfc3339();
+    let inspection_date = chrono::Utc::now();
 
     let row = sqlx::query(
         r#"
@@ -243,8 +243,8 @@ pub async fn generate_report(
             id, report_no, sample_id, sample_no, sample_name, inspection_date,
             inspector, inspection_items, conclusion, remark, status, created_at, tenant_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'draft', NOW(), $11)
-        RETURNING id::text, report_no, sample_id::text, sample_no, sample_name, inspection_date::text,
-                  inspector, inspection_items, conclusion, remark, status, created_at::text
+        RETURNING id::text, report_no, sample_id::text, sample_no, sample_name, inspection_date,
+                  inspector, inspection_items, conclusion, remark, status, created_at
         "#,
     )
     .bind(report_id)
@@ -277,13 +277,13 @@ pub async fn generate_report(
                 "sample_id": r.get::<String, _>("sample_id"),
                 "sample_no": r.get::<String, _>("sample_no"),
                 "sample_name": r.get::<String, _>("sample_name"),
-                "inspection_date": r.get::<Option<String>, _>("inspection_date"),
+                "inspection_date": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("inspection_date"),
                 "inspector": r.get::<Option<String>, _>("inspector"),
                 "inspection_items": r.get::<Option<serde_json::Value>, _>("inspection_items"),
                 "conclusion": r.get::<Option<String>, _>("conclusion"),
                 "remark": r.get::<Option<String>, _>("remark"),
                 "status": r.get::<Option<String>, _>("status"),
-                "created_at": r.get::<Option<String>, _>("created_at"),
+                "created_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
             });
             ApiResponse::success(report, "检测报告生成成功")
         }
@@ -358,8 +358,8 @@ pub async fn approve_report(
         SET status = 'approved', updated_at = NOW()
         WHERE id = $1 AND status = 'draft'
           AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
-        RETURNING id::text, report_no, sample_id::text, sample_no, sample_name, inspection_date::text,
-                  inspector, inspection_items, conclusion, remark, status, created_at::text
+        RETURNING id::text, report_no, sample_id::text, sample_no, sample_name, inspection_date,
+                  inspector, inspection_items, conclusion, remark, status, created_at
         "#,
     )
     .bind(id)
@@ -374,13 +374,13 @@ pub async fn approve_report(
                 "sample_id": r.get::<String, _>("sample_id"),
                 "sample_no": r.get::<String, _>("sample_no"),
                 "sample_name": r.get::<String, _>("sample_name"),
-                "inspection_date": r.get::<Option<String>, _>("inspection_date"),
+                "inspection_date": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("inspection_date"),
                 "inspector": r.get::<Option<String>, _>("inspector"),
                 "inspection_items": r.get::<Option<serde_json::Value>, _>("inspection_items"),
                 "conclusion": r.get::<Option<String>, _>("conclusion"),
                 "remark": r.get::<Option<String>, _>("remark"),
                 "status": r.get::<Option<String>, _>("status"),
-                "created_at": r.get::<Option<String>, _>("created_at"),
+                "created_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
             });
             ApiResponse::success(report, "报告审核通过")
         }
@@ -403,7 +403,7 @@ pub async fn export_report_pdf(
 
     let row = sqlx::query(
         r#"
-        SELECT id, report_no, sample_id, sample_no, sample_name, inspection_date::text,
+        SELECT id, report_no, sample_id, sample_no, sample_name, inspection_date,
                inspector, inspection_items, conclusion, remark, status
         FROM public.qa_lab_inspection_reports
         WHERE id = $1
@@ -423,7 +423,7 @@ pub async fn export_report_pdf(
                 "report_no": r.get::<String, _>("report_no"),
                 "sample_no": r.get::<String, _>("sample_no"),
                 "sample_name": r.get::<String, _>("sample_name"),
-                "inspection_date": r.get::<Option<String>, _>("inspection_date"),
+                "inspection_date": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("inspection_date"),
                 "inspector": r.get::<Option<String>, _>("inspector"),
                 "inspection_items": r.get::<Option<serde_json::Value>, _>("inspection_items"),
                 "conclusion": r.get::<Option<String>, _>("conclusion"),
