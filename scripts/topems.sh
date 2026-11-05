@@ -177,7 +177,7 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
   ws check                检查 WebSocket 连接状态
 
   deploy                  生产部署（systemd 范式，需 .env.production；docker 部署见 scripts/deploy/docker/topems-docker.sh）
-  reset-password [用户] [密码]  重置用户密码（默认 admin/admin123；update-password 为别名）
+  reset-password [用户] [密码]  重置用户密码（密码必填，无默认弱口令；update-password 为别名）
 
 自动预检（主流程入口自动执行，磁盘 <5GiB 会阻断）:
   预检内容: 杀后台 cargo 进程 + 清 llvm-cov-target 残留 + 磁盘空间检查
@@ -225,8 +225,8 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
                                         第3批 业务5: ai rd ticket plugin-registry mobile
                                         第4批 平台5: unified-core integration master-data communication analytics
   topems dev                  启动开发环境
-  topems reset-password       重置 admin 密码为 admin123
-  topems reset-password admin newpass123  重置 admin 密码为 newpass123
+  topems reset-password admin <新密码>   重置 admin 密码（必须显式提供）
+  topems reset-password <用户> <新密码>  重置指定用户密码
 
 完整功能请使用 Python CLI（场景: 批量运维——多服务/模块批量操作 + JSON 输出；日常单服务生命周期用上方 shell 命令）:
   cd cli && python3 -m topems_cli --help

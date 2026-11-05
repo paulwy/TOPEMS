@@ -352,7 +352,7 @@ show_status() {
   echo "  API Gateway:   http://localhost:8000"
   echo "  API Health:    http://localhost:8000/health"
   echo ""
-  info "默认账号: admin / admin123"
+  info "管理员账号: 由 --with-admin 供给步骤创建；密码见首次 stderr 或 --admin-password-file"
   echo ""
   info "日志文件:"
   echo "  Web:    tail -f $PROJECT_ROOT/logs/web.log"

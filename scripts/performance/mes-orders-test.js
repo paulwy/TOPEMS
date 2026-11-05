@@ -1,6 +1,10 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 
+const PERF_USER = process.env.PERF_USER || 'admin';
+const PERF_PASSWORD = process.env.PERF_PASSWORD || '';
+if (!PERF_PASSWORD) throw new Error('需设置 PERF_PASSWORD（不再内置默认口令）');
+
 export const options = {
   vus: 10,
   duration: '30s',
@@ -9,8 +13,8 @@ export const options = {
 export function setup() {
   const loginUrl = 'http://localhost:8099/api/core/iam/auth/login';
   const payload = JSON.stringify({
-    username: 'admin',
-    password: 'admin123',
+    username: PERF_USER,
+    password: PERF_PASSWORD,
   });
 
   const params = {

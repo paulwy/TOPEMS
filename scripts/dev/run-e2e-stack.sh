@@ -8,7 +8,7 @@
 # 用法：
 #   ./scripts/dev/run-e2e-stack.sh up        # 起栈 + 健康校验
 #   ./scripts/dev/run-e2e-stack.sh smoke     # 起栈后跑 full-route-smoke
-#   ./scripts/dev/run-e2e-stack.sh login     # 仅校验真登录（admin/admin123）
+#   ./scripts/dev/run-e2e-stack.sh login     # 仅校验真登录（需显式 E2E_USER/E2E_PASS）
 #   ./scripts/dev/run-e2e-stack.sh stop      # 停 8099
 #
 # 复用：scripts/run_monolith.sh（8099 单体）、start-local.sh 默认账号。
@@ -22,7 +22,7 @@ cd "$PROJECT_ROOT"
 PORT="${PORT:-8099}"
 API_URL="${API_URL:-http://localhost:$PORT}"
 E2E_USER="${E2E_USER:-admin}"
-E2E_PASS="${E2E_PASS:-admin123}"
+E2E_PASS="${E2E_PASS:-}"
 LOG="${LOG:-/tmp/topems_monolith_e2e.log}"
 
 info() { echo -e "\033[0;36m[e2e-stack]\033[0m $*"; }
@@ -43,7 +43,7 @@ db_dsn() {
 }
 
 # 种子 e2e 账号 test_admin（复制 admin 凭据哈希，幂等）。
-# full-route-smoke.spec.ts:96 硬编码 test_admin/admin123；默认库仅 admin。
+# 密码必须由 E2E_PASS 显式提供，不再内置默认弱口令。
 seed_e2e_account() {
   IFS='|' read -r pw host db <<<"$(db_dsn)"
   if [ -z "${pw:-}" ]; then warn "未取到 DATABASE_URL，跳过 test_admin 种子"; return 0; fi
@@ -89,6 +89,7 @@ up() {
 }
 
 login() {
+  [ -n "$E2E_PASS" ] || die "缺少 E2E_PASS：请显式设置测试账号密码（不再内置默认弱口令）"
   up
   seed_e2e_account
   info "校验真登录 ${E2E_USER}@$API_URL ..."
@@ -101,7 +102,7 @@ login() {
 try:
  d=json.load(sys.stdin); print((d.get('data') or {}).get('access_token') or (d.get('data') or {}).get('token') or '')
 except Exception: print('')" 2>/dev/null || true)
-  [ -n "$token" ] || die "真登录失败——IAM 不可用或账号未种子化。响应：${body:-<空>}。请先跑 DB 迁移 + 种子账号（admin/admin123）。"
+  [ -n "$token" ] || die "真登录失败——IAM 不可用或账号未种子化。响应：${body:-<空>}。请先跑 DB 迁移并用 E2E_USER/E2E_PASS 显式提供账号。"
   ok "真登录成功（token 长度 ${#token}）——不会触发 mock fallback"
 }
 

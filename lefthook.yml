@@ -248,6 +248,14 @@ pre-commit:
       tags: security secrets
       run: bash scripts/ci/check-sensitive-info.sh
 
+    # [Gate PASSWD] 硬编码管理员/默认口令常量扫描（代码/配置，测试夹具与文档除外）
+    hardcoded-passwords:
+      tags: security secrets
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(sh|bash|zsh|ps1|mjs|cjs|js|ts|tsx|jsx|rs|py|toml|yaml|yml|sql)$|\.env' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-hardcoded-passwords.mjs --changed-only
+
     # [Gate P] API path duplicates check — migrated from husky #4（脚本已迁移 scripts/tools/，由 CI job 执行）
     # NOTE: scripts/tools/check_api_duplicates_ci.py 纯文件扫描（--ci 离线，无需 live DB）。
     # [Gate P] API Gate（check-api 三合一审计：audit+coverage+compare，dry-run 报告不阻断）

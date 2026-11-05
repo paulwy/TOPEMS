@@ -55,10 +55,14 @@ export const options = SMOKE ? {
   },
 };
 
+const PERF_USER = process.env.PERF_USER || 'admin';
+const PERF_PASSWORD = process.env.PERF_PASSWORD || '';
+if (!PERF_PASSWORD) throw new Error('需设置 PERF_PASSWORD（不再内置默认口令）');
+
 function getAuthToken() {
   const response = http.post(`${IAM_URL}/api/core/iam/auth/login`, JSON.stringify({
-    username: 'admin',
-    password: 'admin123',
+    username: PERF_USER,
+    password: PERF_PASSWORD,
   }), {
     headers: { 'Content-Type': 'application/json' },
   });

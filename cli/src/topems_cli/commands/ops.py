@@ -1,7 +1,7 @@
 """ops 命令组 - 对齐 scripts/topems.sh 新约定
 
 - reset-password / update-password：调用 scripts/dev/update-admin-password.sh
-  （topems.sh:4032-4035：默认 admin / admin123）
+  （密码必填，无默认弱口令）
 - run：一键启动数据库 + 所有服务（对标 topems.sh run / run_all）
 - run-stop：stop-all --with-db 的别名（topems.sh:3939-3941 = stop_everything）
 """

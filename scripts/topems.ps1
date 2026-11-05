@@ -2995,7 +2995,7 @@ function Deploy-Complete {
     Write-Host ''
     Write-Host '初始账号:'
     Write-Host '  用户名: admin'
-    Write-Host '  密码:  admin123'
+    Write-Host '  密码:  由 --with-admin 供给生成（见首次 stderr 或 0600 文件）'
     Write-Host ''
 }
 
@@ -3004,7 +3004,10 @@ function Deploy-Complete {
 # =============================================================================
 function Invoke-UpdateAdminPassword([string]$username, [string]$newPassword) {
     if (-not $username) { $username = 'admin' }
-    if (-not $newPassword) { $newPassword = 'admin123' }
+    if (-not $newPassword) {
+        Write-Error2 '新密码必填（不再提供默认弱口令）'
+        return 1
+    }
     $dbHost = [Environment]::GetEnvironmentVariable('DB_HOST', 'Process'); if (-not $dbHost) { $dbHost = 'localhost' }
     $dbPort = [Environment]::GetEnvironmentVariable('DB_PORT', 'Process'); if (-not $dbPort) { $dbPort = '5432' }
     $dbName = [Environment]::GetEnvironmentVariable('DB_NAME', 'Process'); if (-not $dbName) { $dbName = 'topems' }
@@ -3046,23 +3049,18 @@ function Invoke-UpdateAdminPassword([string]$username, [string]$newPassword) {
     }
 
     $passwordHash = $null
-    if ($newPassword -eq 'admin123') {
-        $passwordHash = '$2b$12$YkGrx2WY9t1JbChfVNO7pe6S4T7iPjFm8j7dm5HBOe2d.InbncFce'
-        Write-Host '使用预设 bcrypt 哈希（密码: admin123）'
-    } else {
-        if (Test-CommandExists 'python') {
-            Write-Host '生成 bcrypt 哈希...'
-            $passwordHash = (& python -c "import bcrypt,sys; print(bcrypt.hashpw(sys.argv[1].encode(), bcrypt.gensalt()).decode())" $newPassword 2>$null | Out-String).Trim()
-            if (-not $passwordHash -or -not $passwordHash.StartsWith('$2')) {
-                Write-Error2 '需要安装 bcrypt 库（pip install bcrypt），或使用默认密码 admin123'
-                Remove-Item Env:PGPASSWORD -ErrorAction SilentlyContinue
-                return 1
-            }
-        } else {
-            Write-Error2 '需要 Python 3 来生成自定义密码哈希，或使用默认密码 admin123'
+    if (Test-CommandExists 'python') {
+        Write-Host '生成 bcrypt 哈希...'
+        $passwordHash = (& python -c "import bcrypt,sys; print(bcrypt.hashpw(sys.argv[1].encode(), bcrypt.gensalt()).decode())" $newPassword 2>$null | Out-String).Trim()
+        if (-not $passwordHash -or -not $passwordHash.StartsWith('$2')) {
+            Write-Error2 '生成 bcrypt 哈希失败（请安装 bcrypt 库：pip install bcrypt）'
             Remove-Item Env:PGPASSWORD -ErrorAction SilentlyContinue
             return 1
         }
+    } else {
+        Write-Error2 '需要 Python 3 来生成密码哈希（pip install bcrypt）'
+        Remove-Item Env:PGPASSWORD -ErrorAction SilentlyContinue
+        return 1
     }
     Write-Host ''
 
@@ -3816,7 +3814,11 @@ try {
         { $_ -in @('update-password','reset-password') } {
             Write-Info '重置管理员密码...'
             $user = if ($rest -and $rest[0]) { $rest[0] } else { 'admin' }
-            $pwd = if ($rest.Count -gt 1) { $rest[1] } else { 'admin123' }
+            $pwd = if ($rest.Count -gt 1) { $rest[1] } else { $null }
+            if (-not $pwd) {
+                Write-Error2 '请显式提供新密码：reset-password <用户> <密码>'
+                break
+            }
             $null = Invoke-UpdateAdminPassword $user $pwd
         }
         { $_ -in @('help','--help','-h') } { Show-Help }

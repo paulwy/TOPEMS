@@ -252,6 +252,10 @@ jobs:
       - name: Scan prod migration entry
         run: node scripts/ci/check-prod-migration-entry.mjs
 
+      # 初始管理员防线：禁止硬编码 admin/default 密码常量
+      - name: Scan hardcoded admin passwords
+        run: node scripts/ci/check-hardcoded-passwords.mjs
+
   # ──────────────────────────────────────────────────────────────────────────
   # [V232-P3 NEW Gate J] Cargo fmt workspace (Rust only, standalone job)
   # ──────────────────────────────────────────────────────────────────────────
