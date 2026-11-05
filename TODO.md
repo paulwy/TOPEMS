@@ -1,3 +1,35 @@
+## 第四十八轮（2026-11-05）：test 环境自洽盘点（G1）+ medium 解码抽检（G2）
+
+### G1. test 账本/结构自洽（⏸ 待确认：重建）
+
+**只读盘点（`topems_test@192.168.110.115`）**：
+
+| 指标 | 数值 |
+|---|---|
+| test 表数 / 账本成功数 / max(version) | 1349 / 561 / `20261105235700` |
+| 仓库迁移 vs test 账本差集 | 32（21 条 prod 迁移 + 11 条 5433 定向迁移） |
+| 其中「账本缺失但 DDL 已生效」 | **18 / 21**（类型/索引/约束/删表均实测生效） |
+| 其中「账本缺失且未生效」 | **3**：`20261103190000`(jsonb)、`20261105130000`(audit_logs CHECK)、`20261104110000`(部分 DROP CONSTRAINT) |
+| 「账本登记但对象不存在」 | 表级 0；**列级 43 个版本**（ADD COLUMN 的列在 test 缺失） |
+| test 结构 vs 基线 | 缺 **941** 列（261 张表）、多 **316** 列、缺 45 索引、缺 6 枚举 |
+| test 独有账本 | 6 条（5 条 5433 定向 + 1 条无文件孤儿 `20261103000005`） |
+| 参考数据漂移 | `core_permissions` 964/986、`core_menus` 184/423 |
+
+**结论**：选 **(b) 基线重建**。理由：43 个账本版本的新增列在 test 缺失，说明账本已与结构脱节；补登已生效的 18 条后仍有 3 条必须执行 DDL，且 941 列/316 列的形态差异无法靠补登收敛。
+
+**副本验证（已通过）**：`provision-env.sh --env test --db g1_scratch_test` → 表 1349 / 账本 576 / max `20261105235700` / 参考数据 11 表 2277 行；核心表行数 986/423/15/653 与 prod 一致。
+
+**备份**：`/Users/air/topems_backups/topems_test_before_g1_20261105.dump`（4.3MB，`pg_restore -l` 9313 项、1349 张 TABLE DATA 可读）。
+
+**待确认风险**：重建会丢失 test 现有 **13,422 行 / 141 张非空表**（审计日志 5,885 行、权限/菜单副本、`crm_master_data_refs` 282、会话 229、回款 151 等）；参考数据 11 表将按基线恢复。**test 尚未改动**。
+
+### G2. medium 解码风险抽检（✅ 完成）
+
+- 18 个活跃表列对复核：行数与上轮一致，prod `NULL` 全部仍为 0。
+- 抽检 5 列全部「确认无害」（证据见 [audit §10.7.1](docs/quality/decode-contract-audit-2026-11-05.md#1071-时效性复核2026-11-05第二轮只读)）。
+- **相邻发现并修复**：`finance.erp_collection_records.status` prod 35/35 NULL；两条 INSERT 显式写 NULL、4 处按 `String` 解码。改为写入 `'pending'` + `COALESCE(status,'pending')` 兼容存量 NULL（2 文件 6 处，无 DDL/DML）。
+- 校验：`cargo check -p topems-finance` / `clippy -D warnings` ✅；`validate.sh`、`check-migrations`、`check-migration-names --strict` 全部 exit 0。
+
 ## 第四十七轮（2026-11-05）：第 3 档——四域页面补测 33 个 Page ✅
 
 > 承接第四十五轮"第 3 档"（原挂账 51 页 / erp 8、crm 18、scm 4、qms 21）。经按实际 `*Page.tsx` 与既有测试文件比对，本轮可测口径为 **33 个未测页面文件**；其余差额来自第三十四轮把子目录面板/详情页一并计入的统计口径。

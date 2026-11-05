@@ -280,6 +280,19 @@ NEW decode=ok id=2 tenant=Some("00000000-0000-0000-0000-000000000001") user=Some
 
 **结论：635 → 实际需改 0 条**。18 对在 prod 当前数据中无 NULL，`Option<T>` 放宽不会带来正确性收益，反而弱化契约；`title` / `setting_value` 属展示类，NULL 语义合理，标「确认无害」。后续若需收口，应由 DB 侧 `NOT NULL` 或写入校验治理，而不是批量放宽 Rust 类型。
 
+**10.7.1 时效性复核（2026-11-05，第二轮只读）**
+
+- 18 个表列对的行数与上一轮一致，`NULL` 计数全部仍为 **0**（prod 只读 `count(*) FILTER`）。
+- 抽检 5 个最易写入 NULL 的列，结论均为「确认无害」：
+  | 抽检列 | 写入路径证据 | 结论 |
+  |---|---|---|
+  | `ehs.qa_ehs_incident_actions.title` | INSERT 显式绑定默认标题；无 UPDATE 改写 | 无害 |
+  | `ehs.qa_ehs_trainings.status` | INSERT 显式 `scheduled`；UPDATE 用 `COALESCE(status, $n)` | 无害 |
+  | `wms.replenishment_orders.total_quantity/total_amount` | INSERT 显式 `unwrap_or(0)`；无 UPDATE | 无害 |
+  | `public.core_tenant_settings.setting_value` | `default_department_description: Option<&str>` 可写 NULL，但读取仅过滤 `api_key_%`，部门键无解码方 | 潜在，当前无害 |
+  | `finance.erp_collection_records.amount` | INSERT/UPDATE 均绑定非空 `Decimal`（`COALESCE` 保留原值） | 无害 |
+- **相邻发现（已修）**：`finance.erp_collection_records.status` 在 prod 为 **35/35 NULL**，而两条 INSERT 显式写 `NULL`，4 处 `Row::get::<String>` 解码会直接失败。已改为写入 `'pending'`，并在 SELECT/RETURNING 用 `COALESCE(status,'pending')` 兼容存量 NULL（无 DB DDL/DML）。
+
 ### 10.8 C：未定位 200 → 95，另 504 条目录无列逐条标注
 
 **扫描器口径调整**（[check-decode-contract.mjs](scripts/ci/check-decode-contract.mjs)）：
