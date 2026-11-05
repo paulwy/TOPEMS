@@ -287,8 +287,9 @@ fn collect_realtime_snapshot(state: &AppState) -> MetricSnapshot {
         0.0
     };
 
-    let pool_size = state.pool.size();
-    let pool_idle = state.pool.num_idle();
+    let pool_stats = state.db.stats();
+    let pool_size = pool_stats.size;
+    let pool_idle = pool_stats.idle;
     let pool_usage = if pool_size > 0 {
         (pool_size as f64 - pool_idle as f64) / pool_size as f64 * 100.0
     } else {
@@ -324,7 +325,12 @@ pub async fn list_thresholds(
 ) -> ApiResponse<Vec<AlertThreshold>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match sqlx::query(sqlx::AssertSqlSafe(format!(
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询阈值列表失败", e)),
+    };
+
+    let fetched = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {cols} FROM public.monitor_thresholds
          WHERE {where} AND enabled = TRUE
          ORDER BY created_at",
@@ -332,9 +338,14 @@ pub async fn list_thresholds(
         where = TENANT_SOFT_DELETED,
     )))
     .bind(tenant_id)
-    .fetch_all(&state.pool)
-    .await
-    {
+    .fetch_all(&mut scope)
+    .await;
+
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("查询阈值列表失败", e));
+    }
+
+    match fetched {
         Ok(rows) => {
             let thresholds: Vec<AlertThreshold> =
                 rows.iter().filter_map(row_to_threshold).collect();
@@ -362,7 +373,12 @@ pub async fn create_threshold(
 ) -> ApiResponse<AlertThreshold> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match sqlx::query(sqlx::AssertSqlSafe(format!(
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("创建阈值失败", e)),
+    };
+
+    let fetched = sqlx::query(sqlx::AssertSqlSafe(format!(
         "INSERT INTO public.monitor_thresholds
             (tenant_id, name, metric_type, operator, threshold_value, severity, service_name, enabled, description)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -378,14 +394,24 @@ pub async fn create_threshold(
     .bind(&req.service_name)
     .bind(req.enabled.unwrap_or(true))
     .bind(&req.description)
-    .fetch_one(&state.pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+
+    match fetched {
         Ok(row) => match row_to_threshold(&row) {
-            Some(threshold) => ApiResponse::success(threshold, "阈值创建成功"),
-            None => ApiResponse::server_error("阈值行反序列化失败"),
+            Some(threshold) => match scope.commit().await {
+                Ok(()) => ApiResponse::success(threshold, "阈值创建成功"),
+                Err(e) => ApiResponse::from(TopemsError::internal("创建阈值失败", e)),
+            },
+            None => {
+                let _ = scope.rollback().await;
+                ApiResponse::server_error("阈值行反序列化失败")
+            }
         },
-        Err(e) => ApiResponse::from(TopemsError::internal("创建阈值失败", e)),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("创建阈值失败", e))
+        }
     }
 }
 
@@ -409,7 +435,12 @@ pub async fn get_threshold(
 ) -> ApiResponse<AlertThreshold> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match sqlx::query(sqlx::AssertSqlSafe(format!(
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("获取阈值详情失败", e)),
+    };
+
+    let fetched = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {cols} FROM public.monitor_thresholds
          WHERE {where} AND id = $2",
         cols = THRESHOLD_COLUMNS,
@@ -417,9 +448,14 @@ pub async fn get_threshold(
     )))
     .bind(tenant_id)
     .bind(id)
-    .fetch_optional(&state.pool)
-    .await
-    {
+    .fetch_optional(&mut scope)
+    .await;
+
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("获取阈值详情失败", e));
+    }
+
+    match fetched {
         Ok(Some(row)) => match row_to_threshold(&row) {
             Some(threshold) => ApiResponse::success(threshold, "获取阈值详情成功"),
             None => ApiResponse::server_error("阈值行反序列化失败"),
@@ -451,7 +487,12 @@ pub async fn update_threshold(
 ) -> ApiResponse<AlertThreshold> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match sqlx::query(sqlx::AssertSqlSafe(format!(
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("更新阈值失败", e)),
+    };
+
+    let fetched = sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE public.monitor_thresholds SET
             name = $3, metric_type = $4, operator = $5, threshold_value = $6,
             severity = $7, service_name = $8, enabled = $9, description = $10,
@@ -471,15 +512,28 @@ pub async fn update_threshold(
     .bind(&req.service_name)
     .bind(req.enabled.unwrap_or(true))
     .bind(&req.description)
-    .fetch_optional(&state.pool)
-    .await
-    {
+    .fetch_optional(&mut scope)
+    .await;
+
+    match fetched {
         Ok(Some(row)) => match row_to_threshold(&row) {
-            Some(threshold) => ApiResponse::success(threshold, "阈值更新成功"),
-            None => ApiResponse::server_error("阈值行反序列化失败"),
+            Some(threshold) => match scope.commit().await {
+                Ok(()) => ApiResponse::success(threshold, "阈值更新成功"),
+                Err(e) => ApiResponse::from(TopemsError::internal("更新阈值失败", e)),
+            },
+            None => {
+                let _ = scope.rollback().await;
+                ApiResponse::server_error("阈值行反序列化失败")
+            }
         },
-        Ok(None) => ApiResponse::not_found("阈值不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("更新阈值失败", e)),
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("阈值不存在")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("更新阈值失败", e))
+        }
     }
 }
 
@@ -504,21 +558,36 @@ pub async fn delete_threshold(
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     // 软删除：与 alerts 模块一致置 deleted_at，不物理删行
-    match sqlx::query(sqlx::AssertSqlSafe(format!(
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("删除阈值失败", e)),
+    };
+
+    let result = sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE public.monitor_thresholds SET deleted_at = NOW(), updated_at = NOW()
          WHERE {where} AND id = $2",
         where = TENANT_SOFT_DELETED,
     )))
     .bind(tenant_id)
     .bind(id)
-    .execute(&state.pool)
-    .await
-    {
-        Ok(r) if r.rows_affected() > 0 => {
-            ApiResponse::success(serde_json::json!({"id": id.to_string()}), "阈值删除成功")
+    .execute(&mut scope)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => match scope.commit().await {
+            Ok(()) => {
+                ApiResponse::success(serde_json::json!({"id": id.to_string()}), "阈值删除成功")
+            }
+            Err(e) => ApiResponse::from(TopemsError::internal("删除阈值失败", e)),
+        },
+        Ok(_) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("阈值不存在")
         }
-        Ok(_) => ApiResponse::not_found("阈值不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("删除阈值失败", e)),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("删除阈值失败", e))
+        }
     }
 }
 
@@ -539,7 +608,11 @@ pub async fn evaluate_thresholds(
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     // 1. 从库加载当前租户启用的阈值（不再使用空内存 Evaluator）
-    let thresholds: Vec<AlertThreshold> = match sqlx::query(sqlx::AssertSqlSafe(format!(
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("查询阈值失败", e)),
+    };
+    let fetched = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {cols} FROM public.monitor_thresholds
          WHERE {where} AND enabled = TRUE
          ORDER BY created_at",
@@ -547,9 +620,12 @@ pub async fn evaluate_thresholds(
         where = TENANT_SOFT_DELETED,
     )))
     .bind(tenant_id)
-    .fetch_all(&state.pool)
-    .await
-    {
+    .fetch_all(&mut scope)
+    .await;
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("查询阈值失败", e));
+    }
+    let thresholds: Vec<AlertThreshold> = match fetched {
         Ok(rows) => rows.iter().filter_map(row_to_threshold).collect(),
         Err(e) => return ApiResponse::from(TopemsError::internal("查询阈值失败", e)),
     };

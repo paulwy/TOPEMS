@@ -20,6 +20,7 @@ topems-shared-bootstrap = { workspace = true }
 topems-shared-core = { workspace = true }
 reqwest.workspace = true
 topems-shared-auth = { workspace = true }
+topems-shared-db = { workspace = true }
 utoipa.workspace = true
 prometheus.workspace = true
 anyhow.workspace = true

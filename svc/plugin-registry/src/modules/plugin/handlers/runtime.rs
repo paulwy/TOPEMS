@@ -108,10 +108,10 @@ pub async fn register_plugin(
     let deps_json: serde_json::Value =
         serde_json::to_value(&req.dependencies).unwrap_or(serde_json::json!([]));
 
-    let mut txn = match state.pool.begin().await {
+    let mut scope = match state.db.scope().await {
         Ok(t) => t,
         Err(e) => {
-            tracing::error!("[Plugin] Failed to begin txn: {}", e);
+            tracing::error!("[Plugin] Failed to begin scope: {}", e);
             return Json(CoreResponse::error(&format!(
                 "Failed to create plugin: {}",
                 e
@@ -121,10 +121,11 @@ pub async fn register_plugin(
 
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
         .bind(uuid::Uuid::nil().to_string())
-        .execute(&mut *txn)
+        .execute(&mut scope)
         .await
     {
         tracing::error!("[Plugin] Failed to set nil tenant context: {}", e);
+        let _ = scope.rollback().await;
         return Json(CoreResponse::error(&format!(
             "Failed to create plugin: {}",
             e
@@ -146,14 +147,18 @@ pub async fn register_plugin(
     .bind(&req.version)
     .bind(&deps_json)
     .bind(&req.category)
-    .fetch_optional(&mut *txn)
+    .fetch_optional(&mut scope)
     .await;
 
     let plugin: Plugin = match plugin_result {
         Ok(Some(p)) => p,
-        Ok(None) => return Json(CoreResponse::error("Failed to create plugin - no result")),
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            return Json(CoreResponse::error("Failed to create plugin - no result"));
+        }
         Err(e) => {
             tracing::error!("[Plugin] Failed to insert plugin: {}", e);
+            let _ = scope.rollback().await;
             return Json(CoreResponse::error(&format!(
                 "Failed to create plugin: {}",
                 e
@@ -176,7 +181,7 @@ pub async fn register_plugin(
         .bind(&perm.name)
         .bind(&perm.resource_type)
         .bind(&perm.action)
-        .execute(&mut *txn)
+        .execute(&mut scope)
         .await
         .ok();
     }
@@ -196,7 +201,7 @@ pub async fn register_plugin(
     .bind(plugin.id)
     .bind(&req.runtime_url)
     .bind(&base_path)
-    .execute(&mut *txn)
+    .execute(&mut scope)
     .await
     .ok();
 
@@ -212,13 +217,13 @@ pub async fn register_plugin(
         )
         .bind(&req.code)
         .bind(nav_config)
-        .execute(&mut *txn)
+        .execute(&mut scope)
         .await
         .ok();
     }
 
-    if let Err(e) = txn.commit().await {
-        tracing::error!("[Plugin] Failed to commit txn: {}", e);
+    if let Err(e) = scope.commit().await {
+        tracing::error!("[Plugin] Failed to commit scope: {}", e);
         return Json(CoreResponse::error(&format!(
             "Failed to create plugin: {}",
             e
@@ -254,6 +259,17 @@ pub async fn update_plugin_status(
         req.status
     );
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open write scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to update plugin status: {}",
+                e
+            )));
+        }
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE core.core_plugin_instances
@@ -263,13 +279,17 @@ pub async fn update_plugin_status(
     )
     .bind(&plugin_code)
     .bind(&req.status)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => Json(CoreResponse::success((), "Plugin status updated")),
+        Ok(_) => {
+            let _ = scope.commit().await;
+            Json(CoreResponse::success((), "Plugin status updated"))
+        }
         Err(e) => {
             tracing::error!("[Plugin] Failed to update plugin status: {}", e);
+            let _ = scope.rollback().await;
             Json(CoreResponse::error("Failed to update plugin status"))
         }
     }
@@ -295,6 +315,17 @@ pub async fn get_plugin_status(
 ) -> Json<CoreResponse<PluginInstance>> {
     tracing::debug!("[Plugin] Getting status for plugin: {}", plugin_code);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open read scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to open database scope: {}",
+                e
+            )));
+        }
+    };
+
     let instance: Option<PluginInstance> = sqlx::query_as(
         r#"
         SELECT pi.* FROM core.core_plugin_instances pi
@@ -303,9 +334,11 @@ pub async fn get_plugin_status(
         "#,
     )
     .bind(&plugin_code)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
+
+    let _ = scope.commit().await;
 
     match instance {
         Some(i) => Json(CoreResponse::success(i, "Plugin status retrieved")),
@@ -333,6 +366,17 @@ pub async fn unregister_plugin(
 ) -> Json<CoreResponse<()>> {
     tracing::info!("[Plugin] Unregistering plugin: {}", plugin_code);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open write scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to unregister plugin: {}",
+                e
+            )));
+        }
+    };
+
     // 更新运行时状态为 stopped
     sqlx::query(
         r#"
@@ -342,9 +386,11 @@ pub async fn unregister_plugin(
         "#,
     )
     .bind(&plugin_code)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     .ok();
+
+    let _ = scope.commit().await;
 
     Json(CoreResponse::success((), "Plugin unregistered"))
 }
@@ -365,6 +411,17 @@ pub async fn list_plugins_with_status(
 ) -> Json<CoreResponse<Vec<PluginWithRuntimeStatus>>> {
     tracing::info!("[Plugin] Listing plugins with runtime status");
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open read scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to open database scope: {}",
+                e
+            )));
+        }
+    };
+
     let plugins: Vec<PluginWithRuntimeStatus> = sqlx::query_as(
         r#"
         SELECT p.id, p.code, p.name, p.description, p.version, p.plugin_type,
@@ -376,9 +433,11 @@ pub async fn list_plugins_with_status(
         ORDER BY p.code
         "#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+
+    let _ = scope.commit().await;
 
     Json(CoreResponse::success(plugins, "Plugins retrieved"))
 }
@@ -411,6 +470,16 @@ pub async fn get_navigation_config(
         .and_then(|s| uuid::Uuid::parse_str(s).ok());
 
     let use_tenant_filter = !claims.is_superuser && tenant_uuid.is_some();
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open read scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to open database scope: {}",
+                e
+            )));
+        }
+    };
     let rows: Vec<(String, String, Option<String>, Option<String>, bool, bool)> =
         if use_tenant_filter {
             let tid = tenant_uuid.unwrap();
@@ -429,7 +498,7 @@ pub async fn get_navigation_config(
             "#,
             )
             .bind(tid)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         } else {
@@ -443,10 +512,12 @@ pub async fn get_navigation_config(
             ORDER BY p.category NULLS LAST, p.code
             "#,
             )
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default()
         };
+
+    let _ = scope.commit().await;
 
     let mut modules = Vec::new();
     for (code, name, category, entry_point, _is_active, _is_installed) in rows {

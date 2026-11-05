@@ -23,9 +23,10 @@ use sqlx::FromRow;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_auth::tier::{resolve_effective_tier, SubscriptionStatus, Tier};
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 // ==================== 数据模型 ====================
@@ -60,7 +61,7 @@ pub struct EffectiveSubscription {
 
 #[derive(Debug, Clone)]
 pub struct SubscriptionState {
-    pub pool: sqlx::PgPool,
+    pub db: Db,
 }
 
 // ==================== Handlers ====================
@@ -79,12 +80,21 @@ pub async fn get_current_subscription(
         .and_then(|t| Uuid::parse_str(t).ok())
         .unwrap_or_else(Uuid::nil);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("获取订阅失败", e)),
+    };
+
     let sub: std::result::Result<Option<Subscription>, sqlx::Error> = sqlx::query_as::<_, Subscription>(sqlx::AssertSqlSafe(format!(
         "SELECT {SUB_RETURN} FROM public.subscriptions WHERE tenant_id = $1 ORDER BY updated_at DESC LIMIT 1"
     )))
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("获取订阅失败", e));
+    }
 
     match sub {
         Ok(Some(s)) => {
@@ -137,6 +147,11 @@ pub async fn upsert_subscription(
         .unwrap_or_else(Uuid::nil);
     let now = Utc::now();
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("保存订阅失败", e)),
+    };
+
     let result: std::result::Result<Subscription, sqlx::Error> =
         sqlx::query_as::<_, Subscription>(sqlx::AssertSqlSafe(format!(
             r#"INSERT INTO public.subscriptions
@@ -156,12 +171,18 @@ pub async fn upsert_subscription(
         .bind(Some(now))
         .bind(req.expires_at)
         .bind(now)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await;
 
     match result {
-        Ok(s) => ApiResponse::success(s, "订阅已保存"),
-        Err(e) => ApiResponse::from(TopemsError::internal("保存订阅失败", e)),
+        Ok(s) => match scope.commit().await {
+            Ok(()) => ApiResponse::success(s, "订阅已保存"),
+            Err(e) => ApiResponse::from(TopemsError::internal("保存订阅失败", e)),
+        },
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("保存订阅失败", e))
+        }
     }
 }
 
@@ -177,6 +198,10 @@ pub async fn cancel_subscription(
         .and_then(|t| Uuid::parse_str(t).ok())
         .unwrap_or_else(Uuid::nil);
     let now = Utc::now();
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("取消订阅失败", e)),
+    };
     let result: std::result::Result<Option<Subscription>, sqlx::Error> =
         sqlx::query_as::<_, Subscription>(sqlx::AssertSqlSafe(format!(
             "UPDATE public.subscriptions SET status = 'canceled', updated_at = $3
@@ -185,13 +210,22 @@ pub async fn cancel_subscription(
         .bind(id)
         .bind(tenant_id)
         .bind(now)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await;
 
     match result {
-        Ok(Some(s)) => ApiResponse::success(s, "订阅已取消"),
-        Ok(None) => ApiResponse::not_found("订阅不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("取消订阅失败", e)),
+        Ok(Some(s)) => match scope.commit().await {
+            Ok(()) => ApiResponse::success(s, "订阅已取消"),
+            Err(e) => ApiResponse::from(TopemsError::internal("取消订阅失败", e)),
+        },
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("订阅不存在")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("取消订阅失败", e))
+        }
     }
 }
 
@@ -199,7 +233,7 @@ pub async fn cancel_subscription(
 
 pub struct SubscriptionModule {
     routes: Router,
-    db: sqlx::PgPool,
+    db: Db,
 }
 
 impl SubscriptionModule {
@@ -218,14 +252,14 @@ impl SubscriptionModule {
             legacy_prefixes: &[],
             init_telemetry: false,
         };
-        let ctx = bootstrap_service(&config).await?;
-        topems_shared_db::database::probe_connection(&ctx.db).await?;
+        let ctx = bootstrap_service_shared(&config).await?;
+        // 作用域沿用模块原有 SEARCH_PATH：public。
+        let db = Db::new(ctx.db.clone(), "public");
+        db.check_health().await?;
 
         // C-1：subscriptions 表由迁移链权威创建（运行时自建表已移除）
 
-        let state = SubscriptionState {
-            pool: ctx.db.clone(),
-        };
+        let state = SubscriptionState { db: db.clone() };
         // 权限分层：读（current）需 subscription:read（tier_permissions 自动关联），写（upsert/cancel）需 subscription:admin
         let read_routes = Router::new()
             .route("/current", get(get_current_subscription))
@@ -252,10 +286,7 @@ impl SubscriptionModule {
             ));
 
         tracing::info!("✅ 订阅模块已接入（prefix={}）", config.api_prefix);
-        Ok(Self {
-            routes,
-            db: ctx.db.clone(),
-        })
+        Ok(Self { routes, db })
     }
 }
 
@@ -275,11 +306,12 @@ impl Module for SubscriptionModule {
 
     async fn health_check(&self) -> ModuleHealth {
         let mut health = ModuleHealth::healthy("subscription", ModuleGroup::Core);
-        let db_ok = self.db.size() > 0;
+        let db = self.db.stats();
+        let db_ok = db.size > 0;
         health.dependencies.push(crate::module::DependencyHealth {
             name: "PostgreSQL",
             healthy: db_ok,
-            detail: format!("连接池大小 {}", self.db.size()),
+            detail: format!("共享池连接数 {}", db.size),
         });
         health
     }

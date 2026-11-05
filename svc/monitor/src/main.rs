@@ -7,12 +7,12 @@ use axum::{extract::State, routing::get, Router};
 use crate::modules::monitor::monitor_plugin;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
+    bootstrap_service_shared, build_application, build_detailed_health_response_db,
+    prometheus_metrics_handler, run, ServiceConfig,
 };
-use topems_shared_core::health::{
-    simple_health_check, ServiceHealth, SimpleHealthConfig, SystemMetrics,
-};
+use topems_shared_core::health::{DependencyHealth, HealthStatus, ServiceHealth, SystemMetrics};
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 
 mod shared;
 
@@ -35,13 +35,14 @@ async fn main() -> anyhow::Result<()> {
         init_telemetry: true,
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_shared(&config).await?;
 
     tracing::info!("🚀 TOPEMS Monitor Service (拆分自 unified-core / V68.1 A2.1) starting...");
 
     let start_time = Instant::now();
     let app_state = AppState {
-        pool: ctx.db.clone(),
+        // 沿用模块原有 SEARCH_PATH：public。
+        db: Db::new(ctx.db.clone(), "public"),
         auth_state: ctx.auth_state.clone(),
         metrics: Arc::new(SystemMetrics::new()),
         start_time,
@@ -106,12 +107,48 @@ async fn home() -> &'static str {
 }
 
 async fn health(State(state): State<AppState>) -> ServiceHealth {
-    let config = SimpleHealthConfig::new("topems-monitor").with_db(state.pool.clone());
-    simple_health_check(&config).await
+    let start = std::time::Instant::now();
+    let db_ok = state.db.check_health().await.is_ok();
+    let status = if db_ok {
+        HealthStatus::Healthy
+    } else {
+        HealthStatus::Unhealthy
+    };
+    let uptime = {
+        let secs = state.start_time.elapsed().as_secs();
+        let (days, hours, minutes, seconds) = (
+            secs / 86400,
+            (secs % 86400) / 3600,
+            (secs % 3600) / 60,
+            secs % 60,
+        );
+        if days > 0 {
+            format!("{}d {}h {}m {}s", days, hours, minutes, seconds)
+        } else if hours > 0 {
+            format!("{}h {}m {}s", hours, minutes, seconds)
+        } else if minutes > 0 {
+            format!("{}m {}s", minutes, seconds)
+        } else {
+            format!("{}s", seconds)
+        }
+    };
+    ServiceHealth {
+        service_name: "topems-monitor".to_string(),
+        status: status.clone(),
+        message: "topems-monitor is running".to_string(),
+        timestamp: chrono::Utc::now().to_rfc3339(),
+        uptime: Some(uptime),
+        dependencies: Some(vec![DependencyHealth {
+            name: "postgresql".to_string(),
+            status,
+            message: if db_ok { "healthy" } else { "unhealthy" }.to_string(),
+        }]),
+        response_time_ms: Some(u64::try_from(start.elapsed().as_millis()).unwrap_or(u64::MAX)),
+        last_check: None,
+    }
 }
 
 async fn detailed_health(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    use topems_shared_bootstrap::build_detailed_health_response;
     let modules = serde_json::json!({
         "metrics": "active",
         "health_check": "active",
@@ -124,8 +161,8 @@ async fn detailed_health(State(state): State<AppState>) -> ApiResponse<serde_jso
         "split_from": "unified-core",
         "v68_1_task": "A2.1",
     });
-    let resp = build_detailed_health_response(
-        &state.pool,
+    let resp = build_detailed_health_response_db(
+        &state.db,
         "topems-monitor",
         modules,
         env!("CARGO_PKG_VERSION"),

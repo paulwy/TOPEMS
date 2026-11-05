@@ -307,10 +307,11 @@ pub async fn get_database_metrics(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<DatabaseMetricsResponse> {
+    let pool_stats = state.db.stats();
     let metrics = DatabaseMetricsResponse {
         service_name: "topems-monitor".to_string(),
-        pool_size: state.pool.size(),
-        pool_idle: state.pool.num_idle(),
+        pool_size: pool_stats.size,
+        pool_idle: pool_stats.idle,
         active_transactions: 5,
         query_count: 12345,
         slow_query_count: 3,
@@ -451,8 +452,9 @@ pub async fn get_realtime_metrics(
     let cpu_usage_percent = ((load_1m / cpu_cores) * 100.0).min(100.0);
     let (total_mb, used_mb, free_mb, memory_usage_percent) = get_memory_usage();
     let connections = state.metrics.get_active_connections();
-    let pool_size = state.pool.size();
-    let pool_idle = state.pool.num_idle();
+    let pool_stats = state.db.stats();
+    let pool_size = pool_stats.size;
+    let pool_idle = pool_stats.idle;
     let active_conns = pool_size.saturating_sub(pool_idle as u32);
     let total_requests = state.metrics.get_request_count();
     let total_errors = state.metrics.get_error_count();
@@ -467,21 +469,27 @@ pub async fn get_realtime_metrics(
     } else {
         0.0
     };
-    let (active_alerts, critical_alerts, warning_alerts) = match sqlx::query(
-        "SELECT COUNT(*) FILTER (WHERE status='active') AS active,
+    let (active_alerts, critical_alerts, warning_alerts) = match state.db.scope_read().await {
+        Ok(mut scope) => {
+            let fetched = sqlx::query(
+                "SELECT COUNT(*) FILTER (WHERE status='active') AS active,
                 COUNT(*) FILTER (WHERE status='active' AND severity='critical') AS critical,
                 COUNT(*) FILTER (WHERE status='active' AND severity='warning') AS warning
          FROM public.alerts WHERE deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id=$1)",
-    )
-    .bind(tenant_id)
-    .fetch_one(&state.pool)
-    .await
-    {
-        Ok(row) => (
-            row.try_get("active").unwrap_or(0),
-            row.try_get("critical").unwrap_or(0),
-            row.try_get("warning").unwrap_or(0),
-        ),
+            )
+            .bind(tenant_id)
+            .fetch_one(&mut scope)
+            .await;
+            let _ = scope.commit().await;
+            match fetched {
+                Ok(row) => (
+                    row.try_get("active").unwrap_or(0),
+                    row.try_get("critical").unwrap_or(0),
+                    row.try_get("warning").unwrap_or(0),
+                ),
+                Err(_) => (0, 0, 0),
+            }
+        }
         Err(_) => (0, 0, 0),
     };
     ApiResponse::success(

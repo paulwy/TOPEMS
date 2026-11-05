@@ -419,12 +419,9 @@ pub struct InfrastructureHealth {
 pub async fn get_infrastructure_health(
     State(state): State<AppState>,
 ) -> ApiResponse<Vec<InfrastructureHealth>> {
-    // 数据库探活（真实执行 SELECT 1）
+    // 数据库探活（真实执行 SELECT 1，经作用域封装）
     let db_start = std::time::Instant::now();
-    let db_ok = sqlx::query_scalar::<_, i32>("SELECT 1")
-        .fetch_one(&state.pool)
-        .await
-        .is_ok();
+    let db_ok = state.db.check_health().await.is_ok();
     let db_ms = db_start.elapsed().as_millis() as u64;
 
     // 网关进程运行时长（实测）
