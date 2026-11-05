@@ -564,14 +564,11 @@ pg_restore --no-owner --no-privileges -h 127.0.0.1 -p 5432 -U xingzhai \
 
 **scratch 重建验证**（库 `p4_rebuild_verify`，本地 5432，**保留**）
 
-- 重建方式：按文件名版本升序逐文件 `psql --single-transaction -v ON_ERROR_STOP=1`；结果 **573 OK / 16 FAIL**，表数 1229（迁移链不含 init 建表部分）。
+- 重建方式：按文件名版本升序逐文件 `psql --single-transaction -v ON_ERROR_STOP=1`；首轮结果 **573 OK / 16 FAIL**（16 条已由 §16.3 分类治理，修正后为 573 OK / 0 FAIL / 16 SKIP），表数 1229（迁移链不含 init 建表部分）。
 - **39 张目标表终态：`remaining_count=0`（全部不存在）** —— 迁移链末尾断言 `P4 chain OK: 39 shadow tables absent` 通过。
 - **10 张核心表抽样**（`iam.users / iam.roles / iam.permissions / mes.production_orders / ehs.qa_ehs_hazards / erp.customers / pdm.pdm_drawings / qms.qa_inspection_items / srm.suppliers / wms.warehouses`）：列名+类型+可空 **236/236 一致**，主键 **完全一致**。
-- 16 个失败均为**既有链问题**，与本次 39 张无关，分三类：
-  1. **8 个 test/5433 定向迁移**（`db07/db08/db10/db11/db14/db15/db16/db18`）：依赖 test 库既有数据/列形态或 5433 专属对象，空库无数据故必然失败；
-  2. **7 个 schema-defense / align 迁移**：目标对象由 `database/init` 建立（如 `flow.core_workflow_versions`、`iam.tenant_permissions`、`public.qa_lab_tasks`），纯迁移链不含 init 时缺失；
-  3. **1 个 P4 首批迁移**（`20261105100000`）：同因——`iam.tenant_permissions` 由 init 建立，缺失时 FK 重指向步骤被跳过，导致 `mes.tenant_permissions` 仍有入站 FK 而 `ABORT`。该批目标不在本轮 39 张内，未做改动。
-- 复用命令：`createdb -h /tmp p4_rebuild_verify` → 对 `database/migrations/*.sql` 按 `LC_ALL=C sort` 逐文件 `psql --single-transaction -v ON_ERROR_STOP=1 -f`；断言 SQL 见迁移文件末尾。
+- 16 个失败均为**既有链问题**，与本次 39 张无关。**根因已在 §16.3 逐条复核并修正**（原判「由 `database/init` 建立」不成立）：8 个 test/5433 定向迁移 + 7 个依赖缺口（前向建表 1、schema 错位 3、先建后删 3）+ 1 个 `20261105100000` 因 `iam.tenant_permissions` 缺失 `ABORT`。修正后的可重复重建流程见 §16.3（573 OK / 0 FAIL / 16 SKIP）。该批目标不在本轮 39 张内，未做改动。
+- 复用命令：`bash scripts/migration/rebuild-verify-classified.sh`（脚本内含 16 条分类 skip，不改迁移文件字节）。
 
 ### 15.2 test 基线补齐：20 张「应保留」表
 
@@ -580,3 +577,69 @@ pg_restore --no-owner --no-privileges -h 127.0.0.1 -p 5432 -U xingzhai \
 - 执行结果：test 表数 **1329 → 1349**（+20），20/20 存在；出站 FK 5 条，`convalidated` **invalid=0**。
 - 结构对比（prod vs test）：**252 个列的名字/类型/可空完全一致，20 个主键完全一致**。
 - 对照基线有效性：prod-only 表差 **63 → 1**（仅剩 `mes.erp_dictionaries`），test-only **0**；后续 prod-vs-test 比对噪声从 63 项降到 1 项。
+
+## 16. 收尾三件事（2026-11-05）：erp_dictionaries 可达性 / prod 账本补登 / 迁移链分类治理
+
+### 16.1 A. `mes.erp_dictionaries` 可达性核查（只读，未删未改）
+
+**结论：功能已完整实现且对外暴露，但从未成功调用过一次（上线即坏）→ 实质死代码。倾向「删表 + 清 handler + 迁移说明」，**待拍板**。**
+
+| 维度 | 实测证据 |
+|---|---|
+| 后端路由 | [dictionaries.rs](../../svc/erp/src/modules/dictionaries.rs#L16-L28) 定义 `GET/POST /dictionaries`、`GET/PUT/DELETE /dictionaries/{id}`；5 个 handler 在 #69/#155/#196/#231/#284；[mod.rs](../../svc/erp/src/modules/mod.rs#L147) 已 merge；[erp_real_module.rs](../../svc/server/src/modules/erp_real_module.rs#L154) 以 `/api/erp` nest 并挂 auth 中间件；[main.rs](../../svc/server/src/main.rs#L63-L70) 由 feature `module-erp` 注册；[Cargo.toml](../../svc/server/Cargo.toml#L69-L71) 该 feature **在 default 内**（prod 常规构建即启用） |
+| 权限 | handler **无权限点校验**（仅取 `claims` 的 tenant）；前端路由需 `erp:dashboard:read`，导航声明 `erp:dictionary:read`；两点均存在于 `public.core_permissions`（986 条）与 [permissions.ts](../../apps/web/src/config/permissions.ts#L490) |
+| 前端 | 页面 [DictionaryPage.tsx](../../apps/web/src/pages/erp/DictionaryPage.tsx#L26)、API [dictionaries.ts](../../apps/web/src/api/erp/dictionaries.ts)、路由 [config.ts](../../apps/web/src/modules/erp/config.ts#L559-L571)、导航 [config.ts](../../apps/web/src/modules/erp/config.ts#L869-L880)；DB `core_menus` 有 `erp-data-dictionaries`（`/erp/data-dictionaries`，permission `erp:dashboard:read`），种子来自 [20261102140000_menu_seed_erp.sql](../../database/migrations/20261102140000_menu_seed_erp.sql#L46)。另有 `erp-dictionaries`（`/erp/dict-management`）是 `dict_types` 的另一套字典，勿混 |
+| 测试 | 前端 [ErpDictionaryPage.test.tsx](../../apps/web/src/pages/__tests__/ErpDictionaryPage.test.tsx) **6 例**；后端 `tests/` **0 例** |
+| 数据 | prod `mes.erp_dictionaries` **0 行**、12 列（id/tenant_id/code/name/category/items/status/description/created_by/created_at/updated_at/deleted_at）、入站 FK **0**；`erp.erp_dictionaries` 与 `public.erp_dictionaries` **均不存在**；test **任何 schema 都不存在** |
+| 建表来源 | [20261021000008_crm_tags_erp_dictionaries.sql](../../database/migrations/20261021000008_crm_tags_erp_dictionaries.sql#L7) 为**无 schema 前缀**的 `CREATE TABLE IF NOT EXISTS erp_dictionaries`，落点取决于执行时 `search_path`；prod 实际落在 `mes` |
+| 调用实况 | `set search_path=erp,public; select count(*) from erp_dictionaries;` → **`ERROR: relation "erp_dictionaries" does not exist`**。服务连接池固定 `SEARCH_PATH=erp, public`（[erp_real_module.rs](../../svc/server/src/modules/erp_real_module.rs#L38)），5 个 handler 全部 100% 失败；prod 日志中该表相关报错 **0 次**（无人调用） |
+
+判定口径：菜单入口确实出现在 prod（曾计划对外），但表从不在 `erp/public`，点开必失败 → 归为「从未成功上线」。三个选项中对应第一项（死代码），处置建议：删表 + 清 handler + 一条迁移说明；若后续确需该功能，正确做法是补 `erp.erp_dictionaries` 或把 handler SQL 改为 `mes.erp_dictionaries` + 补权限点。
+
+### 16.2 B. prod 账本补登两条 no-op 迁移（571 → 573）
+
+- **前置实测**：`20261105230000` 涉及的 39 张影子表在 prod **全部 absent**；`20261105235000` 涉及的 20 张基线表在 prod **全部 present**。故前者只剩末尾断言（`P4 chain OK`），后者只有 102 条 SKIP（20 表 + 1 序列 `already exists`）。
+- **备份**：`~/topems/backups/topems_prod_pre_p4ledger_20261105.dump`（4,128,518 B，`pg_dump -Fc`）。
+- **干跑**：单事务 `\i` 两个文件 + `ROLLBACK`，`ON_ERROR_STOP=1`，**exit 0、0 ERROR**。
+- **实跑**：两条各自 `BEGIN; \i <文件>; INSERT INTO public._sqlx_migrations ...; COMMIT;`（未用 `sqlx migrate run`，避免顺带应用其余 16 条 test/5433 定向迁移）。
+- **结果**：表数 **1350 不变**；结构指纹（表数 / 列定义 md5 / 约束 md5 / 索引数 / 策略数 / 触发器数）前后 **diff 为空**；`:8099/health` **200**；账本 **571 → 573**；行内 checksum 与文件 SHA-384 **逐字节一致**：
+
+| version | description | checksum（前 16 位） |
+|---|---|---|
+| `20261105230000` | `p4a4 drop shadows in rebuild chain` | `2dac6316cce37cea…aed58` |
+| `20261105235000` | `test baseline 20 reverse tables` | `eb40f860a663165d…f4aa2` |
+
+- **发现（遗留项，不在本轮修）**：`20261105235000` 内 `ALTER SEQUENCE public.tenant_permissions_id_seq OWNED BY ...` 的守卫误写成 `to_regclass('public')`（恒为 NULL），导致该句**永远 SKIP**。prod 序列原本已归属列、无影响；test 的该序列因此未归属列（`pg_depend deptype='a'` 为空），属结构小差异，可后续用一条前向迁移补正。
+
+### 16.3 C. 16 条迁移链失败：分类、处置与重建脚本
+
+> **修正 §15.1**：前一轮写「7 条由 `database/init` 建立」不成立——`database/init/*.sql` 不含这些对象（仅 `iam.core_email_queue`，且 schema 不匹配）。本轮逐条定位真实根因如下。
+
+| # | 迁移文件 | 分类 | 真实根因 | 处置 |
+|---|---|---|---|---|
+| 1 | `20261103200000_db07_test_timestamp_uuid_align_prod` | test 定向 | 依赖 test 库既有数据/列形态 | 脚本 skip |
+| 2 | `20261103210000_db08_test_varchar_to_text_190cols` | test 定向 | 同上 | 脚本 skip |
+| 3 | `20261103230000_db10_5433_varchar_text_to_uuid_19cols` | 5433 定向 | 5433 专属列形态 | 脚本 skip |
+| 4 | `20261104000000_db11_5433_varchar_to_text_24cols` | 5433 定向 | 同上 | 脚本 skip |
+| 5 | `20261104030000_db14_test_varchar_to_uuid_7cols_with_data` | test 定向 | 依赖存量数据转换 | 脚本 skip |
+| 6 | `20261104040000_db15_5433_integer_bigint_16cols` | 5433 定向 | 5433 专属列形态 | 脚本 skip |
+| 7 | `20261104050000_db16_5433_tenant_id_rls_decouple_14cols` | 5433 定向 | 同上 | 脚本 skip |
+| 8 | `20261104070000_db18_5433_special_types_8cols` | 5433 定向 | 同上 | 脚本 skip |
+| 9 | `20261005000004_lims_qa_lab_fk_repoint` | 依赖缺口（前向） | `public.qa_lab_tasks` 由**更晚**的 `20261007000009` 创建 | 脚本 skip |
+| 10 | `20261029185000_schema_defense_align_columns` | 依赖缺口（schema 错位） | 链建 `public.qa_sampling_plans`，本迁移改 `mes.qa_sampling_plans`（prod 该表来自运行时/历史残留，现已迁 `qms`） | 脚本 skip |
+| 11 | `20261029200000_schema_defense_type_align` | 依赖缺口（schema 错位） | 链建 `public.workshops`，本迁移改 `mes.workshops`（prod 该表来自运行时 DDL） | 脚本 skip |
+| 12 | `20261102220000_rls_enable_biz_batch1` | 依赖缺口（先建后删） | `iam.tenant_permissions` 已被 `20261007000012` DROP，后续又引用 | 脚本 skip |
+| 13 | `20261104130000_p3_pk_5` | 依赖缺口（先建后删） | `flow.core_master_data_refs` 已被 `20261027200000` DROP | 脚本 skip |
+| 14 | `20261104140000_p3_unique_48` | 依赖缺口（先建后删） | `flow.core_file_permissions` 已被 `20261027200000` DROP | 脚本 skip |
+| 15 | `20261104150000_p3_fk_45` | 依赖缺口（schema 错位） | 链只有 `public.core_doc_document_versions`（`20261029120000`），本迁移要 `flow.` 版 | 脚本 skip |
+| 16 | `20261105100000_p4_drop_shadow_tables_and_repoint_fks` | P4 ABORT | 同 #12：`iam.tenant_permissions` 缺失 → FK 重指向被跳过 → B4 入站 FK 断言 `ABORT` | 脚本 skip |
+
+**init-first 实测否证**：在 `p4_rebuild_init` 先跑 11 个 `database/init/*.sql` 再跑迁移 → init **9/11 失败**（`04` 缺 `unified_core` schema、`05` 早于 `06` 建 `iam`、`06/07/07_qms` 为 pg_dump 快照且重复主键定义），迁移侧 OK 仍 573、**无一条被 init 救回**。故重建流程**不采用 init-first**，改为「仅迁移链 + 脚本层分类跳过」。
+
+**可重复动作**：新增 [rebuild-verify-classified.sh](../../scripts/migration/rebuild-verify-classified.sh)（skip 清单在脚本内，**不改迁移文件字节**，不影响 sqlx checksum）。复跑结果：
+
+- `p4_rebuild_verify`（本地 5432，**保留**供核对）：**573 OK / 0 FAIL / 16 SKIP**（589 文件，exit 0）。
+- 剩余失败 **0 条**；16 条跳过均有分类与原因（上表）。
+- prod 账本现为 573，未登记的 16 个文件即 test/5433 定向迁移（`db08/db09/db10/db11/db12/db13/db14/db15/db16/db17/db18/db20/db21/db23/db24` + `finance_currency_master_fix`），与上述 skip 清单不完全同集，均无需在 prod 登记。
+
+**仍挂账（需单独立项）**：若要把 16 条跳过真正修好，必须在迁移层（而非脚本层）解决——上表 #9 调整执行顺序或加前置建表、#10/#11/#15 统一 schema、#12–#14/#16 恢复被删对象或改为 `to_regclass` 守卫。因「不改已发布迁移字节」约束，本轮不动。
