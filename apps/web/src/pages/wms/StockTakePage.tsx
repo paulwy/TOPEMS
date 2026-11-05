@@ -31,12 +31,17 @@ import { WMS_PATHS } from '@/modules/wms/config';
 import { apiLogger } from '@/utils/logger';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+// P3 批7：盘点写/管理操作权限约束（BE-only 码补前端落点）
+import { usePermission } from '@/hooks/usePermission';
 
 const StockTakePage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
+  const { checkPermission } = usePermission();
+  const canWrite = checkPermission('wms:stocktake:write');
+  const canAdmin = checkPermission('wms:stocktake:admin');
 
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showCountDialog, setShowCountDialog] = useState(false);
@@ -452,7 +457,7 @@ const StockTakePage: React.FC = () => {
                 }}
               >
                 <Typography variant='h6'>{i18n.t('pages.stock_take_page.k2')}</Typography>
-                {selectedStockTake.status === 'in_progress' && (
+                {canWrite && selectedStockTake.status === 'in_progress' && (
                   <Button
                     variant='outlined'
                     size='small'
@@ -588,7 +593,7 @@ const StockTakePage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          {selectedStockTake.status === 'in_progress' && (
+          {canWrite && selectedStockTake.status === 'in_progress' && (
             <Button
               variant='contained'
               color='success'
@@ -599,17 +604,19 @@ const StockTakePage: React.FC = () => {
               {i18n.t('pages.stock_take_page.k15')}
             </Button>
           )}
-          {selectedStockTake.status === 'completed' && !selectedStockTake.stock_adjusted && (
-            <Button
-              variant='contained'
-              color='warning'
-              startIcon={<Edit size={16} />}
-              onClick={handleAdjustStockTake}
-              disabled={adjustStockTakeMutation.isPending}
-            >
-              {i18n.t('pages.stock_take_page.k16')}
-            </Button>
-          )}
+          {canAdmin &&
+            selectedStockTake.status === 'completed' &&
+            !selectedStockTake.stock_adjusted && (
+              <Button
+                variant='contained'
+                color='warning'
+                startIcon={<Edit size={16} />}
+                onClick={handleAdjustStockTake}
+                disabled={adjustStockTakeMutation.isPending}
+              >
+                {i18n.t('pages.stock_take_page.k16')}
+              </Button>
+            )}
           {selectedStockTake.status === 'completed' && selectedStockTake.stock_adjusted && (
             <Chip
               label={t('wms.stocktake_page.variance_adjusted')}
@@ -749,7 +756,7 @@ const StockTakePage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleCountItems}
-            disabled={countItemsMutation.isPending}
+            disabled={!canWrite || countItemsMutation.isPending}
           >
             {i18n.t('pages.stock_take_page.k26')}
           </Button>
