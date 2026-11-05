@@ -35,6 +35,8 @@ auth-state.json
 !*.env.example
 # standalone 独立运行配置含真实密钥，仅本地使用，不入库
 config/standalone.env
+# Playwright E2E 运行时登录态（含真实 token，禁止入库）
+tests/e2e/.auth/
 
 # Frontend
 frontend/node_modules/
