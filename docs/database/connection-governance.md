@@ -492,12 +492,21 @@ C.4 的既有 5 项白名单未变。
 | 证据 | 来源 | 性质 |
 | --- | --- | --- |
 | prod 表存在性 / 列结构 | `database/baseline/prod_schema_20261105235700.sql.gz`（prod `pg_dump`，2026-11-05 23:57） | **prod 快照**，非本地库 |
-| prod 运行形态 | prod 只跑聚合二进制 `topems-server`（plist），以嵌入式路径为准（[p4 判定](../quality/p4-reverse-tables-triage-2026-11-05.md#L90)） | prod 事实 |
+| prod 活数据（行数 / 最近写入） | SSH `xingzhai@192.168.110.115` → 远端 `/opt/homebrew/bin/psql -d topems_prod`，仅 `SELECT`（2026-11-06 06:40 CST） | **prod 实测** |
+| prod 运行形态 | 远端 `launchctl list` / `ps aux` / plist `EnvironmentVariables` / `pg_stat_activity`（同上时刻） | **prod 实测** |
 | 代码引用的表 | 仓库 SQL 字符串静态扫描（`FROM/JOIN/INSERT INTO/UPDATE/DELETE FROM`），按各模块嵌入路径解析 | 代码事实 |
-| **未取得的证据** | `pg_isready 192.168.110.115:5432` 无响应；仓库与 `.env.production` 均无 prod DSN | **未连接 prod** |
 
-因此：**“表在哪个 schema、结构如何”有 prod 快照支撑；“哪份副本里有活数据/行数/FK”未实测**，列入 B.10.5 待确认。
-本地库仅用于辅助确认 schema 存在（`rd`/`rs` 本地并存），不作为 prod 结论。prod 只读约束未触碰：未执行任何 DDL/DML、未重启部署。
+**访问方式（修正）**：prod PostgreSQL 只监听 `localhost:5432`，不对内网开放，因此 `pg_isready 192.168.110.115:5432` 必然无响应——这不等于不可达。
+既有做法是 SSH 到 prod 主机后在本机用 psql 连接（也可用 `ssh -L 15432:127.0.0.1:5432` 隧道）；凭据来自 launchd plist 的内联 `DATABASE_URL`，不是仓库内的 DSN。
+本轮按此执行：**仅 `SELECT` / `information_schema` / `pg_catalog`，未执行任何 DDL/DML，未重启、未部署**。本地库未参与本轮结论。
+
+**prod 运行形态实测**：
+
+- `launchctl list` 仅 `com.topems.server`（PID 1243），进程为 `/Users/xingzhai/topems/bin/topems-server`；无独立 portal / lims / analytics 进程，nginx 与 vite 除外。
+- plist `EnvironmentVariables`：`SEARCH_PATH = flow, mobile, rs, erp, public, iam, shared`、`DATABASE_URL` 指向 `localhost:5432/topems_prod`、`DB_MAX_CONNECTIONS = 8`。
+  → 该基线**不含 `portal`**，portal 模块的裸 `core_*` 只能落到 `public`，与 B.10.5 的实测行数一致。
+- `pg_stat_activity`：76 个 client backend 全部来自 `::1`（同一进程），但 **`application_name` 全部为空**——prod 运行的二进制早于批 1 的命名下发，无法按模块归因；
+  “单一聚合形态”由进程清单与 plist 证明，不依赖 `application_name`。
 
 #### B.10.2 逐模块核对结果（19 个，已去重）
 
@@ -512,52 +521,128 @@ C.4 的既有 5 项白名单未变。
 | gis | `gis, public` | `gis, public, shared` | `gis.*`（19）+ `gis.gis_map_markers` | `gis, public` | 否 | 单 schema |
 | pm | `pm, public, shared` | `pm, public, shared` | `pm.*`（34）+ `pm.pm_budget_items`/`pm_tasks` | `pm, public, shared` | 否 | 一致 |
 | mobile | **未声明**（继承进程 env） | `mobile, public, shared` | `mobile.*`（24 张，**全部限定**） | `mobile, public, shared` | 否 | 嵌入态实际基线随构建顺序变化（prod 聚合 `flow,mobile,rs,erp,public,iam,shared`）；全限定故当前无影响，但需显式固化 |
-| portal | `public, portal` | `portal, public, shared` | `portal.portal_todos/quick_actions` + 裸 `core_faqs`/`core_guides`/`core_guide_lessons`→**public** | `public, portal`（两种形态统一） | **是（仅独立形态）** | 唯一写入方是 portal（[faq.rs#L198](../../svc/portal/src/modules/help/faq.rs#L198)、[guide.rs#L248](../../svc/portal/src/modules/help/guide.rs#L248)）；prod 嵌入写 public，独立写 portal，两库副本已分裂 |
+| portal | `public, portal` | `portal, public, shared` | 裸 `core_faqs`/`core_guides`/`core_guide_lessons`→**public**（活数据 12/12 行）；`portal.portal_todos/quick_actions/announcements/user_preferences` 空表 | `public, portal`（两种形态统一） | **是（仅独立形态）** | prod 实测：`public` 是活数据（12 条 FAQ + 12 条指南，均非空业务列，2026-10-26 写入）；`portal` 与 `iam` 副本 **0 行**（空壳）。嵌入写 public 与 prod 一致；独立 `portal, public` 会读到空表 |
 | pdm | `pdm, public` | `pdm, public, shared` | `pdm.*`（19）+ 裸 `pdm_products`/`pdm_materials`/`pdm_change_notices`→**pdm** | `pdm, public` | 否 | `public.pdm_products` 列不同（`name/code` vs `product_no/version`），**不是同一模型**，不可合并 |
-| lims | `lims, public` | `lims, public, shared` | `lims.*` + `public.qa_lab_*`（显式）+ 裸 `qa_lab_*`→**lims** | `lims, public` | 否（路径不变） | **模块内已分裂**：裸写 `qa_lab_instruments`→lims；[inspection_task.rs#L229](../../svc/lims/src/modules/inspection_task.rs#L229) 显式写 `public.qa_lab_records`，[inspection_record.rs#L130](../../svc/lims/src/modules/inspection_record.rs#L130) 裸写→lims；统计读 `public.qa_lab_instruments` |
+| lims | `lims, public` | `lims, public, shared` | `lims.*` + `public.qa_lab_*`（显式）+ 裸 `qa_lab_*`→**lims** | `lims, public` | 否（路径不变） | **模块内已分裂**：裸写 `qa_lab_instruments`→lims；[inspection_task.rs#L229](../../svc/lims/src/modules/inspection_task.rs#L229) 显式写 `public.qa_lab_records`，[inspection_record.rs#L130](../../svc/lims/src/modules/inspection_record.rs#L130) 裸写→lims；统计读 `public.qa_lab_instruments`。**prod 实测两侧全为 0 行**（见 B.10.5.2），分裂仅存于代码 |
 | ehs | `ehs, public` | `ehs, public, shared` | `ehs.*`（36 张全限定） | `ehs, public` | 否 | 裸表命中均为别名/注释；`schema_boundary.json` 记 `schema=public` 已过时 |
 | erp | `erp, public` | `erp, public, shared` | `erp.*`（32）+ 显式 `crm.core_crm_customers`/`finance.core_finance_accounts`/`public.audit_logs`；裸 `announcements`/`vehicles`/`meeting_*`→erp | `erp, public` | 否 | 裸同名表 erp/public 并存，erp 优先是既有语义 |
 | finance | `finance, public` | `finance, public, shared` | `finance.*`（约 68）+ 显式 `erp.opening_balances`；裸 `payables`/`receivables`/`expenses`→**finance** | `finance, public` | 否 | 写入方为 finance（[operational.rs#L1055](../../svc/finance/src/modules/operational.rs#L1055)）；erp 另有同名副本，二者独立 |
 | ai | `ai, public` | `ai, public, shared` | `ai.*`（11）+ `core.*`（6）+ `public.audit_logs` | `ai, public` | 否 | 裸 `FROM users` 只出现在注入测试/示例串，非真实查询；`schema_boundary.json` 的 `ai_service` 已过时 |
-| communication | `communication, public` | `communication, public, shared` | `communication.core_notifications/templates/geofences`（裸写）+ `public.core_emails` + `iam.users` + 裸 `core_users`→**public.core_users** | `communication, public` | 否 | **身份源两套**：显式 `iam.users` 与裸 `public.core_users` 并存 |
-| analytics | `bi, public` | `bi, public, shared` | 裸 `analytics_*`→**bi**（写入）；显式 `analytics.report_execution_records`（写入）；裸 `core_users/roles`→public | `bi, public` | 否 | 双表：`bi.report_execution_records` 无人使用（重复）；`public.core_roles` 由 unified-core 写；`iam.users` 另存 |
+| communication | `communication, public` | `communication, public, shared` | `communication.core_notifications/templates/geofences`（裸写）+ `public.core_emails` + `iam.users` + 裸 `core_users`→**public.core_users** | `communication, public` | 否 | **身份源两套**：显式 `iam.users` 与裸 `public.core_users` 并存。prod 实测 `iam.users` **5 行且今日仍在更新**，`public.core_users` **0 行** → `iam.users` 为权威；`core_notifications`/`core_emails` 两侧均 0 行 |
+| analytics | `bi, public` | `bi, public, shared` | 裸 `analytics_*`→**bi**（写入）；显式 `analytics.report_execution_records`（写入）；裸 `core_users/roles`→public | `bi, public` | 否 | 双表：`bi.report_execution_records` 无人使用（重复）；`public.core_roles` 由 unified-core 写；`iam.users` 另存。**prod 实测 `bi` 与 `analytics` 两侧相关表全为 0 行**（B.10.5.3），该模块 prod 从未产生数据 |
 | rd | `rs, public` | `rs, public` | `rs.*`（16）+ 显式 `rd.bugs` | `rs, rd, public` | 否（当前无裸 `bugs`） | `rs` 是权威业务 schema；`rd` schema 仅 4 张表，`bugs` 由其承载（[rd_ci_cd.rs#L202](../../svc/rd/src/rd_ci_cd.rs#L202)） |
 
 #### B.10.3 差异清单（会改变行为的逐条说明）
 
-1. **portal（唯一会改变解析的模块）**：3 张裸表 `core_faqs`/`core_guides`/`core_guide_lessons` 在 `iam`、`portal`、`public` 三处都存在。嵌入 `public, portal` → public；独立 `portal, public, shared` → portal。prod 跑嵌入，故 **prod 活数据在 public**。统一为 `public, portal` 后：prod 不变；独立部署会把这 3 张表的读写从 `portal` 切到 `public`，**portal schema 内的存量数据将不可见**，必须先做一次性数据迁移或明确弃用。
+1. **portal（唯一会改变解析的模块）**：3 张裸表 `core_faqs`/`core_guides`/`core_guide_lessons` 在 `iam`、`portal`、`public` 三处都存在。
+   嵌入 `public, portal` → public；独立 `portal, public, shared` → portal。prod 实测 **public 12/12 行（活）**，`portal` 与 `iam` 均 **0 行**。
+   统一为 `public, portal` 后：prod 不变；独立部署会把读写从空壳 `portal` 切到有数据的 `public`，**方向是“空 → 活”，不需要搬数据**（详见 B.10.5.5）。
 2. **`shared` 缺失（tms/ticket/gis/pdm/lims/ehs/erp/finance/ai/communication/analytics）**：prod `shared` 只有 `audit_logs`，而这些模块都没有裸查 `audit_logs`（erp/finance/analytics 用的是显式 `public.audit_logs`）。**去掉 `shared` 不改变任何解析**，属纯配置收敛。
 3. **mobile 未声明**：嵌入态没有模块级 `SEARCH_PATH`，基线取决于前面模块对进程 env 的覆盖（prod 聚合为 `flow,mobile,rs,erp,public,iam,shared`），独立态为 `mobile, public, shared`。因 24 张表全部 `mobile.*` 限定，**当前解析不受影响**；但这是顺序依赖隐患，批 2 必须显式固化。
 4. **rd / rs 落点（明确结论）**：**`rs` 是权威**（16 张 `rs.*` 全限定 + 裸 `rs_*` 解析到 rs）；**`rd` 只承载 `bugs`**（4 张表，代码仅一处显式读）。建议 `rs, rd, public`：`rs` 优先保证既有解析，`rd` 仅作补充；当前没有裸 `bugs`，所以**不改变现有结果**。
-5. **lims 的内部裂开（不是路径问题）**：`qa_lab_instruments` 写在 `lims`，但部分查询显式读 `public.qa_lab_instruments`；`qa_lab_records` 同一模块内一处写 `public.`、一处写裸名（→lims）。改 search_path 解决不了，必须在批 4 前统一前缀（先确认 public 副本是否还有写入方）。
+5. **lims 的内部裂开（不是路径问题）**：`qa_lab_instruments` 写在 `lims`，但部分查询显式读 `public.qa_lab_instruments`；`qa_lab_records` 同一模块内一处写 `public.`、一处写裸名（→lims）。
+   prod 实测 **两侧全部 0 行**（`public.qa_lab_*` 11 张、`lims.qa_lab_*` 9 张，`qa_lab_samples`/`qa_lab_tasks` 仅 public 存在），说明 prod 从未产生 lims 数据，
+   分裂只是代码隐患而非数据分裂。批 4 前统一前缀即可，**无需数据合并**。
 6. **analytics 双表**：`bi.analytics_dashboards` 等由裸名写入（权威）；`analytics.report_execution_records` 由显式写入（权威）；`bi.report_execution_records` 无任何引用（重复表）。
-7. **communication / analytics 的身份源**：`iam.users`（显式）与 `public.core_users`（裸名）并存；`public.core_roles` 由 unified-core 写入。路径保持现状即可，但“以哪张为权威”需数据核对。
+   prod 实测 `bi.report_execution_records`、`analytics.report_execution_records` 以及两侧 `analytics_*` 均为 **0 行**，故“取舍”是纯代码/迁移清理，无数据风险。
+7. **communication / analytics 的身份源**：`iam.users`（显式）与 `public.core_users`（裸名）并存。prod 实测 **`iam.users` 5 行（今日 05:27 仍在更新，全部 active）、`public.core_users` 0 行、`iam.core_users` 0 行** → **`iam.users` 是唯一活的身份源**，`public.core_users` 是空壳。
+   角色数据落 `public.core_roles`（15 行）/`public.core_role_permissions`（653 行），`iam.core_roles` 为 0 行——身份与角色分属两处，路径保持现状即可，代码侧应把裸 `core_users` 改为显式 `iam.users`。
 
 #### B.10.4 先修配置 vs 先修代码
 
 | 类别 | 模块 | 动作 |
 | --- | --- | --- |
 | **先修配置**（仅固化路径，无 SQL 改动） | tms、ticket、gis、pm、mobile、ehs、erp、finance、ai、communication、analytics、pdm、lims、rd | 把路径写死到 `Db::new`；停止 `std::env::set_var("SEARCH_PATH", …)` 的进程级突变（B 的 `SET LOCAL` 已按作用域生效） |
-| **先修代码**（路径解决不了） | lims（前缀统一）、analytics（重复表取舍）、communication（身份源）、tms（`vehicles` 是否应为 `tms.tms_vehicles`）、portal 独立形态（数据迁移） | 各自排入所属批次前置；不得用改 search_path 掩盖 |
-| **必须先补 prod 凭据** | portal、lims、analytics、communication | 需 prod 只读 `SELECT count(*)`/FK 核对“活数据在哪份副本” |
+| **先修代码**（路径解决不了） | lims（前缀统一）、analytics（重复表取舍）、communication（裸 `core_users`→`iam.users`）、tms（`vehicles` 是否应为 `tms.tms_vehicles`）、portal 独立形态（注释标注 `portal.core_*` 废弃） | 各自排入所属批次前置；不得用改 search_path 掩盖 |
+| ~~必须先补 prod 凭据~~ | ~~portal、lims、analytics、communication~~ | 已于 2026-11-06 经 SSH 只读实测补齐，结论见 B.10.5 |
 
-#### B.10.5 待确认（卡点明确，不编结论）
+#### B.10.5 活数据实测结论（prod 只读，2026-11-06 06:40 CST）
 
-1. **prod 无连接**：`pg_isready 192.168.110.115:5432` 无响应，仓库无 DSN/凭据。所需形式：
-   `TOPEMS_PROD_DSN='postgresql://<只读用户>:<pwd>@192.168.110.115:5432/topems'`（仅需 `CONNECT` + `information_schema`/`pg_catalog` 与下列表的 `SELECT`，无需 DDL/DML）；
-   若网络隔离，需 VPN/跳板或 `ssh -L 15432:127.0.0.1:5432` 隧道。**表存在性已由 prod 快照确定，缺的只是活数据分布**。
-2. `public.core_faqs` vs `portal.core_faqs` 行数与最近更新时间（决定 portal 迁移方向与是否需要搬数据）。
-3. `public.qa_lab_instruments/records` vs `lims.qa_lab_instruments/records` 的写入方与行数（lims 统一前缀的前提）。
-4. `bi.report_execution_records` 是否曾有写入（决定是否可删重复表）。
-5. `iam.users` vs `public.core_users` 的写入方与行数（communication/analytics 身份源）。
+> 来源：SSH `xingzhai@192.168.110.115` → 本机 `/opt/homebrew/bin/psql -d topems_prod`，仅 `SELECT`；**不是本地库**。
+> 原“待确认”5 项已全部关闭。
+
+##### B.10.5.1 portal（`core_faqs` / `core_guides` / `core_guide_lessons`）
+
+| 表 | 行数 | `max(updated_at)` | 非空业务列 | tenant 数 |
+| --- | --: | --- | --: | --: |
+| `public.core_faqs` | **12** | 2026-10-26 14:19:13.94399+08 | 12（question+answer 均非空） | 1 |
+| `public.core_guides` | **12** | 2026-10-26 14:19:13.946214+08 | 12（title 非空） | 1 |
+| `portal.core_faqs` / `core_guides` | **0** / **0** | — | 0 | — |
+| `iam.core_faqs` / `core_guides` | **0** / **0** | — | 0 | — |
+| `public.core_guide_lessons` / `portal.*` / `iam.*` | 0 / 0 / 0 | — | 0 | — |
+| `portal.portal_todos` / `quick_actions` / `announcements` / `user_preferences` / `health_checks` / `dashboard_stats` / `federation_transactions` | **全部 0** | — | — | — |
+
+判定：**`public` 是唯一活副本；`portal` 与 `iam` 的 `core_*` 是空壳**。prod plist 的 `SEARCH_PATH` 不含 `portal`，与“写入落在 public”完全吻合。
+
+##### B.10.5.2 lims（`public.qa_lab_*` vs `lims.qa_lab_*`）
+
+| 表 | public 行数 | lims 行数 |
+| --- | --: | --: |
+| `qa_lab_records` | 0 | 0 |
+| `qa_lab_instruments` | 0 | 0 |
+| `qa_lab_calibration_records` | 0 | 0 |
+| `qa_lab_inspection_reports` | 0 | 0 |
+| `qa_lab_processes` | 0 | 0 |
+| `qa_lab_reagents` / `reagent_alerts` / `reagent_history` / `sample_lifecycle` | 各 0 | 各 0 |
+| `qa_lab_samples` / `qa_lab_tasks` | 0 / 0 | **不存在**（仅 public） |
+
+判定：**不是并行双写，是两侧全空**。代码里 `public.` 与裸名并存确实存在，但 prod 从未写入 lims 业务；结构差异仍在（`lims.qa_lab_instruments` 15 列含 `name_en`/`organization_id`，`lims.qa_lab_records` 含 `organization_id`，public 为 13/9 列），但无数据可合并。
+
+##### B.10.5.3 analytics（`bi` 双表）
+
+| 表 | 行数 | 最近写入 |
+| --- | --: | --- |
+| `bi.report_execution_records` | **0** | 无（`started_at`/`completed_at` 全空） |
+| `analytics.report_execution_records` | **0** | 无 |
+| `bi.analytics_dashboards` / `datasets` / `self_service_reports` / `sync_records` | 各 0 | 无 |
+| `analytics.analytics_dashboards` / `datasets` / `self_service_reports` / `sync_records` | 各 0 | 无 |
+
+判定：**`bi.report_execution_records` 从未被写入**，与“无任何代码引用”一致，属可直接下线的重复表；`analytics.*` 侧同样为空，说明 prod 未使用该模块。
+
+##### B.10.5.4 communication 身份源
+
+| 表 | 行数 | `max(updated_at)` | 活跃行 |
+| --- | --: | --- | --: |
+| `iam.users` | **5** | **2026-11-06 05:27:44.38938+08** | 5（`is_active`） |
+| `public.core_users` | **0** | — | 0 |
+| `iam.core_users` | **0** | — | 0 |
+| `public.core_roles` / `core_role_permissions` | 15 / 653 | — | — |
+| `iam.core_roles` / `core_role_permissions` | 0 / 0 | — | — |
+| `communication.core_notifications` / `public.core_notifications` | 0 / 0 | — | — |
+| `communication.core_emails` / `public.core_emails` | 0 / 0 | — | — |
+
+判定：**`iam.users` 是唯一权威身份源**（prod 仍在写入）；`public.core_users` 空壳。角色/权限仍在 `public`，身份与角色分属两个 schema，属既有设计，不要合并。
+
+##### B.10.5.5 portal 处置建议（推荐：认定 `portal` 副本废弃，不搬数据）
+
+**推荐做法**：把 portal 模块的固化值统一为 **`public, portal`**；`portal` schema 内的 4 张 `core_*` 保留空表但标注废弃（代码注释 + 本文档 + 后续迁移不引用），**不做反向数据迁移**。
+
+理由：
+
+1. 方向只能是 `portal → public`（`portal` 0 行），而 0 行没有可搬的数据；搬数据等于空操作。
+2. prod 已长期以 `public` 为活数据（12 条 FAQ / 12 条指南，2026-10-26 写入，租户 1）；固化 `public, portal` 与 prod 现状**完全一致**，不改变任何 prod 解析。
+3. `portal.portal_*`（todos/quick_actions/announcements/user_preferences 等）在 `public` 没有同名表，仍由第二顺位 `portal` 承载，功能不受影响。
+4. 独立部署若继续用 `portal, public, shared`，会在空表上读写并与 prod 数据分叉；统一后独立部署第一次启动就能看到 prod 的 12+12 条数据。
+
+影响面：仅 portal 模块的 `core_faqs`/`core_guides`/`core_guide_lessons`/`core_guide_progress` 4 张表；无数据丢失（源为空），无 schema 变更（不 DROP），`iam.core_*` 空壳同样不删。
+后续若要彻底清理，可在独立迁移中 `DROP TABLE portal.core_*`（需另行评审，本轮不做 DDL）。
 
 #### B.10.6 批 2 前置结论
 
-- 批 2 的 5 个模块（tms/ticket/gis/pm/mobile）+ search 并池**可以按 B.10.2 的固化值执行**：prod 解析结果全部不变。
+- **19 个模块的固化值可以全部落地**：prod 解析结果除“独立 portal 形态”外全部不变；该形态的变化已证明是“空 → 活”，无数据风险。
+- **批 2 可以开始**：5 个模块（tms/ticket/gis/pm/mobile）+ search 并池按 B.10.2 执行。
 - `mobile` 必须显式声明 `mobile, public, shared`，不得继续依赖进程 env。
-- `tms` 固化值必须保留 `public`（否则 `main.rs#L124` 的裸 `vehicles` 会解析失败/改变）。
+- `tms` 固化值必须保留 `public`（否则 `main.rs#L124` 的裸 `vehicles` 会解析失败/改变）；`vehicles` 选表问题仍列为批 2 前置代码项（需确认预热是否有意读 `public.vehicles`）。
 - `search` 并池同时把 `SHARED_POOL_MODULE_WEIGHT` 改 4、`derived_db_pools()` 去掉 search 的 `+1`。
-- portal（批 3）/lims（批 4）/analytics（批 6）的代码项与 prod 活数据核对，作为各自批次的前置门禁，不阻塞批 2。
+- **仍需改代码、但不阻塞批 2 的项**：见下表。
+
+| 项 | 模块 | 批 | prod 实测依据 |
+| --- | --- | --- | --- |
+| 前缀统一（`public.` 与裸名并存） | lims | 批 4 | 两侧 0 行，改前缀无数据影响 |
+| 重复表取舍（`bi.report_execution_records` 无引用） | analytics | 批 6 | 0 行，无写入 |
+| 裸 `core_users` → 显式 `iam.users` | communication | 批 3 | `iam.users` 5 行活 / `public.core_users` 0 行 |
+| `portal.core_*` 标注废弃 + 固化 `public, portal` | portal | 批 3 | `portal` 0 行、`public` 12+12 行 |
+| `vehicles` 选表确认 | tms | 批 2 | 未实测（需业务确认） |
 
 ## C. schema 前缀规则（可执行门禁）
 
