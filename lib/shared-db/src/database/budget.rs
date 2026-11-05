@@ -33,7 +33,7 @@
 //! grant == 0 → 返回错误（fail-fast，不超发）
 //! ```
 //!
-//! `DB_EXPECTED_POOLS` 让额度在池之间公平分摊：嵌入模式默认 28（27 个 real_module +
+//! `DB_EXPECTED_POOLS` 让额度在池之间公平分摊：嵌入模式默认 29（28 个 real_module +
 //! 1 个进程级迁移池），独立部署默认 2（业务池 + 迁移池）。默认值与「先到先得」相比，
 //! 不会让前面的池吃光预算、后面的池拿不到连接。
 
@@ -44,8 +44,8 @@ use topems_shared_core::error::{Result, TopemsError};
 /// 默认进程总连接预算。给 PG `max_connections=100` 留出约 40 的运维 / 其他进程余量。
 pub const DEFAULT_TOTAL_CONNECTION_BUDGET: u32 = 60;
 
-/// 嵌入模式（topems-server）默认池数量：27 个 real_module 业务池 + 1 个共享迁移池。
-const EMBEDDED_DEFAULT_EXPECTED_POOLS: u32 = 28;
+/// 嵌入模式（topems-server）默认池数量：28 个 real_module 业务池 + 1 个共享迁移池。
+const EMBEDDED_DEFAULT_EXPECTED_POOLS: u32 = 29;
 
 /// 独立部署默认池数量：1 个业务池 + 1 个共享迁移池。
 const STANDALONE_DEFAULT_EXPECTED_POOLS: u32 = 2;
@@ -315,23 +315,23 @@ mod tests {
         cell.get_or_init(|| Mutex::new(Ledger::new(BudgetConfig::new(total, expected))))
     }
 
-    /// 27 个模块池各申请 3，预算 60、预期 28 池 → Σ max = 54 ≤ 60。
+    /// 28 个模块池各申请 3，预算 60、预期 29 池 → 每池 2，Σ max = 56 ≤ 60。
     #[test]
     fn grants_sum_within_budget_for_embedded_shape() {
         static L: OnceLock<Mutex<Ledger>> = OnceLock::new();
-        let l = ledger(&L, 60, 28);
+        let l = ledger(&L, 60, 29);
         let mut grants = Vec::new();
-        for _ in 0..27 {
+        for _ in 0..28 {
             let r = reserve_from(l, "business", 3).unwrap();
             grants.push(r.granted());
             r.commit();
         }
         let sum: u32 = grants.iter().sum();
-        assert_eq!(sum, 54);
+        assert_eq!(sum, 56);
         assert!(sum <= 60);
         let snap = l.lock().unwrap().snapshot();
-        assert_eq!(snap.allocated, 54);
-        assert_eq!(snap.pools, 27);
+        assert_eq!(snap.allocated, 56);
+        assert_eq!(snap.pools, 28);
     }
 
     /// 单池配置被调得很大也仍被预算卡住（负向用例的纯逻辑版）。

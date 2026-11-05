@@ -76,7 +76,10 @@ async fn budget_caps_concurrent_connections() {
         "[budget] total={} allocated={} pools={} peak={}",
         snap.total, snap.allocated, snap.pools, snap.peak_allocated
     );
-    assert!(snap.allocated <= BUDGET, "Σ max_connections 超预算: {snap:?}");
+    assert!(
+        snap.allocated <= BUDGET,
+        "Σ max_connections 超预算: {snap:?}"
+    );
     assert_eq!(snap.pools, POOLS);
 
     // 独立监控连接（不计入预算）：只负责采样，不参与业务负载。
@@ -131,10 +134,7 @@ async fn budget_caps_concurrent_connections() {
     let peak = peak.load(Ordering::Relaxed);
     println!("[load] ok={ok} err={err} observed_peak_connections={peak} budget={BUDGET}");
     assert_eq!(err, 0, "并发查询出现连接获取失败：{err}");
-    assert!(
-        peak <= BUDGET,
-        "实测连接峰值 {peak} 超过预算 {BUDGET}"
-    );
+    assert!(peak <= BUDGET, "实测连接峰值 {peak} 超过预算 {BUDGET}");
     assert!(peak >= 1, "未采样到任何连接，采样器可能未生效");
 
     // 提前返回 / 建池失败路径：无效 DSN 连续两次，额度必须归还，计数不递减也不增长。
