@@ -1386,7 +1386,7 @@ pub async fn get_metric_history_handler(
     );
     match history.await {
         Ok(history) => ApiResponse::success(history, "指标历史"),
-        Err(e) => ApiResponse::not_found(&e.classify().1),
+        Err(e) => ApiResponse::bad_request(&e.classify().1),
     }
 }
 
