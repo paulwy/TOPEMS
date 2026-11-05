@@ -366,6 +366,38 @@ node scripts/ci/check-schema-prefix.mjs --json
      `project_phases`/`project_milestones`（rd 与 pm）、`budgets`（finance 与 pm）。
      `unified-core` 与 `monitor` 是主要引用方，二者都没有自己的 schema，最容易读错。
 
+#### C.5.1 复核（2026-11-06 第二次扫描，已修复后）
+
+- **违规 1,627 处**（较首扫 −46），基线 339 → 327 个键；全量扫描退出码 0、`new_violations=0`。
+- 分级：`AMBIGUOUS` **3**（全在 monitor 演示串）、`CROSS_SCHEMA` **2**（同上）、
+  `SEARCH_PATH_DEPENDENT` 884、`UNKNOWN` 738。
+- 按模块变化：`rd` 38→16、`unified-core` 273→262、`finance` 234→228、`scm` 2→0、`srm` 5→0；
+  `monitor` 仍为 10（见下）。
+- 修复口径（每处都按调用方 schema 显式限定，不跨服务猜）：
+  | 表名 | 处理 | 依据 |
+  | --- | --- | --- |
+  | `projects` 等 4 张项目表 | rd 侧补 `rs.`（22 处） | rd 的 `SEARCH_PATH=rs, public`；列集与 `rs.*` 一致；FK 全部同 schema 内；pm 侧本就显式 `pm.*` |
+  | `budgets` | finance 侧补 `finance.`（6 处） | 列集 `department_id/fiscal_year/total_budget` 仅 `finance.budgets` 有；`pm.budgets` 是项目预算（23 列） |
+  | `suppliers` | scm/srm 各自补 `scm.`/`srm.`（7 处） | 两服务各有独立表与写入方（`sync_from_*` 同步列），不合并；两个 schema 都在各自 allow 内 |
+  | `audit_logs` | unified-core 补 `public.`（11 处） | 该服务唯一审计写入方 `middleware/audit_log.rs` 写 `public.audit_logs`；其余 17 份副本**无写入方** |
+  | `employees` / `departments` / `inventory` / `projects`（monitor） | **不修改** | 见下 |
+
+**monitor 的 5 处为什么保留**（不是漏修）：
+
+1. `metrics.rs#778/#879/#889/#899` 的 SQL 是**演示数据字符串**，`get_slow_queries` 等 handler
+   取 `State(_state)` 但从不查库，SQL 文本不会被发送到任何连接。
+2. monitor 的边界配置是 `schema=public, search_path=public, allow=[]`；显式 `hrm.`/`pm.`/`wms.`
+   会被 `scripts/check_schema_boundary.py` 判为未授权跨 schema 而**硬失败**——加前缀属于
+   「为了过静态扫描而塞入真实不允许的引用」，比保留裸表名更糟。
+3. 既有 `schema_boundary.json#bare_ref_baseline` 已为 monitor 的这 4 个表名登记理由
+   （「SQL 模板（监控规则配置），非 monitor 自身跨域直读」）。因此维持现状，由基线放行；
+   若未来把它们改成可执行查询，正确做法是走对应服务接口/独立数据源，而不是在 monitor 内跨 schema。
+
+> 注：`audit_logs` 的实际副本数（本地迁移库 18 个 schema）多于事实源的 8 个——
+> `scripts/schema_boundary_tables.json` 生成于 2026-08-31，已滞后于迁移；判定以真实库为准。
+
+
+
 ### C.6 基线更新流程
 
 1. 先按规则修 SQL（显式 `schema.table`），不要直接加基线；

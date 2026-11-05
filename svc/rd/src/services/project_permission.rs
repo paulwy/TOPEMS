@@ -56,7 +56,7 @@ pub async fn get_project_role(
 ) -> Result<ProjectRole, sqlx::Error> {
     let result = sqlx::query(
         r#"
-        SELECT leader FROM projects WHERE id = $1
+        SELECT leader FROM rs.projects WHERE id = $1
         "#,
     )
     .bind(project_id)
@@ -72,7 +72,7 @@ pub async fn get_project_role(
 
     let member_result = sqlx::query(
         r#"
-        SELECT role FROM project_members WHERE project_id = $1 AND employee_id = $2 AND status = 'active'
+        SELECT role FROM rs.project_members WHERE project_id = $1 AND employee_id = $2 AND status = 'active'
         "#,
     )
     .bind(project_id)

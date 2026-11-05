@@ -21,7 +21,7 @@ pub async fn calculate_project_progress(
             COALESCE(SUM(progress), 0) as total_progress,
             COALESCE(SUM(CASE WHEN status = 'completed' THEN weight ELSE 0 END), 0) as completed_weight,
             COALESCE(SUM(weight), 0) as total_weight
-        FROM project_phases 
+        FROM rs.project_phases 
         WHERE project_id = $1
         "#
     )
@@ -61,7 +61,7 @@ pub async fn update_project_progress(
 
     sqlx::query(
         r#"
-        UPDATE projects 
+        UPDATE rs.projects 
         SET progress = $1, updated_at = NOW()
         WHERE id = $2
         "#,
@@ -84,7 +84,7 @@ pub async fn on_milestone_achieved(
 ) -> Result<(), sqlx::Error> {
     let phase_result = sqlx::query(
         r#"
-        SELECT phase_id FROM project_milestones WHERE id = $1
+        SELECT phase_id FROM rs.project_milestones WHERE id = $1
         "#,
     )
     .bind(milestone_id)
@@ -112,7 +112,7 @@ pub async fn check_phase_completion(
         SELECT 
             COUNT(*) as total_milestones,
             COALESCE(SUM(CASE WHEN status = 'achieved' THEN 1 ELSE 0 END), 0) as achieved_milestones
-        FROM project_milestones 
+        FROM rs.project_milestones 
         WHERE phase_id = $1
         "#,
     )
@@ -126,7 +126,7 @@ pub async fn check_phase_completion(
     if total_milestones > 0 && achieved_milestones == total_milestones {
         sqlx::query(
             r#"
-            UPDATE project_phases 
+            UPDATE rs.project_phases 
             SET status = 'completed', progress = 100, updated_at = NOW()
             WHERE id = $1
             "#,
@@ -154,7 +154,7 @@ pub async fn get_project_timeline(
     let phases = sqlx::query(
         r#"
         SELECT name, start_date, end_date, status 
-        FROM project_phases 
+        FROM rs.project_phases 
         WHERE project_id = $1 
         ORDER BY phase_number
         "#,
@@ -177,7 +177,7 @@ pub async fn get_project_timeline(
     let milestones = sqlx::query(
         r#"
         SELECT name, target_date, actual_date, status 
-        FROM project_milestones 
+        FROM rs.project_milestones 
         WHERE project_id = $1 
         ORDER BY target_date
         "#,

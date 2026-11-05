@@ -116,12 +116,12 @@ async fn main() -> Result<(), TopemsError> {
                 r#"
                 SELECT json_build_object(
                     'items', COALESCE(json_agg(t), '[]'::json),
-                    'total', (SELECT COUNT(*) FROM suppliers WHERE deleted_at IS NULL),
+                    'total', (SELECT COUNT(*) FROM srm.suppliers WHERE deleted_at IS NULL),
                     'page', 1,
                     'page_size', 20
                 ) as data
                 FROM (
-                    SELECT s.* FROM suppliers s
+                    SELECT s.* FROM srm.suppliers s
                     WHERE s.deleted_at IS NULL
                     ORDER BY s.created_at DESC
                     LIMIT 20 OFFSET 0

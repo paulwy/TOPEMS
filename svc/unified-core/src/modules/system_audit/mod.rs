@@ -74,7 +74,7 @@ pub async fn list_audit_logs(
     let search = params.search.clone().unwrap_or_default();
 
     let total: i64 = sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM audit_logs
+        r#"SELECT COUNT(*) FROM public.audit_logs
            WHERE ($1::uuid IS NULL OR user_id = $1)
              AND ($2::text IS NULL OR user_name ILIKE '%' || $2 || '%')
              AND ($3::text IS NULL OR action = $3)
@@ -97,7 +97,7 @@ pub async fn list_audit_logs(
     .unwrap_or(0);
 
     let items: Vec<AuditLog> = sqlx::query_as(
-        r#"SELECT * FROM audit_logs
+        r#"SELECT * FROM public.audit_logs
            WHERE ($1::uuid IS NULL OR user_id = $1)
              AND ($2::text IS NULL OR user_name ILIKE '%' || $2 || '%')
              AND ($3::text IS NULL OR action = $3)
@@ -132,7 +132,7 @@ pub async fn get_audit_log(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AuditLog> {
-    let log: Result<AuditLog, _> = sqlx::query_as("SELECT * FROM audit_logs WHERE id = $1")
+    let log: Result<AuditLog, _> = sqlx::query_as("SELECT * FROM public.audit_logs WHERE id = $1")
         .bind(id)
         .fetch_one(&state.pool)
         .await;
@@ -161,7 +161,7 @@ pub async fn export_audit_logs(
     let search = params.search.clone().unwrap_or_default();
 
     let items: Vec<AuditLog> = sqlx::query_as(
-        r#"SELECT * FROM audit_logs
+        r#"SELECT * FROM public.audit_logs
            WHERE ($1::uuid IS NULL OR user_id = $1)
              AND ($2::text IS NULL OR user_name ILIKE '%' || $2 || '%')
              AND ($3::text IS NULL OR action = $3)
@@ -206,7 +206,7 @@ pub async fn get_audit_stats(
         .unwrap_or_else(|| "action".to_string());
 
     let total: i64 = sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM audit_logs
+        r#"SELECT COUNT(*) FROM public.audit_logs
            WHERE ($1::timestamptz IS NULL OR created_at >= $1::timestamptz)
              AND ($2::timestamptz IS NULL OR created_at <= $2::timestamptz)"#,
     )
@@ -217,7 +217,7 @@ pub async fn get_audit_stats(
     .unwrap_or(0);
 
     let success_count: i64 = sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM audit_logs WHERE status = 'success'
+        r#"SELECT COUNT(*) FROM public.audit_logs WHERE status = 'success'
            AND ($1::timestamptz IS NULL OR created_at >= $1::timestamptz)
            AND ($2::timestamptz IS NULL OR created_at <= $2::timestamptz)"#,
     )
@@ -228,7 +228,7 @@ pub async fn get_audit_stats(
     .unwrap_or(0);
 
     let failed_count: i64 = sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM audit_logs WHERE status != 'success'
+        r#"SELECT COUNT(*) FROM public.audit_logs WHERE status != 'success'
            AND ($1::timestamptz IS NULL OR created_at >= $1::timestamptz)
            AND ($2::timestamptz IS NULL OR created_at <= $2::timestamptz)"#,
     )
@@ -240,7 +240,7 @@ pub async fn get_audit_stats(
 
     let by_group: Vec<(String, i64)> = match group_by.as_str() {
         "action" => sqlx::query_as(
-            r#"SELECT action as key, COUNT(*) as count FROM audit_logs
+            r#"SELECT action as key, COUNT(*) as count FROM public.audit_logs
                WHERE ($1::timestamptz IS NULL OR created_at >= $1::timestamptz)
                  AND ($2::timestamptz IS NULL OR created_at <= $2::timestamptz)
                GROUP BY action ORDER BY count DESC LIMIT 50"#,
@@ -251,7 +251,7 @@ pub async fn get_audit_stats(
         .await
         .unwrap_or_default(),
         "resource" => sqlx::query_as(
-            r#"SELECT entity_type as key, COUNT(*) as count FROM audit_logs
+            r#"SELECT entity_type as key, COUNT(*) as count FROM public.audit_logs
                WHERE ($1::timestamptz IS NULL OR created_at >= $1::timestamptz)
                  AND ($2::timestamptz IS NULL OR created_at <= $2::timestamptz)
                GROUP BY entity_type ORDER BY count DESC LIMIT 50"#,
@@ -263,7 +263,7 @@ pub async fn get_audit_stats(
         .unwrap_or_default(),
         "user" => sqlx::query_as(
             r#"SELECT COALESCE(user_name, user_id::text, 'unknown') as key, COUNT(*) as count
-               FROM audit_logs
+               FROM public.audit_logs
                WHERE ($1::timestamptz IS NULL OR created_at >= $1::timestamptz)
                  AND ($2::timestamptz IS NULL OR created_at <= $2::timestamptz)
                GROUP BY key ORDER BY count DESC LIMIT 50"#,
@@ -274,7 +274,7 @@ pub async fn get_audit_stats(
         .await
         .unwrap_or_default(),
         "date" => sqlx::query_as(
-            r#"SELECT created_at::date::text as key, COUNT(*) as count FROM audit_logs
+            r#"SELECT created_at::date::text as key, COUNT(*) as count FROM public.audit_logs
                WHERE ($1::timestamptz IS NULL OR created_at >= $1::timestamptz)
                  AND ($2::timestamptz IS NULL OR created_at <= $2::timestamptz)
                GROUP BY key ORDER BY key DESC LIMIT 50"#,

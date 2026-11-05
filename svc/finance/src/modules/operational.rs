@@ -390,7 +390,7 @@ pub async fn list_budgets(
         r#"SELECT id, tenant_id, department_id, budget_type, fiscal_year::text AS fiscal_year,
                   total_budget, used_amount, remaining_amount, usage_rate, status,
                   created_at, updated_at, deleted_at
-           FROM budgets WHERE deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
+           FROM finance.budgets WHERE deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
            ORDER BY created_at DESC LIMIT $1 OFFSET $2"#
     ))
     .bind(page_size)
@@ -409,7 +409,7 @@ pub async fn list_budgets(
             let items: Vec<Value> = rows.iter().map(row_to_budget_json).collect();
             let total: i64 = sqlx::query_scalar(only_own_schema_query!(
                 "finance",
-                "SELECT COUNT(*) FROM budgets WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
+                "SELECT COUNT(*) FROM finance.budgets WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
             ))
             .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
             .fetch_one(&state.pool)
@@ -491,7 +491,7 @@ pub async fn create_budget(
 
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        r#"INSERT INTO budgets (id, tenant_id, department_id, budget_type, fiscal_year,
+        r#"INSERT INTO finance.budgets (id, tenant_id, department_id, budget_type, fiscal_year,
                                 total_budget, used_amount, remaining_amount, usage_rate, status,
                                 created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10, $11)
@@ -553,7 +553,7 @@ pub async fn get_budget(
         r#"SELECT id, tenant_id, department_id, budget_type, fiscal_year::text AS fiscal_year,
                   total_budget, used_amount, remaining_amount, usage_rate, status,
                   created_at, updated_at, deleted_at
-           FROM budgets WHERE id = $1 AND deleted_at IS NULL"#
+           FROM finance.budgets WHERE id = $1 AND deleted_at IS NULL"#
     ))
     .bind(id)
     .fetch_optional(&state.pool)
@@ -595,7 +595,7 @@ pub async fn update_budget(
 
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        r#"UPDATE budgets SET
+        r#"UPDATE finance.budgets SET
               department_id = $2, budget_type = $3, fiscal_year = $4,
               total_budget = $5, used_amount = $6, remaining_amount = $7, usage_rate = $8,
               status = $9, updated_at = $10
@@ -654,7 +654,7 @@ pub async fn delete_budget(
     let now = Utc::now();
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        "UPDATE budgets SET deleted_at = $2, updated_at = $2 WHERE id = $1 AND deleted_at IS NULL"
+        "UPDATE finance.budgets SET deleted_at = $2, updated_at = $2 WHERE id = $1 AND deleted_at IS NULL"
     ))
     .bind(id)
     .bind(now)

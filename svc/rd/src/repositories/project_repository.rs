@@ -214,7 +214,7 @@ impl ProjectRepository {
             let id = Uuid::new_v4();
             let project = sqlx::query_as::<_, Project>(
                 r#"
-                INSERT INTO projects (
+                INSERT INTO rs.projects (
                     id, name, code, description, project_type, status, leader,
                     team_members, start_date, end_date, budget, progress, created_by,
                     created_at, updated_at, tenant_id

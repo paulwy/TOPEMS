@@ -121,7 +121,7 @@ pub async fn list_projects(
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at, project_config, benefit_target,
                risk_level, priority, tags, parent_id, workspace_id
-        FROM projects
+        FROM rs.projects
         WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -142,7 +142,7 @@ pub async fn list_projects(
         Ok(projects) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM projects
+                SELECT COUNT(*) FROM rs.projects
                 WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -211,7 +211,7 @@ pub async fn create_project(
 
     let result = sqlx::query_as::<_, Project>(
         r#"
-        INSERT INTO projects (
+        INSERT INTO rs.projects (
             id, tenant_id, name, code, description, project_type, status, leader,
             team_members, start_date, end_date, budget, progress, created_by,
             created_at, updated_at, project_config, benefit_target, risk_level,
@@ -405,7 +405,7 @@ pub async fn get_project(
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at, project_config, benefit_target,
                risk_level, priority, tags, parent_id, workspace_id
-        FROM projects WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM rs.projects WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
@@ -474,7 +474,7 @@ pub async fn update_project(
     }
 
     let existing = sqlx::query_as::<_, Project>(
-        "SELECT id, tenant_id, name, code, description, project_type, status, leader, team_members, start_date, end_date, budget, progress, created_by, created_at, updated_at, project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id FROM projects WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+        "SELECT id, tenant_id, name, code, description, project_type, status, leader, team_members, start_date, end_date, budget, progress, created_by, created_at, updated_at, project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id FROM rs.projects WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
     .bind(tenant_opt)
@@ -508,7 +508,7 @@ pub async fn update_project(
 
     let result = sqlx::query_as::<_, Project>(
         r#"
-        UPDATE projects SET
+        UPDATE rs.projects SET
             name = $2, description = $3, status = $4, leader = $5,
             team_members = $6, end_date = $7, budget = $8, progress = $9, updated_at = $10
         WHERE id = $1 AND ($11::uuid IS NULL OR tenant_id = $11)
@@ -629,7 +629,7 @@ pub async fn delete_project(
     }
 
     let result =
-        sqlx::query("UPDATE projects SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
+        sqlx::query("UPDATE rs.projects SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
             .bind(id)
             .bind(tenant_opt)
             .execute(&mut **txn)
@@ -741,7 +741,7 @@ pub async fn batch_create_projects(
 
         let result = sqlx::query(
             r#"
-            INSERT INTO projects (
+            INSERT INTO rs.projects (
                 id, tenant_id, name, code, description, project_type, status, leader,
                 team_members, start_date, end_date, budget, progress, created_by,
                 created_at, updated_at, project_config, benefit_target, risk_level,
@@ -894,7 +894,7 @@ pub async fn batch_delete_projects(
     }
 
     let result = sqlx::query(
-        r#"UPDATE projects SET deleted_at = NOW() WHERE id = ANY($1) AND ($2::uuid IS NULL OR tenant_id = $2)"#,
+        r#"UPDATE rs.projects SET deleted_at = NOW() WHERE id = ANY($1) AND ($2::uuid IS NULL OR tenant_id = $2)"#,
     )
     .bind(&req.ids)
     .bind(tenant_opt)
@@ -1021,7 +1021,7 @@ pub async fn export_projects(
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at, project_config, benefit_target,
                risk_level, priority, tags, parent_id, workspace_id
-        FROM projects
+        FROM rs.projects
         WHERE ($1::uuid IS NULL OR tenant_id = $1)
         ORDER BY created_at DESC
         "#,
@@ -1325,7 +1325,7 @@ pub async fn import_projects(
 
                 let insert_result = sqlx::query_as::<_, Project>(
                     r#"
-                    INSERT INTO projects (
+                    INSERT INTO rs.projects (
                         id, tenant_id, name, code, description, project_type, status, leader,
                         team_members, start_date, end_date, budget, progress, created_by,
                         created_at, updated_at, project_config, benefit_target, risk_level,
@@ -1488,7 +1488,7 @@ pub async fn get_project_dashboard(
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at,
                project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id
-        FROM projects WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        FROM rs.projects WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)

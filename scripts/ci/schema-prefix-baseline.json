@@ -424,10 +424,6 @@
     },
     {
       "file": "svc/finance/src/modules/operational.rs",
-      "table": "budgets"
-    },
-    {
-      "file": "svc/finance/src/modules/operational.rs",
       "table": "expenses"
     },
     {
@@ -1147,10 +1143,6 @@
       "table": "rs_projects"
     },
     {
-      "file": "svc/rd/src/modules/project.rs",
-      "table": "projects"
-    },
-    {
       "file": "svc/rd/src/modules/statistics.rs",
       "table": "rs_experiments"
     },
@@ -1163,44 +1155,8 @@
       "table": "rs_projects"
     },
     {
-      "file": "svc/rd/src/repositories/project_repository.rs",
-      "table": "projects"
-    },
-    {
-      "file": "svc/rd/src/services/project_permission.rs",
-      "table": "project_members"
-    },
-    {
-      "file": "svc/rd/src/services/project_permission.rs",
-      "table": "projects"
-    },
-    {
-      "file": "svc/rd/src/services/project_progress.rs",
-      "table": "project_milestones"
-    },
-    {
-      "file": "svc/rd/src/services/project_progress.rs",
-      "table": "project_phases"
-    },
-    {
-      "file": "svc/rd/src/services/project_progress.rs",
-      "table": "projects"
-    },
-    {
-      "file": "svc/scm/src/main.rs",
-      "table": "suppliers"
-    },
-    {
       "file": "svc/search/src/handlers.rs",
       "table": "core_files"
-    },
-    {
-      "file": "svc/srm/src/event_handlers/mod.rs",
-      "table": "suppliers"
-    },
-    {
-      "file": "svc/srm/src/main.rs",
-      "table": "suppliers"
     },
     {
       "file": "svc/tms/src/main.rs",
@@ -1321,10 +1277,6 @@
     {
       "file": "svc/unified-core/src/modules/settings/smtp.rs",
       "table": "core_tenant_settings"
-    },
-    {
-      "file": "svc/unified-core/src/modules/system_audit/mod.rs",
-      "table": "audit_logs"
     },
     {
       "file": "svc/unified-core/src/modules/tenant/handlers.rs",
