@@ -230,6 +230,28 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
 
   # ──────────────────────────────────────────────────────────────────────────
+  # [Gate SP/PA] 连接治理门禁（全量扫描，纯静态、秒级、无需 DB）
+  #   SP: 模块 SQL 必须显式 schema.table（不依赖 search_path；同名表跨 schema 最危险）
+  #   PA: svc/ 下禁止直接 pool.acquire（白名单在 scripts/ci/pool-acquire-baseline.json）
+  # 既存违规按基线放行；新增文件/新表名/新 acquire 阻断。规则见
+  # docs/database/connection-governance.md「C. schema 前缀规则」。
+  # 触发：rust 或 scripts 变更（基线/脚本本身改动也需要重新校验）。
+  # ──────────────────────────────────────────────────────────────────────────
+  connection-governance:
+    name: 连接治理门禁（schema 前缀 / 绕过池）
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Schema prefix gate
+        run: node scripts/ci/check-schema-prefix.mjs
+
+      - name: Pool acquire gate
+        run: node scripts/ci/check-pool-acquire.mjs
+
+  # ──────────────────────────────────────────────────────────────────────────
   # [Gate SC] Shellcheck 回归防线（P1-1 清零 195→0 后固化）
   # 全量扫描所有 git 跟踪的 *.sh；任何告警/语法错误即 job 失败。
   # 触发：scripts/** 或 deploy/docker/** 或 workflow 变更（ci filter 已覆盖）。

@@ -1,0 +1,1362 @@
+{
+  "generated": "2026-11-05",
+  "note": "既存裸表名基线。规则见 docs/database/connection-governance.md「C. schema 前缀规则」；新增条目必须人工 review（优先改成显式 schema 前缀，而不是加进基线）。",
+  "entries": [
+    {
+      "file": "svc/ai/src/handlers/ai_handlers.rs",
+      "table": "orders"
+    },
+    {
+      "file": "svc/analytics/src/main.rs",
+      "table": "core_permissions"
+    },
+    {
+      "file": "svc/analytics/src/main.rs",
+      "table": "core_roles"
+    },
+    {
+      "file": "svc/analytics/src/main.rs",
+      "table": "core_user_roles"
+    },
+    {
+      "file": "svc/analytics/src/main.rs",
+      "table": "core_users"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/comparison_analysis.rs",
+      "table": "analytics_comparison_analyses"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/comparison_analysis.rs",
+      "table": "analytics_comparison_results"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/dashboard/crud.rs",
+      "table": "analytics_dashboards"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/dashboard/export.rs",
+      "table": "analytics_dashboards"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/dashboard/export.rs",
+      "table": "analytics_widgets"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/dashboard/realtime.rs",
+      "table": "analytics_dashboards"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/dashboard/realtime.rs",
+      "table": "analytics_widgets"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/dashboard/share.rs",
+      "table": "analytics_dashboard_shares"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/dashboard/share.rs",
+      "table": "analytics_dashboards"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/dashboard/templates.rs",
+      "table": "analytics_dashboard_templates"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/dashboard/templates.rs",
+      "table": "analytics_dashboards"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/data_drilldown.rs",
+      "table": "analytics_drilldown_history"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/data_drilldown.rs",
+      "table": "analytics_drilldown_paths"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/dataset.rs",
+      "table": "bi_datasets"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/dataset_whitelist.rs",
+      "table": "bi_datasets"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/datasource.rs",
+      "table": "analytics_datasources"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/multidimensional_analysis.rs",
+      "table": "analytics_data"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/predictive_analysis.rs",
+      "table": "analytics_data"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/row_level_permission.rs",
+      "table": "analytics_row_level_permissions"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/self_service_report.rs",
+      "table": "analytics_data"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/self_service_report.rs",
+      "table": "analytics_self_service_reports"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/sync_records.rs",
+      "table": "analytics_datasources"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/sync_records.rs",
+      "table": "analytics_sync_records"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/websocket.rs",
+      "table": "analytics_dashboards"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/websocket.rs",
+      "table": "analytics_widgets"
+    },
+    {
+      "file": "svc/analytics/src/modules/bi/widget.rs",
+      "table": "analytics_widgets"
+    },
+    {
+      "file": "svc/analytics/src/modules/report/report.rs",
+      "table": "report_templates"
+    },
+    {
+      "file": "svc/analytics/src/modules/report/schedule.rs",
+      "table": "report_schedules"
+    },
+    {
+      "file": "svc/analytics/src/modules/report/schedule.rs",
+      "table": "report_templates"
+    },
+    {
+      "file": "svc/analytics/src/modules/report/scheduler.rs",
+      "table": "report_schedules"
+    },
+    {
+      "file": "svc/analytics/src/modules/report/scheduler.rs",
+      "table": "report_subscriptions"
+    },
+    {
+      "file": "svc/analytics/src/modules/report/scheduler.rs",
+      "table": "report_templates"
+    },
+    {
+      "file": "svc/analytics/src/modules/report/subscription.rs",
+      "table": "report_subscriptions"
+    },
+    {
+      "file": "svc/analytics/src/modules/report/subscription.rs",
+      "table": "report_templates"
+    },
+    {
+      "file": "svc/analytics/src/modules/report/template.rs",
+      "table": "report_templates"
+    },
+    {
+      "file": "svc/analytics/src/routes.rs",
+      "table": "core_permissions"
+    },
+    {
+      "file": "svc/analytics/src/routes.rs",
+      "table": "core_roles"
+    },
+    {
+      "file": "svc/analytics/src/routes.rs",
+      "table": "core_user_roles"
+    },
+    {
+      "file": "svc/analytics/src/routes.rs",
+      "table": "core_users"
+    },
+    {
+      "file": "svc/communication/src/im_location.rs",
+      "table": "core_geofences"
+    },
+    {
+      "file": "svc/communication/src/im_location.rs",
+      "table": "core_location_messages"
+    },
+    {
+      "file": "svc/communication/src/mail.rs",
+      "table": "core_email_queue"
+    },
+    {
+      "file": "svc/communication/src/mail.rs",
+      "table": "core_email_templates"
+    },
+    {
+      "file": "svc/communication/src/mail.rs",
+      "table": "core_users"
+    },
+    {
+      "file": "svc/communication/src/notification.rs",
+      "table": "core_notification_deliveries"
+    },
+    {
+      "file": "svc/communication/src/notification.rs",
+      "table": "core_notification_preferences"
+    },
+    {
+      "file": "svc/communication/src/notification.rs",
+      "table": "core_notification_subscriptions"
+    },
+    {
+      "file": "svc/communication/src/notification.rs",
+      "table": "core_notification_templates"
+    },
+    {
+      "file": "svc/communication/src/notification.rs",
+      "table": "core_notifications"
+    },
+    {
+      "file": "svc/communication/src/notification.rs",
+      "table": "notification_channels"
+    },
+    {
+      "file": "svc/ehs/src/modules/hazardous_material.rs",
+      "table": "jsonb_array_elements_text"
+    },
+    {
+      "file": "svc/erp/src/event_handlers/mod.rs",
+      "table": "erp_master_data_refs"
+    },
+    {
+      "file": "svc/erp/src/main.rs",
+      "table": "assets"
+    },
+    {
+      "file": "svc/erp/src/main.rs",
+      "table": "dict_types"
+    },
+    {
+      "file": "svc/erp/src/main.rs",
+      "table": "financial_vouchers"
+    },
+    {
+      "file": "svc/erp/src/modules/announcement.rs",
+      "table": "announcements"
+    },
+    {
+      "file": "svc/erp/src/modules/dashboard.rs",
+      "table": "inventory_items"
+    },
+    {
+      "file": "svc/erp/src/modules/db_structure.rs",
+      "table": "sys_db_changes"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_assets.rs",
+      "table": "erp_master_data_quality_reports"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_audit.rs",
+      "table": "erp_master_data_audit_trail"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_conflict.rs",
+      "table": "erp_master_data_conflicts"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_governance.rs",
+      "table": "erp_master_data_audit_trail"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_governance.rs",
+      "table": "erp_master_data_conflicts"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_governance.rs",
+      "table": "erp_master_data_quality_reports"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_governance.rs",
+      "table": "erp_master_data_quality_rules"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_governance.rs",
+      "table": "erp_master_data_versions"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_lifecycle.rs",
+      "table": "erp_master_data_audit_trail"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_quality_rules.rs",
+      "table": "erp_master_data_quality_reports"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_quality_rules.rs",
+      "table": "erp_master_data_quality_rules"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_quality_trend.rs",
+      "table": "erp_master_data_quality_reports"
+    },
+    {
+      "file": "svc/erp/src/modules/master_data_version.rs",
+      "table": "erp_master_data_versions"
+    },
+    {
+      "file": "svc/erp/src/modules/meeting_room.rs",
+      "table": "meeting_bookings"
+    },
+    {
+      "file": "svc/erp/src/modules/meeting_room.rs",
+      "table": "meeting_rooms"
+    },
+    {
+      "file": "svc/erp/src/modules/office_supplies.rs",
+      "table": "office_supplies"
+    },
+    {
+      "file": "svc/erp/src/modules/search.rs",
+      "table": "core_erp_materials"
+    },
+    {
+      "file": "svc/erp/src/modules/search.rs",
+      "table": "core_erp_suppliers"
+    },
+    {
+      "file": "svc/erp/src/modules/settings.rs",
+      "table": "system_settings"
+    },
+    {
+      "file": "svc/erp/src/modules/vehicles.rs",
+      "table": "vehicle_requests"
+    },
+    {
+      "file": "svc/erp/src/modules/vehicles.rs",
+      "table": "vehicles"
+    },
+    {
+      "file": "svc/finance/src/domain/pg_event_store.rs",
+      "table": "cqrs_events"
+    },
+    {
+      "file": "svc/finance/src/domain/pg_event_store.rs",
+      "table": "cqrs_snapshots"
+    },
+    {
+      "file": "svc/finance/src/domain/pg_materialized_views.rs",
+      "table": "mv_receivable_aging"
+    },
+    {
+      "file": "svc/finance/src/domain/pg_materialized_views.rs",
+      "table": "mv_voucher_summary"
+    },
+    {
+      "file": "svc/finance/src/modules/audit_v52.rs",
+      "table": "finance_alert_configs_v52"
+    },
+    {
+      "file": "svc/finance/src/modules/audit_v52.rs",
+      "table": "finance_alert_history_v52"
+    },
+    {
+      "file": "svc/finance/src/modules/audit_v52.rs",
+      "table": "finance_anomaly_alerts_v52"
+    },
+    {
+      "file": "svc/finance/src/modules/audit_v52.rs",
+      "table": "finance_audit_findings_v52"
+    },
+    {
+      "file": "svc/finance/src/modules/audit_v52.rs",
+      "table": "finance_audit_log"
+    },
+    {
+      "file": "svc/finance/src/modules/audit_v52.rs",
+      "table": "finance_audit_rules_v52"
+    },
+    {
+      "file": "svc/finance/src/modules/audit_v52.rs",
+      "table": "finance_detection_configs_v52"
+    },
+    {
+      "file": "svc/finance/src/modules/audit_v52.rs",
+      "table": "voucher_lines"
+    },
+    {
+      "file": "svc/finance/src/modules/financial_reports.rs",
+      "table": "financial_reports"
+    },
+    {
+      "file": "svc/finance/src/modules/forecast_v53.rs",
+      "table": "finance_budget_variances_v53"
+    },
+    {
+      "file": "svc/finance/src/modules/forecast_v53.rs",
+      "table": "finance_cash_flow_predictions_v53"
+    },
+    {
+      "file": "svc/finance/src/modules/forecast_v53.rs",
+      "table": "finance_prediction_models_v53"
+    },
+    {
+      "file": "svc/finance/src/modules/forecast_v53.rs",
+      "table": "voucher_lines"
+    },
+    {
+      "file": "svc/finance/src/modules/forecast_v53.rs",
+      "table": "vouchers"
+    },
+    {
+      "file": "svc/finance/src/modules/mod.rs",
+      "table": "finance_voucher_generation_rules"
+    },
+    {
+      "file": "svc/finance/src/modules/mod.rs",
+      "table": "finance_voucher_template_lines"
+    },
+    {
+      "file": "svc/finance/src/modules/mod.rs",
+      "table": "finance_voucher_templates"
+    },
+    {
+      "file": "svc/finance/src/modules/operational.rs",
+      "table": "budgets"
+    },
+    {
+      "file": "svc/finance/src/modules/operational.rs",
+      "table": "expenses"
+    },
+    {
+      "file": "svc/finance/src/modules/operational.rs",
+      "table": "payables"
+    },
+    {
+      "file": "svc/finance/src/modules/operational.rs",
+      "table": "receivables"
+    },
+    {
+      "file": "svc/finance/src/modules/voucher_template.rs",
+      "table": "finance_voucher_generation_rules"
+    },
+    {
+      "file": "svc/finance/src/modules/voucher_template.rs",
+      "table": "finance_voucher_templates"
+    },
+    {
+      "file": "svc/finance/src/modules/voucher_template_entries.rs",
+      "table": "finance_voucher_template_lines"
+    },
+    {
+      "file": "svc/finance/src/modules/voucher_template_entries.rs",
+      "table": "finance_voucher_templates"
+    },
+    {
+      "file": "svc/finance/src/services/finance/approval_configs.rs",
+      "table": "core_finance_approval_nodes"
+    },
+    {
+      "file": "svc/finance/src/services/finance/approval_configs.rs",
+      "table": "core_finance_payment_approval_config"
+    },
+    {
+      "file": "svc/finance/src/services/finance/collection.rs",
+      "table": "erp_collection_records"
+    },
+    {
+      "file": "svc/finance/src/services/finance/database.rs",
+      "table": "pg_namespace"
+    },
+    {
+      "file": "svc/finance/src/services/finance/database.rs",
+      "table": "pg_type"
+    },
+    {
+      "file": "svc/finance/src/services/finance/payable.rs",
+      "table": "erp_payables"
+    },
+    {
+      "file": "svc/finance/src/services/finance/payment.rs",
+      "table": "core_finance_payment_items"
+    },
+    {
+      "file": "svc/finance/src/services/finance/payment_record.rs",
+      "table": "erp_payment_records"
+    },
+    {
+      "file": "svc/finance/src/services/finance/payment_workflow.rs",
+      "table": "core_finance_payment_approval_config"
+    },
+    {
+      "file": "svc/finance/src/services/finance/payment_workflow.rs",
+      "table": "core_finance_payment_items"
+    },
+    {
+      "file": "svc/finance/src/services/finance/payment_workflow.rs",
+      "table": "core_finance_payment_workflow"
+    },
+    {
+      "file": "svc/finance/src/services/finance/receivable.rs",
+      "table": "erp_receivables"
+    },
+    {
+      "file": "svc/finance/src/services/finance/u8_import.rs",
+      "table": "finance_u8_import_records"
+    },
+    {
+      "file": "svc/finance/src/services/finance/voucher_generation.rs",
+      "table": "finance_voucher_generation_rules"
+    },
+    {
+      "file": "svc/finance/src/services/finance/voucher_template.rs",
+      "table": "finance_voucher_template_lines"
+    },
+    {
+      "file": "svc/finance/src/services/finance/voucher_template.rs",
+      "table": "finance_voucher_templates"
+    },
+    {
+      "file": "svc/gis/src/event_handlers/mod.rs",
+      "table": "gis_map_markers"
+    },
+    {
+      "file": "svc/hrm/src/event_handlers/mod.rs",
+      "table": "hrm_cache_invalidation_logs"
+    },
+    {
+      "file": "svc/integration/src/async_task_queue.rs",
+      "table": "skip"
+    },
+    {
+      "file": "svc/integration/src/event_handlers/mod.rs",
+      "table": "integration_sync_logs"
+    },
+    {
+      "file": "svc/integration/src/external_erp.rs",
+      "table": "erp_connections"
+    },
+    {
+      "file": "svc/integration/src/external_erp.rs",
+      "table": "erp_mappings"
+    },
+    {
+      "file": "svc/integration/src/external_erp.rs",
+      "table": "external_erp_sync_logs"
+    },
+    {
+      "file": "svc/integration/src/handlers/erp_connections.rs",
+      "table": "erp_connections"
+    },
+    {
+      "file": "svc/integration/src/handlers/erp_mappings.rs",
+      "table": "erp_mappings"
+    },
+    {
+      "file": "svc/lims/src/event_handlers/mod.rs",
+      "table": "lims_inspection_records"
+    },
+    {
+      "file": "svc/lims/src/event_handlers/mod.rs",
+      "table": "lims_safety_tasks"
+    },
+    {
+      "file": "svc/lims/src/modules/audit.rs",
+      "table": "qa_lims_audit_logs"
+    },
+    {
+      "file": "svc/lims/src/modules/data_sync.rs",
+      "table": "qa_lims_sync_records"
+    },
+    {
+      "file": "svc/lims/src/modules/inspection_record.rs",
+      "table": "qa_lab_records"
+    },
+    {
+      "file": "svc/lims/src/modules/instrument.rs",
+      "table": "qa_lab_calibration_records"
+    },
+    {
+      "file": "svc/lims/src/modules/instrument.rs",
+      "table": "qa_lab_instruments"
+    },
+    {
+      "file": "svc/lims/src/modules/instrument_data/collection_tasks.rs",
+      "table": "qa_lab_instruments"
+    },
+    {
+      "file": "svc/lims/src/modules/instrument_data/collection_tasks.rs",
+      "table": "qa_lims_collection_tasks"
+    },
+    {
+      "file": "svc/lims/src/modules/instrument_data/collection_tasks.rs",
+      "table": "qa_lims_instrument_data"
+    },
+    {
+      "file": "svc/lims/src/modules/instrument_data/data_parsing.rs",
+      "table": "qa_lims_instrument_data"
+    },
+    {
+      "file": "svc/lims/src/modules/instrument_data/instrument_data_crud.rs",
+      "table": "qa_lab_instruments"
+    },
+    {
+      "file": "svc/lims/src/modules/instrument_data/instrument_data_crud.rs",
+      "table": "qa_lims_instrument_data"
+    },
+    {
+      "file": "svc/lims/src/modules/instrument_data/parse_rules.rs",
+      "table": "qa_lims_parse_rules"
+    },
+    {
+      "file": "svc/lims/src/modules/instrument_data/statistics.rs",
+      "table": "qa_lims_collection_tasks"
+    },
+    {
+      "file": "svc/lims/src/modules/instrument_data/statistics.rs",
+      "table": "qa_lims_instrument_data"
+    },
+    {
+      "file": "svc/lims/src/modules/instrument_data/statistics.rs",
+      "table": "qa_lims_parse_rules"
+    },
+    {
+      "file": "svc/lims/src/modules/process.rs",
+      "table": "qa_lab_processes"
+    },
+    {
+      "file": "svc/lims/src/modules/proficiency_testing.rs",
+      "table": "qa_lims_pt_corrective_actions"
+    },
+    {
+      "file": "svc/lims/src/modules/proficiency_testing.rs",
+      "table": "qa_lims_pt_evaluations"
+    },
+    {
+      "file": "svc/lims/src/modules/proficiency_testing.rs",
+      "table": "qa_lims_pt_plans"
+    },
+    {
+      "file": "svc/lims/src/modules/proficiency_testing.rs",
+      "table": "qa_lims_pt_results"
+    },
+    {
+      "file": "svc/lims/src/modules/proficiency_testing.rs",
+      "table": "qa_lims_pt_samples"
+    },
+    {
+      "file": "svc/lims/src/modules/reagent.rs",
+      "table": "qa_lab_reagents"
+    },
+    {
+      "file": "svc/lims/src/modules/sample_barcode.rs",
+      "table": "qa_lims_barcode_scan_records"
+    },
+    {
+      "file": "svc/lims/src/modules/sample_barcode.rs",
+      "table": "qa_lims_rfid_tags"
+    },
+    {
+      "file": "svc/lims/src/modules/sample_barcode.rs",
+      "table": "qa_lims_sample_barcodes"
+    },
+    {
+      "file": "svc/lims/src/modules/uncertainty.rs",
+      "table": "qa_lims_uncertainty_components"
+    },
+    {
+      "file": "svc/lims/src/modules/uncertainty.rs",
+      "table": "qa_lims_uncertainty_projects"
+    },
+    {
+      "file": "svc/lims/src/modules/uncertainty.rs",
+      "table": "qa_lims_uncertainty_sources"
+    },
+    {
+      "file": "svc/master-data/src/modules/dict/handlers.rs",
+      "table": "core_dict_items"
+    },
+    {
+      "file": "svc/master-data/src/modules/dict/handlers.rs",
+      "table": "core_dict_types"
+    },
+    {
+      "file": "svc/master-data/src/modules/dict/seed.rs",
+      "table": "core_dict_items"
+    },
+    {
+      "file": "svc/master-data/src/modules/dict/seed.rs",
+      "table": "core_dict_types"
+    },
+    {
+      "file": "svc/mes/src/event_handlers.rs",
+      "table": "production_orders"
+    },
+    {
+      "file": "svc/mes/src/main.rs",
+      "table": "capacities"
+    },
+    {
+      "file": "svc/mes/src/modules/basics.rs",
+      "table": "production_lines"
+    },
+    {
+      "file": "svc/mes/src/modules/basics.rs",
+      "table": "shifts"
+    },
+    {
+      "file": "svc/mes/src/modules/basics.rs",
+      "table": "work_calendars"
+    },
+    {
+      "file": "svc/mes/src/modules/basics.rs",
+      "table": "workshops"
+    },
+    {
+      "file": "svc/mes/src/modules/capacity.rs",
+      "table": "capacities"
+    },
+    {
+      "file": "svc/mes/src/modules/demand_forecast.rs",
+      "table": "demand_forecasts"
+    },
+    {
+      "file": "svc/mes/src/modules/equipment.rs",
+      "table": "equipment"
+    },
+    {
+      "file": "svc/mes/src/modules/equipment.rs",
+      "table": "equipment_inspections"
+    },
+    {
+      "file": "svc/mes/src/modules/equipment.rs",
+      "table": "equipment_maintenance_records"
+    },
+    {
+      "file": "svc/mes/src/modules/equipment_oee.rs",
+      "table": "equipment"
+    },
+    {
+      "file": "svc/mes/src/modules/equipment_oee.rs",
+      "table": "equipment_oee"
+    },
+    {
+      "file": "svc/mes/src/modules/material_bom/bom_handlers.rs",
+      "table": "bom_items"
+    },
+    {
+      "file": "svc/mes/src/modules/material_bom/bom_handlers.rs",
+      "table": "material_boms"
+    },
+    {
+      "file": "svc/mes/src/modules/material_bom/issue_handlers.rs",
+      "table": "material_issue_items"
+    },
+    {
+      "file": "svc/mes/src/modules/material_bom/issue_handlers.rs",
+      "table": "material_issues"
+    },
+    {
+      "file": "svc/mes/src/modules/material_bom/issue_handlers.rs",
+      "table": "production_orders"
+    },
+    {
+      "file": "svc/mes/src/modules/material_bom/return_handlers.rs",
+      "table": "material_return_items"
+    },
+    {
+      "file": "svc/mes/src/modules/material_bom/return_handlers.rs",
+      "table": "material_returns"
+    },
+    {
+      "file": "svc/mes/src/modules/material_bom/return_handlers.rs",
+      "table": "production_orders"
+    },
+    {
+      "file": "svc/mes/src/modules/material_requirement.rs",
+      "table": "bom_items"
+    },
+    {
+      "file": "svc/mes/src/modules/material_requirement.rs",
+      "table": "material_boms"
+    },
+    {
+      "file": "svc/mes/src/modules/material_requirement.rs",
+      "table": "material_requirements"
+    },
+    {
+      "file": "svc/mes/src/modules/material_requirement.rs",
+      "table": "production_orders"
+    },
+    {
+      "file": "svc/mes/src/modules/process_flow.rs",
+      "table": "process_flow_steps"
+    },
+    {
+      "file": "svc/mes/src/modules/process_flow.rs",
+      "table": "process_flows"
+    },
+    {
+      "file": "svc/mes/src/modules/process_flow.rs",
+      "table": "process_routes"
+    },
+    {
+      "file": "svc/mes/src/modules/process_flow.rs",
+      "table": "production_processes"
+    },
+    {
+      "file": "svc/mes/src/modules/process_flow.rs",
+      "table": "work_stations"
+    },
+    {
+      "file": "svc/mes/src/modules/process_route.rs",
+      "table": "process_route_steps"
+    },
+    {
+      "file": "svc/mes/src/modules/process_route.rs",
+      "table": "process_routes"
+    },
+    {
+      "file": "svc/mes/src/modules/process_route.rs",
+      "table": "production_processes"
+    },
+    {
+      "file": "svc/mes/src/modules/process_route.rs",
+      "table": "work_stations"
+    },
+    {
+      "file": "svc/mes/src/modules/production_order.rs",
+      "table": "production_orders"
+    },
+    {
+      "file": "svc/mes/src/modules/production_plan.rs",
+      "table": "production_plans"
+    },
+    {
+      "file": "svc/mes/src/modules/production_scheduling.rs",
+      "table": "production_orders"
+    },
+    {
+      "file": "svc/mes/src/modules/production_scheduling.rs",
+      "table": "production_schedules"
+    },
+    {
+      "file": "svc/mes/src/modules/quality_management/inspection.rs",
+      "table": "quality_inspections"
+    },
+    {
+      "file": "svc/mes/src/modules/quality_management/patrol.rs",
+      "table": "quality_patrol_items"
+    },
+    {
+      "file": "svc/mes/src/modules/quality_management/patrol.rs",
+      "table": "quality_patrols"
+    },
+    {
+      "file": "svc/mes/src/modules/quality_management/standard.rs",
+      "table": "quality_standard_values"
+    },
+    {
+      "file": "svc/mes/src/modules/quality_management/standard.rs",
+      "table": "quality_standards"
+    },
+    {
+      "file": "svc/mes/src/modules/quality_traceability.rs",
+      "table": "batch_records"
+    },
+    {
+      "file": "svc/mes/src/modules/quality_traceability.rs",
+      "table": "production_orders"
+    },
+    {
+      "file": "svc/mes/src/modules/quality_traceability.rs",
+      "table": "production_processes"
+    },
+    {
+      "file": "svc/mes/src/modules/quality_traceability.rs",
+      "table": "production_records"
+    },
+    {
+      "file": "svc/mes/src/modules/quality_traceability.rs",
+      "table": "quality_records"
+    },
+    {
+      "file": "svc/mes/src/modules/team.rs",
+      "table": "team_members"
+    },
+    {
+      "file": "svc/mes/src/modules/team.rs",
+      "table": "teams"
+    },
+    {
+      "file": "svc/mes/src/modules/team.rs",
+      "table": "work_stations"
+    },
+    {
+      "file": "svc/mes/src/modules/wip.rs",
+      "table": "production_orders"
+    },
+    {
+      "file": "svc/mes/src/modules/wip.rs",
+      "table": "production_processes"
+    },
+    {
+      "file": "svc/mes/src/modules/wip.rs",
+      "table": "wip_transfers"
+    },
+    {
+      "file": "svc/mes/src/modules/wip.rs",
+      "table": "wips"
+    },
+    {
+      "file": "svc/mes/src/modules/wip.rs",
+      "table": "work_stations"
+    },
+    {
+      "file": "svc/mes/src/modules/work_order.rs",
+      "table": "work_orders"
+    },
+    {
+      "file": "svc/mes/src/modules/work_report.rs",
+      "table": "production_orders"
+    },
+    {
+      "file": "svc/mes/src/modules/work_report.rs",
+      "table": "work_reports"
+    },
+    {
+      "file": "svc/mes/src/modules/work_station.rs",
+      "table": "equipment"
+    },
+    {
+      "file": "svc/mes/src/modules/work_station.rs",
+      "table": "production_processes"
+    },
+    {
+      "file": "svc/mes/src/modules/work_station.rs",
+      "table": "work_stations"
+    },
+    {
+      "file": "svc/monitor/src/modules/monitor/metrics.rs",
+      "table": "ai_models"
+    },
+    {
+      "file": "svc/monitor/src/modules/monitor/metrics.rs",
+      "table": "departments"
+    },
+    {
+      "file": "svc/monitor/src/modules/monitor/metrics.rs",
+      "table": "employees"
+    },
+    {
+      "file": "svc/monitor/src/modules/monitor/metrics.rs",
+      "table": "inventory"
+    },
+    {
+      "file": "svc/monitor/src/modules/monitor/metrics.rs",
+      "table": "orders"
+    },
+    {
+      "file": "svc/monitor/src/modules/monitor/metrics.rs",
+      "table": "projects"
+    },
+    {
+      "file": "svc/monitor/src/modules/monitor/metrics.rs",
+      "table": "transactions"
+    },
+    {
+      "file": "svc/pdm/src/event_handlers/mod.rs",
+      "table": "pdm_configurations"
+    },
+    {
+      "file": "svc/pdm/src/event_handlers/mod.rs",
+      "table": "pdm_master_data_refs"
+    },
+    {
+      "file": "svc/pdm/src/event_handlers/mod.rs",
+      "table": "pdm_materials"
+    },
+    {
+      "file": "svc/pdm/src/main.rs",
+      "table": "pdm_materials"
+    },
+    {
+      "file": "svc/pdm/src/modules/bom.rs",
+      "table": "pdm_bom_items"
+    },
+    {
+      "file": "svc/pdm/src/modules/bom.rs",
+      "table": "pdm_boms"
+    },
+    {
+      "file": "svc/pdm/src/modules/change_notice.rs",
+      "table": "pdm_change_notices"
+    },
+    {
+      "file": "svc/pdm/src/modules/configuration.rs",
+      "table": "pdm_configurations"
+    },
+    {
+      "file": "svc/pdm/src/modules/dashboard.rs",
+      "table": "pdm_boms"
+    },
+    {
+      "file": "svc/pdm/src/modules/dashboard.rs",
+      "table": "pdm_change_notices"
+    },
+    {
+      "file": "svc/pdm/src/modules/dashboard.rs",
+      "table": "pdm_documents"
+    },
+    {
+      "file": "svc/pdm/src/modules/document.rs",
+      "table": "pdm_documents"
+    },
+    {
+      "file": "svc/pdm/src/modules/document.rs",
+      "table": "pdm_workflow_instances"
+    },
+    {
+      "file": "svc/pdm/src/modules/document.rs",
+      "table": "pdm_workflows"
+    },
+    {
+      "file": "svc/pdm/src/modules/document_version.rs",
+      "table": "pdm_document_versions"
+    },
+    {
+      "file": "svc/pdm/src/modules/document_version.rs",
+      "table": "pdm_documents"
+    },
+    {
+      "file": "svc/pdm/src/modules/material.rs",
+      "table": "pdm_materials"
+    },
+    {
+      "file": "svc/pdm/src/modules/product.rs",
+      "table": "pdm_products"
+    },
+    {
+      "file": "svc/pdm/src/modules/production_batch.rs",
+      "table": "pdm_production_batches"
+    },
+    {
+      "file": "svc/pdm/src/modules/production_formula.rs",
+      "table": "pdm_production_formulas"
+    },
+    {
+      "file": "svc/pdm/src/modules/production_process.rs",
+      "table": "pdm_production_processes"
+    },
+    {
+      "file": "svc/pdm/src/modules/production_statistics.rs",
+      "table": "pdm_production_batches"
+    },
+    {
+      "file": "svc/pdm/src/modules/production_statistics.rs",
+      "table": "pdm_production_formulas"
+    },
+    {
+      "file": "svc/pdm/src/modules/production_statistics.rs",
+      "table": "pdm_production_processes"
+    },
+    {
+      "file": "svc/pdm/src/modules/production_statistics.rs",
+      "table": "pdm_production_steps"
+    },
+    {
+      "file": "svc/pdm/src/modules/production_step.rs",
+      "table": "pdm_production_steps"
+    },
+    {
+      "file": "svc/pdm/src/modules/project.rs",
+      "table": "pdm_project_members"
+    },
+    {
+      "file": "svc/pdm/src/modules/project.rs",
+      "table": "pdm_project_phases"
+    },
+    {
+      "file": "svc/pdm/src/modules/project.rs",
+      "table": "pdm_projects"
+    },
+    {
+      "file": "svc/pdm/src/modules/version.rs",
+      "table": "pdm_versions"
+    },
+    {
+      "file": "svc/pdm/src/modules/workflow.rs",
+      "table": "pdm_workflow_instances"
+    },
+    {
+      "file": "svc/pdm/src/modules/workflow.rs",
+      "table": "pdm_workflows"
+    },
+    {
+      "file": "svc/pm/src/modules/statistics.rs",
+      "table": "pm_budget_items"
+    },
+    {
+      "file": "svc/pm/src/modules/statistics.rs",
+      "table": "pm_tasks"
+    },
+    {
+      "file": "svc/portal/src/event_handlers/mod.rs",
+      "table": "portal_dashboard_stats"
+    },
+    {
+      "file": "svc/portal/src/event_handlers/mod.rs",
+      "table": "portal_notifications"
+    },
+    {
+      "file": "svc/portal/src/modules/help/faq.rs",
+      "table": "core_faqs"
+    },
+    {
+      "file": "svc/portal/src/modules/help/guide.rs",
+      "table": "core_guide_lessons"
+    },
+    {
+      "file": "svc/portal/src/modules/help/guide.rs",
+      "table": "core_guides"
+    },
+    {
+      "file": "svc/portal/src/modules/help/mod.rs",
+      "table": "core_faqs"
+    },
+    {
+      "file": "svc/portal/src/modules/help/mod.rs",
+      "table": "core_guides"
+    },
+    {
+      "file": "svc/qms/src/models/audit_log.rs",
+      "table": "qa_approval_events"
+    },
+    {
+      "file": "svc/rd/src/event_handlers/mod.rs",
+      "table": "rs_experiments"
+    },
+    {
+      "file": "svc/rd/src/event_handlers/mod.rs",
+      "table": "rs_formulas"
+    },
+    {
+      "file": "svc/rd/src/event_handlers/mod.rs",
+      "table": "rs_projects"
+    },
+    {
+      "file": "svc/rd/src/modules/project.rs",
+      "table": "projects"
+    },
+    {
+      "file": "svc/rd/src/modules/statistics.rs",
+      "table": "rs_experiments"
+    },
+    {
+      "file": "svc/rd/src/modules/statistics.rs",
+      "table": "rs_formulas"
+    },
+    {
+      "file": "svc/rd/src/modules/statistics.rs",
+      "table": "rs_projects"
+    },
+    {
+      "file": "svc/rd/src/repositories/project_repository.rs",
+      "table": "projects"
+    },
+    {
+      "file": "svc/rd/src/services/project_permission.rs",
+      "table": "project_members"
+    },
+    {
+      "file": "svc/rd/src/services/project_permission.rs",
+      "table": "projects"
+    },
+    {
+      "file": "svc/rd/src/services/project_progress.rs",
+      "table": "project_milestones"
+    },
+    {
+      "file": "svc/rd/src/services/project_progress.rs",
+      "table": "project_phases"
+    },
+    {
+      "file": "svc/rd/src/services/project_progress.rs",
+      "table": "projects"
+    },
+    {
+      "file": "svc/scm/src/main.rs",
+      "table": "suppliers"
+    },
+    {
+      "file": "svc/search/src/handlers.rs",
+      "table": "core_files"
+    },
+    {
+      "file": "svc/srm/src/event_handlers/mod.rs",
+      "table": "suppliers"
+    },
+    {
+      "file": "svc/srm/src/main.rs",
+      "table": "suppliers"
+    },
+    {
+      "file": "svc/tms/src/main.rs",
+      "table": "vehicles"
+    },
+    {
+      "file": "svc/unified-core/src/middleware/versioning.rs",
+      "table": "core_api_version_configs"
+    },
+    {
+      "file": "svc/unified-core/src/modules/audit/handlers.rs",
+      "table": "core_operation_logs"
+    },
+    {
+      "file": "svc/unified-core/src/modules/audit/service.rs",
+      "table": "core_operation_logs"
+    },
+    {
+      "file": "svc/unified-core/src/modules/automation/mod.rs",
+      "table": "automation_rules"
+    },
+    {
+      "file": "svc/unified-core/src/modules/automation/mod.rs",
+      "table": "automation_runs"
+    },
+    {
+      "file": "svc/unified-core/src/modules/automation/mod.rs",
+      "table": "automation_variables"
+    },
+    {
+      "file": "svc/unified-core/src/modules/doc/handlers.rs",
+      "table": "core_doc_document_versions"
+    },
+    {
+      "file": "svc/unified-core/src/modules/doc/handlers.rs",
+      "table": "core_doc_documents"
+    },
+    {
+      "file": "svc/unified-core/src/modules/doc/services/document.rs",
+      "table": "core_doc_documents"
+    },
+    {
+      "file": "svc/unified-core/src/modules/doc/services/folder.rs",
+      "table": "core_doc_folders"
+    },
+    {
+      "file": "svc/unified-core/src/modules/doc/services/template.rs",
+      "table": "core_doc_templates"
+    },
+    {
+      "file": "svc/unified-core/src/modules/engagement/handlers.rs",
+      "table": "core_comments"
+    },
+    {
+      "file": "svc/unified-core/src/modules/engagement/handlers.rs",
+      "table": "core_favorites"
+    },
+    {
+      "file": "svc/unified-core/src/modules/file/manage.rs",
+      "table": "core_file_permissions"
+    },
+    {
+      "file": "svc/unified-core/src/modules/flow/category.rs",
+      "table": "core_flow_categories"
+    },
+    {
+      "file": "svc/unified-core/src/modules/flow/delegate.rs",
+      "table": "core_flow_delegates"
+    },
+    {
+      "file": "svc/unified-core/src/modules/flow/instance.rs",
+      "table": "approval_records"
+    },
+    {
+      "file": "svc/unified-core/src/modules/flow/instance.rs",
+      "table": "approvals"
+    },
+    {
+      "file": "svc/unified-core/src/modules/flow/rule.rs",
+      "table": "core_flow_rules"
+    },
+    {
+      "file": "svc/unified-core/src/modules/flow/variable.rs",
+      "table": "core_flow_variable_history"
+    },
+    {
+      "file": "svc/unified-core/src/modules/flow/variable.rs",
+      "table": "core_flow_variables"
+    },
+    {
+      "file": "svc/unified-core/src/modules/iam/auth.rs",
+      "table": "core_tenant_users"
+    },
+    {
+      "file": "svc/unified-core/src/modules/master/handlers.rs",
+      "table": "core_master_data_change_log"
+    },
+    {
+      "file": "svc/unified-core/src/modules/master/handlers.rs",
+      "table": "core_mdm_approvals"
+    },
+    {
+      "file": "svc/unified-core/src/modules/menu/handlers.rs",
+      "table": "core_menu_groups"
+    },
+    {
+      "file": "svc/unified-core/src/modules/menu/handlers.rs",
+      "table": "core_menus"
+    },
+    {
+      "file": "svc/unified-core/src/modules/migration/service.rs",
+      "table": "core_migration_history"
+    },
+    {
+      "file": "svc/unified-core/src/modules/settings/api_keys.rs",
+      "table": "core_tenant_settings"
+    },
+    {
+      "file": "svc/unified-core/src/modules/settings/smtp.rs",
+      "table": "core_tenant_settings"
+    },
+    {
+      "file": "svc/unified-core/src/modules/system_audit/mod.rs",
+      "table": "audit_logs"
+    },
+    {
+      "file": "svc/unified-core/src/modules/tenant/handlers.rs",
+      "table": "core_tenant_modules"
+    },
+    {
+      "file": "svc/unified-core/src/modules/tenant/handlers.rs",
+      "table": "core_tenant_usage"
+    },
+    {
+      "file": "svc/unified-core/src/modules/tenant/handlers.rs",
+      "table": "core_tenant_users"
+    },
+    {
+      "file": "svc/unified-core/src/modules/tenant/handlers.rs",
+      "table": "core_tenants"
+    },
+    {
+      "file": "svc/unified-core/src/routes/business_tools/database_audit_log_store.rs",
+      "table": "permission_audit_logs"
+    },
+    {
+      "file": "svc/unified-core/src/routes/business_tools/database_permission_store.rs",
+      "table": "tenant_permissions"
+    },
+    {
+      "file": "svc/unified-core/src/routes/business_tools/database_permission_store.rs",
+      "table": "tool_permissions"
+    },
+    {
+      "file": "svc/wms/src/modules/serial_number.rs",
+      "table": "serial_numbers"
+    }
+  ]
+}

@@ -328,6 +328,23 @@ pre-commit:
           exit 0
         fi
 
+    # [Gate SP] schema 前缀门禁：模块 SQL 必须显式 schema.table，不依赖 search_path
+    # 既存违规按 scripts/ci/schema-prefix-baseline.json 放行；新增文件/新表名阻断。
+    schema-prefix:
+      tags: database rust schema
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-schema-prefix.mjs --changed-only
+
+    # [Gate PA] 绕过池调用门禁：svc/ 下禁止直接 pool.acquire（白名单带 reason）
+    pool-acquire:
+      tags: database rust connection
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-pool-acquire.mjs --changed-only
+
     # [Gate Q] Hardcoded CJK in admin module (strict) — migrated from husky #8b
     i18n-hardcode-admin:
       tags: frontend i18n hardcoded
