@@ -152,6 +152,7 @@ psql "$MIGRATE_URL" -f scripts/db/grant-topems-app.sql
 ## 相关文档
 
 - [init/README.md](init/README.md) — 数据库重建详细步骤
+- [migration-debt-register.md](migration-debt-register.md) — 迁移链可重放性挂账登记（版本违序/孤儿/WIP 六件与 validate 基线，只登记不整改）
 - [config/services.yaml](../config/services.yaml) — 服务端口与 schema 配置
 - 根目录 `.env.example` — 数据库连接配置示例
 - [database-primary-instance.md](../docs/database/database-primary-instance.md) — 实例口径与 5433 官方双库验证实例（§6）
