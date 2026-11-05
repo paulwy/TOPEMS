@@ -1,3 +1,42 @@
+## 第四十六轮（2026-11-05）：第 2 档——A4 CASCADE 外键复核补建 + A6 INT 类型延展 ✅
+
+> 承接第四十五轮"第 2 档"：先补回 `DROP TABLE ... CASCADE` 静默删掉的 14 条外键，再收敛 Rust `u32` ↔ DB `BIGINT` 的截断风险。
+
+### 1. A4 CASCADE 顺带删除的 FK 复核补建
+
+**产物**：`database/migrations/20261105190000_db25_restore_cascaded_fks.sql`（14 条约束清单 + `to_regclass` 表存在性判断 + 约束名幂等判断）。
+
+**做法**：沿用 P4 模式——`ADD CONSTRAINT ... NOT VALID`，统计孤儿行；孤儿=0 才 `VALIDATE CONSTRAINT`，否则保留 NOT VALID。
+
+| 库 | FK 总数 | 处置 | 说明 |
+|---|---|---|---|
+| `topems_prepare` | 240→**254**（+14） | 全部新增并 validated | 10 条 mobile 引用表→`mobile.mobile_users` + 4 条 `ehs.qa_ehs_*` |
+| `topems_test` | 193→**197**（+5） | 新增 5 条并 validated | 其余 9 条引用表在 test 不存在（`to_regclass` 判空跳过，非失败） |
+| `topems_prod` | **295**（不变） | no-op | 14 条逻辑约束均已存在 |
+
+- 三库账本均已登记 `20261105190000`（`description=db25 restore cascaded fks`，`success=t`）。
+- 复核：三库目标约束 `convalidated=true`，无 NOT VALID 残留；prod/prepare 出现 18 条同名记录是因为 `qa_ehs_*` 在 `public` 与 `ehs` 各有一份表副本（10+4+4）。
+
+### 2. A6 类型延展（INT/BIGINT ← Rust u32）
+
+**改动文件**：`svc/master-data/src/modules/metadata_v60.rs`
+
+| 字段 | DB 列 | 改动 |
+|---|---|---|
+| `LineageNodeV60.level` | `master_data.mdm_v60_lineage_nodes.level BIGINT` | `u32`→`i64` |
+| `LifecyclePolicy.duration_days` | `master_data.mdm_lifecycle_policies.duration_days BIGINT` | `u32`→`i64` |
+| `LineageDashboard.deepest_level` | 派生值（取节点 level 最大值） | `u32`→`i64` |
+
+- 同步去掉写库 `.bind(x as i64)` 与读库 `row.get::<i64,_>() as u32` 的截断转换；`max_depth` 用 `i64::from(...)` 进入层级循环。
+- 请求侧 `BuildLineageGraphRequest.max_depth` / `CreatePolicyRequest.duration_days` 保持 `Option<u32>`（外部输入语义不变，JSON 数字契约不变）。
+- 验证：`cargo check -p topems-master-data` ✅、`cargo clippy -p topems-master-data --all-targets -- -D warnings` ✅。
+- **范围修正**：审计所称"INT 4 处"经交叉核对，仅上述 2 处存在真实 DB 列映射；另 2 处（`cost_metering/recorded.rs` 的 tokens、gateway/service_client 计数器/rate_limit）为内存态字段，无 DB 列，不需要改。DOUBLE 22 项仍待语义决策。
+
+### 3. 待办状态更新
+
+- A4 → ✅ 完成（prepare +14 / test +5 / prod no-op）。
+- A6 → 部分完成（2 处 INT/BIGINT 已改；DOUBLE 22 项仍待语义决策）。
+
 ## 第四十五轮（2026-11-05）：第 1 档收口——过期清单核销 + A5 账本对账 + A8 NULLIF 同步 ✅
 
 > 承接"第三十四轮补测"与"第四十四轮 prod 治理"，本轮只做三件事：核销过期排期、收敛迁移账本、统一 RLS NULLIF 策略。**未改任何业务代码**。
@@ -47,9 +86,9 @@
 | A1 | prod 反向表 63 张收敛（60 待业务确认 + qms 3 + currencies） | 决策 | 业务确认是否活表 | 逐表 0.5–1d |
 | A2 | prepare 反向表 52 / prod 48 残壳 | 决策 | 同 A1 口径 | 1–2d |
 | A3 | 反向残留列甄别（prod 790 / prepare 1247 / 5433 837） | 决策 | 定"留/删/补迁移" | 2–3d |
-| A4 | CASCADE 删残壳顺带删的 FK 约束复核补建 | **可开工** | 无 | 0.5d |
+| A4 | CASCADE 删残壳顺带删的 FK 约束复核补建 | ✅ 第 2 档完成（prepare+14 / test+5 / prod no-op） | — | — |
 | A5 | 迁移账本对账 | ✅ 本轮完成 | — | — |
-| A6 | 类型延展代码侧 236 项（INT 4 可先行；DOUBLE 22 待语义决策） | 部分可开工 | DOUBLE 需复核 | INT 0.5d；全量 3–5d |
+| A6 | 类型延展代码侧 236 项（INT 4 可先行；DOUBLE 22 待语义决策） | 部分完成（2 处 INT/BIGINT 已改，见第四十六轮） | DOUBLE 需复核 | 全量 3–5d |
 | A7 | 残留 11 表文本比较策略统一 NULLIF | 决策 | 是否统一 | 0.5d |
 | A8 | `fix_tenant_policy_nullif` 同步 test | ✅ 本轮完成（test+prepare 29→0） | — | — |
 | A9 | RLS 应用 tenant 上下文 | 阻塞 | tenant 化架构立项 | 立项后估 |

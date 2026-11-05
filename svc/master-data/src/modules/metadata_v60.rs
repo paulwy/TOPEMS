@@ -179,7 +179,7 @@ pub struct LineageNodeV60 {
     pub entity_type: String,
     pub name: String,
     pub attributes: serde_json::Value,
-    pub level: u32,
+    pub level: i64,
     pub position: serde_json::Value,
 }
 
@@ -219,7 +219,7 @@ pub struct LineageDashboard {
     pub total_edges: usize,
     pub entity_types: Vec<String>,
     pub avg_confidence: f64,
-    pub deepest_level: u32,
+    pub deepest_level: i64,
 }
 
 // ==================== 数据血缘增强：引擎 ====================
@@ -240,7 +240,7 @@ pub struct LifecyclePolicy {
     pub id: String,
     pub entity_type: String,
     pub transitions: serde_json::Value,
-    pub duration_days: u32,
+    pub duration_days: i64,
     pub actions: Vec<String>,
 }
 
@@ -940,7 +940,7 @@ pub async fn build_lineage_graph(
     // K1：算法照搬，写入真表（nodes/edges/graphs）。
     let now = chrono::Utc::now().to_rfc3339();
     let graph_id = uuid::Uuid::new_v4().to_string();
-    let max_depth = req.max_depth.unwrap_or(3);
+    let max_depth = i64::from(req.max_depth.unwrap_or(3));
 
     let root_node = LineageNodeV60 {
         id: uuid::Uuid::new_v4().to_string(),
@@ -963,7 +963,7 @@ pub async fn build_lineage_graph(
             name: format!("{} L{}", req.root_entity_type, level),
             attributes: serde_json::json!({"level": level}),
             level,
-            position: serde_json::json!({"x": level as i64 * 100, "y": 0}),
+            position: serde_json::json!({"x": level * 100, "y": 0}),
         };
 
         let edge = LineageEdgeV60 {
@@ -998,7 +998,7 @@ pub async fn build_lineage_graph(
         .bind(&node.entity_type)
         .bind(&node.name)
         .bind(node.attributes.clone())
-        .bind(node.level as i64)
+        .bind(node.level)
         .bind(node.position.clone())
         .execute(&state.db)
         .await
@@ -1508,7 +1508,7 @@ pub async fn create_policy(
         id: uuid::Uuid::new_v4().to_string(),
         entity_type: req.entity_type,
         transitions: req.transitions,
-        duration_days: req.duration_days.unwrap_or(0),
+        duration_days: req.duration_days.map(i64::from).unwrap_or(0),
         actions: req.actions.unwrap_or_default(),
     };
 
@@ -1520,7 +1520,7 @@ pub async fn create_policy(
     .bind(&policy.id)
     .bind(&policy.entity_type)
     .bind(policy.transitions.clone())
-    .bind(policy.duration_days as i64)
+    .bind(policy.duration_days)
     .bind(serde_json::to_value(&policy.actions).unwrap_or(serde_json::json!([])))
     .execute(&state.db)
     .await
@@ -1980,7 +1980,7 @@ fn lineage_node_from_row(row: &sqlx::postgres::PgRow) -> LineageNodeV60 {
         entity_type: row.get::<String, _>("entity_type"),
         name: row.get::<String, _>("name"),
         attributes: row.get::<serde_json::Value, _>("attributes"),
-        level: row.get::<i64, _>("level") as u32,
+        level: row.get::<i64, _>("level"),
         position: row.get::<serde_json::Value, _>("position"),
     }
 }
@@ -2024,7 +2024,7 @@ fn lifecycle_policy_from_row(row: &sqlx::postgres::PgRow) -> LifecyclePolicy {
         id: row.get::<String, _>("id"),
         entity_type: row.get::<String, _>("entity_type"),
         transitions: row.get::<serde_json::Value, _>("transitions"),
-        duration_days: row.get::<i64, _>("duration_days") as u32,
+        duration_days: row.get::<i64, _>("duration_days"),
         actions: serde_json::from_value(row.get::<serde_json::Value, _>("actions"))
             .unwrap_or_default(),
     }
