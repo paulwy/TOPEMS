@@ -236,12 +236,7 @@ const InventoryReportPage: React.FC = () => {
     }
   };
 
-  const formatNumber = (num: number) => {
-    if (num >= 10000) {
-      return `${(num / 10000).toFixed(2)}${i18n.t('pages.inventory_report_page.k0')}`;
-    }
-    return num.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
-  };
+  const formatNumber = (num: number) => num.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
 
   const tabs: TabItem[] = useMemo(
     () => [

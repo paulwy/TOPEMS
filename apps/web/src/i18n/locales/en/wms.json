@@ -493,7 +493,7 @@
   "wms.location.id_28": "Zone ID",
   "wms.location.k29": "Aisle",
   "wms.location.k30": "Row",
-  "wms.location.k31": "TODO: translate",
+  "wms.location.k31": "Column",
   "wms.location.k32": "Layer",
   "wms.location.k33": "Volume",
   "wms.location.k34": "Weight Limit",
@@ -854,40 +854,40 @@
   "wms.warehouse.k22": "Add Warehouse",
   "wms.warehouse.k23": "Edit Warehouse",
   "wms.warehouse.k24": "Warehouse Details",
-  "wms_abc_analysis_page.sku_0": "TODO: translate",
-  "wms_abc_analysis_page.top10sku_1": "TODO: translate",
-  "wms_abc_analysis_page.c10_2": "TODO: translate",
-  "wms_abc_analysis_page.b20_3": "TODO: translate",
-  "wms_abc_analysis_page.a70_4": "TODO: translate",
-  "wms_abc_analysis_page.abc702010_5": "TODO: translate",
-  "wms_inventory_movement_detail_page.v0_0": "TODO: translate",
-  "wms_inventory_movement_detail_page.k1": "TODO: translate",
-  "wms_inventory_movement_detail_page.v0_2": "TODO: translate",
-  "wms_inventory_movement_detail_page.v0_3": "TODO: translate",
-  "wms_inventory_movement_detail_page.k4": "TODO: translate",
-  "wms_inventory_movement_detail_page.v0_5": "TODO: translate",
-  "wms_transfer_detail_page.k0": "TODO: translate",
-  "wms_transfer_detail_page.k1": "TODO: translate",
-  "wms_transfer_detail_page.k2": "TODO: translate",
-  "wms_transfer_detail_page.v0_3": "TODO: translate",
-  "wms_transfer_detail_page.v0_4": "TODO: translate",
-  "wms_inbound_detail_page.v0_0": "TODO: translate",
-  "wms_inbound_detail_page.k1": "TODO: translate",
-  "wms_inbound_detail_page.v0_2": "TODO: translate",
-  "wms_inbound_detail_page.v0_3": "TODO: translate",
-  "wms_outbound_detail_page.k0": "TODO: translate",
-  "wms_outbound_detail_page.k1": "TODO: translate",
-  "wms_outbound_detail_page.v0_2": "TODO: translate",
-  "wms_outbound_detail_page.v0_3": "TODO: translate",
-  "wms.analytics.agePareto.k0": "TODO: translate",
-  "wms.analytics.agePareto.k1": "TODO: translate",
-  "wms.stockTakeDetail.k0": "TODO: translate",
-  "wms.stockTakeDetail.k1": "TODO: translate",
-  "wms.stockTakeDetail.k2": "TODO: translate",
-  "wms.wavePickDetail.k2": "TODO: translate",
+  "wms_abc_analysis_page.sku_0": "SKU code",
+  "wms_abc_analysis_page.top10sku_1": "Top 10 high-value SKUs",
+  "wms_abc_analysis_page.c10_2": "Class C (low value, 10% of amount)",
+  "wms_abc_analysis_page.b20_3": "Class B (medium value, 20% of amount)",
+  "wms_abc_analysis_page.a70_4": "Class A (high value, 70% of amount)",
+  "wms_abc_analysis_page.abc702010_5": "ABC classification analysis (Pareto 70/20/10)",
+  "wms_inventory_movement_detail_page.v0_0": "Operator: {{v0}}",
+  "wms_inventory_movement_detail_page.k1": "Material code / name",
+  "wms_inventory_movement_detail_page.v0_2": "Warehouse: {{v0}}",
+  "wms_inventory_movement_detail_page.v0_3": "Warehouse: {{v0}}",
+  "wms_inventory_movement_detail_page.k4": "{{v0}}{{v1}} · Created at {{v2}}",
+  "wms_inventory_movement_detail_page.v0_5": "Inventory movement detail — {{v0}}",
+  "wms_transfer_detail_page.k0": "Quantity / estimated arrival",
+  "wms_transfer_detail_page.k1": "Carrier / waybill no.",
+  "wms_transfer_detail_page.k2": "Transport mode / type",
+  "wms_transfer_detail_page.v0_3": "Created at {{v0}}",
+  "wms_transfer_detail_page.v0_4": "Transfer order detail — {{v0}}",
+  "wms_inbound_detail_page.v0_0": "Operator: {{v0}}",
+  "wms_inbound_detail_page.k1": "Total quantity / received",
+  "wms_inbound_detail_page.v0_2": "Created at {{v0}}",
+  "wms_inbound_detail_page.v0_3": "Inbound order detail — {{v0}}",
+  "wms_outbound_detail_page.k0": "Quantity (picked / shipped)",
+  "wms_outbound_detail_page.k1": "Carrier / waybill no.",
+  "wms_outbound_detail_page.v0_2": "Customer: {{v0}}",
+  "wms_outbound_detail_page.v0_3": "Outbound order detail — {{v0}}",
+  "wms.analytics.agePareto.k0": "Inventory age Pareto analysis (80/20 rule)",
+  "wms.analytics.agePareto.k1": "Total SKUs",
+  "wms.stockTakeDetail.k0": "Stocktake order detail —",
+  "wms.stockTakeDetail.k1": "· Warehouse:",
+  "wms.stockTakeDetail.k2": "Stocktake variance list (system / physical / variance / reason)",
+  "wms.wavePickDetail.k2": "Picked / to pick",
   "wms_wave_pick_detail_page.v0_0": "Wave Pick Detail — {{v0}}",
   "wms_wave_pick_detail_page.v0_1": "Created at {{v0}}",
-  "wms.analytics.locationUtilization.k0": "TODO: translate",
+  "wms.analytics.locationUtilization.k0": "Stacked bars by storage zone (used / vacant / stagnant)",
   "wms": {
     "area": {
       "k12": "Enabled",
@@ -1038,7 +1038,7 @@
       "k34": "Weight Limit",
       "k35": "Temperature Zone",
       "k30": "Row",
-      "k31": "TODO: translate",
+      "k31": "Column",
       "k32": "Layer",
       "k0": "Location",
       "k2": "Location Code",
@@ -1511,20 +1511,20 @@
     },
     "analytics": {
       "agePareto": {
-        "k0": "TODO: translate",
-        "k1": "TODO: translate"
+        "k0": "Inventory age Pareto analysis (80/20 rule)",
+        "k1": "Total SKUs"
       },
       "locationUtilization": {
-        "k0": "TODO: translate"
+        "k0": "Stacked bars by storage zone (used / vacant / stagnant)"
       }
     },
     "stockTakeDetail": {
-      "k0": "TODO: translate",
-      "k1": "TODO: translate",
-      "k2": "TODO: translate"
+      "k0": "Stocktake order detail —",
+      "k1": "· Warehouse:",
+      "k2": "Stocktake variance list (system / physical / variance / reason)"
     },
     "wavePickDetail": {
-      "k2": "TODO: translate"
+      "k2": "Picked / to pick"
     },
     "batch_management_page": {
       "in_stock": "Label",
@@ -1772,39 +1772,39 @@
     }
   },
   "wms_abc_analysis_page": {
-    "sku_0": "TODO: translate",
-    "top10sku_1": "TODO: translate",
-    "c10_2": "TODO: translate",
-    "b20_3": "TODO: translate",
-    "a70_4": "TODO: translate",
-    "abc702010_5": "TODO: translate"
+    "sku_0": "SKU code",
+    "top10sku_1": "Top 10 high-value SKUs",
+    "c10_2": "Class C (low value, 10% of amount)",
+    "b20_3": "Class B (medium value, 20% of amount)",
+    "a70_4": "Class A (high value, 70% of amount)",
+    "abc702010_5": "ABC classification analysis (Pareto 70/20/10)"
   },
   "wms_inventory_movement_detail_page": {
-    "v0_0": "TODO: translate",
-    "k1": "TODO: translate",
-    "v0_2": "TODO: translate",
-    "v0_3": "TODO: translate",
-    "k4": "TODO: translate",
-    "v0_5": "TODO: translate"
+    "v0_0": "Operator: {{v0}}",
+    "k1": "Material code / name",
+    "v0_2": "Warehouse: {{v0}}",
+    "v0_3": "Warehouse: {{v0}}",
+    "k4": "{{v0}}{{v1}} · Created at {{v2}}",
+    "v0_5": "Inventory movement detail — {{v0}}"
   },
   "wms_transfer_detail_page": {
-    "k0": "TODO: translate",
-    "k1": "TODO: translate",
-    "k2": "TODO: translate",
-    "v0_3": "TODO: translate",
-    "v0_4": "TODO: translate"
+    "k0": "Quantity / estimated arrival",
+    "k1": "Carrier / waybill no.",
+    "k2": "Transport mode / type",
+    "v0_3": "Created at {{v0}}",
+    "v0_4": "Transfer order detail — {{v0}}"
   },
   "wms_inbound_detail_page": {
-    "v0_0": "TODO: translate",
-    "k1": "TODO: translate",
-    "v0_2": "TODO: translate",
-    "v0_3": "TODO: translate"
+    "v0_0": "Operator: {{v0}}",
+    "k1": "Total quantity / received",
+    "v0_2": "Created at {{v0}}",
+    "v0_3": "Inbound order detail — {{v0}}"
   },
   "wms_outbound_detail_page": {
-    "k0": "TODO: translate",
-    "k1": "TODO: translate",
-    "v0_2": "TODO: translate",
-    "v0_3": "TODO: translate"
+    "k0": "Quantity (picked / shipped)",
+    "k1": "Carrier / waybill no.",
+    "v0_2": "Customer: {{v0}}",
+    "v0_3": "Outbound order detail — {{v0}}"
   },
   "wms.batch_management_page.in_stock": "Label",
   "wms.batch_management_page.outbound": "Outbound",

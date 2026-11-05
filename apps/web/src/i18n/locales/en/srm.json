@@ -7,7 +7,6 @@
     },
     "column": {
       "amount": "Order Amount",
-      "amount_value": "{{value}}0k",
       "overall_score": "Overall Score",
       "quality_score": "Quality Score",
       "delivery_score": "Delivery Score",

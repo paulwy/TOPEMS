@@ -1386,26 +1386,26 @@
   "qms.qms_spc_control_chart_page.k3": "Sample Mean",
   "qms.qms_spc_control_chart_page.r_4": "Range Control Chart (R Chart)",
   "qms.qms_spc_control_chart_page.k5": "Sample Range",
-  "qms_eight_d_detail_page.8d_0": "TODO: translate",
-  "qms_eight_d_detail_page.k1": "TODO: translate",
-  "qms_eight_d_detail_page.8d_2": "TODO: translate",
-  "qms_fmea_detail_page.rpn_0": "TODO: translate",
-  "qms_fmea_detail_page.rpn_1": "TODO: translate",
-  "qms_fmea_detail_page.top10rpn_2": "TODO: translate",
-  "qms.analytics.spcControlChart.k0": "TODO: translate",
-  "qms.analytics.spcControlChart.k1": "TODO: translate",
-  "qms.analytics.spcControlChart.k2": "TODO: translate",
-  "qms.analytics.spcControlChart.k3": "TODO: translate",
-  "qms.analytics.fmeaRiskMatrix.k0": "TODO: translate",
-  "qms.analytics.fmeaRiskMatrix.k1": "TODO: translate",
-  "qms.analytics.fmeaRiskMatrix.k2": "TODO: translate",
-  "qms.inspectionDetail.k0": "TODO: translate",
-  "qms.analytics.auditCompliance.k0": "TODO: translate",
-  "qms.analytics.auditCompliance.k1": "TODO: translate",
-  "qms.analytics.auditCompliance.k2": "TODO: translate",
-  "qms.analytics.auditCompliance.k3": "TODO: translate",
-  "qms.analytics.defectPareto.k0": "TODO: translate",
-  "qms.analytics.defectPareto.k1": "TODO: translate",
+  "qms_eight_d_detail_page.8d_0": "8D report closed",
+  "qms_eight_d_detail_page.k1": "[Root cause analysis complete]",
+  "qms_eight_d_detail_page.8d_2": "8D step timeline",
+  "qms_fmea_detail_page.rpn_0": "Average RPN:",
+  "qms_fmea_detail_page.rpn_1": "Max RPN:",
+  "qms_fmea_detail_page.top10rpn_2": "Top 10 risk items by RPN",
+  "qms.analytics.spcControlChart.k0": "SPC control chart analysis",
+  "qms.analytics.spcControlChart.k1": "Control limits UCL/LCL",
+  "qms.analytics.spcControlChart.k2": "Out-of-limit points / ratio",
+  "qms.analytics.spcControlChart.k3": "Mean control chart (X̄ chart)",
+  "qms.analytics.fmeaRiskMatrix.k0": "FMEA risk matrix",
+  "qms.analytics.fmeaRiskMatrix.k1": "High risk (≥200)",
+  "qms.analytics.fmeaRiskMatrix.k2": "Risk matrix (severity × occurrence, point size = RPN)",
+  "qms.inspectionDetail.k0": "[Approval complete]",
+  "qms.analytics.auditCompliance.k0": "Audit plan:",
+  "qms.analytics.auditCompliance.k1": "| Tasks:",
+  "qms.analytics.auditCompliance.k2": "| Findings:",
+  "qms.analytics.auditCompliance.k3": "Department compliance rate (task completion rate + finding closure rate)",
+  "qms.analytics.defectPareto.k0": "80/20 vital few:",
+  "qms.analytics.defectPareto.k1": "Defect Pareto chart (bars + cumulative line)",
   "auditmanagement": {},
   "eightd": {},
   "qualitycontrol": {},
@@ -2575,30 +2575,30 @@
     },
     "analytics": {
       "spcControlChart": {
-        "k0": "TODO: translate",
-        "k1": "TODO: translate",
-        "k2": "TODO: translate",
-        "k3": "TODO: translate"
+        "k0": "SPC control chart analysis",
+        "k1": "Control limits UCL/LCL",
+        "k2": "Out-of-limit points / ratio",
+        "k3": "Mean control chart (X̄ chart)"
       },
       "fmeaRiskMatrix": {
-        "k0": "TODO: translate",
-        "k1": "TODO: translate",
-        "k2": "TODO: translate"
+        "k0": "FMEA risk matrix",
+        "k1": "High risk (≥200)",
+        "k2": "Risk matrix (severity × occurrence, point size = RPN)"
       },
       "auditCompliance": {
-        "k0": "TODO: translate",
-        "k1": "TODO: translate",
-        "k2": "TODO: translate",
-        "k3": "TODO: translate"
+        "k0": "Audit plan:",
+        "k1": "| Tasks:",
+        "k2": "| Findings:",
+        "k3": "Department compliance rate (task completion rate + finding closure rate)"
       },
       "defectPareto": {
-        "k0": "TODO: translate",
-        "k1": "TODO: translate",
+        "k0": "80/20 vital few:",
+        "k1": "Defect Pareto chart (bars + cumulative line)",
         "k2": "categories"
       }
     },
     "inspectionDetail": {
-      "k0": "TODO: translate"
+      "k0": "[Approval complete]"
     },
     "eight_d_redesign": {
       "severity_major": "Critical"
@@ -2733,14 +2733,14 @@
   "qmsnonconformancepage": {},
   "qmsstandardlistpage": {},
   "qms_eight_d_detail_page": {
-    "8d_0": "TODO: translate",
-    "k1": "TODO: translate",
-    "8d_2": "TODO: translate"
+    "8d_0": "8D report closed",
+    "k1": "[Root cause analysis complete]",
+    "8d_2": "8D step timeline"
   },
   "qms_fmea_detail_page": {
-    "rpn_0": "TODO: translate",
-    "rpn_1": "TODO: translate",
-    "top10rpn_2": "TODO: translate"
+    "rpn_0": "Average RPN:",
+    "rpn_1": "Max RPN:",
+    "top10rpn_2": "Top 10 risk items by RPN"
   },
   "qms_apqp_page": {
     "apqp_product_quality": "APQP Advanced Product Quality Planning"

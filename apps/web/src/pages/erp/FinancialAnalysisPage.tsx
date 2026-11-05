@@ -14,6 +14,7 @@ import { financeReportApi } from '@/api/finance';
 import type { BalanceSheet, IncomeStatement, CashFlowStatement } from '@/api/erp/types';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
+import { formatCny } from '@/utils/format';
 import { BarChart3, TrendingUp, PieChart, FileText } from 'lucide-react';
 import { useTheme } from '@mui/material';
 
@@ -305,25 +306,19 @@ const FinancialAnalysisPage: React.FC = () => {
           {
             id: 'total-assets',
             title: i18n.t('erp.financial_analysis_page.k24'),
-            value: i18n.t('erp:financial_analysis_page.v0_17', {
-              v0: (balanceSheetData.total_assets / 10000).toFixed(1),
-            }),
+            value: formatCny(balanceSheetData.total_assets),
             color: 'success',
           },
           {
             id: 'total-liabilities',
             title: i18n.t('erp.financial_analysis_page.k25'),
-            value: i18n.t('erp:financial_analysis_page.v0_16', {
-              v0: (balanceSheetData.total_liabilities / 10000).toFixed(1),
-            }),
+            value: formatCny(balanceSheetData.total_liabilities),
             color: 'error',
           },
           {
             id: 'total-equity',
             title: i18n.t('erp.financial_analysis_page.k26'),
-            value: i18n.t('erp:financial_analysis_page.v0_15', {
-              v0: (balanceSheetData.total_equity / 10000).toFixed(1),
-            }),
+            value: formatCny(balanceSheetData.total_equity),
             color: 'primary',
           },
         ];
@@ -335,25 +330,19 @@ const FinancialAnalysisPage: React.FC = () => {
           {
             id: 'total-revenue',
             title: i18n.t('erp.financial_analysis_page.k27'),
-            value: i18n.t('erp:financial_analysis_page.v0_14', {
-              v0: (incomeStatementData.total_revenue / 10000).toFixed(1),
-            }),
+            value: formatCny(incomeStatementData.total_revenue),
             color: 'success',
           },
           {
             id: 'total-cost',
             title: i18n.t('erp.financial_analysis_page.k28'),
-            value: i18n.t('erp:financial_analysis_page.v0_13', {
-              v0: (incomeStatementData.total_expense / 10000).toFixed(1),
-            }),
+            value: formatCny(incomeStatementData.total_expense),
             color: 'error',
           },
           {
             id: 'net-profit',
             title: i18n.t('erp.financial_analysis_page.k29'),
-            value: i18n.t('erp:financial_analysis_page.v0_12', {
-              v0: (incomeStatementData.net_income / 10000).toFixed(1),
-            }),
+            value: formatCny(incomeStatementData.net_income),
             color: 'primary',
           },
         ];
@@ -365,25 +354,19 @@ const FinancialAnalysisPage: React.FC = () => {
           {
             id: 'net-cash-flow',
             title: i18n.t('erp.financial_analysis_page.k30'),
-            value: i18n.t('erp:financial_analysis_page.v0_11', {
-              v0: (cashFlowData.net_change / 10000).toFixed(1),
-            }),
+            value: formatCny(cashFlowData.net_change),
             color: 'success',
           },
           {
             id: 'operating-cash-flow',
             title: i18n.t('erp.financial_report.label.total_inflow'),
-            value: i18n.t('erp:financial_analysis_page.v0_10', {
-              v0: (cashFlowData.total_inflow / 10000).toFixed(1),
-            }),
+            value: formatCny(cashFlowData.total_inflow),
             color: 'warning',
           },
           {
             id: 'financing-cash-flow',
             title: i18n.t('erp.financial_report.label.total_outflow'),
-            value: i18n.t('erp:financial_analysis_page.v0_9', {
-              v0: (cashFlowData.total_outflow / 10000).toFixed(1),
-            }),
+            value: formatCny(cashFlowData.total_outflow),
             color: 'info',
           },
         ];
@@ -395,25 +378,19 @@ const FinancialAnalysisPage: React.FC = () => {
           {
             id: 'aging-0-30',
             title: i18n.t('erp.financial_analysis_page.030_8'),
-            value: i18n.t('erp:financial_analysis_page.v0_7', {
-              v0: (agingAnalysisData['0-30'] / 10000).toFixed(1),
-            }),
+            value: formatCny(agingAnalysisData['0-30']),
             color: 'success',
           },
           {
             id: 'aging-31-60',
             title: i18n.t('erp.financial_analysis_page.3160_6'),
-            value: i18n.t('erp:financial_analysis_page.v0_5', {
-              v0: (agingAnalysisData['31-60'] / 10000).toFixed(1),
-            }),
+            value: formatCny(agingAnalysisData['31-60']),
             color: 'warning',
           },
           {
             id: 'aging-overdue',
             title: i18n.t('erp.financial_analysis_page.k33'),
-            value: i18n.t('erp:financial_analysis_page.v0_4', {
-              v0: ((agingAnalysisData['61-90'] || 0) + (agingAnalysisData['90+'] || 0)) / 10000,
-            }),
+            value: formatCny((agingAnalysisData['61-90'] || 0) + (agingAnalysisData['90+'] || 0)),
             color: 'error',
           },
         ];
@@ -425,17 +402,13 @@ const FinancialAnalysisPage: React.FC = () => {
           {
             id: 'budget-amount',
             title: i18n.t('erp.financial_analysis_page.k34'),
-            value: i18n.t('erp:financial_analysis_page.v0_3', {
-              v0: (budgetAnalysisData.budget_amount / 10000).toFixed(1),
-            }),
+            value: formatCny(budgetAnalysisData.budget_amount),
             color: 'success',
           },
           {
             id: 'actual-amount',
             title: i18n.t('erp.financial_analysis_page.k35'),
-            value: i18n.t('erp:financial_analysis_page.v0_2', {
-              v0: (budgetAnalysisData.actual_amount / 10000).toFixed(1),
-            }),
+            value: formatCny(budgetAnalysisData.actual_amount),
             color: 'primary',
           },
           {

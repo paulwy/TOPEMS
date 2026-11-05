@@ -302,10 +302,26 @@ function flatten(obj, prefix = '', out = new Map()) {
   }
   return out;
 }
+// ASCII 占位识别：只匹配「整值即占位」或「以占位词开头」的英文，
+// 避免误伤 "translation"、"hackathon"、代码模板里的 "// TODO: Test" 等合法内容
+const ASCII_PLACEHOLDER_PREFIX_RE =
+  /^\s*\[?\s*(?:TODO|FIXME|HACK|TBD|XXX)\s*[\]：:\-—]?\s*(?:$|[\s：:\-—])/i;
+// "TODO: translate" 这类明确的占位标记允许出现在任意位置（含被 String() 拍平的数组）
+const ASCII_PLACEHOLDER_ANYWHERE_RE = /TODO\s*:\s*translate/i;
+// 整值就是占位的短句
+const ASCII_PLACEHOLDER_FULL_RE =
+  /^(?:n\/a|na|lorem ipsum(?: dolor)?|translate(?: this| me)?|to be (?:translated|determined)|xxx)$/i;
+
 function classifyEn(enVal, zhVal) {
   const ev = (enVal || '').trim();
   const zv = (zhVal || '').trim();
   if (!ev) return 'empty';
+  if (
+    ASCII_PLACEHOLDER_PREFIX_RE.test(ev) ||
+    ASCII_PLACEHOLDER_ANYWHERE_RE.test(ev) ||
+    ASCII_PLACEHOLDER_FULL_RE.test(ev)
+  )
+    return 'ascii_placeholder';
   if (!CJK_RE.test(ev)) return 'ok';
   if (zv && ev === zv) return 'untranslated';
   if (zv && (ev.includes(zv) || zv.includes(ev))) return 'partial_machine';

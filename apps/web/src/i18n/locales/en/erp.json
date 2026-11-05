@@ -428,7 +428,6 @@
       "cannot_export": "Cannot export report"
     },
     "format": {
-      "amount_wan": "¥{{v0}}0k",
       "chart_title": "{{v0}} - Visualization Chart",
       "detail_title": "{{v0}} - Detail Data"
     }
@@ -998,27 +997,11 @@
   "erp.voucher_table.k2": "Confirm",
   "erp.voucher_table.k3": "Open Document",
   "erp.voucher_table.k4": "Delete",
-  "financial_analysis_page.v0_0": "TODO: translate",
-  "financial_analysis_page.v0_1": "TODO: translate",
-  "financial_analysis_page.v0_2": "TODO: translate",
-  "financial_analysis_page.v0_3": "TODO: translate",
-  "financial_analysis_page.v0_4": "TODO: translate",
-  "financial_analysis_page.v0_5": "TODO: translate",
-  "financial_analysis_page.3160_6": "TODO: translate",
-  "financial_analysis_page.v0_7": "TODO: translate",
-  "financial_analysis_page.030_8": "TODO: translate",
-  "financial_analysis_page.v0_9": "TODO: translate",
-  "financial_analysis_page.v0_10": "TODO: translate",
-  "financial_analysis_page.v0_11": "TODO: translate",
-  "financial_analysis_page.v0_12": "TODO: translate",
-  "financial_analysis_page.v0_13": "TODO: translate",
-  "financial_analysis_page.v0_14": "TODO: translate",
-  "financial_analysis_page.v0_15": "TODO: translate",
-  "financial_analysis_page.v0_16": "TODO: translate",
-  "financial_analysis_page.v0_17": "TODO: translate",
-  "financial_analysis_page.v0_18": "TODO: translate",
-  "financial_analysis_page.v0_19": "TODO: translate",
-  "erp.auditLog.k0": "TODO: translate",
+  "financial_analysis_page.v0_0": "{{v0}} - Detail data",
+  "financial_analysis_page.v0_1": "{{v0}} - Visualization chart",
+  "financial_analysis_page.3160_6": "31-60 days",
+  "financial_analysis_page.030_8": "0-30 days",
+  "erp.auditLog.k0": "IP address",
   "erp": {
     "accounting_management_page": {
       "k0": "Create failed",
@@ -1317,7 +1300,7 @@
       "k7": "Financial Management"
     },
     "auditLog": {
-      "k0": "TODO: translate"
+      "k0": "IP address"
     },
     "voucher_mgmt": {
       "label": {
@@ -2735,26 +2718,10 @@
     }
   },
   "financial_analysis_page": {
-    "v0_0": "TODO: translate",
-    "v0_1": "TODO: translate",
-    "v0_2": "TODO: translate",
-    "v0_3": "TODO: translate",
-    "v0_4": "TODO: translate",
-    "v0_5": "TODO: translate",
-    "3160_6": "TODO: translate",
-    "v0_7": "TODO: translate",
-    "030_8": "TODO: translate",
-    "v0_9": "TODO: translate",
-    "v0_10": "TODO: translate",
-    "v0_11": "TODO: translate",
-    "v0_12": "TODO: translate",
-    "v0_13": "TODO: translate",
-    "v0_14": "TODO: translate",
-    "v0_15": "TODO: translate",
-    "v0_16": "TODO: translate",
-    "v0_17": "TODO: translate",
-    "v0_18": "TODO: translate",
-    "v0_19": "TODO: translate"
+    "v0_0": "{{v0}} - Detail data",
+    "v0_1": "{{v0}} - Visualization chart",
+    "3160_6": "31-60 days",
+    "030_8": "0-30 days"
   },
   "erp.voucher_mgmt.label.voucher_detail": "Details",
   "erp.voucher_mgmt.label.voucher_number": "Voucher Number",
@@ -3527,7 +3494,6 @@
   "erp.erp_sales_order_redesign.delete.title": "Delete Sales Order",
   "erp.erp_sales_order_redesign.delete.confirm": "Confirm Delete",
   "erp.erp_sales_order_redesign.delete.confirm_message": "Are you sure you want to delete order \"{{order_no}}\"? This action cannot be undone.",
-  "erp.erp_sales_order_redesign.format.amount_wan": "¥{{v0}}0k",
   "erp.purchase_order.status.draft": "Draft",
   "erp.purchase_order.status.pending_approval": "Pending Approval",
   "erp.purchase_order.status.approved": "Approved",
@@ -3675,7 +3641,6 @@
   "erp.erp_inventory_redesign.drawer.unit_price": "Unit Price",
   "erp.erp_inventory_redesign.drawer.total_value": "Stock Value",
   "erp.erp_inventory_redesign.drawer.last_restock": "Last Restock Date",
-  "erp.erp_inventory_redesign.format.amount_wan": "¥{{v0}}0k",
   "erp.demo.company_a_name": "Shanghai Tech Co., Ltd.",
   "erp.demo.company_b_name": "Beijing Trading Group",
   "erp.demo.company_c_name": "Shenzhen Electronics Co., Ltd.",

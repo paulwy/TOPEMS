@@ -32,6 +32,7 @@ import {
 import type { DataTableColumn, Toast } from '@/components/redesign';
 import { useTranslation } from 'react-i18next';
 import { salesOrderApi } from '@/api/erp/core/salesOrder';
+import { formatCny } from '@/utils/format';
 import type {
   SalesOrder as ApiSalesOrder,
   CreateSalesOrderRequest,
@@ -126,15 +127,8 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  // 金额格式化（含"万"单位，需 t() 取数，故置于组件内）
-  const formatAmount = (value: number) => {
-    if (value >= 10000) {
-      return t('erp.erp_sales_order_redesign.format.amount_wan', {
-        v0: (value / 10000).toFixed(1),
-      });
-    }
-    return `¥${value.toLocaleString('zh-CN')}`;
-  };
+  // 金额统一按真值展示（千分位、¥、不做「万」换算）
+  const formatAmount = formatCny;
 
   const mockSalesOrders: SalesOrder[] = [
     {

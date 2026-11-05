@@ -3260,7 +3260,7 @@
       ],
       [
         "text_2a5da6",
-        "TODO: translate"
+        "files"
       ],
       [
         "text_fff307",
@@ -5555,7 +5555,7 @@
   "bi.bi_index_page.dashboard_stat": "Dashboard",
   "bi.bi_index_page.unit_count": "units_placeholder",
   "bi.bi_index_page.report_stat": "Report",
-  "bi.bi_index_page.data_unit": "TODO: translate",
+  "bi.bi_index_page.data_unit": "Data",
   "bi.bi_index_page.insights_stat": "Insights",
   "bi.bi_index_page.unit_insight": "units_placeholder",
   "bi.bi_index_page.monday": "Monday",

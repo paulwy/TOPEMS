@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { logger } from '@/utils/logger';
+import { formatCny } from '@/utils/format';
 import { RD_PATHS } from '@/modules/rd/config';
 import {
   Box,
@@ -369,7 +370,7 @@ const RsProjectDetailPage: React.FC = () => {
         tags: [
           getStatusLabel(project.status),
           `${i18n.t('pages.rs_project_detail_page.k4')}${project.risklevel || '-'}`,
-          `${i18n.t('pages.rs_project_detail_page.k5')}${project.budget ? (project.budget / 10000).toFixed(1) : '-'}${i18n.t('pages.rs_project_detail_page.k6')}`,
+          `${i18n.t('pages.rs_project_detail_page.k5')}${project.budget ? formatCny(project.budget) : '-'}`,
         ],
         stats: [
           { label: i18n.t('rd.rs_project_detail_page.k39'), value: `${project.progress}%` },

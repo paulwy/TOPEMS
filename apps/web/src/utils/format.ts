@@ -11,6 +11,18 @@ import i18n from '@/i18n';
 // 重新导出共享工具
 export { debounce, throttle, generateId, sharedTruncateText as truncateText };
 
+/**
+ * 金额（正文数值）统一格式：真值展开 + 千分位 + 整数元。
+ * 图表轴刻度另按 K 单位标注，不要用「万/亿」换算后缀。
+ */
+export const formatCny = (amount: number | null | undefined): string =>
+  new Intl.NumberFormat('zh-CN', {
+    style: 'currency',
+    currency: 'CNY',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount ?? 0);
+
 const FORMAT_CACHE_SIZE = 100;
 
 interface FormatCacheEntry {

@@ -158,7 +158,6 @@
     },
     "column": {
       "amount": "订单金额",
-      "amount_value": "{{value}}万",
       "overall_score": "综合评分",
       "quality_score": "质量评分",
       "delivery_score": "交付评分",
