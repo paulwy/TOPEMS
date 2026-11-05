@@ -514,7 +514,7 @@ C.4 的既有 5 项白名单未变。
 | mobile | `mobile, public, shared`（显式，不再继承 `.env`） | `svc/mobile/src/main.rs#L62`、`svc/server/src/modules/mobile_real_module.rs#L46` |
 | search | `public`（并池收口） | `svc/server/src/modules/search_real_module.rs#L45` |
 
-全部模块的 `AppState` 字段类型由 `PgPool` 改为 `Db`，`std::env::set_var("SEARCH_PATH", …)`
+各模块持有连接的方式统一改为 `Db`（`AppState` 字段或 handler 提取器），`std::env::set_var("SEARCH_PATH", …)`
 已从上述 6 个嵌入模块与其独立 `main.rs` 删除。
 
 **池数与预算（真实启动，默认配置，本地 8099）**
