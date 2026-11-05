@@ -617,7 +617,7 @@ pub async fn trigger_srm_scm(
 pub struct IntegrationSyncStatsResp {
     pub total_syncs: i64,
     pub success_rate: f64,
-    pub last_sync_at: Option<String>,
+    pub last_sync_at: Option<chrono::DateTime<chrono::Utc>>,
     pub integration_stats: std::collections::HashMap<String, SyncTypeStats>,
 }
 
@@ -687,10 +687,12 @@ pub async fn get_integration_sync_stats(
         .fetch_one(&state.pool)
         .await?;
 
-        let last_sync: Option<Option<String>> = sqlx::query_scalar(only_own_schema_query!(
-            "integration",
-            "SELECT MAX(created_at)::text FROM integration.core_inter_module_sync"
-        ))
+        let last_sync: Option<chrono::DateTime<chrono::Utc>> = sqlx::query_scalar(
+            only_own_schema_query!(
+                "integration",
+                "SELECT MAX(created_at) FROM integration.core_inter_module_sync"
+            ),
+        )
         .fetch_one(&state.pool)
         .await?;
 
@@ -729,7 +731,7 @@ pub async fn get_integration_sync_stats(
         Ok(IntegrationSyncStatsResp {
             total_syncs,
             success_rate: (success_rate * 100.0).round() / 100.0,
-            last_sync_at: last_sync.flatten(),
+            last_sync_at: last_sync,
             integration_stats,
         })
     }

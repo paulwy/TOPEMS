@@ -148,7 +148,7 @@ pub struct CollectionOut {
     pub remark: Option<String>,
     pub status: Option<String>,
     pub confirmed_by: Option<String>,
-    pub confirmed_at: Option<String>,
+    pub confirmed_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -733,7 +733,7 @@ async fn fetch_collection(
                 customer_id, customer_name,
                 CASE WHEN collection_date IS NULL THEN NULL ELSE to_char(collection_date, 'YYYY-MM-DD') END AS collection_date,
                 amount, payment_method, NULL AS bank_account, remark, status, confirmed_by,
-                CASE WHEN confirmed_at IS NULL THEN NULL ELSE to_char(confirmed_at, 'YYYY-MM-DD\"T\"HH24:MI:SS') END AS confirmed_at
+                confirmed_at
          FROM finance.erp_collection_records erc
          WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
     )
@@ -817,7 +817,7 @@ pub async fn list_collections(
                 customer_id, customer_name,
                 CASE WHEN collection_date IS NULL THEN NULL ELSE to_char(collection_date, 'YYYY-MM-DD') END AS collection_date,
                 amount, payment_method, NULL AS bank_account, remark, status, confirmed_by,
-                CASE WHEN confirmed_at IS NULL THEN NULL ELSE to_char(confirmed_at, 'YYYY-MM-DD\"T\"HH24:MI:SS') END AS confirmed_at
+                confirmed_at
          FROM finance.erp_collection_records erc WHERE {where_sql}
          ORDER BY created_at DESC LIMIT $6 OFFSET $7"
     )))

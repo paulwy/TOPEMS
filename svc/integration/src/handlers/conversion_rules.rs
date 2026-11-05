@@ -53,7 +53,7 @@ pub async fn get_conversion_rule_api(
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ConversionRule> {
     match sqlx::query_as::<_, ConversionRule>(
-        only_own_schema_query!("integration", "SELECT id, tenant_id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("integration", "SELECT id, tenant_id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at, updated_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -141,7 +141,7 @@ pub async fn update_conversion_rule_api(
     let now = Utc::now();
 
     let row = sqlx::query(
-        only_own_schema_query!("integration", "UPDATE integration.conversion_rules SET name = COALESCE($1, name), description = COALESCE($2, description), trigger_type = COALESCE($3, trigger_type), trigger_condition = COALESCE($4, trigger_condition), field_mappings = COALESCE($5, field_mappings), transform_script = COALESCE($6, transform_script), status = COALESCE($7, status), priority = COALESCE($8, priority), is_enabled = COALESCE($9, is_enabled), max_retries = COALESCE($10, max_retries), retry_interval_secs = COALESCE($11, retry_interval_secs), stop_on_failure = COALESCE($12, stop_on_failure), updated_at = $13 WHERE id = $14 RETURNING id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at::TEXT, updated_at::TEXT, tenant_id")
+        only_own_schema_query!("integration", "UPDATE integration.conversion_rules SET name = COALESCE($1, name), description = COALESCE($2, description), trigger_type = COALESCE($3, trigger_type), trigger_condition = COALESCE($4, trigger_condition), field_mappings = COALESCE($5, field_mappings), transform_script = COALESCE($6, transform_script), status = COALESCE($7, status), priority = COALESCE($8, priority), is_enabled = COALESCE($9, is_enabled), max_retries = COALESCE($10, max_retries), retry_interval_secs = COALESCE($11, retry_interval_secs), stop_on_failure = COALESCE($12, stop_on_failure), updated_at = $13 WHERE id = $14 RETURNING id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at, updated_at, tenant_id")
     )
     .bind(&req.name)
     .bind(&req.description)
@@ -282,7 +282,7 @@ pub async fn execute_conversion_rule_api(
     Json(req): Json<ExecuteConversionRequest>,
 ) -> ApiResponse<ExecuteConversionResponse> {
     let rule = match sqlx::query_as::<_, ConversionRule>(
-        only_own_schema_query!("integration", "SELECT id, tenant_id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("integration", "SELECT id, tenant_id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at, updated_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&state.pool)
