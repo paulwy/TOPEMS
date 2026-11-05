@@ -234,6 +234,15 @@ pre-commit:
         [ -z "$STAGED" ] && exit 0
         node scripts/ci/check-prod-migration-entry.mjs
 
+    # [Gate MIG-BASE] 基线完整性：资产 sha256 / 锚点合法单调 / 新增迁移版本 > 锚点
+    # 触发：迁移、基线或本校验脚本变更；无变更秒级跳过。
+    baseline-integrity:
+      tags: database migrations
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^database/(migrations|baseline)/|^scripts/ci/check-baseline-integrity\.mjs$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-baseline-integrity.mjs --changed-only
+
     # [Gate O] Sensitive information scan — migrated from husky #2
     sensitive-info:
       tags: security secrets

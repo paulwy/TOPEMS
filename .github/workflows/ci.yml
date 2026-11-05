@@ -146,8 +146,11 @@ jobs:
             migration:
               - 'svc/**/migrations/**'
               - 'database/migrations/**'
+              - 'database/baseline/**'
               - 'lib/src/migration*/**'
               - 'scripts/check-migrat*'
+              - 'scripts/ci/check-baseline-integrity.mjs'
+              - 'scripts/db/provision-env.sh'
             desktop:
               - 'apps/desktop/**'
 
@@ -1862,6 +1865,10 @@ jobs:
 
       - name: Static check — destructive SQL guards
         run: node scripts/ci/check-destructive-sql.mjs
+
+      # 基线完整性（2026-11-05）：资产 sha256 / 锚点合法且单调 / 新增迁移必须 > 锚点。
+      - name: Static check — baseline integrity
+        run: node scripts/ci/check-baseline-integrity.mjs
 
       - uses: ./.github/actions/setup-rust
         with:

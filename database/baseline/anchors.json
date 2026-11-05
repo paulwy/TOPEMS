@@ -1,0 +1,16 @@
+{
+  "comment": "基线锚点历史（单调不减）。每次 prod 批量 DDL 后重新生成基线并追加一条；锚点前移操作见 docs/quality/environment-provisioning.md。",
+  "anchors": [
+    {
+      "anchor_version": 20261105235700,
+      "generated_at_utc": "2026-11-05T06:55:50Z",
+      "schema_file": "prod_schema_20261105235700.sql.gz",
+      "ledger_file": "prod_ledger_20261105235700.sql",
+      "schema_sha256": "769b81e0f9ccb502a989e35d403bc90ce03992b454ff99a58e0deb81bada7352",
+      "ledger_sha256": "f832e5ed60630c1e9fc703ee70d8ce853f6a37ab249a6cbba91fbd2f4c5312a2",
+      "table_count": 1349,
+      "ledger_rows": 576,
+      "migrations_manifest": "migrations_at_anchor.json"
+    }
+  ]
+}
