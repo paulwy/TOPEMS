@@ -2,7 +2,10 @@
 //!
 //! # 目标
 //!
-//! 任何情况下，**单进程对同一数据库的总连接数** ≤ `DB_TOTAL_CONNECTION_BUDGET`（默认 60）。
+//! 任何情况下，**单进程对同一数据库的总连接数** ≤ `DB_TOTAL_CONNECTION_BUDGET`。
+//!
+//! 默认值：嵌入模式（topems-server）= 推导池数 × [`DEFAULT_CONNECTIONS_PER_POOL`]
+//! （当前 31 × 2 = 62）；独立部署 = [`DEFAULT_TOTAL_CONNECTION_BUDGET`]（60）。
 //!
 //! # 与单池上限的关系
 //!
@@ -27,28 +30,78 @@
 //! # 额度算法
 //!
 //! ```text
-//! denom   = max(DB_EXPECTED_POOLS, 已提交池数 + 1)
+//! denom   = max(预期池数, 已提交池数 + 1)
 //! share   = max(1, 预算 / denom)
 //! grant   = min(申请值, share, 预算 - 已分配)
 //! grant == 0 → 返回错误（fail-fast，不超发）
 //! ```
 //!
-//! `DB_EXPECTED_POOLS` 让额度在池之间公平分摊：嵌入模式默认 29（28 个 real_module +
-//! 1 个进程级迁移池），独立部署默认 2（业务池 + 迁移池）。默认值与「先到先得」相比，
-//! 不会让前面的池吃光预算、后面的池拿不到连接。
+//! # 池数从哪来
+//!
+//! 嵌入模式（topems-server）的池数**不再靠手工常量**：启动时由
+//! [`configure_expected_pools`] 传入「服务注册表/模块 build 列表」推导出的值
+//! （每模块池数 + 1 个共享迁移池）。`DB_EXPECTED_POOLS` 仅作一致性校验：
+//! 与推导值不一致时打印告警并**采用推导值**，避免配置与代码漂移后静默少算。
+//!
+//! 独立部署（单服务）不调用 `configure_expected_pools`，默认按 2 个池（业务池 + 迁移池）。
 
 use std::env;
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Mutex, OnceLock};
 use topems_shared_core::error::{Result, TopemsError};
 
-/// 默认进程总连接预算。给 PG `max_connections=100` 留出约 40 的运维 / 其他进程余量。
+/// 额度不足的稳定标记：错误经 anyhow → TopemsError::Internal 包装后仍可用它归类
+/// 为「预算不足」，与「数据库连不上」在健康检查 degraded 信息里区分。
+pub const BUDGET_EXHAUSTED_TAG: &str = "[db-budget-exhausted]";
+
+/// 独立部署的默认进程总连接预算（给 PG `max_connections=100` 留约 40 的运维 / 其他进程余量）。
+///
+/// 嵌入模式不套用该常量：默认值 = 推导池数 × [`DEFAULT_CONNECTIONS_PER_POOL`]。
 pub const DEFAULT_TOTAL_CONNECTION_BUDGET: u32 = 60;
 
-/// 嵌入模式（topems-server）默认池数量：28 个 real_module 业务池 + 1 个共享迁移池。
-const EMBEDDED_DEFAULT_EXPECTED_POOLS: u32 = 29;
+/// 嵌入模式每池的合理并发上限（传给池的 `max_connections`）。
+///
+/// 取 2 而不是单池申请上限 3：这 2 是 A 上线以来所有池的**实际授予值**
+/// （prod 实测峰值 73 也印证单池活跃连接 ≲ 3），按 2 配置可保证
+/// `31 池 × 2 = 62 ≤ 100`，给运维/迁移留 38 条余量；请求值仍可随
+/// `DB_MODULE_MAX_CONNECTIONS` 上调，但会被预算夹住。
+pub const DEFAULT_CONNECTIONS_PER_POOL: u32 = 2;
+
+/// 嵌入模式兜底池数（仅在服务端忘记调用 [`configure_expected_pools`] 时使用）。
+/// 实际值以服务注册表推导为准，见 `svc/server/src/main.rs::derived_db_pools`。
+const EMBEDDED_DEFAULT_EXPECTED_POOLS: u32 = 31;
 
 /// 独立部署默认池数量：1 个业务池 + 1 个共享迁移池。
 const STANDALONE_DEFAULT_EXPECTED_POOLS: u32 = 2;
+
+/// 启动期由服务端推导出的池数（0 = 未配置，走独立部署默认逻辑）。
+static DERIVED_EXPECTED_POOLS: AtomicU32 = AtomicU32::new(0);
+
+static GLOBAL_LEDGER: OnceLock<Mutex<Ledger>> = OnceLock::new();
+
+/// 设置注册表推导的池数。**必须在首个池创建前调用**（之后调用不生效并告警）。
+pub fn configure_expected_pools(pools: u32) {
+    if pools == 0 {
+        return;
+    }
+    if GLOBAL_LEDGER.get().is_some() {
+        tracing::warn!(
+            "[db-budget] configure_expected_pools({pools}) 在首个池创建后调用，本次不生效（已用推导值 {}）",
+            derived_expected_pools()
+        );
+        return;
+    }
+    let previous = DERIVED_EXPECTED_POOLS.swap(pools, Ordering::Relaxed);
+    if previous != 0 && previous != pools {
+        tracing::warn!("[db-budget] 注册表推导池数被重复设置：{previous} -> {pools}");
+    }
+    tracing::info!("[db-budget] 池数由服务注册表推导：{pools}（DB_EXPECTED_POOLS 仅作一致性校验）");
+}
+
+/// 当前注册表推导的池数（0 = 未配置）。
+pub fn derived_expected_pools() -> u32 {
+    DERIVED_EXPECTED_POOLS.load(Ordering::Relaxed)
+}
 
 /// 预算配置。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -72,15 +125,54 @@ impl BudgetConfig {
     }
 
     /// 从环境变量解析：
-    /// - `DB_TOTAL_CONNECTION_BUDGET`（默认 60，非法/0 回退默认值）
-    /// - `DB_EXPECTED_POOLS`（默认：嵌入 28 / 独立部署 2）
+    /// - `DB_TOTAL_CONNECTION_BUDGET`（未设置时：嵌入模式 = 推导池数 × 2；独立部署 = 60）
+    /// - `DB_EXPECTED_POOLS`：**仅作一致性校验**，与注册表推导值不一致时告警并采用推导值
     pub fn from_env() -> Self {
-        let total = env::var("DB_TOTAL_CONNECTION_BUDGET")
+        let raw_total = env::var("DB_TOTAL_CONNECTION_BUDGET")
+            .ok()
+            .and_then(|s| s.trim().parse::<u32>().ok());
+        // 显式 0 是「预算耗尽」而不是「未配置」：不能被默认值静默覆盖。
+        let zero_budget = raw_total == Some(0);
+        let env_total = raw_total.filter(|v| *v > 0);
+        let env_expected = env::var("DB_EXPECTED_POOLS")
             .ok()
             .and_then(|s| s.trim().parse::<u32>().ok())
-            .filter(|v| *v > 0)
-            .unwrap_or(DEFAULT_TOTAL_CONNECTION_BUDGET);
+            .filter(|v| *v > 0);
 
+        let derived = derived_expected_pools();
+        if derived > 0 {
+            if let Some(configured) = env_expected {
+                if configured != derived {
+                    tracing::warn!(
+                        "[db-budget] DB_EXPECTED_POOLS={configured} 与注册表推导值 {derived} 不一致；\
+                         采用推导值（配置值仅供一致性校验）"
+                    );
+                }
+            }
+            let total = match env_total {
+                Some(v) => v,
+                None if zero_budget => {
+                    tracing::error!(
+                        "[db-budget] DB_TOTAL_CONNECTION_BUDGET=0：所有池都将因额度不足而构建失败（fail-fast，不静默降级）"
+                    );
+                    0
+                }
+                None => derived.saturating_mul(DEFAULT_CONNECTIONS_PER_POOL),
+            };
+            if total < derived {
+                tracing::warn!(
+                    "[db-budget] 预算 {total} 小于池数 {derived}：至少有 {} 个池会因额度不足而构建失败",
+                    derived.saturating_sub(total)
+                );
+            }
+            // 显式 0 必须保持为 0（Self::new 会把 0 兜底成 1，掩盖「预算耗尽」语义）。
+            return Self {
+                total,
+                expected_pools: derived,
+            };
+        }
+
+        // 独立部署（或服务端尚未调用 configure_expected_pools 的兜底路径）
         let embedded = env::var("TOPEMS_EMBEDDED")
             .map(|v| v == "true" || v == "1")
             .unwrap_or(false);
@@ -89,13 +181,28 @@ impl BudgetConfig {
         } else {
             STANDALONE_DEFAULT_EXPECTED_POOLS
         };
-        let expected_pools = env::var("DB_EXPECTED_POOLS")
-            .ok()
-            .and_then(|s| s.trim().parse::<u32>().ok())
-            .filter(|v| *v > 0)
-            .unwrap_or(default_expected);
+        let expected_pools = env_expected.unwrap_or(default_expected);
+        let default_total = if embedded {
+            // 兜底也要自洽：池数 × 每池上限，保证所有池拿得到额度。
+            EMBEDDED_DEFAULT_EXPECTED_POOLS.saturating_mul(DEFAULT_CONNECTIONS_PER_POOL)
+        } else {
+            DEFAULT_TOTAL_CONNECTION_BUDGET
+        };
+        let total = match env_total {
+            Some(v) => v,
+            None if zero_budget => {
+                tracing::error!(
+                    "[db-budget] DB_TOTAL_CONNECTION_BUDGET=0：所有池都将因额度不足而构建失败（fail-fast，不静默降级）"
+                );
+                0
+            }
+            None => default_total,
+        };
 
-        Self::new(total, expected_pools)
+        Self {
+            total,
+            expected_pools,
+        }
     }
 }
 
@@ -236,8 +343,7 @@ impl Drop for PoolReservation {
 }
 
 fn global_ledger() -> &'static Mutex<Ledger> {
-    static LEDGER: OnceLock<Mutex<Ledger>> = OnceLock::new();
-    LEDGER.get_or_init(|| Mutex::new(Ledger::new(BudgetConfig::from_env())))
+    GLOBAL_LEDGER.get_or_init(|| Mutex::new(Ledger::new(BudgetConfig::from_env())))
 }
 
 /// 向指定账本申请一个池的额度（测试可注入独立账本）。
@@ -272,10 +378,22 @@ pub fn reserve_from(
         }
         None => {
             let snap = guard.snapshot();
+            let remaining = snap.total.saturating_sub(snap.allocated);
+            drop(guard);
+            tracing::error!(
+                "{BUDGET_EXHAUSTED_TAG} 池 {} 额度不足：需要 {}，剩余 {}，预算 {}，已分配 {}，池数 {}；\
+                 该模块将构建失败并进入 degraded（kind=budget）",
+                label,
+                requested,
+                remaining,
+                snap.total,
+                snap.allocated,
+                snap.pools
+            );
             Err(TopemsError::Database(format!(
-                "数据库连接预算已耗尽：池 {} 申请 {}，预算 {}，已分配 {}，池数 {}；\
-                 请调大 DB_TOTAL_CONNECTION_BUDGET 或调小单池上限",
-                label, requested, snap.total, snap.allocated, snap.pools
+                "{BUDGET_EXHAUSTED_TAG} 数据库连接预算不足：池 {} 需要 {}，剩余 {}，预算 {}，已分配 {}，\
+                 预期池数 {}；请调大 DB_TOTAL_CONNECTION_BUDGET 或调小单池上限",
+                label, requested, remaining, snap.total, snap.allocated, snap.expected_pools
             )))
         }
     }
@@ -332,6 +450,54 @@ mod tests {
         let snap = l.lock().unwrap().snapshot();
         assert_eq!(snap.allocated, 56);
         assert_eq!(snap.pools, 28);
+    }
+
+    /// 默认自洽：31 个推导池 × 每池 2 = 62，全部池都能拿到额度（含最后 1 个）。
+    #[test]
+    fn default_budget_covers_all_derived_pools() {
+        static L: OnceLock<Mutex<Ledger>> = OnceLock::new();
+        let l = ledger(&L, 31 * DEFAULT_CONNECTIONS_PER_POOL, 31);
+        for n in 1..=31 {
+            let r = reserve_from(l, "derived", 3)
+                .unwrap_or_else(|e| panic!("第 {n} 个池不应额度不足: {e}"));
+            assert_eq!(r.granted(), DEFAULT_CONNECTIONS_PER_POOL);
+            r.commit();
+        }
+        let snap = l.lock().unwrap().snapshot();
+        assert_eq!(snap.pools, 31);
+        assert_eq!(snap.allocated, 62);
+    }
+
+    /// 预算比池数少 1：最后一个池必须显式报出「额度不足」+ 数字，而不是静默跳过。
+    #[test]
+    fn budget_one_short_reports_explicit_exhaustion() {
+        static L: OnceLock<Mutex<Ledger>> = OnceLock::new();
+        let l = ledger(&L, 30, 31);
+        for _ in 0..30 {
+            reserve_from(l, "short", 1).unwrap().commit();
+        }
+        let err = reserve_from(l, "short", 1).unwrap_err().to_string();
+        assert!(err.contains(BUDGET_EXHAUSTED_TAG), "缺少稳定标记: {err}");
+        assert!(err.contains("需要 1"), "缺少 needs: {err}");
+        assert!(err.contains("剩余 0"), "缺少 remaining: {err}");
+        assert!(err.contains("预算 30"), "缺少 budget: {err}");
+    }
+
+    /// 显式预算 0（不是「未配置」）：第一个池就必须失败，且原因里可见预算 0。
+    #[test]
+    fn zero_budget_fails_first_pool_explicitly() {
+        static L: OnceLock<Mutex<Ledger>> = OnceLock::new();
+        let l = L.get_or_init(|| {
+            Mutex::new(Ledger::new(BudgetConfig {
+                total: 0,
+                expected_pools: 31,
+            }))
+        });
+        let err = reserve_from(l, "zero", 1).unwrap_err().to_string();
+        assert!(err.contains(BUDGET_EXHAUSTED_TAG), "缺少稳定标记: {err}");
+        assert!(err.contains("剩余 0"), "缺少 remaining: {err}");
+        assert!(err.contains("预算 0"), "缺少 budget: {err}");
+        assert_eq!(l.lock().unwrap().snapshot().pools, 0);
     }
 
     /// 单池配置被调得很大也仍被预算卡住（负向用例的纯逻辑版）。
