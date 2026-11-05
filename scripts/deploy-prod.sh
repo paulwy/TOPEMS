@@ -207,14 +207,15 @@ fi
 file "$LOCAL_BIN" | grep -q "Mach-O" || warn "目标二进制不是 macOS Mach-O 格式，请确认：$(file "$LOCAL_BIN")"
 info "待部署二进制: $(ls -lh "$LOCAL_BIN" | awk '{print $5}')  $LOCAL_BIN"
 
-# ── 迁移账本预检（只提示不阻断；迁移不会随服务启动自动补跑，需显式 sqlx migrate run）──
+# ── 迁移账本预检（只提示不阻断；迁移不会随服务启动自动补跑，prod 唯一入口 apply-forward.sh）──
 LOCAL_MIG_COUNT=$(ls "$LOCAL_REPO"/database/migrations/*.sql 2>/dev/null | wc -l | tr -d ' ')
 PROD_MIG_COUNT=$(ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -Atc 'SELECT count(*) FROM _sqlx_migrations'" 2>/dev/null | head -1 | tr -d ' ')
 PROD_MIG_COUNT=${PROD_MIG_COUNT:-?}
 info "迁移账本: 本地 $LOCAL_MIG_COUNT 个迁移文件 / 生产 $PROD_MIG_COUNT 条"
+info "prod 迁移唯一入口: scripts/migration/apply-forward.sh --prod（基线 + 前向迁移）；禁止在 prod 执行 sqlx migrate run"
 if [ "$PROD_MIG_COUNT" != "?" ]; then
   if [ "$PROD_MIG_COUNT" -lt "$LOCAL_MIG_COUNT" ] 2>/dev/null; then
-    warn "生产账本少于本地 $((LOCAL_MIG_COUNT - PROD_MIG_COUNT)) 个迁移（多为 test/5433 定向迁移，仅需按需应用）。注意：二进制不内嵌迁移，重启不会自动补跑；需应用时用 sqlx migrate run 并先确认目标库"
+    warn "生产账本少于本地 $((LOCAL_MIG_COUNT - PROD_MIG_COUNT)) 个迁移（多为 test/5433 定向迁移，仅需按需应用）。注意：二进制不内嵌迁移，重启不会自动补跑；需应用时走 scripts/migration/apply-forward.sh --prod，禁止 sqlx migrate run"
   fi
 else
   warn "无法读取生产迁移账本（psql 连接失败），跳过数量对比"

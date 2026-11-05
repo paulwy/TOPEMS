@@ -9,10 +9,18 @@
 # 每个文件在单事务内执行 SQL + 写入 _sqlx_migrations（checksum=SHA-384 文件字节），
 # 幂等：账本已存在的版本不会被重复执行。
 #
+# prod 唯一入口：`--prod` 时对全部 pending（version > anchor 且账本缺失）做双重校验：
+#   1) 定向迁移命名（dbNN_test / dbNN_5433 / test_* / 5433_*，与 CI 检查同口径）→ 拒绝；
+#   2) 无守卫高危语句（ALTER COLUMN TYPE / DROP COLUMN / DROP CONSTRAINT / DROP TABLE CASCADE，
+#      调用 scripts/ci/check-destructive-sql.mjs 同口径判定）→ 拒绝。
+# 命中任一条即硬失败并列出清单，提示必须走「基线 + 前向迁移」路径。
+#
 # 用法：
 #   bash scripts/migration/apply-forward.sh --db topems_prod --prod \
 #     --anchor 20261105235700
 #   bash scripts/migration/apply-forward.sh --dsn "$DSN" --anchor 20261105235700
+#   bash scripts/migration/apply-forward.sh --prod ... --allow-pending 20261106120000
+#     （--allow-pending 可重复；仅用于人工复核后的临时放行，须记录理由）
 #
 # 退出码：0 成功（含 0 待应用）；1 存在失败/被守卫拒绝；2 参数错误
 # =============================================================================
@@ -24,6 +32,7 @@ DSN=""
 DB=""
 ANCHOR=""
 PROD=0
+ALLOW_PENDING=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -31,10 +40,19 @@ while [[ $# -gt 0 ]]; do
     --db) DB="$2"; shift 2 ;;
     --anchor) ANCHOR="$2"; shift 2 ;;
     --prod) PROD=1; shift ;;
-    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+    --allow-pending) ALLOW_PENDING+=("$2"); shift 2 ;;
+    -h|--help) sed -n '2,26p' "$0"; exit 0 ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
 done
+
+is_allowed_pending() {
+  local v="$1" x
+  for x in ${ALLOW_PENDING[@]+"${ALLOW_PENDING[@]}"}; do
+    [[ "$x" == "$v" ]] && return 0
+  done
+  return 1
+}
 
 if [[ -n "$DSN" ]]; then
   PSQL=(psql "$DSN")
@@ -50,9 +68,11 @@ if [[ -z "$ANCHOR" ]]; then
 fi
 
 # 定向迁移命名特征：dbNN_test / dbNN_5433 / *_5433_* / *_test_*
-DENY_RE='_(db[0-9]+_(test|5433)|5433_|test_)'
+# 与 scripts/ci/check-directed-migrations.mjs 的 DENY_RE 保持同口径。
+DENY_RE='(^|_)(db[0-9]+_(test|5433)|5433_|test_)'
 
 PENDING=()
+DENIED=()
 while IFS= read -r f; do
   b="$(basename "$f")"
   [[ "$b" =~ ^[0-9]{14}_ ]] || continue
@@ -61,12 +81,41 @@ while IFS= read -r f; do
   if "${PSQL[@]}" -tA -c "SELECT 1 FROM _sqlx_migrations WHERE version=$v AND success" | grep -q 1; then
     continue
   fi
-  if [[ $PROD -eq 1 && "$b" =~ $DENY_RE ]]; then
-    echo "拒绝：prod 不允许应用定向迁移 $b" >&2
-    exit 1
+  if [[ $PROD -eq 1 ]] && ! is_allowed_pending "$v"; then
+    # 防线 1：定向迁移命名（prod 不允许）
+    if [[ "$b" =~ $DENY_RE ]]; then
+      DENIED+=("$b [定向迁移命名]")
+      continue
+    fi
+    # 防线 2：无守卫高危语句（与 CI 检查同口径）
+    if command -v node >/dev/null 2>&1; then
+      guard_log="/tmp/topems_guard_${v}.log"
+      if ! node "$ROOT/scripts/ci/check-destructive-sql.mjs" --check-file "$f" >"$guard_log" 2>&1; then
+        cnt="$(grep -c '^  L[0-9]' "$guard_log" 2>/dev/null || true)"
+        DENIED+=("$b [无守卫高危语句 ${cnt:-0} 条]")
+        continue
+      fi
+    else
+      DENIED+=("$b [无法校验：node 缺失，拒绝在 prod 应用]")
+      continue
+    fi
   fi
   PENDING+=("$f")
 done < <(ls "$MIG_DIR"/*.sql | LC_ALL=C sort)
+
+if [[ ${#DENIED[@]} -gt 0 ]]; then
+  echo "== 拒绝：prod 检测到 ${#DENIED[@]} 条禁止直接应用的 pending 迁移" >&2
+  printf '  %s\n' "${DENIED[@]}" >&2
+  cat >&2 <<'EOF'
+
+prod 迁移唯一入口 =「基线 + 前向迁移」，不得直接重放历史/定向迁移：
+  1) 先确认 prod 基线已恢复（database/baseline/prod_schema_<anchor>.sql.gz）
+  2) 仅应用 version > anchor 且带存在性守卫（to_regclass / IF EXISTS / DO$$ EXISTS）的前向迁移
+  3) 禁止在 prod 应用 dbNN_test / dbNN_5433 / test_* / 5433_* 定向迁移
+  4) 确需人工复核后临时放行：--allow-pending <version>（须在变更记录注明理由）
+EOF
+  exit 1
+fi
 
 if [[ ${#PENDING[@]} -eq 0 ]]; then
   echo "== 无待应用迁移（anchor=${ANCHOR}）"
