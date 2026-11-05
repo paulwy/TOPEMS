@@ -69,9 +69,9 @@ fn subscription_from_row(row: &sqlx::postgres::PgRow) -> Subscription {
 }
 
 const PRODUCT_COLS: &str =
-    "id, name, tier, rate_limit_per_min, rate_limit_per_day, features, price_monthly, active";
+    "id::text, name, tier, rate_limit_per_min, rate_limit_per_day, features, price_monthly, active";
 const SUBSCRIPTION_COLS: &str =
-    "id, api_product_id, tenant_id, tier, starts_at, expires_at, status";
+    "id::text, api_product_id, tenant_id::text, tier, starts_at, expires_at::text, status";
 
 // ==================== 纯函数（无副作用，可单测） ====================
 
@@ -1686,16 +1686,17 @@ pub async fn generate_sla_report(
 // ==================== K1：真表映射（master_data.mdm_usage_records / billing / rate_cards / sla_*） ====================
 
 const USAGE_COLS: &str =
-    "id, tenant_id, api_product_id, endpoint, requests, errors, data_transferred, recorded_at";
+    "id::text, tenant_id::text, api_product_id, endpoint, requests, errors, data_transferred, recorded_at::text";
 const BILLING_COLS: &str =
-    "id, tenant_id, period_start, period_end, tier, usage_summary, total_amount, status";
+    "id::text, tenant_id::text, period_start, period_end, tier, usage_summary, total_amount, status";
 const RATE_CARD_COLS: &str =
-    "id, tier, cost_per_request, cost_per_mb, overage_multiplier, currency";
-const SLA_CONFIG_COLS: &str = "id, metric, target_value, unit, penalty_per_min, measurement_window";
+    "id::text, tier, cost_per_request, cost_per_mb, overage_multiplier, currency";
+const SLA_CONFIG_COLS: &str =
+    "id::text, metric, target_value, unit, penalty_per_min, measurement_window";
 const SLA_MEASUREMENT_COLS: &str =
-    "id, config_id, tenant_id, measured_value, target_value, met, measured_at, window_start, window_end";
+    "id::text, config_id, tenant_id::text, measured_value, target_value, met, measured_at::text, window_start::text, window_end::text";
 const SLA_INCIDENT_COLS: &str =
-    "id, config_id, tenant_id, incident_type, duration_min, impact_severity, compensation_amount, status";
+    "id::text, config_id, tenant_id::text, incident_type, duration_min, impact_severity, compensation_amount, status";
 
 fn usage_record_from_row(row: &sqlx::postgres::PgRow) -> UsageRecord {
     use sqlx::Row;

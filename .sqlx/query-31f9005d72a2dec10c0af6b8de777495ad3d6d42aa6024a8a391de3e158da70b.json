@@ -6,17 +6,30 @@
       {
         "ordinal": 0,
         "name": "material_code",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "inventory",
+            "name": "material_code"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "material_name",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "inventory",
+            "name": "material_name"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "alert_count",
-        "type_info": "Int8"
+        "type_info": "Int8",
+        "origin": "Expression"
       }
     ],
     "parameters": {

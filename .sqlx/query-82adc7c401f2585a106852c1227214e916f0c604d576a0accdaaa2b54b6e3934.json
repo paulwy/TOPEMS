@@ -6,32 +6,68 @@
       {
         "ordinal": 0,
         "name": "default_model",
-        "type_info": "Varchar"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "ai_settings",
+            "name": "default_model"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "max_tokens",
-        "type_info": "Int4"
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "ai_settings",
+            "name": "max_tokens"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "temperature",
-        "type_info": "Float8"
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "ai_settings",
+            "name": "temperature"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "enable_streaming",
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "ai_settings",
+            "name": "enable_streaming"
+          }
+        }
       },
       {
         "ordinal": 4,
         "name": "enable_function_calling",
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "ai_settings",
+            "name": "enable_function_calling"
+          }
+        }
       },
       {
         "ordinal": 5,
         "name": "available_models",
-        "type_info": "Jsonb"
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "ai_settings",
+            "name": "available_models"
+          }
+        }
       }
     ],
     "parameters": {

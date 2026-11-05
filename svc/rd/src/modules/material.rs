@@ -67,7 +67,7 @@ pub struct MaterialTest {
     pub batch_number: Option<String>,
     pub test_results: serde_json::Value,
     pub conclusion: Option<String>,
-    pub tested_by: String,
+    pub tested_by: Option<Uuid>,
     pub tested_at: chrono::DateTime<chrono::Utc>,
     pub created_at: chrono::DateTime<chrono::Utc>,
 }

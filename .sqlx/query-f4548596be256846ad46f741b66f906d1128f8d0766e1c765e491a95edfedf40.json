@@ -6,22 +6,46 @@
       {
         "ordinal": 0,
         "name": "tool_name",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "tool_permissions",
+            "name": "tool_name"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "max_permission",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "tool_permissions",
+            "name": "max_permission"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "allowed_operations",
-        "type_info": "TextArray"
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "tool_permissions",
+            "name": "allowed_operations"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "denied_operations",
-        "type_info": "TextArray"
+        "type_info": "TextArray",
+        "origin": {
+          "Table": {
+            "table": "tool_permissions",
+            "name": "denied_operations"
+          }
+        }
       }
     ],
     "parameters": {

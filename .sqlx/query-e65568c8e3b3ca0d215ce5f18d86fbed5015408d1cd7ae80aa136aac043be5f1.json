@@ -6,32 +6,68 @@
       {
         "ordinal": 0,
         "name": "name",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "analytics_widgets",
+            "name": "name"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "widget_type",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "analytics_widgets",
+            "name": "widget_type"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "config",
-        "type_info": "Jsonb"
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "analytics_widgets",
+            "name": "config"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "position",
-        "type_info": "Jsonb"
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "analytics_widgets",
+            "name": "position"
+          }
+        }
       },
       {
         "ordinal": 4,
         "name": "query_config",
-        "type_info": "Jsonb"
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "analytics_widgets",
+            "name": "query_config"
+          }
+        }
       },
       {
         "ordinal": 5,
         "name": "cache_ttl_seconds",
-        "type_info": "Int4"
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "analytics_widgets",
+            "name": "cache_ttl_seconds"
+          }
+        }
       }
     ],
     "parameters": {

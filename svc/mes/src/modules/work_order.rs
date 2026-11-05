@@ -358,7 +358,7 @@ pub async fn list_work_orders(
             wo.plan_start_date, wo.plan_end_date,
             wo.actual_start_date, wo.actual_end_date,
             wo.team_id, wo.operator,
-            wo.status, wo.priority, wo.remark,
+            wo.status, wo.priority::text, wo.remark,
             wo.created_at, wo.updated_at,
             pp.process_name, pp.work_station_name, tm.team_name
         FROM mes.work_orders wo

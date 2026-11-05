@@ -1102,7 +1102,7 @@ pub async fn trace_sample_by_barcode(
     let sample = if let Some(sid) = sample_id {
         let sample_row = sqlx::query(
             r#"
-            SELECT id, sample_no, sample_name, sample_type, source, quantity, unit,
+            SELECT id::text, sample_no, sample_name, sample_type, source, quantity::float8, unit,
                    status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT
             FROM public.qa_lab_samples WHERE id = $1
             "#,
@@ -1135,7 +1135,7 @@ pub async fn trace_sample_by_barcode(
 
     let scan_rows = sqlx::query(
         r#"
-        SELECT id, barcode, scan_type, sample_id, sample_no, operator, location, notes, scanned_at::TEXT
+        SELECT id::text, barcode, scan_type, sample_id::text, sample_no, operator, location, notes, scanned_at::TEXT
         FROM qa_lims_barcode_scan_records
         WHERE barcode = $1
         ORDER BY scanned_at DESC

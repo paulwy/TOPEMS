@@ -345,6 +345,10 @@ docs/可空tenant_id补齐处理结果.md
 # JWT 私钥/公钥（generate-jwt-keys.sh 产物，禁止提交）
 config/keys/*.pem
 
+# Nginx 私有 CA 根证书（仅公钥亦不入库，私钥永久留在仓库外；按具体文件精确忽略，
+# 不使用 *.crt 全局规则，避免掩盖未来需入库的站点证书）
+/deploy/nginx/topems-ca.crt
+
 # 孤儿 Cargo.lock（workspace 统一以根 Cargo.lock 为权威，子 crate 独立生成的 lock 不入库）
 /lib/Cargo.lock
 /shared/lib/Cargo.lock

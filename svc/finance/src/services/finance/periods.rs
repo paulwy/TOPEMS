@@ -235,7 +235,7 @@ impl FinanceService {
             })?;
 
             let child_statuses: Vec<PeriodStatus> = sqlx::query_scalar::<_, String>(
-                only_own_schema_query!("finance", "SELECT status FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month < $3 ORDER BY month ASC")
+                only_own_schema_query!("finance", "SELECT status::text FROM finance.core_finance_periods WHERE tenant_id = $1 AND year = $2 AND month < $3 ORDER BY month ASC")
             )
             .bind(tenant_id)
             .bind(year)

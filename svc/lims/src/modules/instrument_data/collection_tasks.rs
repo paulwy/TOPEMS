@@ -34,7 +34,7 @@ pub async fn trigger_collection(
     };
 
     let task_row = sqlx::query(
-        "SELECT id::TEXT, task_no, task_name, instrument_id::TEXT, protocol FROM qa_lims_collection_tasks WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id::TEXT, task_no, task_name, instrument_id, protocol FROM qa_lims_collection_tasks WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(task_id)
     .fetch_optional(&state.pool)

@@ -910,7 +910,7 @@ pub async fn list_alert_rules(
         "wms",
         r#"
         SELECT id, rule_name, alert_type, warehouse_id, material_code, 
-               threshold_value, severity, enabled, remarks, created_at, updated_at
+               threshold_value::float8, severity, enabled, remarks, created_at, updated_at
         FROM wms.inventory_alert_rules
         WHERE ($1::text IS NULL OR rule_name ILIKE $1)
           AND ($2::text IS NULL OR alert_type = $2)
@@ -1025,7 +1025,8 @@ pub async fn create_alert_rule(
                                                material_code, threshold_value, severity,
                                                enabled, remarks, created_at, updated_at, tenant_id, organization_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12)
-        RETURNING *
+        RETURNING id, rule_name, alert_type, warehouse_id, material_code,
+                  threshold_value::float8, severity, enabled, remarks, created_at, updated_at
         "#
     ))
     .bind(id)
@@ -1135,7 +1136,7 @@ pub async fn get_alert_rule(
     }
 
     let result =
-        sqlx::query(only_own_schema_query!("wms", "SELECT id, tenant_id, warehouse_id, rule_name, alert_type, material_code, threshold_value, severity, enabled, remarks, created_at, updated_at FROM wms.inventory_alert_rules WHERE deleted_at IS NULL AND id = $1"))
+        sqlx::query(only_own_schema_query!("wms", "SELECT id, tenant_id, warehouse_id, rule_name, alert_type, material_code, threshold_value::float8, severity, enabled, remarks, created_at, updated_at FROM wms.inventory_alert_rules WHERE deleted_at IS NULL AND id = $1"))
             .bind(id)
             .fetch_optional(&mut **txn)
             .await;
@@ -1219,7 +1220,8 @@ pub async fn update_alert_rule(
             remarks = COALESCE($7, remarks),
             updated_at = $8
         WHERE id = $1 AND ($9::uuid IS NULL OR tenant_id = $9::uuid)
-        RETURNING *
+        RETURNING id, rule_name, alert_type, warehouse_id, material_code,
+                  threshold_value::float8, severity, enabled, remarks, created_at, updated_at
         "#
     ))
     .bind(id)
@@ -1432,7 +1434,7 @@ pub async fn list_alert_records(
 
     let result = sqlx::query(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, rule_id, warehouse_id, item_id, item_code, alert_type, alert_level, current_quantity, threshold_quantity, status, created_at FROM wms.inventory_alert_records
+        SELECT id, tenant_id, rule_id, warehouse_id, item_id, item_code, alert_type, alert_level, current_quantity::float8, threshold_quantity, status, created_at FROM wms.inventory_alert_records
         WHERE ($1::text IS NULL OR alert_type = $1)
           AND ($2::text IS NULL OR severity = $2)
           AND ($3::text IS NULL OR status = $3)
@@ -1540,7 +1542,7 @@ pub async fn get_alert_record(
         Err(e) => return e.0,
     }
 
-    let result = sqlx::query(only_own_schema_query!("wms", "SELECT id, tenant_id, rule_id, warehouse_id, item_id, item_code, alert_type, alert_level, current_quantity, threshold_quantity, status, created_at FROM wms.inventory_alert_records WHERE id = $1"))
+    let result = sqlx::query(only_own_schema_query!("wms", "SELECT id, tenant_id, rule_id, warehouse_id, item_id, item_code, alert_type, alert_level, current_quantity::float8, threshold_quantity, status, created_at FROM wms.inventory_alert_records WHERE id = $1"))
         .bind(id)
         .fetch_optional(&mut **txn)
         .await;

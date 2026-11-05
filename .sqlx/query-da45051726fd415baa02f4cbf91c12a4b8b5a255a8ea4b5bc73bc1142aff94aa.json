@@ -6,27 +6,57 @@
       {
         "ordinal": 0,
         "name": "material_code",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "bom_items",
+            "name": "material_code"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "material_name",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "bom_items",
+            "name": "material_name"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "specification",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "bom_items",
+            "name": "specification"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "unit",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "bom_items",
+            "name": "unit"
+          }
+        }
       },
       {
         "ordinal": 4,
         "name": "quantity",
-        "type_info": "Numeric"
+        "type_info": "Numeric",
+        "origin": {
+          "Table": {
+            "table": "bom_items",
+            "name": "quantity"
+          }
+        }
       }
     ],
     "parameters": {

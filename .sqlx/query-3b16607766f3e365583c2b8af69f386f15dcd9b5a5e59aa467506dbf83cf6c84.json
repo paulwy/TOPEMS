@@ -6,114 +6,228 @@
       {
         "ordinal": 0,
         "name": "id",
-        "type_info": "Uuid"
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "id"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "equipment_id",
-        "type_info": "Uuid"
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "equipment_id"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "record_date",
-        "type_info": "Date"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "record_date"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "planned_production_time",
-        "type_info": "Numeric"
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "planned_production_time"
+          }
+        }
       },
       {
         "ordinal": 4,
         "name": "actual_run_time",
-        "type_info": "Numeric"
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "actual_run_time"
+          }
+        }
       },
       {
         "ordinal": 5,
         "name": "downtime",
-        "type_info": "Numeric"
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "downtime"
+          }
+        }
       },
       {
         "ordinal": 6,
         "name": "ideal_cycle_time",
-        "type_info": "Numeric"
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "ideal_cycle_time"
+          }
+        }
       },
       {
         "ordinal": 7,
         "name": "actual_output",
-        "type_info": "Numeric"
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "actual_output"
+          }
+        }
       },
       {
         "ordinal": 8,
         "name": "good_output",
-        "type_info": "Numeric"
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "good_output"
+          }
+        }
       },
       {
         "ordinal": 9,
         "name": "defective_output",
-        "type_info": "Numeric"
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "defective_output"
+          }
+        }
       },
       {
         "ordinal": 10,
         "name": "availability",
-        "type_info": "Numeric"
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "availability"
+          }
+        }
       },
       {
         "ordinal": 11,
         "name": "performance",
-        "type_info": "Numeric"
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "performance"
+          }
+        }
       },
       {
         "ordinal": 12,
         "name": "quality_rate",
-        "type_info": "Numeric"
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "quality_rate"
+          }
+        }
       },
       {
         "ordinal": 13,
         "name": "oee",
-        "type_info": "Numeric"
+        "type_info": "Float8",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "oee"
+          }
+        }
       },
       {
         "ordinal": 14,
         "name": "shift",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "shift"
+          }
+        }
       },
       {
         "ordinal": 15,
         "name": "operator",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "operator"
+          }
+        }
       },
       {
         "ordinal": 16,
         "name": "notes",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "notes"
+          }
+        }
       },
       {
         "ordinal": 17,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "created_at"
+          }
+        }
       },
       {
         "ordinal": 18,
         "name": "updated_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "equipment_oee",
+            "name": "updated_at"
+          }
+        }
       }
     ],
     "parameters": {
       "Left": [
         "Uuid",
-        "Date",
-        "Numeric",
-        "Numeric",
-        "Numeric",
-        "Numeric",
-        "Numeric",
-        "Numeric",
-        "Numeric",
-        "Numeric",
-        "Numeric",
-        "Numeric",
-        "Numeric",
+        "Timestamptz",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Float8",
         "Varchar",
         "Varchar",
         "Text",

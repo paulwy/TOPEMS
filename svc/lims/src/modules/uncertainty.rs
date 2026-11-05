@@ -1310,7 +1310,7 @@ pub async fn calculate_combined(
     };
 
     let rows = sqlx::query(
-        "SELECT standard_uncertainty, sensitivity_coefficient, degrees_freedom FROM qa_lims_uncertainty_components WHERE deleted_at IS NULL AND project_id = $1"
+        "SELECT standard_uncertainty::float8, sensitivity_coefficient::float8, degrees_freedom::float8 FROM qa_lims_uncertainty_components WHERE deleted_at IS NULL AND project_id = $1"
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -1355,7 +1355,7 @@ pub async fn calculate_combined(
     };
 
     let project_row =
-        sqlx::query("SELECT coverage_factor FROM qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1")
+        sqlx::query("SELECT coverage_factor::float8 FROM qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1")
             .bind(id)
             .fetch_optional(&state.pool)
             .await;
@@ -1417,7 +1417,7 @@ pub async fn generate_report(
     };
 
     let project_row = sqlx::query(
-        "SELECT id, project_no, project_name, method_id, method_name, test_item, measurand, measurement_range, unit, status, evaluator, evaluation_date::TEXT, combined_uncertainty, expanded_uncertainty, coverage_factor, confidence_level, notes, created_at::TEXT FROM qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1"
+        "SELECT id::TEXT, project_no, project_name, method_id::TEXT, method_name, test_item, measurand, measurement_range, unit, status, evaluator, evaluation_date::TEXT, combined_uncertainty::float8, expanded_uncertainty::float8, coverage_factor::float8, confidence_level::float8, notes, created_at::TEXT FROM qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_optional(&state.pool)
@@ -1451,7 +1451,7 @@ pub async fn generate_report(
     };
 
     let source_rows = sqlx::query(
-        "SELECT id, source_name, source_type, description, distribution_type, sensitivity_coefficient, sort_order FROM qa_lims_uncertainty_sources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY sort_order ASC"
+        "SELECT id::TEXT, source_name, source_type, description, distribution_type, sensitivity_coefficient::float8, sort_order FROM qa_lims_uncertainty_sources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY sort_order ASC"
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -1476,8 +1476,8 @@ pub async fn generate_report(
 
     let component_rows = sqlx::query(
         r#"
-        SELECT c.id, c.component_type, c.component_name, c.standard_uncertainty,
-               c.relative_uncertainty, c.sensitivity_coefficient, c.degrees_freedom,
+        SELECT c.id::TEXT, c.component_type, c.component_name, c.standard_uncertainty::float8,
+               c.relative_uncertainty::float8, c.sensitivity_coefficient::float8, c.degrees_freedom::float8,
                c.calculation_method, s.source_name
         FROM qa_lims_uncertainty_components c
         LEFT JOIN qa_lims_uncertainty_sources s ON c.source_id = s.id

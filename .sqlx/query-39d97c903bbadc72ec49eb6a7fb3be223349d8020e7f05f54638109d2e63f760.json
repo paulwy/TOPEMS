@@ -6,22 +6,46 @@
       {
         "ordinal": 0,
         "name": "order_no",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "production_orders",
+            "name": "order_number"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "product_code",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "production_orders",
+            "name": "product_code"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "product_name",
-        "type_info": "Varchar"
+        "type_info": "Varchar",
+        "origin": {
+          "Table": {
+            "table": "production_orders",
+            "name": "product_name"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "quantity",
-        "type_info": "Int8"
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "production_orders",
+            "name": "quantity"
+          }
+        }
       }
     ],
     "parameters": {

@@ -46,8 +46,8 @@ pub async fn list_safety_stock(
     let result = sqlx::query(
         r#"
         SELECT id, warehouse_id, warehouse_name, material_code, material_name,
-               specification, safety_stock, reorder_point, max_stock,
-               safety_factor, lead_time_days, consumption_days,
+               specification, safety_stock::float8, reorder_point::float8, max_stock::float8,
+               safety_factor::float8, lead_time_days, consumption_days,
                updated_at
         FROM wms.safety_stock_settings
         ORDER BY warehouse_id, material_code
@@ -133,8 +133,8 @@ pub async fn get_safety_stock(
     let result = sqlx::query(
         r#"
         SELECT id, warehouse_id, warehouse_name, material_code, material_name,
-               specification, safety_stock, reorder_point, max_stock,
-               safety_factor, lead_time_days, consumption_days,
+               specification, safety_stock::float8, reorder_point::float8, max_stock::float8,
+               safety_factor::float8, lead_time_days, consumption_days,
                created_at, updated_at
         FROM wms.safety_stock_settings WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         "#,
@@ -219,8 +219,8 @@ pub async fn update_safety_stock(
             updated_at = $8
         WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, warehouse_id, warehouse_name, material_code, material_name,
-                  specification, safety_stock, reorder_point, max_stock,
-                  safety_factor, lead_time_days, consumption_days, updated_at
+                  specification, safety_stock::float8, reorder_point::float8, max_stock::float8,
+                  safety_factor::float8, lead_time_days, consumption_days, updated_at
         "#,
     )
     .bind(id)

@@ -284,7 +284,7 @@ pub async fn list_process_flows(
         r#"
         SELECT 
             pf.id, pf.code, pf.name, pf.description, pf.version, pf.status,
-            pf.route_id, pf.production_line, pf.capacity, pf.unit,
+            pf.route_id, pf.production_line, pf.capacity::numeric, pf.unit,
             pf.created_at, pf.updated_at,
             pr.route_name as route_name
         FROM process_flows pf
@@ -423,7 +423,7 @@ pub async fn get_process_flow(
                 version: r.version,
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 route_id: r.route_id.map(|u| u.to_string()),
-                route_name: Some(r.route_name),
+                route_name: r.route_name,
                 production_line: r.production_line,
                 capacity: r
                     .capacity
@@ -907,7 +907,7 @@ pub async fn update_flow_step(
             equipment_ids = COALESCE($3::uuid[], equipment_ids),
             standard_time = COALESCE($4::float8, standard_time),
             wait_time = COALESCE($5::float8, wait_time),
-            transfer_time = COALESCE(NULLIF($6, '')::int4, transfer_time),
+            transfer_time = COALESCE(NULLIF($6, ''), transfer_time),
             quality_check_required = COALESCE($7, quality_check_required),
             description = COALESCE($8, description)
         WHERE id = $9
@@ -1221,10 +1221,7 @@ pub async fn analyze_capacity(
         }
     };
 
-    let total_time: f64 = steps
-        .iter()
-        .map(|s| f64::from(s.standard_time.unwrap_or(0)))
-        .sum();
+    let total_time: f64 = steps.iter().map(|s| s.standard_time.unwrap_or(0.0)).sum();
 
     let flow_capacity = flow.capacity.unwrap_or_default();
     let theoretical_capacity = if total_time > 0.0 {
@@ -1248,7 +1245,7 @@ pub async fn analyze_capacity(
     let mut max_utilization = 0.0;
 
     for step in &steps {
-        let step_time = f64::from(step.standard_time.unwrap_or(0));
+        let step_time = step.standard_time.unwrap_or(0.0);
         let step_capacity = if step_time > 0.0 {
             480.0 / step_time
         } else {

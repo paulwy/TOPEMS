@@ -387,7 +387,7 @@ pub async fn list_budgets(
 
     let rows = sqlx::query(only_own_schema_query!(
         "finance",
-        r#"SELECT id, tenant_id, department_id, budget_type, fiscal_year,
+        r#"SELECT id, tenant_id, department_id, budget_type, fiscal_year::text AS fiscal_year,
                   total_budget, used_amount, remaining_amount, usage_rate, status,
                   created_at, updated_at, deleted_at
            FROM budgets WHERE deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
@@ -495,7 +495,7 @@ pub async fn create_budget(
                                 total_budget, used_amount, remaining_amount, usage_rate, status,
                                 created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10, $11)
-           RETURNING id, tenant_id, department_id, budget_type, fiscal_year,
+           RETURNING id, tenant_id, department_id, budget_type, fiscal_year::text AS fiscal_year,
                      total_budget, used_amount, remaining_amount, usage_rate, status,
                      created_at, updated_at, deleted_at"#
     ))
@@ -550,7 +550,7 @@ pub async fn get_budget(
 ) -> ApiResponse<Value> {
     let result = sqlx::query(only_own_schema_query!(
         "finance",
-        r#"SELECT id, tenant_id, department_id, budget_type, fiscal_year,
+        r#"SELECT id, tenant_id, department_id, budget_type, fiscal_year::text AS fiscal_year,
                   total_budget, used_amount, remaining_amount, usage_rate, status,
                   created_at, updated_at, deleted_at
            FROM budgets WHERE id = $1 AND deleted_at IS NULL"#
@@ -600,7 +600,7 @@ pub async fn update_budget(
               total_budget = $5, used_amount = $6, remaining_amount = $7, usage_rate = $8,
               status = $9, updated_at = $10
            WHERE id = $1 AND deleted_at IS NULL
-           RETURNING id, tenant_id, department_id, budget_type, fiscal_year,
+           RETURNING id, tenant_id, department_id, budget_type, fiscal_year::text AS fiscal_year,
                      total_budget, used_amount, remaining_amount, usage_rate, status,
                      created_at, updated_at, deleted_at"#
     ))

@@ -659,7 +659,7 @@ pub async fn list_outbound_order_items(
     let result = sqlx::query(
         only_own_schema_query!("wms", r#"
         SELECT id, line_number, material_code, material_name, specification, batch_number,
-               requested_quantity, reserved_quantity, picked_quantity, packed_quantity, shipped_quantity, unit, 
+               requested_quantity::float8, reserved_quantity, picked_quantity, packed_quantity, shipped_quantity::float8, unit, 
                source_location_id, source_location_code, destination_location_id, destination_location_code,
                unit_price, total_value, picking_status, packing_status, notes as remarks,
                created_at, updated_at
@@ -768,7 +768,7 @@ pub async fn create_outbound_order_item(
         VALUES ($1, $19, $2, $3, $4, $5, $6, $7, $8, $9, $10,
                 $11, $12, $13, $14, $15, $16, $17, $18, $19)
         RETURNING id, line_number, material_code, material_name, specification, batch_number,
-                  requested_quantity, reserved_quantity, picked_quantity, packed_quantity, shipped_quantity, unit,
+                  requested_quantity::float8, reserved_quantity, picked_quantity, packed_quantity, shipped_quantity, unit,
                   source_location_id, source_location_code, destination_location_id, destination_location_code,
                   unit_price, total_value, picking_status, packing_status, notes as remarks,
                   created_at, updated_at
@@ -887,7 +887,7 @@ pub async fn update_outbound_order_item(
             shipped_quantity = $1, notes = $2, updated_at = $3
         WHERE order_id = $4 AND id = $5 AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, line_number, material_code, material_name, specification, batch_number,
-                  requested_quantity, reserved_quantity, picked_quantity, packed_quantity, shipped_quantity, unit, 
+                  requested_quantity, reserved_quantity, picked_quantity, packed_quantity, shipped_quantity::float8, unit, 
                   source_location_id, source_location_code, destination_location_id, destination_location_code,
                   unit_price, total_value, picking_status, packing_status, notes as remarks,
                   created_at, updated_at

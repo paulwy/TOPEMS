@@ -334,7 +334,7 @@ pub async fn list_drill_plans(
                plan_date::text AS plan_date, location, participants, estimated_duration,
                content, organizer, status, related_plan_id::text AS related_plan_id,
                created_at::text AS created_at, updated_at::text AS updated_at,
-               tenant_id::text AS tenant_id
+               tenant_id AS tenant_id
         FROM ehs.qa_ehs_drill_plans
         {where_clause}
         ORDER BY created_at DESC
@@ -432,7 +432,7 @@ pub async fn create_drill_plan(
             plan_date::text AS plan_date, location, participants, estimated_duration,
             content, organizer, status, related_plan_id::text AS related_plan_id,
             created_at::text AS created_at, updated_at::text AS updated_at,
-            tenant_id::text AS tenant_id
+            tenant_id AS tenant_id
         "#
     )
     .bind(&plan_no)
@@ -544,7 +544,7 @@ pub async fn submit_drill_evaluation(
             id::text AS id, drill_id::text AS drill_id, evaluator, overall_score,
             overall_comment, objectives_met, response_time_score, coordination_score,
             procedure_score, equipment_score, evaluated_at::text AS evaluated_at,
-            created_at::text AS created_at, tenant_id::text AS tenant_id
+            created_at::text AS created_at, tenant_id AS tenant_id
         "#,
     )
     .bind(&id)

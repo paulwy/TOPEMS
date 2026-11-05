@@ -9,7 +9,7 @@
 | 项 | 状态 |
 |---|---|
 | 只读盘点 | ✅ 完成（可连库、可 SELECT，不可写） |
-| P1 类型安全加宽（17 列） | ✅ **已执行 2026-11-05**；类型差异 296→279（P5a 后总差 284） |
+| P1 类型安全加宽（17 列） | ✅ **已执行 2026-11-05**；类型差异 296→279（P5a 后总差 284；P3 后 99；P6 数值族加宽 3 列后 **98**；6 项数值族收敛后 **92**；decode 审计 DB-24 收敛后 **90**） |
 | P2 NULLIF 统一（29 条 master_data 策略） | ✅ **已执行 2026-11-05**；纯文本比较 29→0；策略 1083 / RLS 表 883 均不变 |
 | P3 约束补齐（5 PK / 48 UNIQUE / 45 FK） | ✅ **已执行 2026-11-05**；p/u/f 1391/233/253→**1396/281/298**，`NOT VALID`=0。5 张 `schema_defense_ledger` 运行时自建表 PK 仍由启动守卫补齐 |
 | P4 反向表收敛（74 张，22 个 FK 依赖） | ✅ **首批 2026-11-05**：删 11 张（3 张直接删 + 8 张重指向 18 条 FK 后删）；保留 qms 3 张 + `core_finance_currencies`（运行时 CRUD）+ 60 张待业务确认 |
@@ -37,7 +37,7 @@
 
 | 指标 | 执行前 | 执行后 |
 |---|---:|---:|
-| prod-vs-test 类型差异 | 296 | **284**（P1 后 279，P5a 有意新增 5 处 prod timestamptz vs test naive） |
+| prod-vs-test 类型差异 | 296 | **284**（P1 后 279，P5a 有意新增 5 处 prod timestamptz vs test naive；P3 后 99，P6 后 **98**，6 项后 **92**，decode 审计 DB-24 后 **90**） |
 | NULLIF 纯文本比较策略 | 29 | **0** |
 | naive timestamp（5 列口径） | 5 | **0** |
 | 约束缺口 | 103 | **5**（仅 5 张运行时自建 `*.schema_defense_ledger` 的 PK） |
@@ -74,21 +74,21 @@
 | 0–13 | `create schemas` … `login log` | 对应仓库 `000`–`013` 短版本号文件，checksum 全部匹配 | 正常，无需处理 |
 | `20261103000005` | `db governance check backfill` | 无对应文件；installed_on 2026-11-03 10:02，仓库与文档无引用，无法证明为旧占位 | **待确认，不 DELETE** |
 
-**治理后**：账本 556→**560**（+1 治理补登 `20261103173000`，+1 P4 `20261105100000`，+1 `crm.audit_logs` `20261105130000`，+1 db19 `20261104080000`；checksum 均与仓库文件 SHA-384 一致）。仓库迁移文件 576 个（562 个 14 位版本 + 14 个短版本号）；未登记为 **17**（11 个 5433 + 6 个 test 定向：`20261103200000/210000/220000/04030000/05110000/05120000`）；真孤儿仍 1 个。禁止在任意库执行 `sqlx migrate run`。
+**治理后**：账本 556→**561**（+1 治理补登 `20261103173000`，+1 P4 `20261105100000`，+1 `crm.audit_logs` `20261105130000`，+1 db19 `20261104080000`，+1 P6 `20261105140000`；checksum 均与仓库文件 SHA-384 一致）。仓库迁移文件 **577** 个（563 个 14 位版本 + 14 个短版本号）；未登记为 **17**（11 个 5433 + 6 个 test 定向：`20261103200000/210000/220000/04030000/05110000/05120000`）；真孤儿仍 1 个。禁止在任意库执行 `sqlx migrate run`。
 
 ## 2. prod 实测基线（2026-11-04）
 
 | 维度 | 实测值 | 说明 |
 |---|---|---|
 | 表数量 | prod 1402 / test 1328（执行前） | 反向表（**prod 有、test 无**）74；P4 首批后 prod 1391、反向表 63 |
-| 迁移账本 | prod **549** 条 / 仓库文件 **558** 个（执行前） | **17 个版本未登记**（DB-04-prod～DB-19）；治理后 P1 补登 →557，P4 `20261105100000` →558，`crm.audit_logs` `20261105130000` →559，db19 `20261104080000` →**560** / 文件 **576** / 未登记 **17**（11 个 5433 + 6 个 test 定向）；"孤儿"中 14 个实为短版本号文件，真孤儿 1 个 |
-| 类型差异（同名列） | **296**（101 表） | 164 项 prod 已为 timestamptz（无需动）/ 12+3 方向安全 / 13 项 prod 更短 / 62 numeric 混合 / 其余零星 |
+| 迁移账本 | prod **549** 条 / 仓库文件 **558** 个（执行前） | **17 个版本未登记**（DB-04-prod～DB-19）；治理后 P1 补登 →557，P4 `20261105100000` →558，`crm.audit_logs` `20261105130000` →559，db19 `20261104080000` →560，P6 `20261105140000` →561，P7 `20261105160000` →562，P8 `20261105170000` →**563** / 文件 **582** / 未登记 **19**（11 个 5433 + 8 个 test 定向，新增 DB-24 `20261105180000`，prod 未执行、未登记）；"孤儿"中 14 个实为短版本号文件，真孤儿 1 个 |
+| 类型差异（同名列） | **296**（101 表） | 164 项 prod 已为 timestamptz（无需动）/ 12+3 方向安全 / 13 项 prod 更短 / 62 numeric 混合 / 其余零星；P6 加宽 3 列后总差 **98**、数值族 **59**；6 项收敛后总差 **92**、数值族 **53**；decode 审计 DB-24 后总差 **90**、数值族 **51** |
 | NULLIF 纯文本比较策略 | **29**（全部 `master_data`） | `qual LIKE '%::text = current_setting%' AND qual NOT LIKE '%NULLIF%'` |
-| 缺索引（按名比对，排除 pg_toast） | **10** | 全部为反向表 pkey；旧口径 285 含系统 schema 噪声 |
+| 缺索引（按名比对，排除 pg_toast） | **0** | 2026-11-05 实测：5 条 P3 主键 + 5 条运行时账本主键已全部补齐（P3 + P8）；旧口径 285/10 含系统 schema 与反向表历史残留噪声 |
 | 约束缺口 | **103**（10 PK / 48 UNIQUE / 45 FK，91 表） | 依据 test 侧 `pg_constraint` 结构实测；其中 5 条 PK 属运行时自建 `schema_defense_ledger`，P3 迁移仅覆盖剩余 5 条 |
 | naive timestamp 残留 | **5 列** | `public.equipment` 4 列 + `iam.core_plugin_instances.last_heartbeat` |
 | status_standard 残留 CHECK | **3** 条 | `crm.audit_logs` / `integration.external_erp_sync_logs` / `srm.inquiries`（迁移 0002 清单未覆盖） |
-| 无 PK 表 | 11 | 10 张缺 PK 差异中：5 张纳入 P3 迁移，5 张为运行时自建 `schema_defense_ledger`（不纳入），1 张反向表随 P4 |
+| 无 PK 表 | **1** | 5 张 P3 主键 + 5 张运行时账本主键已补齐（P8，共 10 条）；仅剩 `public.core_chat_members`（反向表，0 行，与 `iam.core_chat_members` 重复且后者已有 PK），随 P4 删除处置，不单独补 PK |
 | 反向表行数 | 执行前 74 张中 73 张 0 行；`finance.core_finance_currencies` 16 行 | P4 首批后 63 张中 62 张 0 行；22 个 FK 引用（18 条已重指向权威表） |
 | 服务连接库 | launchd `com.topems.server.plist` → `topems_prod` | 仓库 `.env` 指向 `topems_test`，属运维陷阱 |
 
@@ -98,10 +98,10 @@
 
 1. **类型收窄/降级不可逆**：296 项中 164 项 prod 已是 timestamptz，若照旧记录"prod 215"批量对齐 test 会把时区语义降级为 naive——禁止。只做安全加宽（varchar→text、numeric 加宽）。
 2. **NULLIF 缺口导致 RLS 崩溃**：`app.tenant_id=''` 时 `::uuid` cast 报 `invalid input syntax for type uuid: ""`；29 条 master_data 策略仍是裸 `current_setting` 比较。
-3. **约束缺口影响正确性**：10 张表无 PK；48 UNIQUE / 45 FK 缺失（test 侧已有）。FK 缺失在并发写入下可产生孤儿行。
+3. **约束缺口影响正确性**：执行前 10 张表无 PK（P3 补 5 + P8 补 5 后实测仅剩 1 张反向表 `public.core_chat_members`，随 P4 删除）；48 UNIQUE / 45 FK 缺失（test 侧已有），FK 缺失在并发写入下可产生孤儿行。
 4. **账本与 DDL 漂移**：17 个版本未登记；已登记版本存在未生效 DDL（status_standard 3 条、db04-prod 5 列）。
 5. **反向表与 FK 依赖**：74 张反向表为运行时自建/历史残留，其中 22 个 FK 依赖，直接 DROP 会因 RESTRICT 失败或破坏引用；`finance.core_finance_currencies` 有 16 行真实数据。首批 11 张已于 2026-11-05 处理（§5.1），余 63 张。
-6. **索引噪声**：旧口径 285 含 `pg_toast`/生成名漂移，实测缺 10（仅反向表 pkey），不属正确性问题。
+6. **索引噪声**：旧口径 285 含 `pg_toast`/生成名漂移；按名比对的历史"缺 10"实为 5 条 P3 主键 + 5 条运行时账本主键，2026-11-05 已由 P3 + P8 补齐，实测缺 **0**；剩余 prod 独有索引均为反向表自带，随 P4 处置，不属正确性问题。
 
 ## 4. 迁移清单（本地验证记录；prod 已于 2026-11-05 全部执行）
 
@@ -153,8 +153,8 @@
 ## 6. 剩余决策项
 
 1. **P4 剩余 63 张**：首批 11 张已删（§5.1）；保留 qms 3 张（无明确权威表）、`finance.core_finance_currencies`（运行时 CRUD）、60 张业务未确认。确认前不动。
-2. **执行后仍有 99 项类型差异**（284→99，2026-11-05 test 侧对齐后）：62 数值族混用、13 varchar test 更宽（prod 更短）、5 jsonb↔text/text[]、5 UUID 契约、5 timestamptz↔text、4 date↔timestamptz、2 numeric↔text、2 varchar↔text、1 varchar↔jsonb。均属契约/语义类，只分类不执行（见 §7）。
-3. **未登记 17 个 + 真孤儿 1 个**（治理后）：11 个 5433 定向、6 个 test 定向（含新增 db20/db21），均不登记；db19 已收敛（1 条已存在 + 3 条评估不建）并登记账本。`20261103000005` 来源不明，保留待确认、不 DELETE。`db08` 无守卫，禁止直接重放。
+2. **执行后仍有 90 项类型差异**（284→99→98→92→90，2026-11-05）：**51 数值族混用**（P6 加宽 3 列 + 6 项收敛 + DB-24 2 列收敛）、13 varchar test 更宽（prod 更短）、5 jsonb↔text/text[]、5 UUID 契约、5 timestamptz↔text、4 date↔timestamptz、2 numeric↔text、2 varchar↔text、1 varchar↔jsonb。均属契约/语义类，只分类不执行（见 §7 与 [数值族逐列判定](docs/quality/numeric-family-62-2026-11-05.md)）。
+3. **未登记 19 个 + 真孤儿 1 个**（治理后）：11 个 5433 定向、8 个 test 定向（含新增 db20/db21/db23/db24），均不登记；db19 已收敛（1 条已存在 + 3 条评估不建）并登记账本。`20261103000005` 来源不明，保留待确认、不 DELETE。`db08` 无守卫，禁止直接重放。
 4. **`crm.audit_logs` 值域**：✅ **已按业务决策执行（2026-11-05，允许 `'error'`）**；prod 执行前 17 行均为 `success`、无非标准值；CHECK 已重建并 `VALIDATE`，见 §8。
 5. **索引批次**：prod 实缺 10 个（反向表 pkey），随 P4 收敛；db19 四索引已在 §6.1 逐项收口；其余库（topems 1137）另行性能批次。
 
@@ -171,6 +171,33 @@
 
 **结论**：无需任何 prod DDL（未补建、未删索引、未备份，因无 schema 变更）；`/health` 复核 **200**。文件内应生效 DDL（`user_id` 索引）已存在且等价，故登记 prod 账本 `20261104080000`（`success=true`、`execution_time=0`、checksum `38e19667446b…` 与文件 SHA-384 一致），**未重放迁移**。
 
+### 6.2 数值族 62 项逐列判定（2026-11-05）
+
+**完整清单**：[numeric-family-62-2026-11-05.md](docs/quality/numeric-family-62-2026-11-05.md)（62 行逐列类型/行数/代码映射/判定）。
+
+| 类别 | 数量 | 处置 |
+|---|---:|---|
+| 不动（prod 语义正确/更宽） | 51 | 37 项 prod numeric vs test double（改 double 属精度降级）；16 项 prod double vs test numeric(p,s)（改 numeric 属范围收窄） |
+| 可安全加宽（已执行） | 3 | `mes.production_orders.quantity/completed_quantity`、`mobile.documents.file_size`：integer→bigint，单事务 + 备份 + `/health` 200 |
+| 已双向收敛（P7 + DB-23 + DB-24） | 8 | 按"代码契约 + 迁移明文"判定权威侧：prod 修 4 列（`production_records.completed_quantity` → numeric(12,2)；`process_flow_steps.standard_time/wait_time` → double precision、`transfer_time` → text），test 修 6 列（`process_flow_steps.wait_time` → double precision、`transfer_time` → text；`crm.rfm_results.recency_days/frequency` → integer；`crm.rfm_results.monetary` → numeric(15,2)、`rfm_score` → numeric(10,2)） |
+| 需业务确认 | 0 | — |
+
+**执行**：P6 [20261105140000_p6_numeric_int_to_bigint_3cols.sql](database/migrations/20261105140000_p6_numeric_int_to_bigint_3cols.sql#L1-L66)；本轮 prod [20261105160000_p7_prod_type_align_4cols.sql](database/migrations/20261105160000_p7_prod_type_align_4cols.sql#L1-L213)、test [20261105150000_db23_test_type_align_4cols.sql](database/migrations/20261105150000_db23_test_type_align_4cols.sql#L1-L235)、test [20261105180000_db24_test_rfm_numeric_2cols.sql](database/migrations/20261105180000_db24_test_rfm_numeric_2cols.sql)。test 先行预演 + 提交；prod 备份 `~/topems/backups/topems_prod_pre_p7_20261105.dump`（4,151,188 字节 / TOC 8265 行）后单事务 exit 0；行数 0/0 不变；6 项收敛后类型 101→**92**、数值族 62→**53**；DB-24 再收敛 test 2 列后 **92→90**、数值族 **53→51**；账本 `20261105160000`（checksum `55b8df6ca894…`）→ 总 **562**。
+
+**证据**：62 列无 PK/UNIQUE/FK/CHECK 参与、0 视图/生成列依赖；默认值仅 `production_orders.completed_quantity`(0) 与 `rs.project_members.allocation`(1.0)；代码侧 WMS 用 `rust_decimal::Decimal`、MES 工单显式 `::float8`、Mobile `file_size: i64`（prod int4 存在解码缺口，bigint 修复）。
+
+## 6.3 P4 余量 pkey 索引处置（P8，2026-11-05）
+
+**复核口径**：以 `pg_catalog` 实测替代历史"缺索引 10"口径。prod 共 62 张反向表，61 张已有主键；全库无唯一索引的表仅 6 张 = 5 张运行时账本 + 1 张反向表。
+
+| 组 | 对象 | 实测 | 处置 |
+|---|---|---|---|
+| P3 主键（5 条） | `flow.core_master_data_refs`、`iam._sqlx_migrations`、`iam.core_chat_members`、`iam.core_role_permissions`、`iam.core_user_roles` | prod 5/5 已存在（`20261104130000` 已执行） | ✅ 无需重做 |
+| 运行时账本（5 条） | `communication/ehs/integration/mobile/pdm.schema_defense_ledger` | prod 5 张均无 PK、0 行；test 23/23 全部有 PK | ✅ P8 补齐 `PRIMARY KEY (service_schema)` |
+| 反向表（1 条） | `public.core_chat_members` | 0 行、无 PK；与 `iam.core_chat_members` 重复且后者有 PK | ⏸ 随 P4 删除，不单独补 PK（禁止凑数量造冗余索引） |
+
+**执行**：[20261105170000_p8_prod_ledger_pkeys_5.sql](database/migrations/20261105170000_p8_prod_ledger_pkeys_5.sql#L1-L103)。test 预演 5/5 NOOP；prod 备份 `~/topems/backups/topems_prod_pre_p8_20261105.dump`（4,151,293 字节 / TOC 8265 行）后单事务 exit 0，5/5 ALTERED；`indisvalid=false` 索引 0；`/health`=200；账本 `20261105170000`（checksum `06b89b59e326…`）→ 总 **563**。执行后 prod 无唯一索引表仅剩 `public.core_chat_members`。
+
 ## 7. test 侧类型对齐（2026-11-05）
 
 **范围**：仅 `topems_test`（prod 机同实例），prod 未做任何变更（执行前后 prod 类型快照 `diff` 一致，`/health`=200）。
@@ -182,7 +209,7 @@
 | prod `timestamptz` / test `timestamp` | **169** | ✅ 执行 test→timestamptz，`USING col AT TIME ZONE 'UTC'`（含 P5a 引入 5 列） | 169 列全 NULL，无依赖 |
 | varchar 加宽（含 1 项 varchar→text） | **13** | ✅ 执行（`varchar(200)→(256)` 等） | 无依赖，加宽不截断 |
 | numeric 加宽 | **3** | ✅ 执行（`numeric(12,2)→(15,3)`，`qa_ehs_hazardous_materials`） | 精度/整数位均不缩 |
-| 数值族混用（double precision / numeric / int） | 62 | ⏸ 只分类 | 精度语义不同，需业务定方向 |
+| 数值族混用（double precision / numeric / int） | 62 | ✅ 已处置（3 加宽 + 8 双向收敛），余 51 不动 | 精度语义不同，不动项保持 prod 现状 |
 | varchar test 更宽（prod 更短） | 13 | ⏸ 不执行 | 对齐会收窄 test，存在截断风险 |
 | jsonb ↔ text/text[] | 5 | ⏸ 只分类 | 需数据合法性甄别 |
 | UUID 契约（uuid ↔ varchar/bigint） | 5 | ⏸ 只分类 | 跨库契约 |
@@ -190,6 +217,12 @@
 | date ↔ timestamptz | 4 | ⏸ 只分类 | 语义方向待定 |
 | numeric ↔ text / varchar ↔ text / varchar ↔ jsonb | 5 | ⏸ 只分类 | 类型族不同 |
 | **合计** | **284** | 执行 185 / 不执行 99 | |
+
+### 6.2.1 decode-contract 审计（2026-11-05）
+
+**完整报告**：[decode-contract-audit-2026-11-05.md](docs/quality/decode-contract-audit-2026-11-05.md)（扫描方法、13 项高危、实证输出、修复清单、未实证项）。
+
+**结论**：`crm.rfm_results.monetary / rfm_score` 保持 prod `numeric(15,2)/(10,2)`（金额/分值语义，prod 不动；test double 由 DB-24 向 prod 收敛）。破损侧在代码：`RfmResultRow` 用 `f64` 解码 NUMERIC，sqlx 0.8 实测抛 `ColumnDecode "mismatched types"`（必然失败，非静默截断）→ 查询补 `::float8`（DB 保留 NUMERIC 精度、API 仍为 JSON number）。全仓动态 `query_as` 扫描 21 个候选 → 13 项高危全部修复，复扫 high=0；prod 账本不变（DB-24 仅 test 定向），`/health` 保持 200。
 
 **迁移文件**（test 定向，禁止在 prod 执行）：
 

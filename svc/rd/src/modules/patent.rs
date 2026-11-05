@@ -77,7 +77,7 @@ pub struct Patent {
     #[serde(rename = "abstract")]
     #[sqlx(rename = "abstract")]
     pub patent_abstract: Option<String>,
-    pub created_by: String,
+    pub created_by: Option<Uuid>,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }

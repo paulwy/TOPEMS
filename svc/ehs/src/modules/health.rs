@@ -133,7 +133,7 @@ pub async fn list_records(
         SELECT id::text AS id, record_no, employee_name, employee_id, department,
                check_type, check_date::text AS check_date, result, status, remarks,
                created_at::text AS created_at, updated_at::text AS updated_at,
-               tenant_id::text AS tenant_id
+               tenant_id AS tenant_id
         FROM ehs.health_records
         {where_clause}
         ORDER BY created_at DESC
@@ -188,7 +188,7 @@ pub async fn create_record(
             id::text AS id, record_no, employee_name, employee_id, department,
             check_type, check_date::text AS check_date, result, status, remarks,
             created_at::text AS created_at, updated_at::text AS updated_at,
-            tenant_id::text AS tenant_id
+            tenant_id AS tenant_id
         "#,
     )
     .bind(&record_no)
@@ -227,7 +227,7 @@ pub async fn get_record(
         SELECT id::text AS id, record_no, employee_name, employee_id, department,
                check_type, check_date::text AS check_date, result, status, remarks,
                created_at::text AS created_at, updated_at::text AS updated_at,
-               tenant_id::text AS tenant_id
+               tenant_id AS tenant_id
         FROM ehs.health_records
         WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
@@ -293,7 +293,7 @@ pub async fn update_record(
             id::text AS id, record_no, employee_name, employee_id, department,
             check_type, check_date::text AS check_date, result, status, remarks,
             created_at::text AS created_at, updated_at::text AS updated_at,
-            tenant_id::text AS tenant_id
+            tenant_id AS tenant_id
         "#,
         params.len() + 1,
         params.len() + 2,

@@ -141,6 +141,56 @@
 | D4 | 5433 账本对账 | 阻塞·外部 | 缺连接串 | — |
 
 
+## 动态解码点全仓收敛（stock_take numeric 根因，2026-11-05）✅
+
+> 承接 `wms.stock_take.rs` `try_get::<f64>` 解 prod `numeric` 的遗留；口径扩到 `try_get/get::<T>`、`query_scalar`、helper 间接行源。
+
+- **单点根因**：`wms.stock_take_items/takes` 数量列为 `numeric(15,2)/(5,2)`（prod 实测，各表 0 行；test 已同为 `numeric(15,2)/(5,2)`，迁移 `20261029200000` success=t）。sqlx 0.9 探针实测 `numeric→f64` = `ColumnDecode "mismatched types; Rust type f64 (as SQL type FLOAT8) is not compatible with SQL type NUMERIC"`，属必然失败非静默截断。判定 DB 权威（金额/数量保 NUMERIC），读路径补 `::float8`，API 仍 JSON number。
+- **扫描器扩展**：`scripts/ci/check-decode-contract.mjs` 覆盖动态解码点/`query_scalar`/helper 调用方；修复 SELECT 范围（排除 WHERE/INSERT 列清单）、scalar 尾随 SQL 误挂、`const *_COLS` 展开三类系统性误报。
+- **结果**：修前 high **156**（wms 58 / lims 40 / mes 13 / ehs 12 / master-data 8 / crm 6 / analytics 5 / qms 3 / unified-core 2 / scm 2 / pm 2 / finance 2 / erp 2 / mobile 1）；常量展开后新暴露 11 列（master-data）、推断式解码（`let x: T = row.get`）新暴露 7 字段 13 条 high（ehs emergency_plan id、finance cqrs_events.aggregate_id、mes 巡检三列、unified-core audit_logs.status、wms 低库存两列），全部修复；修后 high **3（均为已核扫描器误报）**，medium **635**、可定位 **3296**、未定位 **95**（原 200，下降 105）、目录无列 **504**（已逐条标注原因）。
+- **验证**：`SQLX_OFFLINE=true cargo check --workspace` exit 0；13 个受影响 crate `clippy --all-targets -D warnings` exit 0；`cargo fmt --all --check` exit 0。本轮无 `query!` 宏改动，`.sqlx` 无需刷新（prepare 39/39 仍为当日基线）。
+- **文档**：[decode-contract-audit-2026-11-05.md](docs/quality/decode-contract-audit-2026-11-05.md) §10（逐文件处置 + 证据 + 剩余项）。
+- **A 已闭环**：unified-core permission 导出分支重写 SELECT 列清单与绑定（`changed_at AS created_at`、`host(ip_address)`），`target_*`/`reason` 按分支真实可用列返回 `None`；运行时探针旧实现 `Err(no column found for name: target_id)` → 新实现 `decode=ok`。prod/test `permission_audit_logs` 均 0 行。
+- **B 已分级**：medium 635 = tests 80 / prod 空表 596 / 未知表 3 / 活跃非测试 35（18 个表列对）。18 对在 prod 实测 NULL=0（`count(*) filter (where col is null)`），**实际需改 0 条**；其余标「确认无害」，不批量放宽类型。
+- **C 已收敛**：未定位 200→**95**（同文件兜底新增定位 105，其中 2 条落入 medium）；另将 504 条「SQL 已定位但列类型来自表达式/CTE/动态拼接」单独输出并全部标注原因（表达式/聚合别名 303、动态列名 156、CTE 29、宏包装/未限定表 16），不静默丢弃。
+- **D 已核实**：test 侧 `wms.stock_take_items/takes` 与 prod 同为 `numeric(15,2)`、`accuracy_rate numeric(5,2)`，迁移 `20261029200000_schema_defense_type_align` 已应用；**无需新增迁移、不改 prod**。
+
+## mes/unified-core/server 代码契约修复（2026-11-05）✅
+
+> 承接上节"3 个 package 待代码修复"：以 prod schema 为权威修代码（prod 零变更），三包 prepare 全绿。
+
+- **mes 93→0**：`equipment_oee.rs`（78 处）prod 全 float8/timestamptz，代码误用 BigDecimal/NaiveDate——绑定、响应映射、`try_get` 全改 f64/DateTime<Utc>；`production_order.rs` 计划/实际日期列为 `date`，绑定改 `date_naive()`；`team.rs` `leader_id` prod varchar 改按字符串绑定（含动态查询 try_get 同类修复）；`wip.rs`/`process_flow.rs`/`quality_traceability.rs` 可空列与 date→DateTime 转换。
+- **unified-core 6→0**：`database_permission_store.rs` `tenant_id` 依 V448 迁移 `iam.tenant_permissions VARCHAR(64)` 改绑 `&str`（原误绑 Uuid，命中 public 影子表定义）。
+- **server**：自身零代码错误；失败全因 prepare 时单连接 search_path 把依赖 crate 的未限定表名解析到 public 旧表。`sqlx-search-path.map` 新增 `topems-server` 宽 search_path 条目（iam/mes/analytics 等服务 schema 全前置、public 殿后；碰撞表经 prod information_schema 核对）。
+- **验证**：**全量 prepare 39/39 成功**（544 子目录缓存合并，根 `.sqlx` 296 条）；全量 `--check` 通过、`SQLX_OFFLINE cargo check --workspace` exit 0（0 error/0 warning）。
+- **`.sqlx` diff**：首轮 107 变更 / 0 增删 → 三包修复后 122 变更 + 1 新增；净迁移 Numeric−52→Float8+52（equipment_oee 浮点列归位）、Timestamptz+1/Date−1（record_date）、Varchar+4（tenant_id 等）。
+- **类型收紧**：按 prod `information_schema` 的可空性——NOT NULL 列（record_date/created_at/updated_at、planned_production_time/actual_run_time/ideal_cycle_time/actual_output/good_output）直接 `try_get::<f64|DateTime<Utc>>`，不用 `Option` 兜底；可空列（downtime/defective_output/availability/performance/quality_rate/oee）保留 `Option`。
+- **遗留已清零**：`wms.stock_take.rs` `try_get::<f64>` 对 prod numeric 的动态解码风险已在下一节全仓动态点审计中修复。
+
+## sqlx 宏查询缓存基线校准（2026-11-05）✅
+
+> 对象：`cargo sqlx prepare` 被 schema drift 阻塞；目标是把"缓存新鲜度"变成可重复动作。
+
+- **直接根因**：prepare 只用单连接 search_path；本地默认 `mes, public` 将 analytics 未限定表名解析到 `public` 影子表（nullable），与运行时 `analytics,shared,public`（NOT NULL）冲突 → 75 个 `Option<DateTime<Utc>>` 错误。
+- **路径 B 否决**：scratch 空库重放 3 处硬错误（`vector` 需超级用户、`20260827000002` `organization_id` 列缺失、`20260831190000` 关系重名）。
+- **采用 A 变体**：不修整库，按运行时 search_path 分 package prepare + prod 只读基线；当时 36/39 成功，mes/unified-core/server 三包失败项已于本日修复（见上节）。
+- **`.sqlx`**：295→295，107 变更 / 0 新增 / 0 删除；101 条仅新增 `origin`，6 条真实类型变化（9 列 Float8→Numeric、2 列 Varchar→Text）。
+- **固化**：[sqlx-search-path.map](scripts/db/sqlx-search-path.map) + [sqlx-prepare.sh](scripts/dev/sqlx-prepare.sh)（`SQLX_PREPARE_DB_URL`、逐 package search_path、失败子目录清理）。
+- **文档**：[sqlx-cache-baseline-2026-11-05.md](docs/quality/sqlx-cache-baseline-2026-11-05.md)。
+- **后续已闭环**：`wms.stock_take.rs` `try_get::<f64>` 对 prod numeric 的动态解码风险，见顶部"动态解码点全仓收敛"节。
+
+## db 类型 ↔ Rust 解码契约审计 + rfm 两列收敛（2026-11-05）✅
+
+> 承接 `crm.rfm_results.monetary / rfm_score`（prod numeric vs test double）与全仓"DB 类型与 Rust 解码类型不匹配"扫描。
+
+**结论**：prod `numeric(15,2)/(10,2)` 为权威（金额/分值语义），**prod 零变更**；破损侧在代码（`RfmResultRow` 以 `f64` 解 NUMERIC，sqlx 0.8 实测 `ColumnDecode "mismatched types"`，必然失败非静默截断）→ 查询补 `::float8`，DB 保留 NUMERIC 精度、API 仍为 JSON number。test 侧 DB-24 收敛为 numeric，37 行值不变。
+
+- **扫描**：4 种方法交叉（`SQLX_OFFLINE` 编译门禁覆盖 3155 个 `query!` 调用点 + 295 个 `.sqlx` 缓存 `type_info`；新脚本 `scripts/ci/check-decode-contract.mjs` 比对 1818 个动态 `query_as::<_, S>` 与 prod `pg_attribute` 列目录；本地运行时探针；迁移 DDL 交叉）。
+- **结果**：21 个候选 → **13 项高危**（8 项为显式 cast 误报），全部修复，复扫 **high=0**；未实证项见报告 §9。
+- **修复**：`crm/rfm.rs`、`mes/demand_forecast.rs`、`mes/production_plan.rs`、`rd/project_report.rs`、`rd/material.rs`、`rd/patent.rs`、`rd/research_cost.rs`、`scm/tests/integration_tests.rs`。
+- **文档**：[decode-contract-audit-2026-11-05.md](docs/quality/decode-contract-audit-2026-11-05.md)；数值族差异 **92→90**、数值族 **53→51**。
+- **账本/迁移**：prod 账本仍 **563**（DB-24 为 test 定向、不登记）；文件 **582**、未登记 **19**；`/health`=200。
+
 ## 生产部署 seed 体系完善（2026-11-04）✅（P0/P1/P2/P3 全部完成）
 
 > 生产机首次部署后发现：角色/权限为空、部门/岗位无标准数据。已建立 seed 文件体系并接入部署脚本。
@@ -255,11 +305,11 @@
 
 | 项 | 原记录 | 实测（2026-11-04，执行前） | 处置（2026-11-05） |
 |---|---|---|---|
-| 类型差异 | prod 215 | **296**（101 表；179 项 prod 无需动 / 14 项安全加宽 / 103 项人工） | P1 已执行 17 列；执行后 284（P5a 有意新增 5 项）；P3 已执行 test 侧对齐 185 列，差异 **284→99**（余 86 只分类 + 13 prod 更短） |
+| 类型差异 | prod 215 | **296**（101 表；179 项 prod 无需动 / 14 项安全加宽 / 103 项人工） | P1 已执行 17 列；执行后 284（P5a 有意新增 5 项）；P3 已执行 test 侧对齐 185 列，差异 **284→99**；P6 数值族逐列判定后加宽 3 列（int→bigint），差异 **99→98**；6 项双向收敛后差异 **92**，数值族 62→53；decode 审计 DB-24 后差异 **90**、数值族 **51**（51 不动 + 3 加宽 + 8 已收敛 + 0 待业务确认） |
 | NULLIF 文本比较 | 11 表 | **29 条策略，全部 master_data** | P2 已执行，29→0；策略 1083 / RLS 883 不变 |
-| 缺索引 | prod 285 | **10**（全为反向表 pkey）；无二级索引表 665 = test 665 | 随 P4 反向表收敛处理 |
+| 缺索引 | prod 285 | **0**（5 条 P3 主键 + 5 条运行时账本主键已补，P8）；无二级索引表 665 = test 665 | ✅ 2026-11-05 收敛；仅剩反向表 `public.core_chat_members` 无 PK（0 行、与 iam 重复），随 P4 删除 |
 | 约束缺口 | 193 | **103 条**（10 PK / 48 UNIQUE / 45 FK，91 表） | P3 已执行，缺口 103→**5**；p/u/f=1396/281/298，`NOT VALID`=0；5 张 `schema_defense_ledger` 运行时自建表不纳入迁移，其主键由 `ensure_ledger_table` 幂等守卫在服务启动时补齐 |
-| 账本 | 546×5 | prod **549** / 文件 558 / 未登记 17 | 已增至 **560**（+7 执行 +1 治理补登 `20261103173000` +1 P4 `20261105100000` +1 audit `20261105130000` +1 db19 `20261104080000`，checksum 均与文件一致）；文件 576，未登记 17（11 个 5433 + 6 个 test 定向）；db19 四索引收敛为 1 条已存在 + 3 条评估不建；真孤儿 1 个（`20261103000005`）保留待确认 |
+| 账本 | 546×5 | prod **549** / 文件 558 / 未登记 17 | 已增至 **563**（+7 执行 +1 治理补登 `20261103173000` +1 P4 `20261105100000` +1 audit `20261105130000` +1 db19 `20261104080000` +1 P6 `20261105140000` +1 P7 `20261105160000` +1 P8 `20261105170000`，checksum 均与文件一致）；文件 **582**，未登记 19（11 个 5433 + 8 个 test 定向，新增 DB-24 `20261105180000`）；db19 四索引收敛为 1 条已存在 + 3 条评估不建；真孤儿 1 个（`20261103000005`）保留待确认 |
 | db04-prod | 174→0 | **残留 5 列**（`public.equipment` 4 + `iam.core_plugin_instances.last_heartbeat`） | P5a 已执行，5→0 |
 | status_standard | 迁移已登记 success | **3 条残留**（crm.audit_logs / integration.external_erp_sync_logs / srm.inquiries） | P5b 已执行，3→0 |
 | 反向表 | prod 74 | **74 确认**；73 张 0 行，`finance.core_finance_currencies` 16 行；**22 个 FK 依赖** | P4 首批 **2026-11-05 已执行**：删 11 张（3 直接删 + 8 重指向 18 条 FK 后删），表数 1402→1391、FK 298→295；保留 qms 3 张 + currencies + 60 张待业务确认（余 63 张） |
@@ -639,7 +689,7 @@
 
 **验证**：同名类型差异 **633→0**（五级核查中最深层类型层完全对齐 test）；门禁 exit 0 绿；FK 引用 0 冲突、数据全空无损。
 
-**类型统一批次终态**：topems@5432 与 test 类型完全一致；其他库（5433 212/**prod 296→284（2026-11-05 执行 P1 后）→99（test 侧对齐 185 列后）**/prepare 142）差异未动，prod 仅对安全加宽子集执行了 P1 迁移（17 列，已执行）；余 99 中 86 项只分类、13 项 prod 更短（不执行）。
+**类型统一批次终态**：topems@5432 与 test 类型完全一致；其他库（5433 212/**prod 296→284（2026-11-05 执行 P1 后）→99（test 侧对齐 185 列后）→98（P6 数值族加宽 3 列后）→92（本轮 6 项双向收敛后）**/prepare 142）差异未动，prod 已执行 P1 17 列 + P6 3 列 + 本轮 4 列；余 92 = 数值族 53 + 非数值 39（只分类，不执行）。
 
 ## 数据库治理：类型统一补充——permission_audit_logs tenant_id/user_id 对齐（2026-11-03）✅（类型差异 633→3）
 
@@ -764,7 +814,8 @@
 **索引数**：test 2733、topems 1892、5433 2040、prod 2650、prepare 2151。
 **缺索引**（test 有/库无）：topems **1137**（820 表）、5433 775、prod ~~285~~、prepare 767；多余索引 82-296（反向表/运行时自建）。
 
-**2026-11-04 复核（prod 只读）**：按索引名比对并排除 `pg_toast` 后，prod 实缺仅 **10** 个，且全部为反向表 pkey；旧口径 285 含系统 schema/生成名漂移噪声，**以 10 为准**。
+**2026-11-04 复核（prod 只读）**：按索引名比对并排除 `pg_toast` 后，prod 实缺仅 **10** 个，且全部为反向表 pkey；旧口径 285 含系统 schema/生成名漂移噪声。
+**2026-11-05 终态（P3 + P8 后）**：10 = 5 条 P3 主键（已存在）+ 5 条运行时 `schema_defense_ledger` 主键（P8 补齐），实测缺 **0**；仅剩反向表 `public.core_chat_members` 无 PK（0 行、与 `iam.core_chat_members` 重复），随 P4 删除，不单独补。
 
 **性质**：索引属**性能层**（非正确性——缺索引不影响查询结果，仅潜在慢查询）；缺项多为每表 1-2 个（permission_audit_logs/mes_qms_sync/sales_invoices/tms_shipments/core_tickets 等 8-5 个）；来源为 test 开发侧新增索引未固化迁移或主库历史缺失。
 

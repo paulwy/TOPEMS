@@ -102,7 +102,7 @@ pub async fn get_subscription(
 
     let subscription = sqlx::query(
         r#"
-        SELECT s.id, s.template_id, t.name as template_name, s.user_id, 
+        SELECT s.id, s.template_id, t.name as template_name, s.user_id::text AS user_id, 
                s.email, s.frequency, s.enabled, s.created_at
         FROM report_subscriptions s
         LEFT JOIN report_templates t ON s.template_id = t.id
@@ -151,7 +151,7 @@ pub async fn list_subscriptions(State(state): State<AppState>) -> Json<serde_jso
 
     let subscriptions = sqlx::query(
         r#"
-        SELECT s.id, s.template_id, s.user_id, s.email, s.frequency, s.enabled, s.created_at
+        SELECT s.id, s.template_id, s.user_id::text AS user_id, s.email, s.frequency, s.enabled, s.created_at
         FROM report_subscriptions s
         ORDER BY s.created_at DESC
         "#,
@@ -198,7 +198,7 @@ pub async fn get_user_subscriptions(
 
     let subscriptions = sqlx::query(
         r#"
-        SELECT s.id, s.template_id, t.name as template_name, s.user_id, 
+        SELECT s.id, s.template_id, t.name as template_name, s.user_id::text AS user_id, 
                s.email, s.frequency, s.enabled, s.created_at
         FROM report_subscriptions s
         LEFT JOIN report_templates t ON s.template_id = t.id

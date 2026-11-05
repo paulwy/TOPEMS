@@ -40,8 +40,32 @@ deploy/
 ├── systemd/                  # systemd 服务单元（生产主路径）
 │   └── *.service             # 各服务的 systemd unit 文件
 └── nginx/                    # Nginx 反向代理配置（通用）
-    └── topems.conf
+    ├── topems.conf           # 反向代理/TLS 入口配置
+    └── topems-ca.crt         # 私有 CA 根证书（本地生成，.gitignore 精确忽略，不入库）
 ```
+
+## Nginx TLS 证书（`nginx/topems-ca.crt`）
+
+- **性质**：自建私有 CA 的**根证书公钥部分**，`CN=TOPEMS Internal Root CA`、`O=TOPEMS`、`C=CN`，自签名；有效期 `2026-11-05 → 2036-11-02`；RSA 4096 / SHA-256；`Basic Constraints: CA:TRUE, pathlen:0`，`Key Usage: keyCertSign, cRLSign`。**不是站点证书**，无 SAN。
+- **当前引用关系**：`nginx/topems.conf` **不引用** `topems-ca.crt`；实际使用 `/etc/nginx/certs/fullchain.pem`、`/etc/nginx/certs/privkey.pem`、`/etc/nginx/certs/chain.pem`。
+- **生成方式**（占位符，实际路径按环境替换）：
+  ```bash
+  # 私钥 <ca-key-path> 必须存放在仓库之外
+  openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes \
+    -keyout <ca-key-path> -out <ca-crt-path> \
+    -subj "/C=CN/O=TOPEMS/CN=TOPEMS Internal Root CA" \
+    -addext "basicConstraints=critical,CA:TRUE,pathlen:0" \
+    -addext "keyUsage=critical,keyCertSign,cRLSign"
+
+  # 站点证书签发（可选）
+  openssl req -newkey rsa:2048 -nodes -keyout <site-key-path> -out <site-csr-path> -subj "/CN=<domain>"
+  openssl x509 -req -in <site-csr-path> -CA <ca-crt-path> -CAkey <ca-key-path> \
+    -CAcreateserial -days <days> -sha256 -out <site-crt-path>
+  ```
+- **硬性约定**：
+  - **私钥必须永久保存在仓库之外**，任何形式（`*.key` / `*.pem` / `*.p12`）禁止入库；
+  - CA 证书仅作为**信任锚分发**（安装到客户端信任库），**不入库**；`.gitignore` 已按具体文件精确忽略 `/deploy/nginx/topems-ca.crt`，不使用 `*.crt` 全局规则。
+- **客户端信任**：将 `<ca-crt-path>` 导入客户端信任库（macOS Keychain 或 Linux `update-ca-certificates`）；生产入口证书仍按现有 `/etc/nginx/certs/` 路径部署，见本文件「生产部署」与 `scripts/deploy/` 脚本。
 
 ## 生产部署（systemd 主路径）
 

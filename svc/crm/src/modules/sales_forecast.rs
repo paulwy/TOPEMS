@@ -696,7 +696,7 @@ pub async fn get_sales_trend(
 
     let result = sqlx::query(
         r#"
-        SELECT period, predicted_amount, actual_amount, accuracy, trend
+        SELECT period, predicted_amount, actual_amount, accuracy::float8, trend
         FROM crm.sales_forecasts
         WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND period_type = $2
@@ -834,7 +834,7 @@ pub async fn compare_sales_forecasts(
 
     let result = sqlx::query(
         r#"
-        SELECT period, predicted_amount, actual_amount, accuracy, confidence_level, trend
+        SELECT period, predicted_amount, actual_amount, accuracy::float8, confidence_level::float8, trend
         FROM crm.sales_forecasts
         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND period_type = $2 AND period = ANY($3)
         ORDER BY period ASC
@@ -981,7 +981,7 @@ pub async fn get_accuracy_report(
 
     let result = sqlx::query(
         r#"
-        SELECT period, predicted_amount, actual_amount, accuracy, confidence_level, trend
+        SELECT period, predicted_amount, actual_amount, accuracy::float8, confidence_level::float8, trend
         FROM crm.sales_forecasts
         WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND period_type = $2

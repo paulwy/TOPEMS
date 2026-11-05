@@ -132,7 +132,7 @@ pub struct ApsScheduleItem {
     pub product_name: String,
     pub product_code: String,
     pub quantity: f64,
-    pub priority: i32,
+    pub priority: Option<String>,
     pub planned_start: DateTime<Utc>,
     pub planned_end: DateTime<Utc>,
     pub work_station_id: Uuid,
@@ -306,7 +306,7 @@ struct WorkOrderInfo {
     product_name: String,
     product_code: String,
     quantity: f64,
-    priority: i32,
+    priority: Option<String>,
     planned_start_date: Option<DateTime<Utc>>,
     planned_end_date: Option<DateTime<Utc>>,
     status: String,
@@ -602,7 +602,7 @@ async fn run_aps_scheduling(
             product_name: order.product_name.clone(),
             product_code: order.product_code.clone(),
             quantity: order.quantity,
-            priority: order.priority,
+            priority: order.priority.clone(),
             planned_start: start_time,
             planned_end: end_time,
             work_station_id: selected_station.id,
@@ -710,7 +710,7 @@ async fn fetch_pending_orders(
         let placeholders: Vec<String> = (1..=ids.len()).map(|i| format!("${}", i)).collect();
         format!(
             r#"
-            SELECT id, order_number AS order_no, product_name, product_code, quantity,
+            SELECT id, order_number AS order_no, product_name, product_code, quantity::numeric,
                    planned_start_date, planned_end_date, status, priority
             FROM mes.production_orders
             WHERE id IN ({0}) AND status IN ('pending', 'released')
@@ -722,7 +722,7 @@ async fn fetch_pending_orders(
         )
     } else {
         r#"
-        SELECT id, order_number AS order_no, product_name, product_code, quantity,
+        SELECT id, order_number AS order_no, product_name, product_code, quantity::numeric,
                planned_start_date, planned_end_date, status, priority
         FROM mes.production_orders
         WHERE status IN ('pending', 'released')
@@ -757,11 +757,7 @@ async fn fetch_pending_orders(
                     .ok()
                     .flatten(),
             ),
-            priority: r
-                .try_get::<Option<i32>, _>("priority")
-                .ok()
-                .flatten()
-                .unwrap_or(0),
+            priority: r.try_get::<Option<String>, _>("priority").ok().flatten(),
             planned_start_date: r
                 .try_get::<Option<DateTime<Utc>>, _>("planned_start_date")
                 .ok()
@@ -926,7 +922,12 @@ async fn save_schedule_result(
     .bind(item.process_id)
     .bind(item.planned_start)
     .bind(item.planned_end)
-    .bind(item.priority)
+    .bind(
+        item.priority
+            .as_deref()
+            .and_then(|p| p.parse::<i32>().ok())
+            .unwrap_or(0),
+    )
     .bind(format!("APS排程，可行性: {:.0}%", item.feasibility_score))
     .bind(now)
     .bind(tenant_id)
@@ -1105,7 +1106,7 @@ pub async fn check_schedule_constraints(
         // 获取订单信息
         let order = sqlx::query(
             r#"
-            SELECT id, order_number AS order_no, product_name, product_code, quantity,
+            SELECT id, order_number AS order_no, product_name, product_code, quantity::numeric,
                    planned_start_date, planned_end_date
             FROM mes.production_orders
             WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)

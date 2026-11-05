@@ -70,6 +70,12 @@ if [ -f .env ]; then
   set -a; source .env; set +a; ENV_LOADED=1
 fi
 
+# .env 会覆盖外部 export 的 DATABASE_URL；显式指定 prepare 基线库时用本变量
+if [ -n "${SQLX_PREPARE_DB_URL:-}" ]; then
+  DATABASE_URL="$SQLX_PREPARE_DB_URL"
+  log "使用 SQLX_PREPARE_DB_URL 作为 prepare 基线库"
+fi
+
 # merge 模式为纯离线合并，不需要 DATABASE_URL / cargo，提前分流
 if [ "$MODE" == "merge" ]; then
   log "执行纯合并模式：把子目录已存在的 .sqlx/*.json 合并到根 .sqlx/（不连 DB、不执行 cargo prepare）..."
@@ -136,6 +142,23 @@ pkg_dir_of() {
 
 pkg_exists() {
   pkg_dir_of "$1" >/dev/null 2>&1
+}
+
+# 从 scripts/db/sqlx-search-path.map 读取该 package 的运行时 search_path
+search_path_of() {
+  local f="scripts/db/sqlx-search-path.map"
+  [ -f "$f" ] || return 1
+  awk -F= -v k="$1" '$1==k && $2!="" {print $2; exit}' "$f"
+}
+
+# 给 DATABASE_URL 追加 options=-c search_path=...（保留已有 query 参数）
+url_with_search_path() {
+  local base="$1" sp="$2" enc
+  enc=$(printf '%s' "$sp" | sed 's/,/%2C/g; s/ /%20/g')
+  case "$base" in
+    *\?*) echo "${base}&options=-c%20search_path%3D${enc}" ;;
+    *)    echo "${base}?options=-c%20search_path%3D${enc}" ;;
+  esac
 }
 
 # ---------- 主流程 ----------
@@ -305,10 +328,19 @@ for p in "${ALL_PKGS[@]}"; do
   fi
   dir="$(pkg_dir_of "$p" || true)"
   [ -z "$dir" ] && continue
-  log "prepare $p (in $dir)"
+  sp="$(search_path_of "$p" || true)"
+  if [ -n "$sp" ]; then
+    log "prepare $p (in $dir, search_path=$sp)"
+  else
+    log "prepare $p (in $dir)"
+  fi
   set +e
   (
     cd "$dir"
+    if [ -n "$sp" ]; then
+      sp_url="$(url_with_search_path "$DATABASE_URL" "$sp")"
+      export DATABASE_URL="$sp_url"
+    fi
     cargo sqlx prepare >"$PROJECT_ROOT/logs/sqlx-prepare-$p.log" 2>&1
   )
   rc=$?
@@ -342,6 +374,13 @@ for p in "${OK_PKGS[@]}"; do
 done
 
 ROOT_QUERIES=$(find .sqlx -name "*.json" | wc -l | tr -d ' ')
+
+# 失败 package 的 prepare 可能留下半成品子目录缓存；若保留，离线编译会优先读它而
+# 绕过根 .sqlx（sqlx 只查 crate 自身目录），造成"缓存已回根但仍失败"的假象。
+for p in "${FAIL_PKGS[@]}"; do
+  dir="$(pkg_dir_of "$p" || true)"
+  [ -n "$dir" ] && [ -d "$dir/.sqlx" ] && rm -rf "$dir/.sqlx"
+done
 ok "完成：成功 ${#OK_PKGS[@]}/${#ALL_PKGS[@]}，合并 $MERGED 个子目录查询缓存，根 .sqlx 共 $ROOT_QUERIES queries"
 if [ "${#FAIL_PKGS[@]}" -gt 0 ]; then
   warn "失败（通常是代码本身类型错误，非 sqlx 缓存问题）：${FAIL_PKGS[*]}"

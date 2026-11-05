@@ -150,7 +150,7 @@ pub async fn list_material_plans(
     let rows = sqlx::query(
         "SELECT id, plan_no, plan_id, material_id, material_code, material_name, \
                 required_quantity, available_quantity, shortfall_quantity, required_date, \
-                supply_type, status, tenant_id, created_at, updated_at \
+                supply_type, status, tenant_id::text, created_at, updated_at \
          FROM mes.material_plans \
          WHERE ($1::text IS NULL OR status = $1) \
            AND ($2::text IS NULL OR plan_no ILIKE '%' || $2 || '%' \
@@ -202,7 +202,7 @@ pub async fn get_material_plan(
     let row = sqlx::query(
         "SELECT id, plan_no, plan_id, material_id, material_code, material_name, \
                 required_quantity, available_quantity, shortfall_quantity, required_date, \
-                supply_type, status, tenant_id, created_at, updated_at \
+                supply_type, status, tenant_id::text, created_at, updated_at \
          FROM mes.material_plans WHERE id = $1",
     )
     .bind(id)
@@ -240,7 +240,7 @@ pub async fn create_material_plan(
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) \
          RETURNING id, plan_no, plan_id, material_id, material_code, material_name, \
                    required_quantity, available_quantity, shortfall_quantity, required_date, \
-                   supply_type, status, tenant_id, created_at, updated_at",
+                   supply_type, status, tenant_id::text, created_at, updated_at",
     )
     .bind(&req.plan_no)
     .bind(req.plan_id)
@@ -289,7 +289,7 @@ pub async fn update_material_plan(
          WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')::UUID \
          RETURNING id, plan_no, plan_id, material_id, material_code, material_name, \
                    required_quantity, available_quantity, shortfall_quantity, required_date, \
-                   supply_type, status, tenant_id, created_at, updated_at",
+                   supply_type, status, tenant_id::text, created_at, updated_at",
     )
     .bind(id)
     .bind(req.plan_id)
@@ -356,7 +356,7 @@ async fn transition_status(
          WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')::UUID \
          RETURNING id, plan_no, plan_id, material_id, material_code, material_name, \
                    required_quantity, available_quantity, shortfall_quantity, required_date, \
-                   supply_type, status, tenant_id, created_at, updated_at",
+                   supply_type, status, tenant_id::text, created_at, updated_at",
     )
     .bind(id)
     .bind(new_status)

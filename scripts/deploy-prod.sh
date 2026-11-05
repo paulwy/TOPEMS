@@ -7,7 +7,8 @@
 #   ./scripts/deploy-prod.sh --frontend   # 同时部署前端（编译 dist + rsync）
 #   ./scripts/deploy-prod.sh --rollback   # 回滚到上一个备份
 #   ./scripts/deploy-prod.sh --status     # 只看状态
-#   ./scripts/deploy-prod.sh --skip-build  # 跳过本地编译（用现有二进制）
+#   ./scripts/deploy-prod.sh --skip-build  # 跳过本地编译（用现有二进制；缺失时自动回退最近 release 包）
+#   ./scripts/deploy-prod.sh --bin <路径>   # 直接指定现成二进制（隐含跳过编译）
 #   ./scripts/deploy-prod.sh --reset-db   # 重置数据库（清空测试数据+插入部门+岗位+角色+字典）
 #   ./scripts/deploy-prod.sh --seed-departments  # 只插入标准部门（不清库）
 #   ./scripts/deploy-prod.sh --seed-positions    # 只插入标准岗位（不清库）
@@ -24,8 +25,11 @@ set -e
 PROD_HOST="xingzhai@192.168.110.115"
 PROD_BIN_DIR="/Users/xingzhai/topems/bin"
 PROD_REPO_DIR="/Users/xingzhai/TOPEMS"
-LOCAL_BIN="./target/release/topems-server"
 LOCAL_REPO="/Users/air/TOPEMS"
+# 绝对路径：不依赖执行时 CWD（2026-11-05 修复：相对路径 ./target/release 导致 --skip-build 误判缺失）
+LOCAL_BIN="$LOCAL_REPO/target/release/topems-server"
+BIN_OVERRIDE=""                                  # --bin 显式指定
+RELEASE_DIR="$HOME/topems-release"               # 历史 release 包存档（--skip-build 自动回退来源）
 LAUNCHD_LABEL="com.topems.server"
 HEALTH_URL="http://localhost:8099/api/server/health"
 HEALTH_TIMEOUT=60  # 秒
@@ -55,8 +59,8 @@ SEED_ROLES=false
 SEED_DICT=false
 FORCE=false
 
-for arg in "$@"; do
-  case $arg in
+while [ $# -gt 0 ]; do
+  case "$1" in
     --frontend)        DO_FRONTEND=true ;;
     --rollback)        DO_ROLLBACK=true ;;
     --skip-build)      DO_BUILD=false ;;
@@ -69,11 +73,17 @@ for arg in "$@"; do
     --seed-coding-rules) SEED_CODING_RULES=true ;;
     --seed-settings)     SEED_SETTINGS=true ;;
     --force)           FORCE=true ;;
+    --bin)
+      [ -n "${2:-}" ] || error "--bin 需要参数：--bin <二进制路径>"
+      BIN_OVERRIDE="$2"; DO_BUILD=false; shift ;;
+    --bin=*)
+      BIN_OVERRIDE="${1#--bin=}"; DO_BUILD=false ;;
     -h|--help)
-      grep '^#' "$0" | head -20
+      grep '^#' "$0" | head -21
       exit 0 ;;
-    *) error "未知参数: $arg" ;;
+    *) error "未知参数: $1" ;;
   esac
+  shift
 done
 
 # ── 状态模式 ──
@@ -152,6 +162,65 @@ info "git 状态 OK (HEAD=$(git rev-parse --short HEAD))"
 info "测试 SSH 连通性..."
 ssh -o ConnectTimeout=5 $PROD_HOST "hostname" > /dev/null || error "SSH 连接失败"
 info "SSH OK"
+
+# ── 1. 二进制解析 / 编译（必须先于任何破坏性步骤：避免"先清库、后报无二进制"）──
+# 2026-11-05 教训：旧版把本步骤放在 --reset-db 之后，二进制缺失时数据库已被清空才报错。
+resolve_bin_or_die() {
+  [ -f "$LOCAL_BIN" ] && return 0
+  # 回退：最近一份 release 存档包
+  local latest inner tmpdir
+  latest=$(ls -t "$RELEASE_DIR"/topems-server-*.tar.gz 2>/dev/null | head -1)
+  if [ -n "$latest" ]; then
+    tmpdir="$LOCAL_REPO/target/tmp/release-fallback"
+    rm -rf "$tmpdir"; mkdir -p "$tmpdir" "$(dirname "$LOCAL_BIN")"
+    tar -xzf "$latest" -C "$tmpdir" 2>/dev/null
+    inner=$(find "$tmpdir" -type f -name topems-server | head -1)
+    if [ -n "$inner" ]; then
+      cp "$inner" "$LOCAL_BIN" && chmod +x "$LOCAL_BIN"
+      warn "未找到 $LOCAL_BIN，已自动回退使用历史 release 包：$(basename "$latest")"
+      warn "注意：该二进制可能不是当前 HEAD 的构建，上线前请确认版本"
+      rm -rf "$tmpdir"
+      return 0
+    fi
+    rm -rf "$tmpdir"
+  fi
+  error "未找到二进制 $LOCAL_BIN，且无可回退的历史 release 包。请三选一：① 去掉 --skip-build 正常编译；② --bin <现成二进制绝对路径>；③ 先手动放置到 $LOCAL_BIN"
+}
+
+info "=== 步骤 1/5: 二进制解析与编译 ==="
+if [ -n "$BIN_OVERRIDE" ]; then
+  [ -f "$BIN_OVERRIDE" ] || error "--bin 指定的文件不存在：$BIN_OVERRIDE"
+  LOCAL_BIN="$BIN_OVERRIDE"
+elif [ "$DO_BUILD" = true ]; then
+  # 网络受限环境兜底：utoipa-swagger-ui 构建期需从 GitHub 下载 swagger-ui，
+  # 若本地 vendor 包存在则改用 file:// （2026-11-05 首次遇到 curl exit 16 下载失败）
+  if [ -z "${SWAGGER_UI_DOWNLOAD_URL:-}" ] && [ -f "$RELEASE_DIR/vendor/swagger-ui-v5.32.6.zip" ]; then
+    export SWAGGER_UI_DOWNLOAD_URL="file://$RELEASE_DIR/vendor/swagger-ui-v5.32.6.zip"
+    info "使用本地 swagger-ui 包: $SWAGGER_UI_DOWNLOAD_URL"
+  fi
+  info "本地编译 release（cargo build --release -p topems-server）..."
+  cargo build --release -p topems-server 2>&1 | tail -5
+  [ -f "$LOCAL_BIN" ] || error "编译失败，二进制不存在：$LOCAL_BIN"
+else
+  info "跳过编译，解析现有二进制..."
+  resolve_bin_or_die
+fi
+[ -s "$LOCAL_BIN" ] || error "二进制为空文件：$LOCAL_BIN"
+file "$LOCAL_BIN" | grep -q "Mach-O" || warn "目标二进制不是 macOS Mach-O 格式，请确认：$(file "$LOCAL_BIN")"
+info "待部署二进制: $(ls -lh "$LOCAL_BIN" | awk '{print $5}')  $LOCAL_BIN"
+
+# ── 迁移账本预检（只提示不阻断；迁移不会随服务启动自动补跑，需显式 sqlx migrate run）──
+LOCAL_MIG_COUNT=$(ls "$LOCAL_REPO"/database/migrations/*.sql 2>/dev/null | wc -l | tr -d ' ')
+PROD_MIG_COUNT=$(ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -Atc 'SELECT count(*) FROM _sqlx_migrations'" 2>/dev/null | head -1 | tr -d ' ')
+PROD_MIG_COUNT=${PROD_MIG_COUNT:-?}
+info "迁移账本: 本地 $LOCAL_MIG_COUNT 个迁移文件 / 生产 $PROD_MIG_COUNT 条"
+if [ "$PROD_MIG_COUNT" != "?" ]; then
+  if [ "$PROD_MIG_COUNT" -lt "$LOCAL_MIG_COUNT" ] 2>/dev/null; then
+    warn "生产账本少于本地 $((LOCAL_MIG_COUNT - PROD_MIG_COUNT)) 个迁移（多为 test/5433 定向迁移，仅需按需应用）。注意：二进制不内嵌迁移，重启不会自动补跑；需应用时用 sqlx migrate run 并先确认目标库"
+  fi
+else
+  warn "无法读取生产迁移账本（psql 连接失败），跳过数量对比"
+fi
 
 # ── 数据库重置（可选）──
 if [ "$DO_RESET_DB" = true ]; then
@@ -270,17 +339,6 @@ ssh $PROD_HOST "
     info "  $key: OK"
   fi
 done
-
-# ── 1. 本地编译 ──
-if [ "$DO_BUILD" = true ]; then
-  info "=== 步骤 1/5: 本地编译 release ==="
-  cargo build --release -p topems-server 2>&1 | tail -5
-  [ -f "$LOCAL_BIN" ] || error "编译失败，二进制不存在"
-  info "编译完成: $(ls -lh $LOCAL_BIN | awk '{print $5}')"
-else
-  info "=== 步骤 1/5: 跳过编译 ==="
-  [ -f "$LOCAL_BIN" ] || error "二进制不存在且跳过了编译"
-fi
 
 # ── 2. 生产机备份 ──
 info "=== 步骤 2/5: 生产机备份旧二进制 ==="
