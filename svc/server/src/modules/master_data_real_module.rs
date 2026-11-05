@@ -49,8 +49,8 @@ impl MasterDataRealModule {
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标
         let ctx = bootstrap_service(&config).await?;
 
-        // 立即建立连接，固化本连接池的 search_path
-        let _conn = ctx.db.acquire().await?;
+        // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
+        topems_shared_db::database::probe_connection(&ctx.db).await?;
 
         // 对齐独立进程 main.rs：Schema 防御（建表/补列，best-effort 不阻塞）。
         // 根治恢复库缺 master_data.* 表（如 uoms）问题——此前仅在独立进程调用。

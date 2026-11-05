@@ -47,7 +47,7 @@ impl SrmRealModule {
         };
 
         let ctx = bootstrap_service(&config).await?;
-        let _conn = ctx.db.acquire().await?;
+        topems_shared_db::database::probe_connection(&ctx.db).await?;
 
         // DB 初始化（schema_defense 迁移验证，失败不阻塞）
         if let Err(e) = default_init_db(

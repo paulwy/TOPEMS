@@ -42,7 +42,7 @@ impl IntegrationRealModule {
         };
 
         let ctx = bootstrap_service(&config).await?;
-        let _conn = ctx.db.acquire().await?;
+        topems_shared_db::database::probe_connection(&ctx.db).await?;
 
         // 从环境变量获取服务 URL
         let lims_url = std::env::var("LIMS_SERVICE_URL")

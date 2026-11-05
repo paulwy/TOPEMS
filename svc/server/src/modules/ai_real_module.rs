@@ -52,7 +52,7 @@ impl AiRealModule {
 
         // 通用资源（telemetry、auth_state、event_publisher）
         let ctx = bootstrap_service(&config).await?;
-        let _conn = ctx.db.acquire().await?;
+        topems_shared_db::database::probe_connection(&ctx.db).await?;
 
         // AI 专用 Database：复用 bootstrap 的进程级池（连接治理 A，避免第二个 max=100 的池）
         let db = Database::from_parts(ctx.db.clone(), ctx.migrate_pool.clone());

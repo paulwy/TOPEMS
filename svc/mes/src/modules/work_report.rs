@@ -659,6 +659,9 @@ pub async fn create_work_report(
                     .await
                     .ok()
                     .flatten();
+                    // 查询完成即归还连接：事件发布（Redis/Stream 往返）不需要 DB 连接，
+                    // 不应在连接上跨 await 持有（预算内每条连接都有配额成本）。
+                    drop(conn);
 
                     let payload = MesWorkReportSubmittedPayload {
                         work_report_id,

@@ -219,7 +219,7 @@ impl SubscriptionModule {
             init_telemetry: false,
         };
         let ctx = bootstrap_service(&config).await?;
-        let _conn = ctx.db.acquire().await?;
+        topems_shared_db::database::probe_connection(&ctx.db).await?;
 
         // C-1：subscriptions 表由迁移链权威创建（运行时自建表已移除）
 

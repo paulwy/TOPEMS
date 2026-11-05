@@ -211,7 +211,7 @@ impl CommunicationRealModule {
         };
 
         let ctx = bootstrap_service(&config).await?;
-        let _conn = ctx.db.acquire().await?;
+        topems_shared_db::database::probe_connection(&ctx.db).await?;
 
         // ===== 通知子路由（前端 base /api/communication/notification） =====
         let notification_router = {

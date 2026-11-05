@@ -155,3 +155,43 @@ async fn budget_caps_concurrent_connections() {
     println!("[budget-final] {:?}", final_snap);
     assert!(final_snap.allocated <= BUDGET);
 }
+
+/// 启动期探测的语义验证：可用库返回 Ok 且连接立即归还；不可用库返回 Err
+/// （`?` 传播 → 模块 build 失败，不会静默降级）。
+#[tokio::test]
+async fn probe_connection_is_fail_fast_and_returns_connection() {
+    let Some(url) = it_url() else {
+        eprintln!("[skip] 未设置 TOPEMS_IT_DATABASE_URL");
+        return;
+    };
+
+    let pool = sqlx::postgres::PgPoolOptions::new()
+        .max_connections(1)
+        .min_connections(0)
+        .acquire_timeout(Duration::from_secs(5))
+        .connect(&url)
+        .await
+        .expect("建立探测用连接池失败");
+
+    topems_shared_db::database::probe_connection(&pool)
+        .await
+        .expect("可用库探测应成功");
+
+    // 探测后连接必须已归还：池内无占用连接（size 全为 idle 且可再次立即借用）。
+    // 归还到 idle 队列是异步的，留一小段让池完成回收再采样。
+    tokio::time::sleep(Duration::from_millis(100)).await;
+    let size = pool.size();
+    let idle = pool.num_idle();
+    println!("[probe] size={size} idle={idle}");
+    assert_eq!(size as usize, idle, "探测应当已归还连接，不能跨 await 持有");
+
+    // 不可达实例：探测必须返回 Err（而不是 Ok 后静默降级）
+    let bad = sqlx::postgres::PgPoolOptions::new()
+        .max_connections(1)
+        .acquire_timeout(Duration::from_millis(500))
+        .connect_lazy("postgresql://nobody@127.0.0.1:1/topems_test")
+        .expect("lazy 建池不应失败");
+    let err = topems_shared_db::database::probe_connection(&bad).await;
+    println!("[probe-bad] is_err={}", err.is_err());
+    assert!(err.is_err(), "不可达库探测必须失败");
+}

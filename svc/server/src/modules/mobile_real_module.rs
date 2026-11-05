@@ -40,7 +40,7 @@ impl MobileRealModule {
         };
 
         let ctx = bootstrap_service(&config).await?;
-        let _conn = ctx.db.acquire().await?;
+        topems_shared_db::database::probe_connection(&ctx.db).await?;
 
         // 1. 7 个服务客户端统一初始化（与独立部署一致的 service token）
         let (

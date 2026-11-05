@@ -49,8 +49,8 @@ impl PdmRealModule {
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标
         let ctx = bootstrap_service(&config).await?;
 
-        // 立即建立连接，固化本连接池的 search_path
-        let _conn = ctx.db.acquire().await?;
+        // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
+        topems_shared_db::database::probe_connection(&ctx.db).await?;
 
         // 2. 构建业务 AppState（与独立部署 main.rs 一致）
         //    多级缓存初始化（L1: moka + L2: Redis，server 嵌入未配置 Redis 时降级纯 L1）

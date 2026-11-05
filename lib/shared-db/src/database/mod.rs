@@ -182,6 +182,23 @@ pub async fn test_database_connection(pool: &PgPool) -> Result<()> {
     Ok(())
 }
 
+/// 启动期连通性探测：执行一次 `SELECT 1`，连接随查询结束立即归还。
+///
+/// 用于各模块 `build()`，替代历史上的 `let _conn = pool.acquire().await?;`——后者把
+/// 连接绑定到变量并持有到 `build()` 结束（跨 schema 迁移等多个 await），白占预算额度；
+/// 且它注释所称"固化 search_path"并不成立：`SEARCH_PATH` 在建池时已捕获进
+/// `after_connect`，池内每条连接都会自动设置。
+///
+/// 失败返回 `Err` 由调用方 `?` 传播，保持「依赖不可用 → 模块启动失败」的语义，
+/// 不静默降级为"服务起来了但数据库不可用"。
+pub async fn probe_connection(pool: &PgPool) -> Result<()> {
+    sqlx::query("SELECT 1")
+        .execute(pool)
+        .await
+        .map_err(|e| TopemsError::Database(format!("Database connectivity probe failed: {}", e)))?;
+    Ok(())
+}
+
 #[derive(Debug, Clone)]
 pub struct HealthCheckResult {
     pub healthy: bool,

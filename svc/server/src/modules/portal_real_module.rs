@@ -55,7 +55,7 @@ impl PortalRealModule {
         );
 
         let ctx = bootstrap_service(&config).await?;
-        let _conn = ctx.db.acquire().await?;
+        topems_shared_db::database::probe_connection(&ctx.db).await?;
 
         // 嵌入模式无独立 public 入口（server 统一提供 /health /metrics 与 dev 声明注入），
         // 传空 Router<AppState> 作为 public 路由占位

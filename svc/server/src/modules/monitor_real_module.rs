@@ -37,7 +37,7 @@ impl MonitorRealModule {
         };
 
         let ctx = bootstrap_service(&config).await?;
-        let _conn = ctx.db.acquire().await?;
+        topems_shared_db::database::probe_connection(&ctx.db).await?;
 
         // 构建完整 AppState
         let app_state = MonitorAppState {

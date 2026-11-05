@@ -45,8 +45,8 @@ impl GisRealModule {
         // 1. 服务引导：数据库连接池 + 认证 + 指标
         let ctx = bootstrap_service(&config).await?;
 
-        // 立即建立连接，固化本连接池的 search_path
-        let _conn = ctx.db.acquire().await?;
+        // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
+        topems_shared_db::database::probe_connection(&ctx.db).await?;
 
         // 2. GIS 建表 + schema 防御（失败不阻塞嵌入，独立部署行为一致）
         if let Err(e) = topems_gis::db::schema::init_tables(&ctx.db).await {

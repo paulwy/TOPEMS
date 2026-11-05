@@ -38,7 +38,7 @@ impl UnifiedCoreRealModule {
         };
 
         let ctx = topems_shared_bootstrap::bootstrap_service(&config).await?;
-        let _conn = ctx.db.acquire().await?;
+        topems_shared_db::database::probe_connection(&ctx.db).await?;
 
         // P0 迷你试点（2026-10-29）：/ws/healthz + /ws/{module}/{feature}（对齐 P32-6 websocket-path-mapping）。
         // 复用 unified-core 的 WsState/handle_socket；独立 Router<Arc<WsState>> with_state 固化后 merge 进顶层，
