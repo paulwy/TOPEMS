@@ -203,19 +203,17 @@
 | `database/seeds/standard_positions.sql` | 标准岗位 | 20 个（覆盖 10 个部门） |
 | `database/seeds/default_roles.sql` | 默认角色（super_admin / dept_manager / employee） | 3 个系统内置角色 |
 | `database/seeds/default_dict_data.sql` | 系统字典（性别/员工状态/部门类型/岗位职级/婚姻状况/学历） | 6 类 26 项 |
-| `database/seeds/coding_rules.sql` | 编码规则（员工编号 EMP-YYYY-0001、采购单号 PO-YYYY-0001 + 配套序列） | 2 条规则 + 2 序列 |
 | `database/seeds/system_settings.sql` | 系统参数（密码策略、会话超时 60min、上传限制 50MB） | 4 条参数 |
 
 **部署脚本参数：**
 
 | 参数 | 说明 |
 |---|---|
-| `--reset-db` | 清库 + 自动 seed 部门+岗位+角色+字典+编码规则 |
+| `--reset-db` | 清库 + 自动 seed 部门+岗位+角色+字典 |
 | `--seed-departments` | 只插入部门（不清库） |
 | `--seed-positions` | 只插入岗位（不清库） |
 | `--seed-roles` | 只插入角色（不清库） |
 | `--seed-dict` | 只插入字典（不清库） |
-| `--seed-coding-rules` | 只插入编码规则（不清库） |
 | `--seed-settings` | 只插入系统参数（密码策略/会话超时/上传限制，不清库） |
 
 **命名规范：** name=中文（默认语言），name_en=英文（多语言对照），code=英文编码（稳定不变）。
@@ -320,7 +318,7 @@
 
 - 备份：`~/topems/backups/topems_prod_pre_p1235_20261105_004312.dump`（`pg_dump -Fc`，4,151,219 字节，`pg_restore -l` 8270 行 TOC）；每步执行后 prod `/health` = 200。
 - 逐文件执行 7 个迁移（未用 `sqlx migrate run`，未 DROP/CASCADE）：p1 / p5a / p5b / p2 / p3_pk_5 / p3_unique_48 / p3_fk_45；账本 549→556。
-- **P4 反向表清理（2026-11-05）**：42 张已删（A1/A2/A3/B 四批），账本 +4 → **571**；`database/checksums.txt` 同步 +4 行（SHA-256），prod 账本 checksum 与文件 SHA-384 复算一致；全库备份 `~/topems/backups/topems_prod_pre_p4rem_20261105_122001.dump`（4,226,439 字节，TOC 8279 行）+ 42 份单表归档 `~/topems/backups/p4_rem_20261105/`。`deploy-prod.sh` 已移除 `--seed-coding-rules` 与 `coding_rules.sql` 调用（`database/seeds/coding_rules.sql` 文件本身未删）。
+- **P4 反向表清理（2026-11-05）**：42 张已删（A1/A2/A3/B 四批），账本 +4 → **571**；`database/checksums.txt` 同步 +4 行（SHA-256），prod 账本 checksum 与文件 SHA-384 复算一致；全库备份 `~/topems/backups/topems_prod_pre_p4rem_20261105_122001.dump`（4,226,439 字节，TOC 8279 行）+ 42 份单表归档 `~/topems/backups/p4_rem_20261105/`。`deploy-prod.sh` 已移除 `--seed-coding-rules` 与 `coding_rules.sql` 调用，`database/seeds/coding_rules.sql` 文件已删除（避免误跑重建表）。
 - **P3-UQ 守卫缺陷修复**：原文件 `to_regclass('<约束名>')` 误把约束名当关系名，prod 同名唯一索引存在导致 48 条全跳过；改为"无约束时优先 `UNIQUE USING INDEX` 接管同名索引，否则普通 ADD"。scratch 库 24+24 两组双跑 exit 0，24 条接管索引 OID 不变、48/48 约束存在、第二遍零变更；prod `BEGIN...ROLLBACK` 只读幂等验证通过。
 - **账本 checksum 重同步**：`20261104140000` 由 `8966e81a85c7…` 更新为 `42fb0738646e…`，prod 复算与仓库文件 SHA-384 一致（DDL 终态已达成，账本应与文件一致，避免 sqlx integrity 误报）。
 

@@ -519,7 +519,7 @@ pg_restore --no-owner --no-privileges -h 127.0.0.1 -p 5432 -U xingzhai \
 
 ### 14.6 本轮遗留（未做）
 
-1. `database/seeds/coding_rules.sql` **文件本身仍在**（仅移除 `deploy-prod.sh` 的调用与 `--seed-coding-rules` 参数）；手工执行该 seed 仍会重建表 —— 是否删除该文件待确认。
+1. ~~`database/seeds/coding_rules.sql` 文件本身仍在~~ —— **已处理（2026-11-05）**：全仓复核确认无任何可执行调用路径（`deploy-prod.sh` 调用与 `--seed-coding-rules` 参数已在前一提交移除，无通配遍历、无 workflow/Makefile/package.json 引用），文件已 `git rm`。
 2. 39 张的建表来源（27 迁移 + 12 `database/init`）未动，空库重建仍会重建（§12 问题 6）。
 3. 20 张「应保留」表在 test 不存在（§12 问题 5）。
 4. `mes.erp_dictionaries` 功能归属未定（§12 问题 1）。
