@@ -487,7 +487,9 @@ function classify(code, target, rustType) {
 const lineAt = (src, pos) => src.slice(0, pos).split('\n').length;
 
 const findings = [];
-const stats = { dynamicPoints: 0, mappedPoints: 0, unmappedPoints: 0, castSafe: 0 };
+const unmapped = [];
+const noCatalog = [];
+const stats = { dynamicPoints: 0, mappedPoints: 0, unmappedPoints: 0, noCatalogPoints: 0, castSafe: 0 };
 
 for (const file of files) {
   const src = fs.readFileSync(file, 'utf8');
@@ -602,24 +604,29 @@ for (const file of files) {
   for (const d of decoders) {
     let queries = [];
     let anchor = null;
+    let fallback = false;
+    const escCol = d.colName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     if (d.sqlOverride) {
       queries = [d.sqlOverride];
       anchor = d.fnOverride || fnAt(fns, d.pos);
     } else {
       const fn = fnAt(fns, d.pos);
-      if (!fn) { stats.unmappedPoints++; continue; }
+      if (!fn) {
+        stats.unmappedPoints++;
+        unmapped.push({ file, line: lineAt(src, d.pos), subject: d.colName, rust: d.rustType, why: '解码点不在函数内（顶层/闭包）' });
+        continue;
+      }
       anchor = fn;
       const own = sqlOf(fn);
       if (own.length) {
         // 多个语句时，优先取真正输出该列的那条（含 `AS <name>`，或 SELECT/RETURNING）
         const cands = own.filter((l) => l.start <= d.pos);
-        const esc = d.colName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const outRe = new RegExp(`\\bAS\\s+${esc}\\b`, 'i');
+        const outRe = new RegExp(`\\bAS\\s+${escCol}\\b`, 'i');
         const outLit = cands.slice().reverse().find((l) => outRe.test(l.text));
         const selLit = cands
           .slice()
           .reverse()
-          .find((l) => /^[^]*?(SELECT|RETURNING)/i.test(l.text) && new RegExp(`\\b${esc}\\b`, 'i').test(l.text));
+          .find((l) => /^[^]*?(SELECT|RETURNING)/i.test(l.text) && new RegExp(`\\b${escCol}\\b`, 'i').test(l.text));
         const prev = outLit || selLit || cands[cands.length - 1];
         queries = [prev ? prev.text : own[own.length - 1].text];
       } else {
@@ -630,23 +637,52 @@ for (const file of files) {
             if (/\bRETURNING\b/i.test(l.text) || /\bSELECT\b/i.test(l.text)) queries.push(l.text);
           }
         }
+        // 无同文件调用方时的兜底：用同文件全部含该列的 SELECT/RETURNING（仅在唯一目标时采信）
+        if (!queries.length) {
+          const cands = sqlLits.filter(
+            (l) => /^[^]*?(SELECT|RETURNING)/i.test(l.text) && new RegExp(`\\b${escCol}\\b`, 'i').test(l.text)
+          );
+          if (cands.length) {
+            queries = cands.map((l) => l.text);
+            fallback = true;
+          }
+        }
       }
     }
-    if (!queries.length) { stats.unmappedPoints++; continue; }
+    if (!queries.length) {
+      stats.unmappedPoints++;
+      unmapped.push({ file, line: lineAt(src, d.pos), subject: d.colName, rust: d.rustType, why: 'helper 无调用方 SQL，且同文件无含该列的 SELECT/RETURNING' });
+      continue;
+    }
+    if (fallback) {
+      const keys = new Set();
+      for (const q of queries) {
+        const tables = tablesIn(q);
+        if (!tables.length) continue;
+        const target = resolveTarget(q, tables, d.colName);
+        if (target.col) keys.add(`${target.table}.${target.col}`);
+      }
+      if (keys.size !== 1) {
+        stats.unmappedPoints++;
+        unmapped.push({ file, line: lineAt(src, d.pos), subject: d.colName, rust: d.rustType, why: `同文件兜底候选歧义（${keys.size} 个目标列）` });
+        continue;
+      }
+    }
 
     // 同一列在多个查询中的类型取并集，任一不一致即报告
+    let resolvedAny = false;
     const seen = new Set();
     for (const q of queries) {
       const tables = tablesIn(q);
       if (!tables.length) continue;
       const target = resolveTarget(q, tables, d.colName);
       if (!target.col) continue;
+      resolvedAny = true;
       const key = `${target.table}.${target.col}|${target.cast?.type || ''}|${target.agg || ''}`;
       if (seen.has(key)) continue;
       seen.add(key);
       const res = classify(rustCat(d.rustType), target, d.rustType);
       if (!res) continue;
-      stats.mappedPoints++;
       if (res.risk === 'high' && target.cast) stats.castSafe++;
       const aliasNote = d.colName !== target.col ? `（别名 ${d.colName}）` : '';
       findings.push({
@@ -661,6 +697,19 @@ for (const file of files) {
         origin: d.sqlOverride ? 'query_scalar' : 'try_get',
       });
     }
+    if (resolvedAny) {
+      stats.mappedPoints++;
+    } else {
+      // 已找到 SQL 但列类型无法由 prod 目录解析：单独计数并逐条标注原因，
+      // 既不算「未定位」（SQL 已定位），也不静默丢弃。
+      stats.noCatalogPoints++;
+      const qtext = queries.join('\n');
+      let why = '动态列名/跨 crate 映射（SQL 中未出现该列）';
+      if (/\bWITH\b/i.test(qtext)) why = 'CTE/子查询动态别名';
+      else if (!tablesIn(qtext, preferred).length) why = '表未限定或 prod 目录无同名表（宏包装/跨 schema）';
+      else if (new RegExp(`\\bAS\\s+${escCol}\\b`, 'i').test(qtext)) why = '表达式/聚合/函数别名（目录无列类型）';
+      noCatalog.push({ file, line: lineAt(src, d.pos), subject: d.colName, rust: d.rustType, why });
+    }
   }
 }
 
@@ -670,10 +719,18 @@ const list = [...uniq.values()].sort((a, b) => (a.risk === b.risk ? (a.file + a.
 const high = list.filter((f) => f.risk === 'high');
 const medium = list.filter((f) => f.risk === 'medium');
 
-console.log(`# decode-contract 扫描：high=${high.length} medium=${medium.length} 动态点=${stats.dynamicPoints} 可定位=${stats.mappedPoints} 未定位=${stats.unmappedPoints}`);
+console.log(`# decode-contract 扫描：high=${high.length} medium=${medium.length} 动态点=${stats.dynamicPoints} 可定位=${stats.mappedPoints} 未定位=${stats.unmappedPoints} 目录无列=${stats.noCatalogPoints}`);
 for (const f of high) {
   console.log(`${f.risk}|${f.file}:${f.line}|${f.subject}:${f.rust}|${f.db}:${f.dbType}|${f.why}`);
 }
 for (const f of medium) {
   console.log(`${f.risk}|${f.file}:${f.line}|${f.subject}:${f.rust}|${f.db}:${f.dbType}|${f.why}`);
+}
+// 未定位项全部输出原因，禁止静默丢弃（供审计逐条标注）。
+for (const u of unmapped) {
+  console.log(`unmapped|${u.file}:${u.line}|${u.subject}:${u.rust}|${u.why}`);
+}
+// SQL 已定位、但列类型来自表达式/CTE/动态拼接，prod 目录无对应列（已标注原因）。
+for (const u of noCatalog) {
+  console.log(`nocatalog|${u.file}:${u.line}|${u.subject}:${u.rust}|${u.why}`);
 }

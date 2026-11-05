@@ -3,12 +3,15 @@
 
 > 承接 `wms.stock_take.rs` `try_get::<f64>` 解 prod `numeric` 的遗留；口径扩到 `try_get/get::<T>`、`query_scalar`、helper 间接行源。
 
-- **单点根因**：`wms.stock_take_items/takes` 数量列为 `numeric(15,2)/(5,2)`（prod 实测，各表 0 行；test 仍 double precision 待治理）。sqlx 0.9 探针实测 `numeric→f64` = `ColumnDecode "mismatched types; Rust type f64 (as SQL type FLOAT8) is not compatible with SQL type NUMERIC"`，属必然失败非静默截断。判定 DB 权威（金额/数量保 NUMERIC），读路径补 `::float8`，API 仍 JSON number。
+- **单点根因**：`wms.stock_take_items/takes` 数量列为 `numeric(15,2)/(5,2)`（prod 实测，各表 0 行；test 已同为 `numeric(15,2)/(5,2)`，迁移 `20261029200000` success=t）。sqlx 0.9 探针实测 `numeric→f64` = `ColumnDecode "mismatched types; Rust type f64 (as SQL type FLOAT8) is not compatible with SQL type NUMERIC"`，属必然失败非静默截断。判定 DB 权威（金额/数量保 NUMERIC），读路径补 `::float8`，API 仍 JSON number。
 - **扫描器扩展**：`scripts/ci/check-decode-contract.mjs` 覆盖动态解码点/`query_scalar`/helper 调用方；修复 SELECT 范围（排除 WHERE/INSERT 列清单）、scalar 尾随 SQL 误挂、`const *_COLS` 展开三类系统性误报。
-- **结果**：修前 high **156**（wms 58 / lims 40 / mes 13 / ehs 12 / master-data 8 / crm 6 / analytics 5 / qms 3 / unified-core 2 / scm 2 / pm 2 / finance 2 / erp 2 / mobile 1）；常量展开后新暴露 11 列（master-data）、推断式解码（`let x: T = row.get`）新暴露 7 字段 13 条 high（ehs emergency_plan id、finance cqrs_events.aggregate_id、mes 巡检三列、unified-core audit_logs.status、wms 低库存两列），全部修复；修后 high **3（均为已核扫描器误报）**，medium 633、未定位 200。
+- **结果**：修前 high **156**（wms 58 / lims 40 / mes 13 / ehs 12 / master-data 8 / crm 6 / analytics 5 / qms 3 / unified-core 2 / scm 2 / pm 2 / finance 2 / erp 2 / mobile 1）；常量展开后新暴露 11 列（master-data）、推断式解码（`let x: T = row.get`）新暴露 7 字段 13 条 high（ehs emergency_plan id、finance cqrs_events.aggregate_id、mes 巡检三列、unified-core audit_logs.status、wms 低库存两列），全部修复；修后 high **3（均为已核扫描器误报）**，medium **635**、可定位 **3296**、未定位 **95**（原 200，下降 105）、目录无列 **504**（已逐条标注原因）。
 - **验证**：`SQLX_OFFLINE=true cargo check --workspace` exit 0；13 个受影响 crate `clippy --all-targets -D warnings` exit 0；`cargo fmt --all --check` exit 0。本轮无 `query!` 宏改动，`.sqlx` 无需刷新（prepare 39/39 仍为当日基线）。
 - **文档**：[decode-contract-audit-2026-11-05.md](docs/quality/decode-contract-audit-2026-11-05.md) §10（逐文件处置 + 证据 + 剩余项）。
-- **待治理**：test 库 stock_take 列仍 double precision；unified-core permission 导出分支 SELECT 缺 `changed_at AS created_at` / `target_*`（非类型类缺陷，`target_id` 的 `?` 会短路）；medium 633 可空性未批量放宽；未定位 200。
+- **A 已闭环**：unified-core permission 导出分支重写 SELECT 列清单与绑定（`changed_at AS created_at`、`host(ip_address)`），`target_*`/`reason` 按分支真实可用列返回 `None`；运行时探针旧实现 `Err(no column found for name: target_id)` → 新实现 `decode=ok`。prod/test `permission_audit_logs` 均 0 行。
+- **B 已分级**：medium 635 = tests 80 / prod 空表 596 / 未知表 3 / 活跃非测试 35（18 个表列对）。18 对在 prod 实测 NULL=0（`count(*) filter (where col is null)`），**实际需改 0 条**；其余标「确认无害」，不批量放宽类型。
+- **C 已收敛**：未定位 200→**95**（同文件兜底新增定位 105，其中 2 条落入 medium）；另将 504 条「SQL 已定位但列类型来自表达式/CTE/动态拼接」单独输出并全部标注原因（表达式/聚合别名 303、动态列名 156、CTE 29、宏包装/未限定表 16），不静默丢弃。
+- **D 已核实**：test 侧 `wms.stock_take_items/takes` 与 prod 同为 `numeric(15,2)`、`accuracy_rate numeric(5,2)`，迁移 `20261029200000_schema_defense_type_align` 已应用；**无需新增迁移、不改 prod**。
 
 ## mes/unified-core/server 代码契约修复（2026-11-05）✅
 

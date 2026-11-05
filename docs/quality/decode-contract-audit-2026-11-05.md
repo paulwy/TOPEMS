@@ -128,7 +128,7 @@ python3 -c "import json,glob,collections;c=collections.Counter();[c.update(x['ty
 |---|---|
 | 真实列 | prod：`wms.stock_take_items.system_quantity / counted_quantity / discrepancy_quantity` 均为 `numeric(15,2)` 可空；`wms.stock_takes.total_quantity / counted_quantity / discrepancy_quantity` 为 `numeric(15,2)`、`accuracy_rate numeric(5,2)` |
 | 行数 | `wms.stock_take_items` = 0，`wms.stock_takes` = 0（2026-11-05 实测） |
-| test 侧 | 仍为 `double precision`，与 test 迁移链不一致，**待 DB 治理**（不改代码迁就） |
+| test 侧 | 实测已为 `numeric(15,2)` / `accuracy_rate numeric(5,2)`，与 prod 一致；迁移 `20261029200000_schema_defense_type_align` 已应用（见 §10.9） |
 | 运行时探针 | sqlx 0.9 二进制协议：`numeric -> f64` 返回 `Err(ColumnDecode { index: "\"v\"", source: "mismatched types; Rust type f64 (as SQL type FLOAT8) is not compatible with SQL type NUMERIC" })`；`numeric -> i64`、`uuid -> String`、`jsonb -> String`、`bigint -> BigDecimal` 同类。**必然解码失败，不是静默截断** |
 | 权威判定 | DB 权威（金额/数量/分值保 NUMERIC，迁移 `20261029200000_schema_defense_type_align.sql` 明文目标）；代码用 API JSON number（f64），故**只读路径加 `::float8`**，不降 DB 精度、不改字段类型 |
 | 修复 | `stock_take.rs` 9 处 SELECT/RETURNING/`query_scalar`/SUM 表达式补 `::float8`（L813/926/1053/1134/1192/1254/1462-1464/1640） |
@@ -206,8 +206,116 @@ python3 -c "import json,glob,collections;c=collections.Counter();[c.update(x['ty
 | 项 | 说明 |
 |---|---|
 | 3 条 high 残留 | `crm/analytics.rs:72`、`unified-core/audit_query.rs:833/862`，均为扫描器按函数级/尾随 SQL 归因的误报；代码已核实正确（见 10.4） |
-| medium 633 | DB 可空 + Rust 非 `Option`（NULL 会 ColumnDecode，现有 `.ok()` 静默为 null）；属可空性契约问题，未在本轮批量放宽 |
-| 未定位 200 | 解码列名为变量/拼接、CTE 动态别名等，扫描器无法静态定位；需运行时探针或人工抽查 |
-| test 库 stock_take numeric | test 仍 `double precision`，与迁移链不一致，**待 DB 治理**（不改代码迁就） |
-| unified-core permission 分支 | SELECT 未取 `created_at`（列为 `changed_at`）且 `target_id`/`target_type`/`reason` 不存在；`target_id` 的 `?` 会短路，属非类型类缺陷，**待人工** |
+| medium 635 | 已分级：test 80 / prod 空表 596 / 未知表 3 / 活跃非测试 35（18 列对，prod NULL=0）；**实际需改 0 条**（见 §10.7） |
+| 未定位 95 + 目录无列 504 | 未定位已由 200 降至 95；另 504 条 SQL 已定位但列类型来自表达式/CTE/动态拼接，全部标注原因（见 §10.8） |
+| test 库 stock_take numeric | **已核实对齐**（`numeric(15,2)` / `numeric(5,2)`），无需迁移（见 §10.9） |
+| unified-core permission 分支 | **已修复**：重写列清单与绑定，探针证明旧实现 `target_id` 短路、新实现正常（见 §10.6） |
 | 无单测覆盖 | 动态解码错误只能在运行时触发；本轮以 prod 列目录交叉 + 编译 + 运行时探针（§3）验证，未新增集成测试 |
+
+### 10.6 A：permission 导出分支列契约修复
+
+**位置**：[audit_query.rs](svc/unified-core/src/modules/audit/audit_query.rs#L744-L758)（SELECT）+ [#L832-L859](svc/unified-core/src/modules/audit/audit_query.rs#L832-L859)（解码）。对应提交 `233e3136d5`。
+
+**`information_schema` 实测（prod 与 test 列集合一致或 test 为其子集）**：
+
+| 列 | prod 类型 | 可空 | test |
+|---|---|---|---|
+| `id` | `bigint` | NO | 同 |
+| `tenant_id` | `uuid` | NO | 同 |
+| `user_id` | `varchar(64)` | NO | 同 |
+| `action` | `varchar(32)` | NO | 同 |
+| `old_value` / `new_value` | `jsonb` | YES | 同 |
+| `changed_by` | `varchar(64)` | NO | 同 |
+| `changed_at` | `timestamptz` | NO | 同 |
+| `ip_address` | `inet` | YES | 同 |
+| `user_agent` | `text` | YES | 同 |
+| `details` | `jsonb` | YES | 同 |
+| `metadata` | `jsonb` | NO | **test 无此列**（导出未使用） |
+| `deleted_at` | `timestamptz` | YES | 同 |
+
+**不存在** `target_type / target_id / reason`（两库均无）。
+
+**缺陷与修复**：
+- 旧 SELECT 取 `old_value/new_value`，但解码按统一 `ExportRow` 读 `target_type/target_id/reason`；`row.try_get::<Option<Uuid>, _>("target_id")?` 因列不存在直接返回 `Err`，整个导出分支短路（空结果/500）。
+- 新 SELECT 改为该分支真实可用的 `id, tenant_id, user_id, action, changed_by, host(ip_address) AS ip_address, user_agent, changed_at AS created_at`；`host(ip_address)` 去掉 inet 文本中的 `/32` 掩码。
+- 解码只读真实列；`entity_type/entity_id/resource/status/success/error_message` 按分支真实可用性返回 `None`（不是伪造常量），`username` 语义为 `changed_by`，`created_at` 语义为 `changed_at`。字段语义差异已在代码注释与本节点说明。
+
+**运行时探针（真二进制协议，本地 test 库；探针表数据已 DELETE 清理）**：
+
+```
+OLD rows=1
+OLD decode=Err(no column found for name: target_id)
+NEW rows=1
+NEW decode=ok id=2 tenant=Some("00000000-0000-0000-0000-000000000001") user=Some("probe_user") action=create changed_by=Some("__decode_probe__") ip=Some("127.0.0.1") ua=Some("decode-probe") created_at=2026-11-05T01:55:43.149150+00:00
+```
+
+**真实数据**：prod `public.permission_audit_logs` = 0 行；test = 0 行（只读 `count(*)` 实测），无生产抽样。
+
+### 10.7 B：medium 635 分级（prod 可空 + Rust 非 Option）
+
+**分桶（扫描器 `medium` 635 条，按 prod `pg_stat_user_tables.n_live_tup` 与路径判定）**：
+
+| 桶 | 条数 | 判定 |
+|---|---|---|
+| `svc/*/tests/` 测试代码 | 80 | 非生产路径，不改 |
+| prod 表 `n_live_tup=0`（空表） | 596 | 无数据可触发 NULL，不改 |
+| prod 目录无该表 | 3 | 扫描器别名/跨 crate 映射，不改 |
+| 活跃非测试表 | **35**（去重 **18** 个表列对） | 逐对实测 NULL |
+
+**18 个活跃表列对的 prod 实测（只读 `count(*) FILTER (WHERE col IS NULL)`）**：
+
+| 表列 | 行数 | NULL | 语义类 |
+|---|---|---|---|
+| `ehs.qa_ehs_reviews.tenant_id` | 17 | 0 | 外键 |
+| `ehs.qa_ehs_incident_actions.title` | 17 | 0 | 展示 |
+| `ehs.qa_ehs_incident_actions.created_at` | 17 | 0 | 时间 |
+| `ehs.qa_ehs_investigations.tenant_id` | 17 | 0 | 外键 |
+| `ehs.training_programs.tenant_id` / `created_at` | 13 / 13 | 0 / 0 | 外键/时间 |
+| `ehs.qa_ehs_training_certificates.tenant_id` / `created_at` / `updated_at` | 18 | 0 | 外键/时间 |
+| `ehs.training_records.tenant_id` / `created_at` / `updated_at` | 13 | 0 | 外键/时间 |
+| `ehs.qa_ehs_trainings.status` / `tenant_id` | 13 | 0 | 状态/外键 |
+| `finance.erp_collection_records.amount` | 35 | 0 | 金额 |
+| `public.core_tenant_settings.setting_value` | 4 | 0 | 展示 |
+| `wms.replenishment_orders.total_quantity` / `total_amount` | 18 | 0 | 金额 |
+
+**结论：635 → 实际需改 0 条**。18 对在 prod 当前数据中无 NULL，`Option<T>` 放宽不会带来正确性收益，反而弱化契约；`title` / `setting_value` 属展示类，NULL 语义合理，标「确认无害」。后续若需收口，应由 DB 侧 `NOT NULL` 或写入校验治理，而不是批量放宽 Rust 类型。
+
+### 10.8 C：未定位 200 → 95，另 504 条目录无列逐条标注
+
+**扫描器口径调整**（[check-decode-contract.mjs](scripts/ci/check-decode-contract.mjs)）：
+1. `unmapped` 从「静默计数」改为逐条输出 `file:line|列|Rust 类型|原因`；
+2. 新增同文件兜底：helper 无调用方时，取同文件含该列的 SELECT/RETURNING，仅在解析出**唯一**目标列时采信；
+3. 新增 `nocatalog` 桶：SQL 已找到、但列类型来自表达式/聚合/CTE/动态拼接，prod 目录无对应列；单独计数并逐条标注原因，不再静默丢弃。
+
+**结果（2026-11-05 复扫）**：
+
+| 指标 | 修前 | 修后 |
+|---|---|---|
+| 动态解码点 | 3895 | 3895 |
+| 可定位（解析到 prod 列） | 462（仅统计产生 finding 的点） | **3296** |
+| 未定位（无 SQL / 兜底歧义） | 200 | **95** |
+| 目录无列（SQL 已定位、列类型不可由目录解析） | 未统计 | **504** |
+
+**未定位 95 原因分布**：同文件兜底候选歧义 70（master-data 82 / ehs 11 / integration 1 / erp 1）；helper 无调用方且同文件无 SQL 25。同文件兜底新定位 105 条，其中 2 条落入 medium（`ehs.qa_ehs_emergency_plan_approvals.order_num`、`ehs.qa_ehs_emergency_plan_supplies.quantity`，两表 prod 均 0 行）。
+
+**目录无列 504 原因分布**：表达式/聚合/函数别名 303；动态列名/跨 crate 156；CTE/子查询 29；表未限定或 prod 目录无同名表（宏包装/跨 schema）16。
+
+**人工抽查（样本）**：
+- `finance/sales_invoice.rs:1480 invoice_date`：SQL 为 `to_char(invoice_date, …) AS invoice_date`，输出 text ↔ `String`，安全。
+- `ai/model_admin_handlers.rs:178-180 d/count/tokens`：`to_char` / `COUNT(*)` / `SUM(...)` 表达式，输出 text/bigint/bigint ↔ `String/i64/i64`，安全。
+- `communication/notification.rs:4344-4391`：`format!` 拼 `delivery_select_sql()` + 过滤条件，列清单含 `id/notification_id/user_id/...`，Rust 类型与列类型一致（uuid/String/Option<Uuid>），安全。
+- `master-data/commercial_v55.rs:1704-1712`：`USAGE_COLS` 已 `id::text/tenant_id::text/recorded_at::text`，其余 `text/bigint/float8` ↔ `String/i64/f64`，安全。
+- `ehs/emergency_plan.rs:671-681`：调用方 SQL（L345）已 `id::text/plan_id::text/created_at::text/tenant_id::text`，`quantity integer` ↔ `i32`，安全。
+
+未定位剩余项不阻断：扫描器已逐条输出原因与位置，保留待后续按业务抽查。
+
+### 10.9 D：test 库 stock_take 列类型核实（DB 治理，仅 test）
+
+| 侧 | `stock_take_items` | `stock_takes` | 结论 |
+|---|---|---|---|
+| prod | `system_quantity/counted_quantity/discrepancy_quantity numeric(15,2)` | `total_quantity/counted_quantity/discrepancy_quantity numeric(15,2)`、`accuracy_rate numeric(5,2)` | 权威 |
+| test（5432 `topems`） | 同 `numeric(15,2)` | 同 `numeric(15,2)` / `numeric(5,2)` | **已对齐** |
+
+- 迁移账本：`_sqlx_migrations` 中 `20261029200000 schema_defense_type_align` `success=t`（test）。
+- 差异仅为可空性：test `stock_take_items.system_quantity` 为 `NO`，prod 为 `YES`；不影响 Rust `f64` 解码（非 NULL）。
+- **处置**：无迁移缺失、无历史手工残留；**不新增迁移、不改 prod**。原 §10.1/§10.5 的「test 仍 double precision」为过期结论，已更正。
