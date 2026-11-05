@@ -89,10 +89,19 @@ import type { FilterConfig } from '@topems/shared-components';
 import { loadColumnConfig, saveColumnConfig, type CardViewConfig } from './list/types';
 import { InlineEditCell } from './list/InlineEditCell';
 import { useInlineEdit } from './list/useInlineEdit';
+import { useTreeTable } from './list/useTreeTable';
+import { useListExport } from './list/useListExport';
+import { computeFixedColumnPositions } from './list/columnLayout';
+import { validateCrudForm } from './list/formValidation';
 import { ListSearchBar } from './list/ListSearchBar';
 import { ListBatchActions } from './list/ListBatchActions';
 import { ListColumnConfig } from './list/ListColumnConfig';
 import { CardView } from './list/CardView';
+import { CrudAutoForm } from './list/CrudAutoForm';
+import { ListTableHead } from './list/ListTableHead';
+import { ListTableBody } from './list/ListTableBody';
+import { ListMobileCardView } from './list/ListMobileCardView';
+import { ListSummaryRow } from './list/ListSummaryRow';
 // ============ 列表页模板组件 ============
 /**
  * 列表页模板组件
@@ -514,89 +523,25 @@ export function ListPageTemplate<
     };
   }, [cardViewConfig, crud]);
   // ==================== 树形表格 ====================
-  const [internalExpandedKeys, setInternalExpandedKeys] = useState<(string | number)[]>(
-    defaultExpandedKeys ?? []
-  );
-  const resolvedExpandedKeys = expandedKeysProp ?? internalExpandedKeys;
-  const setExpandedKeys = useCallback(
-    (keys: (string | number)[]) => {
-      if (expandedKeysProp === undefined) {
-        setInternalExpandedKeys(keys);
-      }
-      onExpandedKeysChange?.(keys);
-    },
-    [expandedKeysProp, onExpandedKeysChange]
-  );
-  const toggleExpand = useCallback(
-    (key: string | number) => {
-      const isExpanded = resolvedExpandedKeys.includes(key);
-      const newKeys = isExpanded
-        ? resolvedExpandedKeys.filter((k) => k !== key)
-        : [...resolvedExpandedKeys, key];
-      setExpandedKeys(newKeys);
-    },
-    [resolvedExpandedKeys, setExpandedKeys]
-  );
-  // 扁平化树形数据为一维数组（用于渲染），并记录每个节点的层级
-  const flatData = useMemo<
-    Array<{
-      row: T;
-      level: number;
-      parentKey?: string | number;
-    }>
-  >(() => {
-    if (!resolvedTreeView) return data.map((row) => ({ row, level: 0 }));
-    const result: Array<{
-      row: T;
-      level: number;
-      parentKey?: string | number;
-    }> = [];
-    const flatten = (items: T[], level: number, parentKey?: string | number) => {
-      items.forEach((item) => {
-        const key = (item as unknown as Record<string, unknown>)[treeNodeKeyField] as
-          string | number;
-        result.push({ row: item, level, parentKey });
-        const children = (item as unknown as Record<string, unknown>)[treeChildrenField] as
-          T[] | undefined;
-        if (children && children.length > 0 && resolvedExpandedKeys.includes(key)) {
-          flatten(children, level + 1, key);
-        }
-      });
-    };
-    flatten(data, 0);
-    return result;
-  }, [data, resolvedTreeView, treeNodeKeyField, treeChildrenField, resolvedExpandedKeys]);
-  // 树形表格的数据（用于表格渲染）
-  const treeTableData = useMemo(() => {
-    if (!resolvedTreeView) return data;
-    return flatData.map((item) => item.row);
-  }, [resolvedTreeView, flatData, data]);
-  // 获取行的层级（树形表格用）
-  const getRowLevel = useCallback(
-    (rowId: string | number): number => {
-      if (!resolvedTreeView) return 0;
-      const item = flatData.find(
-        (f) => (f.row as unknown as Record<string, unknown>)[treeNodeKeyField] === rowId
-      );
-      return item?.level ?? 0;
-    },
-    [resolvedTreeView, flatData, treeNodeKeyField]
-  );
-  // 检查行是否有子节点
-  const hasChildren = useCallback(
-    (row: T): boolean => {
-      if (!resolvedTreeView) return false;
-      const children = (row as unknown as Record<string, unknown>)[treeChildrenField] as
-        T[] | undefined;
-      return !!(children && children.length > 0);
-    },
-    [resolvedTreeView, treeChildrenField]
-  );
-  // 找到树节点列
-  const treeColumnId = useMemo(() => {
-    const treeCol = resolvedColumns.find((col) => col.treeColumn);
-    return treeCol?.id || resolvedColumns[0]?.id;
-  }, [resolvedColumns]);
+  const {
+    resolvedExpandedKeys,
+    setExpandedKeys,
+    toggleExpand,
+    flatData,
+    treeTableData,
+    getRowLevel,
+    hasChildren,
+    treeColumnId,
+  } = useTreeTable<T>({
+    treeView: resolvedTreeView,
+    data,
+    treeChildrenField,
+    treeNodeKeyField,
+    defaultExpandedKeys,
+    expandedKeysProp,
+    onExpandedKeysChange,
+    resolvedColumns,
+  });
   // ==================== 行内编辑 ====================
   const {
     editingData,
@@ -866,84 +811,7 @@ export function ListPageTemplate<
   // 表单验证
   const validateForm = useCallback((): boolean => {
     if (!crud?.formFields) return true;
-    const errors: Record<string, string> = {};
-    const visibleFields = crud.formFields.filter((field) => {
-      if (formMode === 'create' && field.hideInCreate) return false;
-      if (formMode === 'edit' && field.hideInEdit) return false;
-      return true;
-    });
-    visibleFields.forEach((field) => {
-      const value = formData[field.key];
-      // 必填验证（从 required 字段或 rules 中的 required 类型）
-      const isRequired = field.required || field.rules?.some((r) => r.type === 'required');
-      if (
-        isRequired &&
-        (value === undefined ||
-          value === null ||
-          value === '' ||
-          (Array.isArray(value) && value.length === 0))
-      ) {
-        const rule = field.rules?.find((r) => r.type === 'required');
-        errors[field.key] =
-          rule?.message || `${field.label}${i18n.t('components.list_page_template.k3')}`;
-        return;
-      }
-      // 跳过空值的其他验证
-      if (value === undefined || value === null || value === '') return;
-      // 其他规则验证
-      if (field.rules) {
-        for (const rule of field.rules) {
-          if (rule.type === 'required') continue; // 已处理
-          if (rule.type === 'email') {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(String(value))) {
-              errors[field.key] = rule.message || i18n.t('templates.list_page_template.k5');
-              break;
-            }
-          }
-          if (rule.type === 'number' && isNaN(Number(value))) {
-            errors[field.key] = rule.message || i18n.t('templates.list_page_template.k6');
-            break;
-          }
-          if (rule.type === 'min' && Number(value) < (rule.min ?? 0)) {
-            errors[field.key] =
-              rule.message || `${i18n.t('components.list_page_template.k4')}${rule.min}`;
-            break;
-          }
-          if (rule.type === 'max' && Number(value) > (rule.max ?? Infinity)) {
-            errors[field.key] =
-              rule.message || `${i18n.t('components.list_page_template.k5')}${rule.max}`;
-            break;
-          }
-          if (rule.type === 'minLength' && String(value).length < (rule.minLength ?? 0)) {
-            errors[field.key] =
-              rule.message ||
-              `${i18n.t('components.list_page_template.k6')}${rule.minLength}${i18n.t('components.list_page_template.k7')}`;
-            break;
-          }
-          if (rule.type === 'maxLength' && String(value).length > (rule.maxLength ?? Infinity)) {
-            errors[field.key] =
-              rule.message ||
-              `${i18n.t('components.list_page_template.k8')}${rule.maxLength}${i18n.t('components.list_page_template.k9')}`;
-            break;
-          }
-          if (rule.type === 'pattern' && rule.pattern && !rule.pattern.test(String(value))) {
-            errors[field.key] = rule.message || i18n.t('templates.list_page_template.k7');
-            break;
-          }
-          if (rule.validator) {
-            const result = rule.validator(value);
-            if (result !== true) {
-              errors[field.key] =
-                typeof result === 'string'
-                  ? result
-                  : rule.message || i18n.t('templates.list_page_template.k8');
-              break;
-            }
-          }
-        }
-      }
-    });
+    const errors = validateCrudForm(crud.formFields, formData, formMode);
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   }, [crud?.formFields, formData, formMode]);
@@ -958,470 +826,20 @@ export function ListPageTemplate<
     return handleFormSubmit(submitData);
   }, [crud, formData, formMode, handleFormSubmit, validateForm]);
   // 渲染自动表单内容（formFields 模式）
-  const renderAutoForm = useCallback((): React.ReactNode => {
-    if (!crud?.formFields) return null;
-    const colCount = crud.formColCount ?? 1;
-    const visibleFields = crud.formFields.filter((field) => {
-      if (formMode === 'create' && field.hideInCreate) return false;
-      if (formMode === 'edit' && field.hideInEdit) return false;
-      if (formMode === 'view' && field.hideInView) return false;
-      if (field.visibleWhen && !field.visibleWhen(formData)) return false;
-      return true;
-    });
-    const handleFieldChange = (key: string, value: unknown) => {
-      setFormData((prev) => {
-        const next = { ...prev, [key]: value };
-        if (crud?.onFormDataChange) {
-          const computed = crud.onFormDataChange(next, key);
-          if (computed && typeof computed === 'object') {
-            return { ...next, ...computed };
-          }
-        }
-        return next;
-      });
-    };
-    const renderField = (field: (typeof crud.formFields)[number]): React.ReactNode => {
-      const value = formData[field.key];
-      const disabled =
-        field.disabled ||
-        formMode === 'view' ||
-        (field.disabledWhen && field.disabledWhen(formData));
-      const error = formErrors[field.key];
-      const formatValue = (val: unknown, fieldType: string): React.ReactNode => {
-        if (val === null || val === undefined || val === '')
-          return <span className={styles.il1}>-</span>;
-        // 日期/时间格式化
-        if (fieldType === 'date' && typeof val === 'string') {
-          try {
-            const date = new Date(val);
-            if (!isNaN(date.getTime())) {
-              return date.toLocaleDateString('zh-CN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-              });
-            }
-          } catch {
-            // ignore
-          }
-        }
-        // 数组值（checkbox 等）
-        if (Array.isArray(val)) {
-          return val.length > 0 ? val.join(', ') : <span className={styles.il2}>-</span>;
-        }
-        // switch 类型
-        if (fieldType === 'switch') {
-          return val ? (
-            <Chip
-              label={i18n.t('templates.list_page_template.k9')}
-              size='small'
-              color='success'
-              variant='outlined'
-            />
-          ) : (
-            <Chip
-              label={i18n.t('templates.list_page_template.k10')}
-              size='small'
-              color='default'
-              variant='outlined'
-            />
-          );
-        }
-        // select 类型带标签映射
-        const fieldConfig = crud?.formFields?.find((f) => f.key === field.key);
-        if (fieldConfig?.type === 'select' && fieldConfig.options) {
-          const option = fieldConfig.options.find((opt) => opt.value === val);
-          if (option) {
-            const colorMap = fieldConfig.tableStatusColorMap || {};
-            const color = (colorMap[val as string] || 'default') as
-              'default' | 'primary' | 'success' | 'warning' | 'error' | 'info';
-            return (
-              <Chip
-                label={option.label}
-                size='small'
-                color={color}
-                variant='outlined'
-              />
-            );
-          }
-        }
-        return String(val);
-      };
-      // view 模式下的信息卡片式渲染
-      if (formMode === 'view' && !field.render) {
-        return (
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 0.5,
-              py: 1,
-            }}
-          >
-            <Typography
-              variant='caption'
-              sx={{
-                color: 'text.secondary',
-                fontWeight: 500,
-                fontSize: 12,
-              }}
-            >
-              {field.label}
-            </Typography>
-            <Box sx={{ minHeight: 24 }}>{formatValue(value, field.type)}</Box>
-          </Box>
-        );
-      }
-      if (field.render) {
-        return field.render({
-          value,
-          onChange: (v) => handleFieldChange(field.key, v),
-          mode: formMode,
-        });
-      }
-      switch (field.type) {
-        case 'text':
-        case 'email':
-        case 'password':
-          return (
-            <TextField
-              fullWidth
-              size='small'
-              label={field.label}
-              type={field.type}
-              value={value ?? ''}
-              onChange={(e) => handleFieldChange(field.key, e.target.value)}
-              placeholder={field.placeholder}
-              required={field.required}
-              disabled={disabled}
-              error={!!error}
-              helperText={error}
-              slotProps={formMode === 'view' ? { input: { readOnly: true } } : undefined}
-            />
-          );
-        case 'number':
-          return (
-            <TextField
-              fullWidth
-              size='small'
-              label={field.label}
-              type='number'
-              value={value ?? ''}
-              onChange={(e) => handleFieldChange(field.key, e.target.value)}
-              placeholder={field.placeholder}
-              required={field.required}
-              disabled={disabled}
-              error={!!error}
-              helperText={error}
-              slotProps={{
-                input: {
-                  inputProps: {
-                    min: field.min,
-                    max: field.max,
-                    step: field.step,
-                    readOnly: formMode === 'view',
-                  },
-                },
-              }}
-            />
-          );
-        case 'numberRange':
-          return (
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <TextField
-                fullWidth
-                size='small'
-                label={`${field.label}${i18n.t('components.list_page_template.k10')}`}
-                type='number'
-                value={(value as Record<string, unknown>)?.min ?? ''}
-                onChange={(e) =>
-                  handleFieldChange(field.key, {
-                    ...((value as Record<string, unknown>) || {}),
-                    min: e.target.value,
-                  })
-                }
-                placeholder={i18n.t('templates.list_page_template.k11')}
-                disabled={disabled}
-                slotProps={{
-                  input: {
-                    inputProps: {
-                      min: field.min,
-                      max: field.max,
-                      step: field.step,
-                      readOnly: formMode === 'view',
-                    },
-                  },
-                }}
-              />
-              <Typography
-                variant='body2'
-                sx={{ color: 'text.secondary' }}
-              >
-                ~
-              </Typography>
-              <TextField
-                fullWidth
-                size='small'
-                label={`${field.label}${i18n.t('components.list_page_template.k11')}`}
-                type='number'
-                value={(value as Record<string, unknown>)?.max ?? ''}
-                onChange={(e) =>
-                  handleFieldChange(field.key, {
-                    ...((value as Record<string, unknown>) || {}),
-                    max: e.target.value,
-                  })
-                }
-                placeholder={i18n.t('templates.list_page_template.k12')}
-                disabled={disabled}
-                slotProps={{
-                  input: {
-                    inputProps: {
-                      min: field.min,
-                      max: field.max,
-                      step: field.step,
-                      readOnly: formMode === 'view',
-                    },
-                  },
-                }}
-              />
-            </Box>
-          );
-        case 'textarea':
-          return (
-            <TextField
-              fullWidth
-              size='small'
-              label={field.label}
-              multiline
-              rows={field.rows ?? 3}
-              value={value ?? ''}
-              onChange={(e) => handleFieldChange(field.key, e.target.value)}
-              placeholder={field.placeholder}
-              required={field.required}
-              disabled={disabled}
-              error={!!error}
-              helperText={error}
-              slotProps={formMode === 'view' ? { input: { readOnly: true } } : undefined}
-            />
-          );
-        case 'select':
-          return (
-            <FormControl
-              fullWidth
-              size='small'
-              disabled={disabled}
-              error={!!error}
-            >
-              <InputLabel id={`${field.key}-label`}>{field.label}</InputLabel>
-              <Select
-                labelId={`${field.key}-label`}
-                id={`${field.key}-select`}
-                value={value ?? ''}
-                label={field.label}
-                onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                readOnly={formMode === 'view'}
-              >
-                {field.options?.map((opt) => (
-                  <MenuItem
-                    key={String(opt.value)}
-                    value={opt.value}
-                  >
-                    {opt.label}
-                  </MenuItem>
-                ))}
-              </Select>
-              {error && <FormHelperText>{error}</FormHelperText>}
-            </FormControl>
-          );
-        case 'radio':
-          return (
-            <FormControl
-              component='fieldset'
-              disabled={disabled}
-              error={!!error}
-            >
-              <Typography
-                variant='body2'
-                sx={{ mb: 0.5, color: 'text.secondary' }}
-              >
-                {field.label}
-                {field.required && <span className={styles.il3}> *</span>}
-              </Typography>
-              <RadioGroup
-                value={value ?? ''}
-                onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                row={field.optionLayout === 'horizontal'}
-              >
-                {field.options?.map((opt) => (
-                  <FormControlLabel
-                    key={String(opt.value)}
-                    value={opt.value}
-                    control={<Radio size='small' />}
-                    label={opt.label}
-                  />
-                ))}
-              </RadioGroup>
-              {error && <FormHelperText>{error}</FormHelperText>}
-            </FormControl>
-          );
-        case 'checkbox':
-          return (
-            <FormControl
-              component='fieldset'
-              disabled={disabled}
-              error={!!error}
-            >
-              <Typography
-                variant='body2'
-                sx={{ mb: 0.5, color: 'text.secondary' }}
-              >
-                {field.label}
-                {field.required && <span className={styles.il4}> *</span>}
-              </Typography>
-              <FormGroup row={field.optionLayout === 'horizontal'}>
-                {field.options?.map((opt) => {
-                  const checked = Array.isArray(value) && value.includes(opt.value);
-                  return (
-                    <FormControlLabel
-                      key={String(opt.value)}
-                      control={
-                        <Checkbox
-                          size='small'
-                          checked={checked}
-                          onChange={(e) => {
-                            const arr = Array.isArray(value) ? [...value] : [];
-                            if (e.target.checked) {
-                              arr.push(opt.value);
-                            } else {
-                              const idx = arr.indexOf(opt.value);
-                              if (idx > -1) arr.splice(idx, 1);
-                            }
-                            handleFieldChange(field.key, arr);
-                          }}
-                        />
-                      }
-                      label={opt.label}
-                    />
-                  );
-                })}
-              </FormGroup>
-              {error && <FormHelperText>{error}</FormHelperText>}
-            </FormControl>
-          );
-        case 'switch':
-          return (
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={Boolean(value)}
-                  onChange={(e) => handleFieldChange(field.key, e.target.checked)}
-                  disabled={disabled}
-                />
-              }
-              label={field.label}
-            />
-          );
-        case 'date':
-          return (
-            <TextField
-              fullWidth
-              size='small'
-              label={field.label}
-              type='date'
-              value={value ?? ''}
-              onChange={(e) => handleFieldChange(field.key, e.target.value)}
-              required={field.required}
-              disabled={disabled}
-              error={!!error}
-              helperText={error}
-              slotProps={formMode === 'view' ? { input: { readOnly: true } } : undefined}
-            />
-          );
-        default:
-          return null;
-      }
-    };
-    // 按分组整理字段
-    const groups = crud.formGroups || [];
-    const hasGroups = groups.length > 0 && visibleFields.some((f) => f.group);
-    const renderFieldGroup = (fields: typeof visibleFields) => (
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${colCount}, 1fr)`,
-          gap: 2,
-        }}
-      >
-        {fields.map((field) => (
-          <Box
-            key={field.key}
-            sx={{ gridColumn: `span ${field.colSpan ?? 1}` }}
-          >
-            {renderField(field)}
-          </Box>
-        ))}
-      </Box>
-    );
-    return (
-      <Box
-        component='form'
-        sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (formMode !== 'view') handleAutoFormSubmit();
-        }}
-      >
-        {hasGroups ? (
-          <>
-            {groups.map((group) => {
-              const groupFields = visibleFields.filter((f) => f.group === group.key);
-              if (groupFields.length === 0) return null;
-              return (
-                <Box key={group.key}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography
-                      variant='subtitle2'
-                      sx={{ fontWeight: 600, color: 'text.primary' }}
-                    >
-                      {group.title}
-                    </Typography>
-                    {group.description && (
-                      <Typography
-                        variant='caption'
-                        sx={{ color: 'text.secondary' }}
-                      >
-                        {group.description}
-                      </Typography>
-                    )}
-                  </Box>
-                  {renderFieldGroup(groupFields)}
-                </Box>
-              );
-            })}
-            {/* 未分组的字段放在最后 */}
-            {(() => {
-              const ungroupedFields = visibleFields.filter(
-                (f) => !f.group || !groups.some((g) => g.key === f.group)
-              );
-              if (ungroupedFields.length === 0) return null;
-              return (
-                <Box>
-                  {groups.length > 0 && <Divider sx={{ my: 2 }} />}
-                  {renderFieldGroup(ungroupedFields)}
-                </Box>
-              );
-            })()}
-          </>
-        ) : (
-          renderFieldGroup(visibleFields)
-        )}
-        <input
-          type='submit'
-          className={styles.il5}
+  const renderAutoForm = useCallback(
+    (): React.ReactNode =>
+      crud?.formFields ? (
+        <CrudAutoForm<T>
+          crud={crud}
+          formMode={formMode}
+          formData={formData}
+          formErrors={formErrors}
+          setFormData={setFormData}
+          onSubmit={handleAutoFormSubmit}
         />
-      </Box>
-    );
-  }, [crud, formMode, formData, handleAutoFormSubmit, formErrors]);
+      ) : null,
+    [crud, formMode, formData, handleAutoFormSubmit, formErrors, setFormData]
+  );
   // 最终表单内容：renderForm 优先级高于 formFields
   const formContent = useMemo(() => {
     if (crud?.renderForm) {
@@ -2067,366 +1485,83 @@ export function ListPageTemplate<
     onColumnConfigChange?.(defaultConfig);
     setColumnConfigAnchor(null);
   }, [columns, onColumnConfigChange]);
-  // crud 模式下自动推断导出配置
-  const resolvedExportable = useMemo(() => {
-    if (exportable !== undefined) return exportable;
-    if (crud?.exportable) return true;
-    return false;
-  }, [exportable, crud]);
-  const resolvedExportFileName = useMemo(() => {
-    if (exportFileName) return exportFileName;
-    if (crud?.exportFileName) return crud.exportFileName;
-    if (crud?.entityName) return crud.entityName;
-    if (title) return title;
-    return 'export';
-  }, [exportFileName, crud, title]);
-  const resolvedExportFormats = useMemo((): Array<'csv' | 'excel' | 'json'> => {
-    if (exportFormats?.length) return exportFormats as Array<'csv' | 'excel' | 'json'>;
-    if (crud?.exportFormats?.length) return crud.exportFormats as Array<'csv' | 'excel' | 'json'>;
-    return ['csv', 'json'];
-  }, [exportFormats, crud]);
-  const resolvedExportScopes = useMemo((): Array<'current' | 'all' | 'selected'> => {
-    if (exportScopes?.length) return exportScopes as Array<'current' | 'all' | 'selected'>;
-    if (crud?.exportScopes?.length)
-      return crud.exportScopes as Array<'current' | 'all' | 'selected'>;
-    return ['current', 'all', 'selected'];
-  }, [exportScopes, crud]);
-  // 导出列（crud 模式下从 formFields 自动生成）
-  const resolvedExportColumns = useMemo(() => {
-    if (exportColumns?.length) return exportColumns;
-    if (crud?.formFields) {
-      return crud.formFields.filter((f) => !f.hideInExport && f.key !== 'id').map((f) => f.key);
-    }
-    return visibleColumns.map((c) => c.id);
-  }, [exportColumns, crud, visibleColumns]);
   // 导出功能
-  const handleExport = useCallback(
-    async (
-      format: 'csv' | 'excel' | 'json' = 'csv',
-      scope: 'current' | 'all' | 'selected' = 'current'
-    ) => {
-      if (!resolvedExportable || exporting) return;
-      try {
-        setExporting(true);
-        setExportAnchorEl(null);
-        // 确定导出数据范围
-        let exportDataRows: T[] = [];
-        if (scope === 'selected') {
-          exportDataRows = data.filter((row) =>
-            effectiveSelectedIds.includes(
-              getRowId?.(row) ?? ((row as unknown as Record<string, unknown>).id as string | number)
-            )
-          );
-        } else if (scope === 'current') {
-          exportDataRows = data;
-        } else {
-          exportDataRows = data;
-        }
-        if (exportDataRows.length === 0) {
-          logger.warn(i18n.t('templates.list_page_template.k17'));
-          setExporting(false);
-          return;
-        }
-        // 获取导出列的标签和 id
-        const exportColDefs = resolvedExportColumns.map((colId) => {
-          const col = visibleColumns.find((c) => c.id === colId);
-          let label = col?.label || colId;
-          if (crud?.formFields) {
-            const field = crud.formFields.find((f) => f.key === colId);
-            if (field) label = field.label;
-          }
-          return { id: colId, label };
-        });
-        const headers = exportColDefs.map((c) => c.label);
-        // 转换数据
-        const transformedRows = exportDataRows.map((row) => {
-          const transformed = exportTransform
-            ? exportTransform(row)
-            : (row as unknown as Record<string, unknown>);
-          const result: Record<string, unknown> = {};
-          exportColDefs.forEach(({ id }) => {
-            let value = transformed[id];
-            // crud 模式下应用 exportFormat
-            if (crud?.formFields) {
-              const field = crud.formFields.find((f) => f.key === id);
-              if (field?.exportFormat) {
-                value = field.exportFormat(value, transformed);
-              }
-            }
-            result[id] = value;
-          });
-          return result;
-        });
-        let blob: Blob;
-        let ext: string;
-        if (format === 'json') {
-          const jsonContent = JSON.stringify(transformedRows, null, 2);
-          blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
-          ext = 'json';
-        } else {
-          // CSV / Excel 格式
-          const csvRows = transformedRows.map((row) => {
-            return exportColDefs
-              .map(({ id }) => {
-                const value = row[id];
-                if (value === null || value === undefined) return '';
-                if (typeof value === 'string') {
-                  return `"${value.replace(/"/g, '""')}"`;
-                }
-                if (typeof value === 'object') {
-                  return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
-                }
-                return String(value);
-              })
-              .join(',');
-          });
-          const csvContent = exportIncludeHeader
-            ? [headers.join(','), ...csvRows].join('\n')
-            : csvRows.join('\n');
-          blob = new Blob([`\uFEFF${csvContent}`], {
-            type:
-              format === 'excel'
-                ? 'application/vnd.ms-excel;charset=utf-8;'
-                : 'text/csv;charset=utf-8;',
-          });
-          ext = format === 'excel' ? 'xls' : 'csv';
-        }
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        const timestamp = new Date().toISOString().split('T')[0];
-        link.setAttribute('download', `${resolvedExportFileName}-${timestamp}.${ext}`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        setExportComplete(true);
-        setTimeout(() => {
-          setExportComplete(false);
-        }, 2000);
-      } catch (error) {
-        logger.error(i18n.t('components.list_page_template.k14'), error);
-      } finally {
-        setExporting(false);
-      }
-    },
+  const {
+    resolvedExportable,
+    resolvedExportFileName,
+    resolvedExportFormats,
+    resolvedExportScopes,
+    resolvedExportColumns,
+    handleExport,
+  } = useListExport<T>({
+    exportable,
+    exportFileName,
+    exportFormats,
+    exportScopes,
+    exportTransform,
+    exportColumns,
+    exportIncludeHeader,
+    crud,
+    title,
+    data,
+    visibleColumns,
+    effectiveSelectedIds,
+    getRowId,
+    exporting,
+    setExporting,
+    setExportAnchorEl,
+    setExportComplete,
+  });
+  // 计算固定列的 left/right 位置
+  const fixedColumnPositions = useMemo(
+    () =>
+      computeFixedColumnPositions({
+        visibleColumns,
+        selectable,
+        isBatchSelectionEnabled,
+        showRowNumber,
+        treeView: resolvedTreeView,
+        hasRowActions: !!resolvedRowActions && resolvedRowActions.length > 0,
+        columnConfigurable,
+        getColumnWidth: (id) => columnWidthResult.getColumnWidth(id),
+      }),
     [
-      resolvedExportable,
-      data,
       visibleColumns,
-      exportTransform,
-      exporting,
-      resolvedExportFileName,
-      resolvedExportColumns,
-      exportIncludeHeader,
-      crud,
-      effectiveSelectedIds,
-      getRowId,
+      selectable,
+      isBatchSelectionEnabled,
+      showRowNumber,
+      resolvedTreeView,
+      resolvedRowActions,
+      columnConfigurable,
+      columnWidthResult,
     ]
   );
-  // 计算固定列的 left/right 位置
-  const fixedColumnPositions = useMemo(() => {
-    const leftPositions: Record<string, number> = {};
-    const rightPositions: Record<string, number> = {};
-    let leftOffset = 0;
-    let rightOffset = 0;
-    // 左侧固定列：选择框 + 行号 + 左侧固定列
-    if (selectable || isBatchSelectionEnabled) leftOffset += 48;
-    if (showRowNumber) leftOffset += 60;
-    if (resolvedTreeView) leftOffset += 48;
-    const leftFixed = visibleColumns.filter((col) => col.fixed === 'left');
-    leftFixed.forEach((col) => {
-      leftPositions[col.id] = leftOffset;
-      const w = columnWidthResult.getColumnWidth(col.id);
-      leftOffset += typeof w === 'number' ? w : 150;
-    });
-    // 右侧固定列：操作列 + 列配置 + 右侧固定列
-    if (resolvedRowActions && resolvedRowActions.length > 0) rightOffset += 80;
-    if (columnConfigurable) rightOffset += 48;
-    const rightFixed = [...visibleColumns].filter((col) => col.fixed === 'right').reverse();
-    rightFixed.forEach((col) => {
-      rightPositions[col.id] = rightOffset;
-      const w = columnWidthResult.getColumnWidth(col.id);
-      rightOffset += typeof w === 'number' ? w : 150;
-    });
-    return { leftPositions, rightPositions };
-  }, [
-    visibleColumns,
-    selectable,
-    isBatchSelectionEnabled,
-    showRowNumber,
-    resolvedTreeView,
-    resolvedRowActions,
-    columnConfigurable,
-    columnWidthResult,
-  ]);
   // 渲染表格头部
   const renderTableHead = () => (
-    <TableHead>
-      <TableRow>
-        {selectable && (
-          <TableCell
-            padding='checkbox'
-            sx={{
-              width: 48,
-              position: 'sticky',
-              left: 0,
-              zIndex: (theme) => theme.zIndex.stickyHeader,
-              bgcolor: theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.50',
-            }}
-          >
-            <Checkbox
-              indeterminate={
-                effectiveSelectedIds.length > 0 && effectiveSelectedIds.length < data.length
-              }
-              checked={data.length > 0 && effectiveSelectedIds.length === data.length}
-              onChange={handleSelectAll}
-            />
-          </TableCell>
-        )}
-        {isBatchSelectionEnabled && !selectable && (
-          <TableCell
-            padding='checkbox'
-            sx={{
-              width: 48,
-              position: 'sticky',
-              left: 0,
-              zIndex: (theme) => theme.zIndex.stickyHeader,
-              bgcolor: theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.50',
-            }}
-          >
-            <Checkbox
-              indeterminate={selectedIds.size > 0 && selectedIds.size < data.length}
-              checked={data.length > 0 && selectedIds.size === data.length}
-              onChange={handleBatchSelectAll}
-            />
-          </TableCell>
-        )}
-        {showRowNumber && (
-          <TableCell
-            sx={{
-              width: 60,
-              position: selectable ? 'sticky' : 'relative',
-              left: selectable ? 48 : 0,
-              zIndex: (theme) => theme.zIndex.stickyHeader,
-              bgcolor: theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.50',
-            }}
-          >
-            #
-          </TableCell>
-        )}
-        {expandable && (
-          <TableCell
-            padding='checkbox'
-            sx={{ width: 48 }}
-          />
-        )}
-        {visibleColumns.map((column) => {
-          const colWidth = resolvedColumnResizable
-            ? columnWidthResult.getColumnWidth(column.id)
-            : column.width;
-          const isResizing = columnWidthResult.resizingColumnId === column.id;
-          const canResize = resolvedColumnResizable && column.resizable !== false;
-          const isFixed = column.fixed !== undefined;
-          const leftPos = fixedColumnPositions.leftPositions[column.id];
-          const rightPos = fixedColumnPositions.rightPositions[column.id];
-          return (
-            <TableCell
-              key={column.id}
-              align={column.align || 'left'}
-              width={colWidth}
-              sx={{
-                minWidth: column.minWidth,
-                maxWidth: column.maxWidth,
-                fontWeight: 600,
-                whiteSpace: 'nowrap',
-                position: isFixed ? 'sticky' : 'relative',
-                left: column.fixed === 'left' ? leftPos : undefined,
-                right: column.fixed === 'right' ? rightPos : undefined,
-                zIndex: isFixed ? 2 : 1,
-                bgcolor: theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.50',
-              }}
-            >
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent:
-                    column.align === 'center'
-                      ? 'center'
-                      : column.align === 'right'
-                        ? 'flex-end'
-                        : 'flex-start',
-                }}
-              >
-                {column.renderHeader ? (
-                  column.renderHeader(column)
-                ) : sortable && column.sortable !== false ? (
-                  <TableSortLabel
-                    active={sortBy === column.id}
-                    direction={sortBy === column.id ? sortOrder : 'asc'}
-                    onClick={() => handleSort(column.id)}
-                  >
-                    {column.label || column.id}
-                  </TableSortLabel>
-                ) : (
-                  column.label || column.id
-                )}
-              </Box>
-              {canResize && (
-                <Box
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    columnWidthResult.startResize(column.id, e.clientX);
-                  }}
-                  onDoubleClick={() => columnWidthResult.resetColumnWidth(column.id)}
-                  sx={{
-                    position: 'absolute',
-                    right: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: 4,
-                    cursor: 'col-resize',
-                    bgcolor: isResizing ? 'primary.main' : 'transparent',
-                    transition: 'background-color 0.2s',
-                    '&:hover': {
-                      bgcolor: 'primary.main',
-                    },
-                    zIndex: (theme) => theme.zIndex.dragHandle,
-                  }}
-                  title={i18n.t('templates.list_page_template.k18')}
-                />
-              )}
-            </TableCell>
-          );
-        })}
-        {(renderRowActions || (resolvedRowActions && resolvedRowActions.length > 0)) && (
-          <TableCell
-            align='right'
-            sx={{ width: 80 }}
-          >
-            {i18n.t('components.list_page_template.k1')}
-          </TableCell>
-        )}
-        {columnConfigurable && (
-          <TableCell
-            align='right'
-            sx={{ width: 48 }}
-          >
-            <Tooltip title={i18n.t('templates.list_page_template.k19')}>
-              <IconButton
-                size='small'
-                onClick={(e) => setColumnConfigAnchor(e.currentTarget)}
-                aria-label={i18n.t('templates.list_page_template.k20')}
-              >
-                <Columns3 style={iconMd} />
-              </IconButton>
-            </Tooltip>
-          </TableCell>
-        )}
-      </TableRow>
-    </TableHead>
+    <ListTableHead<T>
+      theme={theme}
+      data={data}
+      visibleColumns={visibleColumns}
+      selectable={selectable}
+      isBatchSelectionEnabled={isBatchSelectionEnabled}
+      showRowNumber={showRowNumber}
+      expandable={expandable}
+      effectiveSelectedIds={effectiveSelectedIds}
+      selectedIds={selectedIds}
+      handleSelectAll={handleSelectAll}
+      handleBatchSelectAll={handleBatchSelectAll}
+      sortable={sortable}
+      sortBy={sortBy}
+      sortOrder={sortOrder}
+      handleSort={handleSort}
+      resolvedColumnResizable={resolvedColumnResizable}
+      columnWidthResult={columnWidthResult}
+      fixedColumnPositions={fixedColumnPositions}
+      renderRowActions={renderRowActions}
+      resolvedRowActions={resolvedRowActions}
+      columnConfigurable={columnConfigurable}
+      setColumnConfigAnchor={setColumnConfigAnchor}
+    />
   );
   // 渲染展开行内容
   const renderExpandedRow = (row: T, index: number) => {
@@ -2436,521 +1571,81 @@ export function ListPageTemplate<
     return null;
   };
   // 渲染表格内容
-  const renderTableBody = () => {
-    if (loading) {
-      return Array.from({ length: 5 }).map((_, index) => (
-        <TableRow key={index}>
-          {selectable && (
-            <TableCell padding='checkbox'>
-              <Skeleton
-                variant='rectangular'
-                width={20}
-                height={20}
-              />
-            </TableCell>
-          )}
-          {showRowNumber && (
-            <TableCell>
-              <Skeleton
-                variant='text'
-                width={30}
-              />
-            </TableCell>
-          )}
-          {expandable && (
-            <TableCell padding='checkbox'>
-              <Skeleton
-                variant='rectangular'
-                width={20}
-                height={20}
-              />
-            </TableCell>
-          )}
-          {visibleColumns.map((column) => (
-            <TableCell key={column.id}>
-              <Skeleton
-                variant='text'
-                width='80%'
-              />
-            </TableCell>
-          ))}
-          {(renderRowActions || (resolvedRowActions && resolvedRowActions.length > 0)) && (
-            <TableCell>
-              <Skeleton
-                variant='text'
-                width={60}
-              />
-            </TableCell>
-          )}
-          {columnConfigurable && <TableCell />}
-        </TableRow>
-      ));
-    }
-    if (error) {
-      return (
-        <TableRow>
-          <TableCell
-            colSpan={
-              visibleColumns.length +
-              (selectable ? 1 : 0) +
-              (showRowNumber ? 1 : 0) +
-              (expandable ? 1 : 0) +
-              (resolvedRowActions ? 1 : 0) +
-              (columnConfigurable ? 1 : 0)
-            }
-            align='center'
-            sx={{ py: 8 }}
-          >
-            <ErrorEmptyState
-              error={error}
-              onRetry={onRefresh}
-            />
-          </TableCell>
-        </TableRow>
-      );
-    }
-    if (data.length === 0) {
-      return (
-        <TableRow>
-          <TableCell
-            colSpan={
-              visibleColumns.length +
-              (selectable ? 1 : 0) +
-              (showRowNumber ? 1 : 0) +
-              (expandable ? 1 : 0) +
-              (resolvedRowActions ? 1 : 0) +
-              (columnConfigurable ? 1 : 0)
-            }
-            align='center'
-            sx={{ py: 8 }}
-          >
-            <EmptyState
-              icon={emptyIcon}
-              title={emptyMessage}
-              description={i18n.t('templates.list_page_template.k21')}
-              action={
-                emptyActionButton
-                  ? { label: emptyActionButton.label, onClick: emptyActionButton.onClick }
-                  : undefined
-              }
-            />
-          </TableCell>
-        </TableRow>
-      );
-    }
-    return treeTableData.map((row, index) => {
-      const rowId =
-        getRowId?.(row) ??
-        ((row as unknown as Record<string, unknown>).id as string | number) ??
-        index;
-      const isSelected = effectiveSelectedIds.includes(rowId);
-      const isExpanded = expandedIds.includes(rowId);
-      const rowLevel = resolvedTreeView ? getRowLevel(rowId) : 0;
-      const rowHasChildren = hasChildren(row);
-      const isEditing = resolvedEditingRowId === rowId;
-      return (
-        <React.Fragment key={rowId}>
-          <TableRow
-            hover
-            selected={isSelected}
-            onClick={() => resolvedOnRowClick?.(row)}
-            onDoubleClick={() => resolvedOnRowDoubleClick?.(row)}
-            sx={{
-              '&:nth-of-type(even)': striped ? { bgcolor: 'action.hover' } : {},
-              '&:hover': {
-                bgcolor: theme.palette.mode === 'dark' ? 'glass.line' : 'primary.50',
-                transition: 'background-color 150ms ease',
-              },
-              '&.Mui-selected': {
-                bgcolor: theme.palette.mode === 'dark' ? 'background.selectedDark' : 'primary.50',
-              },
-              cursor: resolvedOnRowClick ? 'pointer' : 'default',
-              transition: 'background-color 150ms ease',
-            }}
-          >
-            {selectable && (
-              <TableCell
-                padding='checkbox'
-                sx={{
-                  position: 'sticky',
-                  left: 0,
-                  zIndex: (theme) => theme.zIndex.raised,
-                  bgcolor: 'inherit',
-                }}
-              >
-                <Checkbox
-                  checked={isSelected}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSelectRow(row);
-                  }}
-                />
-              </TableCell>
-            )}
-            {isBatchSelectionEnabled && !selectable && (
-              <TableCell
-                padding='checkbox'
-                sx={{
-                  position: 'sticky',
-                  left: 0,
-                  zIndex: (theme) => theme.zIndex.raised,
-                  bgcolor: 'inherit',
-                }}
-              >
-                <Checkbox
-                  checked={selectedIds.has(rowId)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleBatchSelect(row);
-                  }}
-                />
-              </TableCell>
-            )}
-            {showRowNumber && (
-              <TableCell
-                sx={{
-                  position: selectable ? 'sticky' : 'relative',
-                  left: selectable ? 48 : 0,
-                  zIndex: (theme) => theme.zIndex.raised,
-                  bgcolor: 'inherit',
-                }}
-              >
-                {resolvedPagination
-                  ? (resolvedPagination.page -
-                      ((effectiveListState?.baseIndex ?? 1) === 1 ? 1 : 0)) *
-                      resolvedPagination.pageSize +
-                    index +
-                    1
-                  : index + 1}
-              </TableCell>
-            )}
-            {expandable && !resolvedTreeView && (
-              <TableCell padding='checkbox'>
-                <IconButton
-                  size='small'
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleExpandRow(row);
-                  }}
-                  aria-label={i18n.t('templates.list_page_template.k22')}
-                >
-                  <ChevronRight
-                    style={{
-                      width: 18,
-                      height: 18,
-                      transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.2s',
-                    }}
-                  />
-                </IconButton>
-              </TableCell>
-            )}
-            {resolvedTreeView && (
-              <TableCell
-                padding='checkbox'
-                sx={{
-                  width: 48,
-                  position: 'sticky',
-                  left: selectable || isBatchSelectionEnabled ? 48 : 0,
-                  zIndex: (theme) => theme.zIndex.raised,
-                  bgcolor: 'inherit',
-                }}
-              >
-                {rowHasChildren ? (
-                  <IconButton
-                    size='small'
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleExpand(rowId);
-                    }}
-                    aria-label={i18n.t('templates.list_page_template.k23')}
-                  >
-                    <ChevronRight
-                      style={{
-                        width: 18,
-                        height: 18,
-                        transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                        transition: 'transform 0.2s',
-                      }}
-                    />
-                  </IconButton>
-                ) : (
-                  <Box sx={{ width: 24 }} />
-                )}
-              </TableCell>
-            )}
-            {visibleColumns.map((column) => {
-              const isTreeColumn = resolvedTreeView && column.id === treeColumnId;
-              const isFixed = column.fixed !== undefined;
-              const leftPos = fixedColumnPositions.leftPositions[column.id];
-              const rightPos = fixedColumnPositions.rightPositions[column.id];
-              const colWidth = resolvedColumnResizable
-                ? columnWidthResult.getColumnWidth(column.id)
-                : column.width;
-              const canEdit = resolvedInlineEditable && column.editable && !isTreeColumn;
-              const cellValue = (row as unknown as Record<string, unknown>)[column.id];
-              return (
-                <TableCell
-                  key={column.id}
-                  align={column.align || 'left'}
-                  width={colWidth}
-                  sx={{
-                    minWidth: column.minWidth,
-                    maxWidth: column.maxWidth,
-                    position: isFixed ? 'sticky' : 'static',
-                    left: column.fixed === 'left' ? leftPos : undefined,
-                    right: column.fixed === 'right' ? rightPos : undefined,
-                    zIndex: isFixed ? 1 : 0,
-                    bgcolor: 'inherit',
-                  }}
-                  onClick={(e) => {
-                    if (canEdit && resolvedInlineEditMode === 'cell') {
-                      e.stopPropagation();
-                      startEditing(row);
-                    }
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      pl: isTreeColumn ? rowLevel * treeIndentSize : 0,
-                    }}
-                  >
-                    {isTreeColumn && <Box sx={{ width: 24, flexShrink: 0 }} />}
-                    {isEditing && canEdit ? (
-                      <InlineEditCell
-                        column={column}
-                        value={editingData?.[column.id as keyof T] ?? cellValue ?? ''}
-                        onChange={(value) => updateEditingField(column.id as keyof T, value)}
-                        onSave={() => saveEditing(row)}
-                        onCancel={() => cancelEditing(row)}
-                      />
-                    ) : column.render ? (
-                      // V64 防御：调用外部 column.render 前 row 兜底，
-                      //      避免 325 处 schema.renderCell 遇到 undefined 报错
-                      (() => {
-                        try {
-                          return column.render(row ?? ({} as T), index);
-                        } catch (e) {
-                          // 任何自定义渲染报错都不打断整表渲染，返回占位 '-'
-                          if (typeof console !== 'undefined' && console?.warn) {
-                            console.warn(
-                              `[ListPageTemplate] renderCell for column="${column.id}" failed, fallback to "-":`,
-                              e
-                            );
-                          }
-                          return '-';
-                        }
-                      })()
-                    ) : cellValue !== undefined && cellValue !== null ? (
-                      String(cellValue)
-                    ) : (
-                      '-'
-                    )}
-                  </Box>
-                </TableCell>
-              );
-            })}
-            {(renderRowActions || (resolvedRowActions && resolvedRowActions.length > 0)) && (
-              <TableCell align='right'>
-                {renderRowActions ? (
-                  renderRowActions(row, index)
-                ) : isMobile ? (
-                  <IconButton
-                    size='small'
-                    onClick={(e) => handleRowActionClick(e, row)}
-                    aria-label={i18n.t('templates.list_page_template.k24')}
-                  >
-                    <MoreHorizontal style={iconMd} />
-                  </IconButton>
-                ) : (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'flex-end',
-                      gap: 0.5,
-                    }}
-                  >
-                    {(resolvedRowActions ?? []).slice(0, 3).map((action, actionIndex) => {
-                      if (action.show && !action.show(row)) return null;
-                      return (
-                        <Tooltip
-                          key={actionIndex}
-                          title={action.label}
-                        >
-                          <IconButton
-                            size='small'
-                            data-testid={`row-action-${action.key ?? actionIndex}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              action.onClick?.(row);
-                            }}
-                            color={action.color}
-                            aria-label={action.label}
-                          >
-                            {action.icon || <MoreHorizontal style={iconSm} />}
-                          </IconButton>
-                        </Tooltip>
-                      );
-                    })}
-                    {(resolvedRowActions ?? []).length > 3 && (
-                      <IconButton
-                        size='small'
-                        onClick={(e) => handleRowActionClick(e, row)}
-                        aria-label={i18n.t('templates.list_page_template.k25')}
-                      >
-                        <MoreHorizontal style={iconSm} />
-                      </IconButton>
-                    )}
-                  </Box>
-                )}
-              </TableCell>
-            )}
-            {columnConfigurable && <TableCell />}
-          </TableRow>
-          {expandable && isExpanded && (
-            <TableRow>
-              <TableCell
-                colSpan={
-                  visibleColumns.length +
-                  (selectable ? 1 : 0) +
-                  (showRowNumber ? 1 : 0) +
-                  (expandable ? 1 : 0) +
-                  (resolvedRowActions ? 1 : 0) +
-                  (columnConfigurable ? 1 : 0)
-                }
-                sx={{ py: 0 }}
-              >
-                <Collapse
-                  in={isExpanded}
-                  timeout='auto'
-                  unmountOnExit
-                >
-                  <Box sx={{ py: 2, px: 1 }}>{renderExpandedRow(row, index)}</Box>
-                </Collapse>
-              </TableCell>
-            </TableRow>
-          )}
-        </React.Fragment>
-      );
-    });
-  };
+  const renderTableBody = () => (
+    <ListTableBody<T>
+      loading={loading}
+      error={error}
+      onRefresh={onRefresh}
+      data={data}
+      treeTableData={treeTableData}
+      emptyMessage={emptyMessage}
+      emptyIcon={emptyIcon}
+      emptyActionButton={emptyActionButton}
+      visibleColumns={visibleColumns}
+      selectable={selectable}
+      isBatchSelectionEnabled={isBatchSelectionEnabled}
+      showRowNumber={showRowNumber}
+      expandable={expandable}
+      resolvedTreeView={resolvedTreeView}
+      treeColumnId={treeColumnId}
+      getRowId={getRowId}
+      effectiveSelectedIds={effectiveSelectedIds}
+      selectedIds={selectedIds}
+      expandedIds={expandedIds}
+      getRowLevel={getRowLevel}
+      hasChildren={hasChildren}
+      toggleExpand={toggleExpand}
+      handleSelectRow={handleSelectRow}
+      handleBatchSelect={handleBatchSelect}
+      handleExpandRow={handleExpandRow}
+      resolvedRowActions={resolvedRowActions}
+      renderRowActions={renderRowActions}
+      columnConfigurable={columnConfigurable}
+      resolvedOnRowClick={resolvedOnRowClick}
+      resolvedOnRowDoubleClick={resolvedOnRowDoubleClick}
+      striped={striped}
+      theme={theme}
+      resolvedColumnResizable={resolvedColumnResizable}
+      columnWidthResult={columnWidthResult}
+      fixedColumnPositions={fixedColumnPositions}
+      resolvedInlineEditable={resolvedInlineEditable}
+      resolvedInlineEditMode={resolvedInlineEditMode}
+      inlineEdit={{
+        editingData,
+        resolvedEditingRowId,
+        startEditing,
+        cancelEditing,
+        saveEditing,
+        updateEditingField,
+      }}
+      resolvedPagination={resolvedPagination}
+      effectiveListState={effectiveListState}
+      renderExpandedRow={renderExpandedRow}
+      treeIndentSize={treeIndentSize}
+      isMobile={isMobile}
+      handleRowActionClick={handleRowActionClick}
+    />
+  );
   // 渲染汇总行
-  const renderSummaryRow = () => {
-    if (!resolvedShowSummary) return null;
-    const summaryData = resolvedTreeView ? treeTableData : data;
-    return (
-      <TableRow
-        sx={{
-          bgcolor: theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.50',
-          fontWeight: 600,
-        }}
-      >
-        {selectable && (
-          <TableCell
-            padding='checkbox'
-            sx={{
-              position: 'sticky',
-              left: 0,
-              zIndex: (theme) => theme.zIndex.raised,
-              bgcolor: 'inherit',
-            }}
-          />
-        )}
-        {isBatchSelectionEnabled && !selectable && (
-          <TableCell
-            padding='checkbox'
-            sx={{
-              position: 'sticky',
-              left: 0,
-              zIndex: (theme) => theme.zIndex.raised,
-              bgcolor: 'inherit',
-            }}
-          />
-        )}
-        {showRowNumber && (
-          <TableCell
-            sx={{
-              position: selectable ? 'sticky' : 'relative',
-              left: selectable ? 48 : 0,
-              zIndex: (theme) => theme.zIndex.raised,
-              bgcolor: 'inherit',
-            }}
-          >
-            {i18n.t('components.list_page_template.k2')}
-          </TableCell>
-        )}
-        {resolvedTreeView && (
-          <TableCell
-            padding='checkbox'
-            sx={{ width: 48 }}
-          />
-        )}
-        {visibleColumns.map((column) => {
-          const isFixed = column.fixed !== undefined;
-          const leftPos = fixedColumnPositions.leftPositions[column.id];
-          const rightPos = fixedColumnPositions.rightPositions[column.id];
-          const colWidth = resolvedColumnResizable
-            ? columnWidthResult.getColumnWidth(column.id)
-            : column.width;
-          let summaryContent: React.ReactNode = '-';
-          if (column.summaryType === 'custom' && column.summaryRender) {
-            summaryContent = column.summaryRender(summaryData);
-          } else if (column.summaryType === 'count') {
-            summaryContent = summaryData.length;
-          } else if (
-            column.summaryType === 'sum' ||
-            column.summaryType === 'avg' ||
-            column.summaryType === 'max' ||
-            column.summaryType === 'min'
-          ) {
-            const values = summaryData
-              .map((row) => Number((row as unknown as Record<string, unknown>)[column.id]))
-              .filter((v) => !isNaN(v));
-            if (values.length === 0) {
-              summaryContent = '-';
-            } else if (column.summaryType === 'sum') {
-              summaryContent = values.reduce((a, b) => a + b, 0).toLocaleString();
-            } else if (column.summaryType === 'avg') {
-              summaryContent = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
-            } else if (column.summaryType === 'max') {
-              summaryContent = Math.max(...values).toLocaleString();
-            } else if (column.summaryType === 'min') {
-              summaryContent = Math.min(...values).toLocaleString();
-            }
-          }
-          return (
-            <TableCell
-              key={column.id}
-              align={column.align || 'left'}
-              width={colWidth}
-              sx={{
-                minWidth: column.minWidth,
-                maxWidth: column.maxWidth,
-                fontWeight: 600,
-                whiteSpace: 'nowrap',
-                position: isFixed ? 'sticky' : 'static',
-                left: column.fixed === 'left' ? leftPos : undefined,
-                right: column.fixed === 'right' ? rightPos : undefined,
-                zIndex: isFixed ? 1 : 0,
-                bgcolor: 'inherit',
-              }}
-            >
-              {summaryContent}
-            </TableCell>
-          );
-        })}
-        {(renderRowActions || (resolvedRowActions && resolvedRowActions.length > 0)) && (
-          <TableCell
-            align='right'
-            sx={{ width: 80 }}
-          />
-        )}
-        {columnConfigurable && <TableCell sx={{ width: 48 }} />}
-      </TableRow>
-    );
-  };
+  const renderSummaryRow = () => (
+    <ListSummaryRow<T>
+      theme={theme}
+      showSummary={resolvedShowSummary}
+      treeView={resolvedTreeView}
+      treeTableData={treeTableData}
+      data={data}
+      visibleColumns={visibleColumns}
+      fixedColumnPositions={fixedColumnPositions}
+      resolvedColumnResizable={resolvedColumnResizable}
+      columnWidthResult={columnWidthResult}
+      selectable={selectable}
+      isBatchSelectionEnabled={isBatchSelectionEnabled}
+      showRowNumber={showRowNumber}
+      renderRowActions={renderRowActions}
+      resolvedRowActions={resolvedRowActions}
+      columnConfigurable={columnConfigurable}
+    />
+  );
   // 渲染分页
   const renderPagination = () => {
     if (!resolvedPagination) return null;
@@ -2973,201 +1668,27 @@ export function ListPageTemplate<
   // 渲染移动端卡片视图
   const shouldUseMobileCard =
     isMobile && (Boolean(mobileCardRender) || Boolean(mobileCardTitleKey));
-  const renderMobileCardView = () => {
-    if (loading) {
-      return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 1.5 }}>
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton
-              key={i}
-              variant='rectangular'
-              height={120}
-              sx={{ borderRadius: 1 }}
-            />
-          ))}
-        </Box>
-      );
-    }
-    if (!data || data.length === 0) {
-      return (
-        <Box sx={{ p: 4, textAlign: 'center' }}>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            {emptyMessage}
-          </Typography>
-        </Box>
-      );
-    }
-    // 构建字段标签映射（从 columns 配置自动生成）
-    const autoFieldLabels: Record<string, string> = {};
-    visibleColumns.forEach((col) => {
-      autoFieldLabels[col.id] = col.label || col.id;
-    });
-    const fieldLabels = { ...autoFieldLabels, ...(mobileCardFieldLabels || {}) };
-    // 确定展示字段
-    const displayFields =
-      mobileCardDisplayFields ||
-      visibleColumns
-        .filter((c) => c.id !== mobileCardTitleKey && c.id !== mobileCardSubtitleKey)
-        .slice(0, 4)
-        .map((c) => c.id);
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 1.5 }}>
-        {data.map((row, index) => {
-          const rowId = getRowId
-            ? getRowId(row)
-            : (((row as unknown as Record<string, unknown>).id as string | number) ?? index);
-          const isSelected = selectedIds.has(rowId);
-          // 优先使用自定义渲染函数
-          if (mobileCardRender) {
-            return (
-              <Box
-                key={rowId}
-                onClick={() => resolvedOnRowClick?.(row)}
-                sx={{
-                  cursor: resolvedOnRowClick ? 'pointer' : 'default',
-                  '&:active': resolvedOnRowClick ? { opacity: 0.8 } : {},
-                }}
-              >
-                {mobileCardRender(row, index)}
-              </Box>
-            );
-          }
-          // 默认卡片渲染
-          const rowObj = row as unknown as Record<string, unknown>;
-          const title = mobileCardTitleKey
-            ? rowObj[mobileCardTitleKey]
-            : rowObj.name ||
-              rowObj.title ||
-              rowObj.code ||
-              `${i18n.t('components.list_page_template.k17')}${index + 1}`;
-          const subtitle = mobileCardSubtitleKey ? rowObj[mobileCardSubtitleKey] : '';
-          return (
-            <Box
-              key={rowId}
-              onClick={() => resolvedOnRowClick?.(row)}
-              sx={{
-                cursor: resolvedOnRowClick ? 'pointer' : 'default',
-                bgcolor: 'background.paper',
-                border: 1,
-                borderColor: isSelected ? 'primary.main' : 'divider',
-                borderRadius: 1,
-                p: 1.5,
-                minHeight: 44,
-                '&:active': resolvedOnRowClick ? { bgcolor: 'action.hover' } : {},
-                transition: 'background-color 150ms',
-              }}
-            >
-              {/* 卡片头部：标题 + 选择框 + 行操作 */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'space-between',
-                  gap: 1,
-                  mb: displayFields.length > 0 ? 1 : 0,
-                }}
-              >
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography
-                    variant='subtitle2'
-                    sx={{
-                      fontWeight: 600,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {String(title ?? '')}
-                  </Typography>
-                  {subtitle ? (
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                      sx={{
-                        fontSize: 12,
-                        mt: 0.25,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {String(subtitle)}
-                    </Typography>
-                  ) : null}
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  {selectable && (
-                    <Checkbox
-                      size='small'
-                      checked={isSelected || false}
-                      onClick={(e) => e.stopPropagation()}
-                      onChange={() => handleSelectRow(row)}
-                      sx={{ p: 0.5 }}
-                    />
-                  )}
-                  {(renderRowActions || (resolvedRowActions && resolvedRowActions.length > 0)) && (
-                    <IconButton
-                      size='small'
-                      onClick={(e) => handleRowActionClick(e, row)}
-                      aria-label={i18n.t('templates.list_page_template.k27')}
-                    >
-                      <MoreHorizontal style={iconMd} />
-                    </IconButton>
-                  )}
-                </Box>
-              </Box>
-
-              {/* 卡片内容：字段列表 */}
-              {displayFields.length > 0 && (
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0.75 }}>
-                  {displayFields.map((field) => {
-                    const value = rowObj[field];
-                    const label = fieldLabels[field] || field;
-                    const displayValue =
-                      value == null || value === ''
-                        ? '-'
-                        : typeof value === 'boolean'
-                          ? value
-                            ? i18n.t('templates.list_page_template.k28')
-                            : i18n.t('templates.list_page_template.k29')
-                          : String(value);
-                    return (
-                      <Box
-                        key={field}
-                        sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}
-                      >
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                          sx={{ fontSize: 11, fontWeight: 500 }}
-                        >
-                          {label}
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          sx={{
-                            fontSize: 13,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {displayValue}
-                        </Typography>
-                      </Box>
-                    );
-                  })}
-                </Box>
-              )}
-            </Box>
-          );
-        })}
-      </Box>
-    );
-  };
+  const renderMobileCardView = () => (
+    <ListMobileCardView<T>
+      loading={loading}
+      data={data}
+      emptyMessage={emptyMessage}
+      visibleColumns={visibleColumns}
+      mobileCardRender={mobileCardRender}
+      mobileCardTitleKey={mobileCardTitleKey}
+      mobileCardSubtitleKey={mobileCardSubtitleKey}
+      mobileCardFieldLabels={mobileCardFieldLabels}
+      mobileCardDisplayFields={mobileCardDisplayFields}
+      selectedIds={selectedIds}
+      getRowId={getRowId}
+      resolvedOnRowClick={resolvedOnRowClick}
+      selectable={selectable}
+      handleSelectRow={handleSelectRow}
+      renderRowActions={renderRowActions}
+      resolvedRowActions={resolvedRowActions}
+      handleRowActionClick={handleRowActionClick}
+    />
+  );
   return (
     <Box {...props}>
       {/* 页面头部：标题、操作按钮（G1: 面包屑统一由 AppShell 自动面包屑渲染） */}
