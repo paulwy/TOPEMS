@@ -349,7 +349,8 @@ bash scripts/deploy/production-deploy.sh --migrate-only --env .env.production \
 | 定向/无守卫 pending | 会被重放 | 硬拒绝；仅 `--allow-pending` 显式放行并告警 |
 
 **环境供给入口（2026-11-05 起）**：`scripts/deploy/setup-db.sh` 已降级为仅建用户/建库（`--init-schema` 直接 exit 1）；
-新环境 schema 一律走 `scripts/db/provision-env.sh`——恢复基线快照（schema + 账本）→ 只应用 `version > 锚点` 的前向迁移：
+新环境一律走 `scripts/db/provision-env.sh`——恢复基线快照（schema + 账本 + 参考数据）→ 只应用 `version > 锚点` 的前向迁移。
+参考数据（11 张配置表：角色/权限点/菜单/字典/组织岗位等，2277 行）**默认恢复**，否则新环境无角色权限、无法鉴权：
 
 ```bash
 # 1) 仅建用户/库
@@ -359,6 +360,7 @@ bash scripts/deploy/setup-db.sh --create-user --create-db --password '<PWD>'
 bash scripts/db/provision-env.sh --env staging --db topems --skip-prod-fingerprint
 
 # 本地/测试库重复供给：非空库默认 exit 1，确认重建需显式 --force-nonempty（打印 ⚠️ WARN）
+# 只重建参考数据：bash scripts/db/provision-env.sh --env staging --db topems --data-only
 ```
 
 原因：历史链存在断点（`20261005000004` 依赖 `public.qa_lab_tasks`，该表由更晚的 `20261007000009` 才创建），
