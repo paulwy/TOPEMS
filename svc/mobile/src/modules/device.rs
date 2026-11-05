@@ -5,8 +5,9 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{postgres::PgRow, PgPool, Row};
+use sqlx::{postgres::PgRow, Row};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
@@ -128,9 +129,20 @@ pub fn normalize_os_type(os_type: &str) -> String {
 pub async fn register_device(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<RegisterDeviceRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -170,7 +182,7 @@ pub async fn register_device(
     .bind(user_id.to_string())
     .bind(&payload.device_id)
     .bind(tenant_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(r) => r,
@@ -194,17 +206,20 @@ pub async fn register_device(
             .bind(user_id)
             .bind(&payload.device_id)
             .bind(tenant_id)
-            .execute(&pool)
+            .execute(&mut scope)
             .await
         {
             tracing::error!("更新设备信息失败: {}", e);
             return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("更新设备信息失败"));
         }
+        let _ = scope.commit().await;
         return (StatusCode::OK, ApiResponse::success((), "设备更新成功"));
     }
 
     let device_id = Uuid::new_v4();
-    if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "INSERT INTO mobile.devices (id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), $11)"))
+
+    let __mobile_response = {
+        if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "INSERT INTO mobile.devices (id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), $11)"))
         .bind(device_id)
         .bind(user_id)
         .bind(&payload.device_id)
@@ -216,17 +231,20 @@ pub async fn register_device(
         .bind(&payload.push_token)
         .bind(true)
         .bind(tenant_id)
-        .execute(&pool)
+        .execute(&mut scope)
         .await
     {
         tracing::error!("创建设备失败: {}", e);
         return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("创建设备失败"));
     }
 
-    (
-        StatusCode::CREATED,
-        ApiResponse::success((), "设备注册成功"),
-    )
+        (
+            StatusCode::CREATED,
+            ApiResponse::success((), "设备注册成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -243,9 +261,20 @@ pub async fn update_push_token(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<UpdatePushTokenRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -279,28 +308,32 @@ pub async fn update_push_token(
         .bind(user_id)
         .bind(&payload.device_id)
         .bind(tenant_filter)
-        .execute(&pool)
+        .execute(&mut scope)
         .await;
 
-    match result {
-        Ok(r) => {
-            if r.rows_affected() > 0 {
+    let __mobile_response = {
+        match result {
+            Ok(r) => {
+                if r.rows_affected() > 0 {
+                    (
+                        StatusCode::OK,
+                        ApiResponse::success((), "推送Token更新成功"),
+                    )
+                } else {
+                    (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在"))
+                }
+            }
+            Err(e) => {
+                tracing::error!("更新推送Token失败: {}", e);
                 (
-                    StatusCode::OK,
-                    ApiResponse::success((), "推送Token更新成功"),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("更新推送Token失败"),
                 )
-            } else {
-                (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在"))
             }
         }
-        Err(e) => {
-            tracing::error!("更新推送Token失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("更新推送Token失败"),
-            )
-        }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 我的设备列表（前端 GET /device → mobile.devices）
@@ -308,8 +341,19 @@ pub async fn list_my_devices(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -328,10 +372,11 @@ pub async fn list_my_devices(
             .and_then(|s| Uuid::parse_str(s).ok())
     };
 
-    let devices: Vec<Device> = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, created_at, updated_at FROM mobile.devices WHERE user_id::text = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY created_at DESC"))
+    let __mobile_response = {
+        let devices: Vec<Device> = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, created_at, updated_at FROM mobile.devices WHERE user_id::text = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY created_at DESC"))
         .bind(user_id.to_string())
         .bind(tenant_filter)
-        .fetch_all(&pool)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(rows) => rows
@@ -347,13 +392,16 @@ pub async fn list_my_devices(
         }
     };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(
-            serde_json::json!({ "items": devices, "total": devices.len() }),
-            "获取设备列表成功",
-        ),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(
+                serde_json::json!({ "items": devices, "total": devices.len() }),
+                "获取设备列表成功",
+            ),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 // ===== 死代码端点轻量兜底（2026-10-05，页面未调用，占位实现防 404）=====
@@ -363,9 +411,20 @@ pub async fn get_device_by_id(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -390,29 +449,33 @@ pub async fn get_device_by_id(
     ))
     .bind(id)
     .bind(tenant_filter)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
 
-    match device {
-        Ok(Some(row)) => match Device::from_row(&row) {
-            Ok(d) => (StatusCode::OK, ApiResponse::success(d, "获取设备详情成功")),
+    let __mobile_response = {
+        match device {
+            Ok(Some(row)) => match Device::from_row(&row) {
+                Ok(d) => (StatusCode::OK, ApiResponse::success(d, "获取设备详情成功")),
+                Err(e) => {
+                    tracing::error!("解析设备详情失败: {}", e);
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        ApiResponse::server_error("解析设备详情失败"),
+                    )
+                }
+            },
+            Ok(None) => (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在")),
             Err(e) => {
-                tracing::error!("解析设备详情失败: {}", e);
+                tracing::error!("查询设备详情失败: {}", e);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    ApiResponse::server_error("解析设备详情失败"),
+                    ApiResponse::server_error("查询设备详情失败"),
                 )
             }
-        },
-        Ok(None) => (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在")),
-        Err(e) => {
-            tracing::error!("查询设备详情失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("查询设备详情失败"),
-            )
         }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 更新设备（前端 PUT /device/{id} → 更新 app_version/os_version/is_active 等）
@@ -420,10 +483,21 @@ pub async fn update_device(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -457,22 +531,26 @@ pub async fn update_device(
     .bind(os_version)
     .bind(is_active)
     .bind(tenant_filter)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            (StatusCode::OK, ApiResponse::success((), "更新设备成功"))
+    let __mobile_response = {
+        match result {
+            Ok(r) if r.rows_affected() > 0 => {
+                (StatusCode::OK, ApiResponse::success((), "更新设备成功"))
+            }
+            Ok(_) => (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在")),
+            Err(e) => {
+                tracing::error!("更新设备失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("更新设备失败"),
+                )
+            }
         }
-        Ok(_) => (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在")),
-        Err(e) => {
-            tracing::error!("更新设备失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("更新设备失败"),
-            )
-        }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 注销设备（前端 DELETE /device/{id}）
@@ -480,9 +558,20 @@ pub async fn unregister_device(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -507,20 +596,26 @@ pub async fn unregister_device(
     ))
     .bind(id)
     .bind(tenant_filter)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => (StatusCode::OK, ApiResponse::success((), "设备已注销")),
-        Ok(_) => (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在")),
-        Err(e) => {
-            tracing::error!("注销设备失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("注销设备失败"),
-            )
+    let __mobile_response = {
+        match result {
+            Ok(r) if r.rows_affected() > 0 => {
+                (StatusCode::OK, ApiResponse::success((), "设备已注销"))
+            }
+            Ok(_) => (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在")),
+            Err(e) => {
+                tracing::error!("注销设备失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("注销设备失败"),
+                )
+            }
         }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 激活设备（前端 POST /device/{id}/activate）
@@ -528,9 +623,20 @@ pub async fn activate_device(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -555,20 +661,26 @@ pub async fn activate_device(
     ))
     .bind(id)
     .bind(tenant_filter)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => (StatusCode::OK, ApiResponse::success((), "设备已激活")),
-        Ok(_) => (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在")),
-        Err(e) => {
-            tracing::error!("激活设备失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("激活设备失败"),
-            )
+    let __mobile_response = {
+        match result {
+            Ok(r) if r.rows_affected() > 0 => {
+                (StatusCode::OK, ApiResponse::success((), "设备已激活"))
+            }
+            Ok(_) => (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在")),
+            Err(e) => {
+                tracing::error!("激活设备失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("激活设备失败"),
+                )
+            }
         }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 停用设备（前端 POST /device/{id}/disable）
@@ -576,9 +688,20 @@ pub async fn disable_device(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -603,20 +726,26 @@ pub async fn disable_device(
     ))
     .bind(id)
     .bind(tenant_filter)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => (StatusCode::OK, ApiResponse::success((), "设备已停用")),
-        Ok(_) => (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在")),
-        Err(e) => {
-            tracing::error!("停用设备失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("停用设备失败"),
-            )
+    let __mobile_response = {
+        match result {
+            Ok(r) if r.rows_affected() > 0 => {
+                (StatusCode::OK, ApiResponse::success((), "设备已停用"))
+            }
+            Ok(_) => (StatusCode::NOT_FOUND, ApiResponse::not_found("设备不存在")),
+            Err(e) => {
+                tracing::error!("停用设备失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("停用设备失败"),
+                )
+            }
         }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 推送测试（前端 POST /device/{id}/test-push → 占位兜底，真实推送需推送网关）
@@ -624,10 +753,21 @@ pub async fn test_push_device(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
     Json(_payload): Json<serde_json::Value>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -646,22 +786,26 @@ pub async fn test_push_device(
             .and_then(|s| Uuid::parse_str(s).ok())
     };
 
-    let _exists = sqlx::query(only_own_schema_query!(
+    let __mobile_response = {
+        let _exists = sqlx::query(only_own_schema_query!(
         "mobile",
         "SELECT 1 FROM mobile.devices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
-    .bind(id)
-    .bind(tenant_filter)
-    .fetch_optional(&pool)
-    .await;
+        .bind(id)
+        .bind(tenant_filter)
+        .fetch_optional(&mut scope)
+        .await;
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(
-            serde_json::json!({ "success": true }),
-            "测试推送已发送（占位实现，待推送网关接入）",
-        ),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(
+                serde_json::json!({ "success": true }),
+                "测试推送已发送（占位实现，待推送网关接入）",
+            ),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 设备统计（前端 GET /device/stats → mobile.devices 聚合）
@@ -669,8 +813,19 @@ pub async fn get_device_stats(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -695,29 +850,34 @@ pub async fn get_device_stats(
     ))
     .bind(user_id.to_string())
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
-    let active = sqlx::query(only_own_schema_query!(
+    let __mobile_response = {
+        let active = sqlx::query(only_own_schema_query!(
         "mobile",
         "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id::text = $1 AND is_active = true AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(user_id.to_string())
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
+
     .unwrap_or(0);
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(
-            serde_json::json!({ "total": total, "active": active, "inactive": total - active }),
-            "获取设备统计成功",
-        ),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(
+                serde_json::json!({ "total": total, "active": active, "inactive": total - active }),
+                "获取设备统计成功",
+            ),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[cfg(test)]

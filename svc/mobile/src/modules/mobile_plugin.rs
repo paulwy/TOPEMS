@@ -144,11 +144,17 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     tag = "mobile_plugin"
 )]
 pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ServiceHealth> {
-    let db_status = match sqlx::query(only_own_schema_query!("mobile", "SELECT 1"))
-        .fetch_one(&state.pool)
-        .await
-    {
-        Ok(_) => true,
+    let db_status = match state.pool.scope_read().await {
+        Ok(mut scope) => match sqlx::query(only_own_schema_query!("mobile", "SELECT 1"))
+            .fetch_one(&mut scope)
+            .await
+        {
+            Ok(_) => {
+                let _ = scope.commit().await;
+                true
+            }
+            Err(_) => false,
+        },
         Err(_) => false,
     };
 

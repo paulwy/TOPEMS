@@ -8,8 +8,8 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -70,9 +70,20 @@ pub async fn list_documents(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Query(params): Query<DocumentListParams>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -90,7 +101,8 @@ pub async fn list_documents(
     let category = params.category.unwrap_or_default();
     let tenant_filter = tenant_filter(&claims);
 
-    let documents: Vec<MobileDocument> = match sqlx::query_as::<_, MobileDocument>(
+    let __mobile_response = {
+        let documents: Vec<MobileDocument> = match sqlx::query_as::<_, MobileDocument>(
         only_own_schema_query!(
             "mobile",
             "SELECT id, title, description, category, file_name, file_size, file_type, url, status, author_id, created_at, updated_at
@@ -109,7 +121,8 @@ pub async fn list_documents(
     .bind(page_size)
     .bind(offset)
     .bind(tenant_filter)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
+
     .await
     {
         Ok(d) => d,
@@ -122,13 +135,16 @@ pub async fn list_documents(
         }
     };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(
-            serde_json::json!({ "items": documents, "total": documents.len() }),
-            "获取文档列表成功",
-        ),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(
+                serde_json::json!({ "items": documents, "total": documents.len() }),
+                "获取文档列表成功",
+            ),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 文档分类（前端 GET /documents/categories → 内置业务分类）
@@ -152,9 +168,20 @@ pub async fn get_document(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -175,24 +202,28 @@ pub async fn get_document(
     )
     .bind(id)
     .bind(tenant_filter)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
 
-    match document {
-        Ok(Some(d)) => (StatusCode::OK, ApiResponse::success(d, "获取文档详情成功")),
-        Ok(None) => (
-            // 数据不存在语义：HTTP 200 + 内层 code 404，避免裸 404 被前端契约探测判为路由缺失。
-            StatusCode::OK,
-            ApiResponse::not_found("文档不存在"),
-        ),
-        Err(e) => {
-            tracing::error!("查询文档详情失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("查询文档详情失败"),
-            )
+    let __mobile_response = {
+        match document {
+            Ok(Some(d)) => (StatusCode::OK, ApiResponse::success(d, "获取文档详情成功")),
+            Ok(None) => (
+                // 数据不存在语义：HTTP 200 + 内层 code 404，避免裸 404 被前端契约探测判为路由缺失。
+                StatusCode::OK,
+                ApiResponse::not_found("文档不存在"),
+            ),
+            Err(e) => {
+                tracing::error!("查询文档详情失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("查询文档详情失败"),
+                )
+            }
         }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 新建文档（前端 POST /documents）
@@ -200,9 +231,20 @@ pub async fn create_document(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(req): Json<CreateDocumentRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -233,22 +275,26 @@ pub async fn create_document(
     .bind(req.status.as_deref().unwrap_or("draft"))
     .bind(&user_id)
     .bind(tenant_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(_) => (
-            StatusCode::OK,
-            ApiResponse::success(serde_json::json!({ "id": id }), "创建文档成功"),
-        ),
-        Err(e) => {
-            tracing::error!("创建文档失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("创建文档失败"),
-            )
+    let __mobile_response = {
+        match result {
+            Ok(_) => (
+                StatusCode::OK,
+                ApiResponse::success(serde_json::json!({ "id": id }), "创建文档成功"),
+            ),
+            Err(e) => {
+                tracing::error!("创建文档失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("创建文档失败"),
+                )
+            }
         }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 更新文档（前端 PUT /documents/{id}）
@@ -256,10 +302,21 @@ pub async fn update_document(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -287,22 +344,26 @@ pub async fn update_document(
     .bind(category)
     .bind(status)
     .bind(tenant_filter)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            (StatusCode::OK, ApiResponse::success((), "更新文档成功"))
+    let __mobile_response = {
+        match result {
+            Ok(r) if r.rows_affected() > 0 => {
+                (StatusCode::OK, ApiResponse::success((), "更新文档成功"))
+            }
+            Ok(_) => (StatusCode::OK, ApiResponse::not_found("文档不存在")),
+            Err(e) => {
+                tracing::error!("更新文档失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("更新文档失败"),
+                )
+            }
         }
-        Ok(_) => (StatusCode::OK, ApiResponse::not_found("文档不存在")),
-        Err(e) => {
-            tracing::error!("更新文档失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("更新文档失败"),
-            )
-        }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 删除文档（前端 DELETE /documents/{id}）
@@ -310,9 +371,20 @@ pub async fn delete_document(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -330,20 +402,24 @@ pub async fn delete_document(
     ))
     .bind(id)
     .bind(tenant_filter)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            (StatusCode::OK, ApiResponse::success((), "删除文档成功"))
+    let __mobile_response = {
+        match result {
+            Ok(r) if r.rows_affected() > 0 => {
+                (StatusCode::OK, ApiResponse::success((), "删除文档成功"))
+            }
+            Ok(_) => (StatusCode::OK, ApiResponse::not_found("文档不存在")),
+            Err(e) => {
+                tracing::error!("删除文档失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("删除文档失败"),
+                )
+            }
         }
-        Ok(_) => (StatusCode::OK, ApiResponse::not_found("文档不存在")),
-        Err(e) => {
-            tracing::error!("删除文档失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("删除文档失败"),
-            )
-        }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }

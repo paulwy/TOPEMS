@@ -6,9 +6,10 @@
 
 use axum::extract::{Extension, Json, State};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row};
+use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
@@ -60,9 +61,17 @@ pub struct MobileSyncFailedItem {
     tag = "offline_records"
 )]
 pub async fn sync_records(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(req): Json<MobileSyncRequest>,
 ) -> ApiResponse<MobileSyncResponse> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let mut success: Vec<String> = Vec::new();
     let mut failed: Vec<MobileSyncFailedItem> = Vec::new();
 
@@ -85,7 +94,7 @@ pub async fn sync_records(
         .bind(&record.module)
         .bind(&record.action)
         .bind(&record.data)
-        .execute(&pool)
+        .execute(&mut scope)
         .await
         {
             Ok(_) => {
@@ -106,11 +115,15 @@ pub async fn sync_records(
         failed: failed.clone(),
     };
 
-    if failed.is_empty() {
-        ApiResponse::success(response, "同步成功")
-    } else {
-        ApiResponse::success(response, "部分同步成功")
-    }
+    let __mobile_response = {
+        if failed.is_empty() {
+            ApiResponse::success(response, "同步成功")
+        } else {
+            ApiResponse::success(response, "部分同步成功")
+        }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 查询待同步的离线记录
@@ -121,49 +134,59 @@ pub async fn sync_records(
     responses((status = 200, description = "get_pending_records OK")),
     tag = "offline_records"
 )]
-pub async fn get_pending_records(
-    State(pool): State<PgPool>,
-) -> ApiResponse<Vec<serde_json::Value>> {
-    match sqlx::query(only_own_schema_query!(
-        "mobile",
-        r#"
+pub async fn get_pending_records(State(db): State<Db>) -> ApiResponse<Vec<serde_json::Value>> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+    let __mobile_response = {
+        match sqlx::query(only_own_schema_query!(
+            "mobile",
+            r#"
         SELECT id, tenant_id, user_id, module, action, data, status,
                retry_count, max_retries, error_message, created_at, updated_at
         FROM mobile.core_mobile_offline_records
         WHERE status = 'pending'
         ORDER BY created_at ASC
         "#
-    ))
-    .fetch_all(&pool)
-    .await
-    {
-        Ok(rows) => {
-            let records: Vec<serde_json::Value> = rows
-                .into_iter()
-                .map(|row| {
-                    serde_json::json!({
-                        "id": row.get::<Uuid, _>("id"),
-                        "tenant_id": row.get::<Uuid, _>("tenant_id"),
-                        "user_id": row.get::<Uuid, _>("user_id"),
-                        "module": row.get::<String, _>("module"),
-                        "action": row.get::<String, _>("action"),
-                        "data": row.get::<serde_json::Value, _>("data"),
-                        "status": row.get::<String, _>("status"),
-                        "retry_count": row.get::<i32, _>("retry_count"),
-                        "max_retries": row.get::<i32, _>("max_retries"),
-                        "error_message": row.get::<Option<String>, _>("error_message"),
-                        "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
-                        "updated_at": row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
+        ))
+        .fetch_all(&mut scope)
+        .await
+        {
+            Ok(rows) => {
+                let records: Vec<serde_json::Value> = rows
+                    .into_iter()
+                    .map(|row| {
+                        serde_json::json!({
+                            "id": row.get::<Uuid, _>("id"),
+                            "tenant_id": row.get::<Uuid, _>("tenant_id"),
+                            "user_id": row.get::<Uuid, _>("user_id"),
+                            "module": row.get::<String, _>("module"),
+                            "action": row.get::<String, _>("action"),
+                            "data": row.get::<serde_json::Value, _>("data"),
+                            "status": row.get::<String, _>("status"),
+                            "retry_count": row.get::<i32, _>("retry_count"),
+                            "max_retries": row.get::<i32, _>("max_retries"),
+                            "error_message": row.get::<Option<String>, _>("error_message"),
+                            "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                            "updated_at": row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
+                        })
                     })
-                })
-                .collect();
-            ApiResponse::success(records, "查询成功")
+                    .collect();
+                ApiResponse::success(records, "查询成功")
+            }
+            Err(e) => {
+                tracing::error!("查询离线记录失败: {}", e);
+                ApiResponse::from(TopemsError::Internal("查询离线记录失败".to_string()))
+            }
         }
-        Err(e) => {
-            tracing::error!("查询离线记录失败: {}", e);
-            ApiResponse::from(TopemsError::Internal("查询离线记录失败".to_string()))
-        }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 标记单条离线记录为已同步
@@ -175,10 +198,20 @@ pub async fn get_pending_records(
     tag = "offline_records"
 )]
 pub async fn mark_synced(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     axum::extract::Path(record_id): axum::extract::Path<String>,
 ) -> ApiResponse<()> {
-    match Uuid::parse_str(&record_id) {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+
+    let __mobile_response = {
+        match Uuid::parse_str(&record_id) {
         Ok(id) => {
             match sqlx::query(only_own_schema_query!(
                 "mobile",
@@ -189,7 +222,7 @@ pub async fn mark_synced(
                 "#
             ))
             .bind(id)
-            .execute(&pool)
+            .execute(&mut scope)
             .await
             {
                 Ok(_) => ApiResponse::success((), "标记同步成功"),
@@ -205,6 +238,9 @@ pub async fn mark_synced(
             "记录ID格式错误".to_string(),
         )),
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 清理所有已同步的离线记录
@@ -217,25 +253,37 @@ pub async fn mark_synced(
 )]
 pub async fn clear_synced(
     Extension(claims): Extension<Claims>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> ApiResponse<()> {
-    match sqlx::query(only_own_schema_query!(
-        "mobile",
-        r#"
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+    let __mobile_response = {
+        match sqlx::query(only_own_schema_query!(
+            "mobile",
+            r#"
         DELETE FROM mobile.core_mobile_offline_records
         WHERE status = 'synced' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
         "#
-    ))
-    .bind(tenant_filter(&claims))
-    .execute(&pool)
-    .await
-    {
-        Ok(_) => ApiResponse::success((), "清理已同步记录成功"),
-        Err(e) => {
-            tracing::error!("清理已同步记录失败: {}", e);
-            ApiResponse::from(TopemsError::Internal("清理失败".to_string()))
+        ))
+        .bind(tenant_filter(&claims))
+        .execute(&mut scope)
+        .await
+        {
+            Ok(_) => ApiResponse::success((), "清理已同步记录成功"),
+            Err(e) => {
+                tracing::error!("清理已同步记录失败: {}", e);
+                ApiResponse::from(TopemsError::Internal("清理失败".to_string()))
+            }
         }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[cfg(test)]

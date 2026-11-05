@@ -5,8 +5,9 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row};
+use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
@@ -118,10 +119,21 @@ pub fn classify_count_level(count: i64) -> &'static str {
 )]
 pub async fn get_dashboard_stats(
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -138,7 +150,7 @@ pub async fn get_dashboard_stats(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
@@ -148,7 +160,7 @@ pub async fn get_dashboard_stats(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
@@ -158,7 +170,7 @@ pub async fn get_dashboard_stats(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
@@ -168,22 +180,26 @@ pub async fn get_dashboard_stats(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
-    let stats = DashboardStats {
-        today_patrols,
-        today_scans,
-        pending_tasks,
-        completed_tasks,
-    };
+    let __mobile_response = {
+        let stats = DashboardStats {
+            today_patrols,
+            today_scans,
+            pending_tasks,
+            completed_tasks,
+        };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(stats, "获取统计数据成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(stats, "获取统计数据成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -198,10 +214,21 @@ pub async fn get_dashboard_stats(
 )]
 pub async fn get_patrol_stats(
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -219,7 +246,7 @@ pub async fn get_patrol_stats(
     ))
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
@@ -229,7 +256,7 @@ pub async fn get_patrol_stats(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
@@ -239,7 +266,7 @@ pub async fn get_patrol_stats(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
@@ -249,7 +276,7 @@ pub async fn get_patrol_stats(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
@@ -259,23 +286,27 @@ pub async fn get_patrol_stats(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
-    let stats = PatrolStats {
-        total_patrols,
-        completed_patrols,
-        in_progress_patrols,
-        today_count,
-        weekly_count,
-    };
+    let __mobile_response = {
+        let stats = PatrolStats {
+            total_patrols,
+            completed_patrols,
+            in_progress_patrols,
+            today_count,
+            weekly_count,
+        };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(stats, "获取巡逻统计数据成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(stats, "获取巡逻统计数据成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -290,10 +321,21 @@ pub async fn get_patrol_stats(
 )]
 pub async fn get_task_stats(
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -311,7 +353,7 @@ pub async fn get_task_stats(
     ))
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
@@ -321,7 +363,7 @@ pub async fn get_task_stats(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
@@ -331,7 +373,7 @@ pub async fn get_task_stats(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
@@ -341,32 +383,47 @@ pub async fn get_task_stats(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
 
-    let stats = TaskStats {
-        total_tasks,
-        pending_tasks,
-        completed_tasks,
-        overdue_tasks,
-    };
+    let __mobile_response = {
+        let stats = TaskStats {
+            total_tasks,
+            pending_tasks,
+            completed_tasks,
+            overdue_tasks,
+        };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(stats, "获取任务统计数据成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(stats, "获取任务统计数据成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 最近动态（前端 GET /dashboard/activities?limit=N → 聚合最近任务记录）
 pub async fn get_recent_activities(
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ActivityParams>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -380,13 +437,15 @@ pub async fn get_recent_activities(
 
     let limit = params.limit.unwrap_or(10).clamp(1, 50);
 
-    let activities: Vec<serde_json::Value> = match sqlx::query(
+    let __mobile_response = {
+        let activities: Vec<serde_json::Value> = match sqlx::query(
         only_own_schema_query!("mobile", "SELECT id, title, status, updated_at FROM mobile.mobile_tasks WHERE deleted_at IS NULL AND (assignee = $1 OR assignee IS NULL) AND ($3::uuid IS NULL OR tenant_id = $3::uuid) ORDER BY updated_at DESC LIMIT $2"),
     )
     .bind(&user_id)
     .bind(limit)
     .bind(tenant_filter)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
+
     .await
     {
         Ok(rows) => rows
@@ -410,10 +469,13 @@ pub async fn get_recent_activities(
         }
     };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(activities, "获取最近动态成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(activities, "获取最近动态成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 // ===== 死代码端点轻量兜底（2026-10-05，页面未调用，占位实现防 404）=====
@@ -442,11 +504,22 @@ pub struct KpiParams {
 /// KPI 指标（前端 GET /dashboard/kpis?period= → 本地表聚合）
 pub async fn get_dashboard_kpis(
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<KpiParams>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -463,7 +536,7 @@ pub async fn get_dashboard_kpis(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
@@ -473,7 +546,7 @@ pub async fn get_dashboard_kpis(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
@@ -483,7 +556,7 @@ pub async fn get_dashboard_kpis(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
     .unwrap_or(0);
@@ -493,7 +566,10 @@ pub async fn get_dashboard_kpis(
         "scans": { "value": today_scans, "previousValue": 0, "trend": "stable", "trendValue": 0, "label": "今日扫码" },
         "patrols": { "value": today_patrols, "previousValue": 0, "trend": "stable", "trendValue": 0, "label": "今日巡检" }
     });
-    (StatusCode::OK, ApiResponse::success(kpis, "获取KPI成功"))
+
+    let __mobile_response = { (StatusCode::OK, ApiResponse::success(kpis, "获取KPI成功")) };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[derive(Debug, Deserialize)]
@@ -504,10 +580,21 @@ pub struct ChartParams {
 
 /// 图表数据（前端 GET /dashboard/charts → 近 7 天任务趋势）
 pub async fn get_dashboard_charts(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<ChartParams>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let tenant_filter = tenant_filter(&claims);
     let rows = sqlx::query(
         only_own_schema_query!(
@@ -516,7 +603,7 @@ pub async fn get_dashboard_charts(
         ),
     )
     .bind(tenant_filter)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
 
     let mut daily: std::collections::HashMap<String, i64> = std::collections::HashMap::new();
@@ -543,14 +630,18 @@ pub async fn get_dashboard_charts(
         data.push(daily.get(&key).copied().unwrap_or(0));
     }
 
-    let chart = serde_json::json!({
-        "labels": labels,
-        "datasets": [ { "label": "任务数", "data": data } ]
-    });
-    (
-        StatusCode::OK,
-        ApiResponse::success(chart, "获取图表数据成功"),
-    )
+    let __mobile_response = {
+        let chart = serde_json::json!({
+            "labels": labels,
+            "datasets": [ { "label": "任务数", "data": data } ]
+        });
+        (
+            StatusCode::OK,
+            ApiResponse::success(chart, "获取图表数据成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 告警列表（前端 GET /dashboard/alerts → 空列表占位，告警需告警中心接入）

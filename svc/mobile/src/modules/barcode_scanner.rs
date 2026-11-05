@@ -4,9 +4,9 @@ use axum::{
     response::IntoResponse,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
@@ -144,9 +144,20 @@ pub fn calculate_ean13_checksum(code: &str) -> Option<u8> {
 pub async fn scan_barcode(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<ScanRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -195,7 +206,7 @@ pub async fn scan_barcode(
                 c.tenant_id.and_then(|t| Uuid::parse_str(&t).ok())
             }
         });
-    let scan = match db_create_barcode_scan(&pool, tenant_id, user_id, create_data).await {
+    let scan = match db_create_barcode_scan(&mut scope, tenant_id, user_id, create_data).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("保存扫描记录失败: {}", e);
@@ -206,20 +217,24 @@ pub async fn scan_barcode(
         }
     };
 
-    let response = ScanResponse {
-        scan_id: scan.id,
-        barcode: payload.barcode,
-        barcode_type,
-        decoded_data,
-        matched_item,
-        result_action,
-        result_data,
-    };
+    let __mobile_response = {
+        let response = ScanResponse {
+            scan_id: scan.id,
+            barcode: payload.barcode,
+            barcode_type,
+            decoded_data,
+            matched_item,
+            result_action,
+            result_data,
+        };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(response, "条码扫描成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(response, "条码扫描成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 fn detect_barcode_type(barcode: &str) -> String {
@@ -323,9 +338,20 @@ pub async fn get_scan_history(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Query(params): Query<ScanHistoryQuery>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -359,7 +385,7 @@ pub async fn get_scan_history(
     };
 
     let scans = match db_get_barcode_scans(
-        &pool,
+        &mut scope,
         user_id,
         params.barcode_type.as_deref(),
         tenant_filter,
@@ -413,9 +439,20 @@ pub async fn get_scan_by_id(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
@@ -429,7 +466,7 @@ pub async fn get_scan_by_id(
     let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, result_action, result_data, scanned_at, created_at FROM mobile.barcode_scans WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"))
         .bind(id)
         .bind(tenant_filter)
-        .fetch_optional(&pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -442,27 +479,31 @@ pub async fn get_scan_by_id(
         }
     };
 
-    if let Some(row) = row {
-        let scan = match BarcodeScan::from_row(&row) {
-            Ok(s) => s,
-            Err(e) => {
-                tracing::error!("解析扫描记录失败: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    ApiResponse::server_error("解析扫描记录失败"),
-                );
-            }
-        };
-        (
-            StatusCode::OK,
-            ApiResponse::success(scan, "获取扫描记录成功"),
-        )
-    } else {
-        (
-            StatusCode::NOT_FOUND,
-            ApiResponse::not_found("扫描记录不存在"),
-        )
-    }
+    let __mobile_response = {
+        if let Some(row) = row {
+            let scan = match BarcodeScan::from_row(&row) {
+                Ok(s) => s,
+                Err(e) => {
+                    tracing::error!("解析扫描记录失败: {}", e);
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        ApiResponse::server_error("解析扫描记录失败"),
+                    );
+                }
+            };
+            (
+                StatusCode::OK,
+                ApiResponse::success(scan, "获取扫描记录成功"),
+            )
+        } else {
+            (
+                StatusCode::NOT_FOUND,
+                ApiResponse::not_found("扫描记录不存在"),
+            )
+        }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -521,9 +562,20 @@ pub async fn get_supported_barcode_types(
 pub async fn delete_scan_record(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -551,25 +603,29 @@ pub async fn delete_scan_record(
     .bind(id)
     .bind(user_id)
     .bind(Option::<Uuid>::None)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            (StatusCode::OK, ApiResponse::success((), "删除扫描记录成功"))
+    let __mobile_response = {
+        match result {
+            Ok(r) if r.rows_affected() > 0 => {
+                (StatusCode::OK, ApiResponse::success((), "删除扫描记录成功"))
+            }
+            Ok(_) => (
+                StatusCode::NOT_FOUND,
+                ApiResponse::not_found("扫描记录不存在或无权删除"),
+            ),
+            Err(e) => {
+                tracing::error!("删除扫描记录失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("删除扫描记录失败"),
+                )
+            }
         }
-        Ok(_) => (
-            StatusCode::NOT_FOUND,
-            ApiResponse::not_found("扫描记录不存在或无权删除"),
-        ),
-        Err(e) => {
-            tracing::error!("删除扫描记录失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("删除扫描记录失败"),
-            )
-        }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[cfg(test)]

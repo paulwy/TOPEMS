@@ -5,8 +5,8 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -113,8 +113,19 @@ pub async fn get_all_patrol_records(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -125,7 +136,8 @@ pub async fn get_all_patrol_records(
         }
     };
 
-    let records: Vec<PatrolRecord> = match sqlx::query_as::<_, PatrolRecord>(
+    let __mobile_response = {
+        let records: Vec<PatrolRecord> = match sqlx::query_as::<_, PatrolRecord>(
         only_own_schema_query!("mobile", "SELECT id, title, description, location_lat::float8 AS location_lat, location_lng::float8 AS location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
          FROM mobile.patrol_records 
          WHERE deleted_at IS NULL AND checked_by = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) 
@@ -133,7 +145,8 @@ pub async fn get_all_patrol_records(
     )
     .bind(Uuid::parse_str(&user_id).ok())
     .bind(tenant_filter(&claims))
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
+
     .await
     {
         Ok(r) => r,
@@ -143,10 +156,13 @@ pub async fn get_all_patrol_records(
         }
     };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(records, "获取巡逻记录成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(records, "获取巡逻记录成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -168,9 +184,20 @@ pub async fn get_patrol_record(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -181,7 +208,8 @@ pub async fn get_patrol_record(
         }
     };
 
-    let record = match sqlx::query_as::<_, PatrolRecord>(
+    let __mobile_response = {
+        let record = match sqlx::query_as::<_, PatrolRecord>(
         only_own_schema_query!("mobile", "SELECT id, title, description, location_lat::float8 AS location_lat, location_lng::float8 AS location_lng, address, patrol_type, status, checked_by, checked_at, created_at 
          FROM mobile.patrol_records 
          WHERE id = $1 AND checked_by = $2 AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)")
@@ -189,7 +217,8 @@ pub async fn get_patrol_record(
     .bind(id)
     .bind(Uuid::parse_str(&user_id).ok())
     .bind(tenant_filter(&claims))
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
+
     .await
     {
         Ok(Some(r)) => r,
@@ -202,10 +231,13 @@ pub async fn get_patrol_record(
         }
     };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(record, "获取巡逻记录成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(record, "获取巡逻记录成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -224,9 +256,20 @@ pub async fn create_patrol_record(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<CreatePatrolRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -255,41 +298,56 @@ pub async fn create_patrol_record(
     .bind(Uuid::parse_str(&user_id).ok())
     .bind(Utc::now())
     .bind(tenant_filter(&claims))
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         tracing::error!("创建巡逻记录失败: {}", e);
         return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("创建失败"));
     }
 
-    let record = PatrolRecord {
-        id: patrol_id,
-        title: payload.title,
-        description: payload.description,
-        location_lat: payload.location_lat,
-        location_lng: payload.location_lng,
-        address: payload.address,
-        patrol_type: payload.patrol_type,
-        status,
-        checked_by: Uuid::parse_str(&user_id).ok(),
-        checked_at: None,
-        created_at: Utc::now(),
-    };
+    let __mobile_response = {
+        let record = PatrolRecord {
+            id: patrol_id,
+            title: payload.title,
+            description: payload.description,
+            location_lat: payload.location_lat,
+            location_lng: payload.location_lng,
+            address: payload.address,
+            patrol_type: payload.patrol_type,
+            status,
+            checked_by: Uuid::parse_str(&user_id).ok(),
+            checked_at: None,
+            created_at: Utc::now(),
+        };
 
-    (
-        StatusCode::CREATED,
-        ApiResponse::success(record, "创建巡逻记录成功"),
-    )
+        (
+            StatusCode::CREATED,
+            ApiResponse::success(record, "创建巡逻记录成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn update_patrol_record(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdatePatrolRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -307,7 +365,7 @@ pub async fn update_patrol_record(
     .bind(id)
     .bind(Uuid::parse_str(&user_id).ok())
     .bind(tenant_filter(&claims))
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(r)) => r,
@@ -342,23 +400,36 @@ pub async fn update_patrol_record(
     .bind(id)
     .bind(Uuid::parse_str(&user_id).ok())
     .bind(tenant_filter(&claims))
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         tracing::error!("更新巡逻记录失败: {}", e);
         return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("更新失败"));
     }
 
-    (StatusCode::OK, ApiResponse::success((), "更新成功"))
+    let __mobile_response = { (StatusCode::OK, ApiResponse::success((), "更新成功")) };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn delete_patrol_record(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -375,23 +446,29 @@ pub async fn delete_patrol_record(
     .bind(id)
     .bind(Uuid::parse_str(&user_id).ok())
     .bind(tenant_filter(&claims))
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => (StatusCode::OK, ApiResponse::success((), "删除成功")),
-        Ok(_) => (
-            StatusCode::NOT_FOUND,
-            ApiResponse::not_found("巡逻记录不存在或无权删除"),
-        ),
-        Err(e) => {
-            tracing::error!("删除巡逻记录失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("删除失败"),
-            )
+    let __mobile_response = {
+        match result {
+            Ok(r) if r.rows_affected() > 0 => {
+                (StatusCode::OK, ApiResponse::success((), "删除成功"))
+            }
+            Ok(_) => (
+                StatusCode::NOT_FOUND,
+                ApiResponse::not_found("巡逻记录不存在或无权删除"),
+            ),
+            Err(e) => {
+                tracing::error!("删除巡逻记录失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("删除失败"),
+                )
+            }
         }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[cfg(test)]

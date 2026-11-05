@@ -1,8 +1,8 @@
 use chrono::Utc;
-use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
     AfterSalesTicketCreatedPayload, EhsAccidentReportedPayload, EhsHazardReportedPayload, Event,
     EventPublisher, EventResult, EventSubscriber, EventType, PmProjectCreatedPayload,
@@ -14,12 +14,12 @@ type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 pub struct MobileEventHandlers {
-    pub db: PgPool,
+    pub db: Db,
     pub event_publisher: Option<Arc<EventPublisher>>,
 }
 
 impl MobileEventHandlers {
-    pub fn new(db: PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Self {
+    pub fn new(db: Db, event_publisher: Option<Arc<EventPublisher>>) -> Self {
         Self {
             db,
             event_publisher,
@@ -86,6 +86,16 @@ impl MobileEventHandlers {
     ) -> Result<Option<uuid::Uuid>, TopemsError> {
         let now = Utc::now();
         let notification_id = uuid::Uuid::new_v4();
+        let mut scope = match self.db.scope().await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::error!("[mobile] 数据库作用域创建失败: {}", e);
+                return Err(TopemsError::BusinessLogic(format!(
+                    "推送通知创建失败: {}",
+                    e
+                )));
+            }
+        };
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("mobile", "INSERT INTO mobile.mobile_push_notifications (id, notification_type, title, content, priority, source_type, source_id, target_user, status, push_time, tenant_id)
@@ -102,11 +112,12 @@ impl MobileEventHandlers {
         .bind(source_id)
         .bind(target_user.unwrap_or("all"))
         .bind(now)
-        .fetch_optional(&self.db)
+        .fetch_optional(&mut scope)
         .await;
 
         match result {
             Ok(Some(id)) => {
+                let _ = scope.commit().await;
                 tracing::info!(
                     "[mobile] 推送通知创建成功: type={}, title={}, id={}",
                     notification_type,
@@ -116,6 +127,7 @@ impl MobileEventHandlers {
                 Ok(Some(id))
             }
             Ok(None) => {
+                let _ = scope.commit().await;
                 tracing::info!(
                     "[mobile] 推送通知已存在（幂等跳过）: source_type={}, source_id={}",
                     source_type,
@@ -124,6 +136,7 @@ impl MobileEventHandlers {
                 Ok(None)
             }
             Err(e) => {
+                let _ = scope.rollback().await;
                 tracing::error!("[mobile] 推送通知创建失败: {}", e);
                 Err(TopemsError::BusinessLogic(format!(
                     "推送通知创建失败: {}",
@@ -524,7 +537,7 @@ impl MobileEventHandlers {
 }
 
 pub async fn start_event_subscribers(
-    db: PgPool,
+    db: Db,
     event_publisher: Option<Arc<EventPublisher>>,
 ) -> Result<(), TopemsError> {
     let handlers = MobileEventHandlers::new(db, event_publisher);

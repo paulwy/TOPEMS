@@ -5,8 +5,8 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
@@ -49,8 +49,19 @@ pub async fn get_photos(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -77,7 +88,7 @@ pub async fn get_photos(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(p) => p,
@@ -87,7 +98,10 @@ pub async fn get_photos(
         }
     };
 
-    (StatusCode::OK, ApiResponse::success(photos, "获取照片成功"))
+    let __mobile_response =
+        { (StatusCode::OK, ApiResponse::success(photos, "获取照片成功")) };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -104,8 +118,19 @@ pub async fn get_audio(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -124,7 +149,8 @@ pub async fn get_audio(
             .and_then(|s| Uuid::parse_str(s).ok())
     };
 
-    let audio_files: Vec<MediaFile> = match sqlx::query_as::<_, MediaFile>(
+    let __mobile_response = {
+        let audio_files: Vec<MediaFile> = match sqlx::query_as::<_, MediaFile>(
         only_own_schema_query!("mobile", "SELECT id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, uploaded_by_name, description, tags, created_at
          FROM mobile.media_files
          WHERE deleted_at IS NULL AND file_type = 'audio' AND uploaded_by = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
@@ -132,7 +158,8 @@ pub async fn get_audio(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
+
     .await
     {
         Ok(a) => a,
@@ -142,10 +169,13 @@ pub async fn get_audio(
         }
     };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(audio_files, "获取音频成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(audio_files, "获取音频成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -162,8 +192,19 @@ pub async fn get_video(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -190,7 +231,7 @@ pub async fn get_video(
     )
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -200,7 +241,10 @@ pub async fn get_video(
         }
     };
 
-    (StatusCode::OK, ApiResponse::success(videos, "获取视频成功"))
+    let __mobile_response =
+        { (StatusCode::OK, ApiResponse::success(videos, "获取视频成功")) };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -221,10 +265,21 @@ pub async fn upload_media(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(file_type): Path<String>,
     mut multipart: Multipart,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -320,31 +375,35 @@ pub async fn upload_media(
     .bind(&description)
     .bind(Utc::now())
     .bind(tenant_filter.unwrap_or(Uuid::nil()))
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         tracing::error!("上传媒体文件失败: {}", e);
         return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("上传失败"));
     }
 
-    let media_file = MediaFile {
-        id: media_id,
-        file_name,
-        file_type,
-        file_url: Some(file_url),
-        file_size,
-        mime_type,
-        uploaded_by: user_id,
-        uploaded_by_name: None,
-        description,
-        tags: None,
-        created_at: Utc::now(),
-    };
+    let __mobile_response = {
+        let media_file = MediaFile {
+            id: media_id,
+            file_name,
+            file_type,
+            file_url: Some(file_url),
+            file_size,
+            mime_type,
+            uploaded_by: user_id,
+            uploaded_by_name: None,
+            description,
+            tags: None,
+            created_at: Utc::now(),
+        };
 
-    (
-        StatusCode::CREATED,
-        ApiResponse::success(media_file, "上传成功"),
-    )
+        (
+            StatusCode::CREATED,
+            ApiResponse::success(media_file, "上传成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -364,9 +423,20 @@ pub async fn upload_media(
 pub async fn delete_media(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path((file_type, id)): Path<(String, Uuid)>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -383,24 +453,30 @@ pub async fn delete_media(
     .bind(id)
     .bind(&file_type)
     .bind(&user_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => (StatusCode::OK, ApiResponse::success((), "删除成功")),
-        Ok(_) => (
-            // 数据不存在语义：HTTP 200 + 内层 code 404。
-            StatusCode::OK,
-            ApiResponse::not_found("文件不存在或无权删除"),
-        ),
-        Err(e) => {
-            tracing::error!("删除媒体文件失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("删除失败"),
-            )
+    let __mobile_response = {
+        match result {
+            Ok(r) if r.rows_affected() > 0 => {
+                (StatusCode::OK, ApiResponse::success((), "删除成功"))
+            }
+            Ok(_) => (
+                // 数据不存在语义：HTTP 200 + 内层 code 404。
+                StatusCode::OK,
+                ApiResponse::not_found("文件不存在或无权删除"),
+            ),
+            Err(e) => {
+                tracing::error!("删除媒体文件失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("删除失败"),
+                )
+            }
         }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[cfg(test)]

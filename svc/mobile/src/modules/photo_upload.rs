@@ -4,8 +4,8 @@ use axum::{
     response::IntoResponse,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
@@ -89,9 +89,20 @@ pub struct UploadProgressResponse {
 pub async fn upload_photo(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     mut multipart: Multipart,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -192,7 +203,7 @@ pub async fn upload_photo(
     };
 
     let tenant_id = Uuid::new_v4();
-    let upload = match db_create_photo_upload(&pool, tenant_id, user_id, create_data).await {
+    let upload = match db_create_photo_upload(&mut scope, tenant_id, user_id, create_data).await {
         Ok(u) => u,
         Err(e) => {
             tracing::error!("创建上传记录失败: {}", e);
@@ -206,7 +217,7 @@ pub async fn upload_photo(
     let thumbnail_url = Some(format!("/photos/{}/thumbnail", upload.id));
 
     if let Err(e) = db_update_photo_upload_status(
-        &pool,
+        &mut scope,
         upload.id,
         "completed",
         100,
@@ -218,18 +229,22 @@ pub async fn upload_photo(
         tracing::error!("更新上传状态失败: {}", e);
     }
 
-    let response = PhotoUploadResponse {
-        upload_id: upload.id,
-        file_path: upload.file_path,
-        thumbnail_url,
-        status: "completed".to_string(),
-        message: "上传成功".to_string(),
-    };
+    let __mobile_response = {
+        let response = PhotoUploadResponse {
+            upload_id: upload.id,
+            file_path: upload.file_path,
+            thumbnail_url,
+            status: "completed".to_string(),
+            message: "上传成功".to_string(),
+        };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(response, "照片上传成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(response, "照片上传成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -245,9 +260,20 @@ pub async fn upload_photo(
 pub async fn batch_upload_photos(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<BatchUploadRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -287,11 +313,11 @@ pub async fn batch_upload_photos(
         };
 
         let tenant_id = Uuid::new_v4();
-        match db_create_photo_upload(&pool, tenant_id, user_id, create_data).await {
+        match db_create_photo_upload(&mut scope, tenant_id, user_id, create_data).await {
             Ok(upload) => {
                 let thumbnail_url = Some(format!("/photos/{}/thumbnail", upload.id));
                 let _ = db_update_photo_upload_status(
-                    &pool,
+                    &mut scope,
                     upload.id,
                     "completed",
                     100,
@@ -323,16 +349,20 @@ pub async fn batch_upload_photos(
         }
     }
 
-    let response = BatchUploadResponse {
-        success_count,
-        failed_count,
-        results,
-    };
+    let __mobile_response = {
+        let response = BatchUploadResponse {
+            success_count,
+            failed_count,
+            results,
+        };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(response, "批量上传完成"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(response, "批量上传完成"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -354,9 +384,20 @@ pub async fn batch_upload_photos(
 pub async fn get_photo_list(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Query(params): Query<PhotoListQuery>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -406,7 +447,7 @@ pub async fn get_photo_list(
         ))
         .bind(user_id)
     };
-    let rows = match query.fetch_all(&pool).await {
+    let rows = match query.fetch_all(&mut scope).await {
         Ok(rows) => rows,
         Err(e) => {
             tracing::error!("获取照片列表失败: {}", e);
@@ -457,9 +498,20 @@ pub struct PhotoListQuery {
 pub async fn get_photo_by_id(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
     // 根因：旧 SELECT 引用了不存在的 error_message 列，且列不全导致 from_row 失败。
@@ -472,7 +524,7 @@ pub async fn get_photo_by_id(
          FROM mobile.photo_uploads WHERE id = $1 AND deleted_at IS NULL"
     ))
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(r) => r,
@@ -485,23 +537,27 @@ pub async fn get_photo_by_id(
         }
     };
 
-    if let Some(row) = row {
-        let photo = match PhotoUpload::from_row(&row) {
-            Ok(p) => p,
-            Err(e) => {
-                tracing::error!("解析照片失败: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    ApiResponse::server_error("解析照片失败"),
-                );
-            }
-        };
-        (StatusCode::OK, ApiResponse::success(photo, "获取照片成功"))
-    } else {
-        // 数据不存在语义：HTTP 200 + 内层 code 404（与 announcements 约定一致），
-        // 避免裸 HTTP 404 被前端契约探测判为路由缺失。
-        (StatusCode::OK, ApiResponse::not_found("照片不存在"))
-    }
+    let __mobile_response = {
+        if let Some(row) = row {
+            let photo = match PhotoUpload::from_row(&row) {
+                Ok(p) => p,
+                Err(e) => {
+                    tracing::error!("解析照片失败: {}", e);
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        ApiResponse::server_error("解析照片失败"),
+                    );
+                }
+            };
+            (StatusCode::OK, ApiResponse::success(photo, "获取照片成功"))
+        } else {
+            // 数据不存在语义：HTTP 200 + 内层 code 404（与 announcements 约定一致），
+            // 避免裸 HTTP 404 被前端契约探测判为路由缺失。
+            (StatusCode::OK, ApiResponse::not_found("照片不存在"))
+        }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -521,9 +577,20 @@ pub async fn get_upload_progress(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
     let row = match sqlx::query(only_own_schema_query!(
@@ -532,7 +599,7 @@ pub async fn get_upload_progress(
     ))
     .bind(id)
     .bind(tenant_filter(&claims))
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(r) => r,
@@ -545,32 +612,47 @@ pub async fn get_upload_progress(
         }
     };
 
-    if let Some(row) = row {
-        let response = UploadProgressResponse {
-            upload_id: id,
-            progress: row.try_get("upload_progress").unwrap_or(0),
-            status: row
-                .try_get("upload_status")
-                .unwrap_or("unknown".to_string()),
-            file_url: row.try_get("file_path").ok(),
-        };
-        (
-            StatusCode::OK,
-            ApiResponse::success(response, "获取上传进度成功"),
-        )
-    } else {
-        // 数据不存在语义：HTTP 200 + 内层 code 404。
-        (StatusCode::OK, ApiResponse::not_found("上传记录不存在"))
-    }
+    let __mobile_response = {
+        if let Some(row) = row {
+            let response = UploadProgressResponse {
+                upload_id: id,
+                progress: row.try_get("upload_progress").unwrap_or(0),
+                status: row
+                    .try_get("upload_status")
+                    .unwrap_or("unknown".to_string()),
+                file_url: row.try_get("file_path").ok(),
+            };
+            (
+                StatusCode::OK,
+                ApiResponse::success(response, "获取上传进度成功"),
+            )
+        } else {
+            // 数据不存在语义：HTTP 200 + 内层 code 404。
+            (StatusCode::OK, ApiResponse::not_found("上传记录不存在"))
+        }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn delete_photo(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -598,26 +680,30 @@ pub async fn delete_photo(
     .bind(id)
     .bind(user_id)
     .bind(tenant_filter(&claims))
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            (StatusCode::OK, ApiResponse::success((), "删除照片成功"))
+    let __mobile_response = {
+        match result {
+            Ok(r) if r.rows_affected() > 0 => {
+                (StatusCode::OK, ApiResponse::success((), "删除照片成功"))
+            }
+            Ok(_) => (
+                // 数据不存在语义：HTTP 200 + 内层 code 404。
+                StatusCode::OK,
+                ApiResponse::not_found("照片不存在或无权删除"),
+            ),
+            Err(e) => {
+                tracing::error!("删除照片失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("删除照片失败"),
+                )
+            }
         }
-        Ok(_) => (
-            // 数据不存在语义：HTTP 200 + 内层 code 404。
-            StatusCode::OK,
-            ApiResponse::not_found("照片不存在或无权删除"),
-        ),
-        Err(e) => {
-            tracing::error!("删除照片失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("删除照片失败"),
-            )
-        }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[cfg(test)]

@@ -17,12 +17,15 @@ use utoipa::OpenApi;
 use topems_shared_auth::auth::auth_middleware;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
-use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
+use topems_shared_bootstrap::{
+    bootstrap_service_shared, resolve_port, run, Application, ServiceConfig,
+};
 use topems_shared_core::api_version::{create_api_info_router, register_routes_with_legacy_alias};
 use topems_shared_core::cors::create_cors_layer;
 use topems_shared_core::logging::request_context_middleware;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::rls::rls_middleware;
+use topems_shared_db::scope::Db;
 use topems_shared_observability::telemetry::telemetry_middleware;
 
 use db::repository::*;
@@ -32,8 +35,6 @@ use shared::AppState;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    std::env::set_var("SEARCH_PATH", "mobile, public, shared");
-
     let config = ServiceConfig {
         name: "topems-mobile",
         port: 8070,
@@ -46,7 +47,7 @@ async fn main() -> Result<()> {
         legacy_prefixes: &["/api/core/mobile/v1"],
         init_telemetry: true,
     };
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_shared(&config).await?;
 
     // Mobile 专属初始化：Schema 防御（C-1：自建 DDL 已移除，迁移权威唯一仲裁）
     if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(
@@ -57,8 +58,11 @@ async fn main() -> Result<()> {
         tracing::error!("[mobile] Schema 防御检查失败: {:?}", e);
     }
 
-    if let Err(e) =
-        event_handlers::start_event_subscribers(ctx.db.clone(), ctx.event_publisher.clone()).await
+    if let Err(e) = event_handlers::start_event_subscribers(
+        Db::new(ctx.db.clone(), "mobile, public, shared"),
+        ctx.event_publisher.clone(),
+    )
+    .await
     {
         tracing::warn!("⚠️ MOBILE 事件订阅者启动失败: {}", e);
     }
@@ -76,7 +80,7 @@ async fn main() -> Result<()> {
     ) = crate::shared::build_service_clients(&jwt_secret).await;
     let app_state = AppState {
         auth_state: ctx.auth_state.clone(),
-        pool: ctx.db.clone(),
+        pool: Db::new(ctx.db.clone(), "mobile, public, shared"),
         event_publisher: ctx.event_publisher.clone(),
         wms_client,
         hrm_client,
@@ -112,11 +116,11 @@ async fn main() -> Result<()> {
     let protected_routes = protected_routes
         .layer(axum::middleware::from_fn(request_context_middleware))
         .layer(axum::middleware::from_fn_with_state(
-            app_state.pool.clone(),
+            ctx.db.clone(),
             rls_middleware,
         ))
         .layer(axum::middleware::from_fn_with_state(
-            app_state.pool.clone(),
+            ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn(require_permission(
@@ -191,13 +195,24 @@ async fn health_check() -> ServiceHealth {
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn list_mobile_tasks(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    let records = match db_get_mobile_tasks(&state.pool, None).await {
+    let mut scope = match state.pool.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("获取移动任务失败: {}", e);
+            return Json(ApiResponse::success(
+                json!({ "items": Vec::<serde_json::Value>::new(), "total": 0 }),
+                "获取移动任务成功",
+            ));
+        }
+    };
+    let records = match db_get_mobile_tasks(&mut scope, None).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("获取移动任务失败: {}", e);
             vec![]
         }
     };
+    let _ = scope.commit().await;
     let total = records.len() as i64;
     Json(ApiResponse::success(
         json!({ "items": records, "total": total }),

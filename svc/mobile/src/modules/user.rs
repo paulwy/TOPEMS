@@ -5,10 +5,11 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{postgres::PgRow, PgPool, Row};
+use sqlx::{postgres::PgRow, Row};
 use std::fs;
 use std::path::Path;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
@@ -111,8 +112,19 @@ pub async fn get_profile(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -134,10 +146,11 @@ pub async fn get_profile(
     };
     let tenant_filter = tenant_filter(&claims);
 
-    let profile = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, username, nickname, phone, email, avatar_url, department, position, created_at, updated_at FROM mobile.mobile_users WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"))
+    let __mobile_response = {
+        let profile = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, username, nickname, phone, email, avatar_url, department, position, created_at, updated_at FROM mobile.mobile_users WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"))
         .bind(user_id)
         .bind(tenant_filter)
-        .fetch_optional(&pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(row)) => match UserProfile::from_row(&row) {
@@ -156,19 +169,33 @@ pub async fn get_profile(
         }
     };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(profile, "获取用户信息成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(profile, "获取用户信息成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn update_profile(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<UpdateProfileRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -199,22 +226,26 @@ pub async fn update_profile(
         .bind(payload.position)
         .bind(user_id)
         .bind(tenant_filter)
-        .execute(&pool)
+        .execute(&mut scope)
         .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            (StatusCode::OK, ApiResponse::success((), "更新用户信息成功"))
+    let __mobile_response = {
+        match result {
+            Ok(r) if r.rows_affected() > 0 => {
+                (StatusCode::OK, ApiResponse::success((), "更新用户信息成功"))
+            }
+            Ok(_) => (StatusCode::NOT_FOUND, ApiResponse::not_found("用户不存在")),
+            Err(e) => {
+                tracing::error!("更新用户信息失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("内部服务器错误"),
+                )
+            }
         }
-        Ok(_) => (StatusCode::NOT_FOUND, ApiResponse::not_found("用户不存在")),
-        Err(e) => {
-            tracing::error!("更新用户信息失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("内部服务器错误"),
-            )
-        }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -236,9 +267,20 @@ pub async fn upload_avatar(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<UploadAvatarRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -298,22 +340,26 @@ pub async fn upload_avatar(
     .bind(&avatar_url)
     .bind(user_id)
     .bind(tenant_filter)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(_) => (
-            StatusCode::OK,
-            ApiResponse::success(avatar_url, "上传头像成功"),
-        ),
-        Err(e) => {
-            tracing::error!("更新头像URL失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("更新头像URL失败"),
-            )
+    let __mobile_response = {
+        match result {
+            Ok(_) => (
+                StatusCode::OK,
+                ApiResponse::success(avatar_url, "上传头像成功"),
+            ),
+            Err(e) => {
+                tracing::error!("更新头像URL失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("更新头像URL失败"),
+                )
+            }
         }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
@@ -426,9 +472,20 @@ pub async fn get_user_by_id(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -446,32 +503,36 @@ pub async fn get_user_by_id(
     ))
     .bind(id)
     .bind(tenant_filter)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
 
-    match row {
-        Ok(Some(r)) => match UserProfile::from_row(&r) {
-            Ok(profile) => (
-                StatusCode::OK,
-                ApiResponse::success(profile, "获取用户详情成功"),
-            ),
+    let __mobile_response = {
+        match row {
+            Ok(Some(r)) => match UserProfile::from_row(&r) {
+                Ok(profile) => (
+                    StatusCode::OK,
+                    ApiResponse::success(profile, "获取用户详情成功"),
+                ),
+                Err(e) => {
+                    tracing::error!("解析用户详情失败: {}", e);
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        ApiResponse::server_error("解析用户详情失败"),
+                    )
+                }
+            },
+            Ok(None) => (StatusCode::NOT_FOUND, ApiResponse::not_found("用户不存在")),
             Err(e) => {
-                tracing::error!("解析用户详情失败: {}", e);
+                tracing::error!("查询用户详情失败: {}", e);
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    ApiResponse::server_error("解析用户详情失败"),
+                    ApiResponse::server_error("查询用户详情失败"),
                 )
             }
-        },
-        Ok(None) => (StatusCode::NOT_FOUND, ApiResponse::not_found("用户不存在")),
-        Err(e) => {
-            tracing::error!("查询用户详情失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("查询用户详情失败"),
-            )
         }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -490,9 +551,20 @@ pub async fn list_users(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Query(params): Query<ListUsersParams>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -524,31 +596,35 @@ pub async fn list_users(
     .bind(page_size)
     .bind(offset)
     .bind(tenant_filter)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
 
-    match rows {
-        Ok(rows) => {
-            let users: Vec<UserProfile> = rows
-                .iter()
-                .filter_map(|r| UserProfile::from_row(r).ok())
-                .collect();
-            (
-                StatusCode::OK,
-                ApiResponse::success(
-                    serde_json::json!({ "items": users, "total": users.len() }),
-                    "获取用户列表成功",
-                ),
-            )
+    let __mobile_response = {
+        match rows {
+            Ok(rows) => {
+                let users: Vec<UserProfile> = rows
+                    .iter()
+                    .filter_map(|r| UserProfile::from_row(r).ok())
+                    .collect();
+                (
+                    StatusCode::OK,
+                    ApiResponse::success(
+                        serde_json::json!({ "items": users, "total": users.len() }),
+                        "获取用户列表成功",
+                    ),
+                )
+            }
+            Err(e) => {
+                tracing::error!("查询用户列表失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("查询用户列表失败"),
+                )
+            }
         }
-        Err(e) => {
-            tracing::error!("查询用户列表失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("查询用户列表失败"),
-            )
-        }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 部门成员（前端 GET /user/department/{departmentId} → 按 department 过滤）
@@ -556,9 +632,20 @@ pub async fn get_department_members(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     axum::extract::Path(department_id): axum::extract::Path<String>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -577,28 +664,32 @@ pub async fn get_department_members(
     ))
     .bind(&department_id)
     .bind(tenant_filter)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
 
-    match rows {
-        Ok(rows) => {
-            let users: Vec<UserProfile> = rows
-                .iter()
-                .filter_map(|r| UserProfile::from_row(r).ok())
-                .collect();
-            (
-                StatusCode::OK,
-                ApiResponse::success(users, "获取部门成员成功"),
-            )
+    let __mobile_response = {
+        match rows {
+            Ok(rows) => {
+                let users: Vec<UserProfile> = rows
+                    .iter()
+                    .filter_map(|r| UserProfile::from_row(r).ok())
+                    .collect();
+                (
+                    StatusCode::OK,
+                    ApiResponse::success(users, "获取部门成员成功"),
+                )
+            }
+            Err(e) => {
+                tracing::error!("查询部门成员失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("查询部门成员失败"),
+                )
+            }
         }
-        Err(e) => {
-            tracing::error!("查询部门成员失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("查询部门成员失败"),
-            )
-        }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 更新用户状态（前端 PUT /user/{id}/status → mobile_users 无 status 字段，占位校验存在性）
@@ -606,10 +697,21 @@ pub async fn update_user_status(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -628,26 +730,30 @@ pub async fn update_user_status(
     ))
     .bind(id)
     .bind(tenant_filter)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
 
-    match exists {
-        Ok(Some(_)) => (
-            StatusCode::OK,
-            ApiResponse::success(
-                serde_json::json!({ "id": id, "status": status }),
-                "用户状态已更新（占位实现，待 IAM 状态字段接入）",
+    let __mobile_response = {
+        match exists {
+            Ok(Some(_)) => (
+                StatusCode::OK,
+                ApiResponse::success(
+                    serde_json::json!({ "id": id, "status": status }),
+                    "用户状态已更新（占位实现，待 IAM 状态字段接入）",
+                ),
             ),
-        ),
-        Ok(None) => (StatusCode::NOT_FOUND, ApiResponse::not_found("用户不存在")),
-        Err(e) => {
-            tracing::error!("查询用户失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("查询用户失败"),
-            )
+            Ok(None) => (StatusCode::NOT_FOUND, ApiResponse::not_found("用户不存在")),
+            Err(e) => {
+                tracing::error!("查询用户失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("查询用户失败"),
+                )
+            }
         }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 用户权限（前端 GET /user/permissions → 移动端基础权限集）

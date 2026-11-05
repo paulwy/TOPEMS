@@ -4,8 +4,8 @@ use axum::{
     response::IntoResponse,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
@@ -72,9 +72,20 @@ pub struct CreatePushTemplateRequest {
 pub async fn register_device(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<CreatePushDevice>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -115,7 +126,7 @@ pub async fn register_device(
                 c.tenant_id.and_then(|t| Uuid::parse_str(&t).ok())
             }
         });
-    let device = match db_register_push_device(&pool, tenant_id, user_id, payload).await {
+    let device = match db_register_push_device(&mut scope, tenant_id, user_id, payload).await {
         Ok(d) => d,
         Err(e) => {
             tracing::error!("注册设备失败: {}", e);
@@ -126,7 +137,10 @@ pub async fn register_device(
         }
     };
 
-    (StatusCode::OK, ApiResponse::success(device, "设备注册成功"))
+    let __mobile_response =
+        { (StatusCode::OK, ApiResponse::success(device, "设备注册成功")) };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -142,8 +156,19 @@ pub async fn register_device(
 pub async fn get_devices(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -164,21 +189,25 @@ pub async fn get_devices(
         }
     };
 
-    let devices = match db_get_push_devices(&pool, Some(user_id)).await {
-        Ok(d) => d,
-        Err(e) => {
-            tracing::error!("获取设备列表失败: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("获取设备列表失败"),
-            );
-        }
-    };
+    let __mobile_response = {
+        let devices = match db_get_push_devices(&mut scope, Some(user_id)).await {
+            Ok(d) => d,
+            Err(e) => {
+                tracing::error!("获取设备列表失败: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("获取设备列表失败"),
+                );
+            }
+        };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(devices, "获取设备列表成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(devices, "获取设备列表成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -199,16 +228,27 @@ pub async fn get_devices(
 pub async fn send_notification(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<SendNotificationRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
     let mut title = payload.title.clone();
     let mut body = payload.body.clone();
 
     if let Some(template_id) = payload.template_id {
-        let templates = match db_get_push_templates(&pool).await {
+        let templates = match db_get_push_templates(&mut scope).await {
             Ok(t) => t,
             Err(e) => {
                 tracing::error!("获取模板失败: {}", e);
@@ -248,7 +288,7 @@ pub async fn send_notification(
                 c.tenant_id.and_then(|t| Uuid::parse_str(&t).ok())
             }
         });
-    let notification = match db_create_push_notification(&pool, tenant_id, create_data).await {
+    let notification = match db_create_push_notification(&mut scope, tenant_id, create_data).await {
         Ok(n) => n,
         Err(e) => {
             tracing::error!("创建推送通知失败: {}", e);
@@ -262,22 +302,26 @@ pub async fn send_notification(
     let target_count = payload.target_ids.len() as i32;
 
     if let Err(e) =
-        db_update_push_notification_stats(&pool, notification.id, target_count, 0, 0).await
+        db_update_push_notification_stats(&mut scope, notification.id, target_count, 0, 0).await
     {
         tracing::error!("更新推送统计失败: {}", e);
     }
 
-    let response = SendNotificationResponse {
-        notification_id: notification.id,
-        status: "sent".to_string(),
-        sent_count: target_count,
-        message: "推送通知已发送".to_string(),
-    };
+    let __mobile_response = {
+        let response = SendNotificationResponse {
+            notification_id: notification.id,
+            status: "sent".to_string(),
+            sent_count: target_count,
+            message: "推送通知已发送".to_string(),
+        };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(response, "推送通知已发送"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(response, "推送通知已发送"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 fn render_template(template: &str, params: &serde_json::Value) -> String {
@@ -310,12 +354,23 @@ fn render_template(template: &str, params: &serde_json::Value) -> String {
 pub async fn send_broadcast(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<SendNotificationRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
-    let devices = match db_get_push_devices(&pool, None).await {
+    let devices = match db_get_push_devices(&mut scope, None).await {
         Ok(d) => d,
         Err(e) => {
             tracing::error!("获取所有设备失败: {}", e);
@@ -332,7 +387,7 @@ pub async fn send_broadcast(
     let mut body = payload.body.clone();
 
     if let Some(template_id) = payload.template_id {
-        let templates = match db_get_push_templates(&pool).await {
+        let templates = match db_get_push_templates(&mut scope).await {
             Ok(t) => t,
             Err(e) => {
                 tracing::error!("获取模板失败: {}", e);
@@ -372,7 +427,7 @@ pub async fn send_broadcast(
                 c.tenant_id.and_then(|t| Uuid::parse_str(&t).ok())
             }
         });
-    let notification = match db_create_push_notification(&pool, tenant_id, create_data).await {
+    let notification = match db_create_push_notification(&mut scope, tenant_id, create_data).await {
         Ok(n) => n,
         Err(e) => {
             tracing::error!("创建推送通知失败: {}", e);
@@ -386,31 +441,46 @@ pub async fn send_broadcast(
     let target_count = target_ids.len() as i32;
 
     if let Err(e) =
-        db_update_push_notification_stats(&pool, notification.id, target_count, 0, 0).await
+        db_update_push_notification_stats(&mut scope, notification.id, target_count, 0, 0).await
     {
         tracing::error!("更新推送统计失败: {}", e);
     }
 
-    let response = SendNotificationResponse {
-        notification_id: notification.id,
-        status: "sent".to_string(),
-        sent_count: target_count,
-        message: "广播推送已发送".to_string(),
-    };
+    let __mobile_response = {
+        let response = SendNotificationResponse {
+            notification_id: notification.id,
+            status: "sent".to_string(),
+            sent_count: target_count,
+            message: "广播推送已发送".to_string(),
+        };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(response, "广播推送已发送"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(response, "广播推送已发送"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn get_notification_list(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Query(params): Query<NotificationListQuery>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
     let page = params.page.unwrap_or(1);
@@ -422,7 +492,7 @@ pub async fn get_notification_list(
             .bind(size)
             .bind(offset);
 
-    let items = match query.fetch_all(&pool).await {
+    let items = match query.fetch_all(&mut scope).await {
         Ok(rows) => rows
             .into_iter()
             .filter_map(|row| PushNotification::from_row(&row).ok())
@@ -441,7 +511,7 @@ pub async fn get_notification_list(
         "SELECT COUNT(*) FROM mobile.push_notifications WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
     .bind(tenant_filter(&claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(c) => c,
@@ -477,8 +547,19 @@ pub async fn get_notification_stats(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
     let total_sent: i64 = match sqlx::query_scalar(only_own_schema_query!(
@@ -486,7 +567,7 @@ pub async fn get_notification_stats(
         "SELECT COALESCE(SUM(sent_count), 0) FROM mobile.push_notifications WHERE status = 'sent' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
     .bind(tenant_filter(&claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(c) => c,
@@ -497,7 +578,7 @@ pub async fn get_notification_stats(
         only_own_schema_query!("mobile", "SELECT COALESCE(SUM(delivered_count), 0) FROM mobile.push_notifications WHERE status = 'sent' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"),
     )
     .bind(tenant_filter(&claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(c) => c,
@@ -508,7 +589,7 @@ pub async fn get_notification_stats(
         only_own_schema_query!("mobile", "SELECT COALESCE(SUM(clicked_count), 0) FROM mobile.push_notifications WHERE status = 'sent' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"),
     )
     .bind(tenant_filter(&claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(c) => c,
@@ -527,18 +608,22 @@ pub async fn get_notification_stats(
         0.0
     };
 
-    let stats = PushStats {
-        total_sent,
-        delivered_count,
-        clicked_count,
-        delivery_rate,
-        click_rate,
-    };
+    let __mobile_response = {
+        let stats = PushStats {
+            total_sent,
+            delivered_count,
+            clicked_count,
+            delivery_rate,
+            click_rate,
+        };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(stats, "获取推送统计成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(stats, "获取推送统计成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -554,33 +639,59 @@ pub async fn get_notification_stats(
 pub async fn get_templates(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
-    let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
-
-    let templates = match db_get_push_templates(&pool).await {
-        Ok(t) => t,
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
         Err(e) => {
-            tracing::error!("获取模板列表失败: {}", e);
+            tracing::error!("数据库作用域创建失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("获取模板列表失败"),
+                ApiResponse::server_error("数据库作用域创建失败"),
             );
         }
     };
+    let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(templates, "获取模板列表成功"),
-    )
+    let __mobile_response = {
+        let templates = match db_get_push_templates(&mut scope).await {
+            Ok(t) => t,
+            Err(e) => {
+                tracing::error!("获取模板列表失败: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("获取模板列表失败"),
+                );
+            }
+        };
+
+        (
+            StatusCode::OK,
+            ApiResponse::success(templates, "获取模板列表成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn create_template(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<CreatePushTemplateRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
     let tenant_id: Option<Uuid> = extract_bearer_token(&headers)
@@ -592,31 +703,35 @@ pub async fn create_template(
                 c.tenant_id.and_then(|t| Uuid::parse_str(&t).ok())
             }
         });
-    let template = match db_create_push_template(
-        &pool,
-        tenant_id,
-        &payload.name,
-        &payload.title_template,
-        &payload.body_template,
-        &payload.notification_type,
-        payload.description.as_deref(),
-    )
-    .await
-    {
-        Ok(t) => t,
-        Err(e) => {
-            tracing::error!("创建模板失败: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("创建模板失败"),
-            );
-        }
-    };
+    let __mobile_response = {
+        let template = match db_create_push_template(
+            &mut scope,
+            tenant_id,
+            &payload.name,
+            &payload.title_template,
+            &payload.body_template,
+            &payload.notification_type,
+            payload.description.as_deref(),
+        )
+        .await
+        {
+            Ok(t) => t,
+            Err(e) => {
+                tracing::error!("创建模板失败: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("创建模板失败"),
+                );
+            }
+        };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(template, "创建模板成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(template, "创建模板成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -635,14 +750,25 @@ pub async fn create_template(
 pub async fn get_notification_by_id(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
     let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000'::uuid) AS tenant_id, title, body, notification_type, data, target_type, target_ids, status, sent_count, delivered_count, clicked_count, created_at, sent_at FROM mobile.push_notifications WHERE id = $1"))
         .bind(id)
-        .fetch_optional(&pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(r) => r,
@@ -655,25 +781,29 @@ pub async fn get_notification_by_id(
         }
     };
 
-    if let Some(row) = row {
-        let notification = match PushNotification::from_row(&row) {
-            Ok(n) => n,
-            Err(e) => {
-                tracing::error!("解析推送通知失败: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    ApiResponse::server_error("解析推送通知失败"),
-                );
-            }
-        };
-        (
-            StatusCode::OK,
-            ApiResponse::success(notification, "获取推送通知成功"),
-        )
-    } else {
-        // 数据不存在语义：HTTP 200 + 内层 code 404。
-        (StatusCode::OK, ApiResponse::not_found("推送通知不存在"))
-    }
+    let __mobile_response = {
+        if let Some(row) = row {
+            let notification = match PushNotification::from_row(&row) {
+                Ok(n) => n,
+                Err(e) => {
+                    tracing::error!("解析推送通知失败: {}", e);
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        ApiResponse::server_error("解析推送通知失败"),
+                    );
+                }
+            };
+            (
+                StatusCode::OK,
+                ApiResponse::success(notification, "获取推送通知成功"),
+            )
+        } else {
+            // 数据不存在语义：HTTP 200 + 内层 code 404。
+            (StatusCode::OK, ApiResponse::not_found("推送通知不存在"))
+        }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[cfg(test)]

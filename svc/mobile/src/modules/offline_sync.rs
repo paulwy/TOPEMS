@@ -5,9 +5,9 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
+use topems_shared_db::scope::{Db, ScopedTxn};
 use uuid::Uuid;
 
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
@@ -138,9 +138,20 @@ pub fn compute_pagination_offset(page: i64, size: i64) -> i64 {
 pub async fn sync_data(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<SyncRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -167,15 +178,21 @@ pub async fn sync_data(
 
     for op in payload.operations {
         let tenant_id = Uuid::new_v4();
-        match db_create_offline_operation(&pool, tenant_id, user_id, op.clone()).await {
+        match db_create_offline_operation(&mut scope, tenant_id, user_id, op.clone()).await {
             Ok(operation) => {
-                match db_update_offline_operation_status(&pool, operation.id, "syncing", None, None)
-                    .await
+                match db_update_offline_operation_status(
+                    &mut scope,
+                    operation.id,
+                    "syncing",
+                    None,
+                    None,
+                )
+                .await
                 {
-                    Ok(_) => match apply_operation(&pool, &operation).await {
+                    Ok(_) => match apply_operation(&mut scope, &operation).await {
                         Ok(_) => {
                             let _ = db_update_offline_operation_status(
-                                &pool,
+                                &mut scope,
                                 operation.id,
                                 "synced",
                                 None,
@@ -186,7 +203,7 @@ pub async fn sync_data(
                         }
                         Err(e) => {
                             let _ = db_update_offline_operation_status(
-                                &pool,
+                                &mut scope,
                                 operation.id,
                                 "failed",
                                 Some(&e.to_string()),
@@ -233,10 +250,15 @@ pub async fn sync_data(
         next_sync_time: Some(Utc::now() + chrono::Duration::minutes(5)),
     };
 
-    (StatusCode::OK, ApiResponse::success(response, "同步完成"))
+    let __mobile_response = { (StatusCode::OK, ApiResponse::success(response, "同步完成")) };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
-async fn apply_operation(_pool: &PgPool, operation: &OfflineOperation) -> Result<(), TopemsError> {
+async fn apply_operation(
+    _scope: &mut ScopedTxn<'_>,
+    operation: &OfflineOperation,
+) -> Result<(), TopemsError> {
     match operation.operation_type.as_str() {
         "create" | "update" | "delete" => Ok(()),
         _ => Err(TopemsError::ValidationFailed(format!(
@@ -257,8 +279,19 @@ pub async fn get_offline_status(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -284,7 +317,7 @@ pub async fn get_offline_status(
     )
     .bind(user_id)
     .bind(tenant_filter(&claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(c) => c,
@@ -296,7 +329,7 @@ pub async fn get_offline_status(
     )
     .bind(user_id)
     .bind(tenant_filter(&claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(c) => c,
@@ -308,7 +341,7 @@ pub async fn get_offline_status(
     )
     .bind(user_id)
     .bind(tenant_filter(&claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(c) => c,
@@ -320,7 +353,7 @@ pub async fn get_offline_status(
     )
     .bind(user_id)
     .bind(tenant_filter(&claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(c) => c,
@@ -332,31 +365,35 @@ pub async fn get_offline_status(
     )
     .bind(user_id)
     .bind(tenant_filter(&claims))
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(row)) => row.try_get("synced_at").ok(),
         _ => None,
     };
 
-    let sync_policy = match db_get_sync_policy(&pool, user_id).await {
+    let sync_policy = match db_get_sync_policy(&mut scope, user_id).await {
         Ok(p) => p,
         Err(_) => None,
     };
 
-    let response = OfflineStatus {
-        pending_count,
-        syncing_count,
-        synced_count,
-        failed_count,
-        last_sync_time: last_sync,
-        sync_policy,
-    };
+    let __mobile_response = {
+        let response = OfflineStatus {
+            pending_count,
+            syncing_count,
+            synced_count,
+            failed_count,
+            last_sync_time: last_sync,
+            sync_policy,
+        };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(response, "获取离线状态成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(response, "获取离线状态成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -373,9 +410,20 @@ pub async fn get_sync_history(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Query(params): Query<SyncHistoryQuery>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -420,7 +468,7 @@ pub async fn get_sync_history(
         .bind(offset)
     };
 
-    let items = match query.fetch_all(&pool).await {
+    let items = match query.fetch_all(&mut scope).await {
         Ok(rows) => rows
             .into_iter()
             .filter_map(|row| OfflineOperation::from_row(&row).ok())
@@ -440,7 +488,7 @@ pub async fn get_sync_history(
     ))
     .bind(user_id)
     .bind(tenant_filter(&claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(row) => row.try_get::<i64, _>(0).unwrap_or(0),
@@ -475,8 +523,19 @@ pub struct SyncHistoryQuery {
 pub async fn get_sync_policy(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -506,7 +565,7 @@ pub async fn get_sync_policy(
          FROM mobile.sync_policies WHERE user_id = $1 AND deleted_at IS NULL"
     ))
     .bind(user_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(r) => r,
@@ -519,41 +578,56 @@ pub async fn get_sync_policy(
         }
     };
 
-    let policy = match row.map(|r| SyncPolicy::from_row(&r)) {
-        Some(Ok(p)) => p,
-        Some(Err(e)) => {
-            tracing::error!("解析同步策略失败: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("内部服务器错误"),
-            );
-        }
-        // 无记录时返回默认策略（HTTP 200），避免裸 404 被前端契约探测判为路由缺失。
-        None => SyncPolicy {
-            id: Uuid::new_v4(),
-            tenant_id: Uuid::nil(),
-            user_id,
-            auto_sync_enabled: true,
-            sync_interval_minutes: 15,
-            sync_on_network_change: true,
-            conflict_strategy: "server_wins".to_string(),
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        },
-    };
+    let __mobile_response = {
+        let policy = match row.map(|r| SyncPolicy::from_row(&r)) {
+            Some(Ok(p)) => p,
+            Some(Err(e)) => {
+                tracing::error!("解析同步策略失败: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("内部服务器错误"),
+                );
+            }
+            // 无记录时返回默认策略（HTTP 200），避免裸 404 被前端契约探测判为路由缺失。
+            None => SyncPolicy {
+                id: Uuid::new_v4(),
+                tenant_id: Uuid::nil(),
+                user_id,
+                auto_sync_enabled: true,
+                sync_interval_minutes: 15,
+                sync_on_network_change: true,
+                conflict_strategy: "server_wins".to_string(),
+                created_at: Utc::now(),
+                updated_at: Utc::now(),
+            },
+        };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(policy, "获取同步策略成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(policy, "获取同步策略成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn update_sync_policy(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<UpdateSyncPolicy>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -623,7 +697,7 @@ pub async fn update_sync_policy(
     .bind(sync_interval_minutes)
     .bind(sync_on_network_change)
     .bind(&conflict_strategy)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(r) => r,
@@ -636,28 +710,32 @@ pub async fn update_sync_policy(
         }
     };
 
-    let policy = match row.map(|r| SyncPolicy::from_row(&r)) {
-        Some(Ok(p)) => p,
-        Some(Err(e)) => {
-            tracing::error!("解析同步策略失败: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("内部服务器错误"),
-            );
-        }
-        None => {
-            tracing::error!("更新同步策略后未返回记录");
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("内部服务器错误"),
-            );
-        }
-    };
+    let __mobile_response = {
+        let policy = match row.map(|r| SyncPolicy::from_row(&r)) {
+            Some(Ok(p)) => p,
+            Some(Err(e)) => {
+                tracing::error!("解析同步策略失败: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("内部服务器错误"),
+                );
+            }
+            None => {
+                tracing::error!("更新同步策略后未返回记录");
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("内部服务器错误"),
+                );
+            }
+        };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(policy, "更新同步策略成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(policy, "更新同步策略成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -673,8 +751,19 @@ pub async fn update_sync_policy(
 pub async fn retry_failed_sync(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -706,7 +795,7 @@ pub async fn retry_failed_sync(
          ORDER BY created_at ASC"
     ))
     .bind(user_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => rows,
@@ -732,17 +821,17 @@ pub async fn retry_failed_sync(
             continue;
         }
 
-        let _ = db_update_offline_operation_status(&pool, op.id, "syncing", None, None).await;
+        let _ = db_update_offline_operation_status(&mut scope, op.id, "syncing", None, None).await;
 
-        match apply_operation(&pool, &op).await {
+        match apply_operation(&mut scope, &op).await {
             Ok(_) => {
-                let _ =
-                    db_update_offline_operation_status(&pool, op.id, "synced", None, None).await;
+                let _ = db_update_offline_operation_status(&mut scope, op.id, "synced", None, None)
+                    .await;
                 retried_count += 1;
             }
             Err(e) => {
                 let _ = db_update_offline_operation_status(
-                    &pool,
+                    &mut scope,
                     op.id,
                     "failed",
                     Some(&e.to_string()),
@@ -759,7 +848,9 @@ pub async fn retry_failed_sync(
         "still_failed_count": still_failed_count,
     });
 
-    (StatusCode::OK, ApiResponse::success(response, "重试完成"))
+    let __mobile_response = { (StatusCode::OK, ApiResponse::success(response, "重试完成")) };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[cfg(test)]

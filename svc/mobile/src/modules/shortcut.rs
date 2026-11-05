@@ -5,8 +5,9 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row};
+use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
@@ -78,8 +79,19 @@ pub async fn get_shortcuts(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -100,13 +112,15 @@ pub async fn get_shortcuts(
         }
     };
 
-    let shortcuts: Vec<Shortcut> = match sqlx::query_as::<_, Shortcut>(
+    let __mobile_response = {
+        let shortcuts: Vec<Shortcut> = match sqlx::query_as::<_, Shortcut>(
         only_own_schema_query!("mobile", "SELECT id, user_id, name, icon, action_type, action_params, sort_order, is_active, created_at, updated_at 
          FROM mobile.shortcuts WHERE user_id = $1 AND is_active = true AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY sort_order ASC")
     )
     .bind(user_id_uuid)
     .bind(tenant_filter(&claims))
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
+
     .await
     {
         Ok(s) => s,
@@ -116,19 +130,33 @@ pub async fn get_shortcuts(
         }
     };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(shortcuts, "获取快捷操作列表成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(shortcuts, "获取快捷操作列表成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn create_shortcut(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<CreateShortcutRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -161,7 +189,7 @@ pub async fn create_shortcut(
             )
             .bind(user_id_uuid)
             .bind(tenant_filter(&claims))
-            .fetch_one(&pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(r) => r.next_order.unwrap_or(1),
@@ -184,20 +212,22 @@ pub async fn create_shortcut(
         .bind(sort_order)
         .bind(true)
         .bind(tenant_filter(&claims))
-        .execute(&pool)
+        .execute(&mut scope)
         .await
     {
         tracing::error!("创建快捷操作失败: {}", e);
         return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("创建快捷操作失败"));
     }
 
-    let shortcut = match sqlx::query_as::<_, Shortcut>(
+    let __mobile_response = {
+        let shortcut = match sqlx::query_as::<_, Shortcut>(
         only_own_schema_query!("mobile", "SELECT id, user_id, name, icon, action_type, action_params, sort_order, is_active, created_at, updated_at 
          FROM mobile.shortcuts WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)")
     )
     .bind(shortcut_id)
     .bind(tenant_filter(&claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
+
     .await
     {
         Ok(s) => s,
@@ -207,10 +237,13 @@ pub async fn create_shortcut(
         }
     };
 
-    (
-        StatusCode::CREATED,
-        ApiResponse::success(shortcut, "创建快捷操作成功"),
-    )
+        (
+            StatusCode::CREATED,
+            ApiResponse::success(shortcut, "创建快捷操作成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[cfg(test)]

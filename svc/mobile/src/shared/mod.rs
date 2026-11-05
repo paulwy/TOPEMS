@@ -10,9 +10,9 @@ use crate::models::*;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use axum::extract::FromRef;
-use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::auth::AuthState;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::{
     api::crm_api::CrmApi, api::hrm_api::HrmApi, api::mes_api::MesApi,
@@ -23,7 +23,7 @@ use topems_shared_service_client::service_client::{
 #[derive(Clone)]
 pub struct AppState {
     pub auth_state: AuthState,
-    pub pool: PgPool,
+    pub pool: Db,
     pub event_publisher: Option<Arc<EventPublisher>>,
     pub wms_client: TypedServiceClient<WmsApi>,
     pub hrm_client: TypedServiceClient<HrmApi>,
@@ -40,7 +40,7 @@ impl FromRef<AppState> for AuthState {
     }
 }
 
-impl FromRef<AppState> for PgPool {
+impl FromRef<AppState> for Db {
     fn from_ref(state: &AppState) -> Self {
         state.pool.clone()
     }
@@ -918,13 +918,24 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn list_patrol_records(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    let records = match db_get_patrol_records(&state.pool, None).await {
+    let mut scope = match state.pool.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("获取巡逻记录失败: {}", e);
+            return ApiResponse::success(
+                json!({ "items": Vec::<serde_json::Value>::new(), "total": 0 }),
+                "获取巡逻记录成功",
+            );
+        }
+    };
+    let records = match db_get_patrol_records(&mut scope, None).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("获取巡逻记录失败: {}", e);
             vec![]
         }
     };
+    let _ = scope.commit().await;
     let total = records.len() as i64;
     ApiResponse::success(
         json!({ "items": records, "total": total }),
@@ -934,13 +945,24 @@ async fn list_patrol_records(State(state): State<AppState>) -> ApiResponse<serde
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn list_scan_records(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    let records = match db_get_scan_records(&state.pool, None).await {
+    let mut scope = match state.pool.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("获取扫码记录失败: {}", e);
+            return ApiResponse::success(
+                json!({ "items": Vec::<serde_json::Value>::new(), "total": 0 }),
+                "获取扫码记录成功",
+            );
+        }
+    };
+    let records = match db_get_scan_records(&mut scope, None).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("获取扫码记录失败: {}", e);
             vec![]
         }
     };
+    let _ = scope.commit().await;
     let total = records.len() as i64;
     ApiResponse::success(
         json!({ "items": records, "total": total }),
@@ -953,9 +975,20 @@ async fn create_scan_record(
     Json(payload): Json<CreateScanRecord>,
 ) -> ApiResponse<ScanRecord> {
     let tenant_id = Uuid::new_v4();
-    match db_create_scan_record(&state.pool, tenant_id, payload).await {
-        Ok(record) => ApiResponse::success(record, "创建扫码记录成功"),
+    let mut scope = match state.pool.scope().await {
+        Ok(scope) => scope,
         Err(e) => {
+            tracing::error!("创建扫码记录失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("创建扫码记录失败", e));
+        }
+    };
+    match db_create_scan_record(&mut scope, tenant_id, payload).await {
+        Ok(record) => {
+            let _ = scope.commit().await;
+            ApiResponse::success(record, "创建扫码记录成功")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("创建扫码记录失败: {}", e);
             ApiResponse::from(TopemsError::internal("创建扫码记录失败", e))
         }
@@ -963,13 +996,24 @@ async fn create_scan_record(
 }
 
 async fn list_photo_evidences(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    let records = match db_get_photo_evidence(&state.pool, None).await {
+    let mut scope = match state.pool.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("获取照片记录失败: {}", e);
+            return ApiResponse::success(
+                json!({ "items": Vec::<serde_json::Value>::new(), "total": 0 }),
+                "获取照片记录成功",
+            );
+        }
+    };
+    let records = match db_get_photo_evidence(&mut scope, None).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("获取照片记录失败: {}", e);
             vec![]
         }
     };
+    let _ = scope.commit().await;
     ApiResponse::success(
         json!({ "items": records, "total": records.len() }),
         "获取照片记录成功",
@@ -981,9 +1025,20 @@ async fn create_photo_evidence(
     Json(payload): Json<CreatePhotoEvidence>,
 ) -> ApiResponse<PhotoEvidence> {
     let tenant_id = Uuid::new_v4();
-    match db_create_photo_evidence(&state.pool, tenant_id, payload).await {
-        Ok(record) => ApiResponse::success(record, "创建照片记录成功"),
+    let mut scope = match state.pool.scope().await {
+        Ok(scope) => scope,
         Err(e) => {
+            tracing::error!("创建照片记录失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("创建照片记录失败", e));
+        }
+    };
+    match db_create_photo_evidence(&mut scope, tenant_id, payload).await {
+        Ok(record) => {
+            let _ = scope.commit().await;
+            ApiResponse::success(record, "创建照片记录成功")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("创建照片记录失败: {}", e);
             ApiResponse::from(TopemsError::internal("创建照片记录失败", e))
         }
@@ -991,13 +1046,24 @@ async fn create_photo_evidence(
 }
 
 async fn list_audio_recordings(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    let records = match db_get_audio_recordings(&state.pool).await {
+    let mut scope = match state.pool.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("获取音频记录失败: {}", e);
+            return ApiResponse::success(
+                json!({ "items": Vec::<serde_json::Value>::new(), "total": 0 }),
+                "获取音频记录成功",
+            );
+        }
+    };
+    let records = match db_get_audio_recordings(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("获取音频记录失败: {}", e);
             vec![]
         }
     };
+    let _ = scope.commit().await;
     ApiResponse::success(
         json!({ "items": records, "total": records.len() }),
         "获取音频记录成功",
@@ -1009,9 +1075,20 @@ async fn create_audio_recording(
     Json(payload): Json<CreateAudioRecording>,
 ) -> ApiResponse<AudioRecording> {
     let tenant_id = Uuid::new_v4();
-    match db_create_audio_recording(&state.pool, tenant_id, payload).await {
-        Ok(record) => ApiResponse::success(record, "创建音频记录成功"),
+    let mut scope = match state.pool.scope().await {
+        Ok(scope) => scope,
         Err(e) => {
+            tracing::error!("创建音频记录失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("创建音频记录失败", e));
+        }
+    };
+    match db_create_audio_recording(&mut scope, tenant_id, payload).await {
+        Ok(record) => {
+            let _ = scope.commit().await;
+            ApiResponse::success(record, "创建音频记录成功")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("创建音频记录失败: {}", e);
             ApiResponse::from(TopemsError::internal("创建音频记录失败", e))
         }
@@ -1019,13 +1096,24 @@ async fn create_audio_recording(
 }
 
 async fn list_video_recordings(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
-    let records = match db_get_video_recordings(&state.pool).await {
+    let mut scope = match state.pool.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("获取视频记录失败: {}", e);
+            return ApiResponse::success(
+                json!({ "items": Vec::<serde_json::Value>::new(), "total": 0 }),
+                "获取视频记录成功",
+            );
+        }
+    };
+    let records = match db_get_video_recordings(&mut scope).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("获取视频记录失败: {}", e);
             vec![]
         }
     };
+    let _ = scope.commit().await;
     ApiResponse::success(
         json!({ "items": records, "total": records.len() }),
         "获取视频记录成功",
@@ -1037,9 +1125,20 @@ async fn create_video_recording(
     Json(payload): Json<CreateVideoRecording>,
 ) -> ApiResponse<VideoRecording> {
     let tenant_id = Uuid::new_v4();
-    match db_create_video_recording(&state.pool, tenant_id, payload).await {
-        Ok(record) => ApiResponse::success(record, "创建视频记录成功"),
+    let mut scope = match state.pool.scope().await {
+        Ok(scope) => scope,
         Err(e) => {
+            tracing::error!("创建视频记录失败: {}", e);
+            return ApiResponse::from(TopemsError::internal("创建视频记录失败", e));
+        }
+    };
+    match db_create_video_recording(&mut scope, tenant_id, payload).await {
+        Ok(record) => {
+            let _ = scope.commit().await;
+            ApiResponse::success(record, "创建视频记录成功")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
             tracing::error!("创建视频记录失败: {}", e);
             ApiResponse::from(TopemsError::internal("创建视频记录失败", e))
         }

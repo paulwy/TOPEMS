@@ -4,12 +4,12 @@
 
 use crate::models::*;
 use chrono::Utc;
-use sqlx::{Pool, Postgres};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::ScopedTxn;
 use uuid::Uuid;
 
 pub async fn db_get_dashboard_stats(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_filter: Option<Uuid>,
 ) -> sqlx::Result<(i64, i64, i64, i64)> {
     let patrol_count: i64 = sqlx::query_scalar(only_own_schema_query!(
@@ -17,7 +17,7 @@ pub async fn db_get_dashboard_stats(
         "SELECT COUNT(*) FROM mobile.patrol_records WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
     .bind(tenant_filter)
-    .fetch_one(pool)
+    .fetch_one(&mut *scope)
     .await?;
 
     let scan_count: i64 = sqlx::query_scalar(only_own_schema_query!(
@@ -25,7 +25,7 @@ pub async fn db_get_dashboard_stats(
         "SELECT COUNT(*) FROM mobile.scan_records WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
     .bind(tenant_filter)
-    .fetch_one(pool)
+    .fetch_one(&mut *scope)
     .await?;
 
     let photo_count: i64 = sqlx::query_scalar(only_own_schema_query!(
@@ -33,7 +33,7 @@ pub async fn db_get_dashboard_stats(
         "SELECT COUNT(*) FROM mobile.photo_evidences WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
     .bind(tenant_filter)
-    .fetch_one(pool)
+    .fetch_one(&mut *scope)
     .await?;
 
     let task_count: i64 = sqlx::query_scalar(only_own_schema_query!(
@@ -41,26 +41,26 @@ pub async fn db_get_dashboard_stats(
         "SELECT COUNT(*) FROM mobile.mobile_tasks WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)"
     ))
     .bind(tenant_filter)
-    .fetch_one(pool)
+    .fetch_one(&mut *scope)
     .await?;
 
     Ok((patrol_count, scan_count, photo_count, task_count))
 }
 
 pub async fn db_get_patrol_records(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_filter: Option<Uuid>,
 ) -> sqlx::Result<Vec<PatrolRecord>> {
     let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at FROM mobile.patrol_records WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid) ORDER BY created_at DESC"))
         .bind(tenant_filter)
-        .fetch_all(pool)
+        .fetch_all(&mut *scope)
         .await?;
 
     rows.iter().map(|row| PatrolRecord::from_row(row)).collect()
 }
 
 pub async fn db_create_patrol_record(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
     data: CreatePatrolRecord,
 ) -> sqlx::Result<PatrolRecord> {
@@ -84,7 +84,7 @@ pub async fn db_create_patrol_record(
     .bind(&data.checked_by)
     .bind(now)
     .bind(now)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     Ok(PatrolRecord {
@@ -104,19 +104,19 @@ pub async fn db_create_patrol_record(
 }
 
 pub async fn db_get_scan_records(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_filter: Option<Uuid>,
 ) -> sqlx::Result<Vec<ScanRecord>> {
     let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, barcode, location_lat, location_lng, item_type, quantity, operator, scanned_at, created_at FROM mobile.scan_records WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid) ORDER BY created_at DESC"))
         .bind(tenant_filter)
-        .fetch_all(pool)
+        .fetch_all(&mut *scope)
         .await?;
 
     rows.iter().map(|row| ScanRecord::from_row(row)).collect()
 }
 
 pub async fn db_create_scan_record(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
     data: CreateScanRecord,
 ) -> sqlx::Result<ScanRecord> {
@@ -137,7 +137,7 @@ pub async fn db_create_scan_record(
     .bind(&data.operator)
     .bind(now)
     .bind(now)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     Ok(ScanRecord {
@@ -155,12 +155,12 @@ pub async fn db_create_scan_record(
 }
 
 pub async fn db_get_photo_evidence(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_filter: Option<Uuid>,
 ) -> sqlx::Result<Vec<PhotoEvidence>> {
     let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, location_lat, location_lng, address, file_url, recorded_by, recorded_at, created_at FROM mobile.photo_evidences WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid) ORDER BY created_at DESC"))
         .bind(tenant_filter)
-        .fetch_all(pool)
+        .fetch_all(&mut *scope)
         .await?;
 
     rows.iter()
@@ -169,7 +169,7 @@ pub async fn db_get_photo_evidence(
 }
 
 pub async fn db_create_photo_evidence(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
     data: CreatePhotoEvidence,
 ) -> sqlx::Result<PhotoEvidence> {
@@ -191,7 +191,7 @@ pub async fn db_create_photo_evidence(
     .bind(&data.recorded_by)
     .bind(now)
     .bind(now)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     Ok(PhotoEvidence {
@@ -209,9 +209,11 @@ pub async fn db_create_photo_evidence(
     })
 }
 
-pub async fn db_get_audio_recordings(pool: &Pool<Postgres>) -> sqlx::Result<Vec<AudioRecording>> {
+pub async fn db_get_audio_recordings(
+    scope: &mut ScopedTxn<'_>,
+) -> sqlx::Result<Vec<AudioRecording>> {
     let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, location_lat, location_lng, address, duration_seconds, file_url, recorded_by, recorded_at, created_at FROM mobile.audio_recordings ORDER BY created_at DESC"))
-        .fetch_all(pool)
+        .fetch_all(&mut *scope)
         .await?;
 
     rows.iter()
@@ -220,7 +222,7 @@ pub async fn db_get_audio_recordings(pool: &Pool<Postgres>) -> sqlx::Result<Vec<
 }
 
 pub async fn db_create_audio_recording(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
     data: CreateAudioRecording,
 ) -> sqlx::Result<AudioRecording> {
@@ -243,7 +245,7 @@ pub async fn db_create_audio_recording(
     .bind(&data.recorded_by)
     .bind(now)
     .bind(now)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     Ok(AudioRecording {
@@ -262,9 +264,11 @@ pub async fn db_create_audio_recording(
     })
 }
 
-pub async fn db_get_video_recordings(pool: &Pool<Postgres>) -> sqlx::Result<Vec<VideoRecording>> {
+pub async fn db_get_video_recordings(
+    scope: &mut ScopedTxn<'_>,
+) -> sqlx::Result<Vec<VideoRecording>> {
     let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, start_location_lat, start_location_lng, location_track, duration_seconds, file_url, thumbnail_url, recorded_by, recorded_at, created_at FROM mobile.video_recordings ORDER BY created_at DESC"))
-        .fetch_all(pool)
+        .fetch_all(&mut *scope)
         .await?;
 
     rows.iter()
@@ -273,7 +277,7 @@ pub async fn db_get_video_recordings(pool: &Pool<Postgres>) -> sqlx::Result<Vec<
 }
 
 pub async fn db_create_video_recording(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
     data: CreateVideoRecording,
 ) -> sqlx::Result<VideoRecording> {
@@ -297,7 +301,7 @@ pub async fn db_create_video_recording(
     .bind(&data.recorded_by)
     .bind(now)
     .bind(now)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     Ok(VideoRecording {
@@ -318,19 +322,19 @@ pub async fn db_create_video_recording(
 }
 
 pub async fn db_get_mobile_tasks(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_filter: Option<Uuid>,
 ) -> sqlx::Result<Vec<MobileTask>> {
     let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at FROM mobile.mobile_tasks WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid) ORDER BY created_at DESC"))
         .bind(tenant_filter)
-        .fetch_all(pool)
+        .fetch_all(&mut *scope)
         .await?;
 
     rows.iter().map(|row| MobileTask::from_row(row)).collect()
 }
 
 pub async fn db_create_mobile_task(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
     data: CreateMobileTask,
 ) -> sqlx::Result<MobileTask> {
@@ -358,7 +362,7 @@ pub async fn db_create_mobile_task(
     .bind(&due_date)
     .bind(now)
     .bind(now)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     Ok(MobileTask {
@@ -380,7 +384,7 @@ pub async fn db_create_mobile_task(
 }
 
 pub async fn db_update_task_status(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     task_id: Uuid,
     status: &str,
     tenant_filter: Option<Uuid>,
@@ -400,7 +404,7 @@ pub async fn db_update_task_status(
     .bind(now)
     .bind(task_id)
     .bind(tenant_filter)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     if result.rows_affected() == 0 {
@@ -410,14 +414,14 @@ pub async fn db_update_task_status(
     let row = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at FROM mobile.mobile_tasks WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"))
         .bind(task_id)
         .bind(tenant_filter)
-        .fetch_one(pool)
+        .fetch_one(&mut *scope)
         .await?;
 
     Some(MobileTask::from_row(&row)).transpose()
 }
 
 pub async fn db_get_offline_operations(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     user_id: Uuid,
     status: Option<&str>,
     tenant_filter: Option<Uuid>,
@@ -435,14 +439,14 @@ pub async fn db_get_offline_operations(
             .bind(tenant_filter)
     };
 
-    let rows = query.fetch_all(pool).await?;
+    let rows = query.fetch_all(&mut *scope).await?;
     rows.iter()
         .map(|row| OfflineOperation::from_row(row))
         .collect()
 }
 
 pub async fn db_create_offline_operation(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
     user_id: Uuid,
     data: CreateOfflineOperation,
@@ -464,7 +468,7 @@ pub async fn db_create_offline_operation(
     .bind("pending")
     .bind(0)
     .bind(now)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     Ok(OfflineOperation {
@@ -484,7 +488,7 @@ pub async fn db_create_offline_operation(
 }
 
 pub async fn db_update_offline_operation_status(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     operation_id: Uuid,
     status: &str,
     error: Option<&str>,
@@ -498,7 +502,7 @@ pub async fn db_update_offline_operation_status(
         ))
         .bind(operation_id)
         .bind(tenant_filter)
-        .fetch_one(pool)
+        .fetch_one(&mut *scope)
         .await?
     } else {
         0
@@ -512,33 +516,33 @@ pub async fn db_update_offline_operation_status(
     .bind(error)
     .bind(if status == "synced" { Some(now) } else { None })
     .bind(operation_id)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     Ok(())
 }
 
 pub async fn db_get_sync_policy(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     user_id: Uuid,
 ) -> sqlx::Result<Option<SyncPolicy>> {
     let row = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, auto_sync_enabled, sync_interval_minutes, sync_on_network_change, conflict_strategy, created_at, updated_at FROM mobile.sync_policies WHERE user_id = $1"))
         .bind(user_id)
-        .fetch_optional(pool)
+        .fetch_optional(&mut *scope)
         .await?;
 
     row.map(|r| SyncPolicy::from_row(&r)).transpose()
 }
 
 pub async fn db_create_or_update_sync_policy(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
     user_id: Uuid,
     data: UpdateSyncPolicy,
 ) -> sqlx::Result<SyncPolicy> {
     let now = Utc::now();
 
-    let existing = db_get_sync_policy(pool, user_id).await?;
+    let existing = db_get_sync_policy(&mut *scope, user_id).await?;
 
     if let Some(mut policy) = existing {
         if let Some(v) = data.auto_sync_enabled {
@@ -564,7 +568,7 @@ pub async fn db_create_or_update_sync_policy(
         .bind(&policy.conflict_strategy)
         .bind(policy.updated_at)
         .bind(user_id)
-        .execute(pool)
+        .execute(&mut *scope)
         .await?;
 
         Ok(policy)
@@ -597,7 +601,7 @@ pub async fn db_create_or_update_sync_policy(
         .bind(&policy.conflict_strategy)
         .bind(policy.created_at)
         .bind(policy.updated_at)
-        .execute(pool)
+        .execute(&mut *scope)
         .await?;
 
         Ok(policy)
@@ -605,7 +609,7 @@ pub async fn db_create_or_update_sync_policy(
 }
 
 pub async fn db_register_push_device(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Option<Uuid>,
     user_id: Uuid,
     data: CreatePushDevice,
@@ -629,7 +633,7 @@ pub async fn db_register_push_device(
     .bind(true)
     .bind(now)
     .bind(now)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     Ok(PushDevice {
@@ -648,7 +652,7 @@ pub async fn db_register_push_device(
 }
 
 pub async fn db_get_push_devices(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     user_id: Option<Uuid>,
 ) -> sqlx::Result<Vec<PushDevice>> {
     let query = if let Some(uid) = user_id {
@@ -657,12 +661,12 @@ pub async fn db_get_push_devices(
         sqlx::query(only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, user_id, device_token, platform, device_model, app_version, os_version, is_active, created_at, updated_at FROM mobile.push_devices WHERE is_active = true"))
     };
 
-    let rows = query.fetch_all(pool).await?;
+    let rows = query.fetch_all(&mut *scope).await?;
     rows.iter().map(|row| PushDevice::from_row(row)).collect()
 }
 
 pub async fn db_create_push_notification(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Option<Uuid>,
     data: CreatePushNotification,
 ) -> sqlx::Result<PushNotification> {
@@ -686,7 +690,7 @@ pub async fn db_create_push_notification(
     .bind(0)
     .bind(0)
     .bind(now)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     Ok(PushNotification {
@@ -708,7 +712,7 @@ pub async fn db_create_push_notification(
 }
 
 pub async fn db_update_push_notification_stats(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     notification_id: Uuid,
     sent_count: i32,
     delivered_count: i32,
@@ -725,22 +729,22 @@ pub async fn db_update_push_notification_stats(
     .bind(clicked_count)
     .bind(now)
     .bind(notification_id)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     Ok(())
 }
 
-pub async fn db_get_push_templates(pool: &Pool<Postgres>) -> sqlx::Result<Vec<PushTemplate>> {
+pub async fn db_get_push_templates(scope: &mut ScopedTxn<'_>) -> sqlx::Result<Vec<PushTemplate>> {
     let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, name, notification_type, title_template, body_template, description, is_active, created_at, updated_at FROM mobile.push_templates WHERE is_active = true ORDER BY name"))
-        .fetch_all(pool)
+        .fetch_all(&mut *scope)
         .await?;
 
     rows.iter().map(|row| PushTemplate::from_row(row)).collect()
 }
 
 pub async fn db_create_push_template(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Option<Uuid>,
     name: &str,
     title_template: &str,
@@ -765,7 +769,7 @@ pub async fn db_create_push_template(
     .bind(true)
     .bind(now)
     .bind(now)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     Ok(PushTemplate {
@@ -783,7 +787,7 @@ pub async fn db_create_push_template(
 }
 
 pub async fn db_get_barcode_scans(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     user_id: Uuid,
     barcode_type: Option<&str>,
     tenant_filter: Option<Uuid>,
@@ -801,12 +805,12 @@ pub async fn db_get_barcode_scans(
             .bind(tenant_filter)
     };
 
-    let rows = query.fetch_all(pool).await?;
+    let rows = query.fetch_all(&mut *scope).await?;
     rows.iter().map(|row| BarcodeScan::from_row(row)).collect()
 }
 
 pub async fn db_create_barcode_scan(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Option<Uuid>,
     user_id: Uuid,
     data: CreateBarcodeScan,
@@ -828,7 +832,7 @@ pub async fn db_create_barcode_scan(
     .bind(data.location_lng)
     .bind(now)
     .bind(now)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     Ok(BarcodeScan {
@@ -848,7 +852,7 @@ pub async fn db_create_barcode_scan(
 }
 
 pub async fn db_get_photo_uploads(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     user_id: Uuid,
     status: Option<&str>,
     tenant_filter: Option<Uuid>,
@@ -866,12 +870,12 @@ pub async fn db_get_photo_uploads(
             .bind(tenant_filter)
     };
 
-    let rows = query.fetch_all(pool).await?;
+    let rows = query.fetch_all(&mut *scope).await?;
     rows.iter().map(|row| PhotoUpload::from_row(row)).collect()
 }
 
 pub async fn db_create_photo_upload(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
     user_id: Uuid,
     data: CreatePhotoUpload,
@@ -901,7 +905,7 @@ pub async fn db_create_photo_upload(
     .bind(data.location_lat)
     .bind(data.location_lng)
     .bind(now)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     Ok(PhotoUpload {
@@ -928,7 +932,7 @@ pub async fn db_create_photo_upload(
 }
 
 pub async fn db_update_photo_upload_status(
-    pool: &Pool<Postgres>,
+    scope: &mut ScopedTxn<'_>,
     upload_id: Uuid,
     status: &str,
     progress: i32,
@@ -946,7 +950,7 @@ pub async fn db_update_photo_upload_status(
     .bind(if status == "completed" { Some(now) } else { None })
     .bind(upload_id)
     .bind(tenant_filter)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     Ok(())
