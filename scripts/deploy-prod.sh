@@ -209,7 +209,7 @@ fi
 file "$LOCAL_BIN" | grep -q "Mach-O" || warn "目标二进制不是 macOS Mach-O 格式，请确认：$(file "$LOCAL_BIN")"
 info "待部署二进制: $(ls -lh "$LOCAL_BIN" | awk '{print $5}')  $LOCAL_BIN"
 
-# ── 迁移账本预检（只提示不阻断；服务启动会自动补跑未应用迁移）──
+# ── 迁移账本预检（只提示不阻断；迁移不会随服务启动自动补跑，需显式 sqlx migrate run）──
 LOCAL_MIG_COUNT=$(ls "$LOCAL_REPO"/database/migrations/*.sql 2>/dev/null | wc -l | tr -d ' ')
 PROD_MIG_COUNT=$(ssh $PROD_HOST "$PSQL_PATH -U $DB_USER -d $DB_NAME -Atc 'SELECT count(*) FROM _sqlx_migrations'" 2>/dev/null | head -1 | tr -d ' ')
 PROD_MIG_COUNT=${PROD_MIG_COUNT:-?}
