@@ -323,6 +323,7 @@
 - **P3-UQ 守卫缺陷修复**：原文件 `to_regclass('<约束名>')` 误把约束名当关系名，prod 同名唯一索引存在导致 48 条全跳过；改为"无约束时优先 `UNIQUE USING INDEX` 接管同名索引，否则普通 ADD"。scratch 库 24+24 两组双跑 exit 0，24 条接管索引 OID 不变、48/48 约束存在、第二遍零变更；prod `BEGIN...ROLLBACK` 只读幂等验证通过。
 - **账本 checksum 重同步**：`20261104140000` 由 `8966e81a85c7…` 更新为 `42fb0738646e…`，prod 复算与仓库文件 SHA-384 一致（DDL 终态已达成，账本应与文件一致，避免 sqlx integrity 误报）。
 - **erp_dictionaries 完整下线（2026-11-05 D 轮）**：删后端 `dictionaries.rs` + `modules/mod.rs` 声明/merge；删前端 `DictionaryPage.tsx`、`api/erp/dictionaries.ts`、6 例测试、`config.ts` 路由/导航、i18n；新增 3 条迁移（`20261105235500` 菜单行、`20261105235600` 表删除、`20261105235700` 序列归属修正）。prod 表数 **1350→1349**、菜单 **424→423**、账本 **573→576**、`/health` 200；单表归档 `backups/prod-mes-erp_dictionaries-20261105.dump`；test 序列归属已修正并复核 `pg_depend`。scratch 重建 **576 OK / 0 FAIL / 16 SKIP**。明细见 [p4-reverse-tables-triage §17](docs/quality/p4-reverse-tables-triage-2026-11-05.md)。
+- **16 条跳过迁移收口（2026-11-05 E 轮）**：判定 **可追加 0 / 追加无解 8 / 本不该 prod 8**；采用「prod schema 基线 + 前向迁移」：新增 `scripts/migration/gen-baseline.sh`（只读导出 schema+账本锚点+漂移清单）、`apply-forward.sh`（仅应用 `version>anchor`，`--prod` 拒绝定向迁移）、`rebuild-from-baseline.sh`。基线锚点 `20261105235700`（1349 表 / 576 账本，174 KB）；scratch 重建 **0 FAIL / 0 SKIP**；前向执行器实测 3 条 0 失败；10 张核心表与 prod 指纹一致。漂移固化 **prod-only 136 / chain-only 16**，保留链审计。明细见 [§18](docs/quality/p4-reverse-tables-triage-2026-11-05.md)。
 
 **方案入口**：[docs/quality/prod-governance-baseline-2026-11-04.md](docs/quality/prod-governance-baseline-2026-11-04.md)（P1–P5 分批窗口、回滚条件、剩余决策项）。
 

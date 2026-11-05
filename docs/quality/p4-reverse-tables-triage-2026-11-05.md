@@ -679,3 +679,84 @@ pg_restore --no-owner --no-privileges -h 127.0.0.1 -p 5432 -U xingzhai \
 | 前端 `typecheck` / `lint` / `i18n-quality` / `contract-gate` | 全部 exit 0 |
 | `check-migrations.mjs` / `check-migration-names.mjs --strict` / `validate.sh` | exit 0（592 文件、checksum 0 错） |
 | scratch `p4_rebuild_verify` | **576 OK / 0 FAIL / 16 SKIP**（592 文件）；终态 `erp_dictionaries` 在任何 schema 均不存在，`tenant_permissions_id_seq` 已归属 `public.tenant_permissions.id` |
+
+## 18. 16 条跳过迁移的可行性评估与「基线 + 前向迁移」落地（2026-11-05）
+
+### 18.1 三类判定（0 / 8 / 8）
+
+判定口径：**追加迁移的版本号必然更大**，因此它无法阻止更早版本在升序重放时失败。凡「失败点本身在旧迁移」的条目，追加都不能让重放通过；只有把失败点整体移出重放范围（基线）或流程层跳过。
+
+| 文件 | 类别 | 判定 | 依据 | 运行时影响 / 处置 |
+|---|---|---|---|---|
+| `20261103200000_db07_test_timestamp_uuid_align_prod` | test/5433 定向 | 本不该 prod | 文件头注明「test（基准库）对齐 5433/prod」；prod 账本**已含**该版本 | 0；永久排除在 prod 链外 |
+| `20261103210000_db08_test_varchar_to_text_190cols` | test/5433 定向 | 本不该 prod | 190 列 `varchar→text`，无环境守卫、直接 `ALTER` | 0；**风险最高**，靠 `apply-forward --prod` 拒绝 |
+| `20261103230000_db10_5433_varchar_text_to_uuid_19cols` | test/5433 定向 | 本不该 prod | 5433 定向类型对齐 | 0 |
+| `20261104000000_db11_5433_varchar_to_text_24cols` | test/5433 定向 | 本不该 prod | 5433 定向类型对齐 | 0 |
+| `20261104030000_db14_test_varchar_to_uuid_7cols_with_data` | test/5433 定向 | 本不该 prod | 含存量数据转换（`UPDATE`+`ALTER`） | 0 |
+| `20261104040000_db15_5433_integer_bigint_16cols` | test/5433 定向 | 本不该 prod | 5433 定向类型对齐 | 0 |
+| `20261104050000_db16_5433_tenant_id_rls_decouple_14cols` | test/5433 定向 | 本不该 prod | 5433 定向 RLS 解耦 | 0 |
+| `20261104070000_db18_5433_special_types_8cols` | test/5433 定向 | 本不该 prod | 5433 定向特殊类型；`CREATE TYPE` 有守卫，`ALTER` 无表守卫 | 0 |
+| `20261005000004_lims_qa_lab_fk_repoint` | 依赖顺序 | **追加无解** | 引用 `public.qa_lab_tasks`，该表由更晚的 `20261007000009` 创建 | 0；prod 终态由基线固化 |
+| `20261029185000_schema_defense_align_columns` | 依赖顺序 | **追加无解** | 改 `mes.qa_sampling_plans`；链建的是 `public` 副本，后又被 `20261030160000` 移入 `qms` | 0；同上 |
+| `20261029200000_schema_defense_type_align` | 依赖顺序 | **追加无解** | 改 `mes.workshops`；链建 `public.workshops`，prod 为运行时残留 | 0；同上 |
+| `20261102220000_rls_enable_biz_batch1` | 依赖顺序 | **追加无解** | `iam.tenant_permissions` 已被 `20261007000012` DROP | 0；目标对象已不存在 |
+| `20261104130000_p3_pk_5` | 依赖顺序 | **追加无解** | `flow.core_master_data_refs` 已被 `20261027200000` DROP | 0；同上 |
+| `20261104140000_p3_unique_48` | 依赖顺序 | **追加无解** | `flow.core_file_permissions` 已被 DROP | 0；同上 |
+| `20261104150000_p3_fk_45` | 依赖顺序 | **追加无解** | `flow.core_doc_document_versions` 在链上不存在 | 0；同上 |
+| `20261105100000_p4_drop_shadow_tables_and_repoint_fks` | 依赖顺序（ABORT） | **追加无解** | 依赖 `iam.tenant_permissions`，该表已被 DROP，链上直接 ABORT | 0；prod 已完成等价删除/重指向 |
+
+汇总：**可追加解决 0 条；不可能靠追加 8 条；本不该在 prod 生效 8 条**。16 条在 prod 的运行时影响均为 0（失败只发生在「空库按版本重放」场景，prod 早已处于终态）。
+
+### 18.2 第三类的流程约束与缺口
+
+| 防线 | 现状 |
+|---|---|
+| `scripts/deploy-prod.sh` | **不调用** `sqlx migrate run` / `psql` 迁移；仅对账本数量做 warning，不自动应用 |
+| `.github/workflows/deploy-k8s.yml` | 只做镜像更新 + rollout + smoke，无迁移步骤 |
+| CI e2e | 只对 CI 临时库执行 `sqlx migrate run`（这些定向迁移在 5433/test 环境本就适用） |
+| 文件内守卫 | **无**：db08 等直接 `ALTER TABLE`，没有 `current_database()`/`to_regclass` 环境判断 |
+
+**缺口**：没有任何机制阻止人对 prod DSN 手工执行 `sqlx migrate run`；而 prod 账本恰好缺 16 条 14 位迁移，sqlx 会把它们当 pending 重新执行。**已加防线**：`scripts/migration/apply-forward.sh` 只应用 `version > anchor` 的文件（从机制上跳过锚点前的全部历史），并对 `--prod` 启用命名拒绝（`dbNN_test` / `dbNN_5433` / `5433_` / `test_`）。**剩余缺口**：无法强制外部工具，需靠流程约定「生产迁移只走 apply-forward.sh」；建议后续 CI 禁止再新增定向迁移命名。
+
+### 18.3 方案取舍
+
+| 路径 | 覆盖 16 条 | 重建结果 | 成本 / 风险 |
+|---|---|---|---|
+| 路径 2：纯追加迁移 | **0 条**（失败点在更早版本，追加无法救） | 仍 16 SKIP | 最低，但问题原样保留，只能算「有解释的跳过」 |
+| 路径 1：基线 + 前向 | **16 条全部**（全部位于锚点之前，不再回放） | **0 FAIL / 0 SKIP** | 174 KB 基线 + 3 个脚本；固化 prod 漂移 |
+| **推荐：路径 1 为主线 + 保留路径 2 的链审计** | 16 条 | 基线流程 0/0；链审计仍 16 SKIP | 兼顾可重复性与历史可追溯 |
+
+**为什么不是纯追加**：8 条依赖顺序错误 + 8 条定向迁移，追加 0 收益；**为什么选基线**：这是唯一能让「重建」从 16 SKIP 降到 0 的机制，且基线是 prod 的只读快照，可重复、可校验。**漂移是否可接受**：基线固化了 prod 相对链的 **136 张 prod-only 表**（23 张 `*_ledger` 运行时表、53 张 `iam`、32 张 `flow`、10 张 `portal`、10 张 `public`、10 张其他）与 **16 张 chain-only 影子表**（prod 已清理），以及已知的列类型/约束差异。结论：对「prod 复刻 / 灾备 / 新环境引导」**可接受**；对「新开发 schema 权威」**不接受**——因此链审计脚本保留，新 DDL 必须写成锚点之后的前向迁移，不得回改历史。
+
+### 18.4 基线资产与锚点
+
+| 项 | 值 |
+|---|---|
+| 锚点版本 | `20261105235700`（= prod `_sqlx_migrations` 最大成功版本） |
+| 来源 | `topems_prod` @ 192.168.110.115，PostgreSQL 18.4，只读 `pg_dump` |
+| 生成时间（UTC） | 2026-11-05T06:55:50Z |
+| 表数 / 账本行 | 1349 / 576 |
+| schema 快照 | `database/baseline/prod_schema_20261105235700.sql.gz`（174 KB，`sha256=769b81e0…7352`） |
+| 账本锚点 | `database/baseline/prod_ledger_20261105235700.sql`（576 条 INSERT，`sha256=f832e5ed…12a2`） |
+| 元数据 | `database/baseline/baseline_20261105235700.json` |
+| 漂移清单 | `database/baseline/prod_drift_20261105235700.tsv`（prod_only 136 / chain_only 16） |
+| 已知未入账版本 | 16 个 14 位版本（db08–db24 中定向项 + `finance_currency_master_fix`）；与链跳过清单**不完全重合**：db07 已在 prod 账本，`finance_currency_master_fix` 未入账但 prod 已有表 |
+
+**版本对齐校验**（`gen-baseline.sh` 内置）：锚点以内所有 14 位迁移必须「在账本」或「在固定白名单」，否则中止；`rebuild-from-baseline.sh` 恢复后断言 `表数=meta.table_count`、`账本行=meta.ledger_rows`、`max(version)=anchor`。
+**防腐化**：每次 prod 批量 DDL 或新迁移落账后重生成；锚点必须随 prod 账本前移；sha256 写入 meta，可由 `shasum -a 256` 复核。
+
+### 18.5 验证
+
+| 项 | 结果 |
+|---|---|
+| 基线重建（`p4_baseline_verify`） | 成功 1（restore）+ 前向 0；**失败 0，跳过 0**；1349 表 / 576 账本 / anchor 一致 |
+| 前向执行器实测 | 删除 3 条 > `20261105235000` 账本行后重跑 → **应用 3 条，失败 0**，账本回到 576 |
+| 与 prod 结构比对（10 张核心表） | 列数/列名+类型+NOT NULL md5、主键 md5 **逐表一致**（`public.core_menus`、`iam.core_menus`、`public.core_permissions`、`public.tenant_permissions`、`iam.tenant_permissions`、`flow.core_doc_documents`、`public.core_doc_documents`、`flow.core_master_data_refs`、`qms.qa_sampling_plans`、`finance.core_finance_currencies`） |
+| 门禁 | `check-migrations` / `check-migration-names --strict` / `validate.sh` exit 0 |
+
+### 18.6 剩余无解项
+
+- **纯链历史重放**仍有 16 SKIP（仅审计用途，`rebuild-verify-classified.sh` 保留）；基线流程为 0 SKIP。
+- 8 条定向迁移仍在仓库中，且 prod 账本缺其中多条；`apply-forward.sh` 是唯一推荐入口，但无法阻止外部工具直接 `sqlx migrate run`。
+- 未新增任何追加迁移（本方案不需要）；`finance_currency_master_fix` 在 prod 未入账但表已存在，由基线固化。
+- 建议后续：禁止新增 `dbNN_test` / `dbNN_5433` 命名迁移；为 prod 迁移增加 CI 白名单校验。
