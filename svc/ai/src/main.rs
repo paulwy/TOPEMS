@@ -72,16 +72,8 @@ async fn main() -> anyhow::Result<()> {
     // 使用 bootstrap_service 初始化通用资源（telemetry、auth_state、event_publisher）
     let ctx = bootstrap_service(&config).await?;
 
-    // AI 专用 Database（提供 run_migrations 和服务内部状态）
-    let database_url = std::env::var("DATABASE_URL").map_err(|_| {
-        tracing::error!("DATABASE_URL environment variable is required");
-        anyhow::anyhow!("DATABASE_URL environment variable is required")
-    })?;
-    tracing::info!(
-        "🔌 连接数据库: {}",
-        database_url.split('@').next_back().unwrap_or("...")
-    );
-    let db = Database::new(&database_url).await?;
+    // AI 专用 Database：复用 bootstrap 的进程级池（连接治理 A，避免第二个 max=100 的池）
+    let db = Database::from_parts(ctx.db.clone(), ctx.migrate_pool.clone());
     tracing::info!("✅ 数据库连接成功");
 
     if let Err(e) =

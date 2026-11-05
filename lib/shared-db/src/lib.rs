@@ -37,6 +37,10 @@ pub use database::{
     check_pool_health, create_database_pool, ensure_master_data_refs_table,
     test_database_connection, HealthCheckResult, ReadWriteConfig, ReadWritePool,
 };
+pub use database::budget::{
+    snapshot as connection_budget_snapshot, BudgetConfig, BudgetSnapshot, Ledger, PoolReservation,
+    DEFAULT_TOTAL_CONNECTION_BUDGET,
+};
 pub use master_data_refs::{
     CreateMasterDataRefRequest, DuplicateRecord, MasterDataRef, MasterDataRefService, StaleRecord,
     UpdateMasterDataRefRequest, UpsertLocalMasterDataRefRequest,

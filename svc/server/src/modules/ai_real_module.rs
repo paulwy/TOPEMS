@@ -54,10 +54,8 @@ impl AiRealModule {
         let ctx = bootstrap_service(&config).await?;
         let _conn = ctx.db.acquire().await?;
 
-        // AI 专用 Database（提供 run_migrations 和服务内部状态）
-        let database_url = std::env::var("DATABASE_URL")
-            .map_err(|_| TopemsError::EnvVarNotSet("DATABASE_URL".to_string()))?;
-        let db = Database::new(&database_url).await?;
+        // AI 专用 Database：复用 bootstrap 的进程级池（连接治理 A，避免第二个 max=100 的池）
+        let db = Database::from_parts(ctx.db.clone(), ctx.migrate_pool.clone());
 
         // 迁移 / schema 防御 / ai_knowledge 初始化（失败仅告警不阻塞启动）
         if let Err(e) = db.run_migrations().await {

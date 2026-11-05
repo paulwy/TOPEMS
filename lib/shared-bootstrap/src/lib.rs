@@ -402,6 +402,11 @@ impl ServiceBootstrap {
             self.config.database.max_connections,
         );
 
+        // 连接治理 A：V1 遗留建池路径同样纳入进程级预算，避免绕过总额天花板。
+        let reservation =
+            topems_shared_db::database::budget::reserve_pool("legacy-bootstrap", max_connections)?;
+        let max_connections = reservation.granted();
+
         let search_path = env::var("SEARCH_PATH").unwrap_or_else(|_| "rs, erp, public".to_string());
 
         // 单租户部署（MULTI_TENANT_ENABLED != true）且配置了 DEFAULT_TENANT_ID 时，
@@ -440,6 +445,7 @@ impl ServiceBootstrap {
             .connect(&database_url)
             .await?;
 
+        reservation.commit();
         Ok(pool)
     }
 

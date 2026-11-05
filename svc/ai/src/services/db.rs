@@ -1,7 +1,5 @@
-use sqlx::postgres::{PgPool, PgPoolOptions};
-use std::time::Duration;
+use sqlx::postgres::PgPool;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_db::database::create_migrate_pool;
 
 #[derive(Clone)]
 pub struct Database {
@@ -10,49 +8,13 @@ pub struct Database {
 }
 
 impl Database {
-    pub async fn new(database_url: &str) -> Result<Self, sqlx::Error> {
-        // 单租户部署（MULTI_TENANT_ENABLED != true）且配置 DEFAULT_TENANT_ID 时，
-        // 连接建立即固定租户上下文：FORCE RLS 下 ai 业务查询（stats/dashboard 等
-        // 不经 tenant_middleware txn 的直查路径）仍能按默认租户读到数据。
-        // 多租户部署保持逐请求隔离；请求级 txn（set_config(..., true)）可覆盖。
-        let default_tenant = std::env::var("DEFAULT_TENANT_ID")
-            .ok()
-            .filter(|_| {
-                !std::env::var("MULTI_TENANT_ENABLED")
-                    .map(|v| v == "true" || v == "1")
-                    .unwrap_or(false)
-            })
-            .and_then(|t| t.parse::<uuid::Uuid>().ok())
-            .map(|u| u.to_string());
-
-        let pool = PgPoolOptions::new()
-            .max_connections(100)
-            .min_connections(10)
-            .acquire_timeout(Duration::from_secs(30))
-            .idle_timeout(Duration::from_secs(600))
-            .max_lifetime(Duration::from_secs(1800))
-            .after_connect(move |conn, _meta| {
-                let dt = default_tenant.clone();
-                Box::pin(async move {
-                    if let Some(t) = dt {
-                        tracing::debug!("[ai-db] setting default tenant context: {}", t);
-                        sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
-                            .bind(&t)
-                            .execute(&mut *conn)
-                            .await?;
-                    }
-                    Ok(())
-                })
-            })
-            .connect(database_url)
-            .await?;
-
-        let migrate_pool = create_migrate_pool().await.unwrap_or_else(|e| {
-            tracing::warn!("⚠️ MIGRATE_URL 迁移池创建失败，DDL 回退运行时池: {}", e);
-            None
-        });
-
-        Ok(Self { pool, migrate_pool })
+    /// 复用 bootstrap 的进程级连接池，不再单独建第二个池。
+    ///
+    /// 连接治理 A：此前 ai 额外建了一个 `max=100 / min=10` 的池，既不计入模块池上限，
+    /// 也让进程连接数突破全局预算。`bootstrap_service` 已完成 application_name、
+    /// 默认租户上下文（after_connect）与迁移池初始化，这里直接复用其句柄。
+    pub fn from_parts(pool: PgPool, migrate_pool: Option<PgPool>) -> Self {
+        Self { pool, migrate_pool }
     }
 
     pub fn pool(&self) -> &PgPool {

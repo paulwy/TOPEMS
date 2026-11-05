@@ -1,3 +1,4 @@
+pub mod budget;
 pub mod read_write;
 
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
@@ -17,7 +18,11 @@ pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
         std::env::var("SEARCH_PATH").unwrap_or_else(|_| "rs, erp, public".to_string());
     debug!("create_database_pool: search_path = {}", search_path);
 
-    let min_connections = config.min_connections.unwrap_or(5);
+    // 连接治理 A：建池前先向进程级预算申请额度（Total ≤ DB_TOTAL_CONNECTION_BUDGET）。
+    // 预算只压「总额天花板」，单池申请值仍作为上限参与 min 计算。
+    let reservation = budget::reserve_pool("business", config.max_connections)?;
+    let max_connections = reservation.granted();
+    let min_connections = config.min_connections.unwrap_or(5).min(max_connections);
     let connect_timeout = config.connect_timeout.unwrap_or(30);
     let idle_timeout = config.idle_timeout.unwrap_or(300);
     let max_lifetime = config.max_lifetime.unwrap_or(1800);
@@ -32,7 +37,7 @@ pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
         .application_name(&application_name);
 
     let options = PgPoolOptions::new()
-        .max_connections(config.max_connections)
+        .max_connections(max_connections)
         .min_connections(min_connections)
         .acquire_timeout(Duration::from_secs(connect_timeout))
         .idle_timeout(Duration::from_secs(idle_timeout))
@@ -157,9 +162,12 @@ pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
         }
     };
 
+    // 池创建成功：额度永久归该池（失败/panic 路径由 PoolReservation::Drop 自动归还）。
+    reservation.commit();
+
     info!(
         "✅ 数据库连接池创建成功 (max: {}, min: {}, timeout: {}s, lifetime: {}s)",
-        config.max_connections, min_connections, connect_timeout, max_lifetime
+        max_connections, min_connections, connect_timeout, max_lifetime
     );
     Ok(pool)
 }
@@ -238,9 +246,22 @@ pub async fn ensure_master_data_refs_table(pool: &PgPool, service_prefix: &str) 
     Ok(())
 }
 
+/// 进程级迁移池缓存：同一进程内所有模块共享一个 owner 池。
+///
+/// 连接治理 A 的配套收敛：此前每个 real_module 都建一个 migrate 池（max=3，无 idle
+/// 超时），27 个模块最多可额外占用 81 条连接。迁移/DDL 只在启动期串行使用，进程内
+/// 共享一个池即可，同时把「池数量」从 54 降到 28，便于预算公平分摊。
+///
+/// 缓存包含失败结果：MIGRATE_URL 配错时只尝试一次并记录错误，避免每个模块重复等待
+/// 连接超时；调用方语义不变（`Err` → 各自 warn 后回退运行时池）。
+static MIGRATE_POOL: tokio::sync::OnceCell<std::result::Result<Option<PgPool>, String>> =
+    tokio::sync::OnceCell::const_new();
+
 /// 创建迁移专用连接池（DDL 走 owner，运行时查询走受限用户）。
 /// 读取 `MIGRATE_URL` 环境变量（owner 连接串），未设置则返回 None（回退运行时池）。
 /// 仅用于服务启动时的建表/补列/迁移等 DDL，不得用于运行时业务查询。
+///
+/// 进程内单例：重复调用返回同一个池的 clone（见 [`MIGRATE_POOL`]）。
 pub async fn create_migrate_pool() -> Result<Option<PgPool>> {
     let Ok(url) = std::env::var("MIGRATE_URL") else {
         return Ok(None);
@@ -248,12 +269,26 @@ pub async fn create_migrate_pool() -> Result<Option<PgPool>> {
     if url.trim().is_empty() {
         return Ok(None);
     }
+    let cached = MIGRATE_POOL
+        .get_or_init(|| async move { build_migrate_pool(&url).await.map_err(|e| e.to_string()) })
+        .await;
+    match cached {
+        Ok(pool) => Ok(pool.clone()),
+        Err(msg) => Err(TopemsError::Database(msg.clone())),
+    }
+}
+
+/// 实际构建迁移池（仅执行一次，额度同样受进程级预算约束）。
+async fn build_migrate_pool(url: &str) -> Result<Option<PgPool>> {
+    // 与业务池一致：迁移池也计入总预算（总额天花板对「所有池」生效）。
+    let reservation = budget::reserve_pool("migrate", 3)?;
+    let max_connections = reservation.granted();
     // 与业务池保持一致：按 SEARCH_PATH 解析未限定表名，避免 DDL 落到 public schema
     // 遗留同名表（如 public.core_tickets，owner 为受限用户）导致 "must be owner" 42501。
     let search_path =
         std::env::var("SEARCH_PATH").unwrap_or_else(|_| "rs, erp, public".to_string());
     let options = PgPoolOptions::new()
-        .max_connections(3)
+        .max_connections(max_connections)
         .min_connections(0)
         .acquire_timeout(Duration::from_secs(15))
         .after_connect(move |conn, _meta| {
@@ -271,9 +306,13 @@ pub async fn create_migrate_pool() -> Result<Option<PgPool>> {
             })
         });
     let pool = options
-        .connect(&url)
+        .connect(url)
         .await
         .map_err(|e| TopemsError::Database(format!("MIGRATE_URL 连接失败: {e}")))?;
-    info!("✅ MIGRATE_URL 迁移连接池已创建（DDL 走 owner，max=3）");
+    reservation.commit();
+    info!(
+        "✅ MIGRATE_URL 迁移连接池已创建（进程内共享，DDL 走 owner，max={}）",
+        max_connections
+    );
     Ok(Some(pool))
 }
