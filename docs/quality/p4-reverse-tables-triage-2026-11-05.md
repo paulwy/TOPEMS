@@ -4,7 +4,8 @@
 > 对照：同实例 `topems_test`（**1329** 张）。
 > 口径：`prod 独有 = prod 表集合 − test 表集合`，按 `schema.table` 精确比较；`relkind IN ('r','p')`，排除 `pg_catalog / information_schema / pg_toast`。
 > 本轮**只读**：仅 `SELECT` / `pg_catalog` / `information_schema`，未执行任何 DDL/DML，未改迁移账本。
-> **执行状态（2026-11-05 12:22–12:26）**：用户已确认按本文件倾向执行，§4 的 39 张 + `finance.settlements` + `mes.inspection_records` + `public.core_coding_rules` 共 **42 张已删除**；`mes.erp_dictionaries` 与 §7 的 20 张保留未动。逐表状态见 [§14](#14-执行记录2026-11-05)。
+> **执行状态（2026-11-05 12:22–12:26）**：用户已确认按本文件倾向执行，§4 的 39 张 + `finance.settlements` + `mes.inspection_records` + `public.core_coding_rules` 共 **42 张已删除**；`mes.erp_dictionaries` 与 §7 的 20 张当时保留未动。逐表状态见 [§14](#14-执行记录2026-11-05)。
+> **更新（2026-11-05 D 轮）**：`mes.erp_dictionaries` **已完整下线**（前端/后端/菜单/表），prod 表数 1350 → **1349**；明细见 [§17](#17-d-轮2026-11-05erp_dictionaries-完整下线--tenant_permissions_id_seq-归属修正)。
 > 上一轮处置单为临时文件 `/tmp/p4_mapping.md`，未入库；本文件的全部数字均由 2026-11-05 的 `pg_catalog` 实测重建，不依赖 `/tmp`。
 
 ## 1. 结论摘要
@@ -277,6 +278,7 @@ git grep -n -I -w "table"        -- svc lib apps packages cli scripts config dep
 
 - **待确认问题**：ERP 字典功能是否启用、应由哪张表承载？（现状是「代码调用会直接报错，prod 仅 mes 一张空表」）
 - **倾向建议**：确认功能是否上线——若上线，先在 `erp` schema 建表（或把 SQL 改为 `mes.erp_dictionaries` 并纳入 `mes` 连接路径）后**再删本表/改指向**；若未上线，则**直删** `mes.erp_dictionaries` 并清理 handler。
+- **处置结果（2026-11-05 D 轮）：已下线**。按「功能从未成功上线」执行完整下线——删后端 handler/路由、前端页面/API/路由/导航、i18n、prod 菜单行与表；详见 §17。
 
 ### 8.4 `public.core_coding_rules`（2 行 / `database/seeds/coding_rules.sql` / 代码 0 引用）
 
@@ -643,3 +645,37 @@ pg_restore --no-owner --no-privileges -h 127.0.0.1 -p 5432 -U xingzhai \
 - prod 账本现为 573，未登记的 16 个文件即 test/5433 定向迁移（`db08/db09/db10/db11/db12/db13/db14/db15/db16/db17/db18/db20/db21/db23/db24` + `finance_currency_master_fix`），与上述 skip 清单不完全同集，均无需在 prod 登记。
 
 **仍挂账（需单独立项）**：若要把 16 条跳过真正修好，必须在迁移层（而非脚本层）解决——上表 #9 调整执行顺序或加前置建表、#10/#11/#15 统一 schema、#12–#14/#16 恢复被删对象或改为 `to_regclass` 守卫。因「不改已发布迁移字节」约束，本轮不动。
+
+## 17. D 轮（2026-11-05）：erp_dictionaries 完整下线 + tenant_permissions_id_seq 归属修正
+
+### 17.1 A. `erp_dictionaries` 完整下线
+
+| 层 | 处置 | 证据 |
+|---|---|---|
+| 后端 | 删除 `svc/erp/src/modules/dictionaries.rs`（5 handler + 2 条路由）；`modules/mod.rs` 删 `pub mod dictionaries;` 与 `.merge(dictionaries::create_routes())` | `erp_real_module.rs` 仅整体 `nest("/api/erp", erp::create_routes())`，无需改动；全仓已无 `dictionaries::create_routes` / `/dictionaries` 引用 |
+| 前端 | 删除页面 `DictionaryPage.tsx`、API `api/erp/dictionaries.ts`、测试 `ErpDictionaryPage.test.tsx`（6 例）；`config.ts` 删 `ERP_PATHS.dictionaries`、路由块（原 #L559-L571）与导航项（原 #L869-L880） | 保留 `erp-dictionaries` / `dict-management`（另一套 `dict_types` 功能，未受影响） |
+| i18n | 删除仅此功能使用的 `erp.dictionaries.*`（zh/en 各 20 键）与 `erp.nav.erp-data-dictionaries[_desc]`；`i18n-quality` exit 0 | `erp.nav.erp-dictionaries[_desc]` 被 `/erp/dict-management` 复用 → 保留 |
+| 面包屑 | `/erp/data-dictionaries` 段无独立映射（删除路由后不再产生），未改动 `useAutoBreadcrumbs` 的 `dictionaries`（服务于 `/iam/dictionaries`） | 无英文回落 |
+| 菜单 | 新增 `20261105235500_erp_remove_data_dictionaries_menu.sql`，按 `code='erp-data-dictionaries'` 在 `public`/`iam` 两处幂等删除；不改 `20261102140000#L46` | prod 行在 `public`（1 行，iam 0）→ 删除后 0；test 行在 `iam`（1 行，public 0）→ 删除后 0 |
+| 权限点 | `erp:dictionary:read` 仍被菜单 `erp-dictionaries`（`/erp/dict-management`）使用；`erp:dashboard:read` 仍被菜单 `erp-dashboard` 使用 | `public.core_permissions` 986 条中两点均存在；`iam.core_permissions` 0 行。**保留不删**（复用中且审计价值高） |
+| 数据表 | prod 先 `pg_dump -Fc -t mes.erp_dictionaries` 单表归档 → `backups/prod-mes-erp_dictionaries-20261105.dump`；新增 `20261105235600_erp_drop_mes_erp_dictionaries.sql`（`to_regclass` + `relkind` 守卫、有行即 ABORT、`DROP ... RESTRICT`），同迁移清理重建链产生的 `public.erp_dictionaries` | prod `mes.erp_dictionaries` 0 行 → `DROPPED`；`public.erp_dictionaries` absent → `SKIP` |
+
+**prod 结果**：表数 **1350 → 1349**；`public.core_menus` 该行消失、总数 **424 → 423**；账本 **573 → 576**；`/health` **200**。
+
+### 17.2 B. `tenant_permissions_id_seq` 归属修正
+
+- 缺陷：`20261105235000#L317` 守卫 `IF to_regclass('public') IS NULL` 恒真（`to_regclass('public')` 返回 NULL），整块永远 SKIP。
+- 实测：prod 序列经 `pg_depend(deptype='a', refobjid=public.tenant_permissions, refobjsubid=1)` **已归属** `id`（无需变更）；test **无 pg_depend 记录**、`pg_get_serial_sequence` 为 NULL。
+- 新增 `20261105235700_iam_fix_tenant_permissions_id_seq_ownership.sql`：正确守卫表/序列/列存在，`pg_depend` 已归属则 SKIP，否则执行 `ALTER SEQUENCE public.tenant_permissions_id_seq OWNED BY public.tenant_permissions.id`。
+- 结果：prod 执行输出 `SKIP owned-by: already owned ...`（no-op，账本登记）；test 执行输出 `FIXED owned-by ...`，复核 `pg_depend` → `public.tenant_permissions.id`（deptype `a`）。
+
+### 17.3 门禁与重建链
+
+| 项 | 结果 |
+|---|---|
+| `cargo check -p topems-erp -p topems-server` | exit 0 |
+| `cargo clippy ... --all-targets -- -D warnings` | exit 0 |
+| `cargo fmt --check` | exit 0 |
+| 前端 `typecheck` / `lint` / `i18n-quality` / `contract-gate` | 全部 exit 0 |
+| `check-migrations.mjs` / `check-migration-names.mjs --strict` / `validate.sh` | exit 0（592 文件、checksum 0 错） |
+| scratch `p4_rebuild_verify` | **576 OK / 0 FAIL / 16 SKIP**（592 文件）；终态 `erp_dictionaries` 在任何 schema 均不存在，`tenant_permissions_id_seq` 已归属 `public.tenant_permissions.id` |
