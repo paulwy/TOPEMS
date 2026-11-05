@@ -252,7 +252,7 @@ pub async fn generate_report(
     .bind(sample_id)
     .bind(&sample_no)
     .bind(&sample_name)
-    .bind(&inspection_date)
+    .bind(inspection_date)
     .bind(&req.inspector)
     .bind(&inspection_items)
     .bind(&conclusion)

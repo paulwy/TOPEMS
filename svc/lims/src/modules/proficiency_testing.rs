@@ -971,7 +971,7 @@ pub async fn submit_result(
     .bind(std_dev)
     .bind(cv)
     .bind(&req.notes)
-    .bind(&submitted_at)
+    .bind(submitted_at)
     .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
@@ -1190,7 +1190,7 @@ pub async fn evaluate_result(
     .bind(&eval_method)
     .bind(&evaluation_result)
     .bind(&req.evaluated_by)
-    .bind(&evaluated_at)
+    .bind(evaluated_at)
     .bind(&req.notes)
     .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
@@ -1462,7 +1462,7 @@ pub async fn update_corrective_action(
     .bind(&req.status)
     .bind(&req.verification_result)
     .bind(&req.verified_by)
-    .bind(&verified_at)
+    .bind(verified_at)
     .fetch_one(&state.pool)
     .await;
 

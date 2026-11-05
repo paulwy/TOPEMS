@@ -604,8 +604,8 @@ pub async fn subscribe_tenant(
     .bind(&sub.api_product_id)
     .bind(&sub.tenant_id)
     .bind(tier_to_str(&sub.tier))
-    .bind(&sub.starts_at)
-    .bind(&sub.expires_at)
+    .bind(sub.starts_at)
+    .bind(sub.expires_at)
     .bind(sub_status_to_str(&sub.status))
     .execute(&state.db)
     .await
@@ -818,7 +818,7 @@ pub async fn record_usage(
     .bind(record.requests)
     .bind(record.errors)
     .bind(record.data_transferred)
-    .bind(&record.recorded_at)
+    .bind(record.recorded_at)
     .execute(&state.db)
     .await
     {
@@ -1277,9 +1277,9 @@ pub async fn measure_sla(
     .bind(measurement.measured_value)
     .bind(measurement.target_value)
     .bind(measurement.met)
-    .bind(&measurement.measured_at)
-    .bind(&measurement.window_start)
-    .bind(&measurement.window_end)
+    .bind(measurement.measured_at)
+    .bind(measurement.window_start)
+    .bind(measurement.window_end)
     .execute(&state.db)
     .await
     {
