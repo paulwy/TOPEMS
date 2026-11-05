@@ -152,7 +152,7 @@ impl DatabaseAuditLogStore {
             old_value,
             new_value,
             changed_by,
-            changed_at: changed_at.to_rfc3339(),
+            changed_at,
             ip_address,
             user_agent,
             metadata: metadata_map,
@@ -240,9 +240,7 @@ impl AuditLogStore for DatabaseAuditLogStore {
         .bind(&entry.old_value)
         .bind(&entry.new_value)
         .bind(&entry.changed_by)
-        .bind(chrono::DateTime::parse_from_rfc3339(&entry.changed_at)
-            .map(|dt| dt.with_timezone(&chrono::Utc))
-            .unwrap_or_else(|_| chrono::Utc::now()))
+        .bind(entry.changed_at)
         .bind(&entry.ip_address)
         .bind(&entry.user_agent)
         .bind(metadata_json)

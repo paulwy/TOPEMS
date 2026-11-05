@@ -11,6 +11,7 @@
 
 use std::sync::Arc;
 
+use chrono::DateTime;
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 use tracing::{error, info, warn};
@@ -97,7 +98,7 @@ pub struct ExportTaskStats {
     pub last_export_count: usize,
     /// RFC3339 timestamp of the most recent run (None if never run).
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub last_export_at: Option<String>,
+    pub last_export_at: Option<DateTime<Utc>>,
 }
 
 // ===== Export Error =====
@@ -136,7 +137,7 @@ pub struct AuditExportTask<S: AuditLogStore + Send + Sync + 'static + ?Sized> {
     /// Count of entries written in the most recent run.
     last_count: Arc<AtomicUsize>,
     /// Timestamp of the most recent run.
-    last_run_at: Arc<Mutex<Option<String>>>,
+    last_run_at: Arc<Mutex<Option<DateTime<Utc>>>>,
 }
 
 impl<S: AuditLogStore + Send + Sync + 'static + ?Sized> AuditExportTask<S> {
@@ -249,7 +250,7 @@ impl<S: AuditLogStore + Send + Sync + 'static + ?Sized> AuditExportTask<S> {
         config: &ExportTaskConfig,
         window_start: &Arc<Mutex<Option<String>>>,
         last_count: &Arc<AtomicUsize>,
-        last_run_at: &Arc<Mutex<Option<String>>>,
+        last_run_at: &Arc<Mutex<Option<DateTime<Utc>>>>,
     ) -> ExportRunResult {
         let now = Utc::now();
         let lower_bound = window_start.lock().await.clone();
@@ -304,7 +305,7 @@ impl<S: AuditLogStore + Send + Sync + 'static + ?Sized> AuditExportTask<S> {
         let now_rfc = now.to_rfc3339();
         *window_start.lock().await = Some(now_rfc.clone());
         last_count.store(exported, Ordering::Relaxed);
-        *last_run_at.lock().await = Some(now_rfc.clone());
+        *last_run_at.lock().await = Some(now);
 
         ExportRunResult {
             success: true,
@@ -694,7 +695,11 @@ mod tests {
             running: true,
             interval_secs: 3600,
             last_export_count: 42,
-            last_export_at: Some("2026-08-31T10:00:00Z".to_string()),
+            last_export_at: Some(
+                DateTime::parse_from_rfc3339("2026-08-31T10:00:00Z")
+                    .unwrap()
+                    .with_timezone(&Utc),
+            ),
         };
         let json =
             serde_json::to_string(&stats).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));

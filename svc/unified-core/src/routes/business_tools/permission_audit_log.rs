@@ -9,6 +9,7 @@ use std::sync::Arc;
 use topems_shared_core::error::TopemsError;
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
@@ -90,7 +91,7 @@ pub struct AuditLogEntry {
     /// ID of the user/actor who performed the change.
     pub changed_by: String,
     /// Timestamp of the change (RFC3339).
-    pub changed_at: String,
+    pub changed_at: DateTime<Utc>,
     /// IP address of the actor (optional).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ip_address: Option<String>,
@@ -274,13 +275,17 @@ impl AuditLogStore for InMemoryAuditLogStore {
                     }
                 }
                 if let Some(start_time) = &query.start_time {
-                    if &entry.changed_at < start_time {
-                        return false;
+                    if let Ok(start) = DateTime::parse_from_rfc3339(start_time) {
+                        if entry.changed_at < start.with_timezone(&Utc) {
+                            return false;
+                        }
                     }
                 }
                 if let Some(end_time) = &query.end_time {
-                    if &entry.changed_at > end_time {
-                        return false;
+                    if let Ok(end) = DateTime::parse_from_rfc3339(end_time) {
+                        if entry.changed_at > end.with_timezone(&Utc) {
+                            return false;
+                        }
                     }
                 }
                 true
@@ -353,13 +358,17 @@ impl AuditLogStore for InMemoryAuditLogStore {
                     }
                 }
                 if let Some(start) = &start_time {
-                    if &entry.changed_at < start {
-                        return false;
+                    if let Ok(start) = DateTime::parse_from_rfc3339(start) {
+                        if entry.changed_at < start.with_timezone(&Utc) {
+                            return false;
+                        }
                     }
                 }
                 if let Some(end) = &end_time {
-                    if &entry.changed_at > end {
-                        return false;
+                    if let Ok(end) = DateTime::parse_from_rfc3339(end) {
+                        if entry.changed_at > end.with_timezone(&Utc) {
+                            return false;
+                        }
                     }
                 }
                 true
@@ -427,7 +436,7 @@ impl<S: AuditLogStore + ?Sized> AuditLogger<S> {
             old_value: None,
             new_value: Some(serde_json::to_value(permission).unwrap_or(serde_json::Value::Null)),
             changed_by: changed_by.to_string(),
-            changed_at: chrono::Utc::now().to_rfc3339(),
+            changed_at: chrono::Utc::now(),
             ip_address: ip_address.map(|s| s.to_string()),
             user_agent: user_agent.map(|s| s.to_string()),
             metadata: HashMap::new(),
@@ -462,7 +471,7 @@ impl<S: AuditLogStore + ?Sized> AuditLogger<S> {
                 serde_json::to_value(new_permission).unwrap_or(serde_json::Value::Null),
             ),
             changed_by: changed_by.to_string(),
-            changed_at: chrono::Utc::now().to_rfc3339(),
+            changed_at: chrono::Utc::now(),
             ip_address: ip_address.map(|s| s.to_string()),
             user_agent: user_agent.map(|s| s.to_string()),
             metadata: HashMap::new(),
@@ -486,7 +495,7 @@ impl<S: AuditLogStore + ?Sized> AuditLogger<S> {
             old_value: Some(serde_json::to_value(permission).unwrap_or(serde_json::Value::Null)),
             new_value: None,
             changed_by: changed_by.to_string(),
-            changed_at: chrono::Utc::now().to_rfc3339(),
+            changed_at: chrono::Utc::now(),
             ip_address: ip_address.map(|s| s.to_string()),
             user_agent: user_agent.map(|s| s.to_string()),
             metadata: HashMap::new(),
@@ -515,7 +524,7 @@ impl<S: AuditLogStore + ?Sized> AuditLogger<S> {
             old_value: None,
             new_value: Some(serde_json::to_value(permission).unwrap_or(serde_json::Value::Null)),
             changed_by: changed_by.to_string(),
-            changed_at: chrono::Utc::now().to_rfc3339(),
+            changed_at: chrono::Utc::now(),
             ip_address: ip_address.map(|s| s.to_string()),
             user_agent: user_agent.map(|s| s.to_string()),
             metadata: HashMap::new(),

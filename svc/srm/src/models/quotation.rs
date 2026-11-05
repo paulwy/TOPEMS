@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-// date-type-convention: exempt 交货周期文本（DB varchar 列），非时间戳，DTO 字符串展示
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Quotation {
     pub id: Uuid,
@@ -16,6 +15,7 @@ pub struct Quotation {
     pub total_amount: f64,
     pub currency: String,
     pub valid_until: Option<DateTime<Utc>>,
+    // date-type-convention: exempt 交货周期文本（DB varchar 列），非时间戳，DTO 字符串展示
     pub delivery_time: Option<String>,
     pub payment_terms: Option<String>,
     pub status: String,

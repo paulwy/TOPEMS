@@ -11,6 +11,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
@@ -59,9 +60,11 @@ pub struct QualityTask {
     pub status: Option<String>,
     pub inspector: Option<String>,
     pub assignee: Option<String>,
-    pub inspected_at: Option<String>,
+    #[serde(deserialize_with = "topems_shared_db::datetime_text::option::deserialize")]
+    pub inspected_at: Option<DateTime<Utc>>,
     pub result: Option<String>,
-    pub created_at: String,
+    #[serde(deserialize_with = "topems_shared_db::datetime_text::deserialize")]
+    pub created_at: DateTime<Utc>,
     pub tenant_id: String,
 }
 
@@ -74,7 +77,8 @@ pub struct DefectRecord {
     pub measured_value: Option<String>,
     pub is_qualified: bool,
     pub remark: Option<String>,
-    pub created_at: String,
+    #[serde(deserialize_with = "topems_shared_db::datetime_text::deserialize")]
+    pub created_at: DateTime<Utc>,
     pub tenant_id: String,
 }
 
@@ -134,9 +138,9 @@ pub async fn list_quality_tasks(
                status,
                inspector,
                assignee,
-               inspected_at::TEXT,
+               inspected_at,
                result,
-               created_at::TEXT,
+               created_at,
                COALESCE(tenant_id::TEXT, '00000000-0000-0000-0000-000000000001') AS tenant_id
         FROM qms.qa_quality_inspections
         WHERE deleted_at IS NULL
@@ -201,9 +205,9 @@ pub async fn get_quality_task(
                status,
                inspector,
                assignee,
-               inspected_at::TEXT,
+               inspected_at,
                result,
-               created_at::TEXT,
+               created_at,
                COALESCE(tenant_id::TEXT, '00000000-0000-0000-0000-000000000001') AS tenant_id
         FROM qms.qa_quality_inspections
         WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2)
@@ -324,7 +328,7 @@ pub async fn list_defect_records(
                measured_value,
                is_qualified,
                remark,
-               created_at::TEXT,
+               created_at,
                COALESCE(tenant_id::TEXT, '00000000-0000-0000-0000-000000000001') AS tenant_id
         FROM qms.qa_inspection_results
         WHERE deleted_at IS NULL AND is_qualified = false

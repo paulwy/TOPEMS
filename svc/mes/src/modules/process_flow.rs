@@ -27,6 +27,7 @@ struct FlowStepRow {
     equipment_ids: Option<Vec<Uuid>>,
     standard_time: Option<f64>,
     wait_time: Option<f64>,
+    // date-type-convention: exempt —— transfer_time 是时长语义（DB 列为 text），不是时间点。
     transfer_time: Option<String>,
     quality_check_required: Option<bool>,
     description: Option<String>,

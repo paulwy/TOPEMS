@@ -727,7 +727,7 @@ struct ExportRow {
     status: Option<String>,
     success: Option<bool>,
     error_message: Option<String>,
-    created_at: String,
+    created_at: DateTime<Utc>,
 }
 
 async fn fetch_export_rows(
@@ -855,7 +855,7 @@ async fn fetch_export_rows(
                 status: None,
                 success: None,
                 error_message: None,
-                created_at: created_at.to_rfc3339(),
+                created_at,
             },
             "login_logs" => ExportRow {
                 id: row.try_get::<Uuid, _>("id")?.to_string(),
@@ -888,7 +888,7 @@ async fn fetch_export_rows(
                 error_message: row
                     .try_get::<Option<String>, _>("error_message")
                     .unwrap_or(None),
-                created_at: created_at.to_rfc3339(),
+                created_at,
             },
             _ => ExportRow {
                 id: row.try_get::<Uuid, _>("id")?.to_string(),
@@ -923,7 +923,7 @@ async fn fetch_export_rows(
                 error_message: row
                     .try_get::<Option<String>, _>("error_message")
                     .unwrap_or(None),
-                created_at: created_at.to_rfc3339(),
+                created_at,
             },
         };
         out.push(entry);
@@ -954,7 +954,7 @@ fn render_csv(rows: &[ExportRow]) -> String {
                 "false"
             }),
             csv_field(row.error_message.as_deref().unwrap_or("")),
-            csv_field(&row.created_at),
+            csv_field(&row.created_at.to_rfc3339()),
         ];
         output.push_str(&fields.join(","));
         output.push('\n');
@@ -1046,7 +1046,9 @@ mod tests {
             status: Some("success".to_string()),
             success: Some(true),
             error_message: None,
-            created_at: "2026-07-21T00:00:00Z".to_string(),
+            created_at: DateTime::parse_from_rfc3339("2026-07-21T00:00:00Z")
+                .unwrap()
+                .with_timezone(&Utc),
         }];
         let output = render_csv(&rows);
         assert!(output.starts_with("id,source"));

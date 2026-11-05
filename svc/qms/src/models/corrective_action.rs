@@ -23,6 +23,7 @@ pub struct ListActionsResponse {
     pub page_size: i64,
 }
 
+// date-type-convention: exempt —— target_date/completed_at 列已由 20260918000075 收敛为 text，API 契约冻结为字符串。
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct CorrectiveAction {
     pub id: String,
@@ -38,9 +39,11 @@ pub struct CorrectiveAction {
     pub status: Option<String>,
     pub priority: Option<String>,
     pub assignee: Option<String>,
+    /// date-type-convention: exempt —— 列已由 20260918000075 收敛为 text，且 API 入参与出参均冻结为字符串，改类型需 DB 迁移（本轮不做）。
     /// DB 列 qms.qa_corrective_actions.target_date 为 text（迁移 20260918000075 由 timestamptz 对齐为 text），
     /// 创建/更新请求均按 Option<String> 传入，读模型同样按 String 解码，避免 TIMESTAMPTZ vs TEXT 类型不匹配。
     pub target_date: Option<String>,
+    /// date-type-convention: exempt —— 同 target_date，列与契约均为 text。
     /// completed_at 列同为 text（迁移 20260918000075 将 timestamptz 对齐为 text），
     /// complete_action 的 RETURNING 按 text 返回，故读模型按 Option<String> 解码，
     /// 与 target_date 同口径，避免 TIMESTAMPTZ vs TEXT 类型不匹配及 NULL 解码崩溃。

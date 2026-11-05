@@ -73,7 +73,7 @@ impl ArchiveConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchivedEntry {
     /// Archive timestamp.
-    pub archived_at: String,
+    pub archived_at: DateTime<Utc>,
     /// The original audit log entry.
     pub entry: AuditLogEntry,
 }
@@ -90,7 +90,7 @@ pub struct ArchiveFileInfo {
     /// Number of entries in the file.
     pub entry_count: usize,
     /// Creation time.
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
     /// Whether the file is compressed.
     pub compressed: bool,
 }
@@ -127,7 +127,7 @@ impl AuditLogArchiver {
         let mut by_date: std::collections::HashMap<String, Vec<&AuditLogEntry>> =
             std::collections::HashMap::new();
         for entry in entries {
-            let date = extract_date(&entry.changed_at);
+            let date = extract_date(entry.changed_at);
             by_date.entry(date).or_default().push(entry);
         }
 
@@ -137,7 +137,7 @@ impl AuditLogArchiver {
             let archived_entries: Vec<ArchivedEntry> = date_entries
                 .iter()
                 .map(|e| ArchivedEntry {
-                    archived_at: Utc::now().to_rfc3339(),
+                    archived_at: Utc::now(),
                     entry: (*e).clone(),
                 })
                 .collect();
@@ -245,9 +245,9 @@ impl AuditLogArchiver {
                     .ok()
                     .map(|t| {
                         let dt: DateTime<Utc> = t.into();
-                        dt.to_rfc3339()
+                        dt
                     })
-                    .unwrap_or_else(|| Utc::now().to_rfc3339());
+                    .unwrap_or_else(Utc::now);
 
                 let compressed = path
                     .extension()
@@ -283,9 +283,7 @@ impl AuditLogArchiver {
         let mut removed = 0;
 
         for archive in archives {
-            let created = DateTime::parse_from_rfc3339(&archive.created_at)
-                .map(|dt| dt.with_timezone(&Utc))
-                .unwrap_or(Utc::now());
+            let created = archive.created_at;
 
             if created < cutoff {
                 match fs::remove_file(&archive.path) {
@@ -336,9 +334,9 @@ impl From<serde_json::Error> for ArchiveError {
 
 // ===== Helper Functions =====
 
-/// Extract date (YYYY-MM-DD) from an RFC3339 timestamp string.
-fn extract_date(timestamp: &str) -> String {
-    timestamp.get(..10).unwrap_or("unknown").to_string()
+/// Extract date (YYYY-MM-DD) from a UTC timestamp.
+fn extract_date(timestamp: DateTime<Utc>) -> String {
+    timestamp.format("%Y-%m-%d").to_string()
 }
 
 /// V472: Gzip compression using the flate2 library.
@@ -418,8 +416,10 @@ mod tests {
 
     #[test]
     fn test_extract_date() {
-        assert_eq!(extract_date("2026-01-15T10:30:00Z"), "2026-01-15");
-        assert_eq!(extract_date("invalid"), "unknown");
+        let ts = DateTime::parse_from_rfc3339("2026-01-15T10:30:00Z")
+            .unwrap()
+            .with_timezone(&Utc);
+        assert_eq!(extract_date(ts), "2026-01-15");
     }
 
     #[tokio::test]
@@ -494,7 +494,9 @@ mod tests {
     #[test]
     fn test_archived_entry_serialization() {
         let entry = ArchivedEntry {
-            archived_at: "2026-01-15T10:00:00Z".to_string(),
+            archived_at: DateTime::parse_from_rfc3339("2026-01-15T10:00:00Z")
+                .unwrap()
+                .with_timezone(&Utc),
             entry: make_test_entry("1", "2026-01-15T10:00:00Z"),
         };
         let json =
@@ -509,7 +511,9 @@ mod tests {
             path: "/tmp/audit.json".to_string(),
             size: 1024,
             entry_count: 10,
-            created_at: "2026-01-15T10:00:00Z".to_string(),
+            created_at: DateTime::parse_from_rfc3339("2026-01-15T10:00:00Z")
+                .unwrap()
+                .with_timezone(&Utc),
             compressed: false,
         };
         let json =

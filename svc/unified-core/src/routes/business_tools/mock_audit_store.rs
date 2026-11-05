@@ -5,6 +5,7 @@
 use std::sync::Mutex;
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 
 use super::permission_audit_log::{
     AuditAction, AuditLogEntry, AuditLogError, AuditLogQuery, AuditLogResponse, AuditLogStore,
@@ -102,15 +103,19 @@ impl AuditLogStore for MockAuditLogStore {
                         return false;
                     }
                 }
-                // V530g: time-window filters (RFC3339 strings compare lexicographically)
+                // V530g: time-window filters (RFC3339 bounds parsed to UTC).
                 if let Some(start) = &query.start_time {
-                    if e.changed_at < *start {
-                        return false;
+                    if let Ok(start) = DateTime::parse_from_rfc3339(start) {
+                        if e.changed_at < start.with_timezone(&Utc) {
+                            return false;
+                        }
                     }
                 }
                 if let Some(end) = &query.end_time {
-                    if e.changed_at > *end {
-                        return false;
+                    if let Ok(end) = DateTime::parse_from_rfc3339(end) {
+                        if e.changed_at > end.with_timezone(&Utc) {
+                            return false;
+                        }
                     }
                 }
                 true
@@ -205,7 +210,9 @@ pub fn make_test_entry(id: &str, changed_at: &str) -> AuditLogEntry {
         old_value: None,
         new_value: None,
         changed_by: "admin".to_string(),
-        changed_at: changed_at.to_string(),
+        changed_at: DateTime::parse_from_rfc3339(changed_at)
+            .map(|d| d.with_timezone(&Utc))
+            .unwrap_or_else(|_| Utc::now()),
         ip_address: None,
         user_agent: None,
         metadata: std::collections::HashMap::new(),

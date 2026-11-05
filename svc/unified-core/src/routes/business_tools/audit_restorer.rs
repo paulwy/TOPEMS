@@ -414,7 +414,9 @@ mod tests {
 
     fn make_archived_entry(id: &str, created_at: &str) -> ArchivedEntry {
         ArchivedEntry {
-            archived_at: "2026-01-15T10:00:00Z".to_string(),
+            archived_at: chrono::DateTime::parse_from_rfc3339("2026-01-15T10:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
             entry: make_test_entry(id, created_at),
         }
     }

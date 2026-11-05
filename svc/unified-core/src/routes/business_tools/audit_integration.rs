@@ -218,7 +218,7 @@ pub fn create_audit_entry(
         old_value: old_value.map(|p| serde_json::to_value(p).unwrap_or(serde_json::Value::Null)),
         new_value: new_value.map(|p| serde_json::to_value(p).unwrap_or(serde_json::Value::Null)),
         changed_by: actor.changed_by.clone(),
-        changed_at: chrono::Utc::now().to_rfc3339(),
+        changed_at: chrono::Utc::now(),
         ip_address: actor.ip_address.clone(),
         user_agent: actor.user_agent.clone(),
         metadata: HashMap::new(),
