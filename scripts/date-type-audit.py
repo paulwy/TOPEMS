@@ -21,11 +21,13 @@ import os
 import sys
 import json
 import argparse
+import datetime
 from collections import Counter, defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SVC_DIR = os.path.join(ROOT, "svc")
 MIG_DIRS = [os.path.join(ROOT, "database", "migrations")]
+BASELINE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "date-type-baseline.json")
 
 # ── 时间字段名模式（宽松前缀 + 时间后缀；避免把 schedule_no 之类当时间）──
 _TIME_PREFIX = (r"(?:created|updated|deleted|started|finished|completed|approved|issued|returned|"
@@ -124,12 +126,20 @@ def audit_rust(service=None):
                 nearest = derives[-1] if derives else ''
                 is_entity = 'FromRow' in nearest
                 is_serialize = 'Serialize' in nearest
-                exempted = 'date-type-convention: exempt' in before
                 layer = 'entity' if is_entity else 'dto'
-                for line in block.splitlines():
+                block_lines = block.splitlines()
+                for idx, line in enumerate(block_lines):
                     fm = FIELD_LINE.match(line)
                     if not fm:
                         continue
+                    # B4：豁免收到字段级——仅该字段自身、紧邻上方的 doc 注释/属性行内的
+                    # 'date-type-convention: exempt' 生效，结构体级豁免不再放行全部字段。
+                    j = idx - 1
+                    while j >= 0 and (block_lines[j].strip().startswith(('//', '#['))
+                                      or not block_lines[j].strip()):
+                        j -= 1
+                    exempted = 'date-type-convention: exempt' in "\n".join(
+                        block_lines[j + 1:idx + 1])
                     name, opt, typ = fm.group(1), bool(fm.group(2)), fm.group(3)
                     if not TIME_NAME.match(name):
                         continue
@@ -184,6 +194,108 @@ def audit_serialization(service=None):
     return styles, fmt_by, parse_by
 
 
+# ── B4：无时区 timestamp 列静态去重（近似迁移链最终态）──
+# 口径与 audit_sql() 的出现次数不同：这里是唯一 (schema, table, column)，
+# 并处理 ALTER COLUMN TYPE timestamptz / DROP TABLE / DROP COLUMN，
+# 用于基线比对与"还差多少列没改"的可读指标。
+_B4_IDENT = r'(?:"[^"]+"|[A-Za-z_][A-Za-z0-9_$]*)'
+_B4_QNAME = rf'({_B4_IDENT})(?:\s*\.\s*({_B4_IDENT}))?'
+_B4_TS = re.compile(
+    rf'(?i)^\s*({_B4_IDENT})\s+(timestamp(?:\s*\(\s*\d+\s*\))?(?:\s+with(?:out)?\s+time\s+zone)?|timestamptz)\b')
+
+
+def _b4_strip(s):
+    s = re.sub(r'/\*.*?\*/', ' ', s, flags=re.S)
+    s = re.sub(r'(?m)^\s*--[^\n]*$', '', s)
+    return re.sub(r'(?<![:\'])\s--[^\n]*', ' ', s)
+
+
+def _b4_split(body):
+    parts, depth, cur, i, in_str = [], 0, '', 0, False
+    while i < len(body):
+        c = body[i]
+        if c == "'" and (i == 0 or body[i - 1] != "'"):
+            in_str = not in_str
+        if not in_str:
+            if c in '([':
+                depth += 1
+            elif c in ')]':
+                depth -= 1
+            elif c == ',' and depth == 0:
+                parts.append(cur)
+                cur = ''
+                i += 1
+                continue
+        cur += c
+        i += 1
+    if cur.strip():
+        parts.append(cur)
+    return [p.strip() for p in parts if p.strip()]
+
+
+def parse_naive_unique():
+    """返回仍为无时区 timestamp 的唯一列集合 {"schema.table.column"}（静态近似）。"""
+    cols = {}
+    search_path = 'public'
+
+    def unq(x):
+        return x.strip('"').lower() if x else x
+
+    def touch(schema, table, col, typ, drop=False):
+        key = (schema, table, col)
+        if drop:
+            cols.pop(key, None)
+            return
+        raw = typ.lower()
+        if 'timestamptz' in raw or 'with time zone' in raw:
+            cols.pop(key, None)
+        elif 'timestamp' in raw:
+            cols[key] = True
+
+    for fn in sorted(os.listdir(MIG_DIRS[0])):
+        if not fn.endswith('.sql'):
+            continue
+        t = _b4_strip(io.open(os.path.join(MIG_DIRS[0], fn), encoding='utf-8', errors='replace').read())
+        for m in re.finditer(rf'(?i)\bSET\s+search_path\s+TO\s+([^;]+);', t):
+            v = m.group(1).strip().strip('"')
+            if ',' not in v:
+                search_path = unq(v)
+        for m in re.finditer(rf'(?i)\bCREATE\s+(?:UNLOGGED\s+)?TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?{_B4_QNAME}\s*\(', t):
+            schema = unq(m.group(1)) if m.group(2) else search_path
+            table = unq(m.group(2) if m.group(2) else m.group(1))
+            start, depth, i = m.end() - 1, 0, m.end() - 1
+            while i < len(t):
+                if t[i] == '(':
+                    depth += 1
+                elif t[i] == ')':
+                    depth -= 1
+                    if depth == 0:
+                        break
+                i += 1
+            for coldef in _b4_split(t[start + 1:i]):
+                tm = _B4_TS.match(coldef)
+                if tm:
+                    touch(schema, table, unq(tm.group(1)), tm.group(2))
+        for m in re.finditer(rf'(?i)\bALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?(?:ONLY\s+)?{_B4_QNAME}((?:[^;])*)', t):
+            schema = unq(m.group(1)) if m.group(2) else search_path
+            table = unq(m.group(2) if m.group(2) else m.group(1))
+            clause = m.group(3)
+            for am in re.finditer(rf'(?i)\bADD\s+(?:COLUMN\s+)?(?:IF\s+NOT\s+EXISTS\s+)?({_B4_IDENT})\s+([^,;]+)', clause):
+                tm = _B4_TS.match(' ' + am.group(1) + ' ' + am.group(2))
+                if tm:
+                    touch(schema, table, unq(am.group(1)), tm.group(2))
+            for am in re.finditer(rf'(?i)\bALTER\s+(?:COLUMN\s+)?({_B4_IDENT})\s+(?:SET\s+DATA\s+)?TYPE\s+([^,;]+)', clause):
+                touch(schema, table, unq(am.group(1)), am.group(2))
+            for am in re.finditer(rf'(?i)\bDROP\s+(?:COLUMN\s+)?(?:IF\s+EXISTS\s+)?({_B4_IDENT})', clause):
+                touch(schema, table, unq(am.group(1)), '', drop=True)
+        for m in re.finditer(rf'(?i)\bDROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?{_B4_QNAME}', t):
+            schema = unq(m.group(1)) if m.group(2) else search_path
+            table = unq(m.group(2) if m.group(2) else m.group(1))
+            for k in [k for k in cols if k[0] == schema and k[1] == table]:
+                cols.pop(k)
+    return {f"{s}.{tb}.{c}" for (s, tb, c) in cols}
+
+
 def audit_sql():
     """返回 (列类型分布, 无时区列清单)"""
     col_type = Counter()
@@ -227,6 +339,8 @@ def main():
     ap.add_argument('--service', help='仅审计指定服务')
     ap.add_argument('--sql', action='store_true', help='仅 SQL 层')
     ap.add_argument('--json', help='输出 JSON 基线文件')
+    ap.add_argument('--write-baseline', action='store_true',
+                    help='把当前唯一无时区 timestamp 列写入 scripts/date-type-baseline.json')
     args = ap.parse_args()
 
     report = {'rust': None, 'sql': None}
@@ -299,7 +413,7 @@ def main():
         for t, c in col_type.most_common():
             print(f"  {t:22s} {c}")
         if naive_cols:
-            print(f"\n=== 无时区 timestamp 列（{len(naive_cols)} 个，迁移候选） ===")
+            print(f"\n=== 无时区 timestamp 列（出现次数 {len(naive_cols)}，迁移候选） ===")
             seen = set()
             for fn, tbl, col in naive_cols[:60]:
                 key = (tbl, col)
@@ -307,9 +421,46 @@ def main():
                     continue
                 seen.add(key)
                 print(f"  {tbl}.{col} ({fn})")
+        unique_cols = parse_naive_unique()
+        covered = any(
+            'date-type-baseline: covered' in io.open(os.path.join(MIG_DIRS[0], fn), encoding='utf-8',
+                                                     errors='replace').read()
+            for fn in os.listdir(MIG_DIRS[0]) if fn.endswith('.sql'))
+        baseline = {'naive_timestamp_columns': [], 'remaining': len(unique_cols)}
+        if os.path.exists(BASELINE_PATH):
+            with io.open(BASELINE_PATH, 'r', encoding='utf-8') as f:
+                baseline = json.load(f)
+        if args.write_baseline:
+            baseline = {
+                'updated_at': datetime.date.today().isoformat(),
+                'naive_timestamp_columns': sorted(unique_cols),
+                'remaining': 0 if covered else len(unique_cols),
+            }
+            with io.open(BASELINE_PATH, 'w', encoding='utf-8') as f:
+                json.dump(baseline, f, ensure_ascii=False, indent=2)
+            print(f"\n基线已写入 {BASELINE_PATH}（{len(unique_cols)} 列）")
+        base_cols = set(baseline.get('naive_timestamp_columns', []))
+        remaining = [] if covered else sorted(base_cols & unique_cols)
+        new_cols = sorted(unique_cols - base_cols)
+        print(f"\n=== 无时区 timestamp 唯一列（{len(unique_cols)} 个） ===")
+        print(f"  基线登记: {len(base_cols)} 列；仍待迁移: {len(remaining)} 列"
+              f"{'（迁移已声明全覆盖 covered）' if covered else ''}")
+        if remaining:
+            for c in remaining[:40]:
+                print(f"  待迁移 {c}")
+        if new_cols:
+            print(f"\n=== 新增无时区 timestamp 列（{len(new_cols)} 个，基线外，须阻断） ===")
+            for c in new_cols:
+                print(f"  新增 {c}")
+            exit_code = 1
+        elif not remaining:
+            print("  ✅ 无时区 timestamp 列已归零")
         report['sql'] = {
             'col_types': dict(col_type),
             'naive_timestamp_cols': naive_cols,
+            'naive_timestamp_unique': sorted(unique_cols),
+            'baseline_remaining': remaining,
+            'baseline_new': new_cols,
         }
 
     if args.json:
