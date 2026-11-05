@@ -200,9 +200,14 @@ impl<'c> Executor<'c> for &'c mut ScopedTxn<'_> { /* 委托给 &mut PgConnection
 
 具体难点分类（已实测扫描）：
 
-1. **绕过池直接拿连接**：`pool.acquire()` 共 33 处 / 32 文件——28 个 `*_real_module.rs` 中
-   除 search（试点已移除）外的 27 个各 1 处（健康/就绪探测），另有 `analytics/bi/dataset.rs`、
-   `erp/searchable_projection.rs`、`mes/work_report.rs`、`unified-core/middleware/tenant_rls.rs`（2 处）。
+1. **绕过池直接拿连接**：改造前 33 处 / 32 文件。**已消除 28 处**——27 个 `*_real_module.rs`
+   与 `server/modules/subscription_module.rs` 的启动探测（原为 `let _conn = ctx.db.acquire().await?;`，
+   变量绑定使连接持有到 `build()` 结束），统一收敛到 `shared-db::database::probe_connection`
+   （`SELECT 1` 后立即归还，失败 `?` 传播保持 fail-fast）。
+   **保留 5 处**（B 全量范畴，已进 CI 白名单）：`analytics/bi/dataset.rs`（BI 动态 SQL）、
+   `erp/searchable_projection.rs`（erp 未纳入 Db）、`mes/work_report.rs`（spawn 后台任务，
+   已改为查询后立即 `drop(conn)`）、`unified-core/middleware/tenant_rls.rs`（请求级会话 GUC）、
+   `shared-db/src/rls.rs`（共享 RLS 中间件基础设施）。详见 C.4。
 2. **未限定表名依赖会话 `search_path`**：`SEARCH_PATH` 默认 `rs, erp, public`，erp/unified-core
    有大量裸表名；改作用域后每个模块必须显式给 schema 串（不能照搬全局默认）。
 3. **会话级 `SET search_path`**：**生产代码 0 处**，仅 `svc/ehs/tests`、`svc/qms/tests` 用；
@@ -279,3 +284,92 @@ schema——会话基线 `iam,shared,public` 下 `core_files` → `iam.core_file
 下 → `public.core_files`。本试点按 `public` 语义验证通过（两处列结构一致、test 库两表均空），
 但**生产数据实际落点必须在切换前逐模块核对**；B 全量阶段的正确做法是迁移时把未限定表名
 全部显式加 schema 前缀，而不是依赖作用域默认值（否则等于把数据源隐式改掉）。
+
+## C. schema 前缀规则（可执行门禁）
+
+### C.1 规则
+
+**模块内 SQL 的表引用一律显式 `<schema>.<table>`**，不依赖 `search_path` 默认值。
+
+`ScopedTxn` 的 `SET LOCAL search_path` 只是**兜底**，不作为正确性依据：裸表名一旦依赖它，
+改动 search_path（试点、模块裁剪、多租户隔离）就会静默改变数据源，且 SQL 不报错——
+同名表跨 schema 时（如 `core_files` 在 `public` / `flow` / `iam` 各一份）会读到另一份数据。
+
+### C.2 例外（不算违规）
+
+| 场景 | 处理 |
+| --- | --- |
+| 动态表名（`format!` 拼接 / 绑定参数 / `{}` 占位） | 静态不可判定，扫描跳过；要求调用点显式拼接 `schema.`，并在 code review 中人工确认 |
+| CTE 名（`WITH x AS (...)`）、子查询、表别名 | 不是物理表，跳过 |
+| `pg_catalog` / `information_schema` 系统表 | 允许裸写（PostgreSQL 保证可见），也可显式前缀 |
+| `unnest` / `generate_series` / `json_each` 等集合函数 | 不是表，跳过 |
+| 跨 schema JOIN | 两侧都必须显式前缀（这是本规则的高危场景，不允许"一侧显式一侧裸"） |
+| DDL / 建表 | 由 `database/migrations/**` 管理，不在模块代码内；迁移文件不属本规则范围 |
+
+### C.3 检查口径（`scripts/ci/check-schema-prefix.mjs`）
+
+- 扫描范围：`svc/*/src/**/*.rs`，排除 `tests/`、`*_test.rs`、`*_tests.rs`、`test_*.rs`
+  与 `#[cfg(test)] mod` 块（保持行号）。
+- 识别 SQL：仅处理同时满足「结构像 SQL」的字面量（`SELECT … FROM` / `INSERT INTO` /
+  `UPDATE … SET` / `DELETE FROM` / `JOIN`），避免把日志文案（如 `creating report from template`）误报。
+- 抽取表引用：`FROM` / `JOIN` / `INTO` / `UPDATE` / `REFERENCES` 后的首个标识符
+  （含 `"quoted"` 形式）；名字中含 `.` 视为已限定，直接放行。
+- 判定分级（危险度从高到低）：
+
+| 级别 | 含义 |
+| --- | --- |
+| `AMBIGUOUS` | 表名在多 schema 同名（事实源 `scripts/schema_boundary_tables.json#ambiguous`）——search_path 一变就读错表 |
+| `CROSS_SCHEMA` | 静态归属 schema 不在该服务的 `search_path` / `allow` 内——当前就依赖隐式解析 |
+| `SEARCH_PATH_DEPENDENT` | 归属 schema 恰在 `search_path` 内，今天能跑通纯属巧合 |
+| `UNKNOWN` | 静态归属表里查不到（新表/视图未登记），按违规计 |
+
+- 基线：`scripts/ci/schema-prefix-baseline.json`，键为 `文件::表名`。既存违规放行，
+  新增文件或新表名阻断（退出码 1）。同一文件内新增同表名的新语句不会阻断（文件级粒度，
+  与仓库既有基线机制一致）——这是已知限制，靠 review 补齐。
+
+```bash
+node scripts/ci/check-schema-prefix.mjs                 # 全量（CI）
+node scripts/ci/check-schema-prefix.mjs --changed-only  # 仅暂存文件（pre-commit）
+node scripts/ci/check-schema-prefix.mjs --report-only   # 只报告
+node scripts/ci/check-schema-prefix.mjs --json
+```
+
+### C.4 绕过池的调用白名单（`scripts/ci/check-pool-acquire.mjs`）
+
+`svc/**` 内禁止 `.acquire(` / `.acquire_timeout(`；`lib/shared-db/**` 是连接治理基础设施层
+（建池、`scope`、RLS 中间件），不在扫描范围。白名单
+`scripts/ci/pool-acquire-baseline.json` 现有 4 条（均带 reason）：
+
+| 文件 | 保留原因 |
+| --- | --- |
+| `svc/analytics/src/modules/bi/dataset.rs` | BI 动态 SQL，目标 schema 由用户配置决定，不在本进程 search_path 语义内 |
+| `svc/erp/src/modules/searchable_projection.rs` | erp 尚未纳入 `Db` 试点；该处为启动期快照补写的独立只读借用，语义等价 `scope_read` |
+| `svc/mes/src/modules/work_report.rs` | `tokio::spawn` 后台任务，请求事务已提交，无法复用请求级 scope；已改为查询后立即归还 |
+| `svc/unified-core/src/middleware/tenant_rls.rs` | 请求级**会话级**租户 GUC，需跨 `next.run` 持有；与 shared-auth 的事务级 RLS 并存 |
+
+另有 1 处不在扫描范围但同样保留：`lib/shared-db/src/rls.rs::rls_middleware`
+（共享 RLS 中间件，归还前显式 `RESET app.tenant_id`）。
+
+### C.5 首次全量扫描结果（2026-11-06）
+
+- 扫描 1,424 个文件 / 6,325 条 SQL 字面量；**违规 1,673 处**，已全部进基线（339 个 `文件::表` 键），全量扫描退出码 0。
+- 分级：`AMBIGUOUS` 49、`CROSS_SCHEMA` 2、`SEARCH_PATH_DEPENDENT` 884、`UNKNOWN` 738。
+- 按模块（Top）：`mes` 308、`unified-core` 273、`finance` 234、`lims` 174、`analytics` 166、
+  `pdm` 151、`erp` 106、`communication` 101，其余 ≤ 46。
+- **最危险（优先处理）**：
+  1. `CROSS_SCHEMA`（2 处，均在 `svc/monitor/src/modules/monitor/metrics.rs#899`）：
+     `employees`、`departments` 裸引用，实际归属 `hrm`——monitor 的 search_path 不含 hrm，
+     一旦切换作用域即失败或读到同名表。
+  2. `AMBIGUOUS`（49 处 / 8 个表名）：
+     `audit_logs`（crm/mes/srm/wms/hrm/erp/scm/bi 各有，8 个 owner）、
+     `suppliers`（scm/srm/erp）、`inventory`（erp/wms）、`projects`/`project_members`/
+     `project_phases`/`project_milestones`（rd 与 pm）、`budgets`（finance 与 pm）。
+     `unified-core` 与 `monitor` 是主要引用方，二者都没有自己的 schema，最容易读错。
+
+### C.6 基线更新流程
+
+1. 先按规则修 SQL（显式 `schema.table`），不要直接加基线；
+2. 仅当"确实无法静态限定"（如动态表名）才 `node scripts/ci/check-schema-prefix.mjs --update-baseline`
+   重生成基线；
+3. `git diff` 必须只新增预期的 `文件::表名` 条目，`git add` 后随同一 commit 提交；
+4. CI（`connection-governance` job）与 pre-commit 都会跑全量/增量校验，基线膨胀同样会进 review。
