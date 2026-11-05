@@ -208,7 +208,7 @@ pub struct RiskScoreGql {
     pub total_score: i32,
     pub level: String,
     pub factors: Vec<RiskFactorGql>,
-    pub assessed_at: String,
+    pub assessed_at: DateTime<Utc>,
 }
 
 /// V48.0: 信任上下文
@@ -223,7 +223,7 @@ pub struct TrustContextGql {
     pub trust_level: TrustLevelGql,
     pub risk_score: i32,
     pub verification_factors: Vec<String>,
-    pub assessed_at: String,
+    pub assessed_at: DateTime<Utc>,
 }
 
 /// V48.0: 零信任策略
@@ -282,7 +282,7 @@ impl RiskScore {
             total_score: self.total_score,
             level: self.level.clone(),
             factors: self.factors.iter().map(|f| f.to_gql()).collect(),
-            assessed_at: self.assessed_at.to_rfc3339(),
+            assessed_at: self.assessed_at,
         }
     }
 }
@@ -318,7 +318,7 @@ impl TrustContext {
                 .iter()
                 .map(|f| f.as_str().to_string())
                 .collect(),
-            assessed_at: self.assessed_at.to_rfc3339(),
+            assessed_at: self.assessed_at,
         }
     }
 }
@@ -754,9 +754,9 @@ pub struct SignedRequestGql {
 pub struct KeyInfoGql {
     pub key_id: String,
     pub algorithm: SignatureAlgorithmGql,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
     pub revoked: bool,
-    pub revoked_at: Option<String>,
+    pub revoked_at: Option<DateTime<Utc>>,
     pub sign_count: i64,
 }
 
@@ -787,9 +787,9 @@ impl SignatureKey {
         KeyInfoGql {
             key_id: self.key_id.clone(),
             algorithm: self.algorithm,
-            created_at: self.created_at.to_rfc3339(),
+            created_at: self.created_at,
             revoked: self.revoked,
-            revoked_at: self.revoked_at.map(|t| t.to_rfc3339()),
+            revoked_at: self.revoked_at,
             sign_count: self.sign_count as i64,
         }
     }
@@ -1284,8 +1284,8 @@ pub struct DataPermissionGql {
     pub conditions: Vec<PermissionConditionGql>,
     pub field_permissions: Vec<DataFieldPermissionGql>,
     pub granted_by: String,
-    pub granted_at: String,
-    pub expires_at: Option<String>,
+    pub granted_at: DateTime<Utc>,
+    pub expires_at: Option<DateTime<Utc>>,
 }
 
 /// V48.0: 权限审计日志
@@ -1403,8 +1403,8 @@ impl DataPermission {
             conditions: self.conditions.iter().map(|c| c.to_gql()).collect(),
             field_permissions: self.field_permissions.iter().map(|f| f.to_gql()).collect(),
             granted_by: self.granted_by.clone(),
-            granted_at: self.granted_at.to_rfc3339(),
-            expires_at: self.expires_at.map(|t| t.to_rfc3339()),
+            granted_at: self.granted_at,
+            expires_at: self.expires_at,
         }
     }
 

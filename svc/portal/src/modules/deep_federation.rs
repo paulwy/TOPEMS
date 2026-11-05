@@ -18,6 +18,7 @@
 //!    - AuthPolicy: 认证策略
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -228,7 +229,7 @@ pub struct ConsistencyViolation {
     pub entity_id: String,
     pub violation_type: String,
     pub description: String,
-    pub detected_at: String,
+    pub detected_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -238,7 +239,7 @@ pub struct ConsistencyCheck {
     pub model: ConsistencyModel,
     pub violations: Vec<ConsistencyViolation>,
     pub status: CheckStatus,
-    pub checked_at: String,
+    pub checked_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -281,7 +282,7 @@ pub struct DistributedQuery {
     pub consistency_requirement: ConsistencyModel,
     pub timeout_ms: u64,
     pub status: QueryStatus,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -299,7 +300,7 @@ pub struct QueryHistoryEntry {
     pub id: String,
     pub status: QueryStatus,
     pub sub_query_count: u32,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -319,7 +320,7 @@ pub struct FederatedIdentity {
     pub provider: AuthProvider,
     pub claims: serde_json::Value,
     pub scopes: Vec<String>,
-    pub authenticated_at: String,
+    pub authenticated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -330,8 +331,8 @@ pub struct AuthPolicy {
     pub token_issuer: String,
     pub audience: String,
     pub token_validity: u64,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -340,7 +341,7 @@ pub struct AuthStatusInfo {
     pub provider: AuthProvider,
     pub status: AuthStatus,
     pub scopes: Vec<String>,
-    pub expires_at: Option<String>,
+    pub expires_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -348,7 +349,7 @@ pub struct TokenChain {
     pub chain_id: String,
     pub tokens: Vec<serde_json::Value>,
     pub verified: bool,
-    pub verified_at: String,
+    pub verified_at: DateTime<Utc>,
 }
 
 // ==================== 内存存储 ====================
@@ -368,7 +369,8 @@ fn get_deep_federation_store() -> &'static DeepFederationStore {
         let mut federated_identities = HashMap::new();
         let mut auth_policies = HashMap::new();
 
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
+        let now_str = now.to_rfc3339();
 
         version_vectors.insert(
             "entity-001".to_string(),
@@ -380,7 +382,7 @@ fn get_deep_federation_store() -> &'static DeepFederationStore {
                     v.insert("service-b".to_string(), 1);
                     v
                 },
-                timestamp: now.clone(),
+                timestamp: now_str,
             },
         );
 
@@ -395,7 +397,7 @@ fn get_deep_federation_store() -> &'static DeepFederationStore {
                     "roles": ["admin", "user"]
                 }),
                 scopes: vec!["read".to_string(), "write".to_string()],
-                authenticated_at: now.clone(),
+                authenticated_at: now,
             },
         );
 
@@ -408,7 +410,7 @@ fn get_deep_federation_store() -> &'static DeepFederationStore {
                 token_issuer: "https://auth.example.com".to_string(),
                 audience: "topems-portal".to_string(),
                 token_validity: 3600,
-                created_at: now.clone(),
+                created_at: now,
                 updated_at: now,
             },
         );
@@ -458,7 +460,7 @@ impl ConsistencyManager {
                                     max_version,
                                     min_version
                                 ),
-                                detected_at: chrono::Utc::now().to_rfc3339(),
+                                detected_at: chrono::Utc::now(),
                             });
                         }
                     }
@@ -472,7 +474,7 @@ impl ConsistencyManager {
                                     entity_id,
                                     max_version - min_version
                                 ),
-                                detected_at: chrono::Utc::now().to_rfc3339(),
+                                detected_at: chrono::Utc::now(),
                             });
                         }
                     }
@@ -487,7 +489,7 @@ impl ConsistencyManager {
                                     "实体 '{}' 顺序一致性违规 (总和: {}, 预期: {})",
                                     entity_id, total, expected
                                 ),
-                                detected_at: chrono::Utc::now().to_rfc3339(),
+                                detected_at: chrono::Utc::now(),
                             });
                         }
                     }
@@ -501,7 +503,7 @@ impl ConsistencyManager {
                                     entity_id,
                                     max_version - min_version
                                 ),
-                                detected_at: chrono::Utc::now().to_rfc3339(),
+                                detected_at: chrono::Utc::now(),
                             });
                         }
                     }
@@ -511,7 +513,7 @@ impl ConsistencyManager {
                     entity_id: entity_id.clone(),
                     violation_type: "entity_not_found".to_string(),
                     description: format!("实体 '{}' 未找到版本向量", entity_id),
-                    detected_at: chrono::Utc::now().to_rfc3339(),
+                    detected_at: chrono::Utc::now(),
                 });
             }
         }
@@ -533,7 +535,7 @@ impl ConsistencyManager {
             model,
             violations,
             status,
-            checked_at: chrono::Utc::now().to_rfc3339(),
+            checked_at: chrono::Utc::now(),
         };
 
         let mut checks = store.consistency_checks.lock().await;
@@ -807,7 +809,7 @@ impl DistributedQueryEngine {
                 .unwrap_or(ConsistencyModel::StrongEventual),
             timeout_ms: timeout_ms.unwrap_or(30000),
             status: QueryStatus::Pending,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         };
 
         let mut queries = store.distributed_queries.lock().await;
@@ -900,10 +902,7 @@ impl DistributedQueryEngine {
         let total = query.sub_queries.len() as u32;
 
         let elapsed_ms = chrono::Utc::now()
-            .signed_duration_since(
-                chrono::DateTime::parse_from_rfc3339(&query.created_at)
-                    .unwrap_or_else(|_| chrono::Utc::now().into()),
-            )
+            .signed_duration_since(query.created_at)
             .num_milliseconds()
             .max(0) as u64;
 
@@ -1033,7 +1032,7 @@ impl FederatedAuthService {
                 "token_preview": token.chars().take(20).collect::<String>() + "..."
             }),
             scopes: vec!["read".to_string()],
-            authenticated_at: chrono::Utc::now().to_rfc3339(),
+            authenticated_at: chrono::Utc::now(),
         };
 
         let mut identities = store.federated_identities.lock().await;
@@ -1092,7 +1091,7 @@ impl FederatedAuthService {
                 })
                 .collect(),
             verified,
-            verified_at: chrono::Utc::now().to_rfc3339(),
+            verified_at: chrono::Utc::now(),
         })
     }
 
@@ -1114,7 +1113,7 @@ impl FederatedAuthService {
     ) -> Result<AuthPolicy, TopemsError> {
         let store = get_deep_federation_store();
 
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let policy = AuthPolicy {
             id: uuid::Uuid::new_v4().to_string(),
             federation_id,
@@ -1122,7 +1121,7 @@ impl FederatedAuthService {
             token_issuer,
             audience,
             token_validity: token_validity.unwrap_or(3600),
-            created_at: now.clone(),
+            created_at: now,
             updated_at: now,
         };
 
@@ -1159,7 +1158,7 @@ impl FederatedAuthService {
             policy.token_validity = validity;
         }
 
-        policy.updated_at = chrono::Utc::now().to_rfc3339();
+        policy.updated_at = chrono::Utc::now();
         Ok(policy.clone())
     }
 
@@ -1911,7 +1910,7 @@ mod tests {
             entity_id: "e-1".into(),
             violation_type: "conflict".into(),
             description: "version mismatch".into(),
-            detected_at: "2025-01-01T00:00:00Z".into(),
+            detected_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&v);
     }
@@ -1927,7 +1926,7 @@ mod tests {
             entity_id: "e-1".into(),
             violation_type: "conflict".into(),
             description: "x".into(),
-            detected_at: "2025-01-01T00:00:00Z".into(),
+            detected_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         let c = ConsistencyCheck {
             id: "ck-1".into(),
@@ -1935,7 +1934,7 @@ mod tests {
             model: ConsistencyModel::StrongEventual,
             violations: vec![vi],
             status: CheckStatus::Passed,
-            checked_at: "2025-01-01T00:00:00Z".into(),
+            checked_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&c);
         let _ = vv;
@@ -1999,7 +1998,7 @@ mod tests {
             consistency_requirement: ConsistencyModel::Causal,
             timeout_ms: 30000,
             status: QueryStatus::Pending,
-            created_at: "2025-01-01T00:00:00Z".into(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&dq);
     }
@@ -2023,7 +2022,7 @@ mod tests {
             id: "dq-1".into(),
             status: QueryStatus::Completed,
             sub_query_count: 4,
-            created_at: "2025-01-01T00:00:00Z".into(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&e);
     }
@@ -2047,7 +2046,7 @@ mod tests {
             provider: AuthProvider::JWT,
             claims: serde_json::json!({"sub": "user1"}),
             scopes: vec!["read".into()],
-            authenticated_at: "2025-01-01T00:00:00Z".into(),
+            authenticated_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&id);
     }
@@ -2061,8 +2060,8 @@ mod tests {
             token_issuer: "https://issuer".into(),
             audience: "https://portal".into(),
             token_validity: 3600,
-            created_at: "2025-01-01T00:00:00Z".into(),
-            updated_at: "2025-01-01T00:00:00Z".into(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
+            updated_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&p);
     }
@@ -2074,7 +2073,7 @@ mod tests {
             provider: AuthProvider::OAuth2,
             status: AuthStatus::Active,
             scopes: vec!["read".into(), "write".into()],
-            expires_at: Some("2025-02-01T00:00:00Z".into()),
+            expires_at: Some("2025-02-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap()),
         };
         roundtrip(&i);
     }
@@ -2085,7 +2084,7 @@ mod tests {
             chain_id: "chain-1".into(),
             tokens: vec![serde_json::json!({"jti": "t1"})],
             verified: true,
-            verified_at: "2025-01-01T00:00:00Z".into(),
+            verified_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&t);
     }

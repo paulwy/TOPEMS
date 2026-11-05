@@ -17,6 +17,7 @@
 //!    - 请求合并 + 服务端推送 + 预计算响应模板
 
 use axum::{extract::Query, extract::State, Json};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -142,7 +143,7 @@ impl Default for RenderRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RenderResult {
     pub data: serde_json::Value,
-    pub rendered_at: String,
+    pub rendered_at: DateTime<Utc>,
     pub location: EdgeLocation,
     pub latency_ms: u64,
     pub cache_hit: bool,
@@ -174,7 +175,7 @@ pub struct RenderHistoryEntry {
     pub location: EdgeLocation,
     pub latency_ms: u64,
     pub cache_hit: bool,
-    pub rendered_at: String,
+    pub rendered_at: DateTime<Utc>,
 }
 
 // --- 全球加速 ---
@@ -208,7 +209,7 @@ pub struct AcceleratedResponse {
     pub selected_location: EdgeLocation,
     pub routing_strategy: RoutingStrategy,
     pub ttl_ms: u64,
-    pub accelerated_at: String,
+    pub accelerated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -267,8 +268,8 @@ pub struct PrecomputedResponse {
     pub id: String,
     pub template_id: String,
     pub data: serde_json::Value,
-    pub expires_at: String,
-    pub created_at: String,
+    pub expires_at: DateTime<Utc>,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -276,7 +277,7 @@ pub struct CoalescedRequest {
     pub id: String,
     pub request_count: usize,
     pub query_hash: String,
-    pub coalesced_at: String,
+    pub coalesced_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -393,13 +394,13 @@ impl EdgeRenderer {
                         location: loc.clone(),
                         latency_ms: 1,
                         cache_hit: true,
-                        rendered_at: now.to_rfc3339(),
+                        rendered_at: now,
                     });
                     drop(history);
 
                     return Ok(RenderResult {
                         data: data.clone(),
-                        rendered_at: now.to_rfc3339(),
+                        rendered_at: now,
                         location: loc.clone(),
                         latency_ms: 1,
                         cache_hit: true,
@@ -441,7 +442,7 @@ impl EdgeRenderer {
             location: location.clone(),
             latency_ms,
             cache_hit: false,
-            rendered_at: now.to_rfc3339(),
+            rendered_at: now,
         });
         drop(history);
 
@@ -455,7 +456,7 @@ impl EdgeRenderer {
 
         Ok(RenderResult {
             data: simulated_data,
-            rendered_at: now.to_rfc3339(),
+            rendered_at: now,
             location,
             latency_ms,
             cache_hit: false,
@@ -589,7 +590,7 @@ impl GlobalAccelerator {
             selected_location: selected,
             routing_strategy: config.routing_strategy,
             ttl_ms: config.ttl_ms,
-            accelerated_at: chrono::Utc::now().to_rfc3339(),
+            accelerated_at: chrono::Utc::now(),
         })
     }
 
@@ -778,8 +779,8 @@ impl LatencyOptimizer {
             id: uuid::Uuid::new_v4().to_string(),
             template_id,
             data,
-            expires_at: expires_at.to_rfc3339(),
-            created_at: now.to_rfc3339(),
+            expires_at,
+            created_at: now,
         };
 
         let mut precomputed = store.precomputed_responses.lock().await;
@@ -804,7 +805,7 @@ impl LatencyOptimizer {
             id: uuid::Uuid::new_v4().to_string(),
             request_count,
             query_hash,
-            coalesced_at: chrono::Utc::now().to_rfc3339(),
+            coalesced_at: chrono::Utc::now(),
         })
     }
 
@@ -1319,7 +1320,7 @@ mod tests {
     fn render_result_roundtrip() {
         let r = RenderResult {
             data: serde_json::json!({"ok": true}),
-            rendered_at: "2025-01-01T00:00:00Z".into(),
+            rendered_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
             location: EdgeLocation::APAC,
             latency_ms: 42,
             cache_hit: true,
@@ -1360,7 +1361,7 @@ mod tests {
             location: EdgeLocation::AMER,
             latency_ms: 30,
             cache_hit: false,
-            rendered_at: "2025-01-01T00:00:00Z".into(),
+            rendered_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&e);
     }
@@ -1380,7 +1381,7 @@ mod tests {
             selected_location: EdgeLocation::APAC,
             routing_strategy: RoutingStrategy::Nearest,
             ttl_ms: 3600000,
-            accelerated_at: "2025-01-01T00:00:00Z".into(),
+            accelerated_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&r);
     }
@@ -1415,8 +1416,8 @@ mod tests {
             id: "pr-1".into(),
             template_id: "tpl-1".into(),
             data: serde_json::json!({"precomputed": true}),
-            expires_at: "2025-12-31T00:00:00Z".into(),
-            created_at: "2025-01-01T00:00:00Z".into(),
+            expires_at: "2025-12-31T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&r);
     }
@@ -1427,7 +1428,7 @@ mod tests {
             id: "cr-1".into(),
             request_count: 5,
             query_hash: "abc".into(),
-            coalesced_at: "2025-01-01T00:00:00Z".into(),
+            coalesced_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&r);
     }

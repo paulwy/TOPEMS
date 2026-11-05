@@ -66,7 +66,7 @@ pub struct RealtimeStreamStatsGql {
     pub buffered_updates: i64,
     pub current_sequence: i64,
     pub snapshot_count: i64,
-    pub last_update_at: Option<String>,
+    pub last_update_at: Option<DateTime<Utc>>,
 }
 
 /// V47.0: 流快照（用于新客户端初始化）
@@ -76,7 +76,7 @@ pub struct StreamSnapshotGql {
     pub entity_type: String,
     pub sequence_number: i64,
     pub data: serde_json::Value,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 // --- 内部状态 ---
@@ -266,7 +266,7 @@ impl RealtimeStreamManager {
             .updates
             .get(entity_type)
             .and_then(|q| q.back())
-            .map(|u| u.timestamp.to_rfc3339());
+            .map(|u| u.timestamp);
         Some(RealtimeStreamStatsGql {
             entity_type: entity_type.to_string(),
             total_updates: state.total_updates as i64,
@@ -368,7 +368,7 @@ impl RealtimeStreamManager {
             entity_type: s.entity_type.clone(),
             sequence_number: s.sequence_number,
             data: s.data.clone(),
-            created_at: s.created_at.to_rfc3339(),
+            created_at: s.created_at,
         }
     }
 }
@@ -414,7 +414,7 @@ pub struct IncrementalStatsGql {
     pub pending_updates: i64,
     pub applied_updates: i64,
     pub rejected_updates: i64,
-    pub last_reconcile_at: Option<String>,
+    pub last_reconcile_at: Option<DateTime<Utc>>,
 }
 
 /// V47.0: 对账结果
@@ -643,7 +643,7 @@ impl IncrementalUpdateEngine {
             pending_updates: pending,
             applied_updates: state.applied_updates as i64,
             rejected_updates: state.rejected_updates as i64,
-            last_reconcile_at: state.last_reconcile_at.map(|t| t.to_rfc3339()),
+            last_reconcile_at: state.last_reconcile_at,
         }
     }
 
@@ -741,8 +741,8 @@ pub struct SyncSessionGql {
     pub current_version: i64,
     pub pending_updates: i64,
     pub sync_state: SyncStateGql,
-    pub started_at: String,
-    pub last_sync_at: Option<String>,
+    pub started_at: DateTime<Utc>,
+    pub last_sync_at: Option<DateTime<Utc>>,
 }
 
 /// V47.0: 同步统计
@@ -935,8 +935,8 @@ impl StateSyncManager {
             current_version: s.current_version,
             pending_updates: s.pending_updates,
             sync_state: s.sync_state,
-            started_at: s.started_at.to_rfc3339(),
-            last_sync_at: s.last_sync_at.map(|t| t.to_rfc3339()),
+            started_at: s.started_at,
+            last_sync_at: s.last_sync_at,
         }
     }
 

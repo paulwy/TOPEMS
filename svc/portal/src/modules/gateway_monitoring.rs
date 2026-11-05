@@ -17,6 +17,7 @@
 //!    - DetectionModel: 检测模型 (EWMA/Z-Score/Seasonal)
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -212,7 +213,7 @@ pub struct Metric {
     pub metric_type: MetricType,
     pub value: f64,
     pub labels: serde_json::Value,
-    pub checked_at: String,
+    pub checked_at: DateTime<Utc>,
 }
 
 impl Metric {
@@ -228,7 +229,7 @@ impl Metric {
             metric_type,
             value,
             labels,
-            checked_at: chrono::Utc::now().to_rfc3339(),
+            checked_at: chrono::Utc::now(),
         }
     }
 }
@@ -240,7 +241,7 @@ pub struct GatewayHealth {
     pub error_rate: f64,
     pub throughput: f64,
     pub active_connections: u64,
-    pub checked_at: String,
+    pub checked_at: DateTime<Utc>,
 }
 
 impl Default for GatewayHealth {
@@ -251,7 +252,7 @@ impl Default for GatewayHealth {
             error_rate: 0.0,
             throughput: 0.0,
             active_connections: 0,
-            checked_at: chrono::Utc::now().to_rfc3339(),
+            checked_at: chrono::Utc::now(),
         }
     }
 }
@@ -286,7 +287,7 @@ pub struct Trace {
     pub resolver_timings: Vec<ResolverTiming>,
     pub cache_hits: u32,
     pub errors: Vec<String>,
-    pub traced_at: String,
+    pub traced_at: DateTime<Utc>,
 }
 
 impl Trace {
@@ -299,7 +300,7 @@ impl Trace {
             resolver_timings: Vec::new(),
             cache_hits: 0,
             errors: Vec::new(),
-            traced_at: now.to_rfc3339(),
+            traced_at: now,
         }
     }
 }
@@ -327,7 +328,7 @@ pub struct Anomaly {
     pub expected_value: f64,
     pub actual_value: f64,
     pub deviation: f64,
-    pub detected_at: String,
+    pub detected_at: DateTime<Utc>,
 }
 
 impl Anomaly {
@@ -347,7 +348,7 @@ impl Anomaly {
             expected_value,
             actual_value,
             deviation,
-            detected_at: chrono::Utc::now().to_rfc3339(),
+            detected_at: chrono::Utc::now(),
         }
     }
 }
@@ -359,7 +360,7 @@ pub struct DetectionModel {
     pub algorithm: DetectionAlgorithm,
     pub threshold: f64,
     pub sensitivity: f64,
-    pub trained_at: Option<String>,
+    pub trained_at: Option<DateTime<Utc>>,
 }
 
 impl Default for DetectionModel {
@@ -514,7 +515,7 @@ impl GatewayMonitor {
             error_rate,
             throughput,
             active_connections,
-            checked_at: chrono::Utc::now().to_rfc3339(),
+            checked_at: chrono::Utc::now(),
         }
     }
 
@@ -588,19 +589,34 @@ impl GatewayMonitor {
         metric_name: &str,
         from: Option<&str>,
         to: Option<&str>,
-    ) -> Vec<Metric> {
+    ) -> Result<Vec<Metric>, TopemsError> {
+        let from = from
+            .map(|f| {
+                chrono::DateTime::parse_from_rfc3339(f)
+                    .map(|t| t.with_timezone(&Utc))
+                    .map_err(|_| TopemsError::ValidationFailed(format!("无效的起始时间: {}", f)))
+            })
+            .transpose()?;
+        let to = to
+            .map(|t| {
+                chrono::DateTime::parse_from_rfc3339(t)
+                    .map(|dt| dt.with_timezone(&Utc))
+                    .map_err(|_| TopemsError::ValidationFailed(format!("无效的结束时间: {}", t)))
+            })
+            .transpose()?;
+
         let store = get_monitoring_store();
         let metrics = store.metrics.lock().await;
 
-        metrics
+        Ok(metrics
             .iter()
             .filter(|m| {
                 m.name == metric_name
-                    && from.is_none_or(|f| m.checked_at.as_str() >= f)
-                    && to.is_none_or(|t| m.checked_at.as_str() <= t)
+                    && from.is_none_or(|f| m.checked_at >= f)
+                    && to.is_none_or(|t| m.checked_at <= t)
             })
             .cloned()
-            .collect()
+            .collect())
     }
 
     pub async fn set_alert_threshold(threshold: AlertThreshold) -> AlertThreshold {
@@ -1161,7 +1177,7 @@ impl AnomalyDetector {
         let std_dev = variance.sqrt();
 
         model.threshold = std_dev * 3.0;
-        model.trained_at = Some(chrono::Utc::now().to_rfc3339());
+        model.trained_at = Some(chrono::Utc::now());
 
         Ok(model.clone())
     }
@@ -1367,9 +1383,11 @@ pub async fn get_metric_history_handler(
         &metric_name,
         params.from.as_deref(),
         params.to.as_deref(),
-    )
-    .await;
-    ApiResponse::success(history, "指标历史")
+    );
+    match history.await {
+        Ok(history) => ApiResponse::success(history, "指标历史"),
+        Err(e) => ApiResponse::not_found(&e.classify().1),
+    }
 }
 
 #[utoipa::path(
@@ -1903,7 +1921,7 @@ mod tests {
             metric_type: MetricType::Counter,
             value: 42.0,
             labels: serde_json::json!({"host": "a"}),
-            checked_at: "2025-01-01T00:00:00Z".into(),
+            checked_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         assert!(roundtrip(&v));
     }
@@ -1951,7 +1969,7 @@ mod tests {
             resolver_timings: vec![],
             cache_hits: 2,
             errors: vec![],
-            traced_at: "2025-01-01T00:00:00Z".into(),
+            traced_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         assert!(roundtrip(&v));
     }
@@ -1981,7 +1999,7 @@ mod tests {
             expected_value: 50.0,
             actual_value: 500.0,
             deviation: 10.0,
-            detected_at: "2025-01-01T00:00:00Z".into(),
+            detected_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         assert!(roundtrip(&v));
     }

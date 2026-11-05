@@ -17,6 +17,7 @@
 //!    - RoutingDecision: 路由决策 (matched_rule/target/confidence/latency)
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -151,8 +152,8 @@ pub struct OrchestrationPlan {
     pub estimated_cost: f64,
     pub timeout_ms: u64,
     pub status: PlanStatus,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -171,7 +172,7 @@ pub struct ExecutionHistoryEntry {
     pub query_id: String,
     pub status: PlanStatus,
     pub step_count: u32,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 // ==================== 服务发现结构体 ====================
@@ -194,7 +195,7 @@ pub struct ServiceHeartbeat {
     pub service_id: String,
     pub status: HealthStatus,
     pub latency_ms: u64,
-    pub checked_at: String,
+    pub checked_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -291,8 +292,8 @@ impl GatewayOrchestrator {
             estimated_cost,
             timeout_ms: timeout_ms.unwrap_or(30000),
             status: PlanStatus::Pending,
-            created_at: chrono::Utc::now().to_rfc3339(),
-            updated_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
         };
 
         let mut plans = store.plans.lock().await;
@@ -322,7 +323,7 @@ impl GatewayOrchestrator {
         })?;
 
         p.status = PlanStatus::Running;
-        p.updated_at = chrono::Utc::now().to_rfc3339();
+        p.updated_at = chrono::Utc::now();
 
         let mut steps = p.execution_steps.clone();
 
@@ -381,7 +382,7 @@ impl GatewayOrchestrator {
         } else {
             PlanStatus::Completed
         };
-        p.updated_at = chrono::Utc::now().to_rfc3339();
+        p.updated_at = chrono::Utc::now();
 
         let updated = p.clone();
         drop(plans);
@@ -392,7 +393,7 @@ impl GatewayOrchestrator {
             query_id: updated.query_id.clone(),
             status: updated.status.clone(),
             step_count: updated.execution_steps.len() as u32,
-            created_at: updated.created_at.clone(),
+            created_at: updated.created_at,
         });
 
         Ok(updated)
@@ -424,10 +425,7 @@ impl GatewayOrchestrator {
         let total_steps = plan.execution_steps.len() as u32;
 
         let elapsed_ms = chrono::Utc::now()
-            .signed_duration_since(
-                chrono::DateTime::parse_from_rfc3339(&plan.created_at)
-                    .unwrap_or_else(|_| chrono::Utc::now().into()),
-            )
+            .signed_duration_since(plan.created_at)
             .num_milliseconds()
             .max(0) as u64;
 
@@ -457,7 +455,7 @@ impl GatewayOrchestrator {
         }
 
         p.status = PlanStatus::Cancelled;
-        p.updated_at = chrono::Utc::now().to_rfc3339();
+        p.updated_at = chrono::Utc::now();
 
         let updated = p.clone();
         Ok(updated)
@@ -507,7 +505,7 @@ impl GatewayOrchestrator {
         });
 
         p.estimated_cost = Self::estimate_cost(&p.execution_steps);
-        p.updated_at = chrono::Utc::now().to_rfc3339();
+        p.updated_at = chrono::Utc::now();
 
         let updated = p.clone();
         Ok(updated)
@@ -628,7 +626,7 @@ impl ServiceDiscoveryEngine {
             service_id: id.to_string(),
             status: status.clone(),
             latency_ms,
-            checked_at: chrono::Utc::now().to_rfc3339(),
+            checked_at: chrono::Utc::now(),
         };
 
         let mut heartbeats = store.service_heartbeats.lock().await;
@@ -1476,8 +1474,8 @@ mod tests {
             estimated_cost: 1.5,
             timeout_ms: 5000,
             status: PlanStatus::Pending,
-            created_at: "2025-01-01T00:00:00Z".to_string(),
-            updated_at: "2025-01-01T00:00:00Z".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
         };
         roundtrip(&p);
     }
@@ -1502,7 +1500,7 @@ mod tests {
             query_id: "q1".to_string(),
             status: PlanStatus::Failed,
             step_count: 4,
-            created_at: "2025-01-01T00:00:00Z".to_string(),
+            created_at: Utc::now(),
         };
         roundtrip(&e);
     }
@@ -1529,7 +1527,7 @@ mod tests {
             service_id: "svc1".to_string(),
             status: HealthStatus::Degraded,
             latency_ms: 150,
-            checked_at: "2025-01-01T00:00:00Z".to_string(),
+            checked_at: Utc::now(),
         };
         roundtrip(&hb);
     }

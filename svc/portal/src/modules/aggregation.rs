@@ -14,6 +14,7 @@ use axum::{
     extract::{Extension, State},
     http::HeaderMap,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
@@ -24,7 +25,7 @@ use crate::{shared::AppState, utils::user_context::extract_bearer_token};
 /// 跨服务业务统计聚合
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BusinessStatsAggregation {
-    pub generated_at: String,
+    pub generated_at: DateTime<Utc>,
     pub erp: ErpStats,
     pub crm: CrmStats,
     pub hrm: HrmStats,
@@ -88,7 +89,7 @@ pub struct UnifiedTodoItem {
     pub source: String,
     pub source_url: String,
     pub priority: String,
-    pub created_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
     pub due_date: Option<String>,
 }
 
@@ -129,7 +130,7 @@ pub async fn get_business_stats(
     );
 
     let result = BusinessStatsAggregation {
-        generated_at: chrono::Utc::now().to_rfc3339(),
+        generated_at: chrono::Utc::now(),
         erp: erp_stats,
         crm: crm_stats,
         hrm: hrm_stats,
@@ -409,7 +410,7 @@ async fn fetch_workflow_todos(state: &AppState, token: Option<&str>) -> Vec<Unif
                     source: "workflow".to_string(),
                     source_url: "/workflow/tasks".to_string(),
                     priority: task.priority.unwrap_or_else(|| "normal".to_string()),
-                    created_at: Some(task.created_at.to_rfc3339()),
+                    created_at: Some(task.created_at),
                     due_date: task.due_time.map(|dt| dt.to_rfc3339()),
                 })
                 .collect(),
@@ -436,8 +437,7 @@ async fn fetch_local_todos(state: &AppState, user_id: &str) -> Vec<UnifiedTodoIt
                 source_url: "/portal/todos".to_string(),
                 priority: row.get::<Option<String>, _>("priority").unwrap_or_else(|| "normal".to_string()),
                 created_at: row
-                    .get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at")
-                    .map(|dt| dt.to_rfc3339()),
+                    .get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
                 due_date: row
                     .get::<Option<chrono::DateTime<chrono::Utc>>, _>("due_date")
                     .map(|dt| dt.to_rfc3339()),
@@ -473,7 +473,8 @@ async fn fetch_notification_todos(state: &AppState, token: Option<&str>) -> Vec<
                         created_at: n
                             .get("created_at")
                             .and_then(|v| v.as_str())
-                            .map(|s| s.to_string()),
+                            .and_then(|s| DateTime::parse_from_rfc3339(s).ok())
+                            .map(|t| t.with_timezone(&Utc)),
                         due_date: None,
                     })
                 })
@@ -522,8 +523,8 @@ mod tests {
         uuid::Uuid::new_v4().to_string()
     }
 
-    fn now() -> String {
-        chrono::Utc::now().to_rfc3339()
+    fn now() -> DateTime<Utc> {
+        chrono::Utc::now()
     }
 
     #[test]
@@ -601,7 +602,7 @@ mod tests {
             source_url: "/todos".to_string(),
             priority: "normal".to_string(),
             created_at: Some(now()),
-            due_date: Some(now()),
+            due_date: Some(now().to_rfc3339()),
         };
         let mut by_source = std::collections::HashMap::new();
         by_source.insert("portal".to_string(), 1);

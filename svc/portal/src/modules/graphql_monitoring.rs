@@ -779,10 +779,10 @@ pub struct GraphqlAlertGql {
     pub message: String,
     pub value: f64,
     pub threshold: f64,
-    pub started_at: String,
+    pub started_at: DateTime<Utc>,
     pub acknowledged: bool,
     pub resolved: bool,
-    pub resolved_at: Option<String>,
+    pub resolved_at: Option<DateTime<Utc>>,
     pub labels: serde_json::Value,
 }
 
@@ -838,10 +838,10 @@ impl GraphqlAlert {
             message: self.message.clone(),
             value: self.value,
             threshold: self.threshold,
-            started_at: self.started_at.to_rfc3339(),
+            started_at: self.started_at,
             acknowledged: self.acknowledged,
             resolved: self.resolved,
-            resolved_at: self.resolved_at.map(|t| t.to_rfc3339()),
+            resolved_at: self.resolved_at,
             labels: self.labels.clone(),
         }
     }

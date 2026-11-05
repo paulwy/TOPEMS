@@ -14,7 +14,7 @@
 //! 保持 `modules::graphql_schema::*` 访问路径不变。
 
 use async_graphql::SimpleObject;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
@@ -84,7 +84,7 @@ pub struct SchemaRegistryEntryGql {
     pub version: String,
     pub sdl: String,
     pub schema_hash: String,
-    pub registered_at: String,
+    pub registered_at: DateTime<Utc>,
     pub registered_by: String,
     pub status: SchemaVersionStatusGql,
     pub changes: Vec<SchemaChangeGql>,
@@ -109,7 +109,7 @@ pub struct ContractTestResultGql {
     pub errors: Vec<String>,
     pub warnings: Vec<String>,
     pub response_time_ms: u64,
-    pub ran_at: String,
+    pub ran_at: DateTime<Utc>,
     pub diff: Vec<ContractViolationGql>,
 }
 
@@ -162,7 +162,7 @@ pub struct SchemaVersionGql {
     pub sdl: String,
     pub hash: String,
     pub changelog: VersionChangelogGql,
-    pub published_at: String,
+    pub published_at: DateTime<Utc>,
     pub author: String,
     pub status: SchemaVersionStatusGql,
     pub download_count: u64,
@@ -334,7 +334,8 @@ impl SchemaRegistry {
         registered_by: &str,
     ) -> SchemaRegistryEntryGql {
         let schema_hash = Self::compute_hash(sdl);
-        let now = Utc::now().to_rfc3339();
+        let now = Utc::now();
+        let now_str = now.to_rfc3339();
 
         // 与前一版本对比检测变更
         let changes = if let Some(versions) = self.entries.get(service) {
@@ -347,7 +348,7 @@ impl SchemaRegistry {
                     description: format!("Initial schema for {}", service),
                     breaking: false,
                     affected_types: vec![],
-                    timestamp: now.clone(),
+                    timestamp: now_str.clone(),
                 }]
             }
         } else {
@@ -357,7 +358,7 @@ impl SchemaRegistry {
                 description: format!("Initial schema for {}", service),
                 breaking: false,
                 affected_types: vec![],
-                timestamp: now.clone(),
+                timestamp: now_str,
             }]
         };
 
@@ -630,7 +631,7 @@ impl ContractTestRunner {
     #[allow(clippy::indexing_slicing)]
     fn execute_test(&mut self, test: &ContractTestGql) -> ContractTestResultGql {
         let start = std::time::Instant::now();
-        let now = Utc::now().to_rfc3339();
+        let now = Utc::now();
         let mut errors = Vec::new();
         let mut warnings = Vec::new();
         let mut violations = Vec::new();
@@ -687,7 +688,7 @@ impl ContractTestRunner {
 
         // 更新测试的 last_run 和 last_result
         if let Some(t) = self.tests.get_mut(&test.id) {
-            t.last_run = Some(result.ran_at.clone());
+            t.last_run = Some(result.ran_at.to_rfc3339());
             t.last_result = Some(result.clone());
         }
 
@@ -818,7 +819,7 @@ impl SchemaVersionManager {
         sdl: &str,
     ) -> String {
         let hash = Self::compute_hash(sdl);
-        let now = Utc::now().to_rfc3339();
+        let now = Utc::now();
 
         // 与前一版本对比检测变更
         let (changes, breaking_count, additions_count) =
@@ -1161,7 +1162,7 @@ pub fn get_service_governance_info() -> Vec<ServiceGovernanceInfoGql> {
             versions_count,
             tests_count,
             passing_rate,
-            last_change,
+            last_change: last_change.to_rfc3339(),
             breaking_changes_count,
         });
     }

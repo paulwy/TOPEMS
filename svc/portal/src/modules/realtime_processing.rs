@@ -17,6 +17,7 @@
 //!    - TumblingWindow/HoppingWindow/SessionWindow 窗口计算
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -203,7 +204,7 @@ pub struct SubscriptionRecord {
     pub topic: String,
     pub filter: Option<serde_json::Value>,
     pub status: SubscriptionStatus,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
     pub last_activity: String,
     pub delivered_count: u64,
 }
@@ -215,8 +216,8 @@ pub struct SubscriptionEvent {
     pub event_type: String,
     pub payload: serde_json::Value,
     pub sequence: u64,
-    pub delivered_at: Option<String>,
-    pub expires_at: Option<String>,
+    pub delivered_at: Option<DateTime<Utc>>,
+    pub expires_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -254,14 +255,14 @@ pub struct ReplayHistoryEntry {
     pub replay_type: ReplayType,
     pub events_replayed: u64,
     pub status: ReplayStatus,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EventSequenceInfo {
     pub sequence: u64,
     pub event_type: String,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 // ==================== 实时聚合结构体 ====================
@@ -284,7 +285,7 @@ pub struct AggregationResult {
     pub window_end: String,
     pub groups: Vec<serde_json::Value>,
     pub values: serde_json::Value,
-    pub computed_at: String,
+    pub computed_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -343,7 +344,7 @@ impl PersistentSubscription {
             topic,
             filter,
             status: SubscriptionStatus::Active,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
             last_activity: chrono::Utc::now().to_rfc3339(),
             delivered_count: 0,
         };
@@ -449,7 +450,7 @@ impl PersistentSubscription {
         subscription_id: &str,
         event_type: String,
         payload: serde_json::Value,
-        expires_at: Option<String>,
+        expires_at: Option<DateTime<Utc>>,
     ) -> Result<SubscriptionEvent, TopemsError> {
         let store = get_realtime_store();
 
@@ -630,7 +631,7 @@ impl MessageReplayEngine {
                     status: result
                         .map(|res| res.status.clone())
                         .unwrap_or(ReplayStatus::Pending),
-                    created_at: chrono::Utc::now().to_rfc3339(),
+                    created_at: chrono::Utc::now(),
                 }
             })
             .collect();
@@ -652,10 +653,7 @@ impl MessageReplayEngine {
             .map(|e| EventSequenceInfo {
                 sequence: e.sequence,
                 event_type: e.event_type.clone(),
-                created_at: e
-                    .delivered_at
-                    .clone()
-                    .unwrap_or_else(|| chrono::Utc::now().to_rfc3339()),
+                created_at: e.delivered_at.unwrap_or_else(chrono::Utc::now),
             })
     }
 
@@ -930,7 +928,7 @@ impl RealtimeAggregator {
             window_end: window_end.to_rfc3339(),
             groups,
             values,
-            computed_at: now.to_rfc3339(),
+            computed_at: now,
         };
 
         drop(results);
@@ -1642,7 +1640,7 @@ mod tests {
             topic: "orders".into(),
             filter: None,
             status: SubscriptionStatus::Active,
-            created_at: "2025-01-01T00:00:00Z".into(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
             last_activity: "2025-01-01T00:00:00Z".into(),
             delivered_count: 0,
         };
@@ -1706,7 +1704,7 @@ mod tests {
             replay_type: ReplayType::Full,
             events_replayed: 500,
             status: ReplayStatus::Completed,
-            created_at: "2025-01-01T00:00:00Z".into(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         assert!(roundtrip(&v));
     }
@@ -1716,7 +1714,7 @@ mod tests {
         let v = EventSequenceInfo {
             sequence: 42,
             event_type: "order.created".into(),
-            created_at: "2025-01-01T00:00:00Z".into(),
+            created_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         assert!(roundtrip(&v));
     }
@@ -1743,7 +1741,7 @@ mod tests {
             window_end: "2025-01-01T00:01:00Z".into(),
             groups: vec![serde_json::json!({"host": "a"})],
             values: serde_json::json!({"count": 100}),
-            computed_at: "2025-01-01T00:01:00Z".into(),
+            computed_at: "2025-01-01T00:01:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         assert!(roundtrip(&v));
     }

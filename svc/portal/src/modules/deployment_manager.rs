@@ -19,6 +19,7 @@
 //!    - RollbackAction: 回滚动作 (RevertConfig/RestartService/ScaleDown)
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -291,8 +292,8 @@ pub struct Deployment {
     pub environment: Environment,
     pub status: DeploymentStatus,
     pub strategy: DeploymentStrategy,
-    pub started_at: Option<String>,
-    pub completed_at: Option<String>,
+    pub started_at: Option<DateTime<Utc>>,
+    pub completed_at: Option<DateTime<Utc>>,
 }
 
 impl Deployment {
@@ -377,7 +378,7 @@ pub struct GatewayConfig {
     pub environment: Environment,
     pub settings: serde_json::Value,
     pub is_active: bool,
-    pub updated_at: String,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl GatewayConfig {
@@ -394,7 +395,7 @@ impl GatewayConfig {
             environment,
             settings,
             is_active: false,
-            updated_at: chrono::Utc::now().to_rfc3339(),
+            updated_at: chrono::Utc::now(),
         }
     }
 }
@@ -404,7 +405,7 @@ pub struct ConfigDiff {
     pub config_id: String,
     pub old_config: serde_json::Value,
     pub new_config: serde_json::Value,
-    pub changed_at: String,
+    pub changed_at: DateTime<Utc>,
     pub changed_by: Option<String>,
 }
 
@@ -470,7 +471,7 @@ pub struct RollbackAction {
     pub policy_id: String,
     pub action: RollbackActionType,
     pub status: RollbackActionStatus,
-    pub executed_at: Option<String>,
+    pub executed_at: Option<DateTime<Utc>>,
     pub reason: Option<String>,
 }
 
@@ -502,7 +503,7 @@ pub struct RollbackHistoryEntry {
     pub policy_id: String,
     pub action: RollbackActionType,
     pub status: RollbackActionStatus,
-    pub executed_at: Option<String>,
+    pub executed_at: Option<DateTime<Utc>>,
     pub reason: Option<String>,
 }
 
@@ -611,7 +612,7 @@ impl DeploymentManager {
         }
 
         deployment.status = DeploymentStatus::Deploying;
-        deployment.started_at = Some(chrono::Utc::now().to_rfc3339());
+        deployment.started_at = Some(chrono::Utc::now());
 
         let deployment = deployment.clone();
         drop(deployments);
@@ -650,7 +651,7 @@ impl DeploymentManager {
         }
 
         deployment.status = DeploymentStatus::Failed;
-        deployment.completed_at = Some(chrono::Utc::now().to_rfc3339());
+        deployment.completed_at = Some(chrono::Utc::now());
 
         Ok(deployment.clone())
     }
@@ -737,7 +738,7 @@ impl DeploymentManager {
             let mut deployments = store.deployments.lock().await;
             if let Some(d) = deployments.iter_mut().find(|d| d.id == id) {
                 d.status = DeploymentStatus::Completed;
-                d.completed_at = Some(chrono::Utc::now().to_rfc3339());
+                d.completed_at = Some(chrono::Utc::now());
             }
         }
 
@@ -754,7 +755,7 @@ impl DeploymentManager {
             .ok_or_else(|| TopemsError::ResourceNotFound(format!("部署 '{}' 不存在", id)))?;
 
         deployment.status = DeploymentStatus::RollingBack;
-        deployment.completed_at = Some(chrono::Utc::now().to_rfc3339());
+        deployment.completed_at = Some(chrono::Utc::now());
 
         Ok(deployment.clone())
     }
@@ -849,12 +850,12 @@ impl ConfigurationManager {
                 config_id: id.to_string(),
                 old_config: old_settings,
                 new_config: s.clone(),
-                changed_at: chrono::Utc::now().to_rfc3339(),
+                changed_at: chrono::Utc::now(),
                 changed_by: Some("system".to_string()),
             };
 
             config.settings = s;
-            config.updated_at = chrono::Utc::now().to_rfc3339();
+            config.updated_at = chrono::Utc::now();
 
             drop(configs);
 
@@ -869,7 +870,7 @@ impl ConfigurationManager {
                 .ok_or_else(|| TopemsError::ResourceNotFound("配置更新后不存在".to_string()))
         } else if let Some(n) = name {
             config.name = n;
-            config.updated_at = chrono::Utc::now().to_rfc3339();
+            config.updated_at = chrono::Utc::now();
             Ok(config.clone())
         } else {
             Ok(config.clone())
@@ -897,7 +898,7 @@ impl ConfigurationManager {
 
         if let Some(c) = configs.iter_mut().find(|c| c.id == id) {
             c.is_active = true;
-            c.updated_at = chrono::Utc::now().to_rfc3339();
+            c.updated_at = chrono::Utc::now();
             Ok(c.clone())
         } else {
             Err(TopemsError::BusinessLogic("激活失败".to_string()))
@@ -981,11 +982,11 @@ impl ConfigurationManager {
                 config_id: config_id.to_string(),
                 old_config: c.settings.clone(),
                 new_config: old_settings.clone(),
-                changed_at: chrono::Utc::now().to_rfc3339(),
+                changed_at: chrono::Utc::now(),
                 changed_by: Some("rollback".to_string()),
             };
             c.settings = old_settings;
-            c.updated_at = chrono::Utc::now().to_rfc3339();
+            c.updated_at = chrono::Utc::now();
 
             drop(configs);
 
@@ -1112,7 +1113,7 @@ impl RollbackManager {
 
         let mut action = RollbackAction::new(policy_id.to_string(), action_type);
         action.status = RollbackActionStatus::Completed;
-        action.executed_at = Some(chrono::Utc::now().to_rfc3339());
+        action.executed_at = Some(chrono::Utc::now());
         action.reason = reason;
 
         let mut actions = store.rollback_actions.lock().await;
@@ -1150,7 +1151,7 @@ impl RollbackManager {
                 policy_id: a.policy_id.clone(),
                 action: a.action.clone(),
                 status: a.status.clone(),
-                executed_at: a.executed_at.clone(),
+                executed_at: a.executed_at,
                 reason: a.reason.clone(),
             })
             .collect()
@@ -1173,7 +1174,7 @@ impl RollbackManager {
             policy_id: policy_id.to_string(),
             action: RollbackActionType::RevertConfig,
             status: RollbackActionStatus::Completed,
-            executed_at: Some(chrono::Utc::now().to_rfc3339()),
+            executed_at: Some(chrono::Utc::now()),
             reason: Some(format!("测试回滚 - {}", policy.name)),
         };
 
@@ -2224,7 +2225,7 @@ mod tests {
             config_id: "cfg-1".into(),
             old_config: serde_json::json!({"a": 1}),
             new_config: serde_json::json!({"a": 2}),
-            changed_at: "2025-01-01T00:00:00Z".into(),
+            changed_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
             changed_by: Some("admin".into()),
         };
         roundtrip(&d);
@@ -2282,7 +2283,7 @@ mod tests {
             policy_id: "pol-1".into(),
             action: RollbackActionType::RestartService,
             status: RollbackActionStatus::Completed,
-            executed_at: Some("2025-01-01T00:00:00Z".into()),
+            executed_at: Some("2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap()),
             reason: Some("health check failed".into()),
         };
         roundtrip(&e);

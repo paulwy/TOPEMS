@@ -17,6 +17,7 @@
 //!    - AccessDecision: 访问决策 (Allow/Deny/Challenge)
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -259,7 +260,7 @@ pub struct SecurityIncident {
     pub source_ip: Option<String>,
     pub user_agent: Option<String>,
     pub payload: Option<serde_json::Value>,
-    pub detected_at: String,
+    pub detected_at: DateTime<Utc>,
 }
 
 impl SecurityIncident {
@@ -277,7 +278,7 @@ impl SecurityIncident {
             source_ip,
             user_agent,
             payload,
-            detected_at: chrono::Utc::now().to_rfc3339(),
+            detected_at: chrono::Utc::now(),
         }
     }
 }
@@ -359,8 +360,8 @@ pub struct AuditExport {
     pub format: String,
     pub filter: AuditFilter,
     pub created_by: Option<String>,
-    pub created_at: String,
-    pub expires_at: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub expires_at: Option<DateTime<Utc>>,
 }
 
 // --- Access Control ---
@@ -890,7 +891,7 @@ impl AuditTrailV2 {
             format: format.to_string(),
             filter,
             created_by,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
             expires_at: None,
         };
 
@@ -1947,7 +1948,7 @@ mod tests {
             format: "json".into(),
             filter: AuditFilter::default(),
             created_by: Some("admin".into()),
-            created_at: "2025-01-01T00:00:00Z".into(),
+            created_at: Utc::now(),
             expires_at: None,
         };
         roundtrip(&e);

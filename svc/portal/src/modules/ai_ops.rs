@@ -20,6 +20,7 @@
 //!    - RecoveryPlan: 恢复计划
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
@@ -274,8 +275,8 @@ pub struct RoutingRule {
     pub priority: i32,
     pub weight: i32,
     pub enabled: bool,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl RoutingRule {
@@ -286,7 +287,7 @@ impl RoutingRule {
         priority: i32,
         weight: i32,
     ) -> Self {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         Self {
             id: uuid::Uuid::new_v4().to_string(),
             name,
@@ -295,7 +296,7 @@ impl RoutingRule {
             priority,
             weight,
             enabled: true,
-            created_at: now.clone(),
+            created_at: now,
             updated_at: now,
         }
     }
@@ -309,7 +310,7 @@ pub struct RoutingDecision {
     pub target_service: String,
     pub reason: String,
     pub confidence: f64,
-    pub routed_at: String,
+    pub routed_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -365,8 +366,8 @@ pub struct CachePolicy {
     pub ttl_ms: u64,
     pub invalidation_strategy: InvalidationStrategy,
     pub max_size: u64,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl CachePolicy {
@@ -377,7 +378,7 @@ impl CachePolicy {
         invalidation_strategy: InvalidationStrategy,
         max_size: u64,
     ) -> Self {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         Self {
             id: uuid::Uuid::new_v4().to_string(),
             name,
@@ -385,7 +386,7 @@ impl CachePolicy {
             ttl_ms,
             invalidation_strategy,
             max_size,
-            created_at: now.clone(),
+            created_at: now,
             updated_at: now,
         }
     }
@@ -396,8 +397,8 @@ pub struct CacheEntry {
     pub key: String,
     pub value: serde_json::Value,
     pub ttl: u64,
-    pub created_at: String,
-    pub expires_at: String,
+    pub created_at: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
     pub access_count: u64,
     pub last_accessed: Option<String>,
 }
@@ -411,19 +412,15 @@ impl CacheEntry {
             key,
             value,
             ttl,
-            created_at: now.to_rfc3339(),
-            expires_at: expires.to_rfc3339(),
+            created_at: now,
+            expires_at: expires,
             access_count: 0,
             last_accessed: None,
         }
     }
 
     pub fn is_expired(&self) -> bool {
-        let expires = chrono::DateTime::parse_from_rfc3339(&self.expires_at);
-        match expires {
-            Ok(dt) => dt < chrono::Utc::now(),
-            Err(_) => true,
-        }
+        self.expires_at < chrono::Utc::now()
     }
 
     pub fn access(&mut self) {
@@ -438,7 +435,7 @@ pub struct InvalidationEvent {
     pub cache_key: String,
     pub reason: String,
     pub triggered_by: String,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 impl InvalidationEvent {
@@ -448,7 +445,7 @@ impl InvalidationEvent {
             cache_key,
             reason,
             triggered_by,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         }
     }
 }
@@ -505,7 +502,7 @@ pub struct HealingAction {
     pub action_type: HealingActionType,
     pub target: String,
     pub status: HealingStatus,
-    pub executed_at: Option<String>,
+    pub executed_at: Option<DateTime<Utc>>,
 }
 
 impl HealingAction {
@@ -522,7 +519,7 @@ impl HealingAction {
 
     pub fn execute(&mut self) {
         self.status = HealingStatus::Completed;
-        self.executed_at = Some(chrono::Utc::now().to_rfc3339());
+        self.executed_at = Some(chrono::Utc::now());
     }
 }
 
@@ -532,7 +529,7 @@ pub struct RecoveryPlan {
     pub service_id: String,
     pub steps: Vec<String>,
     pub estimated_duration_ms: u64,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
     pub status: RecoveryStatus,
 }
 
@@ -543,7 +540,7 @@ impl RecoveryPlan {
             service_id,
             steps,
             estimated_duration_ms,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
             status: RecoveryStatus::Pending,
         }
     }
@@ -688,7 +685,7 @@ impl SmartRouter {
                 target_service: rule.target_service.clone(),
                 reason: format!("matched rule '{}' (priority={})", rule.name, rule.priority),
                 confidence,
-                routed_at: chrono::Utc::now().to_rfc3339(),
+                routed_at: chrono::Utc::now(),
             };
 
             let mut decisions = store.decisions.lock().await;
@@ -714,7 +711,7 @@ impl SmartRouter {
                 target_service: "default".to_string(),
                 reason: "no matching rule, using default".to_string(),
                 confidence: 0.0,
-                routed_at: chrono::Utc::now().to_rfc3339(),
+                routed_at: chrono::Utc::now(),
             };
 
             let mut decisions = store.decisions.lock().await;
@@ -1029,7 +1026,7 @@ impl AutoCacheManager {
             return 0;
         }
 
-        let mut sorted: Vec<(String, u64, String)> = entries
+        let mut sorted: Vec<(String, u64, DateTime<Utc>)> = entries
             .iter()
             .map(|(k, v)| (k.clone(), v.access_count, v.created_at.clone()))
             .collect();
@@ -2099,7 +2096,7 @@ mod tests {
             target_service: "user-service".into(),
             reason: "matched".into(),
             confidence: 0.95,
-            routed_at: "2025-01-01T00:00:00Z".into(),
+            routed_at: "2025-01-01T00:00:00Z".parse::<DateTime<Utc>>().unwrap(),
         };
         roundtrip(&d);
     }

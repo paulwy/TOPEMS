@@ -578,7 +578,7 @@
             message: "slow".into(),
             value: 500.0,
             threshold: 100.0,
-            started_at: "2025-01-01".into(),
+            started_at: chrono::Utc::now(),
             acknowledged: false,
             resolved: false,
             resolved_at: None,
@@ -606,7 +606,7 @@
             entity_type: "User".into(),
             sequence_number: 1,
             data: j("{}"),
-            created_at: "2025-01-01".into(),
+            created_at: chrono::Utc::now(),
         }));
     }
     #[test]
@@ -651,7 +651,7 @@
             current_version: 5,
             pending_updates: 2,
             sync_state: SyncStateGql::InSync,
-            started_at: "2025-01-01".into(),
+            started_at: chrono::Utc::now(),
             last_sync_at: None,
         }));
     }
@@ -670,7 +670,7 @@
             total_score: 10,
             level: "low".into(),
             factors: vec![],
-            assessed_at: "2025-01-01".into(),
+            assessed_at: "2025-01-01T00:00:00Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap(),
         }));
     }
     #[test]
@@ -721,7 +721,7 @@
         assert!(roundtrip(&KeyInfoGql {
             key_id: "k1".into(),
             algorithm: SignatureAlgorithmGql::Ed25519,
-            created_at: "2025-01-01".into(),
+            created_at: "2025-01-01T00:00:00Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap(),
             revoked: false,
             revoked_at: None,
             sign_count: 100,
@@ -764,7 +764,7 @@
             conditions: vec![],
             field_permissions: vec![],
             granted_by: "admin".into(),
-            granted_at: "2025-01-01".into(),
+            granted_at: "2025-01-01T00:00:00Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap(),
             expires_at: None,
         }));
     }
@@ -813,7 +813,7 @@
             },
             normalized_query: "{ users { id } }".into(),
             result: "{}".into(),
-            created_at: "2025-01-01".into(),
+            created_at: chrono::Utc::now(),
             ttl: 3600,
             hit_count: 100,
             last_accessed: "2025-01-01".into(),
@@ -890,7 +890,7 @@
             operation: "mutation".into(),
             variables: "{}".into(),
             status: MutationStatusGql::Pending,
-            created_at: "2025-01-01".into(),
+            created_at: chrono::Utc::now(),
             synced_at: None,
             retry_count: 0,
             error: None,
@@ -986,7 +986,7 @@
             trust_level: TrustLevelGql::MediumTrust,
             risk_score: 10,
             verification_factors: vec![],
-            assessed_at: "2025-01-01".into(),
+            assessed_at: "2025-01-01T00:00:00Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap(),
         }));
     }
     #[test]
