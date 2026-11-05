@@ -687,14 +687,13 @@ pub async fn get_integration_sync_stats(
         .fetch_one(&state.pool)
         .await?;
 
-        let last_sync: Option<chrono::DateTime<chrono::Utc>> = sqlx::query_scalar(
-            only_own_schema_query!(
+        let last_sync: Option<chrono::DateTime<chrono::Utc>> =
+            sqlx::query_scalar(only_own_schema_query!(
                 "integration",
                 "SELECT MAX(created_at) FROM integration.core_inter_module_sync"
-            ),
-        )
-        .fetch_one(&state.pool)
-        .await?;
+            ))
+            .fetch_one(&state.pool)
+            .await?;
 
         let rows: Vec<SyncStatsAggRow> = sqlx::query_as(only_own_schema_query!(
             "integration",

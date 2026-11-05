@@ -992,9 +992,7 @@ impl CopilotSessionManager {
         let before = sessions.len();
 
         sessions.retain(|_, context| {
-            let age = now
-                .signed_duration_since(context.updated_at)
-                .num_hours();
+            let age = now.signed_duration_since(context.updated_at).num_hours();
             age < max_age_hours as i64
         });
 

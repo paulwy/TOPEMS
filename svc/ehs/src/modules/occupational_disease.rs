@@ -1,12 +1,12 @@
 //! Occupational disease prevention - Hazard factors, detection records, cases, protection, and training
 
-use chrono::{DateTime, Utc};
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
     routing::*,
     Extension, Json, Router,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
@@ -415,8 +415,14 @@ pub async fn list_hazard_factors(
                     .flatten()
                     .unwrap_or_else(|| "active".to_string()),
                 remarks: r.try_get::<Option<String>, _>("remarks").ok().flatten(),
-                created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten(),
-                updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten(),
+                created_at: r
+                    .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                    .ok()
+                    .flatten(),
+                updated_at: r
+                    .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                    .ok()
+                    .flatten(),
                 tenant_id: uuid::Uuid::nil(),
             }
         })

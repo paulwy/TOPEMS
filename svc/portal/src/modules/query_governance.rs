@@ -933,9 +933,7 @@ impl ApprovalWorkflow {
             r.query_hash == query_hash
                 && r.requester_id == user_id
                 && r.status == ApprovalStatus::Approved
-                && r.expires_at
-                    .map(|e| e > Utc::now())
-                    .unwrap_or(true)
+                && r.expires_at.map(|e| e > Utc::now()).unwrap_or(true)
         })
     }
 }

@@ -25,7 +25,10 @@ pub async fn create_retirement_plan(
     let mut plans = store.retirement_plans.lock().await;
 
     let now = chrono::Utc::now();
-    let planned_sunset_at = match req.planned_sunset_at.parse::<chrono::DateTime<chrono::Utc>>() {
+    let planned_sunset_at = match req
+        .planned_sunset_at
+        .parse::<chrono::DateTime<chrono::Utc>>()
+    {
         Ok(v) => v,
         Err(_) => return ApiResponse::bad_request("无效的 planned_sunset_at，需为 RFC3339 时间"),
     };

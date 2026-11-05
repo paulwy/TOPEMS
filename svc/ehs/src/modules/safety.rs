@@ -1,12 +1,12 @@
 //! Safety handlers - Inspection plans, items, and records
 
-use chrono::{DateTime, Utc};
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
     routing::{delete, get, post},
     Extension, Json, Router,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;

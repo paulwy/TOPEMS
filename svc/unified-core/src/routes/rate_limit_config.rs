@@ -66,4 +66,3 @@ pub async fn update_anti_replay_config(
     let cfg = state.anti_replay_state.config().await;
     Json(ApiResponse::success(cfg, "更新成功"))
 }
-

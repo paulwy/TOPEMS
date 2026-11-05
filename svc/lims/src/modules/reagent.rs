@@ -232,28 +232,28 @@ pub async fn create_reagent(
                         let rname = reagent.name.clone();
                         let stock = reagent.quantity.map(|q| q as i32);
                         let expiry = Some(expired.to_rfc3339());
-                            tokio::spawn(async move {
-                                let payload = topems_shared_event::event::LimsReagentAlertPayload {
-                                    reagent_id: rid,
-                                    reagent_no: rno,
-                                    reagent_name: rname,
-                                    alert_type: Some("expired".to_string()),
-                                    severity: Some("high".to_string()),
-                                    description: Some("试剂已过期".to_string()),
-                                    current_stock: stock,
-                                    min_stock: None,
-                                    expiry_date: expiry,
-                                };
-                                let et = topems_shared_event::event::EventType::LimsReagentAlert;
-                                if let Err(e) = publisher.publish_event(et, &payload).await {
-                                    tracing::warn!(
-                                        "[lims] LimsReagentAlert 事件发布失败: {}，入重试队列",
-                                        e
-                                    );
-                                    // D6：发布失败入 Redis ZSET，由 main.rs 15s run_relay 重发。
-                                    commit_retry::push_retry_typed("lims", et, &payload).await;
-                                }
-                            });
+                        tokio::spawn(async move {
+                            let payload = topems_shared_event::event::LimsReagentAlertPayload {
+                                reagent_id: rid,
+                                reagent_no: rno,
+                                reagent_name: rname,
+                                alert_type: Some("expired".to_string()),
+                                severity: Some("high".to_string()),
+                                description: Some("试剂已过期".to_string()),
+                                current_stock: stock,
+                                min_stock: None,
+                                expiry_date: expiry,
+                            };
+                            let et = topems_shared_event::event::EventType::LimsReagentAlert;
+                            if let Err(e) = publisher.publish_event(et, &payload).await {
+                                tracing::warn!(
+                                    "[lims] LimsReagentAlert 事件发布失败: {}，入重试队列",
+                                    e
+                                );
+                                // D6：发布失败入 Redis ZSET，由 main.rs 15s run_relay 重发。
+                                commit_retry::push_retry_typed("lims", et, &payload).await;
+                            }
+                        });
                     }
                 }
             }

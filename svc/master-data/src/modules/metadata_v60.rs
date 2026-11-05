@@ -1920,7 +1920,8 @@ const EDGE_COLS: &str =
     "id, source_id, target_id, transformation_type, transformation_details, confidence";
 const GRAPH_COLS: &str = "id, nodes, edges, root_ids, updated_at::timestamptz AS updated_at";
 const POLICY_COLS: &str = "id, entity_type, transitions, duration_days, actions";
-const HISTORY_COLS: &str = "id, entity_id, stage, from_stage, reason, changed_at::timestamptz AS changed_at, changed_by";
+const HISTORY_COLS: &str =
+    "id, entity_id, stage, from_stage, reason, changed_at::timestamptz AS changed_at, changed_by";
 
 fn parse_transformation_type(s: &str) -> TransformationType {
     match s {
