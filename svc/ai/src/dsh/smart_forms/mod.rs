@@ -36,9 +36,9 @@ pub struct FormDefinition {
     #[serde(default)]
     pub ai_validation_enabled: bool,
     /// 创建时间
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
     /// 更新时间
-    pub updated_at: String,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 表单字段
@@ -190,7 +190,7 @@ pub struct FormData {
     pub values: HashMap<String, FormFieldValue>,
     /// 提交时间
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub submitted_at: Option<String>,
+    pub submitted_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 /// 表单字段值
@@ -469,8 +469,8 @@ pub mod builtin_templates {
             version: "1.0.0".to_string(),
             ai_fill_enabled: true,
             ai_validation_enabled: true,
-            created_at: chrono::Utc::now().to_rfc3339(),
-            updated_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
         }
     }
 
@@ -586,8 +586,8 @@ pub mod builtin_templates {
             version: "1.0.0".to_string(),
             ai_fill_enabled: true,
             ai_validation_enabled: true,
-            created_at: chrono::Utc::now().to_rfc3339(),
-            updated_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
         }
     }
 

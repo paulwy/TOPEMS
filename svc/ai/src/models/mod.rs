@@ -111,7 +111,7 @@ pub struct VectorEmbedding {
     pub chunk_index: i32,
     pub content: String,
     pub embedding: Vec<f32>,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 // 文档分块（内存存储用）
@@ -121,7 +121,7 @@ pub struct DocumentChunk {
     pub document_id: Uuid,
     pub chunk_index: i32,
     pub content: String,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
     pub metadata: serde_json::Value,
 }
 
@@ -138,8 +138,8 @@ pub struct Document {
     pub category: Option<String>,
     pub tags: Option<Vec<String>>,
     pub description: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
     pub status: String,
     pub error_message: Option<String>,
 }
@@ -456,7 +456,7 @@ pub struct ChunkInfo {
     pub document_id: Uuid,
     pub chunk_index: i32,
     pub content: String,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
     pub metadata: serde_json::Value,
 }
 
@@ -500,8 +500,8 @@ pub struct DataConnector {
     pub config: ConnectorConfig,
     pub description: Option<String>,
     pub is_active: bool,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -571,8 +571,8 @@ pub struct AiSearchDocument {
     pub status: Option<String>,
     pub category: Option<String>,
     pub tags: Option<Vec<String>>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
     pub description: Option<String>,
     pub error_message: Option<String>,
 }
@@ -864,7 +864,7 @@ mod tests {
             chunk_index: 0,
             content: "content".into(),
             embedding: vec![0.1, 0.2, 0.3],
-            created_at: "1234567890".into(),
+            created_at: chrono::Utc::now(),
         };
         let json = serde_json::to_string(&ve).unwrap();
         let back: VectorEmbedding = serde_json::from_str(&json).unwrap();
@@ -878,7 +878,7 @@ mod tests {
             document_id: any_uuid(),
             chunk_index: 1,
             content: "chunk text".into(),
-            created_at: "123".into(),
+            created_at: chrono::Utc::now(),
             metadata: serde_json::json!({"page": 1}),
         };
         let json = serde_json::to_string(&dc).unwrap();
@@ -899,8 +899,8 @@ mod tests {
             category: Some("report".into()),
             tags: Some(vec!["tag1".into()]),
             description: None,
-            created_at: "123".into(),
-            updated_at: "456".into(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
             status: "processed".into(),
             error_message: None,
         };
@@ -1073,8 +1073,8 @@ mod tests {
             },
             description: Some("测试连接".into()),
             is_active: true,
-            created_at: "123".into(),
-            updated_at: "456".into(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
         };
         let json = serde_json::to_string(&connector).unwrap();
         let back: DataConnector = serde_json::from_str(&json).unwrap();

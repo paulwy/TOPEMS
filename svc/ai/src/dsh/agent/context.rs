@@ -132,15 +132,15 @@ pub struct AgentContext {
     /// 上下文变量
     pub variables: HashMap<String, String>,
     /// 创建时间
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
     /// 最后更新时间
-    pub updated_at: String,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 impl AgentContext {
     /// 创建新的上下文
     pub fn new(session_id: impl Into<String>, system_prompt: impl Into<String>) -> Self {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         Self {
             session_id: session_id.into(),
             system_prompt: system_prompt.into(),
@@ -148,7 +148,7 @@ impl AgentContext {
             max_context_tokens: 8192,
             current_tokens: 0,
             variables: HashMap::new(),
-            created_at: now.clone(),
+            created_at: now,
             updated_at: now,
         }
     }
@@ -157,7 +157,7 @@ impl AgentContext {
     pub fn add_message(&mut self, message: AgentMessage) {
         self.current_tokens += message.estimate_tokens();
         self.messages.push(message);
-        self.updated_at = chrono::Utc::now().to_rfc3339();
+        self.updated_at = chrono::Utc::now();
 
         // 如果超出上下文窗口，进行截断
         self.truncate_if_needed();
@@ -238,7 +238,7 @@ impl AgentContext {
     pub fn clear(&mut self) {
         self.messages.clear();
         self.current_tokens = 0;
-        self.updated_at = chrono::Utc::now().to_rfc3339();
+        self.updated_at = chrono::Utc::now();
     }
 
     /// 设置上下文变量

@@ -139,15 +139,15 @@ pub struct Entity {
     /// 置信度（0-1）
     pub confidence: f64,
     /// 创建时间
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
     /// 更新时间
-    pub updated_at: String,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 impl Entity {
     /// 创建新实体
     pub fn new(id: &str, name: &str, entity_type: EntityType) -> Self {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         Self {
             id: id.to_string(),
             name: name.to_string(),
@@ -164,14 +164,14 @@ impl Entity {
     /// 添加属性
     pub fn add_property(&mut self, key: &str, value: &str) {
         self.properties.insert(key.to_string(), value.to_string());
-        self.updated_at = chrono::Utc::now().to_rfc3339();
+        self.updated_at = chrono::Utc::now();
     }
 
     /// 添加别名
     pub fn add_alias(&mut self, alias: &str) {
         if !self.aliases.contains(&alias.to_string()) {
             self.aliases.push(alias.to_string());
-            self.updated_at = chrono::Utc::now().to_rfc3339();
+            self.updated_at = chrono::Utc::now();
         }
     }
 }
@@ -196,7 +196,7 @@ pub struct Relation {
     /// 置信度（0-1）
     pub confidence: f64,
     /// 创建时间
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 impl Relation {
@@ -212,7 +212,7 @@ impl Relation {
             properties: HashMap::new(),
             weight: 1.0,
             confidence: 1.0,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         }
     }
 }

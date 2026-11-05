@@ -109,7 +109,7 @@ pub struct PermissionRule {
     /// 是否启用
     pub enabled: bool,
     /// 创建时间
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 角色定义
@@ -124,7 +124,7 @@ pub struct RoleDefinition {
     /// 是否为系统角色（不可删除）
     pub is_system: bool,
     /// 创建时间
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 权限检查请求
@@ -290,21 +290,21 @@ impl PermissionMapper {
                 description: "系统管理员，拥有所有权限".to_string(),
                 inherits_from: vec![],
                 is_system: true,
-                created_at: chrono::Utc::now().to_rfc3339(),
+                created_at: chrono::Utc::now(),
             },
             RoleDefinition {
                 name: "user".to_string(),
                 description: "普通用户，拥有基本权限".to_string(),
                 inherits_from: vec![],
                 is_system: true,
-                created_at: chrono::Utc::now().to_rfc3339(),
+                created_at: chrono::Utc::now(),
             },
             RoleDefinition {
                 name: "viewer".to_string(),
                 description: "只读用户，仅拥有读取权限".to_string(),
                 inherits_from: vec![],
                 is_system: true,
-                created_at: chrono::Utc::now().to_rfc3339(),
+                created_at: chrono::Utc::now(),
             },
         ];
 
@@ -329,7 +329,7 @@ impl PermissionMapper {
             priority: 1000,
             description: "管理员拥有所有权限".to_string(),
             enabled: true,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         });
 
         // 默认规则 - user 拥有基本读写权限
@@ -343,7 +343,7 @@ impl PermissionMapper {
             priority: 100,
             description: "普通用户拥有读取和执行权限".to_string(),
             enabled: true,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         });
 
         // 默认规则 - viewer 拥有只读权限
@@ -357,7 +357,7 @@ impl PermissionMapper {
             priority: 50,
             description: "只读用户仅拥有读取权限".to_string(),
             enabled: true,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         });
 
         info!("Default roles and rules initialized");
@@ -771,7 +771,7 @@ mod tests {
             description: "自定义角色".to_string(),
             inherits_from: vec!["user".to_string()],
             is_system: false,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         };
         mapper.add_role(custom_role);
 
@@ -785,7 +785,7 @@ mod tests {
             priority: 200,
             description: "自定义规则".to_string(),
             enabled: true,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         };
         mapper.add_rule(custom_rule);
 
@@ -811,7 +811,7 @@ mod tests {
             description: "高级用户".to_string(),
             inherits_from: vec!["user".to_string()],
             is_system: false,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         };
         mapper.add_role(custom_role);
 
@@ -898,7 +898,7 @@ mod tests {
             priority: 500,
             description: "临时规则".to_string(),
             enabled: true,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         };
         mapper.add_rule(rule);
 

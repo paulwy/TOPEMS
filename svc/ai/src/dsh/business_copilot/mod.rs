@@ -144,9 +144,9 @@ pub struct CopilotContext {
     /// 上下文数据
     pub context_data: HashMap<String, serde_json::Value>,
     /// 创建时间
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
     /// 最后更新时间
-    pub updated_at: String,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 选中的记录
@@ -598,7 +598,7 @@ impl CopilotSessionManager {
         module: BusinessModule,
     ) -> CopilotContext {
         let session_id = format!("copilot_{}", uuid::Uuid::new_v4());
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
 
         let context = CopilotContext {
             session_id: session_id.clone(),
@@ -631,7 +631,7 @@ impl CopilotSessionManager {
         let mut sessions = self.sessions.lock();
         if sessions.contains_key(&context.session_id) {
             let mut updated = context;
-            updated.updated_at = chrono::Utc::now().to_rfc3339();
+            updated.updated_at = chrono::Utc::now();
             sessions.insert(updated.session_id.clone(), updated.clone());
             Some(updated)
         } else {
@@ -663,7 +663,7 @@ impl CopilotSessionManager {
             context.conversation_history.drain(0..excess);
         }
 
-        context.updated_at = chrono::Utc::now().to_rfc3339();
+        context.updated_at = chrono::Utc::now();
         Ok(())
     }
 
@@ -679,7 +679,7 @@ impl CopilotSessionManager {
             .ok_or_else(|| format!("会话 {} 不存在", session_id))?;
 
         context.selected_records = records;
-        context.updated_at = chrono::Utc::now().to_rfc3339();
+        context.updated_at = chrono::Utc::now();
         Ok(())
     }
 
@@ -696,7 +696,7 @@ impl CopilotSessionManager {
             .ok_or_else(|| format!("会话 {} 不存在", session_id))?;
 
         context.context_data.insert(key.to_string(), value);
-        context.updated_at = chrono::Utc::now().to_rfc3339();
+        context.updated_at = chrono::Utc::now();
         Ok(())
     }
 
@@ -992,12 +992,10 @@ impl CopilotSessionManager {
         let before = sessions.len();
 
         sessions.retain(|_, context| {
-            if let Ok(updated) = chrono::DateTime::parse_from_rfc3339(&context.updated_at) {
-                let age = now.signed_duration_since(updated).num_hours();
-                age < max_age_hours as i64
-            } else {
-                true
-            }
+            let age = now
+                .signed_duration_since(context.updated_at)
+                .num_hours();
+            age < max_age_hours as i64
         });
 
         let cleaned = before - sessions.len();

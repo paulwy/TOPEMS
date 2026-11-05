@@ -8,7 +8,7 @@ use crate::models::{
 };
 use std::fs;
 use std::path::Path;
-use std::time::{SystemTime, UNIX_EPOCH};
+
 use topems_shared_core::TopemsError;
 use tracing;
 use uuid::Uuid;
@@ -42,11 +42,7 @@ pub async fn load_documents_from_dir(dir: &str) -> Vec<Document> {
             .unwrap_or_default()
             .to_string_lossy()
             .to_string();
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs()
-            .to_string();
+        let now = chrono::Utc::now();
 
         let ext = file_path
             .extension()
@@ -208,11 +204,7 @@ pub async fn process_document_for_embedding(doc: &Document) -> Result<(), Topems
 
     let embeddings = generate_embeddings(chunk_contents).await?;
 
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs()
-        .to_string();
+    let now = chrono::Utc::now();
 
     if let (Some(vectors_arc), Some(chunks_arc)) = (VECTORS.get(), CHUNKS.get()) {
         let mut vectors = match vectors_arc.lock() {

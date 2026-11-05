@@ -18,7 +18,7 @@ use tracing::info;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GovernanceDashboard {
     /// 仪表盘生成时间
-    pub generated_at: String,
+    pub generated_at: chrono::DateTime<chrono::Utc>,
     /// 时间范围
     pub time_range: TimeRange,
     /// 总体治理评分（0-100）
@@ -239,7 +239,7 @@ pub struct RiskItem {
     /// 建议措施
     pub recommendation: String,
     /// 发现时间
-    pub detected_at: String,
+    pub detected_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 合规状态
@@ -443,7 +443,7 @@ pub struct SecurityEventSummary {
     /// 事件描述
     pub description: String,
     /// 发生时间
-    pub occurred_at: String,
+    pub occurred_at: chrono::DateTime<chrono::Utc>,
     /// 受影响资源
     pub affected_resource: String,
     /// 处理状态
@@ -682,7 +682,7 @@ impl GovernanceDashboardGenerator {
 
     /// 构建仪表盘数据
     fn build_dashboard(&self, time_range: TimeRange) -> GovernanceDashboard {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
 
         // 生成模拟数据（实际实现中会从各个模块收集真实数据）
         let key_metrics = self.generate_key_metrics();
@@ -928,7 +928,7 @@ impl GovernanceDashboardGenerator {
                     level: RiskLevel::High,
                     impact: "可能导致数据泄露和合规风险".to_string(),
                     recommendation: "启用自动数据分类工具，定期审计数据分类".to_string(),
-                    detected_at: chrono::Utc::now().to_rfc3339(),
+                    detected_at: chrono::Utc::now(),
                 },
                 RiskItem {
                     risk_id: "risk_002".to_string(),
@@ -937,7 +937,7 @@ impl GovernanceDashboardGenerator {
                     level: RiskLevel::Medium,
                     impact: "可能面临合规处罚".to_string(),
                     recommendation: "更新数据保留策略，设置自动过期机制".to_string(),
-                    detected_at: chrono::Utc::now().to_rfc3339(),
+                    detected_at: chrono::Utc::now(),
                 },
             ]
         };
@@ -1029,7 +1029,7 @@ impl GovernanceDashboardGenerator {
                     description: e.description.clone(),
                     severity: e.severity,
                     remediation: "立即调查并处理安全事件".to_string(),
-                    due_date: Some(e.occurred_at.clone()),
+                    due_date: Some(e.occurred_at.to_rfc3339()),
                     status: "待整改".to_string(),
                 })
                 .collect()
@@ -1639,7 +1639,7 @@ mod tests {
             event_type: "suspicious_login".to_string(),
             severity: RiskLevel::High,
             description: "检测到可疑登录尝试".to_string(),
-            occurred_at: chrono::Utc::now().to_rfc3339(),
+            occurred_at: chrono::Utc::now(),
             affected_resource: "user_account".to_string(),
             status: "investigating".to_string(),
         };
