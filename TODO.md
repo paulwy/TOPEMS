@@ -1844,6 +1844,17 @@
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.131 审计整改第八批：P5 副本归一 + 立即清理（批 10，2026-11-06）✅
+
+> 用户拍板"一步到位"后执行：public 唯一权威、search_path 归一、归一验证通过后立即清理冗余副本。
+
+- **S1 备份**：`database/backup/p5_20261106/`（public 475K/1033 条、mes 152K/647 条、iam、flow）。踩坑：public 表 `FORCE ROW LEVEL SECURITY` 阻断 pg_dump → 临时 NO FORCE + dump 后立即恢复 FORCE（已复核）。
+- **S2 数据对齐**：`20261107000001_iam_core_public_authority_sync.sql` 幂等补 public 缺失 4 条码（bi:data_source:write、mes:work_order:write、wms:stocktake:read/write）→ public 1033→1037，二次执行 INSERT 0 0。授权无缺口（superadmin/admin → bi:data_source:read 已在 public）。
+- **S3 连接归一**：`.env`（未跟踪）`SEARCH_PATH=iam,shared,public` → `public,shared,mes`（保留 shared：audit_logs 实体表）；svc/*.env 复核为"模块 schema 优先 + public 兜底"，不改。实测 31 模块 `search_path=<module>, public`，core_permissions 统一解析到 public。
+- **S4 立即清理**：`scripts/p5/cleanup_iam_replicas_20261106.sql` 删除 mes 5 张 IAM 表 + mes/flow 的 core_tenant_modules。**iam 6 张保留**——iam 是 `06_iam_schema.sql` 规范定义 schema（284 处引用，含 core_chat_* 等），删除会与重建链冲突；当前全空且 public 优先已保证权威。登记：待 init 迁移到 public 后清理。
+- **验证**：新 search_path 下 core_permissions=1037、core_roles=20；RLS 校验 ✅；对账 rename_groups=0、fe_orphan 34（未回归）；迁移四件套 Errors 0；server 实测 31 模块启动、`/api/server/health`=200、无 token 业务接口=401（鉴权正常）。登录链路因 core_users=0 无账号不可实测（如实记录）。
+- **回滚**：`scripts/p5/rollback_iam_replicas.sh`（恢复 mes/flow 备份 + 还原 SEARCH_PATH）。
+
 ## v1.130 审计整改第七批（批7/8/9）：P3-3 首约束补齐 + P4 tier 方案 + P5 副本归一方案（2026-11-06）✅
 
 > 三批连续推进。批 7 落地（wms 首批前端约束）；批 8、批 9 按"评估后不具备可控落地条件"停在方案阶段并标注评审项。
