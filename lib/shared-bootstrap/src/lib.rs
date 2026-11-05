@@ -739,9 +739,22 @@ pub async fn bootstrap_service(config: &ServiceConfig) -> Result<ServiceContext>
         anyhow::anyhow!("DATABASE_URL environment variable is required")
     })?;
 
+    // 模块化单体内每个 real_module 都经本函数独立建池：若沿用各模块硬编码的
+    // max_db_connections（10/20），27 个池的理论上限约 315，远超 PG max_connections=100，
+    // 会把测试库/运维连接挤掉。嵌入模式下按小上限 + 零预热带宽收敛，并给连接打
+    // 可区分的 application_name 便于 pg_stat_activity 归因。
+    let (max_connections, min_connections) = embedded_pool_limits(config.max_db_connections);
+    if is_embedded() {
+        env::set_var(
+            "DB_APPLICATION_NAME",
+            format!("{}-module", derive_service_tag(config.name).to_lowercase()),
+        );
+    }
+
     let db_config = DatabaseConfig {
         url: db_url,
-        max_connections: config.max_db_connections,
+        max_connections,
+        min_connections: Some(min_connections),
         ..Default::default()
     };
 
@@ -1212,6 +1225,35 @@ pub fn parse_max_connections(
         .or(global_value)
         .and_then(|s| s.parse::<u32>().ok())
         .unwrap_or(default)
+}
+
+/// 是否运行在模块化单体（topems-server）内。宿主入口显式设置 TOPEMS_EMBEDDED=true。
+fn is_embedded() -> bool {
+    env::var("TOPEMS_EMBEDDED")
+        .map(|v| v == "true" || v == "1")
+        .unwrap_or(false)
+}
+
+/// 嵌入模式下每个 real_module 连接池的 (max_connections, min_connections)。
+///
+/// 单体内 27 个 real_module 各自建池，若沿用硬编码 10/20，理论连接上限远超
+/// PG max_connections，导致其他库（test）无法连接。嵌入模式默认每池 max=3、min=0，
+/// 可用 `DB_MODULE_MAX_CONNECTIONS` / `DB_MODULE_MIN_CONNECTIONS` 覆盖。
+/// 独立部署（未设置 TOPEMS_EMBEDDED）保持原上限与默认预热 2。
+fn embedded_pool_limits(default_max: u32) -> (u32, u32) {
+    if !is_embedded() {
+        return (default_max, 2);
+    }
+    let configured_max = env::var("DB_MODULE_MAX_CONNECTIONS")
+        .ok()
+        .and_then(|v| v.parse::<u32>().ok())
+        .unwrap_or(3);
+    let cap = default_max.min(configured_max).max(1);
+    let min = env::var("DB_MODULE_MIN_CONNECTIONS")
+        .ok()
+        .and_then(|v| v.parse::<u32>().ok())
+        .unwrap_or(0);
+    (cap, min.min(cap))
 }
 
 // ==================== 纯函数：健康状态汇总 ====================

@@ -1,7 +1,8 @@
 pub mod read_write;
 
-use sqlx::postgres::PgPoolOptions;
+use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use sqlx::PgPool;
+use std::str::FromStr;
 use std::time::Duration;
 use topems_shared_core::config::enhanced::DatabaseConfig;
 use topems_shared_core::error::Result;
@@ -20,6 +21,15 @@ pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
     let connect_timeout = config.connect_timeout.unwrap_or(30);
     let idle_timeout = config.idle_timeout.unwrap_or(300);
     let max_lifetime = config.max_lifetime.unwrap_or(1800);
+
+    // 连接级 application_name：默认空值会让 pg_stat_activity 无法按模块归因，
+    // 由 bootstrap_service 逐模块设置 DB_APPLICATION_NAME（如 finance-module）。
+    let application_name = std::env::var("DB_APPLICATION_NAME")
+        .or_else(|_| std::env::var("TOPEMS_SERVICE_NAME"))
+        .unwrap_or_else(|_| "topems-service".to_string());
+    let connect_options = PgConnectOptions::from_str(&config.url)
+        .map_err(|e| TopemsError::Database(format!("数据库 DSN 解析失败: {e}")))?
+        .application_name(&application_name);
 
     let options = PgPoolOptions::new()
         .max_connections(config.max_connections)
@@ -87,7 +97,7 @@ pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
     let pool = {
         let mut ready: Option<PgPool> = None;
         for attempt in 1..=DB_CONNECT_MAX_ATTEMPTS {
-            match options.clone().connect(&config.url).await {
+            match options.clone().connect_with(connect_options.clone()).await {
                 Ok(p) => {
                     if attempt > 1 {
                         info!(

@@ -27,6 +27,10 @@ async fn main() -> Result<()> {
     tracing::info!("🚀 启动 topems-server 模块化单体统一入口");
     tracing::info!("部署模式: private-deployment（进程内 trait 调用）");
 
+    // 模块化单体标记：各 real_module 经 bootstrap_service 独立建池，
+    // 需按小上限 + 零预热带宽收敛（详见 shared-bootstrap::embedded_pool_limits）。
+    std::env::set_var("TOPEMS_EMBEDDED", "true");
+
     // ================================================
     // 模块注册表（共享引用，支持进程内调用）
     // ================================================
