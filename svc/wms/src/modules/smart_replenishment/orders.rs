@@ -74,8 +74,8 @@ pub async fn list_orders(
                 "status": row.try_get::<String, _>("status").ok(),
                 "total_quantity": row.try_get::<i64, _>("total_quantity").ok(),
                 "total_amount": row.try_get::<f64, _>("total_amount").ok(),
-                "created_at": row.try_get::<chrono::NaiveDateTime, _>("created_at").ok().map(|t| t.to_string()),
-                "updated_at": row.try_get::<chrono::NaiveDateTime, _>("updated_at").ok().map(|t| t.to_string()),
+                "created_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("created_at").ok(),
+                "updated_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("updated_at").ok(),
             })).collect();
 
             ApiResponse::success(
@@ -282,8 +282,8 @@ pub async fn get_order(
                 "status": row.try_get::<String, _>("status").ok(),
                 "total_quantity": row.try_get::<i64, _>("total_quantity").ok(),
                 "total_amount": row.try_get::<f64, _>("total_amount").ok(),
-                "created_at": row.try_get::<chrono::NaiveDateTime, _>("created_at").ok().map(|t| t.to_string()),
-                "updated_at": row.try_get::<chrono::NaiveDateTime, _>("updated_at").ok().map(|t| t.to_string()),
+                "created_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("created_at").ok(),
+                "updated_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("updated_at").ok(),
             }),
             "获取补货订单详情成功",
         ),
@@ -372,7 +372,7 @@ pub async fn update_order(
                     "status": row.try_get::<String, _>("status").ok(),
                     "total_quantity": row.try_get::<i64, _>("total_quantity").ok(),
                     "total_amount": row.try_get::<f64, _>("total_amount").ok(),
-                    "created_at": row.try_get::<chrono::NaiveDateTime, _>("created_at").ok().map(|t| t.to_string()),
+                    "created_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("created_at").ok(),
                     "updated_at": now.to_string(),
                 }),
                 "更新补货订单成功",
@@ -511,8 +511,8 @@ pub async fn list_order_items(
                 "unit_price": row.try_get::<Option<f64>, _>("unit_price").ok(),
                 "total_amount": row.try_get::<Option<f64>, _>("total_amount").ok(),
                 "status": row.try_get::<String, _>("status").ok(),
-                "created_at": row.try_get::<chrono::NaiveDateTime, _>("created_at").ok().map(|t| t.to_string()),
-                "updated_at": row.try_get::<chrono::NaiveDateTime, _>("updated_at").ok().map(|t| t.to_string()),
+                "created_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("created_at").ok(),
+                "updated_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("updated_at").ok(),
             })).collect();
 
             ApiResponse::success(

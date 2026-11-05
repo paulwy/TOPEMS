@@ -37,8 +37,8 @@ struct FileInfo {
     #[serde(rename = "filename")]
     filename: String,
     original_filename: String,
-    created_at: String,
-    updated_at: String,
+    created_at: chrono::DateTime<chrono::Utc>,
+    updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -110,8 +110,8 @@ pub async fn list_files(
             String,
             Option<Uuid>,
             Uuid,
-            chrono::NaiveDateTime,
-            chrono::NaiveDateTime,
+            chrono::DateTime<chrono::Utc>,
+            chrono::DateTime<chrono::Utc>,
             Option<String>,
         ),
     >(base_query)
@@ -144,8 +144,8 @@ pub async fn list_files(
                         path,
                         folder_id: folder_id.map(|id| id.to_string()),
                         uploader_id: uploader_id.to_string(),
-                        created_at: created_at.to_string(),
-                        updated_at: updated_at.to_string(),
+                        created_at,
+                        updated_at,
                     },
                 )
                 .collect();
@@ -287,12 +287,8 @@ pub async fn get_file(
         original_filename: row
             .get::<Option<String>, _>("original_name")
             .unwrap_or_else(|| row.get::<String, _>("name")),
-        created_at: row
-            .get::<chrono::NaiveDateTime, _>("created_at")
-            .to_string(),
-        updated_at: row
-            .get::<chrono::NaiveDateTime, _>("updated_at")
-            .to_string(),
+        created_at: row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+        updated_at: row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
     };
 
     Json(serde_json::json!({
@@ -525,7 +521,7 @@ pub async fn delete_file(
 
     let file_uploader_id: Uuid = row.get("uploader_id");
     let file_path: String = row.get("path");
-    let deleted_at: Option<chrono::NaiveDateTime> = row.get("deleted_at");
+    let deleted_at: Option<chrono::DateTime<chrono::Utc>> = row.get("deleted_at");
 
     if file_uploader_id != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
         return Json(serde_json::json!({

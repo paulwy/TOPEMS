@@ -519,16 +519,18 @@ pub async fn get_flow_trend(
 
     if let Ok(rows) = inbound_result {
         for row in rows {
-            let period: Option<chrono::NaiveDateTime> = row.try_get("period").ok().flatten();
+            let period: Option<chrono::DateTime<chrono::Utc>> = row.try_get("period").ok().flatten();
             let qty: f64 = big_decimal_to_f64(
                 row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty")
                     .ok()
                     .flatten(),
             );
             let count: i64 = row.try_get("order_count").unwrap_or(0);
-            let key = period
-                .map(|p| format_period_date(p, group_by))
-                .unwrap_or_default();
+            let Some(period) = period else {
+                tracing::warn!("入库趋势行缺少 period，跳过该行");
+                continue;
+            };
+            let key = format_period_date(period, group_by);
             periods
                 .entry(key.clone())
                 .or_insert_with(|| (0.0, 0.0, 0i64, 0i64));
@@ -543,16 +545,18 @@ pub async fn get_flow_trend(
 
     if let Ok(rows) = outbound_result {
         for row in rows {
-            let period: Option<chrono::NaiveDateTime> = row.try_get("period").ok().flatten();
+            let period: Option<chrono::DateTime<chrono::Utc>> = row.try_get("period").ok().flatten();
             let qty: f64 = big_decimal_to_f64(
                 row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty")
                     .ok()
                     .flatten(),
             );
             let count: i64 = row.try_get("order_count").unwrap_or(0);
-            let key = period
-                .map(|p| format_period_date(p, group_by))
-                .unwrap_or_default();
+            let Some(period) = period else {
+                tracing::warn!("出库趋势行缺少 period，跳过该行");
+                continue;
+            };
+            let key = format_period_date(period, group_by);
             periods
                 .entry(key.clone())
                 .or_insert_with(|| (0.0, 0.0, 0i64, 0i64));
@@ -985,7 +989,8 @@ pub async fn get_location_utilization(
 
 // ===== 辅助函数 =====
 
-fn format_period_date(dt: chrono::NaiveDateTime, group_by: &str) -> String {
+fn format_period_date(dt: chrono::DateTime<chrono::Utc>, group_by: &str) -> String {
+    let dt = dt.naive_utc();
     match group_by {
         "day" => dt.format("%Y-%m-%d").to_string(),
         "week" => dt.format("%Y-W%U").to_string(),

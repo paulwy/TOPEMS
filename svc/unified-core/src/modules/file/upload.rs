@@ -4,6 +4,7 @@ use axum::{
     extract::{Multipart, State},
     Json,
 };
+use chrono::{DateTime, Utc};
 use serde::Serialize;
 use std::fs;
 use std::path::Path;
@@ -21,7 +22,7 @@ struct FileUploadResponse {
     mime_type: String,
     path: String,
     folder_id: Option<String>,
-    created_at: String,
+    created_at: DateTime<Utc>,
 }
 
 /// 上传单个文件
@@ -171,7 +172,7 @@ pub async fn upload_file(
                     mime_type: content_type,
                     path: storage_path,
                     folder_id: folder_id.map(|id| id.to_string()),
-                    created_at: chrono::Utc::now().to_rfc3339(),
+                    created_at: chrono::Utc::now(),
                 });
             }
             Err(e) => {
@@ -336,7 +337,7 @@ pub async fn upload_multiple(
                     mime_type: content_type,
                     path: storage_path,
                     folder_id: folder_id.map(|id| id.to_string()),
-                    created_at: chrono::Utc::now().to_rfc3339(),
+                    created_at: chrono::Utc::now(),
                 });
             }
             Err(e) => {

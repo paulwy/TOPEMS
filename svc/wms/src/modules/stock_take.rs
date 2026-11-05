@@ -4,7 +4,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::{NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
@@ -29,10 +29,10 @@ fn stock_take_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
         "status": row.try_get::<String, _>("status").ok(),
         "description": row.try_get::<Option<String>, _>("description").ok(),
         "created_by": row.try_get::<Option<String>, _>("created_by").ok(),
-        "created_at": row.try_get::<NaiveDateTime, _>("created_at").ok().map(|t| t.to_string()),
-        "started_at": row.try_get::<Option<NaiveDateTime>, _>("started_at").ok().and_then(|t| t.map(|t| t.to_string())),
-        "completed_at": row.try_get::<Option<NaiveDateTime>, _>("completed_at").ok().and_then(|t| t.map(|t| t.to_string())),
-        "adjusted_at": row.try_get::<Option<NaiveDateTime>, _>("adjusted_at").ok().and_then(|t| t.map(|t| t.to_string())),
+        "created_at": row.try_get::<DateTime<Utc>, _>("created_at").ok(),
+        "started_at": row.try_get::<Option<DateTime<Utc>>, _>("started_at").ok().flatten(),
+        "completed_at": row.try_get::<Option<DateTime<Utc>>, _>("completed_at").ok().flatten(),
+        "adjusted_at": row.try_get::<Option<DateTime<Utc>>, _>("adjusted_at").ok().flatten(),
     })
 }
 

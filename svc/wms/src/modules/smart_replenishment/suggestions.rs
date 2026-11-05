@@ -41,8 +41,8 @@ pub(crate) fn suggestion_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json:
         "priority": row.try_get::<String, _>("priority").ok(),
         "trigger_type": row.try_get::<String, _>("trigger_type").ok(),
         "remarks": row.try_get::<Option<String>, _>("remarks").ok(),
-        "created_at": row.try_get::<chrono::NaiveDateTime, _>("created_at").ok().map(|t| t.to_string()),
-        "updated_at": row.try_get::<chrono::NaiveDateTime, _>("updated_at").ok().map(|t| t.to_string()),
+        "created_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("created_at").ok(),
+        "updated_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("updated_at").ok(),
     })
 }
 
