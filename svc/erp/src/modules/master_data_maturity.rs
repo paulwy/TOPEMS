@@ -134,7 +134,7 @@ pub struct ImprovementAction {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MaturityAssessment {
     pub assessment_id: String,
-    pub assessed_at: String,
+    pub assessed_at: chrono::DateTime<chrono::Utc>,
     pub dimensions: Vec<DimensionScore>,
     pub overall_score: f64,
     pub overall_level: MaturityLevel,
@@ -165,7 +165,7 @@ pub struct DimensionDelta {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImprovementPlan {
     pub plan_id: String,
-    pub generated_at: String,
+    pub generated_at: chrono::DateTime<chrono::Utc>,
     pub actions: Vec<ImprovementAction>,
     pub total_effort: String,
     pub estimated_timeline: String,
@@ -288,7 +288,7 @@ fn build_synthetic_assessment(assessment_id: &str, base_score: f64) -> MaturityA
     let overall_level = MaturityLevel::from_score(overall_score);
     MaturityAssessment {
         assessment_id: assessment_id.to_string(),
-        assessed_at: now.to_rfc3339(),
+        assessed_at: now,
         dimensions,
         overall_score,
         overall_level,
@@ -467,7 +467,7 @@ async fn generate_improvement_plan() -> ImprovementPlan {
     let expected_gain = actions.len().min(10) as f64 * 1.5;
     ImprovementPlan {
         plan_id: format!("plan-{}", chrono::Utc::now().timestamp()),
-        generated_at: chrono::Utc::now().to_rfc3339(),
+        generated_at: chrono::Utc::now(),
         total_effort: format!("共 {} 个改进动作", actions.len()),
         estimated_timeline: "6-12 个月".to_string(),
         expected_overall_score_gain: expected_gain,

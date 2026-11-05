@@ -32,15 +32,15 @@ pub struct SyncJobV2 {
     pub target_systems: Vec<String>,
     pub priority: SyncJobPriority,
     pub tags: Vec<String>,
-    pub scheduled_at: Option<String>,
+    pub scheduled_at: Option<chrono::DateTime<chrono::Utc>>,
     pub retries_exhausted: bool,
     pub dead_letter_reason: Option<String>,
     pub current_step: i32,
     pub retry_count: i32,
     pub max_retries: i32,
-    pub created_at: String,
-    pub updated_at: String,
-    pub completed_at: Option<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+    pub completed_at: Option<chrono::DateTime<chrono::Utc>>,
     pub error_message: Option<String>,
 }
 
@@ -67,10 +67,10 @@ pub struct DeadLetterV2 {
     pub operation: String,
     pub error_message: String,
     pub retry_count: i32,
-    pub last_retry_at: Option<String>,
+    pub last_retry_at: Option<chrono::DateTime<chrono::Utc>>,
     pub retryable: bool,
     pub category: String,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
     pub payload: Option<serde_json::Value>,
 }
 
@@ -186,10 +186,10 @@ impl SyncEngineV2Store {
                     current_step: 0,
                     retry_count: if status == "failed" { i } else { 0 },
                     max_retries: 3,
-                    created_at: now.to_rfc3339(),
-                    updated_at: now.to_rfc3339(),
+                    created_at: now,
+                    updated_at: now,
                     completed_at: if status == "completed" {
-                        Some(now.to_rfc3339())
+                        Some(now)
                     } else {
                         None
                     },
@@ -251,6 +251,13 @@ pub async fn create_sync_job_v2(
     let now = chrono::Utc::now();
     let priority = req.priority.unwrap_or_default();
     let tenant_id = req.tenant_id.unwrap_or_else(|| "default".to_string());
+    let scheduled_at = match req.scheduled_at {
+        Some(v) => match v.parse::<chrono::DateTime<chrono::Utc>>() {
+            Ok(v) => Some(v),
+            Err(_) => return ApiResponse::bad_request("无效的 scheduled_at，需为 RFC3339 时间"),
+        },
+        None => None,
+    };
 
     let job = SyncJobV2 {
         id: id.clone(),
@@ -263,14 +270,14 @@ pub async fn create_sync_job_v2(
         target_systems: req.target_systems,
         priority: priority.clone(),
         tags: req.tags.unwrap_or_default(),
-        scheduled_at: req.scheduled_at,
+        scheduled_at,
         retries_exhausted: false,
         dead_letter_reason: None,
         current_step: 0,
         retry_count: 0,
         max_retries: req.max_retries.unwrap_or(3),
-        created_at: now.to_rfc3339(),
-        updated_at: now.to_rfc3339(),
+        created_at: now,
+        updated_at: now,
         completed_at: None,
         error_message: None,
     };
@@ -427,7 +434,7 @@ pub async fn retry_dead_letter_v2(
         Some(job) => {
             job.status = "pending".to_string();
             job.retry_count += 1;
-            job.updated_at = now.to_rfc3339();
+            job.updated_at = now;
             job.retries_exhausted = false;
             job.dead_letter_reason = None;
             job.error_message = None;
@@ -472,7 +479,7 @@ pub async fn batch_retry_dead_letters(
             if let Some(job) = store.jobs.get_mut(&job_id) {
                 job.status = "pending".to_string();
                 job.retry_count += 1;
-                job.updated_at = now.to_rfc3339();
+                job.updated_at = now;
                 job.retries_exhausted = false;
                 job.dead_letter_reason = None;
                 job.error_message = None;
@@ -595,8 +602,12 @@ mod tests {
             current_step: 0,
             retry_count: 0,
             max_retries: 3,
-            created_at: "2024-01-01T00:00:00Z".to_string(),
-            updated_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
+            updated_at: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
             completed_at: None,
             error_message: None,
         };
@@ -622,7 +633,9 @@ mod tests {
             last_retry_at: None,
             retryable: true,
             category: "network".to_string(),
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
             payload: None,
         };
         let json = serde_json::to_value(&dl).unwrap();

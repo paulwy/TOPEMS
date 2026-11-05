@@ -42,9 +42,35 @@ pub struct MasterDataConflict {
     pub status: String,
     pub merge_strategy: String,
     pub resolved_value: Option<serde_json::Value>,
-    pub detected_at: String,
-    pub resolved_at: Option<String>,
+    pub detected_at: chrono::DateTime<chrono::Utc>,
+    pub resolved_at: Option<chrono::DateTime<chrono::Utc>>,
     pub resolved_by: Option<String>,
+}
+
+fn conflict_from_row(r: &sqlx::postgres::PgRow) -> Result<MasterDataConflict, sqlx::Error> {
+    Ok(MasterDataConflict {
+        id: r.try_get::<uuid::Uuid, _>("id").unwrap_or_default().to_string(),
+        master_data_id: r.try_get::<String, _>("master_data_id").unwrap_or_default(),
+        domain: r.try_get::<String, _>("domain").unwrap_or_default(),
+        conflict_type: r.try_get::<String, _>("conflict_type").unwrap_or_default(),
+        field_name: r.try_get::<String, _>("field_name").unwrap_or_default(),
+        local_value: r
+            .try_get::<serde_json::Value, _>("local_value")
+            .unwrap_or_default(),
+        remote_value: r
+            .try_get::<serde_json::Value, _>("remote_value")
+            .unwrap_or_default(),
+        remote_service: r.try_get::<String, _>("remote_service").unwrap_or_default(),
+        status: r.try_get::<String, _>("status").unwrap_or_default(),
+        merge_strategy: r.try_get::<String, _>("merge_strategy").unwrap_or_default(),
+        resolved_value: r
+            .try_get::<Option<serde_json::Value>, _>("resolved_value")
+            .ok()
+            .flatten(),
+        detected_at: r.try_get::<chrono::DateTime<chrono::Utc>, _>("detected_at")?,
+        resolved_at: r.try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("resolved_at")?,
+        resolved_by: r.try_get::<Option<String>, _>("resolved_by").ok().flatten(),
+    })
 }
 
 /// 冲突检测请求
@@ -167,7 +193,7 @@ pub async fn detect_conflicts(
                 status: "detected".into(),
                 merge_strategy: strategy_str.into(),
                 resolved_value: None,
-                detected_at: now.to_rfc3339(),
+                detected_at: now,
                 resolved_at: None,
                 resolved_by: None,
             };
@@ -192,7 +218,7 @@ pub async fn detect_conflicts(
                 status: "detected".into(),
                 merge_strategy: strategy_str.into(),
                 resolved_value: None,
-                detected_at: now.to_rfc3339(),
+                detected_at: now,
                 resolved_at: None,
                 resolved_by: None,
             };
@@ -217,7 +243,7 @@ pub async fn detect_conflicts(
                 status: "detected".into(),
                 merge_strategy: strategy_str.into(),
                 resolved_value: None,
-                detected_at: now.to_rfc3339(),
+                detected_at: now,
                 resolved_at: None,
                 resolved_by: None,
             };
@@ -239,7 +265,7 @@ pub async fn detect_conflicts(
         if should_auto_resolve {
             conflict.status = "auto_resolved".into();
             conflict.resolved_value = Some(conflict.remote_value.clone());
-            conflict.resolved_at = Some(now.to_rfc3339());
+            conflict.resolved_at = Some(now);
             conflict.resolved_by = Some(format!("auto:{}", strategy_str));
             auto_resolved += 1;
 
@@ -433,42 +459,17 @@ pub async fn list_conflicts(
 
     match rows {
         Ok(rows) => {
-            let items: Vec<MasterDataConflict> = rows
+            let items: Vec<MasterDataConflict> = match rows
                 .iter()
-                .map(|r| MasterDataConflict {
-                    id: r
-                        .try_get::<uuid::Uuid, _>("id")
-                        .unwrap_or_default()
-                        .to_string(),
-                    master_data_id: r.try_get::<String, _>("master_data_id").unwrap_or_default(),
-                    domain: r.try_get::<String, _>("domain").unwrap_or_default(),
-                    conflict_type: r.try_get::<String, _>("conflict_type").unwrap_or_default(),
-                    field_name: r.try_get::<String, _>("field_name").unwrap_or_default(),
-                    local_value: r
-                        .try_get::<serde_json::Value, _>("local_value")
-                        .unwrap_or_default(),
-                    remote_value: r
-                        .try_get::<serde_json::Value, _>("remote_value")
-                        .unwrap_or_default(),
-                    remote_service: r.try_get::<String, _>("remote_service").unwrap_or_default(),
-                    status: r.try_get::<String, _>("status").unwrap_or_default(),
-                    merge_strategy: r.try_get::<String, _>("merge_strategy").unwrap_or_default(),
-                    resolved_value: r
-                        .try_get::<Option<serde_json::Value>, _>("resolved_value")
-                        .ok()
-                        .flatten(),
-                    detected_at: r
-                        .try_get::<chrono::DateTime<chrono::Utc>, _>("detected_at")
-                        .unwrap_or_else(|_| chrono::Utc::now())
-                        .to_rfc3339(),
-                    resolved_at: r
-                        .try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("resolved_at")
-                        .ok()
-                        .flatten()
-                        .map(|t| t.to_rfc3339()),
-                    resolved_by: r.try_get::<Option<String>, _>("resolved_by").ok().flatten(),
-                })
-                .collect();
+                .map(conflict_from_row)
+                .collect::<Result<Vec<_>, sqlx::Error>>()
+            {
+                Ok(items) => items,
+                Err(e) => {
+                    tracing::warn!("[erp-mdm] 解析冲突记录失败: {}", e);
+                    return ApiResponse::from(TopemsError::internal("解析冲突记录失败", e));
+                }
+            };
             let total = items.len() as i64;
             ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
@@ -523,42 +524,13 @@ pub async fn get_conflict(
     .await;
 
     match row {
-        Ok(Some(r)) => ApiResponse::success(
-            MasterDataConflict {
-                id: r
-                    .try_get::<uuid::Uuid, _>("id")
-                    .unwrap_or_default()
-                    .to_string(),
-                master_data_id: r.try_get::<String, _>("master_data_id").unwrap_or_default(),
-                domain: r.try_get::<String, _>("domain").unwrap_or_default(),
-                conflict_type: r.try_get::<String, _>("conflict_type").unwrap_or_default(),
-                field_name: r.try_get::<String, _>("field_name").unwrap_or_default(),
-                local_value: r
-                    .try_get::<serde_json::Value, _>("local_value")
-                    .unwrap_or_default(),
-                remote_value: r
-                    .try_get::<serde_json::Value, _>("remote_value")
-                    .unwrap_or_default(),
-                remote_service: r.try_get::<String, _>("remote_service").unwrap_or_default(),
-                status: r.try_get::<String, _>("status").unwrap_or_default(),
-                merge_strategy: r.try_get::<String, _>("merge_strategy").unwrap_or_default(),
-                resolved_value: r
-                    .try_get::<Option<serde_json::Value>, _>("resolved_value")
-                    .ok()
-                    .flatten(),
-                detected_at: r
-                    .try_get::<chrono::DateTime<chrono::Utc>, _>("detected_at")
-                    .unwrap_or_else(|_| chrono::Utc::now())
-                    .to_rfc3339(),
-                resolved_at: r
-                    .try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("resolved_at")
-                    .ok()
-                    .flatten()
-                    .map(|t| t.to_rfc3339()),
-                resolved_by: r.try_get::<Option<String>, _>("resolved_by").ok().flatten(),
-            },
-            "冲突详情",
-        ),
+        Ok(Some(r)) => match conflict_from_row(&r) {
+            Ok(conflict) => ApiResponse::success(conflict, "冲突详情"),
+            Err(e) => {
+                tracing::warn!("[erp-mdm] 解析冲突详情失败: {}", e);
+                ApiResponse::from(TopemsError::internal("解析冲突详情失败", e))
+            }
+        },
         Ok(None) => ApiResponse::not_found("未找到冲突记录"),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询冲突详情失败: {}", e);
@@ -648,7 +620,7 @@ pub async fn resolve_conflict(
             "master_data_id": master_data_id,
             "field_name": field_name,
             "resolved_value": req.resolved_value,
-            "resolved_at": now.to_rfc3339(),
+            "resolved_at": now,
             "resolved_by": req.resolved_by,
         }),
         "冲突已手动解决",
@@ -766,7 +738,7 @@ pub async fn auto_merge_conflict(
             "field_name": field_name,
             "strategy": strategy_label,
             "resolved_value": resolved_value,
-            "auto_merged_at": now.to_rfc3339(),
+            "auto_merged_at": now,
         }),
         "冲突已自动合并",
     )
@@ -883,7 +855,9 @@ mod tests {
             status: "pending".to_string(),
             merge_strategy: "last_write_wins".to_string(),
             resolved_value: None,
-            detected_at: "2024-01-01T00:00:00Z".to_string(),
+            detected_at: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
             resolved_at: None,
             resolved_by: None,
         };

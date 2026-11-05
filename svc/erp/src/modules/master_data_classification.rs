@@ -56,7 +56,7 @@ pub struct ClassificationModel {
     pub categories: Vec<Category>,
     pub rules: Vec<ClassificationRule>,
     pub accuracy: f64,
-    pub trained_at: String,
+    pub trained_at: chrono::DateTime<chrono::Utc>,
     pub training_samples: i64,
 }
 
@@ -877,7 +877,7 @@ pub async fn classification_get_stats(
         categories: filtered_cats.iter().map(|c| (*c).clone()).collect(),
         rules: rules.clone(),
         accuracy: 0.86,
-        trained_at: chrono::Utc::now().to_rfc3339(),
+        trained_at: chrono::Utc::now(),
         training_samples: classifications.len() as i64,
     };
 

@@ -25,7 +25,24 @@ pub struct MasterDataVersion {
     pub status: String,
     pub snapshot: serde_json::Value,
     pub changed_by: Option<String>,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+fn version_from_row(r: &sqlx::postgres::PgRow) -> Result<MasterDataVersion, sqlx::Error> {
+    Ok(MasterDataVersion {
+        id: r.try_get::<uuid::Uuid, _>("id").unwrap_or_default().to_string(),
+        master_data_id: r.try_get::<String, _>("master_data_id").unwrap_or_default(),
+        version_number: r.try_get::<i32, _>("version_number").unwrap_or(0),
+        domain: r.try_get::<String, _>("domain").unwrap_or_default(),
+        code: r.try_get::<String, _>("code").unwrap_or_default(),
+        name: r.try_get::<Option<String>, _>("name").ok().flatten(),
+        status: r.try_get::<String, _>("status").unwrap_or_default(),
+        snapshot: r
+            .try_get::<serde_json::Value, _>("snapshot")
+            .unwrap_or_default(),
+        changed_by: r.try_get::<Option<String>, _>("changed_by").ok().flatten(),
+        created_at: r.try_get::<chrono::DateTime<chrono::Utc>, _>("created_at")?,
+    })
 }
 
 #[derive(Debug, Deserialize)]
@@ -117,7 +134,7 @@ pub async fn record_version(
                     status: req.status,
                     snapshot: req.snapshot,
                     changed_by: req.changed_by,
-                    created_at: now.to_rfc3339(),
+                    created_at: now,
                 },
                 "版本记录成功",
             )
@@ -174,29 +191,17 @@ pub async fn get_versions(
 
     match rows {
         Ok(rows) => {
-            let items: Vec<MasterDataVersion> = rows
+            let items: Vec<MasterDataVersion> = match rows
                 .iter()
-                .map(|r| MasterDataVersion {
-                    id: r
-                        .try_get::<uuid::Uuid, _>("id")
-                        .unwrap_or_default()
-                        .to_string(),
-                    master_data_id: r.try_get::<String, _>("master_data_id").unwrap_or_default(),
-                    version_number: r.try_get::<i32, _>("version_number").unwrap_or(0),
-                    domain: r.try_get::<String, _>("domain").unwrap_or_default(),
-                    code: r.try_get::<String, _>("code").unwrap_or_default(),
-                    name: r.try_get::<Option<String>, _>("name").ok().flatten(),
-                    status: r.try_get::<String, _>("status").unwrap_or_default(),
-                    snapshot: r
-                        .try_get::<serde_json::Value, _>("snapshot")
-                        .unwrap_or_default(),
-                    changed_by: r.try_get::<Option<String>, _>("changed_by").ok().flatten(),
-                    created_at: r
-                        .try_get::<chrono::DateTime<chrono::Utc>, _>("created_at")
-                        .unwrap_or_else(|_| chrono::Utc::now())
-                        .to_rfc3339(),
-                })
-                .collect();
+                .map(version_from_row)
+                .collect::<Result<Vec<_>, sqlx::Error>>()
+            {
+                Ok(items) => items,
+                Err(e) => {
+                    tracing::warn!("[erp-mdm] 解析版本历史失败: {}", e);
+                    return ApiResponse::from(TopemsError::internal("解析版本历史失败", e));
+                }
+            };
             let total = items.len() as i64;
             ApiResponse::success(
                 PaginatedResponse::new(items, total, page, page_size),
@@ -247,34 +252,13 @@ pub async fn get_version(
     .await;
 
     match rows {
-        Ok(Some(row)) => ApiResponse::success(
-            MasterDataVersion {
-                id: row
-                    .try_get::<uuid::Uuid, _>("id")
-                    .unwrap_or_default()
-                    .to_string(),
-                master_data_id: row
-                    .try_get::<String, _>("master_data_id")
-                    .unwrap_or_default(),
-                version_number: row.try_get::<i32, _>("version_number").unwrap_or(0),
-                domain: row.try_get::<String, _>("domain").unwrap_or_default(),
-                code: row.try_get::<String, _>("code").unwrap_or_default(),
-                name: row.try_get::<Option<String>, _>("name").ok().flatten(),
-                status: row.try_get::<String, _>("status").unwrap_or_default(),
-                snapshot: row
-                    .try_get::<serde_json::Value, _>("snapshot")
-                    .unwrap_or_default(),
-                changed_by: row
-                    .try_get::<Option<String>, _>("changed_by")
-                    .ok()
-                    .flatten(),
-                created_at: row
-                    .try_get::<chrono::DateTime<chrono::Utc>, _>("created_at")
-                    .unwrap_or_else(|_| chrono::Utc::now())
-                    .to_rfc3339(),
-            },
-            "版本详情",
-        ),
+        Ok(Some(row)) => match version_from_row(&row) {
+            Ok(version) => ApiResponse::success(version, "版本详情"),
+            Err(e) => {
+                tracing::warn!("[erp-mdm] 解析版本详情失败: {}", e);
+                ApiResponse::from(TopemsError::internal("解析版本详情失败", e))
+            }
+        },
         Ok(None) => ApiResponse::not_found("未找到版本"),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询版本详情失败: {}", e);
@@ -389,7 +373,7 @@ pub async fn rollback_to_version(
                     "domain": domain,
                     "code": code,
                     "status": status,
-                    "rolled_back_at": now.to_rfc3339(),
+                    "rolled_back_at": now,
                 }),
                 &format!("成功回滚到版本 v{}", target_version),
             )
@@ -419,7 +403,9 @@ mod tests {
             status: "active".to_string(),
             snapshot: serde_json::json!({"name": "测试客户"}),
             changed_by: Some("admin".to_string()),
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
         };
         let json = serde_json::to_value(&version).unwrap();
         assert_eq!(json["id"], "v1");
@@ -445,7 +431,9 @@ mod tests {
             status: "inactive".to_string(),
             snapshot: serde_json::json!({}),
             changed_by: None,
-            created_at: "2024-01-02T00:00:00Z".to_string(),
+            created_at: "2024-01-02T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
         };
         let json = serde_json::to_value(&version).unwrap();
         assert_eq!(json["id"], "v2");

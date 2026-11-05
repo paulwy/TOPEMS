@@ -118,8 +118,8 @@ pub struct DashboardLayout {
     pub widgets: Vec<DashboardWidget>,
     pub filters: Vec<DashboardFilter>,
     pub refresh_config: serde_json::Value,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 仪表盘数据
@@ -127,7 +127,7 @@ pub struct DashboardLayout {
 pub struct DashboardData {
     pub widgets_data: HashMap<String, serde_json::Value>,
     pub summary: Vec<KpiMetric>,
-    pub generated_at: String,
+    pub generated_at: chrono::DateTime<chrono::Utc>,
     pub period: String,
 }
 
@@ -255,8 +255,8 @@ async fn ensure_dashboard_initialized() {
             label: "数据域".to_string(),
         }],
         refresh_config: serde_json::json!({ "auto_refresh": true, "interval": 300 }),
-        created_at: rfc(30),
-        updated_at: rfc(0),
+        created_at: now - chrono::Duration::days(30),
+        updated_at: now,
     };
 
     let mut dashboards = store.dashboards.lock().await;
@@ -275,7 +275,7 @@ async fn create_dashboard(req: &DashboardRequest) -> DashboardLayout {
     let store = get_dashboard_store();
     let mut dashboards = store.dashboards.lock().await;
     let id = format!("dashboard-{:03}", dashboards.len() + 1);
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     let widgets: Vec<DashboardWidget> = req
         .widgets
         .iter()
@@ -288,7 +288,7 @@ async fn create_dashboard(req: &DashboardRequest) -> DashboardLayout {
             config: w.config.clone().unwrap_or(serde_json::json!({})),
             position: w.position.unwrap_or((i as i32, 0)),
             refresh_interval: w.refresh_interval.unwrap_or(300),
-            last_updated: now.clone(),
+            last_updated: now.to_rfc3339(),
         })
         .collect();
     let dashboard = DashboardLayout {
@@ -345,7 +345,7 @@ async fn update_dashboard(dashboard_id: &str, req: &DashboardRequest) -> Option<
     if let Some(ref desc) = req.description {
         dashboard.description = desc.clone();
     }
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     let widgets: Vec<DashboardWidget> = req
         .widgets
         .iter()
@@ -358,7 +358,7 @@ async fn update_dashboard(dashboard_id: &str, req: &DashboardRequest) -> Option<
             config: w.config.clone().unwrap_or(serde_json::json!({})),
             position: w.position.unwrap_or((i as i32, 0)),
             refresh_interval: w.refresh_interval.unwrap_or(300),
-            last_updated: now.clone(),
+            last_updated: now.to_rfc3339(),
         })
         .collect();
     dashboard.widgets = widgets;
@@ -498,7 +498,7 @@ async fn get_dashboard_data(dashboard_id: &str) -> Option<DashboardData> {
     Some(DashboardData {
         widgets_data,
         summary,
-        generated_at: chrono::Utc::now().to_rfc3339(),
+        generated_at: chrono::Utc::now(),
         period: "最近30天".to_string(),
     })
 }
@@ -535,9 +535,9 @@ async fn refresh_dashboard(dashboard_id: &str) -> Option<DashboardData> {
         let dashboard = dashboards
             .iter_mut()
             .find(|d| d.dashboard_id == dashboard_id)?;
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         for widget in &mut dashboard.widgets {
-            widget.last_updated = now.clone();
+            widget.last_updated = now.to_rfc3339();
         }
         dashboard.updated_at = now;
     }

@@ -24,15 +24,28 @@ pub async fn create_retirement_plan(
     let store = get_lifecycle_store();
     let mut plans = store.retirement_plans.lock().await;
 
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
+    let planned_sunset_at = match req.planned_sunset_at.parse::<chrono::DateTime<chrono::Utc>>() {
+        Ok(v) => v,
+        Err(_) => return ApiResponse::bad_request("无效的 planned_sunset_at，需为 RFC3339 时间"),
+    };
+    let planned_archived_at = match req.planned_archived_at {
+        Some(v) => match v.parse::<chrono::DateTime<chrono::Utc>>() {
+            Ok(v) => Some(v),
+            Err(_) => {
+                return ApiResponse::bad_request("无效的 planned_archived_at，需为 RFC3339 时间");
+            }
+        },
+        None => None,
+    };
     let plan = RetirementPlan {
         id: uuid::Uuid::new_v4().to_string(),
         master_data_id: req.master_data_id,
         entity_type: req.entity_type,
         entity_code: req.entity_code,
         entity_name: req.entity_name,
-        planned_sunset_at: req.planned_sunset_at,
-        planned_archived_at: req.planned_archived_at,
+        planned_sunset_at,
+        planned_archived_at,
         impact_assessment: ImpactAssessment {
             total_references: 0,
             referencing_services: Vec::new(),
@@ -294,7 +307,7 @@ pub async fn confirm_retirement_plan(
     };
 
     plan.confirmed_by = Some(req.confirmed_by);
-    plan.confirmed_at = Some(chrono::Utc::now().to_rfc3339());
+    plan.confirmed_at = Some(chrono::Utc::now());
     plan.status = RetirementStatus::Confirmed;
 
     ApiResponse::success(plan.clone(), "退役计划已确认")
@@ -326,11 +339,9 @@ pub async fn execute_retirement_plan(
         };
 
         plan.status = RetirementStatus::Completed;
-        plan.executed_at = Some(chrono::Utc::now().to_rfc3339());
-        plan.post_retirement_review_at = Some(
-            (chrono::Utc::now() + chrono::Duration::days(plan.rollback_window_days as i64))
-                .to_rfc3339(),
-        );
+        plan.executed_at = Some(chrono::Utc::now());
+        plan.post_retirement_review_at =
+            Some(chrono::Utc::now() + chrono::Duration::days(plan.rollback_window_days as i64));
         let _ = req;
         (plan.master_data_id.clone(), plan.rollback_window_days)
     };
@@ -339,7 +350,7 @@ pub async fn execute_retirement_plan(
     let mut entities = store.entities.lock().await;
     if let Some(entity) = entities.get_mut(&master_data_id) {
         entity.stage = LifecycleStage::Sunset;
-        entity.last_transition_at = chrono::Utc::now().to_rfc3339();
+        entity.last_transition_at = chrono::Utc::now();
         entity.transition_count += 1;
     }
 
@@ -392,7 +403,7 @@ pub async fn rollback_retirement_plan(
     let mut entities = store.entities.lock().await;
     if let Some(entity) = entities.get_mut(&master_data_id) {
         entity.stage = LifecycleStage::Operative;
-        entity.last_transition_at = chrono::Utc::now().to_rfc3339();
+        entity.last_transition_at = chrono::Utc::now();
         entity.transition_count += 1;
     }
 
@@ -513,7 +524,7 @@ pub async fn rollback_retirement_plan_verb(
     let mut entities = store.entities.lock().await;
     if let Some(entity) = entities.get_mut(&master_data_id) {
         entity.stage = LifecycleStage::Operative;
-        entity.last_transition_at = chrono::Utc::now().to_rfc3339();
+        entity.last_transition_at = chrono::Utc::now();
         entity.transition_count += 1;
     }
 

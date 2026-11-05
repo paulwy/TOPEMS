@@ -68,7 +68,7 @@ pub struct QualityAiScore {
     pub risk_level: String,
     pub risk_factors: Vec<String>,
     pub recommendations: Vec<String>,
-    pub scored_at: String,
+    pub scored_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 质量异常（Z-Score / IQR / 阈值规则检测）
@@ -85,7 +85,7 @@ pub struct QualityAnomaly {
     pub detected_value: String,
     pub expected_range: String,
     pub confidence: f64,
-    pub detected_at: String,
+    pub detected_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 质量预测（基于历史趋势线性回归）
@@ -562,7 +562,7 @@ fn score_entity_internal(profile: &EntityProfile) -> QualityAiScore {
         risk_level: risk.as_str().to_string(),
         risk_factors: factors,
         recommendations: recs,
-        scored_at: chrono::Utc::now().to_rfc3339(),
+        scored_at: chrono::Utc::now(),
     }
 }
 
@@ -570,7 +570,7 @@ fn score_entity_internal(profile: &EntityProfile) -> QualityAiScore {
 /// 异常检测：Z-Score + IQR + 阈值规则
 #[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
 fn detect_anomalies_internal(profiles: &[EntityProfile]) -> Vec<QualityAnomaly> {
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     let mut anomalies = Vec::new();
 
     // 1. 阈值规则：时效性异常
@@ -810,7 +810,7 @@ pub async fn quality_ai_score_entity(
     // 同时更新历史序列
     let mut history = store.quality_history.lock().await;
     let entry = history.entry(entity_id).or_default();
-    entry.push((score.scored_at.clone(), score.overall_score));
+    entry.push((score.scored_at.to_rfc3339(), score.overall_score));
     if entry.len() > 20 {
         entry.remove(0);
     }
@@ -1132,7 +1132,9 @@ mod tests {
             risk_level: "low".to_string(),
             risk_factors: vec!["时效性偏低".to_string()],
             recommendations: vec!["更新客户联系信息".to_string()],
-            scored_at: "2024-01-01T00:00:00Z".to_string(),
+            scored_at: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
         };
         let json = serde_json::to_value(&score).unwrap();
         assert_eq!(json["entity_id"], "ent1");
@@ -1155,7 +1157,9 @@ mod tests {
             detected_value: "255".to_string(),
             expected_range: "1-100".to_string(),
             confidence: 0.95,
-            detected_at: "2024-01-01T00:00:00Z".to_string(),
+            detected_at: "2024-01-01T00:00:00Z"
+                .parse::<chrono::DateTime<chrono::Utc>>()
+                .unwrap(),
         };
         let json = serde_json::to_value(&anomaly).unwrap();
         assert_eq!(json["id"], "anom1");

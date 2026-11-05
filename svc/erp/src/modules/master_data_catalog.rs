@@ -53,8 +53,8 @@ pub struct CatalogEntry {
     pub classification: CatalogClassification,
     pub classification_label: String,
     pub source_system: String,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
     pub popularity: i64,
     pub quality_score: f64,
 }
@@ -146,7 +146,7 @@ async fn ensure_catalog_initialized() {
         return;
     }
     let now = chrono::Utc::now();
-    let rfc = |days_ago: i64| (now - chrono::Duration::days(days_ago)).to_rfc3339();
+    let rfc = |days_ago: i64| now - chrono::Duration::days(days_ago);
 
     let seeds: Vec<(
         &str,
@@ -427,7 +427,7 @@ async fn create_catalog_entry(req: &CatalogEntryRequest) -> CatalogEntry {
     ensure_catalog_initialized().await;
     let store = get_catalog_store();
     let mut entries = store.entries.lock().await;
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     let id = format!("catalog-{:03}", entries.len() + 1);
     let cls = req
         .classification
@@ -489,7 +489,7 @@ async fn update_catalog_entry(entry_id: &str, req: &CatalogEntryRequest) -> Opti
     if let Some(qs) = req.quality_score {
         entry.quality_score = qs;
     }
-    entry.updated_at = chrono::Utc::now().to_rfc3339();
+    entry.updated_at = chrono::Utc::now();
     Some(entry.clone())
 }
 

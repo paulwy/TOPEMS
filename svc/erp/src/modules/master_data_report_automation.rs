@@ -136,7 +136,7 @@ pub struct ReportSchedule {
     pub day_of_month: Option<i32>,
     pub time: String,
     pub timezone: String,
-    pub next_run_at: String,
+    pub next_run_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 报告章节
@@ -160,7 +160,7 @@ pub struct ReportTemplate {
     pub sections: Vec<ReportSection>,
     pub recipients: Vec<String>,
     pub format: ReportFormat,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// 已生成报告
@@ -168,7 +168,7 @@ pub struct ReportTemplate {
 pub struct GeneratedReport {
     pub report_id: String,
     pub template_id: String,
-    pub generated_at: String,
+    pub generated_at: chrono::DateTime<chrono::Utc>,
     pub period: String,
     pub status: ReportStatus,
     pub sections_data: HashMap<String, serde_json::Value>,
@@ -184,7 +184,7 @@ pub struct ReportAutomationStats {
     pub templates_by_type: HashMap<String, usize>,
     pub generated_by_status: HashMap<String, usize>,
     pub scheduled_count: usize,
-    pub last_generated: Option<String>,
+    pub last_generated: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 /// 报告模板创建请求
@@ -308,7 +308,7 @@ async fn ensure_report_initialized() {
         return;
     }
     let now = chrono::Utc::now();
-    let rfc = |days_ago: i64| (now - chrono::Duration::days(days_ago)).to_rfc3339();
+    let rfc = |days_ago: i64| now - chrono::Duration::days(days_ago);
 
     // 预置报告模板
     let quality_template = ReportTemplate {
@@ -322,7 +322,7 @@ async fn ensure_report_initialized() {
             day_of_month: Some(1),
             time: "09:00".to_string(),
             timezone: "Asia/Shanghai".to_string(),
-            next_run_at: (now + chrono::Duration::days(15)).to_rfc3339(),
+            next_run_at: now + chrono::Duration::days(15),
         }),
         sections: vec![
             ReportSection {
@@ -363,7 +363,7 @@ async fn ensure_report_initialized() {
             day_of_month: Some(1),
             time: "10:00".to_string(),
             timezone: "Asia/Shanghai".to_string(),
-            next_run_at: (now + chrono::Duration::days(45)).to_rfc3339(),
+            next_run_at: now + chrono::Duration::days(45),
         }),
         sections: vec![
             ReportSection {
@@ -400,7 +400,7 @@ async fn ensure_report_initialized() {
             day_of_month: None,
             time: "08:00".to_string(),
             timezone: "Asia/Shanghai".to_string(),
-            next_run_at: (now + chrono::Duration::days(3)).to_rfc3339(),
+            next_run_at: now + chrono::Duration::days(3),
         }),
         sections: vec![
             ReportSection {
@@ -476,7 +476,7 @@ async fn create_report_template(req: &ReportTemplateRequest) -> ReportTemplate {
     let store = get_report_store();
     let mut templates = store.templates.lock().await;
     let id = format!("template-{:03}", templates.len() + 1);
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     let sections: Vec<ReportSection> = req
         .sections
         .iter()
@@ -557,8 +557,11 @@ pub async fn generate_report(req: &GenerateReportRequest) -> Option<GeneratedRep
             .clone()
     };
 
-    let now = chrono::Utc::now().to_rfc3339();
-    let period = req.period.clone().unwrap_or_else(|| now[..7].to_string());
+    let now = chrono::Utc::now();
+    let period = req
+        .period
+        .clone()
+        .unwrap_or_else(|| now.format("%Y-%m").to_string());
 
     let mut sections_data: HashMap<String, serde_json::Value> = HashMap::new();
     for section in &template_clone.sections {
@@ -689,7 +692,7 @@ async fn schedule_report(req: &ScheduleReportRequest) -> Option<ReportTemplate> 
             .timezone
             .clone()
             .unwrap_or_else(|| "Asia/Shanghai".to_string()),
-        next_run_at: next_run.to_rfc3339(),
+        next_run_at: next_run,
     });
     Some(template.clone())
 }

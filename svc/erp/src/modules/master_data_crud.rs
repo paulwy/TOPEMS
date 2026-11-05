@@ -55,24 +55,24 @@ pub struct MasterDataRef {
     pub source_service: String,
     pub local_entity_type: Option<String>,
     pub local_entity_id: Option<String>,
-    pub last_synced_at: String,
-    pub created_at: String,
-    pub updated_at: String,
+    pub last_synced_at: chrono::DateTime<chrono::Utc>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
     // V38.0 AC-10: 生命周期管理字段
     /// 归档时间
-    pub archived_at: Option<String>,
+    pub archived_at: Option<chrono::DateTime<chrono::Utc>>,
     /// 归档操作人
     pub archived_by: Option<String>,
     /// 归档原因
     pub archive_reason: Option<String>,
     /// 销毁计划时间
-    pub destroy_scheduled_at: Option<String>,
+    pub destroy_scheduled_at: Option<chrono::DateTime<chrono::Utc>>,
     /// 销毁原因
     pub destroy_reason: Option<String>,
     /// 销毁计划制定人
     pub destroy_scheduled_by: Option<String>,
     /// 实际销毁时间（软删除）
-    pub destroyed_at: Option<String>,
+    pub destroyed_at: Option<chrono::DateTime<chrono::Utc>>,
     /// 销毁操作人
     pub destroyed_by: Option<String>,
 }
@@ -115,16 +115,16 @@ impl From<MasterDataRow> for MasterDataRef {
             source_service: row.source_service,
             local_entity_type: row.local_entity_type,
             local_entity_id: row.local_entity_id.map(|id| id.to_string()),
-            last_synced_at: row.last_synced_at.to_rfc3339(),
-            created_at: row.created_at.to_rfc3339(),
-            updated_at: row.updated_at.to_rfc3339(),
-            archived_at: row.archived_at.map(|t| t.to_rfc3339()),
+            last_synced_at: row.last_synced_at,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+            archived_at: row.archived_at,
             archived_by: row.archived_by,
             archive_reason: row.archive_reason,
-            destroy_scheduled_at: row.destroy_scheduled_at.map(|t| t.to_rfc3339()),
+            destroy_scheduled_at: row.destroy_scheduled_at,
             destroy_reason: row.destroy_reason,
             destroy_scheduled_by: row.destroy_scheduled_by,
-            destroyed_at: row.destroyed_at.map(|t| t.to_rfc3339()),
+            destroyed_at: row.destroyed_at,
             destroyed_by: row.destroyed_by,
         }
     }
