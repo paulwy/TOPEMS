@@ -1,3 +1,32 @@
+## 第四十七轮（2026-11-05）：第 3 档——四域页面补测 33 个 Page ✅
+
+> 承接第四十五轮"第 3 档"（原挂账 51 页 / erp 8、crm 18、scm 4、qms 21）。经按实际 `*Page.tsx` 与既有测试文件比对，本轮可测口径为 **33 个未测页面文件**；其余差额来自第三十四轮把子目录面板/详情页一并计入的统计口径。
+
+### 1. 补测清单（33 个，全部新增，不改业务代码）
+
+| 域 | 数量 | 新增测试文件 |
+|---|---|---|
+| erp | 5 | `AuditLogPage` / `DatabaseManagementPage` / `ErpInventoryRedesignPage` / `ErpSalesOrderRedesignPage` / `FinancialAnalysisPage` |
+| crm | 11 | `CRMCustomerScoringPage` / `CRMCustomerSegmentationPage` / `CRMRecommendationPage` / `CRMSalesForecastPage` / `CRMSalesFunnelPage` / `CrmForecastAlgorithmPage` / `CrmRfmPage` / `CustomerEditPage` / `ContactDetailPage` / `CustomerDetailPage` / `ReturnDetailPage` |
+| scm | 3 | `DashboardPage` / `MrpSuggestionPage` / `ScmOverviewPage` |
+| qms | 14 | `InspectionStandardPage` / `QmsEightDPage` / `QmsStandardListPage` / `QmsApqpProjectDetailPage` / `QmsAuditPlanDetailPage` / `QmsEightDDetailPage` / `QmsFmeaDetailPage` / `QmsInspectionDetailPage` / `QmsIssueDetailPage` / `QmsStandardDetailPage` / `QmsAuditRedesignPage` / `QmsEightDRedesignPage` / `QmsInspectionRedesignPage` / `QmsNonconformanceRedesignPage` |
+
+### 2. 测试策略
+
+- 模板层 mock：`CrudPage` / `ListPageTemplate` / `DetailPageTemplate` / `StatsPageTemplate` / `DashboardTemplate` / `@/components/redesign`，断言传入的 schema、breadcrumbs、统计卡/图表/分区数量。
+- 数据层：API 模块用递归 Proxy（任意方法返回 `Promise.resolve({ success, data })`），`@tanstack/react-query`、`react-i18next`、`QUERY_KEYS` 统一 mock。
+- 依赖加载态/详情数据的复杂页（7 个 qms 详情页、2 个 erp redesign 页）采用空数据 smoke：`expect(() => render(<Page/>)).not.toThrow()`。
+
+### 3. 验证
+
+- `npx vitest run src/pages/erp src/pages/crm src/pages/scm src/pages/qms`：**75 files / 118 tests 全部通过**。
+- `npm run typecheck` ✅；新增测试目录 `eslint --quiet` 0 error（prettier 已自动修复）。
+
+### 4. 未纳入本轮
+
+- 第三十四轮口径中超出 `*Page.tsx` 的子目录面板/弹窗组件，需单独按组件粒度补测。
+- 浏览器/E2E 回归属第 4 档。
+
 ## 第四十六轮（2026-11-05）：第 2 档——A4 CASCADE 外键复核补建 + A6 INT 类型延展 ✅
 
 > 承接第四十五轮"第 2 档"：先补回 `DROP TABLE ... CASCADE` 静默删掉的 14 条外键，再收敛 Rust `u32` ↔ DB `BIGINT` 的截断风险。
