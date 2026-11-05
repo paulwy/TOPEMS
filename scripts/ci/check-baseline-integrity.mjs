@@ -6,9 +6,11 @@
  *
  * 校验项：
  *   1) 基线资产存在，且 schema/ledger 的 sha256 与基线元数据一致；
- *   2) 锚点是 14 位版本号且可解析为合法时间戳（YYYYMMDDHHMMSS）；
- *   3) anchors.json 单调不减，且最新锚点 = 最新 baseline_*.json 锚点；
- *   4) 新增迁移（不在 migrations_at_anchor.json 清单内）版本号必须 > 锚点；
+ *   2) 参考数据基线（baseline_<anchor>_data.json + .sql.gz）存在，sha256 与
+ *      元数据一致，行数清单非空且 total_rows/table_count 自洽；
+ *   3) 锚点是 14 位版本号且可解析为合法时间戳（YYYYMMDDHHMMSS）；
+ *   4) anchors.json 单调不减，且最新锚点 = 最新 baseline_*.json 锚点；
+ *   5) 新增迁移（不在 migrations_at_anchor.json 清单内）版本号必须 > 锚点；
  *      清单内为既存迁移（含 19 条定向 + 16 条跳过项），豁免。
  *
  * 用法：
@@ -169,6 +171,77 @@ if (latestMeta) {
       }
     }
   }
+
+  // ── 3.5) 参考数据基线（存在 / sha256 / 行数清单） ────────────────────────
+  const dataMetaFile = `baseline_${latestMeta.anchor_version}_data.json`;
+  const dataMetaPath = join(BASELINE_DIR, dataMetaFile);
+  if (!existsSync(dataMetaPath)) {
+    violations.push(`参考数据基线元数据缺失：database/baseline/${dataMetaFile}（provision-env 默认 --with-reference-data）`);
+  } else {
+    const dataMeta = readJson(dataMetaPath, `参考数据元数据 ${dataMetaFile}`);
+    if (dataMeta) {
+      if (Number(dataMeta.anchor_version) !== Number(latestMeta.anchor_version)) {
+        violations.push(`参考数据锚点 ${dataMeta.anchor_version} 与结构基线锚点 ${latestMeta.anchor_version} 不一致`);
+      }
+      const df = dataMeta.data_file;
+      const ds = dataMeta.data_sha256;
+      if (typeof df !== 'string' || !df) {
+        violations.push('参考数据元数据缺少 data_file');
+      } else {
+        const dp = join(BASELINE_DIR, df);
+        if (!existsSync(dp)) {
+          violations.push(`参考数据资产缺失：database/baseline/${df}`);
+        } else if (!ds || !/^[a-f0-9]{64}$/i.test(ds)) {
+          violations.push('参考数据元数据 data_sha256 缺失/格式非法');
+        } else if (sha256(dp) !== ds.toLowerCase()) {
+          violations.push(`参考数据资产 sha256 不匹配：${df}（实际 ${sha256(dp)} ≠ 元数据 ${ds}）`);
+        }
+      }
+      const rc = dataMeta.row_counts;
+      if (!rc || typeof rc !== 'object' || Array.isArray(rc) || Object.keys(rc).length === 0) {
+        violations.push('参考数据行数清单为空或格式非法（row_counts 必须为非空对象）');
+      } else {
+        const keys = Object.keys(rc);
+        const bad = keys.filter((k) => !Number.isInteger(rc[k]) || rc[k] < 0);
+        if (bad.length) violations.push(`参考数据行数非法：${bad.join(', ')}`);
+        const sum = keys.reduce((s, k) => s + Number(rc[k] || 0), 0);
+        if (Number(dataMeta.total_rows) !== sum) {
+          violations.push(`参考数据 total_rows=${dataMeta.total_rows} 与逐表行数之和 ${sum} 不一致`);
+        }
+        if (Number(dataMeta.table_count) !== keys.length) {
+          violations.push(`参考数据 table_count=${dataMeta.table_count} 与 row_counts 表数 ${keys.length} 不一致`);
+        }
+        if (sum < 1) violations.push('参考数据总行数为 0（快照不应为空）');
+        for (const k of ['public.core_permissions', 'public.core_menus']) {
+          if (!(k in rc)) violations.push(`参考数据行数清单缺少关键表：${k}`);
+          else if (Number(rc[k]) < 1) violations.push(`关键表行数为 0：${k}`);
+        }
+        if (Array.isArray(dataMeta.tables)) {
+          const listed = new Set(dataMeta.tables);
+          for (const k of keys) if (!listed.has(k)) violations.push(`row_counts 表 ${k} 不在 tables 清单`);
+          for (const t of dataMeta.tables) if (!(t in rc)) violations.push(`tables 清单表 ${t} 缺少行数`);
+        } else {
+          violations.push('参考数据元数据缺少 tables 清单');
+        }
+      }
+      if (dataMeta.pii_review && Array.isArray(dataMeta.pii_review.findings) && dataMeta.pii_review.findings.length) {
+        violations.push(`参考数据脱敏审查存在 findings：${JSON.stringify(dataMeta.pii_review.findings)}`);
+      }
+      if (latestAnchorEntry) {
+        const pairs = [
+          ['data_file', dataMeta.data_file],
+          ['data_sha256', dataMeta.data_sha256],
+          ['data_table_count', dataMeta.table_count],
+          ['data_rows', dataMeta.total_rows],
+        ];
+        for (const [k, v] of pairs) {
+          if (latestAnchorEntry[k] != null && String(latestAnchorEntry[k]) !== String(v)) {
+            violations.push(`anchors.json 最新条目的 ${k} 与参考数据元数据不一致`);
+          }
+        }
+      }
+    }
+  }
 }
 
 // ── 4) 新增迁移版本号必须 > 锚点 ────────────────────────────────────────────
@@ -216,6 +289,7 @@ const result = {
   baseline_meta: latestMeta ? latestMeta.anchor_version : null,
   anchors_count: anchors.length,
   manifest_files: manifestSet.size,
+  data_asset: latestMeta ? `baseline_${latestMeta.anchor_version}_data.sql.gz` : null,
   checked_migrations: candidates.length,
   new_migrations_ok: newOnes.length,
   warnings,
@@ -226,7 +300,7 @@ const result = {
 if (JSON_MODE) {
   console.log(JSON.stringify(result, null, 2));
 } else {
-  console.log(`[baseline-integrity] mode=${result.mode} anchor=${anchorNum} meta=${result.baseline_meta} anchors=${result.anchors_count} manifest=${manifestSet.size} checked=${candidates.length}`);
+  console.log(`[baseline-integrity] mode=${result.mode} anchor=${anchorNum} meta=${result.baseline_meta} anchors=${result.anchors_count} manifest=${manifestSet.size} data=${result.data_asset || 'MISSING'} checked=${candidates.length}`);
   for (const w of warnings) console.log(`  ⚠ ${w}`);
   if (violations.length) {
     for (const v of violations) console.log(`  ✗ ${v}`);
