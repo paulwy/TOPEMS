@@ -81,10 +81,7 @@ fn derived_db_pools() -> u32 {
     {
         pools += 1;
     }
-    #[cfg(feature = "module-pm")]
-    {
-        pools += 1;
-    }
+    // module-pm：批次 2 已迁移到共享运行时池，计在下方权重中。
     #[cfg(feature = "module-mes")]
     {
         pools += 1;
@@ -97,22 +94,11 @@ fn derived_db_pools() -> u32 {
     {
         pools += 1;
     }
-    #[cfg(feature = "module-tms")]
-    {
-        pools += 1;
-    }
     #[cfg(feature = "module-pdm")]
     {
         pools += 1;
     }
-    #[cfg(feature = "module-gis")]
-    {
-        pools += 1;
-    }
-    #[cfg(feature = "module-ticket")]
-    {
-        pools += 1;
-    }
+    // module-tms / module-gis / module-ticket：批次 2 已迁移到共享运行时池，计在下方权重中。
     #[cfg(feature = "module-rd")]
     {
         pools += 1;
@@ -129,28 +115,27 @@ fn derived_db_pools() -> u32 {
     {
         pools += 1;
     }
-    #[cfg(feature = "module-search")]
-    {
-        pools += 1;
-    }
     // 连接治理 B 批次 1：monitor / plugin-registry / subscription 已迁移到共享运行时池
     // （`bootstrap_service_shared`），不再各自建池。它们只占 1 个物理池，但在预算
     // 公平分摊中按「模块数」权重参与，因此这里计入 SHARED_POOL_MODULE_WEIGHT 个预算单位。
+    // 批次 2 并入同池的模块：tms / ticket / gis / pm / mobile / search。
     #[cfg(any(
         feature = "module-monitor",
         feature = "module-plugin-registry",
-        feature = "module-subscription"
+        feature = "module-subscription",
+        feature = "module-tms",
+        feature = "module-ticket",
+        feature = "module-gis",
+        feature = "module-pm",
+        feature = "module-mobile",
+        feature = "module-search"
     ))]
     {
         pools += topems_shared_bootstrap::SHARED_POOL_MODULE_WEIGHT;
     }
-    // 注意：上面 3 个模块各占 1 个物理池已消失，物理池数 = 本函数返回值
+    // 注意：上面已迁移的模块各占 1 个物理池已消失，物理池数 = 本函数返回值
     // - (SHARED_POOL_MODULE_WEIGHT - 1)。
     #[cfg(feature = "module-integration")]
-    {
-        pools += 1;
-    }
-    #[cfg(feature = "module-mobile")]
     {
         pools += 1;
     }

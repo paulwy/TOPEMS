@@ -91,7 +91,10 @@ use topems_shared_db::database::{
 /// 共享池只占 **1 个物理池**，但在预算公平分摊中按本权重参与
 /// （`svc/server/src/main.rs::derived_db_pools()` 同步按本权重计数）。
 /// 每完成一个模块迁移，这里 +1，并把该模块在 `derived_db_pools()` 中的 `+1` 改为 0。
-pub const SHARED_POOL_MODULE_WEIGHT: u32 = 3;
+///
+/// 当前 9 = 批次 1（monitor / plugin-registry / subscription，3）
+/// + 批次 2（tms / ticket / gis / pm / mobile / search，6）。
+pub const SHARED_POOL_MODULE_WEIGHT: u32 = 9;
 use topems_shared_db::rls::rls_middleware;
 
 use topems_shared_auth::auth::{auth_middleware, AuthState};

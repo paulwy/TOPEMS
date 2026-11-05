@@ -12,7 +12,7 @@ use axum::routing::get;
 use axum::Router;
 use topems_search::handlers;
 use topems_shared_auth::middleware::require_permission;
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_db::scope::Db;
 
@@ -38,8 +38,10 @@ impl SearchRealModule {
             init_telemetry: false,
         };
 
-        let ctx = bootstrap_service(&config).await?;
-        // 连接治理 B 试点：模块只拿到 Db（PgPool 私有），所有查询走事务级 search_path。
+        let ctx = bootstrap_service_shared(&config).await?;
+        // 连接治理 B：批次 2 并池收口——search 不再自建池，与批 1/批 2 其它模块共用
+        // 进程级共享运行时池（预算权重计入 SHARED_POOL_MODULE_WEIGHT）。
+        // 作用域沿用模块原有 SEARCH_PATH：public。
         let db = Db::new(ctx.db.clone(), "public");
 
         // 对齐独立进程 main.rs：自举投影表 + 启动事件订阅者 + 差距对账（best-effort，

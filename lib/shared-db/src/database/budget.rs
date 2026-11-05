@@ -517,28 +517,28 @@ mod tests {
         assert_eq!(snap.allocated, 62);
     }
 
-    /// B 批次 1 形状：29 个物理池 = 23 模块池 + 2 advanced + 2 core + 1 迁移 + 1 共享池；
-    /// 共享池合并 3 个已迁移模块，按 3 个预算单位参与。预期 31 单位、预算 62：
-    /// 普通池各 2，共享池 6，Σ = 62，无池额度不足。
+    /// B 批次 2 形状：23 个物理池 = 17 模块池 + 2 advanced + 2 core + 1 迁移 + 1 共享池；
+    /// 共享池合并 9 个已迁移模块（批次 1 的 3 + 批次 2 的 6），按 9 个预算单位参与。
+    /// 预期 31 单位、预算 62：普通池各 2（44），共享池 18，Σ = 62，无池额度不足。
     #[test]
-    fn weighted_shared_pool_fits_budget_with_three_modules() {
+    fn weighted_shared_pool_fits_budget_with_nine_modules() {
         static L: OnceLock<Mutex<Ledger>> = OnceLock::new();
         let l = ledger(&L, 31 * DEFAULT_CONNECTIONS_PER_POOL, 31);
-        for _ in 0..15 {
+        for _ in 0..7 {
             reserve_from(l, "business", 3).unwrap().commit();
         }
-        let shared = reserve_from_weighted(l, "shared", 3 * 3, 3).unwrap();
-        assert_eq!(shared.granted(), 6, "共享池应按 3 个预算单位拿到 6");
+        let shared = reserve_from_weighted(l, "shared", 9 * 3, 9).unwrap();
+        assert_eq!(shared.granted(), 18, "共享池应按 9 个预算单位拿到 18");
         shared.commit();
-        for n in 16..=28 {
+        for n in 8..=22 {
             let r = reserve_from(l, "business", 3)
                 .unwrap_or_else(|e| panic!("第 {n} 个池不应额度不足: {e}"));
             assert_eq!(r.granted(), 2);
             r.commit();
         }
         let snap = l.lock().unwrap().snapshot();
-        assert_eq!(snap.pools, 31, "预算单位：28 普通 + 3 共享");
-        assert_eq!(snap.physical_pools, 29, "物理池：28 普通 + 1 共享");
+        assert_eq!(snap.pools, 31, "预算单位：22 普通 + 9 共享");
+        assert_eq!(snap.physical_pools, 23, "物理池：22 普通 + 1 共享");
         assert_eq!(snap.allocated, 62);
         assert!(snap.allocated <= snap.total);
     }
