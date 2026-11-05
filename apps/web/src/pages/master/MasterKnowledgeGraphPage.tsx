@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import styles from './MasterKnowledgeGraphPage.module.css';
+import { formatDateTime } from '@/utils/date';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Network, Search, GitBranch, ThumbsUp } from 'lucide-react';
@@ -317,7 +318,9 @@ const MasterKnowledgeGraphPage: React.FC = () => {
                 <TableRow key={String(r.id)}>
                   <TableCell>{String(r.name)}</TableCell>
                   <TableCell sx={cellStyle}>{String(r.type)}</TableCell>
-                  <TableCell sx={cellStyle}>{String(r.updated_at || '-')}</TableCell>
+                  <TableCell sx={cellStyle}>
+                    {r.updated_at ? formatDateTime(r.updated_at as string) : '-'}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import styles from './MasterQualityPage.module.css';
+import { formatDateTime } from '@/utils/date';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Gauge, ShieldCheck, ListChecks, Sparkles } from 'lucide-react';
@@ -308,7 +309,9 @@ const MasterQualityPage: React.FC = () => {
                   <TableCell>{String(c.entity_id)}</TableCell>
                   <TableCell>{String(c.rule_id)}</TableCell>
                   <TableCell>{statusChip(c.status)}</TableCell>
-                  <TableCell sx={cellStyle}>{String(c.checked_at || '-')}</TableCell>
+                  <TableCell sx={cellStyle}>
+                    {c.checked_at ? formatDateTime(c.checked_at as string) : '-'}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

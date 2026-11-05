@@ -29,6 +29,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import i18n from '@/i18n';
+import { formatDateTime } from '@/utils/date';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import type { FilterConfig } from '@topems/shared-components';
@@ -489,7 +490,7 @@ const AuditLogPage: React.FC = () => {
               variant='body2'
               sx={{ color: 'text.secondary' }}
             >
-              {row.created_at.replace('T', ' ')}
+              {formatDateTime(row.created_at)}
             </Typography>
           </Box>
         ),
@@ -662,7 +663,7 @@ const AuditLogPage: React.FC = () => {
                   >
                     {i18n.t('pages.audit_log_page.k18')}
                   </Typography>
-                  <Typography>{currentLog.created_at.replace('T', ' ')}</Typography>
+                  <Typography>{formatDateTime(currentLog.created_at)}</Typography>
                 </Box>
               </Box>
               <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>

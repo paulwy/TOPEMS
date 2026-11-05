@@ -17,6 +17,7 @@ import {
 import i18n from '@/i18n';
 import { Calendar, Download, Package, Search } from 'lucide-react';
 import type { MarketplacePlugin } from '../hooks/UsePluginManagement';
+import { formatDateTime } from '@/utils/date';
 
 interface PluginMarketplaceListProps {
   search: string;
@@ -129,7 +130,9 @@ const PluginMarketplaceList: React.FC<PluginMarketplaceListProps> = ({
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <Calendar size={12} />
-                        <Typography variant='caption'>{plugin.published_at}</Typography>
+                        <Typography variant='caption'>
+                          {formatDateTime(plugin.published_at)}
+                        </Typography>
                       </Box>
                     </Stack>
                   </Box>

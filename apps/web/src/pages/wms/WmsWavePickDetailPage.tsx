@@ -8,6 +8,7 @@ import { WmsStatusBadge } from '@/components/wms';
 import { DataTable, PageContainer } from '@/components/common';
 import { DetailPageTemplate } from '@/components/templates';
 import i18n from '@/i18n';
+import { formatDate } from '@/utils/date';
 
 interface WaveOrderRow {
   id: string;
@@ -255,7 +256,7 @@ export default function WmsWavePickDetailPage() {
         emptyState={{ show: !loading && !wave }}
         title={i18n.t('wms:wms_wave_pick_detail_page.v0_0', { v0: wave.wave_pick_number })}
         subtitle={i18n.t('wms:wms_wave_pick_detail_page.v0_1', {
-          v0: wave.created_at.slice(0, 10),
+          v0: formatDate(wave.created_at),
         })}
         detailItemName={wave.wave_pick_number}
         headerContent={
@@ -269,7 +270,7 @@ export default function WmsWavePickDetailPage() {
         infoCard={{
           title: wave.wave_pick_number,
           subtitle: i18n.t('wms:wms_wave_pick_detail_page.v0_1', {
-            v0: wave.created_at.slice(0, 10),
+            v0: formatDate(wave.created_at),
           }),
           tags: [picker],
           stats: [

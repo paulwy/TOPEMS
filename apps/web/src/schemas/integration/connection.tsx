@@ -9,6 +9,7 @@ import { Box, Chip, Typography } from '@mui/material';
 import { Database } from 'lucide-react';
 import type { EntitySchema, SchemaField } from '@/schema';
 import i18n from '@/i18n';
+import { formatDateTime } from '@/utils/date';
 
 const CONNECTION_TYPE_CONFIG: Record<
   string,
@@ -158,7 +159,7 @@ const connectionFields: SchemaField[] = [
         variant='body2'
         color='text.secondary'
       >
-        {String(row.last_sync_at ?? '')}
+        {row.last_sync_at ? formatDateTime(row.last_sync_at as string) : ''}
       </Typography>
     ),
   },

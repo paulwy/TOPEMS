@@ -29,6 +29,7 @@ import type { ColumnDef } from '@/components/templates/list/types';
 import { useConfirmDialog } from '@/hooks';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { formatDateTime } from '@/utils/date';
 
 const SCOPE_LABEL: Record<AutomationVariableScope, string> = {
   global: i18n.t('automation.automation_variables_page.k0'),
@@ -298,7 +299,7 @@ export const AutomationVariablesPage: React.FC = () => {
       {
         id: 'updated_at',
         label: t('automation.automation_variables_page.k14'),
-        render: (row) => <Typography variant='body2'>{row.updated_at}</Typography>,
+        render: (row) => <Typography variant='body2'>{formatDateTime(row.updated_at)}</Typography>,
       },
     ],
     [t, revealedKeys, revealing, maskValue, handleReveal]

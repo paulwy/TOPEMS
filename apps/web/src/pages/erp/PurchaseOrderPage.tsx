@@ -39,6 +39,7 @@ import { useTranslation } from 'react-i18next';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
+import { formatDateTime } from '@/utils/date';
 
 const QUERY_KEY = ['erp', 'purchase-orders'];
 
@@ -684,7 +685,7 @@ const PurchaseOrderPage: React.FC = () => {
                 />
                 <InfoItem
                   label={t('erp.purchase_order.drawer.created_at')}
-                  value={selectedOrder.created_at}
+                  value={formatDateTime(selectedOrder.created_at)}
                 />
                 <InfoItem
                   label={t('erp.purchase_order.drawer.expected_date')}

@@ -49,6 +49,7 @@ import { rdApi, type Experiment, type CreateExperimentRecordRequest } from '@/ap
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
+import { formatDateTime } from '@/utils/date';
 
 interface ExperimentWithProject extends Experiment {
   project_name?: string;
@@ -473,7 +474,7 @@ const RsExperimentDetailPage: React.FC = () => {
                             >
                               {i18n.t('pages.rs_experiment_detail_page.k15')}: {record.recorded_by}{' '}
                               | {i18n.t('pages.rs_experiment_detail_page.k16')}
-                              {record.recorded_at}
+                              {formatDateTime(record.recorded_at)}
                             </Typography>
                           </div>
                         </Stack>

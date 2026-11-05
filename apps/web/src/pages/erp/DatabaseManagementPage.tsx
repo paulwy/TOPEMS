@@ -24,6 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import { ERP_PATHS } from '@/modules/erp/config';
 import { databaseApi, type TableInfo, type TableDetail } from '@/api/erp/database';
 import { extractErrorMessage } from '@/utils/errors';
+import { formatDateTime } from '@/utils/date';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
@@ -570,7 +571,7 @@ const DatabaseManagementPage: React.FC = () => {
             variant='body2'
             sx={{ color: 'text.secondary' }}
           >
-            {row.created_at}
+            {formatDateTime(row.created_at)}
           </Typography>
         ),
       },

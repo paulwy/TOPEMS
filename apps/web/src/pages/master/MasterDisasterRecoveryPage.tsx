@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import styles from './MasterDisasterRecoveryPage.module.css';
+import { formatDateTime } from '@/utils/date';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { LifeBuoy, History, ShieldAlert, Database } from 'lucide-react';
@@ -309,7 +310,9 @@ const MasterDisasterRecoveryPage: React.FC = () => {
               {points.length === 0 && emptyRow(4)}
               {points.map((p) => (
                 <TableRow key={String(p.id)}>
-                  <TableCell sx={cellStyle}>{String(p.created_at || '-')}</TableCell>
+                  <TableCell sx={cellStyle}>
+                    {p.created_at ? formatDateTime(p.created_at as string) : '-'}
+                  </TableCell>
                   <TableCell>{String(p.snapshot_type)}</TableCell>
                   <TableCell>{String(p.size_bytes)}</TableCell>
                   <TableCell sx={cellStyle}>{String(p.created_by || '-')}</TableCell>
@@ -544,7 +547,9 @@ const MasterDisasterRecoveryPage: React.FC = () => {
                   </TableCell>
                   <TableCell>{statusChip(f.status)}</TableCell>
                   <TableCell sx={cellStyle}>{String(f.triggered_by || '-')}</TableCell>
-                  <TableCell sx={cellStyle}>{String(f.started_at || '-')}</TableCell>
+                  <TableCell sx={cellStyle}>
+                    {f.started_at ? formatDateTime(f.started_at as string) : '-'}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
