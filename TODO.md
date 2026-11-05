@@ -1,3 +1,29 @@
+## 第四十九轮（2026-11-05）：prod 连接占用排查（topems-server 72/100）
+
+**观测（prod 只读，18:47–18:54，SSH 隧道 127.0.0.1:15432）**
+
+| 维度 | 结果 |
+|---|---|
+| 分组 | `topems_prod` / usename `topems_prod` / application_name **空** / state `idle` / client `::1` |
+| 状态分布 | idle **72**、active 0（仅本轮 psql 1 条）、**idle in transaction 0** |
+| 连接年龄 | 最老 **25m45s**（< sqlx `max_lifetime` 30m）；>1h **0** 条；5 分钟内新建 23–35 条 |
+| 30–60s 采样（5 次） | 18:47:01/41、18:48:21、18:49:01/41 恒为 72 idle（+1 psql） |
+| 2–3s 高频采样（2 分钟） | 恒定 72–73；**18:51:00 单批新建 23 条、同刻旧批次关闭，总数不涨** |
+| backend_start 批次 | 18:35:59(11)、18:40:59(22)、18:45:59(25)…**每 5 分钟一批**（= `idle_timeout` 300s 回收 + `min_connections` 补连） |
+| 服务端限制 | `max_connections=100`、`superuser_reserved_connections=3`、`reserved_connections=0`、role `topems_prod` connlimit=-1、`idle_in_transaction_session_timeout=0`、`idle_session_timeout=0` |
+| numbackends | prod 73 / test 0 |
+
+**根因判定**：**池实例冗余 + 预热过高**（非单池泄漏、无长事务）。topems-server 27 个真实模块各自 `bootstrap_service` 建独立 PgPool（[svc/server/src/main.rs](file:///Users/air/TOPEMS/svc/server/src/main.rs)、[lib/shared-bootstrap/src/lib.rs#L742-L761](file:///Users/air/TOPEMS/lib/shared-bootstrap/src/lib.rs#L742-L761)）；各池 `max_db_connections` 硬编码 10/20（合计 **315**，含默认关闭的 tms/gis 为 345），且 `DatabaseConfig` 默认 `min_connections=2` → 常驻约 54 条。工作负载把各池抬到高水位后总占用随使用上涨，观测窗口内稳定 72，并伴随每 5 分钟一次的回收/补连抖动（单批 23 条）。
+
+**代码修复（本地已改，待部署）**
+1. 入口置 `TOPEMS_EMBEDDED=true` → `embedded_pool_limits()`：每池 max 默认 **3**（`DB_MODULE_MAX_CONNECTIONS` 可覆盖）、min **0**（`DB_MODULE_MIN_CONNECTIONS`），即 27×3=81，稳态按需建立。
+2. `application_name` 归因：bootstrap 逐模块写 `DB_APPLICATION_NAME=<svc>-module`，`create_database_pool` 经 `PgConnectOptions::application_name` 下发（当前 prod 全为空，无法归因）。
+3. 独立部署行为不变（未设置 `TOPEMS_EMBEDDED` 时保持原 max/min）。
+
+**理论占用**：改前 315（29 个配置点 / 27 启用）≫ 100；改后 81（27×3）+ min 0。
+
+**验证（需重启 prod 才生效，已挂起等确认）**：部署后 30–60s 采样 10 分钟看 idle 总数与 application_name 分组；验收 idle ≤ 20、无 5 分钟 20+ 补连批次、test 稳定可连。
+
 ## 第四十八轮（2026-11-05）：test 环境自洽盘点（G1）+ medium 解码抽检（G2）
 
 ### G1. test 账本/结构自洽（✅ 已完成：已重建）
