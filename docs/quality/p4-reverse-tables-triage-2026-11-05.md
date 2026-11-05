@@ -819,4 +819,4 @@ pg_restore --no-owner --no-privileges -h 127.0.0.1 -p 5432 -U xingzhai \
 1. **外部工具**无法被仓库内校验拦住：直接对 prod 手工执行 `sqlx migrate run` 仍可能发生；本防线只能拦截仓库内脚本与推荐入口。
 2. **判定误差**：60 行窗口内的无关守卫会漏报；`EXCEPTION WHEN OTHERS` 类「伪守卫」会误报（当前均落既存报告档）。
 3. **基线腐化**：`destructive-sql-baseline.json` 需在「合法新增/修复」后人工 `--write-baseline` 重生；不重生会持续阻断新增文件（符合预期）。
-4. **遗留脚本**：`scripts/deploy/production-deploy.sh` 仍调用 `sqlx migrate run`，已在扫描白名单登记（遗留 systemd 部署，非当前 prod 主机链路）；迁到 apply-forward 后应移除豁免。
+4. ~~**遗留脚本**：`scripts/deploy/production-deploy.sh` 仍调用 `sqlx migrate run`。~~ **已收敛（2026-11-05）**：该脚本迁移步骤已切换到 `apply-forward.sh --prod`（失败即中止、锚点/基线缺失即中止、`--allow-pending` 仅显式放行），扫描豁免已移除；全仓脚本中不再存在 prod 链路的 `sqlx migrate run`。

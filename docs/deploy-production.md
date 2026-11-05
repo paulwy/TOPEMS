@@ -309,7 +309,44 @@ ssh xingzhai@192.168.110.115 "curl -s -X POST http://localhost:8099/api/core/iam
 # 返回 success=true + access_token 即成功
 ```
 
+## 4.6 数据库迁移入口（唯一）
 
+**prod 迁移唯一入口是 `scripts/migration/apply-forward.sh --prod`（基线 + 前向迁移）。禁止在 prod 执行 `sqlx migrate run`。**
+
+原因：prod 账本缺 16 条历史/定向迁移（8 条 `dbNN_test` / `dbNN_5433`），`sqlx migrate run` 会把它们当 pending 重放，其中 `db08` 是 190 列 `varchar→text` 的无守卫 `ALTER`。详见 [§18/§19](quality/p4-reverse-tables-triage-2026-11-05.md)。
+
+```bash
+# 唯一入口（在仓库根执行）
+bash scripts/migration/apply-forward.sh --dsn "$DATABASE_URL" --prod --anchor 20261105235700
+
+# 临时代码放行（仅人工复核后；须在变更记录注明理由）
+bash scripts/migration/apply-forward.sh --dsn "$DATABASE_URL" --prod \
+  --anchor 20261105235700 --allow-pending <version>
+```
+
+`scripts/deploy/production-deploy.sh`（遗留 systemd 一键部署）已同步切换：
+
+```bash
+# 完整部署（迁移步骤内部走 apply-forward.sh，失败即中止，不回退 sqlx）
+bash scripts/deploy/production-deploy.sh --env .env.production
+
+# 只跑迁移（不编译、不重启服务；用于灰度/验证）
+bash scripts/deploy/production-deploy.sh --migrate-only --env .env.production
+
+# 临时放行指定 pending 版本（可重复；会打印显著告警）
+bash scripts/deploy/production-deploy.sh --migrate-only --env .env.production \
+  --allow-pending <version>
+```
+
+行为差异（相对旧版）：
+
+| 项 | 旧版 | 新版 |
+|---|---|---|
+| 迁移命令 | `cargo sqlx migrate run` | `apply-forward.sh --prod`（仅 `version > anchor`） |
+| 锚点/基线 | 不涉及 | 自动读取 `database/baseline/baseline_*.json` 最新锚点；资产缺失/校验失败即中止；`--anchor` 可显式覆盖 |
+| 迁移失败 | `warn` 后继续部署 | `error` 退出 1，部署中止 |
+| 账本落后 | 不检查 | 账本最大版本 < 基线锚点 → 中止（提示先恢复基线） |
+| 定向/无守卫 pending | 会被重放 | 硬拒绝；仅 `--allow-pending` 显式放行并告警 |
 
 ***
 
