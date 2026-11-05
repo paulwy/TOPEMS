@@ -16,6 +16,7 @@ use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::sync::Arc;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::database::budget::BUDGET_EXHAUSTED_TAG;
 use tower_http::catch_panic::CatchPanicLayer;
 
 /// 构建失败、未注册的模块（降级状态）
@@ -25,7 +26,32 @@ use tower_http::catch_panic::CatchPanicLayer;
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct DegradedModule {
     pub name: &'static str,
+    /// 降级原因分类，供健康检查区分「预算不足」与「数据库连不上」：
+    /// - `budget`：数据库连接预算不足（`[db-budget-exhausted]` 标记）；
+    /// - `database`：数据库不可达 / 建池或探活失败；
+    /// - `build`：其他构建错误。
+    pub kind: &'static str,
     pub error: String,
+}
+
+/// 根据错误文本归类降级原因。
+///
+/// 预算不足使用稳定标记 [`BUDGET_EXHAUSTED_TAG`]（错误经 `anyhow` / `TopemsError::Internal`
+/// 多层包装后仍保留），因此不会与「数据库连不上」混淆。
+pub fn classify_degraded_kind(error: &str) -> &'static str {
+    if error.contains(BUDGET_EXHAUSTED_TAG) {
+        return "budget";
+    }
+    let lower = error.to_ascii_lowercase();
+    if lower.contains("failed to create database pool")
+        || lower.contains("database connectivity probe")
+        || lower.contains("database connection test")
+        || error.contains("MIGRATE_URL")
+        || error.contains("数据库 DSN")
+    {
+        return "database";
+    }
+    "build"
 }
 
 /// 模块注册表
@@ -51,9 +77,15 @@ impl ModuleRegistry {
     }
 
     /// 记录一个降级模块（build 失败不阻塞启动，但健康检查必须可见）
-    pub fn mark_degraded(&mut self, name: &'static str, error: impl Into<String>) {
+    pub fn mark_degraded(
+        &mut self,
+        name: &'static str,
+        kind: &'static str,
+        error: impl Into<String>,
+    ) {
         self.degraded.push(DegradedModule {
             name,
+            kind,
             error: error.into(),
         });
     }

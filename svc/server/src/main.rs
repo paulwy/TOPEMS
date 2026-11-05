@@ -14,19 +14,159 @@ use anyhow::Result;
 use std::sync::{Arc, Mutex};
 use topems_server::modules::dashboard_module::DashboardModule;
 use topems_server::platform_module::PlatformModule;
+use topems_server::registry::classify_degraded_kind;
 use topems_server::ModuleRegistry;
 use topems_shared_bootstrap::shutdown_signal;
 use topems_shared_core::logging::init_logging;
 
 /// 记录模块降级：构建失败不阻塞启动（既有设计），但健康检查必须能看到。
+///
+/// 预算不足与「数据库连不上」必须可区分：前者带 `[db-budget-exhausted]` 标记，
+/// 归类为 `kind=budget`；建池/探活失败归为 `kind=database`；其余为 `kind=build`。
 fn note_degraded(
     registry: &Arc<Mutex<ModuleRegistry>>,
     name: &'static str,
     err: impl std::fmt::Display,
 ) {
     let msg = format!("{err:#}");
-    tracing::error!("⚠️ 模块 {name} 构建失败（降级运行）: {msg}");
-    registry.lock().unwrap().mark_degraded(name, msg);
+    let kind = classify_degraded_kind(&msg);
+    if kind == "budget" {
+        tracing::error!("⚠️ 模块 {name} 因数据库连接预算不足降级（kind=budget）: {msg}");
+    } else {
+        tracing::error!("⚠️ 模块 {name} 构建失败（降级运行，kind={kind}）: {msg}");
+    }
+    registry.lock().unwrap().mark_degraded(name, kind, msg);
+}
+
+/// 由服务注册表（下方模块 build 列表）推导的数据库池总数。
+///
+/// 唯一事实来源是 `main()` 里的模块 build 列表，计数规则：
+/// - 每个 `*_real_module` 经 `bootstrap_service` 建 1 个业务池；
+/// - `module-core`（unified-core）在 `embedded::build_router_embedded` 内**二次**
+///   `bootstrap_service`，计 **2**；
+/// - `module-advanced` 由 master-data + analytics 两个真实模块组成，计 **2**；
+/// - 进程级共享迁移池计 **1**（`MIGRATE_URL` 为空时该池不建，按安全侧仍计入预算）；
+/// - `platform` / `dashboard` 是纯聚合模块、不建池，显式排除在计数之外。
+///
+/// 新增/移除模块时必须同步修改本函数；启动末尾会用实际建池数核对并在不一致时告警。
+fn derived_db_pools() -> u32 {
+    #[allow(unused_mut)]
+    let mut pools: u32 = 1; // 共享迁移池（create_migrate_pool 单例）
+
+    #[cfg(feature = "module-finance")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-erp")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-qms")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-crm")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-hrm")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-scm")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-wms")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-pm")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-mes")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-ehs")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-lims")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-tms")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-pdm")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-gis")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-ticket")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-rd")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-srm")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-advanced")]
+    {
+        pools += 2; // master-data + analytics
+    }
+    #[cfg(feature = "module-communication")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-search")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-monitor")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-plugin-registry")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-integration")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-mobile")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-ai")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-core")]
+    {
+        pools += 2; // unified-core 业务池 + build_router_embedded 内部业务池
+    }
+    #[cfg(feature = "module-portal")]
+    {
+        pools += 1;
+    }
+    #[cfg(feature = "module-subscription")]
+    {
+        pools += 1;
+    }
+
+    pools
 }
 
 #[tokio::main]
@@ -41,6 +181,21 @@ async fn main() -> Result<()> {
     // 模块化单体标记：各 real_module 经 bootstrap_service 独立建池，
     // 需按小上限 + 零预热带宽收敛（详见 shared-bootstrap::embedded_pool_limits）。
     std::env::set_var("TOPEMS_EMBEDDED", "true");
+
+    // 提前加载 .env：derived_db_pools() 需要读取 MIGRATE_URL 判断迁移池是否存在。
+    // bootstrap_service 内部也会 dotenv，但那时首个池已创建、预算分母已固化。
+    let _ = dotenv::dotenv();
+
+    // 池数由注册表（下方 build 列表）推导，必须在首个池创建前设置。
+    // DB_EXPECTED_POOLS 仅作一致性校验：不一致时告警并采用推导值（见 budget::from_env）。
+    let derived_pools = derived_db_pools();
+    topems_shared_db::database::budget::configure_expected_pools(derived_pools);
+    tracing::info!(
+        "数据库连接预算：池数由注册表推导 = {derived_pools}，每池默认上限 {}，默认总预算 {}",
+        topems_shared_db::database::budget::DEFAULT_CONNECTIONS_PER_POOL,
+        derived_pools
+            .saturating_mul(topems_shared_db::database::budget::DEFAULT_CONNECTIONS_PER_POOL)
+    );
 
     // ================================================
     // 模块注册表（共享引用，支持进程内调用）
@@ -533,6 +688,46 @@ async fn main() -> Result<()> {
             reg.len(),
             reg.provider_count()
         );
+    }
+
+    // 池数与注册表一致性核对（只告警，不阻塞启动）：
+    // - 实际建池数 > 推导值 → derived_db_pools() 漏计，预算分母偏小，后续易误判额度不足；
+    // - 实际建池数 + 降级模块数 < 推导值 → 有模块未建池却未在 derived_db_pools() 中显式排除。
+    {
+        let snap = topems_shared_db::database::budget::snapshot();
+        let degraded = registry.lock().unwrap().degraded_modules().len() as u32;
+        let migrate_expected: u32 = if std::env::var("MIGRATE_URL")
+            .map(|v| !v.trim().is_empty())
+            .unwrap_or(false)
+        {
+            1
+        } else {
+            0
+        };
+        let expected_actual = derived_pools
+            .saturating_sub(1)
+            .saturating_add(migrate_expected);
+        tracing::info!(
+            "[db-budget] 启动核对：注册表推导 {} 池，实际建池 {}，降级 {}，预算 {}，已分配 {}",
+            derived_pools,
+            snap.pools,
+            degraded,
+            snap.total,
+            snap.allocated
+        );
+        if snap.pools > expected_actual {
+            tracing::warn!(
+                "[db-budget] 实际建池数 {} 超过注册表推导值 {}：derived_db_pools() 与 build 列表不一致（预算分母偏小）",
+                snap.pools,
+                expected_actual
+            );
+        } else if degraded == 0 && snap.pools < expected_actual {
+            tracing::warn!(
+                "[db-budget] 实际建池 {} < 推导 {}：有模块未建池却未在 derived_db_pools() 中显式排除（无降级可解释）",
+                snap.pools,
+                expected_actual
+            );
+        }
     }
 
     // ================================================
