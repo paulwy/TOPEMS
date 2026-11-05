@@ -3169,5 +3169,13 @@
   "shared.favorites_page.columns.searched_at": "搜索时间",
   "shared.favorites_page.columns.title": "标题",
   "shared.favorites_page.columns.type": "类型",
-  "shared.favorites_page.columns.source": "来源"
+  "shared.favorites_page.columns.source": "来源",
+  "shared.nav_group.overview": "概览",
+  "shared.nav_group.master": "主数据",
+  "shared.nav_group.process": "业务流程",
+  "shared.nav_group.business": "业务单据",
+  "shared.nav_group.analytics": "统计分析",
+  "shared.nav_group.report": "报表",
+  "shared.nav_group.setting": "系统配置",
+  "shared.nav_group.other": "其他"
 }

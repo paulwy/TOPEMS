@@ -153,6 +153,9 @@ function buildSidebarItems(
           label: labelKey ? i18n.t(labelKey) : child.label,
           icon: resolveIcon(dbItem?.icon || child.icon),
           path: dbItem?.path || child.path,
+          // P2-2：把 navItems 的 group 语义带到渲染层，由 SideRail 按
+          // NavGroup 标准顺序聚合成可折叠的二级分组
+          group: child.group,
         };
       });
 

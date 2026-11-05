@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styles from './SideRail.module.css';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
@@ -36,8 +36,77 @@ export interface NavItem {
   active?: boolean;
   /** 子菜单（两级菜单） */
   children?: NavItem[];
+  /** 二级语义分组（P2-2）：overview/master/process/business/analytics/report/setting/other */
+  group?: string;
   /** 点击后的导航路径 */
   path?: string;
+}
+
+/** L3 菜单子组标准顺序（与 packages/app-shell navigation-types 的 NavGroup 枚举对齐） */
+const NAV_GROUP_ORDER: Record<string, number> = {
+  overview: 0,
+  master: 10,
+  process: 20,
+  business: 30,
+  analytics: 40,
+  report: 50,
+  setting: 60,
+  other: 99,
+};
+
+/** 侧边栏展开状态 localStorage key（仅前端记忆展开位置，不做后端存储） */
+const SIDEBAR_EXPAND_STORAGE_KEY = 'topems.sidebar.expand.v1';
+
+function loadExpandState(): { modules: string[]; groups: string[] } {
+  try {
+    const raw = localStorage.getItem(SIDEBAR_EXPAND_STORAGE_KEY);
+    if (raw) {
+      const parsed: unknown = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        const state = parsed as { modules?: unknown; groups?: unknown };
+        return {
+          modules: Array.isArray(state.modules) ? state.modules.map(String) : [],
+          groups: Array.isArray(state.groups) ? state.groups.map(String) : [],
+        };
+      }
+    }
+  } catch {
+    // 存储不可用或内容损坏：回退默认折叠策略
+  }
+  return { modules: [], groups: [] };
+}
+
+function persistExpandState(modules: Set<string>, groups: Set<string>): void {
+  try {
+    localStorage.setItem(
+      SIDEBAR_EXPAND_STORAGE_KEY,
+      JSON.stringify({ modules: [...modules], groups: [...groups] })
+    );
+  } catch {
+    // 忽略存储异常，不影响导航可用性
+  }
+}
+
+/**
+ * 把模块的二级菜单按 group 聚合成分组块（按 NavGroup 标准顺序排列）。
+ * 未声明 group 的项归入 other，保持其在原数组中的相对顺序。
+ */
+function groupChildren(children: NavItem[]): Array<{ group: string; items: NavItem[] }> {
+  // 注意：本文件从 lucide-react 导入了 Map 图标，会遮蔽全局 Map 构造函数
+  const buckets = new globalThis.Map<string, NavItem[]>();
+  for (const child of children) {
+    const group = child.group || 'other';
+    const bucket = buckets.get(group);
+    if (bucket) {
+      bucket.push(child);
+    } else {
+      buckets.set(group, [child]);
+    }
+  }
+  const groups: string[] = Array.from(buckets.keys());
+  return groups
+    .sort((a, b) => (NAV_GROUP_ORDER[a] ?? 99) - (NAV_GROUP_ORDER[b] ?? 99))
+    .map((group) => ({ group, items: buckets.get(group) as NavItem[] }));
 }
 
 export interface SideRailProps extends React.HTMLAttributes<HTMLElement> {
@@ -269,8 +338,33 @@ export const SideRail: React.FC<SideRailProps> = ({
 
   const railWidth = expanded ? 'var(--siderail-expanded-width)' : 'var(--siderail-width)';
 
-  // 管理展开的菜单组
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  // 管理展开的菜单组（一级模块）与模块内 group 分组（二级，P2-2）
+  // 初始状态读取 localStorage，实现跨会话记忆用户展开位置
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    () => new Set(loadExpandState().modules)
+  );
+  const [expandedSubGroups, setExpandedSubGroups] = useState<Set<string>>(
+    () => new Set(loadExpandState().groups)
+  );
+
+  // 展开状态变化后持久化（toggle 与自动展开共用）
+  useEffect(() => {
+    persistExpandState(expandedGroups, expandedSubGroups);
+  }, [expandedGroups, expandedSubGroups]);
+
+  // 默认展开策略：当前所在模块与其 group 自动展开（用户手动折叠后仍保留选择）
+  useEffect(() => {
+    if (!activeId) return;
+    const [moduleCode] = activeId.split(':');
+    const moduleItem = resolvedItems.find((item) => item.id === moduleCode);
+    const activeChild = moduleItem?.children?.find((child) => child.id === activeId);
+    setExpandedGroups((prev) => (prev.has(moduleCode) ? prev : new Set(prev).add(moduleCode)));
+    if (activeChild?.group) {
+      const subKey = `${moduleCode}:${activeChild.group}`;
+      setExpandedSubGroups((prev) => (prev.has(subKey) ? prev : new Set(prev).add(subKey)));
+    }
+    // resolvedItems 仅为查找当前 group 归属，不是展开状态来源，不参与重算
+  }, [activeId]);
 
   const toggleGroup = (id: string) => {
     setExpandedGroups((prev) => {
@@ -279,6 +373,18 @@ export const SideRail: React.FC<SideRailProps> = ({
         next.delete(id);
       } else {
         next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleSubGroup = (key: string) => {
+    setExpandedSubGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
       }
       return next;
     });
@@ -417,42 +523,90 @@ export const SideRail: React.FC<SideRailProps> = ({
                 )}
               </button>
 
-              {/* 子菜单 */}
+              {/* 子菜单：按 group 语义分组 + 二级折叠（P2-2） */}
               {hasChildren && expanded && isExpanded && (
                 <div className={styles.il3}>
-                  {item.children!.map((child) => {
-                    const ChildIcon = child.icon;
-                    const isChildActive = activeId === child.id;
-                    return (
-                      <button
-                        key={child.id}
-                        type='button'
-                        onClick={() => onItemClick?.(child.id)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 'var(--space-2)',
-                          width: '100%',
-                          height: '36px',
-                          padding: '0 var(--space-3)',
-                          backgroundColor: isChildActive ? 'var(--bg-hover)' : 'transparent',
-                          border: 'none',
-                          borderRadius: 'var(--radius-sm)',
-                          color: isChildActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                          fontSize: 'var(--text-sm)',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          transition: 'all var(--duration-fast) var(--ease-out)',
-                        }}
-                      >
-                        <ChildIcon
-                          size={16}
-                          className={styles.il4}
-                        />
-                        <span className={styles.il5}>{child.label}</span>
-                      </button>
-                    );
-                  })}
+                  {(() => {
+                    const groups = groupChildren(item.children!);
+                    // 仅一组子项时不显示组头，保持两级菜单的简洁观感；
+                    // 多组时每组一个可折叠标题（overview → setting 标准顺序）
+                    const showGroupHeaders = groups.length > 1;
+                    return groups.map(({ group, items: groupItems }) => {
+                      const subKey = `${item.id}:${group}`;
+                      const subExpanded = showGroupHeaders ? expandedSubGroups.has(subKey) : true;
+                      return (
+                        <div key={group}>
+                          {showGroupHeaders && (
+                            <button
+                              type='button'
+                              onClick={() => toggleSubGroup(subKey)}
+                              aria-expanded={subExpanded}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                width: '100%',
+                                height: '26px',
+                                padding: '0 var(--space-3)',
+                                margin: '2px 0',
+                                background: 'transparent',
+                                border: 'none',
+                                borderRadius: 'var(--radius-sm)',
+                                color: 'var(--text-tertiary)',
+                                fontSize: 'var(--text-xs)',
+                                fontWeight: 'var(--font-medium)',
+                                letterSpacing: '0.04em',
+                                cursor: 'pointer',
+                                textAlign: 'left',
+                                transition: 'color var(--duration-fast) var(--ease-out)',
+                              }}
+                            >
+                              <span>{t(`shared.nav_group.${group}`, group)}</span>
+                              {subExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                            </button>
+                          )}
+                          {subExpanded &&
+                            groupItems.map((child) => {
+                              const ChildIcon = child.icon;
+                              const isChildActive = activeId === child.id;
+                              return (
+                                <button
+                                  key={child.id}
+                                  type='button'
+                                  onClick={() => onItemClick?.(child.id)}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 'var(--space-2)',
+                                    width: '100%',
+                                    height: '36px',
+                                    padding: '0 var(--space-3)',
+                                    backgroundColor: isChildActive
+                                      ? 'var(--bg-hover)'
+                                      : 'transparent',
+                                    border: 'none',
+                                    borderRadius: 'var(--radius-sm)',
+                                    color: isChildActive
+                                      ? 'var(--accent-primary)'
+                                      : 'var(--text-secondary)',
+                                    fontSize: 'var(--text-sm)',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    transition: 'all var(--duration-fast) var(--ease-out)',
+                                  }}
+                                >
+                                  <ChildIcon
+                                    size={16}
+                                    className={styles.il4}
+                                  />
+                                  <span className={styles.il5}>{child.label}</span>
+                                </button>
+                              );
+                            })}
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               )}
             </div>
