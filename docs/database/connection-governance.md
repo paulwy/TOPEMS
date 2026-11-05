@@ -7,9 +7,9 @@
 
 | 项 | 改前 | 改后 |
 | --- | --- | --- |
-| 进程总连接上限 | 无（各池 `max_connections` 相加，生产理论 ≈ 496） | **≤ `DB_TOTAL_CONNECTION_BUDGET`（默认 60）** |
+| 进程总连接上限 | 无（各池 `max_connections` 相加，生产理论 ≈ 496） | **≤ `DB_TOTAL_CONNECTION_BUDGET`（嵌入默认 = 池数 × 2 = 62）** |
 | 生产实测峰值 | 73（`idle` 72，无 `idle in transaction`，稳定非泄漏） | 待重启后复测（代码层已硬性封顶） |
-| 池实例数（嵌入模式） | 28 业务池 + 28 迁移池 + 1 个 ai 独立池（max 100 / min 10） | 28 业务池 + **1 个共享迁移池**；ai 复用 bootstrap 池 |
+| 池实例数（嵌入模式） | 28 业务池 + 28 迁移池 + 1 个 ai 独立池（max 100 / min 10） | **30 业务池 + 1 个共享迁移池 = 31**；ai 复用 bootstrap 池 |
 | application_name | 空（无法按模块归因） | 每池可区分（`DB_APPLICATION_NAME` / `TOPEMS_SERVICE_NAME`） |
 
 A 的改动**需要重启服务才生效**；本次未重启、未部署 prod。
@@ -40,17 +40,25 @@ grant = min(申请值, share, 预算 - 已分配)
 grant == 0 → 返回错误（fail-fast，绝不超发）
 ```
 
-- `DB_TOTAL_CONNECTION_BUDGET`：默认 `60`（给 PG `max_connections=100` 留约 40 的运维余量）。
-- `DB_EXPECTED_POOLS`：默认嵌入模式 29（28 个 real_module + 1 个共享迁移池）、独立部署 2
-  （业务池 + 迁移池）。用于公平分摊，避免「先建池的吃光预算、后建池拿不到连接」。
-- 例：嵌入模式 28 个业务池各申请 3 → 每池 2，Σ=56；共享迁移池再拿 2 → Σ=58 ≤ 60。
+- `DB_TOTAL_CONNECTION_BUDGET`：嵌入模式（topems-server）默认 = **推导池数 × 2**（当前 31 × 2 = **62**）；
+  独立部署默认 `60`。
+- 池数**不再手工配置**：由 `svc/server/src/main.rs::derived_db_pools()` 从模块 build 列表推导
+  （规则见 A.6）。`DB_EXPECTED_POOLS` 降级为**一致性校验**：与推导值不一致时打印
+  「配置值 vs 推导值」告警，并**采用推导值**。
+- 例：嵌入模式 31 个池各申请 3 → 每池 2，Σ=62 = 预算 62，全部池拿得到额度。
+- 负向：预算 61 → 公平份额降到 1，31 池各得 1（Σ=31）仍不耗尽；预算 30（= 池数 - 1）
+  → 前 30 池各得 1，第 31 个池显式报额度不足（见 A.6）。
 - 负向：把 `DB_MODULE_MAX_CONNECTIONS` 调到 50/1000，`grant` 仍被 `share` 与余额夹住。
+- 不超 `max_connections=100`：62 为上限，PG 另有 3 条 superuser reserved，剩余约 35 条
+  留给迁移/运维/其他进程，满足「含运维余量」。
 
 ### A.3 实现位置
 
 | 位置 | 作用 |
 | --- | --- |
-| `lib/shared-db/src/database/budget.rs` | 账本 / 预约句柄 / 环境变量解析 / 单测 |
+| `lib/shared-db/src/database/budget.rs` | 账本 / 预约句柄 / 环境变量解析 / 池数配置 / 单测 |
+| `svc/server/src/main.rs::derived_db_pools()` | 池数**唯一事实来源**：按模块 build 列表 cfg 推导（当前 31） |
+| `svc/server/src/registry.rs` | 降级状态增加 `kind`（`budget` / `database` / `build`），健康检查可区分原因 |
 | `lib/shared-db/src/database/mod.rs` `create_database_pool` | 建池前 `reserve_pool`，成功 `commit` |
 | `lib/shared-db/src/database/mod.rs` `create_migrate_pool` | 迁移池改为**进程内单例**并计入预算（原每模块一个 max=3 池，最多额外 84 连接） |
 | `lib/shared-bootstrap/src/lib.rs` V1 遗留建池路径 | 同预算，避免绕过 |
@@ -58,9 +66,26 @@ grant == 0 → 返回错误（fail-fast，绝不超发）
 
 ### A.4 验证
 
-- **单元测试**（`cargo test -p topems-shared-db --lib database::budget`，8 passed）：
-  28 池 Σ=56 ≤ 60；单池申请 1000 仍被预算卡住；40 池不超发；未 commit 的预约连续 3 轮
-  归还且 allocated 不递减；`catch_unwind` 验证 panic 路径归还；30 线程并发预约 Σ ≤ 预算。
+- **单元测试**（`cargo test -p topems-shared-db --lib database::budget`，11 passed）：
+  31 池 × 2 = 62 全部拿到额度；预算 30 / 31 池时第 31 池显式报
+  `[db-budget-exhausted] 需要 1，剩余 0，预算 30`；预算 0 时首个池即失败且原因含「预算 0」；
+  单池申请 1000 仍被预算卡住；40 池不超发；未 commit 的预约连续 3 轮归还且 allocated 不递减；
+  `catch_unwind` 验证 panic 路径归还；30 线程并发预约 Σ ≤ 预算。
+- **真实启动（默认配置，2026-11-06 实测）**：`derived=31`、预算 62、31 池全部 `granted=2`，
+  `启动核对：推导 31，实际建池 31，降级 0，预算 62，已分配 62`；
+  `/api/server/health` = 200 且 `degraded_count=0`，`/api/server/ready` = **200**。
+- **预算 30（= 池数 - 1）实测**：第 31 个池（subscription）构建失败，
+  日志 `ERROR [db-budget-exhausted] 池 business 额度不足：需要 3，剩余 0，预算 30，已分配 30`；
+  degraded 项 `{"name":"subscription","kind":"budget","error":"...剩余 0，预算 30..."}`；
+  `/health` 仍 200（`degraded_count=1`），`/ready` **503**。
+- **预算 61（= 62 - 1）实测**：公平份额 `share=61/31=1`，31 池各得 1（Σ=31），
+  无池耗尽、`/ready` 200。说明「少 1」若指少 1 条连接，只会降低每池并发，不会触发降级；
+  触发额度不足的阈值是 `预算 < 池数`。
+- **预算 0 实测**：所有池 `kind=budget` 降级（29 个池所属模块），
+  原因均为 `[db-budget-exhausted] 需要 3，剩余 0，预算 0`；`/ready` 503。
+- **`DB_EXPECTED_POOLS=30` 错配实测**：日志
+  `WARN DB_EXPECTED_POOLS=30 与注册表推导值 31 不一致；采用推导值`，
+  实际仍按 31 池 / 预算 62 启动，`/ready` 200。
 - **集成测试**（`lib/shared-db/tests/connection_budget_it.rs`，真实 test 库）：
   预算 6 / 3 池 / 每池申请 100，60 个并发 `pg_sleep` 查询；
   `pg_stat_activity` 采样峰值 = **6 / 6**，查询全部成功（60 ok / 0 err）；
@@ -76,10 +101,56 @@ grant == 0 → 返回错误（fail-fast，绝不超发）
 
 ### A.5 运维注意
 
-- 预算在**进程首次建池时**读取环境变量（此刻 dotenv 已加载）；调大/调小需重启。
+- 预算在**进程首次建池时**读取环境变量（`main()` 已提前加载 dotenv，早于首个池）；
+  调大/调小需重启。
 - 成功创建的池会永久占用额度（池与进程同生命周期）；这是设计预期，避免重复建池时超发。
-- 若模块数增长导致 `DB_EXPECTED_POOLS` 与实际池数偏离，可显式设置该变量；
-  预算耗尽时建池返回明确错误（模块初始化失败可见，不会静默超发）。
+- `DB_EXPECTED_POOLS` 只做一致性校验，不再影响分配；**不要再用它手工对齐池数**。
+  若模块数变化，更新 `derived_db_pools()`；启动末尾的「启动核对」日志会打印
+  推导值 / 实际建池 / 降级数，偏差时告警。
+- 预算耗尽时建池返回明确错误（`[db-budget-exhausted]`），模块构建失败并进入 degraded，
+  不会静默超发、也不会静默少一个模块。
+
+### A.6 池数推导与额度耗尽语义
+
+**池数推导（唯一事实来源：`svc/server/src/main.rs` 的模块 build 列表）**
+
+| 来源 | 计数 |
+| --- | --- |
+| 每个 `*_real_module`（finance/erp/.../subscription，共 26 个默认启用的单池模块） | 各 +1 |
+| `module-advanced`：master-data + analytics | +2 |
+| `module-core`（unified-core）：自身 bootstrap + `build_router_embedded` 内部再次 bootstrap | +2 |
+| 进程级共享迁移池（`create_migrate_pool` 单例，`MIGRATE_URL` 为空时不建） | +1 |
+| `platform` / `dashboard`（纯聚合模块，不建池） | 显式排除 |
+| **默认合计** | **31** |
+
+- 推导函数按 cfg feature 门控，与 build 列表**同源**；新增/移除模块必须同步修改。
+- 一致性校验：`DB_EXPECTED_POOLS` 与推导值不符 → 告警「配置值 vs 推导值」，采用推导值；
+  启动末尾再用实际建池数核对（实际 > 推导 → 漏计告警；无降级却少于推导 → 未建池告警）。
+- 默认预算 `31 × 2 = 62`，31 池各得 2，`/ready` = 200（实测）。
+
+**额度耗尽语义（fail-fast，不静默降级）**
+
+- 单池申请失败 → `reserve_pool` 返回 `TopemsError::Database`，错误文本固定包含
+  `[db-budget-exhausted] 数据库连接预算不足：池 <label> 需要 N，剩余 M，预算 B，已分配 A`。
+- 该模块 `build()` 直接失败（不注册半成品模块），由 `note_degraded` 记入 degraded 列表：
+  `kind=budget`，`error` 保留完整数字。
+- 为什么允许进程继续启动：模块化单体的既有约定是「单模块失败不阻塞其它模块」，
+  且必须保证 `/health` 与 `/ready` 可被观测；若进程直接退出，运维只能看到 crash
+  而看不到具体是哪个池、缺多少额度。因此选择「该模块失败 + 进程继续 + `/ready` 503」。
+- 必须失败的场景：数据库连不上 / DSN 错误时同样只降级该模块（`kind=database`），
+  但 `/ready` 为 503；只要 DB 可达，预算不足不会拖垮全部模块以外的部分。
+- **可区分性**：`kind=budget` 与 `kind=database` 写在 `/api/server/health` 与
+  `/api/server/ready` 的 `degraded_modules[].kind`；日志前缀也不同
+  （「因数据库连接预算不足降级」vs「构建失败（kind=database）」）。
+- `DB_TOTAL_CONNECTION_BUDGET=0` 视为显式「预算耗尽」（不是未配置），所有池 fail-fast，
+  `/ready` 503，原因含「预算 0」。
+
+**`/ready` 接入 prod 探针的前置条件（待 prod 验证后方可接入）**
+
+1. prod 按默认配置启动后，`/api/server/health` 200 且 `degraded_count=0`；
+2. prod `/api/server/ready` 200 且无 `kind=budget` 降级；
+3. 灰度观察一轮重启，确认 `启动核对` 日志中「实际建池 = 推导值」；
+4. 满足以上三点后才可把 `/ready` 接入 k8s/负载均衡探针；在此之前**不接入**。
 
 ## B. 单池 + 事务级 `search_path`（设计）
 
