@@ -65,6 +65,9 @@ grant == 0 → 返回错误（fail-fast，绝不超发）
   预算 6 / 3 池 / 每池申请 100，60 个并发 `pg_sleep` 查询；
   `pg_stat_activity` 采样峰值 = **6 / 6**，查询全部成功（60 ok / 0 err）；
   两次无效 DSN 建池失败后 allocated 保持 6（RAII 归还）。
+  本次复跑（2026-11-06）实测输出：
+  `[budget] total=6 allocated=6 pools=3 peak=6` / `[load] ok=60 err=0 observed_peak_connections=6 budget=6` /
+  `[early-return round 0] allocated=6`、`[early-return round 1] allocated=6`（两轮不递减）。
   运行命令：
   ```bash
   TOPEMS_IT_DATABASE_URL='postgresql://xingzhai@127.0.0.1:15432/topems_test' \
@@ -240,6 +243,8 @@ TOPEMS_IT_DATABASE_URL='postgresql://xingzhai@127.0.0.1:15432/topems_test' \
 | 请求 | 结果 | 覆盖路径 |
 | --- | --- | --- |
 | `GET /api/search?keyword=test` | 200，命中 1 条投影数据（含高亮/facets/suggestions） | `scope_with`（复用 RLS 请求事务） |
+| `GET /api/search?keyword=SCHEMA_PROBE` | 200，**只命中 `public.core_files` 的行，`iam` 同名行未命中** | 未限定表名按作用域 `search_path` 解析（见下方落点证据） |
+| `GET /api/search/?keyword=test` | 200（尾斜杠形态） | 全路径 merge 后两种形态都通 |
 | `GET /api/search/suggestions?q=t` | 200 `{"suggestions":[]}` | `scope_read` |
 | `GET /api/search/recent`（搜索后） | 200 `["test"]` | 写入链路 `scope()` + `commit`（fire-and-forget） |
 | `DELETE /api/search/recent` | 200 `"cleared"` | `scope()` + `commit` |
@@ -259,3 +264,18 @@ TOPEMS_IT_DATABASE_URL='postgresql://xingzhai@127.0.0.1:15432/topems_test' \
 **双路径共存实测**：试点模块与其余 27 个模块同进程运行时共用同一 bootstrap 池
 （A 已把总额封顶），`Db` 与直接 `PgPool` 写法并存但指向同一池，未发现连接归属冲突；
 `search_path` 的作用域化只影响本模块自身事务，不改其他模块的会话基线。
+
+**schema 落点证据（运行时，非代码推断）**：`search_documents` 用的是未限定表名
+`FROM core_files`，而 test 库中 `public.core_files` / `flow.core_files` / `iam.core_files`
+三处同名（`public` 与 `iam` 列结构一致，均含 `tenant_id`）。做法：两个 schema 各插一行
+名字可区分的数据（`SCHEMA_PROBE_PUBLIC` / `SCHEMA_PROBE_IAM`），经真实服务检索，实测返回
+**仅 `public` 那行**（`{"id":"cccccccc-…","title":"**SCHEMA_PROBE**_PUBLIC","module":"document"}`），
+`iam` 行未出现 → 证明未限定表名确实按作用域 `search_path=public` 解析，`SET LOCAL` 在真实
+请求路径上生效（请求结束后连接恢复基线由集成测试 `after commit/rollback` 断言覆盖）。
+探针行已清理。
+
+**共存期风险（需在 B 全量前处理）**：同一未限定表名在不同 `search_path` 下会解析到不同
+schema——会话基线 `iam,shared,public` 下 `core_files` → `iam.core_files`，作用域 `public`
+下 → `public.core_files`。本试点按 `public` 语义验证通过（两处列结构一致、test 库两表均空），
+但**生产数据实际落点必须在切换前逐模块核对**；B 全量阶段的正确做法是迁移时把未限定表名
+全部显式加 schema 前缀，而不是依赖作用域默认值（否则等于把数据源隐式改掉）。
