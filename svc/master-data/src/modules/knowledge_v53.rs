@@ -29,10 +29,11 @@ fn kg_node_from_row(row: &sqlx::postgres::PgRow) -> KGNode {
         properties: row.get::<serde_json::Value, _>("properties"),
         embeddings: serde_json::from_value(row.get::<serde_json::Value, _>("embeddings"))
             .unwrap_or_default(),
-        created_at: row.get::<String, _>("created_at"),
+        created_at: row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
     }
 }
-const KG_NODE_COLS: &str = "id, label, node_type, properties, embeddings, created_at";
+const KG_NODE_COLS: &str =
+    "id, label, node_type, properties, embeddings, created_at::timestamptz AS created_at";
 
 fn kg_edge_from_row(row: &sqlx::postgres::PgRow) -> KGEdge {
     KGEdge {
@@ -91,10 +92,10 @@ fn asset_from_row(row: &sqlx::postgres::PgRow) -> DataAsset {
         lineage_summary: row.get::<serde_json::Value, _>("lineage_summary"),
         quality_score: row.get::<f64, _>("quality_score"),
         access_level: row.get::<String, _>("access_level"),
-        updated_at: row.get::<String, _>("updated_at"),
+        updated_at: row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
     }
 }
-const ASSET_COLS: &str = "id, name, asset_type, description, owner, domain, tags, lineage_summary, quality_score, access_level, updated_at";
+const ASSET_COLS: &str = "id, name, asset_type, description, owner, domain, tags, lineage_summary, quality_score, access_level, updated_at::timestamptz AS updated_at";
 
 fn asset_category_from_row(row: &sqlx::postgres::PgRow) -> AssetCategory {
     AssetCategory {
@@ -132,7 +133,7 @@ pub struct KGNode {
     pub r#type: KGNodeType,
     pub properties: serde_json::Value,
     pub embeddings: Vec<f64>,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
@@ -216,7 +217,7 @@ pub struct DataAsset {
     pub lineage_summary: serde_json::Value,
     pub quality_score: f64,
     pub access_level: String,
-    pub updated_at: String,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
@@ -422,14 +423,14 @@ impl KnowledgeGraphEngine {
         node_type: KGNodeType,
         properties: serde_json::Value,
     ) -> Result<KGNode, TopemsError> {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let node = KGNode {
             id: uuid::Uuid::new_v4().to_string(),
             label,
             r#type: node_type,
             properties,
             embeddings: Vec::new(),
-            created_at: now.clone(),
+            created_at: now,
         };
         sqlx::query(
             r#"INSERT INTO master_data.mdm_kg_nodes (id, label, node_type, properties, embeddings, created_at, tenant_id)
@@ -440,7 +441,7 @@ impl KnowledgeGraphEngine {
         .bind(node_type_to_str(&node.r#type))
         .bind(&node.properties)
         .bind(serde_json::to_value(&node.embeddings).unwrap_or_default())
-        .bind(&node.created_at)
+        .bind(node.created_at.to_rfc3339())
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入知识图谱节点失败: {e}")))?;
@@ -1010,7 +1011,7 @@ impl AssetCatalogManager {
         domain: String,
         tags: Vec<String>,
     ) -> Result<DataAsset, TopemsError> {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let asset = DataAsset {
             id: uuid::Uuid::new_v4().to_string(),
             name: name.clone(),
@@ -1039,7 +1040,7 @@ impl AssetCatalogManager {
         .bind(&asset.lineage_summary)
         .bind(asset.quality_score)
         .bind(&asset.access_level)
-        .bind(&asset.updated_at)
+        .bind(asset.updated_at.to_rfc3339())
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入数据资产失败: {e}")))?;
@@ -1156,7 +1157,7 @@ impl AssetCatalogManager {
         if let Some(al) = access_level {
             asset.access_level = al;
         }
-        asset.updated_at = chrono::Utc::now().to_rfc3339();
+        asset.updated_at = chrono::Utc::now();
 
         sqlx::query(
             r#"UPDATE master_data.mdm_assets SET
@@ -1170,7 +1171,7 @@ impl AssetCatalogManager {
         .bind(serde_json::to_value(&asset.tags).unwrap_or_default())
         .bind(asset.quality_score)
         .bind(&asset.access_level)
-        .bind(&asset.updated_at)
+        .bind(asset.updated_at.to_rfc3339())
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新数据资产失败: {e}")))?;
@@ -1219,10 +1220,8 @@ impl AssetCatalogManager {
                 .or_insert(0) += 1;
             *by_domain.entry(asset.domain.clone()).or_insert(0) += 1;
             quality_sum += asset.quality_score;
-            if let Ok(ts) = chrono::DateTime::parse_from_rfc3339(&asset.updated_at) {
-                if ts > one_day_ago {
-                    recent_updates += 1;
-                }
+            if asset.updated_at > one_day_ago {
+                recent_updates += 1;
             }
         }
 
@@ -2084,7 +2083,9 @@ mod tests {
             r#type: KGNodeType::Entity,
             properties: serde_json::json!({"k": "v"}),
             embeddings: vec![0.1, 0.2],
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
         };
         let json = serde_json::to_string(&node).unwrap();
         let back: KGNode = serde_json::from_str(&json).unwrap();
@@ -2101,7 +2102,7 @@ mod tests {
             r#type: KGNodeType::Concept,
             properties: serde_json::json!({}),
             embeddings: vec![],
-            created_at: "t".to_string(),
+            created_at: chrono::Utc::now(),
         };
         let json = serde_json::to_string(&node).unwrap();
         assert!(json.contains("\"type\":\"concept\""));
@@ -2181,7 +2182,9 @@ mod tests {
             lineage_summary: serde_json::json!({}),
             quality_score: 0.9,
             access_level: "restricted".to_string(),
-            updated_at: "2024-01-01T00:00:00Z".to_string(),
+            updated_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
         };
         let json = serde_json::to_string(&a).unwrap();
         let back: DataAsset = serde_json::from_str(&json).unwrap();
@@ -2242,7 +2245,7 @@ mod tests {
             r#type: KGNodeType::Entity,
             properties: serde_json::json!({}),
             embeddings: vec![],
-            created_at: "t".to_string(),
+            created_at: chrono::Utc::now(),
         };
         let cloned = n.clone();
         assert_eq!(n.id, cloned.id);

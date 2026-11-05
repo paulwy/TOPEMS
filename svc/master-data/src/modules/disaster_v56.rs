@@ -123,12 +123,12 @@ fn recovery_point_from_row(row: &sqlx::postgres::PgRow) -> RecoveryPoint {
         entity_id: row.get::<String, _>("entity_id"),
         data: row.get::<serde_json::Value, _>("data"),
         checksum: row.get::<String, _>("checksum"),
-        created_at: row.get::<String, _>("created_at"),
+        created_at: row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
         size_bytes: row.get::<i64, _>("size_bytes"),
     }
 }
 const RECOVERY_POINT_COLS: &str =
-    "id, snapshot_type, entity_type, entity_id, data, checksum, created_at, size_bytes";
+    "id, snapshot_type, entity_type, entity_id, data, checksum, created_at::timestamptz AS created_at, size_bytes";
 
 fn recovery_plan_from_row(row: &sqlx::postgres::PgRow) -> RecoveryPlan {
     RecoveryPlan {
@@ -184,14 +184,15 @@ fn bc_test_from_row(row: &sqlx::postgres::PgRow) -> BCTest {
     BCTest {
         id: row.get::<String, _>("id"),
         plan_id: row.get::<String, _>("plan_id"),
-        tested_at: row.get::<String, _>("tested_at"),
+        tested_at: row.get::<chrono::DateTime<chrono::Utc>, _>("tested_at"),
         result: row.get::<String, _>("result"),
         duration_minutes: row.get::<i64, _>("duration_minutes"),
         issues_found: serde_json::from_value(row.get::<serde_json::Value, _>("issues_found"))
             .unwrap_or_default(),
     }
 }
-const BC_TEST_COLS: &str = "id, plan_id, tested_at, result, duration_minutes, issues_found";
+const BC_TEST_COLS: &str =
+    "id, plan_id, tested_at::timestamptz AS tested_at, result, duration_minutes, issues_found";
 
 fn region_config_from_row(row: &sqlx::postgres::PgRow) -> RegionConfig {
     RegionConfig {
@@ -232,8 +233,8 @@ fn failover_record_from_row(row: &sqlx::postgres::PgRow) -> FailoverRecord {
             "scheduled" => FailoverTrigger::Scheduled,
             _ => FailoverTrigger::Manual,
         },
-        started_at: row.get::<String, _>("started_at"),
-        completed_at: row.get::<Option<String>, _>("completed_at"),
+        started_at: row.get::<chrono::DateTime<chrono::Utc>, _>("started_at"),
+        completed_at: row.get("completed_at"),
         reason: row.get::<String, _>("reason"),
         status: match row.get::<String, _>("status").as_str() {
             "in_progress" => FailoverStatus::InProgress,
@@ -244,7 +245,7 @@ fn failover_record_from_row(row: &sqlx::postgres::PgRow) -> FailoverRecord {
     }
 }
 const FAILOVER_RECORD_COLS: &str =
-    "id, from_region, to_region, trigger, started_at, completed_at, reason, status";
+    "id, from_region, to_region, trigger, started_at::timestamptz AS started_at, NULLIF(completed_at,'')::timestamptz AS completed_at, reason, status";
 
 // ==================== K1：handler 内 sqlx 错误统一出口 ====================
 
@@ -297,7 +298,7 @@ pub struct RecoveryPoint {
     pub entity_id: String,
     pub data: serde_json::Value,
     pub checksum: String,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
     pub size_bytes: i64,
 }
 
@@ -368,7 +369,7 @@ pub struct ContinuityPlan {
 pub struct BCTest {
     pub id: String,
     pub plan_id: String,
-    pub tested_at: String,
+    pub tested_at: chrono::DateTime<chrono::Utc>,
     pub result: String,
     pub duration_minutes: i64,
     pub issues_found: Vec<String>,
@@ -443,8 +444,8 @@ pub struct FailoverRecord {
     pub from_region: String,
     pub to_region: String,
     pub trigger: FailoverTrigger,
-    pub started_at: String,
-    pub completed_at: Option<String>,
+    pub started_at: chrono::DateTime<chrono::Utc>,
+    pub completed_at: Option<chrono::DateTime<chrono::Utc>>,
     pub reason: String,
     pub status: FailoverStatus,
 }
@@ -685,7 +686,7 @@ pub async fn create_recovery_point(
         .map(snapshot_type_from_str)
         .unwrap_or(SnapshotType::Full);
 
-    let created_at = chrono::Utc::now().to_rfc3339();
+    let created_at = chrono::Utc::now();
     let size_bytes = serde_json::to_string(&req.data)
         .map(|s| s.len() as i64)
         .unwrap_or(0);
@@ -713,7 +714,7 @@ pub async fn create_recovery_point(
     .bind(&rp.entity_id)
     .bind(&rp.data)
     .bind(&rp.checksum)
-    .bind(&rp.created_at)
+    .bind(rp.created_at.to_rfc3339())
     .bind(rp.size_bytes)
     .execute(&state.db)
     .await
@@ -1433,7 +1434,7 @@ pub async fn test_plan(
     let bc_test = BCTest {
         id: uuid::Uuid::new_v4().to_string(),
         plan_id: id,
-        tested_at: now.to_rfc3339(),
+        tested_at: now,
         result: "passed".to_string(),
         duration_minutes: 45,
         issues_found: Vec::new(),
@@ -1446,7 +1447,7 @@ pub async fn test_plan(
     )
     .bind(&bc_test.id)
     .bind(&bc_test.plan_id)
-    .bind(&bc_test.tested_at)
+    .bind(bc_test.tested_at.to_rfc3339())
     .bind(&bc_test.result)
     .bind(bc_test.duration_minutes)
     .bind(serde_json::to_value(&bc_test.issues_found).unwrap_or_default())
@@ -1891,7 +1892,7 @@ pub async fn initiate_failover(
         from_region: req.from_region,
         to_region: req.to_region,
         trigger,
-        started_at: chrono::Utc::now().to_rfc3339(),
+        started_at: chrono::Utc::now(),
         completed_at: None,
         reason: req.reason,
         status: FailoverStatus::Initiated,
@@ -1906,7 +1907,7 @@ pub async fn initiate_failover(
     .bind(&failover.from_region)
     .bind(&failover.to_region)
     .bind(failover_trigger_to_str(&failover.trigger))
-    .bind(&failover.started_at)
+    .bind(failover.started_at.to_rfc3339())
     .bind(Option::<String>::None)
     .bind(&failover.reason)
     .bind(failover_status_to_str(&failover.status))
@@ -2362,7 +2363,9 @@ mod tests {
             entity_id: "all".to_string(),
             data: serde_json::json!({"count": 100}),
             checksum: String::new(),
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
             size_bytes: 1024,
         };
         let c1 = generate_checksum(&rp);
@@ -2379,7 +2382,9 @@ mod tests {
             entity_id: "all".to_string(),
             data: serde_json::json!({"count": 100}),
             checksum: String::new(),
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
             size_bytes: 1024,
         };
         let rp2 = RecoveryPoint {
@@ -2389,7 +2394,9 @@ mod tests {
             entity_id: "all".to_string(),
             data: serde_json::json!({"count": 200}),
             checksum: String::new(),
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
             size_bytes: 1024,
         };
         assert_ne!(generate_checksum(&rp1), generate_checksum(&rp2));
@@ -2404,7 +2411,9 @@ mod tests {
             entity_id: "all".to_string(),
             data: serde_json::json!({}),
             checksum: String::new(),
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
             size_bytes: 0,
         };
         let checksum = generate_checksum(&rp);
@@ -2563,7 +2572,9 @@ mod tests {
             entity_id: "all".to_string(),
             data: serde_json::json!({"count": 100}),
             checksum: "abc123".to_string(),
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
             size_bytes: 1024,
         };
         let json = serde_json::to_string(&rp).unwrap();
@@ -2643,7 +2654,9 @@ mod tests {
         let t = BCTest {
             id: "bt-1".to_string(),
             plan_id: "cp-1".to_string(),
-            tested_at: "2024-01-01T00:00:00Z".to_string(),
+            tested_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
             result: "passed".to_string(),
             duration_minutes: 45,
             issues_found: vec![],
@@ -2692,7 +2705,9 @@ mod tests {
             from_region: "cn-east-1".to_string(),
             to_region: "ap-southeast-1".to_string(),
             trigger: FailoverTrigger::Manual,
-            started_at: "2024-01-01T00:00:00Z".to_string(),
+            started_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
             completed_at: None,
             reason: "测试故障转移".to_string(),
             status: FailoverStatus::Initiated,
@@ -2748,7 +2763,7 @@ mod tests {
             entity_id: "all".to_string(),
             data: serde_json::json!({"k": "v"}),
             checksum: "h".to_string(),
-            created_at: "t".to_string(),
+            created_at: chrono::Utc::now(),
             size_bytes: 100,
         };
         let cloned = rp.clone();

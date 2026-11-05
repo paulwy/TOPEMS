@@ -29,13 +29,13 @@ fn snapshot_from_row(row: &sqlx::postgres::PgRow) -> VersionSnapshot {
         data: row.get::<serde_json::Value, _>("data"),
         hash: row.get::<String, _>("hash"),
         created_by: row.get::<String, _>("created_by"),
-        created_at: row.get::<String, _>("created_at"),
+        created_at: row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
         comment: row.get::<String, _>("comment"),
     }
 }
 
 const SNAPSHOT_COLS: &str =
-    "id, entity_type, entity_id, version, data, hash, created_by, created_at, comment";
+    "id, entity_type, entity_id, version, data, hash, created_by, created_at::timestamptz AS created_at, comment";
 
 // ==================== 纯函数（无副作用，可单测） ====================
 
@@ -186,7 +186,7 @@ pub struct VersionSnapshot {
     pub data: serde_json::Value,
     pub hash: String,
     pub created_by: String,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
     pub comment: String,
 }
 
@@ -214,9 +214,9 @@ pub struct VersionBranch {
     pub name: String,
     pub branch_type: BranchType,
     pub parent_branch: Option<String>,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
     pub created_by: String,
-    pub merged_at: Option<String>,
+    pub merged_at: Option<chrono::DateTime<chrono::Utc>>,
     pub merged_by: Option<String>,
     pub status: String,
 }
@@ -264,7 +264,7 @@ pub struct AuditExportLog {
     pub user_id: String,
     pub export_type: String,
     pub record_count: i64,
-    pub exported_at: String,
+    pub exported_at: chrono::DateTime<chrono::Utc>,
     pub ip_address: String,
 }
 
@@ -296,7 +296,7 @@ pub struct PermissionRole {
     pub name: String,
     pub description: String,
     pub inherited_from: Option<String>,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
@@ -304,7 +304,7 @@ pub struct UserRoleAssignment {
     pub id: String,
     pub user_id: String,
     pub role_id: String,
-    pub assigned_at: String,
+    pub assigned_at: chrono::DateTime<chrono::Utc>,
 }
 
 // ==================== 内存存储 ====================
@@ -611,7 +611,7 @@ pub async fn create_snapshot(
 
     let version = generate_version(&existing, &req.entity_type, &req.entity_id);
     let hash = compute_hash(&req.data);
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
 
     let snapshot = VersionSnapshot {
         id: uuid::Uuid::new_v4().to_string(),
@@ -638,7 +638,7 @@ pub async fn create_snapshot(
     .bind(&snapshot.data)
     .bind(&snapshot.hash)
     .bind(&snapshot.created_by)
-    .bind(&snapshot.created_at)
+    .bind(snapshot.created_at.to_rfc3339())
     .bind(&snapshot.comment)
     .execute(&state.db)
     .await
@@ -660,7 +660,7 @@ pub async fn create_snapshot(
     .bind(Option::<serde_json::Value>::None)
     .bind(&snapshot.data)
     .bind("127.0.0.1")
-    .bind(&snapshot.created_at)
+    .bind(snapshot.created_at.to_rfc3339())
     .bind(uuid::Uuid::new_v4().to_string())
     .execute(&state.db)
     .await
@@ -856,7 +856,7 @@ pub async fn restore_version(
     let existing: Vec<VersionSnapshot> = rows.iter().map(snapshot_from_row).collect();
 
     let new_version = generate_version(&existing, &target.entity_type, &target.entity_id);
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
 
     let restored = VersionSnapshot {
         id: uuid::Uuid::new_v4().to_string(),
@@ -882,7 +882,7 @@ pub async fn restore_version(
     .bind(&restored.data)
     .bind(&restored.hash)
     .bind(&restored.created_by)
-    .bind(&restored.created_at)
+    .bind(restored.created_at.to_rfc3339())
     .bind(&restored.comment)
     .execute(&state.db)
     .await
@@ -904,7 +904,7 @@ pub async fn restore_version(
     .bind(Option::<serde_json::Value>::None)
     .bind(&restored.data)
     .bind("127.0.0.1")
-    .bind(&restored.created_at)
+    .bind(restored.created_at.to_rfc3339())
     .bind(uuid::Uuid::new_v4().to_string())
     .execute(&state.db)
     .await
@@ -999,7 +999,7 @@ pub async fn create_branch(
         Some(t) => branch_type_from_str(t),
         None => BranchType::Feature,
     };
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
 
     let branch = VersionBranch {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1021,9 +1021,9 @@ pub async fn create_branch(
     .bind(&branch.name)
     .bind(branch_type_to_str(&branch.branch_type))
     .bind(&branch.parent_branch)
-    .bind(&branch.created_at)
+    .bind(branch.created_at.to_rfc3339())
     .bind(&branch.created_by)
-    .bind(&branch.merged_at)
+    .bind(branch.merged_at.map(|t| t.to_rfc3339()))
     .bind(&branch.merged_by)
     .bind(&branch.status)
     .execute(&state.db)
@@ -1324,7 +1324,7 @@ pub async fn export_audit_log(
     let filtered: Vec<AuditEvent> = rows.iter().map(audit_event_from_row).collect();
 
     let record_count = filtered.len() as i64;
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     let export_id = uuid::Uuid::new_v4().to_string();
 
     if let Err(e) = sqlx::query(
@@ -1335,7 +1335,7 @@ pub async fn export_audit_log(
     .bind("current_user")
     .bind(req.format.unwrap_or_else(|| "json".to_string()))
     .bind(record_count)
-    .bind(&now)
+    .bind(now.to_rfc3339())
     .bind("127.0.0.1")
     .bind(tenant_uuid)
     .execute(&state.db)
@@ -1730,7 +1730,7 @@ pub async fn create_role(
     State(state): State<AppState>,
     Json(req): Json<CreateRoleRequest>,
 ) -> ApiResponse<PermissionRole> {
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
 
     let role = PermissionRole {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1748,7 +1748,7 @@ pub async fn create_role(
     .bind(&role.name)
     .bind(&role.description)
     .bind(&role.inherited_from)
-    .bind(&role.created_at)
+    .bind(role.created_at.to_rfc3339())
     .execute(&state.db)
     .await
     {
@@ -1772,7 +1772,7 @@ pub async fn assign_role(
     State(state): State<AppState>,
     Json(req): Json<AssignRoleRequest>,
 ) -> ApiResponse<UserRoleAssignment> {
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
 
     let assignment = UserRoleAssignment {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1788,7 +1788,7 @@ pub async fn assign_role(
     .bind(&assignment.id)
     .bind(&assignment.user_id)
     .bind(&assignment.role_id)
-    .bind(&assignment.assigned_at)
+    .bind(assignment.assigned_at.to_rfc3339())
     .execute(&state.db)
     .await
     {
@@ -1831,14 +1831,15 @@ pub async fn revoke_role(
 // ==================== K1：真表映射层（versioning_v54 分支/审计/权限/角色） ====================
 
 const BRANCH_COLS: &str =
-    "id, name, branch_type, parent_branch, created_at, created_by, merged_at, merged_by, status";
+    "id, name, branch_type, parent_branch, created_at::timestamptz AS created_at, created_by, merged_at::timestamptz AS merged_at, merged_by, status";
 const AUDIT_EVENT_COLS: &str = "id, event_type, category, entity_type, entity_id, user_id, old_value, new_value, ip_address, timestamp, session_id";
 const AUDIT_EXPORT_LOG_COLS: &str =
-    "id, user_id, export_type, record_count, exported_at, ip_address";
-const PERMISSION_ROLE_COLS: &str = "id, name, description, inherited_from, created_at";
+    "id, user_id, export_type, record_count, exported_at::timestamptz AS exported_at, ip_address";
+const PERMISSION_ROLE_COLS: &str = "id, name, description, inherited_from, created_at::timestamptz AS created_at";
 const DATA_PERMISSION_COLS: &str =
     "id, role_id, resource_type, resource_id, action, condition, inherited";
-const USER_ROLE_ASSIGNMENT_COLS: &str = "id, user_id, role_id, assigned_at";
+const USER_ROLE_ASSIGNMENT_COLS: &str =
+    "id, user_id, role_id, assigned_at::timestamptz AS assigned_at";
 
 fn branch_type_to_str(t: &BranchType) -> &'static str {
     match t {
@@ -2380,7 +2381,7 @@ mod tests {
             data: serde_json::json!({}),
             hash: "h".to_string(),
             created_by: "u".to_string(),
-            created_at: "t".to_string(),
+            created_at: chrono::Utc::now(),
             comment: "".to_string(),
         }];
         let v = generate_version(&snapshots, "customer", "C001");
@@ -2397,7 +2398,7 @@ mod tests {
             data: serde_json::json!({}),
             hash: "h".to_string(),
             created_by: "u".to_string(),
-            created_at: "t".to_string(),
+            created_at: chrono::Utc::now(),
             comment: "".to_string(),
         }];
         // 不同实体应从 v1 开始
@@ -2415,7 +2416,7 @@ mod tests {
             data: serde_json::json!({}),
             hash: "h".to_string(),
             created_by: "u".to_string(),
-            created_at: "t".to_string(),
+            created_at: chrono::Utc::now(),
             comment: "".to_string(),
         }];
         // 非数字版本被忽略，从 v1 开始
@@ -2433,7 +2434,7 @@ mod tests {
             data: serde_json::json!({}),
             hash: "h".to_string(),
             created_by: "u".to_string(),
-            created_at: "t".to_string(),
+            created_at: chrono::Utc::now(),
             comment: "".to_string(),
         };
         let snapshots = vec![make_snap("v1"), make_snap("v2"), make_snap("v5")];
@@ -2620,7 +2621,9 @@ mod tests {
             data: serde_json::json!({"name": "alice"}),
             hash: "abc123".to_string(),
             created_by: "admin".to_string(),
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
             comment: "初始版本".to_string(),
         };
         let json = serde_json::to_string(&s).unwrap();
@@ -2653,7 +2656,9 @@ mod tests {
             name: "feature/x".to_string(),
             branch_type: BranchType::Feature,
             parent_branch: Some("main".to_string()),
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
             created_by: "admin".to_string(),
             merged_at: None,
             merged_by: None,
@@ -2695,7 +2700,9 @@ mod tests {
             user_id: "admin".to_string(),
             export_type: "json".to_string(),
             record_count: 100,
-            exported_at: "2024-01-01T00:00:00Z".to_string(),
+            exported_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
             ip_address: "127.0.0.1".to_string(),
         };
         let json = serde_json::to_string(&l).unwrap();
@@ -2729,7 +2736,9 @@ mod tests {
             name: "admin".to_string(),
             description: "管理员".to_string(),
             inherited_from: None,
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
         };
         let json = serde_json::to_string(&r).unwrap();
         let back: PermissionRole = serde_json::from_str(&json).unwrap();
@@ -2743,7 +2752,9 @@ mod tests {
             id: "ua-1".to_string(),
             user_id: "user-001".to_string(),
             role_id: "role-1".to_string(),
-            assigned_at: "2024-01-01T00:00:00Z".to_string(),
+            assigned_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
         };
         let json = serde_json::to_string(&a).unwrap();
         let back: UserRoleAssignment = serde_json::from_str(&json).unwrap();
@@ -2792,7 +2803,7 @@ mod tests {
             data: serde_json::json!({"k": "v"}),
             hash: "h".to_string(),
             created_by: "u".to_string(),
-            created_at: "t".to_string(),
+            created_at: chrono::Utc::now(),
             comment: "c".to_string(),
         };
         let cloned = s.clone();
@@ -2807,7 +2818,7 @@ mod tests {
             name: "main".to_string(),
             branch_type: BranchType::Main,
             parent_branch: None,
-            created_at: "t".to_string(),
+            created_at: chrono::Utc::now(),
             created_by: "u".to_string(),
             merged_at: None,
             merged_by: None,

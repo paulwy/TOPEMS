@@ -77,7 +77,7 @@ pub struct QualityCheckV51 {
     pub status: QualityStatus,
     pub score: f64,
     pub details: serde_json::Value,
-    pub checked_at: String,
+    pub checked_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -110,13 +110,12 @@ pub struct QualityRule {
     pub severity: String,
     pub parameters: serde_json::Value,
     pub enabled: bool,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// A 试点：把 `master_data.mdm_quality_rules` 行映射为对外契约 `QualityRule`。
-/// id/created_at/updated_at 保持字符串契约（UUID→String、timestamptz→RFC3339），
-/// 与既有内存 Store 时期序列化结果一致，前端无感。
+/// id 保持字符串契约（UUID→String、timestamptz→DateTime）。
 fn rule_row_to_api(row: &sqlx::postgres::PgRow) -> QualityRule {
     use sqlx::Row;
     QualityRule {
@@ -128,12 +127,8 @@ fn rule_row_to_api(row: &sqlx::postgres::PgRow) -> QualityRule {
         severity: row.get("severity"),
         parameters: row.get("parameters"),
         enabled: row.get("enabled"),
-        created_at: row
-            .get::<chrono::DateTime<chrono::Utc>, _>("created_at")
-            .to_rfc3339(),
-        updated_at: row
-            .get::<chrono::DateTime<chrono::Utc>, _>("updated_at")
-            .to_rfc3339(),
+        created_at: row.get("created_at"),
+        updated_at: row.get("updated_at"),
     }
 }
 
@@ -169,7 +164,7 @@ pub struct AutoFixAction {
     pub after_value: Option<serde_json::Value>,
     pub confidence: f64,
     pub status: FixStatus,
-    pub applied_at: Option<String>,
+    pub applied_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -213,7 +208,7 @@ pub struct GovernanceSuggestion {
     pub suggested_action: String,
     pub ai_model_version: String,
     pub status: SuggestionStatus,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
@@ -258,7 +253,7 @@ pub struct FixHistoryEntry {
     pub after_value: Option<serde_json::Value>,
     pub confidence: f64,
     pub status: String,
-    pub applied_at: String,
+    pub applied_at: Option<chrono::DateTime<chrono::Utc>>,
     pub reverted: bool,
 }
 
@@ -469,7 +464,7 @@ pub async fn run_quality_check(
         .cloned()
         .collect();
 
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     let mut results = Vec::new();
 
     for rule in &applicable_rules {
@@ -509,7 +504,7 @@ pub async fn run_quality_check(
         .bind(quality_status_to_str(&check.status))
         .bind(check.score)
         .bind(&check.details)
-        .bind(&check.checked_at)
+        .bind(check.checked_at.to_rfc3339())
         .execute(&state.db)
         .await
         {
@@ -995,7 +990,7 @@ pub async fn apply_auto_fix(
     let strategy = req.strategy.as_deref().unwrap_or("normalize_text");
     let action_type = action_type_from_str(strategy);
 
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
 
     let action = AutoFixAction {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1023,7 +1018,7 @@ pub async fn apply_auto_fix(
     .bind(&action.after_value)
     .bind(action.confidence)
     .bind(fix_status_to_str(&action.status))
-    .bind(&action.applied_at)
+    .bind(action.applied_at.map(|t| t.to_rfc3339()))
     .execute(&state.db)
     .await
     {
@@ -1178,7 +1173,7 @@ pub async fn get_fix_history(State(state): State<AppState>) -> ApiResponse<Vec<F
             after_value: a.after_value.clone(),
             confidence: a.confidence,
             status: format!("{:?}", a.status).to_lowercase(),
-            applied_at: a.applied_at.clone().unwrap_or_else(|| "-".to_string()),
+            applied_at: a.applied_at,
             reverted: false,
         })
         .collect();
@@ -1200,7 +1195,7 @@ pub async fn run_fix_workflow(
     State(state): State<AppState>,
     Json(req): Json<RunFixWorkflowRequest>,
 ) -> ApiResponse<serde_json::Value> {
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
 
     let strategies = req.strategies.unwrap_or_else(|| {
         vec![
@@ -1245,7 +1240,7 @@ pub async fn run_fix_workflow(
         .bind(&action.after_value)
         .bind(action.confidence)
         .bind(fix_status_to_str(&action.status))
-        .bind(&action.applied_at)
+        .bind(action.applied_at.map(|t| t.to_rfc3339()))
         .execute(&state.db)
         .await
         {
@@ -1282,7 +1277,7 @@ pub async fn generate_suggestions(
     State(state): State<AppState>,
     Json(req): Json<GenerateSuggestionsRequest>,
 ) -> ApiResponse<Vec<GovernanceSuggestion>> {
-    let now = chrono::Utc::now().to_rfc3339();
+    let now = chrono::Utc::now();
     let types = req
         .suggestion_types
         .unwrap_or_else(|| vec!["standardize".to_string(), "enrich".to_string()]);
@@ -1321,7 +1316,7 @@ pub async fn generate_suggestions(
         .bind(&s.suggested_action)
         .bind(&s.ai_model_version)
         .bind(suggestion_status_to_str(&s.status))
-        .bind(&s.created_at)
+        .bind(s.created_at.to_rfc3339())
         .execute(&state.db)
         .await
         {
@@ -1620,11 +1615,11 @@ async fn build_quality_trend(
 
 use sqlx::Row;
 
-const CHECK_COLS: &str = "id, entity_type, entity_id, rule_id, status, score, details, checked_at";
+const CHECK_COLS: &str = "id, entity_type, entity_id, rule_id, status, score, details, checked_at::timestamptz AS checked_at";
 const LOOP_CONFIG_COLS: &str =
     "entity_type, enabled_rules, auto_fix_enabled, notification_channels, max_retries";
-const AUTO_FIX_COLS: &str = "id, rule_id, entity_type, entity_id, action_type, before_value, after_value, confidence, status, applied_at";
-const SUGGESTION_COLS: &str = "id, entity_type, entity_id, suggestion_type, confidence, rationale, suggested_action, ai_model_version, status, created_at";
+const AUTO_FIX_COLS: &str = "id, rule_id, entity_type, entity_id, action_type, before_value, after_value, confidence, status, NULLIF(applied_at,'')::timestamptz AS applied_at";
+const SUGGESTION_COLS: &str = "id, entity_type, entity_id, suggestion_type, confidence, rationale, suggested_action, ai_model_version, status, created_at::timestamptz AS created_at";
 const INSIGHT_COLS: &str =
     "insight_type, severity, affected_records, trend_analysis, recommendations";
 
@@ -2018,7 +2013,9 @@ mod tests {
             status,
             score: 0.0,
             details: serde_json::json!({}),
-            checked_at: "2024-01-01T00:00:00Z".to_string(),
+            checked_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
         }
     }
 
@@ -2206,7 +2203,9 @@ mod tests {
             status: QualityStatus::Passed,
             score: 99.5,
             details: serde_json::json!({"k": "v"}),
-            checked_at: "2024-01-01T00:00:00Z".to_string(),
+            checked_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
         };
         let json = serde_json::to_string(&check).unwrap();
         let back: QualityCheckV51 = serde_json::from_str(&json).unwrap();
@@ -2227,8 +2226,12 @@ mod tests {
             severity: "warning".to_string(),
             parameters: serde_json::json!({"min": 1}),
             enabled: true,
-            created_at: "2024-01-01T00:00:00Z".to_string(),
-            updated_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
+            updated_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
         };
         let json = serde_json::to_string(&rule).unwrap();
         let back: QualityRule = serde_json::from_str(&json).unwrap();
@@ -2266,7 +2269,11 @@ mod tests {
             after_value: Some(serde_json::json!("y")),
             confidence: 0.9,
             status: FixStatus::Applied,
-            applied_at: Some("2024-01-01T00:00:00Z".to_string()),
+            applied_at: Some(
+                chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                    .unwrap()
+                    .with_timezone(&chrono::Utc),
+            ),
         };
         let json = serde_json::to_string(&action).unwrap();
         let back: AutoFixAction = serde_json::from_str(&json).unwrap();
@@ -2288,7 +2295,9 @@ mod tests {
             suggested_action: "action".to_string(),
             ai_model_version: "v1".to_string(),
             status: SuggestionStatus::Pending,
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
         };
         let json = serde_json::to_string(&s).unwrap();
         let back: GovernanceSuggestion = serde_json::from_str(&json).unwrap();
@@ -2357,7 +2366,11 @@ mod tests {
             after_value: None,
             confidence: 0.5,
             status: "applied".to_string(),
-            applied_at: "2024-01-01T00:00:00Z".to_string(),
+            applied_at: Some(
+                chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                    .unwrap()
+                    .with_timezone(&chrono::Utc),
+            ),
             reverted: false,
         };
         let json = serde_json::to_string(&e).unwrap();
@@ -2402,8 +2415,8 @@ mod tests {
             severity: "warning".to_string(),
             parameters: serde_json::json!({}),
             enabled: true,
-            created_at: "t1".to_string(),
-            updated_at: "t2".to_string(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
         };
         let cloned = r.clone();
         assert_eq!(r.id, cloned.id);

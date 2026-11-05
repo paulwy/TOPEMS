@@ -94,7 +94,7 @@ pub struct MaturityAssessment {
     pub score: f64,
     pub gaps: Vec<String>,
     pub recommendations: Vec<String>,
-    pub assessed_at: String,
+    pub assessed_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -124,7 +124,7 @@ pub struct MaturityProgress {
     pub from_level: MaturityLevel,
     pub to_level: MaturityLevel,
     pub progress_percentage: f64,
-    pub updated_at: String,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -133,7 +133,7 @@ pub struct MaturityHistoryEntry {
     pub dimension: GovernanceDimension,
     pub score: f64,
     pub level: MaturityLevel,
-    pub recorded_at: String,
+    pub recorded_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -155,7 +155,7 @@ impl GovernanceMaturity {
         dimension: GovernanceDimension,
         target_level: MaturityLevel,
     ) -> Result<MaturityAssessment, TopemsError> {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let scores = fetch_dimension_scores(db).await?;
         let existing = scores.iter().find(|s| s.dimension == dimension);
         let current_level = existing
@@ -178,7 +178,7 @@ impl GovernanceMaturity {
         };
 
         sqlx::query(sqlx::AssertSqlSafe(format!(
-            "INSERT INTO master_data.mdm_maturity_assessments ({ASSESSMENT_COLS}, tenant_id)
+            "INSERT INTO master_data.mdm_maturity_assessments ({ASSESSMENT_INSERT_COLS}, tenant_id)
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
         )))
         .bind(&assessment.id)
@@ -188,7 +188,7 @@ impl GovernanceMaturity {
         .bind(assessment.score)
         .bind(serde_json::to_value(&assessment.gaps).unwrap_or_default())
         .bind(serde_json::to_value(&assessment.recommendations).unwrap_or_default())
-        .bind(&assessment.assessed_at)
+        .bind(assessment.assessed_at.to_rfc3339())
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入成熟度评估失败: {e}")))?;
@@ -201,7 +201,7 @@ impl GovernanceMaturity {
         .bind(dimension_str(&assessment.dimension))
         .bind(assessment.score)
         .bind(maturity_level_str(&assessment.current_level))
-        .bind(&now)
+        .bind(now.to_rfc3339())
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入成熟度历史失败: {e}")))?;
@@ -270,7 +270,7 @@ impl GovernanceMaturity {
                 from_level: MaturityLevel::Initial,
                 to_level: score.maturity_level.clone(),
                 progress_percentage: score.score,
-                updated_at: chrono::Utc::now().to_rfc3339(),
+                updated_at: chrono::Utc::now(),
             });
         }
         Ok(progress)
@@ -359,8 +359,8 @@ pub struct WorkflowStepV58 {
     pub depends_on: Option<String>,
     pub assignee: Option<String>,
     pub status: WorkflowStepStatus,
-    pub started_at: Option<String>,
-    pub completed_at: Option<String>,
+    pub started_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub completed_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -371,8 +371,8 @@ pub struct WorkflowV58 {
     pub steps: Vec<WorkflowStepV58>,
     pub triggers: serde_json::Value,
     pub status: WorkflowStatus,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -392,7 +392,7 @@ pub struct WorkflowHistoryEntry {
     pub step_id: Option<String>,
     pub actor: String,
     pub comment: Option<String>,
-    pub recorded_at: String,
+    pub recorded_at: chrono::DateTime<chrono::Utc>,
 }
 
 // ==================== 自动化工作流：引擎 ====================
@@ -406,7 +406,7 @@ impl MDMWorkflowEngine {
         workflow_type: WorkflowType,
         steps: Vec<WorkflowStepV58>,
     ) -> Result<WorkflowV58, TopemsError> {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let workflow = WorkflowV58 {
             id: uuid::Uuid::new_v4().to_string(),
             name,
@@ -419,7 +419,7 @@ impl MDMWorkflowEngine {
         };
 
         sqlx::query(sqlx::AssertSqlSafe(format!(
-            "INSERT INTO master_data.mdm_workflows ({WORKFLOW_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+            "INSERT INTO master_data.mdm_workflows ({WORKFLOW_INSERT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
         )))
         .bind(&workflow.id)
         .bind(&workflow.name)
@@ -427,8 +427,8 @@ impl MDMWorkflowEngine {
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())
         .bind(serde_json::to_value(&workflow.triggers).unwrap_or_default())
         .bind(status_str(&workflow.status))
-        .bind(&workflow.created_at)
-        .bind(&workflow.updated_at)
+        .bind(workflow.created_at.to_rfc3339())
+        .bind(workflow.updated_at.to_rfc3339())
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("创建工作流失败: {e}")))?;
@@ -448,11 +448,11 @@ impl MDMWorkflowEngine {
             return Ok(None);
         }
         workflow.status = WorkflowStatus::Running;
-        workflow.updated_at = chrono::Utc::now().to_rfc3339();
+        workflow.updated_at = chrono::Utc::now();
 
         if let Some(first_step) = workflow.steps.first_mut() {
             first_step.status = WorkflowStepStatus::InProgress;
-            first_step.started_at = Some(chrono::Utc::now().to_rfc3339());
+            first_step.started_at = Some(chrono::Utc::now());
         }
 
         let mut tx = db
@@ -465,7 +465,7 @@ impl MDMWorkflowEngine {
         .bind(workflow_id)
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())
         .bind(status_str(&workflow.status))
-        .bind(&workflow.updated_at)
+        .bind(workflow.updated_at.to_rfc3339())
         .execute(&mut *tx)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
@@ -479,7 +479,7 @@ impl MDMWorkflowEngine {
         .bind(Option::<String>::None)
         .bind("system")
         .bind(Option::<String>::None)
-        .bind(&workflow.updated_at)
+        .bind(workflow.updated_at.to_rfc3339())
         .execute(&mut *tx)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入工作流历史失败: {e}")))?;
@@ -502,7 +502,7 @@ impl MDMWorkflowEngine {
             return Ok(None);
         }
 
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let mut current_idx = None;
         for (i, step) in workflow.steps.iter_mut().enumerate() {
             if step.status == WorkflowStepStatus::InProgress {
@@ -535,7 +535,7 @@ impl MDMWorkflowEngine {
         .bind(workflow_id)
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())
         .bind(status_str(&workflow.status))
-        .bind(&workflow.updated_at)
+        .bind(workflow.updated_at.to_rfc3339())
         .execute(&mut *tx)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
@@ -599,7 +599,7 @@ impl MDMWorkflowEngine {
             return Ok(None);
         }
 
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         step.status = WorkflowStepStatus::Approved;
         step.completed_at = Some(now.clone());
         let actor = step
@@ -618,7 +618,7 @@ impl MDMWorkflowEngine {
         .bind(workflow_id)
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())
         .bind(status_str(&workflow.status))
-        .bind(&workflow.updated_at)
+        .bind(workflow.updated_at.to_rfc3339())
         .execute(&mut *tx)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
@@ -632,7 +632,7 @@ impl MDMWorkflowEngine {
         .bind(step_id)
         .bind(&actor)
         .bind(Option::<String>::None)
-        .bind(&workflow.updated_at)
+        .bind(workflow.updated_at.to_rfc3339())
         .execute(&mut *tx)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入工作流历史失败: {e}")))?;
@@ -660,7 +660,7 @@ impl MDMWorkflowEngine {
             return Ok(None);
         }
 
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         step.status = WorkflowStepStatus::Rejected;
         step.completed_at = Some(now.clone());
         let actor = step
@@ -680,7 +680,7 @@ impl MDMWorkflowEngine {
         .bind(workflow_id)
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())
         .bind(status_str(&workflow.status))
-        .bind(&workflow.updated_at)
+        .bind(workflow.updated_at.to_rfc3339())
         .execute(&mut *tx)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
@@ -694,7 +694,7 @@ impl MDMWorkflowEngine {
         .bind(step_id)
         .bind(&actor)
         .bind(Option::<String>::None)
-        .bind(&workflow.updated_at)
+        .bind(workflow.updated_at.to_rfc3339())
         .execute(&mut *tx)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入工作流历史失败: {e}")))?;
@@ -757,8 +757,8 @@ pub struct DataProduct {
     pub data_contract: Option<DataContract>,
     pub sla_level: SlaLevel,
     pub status: DataProductStatus,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -769,7 +769,7 @@ pub struct DataContract {
     pub freshness_sla: String,
     pub security_level: SecurityLevel,
     pub version: String,
-    pub updated_at: String,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -777,7 +777,7 @@ pub struct ContractStatus {
     pub product_id: String,
     pub version: String,
     pub is_valid: bool,
-    pub last_verified_at: Option<String>,
+    pub last_verified_at: Option<chrono::DateTime<chrono::Utc>>,
     pub issues: Vec<String>,
 }
 
@@ -789,14 +789,14 @@ pub struct ApiExposure {
     pub auth_type: String,
     pub rate_limit: String,
     pub enabled: bool,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ConsumerInfo {
     pub consumer_id: String,
     pub consumer_name: String,
-    pub subscribed_at: String,
+    pub subscribed_at: chrono::DateTime<chrono::Utc>,
     pub status: String,
 }
 
@@ -821,7 +821,7 @@ impl DataProductManager {
         domain: String,
         sla_level: SlaLevel,
     ) -> Result<DataProduct, TopemsError> {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let product = DataProduct {
             id: uuid::Uuid::new_v4().to_string(),
             name,
@@ -837,7 +837,7 @@ impl DataProductManager {
         };
 
         sqlx::query(sqlx::AssertSqlSafe(format!(
-            "INSERT INTO master_data.mdm_data_products ({DATA_PRODUCT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+            "INSERT INTO master_data.mdm_data_products ({DATA_PRODUCT_INSERT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
         )))
         .bind(&product.id)
         .bind(&product.name)
@@ -848,8 +848,8 @@ impl DataProductManager {
         .bind(Option::<serde_json::Value>::None)
         .bind(sla_level_str(&product.sla_level))
         .bind(product_status_str(&product.status))
-        .bind(&product.created_at)
-        .bind(&product.updated_at)
+        .bind(product.created_at.to_rfc3339())
+        .bind(product.updated_at.to_rfc3339())
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("创建数据产品失败: {e}")))?;
@@ -897,7 +897,7 @@ impl DataProductManager {
         freshness_sla: String,
         security_level: SecurityLevel,
     ) -> Result<Option<DataContract>, TopemsError> {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let contract = DataContract {
             product_id: product_id.to_string(),
             schema,
@@ -913,7 +913,7 @@ impl DataProductManager {
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("开启事务失败: {e}")))?;
         sqlx::query(sqlx::AssertSqlSafe(format!(
-            "INSERT INTO master_data.mdm_data_contracts ({DATA_CONTRACT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+            "INSERT INTO master_data.mdm_data_contracts ({DATA_CONTRACT_INSERT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
         )))
         .bind(&contract.product_id)
         .bind(serde_json::to_value(&contract.schema).unwrap_or_default())
@@ -921,7 +921,7 @@ impl DataProductManager {
         .bind(&contract.freshness_sla)
         .bind(security_level_str(&contract.security_level))
         .bind(&contract.version)
-        .bind(&contract.updated_at)
+        .bind(contract.updated_at.to_rfc3339())
         .execute(&mut *tx)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入数据契约失败: {e}")))?;
@@ -931,7 +931,7 @@ impl DataProductManager {
         )
         .bind(product_id)
         .bind(serde_json::to_value(&contract).unwrap_or_default())
-        .bind(&now)
+        .bind(now.to_rfc3339())
         .execute(&mut *tx)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新数据产品失败: {e}")))?;
@@ -965,7 +965,7 @@ impl DataProductManager {
                 .map(|c| c.version.clone())
                 .unwrap_or_else(|| "0.0.0".to_string()),
             is_valid: issues.is_empty(),
-            last_verified_at: Some(chrono::Utc::now().to_rfc3339()),
+            last_verified_at: Some(chrono::Utc::now()),
             issues,
         }))
     }
@@ -989,11 +989,11 @@ impl DataProductManager {
             auth_type,
             rate_limit,
             enabled: true,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            created_at: chrono::Utc::now(),
         };
 
         sqlx::query(sqlx::AssertSqlSafe(format!(
-            "INSERT INTO master_data.mdm_api_exposures ({API_EXPOSURE_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+            "INSERT INTO master_data.mdm_api_exposures ({API_EXPOSURE_INSERT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
         )))
         .bind(&exposure.id)
         .bind(&exposure.product_id)
@@ -1001,7 +1001,7 @@ impl DataProductManager {
         .bind(&exposure.auth_type)
         .bind(&exposure.rate_limit)
         .bind(exposure.enabled)
-        .bind(&exposure.created_at)
+        .bind(exposure.created_at.to_rfc3339())
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入 API 暴露失败: {e}")))?;
@@ -1024,7 +1024,7 @@ impl DataProductManager {
             .map(|c| ConsumerInfo {
                 consumer_id: c.clone(),
                 consumer_name: format!("Consumer {}", c),
-                subscribed_at: chrono::Utc::now().to_rfc3339(),
+                subscribed_at: chrono::Utc::now(),
                 status: "active".to_string(),
             })
             .collect())
@@ -1962,18 +1962,27 @@ fn parse_step_path(path: &str) -> (String, String) {
 // ==================== K1 接真表：映射层 ====================
 
 const ASSESSMENT_COLS: &str =
+    "id, dimension, current_level, target_level, score, gaps, recommendations, assessed_at::timestamptz AS assessed_at";
+const ASSESSMENT_INSERT_COLS: &str =
     "id, dimension, current_level, target_level, score, gaps, recommendations, assessed_at";
 const DIMENSION_SCORE_COLS: &str = "dimension, score, weight, maturity_level, evidence";
 const IMPROVEMENT_PLAN_COLS: &str =
     "id, dimension, target_level, actions, priority, due_date, status";
 const WORKFLOW_COLS: &str =
+    "id, name, workflow_type, steps, triggers, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at";
+const WORKFLOW_INSERT_COLS: &str =
     "id, name, workflow_type, steps, triggers, status, created_at, updated_at";
 const WORKFLOW_TEMPLATE_COLS: &str = "id, name, description, workflow_type, steps";
-const WORKFLOW_HISTORY_COLS: &str = "id, workflow_id, action, step_id, actor, comment, recorded_at";
-const DATA_PRODUCT_COLS: &str = "id, name, description, owner, domain, consumers, data_contract, sla_level, status, created_at, updated_at";
+const WORKFLOW_HISTORY_COLS: &str = "id, workflow_id, action, step_id, actor, comment, recorded_at::timestamptz AS recorded_at";
+const DATA_PRODUCT_COLS: &str = "id, name, description, owner, domain, consumers, data_contract, sla_level, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at";
+const DATA_PRODUCT_INSERT_COLS: &str = "id, name, description, owner, domain, consumers, data_contract, sla_level, status, created_at, updated_at";
 const DATA_CONTRACT_COLS: &str =
+    "product_id, schema, quality_requirements, freshness_sla, security_level, version, updated_at::timestamptz AS updated_at";
+const DATA_CONTRACT_INSERT_COLS: &str =
     "product_id, schema, quality_requirements, freshness_sla, security_level, version, updated_at";
 const API_EXPOSURE_COLS: &str =
+    "id, product_id, endpoint, auth_type, rate_limit, enabled, created_at::timestamptz AS created_at";
+const API_EXPOSURE_INSERT_COLS: &str =
     "id, product_id, endpoint, auth_type, rate_limit, enabled, created_at";
 
 fn sla_level_str(l: &SlaLevel) -> &str {

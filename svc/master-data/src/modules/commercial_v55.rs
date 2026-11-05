@@ -62,8 +62,8 @@ fn subscription_from_row(row: &sqlx::postgres::PgRow) -> Subscription {
         api_product_id: row.get::<String, _>("api_product_id"),
         tenant_id: row.get::<String, _>("tenant_id"),
         tier: tier_from_str(&row.get::<String, _>("tier")),
-        starts_at: row.get::<String, _>("starts_at"),
-        expires_at: row.get::<String, _>("expires_at"),
+        starts_at: row.get::<chrono::DateTime<chrono::Utc>, _>("starts_at"),
+        expires_at: row.get::<chrono::DateTime<chrono::Utc>, _>("expires_at"),
         status: sub_status_from_str(&row.get::<String, _>("status")),
     }
 }
@@ -71,7 +71,7 @@ fn subscription_from_row(row: &sqlx::postgres::PgRow) -> Subscription {
 const PRODUCT_COLS: &str =
     "id::text, name, tier, rate_limit_per_min, rate_limit_per_day, features, price_monthly, active";
 const SUBSCRIPTION_COLS: &str =
-    "id::text, api_product_id, tenant_id::text, tier, starts_at, expires_at::text, status";
+    "id::text, api_product_id, tenant_id::text, tier, starts_at, expires_at, status";
 
 // ==================== 纯函数（无副作用，可单测） ====================
 
@@ -156,8 +156,8 @@ pub struct Subscription {
     pub api_product_id: String,
     pub tenant_id: String,
     pub tier: ProductTier,
-    pub starts_at: String,
-    pub expires_at: String,
+    pub starts_at: chrono::DateTime<chrono::Utc>,
+    pub expires_at: chrono::DateTime<chrono::Utc>,
     pub status: SubscriptionStatus,
 }
 
@@ -181,7 +181,7 @@ pub struct UsageRecord {
     pub requests: i64,
     pub errors: i64,
     pub data_transferred: f64,
-    pub recorded_at: String,
+    pub recorded_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -269,9 +269,9 @@ pub struct SLAMeasurement {
     pub measured_value: f64,
     pub target_value: f64,
     pub met: bool,
-    pub measured_at: String,
-    pub window_start: String,
-    pub window_end: String,
+    pub measured_at: chrono::DateTime<chrono::Utc>,
+    pub window_start: chrono::DateTime<chrono::Utc>,
+    pub window_end: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -583,15 +583,14 @@ pub async fn subscribe_tenant(
         .unwrap_or_else(|| product.tier.clone());
 
     let now = chrono::Utc::now();
-    let now_str = now.to_rfc3339();
-    let expires_at = (now + chrono::Duration::days(30)).to_rfc3339();
+    let expires_at = now + chrono::Duration::days(30);
 
     let sub = Subscription {
         id: uuid::Uuid::new_v4().to_string(),
         api_product_id: req.api_product_id,
         tenant_id: req.tenant_id,
         tier,
-        starts_at: now_str,
+        starts_at: now,
         expires_at,
         status: SubscriptionStatus::Active,
     };
@@ -804,7 +803,7 @@ pub async fn record_usage(
         requests: req.requests,
         errors: req.errors.unwrap_or(0),
         data_transferred: req.data_transferred.unwrap_or(0.0),
-        recorded_at: chrono::Utc::now().to_rfc3339(),
+        recorded_at: chrono::Utc::now(),
     };
 
     if let Err(e) = sqlx::query(
@@ -1262,9 +1261,9 @@ pub async fn measure_sla(
         measured_value: req.measured_value,
         target_value: target,
         met,
-        measured_at: now.to_rfc3339(),
-        window_start: (now - chrono::Duration::minutes(config.measurement_window)).to_rfc3339(),
-        window_end: now.to_rfc3339(),
+        measured_at: now,
+        window_start: now - chrono::Duration::minutes(config.measurement_window),
+        window_end: now,
     };
 
     if let Err(e) = sqlx::query(
@@ -1622,12 +1621,20 @@ pub async fn generate_sla_report(
                     && params
                         .period_start
                         .as_ref()
-                        .map(|s| &m.measured_at >= s)
+                        .map(|s| {
+                            chrono::DateTime::parse_from_rfc3339(s)
+                                .map(|d| m.measured_at >= d.with_timezone(&chrono::Utc))
+                                .unwrap_or(true)
+                        })
                         .unwrap_or(true)
                     && params
                         .period_end
                         .as_ref()
-                        .map(|e| &m.measured_at <= e)
+                        .map(|e| {
+                            chrono::DateTime::parse_from_rfc3339(e)
+                                .map(|d| m.measured_at <= d.with_timezone(&chrono::Utc))
+                                .unwrap_or(true)
+                        })
                         .unwrap_or(true)
             })
             .collect();
@@ -1686,7 +1693,7 @@ pub async fn generate_sla_report(
 // ==================== K1：真表映射（master_data.mdm_usage_records / billing / rate_cards / sla_*） ====================
 
 const USAGE_COLS: &str =
-    "id::text, tenant_id::text, api_product_id, endpoint, requests, errors, data_transferred, recorded_at::text";
+    "id::text, tenant_id::text, api_product_id, endpoint, requests, errors, data_transferred, recorded_at";
 const BILLING_COLS: &str =
     "id::text, tenant_id::text, period_start, period_end, tier, usage_summary, total_amount, status";
 const RATE_CARD_COLS: &str =
@@ -1694,7 +1701,7 @@ const RATE_CARD_COLS: &str =
 const SLA_CONFIG_COLS: &str =
     "id::text, metric, target_value, unit, penalty_per_min, measurement_window";
 const SLA_MEASUREMENT_COLS: &str =
-    "id::text, config_id, tenant_id::text, measured_value, target_value, met, measured_at::text, window_start::text, window_end::text";
+    "id::text, config_id, tenant_id::text, measured_value, target_value, met, measured_at, window_start, window_end";
 const SLA_INCIDENT_COLS: &str =
     "id::text, config_id, tenant_id::text, incident_type, duration_min, impact_severity, compensation_amount, status";
 
@@ -1708,7 +1715,7 @@ fn usage_record_from_row(row: &sqlx::postgres::PgRow) -> UsageRecord {
         requests: row.get::<i64, _>("requests"),
         errors: row.get::<i64, _>("errors"),
         data_transferred: row.get::<f64, _>("data_transferred"),
-        recorded_at: row.get::<String, _>("recorded_at"),
+        recorded_at: row.get::<chrono::DateTime<chrono::Utc>, _>("recorded_at"),
     }
 }
 
@@ -1799,9 +1806,9 @@ fn sla_measurement_from_row(row: &sqlx::postgres::PgRow) -> SLAMeasurement {
         measured_value: row.get::<f64, _>("measured_value"),
         target_value: row.get::<f64, _>("target_value"),
         met: row.get::<bool, _>("met"),
-        measured_at: row.get::<String, _>("measured_at"),
-        window_start: row.get::<String, _>("window_start"),
-        window_end: row.get::<String, _>("window_end"),
+        measured_at: row.get::<chrono::DateTime<chrono::Utc>, _>("measured_at"),
+        window_start: row.get::<chrono::DateTime<chrono::Utc>, _>("window_start"),
+        window_end: row.get::<chrono::DateTime<chrono::Utc>, _>("window_end"),
     }
 }
 
@@ -2244,8 +2251,8 @@ mod tests {
             api_product_id: "prod-1".to_string(),
             tenant_id: "t-1".to_string(),
             tier: ProductTier::Professional,
-            starts_at: "2024-01-01T00:00:00Z".to_string(),
-            expires_at: "2024-02-01T00:00:00Z".to_string(),
+            starts_at: "2024-01-01T00:00:00Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap(),
+            expires_at: "2024-02-01T00:00:00Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap(),
             status: SubscriptionStatus::Active,
         };
         let json = serde_json::to_string(&s).unwrap();
@@ -2264,7 +2271,7 @@ mod tests {
             requests: 1000,
             errors: 10,
             data_transferred: 5.5,
-            recorded_at: "2024-01-01T00:00:00Z".to_string(),
+            recorded_at: "2024-01-01T00:00:00Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap(),
         };
         let json = serde_json::to_string(&r).unwrap();
         let back: UsageRecord = serde_json::from_str(&json).unwrap();
@@ -2350,9 +2357,9 @@ mod tests {
             measured_value: 99.95,
             target_value: 99.9,
             met: true,
-            measured_at: "2024-01-01T00:00:00Z".to_string(),
-            window_start: "2024-01-01T00:00:00Z".to_string(),
-            window_end: "2024-01-01T01:00:00Z".to_string(),
+            measured_at: "2024-01-01T00:00:00Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap(),
+            window_start: "2024-01-01T00:00:00Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap(),
+            window_end: "2024-01-01T01:00:00Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap(),
         };
         let json = serde_json::to_string(&m).unwrap();
         let back: SLAMeasurement = serde_json::from_str(&json).unwrap();

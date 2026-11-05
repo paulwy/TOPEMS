@@ -59,7 +59,7 @@ pub struct GovernanceSuggestionV59 {
     pub description: String,
     pub confidence: f64,
     pub action: String,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -84,7 +84,7 @@ impl GovernanceAIEngine {
         entity_type: &str,
         entity_id: &str,
     ) -> Result<Vec<GovernanceSuggestionV59>, TopemsError> {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let mut suggestions = Vec::new();
 
         // DEGRADED（说明项）：当前服务无真实 AI/LLM 推理通道（master-data 内无 AI 客户端调用），
@@ -145,7 +145,7 @@ impl GovernanceAIEngine {
             .bind(&sg.description)
             .bind(sg.confidence)
             .bind(&sg.action)
-            .bind(&sg.created_at)
+            .bind(sg.created_at.to_rfc3339())
             .bind(tenant_id)
             .execute(db)
             .await?;
@@ -156,7 +156,7 @@ impl GovernanceAIEngine {
 
     async fn get_suggestions(db: &PgPool) -> Result<Vec<GovernanceSuggestionV59>, TopemsError> {
         let rows = sqlx::query(
-            "SELECT id, type, entity_type, entity_id, description, confidence, action, created_at
+            "SELECT id, type, entity_type, entity_id, description, confidence, action, created_at::timestamptz AS created_at
              FROM master_data.mdm_ai_suggestions ORDER BY created_at DESC",
         )
         .fetch_all(db)
@@ -170,7 +170,7 @@ impl GovernanceAIEngine {
         entity_id: &str,
     ) -> Result<Vec<GovernanceSuggestionV59>, TopemsError> {
         let rows = sqlx::query(
-            "SELECT id, type, entity_type, entity_id, description, confidence, action, created_at
+            "SELECT id, type, entity_type, entity_id, description, confidence, action, created_at::timestamptz AS created_at
              FROM master_data.mdm_ai_suggestions
              WHERE entity_type = $1 AND entity_id = $2 ORDER BY created_at DESC",
         )
@@ -186,7 +186,7 @@ impl GovernanceAIEngine {
         id: &str,
     ) -> Result<Option<GovernanceSuggestionV59>, TopemsError> {
         let row = sqlx::query(
-            "SELECT id, type, entity_type, entity_id, description, confidence, action, created_at
+            "SELECT id, type, entity_type, entity_id, description, confidence, action, created_at::timestamptz AS created_at
              FROM master_data.mdm_ai_suggestions WHERE id = $1",
         )
         .bind(id)
@@ -199,7 +199,7 @@ impl GovernanceAIEngine {
         db: &PgPool,
         id: &str,
     ) -> Result<Option<GovernanceSuggestionV59>, TopemsError> {
-        let row = sqlx::query("DELETE FROM master_data.mdm_ai_suggestions WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING id, type, entity_type, entity_id, description, confidence, action, created_at")
+        let row = sqlx::query("DELETE FROM master_data.mdm_ai_suggestions WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING id, type, entity_type, entity_id, description, confidence, action, created_at::timestamptz AS created_at")
             .bind(id)
             .fetch_optional(db)
             .await?;
@@ -273,7 +273,7 @@ pub struct MatchResult {
     pub match_type: MatchRuleType,
     pub confidence: f64,
     pub status: MatchStatus,
-    pub matched_at: String,
+    pub matched_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -338,7 +338,7 @@ impl IntelligentMatcher {
         )
         .fetch_all(db)
         .await?;
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let mut results = Vec::new();
 
         for r in &rows {
@@ -390,7 +390,7 @@ impl IntelligentMatcher {
             .bind(match_rule_type_str(&mr.match_type))
             .bind(mr.confidence)
             .bind(match_status_str(&mr.status))
-            .bind(&mr.matched_at)
+            .bind(mr.matched_at.to_rfc3339())
             .bind(tenant_id)
             .execute(db)
             .await?;
@@ -401,7 +401,7 @@ impl IntelligentMatcher {
 
     async fn get_match_results(db: &PgPool) -> Result<Vec<MatchResult>, TopemsError> {
         let rows = sqlx::query(
-            "SELECT id, source_id, target_id, match_score, match_type, confidence, status, matched_at
+            "SELECT id, source_id, target_id, match_score, match_type, confidence, status, matched_at::timestamptz AS matched_at
              FROM master_data.mdm_match_results ORDER BY matched_at DESC",
         )
         .fetch_all(db)
@@ -418,7 +418,7 @@ impl IntelligentMatcher {
             "UPDATE master_data.mdm_match_results
              SET status = $1
              WHERE id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
-             RETURNING id, source_id, target_id, match_score, match_type, confidence, status, matched_at",
+             RETURNING id, source_id, target_id, match_score, match_type, confidence, status, matched_at::timestamptz AS matched_at",
         )
         .bind(match_status_str(&status))
         .bind(id)
@@ -503,7 +503,7 @@ pub struct ClassificationResult {
     pub category: String,
     pub confidence: f64,
     pub alternatives: Vec<serde_json::Value>,
-    pub classified_at: String,
+    pub classified_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -559,7 +559,7 @@ impl AutoClassifier {
         entity_type: &str,
         entity_id: &str,
     ) -> Result<ClassificationResult, TopemsError> {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
         let model_row = sqlx::query(
             "SELECT id, name, entity_type, categories, algorithm, accuracy, status
              FROM master_data.mdm_classification_models
@@ -612,7 +612,7 @@ impl AutoClassifier {
         .bind(&result.category)
         .bind(result.confidence)
         .bind(&alternatives)
-        .bind(&result.classified_at)
+        .bind(result.classified_at.to_rfc3339())
         .bind(tenant_id)
         .execute(db)
         .await?;
@@ -625,7 +625,7 @@ impl AutoClassifier {
         entity_id: &str,
     ) -> Result<Option<ClassificationResult>, TopemsError> {
         let row = sqlx::query(
-            "SELECT id, entity_id, category, confidence, alternatives, classified_at
+            "SELECT id, entity_id, category, confidence, alternatives, classified_at::timestamptz AS classified_at
              FROM master_data.mdm_classification_results WHERE entity_id = $1 LIMIT 1",
         )
         .bind(entity_id)
@@ -668,7 +668,7 @@ impl AutoClassifier {
              SET category = COALESCE($1, category),
                  confidence = LEAST(CASE WHEN $2 THEN confidence + 0.05 ELSE confidence END, 0.99)
              WHERE id = $3 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
-             RETURNING id, entity_id, category, confidence, alternatives, classified_at",
+             RETURNING id, entity_id, category, confidence, alternatives, classified_at::timestamptz AS classified_at",
         )
         .bind(&corrected_category)
         .bind(approved)
@@ -1437,15 +1437,15 @@ pub async fn update_classifier_rules(
 // ==================== DB 映射层（接真表） ====================
 
 const AI_SUGGESTION_COLS: &str =
-    "id, type, entity_type, entity_id, description, confidence, action, created_at";
+    "id, type, entity_type, entity_id, description, confidence, action, created_at::timestamptz AS created_at";
 const AI_MODEL_COLS: &str = "id, name, version, domain, accuracy, last_trained, features";
 const MATCH_RULE_COLS: &str = "id, name, rule_type, field_config, threshold, enabled";
 const MATCH_RESULT_COLS: &str =
-    "id, source_id, target_id, match_score, match_type, confidence, status, matched_at";
+    "id, source_id, target_id, match_score, match_type, confidence, status, matched_at::timestamptz AS matched_at";
 const CLASSIFICATION_MODEL_COLS: &str =
     "id, name, entity_type, categories, algorithm, accuracy, status";
 const CLASSIFICATION_RESULT_COLS: &str =
-    "id, entity_id, category, confidence, alternatives, classified_at";
+    "id, entity_id, category, confidence, alternatives, classified_at::timestamptz AS classified_at";
 
 fn ai_suggestion_from_row(r: &sqlx::postgres::PgRow) -> GovernanceSuggestionV59 {
     GovernanceSuggestionV59 {

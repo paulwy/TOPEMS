@@ -28,10 +28,11 @@ fn node_from_row(row: &sqlx::postgres::PgRow) -> LineageNode {
         entity_id: row.get::<String, _>("entity_id"),
         name: row.get::<String, _>("name"),
         description: row.get::<Option<String>, _>("description"),
-        created_at: row.get::<String, _>("created_at"),
+        created_at: row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
     }
 }
-const NODE_COLS: &str = "id, entity_type, entity_id, name, description, created_at";
+const NODE_COLS: &str =
+    "id, entity_type, entity_id, name, description, created_at::timestamptz AS created_at";
 
 fn edge_from_row(row: &sqlx::postgres::PgRow) -> LineageEdge {
     LineageEdge {
@@ -69,11 +70,11 @@ fn event_from_row(row: &sqlx::postgres::PgRow) -> ChangeEvent {
         change_type: change_type_from_str(&row.get::<String, _>("change_type")),
         old_value: row.get::<Option<serde_json::Value>, _>("old_value"),
         new_value: row.get::<Option<serde_json::Value>, _>("new_value"),
-        triggered_at: row.get::<String, _>("triggered_at"),
+        triggered_at: row.get::<chrono::DateTime<chrono::Utc>, _>("triggered_at"),
     }
 }
 const EVENT_COLS: &str =
-    "id, entity_type, entity_id, change_type, old_value, new_value, triggered_at";
+    "id, entity_type, entity_id, change_type, old_value, new_value, triggered_at::timestamptz AS triggered_at";
 
 fn rule_from_row(row: &sqlx::postgres::PgRow) -> PropagationRule {
     PropagationRule {
@@ -95,11 +96,11 @@ fn log_from_row(row: &sqlx::postgres::PgRow) -> PropagationLog {
         target_entity_id: row.get::<String, _>("target_entity_id"),
         action: propagation_action_from_str(&row.get::<String, _>("action")),
         status: row.get::<String, _>("status"),
-        propagated_at: row.get::<String, _>("propagated_at"),
+        propagated_at: row.get::<chrono::DateTime<chrono::Utc>, _>("propagated_at"),
         rollback_id: row.get::<Option<String>, _>("rollback_id"),
     }
 }
-const LOG_COLS: &str = "id, change_event_id, rule_id, source_entity_id, target_entity_id, action, status, propagated_at, rollback_id";
+const LOG_COLS: &str = "id, change_event_id, rule_id, source_entity_id, target_entity_id, action, status, propagated_at::timestamptz AS propagated_at, rollback_id";
 
 // ==================== 数据血缘 ====================
 
@@ -119,7 +120,7 @@ pub struct LineageNode {
     pub entity_id: String,
     pub name: String,
     pub description: Option<String>,
-    pub created_at: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
@@ -202,7 +203,7 @@ pub struct ImpactAnalysisResult {
     pub risk_level: RiskLevel,
     pub chain_reactions: Vec<ChainReaction>,
     pub recommendations: Vec<String>,
-    pub analyzed_at: String,
+    pub analyzed_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
@@ -226,7 +227,7 @@ pub struct ChangeEvent {
     pub change_type: ChangeType,
     pub old_value: Option<serde_json::Value>,
     pub new_value: Option<serde_json::Value>,
-    pub triggered_at: String,
+    pub triggered_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
@@ -256,7 +257,7 @@ pub struct PropagationLog {
     pub target_entity_id: String,
     pub action: PropagationAction,
     pub status: String,
-    pub propagated_at: String,
+    pub propagated_at: chrono::DateTime<chrono::Utc>,
     pub rollback_id: Option<String>,
 }
 
@@ -353,7 +354,7 @@ impl LineageTracker {
         edge_type: EdgeType,
         transformation_description: Option<String>,
     ) -> Result<(LineageNode, LineageNode, LineageEdge), TopemsError> {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
 
         // K1：真表权威——节点按 (entity_type, entity_id) 查复用，缺则 INSERT。
         let from_node = sqlx::query(sqlx::AssertSqlSafe(format!(
@@ -413,7 +414,7 @@ impl LineageTracker {
             .bind(&node.entity_id)
             .bind(&node.name)
             .bind(&node.description)
-            .bind(&node.created_at)
+            .bind(node.created_at.to_rfc3339())
             .execute(db)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入血缘节点失败: {e}")))?;
@@ -760,7 +761,7 @@ impl ImpactAnalyzer {
             risk_level,
             chain_reactions,
             recommendations,
-            analyzed_at: chrono::Utc::now().to_rfc3339(),
+            analyzed_at: chrono::Utc::now(),
         };
 
         // K1：结果写真表（JSONB 全量承载）。
@@ -772,7 +773,7 @@ impl ImpactAnalyzer {
         )
         .bind(&result.id)
         .bind(&data)
-        .bind(&result.analyzed_at)
+        .bind(result.analyzed_at.to_rfc3339())
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入影响分析失败: {e}")))?;
@@ -941,7 +942,7 @@ impl ChangePropagator {
         old_value: Option<serde_json::Value>,
         new_value: Option<serde_json::Value>,
     ) -> Result<(ChangeEvent, Vec<PropagationLog>), TopemsError> {
-        let now = chrono::Utc::now().to_rfc3339();
+        let now = chrono::Utc::now();
 
         let event = ChangeEvent {
             id: uuid::Uuid::new_v4().to_string(),
@@ -992,7 +993,7 @@ impl ChangePropagator {
         .bind(change_type_to_str(&event.change_type))
         .bind(&event.old_value)
         .bind(&event.new_value)
-        .bind(&event.triggered_at)
+        .bind(event.triggered_at.to_rfc3339())
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入变更事件失败: {e}")))?;
@@ -1010,7 +1011,7 @@ impl ChangePropagator {
             .bind(&log.target_entity_id)
             .bind(propagation_action_to_str(&log.action))
             .bind(&log.status)
-            .bind(&log.propagated_at)
+            .bind(log.propagated_at.to_rfc3339())
             .execute(db)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入传播日志失败: {e}")))?;
@@ -1983,7 +1984,9 @@ mod tests {
             entity_id: "SAP".to_string(),
             name: "SAP".to_string(),
             description: Some("desc".to_string()),
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
         };
         let json = serde_json::to_string(&node).unwrap();
         let back: LineageNode = serde_json::from_str(&json).unwrap();
@@ -2084,7 +2087,9 @@ mod tests {
             entity_id: "E001".to_string(),
             name: "name".to_string(),
             description: None,
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
         };
         let r = ImpactAnalysisResult {
             id: "ia-1".to_string(),
@@ -2094,7 +2099,9 @@ mod tests {
             risk_level: RiskLevel::Low,
             chain_reactions: vec![],
             recommendations: vec!["rec".to_string()],
-            analyzed_at: "2024-01-01T00:00:00Z".to_string(),
+            analyzed_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
         };
         let json = serde_json::to_string(&r).unwrap();
         let back: ImpactAnalysisResult = serde_json::from_str(&json).unwrap();
@@ -2129,7 +2136,9 @@ mod tests {
             change_type: ChangeType::Create,
             old_value: None,
             new_value: Some(serde_json::json!({"k": "v"})),
-            triggered_at: "2024-01-01T00:00:00Z".to_string(),
+            triggered_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
         };
         let json = serde_json::to_string(&e).unwrap();
         let back: ChangeEvent = serde_json::from_str(&json).unwrap();
@@ -2162,7 +2171,9 @@ mod tests {
             target_entity_id: "order:*".to_string(),
             action: PropagationAction::SyncNotify,
             status: "propagated".to_string(),
-            propagated_at: "2024-01-01T00:00:00Z".to_string(),
+            propagated_at: chrono::DateTime::parse_from_rfc3339("2024-01-01T00:00:00Z")
+                .unwrap()
+                .with_timezone(&chrono::Utc),
             rollback_id: None,
         };
         let json = serde_json::to_string(&l).unwrap();
@@ -2181,7 +2192,7 @@ mod tests {
             entity_id: "eid".to_string(),
             name: "n".to_string(),
             description: None,
-            created_at: "t".to_string(),
+            created_at: chrono::Utc::now(),
         };
         let cloned = n.clone();
         assert_eq!(n.id, cloned.id);
