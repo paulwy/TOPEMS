@@ -23,7 +23,7 @@ use topems_ai::services::{
 };
 use topems_shared_ai::ai_client::{AIModelConfig, AIProviderType};
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
-use topems_shared_core::error::{Result, TopemsError};
+use topems_shared_core::error::Result;
 
 pub struct AiRealModule {
     routes: Router,
