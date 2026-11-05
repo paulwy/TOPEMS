@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import styles from './MasterVersioningPage.module.css';
+import { formatDateTime } from '@/utils/date';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { GitBranch, History, ShieldCheck, ClipboardList, KeyRound } from 'lucide-react';
@@ -254,7 +255,9 @@ const MasterVersioningPage: React.FC = () => {
                     />
                   </TableCell>
                   <TableCell>{String(r.changed_by)}</TableCell>
-                  <TableCell sx={cellStyle}>{String(r.changed_at || '-')}</TableCell>
+                  <TableCell sx={cellStyle}>
+                    {r.changed_at ? formatDateTime(r.changed_at as string) : '-'}
+                  </TableCell>
                   <TableCell sx={cellStyle}>{String(r.summary || '-')}</TableCell>
                 </TableRow>
               ))}
@@ -391,7 +394,9 @@ const MasterVersioningPage: React.FC = () => {
                     label={String(r.action)}
                   />
                 </TableCell>
-                <TableCell sx={cellStyle}>{String(r.granted_at || '-')}</TableCell>
+                <TableCell sx={cellStyle}>
+                  {r.granted_at ? formatDateTime(r.granted_at as string) : '-'}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

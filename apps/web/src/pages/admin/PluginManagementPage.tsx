@@ -47,6 +47,7 @@ import { type Plugin, fetchAllPluginInfo, PLUGIN_REGISTRY } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
 import { extractErrorMessage } from '@/utils/errors';
 import { pluginSchema } from '@/schemas/admin';
+import { formatDateTime } from '@/utils/date';
 
 interface MarketplacePlugin {
   code: string;
@@ -856,7 +857,9 @@ const PluginManagementPage: React.FC = () => {
                                 </Box>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                   <Calendar size={12} />
-                                  <Typography variant='caption'>{plugin.published_at}</Typography>
+                                  <Typography variant='caption'>
+                                    {formatDateTime(plugin.published_at)}
+                                  </Typography>
                                 </Box>
                               </Stack>
                             </Box>

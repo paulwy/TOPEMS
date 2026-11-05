@@ -47,6 +47,7 @@ import { connectionApi } from '@/api/integration/connection';
 import { designTokens } from '@/theme/tokens';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { formatDateTime } from '@/utils/date';
 
 type SyncStatus = 'success' | 'syncing' | 'error' | 'pending';
 
@@ -94,7 +95,7 @@ const toTask = (c: ErpConnectionRow): SyncTask => ({
   name: c.name,
   type: c.type,
   status: toSyncStatus(c.status, c.isactive),
-  lastSyncTime: c.last_sync_at ? c.last_sync_at.slice(0, 19).replace('T', ' ') : '-',
+  lastSyncTime: c.last_sync_at ? formatDateTime(c.last_sync_at) : '-',
   records: 0,
 });
 

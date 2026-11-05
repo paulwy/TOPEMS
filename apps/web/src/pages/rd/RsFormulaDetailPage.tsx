@@ -25,6 +25,7 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
+import { formatDateTime } from '@/utils/date';
 
 const RsFormulaDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -229,7 +230,7 @@ const RsFormulaDetailPage: React.FC = () => {
                 label={v.version}
                 size='small'
               />
-              <Typography variant='caption'>{v.created_at}</Typography>
+              <Typography variant='caption'>{formatDateTime(v.created_at)}</Typography>
             </Stack>
             <Typography
               variant='body2'

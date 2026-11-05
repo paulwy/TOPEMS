@@ -10,6 +10,7 @@ import { DataTable, PageContainer } from '@/components/common';
 import StatusTimeline from '@/components/common/StatusTimeline';
 import { DetailPageTemplate } from '@/components/templates';
 import i18n from '@/i18n';
+import { formatDate, formatDateTime } from '@/utils/date';
 
 interface InboundItemRow {
   id: string;
@@ -203,7 +204,7 @@ export default function WmsInboundDetailPage() {
           v0: order.created_by ?? 'system',
         }),
         status: 'completed',
-        time: order.created_at?.slice(0, 19).replace('T', ' '),
+        time: order.created_at ? formatDateTime(order.created_at) : undefined,
       },
       {
         id: 'approved',
@@ -212,7 +213,7 @@ export default function WmsInboundDetailPage() {
           ? i18n.t('wms:wms_inbound_detail_page.v0_0', { v0: order.approved_by })
           : undefined,
         status: order.approved_at ? 'completed' : 'pending',
-        time: order.approved_at?.slice(0, 19).replace('T', ' '),
+        time: order.approved_at ? formatDateTime(order.approved_at) : undefined,
       },
     ];
   }, [order]);
@@ -248,7 +249,7 @@ export default function WmsInboundDetailPage() {
         emptyState={{ show: !loading && !order }}
         title={i18n.t('wms:wms_inbound_detail_page.v0_3', { v0: order.order_number })}
         subtitle={i18n.t('wms:wms_inbound_detail_page.v0_2', {
-          v0: order.created_at.slice(0, 10),
+          v0: formatDate(order.created_at),
         })}
         detailItemName={order.order_number}
         headerContent={
@@ -268,7 +269,7 @@ export default function WmsInboundDetailPage() {
         infoCard={{
           title: order.order_number,
           subtitle: i18n.t('wms:wms_inbound_detail_page.v0_2', {
-            v0: order.created_at.slice(0, 10),
+            v0: formatDate(order.created_at),
           }),
           tags: [order.warehouse_name ?? '-', order.supplier_name ?? '-'],
           stats: [

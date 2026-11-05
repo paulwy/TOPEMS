@@ -6,7 +6,31 @@ import {
   isTomorrow,
   getWeekStart,
   getWeekEnd,
+  formatDate,
+  formatDateTime,
+  parseDate,
 } from '@/utils/date';
+
+describe('时区解析与本地渲染（Asia/Shanghai）', () => {
+  it('带 Z 的 RFC3339 解析为同一瞬间并渲染本地时间', () => {
+    expect(formatDateTime('2026-11-02T06:08:54.035752Z')).toBe('2026-11-02 14:08:54');
+    expect(parseDate('2026-11-02T06:08:54.035752Z')?.getTime()).toBe(
+      new Date('2026-11-02T06:08:54.035752Z').getTime()
+    );
+  });
+
+  it('带 +08:00 偏移的 RFC3339 渲染为同一本地时间', () => {
+    expect(formatDateTime('2026-11-02T14:08:54.035752+08:00')).toBe('2026-11-02 14:08:54');
+  });
+
+  it('纯日期字符串仅用于日期格式', () => {
+    expect(formatDate('2026-11-02', 'YYYY-MM-DD')).toBe('2026-11-02');
+  });
+
+  it('旧的无时区空格格式按本地时间解析，显示不变', () => {
+    expect(formatDateTime('2026-11-02 14:08:54')).toBe('2026-11-02 14:08:54');
+  });
+});
 
 describe('getWeekday', () => {
   it('should return 0 for Sunday', () => {

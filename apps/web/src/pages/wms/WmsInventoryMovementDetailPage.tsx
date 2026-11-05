@@ -8,6 +8,7 @@ import { WmsStatusBadge } from '@/components/wms';
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate } from '@/components/templates';
 import i18n from '@/i18n';
+import { formatDate, formatDateTime } from '@/utils/date';
 
 // 扩展类型：包含页面需要但 API 可能不返回的字段
 type ExtendedMovement = InventoryMovement & {
@@ -177,7 +178,7 @@ function OperationTimeline({ move }: { move: ExtendedMovement }) {
             variant='caption'
             color='text.secondary'
           >
-            {e.t?.slice(0, 19).replace('T', ' ')}
+            {e.t ? formatDateTime(e.t) : ''}
           </Typography>
           <Typography
             variant='body2'
@@ -281,7 +282,7 @@ export default function WmsInventoryMovementDetailPage() {
         subtitle={i18n.t('wms:wms_inventory_movement_detail_page.k4', {
           v0: i18n.t('pages.wms_inventory_movement_detail_page.k1'),
           v1: move.movement_type ?? i18n.t('pages.wms_inventory_movement_detail_page.k0'),
-          v2: move.created_at.slice(0, 10),
+          v2: formatDate(move.created_at),
         })}
         detailItemName={move.movement_number ?? move.movement_no}
         headerContent={
@@ -297,7 +298,7 @@ export default function WmsInventoryMovementDetailPage() {
           subtitle: i18n.t('wms:wms_inventory_movement_detail_page.k4', {
             v0: i18n.t('pages.wms_inventory_movement_detail_page.k1'),
             v1: move.movement_type ?? i18n.t('pages.wms_inventory_movement_detail_page.k0'),
-            v2: move.created_at.slice(0, 10),
+            v2: formatDate(move.created_at),
           }),
           tags: [move.warehouse_name ?? '-'],
           stats: [

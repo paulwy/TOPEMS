@@ -29,6 +29,7 @@ import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction } from '@/components/templates/list/types';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
+import { formatDateTime } from '@/utils/date';
 
 const RUN_STATUS_COLOR: Record<
   AutomationRunStatus,
@@ -143,12 +144,16 @@ export const AutomationRunsPage: React.FC = () => {
       {
         id: 'started_at',
         label: t('automation.automation_runs_page.k15'),
-        render: (run) => <Typography variant='body2'>{run.started_at}</Typography>,
+        render: (run) => <Typography variant='body2'>{formatDateTime(run.started_at)}</Typography>,
       },
       {
         id: 'finished_at',
         label: t('automation.automation_runs_page.k16'),
-        render: (run) => <Typography variant='body2'>{run.finished_at ?? '-'}</Typography>,
+        render: (run) => (
+          <Typography variant='body2'>
+            {run.finished_at ? formatDateTime(run.finished_at) : '-'}
+          </Typography>
+        ),
       },
       {
         id: 'duration_ms',

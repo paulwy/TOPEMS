@@ -18,6 +18,7 @@ import { workflowDefinitionSchema } from '@/schemas/workflow';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import i18n from '@/i18n';
 import { localizedName } from '@/utils/i18n';
+import { formatDate } from '@/utils/date';
 // ============ 类型定义 ============
 interface WorkflowDefinition {
   id: string;
@@ -62,8 +63,8 @@ function toDefinition(w: FlowWorkflowRow): WorkflowDefinition {
     description: w.description ?? '',
     node_count: Array.isArray(w.definition?.nodes) ? w.definition.nodes.length : 0,
     instance_count: 0,
-    created_at: w.created_at?.slice(0, 10) ?? '',
-    updated_at: w.updated_at?.slice(0, 10) ?? '',
+    created_at: w.created_at ? formatDate(w.created_at) : '',
+    updated_at: w.updated_at ? formatDate(w.updated_at) : '',
     created_by: w.created_by ?? '',
   };
 }

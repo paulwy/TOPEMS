@@ -8,6 +8,7 @@ import { WmsStatusBadge, WmsFSMActionButtons } from '@/components/wms';
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate } from '@/components/templates';
 import i18n from '@/i18n';
+import { formatDate, formatDateTime } from '@/utils/date';
 
 // 扩展类型：包含页面需要但 API 可能不返回的字段
 type ExtendedTransfer = TransferOrder & {
@@ -122,11 +123,11 @@ function TransferDetails({ transfer }: { transfer: ExtendedTransfer }) {
   const items = [
     {
       label: i18n.t('pages.wms_transfer_detail_page.k4'),
-      value: transfer.shipped_at?.slice(0, 19).replace('T', ' ') ?? '-',
+      value: transfer.shipped_at ? formatDateTime(transfer.shipped_at) : '-',
     },
     {
       label: i18n.t('pages.wms_transfer_detail_page.k5'),
-      value: transfer.received_at?.slice(0, 19).replace('T', ' ') ?? '-',
+      value: transfer.received_at ? formatDateTime(transfer.received_at) : '-',
     },
     {
       label: i18n.t('pages.wms_transfer_detail_page.k6'),
@@ -256,7 +257,7 @@ export default function WmsTransferDetailPage() {
         emptyState={{ show: !loading && !transfer }}
         title={i18n.t('wms:wms_transfer_detail_page.v0_4', { v0: transfer.order_number })}
         subtitle={i18n.t('wms:wms_transfer_detail_page.v0_3', {
-          v0: transfer.created_at.slice(0, 10),
+          v0: formatDate(transfer.created_at),
         })}
         detailItemName={transfer.order_number}
         headerContent={
@@ -276,7 +277,7 @@ export default function WmsTransferDetailPage() {
         infoCard={{
           title: transfer.order_number,
           subtitle: i18n.t('wms:wms_transfer_detail_page.v0_3', {
-            v0: transfer.created_at.slice(0, 10),
+            v0: formatDate(transfer.created_at),
           }),
           tags: [transfer.from_warehouse_name ?? '-', transfer.to_warehouse_name ?? '-'],
           stats: [

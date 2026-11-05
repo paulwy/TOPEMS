@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import styles from './MasterGovernancePage.module.css';
+import { formatDateTime } from '@/utils/date';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Gauge, ListChecks, Workflow, Boxes } from 'lucide-react';
@@ -246,7 +247,8 @@ const MasterGovernancePage: React.FC = () => {
             variant='body2'
             sx={cellStyle}
           >
-            {String(h.assessed_at || '-')} · {String(h.level)} · {String(h.overall_score)}
+            {h.assessed_at ? formatDateTime(h.assessed_at as string) : '-'} · {String(h.level)} ·{' '}
+            {String(h.overall_score)}
           </Typography>
         ))}
       </Card>
@@ -328,7 +330,9 @@ const MasterGovernancePage: React.FC = () => {
                 <TableCell>{String(w.name)}</TableCell>
                 <TableCell sx={cellStyle}>{String(w.description || '-')}</TableCell>
                 <TableCell>{statusChip(w.status)}</TableCell>
-                <TableCell sx={cellStyle}>{String(w.created_at || '-')}</TableCell>
+                <TableCell sx={cellStyle}>
+                  {w.created_at ? formatDateTime(w.created_at as string) : '-'}
+                </TableCell>
                 <TableCell>
                   <Stack
                     direction='row'
@@ -389,7 +393,9 @@ const MasterGovernancePage: React.FC = () => {
                   <TableCell>{String(pr.owner)}</TableCell>
                   <TableCell sx={cellStyle}>{String(pr.domain)}</TableCell>
                   <TableCell>{statusChip(pr.status)}</TableCell>
-                  <TableCell sx={cellStyle}>{String(pr.updated_at || '-')}</TableCell>
+                  <TableCell sx={cellStyle}>
+                    {pr.updated_at ? formatDateTime(pr.updated_at as string) : '-'}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import styles from './AiKnowledgeBasePage.module.css';
+import { formatDate } from '@/utils/date';
 import {
   Box,
   Typography,
@@ -217,7 +218,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
           title: d.title,
           type: d.doc_type || 'manual',
           size: d.file_size != null ? formatFileSize(d.file_size) : '-',
-          updatedAt: (d.updated_at ?? '').slice(0, 10),
+          updatedAt: d.updated_at ? formatDate(d.updated_at) : '',
         }));
         setDocumentList(items.length > 0 ? items : sampleDocuments);
       })
