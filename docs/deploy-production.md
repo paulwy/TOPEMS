@@ -348,6 +348,22 @@ bash scripts/deploy/production-deploy.sh --migrate-only --env .env.production \
 | 账本落后 | 不检查 | 账本最大版本 < 基线锚点 → 中止（提示先恢复基线） |
 | 定向/无守卫 pending | 会被重放 | 硬拒绝；仅 `--allow-pending` 显式放行并告警 |
 
+**空库初始化工具（`scripts/deploy/setup-db.sh`）的新增守卫**：该工具只用于全新库初始化。`--init-schema` 执行前会探测目标库，任一命中即 exit 1 中止：
+
+- 库名/host 命中 prod 特征（`topems_prod` / `192.168.110.115` / `xingzhai`）——不可绕过，`--force-nonempty` 也不放行；
+- 已存在 `public._sqlx_migrations` 成功记录，或存在任何非系统 schema 的业务表（`relkind='r'`）；
+- 探测失败（连接/权限/5s `statement_timeout` 超时）同样 exit 1（fail-closed，不默认放行）。
+
+```bash
+# 全新库初始化（唯一适用场景）
+bash scripts/deploy/setup-db.sh --create-user --create-db --init-schema --password '<PWD>'
+
+# 仅本地/测试库、确认风险后显式绕过（打印 ⚠️ WARN；prod 不可用）
+bash scripts/deploy/setup-db.sh --init-schema --force-nonempty
+```
+
+已有库（含 prod）升级一律走上面的 `apply-forward.sh --prod`（基线 + 前向迁移），不要用 `setup-db.sh` 重放整链。
+
 ***
 
 ## 5. 运维与备份
