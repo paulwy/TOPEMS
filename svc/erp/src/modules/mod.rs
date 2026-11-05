@@ -27,7 +27,6 @@ pub mod customer_calc;
 pub mod dashboard;
 pub mod db_structure;
 pub mod dict;
-pub mod dictionaries;
 pub mod documents;
 pub mod erp_plugin;
 pub mod finance;
@@ -144,7 +143,6 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(addressbook::create_routes())
         .merge(asset::create_routes())
         .merge(asset_category::create_routes())
-        .merge(dictionaries::create_routes())
         .merge(audit::create_routes())
         .merge(bank_account::create_routes())
         .merge(consolidation::create_routes())

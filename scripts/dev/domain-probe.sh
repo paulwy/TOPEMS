@@ -154,7 +154,7 @@ except Exception: print(-2)' 2>/dev/null)"
 done
 
 # [P3] write-path probe (system hardening): POST spot check - 422/400/404/409 = OK (validation/route), 5xx = FAIL
-for WR in "api/crm/tags" "api/gis/devices" "api/erp/dictionaries"; do
+for WR in "api/crm/tags" "api/gis/devices"; do
   WC="$(curl -s -m 8 -o /dev/null -w '%{http_code}' -X POST "$BASE/$WR" -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{}' 2>/dev/null)"
   case "$WC" in
     422|400|404|409) echo "WRITE_OK $WR -> $WC (validation/route, no 5xx)" ;;
