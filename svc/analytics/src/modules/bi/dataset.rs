@@ -12,6 +12,7 @@ use tracing::{info, warn};
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::get_tenant_id_from_claims;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::{ApiResponse, ListResponse};
 
@@ -111,30 +112,34 @@ pub fn create_routes() -> Router<AppState> {
 )]
 pub async fn list_datasets(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ListDatasetQuery>,
 ) -> ApiResponse<ListResponse<Dataset>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
-    let query = "SELECT id, name, description, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at FROM bi.analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid OR is_public = true) ORDER BY created_at DESC LIMIT $4 OFFSET $5";
+    let query = "SELECT id, name, description, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at FROM bi.analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) AND (tenant_id IS NULL OR $6::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $6::uuid OR is_public = true) ORDER BY created_at DESC LIMIT $4 OFFSET $5";
     let result = sqlx::query_as::<_, Dataset>(sqlx::AssertSqlSafe(query))
         .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
         .bind(params.status.as_deref())
         .bind(params.data_source_id)
         .bind(page_size)
         .bind(offset)
+        .bind(tenant_id)
         .fetch_all(&state.pool)
         .await;
 
     match result {
         Ok(datasets) => {
             let total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM bi.analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) AND (current_setting('app.tenant_id', true) IS NULL OR current_setting('app.tenant_id', true) = '' OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000' OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid OR is_public = true)",
+                "SELECT COUNT(*) FROM bi.analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) AND (tenant_id IS NULL OR $4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid OR is_public = true)",
             )
             .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
             .bind(params.status.as_deref())
             .bind(params.data_source_id)
+            .bind(tenant_id)
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);

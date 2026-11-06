@@ -4,11 +4,13 @@
 //! - 独立部署 main.rs 与模块化单体（svc/server）均调用本函数，避免路由清单重复维护
 
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     routing::{delete, get, post, put},
     Router,
 };
 
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::get_tenant_id_from_claims;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_core::response::ApiResponse;
 
@@ -754,7 +756,10 @@ fn activity_display_name(action: &str) -> String {
     responses((status = 200, description = "Reports center dashboard statistics"))
 )]
 #[allow(clippy::as_conversions)]
-pub async fn reports_center_stats(State(state): State<AppState>) -> ApiResponse<serde_json::Value> {
+pub async fn reports_center_stats(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> ApiResponse<serde_json::Value> {
     // Dashboard summary stats — live counts from the real IAM/BI tables via the
     // service search_path (bi, public): core_users / core_roles / core_permissions
     // (public schema). The previously referenced iam_* / org_* tables do not exist
@@ -767,15 +772,15 @@ pub async fn reports_center_stats(State(state): State<AppState>) -> ApiResponse<
         i64, i64, i64, i64, i64,
     )>(r#"
         SELECT
-            (SELECT COUNT(*) FROM core_users WHERE tenant_id = current_setting('app.tenant_id', true)::uuid OR current_setting('app.tenant_id', true) = '') AS total_users,
+            (SELECT COUNT(*) FROM core_users WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)) AS total_users,
             (SELECT COUNT(*) FROM core_users WHERE last_login_at >= NOW() - INTERVAL '30 days'
-               AND (tenant_id = current_setting('app.tenant_id', true)::uuid OR current_setting('app.tenant_id', true) = '')) AS active_users,
-            (SELECT COUNT(*) FROM core_roles WHERE tenant_id = current_setting('app.tenant_id', true)::uuid OR current_setting('app.tenant_id', true) = '') AS total_roles,
+               AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)) AS active_users,
+            (SELECT COUNT(*) FROM core_roles WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)) AS total_roles,
             -- core_permissions is a shared global table (public.core_permissions has NO tenant_id column)
             (SELECT COUNT(*) FROM core_permissions) AS total_permissions,
             (SELECT COUNT(*) FROM public.audit_logs WHERE created_at >= NOW() - INTERVAL '7 days'
-               AND (tenant_id = current_setting('app.tenant_id', true)::uuid OR current_setting('app.tenant_id', true) = '')) AS recent_activities
-    "#).fetch_one(&state.pool).await.unwrap_or((0, 0, 0, 0, 0));
+               AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)) AS recent_activities
+    "#).bind(get_tenant_id_from_claims(&claims)).fetch_one(&state.pool).await.unwrap_or((0, 0, 0, 0, 0));
 
     // 组织计数（BE-02 方案 A）：hrm 组织数据对 analytics（schema=bi，boundary allow=[]）不可裸引，
     // 由 bi.org_stats 物化视图提供快照（companies/departments/employees 排除软删 + refreshed_at）。
@@ -810,17 +815,18 @@ pub async fn reports_center_stats(State(state): State<AppState>) -> ApiResponse<
                 months.month AS month,
                 (SELECT COUNT(*) FROM core_users u
                    WHERE to_char(u.created_at, 'YYYY-MM') = months.month
-                     AND (u.tenant_id = current_setting('app.tenant_id', true)::uuid
-                          OR current_setting('app.tenant_id', true) = '')) AS new_users,
+                     AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+                          OR u.tenant_id = $1::uuid)) AS new_users,
                 (SELECT COUNT(*) FROM core_users u
                    WHERE u.last_login_at IS NOT NULL
                      AND to_char(u.last_login_at, 'YYYY-MM') = months.month
-                     AND (u.tenant_id = current_setting('app.tenant_id', true)::uuid
-                          OR current_setting('app.tenant_id', true) = '')) AS active_users
+                     AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+                          OR u.tenant_id = $1::uuid)) AS active_users
             FROM months
             ORDER BY months.month
             "#,
         )
+        .bind(get_tenant_id_from_claims(&claims))
         .fetch_all(&state.pool)
         .await
         .unwrap_or_default()
@@ -851,13 +857,14 @@ pub async fn reports_center_stats(State(state): State<AppState>) -> ApiResponse<
             LEFT JOIN core_user_roles ur ON ur.role_id = r.id
             LEFT JOIN core_users u ON u.id = ur.user_id AND u.deleted_at IS NULL
             WHERE r.deleted_at IS NULL
-              AND (r.tenant_id = current_setting('app.tenant_id', true)::uuid
-                   OR current_setting('app.tenant_id', true) = '')
+              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+                   OR r.tenant_id = $1::uuid)
             GROUP BY r.name
             ORDER BY user_count DESC, r.name
             LIMIT 10
             "#,
         )
+        .bind(get_tenant_id_from_claims(&claims))
         .fetch_all(&state.pool)
         .await
         .unwrap_or_default()
@@ -881,13 +888,14 @@ pub async fn reports_center_stats(State(state): State<AppState>) -> ApiResponse<
             SELECT action AS activity, COUNT(*) AS cnt
             FROM public.audit_logs
             WHERE created_at >= NOW() - INTERVAL '30 days'
-              AND (tenant_id = current_setting('app.tenant_id', true)::uuid
-                   OR current_setting('app.tenant_id', true) = '')
+              AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid
+                   OR tenant_id = $1::uuid)
             GROUP BY action
             ORDER BY cnt DESC, action
             LIMIT 10
             "#,
         )
+        .bind(get_tenant_id_from_claims(&claims))
         .fetch_all(&state.pool)
         .await
         .unwrap_or_default()
