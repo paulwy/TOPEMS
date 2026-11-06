@@ -1,6 +1,8 @@
+use crate::scope::Db;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
+use topems_shared_auth::middleware::tenant::current_request_tenant;
 use uuid::Uuid;
 
 /// 审计日志 status 标准值集合（与 DB `ck_audit_logs_status_standard` 保持同步）。
@@ -133,12 +135,36 @@ impl CreateAuditLogRequest {
 
 #[derive(Debug, Clone)]
 pub struct AuditLogService {
-    pool: PgPool,
+    db: Db,
 }
 
 impl AuditLogService {
+    /// 构造时把池包装成 `Db`（search_path=`public, shared`）。
+    ///
+    /// 写入/查询都走显式作用域：有请求上下文用 `scope*/scope_read*`，
+    /// 无上下文（后台任务/脚本）用 `scope_system*/scope_read_system*`，
+    /// 不再依赖裸池连接上的偶然 GUC。
     pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+        Self {
+            db: Db::new(pool, "public, shared"),
+        }
+    }
+
+    /// 有请求上下文用租户作用域，否则用显式系统作用域（nil + system=on）。
+    async fn write_scope(&self) -> Result<crate::scope::ScopedTxn<'_>, sqlx::Error> {
+        if current_request_tenant().is_some() {
+            self.db.scope().await
+        } else {
+            self.db.scope_system().await
+        }
+    }
+
+    async fn read_scope(&self) -> Result<crate::scope::ScopedTxn<'_>, sqlx::Error> {
+        if current_request_tenant().is_some() {
+            self.db.scope_read().await
+        } else {
+            self.db.scope_read_system().await
+        }
     }
 
     pub async fn create_audit_log(
@@ -152,8 +178,15 @@ impl AuditLogService {
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok());
 
+        // 请求上下文内未显式指定租户时，落当前请求租户（而非 nil），
+        // 否则收口后的 WITH CHECK 会拒绝普通租户的审计写入。
+        let effective_tenant = request
+            .tenant_id
+            .or_else(|| current_request_tenant().map(|ctx| ctx.tenant));
+
         // status: VARCHAR(20) 直接写字符串（"success"/"failed" 等）
         // ip_address: VARCHAR(45) 直接写 TEXT，不再强制 INET cast
+        let mut scope = self.write_scope().await?;
         let record = sqlx::query_as::<_, AuditLogRecord>(
             r#"
             INSERT INTO public.audit_logs (
@@ -181,7 +214,7 @@ impl AuditLogService {
                 created_at
             "#,
         )
-        .bind(request.tenant_id)
+        .bind(effective_tenant)
         .bind(&request.action)
         .bind(&request.entity_type)
         .bind(request.entity_id)
@@ -194,9 +227,10 @@ impl AuditLogService {
         .bind(request.error_message.as_deref())
         .bind(request.ip_address.as_deref())
         .bind(request.user_agent.as_deref())
-        .fetch_one(&self.pool)
+        .fetch_one(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(record.into_audit_log())
     }
 
@@ -299,7 +333,9 @@ impl AuditLogService {
 
         q = q.bind(limit).bind(offset);
 
-        let records = q.fetch_all(&self.pool).await?;
+        let mut scope = self.read_scope().await?;
+        let records = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
         Ok(records.into_iter().map(|r| r.into_audit_log()).collect())
     }
 }
@@ -369,7 +405,9 @@ impl AuditLogRecord {
 
 #[derive(Debug, Clone)]
 pub struct SchemaAwareAuditLogService {
+    /// 仅用于 `ensure_table` 的 DDL 自愈（DDL 不受行策略约束）。
     pool: PgPool,
+    db: Db,
     /// Optional schema prefix. `None` means the service expects the
     /// connection search_path to be set (used by wms / erp which write bare
     /// `audit_logs` table names). `Some("plugin_crm")` means write
@@ -379,9 +417,32 @@ pub struct SchemaAwareAuditLogService {
 
 impl SchemaAwareAuditLogService {
     pub fn new(pool: &PgPool, schema_prefix: Option<&str>) -> Self {
+        // 显式前缀直接拼 search_path；无前缀沿用进程 env `SEARCH_PATH`
+        // （bare `audit_logs` 由 search_path 解析，不能改写成 public）。
+        let search_path = match schema_prefix {
+            Some(p) => format!("{p}, public, shared"),
+            None => std::env::var("SEARCH_PATH").unwrap_or_else(|_| "public, shared".to_string()),
+        };
         Self {
             pool: pool.clone(),
+            db: Db::new(pool.clone(), search_path),
             schema_prefix: schema_prefix.map(|s| s.to_string()),
+        }
+    }
+
+    async fn write_scope(&self) -> Result<crate::scope::ScopedTxn<'_>, sqlx::Error> {
+        if current_request_tenant().is_some() {
+            self.db.scope().await
+        } else {
+            self.db.scope_system().await
+        }
+    }
+
+    async fn read_scope(&self) -> Result<crate::scope::ScopedTxn<'_>, sqlx::Error> {
+        if current_request_tenant().is_some() {
+            self.db.scope_read().await
+        } else {
+            self.db.scope_read_system().await
         }
     }
 
@@ -458,6 +519,9 @@ impl SchemaAwareAuditLogService {
             .user_id
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok());
+        let effective_tenant = request
+            .tenant_id
+            .or_else(|| current_request_tenant().map(|ctx| ctx.tenant));
 
         let sql = format!(
             r#"
@@ -473,8 +537,9 @@ impl SchemaAwareAuditLogService {
             "#,
             tbl = tbl,
         );
+        let mut scope = self.write_scope().await?;
         let record = sqlx::query_as::<_, AuditLogRecord>(sqlx::AssertSqlSafe(sql))
-            .bind(request.tenant_id)
+            .bind(effective_tenant)
             .bind(&request.action)
             .bind(&request.entity_type)
             .bind(request.entity_id)
@@ -487,9 +552,10 @@ impl SchemaAwareAuditLogService {
             .bind(request.error_message.as_deref())
             .bind(request.ip_address.as_deref())
             .bind(request.user_agent.as_deref())
-            .fetch_one(&self.pool)
+            .fetch_one(&mut scope)
             .await?;
 
+        scope.commit().await?;
         Ok(record.into_audit_log())
     }
 
@@ -601,7 +667,9 @@ impl SchemaAwareAuditLogService {
             }
         }
         q = q.bind(limit).bind(offset);
-        let records = q.fetch_all(&self.pool).await?;
+        let mut scope = self.read_scope().await?;
+        let records = q.fetch_all(&mut scope).await?;
+        scope.commit().await?;
         Ok(records.into_iter().map(|r| r.into_audit_log()).collect())
     }
 }

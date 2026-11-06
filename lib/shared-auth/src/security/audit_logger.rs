@@ -29,6 +29,7 @@ pub struct AuditLogData {
     pub error_message: Option<String>,
     pub ip_address: Option<String>,
     pub user_agent: Option<String>,
+    pub tenant_id: Option<Uuid>,
 }
 
 impl AuditLogData {
@@ -46,7 +47,13 @@ impl AuditLogData {
             error_message: None,
             ip_address: None,
             user_agent: None,
+            tenant_id: None,
         }
+    }
+
+    pub fn with_tenant_id(mut self, tenant_id: Option<Uuid>) -> Self {
+        self.tenant_id = tenant_id;
+        self
     }
 
     pub fn with_entity_id(mut self, entity_id: Uuid) -> Self {
@@ -301,6 +308,15 @@ fn extract_user_info(req: &Request<Body>) -> (Option<String>, Option<String>) {
     }
 }
 
+/// 从已解析的 Claims 扩展提取租户；没有（外层中间件早于认证）返回 None，
+/// 由 `save_audit_log` 落系统 nil 租户。
+fn extract_tenant_id(req: &Request<Body>) -> Option<Uuid> {
+    req.extensions()
+        .get::<Claims>()
+        .and_then(|claims| claims.tenant_id.as_deref())
+        .and_then(|s| Uuid::parse_str(s).ok())
+}
+
 fn extract_client_ip(req: &Request<Body>) -> Option<String> {
     req.headers()
         .get("X-Forwarded-For")
@@ -346,31 +362,52 @@ async fn save_audit_log(
 ) -> Result<(), sqlx::Error> {
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
+    // 中间件在响应后写审计，认证中间件的 task-local 已结束；
+    // 这里显式使用系统通道（nil UUID + system=on）并显式绑定行租户，
+    // 避免裸连接无 GUC 时被 RLS `WITH CHECK` 拒绝（静默丢审计）。
+    let tenant_id = request.tenant_id.unwrap_or_else(Uuid::nil);
 
+    let mut tx = db_pool.begin().await?;
     sqlx::query(
+        "SELECT set_config('app.tenant_id', $1, true), \
+                set_config('app.rls_system', 'on', true)",
+    )
+    .bind(tenant_id.to_string())
+    .execute(&mut *tx)
+    .await?;
+
+    let result = sqlx::query(
         r#"INSERT INTO public.audit_logs (
-            id, action, entity_type, entity_id, entity_ids,
+            id, tenant_id, action, entity_type, entity_id, entity_ids,
             user_id, user_name, request_details, response_details,
             status, error_message, ip_address, user_agent, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)"#,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)"#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&request.action)
     .bind(&request.entity_type)
     .bind(request.entity_id)
-    .bind(&request.entity_ids)
-    .bind(&request.user_id)
-    .bind(&request.user_name)
-    .bind(&request.request_details)
-    .bind(&request.response_details)
+    .bind(request.entity_ids)
+    .bind(request.user_id)
+    .bind(request.user_name)
+    .bind(request.request_details)
+    .bind(request.response_details)
     .bind(&request.status)
-    .bind(&request.error_message)
-    .bind(&request.ip_address)
-    .bind(&request.user_agent)
+    .bind(request.error_message)
+    .bind(request.ip_address)
+    .bind(request.user_agent)
     .bind(now)
-    .execute(db_pool)
-    .await?;
-    Ok(())
+    .execute(&mut *tx)
+    .await;
+
+    match result {
+        Ok(_) => tx.commit().await,
+        Err(e) => {
+            let _ = tx.rollback().await;
+            Err(e)
+        }
+    }
 }
 
 pub async fn audit_logger_middleware(
@@ -392,6 +429,7 @@ pub async fn audit_logger_middleware(
     let (user_id, user_name) = extract_user_info(&req);
     let ip_address = extract_client_ip(&req);
     let user_agent = extract_user_agent(&req);
+    let tenant_id = extract_tenant_id(&req);
     let (entity_type, action) = extract_entity_info(&path, &method);
     let entity_id = extract_entity_id(&path);
 
@@ -460,12 +498,16 @@ pub async fn audit_logger_middleware(
         .with_user(user_id.unwrap_or_default(), user_name.unwrap_or_default())
         .with_request_details(request_details.unwrap_or(json!({})))
         .with_response_details(response_details.unwrap_or(json!({})))
-        .with_request_info(ip_address, user_agent);
+        .with_request_info(ip_address, user_agent)
+        .with_tenant_id(tenant_id);
 
-    if let Some(msg) = error_message {
-        let _ = save_audit_log(&middleware.db_pool, audit_request.with_error(msg)).await;
+    let result = if let Some(msg) = error_message {
+        save_audit_log(&middleware.db_pool, audit_request.with_error(msg)).await
     } else {
-        let _ = save_audit_log(&middleware.db_pool, audit_request).await;
+        save_audit_log(&middleware.db_pool, audit_request).await
+    };
+    if let Err(e) = result {
+        tracing::error!("请求审计写入失败（不静默丢弃）: {}", e);
     }
 
     Response::from_parts(response_parts, response_body)
