@@ -634,10 +634,11 @@ pub async fn mark_as_read(
         r#"
         SELECT EXISTS(
             SELECT 1 FROM public.core_emails e
-            JOIN core_users u_to ON e.to_email = u_to.email
+            JOIN iam.users u_to ON e.to_email = u_to.email
             WHERE e.id = $1 AND u_to.id = $2
         )
-        "#
+        "#,
+        "iam"
     ))
     .bind(email_id)
     .bind(user_id)
