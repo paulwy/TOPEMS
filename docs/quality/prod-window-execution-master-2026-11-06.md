@@ -357,33 +357,143 @@ DICT_WINDOW_CONFIRM=yes scripts/db/dict-replay-window.sh smoke \
 
 | 项 | 值 |
 | --- | --- |
-| 窗口日期/时间 | |
-| 操作人 / 复核人 | |
-| 工单/审批号 | |
-| prod 主机 / 库 | |
-| anchor（窗口前） | |
-| pending 迁移清单 | |
-| 备份时间戳（9 表） | |
-| 备份 SHA256 登记 | |
-| 恢复验证结果（9/9） | |
-| 字典回灌 pre→post | 7/24 → 77/397 |
-| legacy 4 类分项 | / / / |
-| 回填 audit pre→upd | |
-| 回填 rfm pre→upd | |
-| A 组 refs pre→del | |
-| A 组 returns pre→del | |
-| A 组 risks pre→del | |
-| A 组 monitors pre→del | |
-| B 组 audit pre→marked | |
-| customers 总数（前/后） | |
-| audit 总数（前/后） | |
-| audit …0099（前/后） | |
-| 迁移结果 | |
-| 策略数 9/9 = 1 | |
-| FORCE RLS 9/9 | |
-| 冒烟结果 | |
-| 是否触发回滚 / 路径 | |
-| 窗口结束时间 | |
+| 窗口日期/时间 | 2026-11-06 17:05:26 – 17:18:31（Asia/Shanghai） |
+| 操作人 / 复核人 | Trae（用户授权执行）/ 待复核 |
+| 工单/审批号 | `window-2026-11-06-dict-rls` |
+| prod 主机 / 库 | `xingzhai@192.168.110.115` / `topems_prod`（SSH 执行物模式） |
+| anchor（窗口前） | `20261105235700` |
+| pending 迁移清单 | 19 条；应用 2 条（08、13），其余 **17 条 defer 保持 pending** |
+| 备份时间戳（9 表） | `20261106_170526` |
+| 备份 SHA256 登记 | 9/9 已登记（明细见 9.1.2） |
+| 恢复验证结果（9/9） | **9/9 行数 + 整行指纹一致**（scratch `topems_prod_verify_20261106`） |
+| 字典回灌 pre→post | `7/24 → 77/397` |
+| legacy 4 类分项 | `department_type 4 / education 4 / marital_status 4 / position_level 5 = 17` |
+| 回填 audit pre→upd | `17 → 17` |
+| 回填 rfm pre→upd | `300 → 300` |
+| A 组 refs pre→del | `121 → 121`（表内总数 `158 → 37`） |
+| A 组 returns pre→del | `19 → 19` |
+| A 组 risks pre→del | `20 → 20` |
+| A 组 monitors pre→del | `38 → 38` |
+| B 组 audit pre→marked | `64 → 64`（`marked_total=64`） |
+| customers 总数（前/后） | `302 / 302` |
+| audit 总数（前/后） | `362 / 362`（部署前后均未变） |
+| audit …0099（前/后） | `271 / 271` |
+| 迁移结果 | 08、13 成功；账本 `576 → 578`；checksum `ce4327e2…`、`12f73d5b…` |
+| 策略数 9/9 = 1 | 通过（`policy_ok` 9 张全部打印） |
+| FORCE RLS 9/9 | 通过（9 张 `relrowsecurity=t / relforcerowsecurity=t`） |
+| 冒烟结果 | 4/4 PASS（超管 77、普通租户 0、通知 200、补测 0001=77） |
+| 是否触发回滚 / 路径 | 未触发；首次 s4 因脚本 fail-open 零 DDL，修正后重跑成功 |
+| 窗口结束时间 | 2026-11-06 17:18:31（冒烟完成），17:19 收尾 |
+
+---
+
+### 9.1 本次执行证据（2026-11-06）
+
+#### 9.1.1 发布基线
+
+| 项 | 值 |
+| --- | --- |
+| 发布 commit | `bb886972bae0a85fb795e8e989b52381d46c9800`（main，工作区干净） |
+| 前序基线 | `c240b32fa`；batch25/26 经 `6816f37d3`、`6bf524b2f` 已包含 |
+| 服务二进制 | `aa9b73f7d748ba832610ce580ac08d87e92e8e9a3e1f5e3ad655e6255eb11b0b`（在 `bb886972b` 重建，哈希不变＝仅脚本改动） |
+| seed 二进制 | `61b7f9013137dbcaad8940cb3a56eaee23ac693cd0502ae6568c413838f2bf18` |
+| 执行物投递 | 9 件投递到 `/tmp/topems_window_20261106`，逐件 sha256 与本地一致 |
+
+#### 9.1.2 备份与恢复（ts `20261106_170526`）
+
+- 主机本地 `pg_dump -Fc --enable-row-security` + CSV，取回 `/Users/air/topems/backups/`，远端/本地 sha256 一致后落 `.dump.sha256`。
+
+| 表 | 行数 | dump sha256（前 16） |
+| --- | --- | --- |
+| `core_dict_types` | 7 | `973c32c77677b469` |
+| `core_dict_items` | 24 | `608d0d5adf8ff3f9` |
+| `crm_master_data_refs` | 158 | `bb5dff9949b6bd9d` |
+| `returns` | 19 | `9118210d03d92581` |
+| `customers` | 302 | `8c81bd43325c383a` |
+| `rfm_results` | 300 | `8ba0c20a5c37612b` |
+| `qa_ehs_risks` | 20 | `150d044f7d0279da` |
+| `qa_ehs_environment_monitors` | 38 | `41872fc1dbe905ae` |
+| `audit_logs` | 362 | `24fa5390f7d53152` |
+
+恢复验证：scratch `topems_prod_verify_20261106` 逐表比对，**9/9 行数 + 指纹一致**。
+
+#### 9.1.3 账本前/后
+
+| 项 | 前 | 后 |
+| --- | --- | --- |
+| `max(version)` | `20261105235700` | `20261107000013` |
+| 账本总行数 | 576 | 578 |
+| `> anchor` 行 | 0 | 2（`08`、`13`） |
+
+仍 pending 的 17 条（全部 defer，未应用）：
+
+`20261105235800`、`20261106000000`（`tz_unify`，**未应用**）、`20261106000001`、
+`20261107000001`、`20261107000002`、`20261107000003`、`20261107000004`、`20261107000005`、
+`20261107000006`、`20261107000007`、`20261107000009`、`20261107000010`、`20261107000011`、
+`20261107000012`、`20261107000014`、`20261107000015`、`20261107000016`。
+
+#### 9.1.4 字典与 RLS
+
+- 字典 `77` 类 / `397` 项；标准类 `73/380`；legacy `4/17`；G1–G6 全 OK。
+- 回填 `audit 17/17`、`rfm 300/300`；回填后 `audit` 租户分布：`NULL 28 / …0000 317 / …0001 17`。
+- A 组 `refs 121`、`returns 19`、`risks 20`、`monitors 38`；非目标 `customers 302`、`audit 362`、合成租户 `271` 前后不变。
+- B 组 `target=64 / updated=64 / marked_total=64`。
+- 9 张表：`relrowsecurity=t`、`relforcerowsecurity=t`、`count(policy)=1`。
+- `SET ROLE topems_prod` 实测：`dict_0001=77`、`dict_1111=0`、`audit_1111=0`、`refs_1111=0`。
+
+#### 9.1.5 部署与健康
+
+| 项 | 值 |
+| --- | --- |
+| 旧二进制 sha256 | `c73c0dae4706f8273b604904b1a193b3e48737b151afa5240768d67c864530f3` |
+| 旧二进制留档 | `~/topems/bin/topems-server.sha256`、`~/topems/bin/topems-server.bak-20261106` |
+| 新二进制 sha256 | `aa9b73f7…11b0b`（远端与本地一致） |
+| 重启方式 | `launchctl kickstart -k gui/501/com.topems.server`，新 pid `59426`，`last exit code = 0` |
+| `/health` | 200 `{"data":"healthy"}` |
+| `/api/server/health` | 200 `{"status":"ok","modules":31}` |
+| `/api/server/ready` | 200 `{"status":"ready","degraded_modules":[]}`（旧二进制为 404，部署后出现） |
+| `/ready` | 200 `text/html`（SPA） |
+
+#### 9.1.6 冒烟（4 项）
+
+| 检查 | 结果 |
+| --- | --- |
+| 超管字典列表 | HTTP 200，`total=77`，legacy 4 类均在 |
+| 普通租户可见性 | HTTP 200，`total=0`，无系统字典泄露（tenant `1111…`） |
+| 通知创建 | HTTP 200，`id=0582bd96-076a-437f-8244-52254c343dd8`，落库 `public.core_notifications` 1 行 |
+| 补测：tenant `…0001` | HTTP 200，`total=77`（自有字典可见） |
+
+> 说明：prod 只有默认租户 `…0001`，无第二个真实租户，故隔离冒烟用非 `0001` 的探针租户
+> `11111111-…`（`sub` 为真实员工 `wangy`），并补测 `0001` 自身可见性。
+
+#### 9.1.7 分段耗时（最终成功路径）
+
+| 段 | ms |
+| --- | --- |
+| artifacts（发布基线 + 投递） | 6079 |
+| preflight | 497 |
+| backup | 13300 |
+| verify-backup | 2366 |
+| s1 字典（回灌 + 清理 + 核对） | 3247 |
+| s2 回填 | 372 |
+| s3 清理 / 标记 | 432 |
+| s4 迁移 + 收紧 + 后核对 + RLS | 6567 |
+| 冒烟（4 项，含补测） | 约 900 |
+
+墙钟：`17:05:26` 开窗 → `17:18:31` 冒烟完成，约 **13 分钟**（含首次 s4 失败诊断与修正）。
+
+#### 9.1.8 audit_logs 来源判断
+
+`362 → 362`（未新增）；`…0001 17` 来自回填；`…0000 317` 中含 B 组标记 64 行；
+`NULL 28` 与合成租户 `271` 未动。本次窗口未产生新的审计行，冒烟通知亦未写 audit。
+
+#### 9.1.9 首次 s4 失败与修正（已留档）
+
+- 现象：`apply-forward` 报“无待应用迁移”，账本零新增；`postcheck` 因 `audit_logs` 仍有 2 条历史策略而失败。
+- 根因：SSH 模式下 `while read` 循环内的远端 `psql` 吞掉进程替换 stdin，扫描第 1 条即结束（fail-open）。
+- 证据：`release_attempt1_skipped.txt`、`postcheck_attempt1_failed.txt`；本地实测 611 个文件只迭代 1 次。
+- 修正：账本查询加 `</dev/null`；新增 fail-closed 断言（`--only` 版本必须被扫描到），提交 `bb886972b`；
+  在 prod 主机临时库 `topems_window_ssh_drill` 走真实 SSH 路径验证后重跑 s4，成功（库已 DROP）。
 
 ---
 
@@ -404,6 +514,7 @@ DICT_WINDOW_CONFIRM=yes scripts/db/dict-replay-window.sh smoke \
 | 11 | 旧入口会把 anchor 之后全部 pending 推到 prod（含 `tz_unify`） | 窗口污染 | `--only` 严格白名单 + `--defer` 显式声明；清单外 pending 在任何 DDL 前 exit 1；负例已验证 |
 | 12 | prod 主机仓库停在 `0c11b5b90`，直接借主机代码会跑旧逻辑 | 执行物与发布基线不一致 | 从干净 HEAD 构建 `seed_dict_replay`，与 SQL/迁移一起投递并逐件 sha256 校验；不使用主机仓库代码 |
 | 13 | 本地提交基于落后 4 个提交的 origin/main，pre-push `stale-base` 拦截 | 无法推送，且远端已重编号迁移 14–16 | `git pull --rebase origin main` 后重跑演练与门禁；defer 清单补 `14/15/16`，白名单仍为 `08+13` |
+| 14 | **prod 窗口实测**：SSH 模式下 `while read` 循环内的远端 `psql` 吞掉进程替换 stdin，pending 扫描第 1 条即结束 | `--only` 白名单未被扫描到 → 报“无待应用迁移”，迁移被静默跳过（fail-open，零 DDL） | 账本查询加 `</dev/null`；新增 fail-closed 断言（`--only` 每个版本必须被扫描到，否则 exit 1）；提交 `bb886972b`；本地演练不覆盖 SSH stdin 行为，需真实主机路径验证 |
 
 ---
 
