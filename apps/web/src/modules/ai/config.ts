@@ -177,7 +177,7 @@ const aiModelSettingsRoute: RouteConfigV2<AiModelSettingsPageProps> = {
   titleKey: 'ai.nav.ai-settings',
   template: 'settings',
   group: 'setting',
-  requiredPermissions: ['ai:dashboard:admin', 'ai:dashboard:write'],
+  requiredPermissions: ['ai:dashboard:admin'],
   action: 'admin',
 };
 

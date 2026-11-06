@@ -169,7 +169,7 @@ const reportBuilderRoute: RouteConfigV2<ReportBuilderPageProps> = {
   title: i18n.t('bi.nav.bi-report-builder'),
   titleKey: 'bi.nav.bi-report-builder',
   code: 'bi-report-builder',
-  requiredPermissions: ['bi:report:write', 'bi:dashboard:write'],
+  requiredPermissions: ['bi:report:write'],
   action: 'write',
   template: 'form',
   group: 'analytics',

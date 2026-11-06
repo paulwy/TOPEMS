@@ -100,7 +100,7 @@ const workflowDesignerRoute: RouteConfigV2<WorkflowDesignerPageProps> = {
   titleKey: 'workflow.nav.workflow-designer',
   template: 'form',
   group: 'process',
-  requiredPermissions: ['workflow:definition:write', 'workflow:dashboard:write'],
+  requiredPermissions: ['workflow:definition:write'],
   action: 'write',
 };
 

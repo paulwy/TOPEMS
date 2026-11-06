@@ -215,7 +215,7 @@ const crmRoutes: RouteConfigV2[] = [
     titleKey: 'crm.nav.crm-customer-create',
     template: 'form',
     group: 'business',
-    requiredPermissions: ['crm:customer:create', 'crm:dashboard:write'],
+    requiredPermissions: ['crm:customer:create'],
     action: 'write',
   } as RouteConfigV2<CustomerCreatePageProps>,
   customerDetailRoute,

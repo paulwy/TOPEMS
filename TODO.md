@@ -2084,6 +2084,16 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.148 审计整改第二十五批：路由权限码缺口修复与测试污染排除（批 27，2026-11-07）
+
+- **核心发现（双重条件致死）**：全站 18 处「细码 AND `<域>:dashboard:write`」路由，实测 8 个域的 dashboard:write 中 **7 个无人持有**（唯一例外 lims），且 15 个细码中 **4 个无人持有**。实际效果：这些页面**除 superadmin（is_superuser 前置放行）外，admin 与全部域 manager 都进不去**。finance 已在批 26 修正，本批移除其余 17 处，残留 0。
+- **权限码缺口补齐**（迁移 `20261107000021`，幂等 + ROLLBACK）：新建 `finance:account:read`（依据 `schemas/admin/account.ts:114` 的 permissionResource 拼接消费，DB 仅有 create/update/delete），授权 admin/finance_manager/superadmin；补齐 4 个「码存在但无人持有」的路由细码授权（`admin:tenant:write`、`rd:project:write`、`rd:experiment:write`、`rd:formula:write`）→ admin + superadmin。首次 INSERT 1/3/8，二次全 0。`core_permissions` 1160 → 1164，`core_role_permissions` 2995 → 3015。
+- **路由可达性实测**：抽取全部 `requiredPermissions` 共 **379 个去重码**，DB 缺失 0；admin 直接未持有 12 项，其中 **10 项**由 `<模块>:admin` 通配（规则③）覆盖；**2 项真实缺口登记**：`admin:iam:delete`（仅 superadmin 持有，admin↔iam 等价规则未覆盖）、`pdm:drawing:read`（无人持有且无 `pdm:admin` 通配）。
+- **对账脚本排除测试文件**：`SKIP_MARKERS` 新增 `/__tests__/`、`.test.`、`.spec.`。新基线 fe 465 → **445**（-20）、fe_orphan 42 → **32**（-10）、db_only 557 → **570**、db 991 → **995**（+1 本批新建 + 3 并行会话 hrm:training_plan）。
+- **init 基线清理 15 行**：108 项 SQL-only 逐条核实（含 permissionResource 拼接消费复核）→ keep 1（`finance:budget:write` utoipa doc 引用）、special 1（`admin:iam:tenant` 非标准三段码）、复核保留 1（`finance:account:read` 已落库+拼接消费）、**init 声明可删 15 项**（counterparty/payable/template/analysis/cash/dictionary/workflow/integration 的 read/write + period:write，这些资源在 DB 中整体 0 码）、其余 90 项仅在历史 migration 中不处理。删后 SQL 声明 1102 → **1087**，SQL-only 108 → **92**，DB-only 保持 **0**。
+- **验证**：tsc 0；eslint 0；全量 vitest **621 files / 6639 passed / 1 skipped / EXIT 0**（-4 来自并行会话 `aca420437` 下线邮件模板链路，与本批无关）；迁移四件套 PASS；schema-defense drift 0；RLS PASS。
+- 产出：`docs/audit/P3-17_路由权限码缺口修复与测试污染排除_批27_执行记录_2026-11-07.md`、迁移 `20261107000021_route_permission_gaps_batch27.sql`、9 个模块 config 修正、`scripts/audit_permission_codes.py` SKIP_MARKERS、`database/init/03_init_permissions.sql` 删 15 行
+
 ## v1.147 审计整改第二十四批：对账口径改源与 finance 路由权限码修正（批 26，2026-11-06）
 
 - **对账脚本口径改源（本批核心）**：`scripts/audit_permission_codes.py` 的 `db` 集合从「扫描 `database/init` + `database/migrations` 的 SQL 声明」改为**读取 `public.core_permissions`（live DB）**；SQL 声明集独立输出为 `code_drift`（`sql_only_never_persisted` / `db_only_not_in_sql`）做漂移比对。连接串优先级 `--dsn` > `TOPEMS_AUDIT_DSN` > 内置本机默认；psql 不可用时回退 SQL 扫描并标注 `db_source: sql_fallback`。

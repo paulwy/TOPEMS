@@ -36,7 +36,12 @@ from typing import Dict, Iterable, List, Set, Tuple
 
 CODE_RE = re.compile(r"""['"]([a-z][a-z0-9_]+):([a-z][a-z0-9_]*):([a-z][a-z0-9_]*)['"]""")
 
-SKIP_MARKERS = ('/target/', '/node_modules/', '/dist/', '/.next/', '/__pycache__/')
+# 批27：排除测试文件——单测 mock 里的权限码字面量不是生产消费，计入基线会制造假 orphan
+# （批15 实测 +19/+7，批26 口径改源后 finance:account:read 即为此类）。
+SKIP_MARKERS = (
+    '/target/', '/node_modules/', '/dist/', '/.next/', '/__pycache__/',
+    '/__tests__/', '.test.', '.spec.',
+)
 
 
 def _iter_files(root: str, exts: Iterable[str]) -> Iterable[str]:
