@@ -1,7 +1,8 @@
 use axum::Extension;
 use axum::{
     extract::{Path, Query, State},
-    http::HeaderMap,
+    http::{HeaderMap, StatusCode},
+    response::{IntoResponse, Response},
     Json,
 };
 use sqlx::Row;
@@ -129,7 +130,7 @@ pub async fn send_notification(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SendNotificationRequest>,
-) -> Json<serde_json::Value> {
+) -> Response {
     tracing::info!(
         "Sending notification to user: {} by user: {}",
         req.user_id,
@@ -138,34 +139,46 @@ pub async fn send_notification(
 
     // 检查权限：管理员或超级管理员可以发送通知给任意用户
     if !claims.is_superuser && !claims.has_permission("notification:write") {
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "没有权限发送通知",
-            "data": null,
-            "code": 403
-        }));
+        return (
+            StatusCode::FORBIDDEN,
+            Json(serde_json::json!({
+                "success": false,
+                "message": "没有权限发送通知",
+                "data": null,
+                "code": 403
+            })),
+        )
+            .into_response();
     }
 
     let mut txn_guard = txn_arc.lock().await;
     let Some(txn) = txn_guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
-        return Json(serde_json::json!({
-            "success": false,
-            "message": "数据库事务不可用",
-            "data": null,
-            "code": 500
-        }));
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            })),
+        )
+            .into_response();
     };
     let mut scope = match db.scope_with(txn).await {
         Ok(scope) => scope,
         Err(e) => {
             tracing::error!("建立 RLS 事务作用域失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "数据库事务不可用",
-                "data": null,
-                "code": 500
-            }));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "success": false,
+                    "message": "数据库事务不可用",
+                    "data": null,
+                    "code": 500
+                })),
+            )
+                .into_response();
         }
     };
 
@@ -191,7 +204,7 @@ pub async fn send_notification(
     };
     let result = sqlx::query(
         only_own_schema_query!("public", r#"
-        INSERT INTO core_notifications (id, user_id, title, content, notification_type, priority, data, tenant_id, created_at)
+        INSERT INTO public.core_notifications (id, user_id, title, content, notification_type, priority, data, tenant_id, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
         RETURNING id, user_id, title, content, notification_type, is_read, priority, data, created_at, read_at
         "#),
@@ -233,14 +246,19 @@ pub async fn send_notification(
                 "message": "Notification sent successfully",
                 "data": notification
             }))
+            .into_response()
         }
         Err(e) => {
             tracing::error!("Failed to send notification: {}", e);
-            Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to send notification: {}", e),
-                "data": null
-            }))
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "success": false,
+                    "message": format!("Failed to send notification: {}", e),
+                    "data": null
+                })),
+            )
+                .into_response()
         }
     }
 }
@@ -358,7 +376,7 @@ pub async fn broadcast_notification(
         let id = Uuid::new_v4();
         let result = sqlx::query(
             only_own_schema_query!("public", r#"
-            INSERT INTO core_notifications (id, user_id, title, content, notification_type, priority, data, tenant_id, created_at)
+            INSERT INTO public.core_notifications (id, user_id, title, content, notification_type, priority, data, tenant_id, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
             "#),
         )
@@ -416,16 +434,20 @@ pub async fn create_notification(
     Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
-) -> Json<serde_json::Value> {
+) -> Response {
     tracing::info!("Creating notification via /notification/notifications");
     // 委托给 send_notification 处理逻辑
     let send_req = serde_json::from_value::<SendNotificationRequest>(req.clone());
     match send_req {
         Ok(r) => send_notification(State(db), Extension(txn_arc), Extension(claims), Json(r)).await,
-        Err(_) => Json(serde_json::json!({
-            "success": false,
-            "message": "Invalid notification request body"
-        })),
+        Err(_) => (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({
+                "success": false,
+                "message": "Invalid notification request body"
+            })),
+        )
+            .into_response(),
     }
 }
 
@@ -493,7 +515,7 @@ pub async fn list_notifications(
     let result = sqlx::query(
         only_own_schema_query!("public", r#"
         SELECT id, user_id, title, content, notification_type, is_read, priority, data, created_at, read_at
-        FROM core_notifications
+        FROM public.core_notifications
         WHERE user_id = $1
           AND ($2::boolean IS NULL OR is_read = $2)
           AND ($3::text IS NULL OR notification_type = $3)
@@ -532,7 +554,7 @@ pub async fn list_notifications(
             let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "public",
                 r#"
-                SELECT COUNT(*) FROM core_notifications
+                SELECT COUNT(*) FROM public.core_notifications
                 WHERE deleted_at IS NULL AND user_id = $1
                   AND ($2::boolean IS NULL OR is_read = $2)
                   AND ($3::text IS NULL OR notification_type = $3)
@@ -547,7 +569,7 @@ pub async fn list_notifications(
             let total = count_result.unwrap_or(0);
 
             let unread_result = sqlx::query_scalar::<_, i64>(
-                only_own_schema_query!("public", "SELECT COUNT(*) FROM core_notifications WHERE deleted_at IS NULL AND user_id = $1 AND is_read = FALSE"),
+                only_own_schema_query!("public", "SELECT COUNT(*) FROM public.core_notifications WHERE deleted_at IS NULL AND user_id = $1 AND is_read = FALSE"),
             )
             .bind(user_id)
             .fetch_one(&mut scope)
@@ -641,7 +663,7 @@ pub async fn mark_as_read(
 
     // 检查通知是否属于当前用户
     let belongs_to_user = sqlx::query_scalar::<_, bool>(
-        only_own_schema_query!("public", "SELECT EXISTS(SELECT 1 FROM core_notifications WHERE deleted_at IS NULL AND id = $1 AND user_id = $2)"),
+        only_own_schema_query!("public", "SELECT EXISTS(SELECT 1 FROM public.core_notifications WHERE deleted_at IS NULL AND id = $1 AND user_id = $2)"),
     )
     .bind(id)
     .bind(user_id)
@@ -661,7 +683,7 @@ pub async fn mark_as_read(
     let result = sqlx::query(only_own_schema_query!(
         "public",
         r#"
-        UPDATE core_notifications
+        UPDATE public.core_notifications
         SET is_read = TRUE, read_at = NOW()
         WHERE id = $1 AND user_id = $2
         "#
@@ -752,7 +774,7 @@ pub async fn mark_all_as_read(
     let result = sqlx::query(only_own_schema_query!(
         "public",
         r#"
-        UPDATE core_notifications
+        UPDATE public.core_notifications
         SET is_read = TRUE, read_at = NOW()
         WHERE user_id = $1 AND is_read = FALSE
         "#
@@ -868,7 +890,7 @@ pub async fn get_unread_count(
     };
 
     let result = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("public", "SELECT COUNT(*) FROM core_notifications WHERE deleted_at IS NULL AND user_id = $1 AND is_read = FALSE"),
+        only_own_schema_query!("public", "SELECT COUNT(*) FROM public.core_notifications WHERE deleted_at IS NULL AND user_id = $1 AND is_read = FALSE"),
     )
     .bind(user_id)
     .fetch_one(&mut scope)
@@ -950,7 +972,7 @@ pub async fn get_unread_notifications(
     let result = sqlx::query(
         only_own_schema_query!("public", r#"
         SELECT id, user_id, title, content, notification_type, is_read, priority, data, created_at, read_at
-        FROM core_notifications
+        FROM public.core_notifications
         WHERE user_id = $1
           AND is_read = FALSE
           AND ($2::text IS NULL OR notification_type = $2)
@@ -1065,7 +1087,7 @@ pub async fn delete_notification(
     };
 
     let belongs_to_user = sqlx::query_scalar::<_, bool>(
-        only_own_schema_query!("public", "SELECT EXISTS(SELECT 1 FROM core_notifications WHERE deleted_at IS NULL AND id = $1 AND user_id = $2)"),
+        only_own_schema_query!("public", "SELECT EXISTS(SELECT 1 FROM public.core_notifications WHERE deleted_at IS NULL AND id = $1 AND user_id = $2)"),
     )
     .bind(id)
     .bind(user_id)
@@ -1084,7 +1106,7 @@ pub async fn delete_notification(
 
     let result = sqlx::query(only_own_schema_query!(
         "public",
-        "UPDATE core_notifications SET deleted_at = NOW() WHERE id = $1 AND user_id = $2"
+        "UPDATE public.core_notifications SET deleted_at = NOW() WHERE id = $1 AND user_id = $2"
     ))
     .bind(id)
     .bind(user_id)
@@ -1168,7 +1190,7 @@ pub async fn delete_all_notifications(
 
     let result = sqlx::query(only_own_schema_query!(
         "public",
-        "UPDATE core_notifications SET deleted_at = NOW() WHERE user_id = $1"
+        "UPDATE public.core_notifications SET deleted_at = NOW() WHERE user_id = $1"
     ))
     .bind(user_id)
     .execute(&mut scope)
@@ -1254,7 +1276,7 @@ pub async fn get_notification(
     let result = sqlx::query(
         only_own_schema_query!("public", r#"
         SELECT id, user_id, title, content, notification_type, is_read, priority, data, created_at, read_at
-        FROM core_notifications
+        FROM public.core_notifications
         WHERE id = $1 AND user_id = $2
         "#),
     )
@@ -1362,7 +1384,7 @@ pub async fn mark_as_unread(
     };
 
     let belongs_to_user = sqlx::query_scalar::<_, bool>(
-        only_own_schema_query!("public", "SELECT EXISTS(SELECT 1 FROM core_notifications WHERE deleted_at IS NULL AND id = $1 AND user_id = $2)"),
+        only_own_schema_query!("public", "SELECT EXISTS(SELECT 1 FROM public.core_notifications WHERE deleted_at IS NULL AND id = $1 AND user_id = $2)"),
     )
     .bind(id)
     .bind(user_id)
@@ -1382,7 +1404,7 @@ pub async fn mark_as_unread(
     let result = sqlx::query(only_own_schema_query!(
         "public",
         r#"
-        UPDATE core_notifications
+        UPDATE public.core_notifications
         SET is_read = FALSE, read_at = NULL
         WHERE id = $1 AND user_id = $2
         "#
@@ -1486,7 +1508,7 @@ pub async fn bulk_mark_read(
     let result = sqlx::query(only_own_schema_query!(
         "public",
         r#"
-        UPDATE core_notifications
+        UPDATE public.core_notifications
         SET is_read = TRUE, read_at = NOW()
         WHERE user_id = $1 AND id = ANY($2)
         "#
@@ -1586,7 +1608,7 @@ pub async fn bulk_delete(
 
     let result = sqlx::query(only_own_schema_query!(
         "public",
-        "UPDATE core_notifications SET deleted_at = NOW() WHERE user_id = $1 AND id = ANY($2)"
+        "UPDATE public.core_notifications SET deleted_at = NOW() WHERE user_id = $1 AND id = ANY($2)"
     ))
     .bind(user_id)
     .bind(&payload.notification_ids)
@@ -1670,7 +1692,7 @@ pub async fn get_notification_stats(
         r#"
         SELECT notification_type, COUNT(*) as count,
                SUM(CASE WHEN is_read = FALSE THEN 1 ELSE 0 END) as unread_count
-        FROM core_notifications
+        FROM public.core_notifications
         WHERE user_id = $1
         GROUP BY notification_type
         ORDER BY count DESC
@@ -1695,7 +1717,7 @@ pub async fn get_notification_stats(
 
             let total_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "public",
-                "SELECT COUNT(*) FROM core_notifications WHERE deleted_at IS NULL AND user_id = $1"
+                "SELECT COUNT(*) FROM public.core_notifications WHERE deleted_at IS NULL AND user_id = $1"
             ))
             .bind(user_id)
             .fetch_one(&mut scope)
@@ -1703,7 +1725,7 @@ pub async fn get_notification_stats(
             .unwrap_or(0);
 
             let total_unread_result = sqlx::query_scalar::<_, i64>(
-                only_own_schema_query!("public", "SELECT COUNT(*) FROM core_notifications WHERE deleted_at IS NULL AND user_id = $1 AND is_read = FALSE"),
+                only_own_schema_query!("public", "SELECT COUNT(*) FROM public.core_notifications WHERE deleted_at IS NULL AND user_id = $1 AND is_read = FALSE"),
             )
             .bind(user_id)
             .fetch_one(&mut scope)
@@ -1793,7 +1815,7 @@ pub async fn archive_notification(
     };
 
     let belongs_to_user = sqlx::query_scalar::<_, bool>(
-        only_own_schema_query!("public", "SELECT EXISTS(SELECT 1 FROM core_notifications WHERE deleted_at IS NULL AND id = $1 AND user_id = $2)"),
+        only_own_schema_query!("public", "SELECT EXISTS(SELECT 1 FROM public.core_notifications WHERE deleted_at IS NULL AND id = $1 AND user_id = $2)"),
     )
     .bind(id)
     .bind(user_id)
@@ -1813,7 +1835,7 @@ pub async fn archive_notification(
     let result = sqlx::query(only_own_schema_query!(
         "public",
         r#"
-        UPDATE core_notifications
+        UPDATE public.core_notifications
         SET is_archived = TRUE
         WHERE id = $1 AND user_id = $2
         "#
@@ -1907,7 +1929,7 @@ pub async fn unarchive_notification(
     };
 
     let belongs_to_user = sqlx::query_scalar::<_, bool>(
-        only_own_schema_query!("public", "SELECT EXISTS(SELECT 1 FROM core_notifications WHERE deleted_at IS NULL AND id = $1 AND user_id = $2)"),
+        only_own_schema_query!("public", "SELECT EXISTS(SELECT 1 FROM public.core_notifications WHERE deleted_at IS NULL AND id = $1 AND user_id = $2)"),
     )
     .bind(id)
     .bind(user_id)
@@ -1927,7 +1949,7 @@ pub async fn unarchive_notification(
     let result = sqlx::query(only_own_schema_query!(
         "public",
         r#"
-        UPDATE core_notifications
+        UPDATE public.core_notifications
         SET is_archived = FALSE
         WHERE id = $1 AND user_id = $2
         "#
@@ -2023,7 +2045,7 @@ pub async fn list_archived_notifications(
     let result = sqlx::query(
         only_own_schema_query!("public", r#"
         SELECT id, user_id, title, content, notification_type, is_read, priority, data, created_at, read_at
-        FROM core_notifications
+        FROM public.core_notifications
         WHERE user_id = $1
           AND is_archived = TRUE
           AND ($2::boolean IS NULL OR is_read = $2)
@@ -2063,7 +2085,7 @@ pub async fn list_archived_notifications(
             let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "public",
                 r#"
-                SELECT COUNT(*) FROM core_notifications
+                SELECT COUNT(*) FROM public.core_notifications
                 WHERE deleted_at IS NULL AND user_id = $1
                   AND is_archived = TRUE
                   AND ($2::boolean IS NULL OR is_read = $2)
@@ -2196,7 +2218,7 @@ pub async fn run_auto_archive(
             "public",
             r#"
             WITH archived AS (
-                UPDATE core_notifications
+                UPDATE public.core_notifications
                 SET is_archived = true
                 WHERE created_at < NOW() - INTERVAL '30 days' AND is_archived = false AND deleted_at IS NULL
                 RETURNING 1
@@ -2215,7 +2237,7 @@ pub async fn run_auto_archive(
             "public",
             r#"
             WITH soft_deleted AS (
-                UPDATE core_notifications
+                UPDATE public.core_notifications
                 SET deleted_at = NOW()
                 WHERE created_at < NOW() - INTERVAL '30 days' AND deleted_at IS NULL
                 RETURNING 1
@@ -3502,7 +3524,7 @@ pub async fn bulk_mark_unread(
     }
     let result = sqlx::query(only_own_schema_query!(
         "public",
-        "UPDATE core_notifications SET is_read = FALSE, read_at = NULL WHERE user_id = $1 AND id = ANY($2)"
+        "UPDATE public.core_notifications SET is_read = FALSE, read_at = NULL WHERE user_id = $1 AND id = ANY($2)"
     ))
     .bind(user_id)
     .bind(&payload.ids)
@@ -3576,7 +3598,7 @@ pub async fn bulk_read_by_condition(
     let result = sqlx::query(only_own_schema_query!(
         "public",
         r#"
-        UPDATE core_notifications SET is_read = TRUE, read_at = NOW()
+        UPDATE public.core_notifications SET is_read = TRUE, read_at = NOW()
         WHERE user_id = $1
           AND ($2::uuid[] IS NULL OR id = ANY($2))
           AND ($3::int IS NULL OR created_at < NOW() - ($3 * INTERVAL '1 day'))
@@ -3657,7 +3679,7 @@ pub async fn bulk_delete_by_condition(
     let result = sqlx::query(only_own_schema_query!(
         "public",
         r#"
-        UPDATE core_notifications SET deleted_at = NOW()
+        UPDATE public.core_notifications SET deleted_at = NOW()
         WHERE user_id = $1
           AND ($2::uuid[] IS NULL OR id = ANY($2))
           AND ($3::int IS NULL OR created_at < NOW() - ($3 * INTERVAL '1 day'))
@@ -3740,7 +3762,7 @@ pub async fn bulk_archive(
     let result = sqlx::query(only_own_schema_query!(
         "public",
         r#"
-        UPDATE core_notifications SET is_archived = TRUE
+        UPDATE public.core_notifications SET is_archived = TRUE
         WHERE user_id = $1 AND is_archived = FALSE
           AND ($2::uuid[] IS NULL OR id = ANY($2))
           AND ($3::int IS NULL OR created_at < NOW() - ($3 * INTERVAL '1 day'))
@@ -3826,7 +3848,7 @@ pub async fn bulk_unarchive(
     }
     let result = sqlx::query(only_own_schema_query!(
         "public",
-        "UPDATE core_notifications SET is_archived = FALSE WHERE user_id = $1 AND id = ANY($2)"
+        "UPDATE public.core_notifications SET is_archived = FALSE WHERE user_id = $1 AND id = ANY($2)"
     ))
     .bind(user_id)
     .bind(&payload.ids)
@@ -6692,6 +6714,13 @@ mod tests {
         }
     }
 
+    async fn response_json(res: Response) -> serde_json::Value {
+        let bytes = axum::body::to_bytes(res.into_body(), usize::MAX)
+            .await
+            .expect("read response body");
+        serde_json::from_slice(&bytes).expect("response body json")
+    }
+
     fn sample_claims() -> Claims {
         Claims {
             sub: "550e8400-e29b-41d4-a716-446655440000".to_string(),
@@ -6805,7 +6834,8 @@ mod tests {
             Json(req),
         )
         .await;
-        let v = res.0;
+        assert_eq!(res.status(), StatusCode::FORBIDDEN);
+        let v = response_json(res).await;
         assert_eq!(v["success"], false);
         assert_eq!(v["code"], 403);
     }
@@ -6848,7 +6878,8 @@ mod tests {
             Json(bad),
         )
         .await;
-        let v = res.0;
+        assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+        let v = response_json(res).await;
         assert_eq!(v["success"], false);
     }
 

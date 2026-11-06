@@ -1,8 +1,9 @@
 //! Auto-generated schema defense for the communication service.
 //!
 //! - Service tag: `communication`
-//! - Schema: `public`
-//! - Tables: 9
+//! - Schema: `communication`
+//! - Tables: 3（core_notifications / core_emails / core_email_templates 的权威表在
+//!   `public`，不再由启动期 DDL 在 communication 重建副本）
 //!
 //! This module drives idempotent table creation and column reconciliation via
 //! `topems_shared_db::schema::run_schema_defense`, mirroring the pattern used by
@@ -24,24 +25,8 @@ const SERVICE_TAG: &str = "communication";
 /// of `(column_name, column_ddl)` pairs. The `id` primary-key column is
 /// intentionally excluded; it is created by `run_schema_migration_and_verify`.
 const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
-    // 1. core_notifications
-    (
-        "core_notifications",
-        &[
-            ("user_id", "UUID NOT NULL"),
-            ("title", "VARCHAR(256) NOT NULL"),
-            ("content", "TEXT"),
-            ("notification_type", "VARCHAR(64) DEFAULT 'info'"),
-            ("is_read", "BOOLEAN DEFAULT FALSE"),
-            ("priority", "INTEGER DEFAULT 0"),
-            ("data", "JSONB"),
-            ("created_at", "TIMESTAMP DEFAULT NOW()"),
-            ("read_at", "TIMESTAMP"),
-            ("is_archived", "BOOLEAN DEFAULT FALSE"),
-            ("deleted_at", "TIMESTAMP"),
-        ],
-    ),
-    // 2. core_notification_templates
+    // 1. core_notification_templates（注意：权威表在 public，本副本仍待清理，见
+    //    docs/quality/runtime-ddl-shadow-audit.md 高危清单第 3 项）
     (
         "core_notification_templates",
         &[
@@ -56,38 +41,7 @@ const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("deleted_at", "TIMESTAMP"),
         ],
     ),
-    // 6. core_emails
-    (
-        "core_emails",
-        &[
-            ("from_email", "VARCHAR(256) NOT NULL"),
-            ("to_email", "VARCHAR(256) NOT NULL"),
-            ("subject", "VARCHAR(512)"),
-            ("body", "TEXT"),
-            ("html_body", "TEXT"),
-            ("cc", "TEXT[]"),
-            ("bcc", "TEXT[]"),
-            ("is_read", "BOOLEAN DEFAULT FALSE"),
-            ("sent_at", "TIMESTAMP"),
-            ("read_at", "TIMESTAMP"),
-            ("deleted_at", "TIMESTAMP"),
-            ("created_at", "TIMESTAMP DEFAULT NOW()"),
-        ],
-    ),
-    // 7. core_email_templates
-    (
-        "core_email_templates",
-        &[
-            ("name", "VARCHAR(128) NOT NULL"),
-            ("subject_template", "VARCHAR(512) NOT NULL"),
-            ("body_template", "TEXT NOT NULL"),
-            ("description", "TEXT"),
-            ("created_at", "TIMESTAMP DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMP DEFAULT NOW()"),
-            ("deleted_at", "TIMESTAMP"),
-        ],
-    ),
-    // 8. core_location_messages
+    // 2. core_location_messages
     (
         "core_location_messages",
         &[
@@ -113,7 +67,7 @@ const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("created_at", "TIMESTAMP WITH TIME ZONE DEFAULT NOW()"),
         ],
     ),
-    // 9. core_geofences
+    // 3. core_geofences
     (
         "core_geofences",
         &[
@@ -188,19 +142,19 @@ mod tests {
     }
 
     #[test]
-    fn test_table_defs_count_is_six() {
-        assert_eq!(table_defs_for_test().len(), 6);
+    fn test_table_defs_count_is_three() {
+        assert_eq!(table_defs_for_test().len(), 3);
     }
 
     #[test]
     fn test_table_defs_names_known() {
         let names: Vec<&str> = table_defs_for_test().iter().map(|(n, _)| *n).collect();
-        assert!(names.contains(&"core_notifications"));
         assert!(names.contains(&"core_notification_templates"));
-        assert!(names.contains(&"core_emails"));
-        assert!(names.contains(&"core_email_templates"));
         assert!(names.contains(&"core_location_messages"));
         assert!(names.contains(&"core_geofences"));
+        assert!(!names.contains(&"core_notifications"));
+        assert!(!names.contains(&"core_emails"));
+        assert!(!names.contains(&"core_email_templates"));
     }
 
     #[test]
@@ -208,33 +162,6 @@ mod tests {
         for (name, cols) in table_defs_for_test() {
             assert!(!cols.is_empty(), "table {} should have columns", name);
         }
-    }
-
-    #[test]
-    fn test_core_notifications_has_expected_columns() {
-        let notif = table_defs_for_test()
-            .iter()
-            .find(|(n, _)| *n == "core_notifications")
-            .expect("core_notifications present");
-        let col_names: Vec<&str> = notif.1.iter().map(|(c, _)| *c).collect();
-        assert!(col_names.contains(&"user_id"));
-        assert!(col_names.contains(&"title"));
-        assert!(col_names.contains(&"is_read"));
-        assert!(col_names.contains(&"priority"));
-        assert!(col_names.contains(&"deleted_at"));
-    }
-
-    #[test]
-    fn test_core_emails_has_expected_columns() {
-        let emails = table_defs_for_test()
-            .iter()
-            .find(|(n, _)| *n == "core_emails")
-            .expect("core_emails present");
-        let col_names: Vec<&str> = emails.1.iter().map(|(c, _)| *c).collect();
-        assert!(col_names.contains(&"from_email"));
-        assert!(col_names.contains(&"to_email"));
-        assert!(col_names.contains(&"subject"));
-        assert!(col_names.contains(&"is_read"));
     }
 
     #[test]
