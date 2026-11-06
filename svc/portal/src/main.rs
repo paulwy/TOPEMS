@@ -29,7 +29,11 @@ fn get_uptime() -> u64 {
 #[tokio::main]
 #[allow(clippy::expect_used)]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "portal, public, shared");
+    // 与嵌入态（svc/server/src/modules/portal_real_module.rs）统一为 `public, portal`：
+    // 帮助中心 4 张表（core_faqs/core_guides/core_guide_lessons/core_guide_progress）
+    // 在 portal schema 的副本已废弃（prod 全 0 行），权威数据在 public（faq/guide 各 12 行）。
+    // 顺序必须是 public 在前，否则裸表名会解析到 portal 的空副本。
+    std::env::set_var("SEARCH_PATH", "public, portal");
 
     let config = ServiceConfig {
         name: "topems-portal",

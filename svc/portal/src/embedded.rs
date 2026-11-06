@@ -52,7 +52,7 @@ fn decrement_ws_connections() {
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 构建 Portal 业务路由（业务 API + GraphQL 聚合层 + 事件总线 + 遗留别名 + CORS）
 ///
-/// - `db`：portal schema 连接池（search_path=portal,public）
+/// - `db`：portal 连接池（search_path=`public, portal`，与独立部署一致；public 在前）
 /// - `migrate_pool`：DDL owner 连接池（帮助中心 / portal schema 防御建表用）
 /// - `event_publisher`：事件发布器
 /// - `public_routes`：调用方提供的健康/指标/首页等入口路由（无 state 依赖）；

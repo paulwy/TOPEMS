@@ -3,6 +3,11 @@ pub mod guide;
 
 use sqlx::PgPool;
 
+/// 帮助中心初始化数据。
+///
+/// ⚠️ 裸表名 `core_faqs` / `core_guides` 依赖 portal 的 search_path `public, portal`：
+/// portal schema 的副本已废弃（prod 全 0 行），权威写入目标是 `public`（prod faq/guide 各 12 行）。
+/// 禁止把 search_path 顺序改回 `portal, public`，否则种子数据会写进废弃副本。
 async fn seed_help_data(pool: &PgPool) -> Result<(), sqlx::Error> {
     let faq_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_faqs")
         .fetch_one(pool)

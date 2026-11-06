@@ -1,3 +1,9 @@
+//! 帮助中心 FAQ。
+//!
+//! ⚠️ 本文件所有裸表名 `core_faqs` 依赖 portal 的 search_path `public, portal`。
+//! `portal.core_faqs` 副本已废弃（prod 实测 0 行），权威数据在 `public.core_faqs`
+//! （prod 12 行）。禁止把 search_path 顺序改回 `portal, public`。
+
 use axum::{
     extract::{Path, Query, State},
     Json,

@@ -1,3 +1,9 @@
+//! 帮助中心指南 / 课程。
+//!
+//! ⚠️ 本文件裸表名 `core_guides` / `core_guide_lessons` 依赖 portal 的 search_path
+//! `public, portal`。portal schema 的副本已废弃（prod 全 0 行），权威数据在 public
+//! （prod `public.core_guides` 12 行）。禁止把 search_path 顺序改回 `portal, public`。
+
 use axum::{
     extract::{Path, Query, State},
     Json,
