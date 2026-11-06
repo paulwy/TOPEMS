@@ -241,6 +241,16 @@
 | 后台任务/事件处理无请求租户（hrm `event_handlers` 等） | B2（mes/wms/qms 后台）、B4（hrm）各自批次引入 `with_tenant` |
 | 8 个 BFF 模块未挂 `tenant_middleware`（ai/analytics/gis/integration/monitor/portal/ticket/unified-core） | B1（portal/monitor/unified-core）、B5（ai/integration/gis）、B6（analytics/ticket），随模块收敛补挂 |
 
+### 7.4 一次性例外登记（与 7.1 并列）
+
+| # | Commit | 范围 | 授权 | 理由 |
+|---|---|---|---|---|
+| 1 | `913d60c55` refactor(services): switch request pool fields to ScopedPool | B0 字段切换批次 | 用户显式授权，仅该 commit | `web-contract-smoke` 5 条失败经 HEAD 基线 8097 复跑完全相同，属本地 dev 栈缺失 |
+| 2 | `066388df8` merge: fix/datetime-rfc3339-unify into main | 本次 merge commit | 用户显式授权，仅该 commit | 同上 5 条失败（ERP HR 4 条 500、mobile workbench -1），非本次合并引入 |
+
+两次均为一次性例外：未改 lefthook 配置、未新增跳过脚本、未设 CI 跳过；不作为常规手段。
+后续改进项见 7.2（提交前探测依赖服务，缺失时对远端服务相关用例显式 SKIP）。
+
 ---
 
 ## 附录 A：逐文件盘点（329 个文件）
