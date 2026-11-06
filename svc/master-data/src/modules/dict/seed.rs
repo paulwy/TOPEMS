@@ -9,6 +9,11 @@ use sqlx::PgPool;
 ///
 /// 包含：通用状态、性别、是/否、用户类型、审批状态、优先级、货币、单位等
 ///
+/// **只做合并、不做删除**：二次执行时按 `code` / `(dict_type_id, code)` 走 `ON CONFLICT`，
+/// 不会清表、不会覆盖已有租户归属；4 个历史存量类（`department_type` / `education` /
+/// `marital_status` / `position_level`，见 [`super::legacy::LEGACY_DICT_TYPES`]）及其 items
+/// 必须原样保留。`legacy.rs` 的单元测试会静态断言本文件不出现删除字典行的 SQL。
+///
 /// 该函数不经过请求中间件，必须显式打开系统通道（`app.rls_system='on'`）：
 /// 紧收后的 `rls_tenant_isolation` 不再把"无租户 GUC / 全零 GUC"视为放行，
 /// 否则 seed 的读写都会被 RLS 拒绝或看不见既有行。
@@ -81,7 +86,7 @@ pub async fn seed_dict_data(pool: &PgPool) -> Result<(), sqlx::Error> {
 type DictItemDef = (&'static str, &'static str, Option<&'static str>);
 type DictTypeDef = (&'static str, &'static str, &'static [DictItemDef]);
 
-fn get_system_dict_definitions() -> Vec<DictTypeDef> {
+pub(crate) fn get_system_dict_definitions() -> Vec<DictTypeDef> {
     vec![
         // 通用状态
         (

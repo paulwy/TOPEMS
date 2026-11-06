@@ -984,6 +984,22 @@ USING (
 - 回灌与 `zz_b4_probe2` 清理的执行方案（备份、显式 GUC、核对 SQL、回滚、窗口）见
   [prod-dict-seed-replay-plan-2026-11-06.md](prod-dict-seed-replay-plan-2026-11-06.md)。
 
+#### B.10.13 字典 legacy 保留与回灌窗口（2026-11-06 第二批）
+
+- **legacy 4 类**：`department_type` / `education` / `marital_status` / `position_level`（合计 17 项）
+  由 [legacy.rs](../../svc/master-data/src/modules/dict/legacy.rs) 的 `LEGACY_DICT_TYPES` 统一标注；
+  单测断言它们不在标准种子、且 `seed.rs` 无 `DELETE`/`TRUNCATE`。说明见
+  [dict-legacy-types.md](dict-legacy-types.md)。
+- **回灌为合并**：`seed_dict_data` 仅 `INSERT ... ON CONFLICT`；prod 预期 `77 类 / 397 项`
+  （73 标准 + 4 legacy；379 标准项 + 17 legacy + 1 存量 `regular`）。
+- **窗口**：备份 → 回灌 → 清理 probe → 6 组核对 → 发布 → 冒烟；脚本
+  [dict-replay-window.sh](../../scripts/db/dict-replay-window.sh)，清单
+  [dict-replay-window-checklist-2026-11-06.md](dict-replay-window-checklist-2026-11-06.md)，
+  演练 [dict-replay-rehearsal-2026-11-06.md](dict-replay-rehearsal-2026-11-06.md)。
+- **下一批 RLS**：其余 359 张表仍含 NULL/0 放行分支（扣除字典 2 张后 357）；7 张有 NULL/0 存量行，
+  必须先回填再收紧；7 张未 `FORCE RLS`。只读评估见
+  [rls-tenant-isolation-next-batch-2026-11-06.md](../quality/rls-tenant-isolation-next-batch-2026-11-06.md)。
+
 
 
 ## C. schema 前缀规则（可执行门禁）

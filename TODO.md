@@ -1,3 +1,25 @@
+## 字典 legacy 保留 + 回灌窗口演练（2026-11-06 第二批）
+
+- **legacy 标注**：4 个非标准类（`department_type`/`education`/`marital_status`/`position_level`）
+  纳入 [legacy.rs](svc/master-data/src/modules/dict/legacy.rs) 的 `LEGACY_DICT_TYPES`；单测断言它们不在
+  标准种子、seed 源码无 `DELETE`/`TRUNCATE`。文档：[dict-legacy-types.md](docs/database/dict-legacy-types.md)。
+- **回灌是合并**：本地演练实测回灌后 `78 类 / 397 项`，清理 `zz_b4_probe2` 后 **77 类 / 397 项**；
+  legacy 4 类分项 **4/4/4/5（17 项）** 完整保留。
+- **窗口脚本**：[dict-replay-window.sh](scripts/db/dict-replay-window.sh)（backup/replay/cleanup/verify/
+  release/smoke/两条回滚）；核对 SQL [dict_replay_verify.sql](scripts/db/sql/dict_replay_verify.sql) 6 组断言。
+- **窗口清单**：[dict-replay-window-checklist-2026-11-06.md](docs/database/dict-replay-window-checklist-2026-11-06.md)
+  （先灌后发、30–45 分钟、回滚判据与双路径）。
+- **本地演练**：[dict-replay-rehearsal-2026-11-06.md](docs/database/dict-replay-rehearsal-2026-11-06.md)；
+  增量回滚 6/24、备份恢复 7/24，均保留 legacy。演练发现 `pg_restore -t schema.table` 不匹配 + 默认忽略
+  FK 错误导致静默丢行，已修复为 `-n public -t` 两步 + `--exit-on-error`。
+- **下一批 RLS 评估（只读，未改代码/迁移）**：359 张表仍含 NULL/0 放行分支（扣除本批 2 张字典表后 357）；
+  37 张高风险（7 张先回填 + 30 张普通高），其中 **7 张有 NULL/0 租户存量行，必须先回填再收紧**（`public.audit_logs`、
+  `crm.rfm_results`、`crm.crm_master_data_refs`、`crm.returns`、`crm.customers`、`ehs.qa_ehs_risks`、
+  `ehs.qa_ehs_environment_monitors`）；7 张未 `FORCE RLS`。清单见
+  [rls-tenant-isolation-next-batch-2026-11-06.md](docs/quality/rls-tenant-isolation-next-batch-2026-11-06.md)。
+- **遗留（需拍板）**：① 7 张脏租户表回填口径（回填 or 清理）；② 后台任务/裸名 SQL 调用清单需服务负责人确认；
+  ③ prod 窗口执行（等授权）。
+
 ## 字典租户隔离修复（2026-11-06）
 
 - **代码**：`master-data` 全部 dict handlers 从直连池改为请求级 `RlsTxnCell` + `scope_with`（复用

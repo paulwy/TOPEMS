@@ -4,6 +4,9 @@
 - 对象：`topems_prod` 的 `public.core_dict_types` / `public.core_dict_items`
 - 状态：**仅方案，本轮未对 prod 执行任何 DML/DDL**
 - 关联：[connection-governance.md](connection-governance.md) B.10.12、迁移 `20261107000008_dict_tenant_isolation_strict.sql`
+- **可执行窗口清单（以此为准）**：[dict-replay-window-checklist-2026-11-06.md](dict-replay-window-checklist-2026-11-06.md)
+- 本地演练：[dict-replay-rehearsal-2026-11-06.md](dict-replay-rehearsal-2026-11-06.md)
+- legacy 标注：[dict-legacy-types.md](dict-legacy-types.md)
 
 ---
 
