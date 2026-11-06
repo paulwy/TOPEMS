@@ -9,7 +9,6 @@ pub mod auth;
 pub mod middleware;
 pub mod permission;
 pub mod permission_center;
-pub mod scoped_pool;
 pub mod security;
 pub mod service;
 pub mod service_monitor;
@@ -36,7 +35,6 @@ pub use permission::{
     ResourcePermission,
 };
 pub use permission_center::{check_permission_with_scope, PermissionCenterClient};
-pub use scoped_pool::{ScopedCtx, ScopedPool, ScopedTxnCell};
 pub use security::*;
 pub use tenant::{
     Tenant, TenantContext, TenantError, TenantManager, TenantPlan, TenantRole, TenantSettings,

@@ -58,7 +58,6 @@ pub use repository::{
     PaginatedQuery, PaginatedResult as RepoPaginatedResult, QueryBuilder, Repository,
 };
 pub use rls::rls_middleware;
-pub use topems_shared_auth::scoped_pool::{ScopedCtx, ScopedPool, ScopedTxnCell};
 pub use schema::{
     ai_table, bi_table, crm_table, ehs_table, erp_table, gis_table, hrm_table, im_table,
     integration_table, lims_table, mail_table, mes_table, mobile_table, pdm_table, pm_table,

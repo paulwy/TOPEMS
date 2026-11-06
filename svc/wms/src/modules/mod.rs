@@ -3,7 +3,6 @@ use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
 use topems_shared_auth::auth::AuthState;
-use topems_shared_auth::ScopedPool;
 use topems_shared_core::health::SystemMetrics;
 use topems_shared_core::l2_cache::AsyncL2Cache;
 use topems_shared_event::event::EventPublisher;
@@ -40,7 +39,7 @@ pub mod wms_plugin;
 
 #[derive(Clone)]
 pub struct ApiState {
-    pub db: ScopedPool,
+    pub db: PgPool,
     pub auth_state: AuthState,
     pub metrics: Arc<SystemMetrics>,
     pub start_time: Instant,
@@ -58,7 +57,7 @@ impl FromRef<ApiState> for AuthState {
 
 impl FromRef<ApiState> for PgPool {
     fn from_ref(state: &ApiState) -> Self {
-        state.db.inner().clone()
+        state.db.clone()
     }
 }
 

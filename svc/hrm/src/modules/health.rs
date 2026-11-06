@@ -15,7 +15,7 @@ use crate::modules::ApiState;
 )]
 
 pub async fn health_check(State(state): State<ApiState>) -> ServiceHealth {
-    let cfg = SimpleHealthConfig::new("topems-hrm").with_db(state.db.inner().clone());
+    let cfg = SimpleHealthConfig::new("topems-hrm").with_db(state.db);
     simple_health_check(&cfg).await
 }
 
