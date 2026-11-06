@@ -26,9 +26,6 @@ use modules::tms_plugin::{auto_register_to_core, get_plugin_info, plugin_health_
 use shared::AppState;
 
 /// 缓存预热查询：经 `Db` 只读事务作用域执行（事务级 `search_path = "tms, public"`）。
-///
-/// 预热 SQL 中的 **未限定 `vehicles`** 保持未限定：prod 实测 `public.vehicles`
-/// 与 `tms.tms_vehicles` 均 0 行，选表待业务确认，当前保持现状解析 → `public.vehicles`。
 async fn warm_query(db: &Db, sql: &'static str) -> Result<Option<serde_json::Value>, sqlx::Error> {
     let mut scope = db.scope_read().await?;
     let result = sqlx::query_scalar::<_, serde_json::Value>(sql)
@@ -134,20 +131,19 @@ async fn main() -> Result<()> {
             }
 
             // 预热车辆列表（第一页，默认参数）
-            // 注意：下表名 `vehicles` 保持未限定（不补 tms. 前缀）。prod 实测
-            // `public.vehicles` 与 `tms.tms_vehicles` 均 0 行，选表待业务确认，
-            // 当前保持现状解析 → `public.vehicles`（由事务级 search_path "tms, public" 决定）。
+            // 必须显式 `tms.tms_vehicles`：`public.vehicles` 是仅 3 列的空壳
+            // （id/deleted_at/created_at，无业务列），业务 handler 全部读 `tms.tms_vehicles`。
             match warm_query(
                 &db,
                 r#"
                 SELECT json_build_object(
                     'items', COALESCE(json_agg(t), '[]'::json),
-                    'total', (SELECT COUNT(*) FROM vehicles WHERE deleted_at IS NULL),
+                    'total', (SELECT COUNT(*) FROM tms.tms_vehicles WHERE deleted_at IS NULL),
                     'page', 1,
                     'page_size', 10
                 ) as data
                 FROM (
-                    SELECT v.* FROM vehicles v
+                    SELECT v.* FROM tms.tms_vehicles v
                     WHERE v.deleted_at IS NULL
                     ORDER BY v.created_at DESC
                     LIMIT 10 OFFSET 0
