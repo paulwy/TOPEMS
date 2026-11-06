@@ -5,7 +5,7 @@ use axum::routing::{delete, get, post, put};
 use axum::Router;
 
 use topems_shared_auth::auth::auth_middleware;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use topems_shared_core::api_version::register_routes_with_legacy_alias;
 use topems_shared_core::cors::create_cors_layer;
@@ -205,7 +205,10 @@ fn create_routes_inner(
             pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
-        .layer(from_fn(require_permission("integration:admin")))
+        // 模块门只负责「能进 integration + 读」；连接/映射/转换规则改写与同步触发
+        // 仍要求 integration:admin（避免 integration:read 提权）。
+        .layer(from_fn(require_module_write("integration")))
+        .layer(from_fn(require_module_access("integration")))
         .layer(from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,

@@ -11,7 +11,7 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::routing::get;
 use axum::Router;
 use topems_search::handlers;
-use topems_shared_auth::middleware::require_module_access;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_db::scope::Db;
@@ -73,6 +73,8 @@ impl SearchRealModule {
                 "/api/search/recent",
                 axum::routing::delete(handlers::clear_recent),
             )
+            // 与独立部署 :8082 同口径：DELETE /api/search/recent 仍要求 search:admin。
+            .layer(axum::middleware::from_fn(require_module_write("search")))
             .layer(axum::middleware::from_fn(require_module_access("search")))
             .with_state(db.clone())
             .layer(axum::middleware::from_fn_with_state(

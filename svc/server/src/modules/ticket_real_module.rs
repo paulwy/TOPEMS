@@ -11,7 +11,7 @@
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
-use topems_shared_auth::middleware::require_module_access;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_db::scope::Db;
@@ -62,6 +62,7 @@ impl TicketRealModule {
         let protected_routes = handlers::ticket_routes()
             .merge(feedback_compat::feedback_compat_routes())
             .merge(ticket_ext::ticket_ext_routes())
+            .layer(axum::middleware::from_fn(require_module_write("ticket")))
             .layer(axum::middleware::from_fn(require_module_access("ticket")))
             .with_state(db.clone())
             // V1.3 tier 治理：ticket 为 Free 层模块（对照组，永不裁剪）

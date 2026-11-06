@@ -9,7 +9,7 @@ use axum::{Json, Router};
 use std::sync::Arc;
 
 use topems_shared_auth::auth::{AuthState, Claims};
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -416,7 +416,9 @@ pub fn build_business_router(state: &AppState, rls_pool: sqlx::PgPool) -> Router
                 .put(modules::geofence::update_geofence)
                 .delete(modules::geofence::delete_geofence),
         )
-        .layer(axum::middleware::from_fn(require_permission("gis:admin")))
+        // 模块门只负责「能进 gis + 读」；围栏新增/修改/删除等写仍要求 gis:admin。
+        .layer(axum::middleware::from_fn(require_module_write("gis")))
+        .layer(axum::middleware::from_fn(require_module_access("gis")))
         .layer(axum::middleware::from_fn_with_state(
             rls_pool,
             topems_shared_auth::tenant_middleware(),
