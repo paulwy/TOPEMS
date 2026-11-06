@@ -1,7 +1,7 @@
 //! Quality Dashboard and Alert handlers
 
 use axum::{
-    extract::State,
+    extract::{Extension, State},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -9,6 +9,8 @@ use bigdecimal::BigDecimal;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, Row};
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_non_opt};
@@ -642,6 +644,7 @@ pub async fn create_alert_message(
 )]
 pub async fn acknowledge_alert(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(_req): Json<serde_json::Value>,
 ) -> ApiResponse<AlertMessage> {
@@ -650,7 +653,9 @@ pub async fn acknowledge_alert(
         Err(_) => return ApiResponse::bad_request("无效的预警消息ID"),
     };
 
-    let message = sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"UPDATE qms.qa_alert_messages SET status = 'acknowledged', acknowledged_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at, created_at"#)).bind(id)
+    let tenant_id = get_tenant_id_from_claims(&claims);
+
+    let message = sqlx::query_as::<_, AlertMessage>(only_own_schema_query!("qms", r#"UPDATE qms.qa_alert_messages SET status = 'acknowledged', acknowledged_at = NOW() WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid) RETURNING id::TEXT, tenant_id::TEXT, rule_id::TEXT, rule_name, alert_type, severity, title, message, metric_value, threshold, status, acknowledged_by, acknowledged_at, created_at"#)).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
