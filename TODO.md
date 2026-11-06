@@ -1921,6 +1921,18 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.141 审计整改第十八批：孤儿 schema 清理（批 20，2026-11-06）✅
+
+- **`erp/voucher.ts` 搬家判定不成立**：核实 `schemas/finance/voucher.ts:16` 已存在同名导出（`finance/index.ts:12` 转发），`erp/voucher.ts` 被活页面 `pages/erp/VoucherPage.tsx:17` 消费（路由 `modules/erp/config.ts:169`），两文件 diff 511 行 = 两个不同 schema 服务两个活页面 → 不搬；真问题是两套凭证页面功能重复，登记待拍板。
+- **全量孤儿扫描（227 schema 文件）**：文件级 + 符号级双层交叉，删除 3 个零引用 schema ——
+  `admin/tenantInvoice.tsx`（被同名 `.ts` 遮蔽、`index.ts` 转发的是 `.ts`）、`wms/outboundOrder.ts`（仅测试自嗨，index 转发的是 `./outbound`）、`mes/workOrder.ts`（页面批 3 已删、全站零消费）；
+  连带删 2 个测试 + 1 个 css + 清 `mes/index.ts` 转发行，共 7 项变更。
+- **一次误删已回滚（如实记录）**：初次误判 `wms/outbound.ts` 为孤儿（`grep | head -8` 截断导致漏看 `pages/wms/OutboundOrderPage.tsx:14`、`OutboundPage.tsx:11` 的引用），tsc 报 2 处 TS2724 后立即 `git checkout` 回滚并改全量 grep 复核；教训：清理批量判断禁用截断输出。
+- **有引用不删**：`scm/purchaseContract.ts`（页面已删但 `scmSchemas.test.ts:14` 真实断言）登记待判定；`hrm` 工厂函数（经 index 重命名导出）保留。
+- **wms 3 个孤儿页面残留**：全站 grep 无引用，已干净。
+- **验证**：tsc 0 error；eslint 0；vitest **622 files / 6647 passed / 1 skipped**（-22 用例=删的 2 个测试；1 failed 为 `smoke-batch` ForceChangePasswordPage 120s 超时，单跑 1498/1498 全通过，flaky 与本批无关）；对账不变（无权限码改动）；无迁移。
+- 产出：`docs/audit/P3-10_孤儿schema清理_执行记录_2026-11-06.md`
+
 ## v1.140 审计整改第十七批：tenant 域资源码 + erp:vouchers 模块订正（批 19，2026-11-06）✅
 
 - **`erp:vouchers` 收敛（取证后动手）**：三层证据闭合——`schemas/erp/voucher.ts:14` import `@/api/finance/voucher`；`api/finance/voucher.ts:25,51…` 全部 `apiClient.finance.get/post('/vouchers')`；`svc/erp/src` 只有 prometheus gauge 与表名，**无 `/api/erp/vouchers` 路由**；`grep -rn "api.module" apps/web/src` **零引用**（该字段无运行时用途，CrudPage 请求全走 `apiAdapter` @ :504/521/545/569）；对账脚本扫字面码不读该字段 → 改 module 不改请求路径、不影响基线。已把 `module: 'erp'` 订正为 `'finance'` + 接入 `permissionResource: 'finance:voucher'`。
