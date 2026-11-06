@@ -17,8 +17,8 @@ use utoipa::OpenApi;
 
 use topems_shared_auth::auth::auth_middleware;
 use topems_shared_auth::middleware::require_module_access;
-use topems_shared_auth::Claims;
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
+use topems_shared_auth::Claims;
 use topems_shared_bootstrap::{
     bootstrap_service_shared, resolve_port, run, Application, ServiceConfig,
 };

@@ -636,7 +636,9 @@ pub fn create_protected_routes(app_state: AppState) -> Router {
         .route("/health/detailed", get(detailed_health))
         // 模块门只负责「能进 analytics + 读」；报表/数据源/导出等写仍要求 analytics:admin。
         .layer(axum::middleware::from_fn(require_module_write("analytics")))
-        .layer(axum::middleware::from_fn(require_module_access("analytics")))
+        .layer(axum::middleware::from_fn(require_module_access(
+            "analytics",
+        )))
         .with_state(app_state);
     protected_routes
 }
