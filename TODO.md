@@ -2084,6 +2084,16 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.149 审计整改第二十八批：域管理码缺口补齐与 10 个域经理角色落地（批 28，2026-11-07）
+
+- **E 项两处缺口直接补齐**（迁移 `20261107000022`）：`admin:iam:delete` → admin（`admin:admin`/`admin:iam:admin` 均不存在、规则5 的 `iam:iam:delete` 也不存在，只能补授权）；`pdm:drawing:read`（原零持有，admin 无 `pdm:admin` 通配）→ admin + pdm_manager + superadmin。首 `INSERT 0 1` / `0 3`，二次全 0。
+- **10 个域经理角色一次建齐**（拍板一次到位）：`rd_manager`(55)、`integration_manager`(31)、`workflow_manager`(32)、`aps_manager`(22)、`tms_manager`(21)、`bi_manager`(19)、`monitor_manager`(16)、`notification_manager`(15)、`doc_manager`(14)、`ticket_manager`(5)，共 **230** 条授权，**DB 实测每角色域内覆盖 100%、跨域 0**。命名/描述/tenant_id 沿用既有 manager 规范（`<域>_manager` + 「XX管理角色」+ 全 0）。`mobile`/`migration`/`plugin`/`iam`/`tenant` 五域维持 admin-only；`project_manager`（tenant 级岗位角色）与 `pm_manager`（平台级域管理角色）语义不重复，**不新建**。
+- **额外发现并修复：域管理码授权不一致**（迁移 `20261107000023`）：可达性实测路由码 379 → **395**（并行会话新增 master-data / lims test-method 路由），暴露 13 个 admin 不可达码全部零持有。根因是「域管理码 `X:admin` 存在但关键角色未持有」——admin 缺 `lims:admin`/`master-data:admin`，且 **erp/lims/pdm/srm 四个既有 manager 不持自家域 admin 码**（另 14 个持有）。补授权：`lims:admin`→admin+lims_manager、`master-data:admin`→admin、`erp:admin`→erp_manager、`pdm:admin`→admin+pdm_manager、`srm:admin`→admin+srm_manager、`admin:iam:dashboard:approve`→admin+superadmin。`INSERT 0 8` + 补跑 `0 2`，二次 0。
+- **修复后可达性实测**：395 码，DB 缺失 **0**，admin 未直接持有 22 项**全部被 `<模块>:admin` 通配覆盖**，**真实缺口 0**（批 27 为 2）。
+- **规模**：`core_roles` 20 → **30**；`core_role_permissions` 3015 → **3259**（+244）；`core_permissions` 保持 **1164**（本批未建码）。
+- **验证**：对账 fe 445 / be 577 / db 995（不变）/ DB-only 0；tsc 0；eslint 无需（仅 SQL）；迁移四件套 PASS（Errors 0 / Warnings 4）；drift 0；RLS PASS；全量 vitest 620/621 files 通过，唯一失败为 `smoke-batch.test.tsx` 的 `ForceChangePasswordPage` 在全量并发下 120s 超时（**偶发**，单跑该文件 1491/1491 通过、该页 9505ms）。
+- 产出：`docs/audit/P3-18_域管理码缺口补齐与域经理角色落地_批28_执行记录_2026-11-07.md`、迁移 `20261107000022_domain_manager_roles_batch28.sql`、`20261107000023_domain_admin_code_grants_batch28.sql`
+
 ## v1.148 审计整改第二十七批：路由权限码缺口修复与测试污染排除（批 27，2026-11-07）
 
 - **核心发现（双重条件致死）**：全站 18 处「细码 AND `<域>:dashboard:write`」路由，实测 8 个域的 dashboard:write 中 **7 个无人持有**（唯一例外 lims），且 15 个细码中 **4 个无人持有**。实际效果：这些页面**除 superadmin（is_superuser 前置放行）外，admin 与全部域 manager 都进不去**。finance 已在批 26 修正，本批移除其余 17 处，残留 0。
