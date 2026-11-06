@@ -82,6 +82,7 @@ impl MesRealModule {
         let state = AppState {
             auth_state: ctx.auth_state.clone(),
             pool: ctx.db.clone(),
+            db: topems_shared_db::scope::Db::new(ctx.db.clone(), "mes, public, shared"),
             health_config,
             event_publisher: ctx.event_publisher.clone(),
             dict_cache: Arc::new(AsyncL2Cache::new_l1_only(l2_config)),

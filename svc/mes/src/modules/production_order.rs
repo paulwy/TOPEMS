@@ -326,6 +326,14 @@ pub async fn list_production_orders(
     }
     let tenant_uuid = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取生产工单列表失败");
+        }
+    };
+
     let count_sql = format!(
         "SELECT COUNT(*) as total FROM production_orders{}",
         where_clause
@@ -338,7 +346,7 @@ pub async fn list_production_orders(
     }
     count_query = count_query.bind(tenant_uuid);
 
-    let count_result = count_query.fetch_one(&state.pool).await;
+    let count_result = count_query.fetch_one(&mut scope).await;
     let total: Option<i64> = match count_result {
         Ok(c) => c,
         Err(e) => {
@@ -375,7 +383,7 @@ pub async fn list_production_orders(
     }
     fetch_query = fetch_query.bind(tenant_uuid).bind(page_size).bind(offset);
 
-    let orders = match fetch_query.fetch_all(&state.pool).await {
+    let orders = match fetch_query.fetch_all(&mut scope).await {
         Ok(o) => o,
         Err(e) => {
             tracing::error!("Failed to fetch production orders: {}", e);
@@ -506,25 +514,13 @@ pub async fn create_production_order(
         Ok(t) => t,
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let rls_tenant = tenant_opt.unwrap_or(Uuid::nil());
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to begin tx for create_production_order: {}", e);
+            tracing::error!("Failed to begin scope for create_production_order: {}", e);
             return ApiResponse::server_error("创建生产工单失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(rls_tenant.to_string())
-        .execute(&mut *tx)
-        .await
-    {
-        tracing::error!(
-            "Failed to set RLS context for create_production_order: {}",
-            e
-        );
-        return ApiResponse::server_error("创建生产工单失败");
-    }
 
     let result = sqlx::query!(
         r#"
@@ -553,12 +549,12 @@ req.planned_start_date.map(|d| d.date_naive()),
         now,
         tenant_opt,
     )
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut scope)
     .await;
 
     let result = match result {
         Ok(r) => {
-            if let Err(e) = tx.commit().await {
+            if let Err(e) = scope.commit().await {
                 tracing::error!("Failed to commit tx for create_production_order: {}", e);
                 return ApiResponse::server_error("创建生产工单失败");
             }
@@ -677,25 +673,13 @@ pub async fn create_order_from_erp(
         Ok(t) => t,
         Err((_code, msg)) => return ApiResponse::bad_request(&msg),
     };
-    let rls_tenant = tenant_opt.unwrap_or(Uuid::nil());
-    let mut tx = match state.pool.begin().await {
-        Ok(tx) => tx,
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to begin tx for create_order_from_erp: {}", e);
+            tracing::error!("Failed to begin scope for create_order_from_erp: {}", e);
             return ApiResponse::server_error("从ERP订单创建生产工单失败");
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(rls_tenant.to_string())
-        .execute(&mut *tx)
-        .await
-    {
-        tracing::error!(
-            "Failed to set nil RLS context for create_order_from_erp: {}",
-            e
-        );
-        return ApiResponse::server_error("从ERP订单创建生产工单失败");
-    }
 
     let result = sqlx::query!(
         r#"
@@ -726,16 +710,17 @@ planned_start.date_naive(),
         now,
         tenant_opt,
     )
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut scope)
     .await;
 
-    if let Err(e) = tx.commit().await {
-        tracing::error!("Failed to commit tx for create_order_from_erp: {}", e);
-        return ApiResponse::server_error("从ERP订单创建生产工单失败");
-    }
-
     let result = match result {
-        Ok(r) => r,
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit tx for create_order_from_erp: {}", e);
+                return ApiResponse::server_error("从ERP订单创建生产工单失败");
+            }
+            r
+        }
         Err(e) => {
             tracing::error!("Failed to create production order from ERP: {}", e);
             return ApiResponse::server_error("从ERP订单创建生产工单失败");
@@ -801,6 +786,13 @@ pub async fn get_production_order(
 
     // 详情读取同样按 Claims 租户隔离 + 过滤软删除，避免跨租户 200 或已删单可读。
     let tenant_id = get_tenant_id(&claims);
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取生产工单失败");
+        }
+    };
     let result = sqlx::query(
         r#"
         SELECT 
@@ -817,7 +809,7 @@ pub async fn get_production_order(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
@@ -927,10 +919,16 @@ pub async fn update_production_order(
     }
 
     // 租户来源统一为 Claims（与 create 写入的 tenant_id 同源）。
-    // 注意：tenant_middleware 的 `app.tenant_id` GUC 设在请求事务上，而这里查询走
-    // `state.pool` 的另一条连接，GUC 不可见 → 原先的 current_setting 谓词恒等于
-    // nil UUID，导致同租户同 ID 的已存在订单被判为不存在（404）。
+    // `Db::scope()` 在独立事务上同时落 search_path 与请求租户 GUC，RLS 与内联谓词可见。
     let tenant_id = get_tenant_id(&claims);
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("更新生产工单失败");
+        }
+    };
 
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
@@ -963,11 +961,17 @@ pub async fn update_production_order(
     .bind(req.notes)
     .bind(Utc::now())
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
-        Ok(r) => r,
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit production order update: {}", e);
+                return ApiResponse::server_error("更新生产工单失败");
+            }
+            r
+        }
         Err(e) => {
             tracing::error!("Failed to update production order: {}", e);
             return ApiResponse::server_error("更新生产工单失败");
@@ -1033,6 +1037,14 @@ pub async fn delete_production_order(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("删除生产工单失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         UPDATE production_orders SET deleted_at = NOW()
@@ -1042,11 +1054,17 @@ pub async fn delete_production_order(
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     let result = match result {
-        Ok(r) => r,
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit delete production order: {}", e);
+                return ApiResponse::server_error("删除生产工单失败");
+            }
+            r
+        }
         Err(e) => {
             tracing::error!("Failed to delete production order: {}", e);
             return ApiResponse::server_error("删除生产工单失败");
@@ -1091,6 +1109,14 @@ pub async fn start_production_order(
     let tenant_id = get_tenant_id(&claims);
     let now = Utc::now();
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("启动生产工单失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
         UPDATE production_orders SET
@@ -1111,11 +1137,17 @@ pub async fn start_production_order(
     .bind(now.date_naive())
     .bind(now)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
-        Ok(r) => r,
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit start production order: {}", e);
+                return ApiResponse::server_error("启动生产工单失败");
+            }
+            r
+        }
         Err(e) => {
             tracing::error!("Failed to start production order: {}", e);
             return ApiResponse::server_error("启动生产工单失败");
@@ -1182,6 +1214,14 @@ pub async fn complete_production_order(
     let tenant_id = get_tenant_id(&claims);
     let now = Utc::now();
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("完成生产工单失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
         UPDATE production_orders SET
@@ -1203,11 +1243,17 @@ pub async fn complete_production_order(
     .bind(now.date_naive())
     .bind(now)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
-        Ok(r) => r,
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit complete production order: {}", e);
+                return ApiResponse::server_error("完成生产工单失败");
+            }
+            r
+        }
         Err(e) => {
             tracing::error!("Failed to complete production order: {}", e);
             return ApiResponse::server_error("完成生产工单失败");
@@ -1274,6 +1320,14 @@ pub async fn cancel_production_order(
     let tenant_id = get_tenant_id(&claims);
     let now = Utc::now();
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("取消生产工单失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
         UPDATE production_orders SET
@@ -1292,11 +1346,17 @@ pub async fn cancel_production_order(
     .bind(id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
-        Ok(r) => r,
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit cancel production order: {}", e);
+                return ApiResponse::server_error("取消生产工单失败");
+            }
+            r
+        }
         Err(e) => {
             tracing::error!("Failed to cancel production order: {}", e);
             return ApiResponse::server_error("取消生产工单失败");
@@ -1363,6 +1423,14 @@ pub async fn release_production_order(
     let tenant_id = get_tenant_id(&claims);
     let now = Utc::now();
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立写作用域失败: {}", e);
+            return ApiResponse::server_error("发布生产工单失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, ProductionOrderRow>(
         r#"
         UPDATE production_orders SET
@@ -1381,11 +1449,17 @@ pub async fn release_production_order(
     .bind(id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let result = match result {
-        Ok(r) => r,
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit release production order: {}", e);
+                return ApiResponse::server_error("发布生产工单失败");
+            }
+            r
+        }
         Err(e) => {
             tracing::error!("Failed to release production order: {}", e);
             return ApiResponse::server_error("发布生产工单失败");

@@ -8,6 +8,7 @@ use std::sync::Arc;
 use topems_shared_auth::auth::AuthState;
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_core::l2_cache::AsyncL2Cache;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::{api::erp_api::ErpApi, TypedServiceClient};
 
@@ -15,6 +16,9 @@ use topems_shared_service_client::service_client::{api::erp_api::ErpApi, TypedSe
 pub struct AppState {
     pub auth_state: AuthState,
     pub pool: PgPool,
+    /// 作用域数据库句柄：`Db::scope*` 在每个事务上落 `search_path` 与请求租户 GUC。
+    /// 受 RLS（ENABLE+FORCE）保护的 `mes.*` 表必须经此访问，裸 `pool` 无 GUC 会返回 0 行。
+    pub db: Db,
     pub health_config: SimpleHealthConfig,
     pub event_publisher: Option<Arc<EventPublisher>>,
     // 生产执行闭环：ERP 服务客户端（报工后回传生产进度，Option 优雅降级）

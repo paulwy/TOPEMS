@@ -128,6 +128,14 @@ pub async fn get_dashboard(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取看板总览失败");
+        }
+    };
+
     // 1. Summary: 订单统计 + 今日产量 + 合格率 + OEE
     let order_stats = sqlx::query(
         r#"
@@ -141,7 +149,7 @@ pub async fn get_dashboard(
         "#,
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let order_stats = match order_stats {
@@ -162,7 +170,7 @@ pub async fn get_dashboard(
         "#,
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let today_output_val = match today_output {
@@ -196,7 +204,7 @@ pub async fn get_dashboard(
         "#,
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let quality_stats = match quality_stats {
@@ -238,7 +246,7 @@ pub async fn get_dashboard(
         "#,
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let oee_avg = match oee_stats {
@@ -288,7 +296,7 @@ pub async fn get_dashboard(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let order_progress: Vec<OrderProgressResponse> = match orders {
@@ -365,7 +373,7 @@ pub async fn get_dashboard(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let workstation_status: Vec<WorkstationStatusResponse> = match ws_rows {
@@ -430,7 +438,7 @@ pub async fn get_dashboard(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let quality_trend: Vec<QualityTrendResponse> = match qt_rows {
@@ -495,7 +503,7 @@ pub async fn get_dashboard(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let equipment_status: Vec<EquipmentStatusResponse> = match eq_rows {
@@ -564,6 +572,14 @@ pub async fn get_order_progress(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取订单进度失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         SELECT
@@ -574,7 +590,7 @@ pub async fn get_order_progress(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let orders = match result {
@@ -646,6 +662,14 @@ pub async fn get_workstation_status(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取工位状态失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         SELECT
@@ -679,7 +703,7 @@ pub async fn get_workstation_status(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let rows = match result {
@@ -753,6 +777,14 @@ pub async fn get_quality_trend(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取质量趋势失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         SELECT
@@ -771,7 +803,7 @@ pub async fn get_quality_trend(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let rows = match result {
@@ -842,6 +874,14 @@ pub async fn get_equipment_status(
 
     let tenant_id = get_tenant_id(&claims);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("建立只读作用域失败: {}", e);
+            return ApiResponse::server_error("获取设备状态失败");
+        }
+    };
+
     let result = sqlx::query(
         r#"
         SELECT
@@ -864,7 +904,7 @@ pub async fn get_equipment_status(
         "#,
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let rows = match result {
