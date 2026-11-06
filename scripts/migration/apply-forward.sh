@@ -164,7 +164,9 @@ while IFS= read -r f; do
   [[ "$b" =~ ^[0-9]{14}_ ]] || continue
   v="${b%%_*}"
   (( 10#$v > 10#$ANCHOR )) || continue
-  if psql_exec -tA -c "SELECT 1 FROM _sqlx_migrations WHERE version=$v AND success" | grep -q 1; then
+  # </dev/null：SSH 模式下 psql 会继承并吞掉 while 的 stdin（进程替换），
+  # 导致扫描在第 1 条后就结束、后续 pending 被静默跳过（fail-open）。
+  if psql_exec -tA -c "SELECT 1 FROM _sqlx_migrations WHERE version=$v AND success" </dev/null | grep -q 1; then
     if contains "$v" ${ONLY[@]+"${ONLY[@]}"}; then APPLIED_ONLY+=("$v"); fi
     continue
   fi
@@ -197,6 +199,19 @@ while IFS= read -r f; do
   fi
   PENDING+=("$f")
 done < <(ls "$MIG_DIR"/*.sql | LC_ALL=C sort)
+
+# fail-closed：--only 的每个版本都必须被扫描到（已应用或进入待应用队列）。
+# 防止扫描环节被中断/截断后，把“一条都没看到”误判成“无待应用迁移”。
+if [[ ${#ONLY[@]} -gt 0 ]]; then
+  PENDING_VERSIONS=()
+  for f in ${PENDING[@]+"${PENDING[@]}"}; do PENDING_VERSIONS+=("$(basename "$f" | cut -d_ -f1)"); done
+  for v in "${ONLY[@]}"; do
+    if ! contains "$v" ${APPLIED_ONLY[@]+"${APPLIED_ONLY[@]}"} && ! contains "$v" ${PENDING_VERSIONS[@]+"${PENDING_VERSIONS[@]}"}; then
+      echo "== 拒绝：白名单版本 $v 未被扫描到（既不在待应用队列，也不在账本）；疑似扫描截断，未产生任何 DDL" >&2
+      exit 1
+    fi
+  done
+fi
 
 # 白名单外 pending：必须先于任何 DDL 硬失败
 if [[ ${#OUT_OF_MANIFEST[@]} -gt 0 ]]; then
