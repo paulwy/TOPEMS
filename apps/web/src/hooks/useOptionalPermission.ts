@@ -47,21 +47,11 @@ function resolveAliases(permission: string): string[] {
 }
 
 /**
- * 单码判定。
- *
- * 注意：`hasPermission` 对三段码（`模块:资源:动作`，如 `scm:contract:delete`）会走
- * 等级近似分支——把 `contract` 当 action 查等级得 0，而模块内任何权限等级亦 ≥ 0，
- * 于是「该模块有任一权限即放行」（同模块 create 会放行 delete）。这是既有缺陷，
- * 已登记待专项评估；本 hook 不复用它：三段码只认精确命中与 `<模块>:<资源>:admin` 通配，
- * 二段码（`模块:动作`）仍按等级继承判定。
+ * 单码判定：直接复用 `hasPermission`（批 15 已修正三段码精确判定），不再自建分支，
+ * 避免两套判定逻辑漂移。
  */
 function checkCode(permissions: string[], inherited: string[], code: string): boolean {
   if (permissions.includes('all') || inherited.includes('all')) return true;
-  if (permissions.includes(code) || inherited.includes(code)) return true;
-  const parts = code.split(':');
-  if (parts.length >= 3) {
-    return permissions.includes(`${parts[0]}:${parts[1]}:admin`);
-  }
   return hasPermissionWithInheritance(inherited, code) || hasPermission(permissions, code);
 }
 

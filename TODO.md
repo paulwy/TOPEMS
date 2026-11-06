@@ -1882,6 +1882,16 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.136 审计整改第十三批：hasPermission 三段码缺陷修正（批 15，2026-11-06）✅
+
+- **缺陷**：`permissions.ts` 对 `模块:资源:动作` 三段码沿用二段码等级近似——资源名当 action 查等级得 0，模块内任何权限等级亦 ≥0 → `0>=0` 恒真 → **该模块有任一权限即放行全部三段码**。
+- **量化**：FE 源码 2282 处三段码引用（449 唯一值）全部受影响；DB 20 角色/2760 授权中 **80/160 个 (角色,模块) 组是"部分持有"**（employee 在 mes 仅持 1/93 码、在 finance 持 2/75 码）。**误放行面极大，按拍板一步到位修正，不做分级。**
+- **修正规则（定稿并写入判定层，不改任何页面引用）**：① 三段码精确匹配；② `<模块>:<资源>:admin` / `<模块>:admin` 通配放行；③ **`X:write` 作为聚合码单向覆盖 create/update/delete**（DB 483 个细粒度码 vs 50 个 write 码，反向不成立）；④ admin↔iam 等价与基础设施 iam 联动保留；⑤ 删除等级近似分支；两段码等级语义不变。
+- **收紧实测**：20 角色对 461 个 FE 三段码合计可见 1534 → **1170（-364，-23.7%）**；employee 260→0、erp_manager 25→0 经核实正确（两者持有码中**三段码为 0**，原先可见全是误放行）；域经理基本零收紧；超级管理员走 `is_superuser` 前置放行不受影响。
+- **验证**：新增 `permissions.threeSegment.test.ts` 11 passed · `useOptionalPermission` 7 passed · **全站 vitest 623 files / 6663 passed / 0 failed** · tsc 0 error · eslint 0 error · RLS ✅ · rename_groups 0。
+- **对账口径**：fe 461 / orphan 42（较批 14 +19/+7），来源是新增单测字面量被 audit 脚本计入（脚本不排除 `__tests__`），真实代码零新增引用。
+- **无 DB 改动**（纯前端判定层，无迁移/回滚脚本；回滚方式 `git revert`）。
+
 ## v1.135 审计整改第十二批：CrudPage 写权限入口专项（批 14，2026-11-06）✅
 
 - **盘点**：`CrudPage` 被 284 个页面引用，改造前**无任何权限校验**（只有 `actions` / `readOnly`）。

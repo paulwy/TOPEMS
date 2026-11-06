@@ -202,6 +202,52 @@ export const ROLES = {
   },
 };
 
+/**
+ * 三段及以上权限码判定（批 15）
+ *
+ * 背景：原实现对三段码（`模块:资源:动作`）沿用二段码的"等级近似"分支——把资源名
+ * 当作 action 去查等级得 0，而该模块下任何权限的等级也 ≥ 0，于是 `0 >= 0` 恒真，
+ * 变成「该模块有任一权限即放行全部三段码」。DB 实测：160 个 (角色, 模块) 授权组中
+ * 80 个是"部分持有"（如 employee 在 mes 仅持 1/93 个码），即这些角色能看到该模块
+ * 全部写按钮 —— 前端 2282 处三段码引用全部受影响。
+ *
+ * 现行规则（一次性定稿，写入判定层，不改各页面引用）：
+ * 1. `all` / 精确命中 → 放行（在上层已处理，此处不重复）；
+ * 2. `<模块>:<资源>:admin` 资源级管理码 → 放行该资源下所有动作；
+ * 3. `<模块>:admin` 模块级管理码 → 放行该模块下所有动作（含三段码）；
+ * 4. `X:write` 作为**聚合码**：持有 `<模块>:<资源>:write` 即可做 create/update/delete
+ *    （DB 实测 483 个细粒度 CRUD 码 vs 50 个 write 聚合码，write 定义为全写）；
+ *    **反向不成立**：持有 create/update/delete 不推出 write；
+ * 5. admin↔iam 等价、基础设施模块与 iam 联动（沿用原有过渡期语义）；
+ * 6. 其余一律不放行 —— 不再做等级近似。
+ */
+function hasThreeSegmentPermission(userPermissions: string[], parts: string[]): boolean {
+  const module = parts[0];
+  const action = parts[parts.length - 1];
+  const resource = parts.slice(1, -1).join(':');
+  const resourceCode = `${module}:${resource}`;
+
+  // 2. 资源级管理码
+  if (userPermissions.includes(`${resourceCode}:admin`)) return true;
+  // 3. 模块级管理码
+  if (userPermissions.includes(`${module}:admin`)) return true;
+  // 4. write 聚合码覆盖 create/update/delete
+  if (['create', 'update', 'delete'].includes(action)) {
+    if (userPermissions.includes(`${resourceCode}:write`)) return true;
+  }
+  // 5. admin ↔ iam 过渡期等价
+  if (module === 'admin' && userPermissions.includes(`iam:${resource}:${action}`)) return true;
+  if (module === 'iam' && userPermissions.includes(`admin:${resource}:${action}`)) return true;
+  // 5b. 基础设施模块与 iam 联动（沿用原语义：iam 同资源同动作 / iam 管理码）
+  const infrastructureModules = ['doc', 'file', 'notification', 'integration', 'im'];
+  if (infrastructureModules.includes(module)) {
+    if (userPermissions.includes(`iam:${resource}:${action}`)) return true;
+    if (userPermissions.includes('iam:dashboard:admin')) return true;
+    if (userPermissions.includes('admin:dashboard:admin')) return true;
+  }
+  return false;
+}
+
 export const hasPermission = (userPermissions: string[], requiredPermission: string): boolean => {
   if (userPermissions.includes('all')) {
     return true;
@@ -212,6 +258,9 @@ export const hasPermission = (userPermissions: string[], requiredPermission: str
   }
 
   const parts = requiredPermission.split(':');
+  if (parts.length >= 3) {
+    return hasThreeSegmentPermission(userPermissions, parts);
+  }
   if (parts.length >= 2) {
     const [module, ...restParts] = parts;
     const action = restParts.join(':');
