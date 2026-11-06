@@ -5,7 +5,7 @@ use std::time::Instant;
 use axum::{extract::State, routing::get, Router};
 
 use crate::modules::monitor::monitor_plugin;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{
     bootstrap_service_shared, build_application, build_detailed_health_response_db,
     prometheus_metrics_handler, run, ServiceConfig,
@@ -55,9 +55,9 @@ async fn main() -> anyhow::Result<()> {
     let protected_routes = Router::new()
         .merge(modules::create_routes())
         .route("/health/detailed", get(detailed_health))
-        .layer(axum::middleware::from_fn(require_permission(
-            "monitor:admin",
-        )))
+        // 模块门只负责「能进 monitor + 读」；告警确认/规则增删等写仍要求 monitor:admin。
+        .layer(axum::middleware::from_fn(require_module_write("monitor")))
+        .layer(axum::middleware::from_fn(require_module_access("monitor")))
         .with_state(app_state.clone())
         .layer(axum::middleware::from_fn_with_state(
             ctx.db.clone(),

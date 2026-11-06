@@ -9,14 +9,14 @@ use axum::{
     Router,
 };
 
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_core::response::ApiResponse;
 
 use crate::modules;
 use crate::shared::AppState;
 
 /// 组装 BI + Report 受保护业务路由（对应独立部署 main.rs 的 protected_routes）。
-/// 已包含 `require_permission("analytics:admin")` 权限层 + AppState。
+/// 已包含 `require_module_access("analytics")` 权限层 + AppState。
 pub fn create_protected_routes(app_state: AppState) -> Router {
     let protected_routes = Router::new()
         // ===== BI routes (prefix: /api/bi) =====
@@ -634,9 +634,9 @@ pub fn create_protected_routes(app_state: AppState) -> Router {
         //       完整路径为 /api/bi/health/detailed，与上方 stateful_public 中
         //       无鉴权的 /health（服务级健康检查）区分开）
         .route("/health/detailed", get(detailed_health))
-        .layer(axum::middleware::from_fn(require_permission(
-            "analytics:admin",
-        )))
+        // 模块门只负责「能进 analytics + 读」；报表/数据源/导出等写仍要求 analytics:admin。
+        .layer(axum::middleware::from_fn(require_module_write("analytics")))
+        .layer(axum::middleware::from_fn(require_module_access("analytics")))
         .with_state(app_state);
     protected_routes
 }
