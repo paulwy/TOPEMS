@@ -285,7 +285,9 @@ export const financeModuleConfig: RouteModuleConfig = {
       titleKey: 'finance.nav.finance-voucher-create',
       template: 'form',
       group: 'business',
-      requiredPermissions: ['finance:voucher:create', 'finance:dashboard:write'],
+      // 批26：移除与凭证创建无语义关系的 finance:dashboard:write（dashboard:write 按 hasPermission
+      // 聚合规则只覆盖 dashboard 资源的 create/update/delete，不是域级写总闸）。
+      requiredPermissions: ['finance:voucher:create'],
       action: 'write',
     } satisfies RouteConfigV2<VoucherCreatePageProps>,
     {

@@ -1959,6 +1959,18 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.147 审计整改第二十四批：对账口径改源与 finance 路由权限码修正（批 26，2026-11-06）
+
+- **对账脚本口径改源（本批核心）**：`scripts/audit_permission_codes.py` 的 `db` 集合从「扫描 `database/init` + `database/migrations` 的 SQL 声明」改为**读取 `public.core_permissions`（live DB）**；SQL 声明集独立输出为 `code_drift`（`sql_only_never_persisted` / `db_only_not_in_sql`）做漂移比对。连接串优先级 `--dsn` > `TOPEMS_AUDIT_DSN` > 内置本机默认；psql 不可用时回退 SQL 扫描并标注 `db_source: sql_fallback`。
+- **实施修正**：live DB 含四段码（`admin:iam:tenant:write` 等）会让 `normalize()` 解包失败（本批实测崩过一次），SQL 查询限定标准三段码 `^[a-z][a-z0-9_]*:[a-z][a-z0-9_]*:[a-z][a-z0-9_]*$`，`normalize()` 增加非三段防御。
+- **新基线（口径变更，非代码变化）**：fe 465 / be 577 / **db 1102 → 991**（-111，SQL 声明中从未落库者）/ both_fe_be 128 / be_only 449 / fe_only 337 / **fe_orphan 41 → 42**（+1）/ **db_only 666 → 557**（-109）/ rename 0。漂移：SQL 声明 1102 / live DB 991 / **交集 991** / SQL-only 111 / **DB-only 0**（声明是 DB 的超集，无隐藏码）。
+- **`fe_orphan` +1 定性**：新增 `finance:account:read`，仅被 `hooks/__tests__/usePermission.test.ts:31` 的 mock 字面量引用，BE 与 live DB 均无（SQL 声明有）→ **测试字面量污染基线**，非生产缺陷；对应「`SKIP_MARKERS` 不排除 `__tests__`」长期登记项。
+- **`finance:dashboard:write` 错位修正**：`modules/finance/config.ts:288` 凭证创建路由 `requiredPermissions` 从 `['finance:voucher:create', 'finance:dashboard:write']` 改为 `['finance:voucher:create']`。判定依据：`hasPermission` 的 `X:write` 聚合范围是同 resource 的 create/update/delete，`dashboard:write` 与「创建凭证」无语义关系，也不构成域级写总闸。可用性：finance_manager 实测同时持有 `finance:voucher:create`，移除后入口不受影响；该码本身保留在 DB。
+- **全站同类组合盘点（登记不改）**：`X:细码` + `<域>:dashboard:write` 共 **17 处**，finance 已修正，剩余 **16 处**（admin 3 / ai 1 / bi 1 / crm 1 / lims 2 / pm 3 / rd 3 / report 2 / workflow 1）。处置需先逐域确认 manager 是否持有对应细码，否则移除后会失权，需单独批次统一处理。
+- **归档**：整改计划顶部新增「待产品拍板清单」，含 A 域经理角色规划（P1 rd/integration/aps 22 前缀、P2-P3 7 个 18 前缀、5 平台域维持 admin-only + 四个确认点）、B rd 三页面语义错配证据表、C 16 处 dashboard:write 组合、D 对账脚本测试污染。
+- **验证**：tsc 0 error；eslint 0；全量 vitest **621 files / 6643 passed / 1 skipped / EXIT 0**；迁移四件套 PASS（Errors 0/Warnings 4）；RLS PASS；**权限码数据零改动**（DB 仍 1160 行 / 授权 2995 行）；无新增迁移。
+- 产出：`docs/audit/P3-16_对账口径改源与finance路由修正_批26_执行记录_2026-11-06.md`，`scripts/audit_permission_codes.py` 口径改造，`apps/web/src/modules/finance/config.ts` 路由修正
+
 ## v1.146 审计整改第二十三批：零消费权限码清理与 finance write 收敛（批 25，2026-11-06）
 
 - **口径校正（本批首个产出）**：`scripts/audit_permission_codes.py` 的 `db` 集合来自**扫描 SQL 文件**（`database/init` + `database/migrations`），非 `core_permissions` 表。实测 SQL 声明 1108 码 / DB 实际 1238 行 / 交集 1083 / SQL-only 25 / DB-only 155。删除对象以 DB 实际行为准。

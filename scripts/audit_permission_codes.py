@@ -7,6 +7,13 @@
   python3 scripts/audit_permission_codes.py --summary
   python3 scripts/audit_permission_codes.py --json > /tmp/perm.json
 
+db 集合口径（批 26 变更）：
+  读 public.core_permissions 表（运行时真实可用码）。历史上的「扫 SQL 文件」口径会把
+  「声明了但从未落库」与「历史迁移建了但 SQL 无声明」混进 db_only，已改为独立输出
+  code_drift（sql_only_never_persisted / db_only_not_in_sql）供漂移比对。
+  连接串优先级：--dsn > 环境变量 TOPEMS_AUDIT_DSN > 环境变量 DATABASE_URL > 仓库根 .env 的
+  DATABASE_URL；均无或 psql 不可用时回退 SQL 扫描（输出标注 db_source: sql_fallback 及原因）。
+
 分类口径：
   ① be_only      BE 校验声明但 FE 未引用（前端菜单/按钮可能缺约束）
   ② fe_only      FE 引用但 BE 未声明（前端引用不存在的码，或被 DB 授权兜底）
@@ -20,7 +27,9 @@ from __future__ import annotations
 import argparse
 import glob
 import json
+import os
 import re
+import subprocess
 import sys
 from collections import Counter, defaultdict
 from typing import Dict, Iterable, List, Set, Tuple
@@ -63,9 +72,75 @@ def scan_codes(root: str, exts: Iterable[str], limit_per_code: int = 5) -> Dict[
 
 
 def normalize(code: str) -> str:
-    """归一化 resource 段：去掉下划线/连字符，用于识别同义不同命名。"""
-    module, resource, action = code.split(':')
-    return f'{module}:{re.sub(r"[_\\-]", "", resource)}:{action}'
+    """归一化 resource 段：去掉下划线/连字符，用于识别同义不同命名。
+
+    只对标准三段码生效；非三段码（如 admin:iam:tenant:write）原样返回，避免 split 解包失败。
+    """
+    parts = code.split(':')
+    if len(parts) != 3:
+        return code
+    module, resource, action = parts
+    return f'{module}:{re.sub(r"[_\\-]", "", resource.to_string() if False else resource)}:{action}'
+
+
+def project_env_value(key: str) -> str:
+    """从仓库根 .env 读取键值（不打印内容）。找不到返回空串。"""
+    try:
+        with open('.env', encoding='utf-8') as fh:
+            for line in fh:
+                line = line.strip()
+                if line.startswith(f'{key}='):
+                    return line.split('=', 1)[1].strip().strip('"\'')
+    except OSError:
+        pass
+    return ''
+
+
+def collect_live_db(
+    dsn: str | None = None, limit_per_code: int = 5
+) -> Tuple[Dict[str, List[Tuple[str, int]]] | None, str | None]:
+    """读取 core_permissions 表（运行时真实可用码）。
+
+    批 26 口径变更：此前 db 集合来自 scan_codes('database/init') + scan_codes('database/migrations')，
+    即「SQL 文件里的码声明」，不是数据库表。二者不等价（实测 SQL 声明 1108 / DB 实际 1238），
+    会把「SQL-only（声明了但从未落库）」与「DB-only（历史迁移链建了但 SQL 无声明）」混进
+    db_only，导致对账基线失真。现改为读 live DB；SQL 声明集单独作为漂移比对输出。
+
+    返回 (码集, 错误信息)。psql 不可用或连接失败时返回 (None, 原因)，调用方回退到 SQL 扫描。
+    """
+    target = (
+        dsn
+        or os.environ.get('TOPEMS_AUDIT_DSN')
+        or os.environ.get('DATABASE_URL')
+        or project_env_value('DATABASE_URL')
+    )
+    if not target:
+        return None, '未提供 DSN（--dsn / TOPEMS_AUDIT_DSN / DATABASE_URL / .env 均无）'
+    try:
+        proc = subprocess.run(
+            [  # 固定 psql 参数，无用户输入拼接
+                'psql', target, '-t', '-A', '-c',
+                "SELECT code FROM public.core_permissions "
+                "WHERE code ~ '^[a-z][a-z0-9_]*:[a-z][a-z0-9_]*:[a-z][a-z0-9_]*$' "
+                "AND deleted_at IS NULL ORDER BY 1",
+            ],
+            capture_output=True, text=True, timeout=60,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return None, f'{type(exc).__name__}: {exc}'
+    if proc.returncode != 0:
+        return None, (proc.stderr or '').strip().split('\n')[0][:200]
+    codes = [line.strip() for line in proc.stdout.split('\n') if line.strip()]
+    if not codes:
+        return None, 'core_permissions 查询返回 0 行'
+    return {code: [('live:public.core_permissions', 0)] for code in codes}, None
+
+
+def scan_sql_declared(limit_per_code: int = 5) -> Dict[str, List[Tuple[str, int]]]:
+    """SQL 文件中的码声明集（init + migrations），用于与 live DB 做漂移比对。"""
+    declared = scan_codes('database/init', ('.sql',), limit_per_code)
+    declared.update(scan_codes('database/migrations', ('.sql',), limit_per_code))
+    return declared
 
 
 def classify(fe: Dict, be: Dict, db: Dict) -> Dict:
@@ -135,14 +210,39 @@ def main() -> int:
     parser.add_argument('--json', action='store_true', help='输出完整 JSON')
     parser.add_argument('--summary', action='store_true', help='仅输出统计摘要（默认）')
     parser.add_argument('--limit', type=int, default=5, help='每个码保留的证据条数')
+    parser.add_argument(
+        '--dsn',
+        default=None,
+        help='数据库连接串（默认取 TOPEMS_AUDIT_DSN / DATABASE_URL / .env 的 DATABASE_URL）',
+    )
     args = parser.parse_args()
 
     fe = scan_codes('apps/web/src', ('.ts', '.tsx'), args.limit)
     be = scan_codes('svc', ('.rs',), args.limit)
-    db = scan_codes('database/init', ('.sql',), args.limit)
-    db.update(scan_codes('database/migrations', ('.sql',), args.limit))
+
+    # 批 26：db 集合改为读 live DB（运行时真实可用码）；SQL 声明集单独输出做漂移比对
+    live_db, live_err = collect_live_db(dsn=args.dsn, limit_per_code=args.limit)
+    sql_declared = scan_sql_declared(args.limit)
+    if live_db is not None:
+        db = live_db
+        db_source = 'live'
+    else:
+        db = sql_declared
+        db_source = 'sql_fallback'
 
     report = classify(fe, be, db)
+
+    # 口径与漂移信息（区分「口径变更」与「数据变化」）
+    db_set, sql_set = set(db), set(sql_declared)
+    report['db_source'] = db_source
+    report['db_source_error'] = live_err
+    report['code_drift'] = {
+        'live_db_codes': len(db_set),
+        'sql_declared_codes': len(sql_set),
+        'in_both': len(db_set & sql_set),
+        'sql_only_never_persisted': sorted(sql_set - db_set),
+        'db_only_not_in_sql': sorted(db_set - sql_set),
+    }
 
     if args.json:
         json.dump(report, sys.stdout, ensure_ascii=False, indent=2)
@@ -151,7 +251,17 @@ def main() -> int:
 
     counts = report['counts']
     print('权限码三端对账')
+    src = report.get('db_source')
+    hint = '（读 core_permissions 表）' if src == 'live' else f'（回退到 SQL 扫描：{report.get("db_source_error")}）'
+    print(f'  DB 来源：{src} {hint}')
     print(f"  FE {counts['fe']} | BE {counts['be']} | DB {counts['db']} | FE∩BE {counts['both_fe_be']}")
+    drift = report.get('code_drift') or {}
+    if drift:
+        print(
+            f"  漂移：SQL 声明 {drift['sql_declared_codes']} | live DB {drift['live_db_codes']} | "
+            f"交集 {drift['in_both']} | SQL-only {len(drift['sql_only_never_persisted'])} | "
+            f"DB-only {len(drift['db_only_not_in_sql'])}"
+        )
     print(f"  ① be_only {counts['be_only']}   ② fe_only {counts['fe_only']}   ④ fe_orphan {counts['fe_orphan']}   db_only {counts['db_only']}")
     print(f"  ③ 命名不一致组 {counts['rename_groups']}")
     for group in report['rename_groups'][:20]:
