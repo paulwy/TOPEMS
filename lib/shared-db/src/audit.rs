@@ -38,9 +38,43 @@ pub struct AuditLog {
     pub created_at: DateTime<Utc>,
 }
 
+/// 审计来源。用于区分租户请求、后台任务、事件驱动与系统级运维。
+///
+/// 注意：可见性仍由 `tenant_id` 决定；`origin` 只用于运维筛选与语义区分。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum AuditOrigin {
+    /// 请求内同步写入（普通租户操作）
+    Request,
+    /// 无请求租户的后台任务
+    Background,
+    /// 由租户事件触发的异步处理
+    Event,
+    /// 系统级/跨租户运维（超管）
+    System,
+    /// 外部系统集成写入
+    Integration,
+    /// 历史数据（无法归因，仅用于未来标记）
+    Legacy,
+}
+
+impl AuditOrigin {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Request => "request",
+            Self::Background => "background",
+            Self::Event => "event",
+            Self::System => "system",
+            Self::Integration => "integration",
+            Self::Legacy => "legacy",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct CreateAuditLogRequest {
     pub tenant_id: Option<Uuid>,
+    pub origin: Option<AuditOrigin>,
     pub action: String,
     pub entity_type: String,
     pub entity_id: Option<Uuid>,
@@ -71,6 +105,7 @@ impl CreateAuditLogRequest {
     pub fn new(action: String, entity_type: String, status: String) -> Self {
         Self {
             tenant_id: None,
+            origin: None,
             action,
             entity_type,
             entity_id: None,
@@ -84,6 +119,11 @@ impl CreateAuditLogRequest {
             ip_address: None,
             user_agent: None,
         }
+    }
+
+    pub fn with_origin(mut self, origin: AuditOrigin) -> Self {
+        self.origin = Some(origin);
+        self
     }
 
     pub fn with_tenant_id(mut self, tenant_id: Uuid) -> Self {
@@ -229,6 +269,14 @@ impl AuditLogService {
         .bind(request.user_agent.as_deref())
         .fetch_one(&mut scope)
         .await?;
+
+        if let Some(origin) = request.origin {
+            sqlx::query("UPDATE public.audit_logs SET origin = $1 WHERE id = $2")
+                .bind(origin.as_str())
+                .bind(record.id)
+                .execute(&mut scope)
+                .await?;
+        }
 
         scope.commit().await?;
         Ok(record.into_audit_log())
@@ -480,6 +528,7 @@ impl SchemaAwareAuditLogService {
                 error_message TEXT NULL,
                 ip_address VARCHAR(45) NULL,
                 user_agent TEXT NULL,
+                origin VARCHAR(16) NULL,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
             CREATE INDEX IF NOT EXISTS idx_{indexes_prefix}_audit_logs_action
@@ -490,6 +539,8 @@ impl SchemaAwareAuditLogService {
                 ON {tbl}(user_id);
             CREATE INDEX IF NOT EXISTS idx_{indexes_prefix}_audit_logs_created_at
                 ON {tbl}(created_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_{indexes_prefix}_audit_logs_origin
+                ON {tbl}(origin) WHERE origin IS NOT NULL;
             "#,
             tbl = tbl,
             indexes_prefix = indexes_prefix,
@@ -554,6 +605,15 @@ impl SchemaAwareAuditLogService {
             .bind(request.user_agent.as_deref())
             .fetch_one(&mut scope)
             .await?;
+
+        if let Some(origin) = request.origin {
+            let update_sql = format!("UPDATE {tbl} SET origin = $1 WHERE id = $2");
+            sqlx::query(sqlx::AssertSqlSafe(update_sql))
+                .bind(origin.as_str())
+                .bind(record.id)
+                .execute(&mut scope)
+                .await?;
+        }
 
         scope.commit().await?;
         Ok(record.into_audit_log())
