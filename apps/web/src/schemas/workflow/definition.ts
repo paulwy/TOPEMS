@@ -52,6 +52,9 @@ export const workflowDefinitionSchema: EntitySchema = {
     resource: 'workflows',
   },
 
+  // 批 17：写权限资源前缀（API 资源名 → DB 资源名语义映射）
+  permissionResource: 'workflow:definition',
+
   fields: [
     {
       name: 'name',

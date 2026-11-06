@@ -17,6 +17,9 @@ export const incomingInspectionSchema: EntitySchema = {
     resource: 'incomingInspections',
   },
 
+  // 批 17：写权限资源前缀（API 资源名 → DB 资源名语义映射）
+  permissionResource: 'scm:incoming_inspection',
+
   fields: [
     {
       name: 'inspection_number',

@@ -11,6 +11,9 @@ export const purchaseOrderSchema: EntitySchema = {
     resource: 'purchaseOrders',
   },
 
+  // 批 17：写权限资源前缀（API 资源名 → DB 资源名语义映射）
+  permissionResource: 'erp:purchase_order',
+
   fields: [
     {
       name: 'order_number',

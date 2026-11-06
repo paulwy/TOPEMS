@@ -1905,6 +1905,17 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.138 审计整改第十五批：API 资源名 → DB 资源名 语义映射（69 项逐条判定 + 补 30 码 + 56 个 schema 接入）（批 17，2026-11-06）✅
+
+- **判定方法**：69 项逐条读 `entity` + API 方法 + DB 同模块资源清单做**人工语义判定**，不依赖字符串相似度（相似度最高的候选多次是错的，如 `mes:materialIssues` 最高分是 `mes:material`，但领料单 ≠ 物料主数据）。
+- **三类结论**：① 可直接映射 **36** 项（DB 已有 create/update/delete 三码，如 `orders→production_order`、`bomVersions→bom`、`purchaseContracts→contract`、`inboundOrders→inbound`、`eightD→eightd`）；② 需补码 **10** 项（30 码）；③ 语义不明/一对多/跨域/无实体码 **23** 项（**不接入，登记**）。
+- **补码迁移** `20261107000006_api_resource_semantic_mapping_codes.sql`：30 条码（workflow3/wms3/finance6/monitor3/mes9/scm6），`[batch17]` 标记 + 回滚段。其中 **4 项对既有资源补动作**（workflow:definition、wms:stocktake、finance:receivable_payable、monitor:rule）；**6 项新建资源**（mes 领料/需求/退料、scm 来料检验/到货通知、finance 会计科目），均给出"为何不与既有资源合并"的语义依据（领料单 ≠ material 物料主数据、来料检验 ≠ supplier_admission 供应商准入、会计科目 ≠ ledger 总账）。幂等实测：首次 `INSERT 0 30` + 授权 `0 60`/`0 24`，二次 `0 0`；DB 码 1172 → **1202**。
+- **授权**：admin/superadmin 各 30（不补会误锁管理员）；mes_manager 9、scm_manager 6、finance_manager 6、wms_manager 3；**employee/finance_user 等基础角色 0**；workflow/monitor 无对应 manager 角色只建码（登记）。
+- **接入**：本批修改 **56 个 schema**（① 36 + ② 10 + erp 域批 16 已补码的 13 项，去重 1 处同文件多资源），沿用 `permissionResource` 机制，**页面零改动**；累计注入 **73 个文件 / 69 个去重前缀**。
+- **真实角色核对（69 前缀 × 3 动作 = 207 码）**：admin/superadmin **207/207**；**各域经理本域 100% 可见、跨域 0**——mes_manager 48/48、scm_manager 42/42、erp_manager 39/39、wms_manager 12/12、finance_manager 6/6、ehs_manager 15、hrm/lims/qms_manager 9、pdm_manager 6、crm/srm_manager 3；employee/finance_user **0/207**；pm_manager/report_manager 0（无归属前缀）。
+- **验证**：全站 vitest **624 files / 6669 passed / 1 skipped / 0 failed**（与基线一致）；tsc 0 error；eslint 0 error（修 1 处 prettier 缩进）；迁移四件套 PASS（Errors 0 / Warnings 4 / drift 0 / checksum 0）；RLS ✅；rename_groups 0；对账 fe 465 / be 577 / db **1058**（+30）。
+- **遗留（登记）**：③ 类 23 项中 6 项属"模块级资源码缺失"（notification/migration/integration/ticket/plugin），需先做模块资源码细化，独立批次；`erp:fixedAssets`/`erp:vouchers`/`finance:accounts` 三项跨域语义应通过"改 schema 的 api.module"解决而非接跨域码；workflow/monitor 需 manager 角色规划。
+
 ## v1.137 审计整改第十四批：CrudPage 写权限接入前置（缺口盘点 + 补码 + scm/mes 首批接入）（批 16，2026-11-06）✅
 
 - **盘点结论（217 个 CrudPage 文件 / 208 带 api 声明 / 200 个 (模块,资源) 对）**：写码齐全 **86**；资源存在但零写码 **45**（缺 135 码）；FE 资源名 ≠ DB 资源名 **69**（命名映射问题）。

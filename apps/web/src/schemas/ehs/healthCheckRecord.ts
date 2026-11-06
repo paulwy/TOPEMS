@@ -11,6 +11,9 @@ export const healthCheckRecordSchema: EntitySchema = {
     resource: 'checkRecords',
   },
 
+  // 批 17：写权限资源前缀（API 资源名 → DB 资源名语义映射）
+  permissionResource: 'ehs:check',
+
   fields: [
     {
       name: 'record_no',

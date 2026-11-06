@@ -16,6 +16,9 @@ export const incomingNoticeSchema: EntitySchema = {
     resource: 'incomingNotices',
   },
 
+  // 批 17：写权限资源前缀（API 资源名 → DB 资源名语义映射）
+  permissionResource: 'scm:incoming_notice',
+
   fields: [
     {
       name: 'notice_number',
