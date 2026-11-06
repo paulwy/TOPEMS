@@ -1,3 +1,19 @@
+## prod 窗口执行总表（2026-11-06 第三批，本地演练已通过）
+
+- **总表**：[prod-window-execution-master-2026-11-06.md](docs/quality/prod-window-execution-master-2026-11-06.md)
+  （一键入口、5 个人工停点、四段时间线/命令/核对 SQL/中止/回滚、执行记录表、回滚手册）。
+- **一键入口**：本地演练 [window-rehearsal.sh](scripts/db/window-rehearsal.sh)（scratch 克隆库 + stub，跑完自动 DROP）；
+  prod 窗口 [window-execution.sh](scripts/db/window-execution.sh) `all`（需 `WINDOW_TARGET=prod` 三重授权，5 处停点人工 `yes`）。
+- **备份固化**：`/Users/air/topems/backups/`，命名 `<table>_<yyyyMMdd_HHmmss>.dump|csv`，
+  `pg_dump -Fc` + CSV 双份 + `.sha256`；恢复验证到 scratch 后逐表比对行数与整行 md5（演练 9/9 一致）。
+- **演练实测（20261106_153005）**：前置 0.76s、备份 9.73s、恢复验证 4.83s、字典 0.71s、回填 0.11s、
+  清理 0.33s、发布收紧 4.78s、冒烟 0.22s，合计 **21.46s**（整套墙钟 41s）；演练库已 DROP，主开发库未改动。
+- **窗口内收紧范围（已定口径）**：只收紧 **字典 2 张（迁移 08）+ 已回填 7 张（迁移 13）**，共 9 张；
+  其余 **30 张高危**窗口后第 1 个变更窗口、**271 张中危**第 2–3 个窗口（50–80 张/批），
+  排期位置见总表第 12 节。
+- **硬规则**：先回填后收紧；段间禁止跳段；任一段失败按总表第 11 节回滚/恢复后再决定是否重跑。
+- **遗留（需授权）**：prod 窗口执行（本轮 prod 零连接、零 DML/DDL/重启/部署）。
+
 ## 字典 legacy 保留 + 回灌窗口演练（2026-11-06 第二批）
 
 - **legacy 标注**：4 个非标准类（`department_type`/`education`/`marital_status`/`position_level`）
@@ -1942,6 +1958,19 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - **模板要点（本批固化）**：手写形态 mock `@/components/templates/ListPageTemplate`（记录 props + data-testid）；redesign 形态 mock `@/components/redesign` 13+ 组件（Modal 渲染 footer、StatTile label:value、Tabs 可点击、Drawer、ToastContainer、FileUpload 等）；页面直引 i18n 实例时 `vi.mock('@/i18n', () => ({ default: { t: (k) => k } }))`；useNotificationStore mock 需支持 selector 形态（`useNotificationStore((state) => state.addNotification)`）；异步行操作必须 `await act(async () => ...)` 防 act 泄漏（泄漏会导致后续用例 render 空 body）；多个同名数值用 getAllByText + toHaveLength；placeholder 断言用 getByPlaceholderText
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
+
+## v1.146 审计整改第二十三批：零消费权限码清理与 finance write 收敛（批 25，2026-11-06）
+
+- **口径校正（本批首个产出）**：`scripts/audit_permission_codes.py` 的 `db` 集合来自**扫描 SQL 文件**（`database/init` + `database/migrations`），非 `core_permissions` 表。实测 SQL 声明 1108 码 / DB 实际 1238 行 / 交集 1083 / SQL-only 25 / DB-only 155。删除对象以 DB 实际行为准。
+- **纠正批 24 的错误判断**：`rd:review:read` / `rd:release:read` / `rd:code:read` 并非零消费 —— `apps/web/src/modules/rd/config.ts` 的 `requiredPermissions`（路由守卫，:369/:395/:317）与 navItem `permission`（菜单过滤，:637/:661/:589）均在使用，删除会导致 rd 三个页面入口 403 / 菜单消失。**保留**。
+- **备份**：`pg_dump` 因 RLS 强制策略失败（`FROM ONLY` 触发策略），改用 `\copy` 导出 CSV：`database/backup/p3_25_20261106/core_permissions.csv`（1252 行 / 195KB）、`core_role_permissions.csv`（3271 行 / 338KB），行数与 `SELECT count(*)` 核对一致后方进入删除。
+- **三道删除前确认**：① 全仓不截断 grep（排除定义文件）→ **94/94 零引用**；② 拼码反向确认（permissionResource × 4 动作 = 752 码 vs 删除集）→ **交集 0**；③ 受影响授权 **276 行**（superadmin/admin 各 92，report_manager 14、mes_manager 12、hrm/wms/finance/pm/qms/crm_manager 各 9、srm/lims/pdm/ehs_manager 各 3）。
+- **删除执行**（迁移 `20261107000012_drop_unused_permission_codes_batch25.sql`）：先删授权后删码；首次 `DELETE 276` / `DELETE 92`，二次全 0（幂等）。`core_permissions` 1252 → **1160**，`core_role_permissions` 3271 → **2995**。按模块 report 14 / mes 12 / crm 9 / finance 9 / hrm 9 / pm 9 / qms 9 / wms 9 / ehs 3 / lims 3 / pdm 3 / srm 3。另 2 项 SQL-only（`finance:budget:approve`、`finance:report:write`）DB 无行，仅改 init。
+- **finance write 收敛**：DB 侧 2 个 write 全部**保留**（`finance:dashboard:write` 被 `modules/finance/config.ts:288` 凭证创建路由消费；`finance:settlement:write` 无细码对应、是唯一写语义）。init 侧删 6 行冗余声明（`finance:account:write` / `cost:write` / `tax:write` / `receivable:write` 均已有细码且零消费；`budget:approve` / `report:write` 零消费零引用），保留 8 个无细码对应的 write 声明。
+- **rd 三页面语义错配（只登记不改）**：`review.ts`→`rd.builds`（构建）、`release.ts`→`rd.deploys`（部署）、`code.ts`→`rs.projects`（项目）—— 三表均不含评审/发布/代码仓库语义字段，属业务语义层缺陷，权限层已按真实数据源接入无风险。
+- **角色规划一页式建议**：15 个无 manager 域 / 45 前缀盘点完成，建议 P1 建 `rd_manager`（11 前缀）、`integration_manager`（6）、`aps_manager`（5）；P2/P3 建 tms/workflow/monitor/notification/bi/ticket/doc 共 7 个；mobile/migration/plugin/iam/tenant 五域建议维持 admin-only。未造任何角色。
+- **验证**：tsc 0 error；全量 vitest **621 files / 6643 passed / 1 skipped / EXIT 0**；迁移四件套全 PASS；schema-defense drift 0；RLS PASS；对账 fe 465 / be 577 / **db 1102**（-6，仅反映 init 口径，DB 实删 92 行不计入该脚本）/ db_only 666；全局拼码校验 **617/618**（删除未触及任何被 permissionResource 引用的码）。
+- 产出：`docs/audit/P3-15_零消费权限码清理与finance_write收敛_批25_执行记录_2026-11-06.md`、`docs/audit/域经理角色规划建议_一页式_2026-11-06.md`
 
 ## v1.145 审计整改第二十二批：资源级 CRUD 码补齐与 rd 域判定（批 24，2026-11-06）
 
