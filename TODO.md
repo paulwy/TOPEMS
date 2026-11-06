@@ -1,3 +1,14 @@
+## hrm:training_plan 3 码裁决（2026-11-06 第九批，只读）
+
+- 记录：[prod-pending-migration-triage §9](docs/quality/prod-pending-migration-triage-2026-11-06.md#9-补充裁决hrmtraining_plancreateupdatedelete2026-11-06-只读复核)。
+- **结论：删除**。后端 training handler 无权限码校验（仅 `require_permission("hrm:admin")` 模块门）；
+  前端写按钮实际用 `permissionResource: 'hrm:training'` 展开的 `hrm:training:create/update/delete`，
+  这 3 条 `*:training_plan:write` 全仓零消费。
+- prod：`hrm:training_plan:read` 1 行（0 角色持有），3 条写码 **0 行**；`hrm:training_*` 4 表全 0 行，
+  审计 0 条 → 功能可达但未使用。删除无能力损失，无需下线页面/路由。
+- 迁移：`000012` 删除清单保持原样（prod 空转）；`000005` 不改字节；**顺序必须 `000005` → `000012`**，
+  否则 3 码会被重新插入。本地账本 `000005 success=t` 但无这 3 行，存在漂移，权限批次前复核。
+
 ## prod 短窗口批次 1 执行（2026-11-06 第八批）
 
 - 记录：[窗口执行总表 §15](docs/quality/prod-window-execution-master-2026-11-06.md#15-短窗口批次-1-000003--000004--000014--0000162026-11-06-2006)。

@@ -345,3 +345,91 @@ SELECT code FROM public.core_permissions WHERE code IN (...);
 ```
 
 本轮 prod 只执行上述 `SELECT`，**无 DDL、无 DML、无重启**。
+
+---
+
+## 9. 补充裁决：`hrm:training_plan:create/update/delete`（2026-11-06 只读复核）
+
+**结论：删除（不保留）。`000012` 的删除清单保持原样，无需排除这 3 条；`000005` 不改字节，但必须保证先于 `000012` 应用。**
+
+### 9.1 代码侧消费点（全仓 grep `hrm:training_plan`，19 处）
+
+| 位置 | 内容 | 是否消费 |
+|---|---|---|
+| [hrm/config.ts#L903-L917](file:///Users/air/TOPEMS/apps/web/src/modules/hrm/config.ts#L903-L917) | 路由 `hrm-training-plan`，`requiredPermissions: ['hrm:training_plan:read']` | 只消费 **read** |
+| [hrm/config.ts#L1161-L1166](file:///Users/air/TOPEMS/apps/web/src/modules/hrm/config.ts#L1161-L1166) | 菜单项 `permission: 'hrm:training_plan:read'` | 只消费 **read** |
+| [permissions.ts#L605](file:///Users/air/TOPEMS/apps/web/src/config/permissions.ts#L605) | 前端权限清单登记 `hrm:training_plan:read` | 仅登记 |
+| [schemas/hrm/training.ts#L14-L15](file:///Users/air/TOPEMS/apps/web/src/schemas/hrm/training.ts#L14-L15) | CrudPage 的 `permissionResource: 'hrm:training'`（注释「批 23…三码齐全」） | 写按钮实际拼的是 **`hrm:training:*`** |
+| [CrudPage.tsx#L326-L339](file:///Users/air/TOPEMS/apps/web/src/components/templates/CrudPage.tsx#L326-L339) | `permissionResource` 自动展开 | 展开规则见下 |
+| [crudPermissions.ts#L29-L35](file:///Users/air/TOPEMS/apps/web/src/components/templates/crudPermissions.ts#L29-L35) | `${prefix}:create` / `:update` / `:delete` | 前缀是 `hrm:training`，**不是** `hrm:training_plan` |
+| [training.rs#L20-L47](file:///Users/air/TOPEMS/svc/hrm/src/modules/training.rs#L20-L47) | 后端 `/training-plans` 等路由存在 | 路由活着 |
+| [training.rs#L130-L146](file:///Users/air/TOPEMS/svc/hrm/src/modules/training.rs#L130-L146) | `create_plan`：只用 `Claims` 取 `tenant_id`，**无权限码校验** | 不消费 |
+| [hrm/main.rs#L106-L112](file:///Users/air/TOPEMS/svc/hrm/src/main.rs#L106-L112) | 整个 hrm 业务路由统一挂 `require_permission("hrm:admin")` | 只校验 `hrm:admin`，与这 3 码无关 |
+| [000005:33](file:///Users/air/TOPEMS/database/migrations/20261107000005_resource_write_codes.sql#L33) | 批 16 按「有 read 码的资源补三码」机械新增这 3 条 | 仅登记 + 授权 |
+| [000012:68-70 / 165-167](file:///Users/air/TOPEMS/database/migrations/20261107000012_drop_unused_permission_codes_batch25.sql#L68-L70) | 批 25 删除这 3 条 | 仅登记 |
+
+- 全仓 **没有任何一处**以 `hrm:training_plan:create/update/delete` 做鉴权、按钮过滤或菜单过滤；
+  `training.rs` 里 create/update/delete 三个 handler 完全没有 `check_permission` 调用（对比同 crate 的
+  `employee.rs`/`position.rs`/`department.rs` 都显式调用）。
+- 前端真正生效的写码是 `hrm:training:create/update/delete`（由 `permissionResource` 展开），
+  与这 3 条不是同一组码。
+
+### 9.2 prod 数据面（现场只读）
+
+```text
+PERM|hrm:training_plan:read    row=ce453dba-…  level=1  desc=Auto-registered from frontend usage: hrm/config
+（create/update/delete 3 条：0 行）
+GRANT|hrm:training_plan:read   <no-role>|1      → 实际授予 0 个角色
+GRANT|hrm:training:create/update/delete/read   hrm_manager 各 1 行（这组才有人持有）
+TRAIN|hrm.training_plans|courses|records|participants  rows = 0 / 0 / 0 / 0
+TRAIN|plans_ts  max(created_at)=<null>  max(updated_at)=<null>
+AUDIT|entity_type 命中 train/hrm = 0 行
+```
+
+- 与 §4.2 一致：`000012` 删除集 92 条里，prod 只缺这 3 条（其余 89 条存在）；
+  **这 3 条在 prod 不是「待删除的存量」，而是「根本不存在」**，`000012` 对它们是 0 行空转。
+- 本地库（`topems`）同样没有这 3 条写码：`000005` 账本 `success=t`，但当前表内无这 3 行，
+  **账本与数据存在漂移**，权限批次前需一并复核；已演练环境的净效果同样是「不存在」。
+
+### 9.3 功能是否活
+
+- 路由：`/training-plans`、`/training-plans/{id}`、`activate/deactivate` 等均存在（`training.rs:20-47`）；
+- 页面：`apps/web/src/pages/hrm/setting/TrainingPlanPage.tsx` 存在；
+- 入口：路由 `hrm-training-plan`（`config.ts:903`）+ 菜单项（`config.ts:1161`）都在，仅需 `hrm:training_plan:read`；
+- **使用痕迹：prod 4 张培训表全 0 行、无创建/更新时间、审计日志 0 条** → 功能「可达但未使用」。
+- 因此删除这 3 个码 **不改变任何可达性**：页面/菜单/路由仍凭 `hrm:training_plan:read` 进入，
+  写按钮仍凭 `hrm:training:create/update/delete` 显示。
+
+### 9.4 删除后失去什么 / 是否需要下线页面
+
+- 失去的只是 3 条**无人校验、无人持有**的权限登记行；prod 本来就是 0 行，**无能力损失**。
+- **不需要**下线页面、路由或菜单；也不需要对 `hrm:training_plan:read` 做任何处理。
+- 唯一注意点：若未来要把后端培训写接口做成细粒度鉴权，应统一使用 `hrm:training:create/update/delete`
+  （与 FE `permissionResource` 对齐），不要再复活 `hrm:training_plan:*` 这套命名。
+
+### 9.5 `000012` / `000005` 怎么调
+
+1. **`000012` 不改**：删除清单保留这 3 条（`000012:68-70/165-167`）。prod 上它们是 0 行，
+   `DELETE` 空转；在有存量的环境里则正常清掉。
+2. **`000005` 不改字节**（本地/test 已 `success=t`，改字节会破坏 checksum）。它给
+   `hrm_manager` 授这 3 条同样无消费，`000012` 会连同授权行一起删。
+3. **顺序约束（必须写进批次单）**：`000005` 先于 `000012`。若某环境先跑 `000012` 再跑 `000005`，
+   这 3 条会被重新插入（复活）。prod 当前两条都 pending，按版本顺序执行即最终为「不存在」。
+4. 若坚持「批 16 语义」要保留写码，正确做法是把 `000005` 里的 3 条改成
+   `hrm:training:*`（与 FE 一致），并从 `000012` 删除集排除——但这会新增 3 条码并牵动授权，
+   属另一批变更，**本裁决不采纳**。
+
+### 9.6 复核命令（本轮只读）
+
+```sql
+-- prod
+SELECT code, id, level, description FROM public.core_permissions WHERE code LIKE 'hrm:training%';
+SELECT p.code, r.name, count(*) FROM public.core_permissions p
+  LEFT JOIN public.core_role_permissions rp ON rp.permission_id=p.id
+  LEFT JOIN public.core_roles r ON r.id=rp.role_id
+ WHERE p.code LIKE 'hrm:training%' GROUP BY 1,2 ORDER BY 1;
+SELECT count(*) FROM hrm.training_plans;  -- courses / records / participants 同
+SELECT count(*) FROM public.audit_logs WHERE entity_type ILIKE '%train%';
+```
+
+本轮 **无代码改动、prod 无 DDL/DML/重启**。
