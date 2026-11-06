@@ -11,7 +11,7 @@
 | --- | --- | --- |
 | 进程总连接上限 | 无（各池 `max_connections` 相加，生产理论 ≈ 496） | **≤ `DB_TOTAL_CONNECTION_BUDGET`（嵌入默认 = 池数 × 2 = 62）** |
 | 生产实测峰值 | 73（`idle` 72，无 `idle in transaction`，稳定非泄漏） | 待重启后复测（代码层已硬性封顶） |
-| 池实例数（嵌入模式） | 28 业务池 + 28 迁移池 + 1 个 ai 独立池（max 100 / min 10） | **28 业务池 + 1 共享迁移池 = 31**；ai 复用 bootstrap 池。批次 1 后：29；**批次 2 后：21 业务池 + 1 共享运行时池 + 1 迁移池 = 23** |
+| 池实例数（嵌入模式） | 28 业务池 + 28 迁移池 + 1 个 ai 独立池（max 100 / min 10） | **28 业务池 + 1 共享迁移池 = 31**；ai 复用 bootstrap 池。批次 1 后：29；批次 2 后：23（21 业务池 + 1 共享运行时池 + 1 迁移池）；**批次 3 后：18（16 业务池 + 1 共享运行时池 + 1 迁移池）** |
 | application_name | 空（无法按模块归因） | 每池可区分（`DB_APPLICATION_NAME` / `TOPEMS_SERVICE_NAME`） |
 
 A 的改动**需要重启服务才生效**；本次未重启、未部署 prod。
@@ -118,23 +118,23 @@ grant == 0 → 返回错误（fail-fast，绝不超发）
 
 | 来源 | 计数（预算单位） |
 | --- | --- |
-| 每个 `*_real_module`（finance/erp/...，共 **17** 个未迁移的默认启用单池模块） | 各 +1 |
-| 共享运行时池（批次 1 的 3 个 + 批次 2 的 6 个 = 9 个模块，合并为 **1 个物理池**） | +`SHARED_POOL_MODULE_WEIGHT`（当前 9） |
+| 每个 `*_real_module`（finance/erp/...，共 **12** 个未迁移的默认启用单池模块） | 各 +1 |
+| 共享运行时池（批次 1 的 3 个 + 批次 2 的 6 个 + 批次 3 的 5 个 = **14** 个模块，合并为 **1 个物理池**） | +`SHARED_POOL_MODULE_WEIGHT`（当前 14） |
 | `module-advanced`：master-data + analytics | +2 |
 | `module-core`（unified-core）：自身 bootstrap + `build_router_embedded` 内部再次 bootstrap | +2 |
 | 进程级共享迁移池（`create_migrate_pool` 单例，`MIGRATE_URL` 为空时不建） | +1 |
 | `platform` / `dashboard`（纯聚合模块，不建池） | 显式排除 |
 | **默认合计（预算单位）** | **31** |
-| **默认物理池数（启动核对口径）** | **23** = 31 − (9 − 1) |
+| **默认物理池数（启动核对口径）** | **18** = 31 − (14 − 1) |
 
 - 推导函数按 cfg feature 门控，与 build 列表**同源**；新增/移除模块必须同步修改。
 - `derived_db_pools()` 返回**预算单位**；物理池数 = 预算单位 − (`SHARED_POOL_MODULE_WEIGHT` − 1)，
   启动核对按物理池数比较（`snapshot.physical_pools`）。
 - 一致性校验：`DB_EXPECTED_POOLS` 与推导值不符 → 告警「配置值 vs 推导值」，采用推导值；
   启动末尾再用实际建池数核对（实际 > 推导 → 漏计告警；无降级却少于推导 → 未建池告警）。
-- 默认预算 `31 × 2 = 62`：22 个非共享物理池各得 2（44）+ 共享池按权重 9 得 18 = **62**，
-  `/ready` = 200（批次 1、批次 2 均实测）。
-- 未迁移模块数（17）随批次推进减少，但**预算单位总数 31 保持不变**：每迁移一个模块，
+- 默认预算 `31 × 2 = 62`：17 个非共享物理池各得 2（34）+ 共享池按权重 14 得 28 = **62**，
+  `/ready` = 200（批次 1、2、3 均实测）。
+- 未迁移模块数（12）随批次推进减少，但**预算单位总数 31 保持不变**：每迁移一个模块，
   `derived_db_pools()` 的 `+1` 移入 `SHARED_POOL_MODULE_WEIGHT`，只减少物理池、不改变预算份额。
 
 **额度耗尽语义（fail-fast，不静默降级）**
@@ -393,6 +393,11 @@ schema——会话基线 `iam,shared,public` 下 `core_files` → `iam.core_file
 | 2 | `pm` | `pm, public, shared` | 194 | 130 处 `scope_with` 复用请求 RLS 事务 | 完成 |
 | 2 | `mobile` | `mobile, public, shared`（显式） | 192 | 24 张表全限定；此前靠继承 `.env`，本批写死 | 完成 |
 | 2 | `search`（并池收口） | `public` | 13 | 代码早已迁 `Db`，仅换 `bootstrap_service_shared` | 完成 |
+| 3 | `portal` | `public, portal` | 37 | 帮助中心裸 `core_*` 落 `public`（权威）；GraphQL/仪表盘走 `portal.*` | 完成 |
+| 3 | `pdm` | `pdm, public` | 148 | 裸 `pdm_*` 大量；115 个 handler 接入请求 RLS 事务 | 完成 |
+| 3 | `integration` | `integration, public` | 174 | 混合裸表与 `integration.*`；后台同步服务保留共享池 | 完成 |
+| 3 | `ai` | `ai, public` | 141 | 以 `ai.*` 为主；`Database` 改持 `Db`，仅 DDL/RAG/审计保留共享池 | 完成 |
+| 3 | `communication` | `communication, public` | 120 | 裸 `core_*` 大量；71+14+8 个 handler 接入请求事务 | 完成 |
 
 批次 1 的 3 个模块统一走 `bootstrap_service_shared` + `Db::new(ctx.db.clone(), "public")`，
 不再各自 `bootstrap_service`；三者合计 **3 个物理池 → 1 个 `shared-runtime` 池**。
@@ -412,12 +417,16 @@ schema——会话基线 `iam,shared,public` 下 `core_files` → `iam.core_file
 
 前置只改代码/配置与门禁，**未迁移任何模块入共享池**：`/ready` 200、物理池仍 **23**、预算单位 31、预算 62。
 
+批次 3 完成（2026-11-06）：`portal` / `pdm` / `integration` / `ai` / `communication` 五模块迁入共享池，
+`SHARED_POOL_MODULE_WEIGHT` 9 → **14**，`derived_db_pools()` 去掉 5 个 `+1`；
+预算单位仍 **31**、物理池 **23 → 18**、共享池 grant 18 → 28、预算 62 自洽。详见 B.10.9。
+
 #### B.9.3 剩余 19 个 svc 模块分批计划（4 批，风险由低到高）
 
 | 批次 | 模块（SQL 点 / 动态 SQL / 前缀固化率 / 跨 schema） | 选入理由 |
 | --- | --- | --- |
 | 2（最低） | `tms`(76/0/96%)、`ticket`(102/0/97%)、`gis`(140/0/97%)、`pm`(194/0/95%)、`mobile`(192/0/100%) | **已完成**：单业务 schema、0 动态 SQL、前缀固化 ≥95%；`mobile` 已显式声明 `mobile, public, shared` |
-| 3 | `portal`(37/5/48%)、`pdm`(163/0/7%)、`integration`(174/0/80%)、`ai`(157/1/89%，→`core`)、`communication`(120/13/31%，→`iam`) | SQL 少但依赖裸表名或动态 SQL；`portal`/`communication` 前置已完成（见 B.9.2、B.10.8），**池迁移未开始** |
+| 3 | `portal`(37/5/48%)、`pdm`(163/0/7%)、`integration`(174/0/80%)、`ai`(157/1/89%，→`core`)、`communication`(120/13/31%，→`iam`) | **已完成**（2026-11-06）：裸表名/动态 SQL 已按固化值落地；前置见 B.10.8，结果见 B.10.9 |
 | 4 | `rd`(206/2/93%，`rs`/`rd` 双 schema)、`ehs`(261/0/96%)、`lims`(264/1/51%)、`scm`(261/7/97%)、`hrm`(240/0/100%，→`iam`) | 中量 SQL + 裸表名/跨 schema/动态 SQL 混合；`rd` 需先确认 `rs` 与 `rd` 的实际落点 |
 | 5 | `srm`(233/0/98%，→`unified_core`)、`crm`(286/0/95%，→`erp`)、`qms`(333/13/93%)、`master-data`(382/2/98%)、`wms`(462/0/~100%，→`scm`/`unified_core`) | 跨 schema JOIN 增多、体量上升；`crm`/`erp` 互相引用需成对验证 |
 | 6（最高） | `analytics`(212/32/32%，7 schema)、`mes`(603/7/68%)、`erp`(445/1/82%，→`crm`/`finance`)、`finance`(715/4/79%，→`erp`)、`unified-core`(677/5/67%，7 schema/124 JOIN) | 动态 SQL 或裸表名占比最高、跨 schema 最复杂；`finance`/`erp`/`unified-core` 必须走 `scope_with` 复用请求 RLS 事务 |
@@ -767,9 +776,44 @@ C.4 的既有 5 项白名单未变。
 
 批 3 前置**不迁池**：`/ready` 200、物理池 23、预算单位 31、预算 62 均与批 2 一致。
 
-**待决策（未自行删功能）**：tms 的三份启动预热（司机/车辆/承运商）缓存键均为
-`…:default:…`，而业务 handler 的键为 `…:all:…` 或 `…:<tenant_uuid>:…`，预热值从未被命中；
-`vehicles` 前缀修复只保证“预热读对表”，不改变“预热键不被消费”这一既有事实。是否删除预热需单独确认。
+**tms 三份启动预热判定（2026-11-06，批 3 附带项）：死缓存，已删除**
+
+| 方向 | 键（L1/L2 同串，L2 另有实例前缀 `tms:`） | 位置 |
+| --- | --- | --- |
+| 预热写入 | `tms:driver:list:default:page:1:page_size:10:search:none:status:all` 等三份 | 原 [svc/tms/src/main.rs](../../svc/tms/src/main.rs)（批 3 已删） |
+| 业务读取（司机） | `tms:driver:list:{tenant_key}:page:{page}:page_size:{page_size}:search:{search}:status:{status}` | [driver.rs#L110](../../svc/tms/src/modules/driver.rs#L110) |
+| 业务读取（车辆） | `tms:vehicle:list:{tenant_key}:page:...:search:...:status:...` | [vehicle.rs#L107](../../svc/tms/src/modules/vehicle.rs#L107) |
+| 业务读取（承运商） | `tms:carrier:list:{tenant_key}:...:status:{status}:locale:{locale}` | [carrier.rs#L112](../../svc/tms/src/modules/carrier.rs#L112) |
+
+`tenant_key` 只有两种取值：超管 `all`、普通租户 `<tenant_uuid>`（三处均为
+`tenant_id.map_or("all", |t| t.to_string())`）；承运商还多一个 `:locale:` 后缀。
+全仓库 grep `list:default` 只命中三处预热与文档，**没有任何读取方**；因此三份预热写入的键
+在业务侧永远不可能命中，属死代码。批 3 已删除三份预热（连同只为它们服务的 `warm_query`），
+`vehicles` 的空壳选表问题随删除一并消失。
+
+#### B.10.9 批 3 落地状态（2026-11-06，真实启动 + 真实请求）
+
+| 模块 | 固化 search_path | 主要读端点（200） | 写端点（200） | 落点证据 |
+| --- | --- | --- | --- | --- |
+| `portal` | `public, portal` | `/api/portal/help/faqs` | `POST /api/portal/todos` | 待办落 `portal.portal_todos`（无 `public` 同名表）；FAQ 走 `public` |
+| `pdm` | `pdm, public` | `/api/pdm/materials` | `POST /api/pdm/materials` | `B3-PDM-001` 仅在 `pdm.pdm_materials`（1 行），`public.pdm_materials` 0 行 |
+| `integration` | `integration, public` | `/api/integration/erp/connections` | `POST /api/integration/erp/connections` | `B3-ERP` 仅在 `integration.erp_connections`，`public` 0 行 |
+| `ai` | `ai, public` | `/api/ai/models` | `POST /api/ai/prompts/templates` | 模板落 `ai.ai_prompt_templates`（`public` 无同名表） |
+| `communication` | `communication, public` | `/api/communication/notification/notification-templates` | `POST .../notification-templates` | `B3模板` 仅在 `communication.core_notification_templates`，`public` 0 行 |
+
+- **租户隔离（`scope_with` 复用请求事务）实测**：向本地 `integration.lims_qms_sync` 写入
+  tenant A 的固定行，`POST /api/integration/lims-qms/{id}/sync`：tenant B → **404**（`app.tenant_id=B`
+  在复用事务中生效，行不可见），tenant A → **200** 并更新成功。`pdm`/`ai`/`communication`
+  的列表端点同样验证 A 可见 1 条、B 可见 0 条。
+- **嵌入启动实测**：日志 `[db-budget] 启动核对：注册表推导 31 预算单位（物理池 18），实际建池 18，降级 0，预算 62，已分配 62`；
+  `/api/server/ready` = **200**、`/health` degraded=0。
+- **连接占用**：3 并发 × 60 轮（每轮 5 个模块主读端点，共 900 请求）采样：
+  `topems-shared-runtime` 峰值 **3**、全库连接峰值 **35**（预算 62）。
+- **回归**：`cargo check --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、
+  `cargo fmt --check` 全通过；5 个模块 + `shared-db` + `shared-bootstrap` 单测
+  992/210/194/322/582/120/176 全通过（0 失败）。
+- **不再自建池**：五模块源码内 `bootstrap_service(` / `create_database_pool` / `PgPoolOptions`
+  为 0（communication 仅测试内惰性池）；生产入口全部 `bootstrap_service_shared` + `Db::new`。
 
 
 ## C. schema 前缀规则（可执行门禁）
