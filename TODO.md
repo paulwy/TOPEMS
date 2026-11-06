@@ -2084,7 +2084,7 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
-## v1.148 审计整改第二十五批：路由权限码缺口修复与测试污染排除（批 27，2026-11-07）
+## v1.148 审计整改第二十七批：路由权限码缺口修复与测试污染排除（批 27，2026-11-07）
 
 - **核心发现（双重条件致死）**：全站 18 处「细码 AND `<域>:dashboard:write`」路由，实测 8 个域的 dashboard:write 中 **7 个无人持有**（唯一例外 lims），且 15 个细码中 **4 个无人持有**。实际效果：这些页面**除 superadmin（is_superuser 前置放行）外，admin 与全部域 manager 都进不去**。finance 已在批 26 修正，本批移除其余 17 处，残留 0。
 - **权限码缺口补齐**（迁移 `20261107000021`，幂等 + ROLLBACK）：新建 `finance:account:read`（依据 `schemas/admin/account.ts:114` 的 permissionResource 拼接消费，DB 仅有 create/update/delete），授权 admin/finance_manager/superadmin；补齐 4 个「码存在但无人持有」的路由细码授权（`admin:tenant:write`、`rd:project:write`、`rd:experiment:write`、`rd:formula:write`）→ admin + superadmin。首次 INSERT 1/3/8，二次全 0。`core_permissions` 1160 → 1164，`core_role_permissions` 2995 → 3015。
