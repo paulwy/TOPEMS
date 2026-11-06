@@ -1,7 +1,7 @@
 # 租户来源混用收敛方案（盘点 + 路线选择）
 
 - 日期：2026-11-06
-- 状态：**已拍板，按批次执行中**（P0 迁移未应用；B1 mes/qms/finance、B2 pm/portal/integration/analytics 已完成并验证）
+- 状态：**已拍板，按批次执行中**（P0 迁移未应用；B1 mes/qms/finance、B2 pm/portal/integration/analytics、B3 crm/wms/scm/lims/gis/rd/unified-core 已完成并验证；待 B4 master-data/mobile）
 - 范围：`svc/**` 中 SQL 以 GUC `app.tenant_id` 作租户谓词、但执行在 `state.pool` 上的调用点；以及 `GET /orders/{id}` 这类"无租户谓词 + 无 deleted_at 过滤"的 pool 读
 - 关联提交（已完成的止血）：`8e1c47bf7`（qms FMEA uuid `::TEXT`）、`2a468f7db`（mes 生产订单写路径改 Claims）、`abb730e49`（finance 费用审批校验与落库）
 
@@ -460,6 +460,22 @@ rls_tenant_isolation|((COALESCE(current_setting('app.tenant_id'::text, true), ''
   - Integration `lims-qms sync` 不存在 id：T1/T2 均 `404`（无数据下不可区分越权，按代码口径+冒烟记录）。
 - **阻塞/新发现（仅记录，未扩大范围）**：① **`portal.portal_todos` 严重 schema 漂移**——真库无 `user_id / service_code / service_name / todo_type / link_url / completed` 列，`add/complete/delete` 必然 500；`get_todos` 靠 `default_todos()` 静默降级，故线上看似"能用"。本次改造已完成且编译通过，但 **portal 待办写路径在当前 schema 下无法功能验证**，需单独立项补列/对齐代码。② `portal.portal_todos` 的 RLS 策略为 `allow_all`，未纳入租户隔离，P0 需覆盖。③ pm `get_settlement` / `get_project_settlements` 无租户谓词（按 id/project 可跨租户读，非 GUC 模式）。④ `effective_tenant_id` 硬编码超管→租户 0001，与"claims 为准 / nil 全量"不统一。⑤ integration `update_company_mapping` / `update_entity_mapping` 仅按 id+connection 更新，无租户谓词。
 - **环境**：`SQLX_OFFLINE=true` 编译；本轮旧二进制备份 `topems-server-4fd8db5d2-20261106-b2.bak`；重启到 `/health` 恢复约 12s。
+
+**B3 执行记录（2026-11-06，crm / wms / scm / lims / gis / rd / unified-core）**
+
+- **盘点修正**：计划表原写 16 处 / 10 文件；按统一逐语句扫描器实测，7 个模块含 GUC 的语句共 **68 处 / 28 文件**，其中 **48 处执行在 `&mut **txn`（请求事务内 GUC 正确，属非缺陷，保持原样）**，**真实 pool 缺陷 20 处 / 11 文件**：crm 8（`modules/analytics.rs` 7 + `event_handlers/mod.rs` 1）、gis 3（location/map/marker）、rd 3（`project_repository`）、unified-core 2（`access_log` + 审计中间件）、wms 2（`serial_number`）、scm 1（`audit`）、lims 1（`report`）。
+- **对账（同一扫描器）**：B3 七模块 pool 执行 **20 处 → 0 处**（`svc/crm/src/tests/rls_isolation_test.rs` 1 处为测试专用，按设计保留）。另修 1 类扫描器结构性漏识——「SQL 文本先拼接、后执行」的语句（`unified-core/src/middleware/audit_log.rs::log_audit_entry`）一并改为 `$9` 绑定 nil，人工口径合计 **21 处 / 12 文件 → 0**。
+- **计划外补漏（P0 fail-closed 前必须去掉的 GUC 依赖：3 处 / 2 文件 → 0）**：`lib/shared-db/src/audit.rs` 两处（`AuditLogService::create_audit_log` 与 `SchemaAuditLogService::create_audit_log`）`COALESCE($1, NULLIF(current_setting(...)))` → `COALESCE($1, '00000000-0000-0000-0000-000000000000'::uuid)`；`svc/plugin-registry/.../tenant_plugins.rs::upload_plugin` 的 INSERT 末位改 `$17` + `.bind(get_tenant_id_from_claims(&claims))`。
+- **全仓剩余（同一扫描器，改造后）**：pool 执行 GUC 语句 **90 处 / 19 文件**；其中业务剩余 **87 处 / 15 文件**（master-data 80/10、mobile 7/5）= B4 范围；其余 3 处为 2 个 RLS 单测 + `lib/shared-db/src/rls.rs` 的 RLS 策略生成 DDL（机制本身，按设计保留）。`&mut **txn` 193 处不计入。
+- **统一口径**：写/读谓词 `($N::uuid IS NULL OR tenant_id = $N)`（nil = 全量），N = 语句现有最大参数 +1，末尾 `.bind(tenant)`。crm/gis 用 `Option<Uuid>`（超管 `None`）；lims/wms/rd 用 `get_tenant_id_from_claims`；scm 系统级审计与 unified-core HTTP 审计中间件显式绑 `Uuid::nil()`（无 Claims / 早于认证）。
+- **验证（8099 实测，三身份：普通租户1 / 普通租户2 / nil）**：
+  - CRM dashboard：T1N `industries=[{unknown,300}]`、T2N `[]`、nil `[{unknown,300}]` → 普通租户过滤生效（改造前 pool 上宽松 GUC 谓词会让 T2N 也看到 300）。
+  - GIS map-markers：T1N 创建 `200`；T2N 跨租户更新 `404「地图标记未找到」`；T1N 本租户更新 `200`、删除 `200`（已清理）；三身份列表均 `200`。
+  - WMS serial-numbers：列表/追溯三身份均 `200`（对应表为空，无法以行数区分；仅证明链路可达 + 代码口径）。
+  - LIMS `POST /api/lims/reports/{id}/approve` 三身份均 `404「接口不存在」`——**该 handler 未注册路由（死代码）**，仅代码级修复。
+  - SCM / unified-core：写路径为系统级/中间件审计（显式 nil），无租户差异，仅代码级 + 编译验证。
+- **新发现（仅记录，未扩大范围）**：① LIMS `approve_report` 未挂载路由；② rd `ProjectService`/repository 的 update·delete·batch_delete 无外部调用者（服务未挂载）；③ rd `batch_create` 仍显式写 nil（非 GUC 模式，本次未改）；④ `lib/shared-db/src/rls.rs` 的 RLS 策略生成器仍用 GUC（机制本身，P0 迁移需与之对齐口径）。
+- **环境**：`SQLX_OFFLINE=true`编译；补漏后重新构建并重启（`/health` 恢复约 15s）；本轮备份 `topems-server-b3-20261106.bak`。
 
 **验证通用手段**
 
