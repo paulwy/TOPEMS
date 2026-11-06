@@ -2084,6 +2084,25 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.152 审计整改第三十一批：架构级缺陷收敛实施（批 31，2026-11-07）
+
+原则：**一步到位**——前、后端、数据库该补充的就补充、完善。批 30 只出方案登记的部分，本批落地实施。
+
+- **`asset_category.rs` latent bug 修复 + CRUD 补齐**：`svc/erp/src/modules/asset_category.rs:237` INSERT 列清单删去不存在的 `tenant_id`（7 列 → 6 列，同步删对应 VALUES 的 COALESCE 表达式，bind `$1–$6` 不变、`$7` 仍为 RETURNING 的 locale 参数）。同时补齐软删过滤五处：list count `:120`、list data `:142`、get `:200`、update WHERE `:292`；**硬 `DELETE` 改为软删 `UPDATE SET deleted_at = NOW()`**（`:340`）。五个 CRUD 全部可用，POST 不再必然失败。表实测 10 列（**无 `tenant_id`、无 `sort_order`**），按现有结构对齐不改表。
+- **资产分类种子迁移（`20261107000026`）**：`erp.asset_categories` 自建表以来**从未灌过种子**（grep 无命中）、0 行 → 按 **GB/T 14885** 六大类（房屋及构筑物 / 通用设备 / 专用设备 / 文物和陈列品 / 图书、档案 / 家具、用具、装具及动植物）建两级树，共 **28 行**（6 大类 + 22 子类）。`ON CONFLICT (code) DO NOTHING` 幂等（唯一约束 `asset_categories_code_key`）；树结构靠 `parent_id = (SELECT id ... WHERE code='<父code>')` 建立不写死 uuid；文件头含 `[batch31]` + ROLLBACK SQL。**验证：顶层 6 / 子节点 22 / 孤儿 0 / 总 28；二次执行 7 条 INSERT 全 `INSERT 0 0`，行数保持 28。**
+- **死表清理迁移（`20261107000027`）**：**drop 3 张** —— `erp.core_erp_suppliers`（0 writer / 0 reader / 0 DB 依赖）、`crm.core_crm_customers`（同）、`crm.customers_tenant_null_backup_20260919`（同）。均 `DROP TABLE IF EXISTS` 包 `BEGIN;/COMMIT;`，**二次执行全部 NOTICE skipping 且 exit 0**。未受影响：`crm.customers=295` / `scm.suppliers=196` / `srm.suppliers=92` 精确对齐。回滚文档写入注释（原 DDL 在 `20260725000000_business_base_tables.sql`、三条 `\copy` 指回备份、完整列清单、重建需补 RLS/索引）。
+- **关键偏差：`erp.customers` 不是死表 → 跳过保留**。取证推翻任务书预设：代码侧 `svc/erp/src/modules/customer.rs:145,162,180,233,279,368,456,608,655,716,777,854,921,995,1044,1051,1058,1065,1070,1110,1113`（20+ 处 CRUD）、`searchable_projection.rs:46,219`、`sales_order.rs:234,815`；DB 侧 `erp.sales_orders.customer_id → erp.customers` 外键 `sales_orders_customer_id_fkey`。**该表承载活跃业务，只是当前 6 行数据恰好全是测试残留**（1 行 MCP + 5 行 B1 验收 `K1B1*`，5 行已软删）。按「绝不为了推进而强删」保留，CSV 备份留存待后续决策（后续应走「清残留行」而非 drop 表）。
+- **CSV 备份（drop 前完成）**：`database/backup/` 四份，行数核对 6 / 0 / 177 / 0（CSV 7 / 1 / 178 / 1 含表头）。
+- **`erp.search` 供应商读取修正**（`svc/erp/src/modules/search.rs:162`）：原读死表 `core_erp_suppliers` **恒返回空** → 改 `UNION ALL` `scm.suppliers ∪ srm.suppliers`，外层 `ROW_NUMBER() OVER (PARTITION BY supplier_no ORDER BY (src='scm') DESC)` 去重（**scm 优先**），两表均 `deleted_at IS NULL`；`description = COALESCE(NULLIF(email,''),NULLIF(phone,''),name)`；path 保留 `/srm/suppliers`。宏 `only_own_schema_query!("erp", sql, "scm", "srm")`（extra 变长合规，客户段 `"crm"` 不动）。**实测（租户 `...0001`）：供应商从 0 变 287 可命中（scm 195 + srm 92 零重叠），客户 189 可命中。**
+- **`publish_customer_event` 死代码删除**：全量复核零调用后，删除整个 `svc/crm/src/services/mdm_event_service.rs`（−104 行，该结构体仅此一个业务方法无外部引用）+ 从 `services/mod.rs` 移除 `pub mod mdm_event_service;`。删除后全仓 grep 命中 **0**。
+- **前端资产分类补齐**：`assetCategory.ts:5` 过期注释修正（「V19.0 Stub 后端尚未实现」→ 准确描述）；`schemas/erp/assetCategory.ts` 的 `parentId` 从 `type:'text'` 手输 UUID 改为 `type:'select'` + `dynamicOptions` loader，并用 `computeSelfAndDescendants` 排除自身及后代防成环（`:8-29` / `:39-62` / `:96-102` / `:184-190`）；`code` 补 `maxLength=64`（`:86`）；列表移除 `parentId` 裸 UUID 列（`:100,132`）。**未加 `sort_order`**（表无此列）。
+- **前端 erp 全局搜索契约对齐（查出真实 bug，比后端死表更严重）**：后端返回 `data.items`（`svc/search/src/models.rs:29-37`），前端读 `data.results` → **全局搜索前端恒空**。修复：`useGlobalSearch.ts:167` 改读 `items`；`:238` 跳转改 `navigate(result.path || result.url || '/')`；`utils.ts:107,117` 分组改 `module || service` + `type_name` 兜底；`:177-180,189,202` 筛选选项改 `module`/`type_name`；`:170` 模糊搜索索补 `description`/`type_name`；`api/search/index.ts:5-40` 类型重排为新契约（旧字段保留可选）。`description` null 兜底已存在（`SearchResultList.tsx:359`）未改。
+- **测试回归逐个收敛**：vitest 首轮 10 failed 全在 `useGlobalSearch.test.ts`，根因是 mock 信封仍为 `results`。处置：mock 对齐新信封（`mockSearchResult` 形状 + `data.items`），`:377` / `:580` 两处跳转断言从 `'/test'` 收敛到 `'/crm/customers'` 并逐条写明理由；**断言消费端 `results` 保留不动**（失败根因只在 mock 输入形状）。
+- **验证**：`cargo check -p topems-erp -p topems-crm` **exit 0 / 0 warning**；`typecheck` **0 错误**；`eslint`（5 文件）**0 报错**；全量 vitest **621 files / 6639 passed / 0 failed**（1 skipped）；迁移四件套全 PASS（文件名 PASS / validate exit 0 Errors 0 / schema 防御 drift 0 / RLS 通过）；搜索 psql 实测 **287 / 189**。
+- **DB 终态**：`erp.asset_categories` **0 → 28 行**；3 张死表已 drop；`erp.customers` 6 行保留；`crm.customers` 295 / `scm.suppliers` 196 / `srm.suppliers` 92 均未受影响。
+- 产出：`docs/audit/P3-21_架构级缺陷收敛实施_批31_执行记录_2026-11-07.md`、两个迁移文件、13 个改动文件（9 M + 1 D + 2 新增迁移 + checksums）。
+- 遗留：`erp.customers` 6 行测试残留是否清理待产品确认；供应商主数据权威源（mdm 建表导入 288 行 + 视图 + 11 CRUD + 8 sync + 12 JOIN）仍待拍板；`mdm_asset_categories` 建议改名待定；B 项 rd 三页面语义错配维持不动。
+
 ## v1.151 审计整改第三十批：架构级缺陷取证与收敛（批 30，2026-11-07）
 
 原则：**无把握不动**——纯字典表可归并，涉及业务数据双写的必须先取证，不可安全执行只出方案登记。

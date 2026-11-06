@@ -1,26 +1,45 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+/**
+ * 全局搜索结果（svc/search /api/search 实际契约）
+ *
+ * 现行后端返回字段：id / title / description(nullable) / module / path / type_name，
+ * 信封为 data.items（见 svc/search/src/models.rs SearchResponse）。
+ * 下列 summary / service / result_type / url 等为历史字段，后端已不返回，
+ * 保留为可选仅为兼容旧 mock 与过渡期兜底。
+ */
 export interface SearchResult {
   id: string;
   title: string;
-  summary: string;
-  description?: string;
-  highlight_title: string;
-  highlight_summary: string;
-  service: string;
-  service_name: string;
-  module?: string;
-  result_type: string;
+  description?: string | null;
+  module: string;
+  path: string;
   type_name?: string;
-  url: string;
+  relevance?: number;
+  snippet?: string;
+  // ── 历史字段（后端已不下发，可选兜底） ──
+  summary?: string;
+  highlight_title?: string;
+  highlight_summary?: string;
+  service?: string;
+  service_name?: string;
+  result_type?: string;
+  url?: string;
 }
 
 interface SearchResponse {
+  items: SearchResult[];
   total: number;
-  by_service: Record<string, number>;
-  results: SearchResult[];
-  duration_ms: number;
+  page: number;
+  page_size: number;
+  search_type?: string;
+  facets?: Record<string, number>;
+  suggestions?: unknown[];
+  // ── 历史信封字段（已不下发） ──
+  results?: SearchResult[];
+  by_service?: Record<string, number>;
+  duration_ms?: number;
 }
 
 interface SearchSuggestionsResponse {

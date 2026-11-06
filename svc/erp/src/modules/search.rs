@@ -159,15 +159,35 @@ async fn global_search(
     .unwrap_or_default();
     results.extend(customer_results);
 
+    // 供应商：UNION scm.suppliers ∪ srm.suppliers，按 supplier_no 去重（scm 优先）
+    // 两表均有 deleted_at 软删列，RLS 按 app.tenant_id 自动隔离
     let supplier_results: Vec<SearchResult> = sqlx::query(only_own_schema_query!(
         "erp",
         r#"
-        SELECT id, name as title, contact_person as description, 'supplier' as module,
-               '/srm/suppliers' as path, '供应商' as type_name
-        FROM core_erp_suppliers
-        WHERE LOWER(name) LIKE $1 OR LOWER(contact_person) LIKE $1 OR LOWER(phone) LIKE $1
+        SELECT id, name as title, description, module, path, type_name
+        FROM (
+            SELECT id, name,
+                   COALESCE(NULLIF(email, ''), NULLIF(phone, ''), name) as description,
+                   'supplier' as module,
+                   '/srm/suppliers' as path, '供应商' as type_name,
+                   supplier_no,
+                   ROW_NUMBER() OVER (PARTITION BY supplier_no ORDER BY (src = 'scm') DESC) as rn
+            FROM (
+                SELECT id, supplier_no, name, email, phone, 'scm' as src
+                FROM scm.suppliers
+                WHERE deleted_at IS NULL
+                  AND (LOWER(name) LIKE $1 OR LOWER(COALESCE(email, '')) LIKE $1 OR LOWER(COALESCE(phone, '')) LIKE $1)
+                UNION ALL
+                SELECT id, supplier_no, name, email, phone, 'srm' as src
+                FROM srm.suppliers
+                WHERE deleted_at IS NULL
+                  AND (LOWER(name) LIKE $1 OR LOWER(COALESCE(email, '')) LIKE $1 OR LOWER(COALESCE(phone, '')) LIKE $1)
+            ) u
+        ) ranked
+        WHERE rn = 1
         LIMIT $2
-        "#
+        "#,
+        "scm", "srm"
     ))
     .bind(search_pattern)
     .bind(limit / 3)

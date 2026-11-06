@@ -38,7 +38,9 @@
       "search_path": "erp, public",
       "allow": [
         "finance",
-        "crm"
+        "crm",
+        "scm",
+        "srm"
       ]
     },
     "finance": {

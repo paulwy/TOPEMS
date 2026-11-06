@@ -5,28 +5,28 @@ import { useGlobalSearch } from '@/hooks/useGlobalSearch';
 import { loadSearchHistory, saveSearchHistory } from '@/components/GlobalSearchBar/utils';
 
 const { mockSearchResult, mockSearchResponse } = vi.hoisted(() => {
+  // 对齐后端真实契约（svc/search SearchResult）：
+  // {id, title, description(nullable), module, path, type_name}，信封 data.items
   const mockSearchResult = {
     id: '1',
     title: 'Test Result',
-    summary: 'Test summary',
-    highlight_title: 'Test Result',
-    highlight_summary: 'Test summary',
-    service: 'user',
-    service_name: '用户管理',
-    module: 'user',
-    result_type: 'user',
-    type_name: '用户',
-    url: '/test',
+    description: 'test@example.com',
+    module: 'customer',
+    path: '/crm/customers',
+    type_name: '客户',
   };
   const mockSearchResponse = {
     success: true,
     code: 200,
     message: 'ok',
     data: {
-      results: [mockSearchResult],
+      items: [mockSearchResult],
       total: 1,
-      by_service: { user: 1 },
-      duration_ms: 10,
+      page: 1,
+      page_size: 10,
+      search_type: 'exact',
+      facets: { customer: 1 },
+      suggestions: [],
     },
     timestamp: Date.now(),
   };
@@ -374,7 +374,7 @@ describe('useGlobalSearch', () => {
         } as unknown as React.KeyboardEvent);
       });
 
-      expect(mockNavigate).toHaveBeenCalledWith('/test');
+      expect(mockNavigate).toHaveBeenCalledWith('/crm/customers');
       expect(result.current.open).toBe(false);
       expect(result.current.query).toBe('');
     });
@@ -577,7 +577,7 @@ describe('useGlobalSearch', () => {
         result.current.handleResultClick(mockResult);
       });
 
-      expect(mockNavigate).toHaveBeenCalledWith('/test');
+      expect(mockNavigate).toHaveBeenCalledWith('/crm/customers');
       expect(result.current.open).toBe(false);
       expect(result.current.query).toBe('');
     });
