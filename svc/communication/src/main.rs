@@ -1,6 +1,7 @@
 use axum::{routing::delete, routing::get, routing::post, routing::put, Router};
 use topems_shared_auth::middleware::require_permission;
-use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_shared, build_application, run, ServiceConfig};
+use topems_shared_db::scope::Db;
 
 mod im;
 mod im_location;
@@ -12,8 +13,6 @@ mod schema_defense;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "communication, public, shared");
-
     let config = ServiceConfig {
         name: "topems-communication",
         port: 8084,
@@ -27,7 +26,8 @@ async fn main() -> anyhow::Result<()> {
         init_telemetry: true,
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_shared(&config).await?;
+    let db = Db::new(ctx.db.clone(), "communication, public");
 
     // C-1：自建 DDL 已移除（迁移权威唯一仲裁）；Schema 防御保留
     if let Err(e) = schema_defense::run_schema_migration_and_verify(
@@ -259,7 +259,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/mail/templates/{id}/send", post(mail::send_with_template))
         .route("/mail/emails/{id}", delete(mail::delete_email));
 
-    // 合并所有路由（PgPool 作为 state），build_application 自动加 auth/rate_limit/CORS/Prometheus/telemetry
+    // 合并所有路由（Db 作为 state；租户中间件仍使用原生池），build_application 自动加 auth/rate_limit/CORS/Prometheus/telemetry
     let protected_routes = Router::new()
         .merge(notification_read)
         .merge(notification_write)
@@ -274,7 +274,7 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn(require_permission(
             "communication:admin",
         )))
-        .with_state(ctx.db.clone());
+        .with_state(db.clone());
 
     let public_routes = Router::new().route("/health", get(health_handler));
 

@@ -4,7 +4,7 @@ use axum::{
     extract::{Path, State},
     Json,
 };
-use sqlx::PgPool;
+use topems_shared_db::scope::Db;
 
 /// 根据 last_active_secs 与 now 的差值分类 IM 用户状态
 /// diff <= 300s → online，<= 1800s → away，否则 offline；时钟倒拨视为 offline
@@ -50,7 +50,7 @@ pub fn format_im_message(sender: &str, content: &str, max_len: usize) -> String 
         (status = 500, description = "Internal server error")
     )
 )]
-pub async fn list_rooms(State(_pool): State<PgPool>) -> Json<serde_json::Value> {
+pub async fn list_rooms(State(_db): State<Db>) -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "success": true,
         "message": "list_rooms success",
@@ -70,7 +70,7 @@ pub async fn list_rooms(State(_pool): State<PgPool>) -> Json<serde_json::Value> 
     )
 )]
 pub async fn create_room(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IM create_room called with: {:?}", payload);
@@ -94,10 +94,7 @@ pub async fn create_room(
     ),
     tag = "im"
 )]
-pub async fn get_room(
-    State(_pool): State<PgPool>,
-    Path(id): Path<String>,
-) -> Json<serde_json::Value> {
+pub async fn get_room(State(_db): State<Db>, Path(id): Path<String>) -> Json<serde_json::Value> {
     tracing::info!("IM get_room called with id: {}", id);
     Json(serde_json::json!({
         "success": true,
@@ -120,7 +117,7 @@ pub async fn get_room(
     tag = "im"
 )]
 pub async fn get_messages(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IM get_messages called with room id: {}", id);
@@ -145,7 +142,7 @@ pub async fn get_messages(
     tag = "im"
 )]
 pub async fn send_message(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -184,7 +181,7 @@ pub async fn send_message(
     ),
     tag = "im"
 )]
-pub async fn list_contacts(State(_pool): State<PgPool>) -> Json<serde_json::Value> {
+pub async fn list_contacts(State(_db): State<Db>) -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "success": true,
         "message": "list_contacts success",
@@ -203,7 +200,7 @@ pub async fn list_contacts(State(_pool): State<PgPool>) -> Json<serde_json::Valu
     tag = "im"
 )]
 pub async fn add_contact(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IM add_contact called with: {:?}", payload);
@@ -216,7 +213,7 @@ pub async fn add_contact(
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_online_status(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(user_id): Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IM get_online_status called with user_id: {}", user_id);
@@ -253,7 +250,7 @@ pub async fn get_online_status(
     tag = "im"
 )]
 pub async fn update_room(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -282,10 +279,7 @@ pub async fn update_room(
     ),
     tag = "im"
 )]
-pub async fn delete_room(
-    State(_pool): State<PgPool>,
-    Path(id): Path<String>,
-) -> Json<serde_json::Value> {
+pub async fn delete_room(State(_db): State<Db>, Path(id): Path<String>) -> Json<serde_json::Value> {
     tracing::info!("IM delete_room called with id: {}", id);
     Json(serde_json::json!({
         "success": true,
@@ -308,7 +302,7 @@ pub async fn delete_room(
     tag = "im"
 )]
 pub async fn add_member(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -338,7 +332,7 @@ pub async fn add_member(
     tag = "im"
 )]
 pub async fn remove_member(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -368,7 +362,7 @@ pub async fn remove_member(
     tag = "im"
 )]
 pub async fn list_members(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IM list_members called with room id: {}", id);
@@ -380,7 +374,7 @@ pub async fn list_members(
 }
 
 pub async fn update_message(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -397,7 +391,7 @@ pub async fn update_message(
 }
 
 pub async fn delete_message(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IM delete_message called with message id: {}", id);
@@ -409,7 +403,7 @@ pub async fn delete_message(
 }
 
 pub async fn mark_messages_read(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IM mark_messages_read called with room id: {}", id);
@@ -421,7 +415,7 @@ pub async fn mark_messages_read(
 }
 
 pub async fn list_im_notifications(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(user_id): Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IM list_im_notifications called with user_id: {}", user_id);
@@ -432,7 +426,7 @@ pub async fn list_im_notifications(
     }))
 }
 
-pub async fn list_project_groups(State(_pool): State<PgPool>) -> Json<serde_json::Value> {
+pub async fn list_project_groups(State(_db): State<Db>) -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "success": true,
         "message": "list_project_groups success",
@@ -441,7 +435,7 @@ pub async fn list_project_groups(State(_pool): State<PgPool>) -> Json<serde_json
 }
 
 pub async fn create_project_group(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IM create_project_group called with: {:?}", payload);
@@ -452,7 +446,7 @@ pub async fn create_project_group(
     }))
 }
 
-pub async fn list_contact_groups(State(_pool): State<PgPool>) -> Json<serde_json::Value> {
+pub async fn list_contact_groups(State(_db): State<Db>) -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "success": true,
         "message": "list_contact_groups success",
@@ -461,7 +455,7 @@ pub async fn list_contact_groups(State(_pool): State<PgPool>) -> Json<serde_json
 }
 
 pub async fn create_contact_group(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IM create_contact_group called with: {:?}", payload);
@@ -473,7 +467,7 @@ pub async fn create_contact_group(
 }
 
 pub async fn update_contact_group(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -490,7 +484,7 @@ pub async fn update_contact_group(
 }
 
 pub async fn delete_contact_group(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IM delete_contact_group called with id: {}", id);
@@ -502,7 +496,7 @@ pub async fn delete_contact_group(
 }
 
 pub async fn mute_room(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -519,7 +513,7 @@ pub async fn mute_room(
 }
 
 pub async fn pin_message(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -545,7 +539,7 @@ pub async fn pin_message(
     ),
     tag = "im"
 )]
-pub async fn search_rooms(State(_pool): State<PgPool>) -> Json<serde_json::Value> {
+pub async fn search_rooms(State(_db): State<Db>) -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "success": true,
         "message": "search_rooms success",
@@ -554,7 +548,7 @@ pub async fn search_rooms(State(_pool): State<PgPool>) -> Json<serde_json::Value
 }
 
 pub async fn search_messages(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IM search_messages called with room id: {}", id);
@@ -565,10 +559,7 @@ pub async fn search_messages(
     }))
 }
 
-pub async fn get_contact(
-    State(_pool): State<PgPool>,
-    Path(id): Path<String>,
-) -> Json<serde_json::Value> {
+pub async fn get_contact(State(_db): State<Db>, Path(id): Path<String>) -> Json<serde_json::Value> {
     tracing::info!("IM get_contact called with id: {}", id);
     Json(serde_json::json!({
         "success": true,
@@ -578,7 +569,7 @@ pub async fn get_contact(
 }
 
 pub async fn remove_contact(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IM remove_contact called with id: {}", id);
@@ -590,7 +581,7 @@ pub async fn remove_contact(
 }
 
 pub async fn update_contact(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -703,11 +694,14 @@ mod tests {
 
     // ===== axum handler 桩实现测试（用 lazy pool 直接调用） =====
 
-    fn lazy_pool() -> PgPool {
+    fn lazy_pool() -> Db {
         use sqlx::postgres::PgPoolOptions;
-        PgPoolOptions::new()
-            .connect_lazy("postgres://nobody:nobody@127.0.0.1:1/none")
-            .expect("lazy pool")
+        Db::new(
+            PgPoolOptions::new()
+                .connect_lazy("postgres://127.0.0.1:1/none")
+                .expect("lazy pool"),
+            "communication, public",
+        )
     }
 
     #[tokio::test]

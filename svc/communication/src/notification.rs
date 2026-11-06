@@ -4,12 +4,15 @@ use axum::{
     http::HeaderMap,
     Json,
 };
-use sqlx::PgPool;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
+use topems_shared_db::scope::{Db, ScopedTxn};
 use uuid::Uuid;
+
+type RlsTxnCell =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 use crate::models::{
     ArchiveConfig, BatchSubscribeRequest, BatchUnsubscribeRequest, BroadcastNotificationRequest,
@@ -122,7 +125,8 @@ pub fn truncate_notification_title(title: &str, max_len: usize) -> String {
     )
 )]
 pub async fn send_notification(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SendNotificationRequest>,
 ) -> Json<serde_json::Value> {
@@ -141,6 +145,29 @@ pub async fn send_notification(
             "code": 403
         }));
     }
+
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
 
     let id = Uuid::new_v4();
     let send_email = req.send_email.unwrap_or(false);
@@ -177,7 +204,7 @@ pub async fn send_notification(
     .bind(priority)
     .bind(&req.data)
     .bind(tenant_bind)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -198,7 +225,7 @@ pub async fn send_notification(
 
             // 如果需要同时发送邮件
             if send_email {
-                let _ = send_notification_email(&pool, &req).await;
+                let _ = send_notification_email(&db, &mut scope, &req).await;
             }
 
             Json(serde_json::json!({
@@ -231,7 +258,8 @@ pub async fn send_notification(
     tag = "notification"
 )]
 pub async fn broadcast_notification(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BroadcastNotificationRequest>,
 ) -> Json<serde_json::Value> {
@@ -250,6 +278,29 @@ pub async fn broadcast_notification(
             "code": 403
         }));
     }
+
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
 
     let notification_type =
         normalize_notification_type(&req.notification_type.unwrap_or_else(|| "info".to_string()));
@@ -279,7 +330,7 @@ pub async fn broadcast_notification(
                 "SELECT tenant_id FROM iam.users WHERE id = $1 AND deleted_at IS NULL",
             )
             .bind(user_id)
-            .fetch_optional(&pool)
+            .fetch_optional(&mut scope)
             .await
             .unwrap_or(None);
             let tenant_matches = match recipient_ok {
@@ -319,7 +370,7 @@ pub async fn broadcast_notification(
         .bind(priority)
         .bind(&req.data)
         .bind(tenant_bind)
-        .execute(&pool)
+        .execute(&mut scope)
         .await;
 
         match result {
@@ -361,7 +412,8 @@ pub async fn broadcast_notification(
     ),
 )]
 pub async fn create_notification(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -369,7 +421,7 @@ pub async fn create_notification(
     // 委托给 send_notification 处理逻辑
     let send_req = serde_json::from_value::<SendNotificationRequest>(req.clone());
     match send_req {
-        Ok(r) => send_notification(State(pool), Extension(claims), Json(r)).await,
+        Ok(r) => send_notification(State(db), Extension(txn_arc), Extension(claims), Json(r)).await,
         Err(_) => Json(serde_json::json!({
             "success": false,
             "message": "Invalid notification request body"
@@ -394,10 +446,33 @@ pub async fn create_notification(
     )
 )]
 pub async fn list_notifications(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<NotificationQuery>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -431,7 +506,7 @@ pub async fn list_notifications(
     .bind(&params.notification_type)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -466,7 +541,7 @@ pub async fn list_notifications(
             .bind(user_id)
             .bind(params.is_read)
             .bind(&params.notification_type)
-            .fetch_one(&pool)
+            .fetch_one(&mut scope)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -475,7 +550,7 @@ pub async fn list_notifications(
                 only_own_schema_query!("public", "SELECT COUNT(*) FROM core_notifications WHERE deleted_at IS NULL AND user_id = $1 AND is_read = FALSE"),
             )
             .bind(user_id)
-            .fetch_one(&pool)
+            .fetch_one(&mut scope)
             .await;
             let unread_count = unread_result.unwrap_or(0);
 
@@ -518,10 +593,33 @@ pub async fn list_notifications(
     ),
 )]
 pub async fn mark_as_read(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Marking notification as read: {} for user: {}",
         id,
@@ -547,7 +645,7 @@ pub async fn mark_as_read(
     )
     .bind(id)
     .bind(user_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(false);
 
@@ -570,7 +668,7 @@ pub async fn mark_as_read(
     ))
     .bind(id)
     .bind(user_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -607,9 +705,32 @@ pub async fn mark_as_read(
     tag = "notification"
 )]
 pub async fn mark_all_as_read(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Marking all notifications as read for user: {}",
         claims.username
@@ -637,7 +758,7 @@ pub async fn mark_all_as_read(
         "#
     ))
     .bind(user_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -676,11 +797,18 @@ pub async fn mark_all_as_read(
     )
 )]
 pub async fn get_notifications(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<NotificationQuery>,
 ) -> Json<serde_json::Value> {
-    list_notifications(State(pool), Extension(claims), Query(params)).await
+    list_notifications(
+        State(db),
+        Extension(txn_arc),
+        Extension(claims),
+        Query(params),
+    )
+    .await
 }
 
 /// 获取当前用户的未读通知数量
@@ -695,9 +823,32 @@ pub async fn get_notifications(
     tag = "notification"
 )]
 pub async fn get_unread_count(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Getting unread notification count for user: {}",
         claims.username
@@ -720,7 +871,7 @@ pub async fn get_unread_count(
         only_own_schema_query!("public", "SELECT COUNT(*) FROM core_notifications WHERE deleted_at IS NULL AND user_id = $1 AND is_read = FALSE"),
     )
     .bind(user_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -752,10 +903,33 @@ pub async fn get_unread_count(
     tag = "notification"
 )]
 pub async fn get_unread_notifications(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<NotificationQuery>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -788,7 +962,7 @@ pub async fn get_unread_notifications(
     .bind(&params.notification_type)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -844,10 +1018,33 @@ pub async fn get_unread_notifications(
     ),
 )]
 pub async fn delete_notification(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Deleting notification: {} for user: {}",
         id,
@@ -872,7 +1069,7 @@ pub async fn delete_notification(
     )
     .bind(id)
     .bind(user_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(false);
 
@@ -891,7 +1088,7 @@ pub async fn delete_notification(
     ))
     .bind(id)
     .bind(user_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -928,9 +1125,32 @@ pub async fn delete_notification(
     tag = "notification"
 )]
 pub async fn delete_all_notifications(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!("Deleting all notifications for user: {}", claims.username);
 
     let user_id = match Uuid::parse_str(&claims.sub) {
@@ -951,7 +1171,7 @@ pub async fn delete_all_notifications(
         "UPDATE core_notifications SET deleted_at = NOW() WHERE user_id = $1"
     ))
     .bind(user_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -989,10 +1209,33 @@ pub async fn delete_all_notifications(
     )
 )]
 pub async fn get_notification(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!("Getting notification: {} for user: {}", id, claims.username);
 
     let user_id = match Uuid::parse_str(&claims.sub) {
@@ -1017,7 +1260,7 @@ pub async fn get_notification(
     )
     .bind(id)
     .bind(user_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -1072,10 +1315,33 @@ pub async fn get_notification(
     tag = "notification"
 )]
 pub async fn mark_as_unread(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Marking notification as unread: {} for user: {}",
         id,
@@ -1100,7 +1366,7 @@ pub async fn mark_as_unread(
     )
     .bind(id)
     .bind(user_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(false);
 
@@ -1123,7 +1389,7 @@ pub async fn mark_as_unread(
     ))
     .bind(id)
     .bind(user_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -1160,7 +1426,8 @@ pub async fn mark_as_unread(
     tag = "notification"
 )]
 pub async fn bulk_mark_read(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<BulkIdsRequest>,
 ) -> Json<serde_json::Value> {
@@ -1193,6 +1460,29 @@ pub async fn bulk_mark_read(
         }));
     }
 
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "public",
         r#"
@@ -1203,7 +1493,7 @@ pub async fn bulk_mark_read(
     ))
     .bind(user_id)
     .bind(&payload.notification_ids)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -1237,7 +1527,8 @@ pub async fn bulk_mark_read(
     tag = "notification"
 )]
 pub async fn bulk_delete(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<BulkIdsRequest>,
 ) -> Json<serde_json::Value> {
@@ -1270,13 +1561,36 @@ pub async fn bulk_delete(
         }));
     }
 
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "public",
         "UPDATE core_notifications SET deleted_at = NOW() WHERE user_id = $1 AND id = ANY($2)"
     ))
     .bind(user_id)
     .bind(&payload.notification_ids)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -1310,9 +1624,32 @@ pub async fn bulk_delete(
     tag = "notification"
 )]
 pub async fn get_notification_stats(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!("Getting notification stats for user: {}", claims.username);
 
     let user_id = match Uuid::parse_str(&claims.sub) {
@@ -1340,7 +1677,7 @@ pub async fn get_notification_stats(
         "#
     ))
     .bind(user_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -1361,7 +1698,7 @@ pub async fn get_notification_stats(
                 "SELECT COUNT(*) FROM core_notifications WHERE deleted_at IS NULL AND user_id = $1"
             ))
             .bind(user_id)
-            .fetch_one(&pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
@@ -1369,7 +1706,7 @@ pub async fn get_notification_stats(
                 only_own_schema_query!("public", "SELECT COUNT(*) FROM core_notifications WHERE deleted_at IS NULL AND user_id = $1 AND is_read = FALSE"),
             )
             .bind(user_id)
-            .fetch_one(&pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
@@ -1409,10 +1746,33 @@ pub async fn get_notification_stats(
     tag = "notification"
 )]
 pub async fn archive_notification(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Archiving notification: {} for user: {}",
         id,
@@ -1437,7 +1797,7 @@ pub async fn archive_notification(
     )
     .bind(id)
     .bind(user_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(false);
 
@@ -1460,7 +1820,7 @@ pub async fn archive_notification(
     ))
     .bind(id)
     .bind(user_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -1500,10 +1860,33 @@ pub async fn archive_notification(
     tag = "notification"
 )]
 pub async fn unarchive_notification(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Unarchiving notification: {} for user: {}",
         id,
@@ -1528,7 +1911,7 @@ pub async fn unarchive_notification(
     )
     .bind(id)
     .bind(user_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(false);
 
@@ -1551,7 +1934,7 @@ pub async fn unarchive_notification(
     ))
     .bind(id)
     .bind(user_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -1588,10 +1971,33 @@ pub async fn unarchive_notification(
     tag = "notification"
 )]
 pub async fn list_archived_notifications(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<NotificationQuery>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Listing archived notifications for user: {}",
         claims.username
@@ -1631,7 +2037,7 @@ pub async fn list_archived_notifications(
     .bind(&params.notification_type)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -1667,7 +2073,7 @@ pub async fn list_archived_notifications(
             .bind(user_id)
             .bind(params.is_read)
             .bind(&params.notification_type)
-            .fetch_one(&pool)
+            .fetch_one(&mut scope)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -1705,7 +2111,7 @@ pub async fn list_archived_notifications(
     tag = "notification"
 )]
 pub async fn get_archive_config(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Extension(_claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
     Json(serde_json::json!({
@@ -1733,7 +2139,7 @@ pub async fn get_archive_config(
     tag = "notification"
 )]
 pub async fn update_archive_config(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Extension(_claims): Extension<Claims>,
     Json(_config): Json<ArchiveConfig>,
 ) -> Json<serde_json::Value> {
@@ -1757,7 +2163,8 @@ pub async fn update_archive_config(
     tag = "notification"
 )]
 pub async fn run_auto_archive(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
     if !claims.is_superuser && !claims.has_permission("notification:admin") {
@@ -1769,37 +2176,58 @@ pub async fn run_auto_archive(
         }));
     }
 
-    let archived_count: i64 = sqlx::query_scalar(only_own_schema_query!(
-        "public",
-        r#"
-        WITH archived AS (
-            UPDATE core_notifications
-            SET is_archived = true
-            WHERE created_at < NOW() - INTERVAL '30 days' AND is_archived = false AND deleted_at IS NULL
-            RETURNING 1
-        )
-        SELECT COUNT(*) FROM archived
-        "#
-    ))
-    .fetch_one(&pool)
-    .await
-    .unwrap_or(0);
+    let mut txn_guard = txn_arc.lock().await;
+    let mut scope = match txn_guard.as_mut() {
+        Some(txn) => match db.scope_with(txn).await {
+            Ok(scope) => Some(scope),
+            Err(e) => {
+                tracing::error!("建立 RLS 事务作用域失败: {}", e);
+                None
+            }
+        },
+        None => {
+            tracing::error!("rls txn missing: RLS 事务中间件未注入");
+            None
+        }
+    };
 
-    let deleted_count: i64 = sqlx::query_scalar(only_own_schema_query!(
-        "public",
-        r#"
-        WITH soft_deleted AS (
-            UPDATE core_notifications
-            SET deleted_at = NOW()
-            WHERE created_at < NOW() - INTERVAL '30 days' AND deleted_at IS NULL
-            RETURNING 1
-        )
-        SELECT COUNT(*) FROM soft_deleted
-        "#
-    ))
-    .fetch_one(&pool)
-    .await
-    .unwrap_or(0);
+    let archived_count: i64 = match scope.as_mut() {
+        Some(scope) => sqlx::query_scalar(only_own_schema_query!(
+            "public",
+            r#"
+            WITH archived AS (
+                UPDATE core_notifications
+                SET is_archived = true
+                WHERE created_at < NOW() - INTERVAL '30 days' AND is_archived = false AND deleted_at IS NULL
+                RETURNING 1
+            )
+            SELECT COUNT(*) FROM archived
+            "#
+        ))
+        .fetch_one(scope)
+        .await
+        .unwrap_or(0),
+        None => 0,
+    };
+
+    let deleted_count: i64 = match scope.as_mut() {
+        Some(scope) => sqlx::query_scalar(only_own_schema_query!(
+            "public",
+            r#"
+            WITH soft_deleted AS (
+                UPDATE core_notifications
+                SET deleted_at = NOW()
+                WHERE created_at < NOW() - INTERVAL '30 days' AND deleted_at IS NULL
+                RETURNING 1
+            )
+            SELECT COUNT(*) FROM soft_deleted
+            "#
+        ))
+        .fetch_one(scope)
+        .await
+        .unwrap_or(0),
+        None => 0,
+    };
 
     let count: i64 = archived_count + deleted_count;
 
@@ -1823,9 +2251,32 @@ pub async fn run_auto_archive(
     tag = "notification"
 )]
 pub async fn list_templates(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Listing notification templates for user: {}",
         claims.username
@@ -1839,7 +2290,7 @@ pub async fn list_templates(
         ORDER BY created_at DESC
         "#),
     )
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -1892,10 +2343,33 @@ pub async fn list_templates(
     tag = "notification"
 )]
 pub async fn get_template(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!("Getting template: {} for user: {}", id, claims.username);
 
     let result = sqlx::query(only_own_schema_query!(
@@ -1907,7 +2381,7 @@ pub async fn get_template(
         "#
     ))
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -1958,11 +2432,34 @@ pub async fn get_template(
     tag = "notification"
 )]
 pub async fn render_template(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(data): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!("Rendering template: {} for user: {}", id, claims.username);
 
     let result = sqlx::query(only_own_schema_query!(
@@ -1974,7 +2471,7 @@ pub async fn render_template(
         "#
     ))
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -2050,10 +2547,33 @@ fn render_template_vars(
     tag = "notification"
 )]
 pub async fn create_template(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTemplateRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Creating template: {} by user: {}",
         req.name,
@@ -2100,7 +2620,7 @@ pub async fn create_template(
     .bind(priority)
     .bind(&req.data)
     .bind(tenant_bind)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -2149,11 +2669,34 @@ pub async fn create_template(
     tag = "notification"
 )]
 pub async fn update_template(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTemplateRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!("Updating template: {} by user: {}", id, claims.username);
 
     if !claims.is_superuser && !claims.has_permission("notification:admin") {
@@ -2186,7 +2729,7 @@ pub async fn update_template(
     .bind(req.priority)
     .bind(&req.data)
     .bind(id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -2240,10 +2783,33 @@ pub async fn update_template(
     tag = "notification"
 )]
 pub async fn delete_template(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!("Deleting template: {} by user: {}", id, claims.username);
 
     if !claims.is_superuser && !claims.has_permission("notification:admin") {
@@ -2260,7 +2826,7 @@ pub async fn delete_template(
         "UPDATE core_notification_templates SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -2285,14 +2851,18 @@ pub async fn delete_template(
     }
 }
 
-async fn send_notification_email(pool: &PgPool, req: &SendNotificationRequest) -> Result<(), ()> {
+async fn send_notification_email(
+    db: &Db,
+    scope: &mut ScopedTxn<'_>,
+    req: &SendNotificationRequest,
+) -> Result<(), ()> {
     let email: Option<String> = sqlx::query_scalar(only_own_schema_query!(
         "public",
         "SELECT email FROM iam.users WHERE id = $1",
         "iam"
     ))
     .bind(req.user_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut *scope)
     .await
     .map_err(|e| {
         tracing::error!("Failed to get user email: {}", e);
@@ -2300,7 +2870,7 @@ async fn send_notification_email(pool: &PgPool, req: &SendNotificationRequest) -
 
     if let Some(email) = email {
         let queue_id = crate::mail::queue_email(
-            pool,
+            db,
             "system@topems.io".to_string(),
             email,
             req.title.clone(),
@@ -2329,11 +2899,34 @@ async fn send_notification_email(pool: &PgPool, req: &SendNotificationRequest) -
     tag = "notification"
 )]
 pub async fn list_channels(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ChannelQuery>,
     headers: HeaderMap,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败按 None（超管分支仍为 None）
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -2369,7 +2962,7 @@ pub async fn list_channels(
     .bind(locale)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(r) => r,
@@ -2388,7 +2981,7 @@ pub async fn list_channels(
     .bind(tenant_id)
     .bind(query.r#type)
     .bind(query.status)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -2420,11 +3013,34 @@ pub async fn list_channels(
     tag = "notification"
 )]
 pub async fn get_channel(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败按 None（超管分支仍为 None）
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -2446,7 +3062,7 @@ pub async fn get_channel(
     .bind(id)
     .bind(tenant_id)
     .bind(locale)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(ch)) => Json(serde_json::json!({
@@ -2473,10 +3089,33 @@ pub async fn get_channel(
     tag = "notification"
 )]
 pub async fn create_channel(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateChannelRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败回退 nil（与本文件其他写入一致）
     let tenant_id = claims
         .tenant_id
@@ -2494,7 +3133,7 @@ pub async fn create_channel(
              WHERE tenant_id = $1 AND is_default = true",
         )
         .bind(tenant_id)
-        .execute(&pool)
+        .execute(&mut scope)
         .await;
     }
 
@@ -2516,7 +3155,7 @@ pub async fn create_channel(
     .bind(req.rate_limit_per_minute)
     .bind(req.retry_count.unwrap_or(3))
     .bind(req.description)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(ch) => Json(serde_json::json!({
@@ -2543,11 +3182,34 @@ pub async fn create_channel(
     tag = "notification"
 )]
 pub async fn update_channel(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateChannelRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败回退 nil（与 create_channel 一致）
     let tenant_id = claims
         .tenant_id
@@ -2563,7 +3225,7 @@ pub async fn update_channel(
         )
         .bind(tenant_id)
         .bind(id)
-        .execute(&pool)
+        .execute(&mut scope)
         .await;
     }
 
@@ -2590,7 +3252,7 @@ pub async fn update_channel(
     .bind(req.status)
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(ch)) => Json(serde_json::json!({
@@ -2620,10 +3282,33 @@ pub async fn update_channel(
     tag = "notification"
 )]
 pub async fn delete_channel(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败回退 nil
     let tenant_id = claims
         .tenant_id
@@ -2633,7 +3318,7 @@ pub async fn delete_channel(
     match sqlx::query("DELETE FROM notification_channels WHERE id = $1 AND tenant_id = $2")
         .bind(id)
         .bind(tenant_id)
-        .execute(&pool)
+        .execute(&mut scope)
         .await
     {
         Ok(result) => {
@@ -2668,10 +3353,33 @@ pub async fn delete_channel(
     tag = "notification"
 )]
 pub async fn test_channel(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败按 None（超管分支仍为 None）
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -2688,7 +3396,7 @@ pub async fn test_channel(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(_ch)) => {
@@ -2721,7 +3429,7 @@ pub async fn test_channel(
     tag = "notification"
 )]
 pub async fn get_channel_metrics(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Extension(_claims): Extension<Claims>,
     Path(_id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
@@ -2750,10 +3458,33 @@ pub async fn get_channel_metrics(
     tag = "notification"
 )]
 pub async fn bulk_mark_unread(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<BulkIdsV2Request>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
         Err(e) => {
@@ -2775,7 +3506,7 @@ pub async fn bulk_mark_unread(
     ))
     .bind(user_id)
     .bind(&payload.ids)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
     match result {
         Ok(r) => Json(serde_json::json!({
@@ -2806,10 +3537,33 @@ pub async fn bulk_mark_unread(
     tag = "notification"
 )]
 pub async fn bulk_read_by_condition(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BulkConditionRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
         Err(e) => {
@@ -2833,7 +3587,7 @@ pub async fn bulk_read_by_condition(
     .bind(&req.ids)
     .bind(req.older_than_days)
     .bind(req.notification_types)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
     match result {
         Ok(r) => Json(serde_json::json!({
@@ -2864,10 +3618,33 @@ pub async fn bulk_read_by_condition(
     tag = "notification"
 )]
 pub async fn bulk_delete_by_condition(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BulkConditionRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
         Err(e) => {
@@ -2893,7 +3670,7 @@ pub async fn bulk_delete_by_condition(
     .bind(req.older_than_days)
     .bind(req.notification_types)
     .bind(req.include_archived)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
     match result {
         Ok(r) => Json(serde_json::json!({
@@ -2924,10 +3701,33 @@ pub async fn bulk_delete_by_condition(
     tag = "notification"
 )]
 pub async fn bulk_archive(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BulkConditionRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
         Err(e) => {
@@ -2951,7 +3751,7 @@ pub async fn bulk_archive(
     .bind(&req.ids)
     .bind(req.older_than_days)
     .bind(req.notification_types)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
     match result {
         Ok(r) => Json(serde_json::json!({
@@ -2982,10 +3782,33 @@ pub async fn bulk_archive(
     tag = "notification"
 )]
 pub async fn bulk_unarchive(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<BulkIdsV2Request>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
         Err(e) => {
@@ -3007,7 +3830,7 @@ pub async fn bulk_unarchive(
     ))
     .bind(user_id)
     .bind(&payload.ids)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
     match result {
         Ok(r) => Json(serde_json::json!({
@@ -3039,10 +3862,33 @@ pub async fn bulk_unarchive(
     tag = "notification"
 )]
 pub async fn batch_update_template_status(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BulkTemplateStatusRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     if !claims.is_superuser && !claims.has_permission("notification:admin") {
         return Json(serde_json::json!({
             "success": false,
@@ -3073,7 +3919,7 @@ pub async fn batch_update_template_status(
     .bind(&req.status)
     .bind(&req.ids)
     .bind(tenant_bind)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
     match result {
         Ok(r) => Json(serde_json::json!({
@@ -3141,13 +3987,16 @@ type PrefRow = (
     String,
 );
 
-async fn load_preference_row(pool: &PgPool, user_id: Uuid) -> Result<Option<PrefRow>, String> {
+async fn load_preference_row(
+    scope: &mut ScopedTxn<'_>,
+    user_id: Uuid,
+) -> Result<Option<PrefRow>, String> {
     let row = sqlx::query(
         "SELECT categories, quiet_hours, global_mute, default_channels, language, timezone \
          FROM core_notification_preferences WHERE user_id = $1",
     )
     .bind(user_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut *scope)
     .await
     .map_err(|e| format!("Failed to load preferences: {}", e))?;
 
@@ -3182,14 +4031,44 @@ async fn load_preference_row(pool: &PgPool, user_id: Uuid) -> Result<Option<Pref
     tag = "notification"
 )]
 pub async fn get_preferences(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
-    let user_id = match resolve_user_id(&claims) {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
+    get_preferences_impl(&claims, &mut scope).await
+}
+
+async fn get_preferences_impl(
+    claims: &Claims,
+    scope: &mut ScopedTxn<'_>,
+) -> Json<serde_json::Value> {
+    let user_id = match resolve_user_id(claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
     };
-    match load_preference_row(&pool, user_id).await {
+    match load_preference_row(scope, user_id).await {
         Ok(Some((categories, quiet_hours, global_mute, channels, language, timezone))) => {
             Json(serde_json::json!({
                 "success": true,
@@ -3232,15 +4111,40 @@ pub async fn get_preferences(
     tag = "notification"
 )]
 pub async fn update_preferences(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<PreferencesUpdate>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
     };
-    let existing = load_preference_row(&pool, user_id).await.unwrap_or(None);
+    let existing = load_preference_row(&mut scope, user_id)
+        .await
+        .unwrap_or(None);
     let (old_cat, old_qh, old_gm, old_ch, old_lang, old_tz) = existing.unwrap_or((
         serde_json::json!([]),
         serde_json::json!({}),
@@ -3274,11 +4178,11 @@ pub async fn update_preferences(
     .bind(&language)
     .bind(&timezone)
     .bind(tenant_bind)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(_) => get_preferences(State(pool), Extension(claims)).await,
+        Ok(_) => get_preferences_impl(&claims, &mut scope).await,
         Err(e) => {
             tracing::error!("Failed to update preferences: {}", e);
             Json(serde_json::json!({
@@ -3302,14 +4206,37 @@ pub async fn update_preferences(
     tag = "notification"
 )]
 pub async fn get_category_preferences(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
     };
-    match load_preference_row(&pool, user_id).await {
+    match load_preference_row(&mut scope, user_id).await {
         Ok(Some((categories, _, _, _, _, _))) => Json(serde_json::json!({
             "success": true, "message": "ok", "data": { "categories": categories }
         })),
@@ -3337,16 +4264,39 @@ pub async fn get_category_preferences(
     tag = "notification"
 )]
 pub async fn update_category_preference(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(category): Path<String>,
     Json(req): Json<CategoryPreferenceUpdate>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
     };
-    let (current, _, _, _, _, _) = load_preference_row(&pool, user_id)
+    let (current, _, _, _, _, _) = load_preference_row(&mut scope, user_id)
         .await
         .unwrap_or(None)
         .unwrap_or((
@@ -3392,7 +4342,7 @@ pub async fn update_category_preference(
     .bind(user_id)
     .bind(serde_json::json!(cats))
     .bind(tenant_bind)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -3423,10 +4373,33 @@ pub async fn update_category_preference(
     tag = "notification"
 )]
 pub async fn set_global_mute(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GlobalMuteRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
@@ -3445,7 +4418,7 @@ pub async fn set_global_mute(
     .bind(user_id)
     .bind(&mute)
     .bind(tenant_bind)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -3475,9 +4448,32 @@ pub async fn set_global_mute(
     tag = "notification"
 )]
 pub async fn cancel_global_mute(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
@@ -3492,7 +4488,7 @@ pub async fn cancel_global_mute(
     .bind(user_id)
     .bind(&mute)
     .bind(tenant_bind)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -3522,14 +4518,37 @@ pub async fn cancel_global_mute(
     tag = "notification"
 )]
 pub async fn get_quiet_hours(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
     };
-    match load_preference_row(&pool, user_id).await {
+    match load_preference_row(&mut scope, user_id).await {
         Ok(Some((_, quiet_hours, _, _, _, _))) => Json(serde_json::json!({
             "success": true, "message": "ok", "data": quiet_hours
         })),
@@ -3564,15 +4583,38 @@ pub async fn get_quiet_hours(
     tag = "notification"
 )]
 pub async fn update_quiet_hours(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<QuietHoursUpdate>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
     };
-    let (_, old_qh, _, _, _, _) = load_preference_row(&pool, user_id)
+    let (_, old_qh, _, _, _, _) = load_preference_row(&mut scope, user_id)
         .await
         .unwrap_or(None)
         .unwrap_or((
@@ -3608,7 +4650,7 @@ pub async fn update_quiet_hours(
     .bind(user_id)
     .bind(serde_json::json!(qh))
     .bind(tenant_bind)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -3638,12 +4680,35 @@ pub async fn update_quiet_hours(
     tag = "notification"
 )]
 pub async fn reset_preferences(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
     let user_id = match resolve_user_id(&claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
+    };
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
     };
     let defaults = default_preferences(user_id);
     let tenant_bind = tenant_bind_for(&claims);
@@ -3664,7 +4729,7 @@ pub async fn reset_preferences(
     .bind("zh-CN".to_string())
     .bind("Asia/Shanghai".to_string())
     .bind(tenant_bind)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -3765,10 +4830,33 @@ fn subscription_row_to_json(r: &sqlx::postgres::PgRow) -> Result<serde_json::Val
     tag = "notification"
 )]
 pub async fn list_subscriptions(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<SubscriptionQuery>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
@@ -3793,7 +4881,7 @@ pub async fn list_subscriptions(
     .bind(&query.channel)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
     let total = sqlx::query_scalar::<_, i64>(
         "SELECT COUNT(*) FROM core_notification_subscriptions \
@@ -3806,7 +4894,7 @@ pub async fn list_subscriptions(
     .bind(&query.event_type)
     .bind(&query.status)
     .bind(&query.channel)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await;
 
     match (rows, total) {
@@ -3843,10 +4931,33 @@ pub async fn list_subscriptions(
     tag = "notification"
 )]
 pub async fn get_subscription(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(uid) => uid,
         Err(v) => return Json(v),
@@ -3858,7 +4969,7 @@ pub async fn get_subscription(
     )
     .bind(id)
     .bind(user_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
     match row {
         Ok(Some(r)) => match subscription_row_to_json(&r) {
@@ -3891,10 +5002,33 @@ pub async fn get_subscription(
     tag = "notification"
 )]
 pub async fn create_subscription(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSubscriptionRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
@@ -3921,7 +5055,7 @@ pub async fn create_subscription(
     .bind(&req.filter_expression)
     .bind(req.priority.unwrap_or(0))
     .bind(expires)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
     match row {
         Ok(Some(r)) => match subscription_row_to_json(&r) {
@@ -3954,11 +5088,34 @@ pub async fn create_subscription(
     tag = "notification"
 )]
 pub async fn update_subscription(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSubscriptionRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(uid) => uid,
         Err(v) => return Json(v),
@@ -3985,7 +5142,7 @@ pub async fn update_subscription(
     .bind(expires)
     .bind(id)
     .bind(user_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
     match row {
         Ok(Some(r)) => match subscription_row_to_json(&r) {
@@ -4018,10 +5175,33 @@ pub async fn update_subscription(
     tag = "notification"
 )]
 pub async fn delete_subscription(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(uid) => uid,
         Err(v) => return Json(v),
@@ -4030,7 +5210,7 @@ pub async fn delete_subscription(
         sqlx::query("DELETE FROM core_notification_subscriptions WHERE id = $1 AND user_id = $2")
             .bind(id)
             .bind(user_id)
-            .execute(&pool)
+            .execute(&mut scope)
             .await;
     match result {
         Ok(r) => Json(serde_json::json!({
@@ -4060,10 +5240,33 @@ pub async fn delete_subscription(
     tag = "notification"
 )]
 pub async fn pause_subscription(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(uid) => uid,
         Err(v) => return Json(v),
@@ -4076,7 +5279,7 @@ pub async fn pause_subscription(
     )
     .bind(id)
     .bind(user_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
     match row {
         Ok(Some(r)) => match subscription_row_to_json(&r) {
@@ -4109,10 +5312,33 @@ pub async fn pause_subscription(
     tag = "notification"
 )]
 pub async fn resume_subscription(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(uid) => uid,
         Err(v) => return Json(v),
@@ -4125,7 +5351,7 @@ pub async fn resume_subscription(
     )
     .bind(id)
     .bind(user_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
     match row {
         Ok(Some(r)) => match subscription_row_to_json(&r) {
@@ -4158,11 +5384,18 @@ pub async fn resume_subscription(
     tag = "notification"
 )]
 pub async fn my_subscriptions(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<SubscriptionQuery>,
 ) -> Json<serde_json::Value> {
-    list_subscriptions(State(pool), Extension(claims), Query(query)).await
+    list_subscriptions(
+        State(db),
+        Extension(txn_arc),
+        Extension(claims),
+        Query(query),
+    )
+    .await
 }
 
 /// 批量订阅（`POST /notification/batch-subscribe`）
@@ -4177,10 +5410,33 @@ pub async fn my_subscriptions(
     tag = "notification"
 )]
 pub async fn batch_subscribe(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchSubscribeRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
@@ -4211,7 +5467,7 @@ pub async fn batch_subscribe(
         .bind(&sub.filter_expression)
         .bind(sub.priority.unwrap_or(0))
         .bind(expires)
-        .execute(&pool)
+        .execute(&mut scope)
         .await;
         if let Ok(r) = result {
             created += i32::try_from(r.rows_affected()).unwrap_or(0);
@@ -4234,10 +5490,33 @@ pub async fn batch_subscribe(
     tag = "notification"
 )]
 pub async fn batch_unsubscribe(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchUnsubscribeRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
@@ -4247,7 +5526,7 @@ pub async fn batch_unsubscribe(
     )
     .bind(user_id)
     .bind(&req.ids)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
     match result {
         Ok(r) => Json(serde_json::json!({
@@ -4277,10 +5556,33 @@ pub async fn batch_unsubscribe(
     tag = "notification"
 )]
 pub async fn unsubscribe_event(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<SubscriptionQuery>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(uid) => uid,
         Err(v) => return Json(v),
@@ -4295,7 +5597,7 @@ pub async fn unsubscribe_event(
     )
     .bind(user_id)
     .bind(&event_type)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
     match result {
         Ok(r) => Json(serde_json::json!({
@@ -4433,7 +5735,7 @@ fn parse_ts(s: &Option<String>) -> Option<chrono::DateTime<chrono::Utc>> {
 }
 
 async fn paginated_deliveries(
-    pool: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     user_id: Uuid,
     query: &DeliveryQuery,
 ) -> Json<serde_json::Value> {
@@ -4466,7 +5768,7 @@ async fn paginated_deliveries(
     q = q.bind(to);
     q = q.bind(page_size);
     q = q.bind(offset);
-    let rows = q.fetch_all(pool).await;
+    let rows = q.fetch_all(&mut *scope).await;
     let count_sql = format!(
         "SELECT COUNT(*) FROM core_notification_deliveries {}",
         filter
@@ -4479,7 +5781,7 @@ async fn paginated_deliveries(
     c = c.bind(query.batch_id);
     c = c.bind(from);
     c = c.bind(to);
-    let total = c.fetch_one(pool).await;
+    let total = c.fetch_one(&mut *scope).await;
     match (rows, total) {
         (Ok(rows), Ok(total)) => {
             let items: Vec<serde_json::Value> = rows
@@ -4513,15 +5815,38 @@ async fn paginated_deliveries(
     tag = "notification"
 )]
 pub async fn list_deliveries(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<DeliveryQuery>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
     };
-    paginated_deliveries(&pool, user_id, &query).await
+    paginated_deliveries(&mut scope, user_id, &query).await
 }
 
 /// 获取单条投递（`GET /notification/deliveries/{id}`）
@@ -4536,10 +5861,33 @@ pub async fn list_deliveries(
     tag = "notification"
 )]
 pub async fn get_delivery(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(uid) => uid,
         Err(v) => return Json(v),
@@ -4550,7 +5898,7 @@ pub async fn get_delivery(
     )))
     .bind(id)
     .bind(user_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
     match row {
         Ok(Some(r)) => match delivery_row_to_json(&r) {
@@ -4581,10 +5929,33 @@ pub async fn get_delivery(
     tag = "notification"
 )]
 pub async fn retry_delivery(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(uid) => uid,
         Err(v) => return Json(v),
@@ -4594,7 +5965,7 @@ pub async fn retry_delivery(
     )
     .bind(id)
     .bind(user_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
     let previous_status = match prev {
         Ok(Some(s)) => s,
@@ -4620,7 +5991,7 @@ pub async fn retry_delivery(
     )
     .bind(id)
     .bind(user_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
     match row {
         Ok(Some(_)) => Json(serde_json::json!({
@@ -4651,18 +6022,41 @@ pub async fn retry_delivery(
     tag = "notification"
 )]
 pub async fn list_batch_deliveries(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(batch_id): Path<Uuid>,
     Query(query): Query<DeliveryQuery>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(uid) => uid,
         Err(v) => return Json(v),
     };
     let mut q = query;
     q.batch_id = Some(batch_id);
-    paginated_deliveries(&pool, user_id, &q).await
+    paginated_deliveries(&mut scope, user_id, &q).await
 }
 
 /// 按用户查询投递（`GET /notification/deliveries/by-user/{userId}`）
@@ -4677,17 +6071,40 @@ pub async fn list_batch_deliveries(
     tag = "notification"
 )]
 pub async fn list_user_deliveries(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(user_id): Path<Uuid>,
     Query(query): Query<DeliveryQuery>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let current = match resolve_user_id(&claims) {
         Ok(uid) => uid,
         Err(v) => return Json(v),
     };
     let _ = current;
-    paginated_deliveries(&pool, user_id, &query).await
+    paginated_deliveries(&mut scope, user_id, &query).await
 }
 
 /// 投递统计（`GET /notification/deliveries/stats`）
@@ -4702,9 +6119,32 @@ pub async fn list_user_deliveries(
     tag = "notification"
 )]
 pub async fn delivery_stats(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(query): Query<DeliveryStatsQuery>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let from = parse_ts(&query.from_date);
     let to = parse_ts(&query.to_date);
     let agg = sqlx::query(
@@ -4723,7 +6163,7 @@ pub async fn delivery_stats(
     .bind(from)
     .bind(to)
     .bind(&query.channel)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await;
     let by_channel = sqlx::query(
         "SELECT channel, COUNT(*) AS cnt FROM core_notification_deliveries \
@@ -4734,7 +6174,7 @@ pub async fn delivery_stats(
     .bind(from)
     .bind(to)
     .bind(&query.channel)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
     let by_status = sqlx::query(
         "SELECT status, COUNT(*) AS cnt FROM core_notification_deliveries \
@@ -4745,14 +6185,14 @@ pub async fn delivery_stats(
     .bind(from)
     .bind(to)
     .bind(&query.channel)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
     let reasons = sqlx::query(
         "SELECT COALESCE(failure_reason, 'unknown') AS reason, COUNT(*) AS cnt \
          FROM core_notification_deliveries WHERE status = 'failed' \
          GROUP BY reason ORDER BY cnt DESC LIMIT 10",
     )
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
 
     match (agg, by_channel, by_status, reasons) {
@@ -4826,17 +6266,40 @@ pub async fn delivery_stats(
     tag = "notification"
 )]
 pub async fn list_failed_deliveries(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<DeliveryQuery>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
     };
     let mut q = query;
     q.status = Some("failed".to_string());
-    paginated_deliveries(&pool, user_id, &q).await
+    paginated_deliveries(&mut scope, user_id, &q).await
 }
 
 /// 全部失败重试（`POST /notification/deliveries/retry-all`）
@@ -4851,9 +6314,32 @@ pub async fn list_failed_deliveries(
     tag = "notification"
 )]
 pub async fn retry_all_failed(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
@@ -4865,7 +6351,7 @@ pub async fn retry_all_failed(
          WHERE status = 'failed' AND user_id = $1",
     )
     .bind(user_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
     match result {
         Ok(r) => Json(serde_json::json!({
@@ -4893,18 +6379,41 @@ pub async fn retry_all_failed(
     tag = "notification"
 )]
 pub async fn list_channel_deliveries(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(channel): Path<String>,
     Query(query): Query<DeliveryQuery>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(id) => id,
         Err(v) => return Json(v),
     };
     let mut q = query;
     q.channel = Some(channel);
-    paginated_deliveries(&pool, user_id, &q).await
+    paginated_deliveries(&mut scope, user_id, &q).await
 }
 
 /// 删除投递记录（`DELETE /notification/deliveries/{id}`）
@@ -4919,10 +6428,33 @@ pub async fn list_channel_deliveries(
     tag = "notification"
 )]
 pub async fn delete_delivery(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     let user_id = match resolve_user_id(&claims) {
         Ok(uid) => uid,
         Err(v) => return Json(v),
@@ -4931,7 +6463,7 @@ pub async fn delete_delivery(
         sqlx::query("DELETE FROM core_notification_deliveries WHERE id = $1 AND user_id = $2")
             .bind(id)
             .bind(user_id)
-            .execute(&pool)
+            .execute(&mut scope)
             .await;
     match result {
         Ok(r) => Json(serde_json::json!({
@@ -5180,13 +6712,20 @@ mod tests {
         }
     }
 
-    fn lazy_pool() -> PgPool {
+    fn lazy_pool() -> Db {
         use sqlx::postgres::PgPoolOptions;
         // 极短的 acquire_timeout 让 DB 错误路径快速失败，避免测试卡在连接超时
-        PgPoolOptions::new()
-            .acquire_timeout(std::time::Duration::from_millis(50))
-            .connect_lazy("postgres://nobody:nobody@127.0.0.1:1/none")
-            .expect("lazy pool")
+        Db::new(
+            PgPoolOptions::new()
+                .acquire_timeout(std::time::Duration::from_millis(50))
+                .connect_lazy("postgres://127.0.0.1:1/none")
+                .expect("lazy pool"),
+            "communication, public",
+        )
+    }
+
+    fn test_txn_cell() -> RlsTxnCell {
+        std::sync::Arc::new(tokio::sync::Mutex::new(None))
     }
 
     #[tokio::test]
@@ -5226,7 +6765,8 @@ mod tests {
     async fn test_run_auto_archive_forbidden_without_permission() {
         let pool = lazy_pool();
         let claims = sample_claims(); // is_superuser=false, 无权限
-        let res = run_auto_archive(State(pool), Extension(claims)).await;
+        let res =
+            run_auto_archive(State(pool), Extension(test_txn_cell()), Extension(claims)).await;
         let v = res.0;
         assert_eq!(v["success"], false);
         assert_eq!(v["code"], 403);
@@ -5238,7 +6778,8 @@ mod tests {
         let mut claims = sample_claims();
         claims.is_superuser = true;
         // 不可达 DB → query 失败 → unwrap_or(0)，但仍返回 success:true
-        let res = run_auto_archive(State(pool), Extension(claims)).await;
+        let res =
+            run_auto_archive(State(pool), Extension(test_txn_cell()), Extension(claims)).await;
         let v = res.0;
         assert_eq!(v["success"], true);
         assert_eq!(v["data"]["archived_count"], 0);
@@ -5257,7 +6798,13 @@ mod tests {
             data: None,
             send_email: None,
         };
-        let res = send_notification(State(pool), Extension(claims), Json(req)).await;
+        let res = send_notification(
+            State(pool),
+            Extension(test_txn_cell()),
+            Extension(claims),
+            Json(req),
+        )
+        .await;
         let v = res.0;
         assert_eq!(v["success"], false);
         assert_eq!(v["code"], 403);
@@ -5276,7 +6823,13 @@ mod tests {
             data: None,
             send_email: None,
         };
-        let res = broadcast_notification(State(pool), Extension(claims), Json(req)).await;
+        let res = broadcast_notification(
+            State(pool),
+            Extension(test_txn_cell()),
+            Extension(claims),
+            Json(req),
+        )
+        .await;
         let v = res.0;
         assert_eq!(v["success"], false);
         assert_eq!(v["code"], 403);
@@ -5288,7 +6841,13 @@ mod tests {
         let claims = sample_claims();
         // 缺少 user_id → 反序列化失败
         let bad = serde_json::json!({"title": "t"});
-        let res = create_notification(State(pool), Extension(claims), Json(bad)).await;
+        let res = create_notification(
+            State(pool),
+            Extension(test_txn_cell()),
+            Extension(claims),
+            Json(bad),
+        )
+        .await;
         let v = res.0;
         assert_eq!(v["success"], false);
     }
@@ -5300,6 +6859,7 @@ mod tests {
         claims.sub = "550e8400-e29b-41d4-a716-446655440000".to_string();
         let res = bulk_mark_read(
             State(pool),
+            Extension(test_txn_cell()),
             Extension(claims),
             Json(BulkIdsRequest {
                 notification_ids: vec![],
@@ -5318,6 +6878,7 @@ mod tests {
         claims.sub = "550e8400-e29b-41d4-a716-446655440000".to_string();
         let res = bulk_delete(
             State(pool),
+            Extension(test_txn_cell()),
             Extension(claims),
             Json(BulkIdsRequest {
                 notification_ids: vec![],

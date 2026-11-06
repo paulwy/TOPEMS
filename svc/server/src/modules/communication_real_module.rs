@@ -23,8 +23,9 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::routing::{delete, get, post, put};
 use axum::{Json, Router};
 use topems_communication::{im, im_location, mail, notification};
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
+use topems_shared_db::scope::Db;
 
 /// 轻量兜底：crate 尚未实现的通信子域端点（待上游支持）。
 /// 返回 200 + 空数据，避免前端契约裸 404；非业务实现。
@@ -186,17 +187,12 @@ const MAIL_STUB_PUT: &[&str] = &["/templates/{id}/status"];
 /// 真实 Communication 模块：持有完整业务路由
 pub struct CommunicationRealModule {
     routes: Router,
-    pool: sqlx::PgPool,
+    db: Db,
 }
 
 impl CommunicationRealModule {
     /// 异步构建真实 Communication 模块
     pub async fn build() -> Result<Self> {
-        // 自己 schema 优先（与全仓 master_data/pm 等模式对齐：communication, public）。
-        // 裸表名 SQL 据此解析到 communication schema（i18n name_en 列在该 schema），
-        // 避免命中 public 空壳旧表（缺 name_en 列 → channels/mail templates 查询 500）。
-        std::env::set_var("SEARCH_PATH", "communication, public");
-
         let config = ServiceConfig {
             name: "topems-communication",
             port: 8093,
@@ -210,8 +206,10 @@ impl CommunicationRealModule {
             init_telemetry: false,
         };
 
-        let ctx = bootstrap_service(&config).await?;
+        let ctx = bootstrap_service_shared(&config).await?;
         topems_shared_db::database::probe_connection(&ctx.db).await?;
+        // 模块 schema 作用域由事务级 search_path 提供（communication, public）
+        let db = Db::new(ctx.db.clone(), "communication, public");
 
         // ===== 通知子路由（前端 base /api/communication/notification） =====
         let notification_router = {
@@ -461,7 +459,7 @@ impl CommunicationRealModule {
             for p in NOTIF_STUB_DELETE {
                 r = r.route(p, delete(comm_stub));
             }
-            r
+            r.with_state(db.clone())
         };
 
         // ===== IM 子路由（前端 base /api/communication/im） =====
@@ -508,7 +506,7 @@ impl CommunicationRealModule {
             for p in IM_STUB_DELETE {
                 r = r.route(p, delete(comm_stub));
             }
-            r
+            r.with_state(db.clone())
         };
 
         // ===== 邮件子路由（前端 base /api/communication/mail） =====
@@ -534,7 +532,7 @@ impl CommunicationRealModule {
             for p in MAIL_STUB_PUT {
                 r = r.route(p, put(comm_stub));
             }
-            r
+            r.with_state(db.clone())
         };
 
         // 公开路由
@@ -550,7 +548,7 @@ impl CommunicationRealModule {
                 ctx.db.clone(),
                 topems_shared_auth::tenant_middleware(),
             ))
-            .with_state(ctx.db.clone());
+            .with_state(db.clone());
         let routes = axum::Router::new()
             .nest(config.api_prefix, public_routes.merge(protected_routes))
             .layer(axum::middleware::from_fn_with_state(
@@ -563,10 +561,7 @@ impl CommunicationRealModule {
                 topems_shared_db::rls::rls_middleware,
             ));
 
-        Ok(Self {
-            routes,
-            pool: ctx.db,
-        })
+        Ok(Self { routes, db })
     }
 }
 
@@ -585,7 +580,7 @@ impl Module for CommunicationRealModule {
     }
 
     async fn health_check(&self) -> ModuleHealth {
-        let db_healthy = sqlx::query("SELECT 1").execute(&self.pool).await.is_ok();
+        let db_healthy = self.db.check_health().await.is_ok();
 
         if db_healthy {
             ModuleHealth::healthy(self.name(), self.group())
