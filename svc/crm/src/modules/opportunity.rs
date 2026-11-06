@@ -11,7 +11,9 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::models::{CreateOpportunityRequest, Opportunity, UpdateOpportunityRequest};
-use crate::modules::audit::{log_audit_event, AuditEventParams};
+use crate::modules::audit::{
+    log_audit_event, log_audit_event_with_actor, AuditActor, AuditEventParams,
+};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
@@ -480,8 +482,8 @@ pub async fn create_opportunity(
             entity_type: "opportunity".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -614,7 +616,7 @@ async fn update_opportunity(
 
     let existing = sqlx::query_as::<_, Opportunity>(
         r#"
-        SELECT id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at FROM crm.opportunities WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+        SELECT id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at FROM crm.opportunities WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
@@ -715,8 +717,8 @@ async fn update_opportunity(
             entity_type: "opportunity".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -813,8 +815,8 @@ async fn delete_opportunity(
             entity_type: "opportunity".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: None,
             response_details: response_data,
             status: status_str,
@@ -925,8 +927,8 @@ pub async fn batch_delete_opportunities(
             entity_type: "opportunity".to_string(),
             entity_id: None,
             entity_ids: serde_json::to_value(&req.ids).ok(),
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: None,
             response_details: response_data,
             status: status_str,
@@ -1381,7 +1383,7 @@ pub async fn advance_opportunity(
 
     let existing = match sqlx::query_as::<_, Opportunity>(
         r#"
-        SELECT id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, win_rate, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
+        SELECT id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
         FROM crm.opportunities WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
@@ -1444,7 +1446,7 @@ pub async fn advance_opportunity(
         UPDATE crm.opportunities SET
             stage = $2, status = $3, notes = COALESCE($4, notes), updated_at = $5
         WHERE id = $1 AND tenant_id = $6
-        RETURNING id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, win_rate, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
+        RETURNING id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
         "#,
     )
     .bind(id)
@@ -1503,8 +1505,12 @@ pub async fn advance_opportunity(
         None
     };
 
+    // 审计租户跟随被操作实体（预读行），而非操作者 claims。
+    // 注意：UPDATE 仍按 tenant_id = $6 严格过滤，超管只能命中 nil 实体行，
+    // 因此这里取到的实体 tenant 对超管必然为 nil，`from_claims` 会归一为 None。
+    let audit_actor = AuditActor::from_claims(Some(existing.tenant_id), &claims);
     tokio::spawn(async move {
-        let _ = log_audit_event(
+        let _ = log_audit_event_with_actor(
             &state.db,
             AuditEventParams {
                 action: "crm.opportunity.advance".to_string(),
@@ -1519,6 +1525,7 @@ pub async fn advance_opportunity(
                 error_message: error_msg,
             },
             &headers,
+            audit_actor,
         )
         .await;
     });
@@ -1574,7 +1581,7 @@ pub async fn rollback_opportunity(
 
     let existing = match sqlx::query_as::<_, Opportunity>(
         r#"
-        SELECT id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, win_rate, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
+        SELECT id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
         FROM crm.opportunities WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
@@ -1647,7 +1654,7 @@ pub async fn rollback_opportunity(
         UPDATE crm.opportunities SET
             stage = $2, status = $3, notes = COALESCE($4, notes), updated_at = $5
         WHERE id = $1 AND tenant_id = $6
-        RETURNING id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, win_rate, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
+        RETURNING id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
         "#,
     )
     .bind(id)
@@ -1706,8 +1713,10 @@ pub async fn rollback_opportunity(
         None
     };
 
+    // 审计租户跟随被操作实体（预读行）；超管仅能命中 nil 实体行，见 advance 注释。
+    let audit_actor = AuditActor::from_claims(Some(existing.tenant_id), &claims);
     tokio::spawn(async move {
-        let _ = log_audit_event(
+        let _ = log_audit_event_with_actor(
             &state.db,
             AuditEventParams {
                 action: "crm.opportunity.rollback".to_string(),
@@ -1722,6 +1731,7 @@ pub async fn rollback_opportunity(
                 error_message: error_msg,
             },
             &headers,
+            audit_actor,
         )
         .await;
     });
