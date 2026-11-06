@@ -1943,6 +1943,18 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.145 审计整改第二十二批：资源级 CRUD 码补齐与 rd 域判定（批 24，2026-11-06）
+
+- **9 项资源取证（先证据后建码）**：`aps:material_plan`→表 `mes.material_plans`、`aps:production_plan`→`mes.production_plans`、`workflow:template`→`master_data.mdm_workflow_templates`（三者已有 read 码）；`notification:template`→`public.notification_templates`+`svc/communication/src/notification.rs`、`srm:scoring_dimension`→`srm.scoring_dimensions`、`srm:supplier_product`→`srm.supplier_products`（三者无码，新建四码）。
+- **rd 域三项判定：真实数据源，不造码（本批最重要结论）**。`rd` schema 仅有 `bugs/builds/deploys/test_cases` 四表，**无 reviews/releases/code_repos**；后端 `rd_ci_cd.rs:27/29` 有 `/builds`、`/deploys`，`project.rs:55` 有 `/projects`（表 `rs.projects`）。前端三 schema 的 `api.resource` 精确对应真实路由，故按真实数据源接入既有 `rd:build` / `rd:deploy` / `rd:project` 三码，**不为无实体资源造码**；三个历史 read 码登记为待清理。
+- **建码 21 条**（迁移 `20261107000011_resource_crud_codes_batch24.sql`，`NOT EXISTS` 幂等 + ROLLBACK）：aps 6 / workflow 3 / notification 4 / srm 8。授权 admin+superadmin 各 21（42）+ `srm_manager` 8。实跑首次 21/42/8、二次全 0；`core_permissions` 1231 → **1252**。
+- **接入 9 个 schema**：aps/materialPlan、aps/productionPlan、workflow/template、notification/template、srm/scoringDimension、srm/supplierProduct、rd/review→`rd:build`、rd/code→`rd:project`、rd/release→`rd:deploy`。
+- **发现并修正一处严重错误 + 新增全局校验**：srm 两项初版误用 DB `resource` 列的 underscore 写法，而 `resolveCrudPermissionCodes` 拼 `${prefix}:${action}`，会拼出 `srm_scoring_dimension:create` ≠ DB 的 `srm:scoring_dimension:create` → 运行时写按钮被误隐藏（不报错）。已改冒号两段，并补**全局拼码校验**：188 个前缀 ×3 动作逐个查 DB 存在性，**617/618 通过**（唯一例外 `tenant:member:create` 为批19 有意不建）。该结果同时证明批23 无同类潜伏错误。
+- **未覆盖候选分类（125 项）**：前缀 188（+6）；`db_only` 672 中被运行时使用 **547**、未覆盖 **125**（批23 为 129）。CRUD 未覆盖 102 码 / **35 资源** → 全部不可接入：5 项语义不符/一对多（`ehs:compliance` 法规≠合规、`ehs:hazard` 危化品≠隐患、`finance:receivable` 与 receivablePayable 合并页冲突、`mes:material` 无物料主数据页、`srm:product` 与 supplierProduct 冲突），**30 项前端零页面**（DB 有码、FE 零消费，属冗余码候选）。非 CRUD 未覆盖 23 项，finance 占 18（`write` 聚合语义遗留）。
+- **角色核对**：admin/superadmin 21/21；`srm_manager` 8/8；employee 三段码 **0**（仅持 3 条历史两段码）；aps/workflow/notification 三域无 manager 角色，维持 admin-only（与批23 登记的 15 个无 manager 域合并计）。
+- **验证**：tsc 0 error；eslint 9 文件 0；全量 vitest **621 files / 6643 passed / 1 skipped / EXIT 0**；迁移四件套全 PASS（validate Errors 0 / Warnings 4）；schema-defense drift 0；RLS PASS；对账 fe 465 / be 577 / **db 1108**（+21）/ db_only 672。
+- 产出：`docs/audit/P3-14_资源级CRUD三码补齐与rd域判定_批24_执行记录_2026-11-06.md`
+
 ## v1.144 审计整改第二十一批：CrudPage 写权限全域接入（批 23，2026-11-06）
 
 - **方法论修正（关键）**：映射基准从 `api.resource`（API 路径名）改为 `entity`（业务实体名）。先按 resource 跑出 102 候选，逐条复核即暴露 5 类错配：`finance/{cost,ledger,asset}.ts` 的 resource 都是 `accounts`（会错映射到 `finance:account`，正确是 `finance:cost/ledger/asset`）、`rd/review.ts` resource=`builds`（实体是 review）、`rd/code.ts` resource=`projects`（实体是 code_repo）。改用 entity 后 135 个待接入 schema → 97 个三码齐全可直连、38 个待人工判定。

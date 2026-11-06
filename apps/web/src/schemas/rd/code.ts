@@ -26,6 +26,9 @@ export const codeSchema: EntitySchema = {
     resource: 'projects',
   },
 
+  // 批24：按真实数据源接入（/api/rd/projects → rs.projects），不造 rd:code 码
+  permissionResource: 'rd:project',
+
   fields: [
     {
       name: 'repo_name',

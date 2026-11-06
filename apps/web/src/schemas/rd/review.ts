@@ -28,6 +28,9 @@ export const reviewSchema: EntitySchema = {
     resource: 'builds',
   },
 
+  // 批24：按真实数据源接入（/api/rd/builds → rd.builds），不为其造 rd:review 码
+  permissionResource: 'rd:build',
+
   fields: [
     {
       name: 'title',
