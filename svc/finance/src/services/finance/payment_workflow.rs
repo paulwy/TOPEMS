@@ -188,6 +188,7 @@ impl FinanceService {
         tenant_id: Uuid,
         payment_id: Uuid,
         approved_by: &str,
+        approver_id: Uuid,
     ) -> Result<PaymentResponse, TopemsError> {
         tracing::info!(
             "开始审批付款单, payment_id={}, tenant_id={}, approved_by={}",
@@ -343,7 +344,7 @@ impl FinanceService {
             sqlx::query(
                 only_own_schema_query!("finance", "UPDATE finance.core_finance_payments SET approved_by = $1, updated_at = NOW() WHERE tenant_id = $2 AND id = $3"),
             )
-            .bind(approved_by)
+            .bind(approver_id)
             .bind(tenant_id)
             .bind(payment_id)
             .execute(&self.db_pool)
@@ -520,7 +521,7 @@ impl FinanceService {
         tenant_id: Uuid,
         payment_id: Uuid,
         req: ExecutePaymentRequest,
-        executed_by: &str,
+        executed_by: Uuid,
     ) -> Result<PaymentResponse, TopemsError> {
         let payment = sqlx::query_as::<_, Payment>(only_own_schema_query!(
             "finance",

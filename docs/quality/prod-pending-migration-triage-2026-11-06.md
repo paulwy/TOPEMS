@@ -773,3 +773,163 @@ $ grep -n "templates" svc/communication/src/main.rs svc/server/src/modules/commu
 - SMTP 不可用时的产品行为：11.9
 - 影响面与未修项：11.10 / 11.11
 
+---
+
+## 12. created_by UUID/TEXT 契约修复与 WCS 全量转绿（2026-11-06 本地执行）
+
+- 状态：**prod 只读核查；零 DDL / 零 DML / 零重启**
+- 本地：test 库已按 prod 契约对齐，WCS **4658/4658 PASS, 0 FAIL**
+- 口径修正：服务全部拉起后，上一轮的 21 FAIL 实际收敛为 **10 FAIL**，其中
+  契约类 5 项、环境类 5 项；不存在用户口径中的「12 + 9」两组独立数字。
+
+### 12.1 db14 七列：prod 实际类型 vs Rust 解码类型
+
+prod 只读实测（`information_schema.columns`，2026-11-06）：
+
+| # | 列 | prod 实际类型 | 修复前代码解码 | 是否一致 | 线上影响 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `finance.core_finance_payment_approval_config.created_by` | `uuid` | `String`（`PaymentApprovalConfig`） | **否** | 潜伏 500：表 0 行；首次创建配置时 `RETURNING` 解码失败 → 写路径实际不可用 |
+| 2 | `finance.core_finance_payments.approved_by` | `uuid` | `Option<String>`（`Payment`） | **否** | 潜伏 500：表 0 行；首次审批后 `approved_by` 为 uuid，读/回写解码失败 |
+| 3 | `finance.core_finance_payments.created_by` | **`character varying`** | `Option<String>` | 是 | 无。该列由 `20261020000004` 明确为 VARCHAR(100) 文本（操作者用户名），**不应改成 uuid** |
+| 4 | `finance.core_finance_payments.executed_by` | `uuid` | `Option<String>`（`Payment`/`PaymentResponse`） | **否** | 潜伏 500：表 0 行；首次执行付款后解码失败，执行链路不可用 |
+| 5 | `finance.erp_collection_records.created_by` | `uuid` | 写入 `Uuid`；读取 SQL 选了列但映射未解码 | 是 | 无。39 行，`created_by` 不参与响应映射 |
+| 6 | `finance.erp_payment_records.created_by` | `uuid` | 写入 `Uuid`；读取同上 | 是 | 无。20 行 |
+| 7 | `public.user_settings.user_id` | `uuid` | 无 Rust 读写点 | 是（n/a） | 无 |
+
+结论：
+
+- **没有“prod 仍是 varchar 而代码按 Uuid 解码”的线上正在发生的故障**；反向的潜伏故障
+  有 3 条（#1/#2/#4，均为 prod `uuid` + 代码 `String`），因相关表当前 0 行而未暴露。
+  首次写入（创建审批配置 / 审批付款 / 执行付款）后会立即 500，属于**功能不可用**而
+  非“读接口报错”。
+- #3 是唯一 prod `varchar` 列，代码按 `String` 解码**正确**；本地 test 库被 db14/db17
+  误改成 `uuid`，才是漂移来源。
+
+### 12.2 每列修法依据（按列定，不一刀切）
+
+| 列 | 选择 | 依据 |
+| --- | --- | --- |
+| `core_finance_payments.created_by` | **TEXT（varchar 100）** | `20261020000004` 的显式业务决策：该列存操作者用户名，允许 `system` 等非 uuid 值；现有 0 行但契约明确。Rust 保持 `Option<String>`，**不加 `::text` cast** |
+| `core_finance_payments.approved_by` | **UUID** | 指向审批人主键；prod DDL 已是 uuid；`Payment.approved_by` 改 `Option<Uuid>`，审批写入改绑 `approver_id: Uuid`（JWT `sub`），昵称/用户名仍写文本列 |
+| `core_finance_payments.executed_by` | **UUID** | 同上；`PaymentResponse` 同步 `Option<Uuid>`；`execute_payment` 入参改 `Uuid`，handler 由 `claims.sub` 解析 |
+| `core_finance_payment_approval_config.created_by` | **UUID** | 创建配置的写入侧本来就把用户名转成 `Uuid::nil()` 落库，读侧却按 `String`；统一为 `Uuid` 后与 prod 一致 |
+| `erp_collection_records.created_by` | **UUID** | 写入已 `Uuid::parse_str`；读取不回显该列，无需改 |
+| `erp_payment_records.created_by` | **UUID** | 同上 |
+| `public.user_settings.user_id` | **UUID** | 代码无读写点，保持 DDL 即可 |
+
+代码改动点：
+
+- `svc/finance/src/models/mod.rs`：`Payment.executed_by`/`approved_by`、
+  `PaymentResponse.executed_by` → `Option<Uuid>`；`PaymentApprovalConfig.created_by` → `Uuid`；
+  `Payment.created_by` 保持 `Option<String>`。
+- `svc/finance/src/services/finance/payment_workflow.rs`：`approve_payment` 增加
+  `approver_id: Uuid` 并绑定到 `payments.approved_by`；`execute_payment` 的 `executed_by`
+  改为 `Uuid` 绑定。
+- `svc/finance/src/modules/mod.rs:1072`：执行付款的 `executed_by` 改取 `claims.sub`。
+
+### 12.3 db14 的归属与 prod 前向迁移结论
+
+- `20261104030000_db14_*` 与 `20261104060000_db17_*` **都不在 prod 账本**（只读
+  `_sqlx_migrations` 计数为 0）；它们是 test 库对齐脚本。
+- prod 的 7 列由 `20261020000004`（payments.created_by → varchar(100)）与既有 DDL
+  形成，实际状态已正确，**不存在“账本/现实不一致”**。
+- 反而 test 账本出现了不一致：db14/db17 把 `core_finance_payments.created_by` 改成
+  uuid，直接违反 prod 的文本契约，导致本地所有按 `String` 解码的付款读路径 500。
+- 处置：新增 **test-only** 前向迁移
+  `20261107000020_align_finance_payments_created_by_and_pm_tags.sql`，仅在
+  `data_type='uuid'` 时回退为 `varchar(100)`；同时把本地 `pm.projects.tags` 从
+  `text[]` 对齐为 prod 的 `jsonb`（详见 12.5）。prod 上两条分支均为 no-op。
+- **prod 结论：这 7 列不需要任何前向迁移。** db14/db17 不得应用到 prod；若误应用，
+  会把 `payments.created_by` 从文本变成 uuid，破坏 `system` 等历史值与文本契约。
+
+### 12.4 MES `COALESCE(varchar, uuid)` 的正确写法
+
+`svc/mes/src/modules/team.rs:516`：
+
+```sql
+-- 错误：$5 已按 Option<Uuid> 绑定，::varchar 强行把候选类型拉成 varchar
+leader_id = COALESCE($5::varchar, leader_id)
+-- 正确：两侧都是 uuid
+leader_id = COALESCE($5, leader_id)
+```
+
+`COALESCE` 要求各候选可统一到同一类型；`uuid` 列与 `varchar` 绑定没有公共类型，
+PG 直接报 `COALESCE types character varying and uuid cannot be matched`。
+
+### 12.5 同批发现的其它真实契约 bug（非 created_by）
+
+| 位置 | 问题 | 修法 |
+| --- | --- | --- |
+| `svc/pm/src/models/project.rs:42/45/50` | `project_config`/`benefit_target`/`tags` 为 `Option<serde_json::Value>`，FromRow 缺 JSON 解码标注，prod `jsonb` 解码失败 → GET/PUT 500 | 三处加 `#[sqlx(json(nullable))]` |
+| 本地 `pm.projects.tags` | test 库为 `text[]`，prod 为 `jsonb`；UPDATE 的 `COALESCE($12::jsonb, tags)` 报 `jsonb and text[]` 混型 | test-only 迁移转 `jsonb`（prod 已正确），SQL 不加 cast |
+| `svc/master-data/src/modules/governance_v58.rs:2206` | `recorded_at` 列为 `text`，结构体按 `DateTime<Utc>` 解码 → 500 | 查询显式 `recorded_at::timestamptz AS recorded_at`（同文件 1977 已有同样写法） |
+| `apps/web/src/api/communication/readOps2.ts` | 邮件模板下线后仍残留 `listTemplates2 → GET /templates` 过期声明，WCS 探测 404 | 删除该声明（全仓无消费方） |
+
+### 12.6 环境类失败与本地运行配方
+
+1. **unified-core :8000**：mobile 的审批与工作台部分客户端默认直连 `localhost:8000`。
+   只起 8099 时，mobile approvals 5 项 + workbench 超时；另起 unified-core 后
+   21 FAIL → 10 FAIL。
+2. **嵌入模式连接池预算**：单体默认按模块公平份额只给 2 条连接。HRM 员工列表在
+   RLS 中间件持有 1 条事务连接的同时还需模块池再取连接，叠加启动期后台任务后
+   `pool timed out` → `/api/hrm/employees` 500，并连带 erp hr 4 项、workbench 超时。
+   本地以 `DB_TOTAL_CONNECTION_BUDGET=124`（31 池 × 4）+
+   `DB_MODULE_MAX_CONNECTIONS=4` 启动后全部恢复；该配方已写入
+   `scripts/run_monolith.sh`，未改变任何业务代码。
+
+上一轮 10 FAIL 的逐项归因：
+
+| 模块/端点 | 归因 | 处置 |
+| --- | --- | --- |
+| erp `/hr/employees` ×2、`/hr/employees/{id}` ×2、`/example/employees` | HRM 模块池耗尽（环境） | 连接池预算 |
+| mobile `/workbench` | 同上导致聚合耗时 20.8s > 冒烟超时 | 连接池预算 |
+| finance `GET /payments` | 本地 `created_by` uuid 漂移 + 代码潜伏契约 | 12.2 + 12.3 |
+| master `GET /maturity/history` | `recorded_at` text 解码 | 12.5 |
+| mes `PUT /teams/{id}` | `COALESCE(varchar, uuid)` | 12.4 |
+| pm `GET/PUT /projects` | `tags` JSONB 解码 + 本地 `text[]` 漂移 | 12.5 |
+
+### 12.7 WCS 全量结果
+
+| 轮次 | 前置条件 | 结果 | 失败 |
+| --- | --- | --- | --- |
+| 上一轮 | 仅 8099，未起 8000 | 4638/4659 | 21 |
+| 本轮第 1 次 | 8099 + unified-core 8000 | 4649/4659 | 10（见 12.6） |
+| 本轮第 2 次 | 修复代码 + 连接池预算 | **4658/4658** | **0** |
+
+- 总数从 4659 变为 4658，是因为邮件模板路由已下线，WCS 不再探测
+  `GET /api/communication/mail/templates`（少 1 条探针），不是少测或跳过。
+- KNOWN 豁免 0 条，日志无 `FAIL`、无 `network_error`。
+
+### 12.8 编译 / 测试 / lint / 前端
+
+| 检查 | 命令 | 结果 |
+| --- | --- | --- |
+| 格式 | `cargo fmt --all -- --check` | 通过（无输出） |
+| 编译 | `cargo check --workspace` | 通过 |
+| Clippy | `cargo clippy --workspace --all-targets -- -D warnings` | EXIT=0 |
+| 单测/集成 | 6 个相关包 `--lib --tests`（带本地 `DATABASE_URL`） | **6202 passed / 0 failed（89 suites）** |
+| 前端 lint | `npm run lint` | EXIT=0（0 error，181 条既有 warning） |
+| 前端构建 | `npm run build` | EXIT=0 |
+
+测试口径说明：
+
+- `topems-finance` 的 `extract_openapi_spec` 为既有栈溢出用例（见
+  `docs/database/column-type-risk-report.md` 的已知问题），运行时以
+  `--skip extract_openapi_spec` 排除，未改测试代码。
+- `topems-unified-core` 的文档测试 `DatabaseAuditLogStore` 编译失败为既有问题，
+  故用 `--lib --tests` 口径；库/集成测试全绿。
+
+### 12.9 提交策略
+
+选择**拆两笔**：
+
+1. 邮件模板链路下线 + 密码重置最小闭环（现有 28 个 staged 文件 + 模板路由残留清理）；
+2. created_by UUID/TEXT 契约修复 + pm/master/mes 修复 + test-only 对齐迁移 +
+   `run_monolith.sh` 连接池配方 + 本文档 §12。
+
+理由：两批变更的风险面互不重叠（前者是“删能力 + 迁移”，后者是“类型契约 + 测试
+库对齐”），独立回滚与独立上线检查点更清晰；且迁移 19（DROP 模板表）必须先于
+代码上线，而迁移 20 只是 test-only 对齐，二者不应绑在同一部署单元。
+
+提交按正常钩子执行，不使用 `--no-verify`，不 force push。
+

@@ -1068,10 +1068,11 @@ pub async fn execute_payment_handler(
 ) -> ApiResponse<PaymentResponse> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let executed_by = claims.username.clone();
+    // executed_by 列为 uuid，按 JWT sub 绑定；用户名仅供日志/文本列使用。
+    let executed_by = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
 
     match service
-        .execute_payment(tenant_id, payment_id, req, &executed_by)
+        .execute_payment(tenant_id, payment_id, req, executed_by)
         .await
     {
         Ok(p) => ApiResponse::success(p, "执行成功"),

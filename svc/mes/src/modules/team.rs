@@ -513,7 +513,7 @@ pub async fn update_team(
             team_name = COALESCE($2, team_name),
             team_type = COALESCE($3, team_type),
             work_station_id = COALESCE($4, work_station_id),
-            leader_id = COALESCE($5::varchar, leader_id),
+            leader_id = COALESCE($5, leader_id),
             leader_name = COALESCE($6, leader_name),
             status = COALESCE($7, status),
             description = COALESCE($8, description),

@@ -39,12 +39,15 @@ pub struct Project {
     pub end_date: Option<DateTime<Utc>>,
     pub budget: Option<Decimal>,
     pub progress: i32,
+    #[sqlx(json(nullable))]
     pub project_config: Option<serde_json::Value>,
     #[serde(alias = "benefit_target", rename = "benefittarget")]
+    #[sqlx(json(nullable))]
     pub benefit_target: Option<serde_json::Value>,
     #[serde(alias = "risk_level", rename = "risklevel")]
     pub risk_level: Option<String>,
     pub priority: Option<i32>,
+    #[sqlx(json(nullable))]
     pub tags: Option<serde_json::Value>,
     #[serde(alias = "parent_id", rename = "parentId")]
     pub parent_id: Option<Uuid>,

@@ -951,13 +951,15 @@ pub struct Payment {
     pub payment_date: Option<chrono::NaiveDate>,
     pub actual_payment_date: Option<chrono::NaiveDate>,
     pub bank_transaction_no: Option<String>,
-    pub executed_by: Option<String>,
+    /// prod 列类型为 uuid，按 Option<Uuid> 解码。
+    pub executed_by: Option<Uuid>,
     pub executed_at: Option<DateTime<Utc>>,
     pub remark: Option<String>,
     pub attachment_url: Option<String>,
     /// 列已由迁移 20261020000004 对齐为 VARCHAR(100)，存操作者用户名文本，按 Option<String> 解码。
     pub created_by: Option<String>,
-    pub approved_by: Option<String>,
+    /// prod 列类型为 uuid，按 Option<Uuid> 解码。
+    pub approved_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -1025,7 +1027,7 @@ pub struct PaymentResponse {
     pub payment_date: Option<chrono::NaiveDate>,
     pub actual_payment_date: Option<chrono::NaiveDate>,
     pub bank_transaction_no: Option<String>,
-    pub executed_by: Option<String>,
+    pub executed_by: Option<Uuid>,
     pub executed_at: Option<DateTime<Utc>>,
     pub status: VoucherStatus,
     pub remark: Option<String>,
@@ -1066,7 +1068,8 @@ pub struct PaymentApprovalConfig {
     pub node_config: Option<serde_json::Value>,
     pub priority: i32,
     pub is_active: bool,
-    pub created_by: String,
+    /// prod 列类型为 uuid；写入侧已按 Uuid 绑定。
+    pub created_by: Uuid,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
