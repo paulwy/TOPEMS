@@ -24,7 +24,6 @@ use topems_shared_core::api_version::{create_api_info_router, register_routes_wi
 use topems_shared_core::cors::create_cors_layer;
 use topems_shared_core::logging::request_context_middleware;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_db::rls::rls_middleware;
 use topems_shared_db::scope::Db;
 use topems_shared_observability::telemetry::telemetry_middleware;
 
@@ -112,13 +111,9 @@ async fn main() -> Result<()> {
         .with_state(app_state.clone());
 
     // Protected 中间件链（axum 后挂先执行 → 实际顺序）：
-    // auth（验 token 注入 Claims）→ require_permission → tenant → rls → request_context
+    // auth（验 token 注入 Claims）→ require_permission → tenant → request_context
     let protected_routes = protected_routes
         .layer(axum::middleware::from_fn(request_context_middleware))
-        .layer(axum::middleware::from_fn_with_state(
-            ctx.db.clone(),
-            rls_middleware,
-        ))
         .layer(axum::middleware::from_fn_with_state(
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),

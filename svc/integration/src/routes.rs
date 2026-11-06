@@ -11,7 +11,6 @@ use topems_shared_core::api_version::register_routes_with_legacy_alias;
 use topems_shared_core::cors::create_cors_layer;
 use topems_shared_core::health::build_health_response;
 use topems_shared_core::health::ServiceHealth;
-use topems_shared_db::rls::rls_middleware;
 use topems_shared_observability::telemetry::telemetry_middleware;
 use utoipa::OpenApi;
 
@@ -210,7 +209,6 @@ fn create_routes_inner(
             state.auth_state.clone(),
             auth_middleware,
         ))
-        .layer(from_fn_with_state(pool, rls_middleware))
         .layer(rate_limit_layer)
         .with_state(state);
 

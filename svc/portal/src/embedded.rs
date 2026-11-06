@@ -24,7 +24,6 @@ use topems_shared_auth::middleware::require_permission;
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use topems_shared_core::api_version::register_routes_with_legacy_alias;
 use topems_shared_core::logging::request_context_middleware;
-use topems_shared_db::rls::rls_middleware;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_observability::telemetry::telemetry_middleware;
 
@@ -304,10 +303,6 @@ pub async fn build_router(
             "/help/guides/{guide_id}/lessons",
             post(modules::help::guide::add_lesson),
         )
-        .layer(axum::middleware::from_fn_with_state(
-            db.clone(),
-            rls_middleware,
-        ))
         .layer(axum::middleware::from_fn(require_permission(
             "portal:admin",
         )))
@@ -321,10 +316,6 @@ pub async fn build_router(
         ));
 
     let personal_routes = personal_routes
-        .layer(axum::middleware::from_fn_with_state(
-            db.clone(),
-            rls_middleware,
-        ))
         .layer(axum::middleware::from_fn_with_state(
             db.clone(),
             topems_shared_auth::tenant_middleware(),

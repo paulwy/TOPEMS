@@ -98,11 +98,6 @@ impl FinanceRealModule {
             .layer(axum::middleware::from_fn_with_state(
                 ctx.auth_state.clone(),
                 topems_shared_auth::auth::auth_middleware,
-            ))
-            // P2：8099 请求层 RLS 中间件（对齐 build_application lib.rs:1013，B6 独占连接模式）
-            .layer(axum::middleware::from_fn_with_state(
-                ctx.db.clone(),
-                topems_shared_db::rls::rls_middleware,
             ));
 
         tracing::info!(

@@ -69,12 +69,7 @@ impl GisRealModule {
 
         let routes = Router::new()
             .nest(config.api_prefix, business_routes)
-            .with_state(state)
-            // P2：8099 请求层 RLS 中间件（对齐 build_application lib.rs:1013，B6 独占连接模式）
-            .layer(axum::middleware::from_fn_with_state(
-                ctx.db.clone(),
-                topems_shared_db::rls::rls_middleware,
-            ));
+            .with_state(state);
 
         tracing::info!(
             "✅ 真实 gis 模块已接入统一入口（db={}，prefix={}）",
