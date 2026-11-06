@@ -1,6 +1,7 @@
 # `audit_logs` RLS 收口方案（20261107）
 
-> 状态：**方案待确认**。本轮只读侦察，未对 prod 执行任何 DDL，演练仅在克隆库 `topems_p0_rehearsal` 进行。
+> 状态：**用户已确认（D1–D4）**；Phase 0 代码改造完成，rehearsal（8098 + `topems_p0_rehearsal`）已通过（2026-11-07）。
+> **prod 仍未执行任何 DDL**，待窗口建议与验收清单确认后另行执行。
 > 关联：`pool-tenant-context-convergence-plan-20261106.md`（ScopedPool 退役 / `Db::scope*` 收敛）。
 
 ## 1. 现状与证据
@@ -63,8 +64,7 @@ CREATE POLICY rls_tenant_isolation ON <schema>.audit_logs
   FOR ALL
   USING (
     (NULLIF(current_setting('app.tenant_id', true), '')::uuid = '00000000-0000-0000-0000-000000000000'::uuid)
-    OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), '')::uuid
-  )
+    OR tenant_id = (NULLIF(current_setting('app.tenant_id', true), '')::uuid)
   WITH CHECK (同上);
 
 ALTER TABLE <schema>.audit_logs ENABLE ROW LEVEL SECURITY;
@@ -139,7 +139,7 @@ pub async fn scope_read_system(&self) -> Result<ScopedTxn<'_>> // 读
 
 | 表 | 处理 |
 |----|------|
-| `iam.audit_logs` | 新增 `tenant_id UUID NULL` + `CREATE INDEX`，历史行回填 nil |
+| `iam.audit_logs` | 新增 `tenant_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid`（历史行自动回填 nil）+ `CREATE INDEX` |
 | `flow.audit_logs` / `gis.audit_logs` / `qms.audit_logs` | 同上（均为 0 行的占位表，回填无风险） |
 | `shared.audit_logs` | 新增 `tenant_id` + `ENABLE/FORCE RLS` + 同款策略（当前完全无防护） |
 
@@ -213,9 +213,64 @@ DDL 走正常迁移链，不手写 prod。迁移需配套 `sqlx migrate` 编号�
 
 回滚判定：上述任一 ❌ 且 5 分钟内无法定位 → 执行该 schema 的 down 迁移。
 
-## 9. 待确认事项
+## 9. 已确认决策
 
-- **D1**：租户管理员是否需要看到系统级（`tenant_id=nil`）审计行？默认「不需要」。
-- **D2**：`shared.audit_logs` 是否作为第 14 张一并收口（当前 0 行、无策略），还是直接废弃该表。
-- **D3**：后台任务的“系统身份”只依赖 `scope_system()`，是否需要额外的 `app.rls_system` 标志（Phase 2）。
-- **D4**：prod 窗口具体日期与值班人。
+- **D1**：租户管理员**不**可见系统级（`tenant_id = nil`）审计行，避免换一种形式的泄漏。
+- **D2**：`shared.audit_logs` 一并收口，不废弃；prod 现有 306 行 nil 数据保留可读（仅系统通道）。
+- **D3**：Phase 2 引入独立 `app.rls_system` 语义，已随 `000011` 落地：`WITH CHECK` 只认
+  `app.tenant_id = nil AND app.rls_system = 'on'` 这一显式系统通道；由
+  `Db::scope_system()/scope_read_system()` 负责设置，不再依赖“未设置 GUC”。
+- **D4**：prod 窗口按 §8 建议、用户最终确认后执行；本轮 prod 零 DDL。
+
+## 10. rehearsal 演练结果（2026-11-07）
+
+环境：8098（debug 二进制）+ 克隆库 `topems_p0_rehearsal`，应用角色 `topems_prod`（非 super、无 BYPASSRLS）。
+
+### 10.1 执行顺序与迁移
+
+- 先完成 Phase 0 写入/读路径改造并编译、单测通过，**再**翻策略（未反向）。
+- `000010` 补 5 表 `tenant_id`（NOT NULL DEFAULT nil）+ 索引；`000011` 18 张表 Phase 2 谓词。
+- 翻转前导出 `pg_policies`（17 条，`/tmp/pg_policies_audit_logs_before_20261107.csv`）。
+- 逐 schema 单事务翻转：bi→crm→ehs→erp→flow→gis→hrm→iam→lims→qms→scm→srm→wms→shared→public→mes→plugin_mes→rs，全部成功。
+
+### 10.2 写入路径（翻转后）
+
+| 身份 | `POST /api/core/iam/access-logs` | 落库 `tenant_id` |
+|------|----------------------------------|------------------|
+| A 超管 | 200 | nil（系统通道） |
+| B 租户 0001 | 200 | 0001 |
+| C 租户 0002 | 200 | 0002 |
+
+- 请求审计中间件（`action=create`）落 nil + `user_id` 正确；修复 `user_id` 由 text 绑 uuid 的类型错误后，
+  日志中 `请求审计写入失败 = 0`。
+- SchemaAware 服务写入（CRM customer create）成功落 `crm.audit_logs`，无 `记录审计日志失败`。
+
+### 10.3 隔离矩阵（`SET ROLE topems_prod`；表内为行数）
+
+| 身份 | erp | public | crm | hrm | scm | srm | wms | shared | 其余 schema |
+|------|-----|--------|-----|-----|-----|-----|-----|--------|-------------|
+| 0001 | 302 | 38 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 0002 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| nil + `rls_system=on` | 302 | 366 | 23 | 223 | 99 | 19 | 565 | 0 | 0 |
+
+HTTP 口径一致：B `/api/erp/audit-logs` = 302（全部 0001）；C = 0；A（超管）全量。
+
+### 10.4 回归与 fail-closed
+
+- C 登录 / refresh / logout 全部 200。
+- 6 个核心列表 + `portal/todos` 全部 200；MES kanban A/B = 22 / 1，C = 0。
+- 裸连接 `SET ROLE topems_prod` 无 GUC：erp/public/hrm/wms `SELECT` = 0；
+  `INSERT public.audit_logs` 报 `new row violates row-level security policy`。
+
+### 10.5 回滚演练（单 schema）
+
+以 `srm` 为例：执行 down（重建 `srm_allow_all_audit_logs`）后，租户 0002 读到 19 行（原 nil 行）；
+再执行 up（恢复 `rls_tenant_isolation`）后，租户 0002 回到 0、系统通道仍 19。
+证明按 schema 回滚/重放有效，失败可只回单个 schema。
+
+### 10.6 残留行为（需业务知悉）
+
+- 服务层审计多数在 `tokio::spawn` 中写入，脱离请求 task-local，按设计走 `scope_system()` → `tenant_id = nil`
+  （与改造前落 nil 一致）。D1 下租户管理员不可见这类行。
+- 若业务要求“本租户业务审计对本租户管理员可见”，需在后续把请求租户显式传入各服务审计 sink（独立跟进项，不在本轮）。
+- `shared.audit_logs` 在 rehearsal 为 0 行；prod 306 行 nil 数据在 Phase 2 下仅系统通道可读。
