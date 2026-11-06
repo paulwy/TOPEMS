@@ -286,6 +286,7 @@ pub async fn update_push_template(
         .and_then(|v| v.as_str())
         .unwrap_or("");
     let is_active = payload.get("isActive").and_then(|v| v.as_bool());
+    let tenant_filter: Option<Uuid> = None;
     match sqlx::query(
         r#"UPDATE mobile.push_templates
            SET name = COALESCE(NULLIF($2, ''), name),
@@ -293,7 +294,7 @@ pub async fn update_push_template(
                body_template = COALESCE(NULLIF($4, ''), body_template),
                is_active = COALESCE($5, is_active),
                updated_at = NOW()
-           WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+           WHERE id = $1 AND ($6::uuid IS NULL OR tenant_id = $6)
            RETURNING id, name, notification_type, title_template, body_template, is_active, created_at"#,
     )
     .bind(id)
@@ -301,6 +302,7 @@ pub async fn update_push_template(
     .bind(title_template)
     .bind(body_template)
     .bind(is_active)
+    .bind(tenant_filter)
     .fetch_optional(&pool)
     .await
     {
