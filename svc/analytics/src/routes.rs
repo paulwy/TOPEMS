@@ -16,7 +16,7 @@ use crate::modules;
 use crate::shared::AppState;
 
 /// 组装 BI + Report 受保护业务路由（对应独立部署 main.rs 的 protected_routes）。
-/// 已包含 `require_module_access("analytics")` 权限层 + AppState。
+/// 已包含 `require_module_access("bi")` 权限层 + AppState。
 pub fn create_protected_routes(app_state: AppState) -> Router {
     let protected_routes = Router::new()
         // ===== BI routes (prefix: /api/bi) =====
@@ -634,11 +634,10 @@ pub fn create_protected_routes(app_state: AppState) -> Router {
         //       完整路径为 /api/bi/health/detailed，与上方 stateful_public 中
         //       无鉴权的 /health（服务级健康检查）区分开）
         .route("/health/detailed", get(detailed_health))
-        // 模块门只负责「能进 analytics + 读」；报表/数据源/导出等写仍要求 analytics:admin。
-        .layer(axum::middleware::from_fn(require_module_write("analytics")))
-        .layer(axum::middleware::from_fn(require_module_access(
-            "analytics",
-        )))
+        // 模块门只负责「能进 BI + 读」；报表/数据源/导出等写仍要求 bi:admin。
+        // 路由前缀与前端菜单均为 /api/bi、业务权限码均为 bi:*，故模块门对齐 bi。
+        .layer(axum::middleware::from_fn(require_module_write("bi")))
+        .layer(axum::middleware::from_fn(require_module_access("bi")))
         .with_state(app_state);
     protected_routes
 }
