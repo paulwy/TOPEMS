@@ -247,8 +247,9 @@
 |---|---|---|---|---|
 | 1 | `913d60c55` refactor(services): switch request pool fields to ScopedPool | B0 字段切换批次 | 用户显式授权，仅该 commit | `web-contract-smoke` 5 条失败经 HEAD 基线 8097 复跑完全相同，属本地 dev 栈缺失 |
 | 2 | `066388df8` merge: fix/datetime-rfc3339-unify into main | 本次 merge commit | 用户显式授权，仅该 commit | 同上 5 条失败（ERP HR 4 条 500、mobile workbench -1），非本次合并引入 |
+| 3 | `835984fd1` merge: catch up origin/main (1b9a56200) with Db/scope as authoritative | 本次追平 merge commit | 用户显式授权，**仅限该 commit** | 同一 5 条环境失败（ERP HR 4 条 500 / mobile workbench -1），合并前 main 基线 362/366 与 293/295 对照相同 |
 
-两次均为一次性例外：未改 lefthook 配置、未新增跳过脚本、未设 CI 跳过；不作为常规手段。
+三次均为一次性例外：未改 lefthook 配置、未新增跳过脚本、未设 CI 跳过；不作为常规手段。
 后续改进项见 7.2（提交前探测依赖服务，缺失时对远端服务相关用例显式 SKIP）。
 
 ---
