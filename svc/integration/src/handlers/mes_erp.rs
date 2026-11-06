@@ -32,14 +32,31 @@ pub struct SyncMesToErpRequest {
         (status = 200, description = "OK"),
     ),
 )]
-pub async fn list_mes_erp_sync(State(state): State<AppState>) -> ApiResponse<Vec<MesErpSync>> {
+pub async fn list_mes_erp_sync(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> ApiResponse<Vec<MesErpSync>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, MesErpSync>(only_own_schema_query!(
         "integration",
         "SELECT id, mes_order_id, erp_order_id, order_number, product_name, quantity,
                 synced, sync_status, sync_error, last_synced_at, created_at, updated_at
            FROM integration.mes_erp_sync ORDER BY updated_at DESC LIMIT 100"
     ))
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(syncs) => ApiResponse::success(syncs, "MES↔ERP syncs retrieved successfully"),
@@ -62,6 +79,9 @@ pub async fn list_mes_erp_sync(State(state): State<AppState>) -> ApiResponse<Vec
 )]
 pub async fn create_mes_erp_sync(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateMesErpSyncRequest>,
 ) -> ApiResponse<MesErpSync> {
     let id = Uuid::new_v4();
@@ -74,6 +94,18 @@ pub async fn create_mes_erp_sync(
             return ApiResponse::from(TopemsError::ValidationFailed(
                 "Invalid MES order ID".to_string(),
             ));
+        }
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
         }
     };
 
@@ -96,7 +128,7 @@ pub async fn create_mes_erp_sync(
     .bind(now)
     .bind(now)
     .bind(Uuid::nil())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(sync) => ApiResponse::success(sync, "MES↔ERP sync created successfully"),
@@ -122,8 +154,23 @@ pub async fn create_mes_erp_sync(
 )]
 pub async fn get_mes_erp_sync(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<MesErpSync> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, MesErpSync>(only_own_schema_query!(
         "integration",
         "SELECT id, mes_order_id, erp_order_id, order_number, product_name, quantity,
@@ -131,7 +178,7 @@ pub async fn get_mes_erp_sync(
            FROM integration.mes_erp_sync WHERE id = $1"
     ))
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(sync) => ApiResponse::success(sync, "MES↔ERP sync found"),
@@ -158,10 +205,25 @@ pub async fn get_mes_erp_sync(
 )]
 pub async fn sync_mes_erp(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<MesErpSync> {
     let now = Utc::now();
     let erp_order_id = Uuid::new_v4();
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
 
     let updated_sync = match sqlx::query_as::<_, MesErpSync>(only_own_schema_query!(
         "integration",
@@ -178,7 +240,7 @@ pub async fn sync_mes_erp(
     .bind("synced")
     .bind(Some(now))
     .bind(now)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(s)) => s,

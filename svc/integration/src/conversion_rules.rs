@@ -4,9 +4,9 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::ScopedTxn;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -399,17 +399,19 @@ pub fn get_predefined_rules(tenant_id: Uuid) -> Vec<ConversionRule> {
 // ==================== Database Operations ====================
 
 /// 获取所有转换规则
-pub async fn list_conversion_rules(pool: &PgPool) -> Result<Vec<ConversionRule>, sqlx::Error> {
+pub async fn list_conversion_rules(
+    scope: &mut ScopedTxn<'_>,
+) -> Result<Vec<ConversionRule>, sqlx::Error> {
     sqlx::query_as::<_, ConversionRule>(
         only_own_schema_query!("integration", "SELECT id, tenant_id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM integration.conversion_rules WHERE deleted_at IS NULL ORDER BY priority ASC, created_at DESC"),
     )
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await
 }
 
 /// 获取指定规则的转换执行记录
 pub async fn get_rule_executions(
-    pool: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     rule_id: Uuid,
     limit: i64,
 ) -> Result<Vec<ConversionExecution>, sqlx::Error> {
@@ -418,13 +420,13 @@ pub async fn get_rule_executions(
     )
     .bind(rule_id)
     .bind(limit)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await
 }
 
 /// 插入转换规则
 pub async fn insert_conversion_rule(
-    pool: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     rule: &ConversionRule,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
@@ -458,7 +460,7 @@ pub async fn insert_conversion_rule(
     .bind(rule.stop_on_failure)
     .bind(rule.created_at)
     .bind(rule.updated_at)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
 
     Ok(())

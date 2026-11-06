@@ -1,4 +1,4 @@
-use axum::extract::{Path, State};
+use axum::extract::{Extension, Path, State};
 use axum::Json;
 use chrono::Utc;
 use topems_shared_boundary::only_own_schema_query;
@@ -17,7 +17,24 @@ use crate::models::{AppState, CreateLimsQmsSyncRequest, LimsQmsSync};
         (status = 200, description = "OK"),
     ),
 )]
-pub async fn list_lims_qms_sync(State(state): State<AppState>) -> ApiResponse<Vec<LimsQmsSync>> {
+pub async fn list_lims_qms_sync(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> ApiResponse<Vec<LimsQmsSync>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, LimsQmsSync>(only_own_schema_query!(
         "integration",
         "SELECT id, lims_sample_id, qms_inspection_id, sample_name, inspection_result,
@@ -25,7 +42,7 @@ pub async fn list_lims_qms_sync(State(state): State<AppState>) -> ApiResponse<Ve
                 created_at, updated_at
            FROM integration.lims_qms_sync ORDER BY updated_at DESC LIMIT 100"
     ))
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(syncs) => ApiResponse::success(syncs, "LIMS↔QMS syncs retrieved successfully"),
@@ -48,6 +65,9 @@ pub async fn list_lims_qms_sync(State(state): State<AppState>) -> ApiResponse<Ve
 )]
 pub async fn create_lims_qms_sync(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateLimsQmsSyncRequest>,
 ) -> ApiResponse<LimsQmsSync> {
     let id = Uuid::new_v4();
@@ -60,6 +80,18 @@ pub async fn create_lims_qms_sync(
             return ApiResponse::from(TopemsError::ValidationFailed(
                 "Invalid LIMS sample ID".to_string(),
             ));
+        }
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
         }
     };
 
@@ -83,7 +115,7 @@ pub async fn create_lims_qms_sync(
     .bind(now)
     .bind(now)
     .bind(Uuid::nil())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(sync) => ApiResponse::success(sync, "LIMS↔QMS sync created successfully"),
@@ -109,8 +141,23 @@ pub async fn create_lims_qms_sync(
 )]
 pub async fn get_lims_qms_sync(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<LimsQmsSync> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, LimsQmsSync>(only_own_schema_query!(
         "integration",
         "SELECT id, lims_sample_id, qms_inspection_id, sample_name, inspection_result,
@@ -119,7 +166,7 @@ pub async fn get_lims_qms_sync(
            FROM integration.lims_qms_sync WHERE id = $1"
     ))
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(sync) => ApiResponse::success(sync, "LIMS↔QMS sync found"),
@@ -146,9 +193,24 @@ pub async fn get_lims_qms_sync(
 )]
 pub async fn sync_lims_qms(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<LimsQmsSync> {
     let now = Utc::now();
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
 
     // Check if sync exists
     let _exists = match sqlx::query_as::<_, LimsQmsSync>(only_own_schema_query!(
@@ -159,7 +221,7 @@ pub async fn sync_lims_qms(
            FROM integration.lims_qms_sync WHERE id = $1"
     ))
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(s) => s,
@@ -187,7 +249,7 @@ pub async fn sync_lims_qms(
     .bind("synced")
     .bind(Some(now))
     .bind(now)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(s) => s,

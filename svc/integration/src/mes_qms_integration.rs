@@ -5,9 +5,10 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, FromRow, PgPool, Row};
+use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::{Db, ScopedTxn};
 use tracing::{error, info, warn};
 use utoipa::ToSchema;
 
@@ -126,7 +127,7 @@ pub const STATUS_RETRYING: &str = "retrying";
 // ==================== Sync Record CRUD ====================
 
 pub async fn list_mes_qms_sync(
-    pool: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
     sync_type: Option<&str>,
     direction: Option<&str>,
@@ -169,10 +170,13 @@ pub async fn list_mes_qms_sync(
     }
     query = query.bind(limit);
 
-    query.fetch_all(pool).await
+    query.fetch_all(&mut *scope).await
 }
 
-pub async fn get_mes_qms_sync(pool: &PgPool, id: Uuid) -> Result<Option<MesQmsSync>, sqlx::Error> {
+pub async fn get_mes_qms_sync(
+    scope: &mut ScopedTxn<'_>,
+    id: Uuid,
+) -> Result<Option<MesQmsSync>, sqlx::Error> {
     sqlx::query_as::<_, MesQmsSync>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, sync_type, direction, mes_record_id, mes_record_type, 
@@ -183,12 +187,12 @@ pub async fn get_mes_qms_sync(pool: &PgPool, id: Uuid) -> Result<Option<MesQmsSy
            FROM integration.mes_qms_sync WHERE id = $1"
     ))
     .bind(id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut *scope)
     .await
 }
 
 pub async fn create_sync_record(
-    pool: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     req: &CreateMesQmsSyncRequest,
 ) -> Result<MesQmsSync, sqlx::Error> {
     let id = Uuid::new_v4();
@@ -245,14 +249,14 @@ pub async fn create_sync_record(
     .bind(None::<DateTime<Utc>>)
     .bind(now)
     .bind(now)
-    .fetch_one(pool)
+    .fetch_one(&mut *scope)
     .await?;
 
     Ok(result)
 }
 
 pub async fn update_sync_status(
-    pool: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     id: Uuid,
     status: &str,
     synced: bool,
@@ -283,12 +287,12 @@ pub async fn update_sync_status(
     .bind(result_payload)
     .bind(last_synced)
     .bind(now)
-    .fetch_one(pool)
+    .fetch_one(&mut *scope)
     .await
 }
 
 pub async fn increment_retry_count(
-    pool: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     id: Uuid,
     error: &str,
 ) -> Result<(), sqlx::Error> {
@@ -301,7 +305,7 @@ pub async fn increment_retry_count(
     ))
     .bind(id)
     .bind(error)
-    .execute(pool)
+    .execute(&mut *scope)
     .await?;
     Ok(())
 }
@@ -310,7 +314,7 @@ pub async fn increment_retry_count(
 
 /// Trigger QMS inspection task from MES production record
 pub async fn trigger_qms_inspection(
-    pool: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
     mes_url: &str,
     qms_url: &str,
@@ -321,7 +325,7 @@ pub async fn trigger_qms_inspection(
     let record_id = Uuid::parse_str(&req.production_record_id)
         .map_err(|e| TopemsError::ValidationFailed(format!("无效的生产记录ID: {}", e)))?;
 
-    let production_data = fetch_mes_production_record(pool, mes_url, record_id).await?;
+    let production_data = fetch_mes_production_record(mes_url, record_id).await?;
 
     let inspection_type = req
         .inspection_type
@@ -386,7 +390,7 @@ pub async fn trigger_qms_inspection(
         payload: Some(production_data),
     };
 
-    let sync_record = create_sync_record(pool, &sync_req)
+    let sync_record = create_sync_record(scope, &sync_req)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -397,7 +401,7 @@ pub async fn trigger_qms_inspection(
     });
 
     let updated = update_sync_status(
-        pool,
+        scope,
         sync_record.id,
         STATUS_SYNCED,
         true,
@@ -416,7 +420,7 @@ pub async fn trigger_qms_inspection(
 
 /// Sync QMS inspection result back to MES
 pub async fn sync_quality_result_to_mes(
-    pool: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
     mes_url: &str,
     qms_url: &str,
@@ -427,7 +431,7 @@ pub async fn sync_quality_result_to_mes(
     let inspection_id = Uuid::parse_str(&req.inspection_id)
         .map_err(|e| TopemsError::ValidationFailed(format!("无效的质检ID: {}", e)))?;
 
-    let inspection_data = fetch_qms_inspection(pool, qms_url, inspection_id).await?;
+    let inspection_data = fetch_qms_inspection(qms_url, inspection_id).await?;
 
     let status = inspection_data
         .get("status")
@@ -452,7 +456,7 @@ pub async fn sync_quality_result_to_mes(
     let mes_record_id_str = mes_record_id.map(|u| u.to_string());
 
     if let Some(mes_id) = mes_record_id {
-        update_mes_quality_record(pool, mes_url, mes_id, &inspection_data).await?;
+        update_mes_quality_record(mes_url, mes_id, &inspection_data).await?;
     }
 
     let order_id = inspection_data
@@ -498,7 +502,7 @@ pub async fn sync_quality_result_to_mes(
         payload: Some(inspection_data.clone()),
     };
 
-    let sync_record = create_sync_record(pool, &sync_req)
+    let sync_record = create_sync_record(scope, &sync_req)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -509,7 +513,7 @@ pub async fn sync_quality_result_to_mes(
     });
 
     let updated = update_sync_status(
-        pool,
+        scope,
         sync_record.id,
         STATUS_SYNCED,
         true,
@@ -525,7 +529,7 @@ pub async fn sync_quality_result_to_mes(
 
 /// Sync quality traceability chain data
 pub async fn sync_trace_chain_data(
-    pool: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
     mes_url: &str,
     _qms_url: &str,
@@ -538,7 +542,7 @@ pub async fn sync_trace_chain_data(
 
     let direction = req.direction.as_deref().unwrap_or("forward");
 
-    let trace_data = fetch_mes_trace_chain(pool, mes_url, order_id, direction).await?;
+    let trace_data = fetch_mes_trace_chain(mes_url, order_id, direction).await?;
 
     let sync_req = CreateMesQmsSyncRequest {
         tenant_id,
@@ -569,7 +573,7 @@ pub async fn sync_trace_chain_data(
         payload: Some(trace_data.clone()),
     };
 
-    let sync_record = create_sync_record(pool, &sync_req)
+    let sync_record = create_sync_record(scope, &sync_req)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -587,7 +591,7 @@ pub async fn sync_trace_chain_data(
     });
 
     let updated = update_sync_status(
-        pool,
+        scope,
         sync_record.id,
         STATUS_SYNCED,
         true,
@@ -603,7 +607,7 @@ pub async fn sync_trace_chain_data(
 
 /// Handle defective product processing flow linkage
 pub async fn handle_defect_handling(
-    pool: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     tenant_id: Uuid,
     mes_url: &str,
     qms_url: &str,
@@ -618,7 +622,6 @@ pub async fn handle_defect_handling(
         "rework" => {
             info!("触发返工流程 - 数量: {}", req.defect_quantity);
             trigger_mes_rework_process(
-                pool,
                 mes_url,
                 &req.production_record_id,
                 req.defect_quantity,
@@ -630,7 +633,6 @@ pub async fn handle_defect_handling(
         "scrap" => {
             info!("触发报废流程 - 数量: {}", req.defect_quantity);
             trigger_mes_scrap_process(
-                pool,
                 mes_url,
                 &req.production_record_id,
                 req.defect_quantity,
@@ -658,7 +660,7 @@ pub async fn handle_defect_handling(
         }
     };
 
-    let inspection_data = fetch_qms_inspection(pool, qms_url, inspection_id)
+    let inspection_data = fetch_qms_inspection(qms_url, inspection_id)
         .await
         .unwrap_or_else(|_| serde_json::json!({"inspection_id": req.inspection_id.clone()}));
 
@@ -703,7 +705,7 @@ pub async fn handle_defect_handling(
         })),
     };
 
-    let sync_record = create_sync_record(pool, &sync_req)
+    let sync_record = create_sync_record(scope, &sync_req)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
@@ -714,7 +716,7 @@ pub async fn handle_defect_handling(
     });
 
     let updated = update_sync_status(
-        pool,
+        scope,
         sync_record.id,
         STATUS_SYNCED,
         true,
@@ -731,7 +733,6 @@ pub async fn handle_defect_handling(
 // ==================== Helper Functions ====================
 
 async fn fetch_mes_production_record(
-    _pool: &PgPool,
     _mes_url: &str,
     record_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -778,7 +779,6 @@ async fn create_qms_inspection_task(
 }
 
 async fn fetch_qms_inspection(
-    _pool: &PgPool,
     _qms_url: &str,
     inspection_id: Uuid,
 ) -> Result<serde_json::Value, TopemsError> {
@@ -807,7 +807,6 @@ async fn fetch_qms_inspection(
 }
 
 async fn update_mes_quality_record(
-    _pool: &PgPool,
     _mes_url: &str,
     record_id: Uuid,
     inspection_data: &serde_json::Value,
@@ -818,7 +817,6 @@ async fn update_mes_quality_record(
 }
 
 async fn fetch_mes_trace_chain(
-    _pool: &PgPool,
     _mes_url: &str,
     order_id: Uuid,
     direction: &str,
@@ -876,7 +874,6 @@ async fn fetch_mes_trace_chain(
 }
 
 async fn trigger_mes_rework_process(
-    _pool: &PgPool,
     _mes_url: &str,
     _production_record_id: &Option<String>,
     quantity: f64,
@@ -897,7 +894,6 @@ async fn trigger_mes_rework_process(
 }
 
 async fn trigger_mes_scrap_process(
-    _pool: &PgPool,
     _mes_url: &str,
     _production_record_id: &Option<String>,
     quantity: f64,
@@ -919,7 +915,7 @@ async fn trigger_mes_scrap_process(
 
 // ==================== Sync Stats ====================
 
-pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Error> {
+pub async fn get_mes_qms_sync_stats(scope: &mut ScopedTxn<'_>) -> Result<SyncStats, sqlx::Error> {
     let mes_to_qms_result = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total, 
@@ -928,7 +924,7 @@ pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
            FROM integration.mes_qms_sync 
           WHERE direction = 'mes_to_qms' AND sync_type = 'production_inspection'"
     ))
-    .fetch_one(pool)
+    .fetch_one(&mut *scope)
     .await;
 
     let (mes_to_qms_total, mes_to_qms_synced, mes_to_qms_failed) = match mes_to_qms_result {
@@ -948,7 +944,7 @@ pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
            FROM integration.mes_qms_sync 
           WHERE direction = 'qms_to_mes' AND sync_type = 'quality_result'"
     ))
-    .fetch_one(pool)
+    .fetch_one(&mut *scope)
     .await;
 
     let (qms_to_mes_total, qms_to_mes_synced, qms_to_mes_failed) = match qms_to_mes_result {
@@ -967,7 +963,7 @@ pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
            FROM integration.mes_qms_sync 
           WHERE sync_type = 'trace_chain'"
     ))
-    .fetch_one(pool)
+    .fetch_one(&mut *scope)
     .await;
 
     let (trace_total, trace_synced) = match trace_result {
@@ -985,7 +981,7 @@ pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
            FROM integration.mes_qms_sync 
           WHERE sync_type = 'defect_handling'"
     ))
-    .fetch_one(pool)
+    .fetch_one(&mut *scope)
     .await;
 
     let (defect_total, defect_completed) = match defect_result {
@@ -1000,7 +996,7 @@ pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
         "integration",
         "SELECT MAX(last_synced_at) as last_sync FROM integration.mes_qms_sync"
     ))
-    .fetch_one(pool)
+    .fetch_one(&mut *scope)
     .await;
 
     let last_sync = last_sync_result
@@ -1025,17 +1021,26 @@ pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
 // ==================== Retry Functions ====================
 
 pub async fn retry_failed_sync(
-    pool: &PgPool,
+    db: &Db,
     mes_url: &str,
     qms_url: &str,
     sync_id: Uuid,
 ) -> Result<MesQmsSync, TopemsError> {
     info!("重试失败的同步 - ID: {}", sync_id);
 
-    let sync = get_mes_qms_sync(pool, sync_id)
+    // 后台重试路径无请求事务：读取/更新各自建立短作用域。
+    let mut scope = db
+        .scope()
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
+    let sync = get_mes_qms_sync(&mut scope, sync_id)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("获取同步记录失败: {}", e)))?
         .ok_or_else(|| TopemsError::ResourceNotFound("同步记录不存在".to_string()))?;
+    scope
+        .commit()
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("提交作用域失败: {}", e)))?;
 
     if sync.retry_count >= sync.max_retries {
         return Err(TopemsError::ValidationFailed(
@@ -1060,25 +1065,52 @@ pub async fn retry_failed_sync(
 
     let executor = RetryExecutor::new(retry_config);
 
+    let tenant_id = sync.tenant_id;
     let sync_type = sync.sync_type.clone();
     let payload = sync.payload.clone().unwrap_or(serde_json::Value::Null);
+    let mes_url = mes_url.to_string();
+    let qms_url = qms_url.to_string();
+    let db_for_retry = db.clone();
 
     let result = executor
-        .execute(|| async {
-            execute_sync_by_type(pool, sync.tenant_id, mes_url, qms_url, &sync_type, &payload).await
+        .execute(|| {
+            let db = db_for_retry.clone();
+            let mes_url = mes_url.clone();
+            let qms_url = qms_url.clone();
+            let sync_type = sync_type.clone();
+            let payload = payload.clone();
+            async move {
+                execute_sync_by_type(&db, tenant_id, &mes_url, &qms_url, &sync_type, &payload).await
+            }
         })
         .await;
 
     match result {
         RetryResult::Success(_) => {
+            let mut scope = db
+                .scope()
+                .await
+                .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
             let updated =
-                update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None).await?;
+                update_sync_status(&mut scope, sync_id, STATUS_SYNCED, true, None, None).await?;
+            scope
+                .commit()
+                .await
+                .map_err(|e| TopemsError::DatabaseQuery(format!("提交作用域失败: {}", e)))?;
             info!("同步重试成功 - ID: {}", sync_id);
             Ok(updated)
         }
         RetryResult::Failed { error, attempts }
         | RetryResult::MaxRetriesExceeded { error, attempts } => {
-            increment_retry_count(pool, sync_id, &error).await?;
+            let mut scope = db
+                .scope()
+                .await
+                .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
+            increment_retry_count(&mut scope, sync_id, &error).await?;
+            scope
+                .commit()
+                .await
+                .map_err(|e| TopemsError::DatabaseQuery(format!("提交作用域失败: {}", e)))?;
             error!(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error
@@ -1089,13 +1121,17 @@ pub async fn retry_failed_sync(
 }
 
 async fn execute_sync_by_type(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     mes_url: &str,
     qms_url: &str,
     sync_type: &str,
     payload: &serde_json::Value,
 ) -> Result<(), TopemsError> {
+    let mut scope = db
+        .scope()
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
     match sync_type {
         SYNC_TYPE_PRODUCTION_INSPECTION => {
             let record_id = payload.get("id").and_then(|v| v.as_str()).unwrap_or("");
@@ -1105,7 +1141,7 @@ async fn execute_sync_by_type(
                 quantity: None,
                 triggered_by: Some("retry".to_string()),
             };
-            trigger_qms_inspection(pool, tenant_id, mes_url, qms_url, &req).await?;
+            trigger_qms_inspection(&mut scope, tenant_id, mes_url, qms_url, &req).await?;
             Ok(())
         }
         SYNC_TYPE_QUALITY_RESULT => {
@@ -1114,20 +1150,25 @@ async fn execute_sync_by_type(
                 inspection_id: inspection_id.to_string(),
                 production_record_id: None,
             };
-            sync_quality_result_to_mes(pool, tenant_id, mes_url, qms_url, &req).await?;
+            sync_quality_result_to_mes(&mut scope, tenant_id, mes_url, qms_url, &req).await?;
             Ok(())
         }
         _ => Err(TopemsError::ValidationFailed(format!(
             "不支持的同步类型: {}",
             sync_type
         ))),
-    }
+    }?;
+    scope
+        .commit()
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("提交作用域失败: {}", e)))?;
+    Ok(())
 }
 
 // ==================== Event Handlers ====================
 
 pub async fn handle_mes_production_completed(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     mes_url: &str,
     qms_url: &str,
@@ -1152,16 +1193,24 @@ pub async fn handle_mes_production_completed(
         triggered_by: Some("auto_trigger".to_string()),
     };
 
-    match trigger_qms_inspection(pool, tenant_id, mes_url, qms_url, &req).await {
+    let mut scope = db
+        .scope()
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
+    match trigger_qms_inspection(&mut scope, tenant_id, mes_url, qms_url, &req).await {
         Ok(_) => info!("自动触发质检成功 - 记录ID: {}", record_id),
         Err(e) => error!("自动触发质检失败 - 记录ID: {}, 错误: {}", record_id, e),
     }
+    scope
+        .commit()
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("提交作用域失败: {}", e)))?;
 
     Ok(())
 }
 
 pub async fn handle_qms_inspection_completed(
-    pool: &PgPool,
+    db: &Db,
     tenant_id: Uuid,
     mes_url: &str,
     qms_url: &str,
@@ -1189,13 +1238,21 @@ pub async fn handle_qms_inspection_completed(
         production_record_id,
     };
 
-    match sync_quality_result_to_mes(pool, tenant_id, mes_url, qms_url, &req).await {
+    let mut scope = db
+        .scope()
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("建立作用域失败: {}", e)))?;
+    match sync_quality_result_to_mes(&mut scope, tenant_id, mes_url, qms_url, &req).await {
         Ok(_) => info!("质检结果自动回传成功 - 质检ID: {}", inspection_id),
         Err(e) => error!(
             "质检结果自动回传失败 - 质检ID: {}, 错误: {}",
             inspection_id, e
         ),
     }
+    scope
+        .commit()
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("提交作用域失败: {}", e)))?;
 
     Ok(())
 }

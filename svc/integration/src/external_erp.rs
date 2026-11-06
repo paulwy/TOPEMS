@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_db::scope::ScopedTxn;
 use uuid::Uuid;
 
 use crate::models::{AppState, ErpConnection, ErpConnectionResponse, ErpMapping};
@@ -390,12 +391,27 @@ pub struct SyncStatistics {
 pub async fn list_connections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> ApiResponse<Vec<ErpConnectionResponse>> {
     let tid: Option<&str> = if claims.is_superuser {
         None
     } else {
         Some(claims.tenant_id.as_deref().unwrap_or("default"))
     };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
@@ -403,7 +419,7 @@ pub async fn list_connections(
          created_at AS created_at, updated_at AS updated_at FROM erp_connections WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY created_at DESC"
     ))
     .bind(tid)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => ApiResponse::success(
@@ -431,6 +447,9 @@ pub async fn list_connections(
 pub async fn create_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<ErpConnectionResponse> {
     let id = Uuid::new_v4();
@@ -476,6 +495,18 @@ pub async fn create_connection(
         .and_then(|v| v.as_i64())
         .map(|v| v as i32);
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "INSERT INTO erp_connections \
@@ -497,7 +528,7 @@ pub async fn create_connection(
     .bind(&sync_direction)
     .bind(&sync_mode)
     .bind(sync_interval)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(conn) => ApiResponse::success(conn.into(), "创建成功"),
@@ -614,6 +645,9 @@ async fn test_connection(
 async fn get_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<String>,
 ) -> ApiResponse<ErpConnectionResponse> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
@@ -622,6 +656,18 @@ async fn get_connection(
     } else {
         Some(claims.tenant_id.as_deref().unwrap_or("default"))
     };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
@@ -630,7 +676,7 @@ async fn get_connection(
     ))
     .bind(uuid)
     .bind(tid)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(conn)) => ApiResponse::success(conn.into(), "获取成功"),
@@ -655,6 +701,9 @@ async fn get_connection(
 pub async fn update_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<ErpConnectionResponse> {
@@ -672,6 +721,18 @@ pub async fn update_connection(
         .get("status")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
 
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
@@ -692,7 +753,7 @@ pub async fn update_connection(
     .bind(status)
     .bind(uuid)
     .bind(&claims.tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(conn)) => ApiResponse::success(conn.into(), "更新成功"),
@@ -717,16 +778,31 @@ pub async fn update_connection(
 pub async fn delete_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<String>,
 ) -> ApiResponse<()> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query(only_own_schema_query!(
         "integration",
         "DELETE FROM erp_connections WHERE id = $1 AND tenant_id::text = $2"
     ))
     .bind(uuid)
     .bind(&claims.tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
@@ -740,6 +816,9 @@ pub async fn delete_connection(
 pub async fn list_entity_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path((id, entity)): Path<(String, String)>,
 ) -> ApiResponse<Vec<ErpMapping>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
@@ -748,6 +827,18 @@ pub async fn list_entity_mappings(
     } else {
         Some(claims.tenant_id.as_deref().unwrap_or("default"))
     };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
@@ -758,7 +849,7 @@ pub async fn list_entity_mappings(
     .bind(uuid)
     .bind(&entity)
     .bind(tid)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => ApiResponse::success(rows, "映射列表获取成功"),
@@ -769,6 +860,9 @@ pub async fn list_entity_mappings(
 async fn create_entity_mapping(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path((id, entity)): Path<(String, String)>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<ErpMapping> {
@@ -795,6 +889,18 @@ async fn create_entity_mapping(
         .unwrap_or("")
         .to_string();
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
         "INSERT INTO erp_mappings \
@@ -815,7 +921,7 @@ async fn create_entity_mapping(
     .bind(&local_name)
     .bind(&external_code)
     .bind(&external_name)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(m) => ApiResponse::success(m, "创建成功"),
@@ -826,6 +932,9 @@ async fn create_entity_mapping(
 pub async fn batch_entity_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path((id, entity)): Path<(String, String)>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
@@ -837,6 +946,18 @@ pub async fn batch_entity_mappings(
         .unwrap_or_default();
     let mut processed = 0i64;
     let mut failed = 0i64;
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
 
     for item in &items {
         let mapping_id = Uuid::new_v4();
@@ -877,7 +998,7 @@ pub async fn batch_entity_mappings(
         .bind(&local_name)
         .bind(&external_code)
         .bind(&external_name)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
         {
             Ok(_) => processed += 1,
@@ -899,6 +1020,9 @@ pub async fn batch_entity_mappings(
 pub async fn preview_entity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path((id, entity)): Path<(String, String)>,
 ) -> ApiResponse<Vec<ErpMapping>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
@@ -907,6 +1031,18 @@ pub async fn preview_entity(
     } else {
         Some(claims.tenant_id.as_deref().unwrap_or("default"))
     };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
@@ -918,7 +1054,7 @@ pub async fn preview_entity(
     .bind(uuid)
     .bind(&entity)
     .bind(tid)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => ApiResponse::success(rows, "预览数据获取成功"),
@@ -930,7 +1066,7 @@ pub async fn preview_entity(
 
 /// 获取 ERP 连接信息
 async fn get_connection_by_id(
-    pool: &sqlx::PgPool,
+    scope: &mut ScopedTxn<'_>,
     connection_id: Uuid,
     tenant: Option<&str>,
 ) -> Option<ErpConnection> {
@@ -942,7 +1078,7 @@ async fn get_connection_by_id(
     ))
     .bind(connection_id)
     .bind(tenant)
-    .fetch_optional(pool)
+    .fetch_optional(&mut *scope)
     .await
     .ok()
     .flatten()
@@ -1028,7 +1164,7 @@ async fn call_erp_api(
 
 /// 更新同步日志状态
 async fn update_sync_log_status(
-    pool: &sqlx::PgPool,
+    scope: &mut ScopedTxn<'_>,
     task_id: Uuid,
     status: &str,
     total_records: i32,
@@ -1049,14 +1185,14 @@ async fn update_sync_log_status(
     .bind(failed_count)
     .bind(error_message)
     .bind(task_id)
-    .execute(pool)
+    .execute(&mut *scope)
     .await;
 }
 
 /// 将从 ERP 导入的数据写入 staging 表
 /// 支持去重（基于 connection_id + entity + external_id）
 async fn write_to_staging(
-    pool: &sqlx::PgPool,
+    scope: &mut ScopedTxn<'_>,
     connection_id: Uuid,
     entity: &str,
     items: &[serde_json::Value],
@@ -1083,7 +1219,7 @@ async fn write_to_staging(
             .bind(connection_id)
             .bind(entity)
             .bind(eid)
-            .fetch_optional(pool)
+            .fetch_optional(&mut *scope)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("检查重复记录失败: {}", e)))?;
 
@@ -1106,7 +1242,7 @@ async fn write_to_staging(
         .bind(entity)
         .bind(&external_id)
         .bind(item)
-        .execute(pool)
+        .execute(&mut *scope)
         .await
         {
             Ok(_) => inserted += 1,
@@ -1130,6 +1266,9 @@ async fn write_to_staging(
 pub async fn sync_entity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(entity): Path<String>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
@@ -1148,6 +1287,18 @@ pub async fn sync_entity(
         .and_then(|v| v.as_i64())
         .unwrap_or(100) as i32;
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     // 创建同步日志记录
     if let Err(e) = sqlx::query(only_own_schema_query!(
         "integration",
@@ -1160,7 +1311,7 @@ pub async fn sync_entity(
     .bind(connection_id)
     .bind(&entity)
     .bind(&direction)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     {
         tracing::error!("sync_entity insert log: {}", e);
@@ -1172,7 +1323,7 @@ pub async fn sync_entity(
         Some(c) => c,
         None => {
             update_sync_log_status(
-                &state.pool,
+                &mut scope,
                 task_id,
                 "failed",
                 0,
@@ -1185,12 +1336,12 @@ pub async fn sync_entity(
         }
     };
 
-    let connection = match get_connection_by_id(&state.pool, cid, claims.tenant_id.as_deref()).await
+    let connection = match get_connection_by_id(&mut scope, cid, claims.tenant_id.as_deref()).await
     {
         Some(c) => c,
         None => {
             update_sync_log_status(
-                &state.pool,
+                &mut scope,
                 task_id,
                 "failed",
                 0,
@@ -1204,7 +1355,7 @@ pub async fn sync_entity(
     };
 
     if !connection.isactive {
-        update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some("连接已禁用")).await;
+        update_sync_log_status(&mut scope, task_id, "failed", 0, 0, 0, Some("连接已禁用")).await;
         return ApiResponse::bad_request("ERP 连接已禁用");
     }
 
@@ -1229,7 +1380,7 @@ pub async fn sync_entity(
 
                         // 将数据写入 staging 表（支持去重）
                         let (inserted, skipped) =
-                            match write_to_staging(&state.pool, cid, &entity, &items).await {
+                            match write_to_staging(&mut scope, cid, &entity, &items).await {
                                 Ok((i, s)) => (i, s),
                                 Err(e) => {
                                     tracing::warn!("写入 staging 表失败: {}", e);
@@ -1243,20 +1394,14 @@ pub async fn sync_entity(
                     );
 
                         update_sync_log_status(
-                            &state.pool,
-                            task_id,
-                            "success",
-                            total,
-                            inserted,
-                            skipped,
-                            None,
+                            &mut scope, task_id, "success", total, inserted, skipped, None,
                         )
                         .await;
                         Ok((total, inserted, skipped))
                     }
                     Err(e) => {
                         update_sync_log_status(
-                            &state.pool,
+                            &mut scope,
                             task_id,
                             "failed",
                             0,
@@ -1286,20 +1431,14 @@ pub async fn sync_entity(
                             .and_then(|v| v.as_i64())
                             .unwrap_or(1) as i32;
                         update_sync_log_status(
-                            &state.pool,
-                            task_id,
-                            "success",
-                            created,
-                            created,
-                            0,
-                            None,
+                            &mut scope, task_id, "success", created, created, 0, None,
                         )
                         .await;
                         Ok((created, created, 0))
                     }
                     Err(e) => {
                         update_sync_log_status(
-                            &state.pool,
+                            &mut scope,
                             task_id,
                             "failed",
                             0,
@@ -1314,7 +1453,7 @@ pub async fn sync_entity(
             }
             _ => {
                 let msg = format!("不支持的同步方向: {}", direction);
-                update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&msg)).await;
+                update_sync_log_status(&mut scope, task_id, "failed", 0, 0, 0, Some(&msg)).await;
                 Err(TopemsError::ValidationFailed(msg))
             }
         };
@@ -1325,7 +1464,7 @@ pub async fn sync_entity(
         "UPDATE erp_connections SET last_sync_at = NOW(), updated_at = NOW() WHERE id = $1"
     ))
     .bind(cid)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match sync_result {
@@ -1351,12 +1490,27 @@ pub async fn sync_entity(
 pub async fn sync_logs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> ApiResponse<Vec<ExternalErpSyncLog>> {
     let tid: Option<&str> = if claims.is_superuser {
         None
     } else {
         Some(claims.tenant_id.as_deref().unwrap_or("default"))
     };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, ExternalErpSyncLog>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
@@ -1365,7 +1519,7 @@ pub async fn sync_logs(
          FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY created_at DESC LIMIT 100"
     ))
     .bind(tid)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => ApiResponse::success(rows, "同步日志获取成功"),
@@ -1378,19 +1532,34 @@ pub async fn sync_logs(
 pub async fn sync_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> ApiResponse<SyncStatistics> {
     let tid: Option<&str> = if claims.is_superuser {
         None
     } else {
         Some(claims.tenant_id.as_deref().unwrap_or("default"))
     };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     // 总量统计
     let total: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1)"
     ))
     .bind(tid)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
 
@@ -1399,7 +1568,7 @@ pub async fn sync_statistics(
         "SELECT COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1) AND status = 'success'"
     ))
     .bind(tid)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
 
@@ -1408,7 +1577,7 @@ pub async fn sync_statistics(
         "SELECT COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1) AND status = 'failed'"
     ))
     .bind(tid)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
 
@@ -1418,7 +1587,7 @@ pub async fn sync_statistics(
             "SELECT MAX(completed_at) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1)"
         ))
         .bind(tid)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
 
@@ -1428,7 +1597,7 @@ pub async fn sync_statistics(
         "SELECT entity, COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1) GROUP BY entity ORDER BY COUNT(*) DESC"
     ))
     .bind(tid)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -1454,12 +1623,27 @@ pub async fn sync_statistics(
 pub async fn export_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> ApiResponse<serde_json::Value> {
     let tid: Option<&str> = if claims.is_superuser {
         None
     } else {
         Some(claims.tenant_id.as_deref().unwrap_or("default"))
     };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
@@ -1467,7 +1651,7 @@ pub async fn export_mappings(
          created_at AS created_at, updated_at AS updated_at FROM erp_mappings WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY created_at DESC"
     ))
     .bind(tid)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => ApiResponse::success(
@@ -1485,12 +1669,27 @@ pub async fn export_mappings(
 pub async fn export_sync_logs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> ApiResponse<serde_json::Value> {
     let tid: Option<&str> = if claims.is_superuser {
         None
     } else {
         Some(claims.tenant_id.as_deref().unwrap_or("default"))
     };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, ExternalErpSyncLog>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
@@ -1499,7 +1698,7 @@ pub async fn export_sync_logs(
          FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY created_at DESC"
     ))
     .bind(tid)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => ApiResponse::success(
@@ -1519,6 +1718,9 @@ pub async fn export_sync_logs(
 pub async fn toggle_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<ErpConnectionResponse> {
@@ -1527,6 +1729,18 @@ pub async fn toggle_connection(
         .get("enabled")
         .and_then(|v| v.as_bool())
         .unwrap_or(true);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "UPDATE erp_connections SET isactive = $2, updated_at = NOW() \
@@ -1538,7 +1752,7 @@ pub async fn toggle_connection(
     .bind(uuid)
     .bind(enabled)
     .bind(&claims.tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(conn)) => ApiResponse::success(conn.into(), "切换成功"),
@@ -1552,11 +1766,26 @@ pub async fn toggle_connection(
 pub async fn sync_connection_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     // 待上游支持：此处仅回显连接当前状态，真实 ERP 连通性探测后续接入
-    match get_connection_by_id(&state.pool, uuid, claims.tenant_id.as_deref()).await {
+    match get_connection_by_id(&mut scope, uuid, claims.tenant_id.as_deref()).await {
         Some(c) => ApiResponse::success(
             serde_json::json!({"status": c.status, "isactive": c.isactive, "last_sync_at": c.last_sync_at}),
             "连接状态已刷新",
@@ -1570,6 +1799,9 @@ pub async fn sync_connection_status(
 pub async fn list_company_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<String>,
 ) -> ApiResponse<Vec<ErpMapping>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
@@ -1578,6 +1810,18 @@ pub async fn list_company_mappings(
     } else {
         Some(claims.tenant_id.as_deref().unwrap_or("default"))
     };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
@@ -1587,7 +1831,7 @@ pub async fn list_company_mappings(
     ))
     .bind(uuid)
     .bind(tid)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => ApiResponse::success(rows, "公司映射列表获取成功"),
@@ -1598,6 +1842,9 @@ pub async fn list_company_mappings(
 pub async fn create_company_mapping(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<ErpMapping> {
@@ -1623,6 +1870,18 @@ pub async fn create_company_mapping(
         .and_then(|v| v.as_str())
         .unwrap_or("")
         .to_string();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
         "INSERT INTO erp_mappings \
@@ -1642,7 +1901,7 @@ pub async fn create_company_mapping(
     .bind(&local_name)
     .bind(&external_code)
     .bind(&external_name)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(m) => ApiResponse::success(m, "创建成功"),
@@ -1652,11 +1911,25 @@ pub async fn create_company_mapping(
 
 pub async fn update_company_mapping(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path((id, mapping_id)): Path<(String, String)>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<ErpMapping> {
     let conn_uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
     let local_code = body.get("local_code").and_then(|v| v.as_str());
     let local_name = body.get("local_name").and_then(|v| v.as_str());
     let external_code = body.get("external_code").and_then(|v| v.as_str());
@@ -1680,7 +1953,7 @@ pub async fn update_company_mapping(
     .bind(external_name)
     .bind(mid)
     .bind(conn_uuid)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(m)) => ApiResponse::success(m, "更新成功"),
@@ -1691,17 +1964,32 @@ pub async fn update_company_mapping(
 
 pub async fn delete_company_mapping(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path((id, mapping_id)): Path<(String, String)>,
 ) -> ApiResponse<()> {
     let conn_uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query(only_own_schema_query!(
         "integration",
         "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = 'company' AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id::text = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(mid)
     .bind(conn_uuid)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
@@ -1714,11 +2002,25 @@ pub async fn delete_company_mapping(
 
 pub async fn update_entity_mapping(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path((conn_id, entity, mapping_id)): Path<(String, String, String)>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<ErpMapping> {
     let conn_uuid = Uuid::parse_str(&conn_id).unwrap_or(Uuid::nil());
     let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
     let local_code = body.get("local_code").and_then(|v| v.as_str());
     let local_name = body.get("local_name").and_then(|v| v.as_str());
     let external_code = body.get("external_code").and_then(|v| v.as_str());
@@ -1743,7 +2045,7 @@ pub async fn update_entity_mapping(
     .bind(mid)
     .bind(conn_uuid)
     .bind(&entity)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(m)) => ApiResponse::success(m, "更新成功"),
@@ -1754,10 +2056,25 @@ pub async fn update_entity_mapping(
 
 pub async fn delete_entity_mapping(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path((conn_id, entity, mapping_id)): Path<(String, String, String)>,
 ) -> ApiResponse<()> {
     let conn_uuid = Uuid::parse_str(&conn_id).unwrap_or(Uuid::nil());
     let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query(only_own_schema_query!(
         "integration",
         "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = $3 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id::text = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))"
@@ -1765,7 +2082,7 @@ pub async fn delete_entity_mapping(
     .bind(mid)
     .bind(conn_uuid)
     .bind(&entity)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
@@ -1787,15 +2104,30 @@ pub async fn auto_match_mappings() -> ApiResponse<serde_json::Value> {
 /// 取消同步（待上游支持：此处校验日志存在性后返回成功，真实中断后续接入）
 pub async fn cancel_sync(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(log_id): Path<String>,
 ) -> ApiResponse<serde_json::Value> {
     let uuid = Uuid::parse_str(&log_id).unwrap_or(Uuid::nil());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     let exists: Option<(Uuid,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
         "SELECT id FROM external_erp_sync_logs WHERE id = $1"
     ))
     .bind(uuid)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
     match exists {
@@ -1808,9 +2140,24 @@ pub async fn cancel_sync(
 
 pub async fn get_sync_log(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(log_id): Path<String>,
 ) -> ApiResponse<ExternalErpSyncLog> {
     let uuid = Uuid::parse_str(&log_id).unwrap_or(Uuid::nil());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, ExternalErpSyncLog>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
@@ -1819,7 +2166,7 @@ pub async fn get_sync_log(
          FROM external_erp_sync_logs WHERE id = $1"
     ))
     .bind(uuid)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(log)) => ApiResponse::success(log, "获取成功"),
@@ -1832,15 +2179,30 @@ pub async fn get_sync_log(
 
 pub async fn connection_sync_statistics(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(conn_id): Path<String>,
 ) -> ApiResponse<SyncStatistics> {
     let uuid = Uuid::parse_str(&conn_id).unwrap_or(Uuid::nil());
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     let total: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) FROM external_erp_sync_logs WHERE connection_id = $1"
     ))
     .bind(uuid)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
     let successful: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
@@ -1848,7 +2210,7 @@ pub async fn connection_sync_statistics(
         "SELECT COUNT(*) FROM external_erp_sync_logs WHERE connection_id = $1 AND status = 'success'"
     ))
     .bind(uuid)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
     let failed: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
@@ -1856,7 +2218,7 @@ pub async fn connection_sync_statistics(
         "SELECT COUNT(*) FROM external_erp_sync_logs WHERE connection_id = $1 AND status = 'failed'"
     ))
     .bind(uuid)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
     let last_sync: Option<(Option<chrono::DateTime<chrono::Utc>>,)> =
@@ -1865,7 +2227,7 @@ pub async fn connection_sync_statistics(
             "SELECT MAX(completed_at) FROM external_erp_sync_logs WHERE connection_id = $1"
         ))
         .bind(uuid)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
     ApiResponse::success(

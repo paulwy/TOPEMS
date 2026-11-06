@@ -4,11 +4,11 @@ pub use topems_shared_bootstrap::audit::{AuditEventParams, AuditLog, ListAuditLo
 use axum::extract::FromRef;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::AuthState;
+use topems_shared_db::scope::Db;
 
 use crate::mes_erp_sync::MesErpSyncService;
 
@@ -124,7 +124,9 @@ pub struct SyncStats {
 
 #[derive(Clone)]
 pub struct AppState {
-    pub pool: PgPool,
+    /// 模块不再持有连接池，所有查询经 `Db` 作用域
+    /// （事务级 `SET LOCAL search_path = "integration, public"`）。
+    pub db: Db,
     pub lims_url: String,
     pub qms_url: String,
     pub mes_url: String,
@@ -141,9 +143,9 @@ impl FromRef<AppState> for AuthState {
     }
 }
 
-impl FromRef<AppState> for PgPool {
+impl FromRef<AppState> for Db {
     fn from_ref(state: &AppState) -> Self {
-        state.pool.clone()
+        state.db.clone()
     }
 }
 

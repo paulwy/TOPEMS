@@ -1,7 +1,7 @@
 use chrono::Utc;
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{Event, EventResult, EventSubscriber, EventType};
 
 use crate::qms_lims_ehs;
@@ -10,11 +10,11 @@ type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 pub struct IntegrationEventHandlers {
-    pub db: PgPool,
+    pub db: Db,
 }
 
 impl IntegrationEventHandlers {
-    pub fn new(db: PgPool) -> Self {
+    pub fn new(db: Db) -> Self {
         Self { db }
     }
 
@@ -85,6 +85,11 @@ impl IntegrationEventHandlers {
         let now = Utc::now();
         let log_id = uuid::Uuid::new_v4();
 
+        // 后台任务无请求事务：每次操作自建写作用域（事务级 search_path）。
+        let mut scope =
+            self.db.scope().await.map_err(|e| {
+                TopemsError::BusinessLogic(format!("建立同步日志作用域失败: {}", e))
+            })?;
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("integration", "INSERT INTO integration_sync_logs (id, sync_type, source_system, target_system, status, trace_id, details, started_at, source_type, source_id, tenant_id)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, '00000000-0000-0000-0000-000000000000')
@@ -101,8 +106,13 @@ impl IntegrationEventHandlers {
         .bind(now)
         .bind(source_type)
         .bind(source_id)
-        .fetch_optional(&self.db)
+        .fetch_optional(&mut scope)
         .await;
+        let result = match (result, scope.commit().await) {
+            (Ok(row), Ok(())) => Ok(row),
+            (Err(e), _) => Err(e),
+            (Ok(_), Err(e)) => Err(e),
+        };
 
         match result {
             Ok(Some(id)) => {
@@ -209,7 +219,7 @@ impl IntegrationEventHandlers {
     }
 }
 
-pub async fn start_event_subscribers(db: PgPool) -> Result<(), TopemsError> {
+pub async fn start_event_subscribers(db: Db) -> Result<(), TopemsError> {
     let handlers = IntegrationEventHandlers::new(db);
     let subscriber = handlers.build_subscriber()?;
 
