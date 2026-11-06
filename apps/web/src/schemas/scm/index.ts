@@ -1,7 +1,6 @@
 export * from './supplier';
 export * from './purchaseOrder';
 export * from './purchaseRequisition';
-export * from './purchaseContract';
 export { purchaseContractWizardSchema } from './purchaseContractWizard';
 export * from './evaluation';
 export * from './deliveryAppointment';

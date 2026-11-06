@@ -9,7 +9,7 @@
  *   - D3/D5：SubTableBuilder 子表
  * - 详情：FormBuilder view 模式
  *
- * 参考：apps/web/src/pages/erp/VoucherPage.tsx
+ * 参考：apps/web/src/pages/finance/FinanceVoucherPage/index.tsx
  */
 
 import React from 'react';

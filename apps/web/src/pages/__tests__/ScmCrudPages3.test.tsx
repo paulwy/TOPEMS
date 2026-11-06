@@ -45,7 +45,6 @@ vi.mock('@/components/templates/CrudPage', () => ({
 vi.mock('@/schemas/scm', () => ({
   incomingInspectionSchema: { name: 'incomingInspectionSchema' },
   evaluationSchema: { name: 'evaluationSchema' },
-  purchaseContractSchema: { name: 'purchaseContractSchema' },
 }));
 
 vi.mock('@/api/scm', () => ({

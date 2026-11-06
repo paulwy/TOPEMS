@@ -1943,6 +1943,16 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.142 审计整改第十九批：scm 合同 schema 清理 + 凭证页收敛（批 21，2026-11-06）✅
+
+- **scm 合同 schema 一步到位**：现役页面 `ScmPurchaseContractPage.tsx:13` 用的是 `purchaseContractWizardSchema`（3 步向导），`purchaseContract.ts` 是被取代的旧版（仅 `scmSchemas.test.ts:121` 断言消费）→ 删文件 + 清 `scm/index.ts` 的 `export *` + 删测试断言块与 import + 清 `ScmCrudPages3.test.tsx` 多余 mock 键；**保留 wizard 的契约断言**（活 schema 仍受测）。
+- **凭证页收敛（finance 权威）**：逐项对比 114 行 erp 版 vs 807 行 finance 版 —— 导入/详情分录/批量提交审批过账/删除二次确认/科目 Tab/统计卡片 finance 版全有，**erp 版零独有功能** → 删 `pages/erp/VoucherPage.tsx` + 2 个测试 + `schemas/erp/voucher.ts`。
+- **入口不丢**：保留 `voucherRoute` 的 `path: ERP_PATHS.voucherManagement`（`/erp/voucher-management`）、菜单标题、`code`、`tier` 不变，仅 `element` 换成 `import('@/pages/finance/FinanceVoucherPage')`（lazy key `FinanceVoucherPage`）→ 书签/面包屑/外部链接全有效。
+- **权限码对齐（避免可见但 403）**：后端 `/finance/vouchers` 实际鉴权为 `finance:voucher:read`（`svc/finance/src/modules/mod.rs:290`、`cqrs_routes.rs:130`），而 erp_manager 对 `finance:voucher:*` 持有 0 条 → 该路由 `requiredPermissions` 由 `erp:general_ledger:read` 改为 `finance:voucher:read` + `finance:dashboard:read`。影响：erp_manager 不再见该入口（原为"可见但点了 403"），如需 ERP 内看凭证须授其 finance:voucher:read，待拍板。
+- **新增契约测试** `src/__tests__/erpVoucherRouteContract.test.ts`（5 用例全过）：路径不变、落点指向 finance、权限码一致、已删文件不存在、权威页存在。（初次放 `modules/erp/__tests__` 被 vitest include 规则跳过，已移位）
+- **验证**：tsc 0 error（两次）；eslint 0；契约测试 5/5；全量 vitest 621 files / 6640 passed / 1 skipped / 2 failed（`PluginManager` hook 超时 + `smoke-batch` ForceChangePasswordPage 超时，单独复跑两文件 1524/1524 全过 = 并行 flaky）；对账不变 fe 465/be 577/db 1087/fe_orphan 41/rename 0；无迁移。
+- 产出：`docs/audit/P3-11_scm合同schema清理与凭证页收敛_执行记录_2026-11-06.md`
+
 ## v1.141 审计整改第十八批：孤儿 schema 清理（批 20，2026-11-06）✅
 
 - **`erp/voucher.ts` 搬家判定不成立**：核实 `schemas/finance/voucher.ts:16` 已存在同名导出（`finance/index.ts:12` 转发），`erp/voucher.ts` 被活页面 `pages/erp/VoucherPage.tsx:17` 消费（路由 `modules/erp/config.ts:169`），两文件 diff 511 行 = 两个不同 schema 服务两个活页面 → 不搬；真问题是两套凭证页面功能重复，登记待拍板。
