@@ -1,3 +1,28 @@
+## MES 集成测试两项失败修复（2026-11-06 第五批）
+
+- **失败 1 `ck_batch_records_status_standard` 拒绝 `in_stock`**：根因是**模板误加约束**
+  （[20260809000002](database/migrations/20260809000002_add_status_check_constraints.sql) 对 0 行表空集通过；
+  建表迁移本身无此 CHECK；prod 无该约束、本地/test 有）。三处 `mes.batch_records` 均 0 行。
+  修法：前向迁移 [20261107000018](database/migrations/20261107000018_mes_drop_ck_batch_records_status_standard.sql) **DROP**，
+  沿用 [20261103000002](database/migrations/20261103000002_global_remove_misapplied_status_standard_checks.sql) /
+  [20261104110000](database/migrations/20261104110000_p5b_prod_status_standard_checks_3.sql) 先例；不放宽枚举。
+- **失败 2 `production_orders.completed_quantity` 的 `NUMERIC` 按 `i64` 解码**：根因是本地/test 类型漂移
+  （`quantity integer` / `completed_quantity numeric(12,2)`），prod 基线本就是 `bigint`；账本称已执行
+  `20261105140000` 但该迁移跳过 `numeric`。语义为整数件数（允许小数的
+  `production_records.completed_quantity` 保持 `numeric(12,2)` + `BigDecimal`）。
+  修法：前向迁移 [20261107000017](database/migrations/20261107000017_mes_production_orders_quantity_bigint.sql)
+  先断言无小数行再转 `bigint`（拒绝静默取整）。
+- **失败 3（既有夹具缺口）**：[work_order_e2e.rs](svc/mes/tests/work_order_e2e.rs) 的 `setup_schema` 缺
+  `tenant_id`，handler 已按 `wo.tenant_id` 过滤 → 补列，测试口径未改。
+- **测试**：`integration_tests` 45 passed / **2 failed → 47 / 0**；`work_order_e2e` **0/3 → 3/0**；
+  `cargo test -p topems-mes` 全部二进制 0 failed；`cargo check` / `clippy -D warnings` / `fmt --check` 通过。
+- **迁移与账本**：本地 `552 → 554`（幂等复跑 0 操作）；test 快照库直接 `psql -f`（未伪造账本）；
+  prod **只读未动**（579，两个新版本 0 已应用）；`checksums.txt` 只新增 2 行、历史迁移字节未改。
+- **文档**：[mes-status-quantity-fix-2026-11-06.md](docs/quality/mes-status-quantity-fix-2026-11-06.md)。
+- **遗留**：① prod 新窗口应用两条迁移（空转 + 2 行账本）；② `mes.batch_records.status` 默认值仍是模板值
+  `active`；③ 其它 `ck_%_status_standard` 残留本地 247 / test 618 / prod 4（prod 4 条为业务合法约束），需逐条判断；
+  ④ 账本 success 但 DDL 未落地的漂移需后续巡检。
+
 ## tz_unify 时间戳归一执行（2026-11-06 第四批）
 
 - **迁移**：[20261106000000_tz_unify_timestamp_without_tz.sql](database/migrations/20261106000000_tz_unify_timestamp_without_tz.sql)
