@@ -1,42 +1,52 @@
-# A 组 454 行清理 + B 组 72 行 audit 孤儿处置确认稿（2026-11-06）
+# A 组 194 行清理（由 454 行收缩）+ B 组 audit 孤儿处置确认稿（2026-11-06）
 
-> 状态：**确认稿，待用户逐条拍板**。本轮仍为只读：prod 仅执行 `SELECT` / `information_schema` / `pg_catalog`，
-> 未执行任何 DML/DDL、未建迁移、未改动代码。30 张可收紧表继续不动。
+> 状态：**口径已定，进入执行前定稿**（第二轮，2026-11-06 14:xx）。
+>
+> **已定范围**：A 组缩减为 **194 行 / 4 张表** —— `crm.crm_master_data_refs` 121、`crm.returns` 18、
+> `ehs.qa_ehs_risks` 19、`ehs.qa_ehs_environment_monitors` 36。
+> `crm.customers` 2 行**不删**；`public.audit_logs` 258 行**不删**（原样保留，靠 RLS 隔离，见 §6）。
+>
+> 本轮 prod 仍**只读**（仅 `SELECT` / `information_schema` / `pg_catalog`），未执行任何 DML/DDL、未重启、未部署。
+> 代码侧只改 `audit_query.rs` 的软删过滤并补测试；30 张可收紧表继续不动。
 >
 > 前置文档：[7 张脏租户表回填口径](tenant-backfill-plan-7-tables-2026-11-06.md)、
 > [下一批 RLS 评估](rls-tenant-isolation-next-batch-2026-11-06.md)。
 >
-> 本文所有“命中数”均为 2026-11-06 在 `topems_prod` 上只读实测；所有处置动作**均为待批准的草稿**，
-> 不代表已定口径。凡标 **【待拍板】** 的条目，需你明确回复后才进入窗口执行清单。
+> 本文所有“命中数”均为 2026-11-06 在 `topems_prod` 上只读实测；所有 DML 语句**均为待窗口授权的草稿**，
+> 不代表已执行。凡标 **⏳** 的条目，需你确认后才进入窗口执行清单；标 **✅ 已定** 的为已定口径。
 
 ## 0. 口径基线（先说清楚，避免数字对不上）
 
 - 脏租户判定：`tenant_id IS NULL` 或 `tenant_id = '00000000-0000-0000-0000-000000000000'`。
 - prod 当前仅 1 个正式租户 `00000000-0000-0000-0000-000000000001`；`public.core_users` / `iam.core_users` 均 0 行。
-- A 组 6 张表：**无任何外键（入向 0 / 出向 0）、无触发器、无视图依赖**（本次重新核对，见 §9）。
+- A 组分析过的 6 张表（其中 4 张进入删除）：**无任何外键（入向 0 / 出向 0）、无触发器、无视图依赖**（本次重新核对，见 §9）。
 - 因此删除不会触发级联；风险集中在“逻辑引用”和“业务语义”两点。
 - 计数口径提醒：本稿所有校验 SQL 均避开 `entity_id = '…0099'` 的 NULL 陷阱
   （`NULL = uuid` 结果为 NULL，会让 `NOT (...)` 静默漏行）。已改用 `IS DISTINCT FROM` 或显式 `IS NULL` 分支。
-- **计数会漂移（本轮新发现）**：prod 的 `public.audit_logs` **仍在持续写入**探针行。同一会话内 13:44 → 13:55 的复查：
-  总行 347 → **350**、0 租户 320 → **322**、NULL 租户 27 → **28**、合成 `…0099` 258 → **260**。
-  13:52 新增 `delete_vector` / `delete_document`（实体 `…0099`），13:54 新增 `update|user`（`e91e…`）。
-  因此本文所有 audit 数字都标注为“**快照值**”，窗口执行时必须现场重测；删除语句本身按 `WHERE` 动态取当前集合，
-  **不要把 258 写死成期望值**。其余 5 张表在本次复查中未见变化。
+- **计数会漂移，且不止 audit**：14:14 复核确认 13:44 之后又跑了一轮探针（13:52:37–13:56:34，audit 共 15 行），
+  4 张目标表增加：`returns` 18 → **19**、`risks` 19 → **20**、`monitors` 36 → **38**、`refs` 121 不变；
+  audit 0 租户 320 → **334**、NULL 租户 27 → **28**、合成 `…0099` 258 → **271**（全表 347 → **362**）。
+  15 行增量 = 13 行合成 `…0099` + 1 行 `update_acceptance_plan`（0 租户、entity NULL）+ 1 行 `update|user`（NULL 租户）。
+  新增业务行时间戳：`RET-20261106-000002` 13:52:59、`RSK-5A29F56A` 13:53:07、`ENV-17992915/14D12964` 13:53:04。
+- 因此：§1 的 **194 是“已定口径”，14:14 实测为 198**（121 + 19 + 20 + 38）；窗口执行时**必须现场重测**，
+  并把 `DELETE` 的期望行数改成现场值，**不要把 194/258 写死**。每条目标行的定位条件本身不变。
+- 探针来源已定位（§14）：`scripts/web_contract_smoke.py` / `mobile_contract_smoke.py` 在 prod 机上对
+  `localhost:8099` 跑契约冒烟；不先停它，清理后仍会回涨。
 
 ## 1. 总览表
 
-| 表 | 目标行数 | 全表 | 删除后剩余 | 处置（建议） | 可逆性 | 风险 |
-| --- | ---: | ---: | ---: | --- | --- | --- |
-| `crm.crm_master_data_refs` | 121 | 158 | 37 | 硬删（按 `master_data_id` 白名单）**【待拍板】** | 备份可恢复 | 中：主数据同步链路产物，需 SCM 确认 |
-| `crm.returns` | 18 | 18 | 0 | 硬删 **【待拍板】** | 备份可恢复（删后表为空） | 低-中：连续编号 + 冒烟账号可佐证 |
-| `crm.customers` | 2 | 302 | 300 | **不删**（已软删，建议维持）；可选硬删 **【待拍板】** | 备份可恢复 | 中：业务主表，勿按“探针”一刀切 |
-| `ehs.qa_ehs_risks` | 19 | 19 | 0 | 硬删 **【待拍板】** | 备份可恢复 | 低：全部“未命名风险”、无子表引用 |
-| `ehs.qa_ehs_environment_monitors` | 36 | 36 | 0 | 硬删 **【待拍板】** | 备份可恢复 | 低：全部“未命名监测点”、无子表引用 |
-| `public.audit_logs` | 258（快照，13:55 已涨到 260） | 347（13:55 为 350） | 89（13:55 为 90） | **两路径对比，见 §6；建议路径二（保留）** **【待拍板】** | 路径一依赖备份；路径二零删除 | 高：审计合规属性；且**仍在增长** |
+| 表 | 已定目标行数 | 14:14 实测 | 全表 | 删除后剩余（按已定口径） | 处置（已定） | 可逆性 | 风险 |
+| --- | ---: | ---: | ---: | ---: | --- | --- | --- |
+| `crm.crm_master_data_refs` | 121 | 121 | 158 | 37 | 硬删（按 `master_data_id` 白名单） | 备份可恢复 | 中：主数据同步链路产物 |
+| `crm.returns` | 18 | **19** | 19 | 0 | 硬删 | 备份可恢复（删后表为空） | 低-中：连续编号 + 冒烟账号佐证 |
+| `ehs.qa_ehs_risks` | 19 | **20** | 20 | 0 | 硬删 | 备份可恢复 | 低：全部占位标题、无子表引用 |
+| `ehs.qa_ehs_environment_monitors` | 36 | **38** | 38 | 0 | 硬删 | 备份可恢复 | 低：全部占位名称、无子表引用 |
+| `crm.customers` | 2 | 2 | 302 | **302（不删）** | **不删**（已软删，保持现状） | 无需 | 中：业务主表，勿按“探针”一刀切 |
+| `public.audit_logs` | 258（合成集） | **271** | 362 | **362（不删）** | **不删**，原样保留靠 RLS 隔离 | 无需 | 高：审计合规属性；且**仍在增长** |
 
-合计 A 组 **454 行（13:4x 快照）**；删除后 6 表合计剩余 **426 行**（37 + 0 + 300 + 0 + 0 + 89），
-按 13:55 复查则 A 组为 **456 行**、剩余 **428 行**。
-**重要**：audit 的这 3 个数会随时间上涨；窗口执行时以现场重测为准（见 §0 与 §5）。
+合计**已定清理量 194 行**（14:14 实测口径为 **198 行**）；`customers` / `audit_logs` 的 273 行（2 + 271）
+**保持原样**，不进入任何删除批次。
+**重要**：所有数字随探针运行上涨；窗口开始时以现场重测为准（§0 / §5）。
 
 ## 2. 逐表小节
 
@@ -99,7 +109,8 @@ COMMIT;
   （`pg_restore` 的 `-t` 只认表名，必须与 `-n` 搭配；这是前次演练踩过的坑）。
 - 恢复到 158 行、37 行非零租户 = 成功。
 
-**【待拍板】** 121 行是否确认为压测/同步残留（需 SCM/主数据负责人确认）；未确认前建议**只保留不删**。
+**【已定】** 121 行随 A 组一起硬删（已定口径）；SCM 负责人确认仅作后续追溯，不再阻断执行。
+若窗口前拿到“确属业务数据”的相反结论，请立即叫停该批次并回滚口径。
 
 ### 2.2 `crm.returns`（18 / 18）
 
@@ -109,10 +120,11 @@ COMMIT;
 SELECT count(*) FROM crm.returns
 WHERE tenant_id = '00000000-0000-0000-0000-000000000000'
   AND customer_id IS NULL
-  AND created_by = 'e91e2228-ab9d-4ac3-99f4-fdcd9c723f21';   -- 实测 18；全表 18
+  AND created_by = 'e91e2228-ab9d-4ac3-99f4-fdcd9c723f21';   -- 口径 18；14:14 实测 19
 ```
 
-对齐：文档 18 = 实测 18。17 行 `RET-20261102-000001~000017`（11-02），1 行 `RET-20261106-000001`（11-06）；
+对齐：**已定口径 18**；14:14 实测 **19**（新增 `RET-20261106-000002`，13:52:59，来自同一轮契约冒烟）。
+原 18 行 = 17 行 `RET-20261102-000001~000017` + `RET-20261106-000001`（12:44）；
 `order_id/ticket_id/warehouse_id` 全空。
 
 **2) 引用检查**
@@ -135,16 +147,14 @@ BEGIN; SET LOCAL app.rls_system='on';
 DELETE FROM crm.returns
 WHERE tenant_id = '00000000-0000-0000-0000-000000000000'
   AND customer_id IS NULL
-  AND created_by = 'e91e2228-ab9d-4ac3-99f4-fdcd9c723f21';   -- 期望 DELETE 18
+  AND created_by = 'e91e2228-ab9d-4ac3-99f4-fdcd9c723f21';   -- 期望 DELETE 19（14:14 实测；窗口现场重测）
 COMMIT;
 ```
 
 **为什么硬删**：表有 `deleted_at`，但 `return_no` 是业务编号，软删会长期占用编号并留在“已删除”集合；
 这些行 `customer_id/order_id` 全空、创建人是未绑定租户的冒烟账号，不具备任何业务可追溯性。
 
-**5) 验证与回滚**：删除后全表 **0** 行；回滚用 `pg_restore --data-only -n crm -t returns`，恢复至 18 行即成功。
-
-**【待拍板】** 是否确认 18 行为探针残留。
+**5) 验证与回滚**：删除后全表 **0** 行；回滚用 `pg_restore --data-only -n crm -t returns`，恢复至现场基线行数即成功。
 
 ### 2.3 `crm.customers`（2 / 302）— 重点核查
 
@@ -179,28 +189,21 @@ WHERE tenant_id = '00000000-0000-0000-0000-000000000000'
 - **结论**：这两行是**被软删的 E2E 探针**，且无任何下游引用；但因为 `crm.customers` 是客户主表，
   仍不建议把“探针”当作常规清理对象。
 
-**3) 处置建议**：**不删**。两行 `deleted_at` 非空，业务列表/详情均不可见；收紧 RLS 后普通租户也不可见。
-硬删的唯一收益是表内“0 租户”计数归零，收益极低、误判成本高。
+**3) 处置（已定）：不删**。两行 `deleted_at` 非空，业务列表/详情均不可见；收紧 RLS 后普通租户也不可见。
+硬删的唯一收益是表内“0 租户”计数归零，收益极低、误判成本高。**本轮不备份、不删除、不更新**。
 
-**4) 备份（若你决定删，才需要）**
-
-```bash
-pg_dump -d topems_prod -Fc -n crm -t customers -f ~/backups/topems_prod/20261106/crm_customers.dump
-```
-
-**5) 执行语句（仅在你批准“删”时使用）与验证回滚**
+**4) 保留后的验证项（窗口执行完 A 组 4 张表后复核）**
 
 ```sql
-BEGIN; SET LOCAL app.rls_system='on';
-DELETE FROM crm.customers
-WHERE tenant_id = '00000000-0000-0000-0000-000000000000'
-  AND deleted_at IS NOT NULL
-  AND id IN ('29cd66ab-2343-4ac8-8023-c74bd0f9b820','c9d6ad2b-888b-41f3-935e-dbce0ccdf858');  -- 期望 DELETE 2
-COMMIT;
+-- 仍为 2 行，且 deleted_at 未被改动
+SELECT count(*) FROM crm.customers
+WHERE tenant_id='00000000-0000-0000-0000-000000000000' AND deleted_at IS NOT NULL
+  AND id IN ('29cd66ab-2343-4ac8-8023-c74bd0f9b820','c9d6ad2b-888b-41f3-935e-dbce0ccdf858');
+-- 全表仍为 302（不因清理动作减少）
+SELECT count(*) FROM crm.customers;
 ```
 
-验证：剩余 **300**、`tenant_id=…0001` 计数不变（300）；回滚 `pg_restore --data-only -n crm -t customers` → 302 行即成功。
-**注意**：恢复后两行仍带 `deleted_at`，属正常状态，不要去改。
+**5) 不可逆性**：不做任何动作，天然可逆。**注意**：不要把这 2 行当作后续“去脏租户”的删除对象。
 
 ### 2.4 `ehs.qa_ehs_risks`（19 / 19）
 
@@ -210,10 +213,11 @@ COMMIT;
 SELECT count(*) FROM ehs.qa_ehs_risks
 WHERE tenant_id = '00000000-0000-0000-0000-000000000000'
   AND title = '未命名风险'
-  AND created_by IS NULL;                  -- 实测 19；全表 19
+  AND created_by IS NULL;                  -- 口径 19；14:14 实测 20
 ```
 
-对齐：文档 19 = 实测 19。`created_by/department_id` 全 NULL，`risk_no = RSK-XXXXXXXX`。
+对齐：**已定口径 19**；14:14 实测 **20**（新增 `RSK-5A29F56A`，13:53:07）。
+`created_by/department_id` 全 NULL，`risk_no = RSK-XXXXXXXX`。
 
 **2) 引用检查**：FK 0；`ehs.qa_ehs_risk_controls.risk_id`、`pm.risk_events.risk_id` **均为 0**；
 `public.qa_ehs_risks.risk_no` 跨表 0。代码见 `svc/ehs/src/modules/risk.rs:141,270,397,523,841`（按 id+tenant 读写，列表过滤 `deleted_at IS NULL`）。
@@ -232,7 +236,7 @@ BEGIN; SET LOCAL app.rls_system='on';
 DELETE FROM ehs.qa_ehs_risks
 WHERE tenant_id = '00000000-0000-0000-0000-000000000000'
   AND title = '未命名风险'
-  AND created_by IS NULL;                  -- 期望 DELETE 19
+  AND created_by IS NULL;                  -- 期望 DELETE 20（14:14 实测；窗口现场重测）
 COMMIT;
 ```
 
@@ -249,10 +253,11 @@ COMMIT;
 SELECT count(*) FROM ehs.qa_ehs_environment_monitors
 WHERE tenant_id = '00000000-0000-0000-0000-000000000000'
   AND name = '未命名监测点'
-  AND coalesce(created_by,'') = '';        -- 实测 36；全表 36
+  AND coalesce(created_by,'') = '';        -- 口径 36；14:14 实测 38
 ```
 
-对齐：文档 36 = 实测 36。`monitor_no = ENV-XXXXXXXX`，`status='active'`。
+对齐：**已定口径 36**；14:14 实测 **38**（新增 `ENV-17992915`、`ENV-14D12964`，13:53:04，每轮冒烟固定产生 2 行）。
+`monitor_no = ENV-XXXXXXXX`，`status='active'`。
 注意 `created_by` 在 prod 是 **`character varying`（文本）** 且全为空，无法 join 用户表；
 这与 `ehs.qa_ehs_risks.created_by`（uuid）不同，故两表判据不能混用。
 
@@ -271,7 +276,7 @@ BEGIN; SET LOCAL app.rls_system='on';
 DELETE FROM ehs.qa_ehs_environment_monitors
 WHERE tenant_id = '00000000-0000-0000-0000-000000000000'
   AND name = '未命名监测点'
-  AND coalesce(created_by,'') = '';        -- 期望 DELETE 36
+  AND coalesce(created_by,'') = '';        -- 期望 DELETE 38（14:14 实测；窗口现场重测）
 COMMIT;
 ```
 
@@ -286,7 +291,7 @@ COMMIT;
 | `crm.customers` | 有（已置位） | 已生效，无需再动 | **不删** |
 | `ehs.qa_ehs_risks` | 有 | 有效，但占用 `risk_no` UNIQUE | 硬删 |
 | `ehs.qa_ehs_environment_monitors` | 有 | 有效，但占用 `monitor_no` UNIQUE | 硬删 |
-| `public.audit_logs` | 有 | **无效**：`audit_query.rs` 查询不过滤 `deleted_at` | 见 §6 两路径 |
+| `public.audit_logs` | 有 | **已修复**：本轮给 `audit_query.rs` 补 `deleted_at IS NULL`（见 §12） | **已定：不删**（原样保留） |
 
 补一句：**软删不等于隔离**。这 5 张表的列表查询都带 `tenant_id` 条件；即便软删，`tenant_id=0` 行在收紧后
 仍是“脏数据”，只是从“可见”变成“不可见”。硬删的目的不是让业务看不见，而是让统计与审计口径回到干净状态。
@@ -294,13 +299,14 @@ COMMIT;
 ## 4. 备份与存放约定
 
 - **本轮未创建任何目录/文件**（只读）。
-- prod 上 `/backup` **不存在**；`~` 可用空间 ~11 GiB，6 张表总量约 0.6 MB，快照成本可忽略。
-- **建议约定（【待拍板】）**：`~/backups/topems_prod/<YYYYMMDD>/<schema>_<table>.dump` + 同名 `.target.csv`。
-  若你要求放到 `/backup` 或外部挂载盘，请在拍板时给出路径；窗口内再 `mkdir`。
-- 文件名固定：`crm_crm_master_data_refs` / `crm_returns` / `crm_customers` / `ehs_qa_ehs_risks` /
-  `ehs_qa_ehs_environment_monitors` / `public_audit_logs`。
+- prod 上 `/backup` **不存在**；`~` 可用空间 ~11 GiB，4 张目标表总量 < 0.3 MB，快照成本可忽略。
+- **约定**：`~/backups/topems_prod/<YYYYMMDD>/<schema>_<table>.dump` + 同名 `.target.csv`。
+  若你要求放到 `/backup` 或外部挂载盘，请在窗口授权时给出路径；窗口内再 `mkdir`。
+- 文件名固定（**仅 4 张**）：`crm_crm_master_data_refs` / `crm_returns` / `ehs_qa_ehs_risks` /
+  `ehs_qa_ehs_environment_monitors`。`crm.customers` 与 `public.audit_logs` **不备份**（不删）。
 - **备份自检**（恢复演练的最低要求）：
-  `pg_restore -l <dump> | grep TABLE DATA` 应列出目标表；CSV 行数应等于目标行数（121/18/2/19/36/258）。
+  `pg_restore -l <dump> | grep TABLE DATA` 应列出目标表；CSV 行数应等于**窗口现场**目标行数
+  （口径 121/18/19/36，14:14 实测 121/19/20/38）。
 - 保留期建议与现网备份策略一致；**不要**把快照留在 prod 库内（`CREATE TABLE bf_bak_*` 会扩表并进备份链），
   如必须库内留底，只在窗口事务内建临时表并在验证后 `DROP`。
 
@@ -308,14 +314,16 @@ COMMIT;
 
 建议**按表独立事务**，每表“预统计 → DELETE → 后统计 → COMMIT”，任一计数不符立即 `ROLLBACK`：
 
-| 批次 | 表 | 期望影响行数 | 事务后剩余 |
+**只 4 个批次，共 194 行（14:14 实测 198 行）**；`crm.customers`、`public.audit_logs` 不在执行清单内。
+
+| 批次 | 表 | 期望影响行数（口径 → 14:14 实测） | 事务后剩余 |
 | ---: | --- | ---: | ---: |
-| 1 | `crm.returns` | 18 | 0 |
-| 2 | `ehs.qa_ehs_risks` | 19 | 0 |
-| 3 | `ehs.qa_ehs_environment_monitors` | 36 | 0 |
-| 4 | `crm.crm_master_data_refs` | 121 | 37 |
-| 5 | `crm.customers`（可选） | 2 | 300 |
-| 6 | `public.audit_logs`（若走路径一） | **N（窗口现场重测，快照 258，13:55 为 260）** | 89 / 90 |
+| 1 | `crm.returns` | 18 → **19** | 0 |
+| 2 | `ehs.qa_ehs_risks` | 19 → **20** | 0 |
+| 3 | `ehs.qa_ehs_environment_monitors` | 36 → **38** | 0 |
+| 4 | `crm.crm_master_data_refs` | 121 → **121** | 37 |
+| — | `crm.customers` | 不删 | 302 |
+| — | `public.audit_logs` | 不删 | 362（仍会随探针上涨） |
 
 统一模板：
 
@@ -335,23 +343,30 @@ COMMIT;
 SELECT count(*) FROM pg_stat_activity WHERE datname='topems_prod' AND state<>'idle';  -- 确认无长事务
 ```
 
-## 6. `public.audit_logs` 258 行：两条路径对比
+**B 组 orphan 标记**：不在 A 组 4 个批次内，放在 A 组验证通过后单独一个事务执行（见 §13）；
+标记前先导出 `id + request_details` 快照，**标记不等于隔离**，隔离仍靠后续 RLS 收紧。
 
-目标集（实测 258，全表 347）：
+## 6. `public.audit_logs` 258 行（14:14 现场 271）：**已决定不删**（两路径对比存档）
+
+> **决策（2026-11-06，用户已定）**：走**路径二**——原样保留，不删除、不归档、不打 `deleted_at`，
+> 靠后续 RLS 收紧隔离。以下对比保留作决策依据与审计存档。
+> 因此本表**不在** §5 批次内，也**不在** §4 备份清单内。
+
+目标集（快照 258；14:14 实测 **271**，全表 362）：
 
 ```sql
 SELECT count(*) FROM public.audit_logs
 WHERE tenant_id = '00000000-0000-0000-0000-000000000000'
   AND entity_id = '00000000-0000-0000-0000-000000000099';
--- 快照 258 / 全表 347；13:55 复查为 260 / 350（仍在上涨）
+-- 快照 258 / 全表 347；14:14 实测 271 / 362（13:52:37–13:56:34 新增 13 行合成探针）
 -- 258 = project 49 / contract 95 / budget 57 / risk 19 / document 19 / vector 19
--- 时间：11-02 245 行、11-06 13 行（+13:52~13:55 新增 delete_vector / delete_document）
--- 全部 deleted_at IS NULL
+-- 时间：11-02 245 行、11-06 13 行（+13:52 delete_vector/delete_document、13:56 budget/contract/project/risk）
+-- 全部 deleted_at IS NULL（prod 全表软删行 0）
 ```
 
-删除后**全表剩余 89 行（快照）** = 0 租户非合成 62（含 17 行可归因项目）+ NULL 租户 27；
-13:55 复查则为 90 行。
-**注意**：在探针写入未停止前，这个集合会持续增长，删完还会回涨——见 §8 D12。
+删除后**全表剩余 91 行（14:14 口径，= 362 − 271）** = 0 租户非合成 63（含 17 行可归因项目）+ NULL 租户 28；
+快照口径则为 89 行。
+**注意**：在探针写入未停止前，这个集合会持续增长，删完还会回涨——见 §8 D13 / §14。
 
 ### 路径一：物理删除 258 行
 
@@ -360,7 +375,7 @@ WHERE tenant_id = '00000000-0000-0000-0000-000000000000'
 | 动作 | `DELETE ... WHERE tenant_id='…0' AND entity_id='…0099'` |
 | 代价 | 需**审计/安全书面批准** + 备份 + 证据留存；不可逆（除备份恢复） |
 | 可逆性 | 仅靠 `pg_dump` 快照；恢复后 `id/created_at` 不变，但“删除事实”本身会留在 DBA 操作记录 |
-| 对 RLS 收紧 | **没有实质帮助**：剩余 89 行仍有 62 行 `tenant_id=0`、27 行 NULL，收紧策略照样要处理脏租户分支 |
+| 对 RLS 收紧 | **没有实质帮助**：剩余 91 行仍有 63 行 `tenant_id=0`、28 行 NULL，收紧策略照样要处理脏租户分支 |
 | 合规 | 审计日志属留存类数据，批量删除需说明“合成探针、非真实业务事件”，并保留删除前快照与审批记录 |
 | 额外收益 | 表体量 216 kB → 更小；审计检索噪声显著降低 |
 
@@ -383,19 +398,21 @@ WHERE tenant_id = '00000000-0000-0000-0000-000000000000'
 | 数据风险 | 不可逆（依赖备份） | 零 |
 | 合规风险 | 需审批；否则“删审计”本身是问题 | 无 |
 | 运维成本 | 备份+审批+执行+验证 | 0（2d）或 1 次 DDL（2a/2b） |
-| 收紧收益 | 无（仍有 89 行脏租户） | 无（但 2d 不影响收紧） |
+| 收紧收益 | 无（仍有 91 行脏租户） | 无（但 2d 不影响收紧） |
 | 审计视图噪声 | 消除 | 保留（仅超管可见） |
 
-**建议（待你拍板）**：默认走 **2d（原样保留 + 收紧后仅系统通道可见）**；若审计/安全明确要求“生产审计表不得含
-合成探针”，再走 **2a 归档表**（保留可查副本，原表干净）。**路径一仅在书面批准后执行**。
-两种做法都不改变“17 行可归因项目已回填 …0001”这一已确认动作。
+**决策（已定）**：走 **2d**——原样保留 + 收紧后仅系统通道可见；不建归档表、不加标记列、不置 `deleted_at`。
+若审计/安全后续明确要求“生产审计表不得含合成探针”，再另行审批走 **2a 归档表**（保留可查副本，原表干净）。
+**路径一仅在书面批准后执行**。两种做法都不改变“17 行可归因项目已回填 …0001”这一已确认动作。
 
-## 7. B 组 72 行：聚类分析（只读）
+## 7. B 组 orphan：聚类分析（只读）
 
-> 快照 72 行；13:55 复查为 **73 行**（新增 1 行 `update|user`，13:54:58，`tenant_id IS NULL`，实体 `e91e…`，payload `{}`）。
-> 下表的 19 就是这 1 行到来前的计数。
+> 快照 **72 行**（定稿口径）；13:55 复查 73 行；**14:14 实测 74 行**——
+> 比快照多 2 行：`update|user`（13:54:58，`tenant_id IS NULL`，实体 `e91e…`，payload `{}`）
+> 与 `update_acceptance_plan`（13:56:30，`tenant_id=0`，`entity_id=NULL`）。
+> 下表簇内计数按 **74 行现场值**给出，括号内为 72 行快照值；窗口执行时按同一 predicate 现场重测。
 
-定义（实测 72，修正了 NULL 陷阱）：
+定义（14:14 实测 74，修正了 NULL 陷阱）：
 
 ```sql
 SELECT count(*) FROM public.audit_logs a
@@ -405,15 +422,16 @@ WHERE (a.tenant_id = '00000000-0000-0000-0000-000000000000' OR a.tenant_id IS NU
            AND EXISTS (SELECT 1 FROM pm.projects p
                        WHERE p.id=a.entity_id AND p.tenant_id IS NOT NULL
                          AND p.tenant_id <> '00000000-0000-0000-0000-000000000000'));
--- 72 = 320(0 租户) - 258(合成) - 17(可归因) + 27(NULL 租户)
+-- 快照 72 = 320(0 租户) - 258(合成) - 17(可归因) + 27(NULL 租户)
+-- 14:14 实测 74 = 334(0 租户) - 271(合成) - 17(可归因) + 28(NULL 租户)
 ```
 
 ### 7.1 按 `action` / `entity_type` 聚类（11 类）
 
 | 簇 | 行数 | `entity_id` 空 | `tenant_id` NULL | 时间窗 | 说明 |
 | --- | ---: | ---: | ---: | --- | --- |
-| `update_acceptance_plan` / project | 19 | 19 | 0 | 11-02 11–13、11-05 11–12、11-06 05/12 | 无实体、payload `{"status": null}` |
-| `update` / user | 19（13:55 为 20） | 0 | 19（13:55 为 20） | 11-02 11:37–14:xx、11-06 12:4x / 13:54 | 全部指向冒烟账号 `e91e…`；最新 1 行 13:54:58 |
+| `update_acceptance_plan` / project | 20（快照 19） | 20 | 0 | 11-02 11–13、11-05 11–12、11-06 05/12/13:56 | 无实体、payload `{"status": null}` |
+| `update` / user | 20（快照 19） | 0 | 20 | 11-02 11:37–14:xx、11-06 12:4x / 13:54 | 全部指向冒烟账号 `e91e…`；最新 1 行 13:54:58 |
 | `delete_project` / project | 9 | 0 | 0 | 10-26 20:12–21:15 | 删完即离场 |
 | `create` / user | 7 | 0 | 7 | 10-26 17:54、11-06 05 | 含 `testuser_…@topems.local` / `fresh2026` |
 | `create_project` / project | 7 | 0 | 0 | 10-26 20:13–21:15 | `L1-DBG-1` / `AUDIT-1` |
@@ -424,13 +442,13 @@ WHERE (a.tenant_id = '00000000-0000-0000-0000-000000000000' OR a.tenant_id IS NU
 | `approval_reject` / project | 1 | 0 | 0 | 10-26 21:15 | `reason: 不通过` |
 | `approval_approve` / project | 1 | 0 | 0 | 10-26 21:14 | 审批闭环 |
 
-聚合：**项目生命周期 39**（update_acceptance_plan 19 + delete 9 + create 7 + approval 4）、
-**用户生命周期 27**（update 19 + create 7 + delete 1；13:55 为 28）、**风险 6**。
+聚合：**项目生命周期 40**（update_acceptance_plan 20 + delete 9 + create 7 + approval 4）、
+**用户生命周期 28**（update 20 + create 7 + delete 1）、**风险 6**；合计 **74**（快照口径 72）。
 
 ### 7.2 按 `user_agent` / `ip_address` / `path` / `method`
 
-- `user_agent`：**72/72 为 NULL**
-- `ip_address`：**72/72 为 NULL**
+- `user_agent`：**74/74 为 NULL**
+- `ip_address`：**74/74 为 NULL**
 - `user_name`：仅 2 行（`approval_start`）
 - `path` / `method`：**该表没有这两列**（`information_schema` 实测；审计写入只记 `action`）
 
@@ -468,34 +486,36 @@ WHERE (a.tenant_id = '00000000-0000-0000-0000-000000000000' OR a.tenant_id IS NU
 - 另需注意：`create|user` 的 `request_details` 存了**明文口令**——这是独立的安全项（历史数据脱敏），不在本次清理范围内，
   但建议在拍板时一并决议是否删除/脱敏这批 payload。
 
-### 7.6 保留 orphan 的具体做法（若选择“不删”）
+### 7.6 保留 orphan 的具体做法（已定：零 DDL 标记）
 
 | 项 | 做法 | 是否影响收紧 |
 | --- | --- | --- |
-| 字段 | **不新增**任何标记列；`tenant_id` 保持现状（0 或 NULL） | 不影响 |
-| 标记方式 | 用只读查询固化清单：`entity_id IS DISTINCT FROM '…0099'` + 非可归因条件，导出 72 个 `id` 作为附件 | 不影响 |
-| 可见性 | 收紧后普通租户不可见；超管系统通道（`app.rls_system='on'`）仍可查 | 需要在收紧策略里显式保留系统通道 |
-| 库内表 | **不建** `audit_orphans` 之类的独立表/列，避免扩表与备份链变化 | 不影响 |
-| 索引 | `audit_logs_tenant_id_idx` 已存在，查询已覆盖 | 不影响 |
+| 字段 | **零 DDL**：复用已有的 `request_details`（jsonb），合并写入 `{"_orphan":"b72-20261106"}`；`tenant_id` 保持现状（0 或 NULL），不加列、不改类型 | 不影响 |
+| 标记语句 | `UPDATE public.audit_logs SET request_details = COALESCE(request_details,'{}'::jsonb) || '{"_orphan":"b72-20261106"}' WHERE <§7 predicate>`；`?` 判重，天然幂等 | 不影响 |
+| 可见性 | **标记本身不提供隔离**：旧策略下普通租户仍能看到 NULL 租户的标记行（§13 实测 3 行含 1 标记行）；隔离来自 RLS 收紧 + 系统通道 | 需要收紧策略显式保留系统通道 |
+| 库内表 | **不建** `audit_orphans` 独立表/列，避免扩表与备份链变化 | 不影响 |
+| 索引 | 不新增索引；`_orphan` 仅用于人工核对与导出，不做在线过滤条件 | 不影响 |
+| 审计完整性 | 这是**改写审计行内容**：标记前须导出 `id + request_details` 原值快照；标记只加键、不改原有键值 | — |
 
-**【待拍板】** B 组 72 行：保留（推荐）还是逐条核实后删除；若删除，按 §5 模板拆 3 个子批次（项目类 39 / 用户类 27 / 风险类 6）。
+**已定**：B 组**不删**，按 §13 的零 DDL 方案标记（定稿 72 行 / 14:14 现场 74 行，执行时现场重测）。
 
-## 8. 需要你拍板的清单
+## 8. 已定 / 待定清单
 
-| # | 事项 | 选项 | 我的建议 | 状态 |
+| # | 事项 | 选项 | 结论 | 状态 |
 | ---: | --- | --- | --- | --- |
-| D1 | `crm.crm_master_data_refs` 121 行 | 删 / 保留 | **保留**（等 SCM 确认残留来源） | 待拍板 |
-| D2 | `crm.returns` 18 行 | 删 / 保留 | 删（连续编号 + 冒烟账号佐证） | 待拍板 |
-| D3 | `ehs.qa_ehs_risks` 19 行 | 删 / 保留 | 删（全部占位标题、无引用） | 待拍板 |
-| D4 | `ehs.qa_ehs_environment_monitors` 36 行 | 删 / 保留 | 删（同上） | 待拍板 |
-| D5 | `crm.customers` 2 行 | 删 / 不删 | **不删**（已软删、业务主表） | 待拍板 |
-| D6 | `public.audit_logs` 258 行 | 路径一删 / 路径二保留 | **路径二 2d（原样保留）**；如需隔离用 2a 归档表 | 待拍板 |
-| D7 | B 组 72 行 | 保留 / 逐条核实后删 | **保留**，固化为只读清单 | 待拍板 |
-| D8 | 备份路径 | `~/backups/topems_prod/20261106/` 或你指定 | 上者（`/backup` 不存在） | 待拍板 |
-| D9 | 是否允许窗口内建库内备份表 | 允许 / 禁止 | **禁止**（改用 dump 文件） | 待拍板 |
-| D10 | 明文口令 payload（B 组 `create\|user`） | 一并处理 / 另立安全项 | **另立安全项** | 待拍板 |
-| D11 | 30 张可收紧表的时点 | 清理后 / 并行 | **清理确认并验证后再收紧** | 待拍板 |
-| D12 | 仍在运行的探针写入（13:52 `delete_vector`/`delete_document`、13:54 `update\|user`） | 先定位并停掉 / 不管 | **先定位并停掉**，否则 A 组 audit 与 B 组会持续回涨 | 待拍板 |
+| D1 | `crm.crm_master_data_refs` 121 行 | 删 / 保留 | **删**（硬删，窗口现场重测） | ✅ 已定 |
+| D2 | `crm.returns` 18 行 | 删 / 保留 | **删**（现场 19） | ✅ 已定 |
+| D3 | `ehs.qa_ehs_risks` 19 行 | 删 / 保留 | **删**（现场 20） | ✅ 已定 |
+| D4 | `ehs.qa_ehs_environment_monitors` 36 行 | 删 / 保留 | **删**（现场 38） | ✅ 已定 |
+| D5 | `crm.customers` 2 行 | 删 / 不删 | **不删**（已软删、业务主表） | ✅ 已定 |
+| D6 | `public.audit_logs` 258 行（现场 271） | 路径一删 / 路径二保留 | **路径二 2d：不删**，靠 RLS 收紧隔离 | ✅ 已定 |
+| D7 | B 组 orphan（72 / 现场 74） | 删 / 保留 / 标记 | **不删 + 零 DDL 标 orphan**（§13） | ✅ 已定 |
+| D8 | 备份路径 | `~/backups/topems_prod/20261106/` 或指定 | 建议前者（prod `/backup` 不存在） | ⏳ 窗口确认 |
+| D9 | 窗口内是否建库内备份表 | 允许 / 禁止 | 建议**禁止**，改用 dump 文件 | ⏳ 窗口确认 |
+| D10 | 明文口令 payload（B 组 `create\|user`） | 一并处理 / 另立安全项 | 建议**另立安全项**（历史数据脱敏） | ⏳ 待定 |
+| D11 | 30 张可收紧表的时点 | 清理后 / 并行 | 建议**清理确认并验证后再收紧** | ⏳ 待定 |
+| D12 | `…0099` 合成探针写入源 | 停 / 不停 / 改脚本 | **已定位为契约冒烟脚本**（§14）；处置由你决定，本轮未停任何任务、未改配置 | ⏳ 待你决定 |
+| D13 | prod 写权限窗口 | 由你指定时点 | A 组 DML 与 B 组标记均需授权窗口 | ⏳ 待授权 |
 
 ## 9. 证据与可复现 SQL（只读）
 
@@ -534,8 +554,10 @@ SELECT 'customers' t, count(*) FILTER (WHERE NOT (tenant_id='00000000-0000-0000-
 
 实测结果（2026-11-06）：
 
-- E1（13:4x 快照）：`refs 121/158`、`returns 18/18`、`customers 2/302`、`risks 19/19`、`monitors 36/36`、
-  `audit0099 258/347`；`audit` 0 租户合计 320，NULL 27。**13:55 复查**：`audit0099 260/350`，0 租户 322，NULL 28。
+- E1（13:44 快照）：`refs 121/158`、`returns 18/18`、`customers 2/302`、`risks 19/19`、`monitors 36/36`、
+  `audit0099 258/347`；`audit` 0 租户合计 320，NULL 27。
+  **14:14 复核（本轮定稿口径）**：`refs 121/158`、`returns 19/19`、`customers 2/302`、`risks 20/20`、
+  `monitors 38/38`、`audit0099 271/362`；`audit` 0 租户 334、NULL 28、软删行 **0**。
 - E2a / E2b：**0 行**（出向、入向均无 FK）。
 - E3：**全部 0**。
 - 触发器 0、视图依赖 0（`pg_trigger` / `pg_views` 实测）。
@@ -544,19 +566,248 @@ SELECT 'customers' t, count(*) FILTER (WHERE NOT (tenant_id='00000000-0000-0000-
 ## 10. 拿不准 / 明确标注未定的事项
 
 1. **refs 121 行的来源**：只能看到“`local_entity_id` 全空 + 同名 `Acme Corp`”，无 path/UA 可追；需 SCM 负责人确认。
-2. **B 组 72 行的责任人**：`user_agent` / `ip_address` 全空、无 path/method 列，本稿只做推断，不做定论。
+2. **B 组 orphan 的操作人**：`user_agent` / `ip_address` 全空、无 path/method 列；**写入装置已定位**（§14），
+   但“谁在什么场景触发”仍无直接证据。标记方案已定（§13），不依赖责任人。
 3. **审计留存的合规口径**（保存年限、删除审批人、是否需要归档表）：本稿不代替安全/合规意见。
-4. **批量删除是否允许在业务时段执行**：表小（454 行、<1 MB 变更），但审计表有检索流量，建议仍在低峰窗口。
-5. **`status` 列是否可以承载 `synthetic_probe`**：不建议，但若你倾向“零 DDL”，需要前端状态映射同步评估（未评估）。
+4. **批量删除是否允许在业务时段执行**：表小（198 行、<1 MB 变更），但审计表有检索流量，建议仍在低峰窗口。
+5. **`status` 列是否可以承载 `synthetic_probe`**：**已不采用**——改为 `request_details` 合并键（零 DDL，§13），
+   前端状态映射无需改动。
 6. **prod `app.rls_system` 之外的超管查询路径**：本稿依据 `lib/shared-auth/src/middleware/tenant.rs:166-252`；
-   若收紧时新增/改名开关，本稿 §7.6 的“超管可见”前提需重新核对。
-7. **探针写入的来源**：`audit_logs` 无 path/method、`user_agent`/`ip_address` 全空，本稿无法定位是哪个任务在 13:52/13:54
-   写入；需要从应用侧日志或部署任务清单反查。**在查清前，清理无法保证“一次删净”**。
-8. **audit 目标集的时效性**：快照 258、13:55 已 260；窗口开始时重测的数才是基线，任何固定数字都可能过期。
+   若收紧时新增/改名开关，本稿 §7.6 / §13 的“超管可见”前提需重新核对。
+7. **探针写入的来源**：**已定位**（§14）：`scripts/web_contract_smoke.py` / `mobile_contract_smoke.py`
+   在 prod 机对 `localhost:8099` 跑的契约冒烟。仍未确定的是“由谁/哪次会话触发”；本轮未停任务、未改配置。
+8. **audit 目标集的时效性**：快照 258、14:14 已 271；窗口开始时重测的数才是基线，任何固定数字都可能过期。
 
 ## 11. 本轮边界声明
 
-- prod：**只读**，未执行 DML/DDL，未重启、未部署。
-- 仓库：未建迁移、未改代码；本文档为唯一新增文件。
+- prod：**只读**，未执行 DML/DDL，未重启、未部署、未停任何任务、未改任何配置。
+- 仓库：**未建迁移、未改历史迁移字节**；代码只改 `audit_query.rs` 的软删过滤并补测试（§12）。
 - 禁止项仍生效：不使用 `--no-verify`、不 force push。
-- 30 张可收紧表：**继续不动**，等 A/B 组拍板并验证后再排期。
+- 30 张可收紧表：**继续不动**，等 A/B 组清理并验证后再排期。
+- 本地演示库 `topems_audit_demo_20261106` 仅为验证 RLS/标记可见性（§13），与 prod 无关。
+
+## 12. `audit_query.rs` 软删过滤修复（本轮唯一代码改动）
+
+### 12.1 缺陷
+
+`svc/unified-core/src/modules/audit/audit_query.rs` 中所有 `public.audit_logs` 查询都没有 `deleted_at IS NULL`，
+而该表**有** `deleted_at` 列（prod `information_schema` 实测）。结果：一行被软删后，审计列表、统计、榜单、
+趋势、导出仍会把它算进去——软删对审计查询**完全无效**。
+
+> 另注：`svc/hrm/src/schema_defense.rs:813` 断言的是 `hrm.audit_logs`（不可变日志、无 `deleted_at`），
+> 与本次修改的 `public.audit_logs` 是两张不同的表，不冲突。
+
+### 12.2 改动清单（9 处，只加条件，不改字段/排序/分页）
+
+| # | 位置 | 改动 |
+| ---: | --- | --- |
+| 1 | `query_audit_logs` 的 total SQL | `WHERE deleted_at IS NULL AND ...` |
+| 2 | `query_audit_logs` 的 items SQL | 同上（`LIMIT/OFFSET` 不变） |
+| 3 | `get_audit_log_stats` 的 `total` | 同上 |
+| 4 | `get_audit_log_stats` 的 `today_total` | 同上 |
+| 5 | `get_audit_log_stats` 的 `success_total` | 同上（`deleted_at IS NULL AND status='success'`） |
+| 6 | `load_top_by_column`（by_action / by_entity_type / by_ip 等） | 新增 `deleted_filter`，仅 `table=="public.audit_logs"` 时拼 `AND deleted_at IS NULL` |
+| 7 | `load_audit_top_users` | `WHERE deleted_at IS NULL AND created_at >= NOW()-INTERVAL '30 days'` |
+| 8 | `load_trend` | 同一 `deleted_filter` |
+| 9 | `fetch_export_rows`（CSV/JSON 导出） | `WHERE deleted_at IS NULL AND ...` |
+
+**不改**：`permission_audit_logs`、`core_login_logs`（两张表**没有** `deleted_at` 列），保持原样；
+`source` 路由、参数解析、分页、导出格式均未动。diff 规模 `+27 / -7`。
+
+### 12.3 调用方与数据影响评估
+
+- **路由**：`/api/core/iam/v1/audit/logs`、`/stats`、`/export`（`svc/unified-core/src/modules/audit/mod.rs:58-65`）。
+- **前端**：唯一调用方 `apps/web/src/pages/admin/AuditLogPage.tsx:388,451`；无“回收站/已删”参数或视图。
+- **现有数据**：prod `public.audit_logs` 362 行中 `deleted_at IS NOT NULL` = **0**；本地测试库 2615 行同样 **0**。
+- **写入**：全仓库 grep **无**任何 `UPDATE/DELETE ... audit_logs` 设置 `deleted_at` 的代码
+  （唯一命中都是本修复新增的 SELECT 条件）。
+- **结论**：**当前行为中性（0 行受影响）**，修复只对“将来被软删的行”生效；不存在依赖“能查到软删行”的调用方，
+  前端/i18n 无需改动。
+
+### 12.4 改动前后行为对比（同一份数据）
+
+| 场景 | 修复前 | 修复后 |
+| --- | --- | --- |
+| 审计列表 `total` / `items` | 含软删行 | 排除软删行 |
+| 统计 `total` / `today_total` / `success_total` | 含软删行 | 排除 |
+| `by_action` / `by_entity_type` / `by_user` / `trend` | 含软删行 | 排除 |
+| 导出 CSV / JSON | 含软删行 | 排除 |
+| 权限审计 `permission_audit_logs` / 登录日志 | 不变 | 不变（表无该列） |
+| prod 现有 362 行 | 362 | 362（软删 0 行） |
+
+### 12.5 测试
+
+新增 `svc/unified-core/tests/audit_e2e.rs::audit_query_excludes_soft_deleted_rows`：
+插入 3 行（`create_project` / `update_project` 未删，`delete_project` 置 `deleted_at=now()`），断言
+`query_audit_logs` → `total=2`、`items=2`、不含 `delete_project`；`get_audit_log_stats` → `total=2`、
+`by_action` 中 `delete_project` 计数 0。
+
+```bash
+DATABASE_URL="postgres://topems_app:<local_pwd>@127.0.0.1:5432/topems" \
+  cargo test -p topems-unified-core --test audit_e2e
+# running 4 tests ... test result: ok. 4 passed; 0 failed; 0 ignored
+
+cargo fmt -p topems-unified-core -- --check   # PASS
+```
+
+> 注：`sqlx::test` 需要**带 host 的 TCP DSN**；`postgres://air@/topems` 会报 `role "anonymous" does not exist`。
+
+## 13. B 组 orphan：零 DDL 标记方案与三方可见性实测
+
+### 13.1 方案（零 DDL）
+
+复用 `request_details`（jsonb，已有列；B 组 74/74 行为 NULL 或 `{}` / `{"status": null}`），合并写入一个键：
+
+```json
+{"_orphan": "b72-20261106"}
+```
+
+- 不加列、不建迁移、不改 RLS 策略、不改应用代码；下划线前缀避免与业务 payload 键冲突。
+- 幂等：`AND NOT (request_details ? '_orphan')`。
+- 回滚：`request_details - '_orphan'`（jsonb 减键，不触碰原有键）。
+- 不写 `status`：会污染状态语义与前端状态映射（§10.5 已否）。
+
+### 13.2 prod 标记草稿（**待窗口授权，本轮未执行**）
+
+```sql
+BEGIN;
+SET LOCAL app.rls_system = 'on';
+
+-- 0) 标记前快照（文件留底，库内不建表）
+-- \copy (SELECT id, request_details FROM public.audit_logs WHERE <下方 predicate>) \
+--   TO '~/backups/topems_prod/20261106/audit_orphans_before.csv' WITH (FORMAT csv, HEADER true)
+
+-- 1) 预核对：定稿口径 72，14:14 现场 74
+WITH b AS (
+  SELECT a.id FROM public.audit_logs a
+  WHERE (a.tenant_id = '00000000-0000-0000-0000-000000000000' OR a.tenant_id IS NULL)
+    AND a.entity_id IS DISTINCT FROM '00000000-0000-0000-0000-000000000099'
+    AND NOT (a.entity_type='project' AND a.entity_id IS NOT NULL
+             AND EXISTS (SELECT 1 FROM pm.projects p
+                         WHERE p.id=a.entity_id AND p.tenant_id IS NOT NULL
+                           AND p.tenant_id <> '00000000-0000-0000-0000-000000000000'))
+)
+SELECT count(*) FROM b;
+
+-- 2) 标记（幂等）
+UPDATE public.audit_logs a
+SET request_details = COALESCE(a.request_details, '{}'::jsonb)
+                      || '{"_orphan":"b72-20261106"}'::jsonb
+WHERE (a.tenant_id = '00000000-0000-0000-0000-000000000000' OR a.tenant_id IS NULL)
+  AND a.entity_id IS DISTINCT FROM '00000000-0000-0000-0000-000000000099'
+  AND NOT (a.entity_type='project' AND a.entity_id IS NOT NULL
+           AND EXISTS (SELECT 1 FROM pm.projects p
+                       WHERE p.id=a.entity_id AND p.tenant_id IS NOT NULL
+                         AND p.tenant_id <> '00000000-0000-0000-0000-000000000000'))
+  AND NOT (a.request_details ? '_orphan');
+
+-- 3) 后核对：marked 必须等于预核对值（期望 74），unmarked 必须 0
+SELECT count(*) FILTER (WHERE request_details ? '_orphan') AS marked,
+       count(*) FILTER (WHERE NOT (request_details ? '_orphan')) AS unmarked
+FROM public.audit_logs
+WHERE (tenant_id='00000000-0000-0000-0000-000000000000' OR tenant_id IS NULL)
+  AND entity_id IS DISTINCT FROM '00000000-0000-0000-0000-000000000099';
+COMMIT;
+```
+
+`?` 是 jsonb 键存在判断（等价 `jsonb_exists`）。**不要**用 `LIKE`/`::text` 匹配，避免误命中 payload 文本。
+
+### 13.3 本地三方可见性实测（`topems_audit_demo_20261106`）
+
+样本 4 行：正式租户 1 行正常、0 租户 1 行（标记）、NULL 租户 2 行（1 标记 / 1 未标记）。
+查询角色 `topems_app`（非 owner、受 RLS 约束）；owner=`air` 仅用于切策略。
+
+| 场景 | RLS 策略 | 可见行数 | 其中标记 orphan | 结论 |
+| --- | --- | ---: | ---: | --- |
+| 普通租户 `…0001` | **旧**（prod 现状：`tenant_id IS NULL OR tenant_id = app.tenant_id`） | 3 | 1 | **仅标记不隐藏** |
+| 普通租户 `…0001`，查询加 `_orphan` 过滤 | 旧 | 1 | 1 | 过滤只靠查询条件 |
+| 普通租户 `…0001` | **新**（`rls_system='on' OR tenant_id = app.tenant_id`） | 1 | 0 | 普通租户看不到 |
+| 普通租户 `…0002` | 新 | 0 | 0 | 跨租户隔离 |
+| 系统/超管 `app.rls_system='on'` | 新 | 4 | 2 | 系统通道仍可见 |
+| 系统通道 + 照抄 `audit_query` 列表 SQL | 新 | 4 | 2（`? '_orphan'` 键可读） | **audit 查询不报错** |
+
+复现（本地演示库，prod 无关）：
+
+```bash
+psql "postgres://topems_app:<local_pwd>@127.0.0.1:5432/topems_audit_demo_20261106" -X -A -F'|' <<'SQL'
+SET app.tenant_id='00000000-0000-0000-0000-000000000001';
+SELECT count(*) FROM public.audit_logs;                                     -- 新策略 1
+SET app.rls_system='on';
+SELECT count(*) FROM public.audit_logs;                                     -- 4
+SELECT count(*) FROM public.audit_logs WHERE request_details ? '_orphan';   -- 2
+SELECT count(*) FROM (SELECT id FROM public.audit_logs
+                      WHERE deleted_at IS NULL ORDER BY created_at DESC
+                      LIMIT 20 OFFSET 0) s;                                 -- 4
+SQL
+```
+
+**结论**：标记本身**不提供隔离**（旧策略下普通租户能看到 NULL 租户的标记行）；隔离来自 RLS 收紧。
+收紧后：普通租户 0 个 orphan、系统/超管可见全部、`audit_query` 列表 SQL 正常返回且 JSON 键保留。
+
+### 13.4 风险与备选
+
+- **审计不可变性**：这是改写审计行 payload，需“标记前快照 + 变更单”；只加键、不改原有键值。
+- 若有系统按 `request_details` 全文检索，可能被 `_orphan` 命中（本仓库未发现此类查询）。
+- **备选（不推荐）**：`ALTER TABLE ... ADD COLUMN data_origin text` + 回填 + 查询/RLS 改造；
+  需 DDL 审批与前后端联动，收益与零 DDL 相同，故本轮不采用。
+
+## 14. `…0099` 合成探针写入源定位（只读）
+
+### 14.1 结论
+
+写入源是仓库内的**契约冒烟脚本**，在 prod 主机上对 `localhost:8099`（模块化单体）执行；**不是定时任务**：
+
+- `scripts/web_contract_smoke.py`：`TEST_UUID = 00000000-0000-0000-0000-000000000099`、
+  `TEST_UID = e91e2228-…`，默认 `WEB_BFF_URL=http://localhost:8099`；扫描 `apps/web/src/api/**` 端点，
+  把路径里的 `:id` 替换为 `…0099`，未登记 body 的 POST/PUT 发送 `{}`。
+- `scripts/mobile_contract_smoke.py`：同一组 `TEST_UID/TEST_UUID`；base 探测 **8099 优先、8098 兜底**；
+  `prepare_data()` 还会用 `DATABASE_URL` 直接 `psql` 写 `mobile.mobile_users` / `iam.users` / `hrm.employees`。
+
+两条脚本的**默认目标就是 prod 单体**，不是本地测试库。
+
+### 14.2 证据链（逐条可复现）
+
+1. **时间窗与行数吻合**：13:52:37–13:56:34 共 **15 行**，之后至 14:14 无新增。一轮的产物恰好是
+   13 行合成 audit（`…0099`）+ `crm.returns` 1 + `ehs.qa_ehs_risks` 1 + `ehs.qa_ehs_environment_monitors` 2。
+2. **逐行指纹**（prod 只读实测）：
+
+   | 时间 | action | entity_type | entity_id | status | tenant | request_details |
+   | --- | --- | --- | --- | --- | --- | --- |
+   | 13:52:37 | `delete_document` | document | `…0099` | failed | `…0000` | `{}` |
+   | 13:52:45 | `delete_vector` | vector | `…0099` | failed | `…0000` | `{}` |
+   | 13:54:58 | `update` | user | `e91e…` | success | NULL | `{}` |
+   | 13:56:30 | `update_acceptance_plan` | project | NULL | failed | `…0000` | `{"status":null}` |
+   | 13:56:30–34 | budget / contract / project / risk 共 11 行 | 对应实体 | `…0099` | failed | `…0000` | 全 null / `{}` |
+
+3. **端点与动作对应**：
+   - `apps/web/src/api/ai/writeOps.ts:11` → `DELETE /vectors/{id}`；`apps/web/src/api/ai/documents.ts:42` → `DELETE /documents/{id}`；
+     `svc/ai/src/modules/document.rs:401-405` 记录 `delete_document`，`vector.rs:565` / `document.rs:341` 为服务层；
+     `…0099` 不存在 → `status=failed`；`log_document_operation` 不传 tenant → `lib/shared-db/src/audit.rs` COALESCE 落 `…0000`。
+   - `e91e…` 是 mobile 脚本 `prepare_data()` 预建的 `iam.users` 测试账号，`REAL_IDS["user"]=TEST_UID`；
+     `/user/change-password` 命中该实体 → `update`/`user`。
+   - budget/contract/project/risk 的空 payload 是 web 脚本“未登记 body 发 `{}`”的直接产物。
+4. **旁证**：
+   - 15 行 `user_name` / `user_agent` / `ip_address` **全部 NULL**（14 行 `status=failed`，1 行 success），
+     与脚本不带 `x-username`、审计表无 UA/IP 列一致。
+   - `~/TOPEMS/logs/server.out` mtime **10:44**（PID 76088 于 10:44:15 启动）→ 服务日志未覆盖 13:52；
+     `nginx access.log` mtime **04:33** → 请求绕过 nginx，直连 `:8099`。
+   - `crontab -l` / `launchctl list` 无 smoke 任务；14:14 `ps` 无 smoke 进程；`~/.zsh_history` 无调用记录。
+
+### 14.3 已排除
+
+| 假设 | 排除依据 |
+| --- | --- |
+| cron / launchd 定时任务 | 无条目 |
+| 仓库 e2e 测试（`cargo test`） | 测试连本地测试库，无写 prod 的路径；且窗口内无进程 |
+| nginx 反代流量 | access.log 不覆盖该窗口（11-06 04:33 之后无写入） |
+| 正常业务请求 | `…0099` / `e91e…` 是脚本常量，payload 全 null/空 |
+| 8098 另一实例（PID 18497） | 不能完全排除其为入口，但它与 8099 实例都指向同一 prod DB；脚本 8099 优先，故 8099 命中 |
+
+### 14.4 未定位项与建议（**本轮未停任务、未改配置**）
+
+- **未定位“谁触发”**：无 shell history、无 CI 运行记录、无服务端请求日志；只能确定是这两条脚本在 prod 主机执行。
+- 处置选项（供你决定，均未执行）：
+  a) 给脚本加 `--dry-run` / 环境变量守卫，默认拒绝打 prod；
+  b) 把 `TEST_UUID` / `BASE` 指到一次性测试库；
+  c) 保持现状，但在清理后把“合成探针”视为常态噪声，靠 RLS + `_orphan` 标记区分。
+- 只要脚本仍在 prod 上跑，A 组清理与 B 组标记**之后仍会回涨**（本轮已观察到 258 → 271、72 → 74）。

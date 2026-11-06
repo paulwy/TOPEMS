@@ -168,3 +168,107 @@ async fn operation_logs_with_data_lists_one(pool: sqlx::PgPool) {
     assert_eq!(body.items[0].user_name, "bob");
     assert_eq!(body.items[0].module, "ehs");
 }
+
+// ===== public.audit_logs 软删过滤（2026-11-06）=====
+
+use topems_unified_core::modules::audit::audit_query::{
+    get_audit_log_stats, query_audit_logs, AuditLogQueryParams,
+};
+
+async fn setup_audit_logs_schema(pool: &sqlx::PgPool) {
+    sqlx::query(
+        r#"CREATE TABLE IF NOT EXISTS public.audit_logs (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID,
+            action TEXT NOT NULL,
+            entity_type TEXT,
+            entity_id UUID,
+            entity_ids JSONB,
+            user_id UUID,
+            user_name TEXT,
+            request_details JSONB,
+            response_details JSONB,
+            status TEXT,
+            error_message TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            deleted_at TIMESTAMPTZ,
+            success BOOLEAN
+        )"#,
+    )
+    .execute(pool)
+    .await
+    .unwrap();
+}
+
+fn empty_audit_query() -> AuditLogQueryParams {
+    AuditLogQueryParams {
+        source: None,
+        user_id: None,
+        username: None,
+        action: None,
+        entity_type: None,
+        resource: None,
+        status: None,
+        success: None,
+        ip_address: None,
+        start_date: None,
+        end_date: None,
+        search: None,
+        page: None,
+        page_size: None,
+    }
+}
+
+/// 审计查询/统计/榜单都必须排除 `deleted_at` 非空行。
+#[sqlx::test(migrations = false)]
+async fn audit_query_excludes_soft_deleted_rows(pool: sqlx::PgPool) {
+    setup_audit_logs_schema(&pool).await;
+    for (action, deleted) in [
+        ("create_project", false),
+        ("update_project", false),
+        ("delete_project", true),
+    ] {
+        sqlx::query(
+            r#"INSERT INTO public.audit_logs (tenant_id, action, entity_type, status, deleted_at)
+               VALUES ('00000000-0000-0000-0000-000000000001', $1, 'project', 'success', $2)"#,
+        )
+        .bind(action)
+        .bind(if deleted {
+            Some(chrono::Utc::now())
+        } else {
+            None
+        })
+        .execute(&pool)
+        .await
+        .unwrap();
+    }
+
+    let state = test_app_state(pool);
+    let resp = query_audit_logs(State(state.clone()), Query(empty_audit_query())).await;
+    assert!(resp.success, "query_audit_logs failed: {:?}", resp.message);
+    let body = resp.data.expect("data missing");
+    assert_eq!(body.total, 2, "软删行不应计入 total");
+    assert_eq!(body.items.len(), 2, "软删行不应出现在列表");
+    assert!(
+        !body.items.iter().any(|i| i.action == "delete_project"),
+        "软删行 delete_project 不应返回"
+    );
+
+    let stats = get_audit_log_stats(State(state), Query(empty_audit_query())).await;
+    assert!(
+        stats.success,
+        "get_audit_log_stats failed: {:?}",
+        stats.message
+    );
+    let stats = stats.data.expect("stats missing");
+    assert_eq!(stats.total, 2, "统计总数应排除软删行");
+    let by_action: i64 = stats
+        .by_action
+        .iter()
+        .filter(|c| c.key == "delete_project")
+        .map(|c| c.count)
+        .sum();
+    assert_eq!(by_action, 0, "by_action 不应含软删行");
+}
