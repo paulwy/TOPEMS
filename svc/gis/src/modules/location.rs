@@ -195,6 +195,14 @@ pub async fn update_location(
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
         return e.0;
     }
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
 
     match sqlx::query_as::<_, Location>(only_own_schema_query!(
         "gis",
@@ -202,7 +210,7 @@ pub async fn update_location(
         UPDATE gis.locations 
         SET name = $1, location_type = $2, position = $3, address = $4, 
             description = $5, properties = $6, status = COALESCE($7, status), updated_at = NOW()
-        WHERE id = $8 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $8 AND ($9::uuid IS NULL OR tenant_id = $9)
         RETURNING *
         "#
     ))
@@ -214,6 +222,7 @@ pub async fn update_location(
     .bind(&payload.properties)
     .bind(&payload.status)
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     {

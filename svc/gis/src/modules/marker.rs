@@ -168,13 +168,21 @@ pub async fn update_map_marker(
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::MapMarkerWrite).await {
         return e.0;
     }
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let visible = payload.visible.unwrap_or(true);
     let z_index = payload.z_index.unwrap_or(100);
     match sqlx::query_as::<_, MapMarker>(
         only_own_schema_query!("gis", r#"
         UPDATE gis.map_markers 
         SET marker_type = $1, name = $2, marker_style = $3, position = $4, icon_svg = $5, color = $6, size = $7, popup_content = $8, click_action = $9, action_data = $10, visible = $11, z_index = $12, updated_at = NOW()
-        WHERE id = $13 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $13 AND ($14::uuid IS NULL OR tenant_id = $14)
         RETURNING *
         "#),
     )
@@ -191,6 +199,7 @@ pub async fn update_map_marker(
     .bind(visible)
     .bind(z_index)
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     {
