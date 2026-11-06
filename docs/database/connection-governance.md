@@ -799,12 +799,13 @@ C.4 的既有 5 项白名单未变。
 | `pdm` | `pdm, public` | `/api/pdm/materials` | `POST /api/pdm/materials` | `B3-PDM-001` 仅在 `pdm.pdm_materials`（1 行），`public.pdm_materials` 0 行 |
 | `integration` | `integration, public` | `/api/integration/erp/connections` | `POST /api/integration/erp/connections` | `B3-ERP` 仅在 `integration.erp_connections`，`public` 0 行 |
 | `ai` | `ai, public` | `/api/ai/models` | `POST /api/ai/prompts/templates` | 模板落 `ai.ai_prompt_templates`（`public` 无同名表） |
-| `communication` | `communication, public` | `/api/communication/notification/notification-templates` | `POST .../notification-templates` | `B3模板` 仅在 `communication.core_notification_templates`，`public` 0 行 |
+| `communication` | `communication, public` | `/api/communication/notification/notification-templates` | `POST .../notification-templates` | ~~`B3模板` 仅在 `communication.core_notification_templates`，`public` 0 行~~ **该落点是影子表，验收不成立（见 B.10.10）**：权威表 `public.core_notification_templates` 0 行，写入的 2 行落在启动期 DDL 复活的 `communication` 副本 |
 
 - **租户隔离（`scope_with` 复用请求事务）实测**：向本地 `integration.lims_qms_sync` 写入
   tenant A 的固定行，`POST /api/integration/lims-qms/{id}/sync`：tenant B → **404**（`app.tenant_id=B`
-  在复用事务中生效，行不可见），tenant A → **200** 并更新成功。`pdm`/`ai`/`communication`
-  的列表端点同样验证 A 可见 1 条、B 可见 0 条。
+  在复用事务中生效，行不可见），tenant A → **200** 并更新成功。`pdm`/`ai` 的列表端点同样验证
+  A 可见 1 条、B 可见 0 条；`communication` 那一条当时读写的是 `communication` 影子表
+  （RLS 关闭、无 `tenant_id`），**不能作为 `public` 权威表租户隔离的证据**，已由 B.10.10 重做。
 - **嵌入启动实测**：日志 `[db-budget] 启动核对：注册表推导 31 预算单位（物理池 18），实际建池 18，降级 0，预算 62，已分配 62`；
   `/api/server/ready` = **200**、`/health` degraded=0。
 - **连接占用**：3 并发 × 60 轮（每轮 5 个模块主读端点，共 900 请求）采样：
@@ -814,6 +815,47 @@ C.4 的既有 5 项白名单未变。
   992/210/194/322/582/120/176 全通过（0 失败）。
 - **不再自建池**：五模块源码内 `bootstrap_service(` / `create_database_pool` / `PgPoolOptions`
   为 0（communication 仅测试内惰性池）；生产入口全部 `bootstrap_service_shared` + `Db::new`。
+
+#### B.10.10 通知链路修复（2026-11-06，代码 → 迁移 → 验证）
+
+**根因判定：C（缺列 + 代码写错），主因是 B。**
+
+- 启动期 `schema_defense` 的 `CREATE TABLE IF NOT EXISTS "communication"."core_notifications"(id UUID PRIMARY KEY)`
+  每次启动重建迁移已 DROP 的 12 列空壳（无 `tenant_id`），把废弃副本复活。
+- `notification.rs` 34 处 SQL 写裸名，communication 的固化 `search_path` 为 `communication, public`，
+  裸名优先命中副本 → INSERT 显式写 `tenant_id` 时 `SQLSTATE 42703`（列不存在）。
+- 权威表 `public.core_notifications`（13 列、含 `tenant_id`、RLS 开启）本身结构与 INSERT 列清单一致。
+
+**改动（先代码，后迁移）**
+
+| 项 | 位置 | 内容 |
+| --- | --- | --- |
+| 停止重建副本 | [schema_defense.rs](../../svc/communication/src/schema_defense.rs) | `TABLE_DEFS` 6 → 3，删除 `core_notifications` / `core_emails` / `core_email_templates`（三张权威表均在 `public`）；测试改为断言这三张不出现 |
+| 显式 schema | [notification.rs](../../svc/communication/src/notification.rs) | 34 处裸 `core_notifications` → `public.core_notifications`（INSERT/列表/未读数/统计/已读/删除/广播全覆盖），文件内裸名计数 0 |
+| HTTP 契约 | 同上 `send_notification` / `create_notification` | 写失败由「200 + `success:false`」改为真实状态码：坏 body **400**、无权限 **403**、事务/DB 失败 **500**；成功仍 200 + `success:true`。前端 `apps/web/src/api/notification/batch.ts` 的 `sendNotification` 无 UI 调用方，`client.ts` 对非 2xx 走 reject，影响低 |
+| 前向迁移 | [20261107000003_drop_communication_notification_shadow_tables.sql](../../database/migrations/20261107000003_drop_communication_notification_shadow_tables.sql) | 守卫式 `DROP TABLE IF EXISTS communication.{core_notifications,core_emails,core_email_templates}`：要求 `public` 权威表存在 + 副本 0 行，否则 `RAISE NOTICE` 跳过；不 CASCADE；历史迁移字节与既有 checksums 行不变 |
+
+**验证（全部通过，本地）**
+
+| 项 | 证据 |
+| --- | --- |
+| 解析落点 | `SET search_path TO communication, public; SELECT to_regclass('core_notifications')` → `public.core_notifications`；`communication.core_notifications` → NULL |
+| 重启不复活 | 重启 4 次后仍为 NULL；启动日志无这三张表的建表/补列记录；`schema_defense` 审计不再报该表 |
+| 创建 | `POST /api/communication/notification/notifications` → **200** + `success:true`；`SELECT count(*) FROM public.core_notifications WHERE title='B3-FIX-A'` = **1**，`communication` 侧无该行 |
+| 列表 | A 租户列表仅见 `B3-FIX-A`、B 仅见 `B3-FIX-B`（`public` 表 RLS 生效；超管 `B3-FIX-SUPER` 走 `tenant_id=0`） |
+| 已读 | `PUT /notifications/{id}` 200，`public` 侧 `is_read=t`、`read_at` 非空 |
+| 删除 | `DELETE /notifications/{id}` 200，`public` 侧 `deleted_at` 非空 |
+| 回归 | `cargo check --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --check` 通过；`cargo test -p topems-communication` 208 + 202 + 1 passed / 0 failed |
+
+**A4 自纠：批 3 的 communication 写验收不成立。** `core_notification_templates` 的 2 行
+（`B3-TPL-A` / `B3模板`）实际落在 `communication.core_notification_templates`——该表被
+`20261027200000_core_schema_duplicates_cleanup.sql` DROP 后由启动期 DDL 复活，无 `tenant_id`、
+RLS 关闭；权威表 `public.core_notification_templates` 为 **0 行**。B.10.9 该行与
+「communication A/B 租户隔离」结论均已按此更正。
+
+**遗留**：`communication.core_notification_templates` / `core_geofences` 等同类影子表仍由
+`schema_defense` 复活，属本轮 B 扫描的高危清单，见
+[runtime-ddl-shadow-audit.md](../quality/runtime-ddl-shadow-audit.md)（本轮只出清单，不批量改）。
 
 
 ## C. schema 前缀规则（可执行门禁）

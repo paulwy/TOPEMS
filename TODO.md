@@ -1,3 +1,41 @@
+## 通知链路修复 + 运行期 DDL 影子表扫描（2026-11-06）
+
+### A. 通知链路（已完成并验证）
+
+**根因 C（主因代码）**：communication 固化 `search_path=communication, public`；启动期
+`schema_defense` 用 `CREATE TABLE IF NOT EXISTS` 复活迁移已 DROP 的 12 列空壳
+`communication.core_notifications`（无 `tenant_id`），`notification.rs` 34 处裸名 SQL 命中副本 →
+INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
+
+| 改动 | 位置 |
+| --- | --- |
+| `TABLE_DEFS` 6 → 3，删除 `core_notifications` / `core_emails` / `core_email_templates` 副本定义 | `svc/communication/src/schema_defense.rs` |
+| 34 处裸名 → `public.core_notifications`；文件内裸名 0 | `svc/communication/src/notification.rs` |
+| 契约：坏 body 400 / 无权限 403 / 事务与 DB 失败 500；成功仍 200 | 同上 |
+| 守卫式前向迁移，删 3 张 0 行副本（不 CASCADE、不改历史迁移字节） | `database/migrations/20261107000003_drop_communication_notification_shadow_tables.sql` |
+
+**验证**：`to_regclass` 解析到 `public`、`communication` 侧 NULL；重启 4 次不复活且启动日志无重建；
+创建 200 且 `public` 侧 1 行 / 副本 0 行；A/B 列表互相不可见（RLS 生效）；已读 `is_read=t`、删除
+`deleted_at` 非空；`check` / `clippy -D warnings` / `fmt --check` 通过，communication 单测 411 passed。
+
+**A4 自纠**：批 3「communication 写验收」不成立——`core_notification_templates` 的 2 行落在
+启动期复活的 `communication` 影子表（无 `tenant_id`、RLS 关），权威 `public` 侧 0 行；
+`docs/database/connection-governance.md` B.10.9 已更正，新增 B.10.10 记录本轮修复。
+
+### B. 运行期 DDL 复活已删表（清单已完成，未批量改）
+
+全仓 26 服务 / 607 条 `TABLE_DEFS` / 55 处模块级运行期 DDL；与 598 个迁移比对后分档：
+
+| 档 | 数量 | 代表 |
+| --- | --- | --- |
+| 高（权威同名 + 裸名命中 + 缺 `tenant_id` 或 RLS 关） | **4** | `master_data.core_dict_types`、`master_data.core_dict_items`、`communication.core_notification_templates`、`communication.core_geofences` |
+| 中 | 16 | `portal.core_faqs` 等（全限定或空表无写入方） |
+| 低 | 587 | `*_ledger` 类运行时台账，无同名权威表 |
+
+**结论**：22 个服务调用 `run_schema_migration_and_verify`，空壳表循环会持续复活被 DROP 的表；
+`master_data` 字典副本与 `communication` 模板副本 RLS 关闭/allow-all，**存在租户隔离失效**。
+清单与处置建议见 `docs/quality/runtime-ddl-shadow-audit.md`；本轮不改，等确认后按「先代码去裸名/删定义 → 再前向迁移删影子」推进。
+
 ## 第四十九轮（2026-11-05）：prod 连接占用排查（topems-server 72/100）
 
 **观测（prod 只读，18:47–18:54，SSH 隧道 127.0.0.1:15432）**
