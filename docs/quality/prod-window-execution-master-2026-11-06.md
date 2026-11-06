@@ -541,11 +541,119 @@ DICT_WINDOW_CONFIRM=yes scripts/db/dict-replay-window.sh smoke \
 #### 9.2.4 影响面与回滚
 
 - **旧 access token 全部失效**：已登录 web/mobile 用户在下次请求会收到 401，**需重新登录**；
-- **refresh token 仍有效**：其签名使用独立的 `JWT_REFRESH_SECRET`（本次未轮换），旧 refresh token 仍可换发新 access token，
-  直到 refresh 过期；若需强制全量重登，需再轮换 `JWT_REFRESH_SECRET` 并重启（本次未执行，留待决策）；
+- **refresh token 仍有效**：本次未轮换 `JWT_REFRESH_SECRET`，旧 refresh token 仍可换发新 access token，
+  直到 refresh 过期；**（已于 9.3 处理：核实 refresh 为 DB 存储不透明串、密钥不参与验签，故轮换密钥 + 吊销全部活跃行）**；
 - 无其它在线服务依赖该密钥（CI/e2e/前端构建均不使用 prod 值）；
 - 回滚：从 `~/topems/.secrets/jwt-secret-pre-rotate-20261106.txt` 恢复旧值到 `.env` 与 plist，
   再 `launchctl bootout` + `bootstrap`（不可仅 `kickstart -k`）。
+
+### 9.3 prod `JWT_REFRESH_SECRET` 轮换 + 吊销全部 refresh token（2026-11-06 17:57–18:03）
+
+**原因**：补齐 9.2 遗留项（refresh token 仍可换发 access token）。按用户确认的方案 B 执行：
+轮换密钥 + 同步三处引用 + 吊销全部活跃 refresh token（保留行，不 DELETE）。
+
+**关键事实（先证实、后执行）**：refresh token 是 **DB 存储的不透明串**（`generate_refresh_token()`
+返回 32 字节随机 hex，非 JWT），校验走 `hash_token()`（纯 SHA-256）+ `public.core_refresh_tokens`，
+不经过 `JWT_REFRESH_SECRET`；该字段仅用于启动校验（全仓无其它读取点）。
+**因此单独轮换密钥不会让已签发 refresh 失效**，旧 refresh 失效必须依赖吊销 DML。
+
+#### 9.3.1 依赖清单（只读排查，值一律打码）
+
+prod 值（轮换前 `00bb**`，len 64）的**全部落点**（精确值反向搜索，不打印明文）：
+
+| 位置 | 用途 | 轮换后处理 |
+| --- | --- | --- |
+| prod `~/TOPEMS/.env`（600） | 单体进程运行配置 | **已更新**（`3829**`，len 64） |
+| `~/Library/LaunchAgents/com.topems.server.plist`（644） | launchd 环境 | **已更新**，与 `.env` 同前缀同长度 |
+| `~/TOPEMS/secret/jwt_refresh.txt`（600，`.git/info/exclude` 未入 git） | 装机时密钥落盘 | **已更新**（本轮新增确认的第三处活跃副本） |
+| `.secrets/retired-20261106/*.prev / *.bak-be08 / *.bak-ehs-20261031`（600） | 上一轮归档 plist | 保留（内含已失效旧值）；目录权限由 `755` 收紧为 **700** |
+| 非 prod 值：`config/standalone.env`（`5871**`）、`deploy/docker/.env` 与 `.bak-20261015`（`56f8**`） | 开发/容器 | 无需处理（与 prod 值不同；主机未装 docker） |
+| `config/env/*.template`、`.env.example`、`.env.production.example` | 模板 | `<SET_ME…>` 占位，无真值 |
+| CI（`.github/workflows`）、`scripts/topems-docker.sh`、`topems.ps1`、`ports.ps1` | 生成/开发默认值 | 不含 prod 值 |
+| `crontab`（`collect-usage-daily.sh`，每日 01:00） | 采集任务 | 走 **login 拿 access token**，不依赖 refresh，不受影响 |
+| `~/Library/Application Support/{DoubaoWork,Trae CN}` 会话日志 | 历史终端输出残留（旧值） | 旧值已作废，不作为配置引用 |
+
+#### 9.3.2 变更与留档
+
+| 项 | 值/结果 |
+| --- | --- |
+| 新密钥 | `openssl rand -hex 32` 主机内生成，前缀 `3829**`，len 64，未打印/未入库 |
+| 旧值留档 | `~/TOPEMS/.secrets/jwt-refresh-secret-pre-rotate-20261106.txt`（600，65 字节） |
+| 变更前镜像 | `~/TOPEMS/.secrets/jwt-refresh-20261106/`（700；`.env.pre` / plist / txt 均 600） |
+| 三处一致性 | `env=3829** len=64` / `txt=3829** len=64` / `plist=3829** len=64` → `consistency=SAME` |
+| plist 语法 | `plutil -lint … : OK` |
+| 目录权限 | `.secrets` 700、`retired-20261106` 700、`jwt-refresh-20261106` 700 |
+
+#### 9.3.3 吊销（保留行，不 DELETE）
+
+`UPDATE public.core_refresh_tokens SET revoked_at=now(), revoked_reason='rotate-20261106' WHERE revoked_at IS NULL;`
+
+| 分布 | 吊销前 | 吊销后 |
+| --- | --- | --- |
+| total | 1374 | 1374 |
+| active（未吊销） | **1369** | **0** |
+| revoked | 5 | 1374（其中 `rotate-20261106` = 1369） |
+| expired | 0 | 0 |
+| 持有账号 | `admin`（`56f4256f…`）1369 条 | — |
+| 精确影响行数 | — | **`UPDATE 1369`**（与预期一致） |
+
+UA 分布（全部自动化）：Playwright/1.62 CI 618、HeadlessChrome 151 525、HeadlessChrome 156 176、
+`curl/8.7.1` 39、`node` 5、空 5。
+
+#### 9.3.4 重启
+
+| 步骤 | 结果 |
+| --- | --- |
+| 重启前 pid | `65124` |
+| `launchctl bootout gui/501/com.topems.server` | `unloaded` |
+| `launchctl bootstrap gui/501 <plist>` | pid **`74405`**，`state = running`，`runs = 1`，`last exit code = (never exited)` |
+| 启动时间 | `18:01:14`（启动校验通过，说明新密钥长度/非默认值合法） |
+
+> `last exit code = (never exited)` 表示该 job 本轮从未异常退出（launchd 对新 bootstrap 进程的正常表述），
+> 等价于“无失败退出”；未使用 `kickstart -k`（其不重读 plist）。
+
+#### 9.3.5 验证（全部通过）
+
+| 检查 | 结果 |
+| --- | --- |
+| 旧 refresh（插入临时行 → 以同一条吊销语义置 `revoked` → 调刷新） | **401**（`Refresh token 无效或已过期`） |
+| 临时行基线（吊销前 DB 状态） | `active = t`（确实为可用态） |
+| 轮换后刷新链路（临时行 `tmp-rotate-verify`） | **200** |
+| 临时行清理 | `DELETE 3`（旧行 + 已轮换行 + 刷新新行），`tmp_residue = 0` |
+| 清理后计数 | `total=1374 active=0 revoked_by_reason=1369`（回到吊销后值） |
+| 旧 access token（上一轮 `JWT_SECRET` 签发） | **401** |
+| 新超管 access | 200，`total=77` |
+| 探针租户 `1111…` | 200，`total=0`（无泄露） |
+| 租户 `…0001` | 200，`total=77` |
+| 通知创建 | 200，`id=43cd3f44-f6f3-4cb7-9572-a2e8903a1c80`，落 `public.core_notifications` 1 行 |
+| `/health` / `/api/server/ready` / `/api/server/health` | 200 / 200 / 200 |
+
+#### 9.3.6 影响面
+
+- **人类用户 0**：吊销前 1369 条活跃 refresh 全部属于 `admin` 的自动化会话（Playwright/HeadlessChrome/curl），
+  无真实用户持有活跃 refresh；
+- **自动化客户端需重新登录**（E2E/巡检脚本下次运行会重新 login，链路本身不受影响）；
+- `collect-usage-daily.sh`（cron 01:00）用 `USAGE_USER/USAGE_PASS` 登录换 access token，**不受 refresh 吊销影响**；
+- 后台任务/机器人**无**依赖长驻 refresh token 的调用（仓库与主机脚本均未发现 `/auth/refresh` 消费方）；
+- 旧 access token 仍 401（其失效来自 9.2 的 `JWT_SECRET` 轮换，与本次 refresh 轮换无关）。
+
+#### 9.3.7 回滚
+
+顺序（两步都做才算恢复会话）：
+
+1. **恢复密钥**：从 `.secrets/jwt-refresh-secret-pre-rotate-20261106.txt` 取旧值，回写三处
+   （`.env` / plist / `secret/jwt_refresh.txt`），`plutil -lint` 后 `launchctl bootout` + `bootstrap`；
+2. **恢复吊销**：
+   ```sql
+   UPDATE public.core_refresh_tokens
+      SET revoked_at = NULL, revoked_reason = NULL
+    WHERE revoked_reason = 'rotate-20261106';
+   ```
+   影响 1369 行，`active` 回到 1369。
+
+**回滚后旧 refresh 是否重新可用**：只做第 1 步 → **仍不可用**（失效来自 DB 吊销，与密钥无关，且旧 token
+有效期最长至 2026-11-13）；必须同时做第 2 步，旧 refresh 才恢复可用（前提是未过期）。
+因密钥本身不参与 refresh 校验，回滚密钥对 refresh 可用性没有影响。
 
 ---
 
