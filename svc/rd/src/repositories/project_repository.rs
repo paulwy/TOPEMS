@@ -133,6 +133,7 @@ impl ProjectRepository {
         id: Uuid,
         req: &UpdateProjectRequest,
         existing: &Project,
+        tenant_id: Uuid,
     ) -> Result<Project> {
         let now = Utc::now();
         let name = req.name.clone().unwrap_or(existing.name.clone());
@@ -165,7 +166,7 @@ impl ProjectRepository {
                 status = $5, progress = $6, updated_at = $7,
                 project_config = $8, benefit_target = $9, risk_level = $10,
                 priority = $11, tags = $12, parent_id = $13, workspace_id = $14
-            WHERE id = $15 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            WHERE id = $15 AND ($16::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $16::uuid)
             RETURNING id, tenant_id, name, code, description, project_type, status, leader,
                       team_members, start_date, end_date, budget, progress,
                       created_by, created_at, updated_at, project_config,
@@ -187,19 +188,21 @@ impl ProjectRepository {
         .bind(parent_id)
         .bind(workspace_id)
         .bind(id)
+        .bind(tenant_id)
         .fetch_optional(&self.db)
         .await?;
 
         project.ok_or_else(|| TopemsError::NotFound("项目不存在".to_string()))
     }
 
-    pub async fn delete(&self, id: Uuid) -> Result<bool> {
+    pub async fn delete(&self, id: Uuid, tenant_id: Uuid) -> Result<bool> {
         let result = sqlx::query(
             r#"
-            UPDATE rs.projects SET deleted_at = NOW() WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            UPDATE rs.projects SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
             "#,
         )
         .bind(id)
+        .bind(tenant_id)
         .execute(&self.db)
         .await?;
 
@@ -250,17 +253,18 @@ impl ProjectRepository {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-    pub async fn batch_delete(&self, ids: &[Uuid]) -> Result<i64> {
+    pub async fn batch_delete(&self, ids: &[Uuid], tenant_id: Uuid) -> Result<i64> {
         if ids.is_empty() {
             return Ok(0);
         }
 
         let result = sqlx::query(
             r#"
-            UPDATE rs.projects SET deleted_at = NOW() WHERE id = ANY($1) AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            UPDATE rs.projects SET deleted_at = NOW() WHERE id = ANY($1) AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
             "#,
         )
         .bind(ids)
+        .bind(tenant_id)
         .execute(&self.db)
         .await?;
 
