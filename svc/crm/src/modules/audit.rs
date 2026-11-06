@@ -14,7 +14,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
-use topems_shared_db::SchemaAwareAuditLogService;
+use topems_shared_db::{AuditOrigin, SchemaAwareAuditLogService};
 
 /// 审计日志参数包装（消除 clippy::too_many_arguments 告警）
 #[derive(Debug, Clone)]
@@ -207,8 +207,69 @@ pub async fn get_audit_log(
     }
 }
 
+/// 请求边界内捕获的审计主体。
+///
+/// `tenant_id` 必须来自「被操作实体」而非操作者 claims：
+/// - spawn 前从实体行（或插入结果）读取；
+/// - 超管代租户操作时，实体行的 tenant 才是租户管理员应看到的那一行；
+/// - 实体本身为 nil 时才落 nil。
+#[derive(Debug, Clone)]
+pub struct AuditActor {
+    pub tenant_id: Option<Uuid>,
+    pub user_id: Option<String>,
+    pub user_name: Option<String>,
+    pub origin: AuditOrigin,
+}
+
+impl AuditActor {
+    /// 从请求 Claims 捕获用户身份；租户必须由调用方按「被操作实体」传入。
+    ///
+    /// 实体 tenant 在查询结果中常以全零 UUID 表示 NULL（SQL 侧 COALESCE 兜底），
+    /// 这里统一归一为 `None`，避免给系统级 nil 行写入一个假的租户值。
+    pub fn from_claims(tenant_id: Option<Uuid>, claims: &Claims) -> Self {
+        Self {
+            tenant_id: tenant_id.filter(|t| *t != Uuid::nil()),
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
+            origin: if claims.is_superuser {
+                AuditOrigin::System
+            } else {
+                AuditOrigin::Request
+            },
+        }
+    }
+}
+
 pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &HeaderMap) {
+    let ctx = topems_shared_auth::middleware::tenant::current_request_tenant();
+    let actor = AuditActor {
+        // None 表示交给 sink 使用请求 task-local（非 spawn 路径）。
+        tenant_id: None,
+        user_id: params.user_id.clone(),
+        user_name: params.user_name.clone(),
+        origin: if ctx.map(|c| c.system).unwrap_or(false) {
+            AuditOrigin::System
+        } else {
+            AuditOrigin::Request
+        },
+    };
+    log_audit_event_with_actor(db, params, headers, actor).await;
+}
+
+/// 显式主体的审计写入。spawn 路径必须使用本函数，避免 task-local 丢失。
+pub async fn log_audit_event_with_actor(
+    db: &PgPool,
+    params: AuditEventParams,
+    headers: &HeaderMap,
+    actor: AuditActor,
+) {
     use topems_shared_db::CreateAuditLogRequest;
+    let AuditActor {
+        tenant_id: actor_tenant,
+        user_id: actor_user_id,
+        user_name: actor_user_name,
+        origin,
+    } = actor;
     let AuditEventParams {
         action,
         entity_type,
@@ -239,12 +300,17 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
     // svc/crm/src/schema_defense.rs TABLE_DEFS), so no column mapping is needed.
     // U12: 读路径（list/get_audit_log）已同步改读 crm.audit_logs，读写同表。
     let mut req = CreateAuditLogRequest::new(action, entity_type, status);
+    if let Some(tid) = actor_tenant {
+        req = req.with_tenant_id(tid);
+    }
     if let Some(eid) = entity_id {
         req = req.with_entity_id(eid);
     }
     if let Some(eids) = entity_ids {
         req = req.with_entity_ids(eids);
     }
+    let user_id = actor_user_id.or(user_id);
+    let user_name = actor_user_name.or(user_name);
     if user_id.is_some() || user_name.is_some() {
         req = req.with_user(user_id.unwrap_or_default(), user_name.unwrap_or_default());
     }
@@ -257,6 +323,7 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
     if let Some(err) = error_message {
         req = req.with_error(err);
     }
+    req = req.with_origin(origin);
     req.ip_address = ip_address;
     req.user_agent = user_agent;
 

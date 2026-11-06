@@ -11,7 +11,9 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::models::{Contact, CreateContactRequest, UpdateContactRequest};
-use crate::modules::audit::{log_audit_event, AuditEventParams};
+use crate::modules::audit::{
+    log_audit_event, log_audit_event_with_actor, AuditActor, AuditEventParams,
+};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
@@ -270,8 +272,8 @@ pub async fn create_contact(
             entity_type: "contact".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -469,8 +471,8 @@ async fn update_contact(
             entity_type: "contact".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: request_data,
             response_details: response_data,
             status: status_str,
@@ -561,8 +563,8 @@ async fn delete_contact(
             entity_type: "contact".to_string(),
             entity_id: Some(id),
             entity_ids: None,
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: None,
             response_details: response_data,
             status: status_str,
@@ -668,8 +670,8 @@ pub async fn batch_delete_contacts(
             entity_type: "contact".to_string(),
             entity_id: None,
             entity_ids: serde_json::to_value(&req.ids).ok(),
-            user_id: None,
-            user_name: None,
+            user_id: Some(claims.sub.clone()),
+            user_name: Some(claims.username.clone()),
             request_details: None,
             response_details: response_data,
             status: status_str,
@@ -727,25 +729,15 @@ pub async fn start_contact_approval(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
+    // 预读条件与下方 UPDATE 的 GUC 条件保持一致：非超管仍按 app.tenant_id 限定，
+    // 超管（app.tenant_id 为 nil/空）可跨租户定位实体。审计租户一律取实体行 tenant_id。
     let contact = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
-        FROM crm.contacts WHERE id = $1 AND tenant_id = $2
+        FROM crm.contacts WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -793,6 +785,7 @@ pub async fn start_contact_approval(
         }
     }
 
+    let audit_actor = AuditActor::from_claims(Some(contact.tenant_id), &claims);
     let request_data = serde_json::json!({
         "workflow_id": req.workflow_id.to_string(),
         "comment": req.comment,
@@ -805,7 +798,7 @@ pub async fn start_contact_approval(
         "comment": req.comment,
     });
     tokio::spawn(async move {
-        let _ = log_audit_event(
+        let _ = log_audit_event_with_actor(
             &state.db,
             AuditEventParams {
                 action: "crm.contact.approval.start".to_string(),
@@ -820,6 +813,7 @@ pub async fn start_contact_approval(
                 error_message: None,
             },
             &headers,
+            audit_actor,
         )
         .await;
     });
@@ -867,25 +861,15 @@ pub async fn approve_contact(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
+    // 预读条件与下方 UPDATE 的 GUC 条件保持一致：非超管仍按 app.tenant_id 限定，
+    // 超管（app.tenant_id 为 nil/空）可跨租户定位实体。审计租户一律取实体行 tenant_id。
     let contact = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
-        FROM crm.contacts WHERE id = $1 AND tenant_id = $2
+        FROM crm.contacts WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -912,6 +896,7 @@ pub async fn approve_contact(
         }
     }
 
+    let audit_actor = AuditActor::from_claims(Some(contact.tenant_id), &claims);
     let request_data = serde_json::json!({
         "comment": req.comment,
     });
@@ -922,7 +907,7 @@ pub async fn approve_contact(
         "comment": req.comment,
     });
     tokio::spawn(async move {
-        let _ = log_audit_event(
+        let _ = log_audit_event_with_actor(
             &state.db,
             AuditEventParams {
                 action: "crm.contact.approval.approve".to_string(),
@@ -937,6 +922,7 @@ pub async fn approve_contact(
                 error_message: None,
             },
             &headers,
+            audit_actor,
         )
         .await;
     });
@@ -983,25 +969,15 @@ pub async fn reject_contact(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
+    // 预读条件与下方 UPDATE 的 GUC 条件保持一致：非超管仍按 app.tenant_id 限定，
+    // 超管（app.tenant_id 为 nil/空）可跨租户定位实体。审计租户一律取实体行 tenant_id。
     let contact = sqlx::query_as::<_, Contact>(
         r#"
         SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, approval_status, created_at, updated_at, deleted_at
-        FROM crm.contacts WHERE id = $1 AND tenant_id = $2
+        FROM crm.contacts WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1028,6 +1004,7 @@ pub async fn reject_contact(
         }
     }
 
+    let audit_actor = AuditActor::from_claims(Some(contact.tenant_id), &claims);
     let reason = req.reason.clone().unwrap_or_default();
     let request_data = serde_json::json!({
         "comment": req.comment,
@@ -1041,7 +1018,7 @@ pub async fn reject_contact(
         "reason": reason,
     });
     tokio::spawn(async move {
-        let _ = log_audit_event(
+        let _ = log_audit_event_with_actor(
             &state.db,
             AuditEventParams {
                 action: "crm.contact.approval.reject".to_string(),
@@ -1056,6 +1033,7 @@ pub async fn reject_contact(
                 error_message: None,
             },
             &headers,
+            audit_actor,
         )
         .await;
     });

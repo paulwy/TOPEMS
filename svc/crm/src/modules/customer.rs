@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::models::customer::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
-use crate::modules::audit::{log_audit_event, AuditEventParams};
+use crate::modules::audit::{log_audit_event_with_actor, AuditActor, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
@@ -328,8 +328,9 @@ pub async fn create_customer(
             invalidate_customer_cache(&state, "customer_created").await;
             let request_data = serde_json::to_value(&req).ok();
             let response_data = serde_json::to_value(&customer).ok();
+            let audit_actor = AuditActor::from_claims(Some(customer.tenant_id), &claims);
             tokio::spawn(async move {
-                let _ = log_audit_event(
+                let _ = log_audit_event_with_actor(
                     &state.db,
                     AuditEventParams {
                         action: "crm.customer.create".to_string(),
@@ -344,6 +345,7 @@ pub async fn create_customer(
                         error_message: None,
                     },
                     &headers,
+                    audit_actor,
                 )
                 .await;
             });
@@ -573,8 +575,9 @@ pub async fn update_customer(
             let response_data = serde_json::to_value(&customer).ok();
             // 更新客户后失效客户详情与列表缓存
             invalidate_customer_cache(&state, "customer_updated").await;
+            let audit_actor = AuditActor::from_claims(Some(customer.tenant_id), &claims);
             tokio::spawn(async move {
-                let _ = log_audit_event(
+                let _ = log_audit_event_with_actor(
                     &state.db,
                     AuditEventParams {
                         action: "crm.customer.update".to_string(),
@@ -589,6 +592,7 @@ pub async fn update_customer(
                         error_message: None,
                     },
                     &headers,
+                    audit_actor,
                 )
                 .await;
             });
@@ -643,15 +647,15 @@ pub async fn delete_customer(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
-    match sqlx::query(
-        "UPDATE crm.customers SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+    match sqlx::query_scalar::<_, Uuid>(
+        "UPDATE crm.customers SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING tenant_id",
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await
     {
-        Ok(r) if r.rows_affected() > 0 => {
+        Ok(Some(entity_tenant)) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
@@ -660,9 +664,10 @@ pub async fn delete_customer(
             }
             // 删除客户后失效缓存
             invalidate_customer_cache(&state, "customer_deleted").await;
-            let response_data = serde_json::json!({ "rows_affected": r.rows_affected() });
+            let response_data = serde_json::json!({ "rows_affected": 1 });
+            let audit_actor = AuditActor::from_claims(Some(entity_tenant), &claims);
             tokio::spawn(async move {
-                let _ = log_audit_event(
+                let _ = log_audit_event_with_actor(
                     &state.db,
                     AuditEventParams {
                         action: "crm.customer.delete".to_string(),
@@ -677,12 +682,13 @@ pub async fn delete_customer(
                         error_message: None,
                     },
                     &headers,
+                    audit_actor,
                 )
                 .await;
             });
             ApiResponse::success_no_data("客户删除成功")
         }
-        Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("客户不存在".to_string())),
+        Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("客户不存在".to_string())),
         Err(e) => {
             tracing::error!("删除客户失败: {}", e);
             ApiResponse::from(TopemsError::Internal("客户删除失败".to_string()))
@@ -739,27 +745,41 @@ pub async fn batch_delete_customers(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
-    match sqlx::query(
-        "UPDATE crm.customers SET deleted_at = NOW() WHERE id = ANY($1) AND tenant_id = $2",
+    match sqlx::query_scalar::<_, Option<Uuid>>(
+        "UPDATE crm.customers SET deleted_at = NOW() WHERE id = ANY($1) AND tenant_id = $2 RETURNING tenant_id",
     )
     .bind(&req.ids)
     .bind(tenant_id)
-    .execute(&mut **txn)
+    .fetch_all(&mut **txn)
     .await
     {
-        Ok(r) => {
+        Ok(tenant_rows) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
                     return ApiResponse::from(TopemsError::Internal("事务提交失败".to_string()));
                 }
             }
+            let rows_affected = tenant_rows.len() as u64;
             // 批量删除客户后失效缓存
             invalidate_customer_cache(&state, "customer_batch_deleted").await;
             let entity_ids = serde_json::to_value(&req.ids).ok();
-            let response_data = serde_json::json!({ "rows_affected": r.rows_affected() });
+            // 单行审计无法表达多个租户：仅当命中的非 nil 实体租户唯一时才落该租户，
+            // 否则（混合租户 / 全部 nil 系统行）落 nil。
+            let mut distinct_tenant: Option<Uuid> = None;
+            let mut multi_tenant = false;
+            for t in tenant_rows.iter().flatten() {
+                match distinct_tenant {
+                    None => distinct_tenant = Some(*t),
+                    Some(d) if d != *t => multi_tenant = true,
+                    _ => {}
+                }
+            }
+            let audit_tenant = if multi_tenant { None } else { distinct_tenant };
+            let audit_actor = AuditActor::from_claims(audit_tenant, &claims);
+            let response_data = serde_json::json!({ "rows_affected": rows_affected });
             tokio::spawn(async move {
-                let _ = log_audit_event(
+                let _ = log_audit_event_with_actor(
                     &state.db,
                     AuditEventParams {
                         action: "crm.customer.batch_delete".to_string(),
@@ -774,13 +794,11 @@ pub async fn batch_delete_customers(
                         error_message: None,
                     },
                     &headers,
+                    audit_actor,
                 )
                 .await;
             });
-            ApiResponse::success(
-                format!("成功删除 {} 个客户", r.rows_affected()),
-                "批量删除成功",
-            )
+            ApiResponse::success(format!("成功删除 {} 个客户", rows_affected), "批量删除成功")
         }
         Err(e) => {
             tracing::error!("批量删除客户失败: {}", e);
@@ -835,22 +853,13 @@ pub async fn start_customer_approval(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
+    // 预读条件与下方 UPDATE 的 GUC 条件保持一致：非超管仍按 app.tenant_id 限定，
+    // 超管（app.tenant_id 为 nil/空）可跨租户定位实体。修正此前「UPDATE 允许超管、
+    // 预读却严格按操作者租户」的不一致；审计租户一律取实体行 tenant_id。
     let customer = sqlx::query_as::<_, Customer>(
-        "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(id)
-    .bind(tenant_id)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
@@ -899,6 +908,7 @@ pub async fn start_customer_approval(
         }
     }
 
+    let audit_actor = AuditActor::from_claims(Some(customer.tenant_id), &claims);
     let request_data = serde_json::json!({
         "workflow_id": req.workflow_id.to_string(),
         "comment": req.comment,
@@ -911,7 +921,7 @@ pub async fn start_customer_approval(
         "comment": req.comment,
     });
     tokio::spawn(async move {
-        let _ = log_audit_event(
+        let _ = log_audit_event_with_actor(
             &state.db,
             AuditEventParams {
                 action: "crm.customer.approval.start".to_string(),
@@ -926,6 +936,7 @@ pub async fn start_customer_approval(
                 error_message: None,
             },
             &headers,
+            audit_actor,
         )
         .await;
     });
@@ -973,22 +984,13 @@ pub async fn approve_customer(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
+    // 预读条件与下方 UPDATE 的 GUC 条件保持一致：非超管仍按 app.tenant_id 限定，
+    // 超管（app.tenant_id 为 nil/空）可跨租户定位实体。修正此前「UPDATE 允许超管、
+    // 预读却严格按操作者租户」的不一致；审计租户一律取实体行 tenant_id。
     let customer = sqlx::query_as::<_, Customer>(
-        "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(id)
-    .bind(tenant_id)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
@@ -1016,6 +1018,7 @@ pub async fn approve_customer(
         }
     }
 
+    let audit_actor = AuditActor::from_claims(Some(customer.tenant_id), &claims);
     let request_data = serde_json::json!({
         "comment": req.comment,
     });
@@ -1026,7 +1029,7 @@ pub async fn approve_customer(
         "comment": req.comment,
     });
     tokio::spawn(async move {
-        let _ = log_audit_event(
+        let _ = log_audit_event_with_actor(
             &state.db,
             AuditEventParams {
                 action: "crm.customer.approval.approve".to_string(),
@@ -1041,6 +1044,7 @@ pub async fn approve_customer(
                 error_message: None,
             },
             &headers,
+            audit_actor,
         )
         .await;
     });
@@ -1087,22 +1091,13 @@ pub async fn reject_customer(
         Err(e) => return e.0,
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-
+    // 预读条件与下方 UPDATE 的 GUC 条件保持一致：非超管仍按 app.tenant_id 限定，
+    // 超管（app.tenant_id 为 nil/空）可跨租户定位实体。修正此前「UPDATE 允许超管、
+    // 预读却严格按操作者租户」的不一致；审计租户一律取实体行 tenant_id。
     let customer = sqlx::query_as::<_, Customer>(
-        "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2",
+        "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, name_en, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(id)
-    .bind(tenant_id)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
@@ -1130,6 +1125,7 @@ pub async fn reject_customer(
         }
     }
 
+    let audit_actor = AuditActor::from_claims(Some(customer.tenant_id), &claims);
     let reason = req.reason.clone().unwrap_or_default();
     let request_data = serde_json::json!({
         "comment": req.comment,
@@ -1143,7 +1139,7 @@ pub async fn reject_customer(
         "reason": reason,
     });
     tokio::spawn(async move {
-        let _ = log_audit_event(
+        let _ = log_audit_event_with_actor(
             &state.db,
             AuditEventParams {
                 action: "crm.customer.approval.reject".to_string(),
@@ -1158,6 +1154,7 @@ pub async fn reject_customer(
                 error_message: None,
             },
             &headers,
+            audit_actor,
         )
         .await;
     });
