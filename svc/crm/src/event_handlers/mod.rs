@@ -773,16 +773,8 @@ impl CrmEventHandlers {
             return Ok(());
         }
 
-        let tenant_id = if payload_tenant.is_some() {
-            payload_tenant
-        } else {
-            sqlx::query_scalar("SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid")
-                .fetch_optional(&self.db)
-                .await
-                .ok()
-                .flatten()
-        };
-        let Some(tenant_id) = tenant_id else {
+        // 事件载荷必须携带租户；后台链路无请求 GUC，缺失租户时跳过（与既有行为一致）
+        let Some(tenant_id) = payload_tenant else {
             tracing::warn!(
                 "[crm] 跳过客户订单同步（无租户上下文）- order_no={}",
                 order_no
