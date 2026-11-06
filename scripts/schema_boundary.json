@@ -39,8 +39,7 @@
       "allow": [
         "finance",
         "crm",
-        "scm",
-        "srm"
+        "master_data"
       ]
     },
     "finance": {

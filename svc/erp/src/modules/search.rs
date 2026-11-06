@@ -159,35 +159,26 @@ async fn global_search(
     .unwrap_or_default();
     results.extend(customer_results);
 
-    // 供应商：UNION scm.suppliers ∪ srm.suppliers，按 supplier_no 去重（scm 优先）
-    // 两表均有 deleted_at 软删列，RLS 按 app.tenant_id 自动隔离
+    // 供应商：直读主数据权威表 master_data.mdm_suppliers（scm/srm 已汇入，表内已去重，
+    // 含 supplier_no+tenant_id 唯一约束）。RLS 按 app.tenant_id 自动隔离。
     let supplier_results: Vec<SearchResult> = sqlx::query(only_own_schema_query!(
         "erp",
         r#"
-        SELECT id, name as title, description, module, path, type_name
-        FROM (
-            SELECT id, name,
-                   COALESCE(NULLIF(email, ''), NULLIF(phone, ''), name) as description,
-                   'supplier' as module,
-                   '/srm/suppliers' as path, '供应商' as type_name,
-                   supplier_no,
-                   ROW_NUMBER() OVER (PARTITION BY supplier_no ORDER BY (src = 'scm') DESC) as rn
-            FROM (
-                SELECT id, supplier_no, name, email, phone, 'scm' as src
-                FROM scm.suppliers
-                WHERE deleted_at IS NULL
-                  AND (LOWER(name) LIKE $1 OR LOWER(COALESCE(email, '')) LIKE $1 OR LOWER(COALESCE(phone, '')) LIKE $1)
-                UNION ALL
-                SELECT id, supplier_no, name, email, phone, 'srm' as src
-                FROM srm.suppliers
-                WHERE deleted_at IS NULL
-                  AND (LOWER(name) LIKE $1 OR LOWER(COALESCE(email, '')) LIKE $1 OR LOWER(COALESCE(phone, '')) LIKE $1)
-            ) u
-        ) ranked
-        WHERE rn = 1
+        SELECT id, name as title,
+               COALESCE(NULLIF(email, ''), NULLIF(phone, ''), name) as description,
+               'supplier' as module,
+               '/srm/suppliers' as path, '供应商' as type_name
+        FROM master_data.mdm_suppliers
+        WHERE deleted_at IS NULL
+          AND (
+              LOWER(name) LIKE $1
+              OR LOWER(COALESCE(email, '')) LIKE $1
+              OR LOWER(COALESCE(phone, '')) LIKE $1
+              OR LOWER(supplier_no) LIKE $1
+          )
         LIMIT $2
         "#,
-        "scm", "srm"
+        "master_data"
     ))
     .bind(search_pattern)
     .bind(limit / 3)

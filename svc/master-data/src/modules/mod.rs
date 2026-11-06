@@ -27,6 +27,8 @@ pub mod versioning_v54;
 pub mod dict;
 // P2-11: 公共主数据域（物料目录 / UOM / 样品）
 pub mod master_data;
+// 供应商权威只读查询（master_data.mdm_suppliers，scm/srm 汇入去重后的权威表）
+pub mod supplier_master;
 
 /// B10：把 10 个 MDM 模块的内存集合快照全部回写库（幂等 upsert）。
 /// 与 main.rs 后台 3s flush 的调用面一致；各模块内部按 initialized 门控，
@@ -790,6 +792,9 @@ pub fn create_routes() -> Router<AppState> {
         .route("/score", get(quality_v51::get_quality_score))
         .route("/trending", get(knowledge_v53::get_trending_items))
         .route("/uoms", get(master_data::list_uoms))
+        // 供应商权威只读列表/详情（GET /api/master-data/suppliers[/{id}]）
+        .route("/suppliers", get(supplier_master::list_suppliers))
+        .route("/suppliers/{id}", get(supplier_master::get_supplier))
         .route("/version/diff", get(versioning_v54::diff_versions_compat))
         .route(
             "/ai/predict",
