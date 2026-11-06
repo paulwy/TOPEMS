@@ -32,6 +32,7 @@ shift || true
 
 DSN="${DICT_WINDOW_DSN:-${DATABASE_URL:-}}"
 OUT_DIR="${DICT_WINDOW_OUT_DIR:-}"
+BACKUP_DIR="${DICT_WINDOW_BACKUP_DIR:-/Users/air/topems/backups}"
 SEED_BIN="${DICT_WINDOW_SEED_BIN:-$ROOT/target/debug/examples/seed_dict_replay}"
 ANCHOR=""
 PROD_FLAG=""
@@ -87,21 +88,35 @@ require_confirm() {
 
 psql_x() { psql "$DSN" -X -v ON_ERROR_STOP=1 "$@"; }
 
-latest_dump() {
-  ls -1t "$OUT_DIR"/dict_before_*.dump 2>/dev/null | head -n 1
+latest_dump_for() {
+  # $1 = 表名（core_dict_types / core_dict_items）
+  # shellcheck disable=SC2012
+  ls -1t "$BACKUP_DIR"/"$1"_*.dump 2>/dev/null | head -n 1
 }
 
 stage_backup() {
-  local ts dump txt
+  local ts txt dump csv qualified table count
   ts="$(date +%Y%m%d_%H%M%S)"
-  dump="$OUT_DIR/dict_before_${ts}.dump"
+  mkdir -p "$BACKUP_DIR"
   txt="$OUT_DIR/dict_before_${ts}.txt"
 
-  echo "[backup] pg_dump -> $dump"
-  PGOPTIONS="${PGOPTIONS:-} -c app.rls_system=on" pg_dump "$DSN" -Fc \
-    -t public.core_dict_types -t public.core_dict_items \
-    --enable-row-security -f "$dump"
-  shasum -a 256 "$dump" > "$dump.sha256"
+  for table in core_dict_types core_dict_items; do
+    qualified="public.$table"
+    dump="$BACKUP_DIR/${table}_${ts}.dump"
+    csv="$BACKUP_DIR/${table}_${ts}.csv"
+
+    echo "[backup] pg_dump -> $dump"
+    PGOPTIONS="${PGOPTIONS:-} -c app.rls_system=on" pg_dump "$DSN" -Fc \
+      -t "$qualified" --enable-row-security -f "$dump"
+    shasum -a 256 "$dump" > "$dump.sha256"
+
+    echo "[backup] CSV -> $csv"
+    psql_x -q -c "SET app.rls_system='on'" \
+      -c "\copy (SELECT * FROM $qualified) TO '$csv' WITH (FORMAT csv, HEADER true)"
+    count="$(psql_x -q -A -t -c "SET app.rls_system='on'" -c "SELECT count(*) FROM $qualified")"
+    echo "[backup] $table rows=$count"
+    printf '%s\t%s\t%s\n' "$table" "$count" "$dump" >> "$OUT_DIR/backup_manifest.tsv"
+  done
 
   echo "[backup] 文本基线 -> $txt"
   psql_x -q -A -F'|' -c "SET app.rls_system='on'" -c "
@@ -115,7 +130,7 @@ stage_backup() {
 
   psql_x -q -A -t -c "SELECT now()" > "$OUT_DIR/window_start.txt"
   echo "[backup] window_start=$(cat "$OUT_DIR/window_start.txt")"
-  echo "[backup] $(cat "$dump.sha256")"
+  echo "[backup] 备份文件：$BACKUP_DIR"
   echo "[backup] OK"
 }
 
@@ -298,13 +313,20 @@ SQL
 
 stage_restore() {
   require_confirm
-  local dump
-  dump="${DICT_WINDOW_DUMP:-$(latest_dump)}"
-  [[ -n "$dump" && -f "$dump" ]] || {
-    echo "找不到备份 dump（$OUT_DIR/dict_before_*.dump），可用 DICT_WINDOW_DUMP 指定" >&2
+  local dump_types dump_items
+  dump_types="${DICT_WINDOW_DUMP_TYPES:-$(latest_dump_for core_dict_types)}"
+  dump_items="${DICT_WINDOW_DUMP_ITEMS:-$(latest_dump_for core_dict_items)}"
+  [[ -n "$dump_types" && -f "$dump_types" ]] || {
+    echo "找不到 core_dict_types 备份 dump（$BACKUP_DIR/core_dict_types_*.dump）" >&2
     exit 2
   }
-  echo "[rollback-restore] TRUNCATE + pg_restore --data-only <- $dump"
+  [[ -n "$dump_items" && -f "$dump_items" ]] || {
+    echo "找不到 core_dict_items 备份 dump（$BACKUP_DIR/core_dict_items_*.dump）" >&2
+    exit 2
+  }
+  echo "[rollback-restore] TRUNCATE + pg_restore --data-only"
+  echo "[rollback-restore]   types <- $dump_types"
+  echo "[rollback-restore]   items <- $dump_items"
   echo "[rollback-restore] 注意：pg_restore 的 -t 不匹配 schema.table，必须用 -n public -t <table>；"
   echo "[rollback-restore] 且 items 依赖 types，必须分两步按依赖顺序恢复并开启 --exit-on-error"
   psql_x <<'SQL'
@@ -316,11 +338,11 @@ SQL
   PGOPTIONS="${PGOPTIONS:-} -c app.rls_system=on" pg_restore \
     --data-only --enable-row-security --exit-on-error \
     -n public -t core_dict_types \
-    -d "$DSN" "$dump"
+    -d "$DSN" "$dump_types"
   PGOPTIONS="${PGOPTIONS:-} -c app.rls_system=on" pg_restore \
     --data-only --enable-row-security --exit-on-error \
     -n public -t core_dict_items \
-    -d "$DSN" "$dump"
+    -d "$DSN" "$dump_items"
   echo "[rollback-restore] OK"
 }
 
