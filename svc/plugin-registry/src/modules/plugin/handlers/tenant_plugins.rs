@@ -896,9 +896,11 @@ pub async fn get_available_plugins(
 )]
 pub async fn upload_plugin(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<UploadPluginRequest>,
 ) -> Json<CoreResponse<Plugin>> {
     tracing::info!("[Plugin] Uploading new plugin: {}", req.name);
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
 
     let plugin_result: Result<Plugin, sqlx::Error> = sqlx::query_as(
         r#"
@@ -908,7 +910,7 @@ pub async fn upload_plugin(
             dependencies, author_name, author_url, homepage_url,
             screenshots, tags, category, is_published, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, false, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, false, $17)
         RETURNING *
         "#,
     )
@@ -928,6 +930,7 @@ pub async fn upload_plugin(
     .bind(serde_json::to_value(&req.screenshots).unwrap_or(serde_json::Value::Array(vec![])))
     .bind(serde_json::to_value(&req.tags).unwrap_or(serde_json::Value::Array(vec![])))
     .bind(&req.category)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
