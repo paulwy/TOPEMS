@@ -366,6 +366,12 @@ async fn save_audit_log(
     // 这里显式使用系统通道（nil UUID + system=on）并显式绑定行租户，
     // 避免裸连接无 GUC 时被 RLS `WITH CHECK` 拒绝（静默丢审计）。
     let tenant_id = request.tenant_id.unwrap_or_else(Uuid::nil);
+    // public.audit_logs.user_id 为 uuid；Claims.sub 是字符串，必须解析后再绑定，
+    // 否则 PostgreSQL 报 "column user_id is of type uuid but expression is of type text"。
+    let user_id = request
+        .user_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let mut tx = db_pool.begin().await?;
     sqlx::query(
@@ -389,7 +395,7 @@ async fn save_audit_log(
     .bind(&request.entity_type)
     .bind(request.entity_id)
     .bind(request.entity_ids)
-    .bind(request.user_id)
+    .bind(user_id)
     .bind(request.user_name)
     .bind(request.request_details)
     .bind(request.response_details)
