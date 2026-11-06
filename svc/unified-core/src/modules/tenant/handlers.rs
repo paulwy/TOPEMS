@@ -11,6 +11,7 @@ use uuid::Uuid;
 use super::models::*;
 use crate::{AppState, CoreResponse};
 use topems_shared_auth::auth::Claims;
+use topems_shared_db::scope::Db;
 
 /// List all tenants with pagination and filtering (super admin only)
 pub async fn list_tenants(
@@ -2816,13 +2817,21 @@ pub async fn get_tenant_api_usage(
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
     // 真实数据源：public.audit_logs（请求审计中间件写入）按租户成员反查聚合
+    let db = Db::new(state.pool.clone(), "public, shared");
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return Json(CoreResponse::error("租户 API 用量查询失败"));
+        }
+    };
     let total: i64 = sqlx::query(
         "SELECT COUNT(*)::bigint AS total FROM public.audit_logs a
          JOIN public.core_tenant_users u ON a.user_id = u.user_id AND u.tenant_id = $1
          WHERE a.created_at >= date_trunc('month', now())",
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r| r.get::<i64, _>("total"))
     .unwrap_or(0);
@@ -2833,12 +2842,13 @@ pub async fn get_tenant_api_usage(
          GROUP BY action ORDER BY cnt DESC",
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default()
     .into_iter()
     .map(|r| serde_json::json!({"action": r.get::<String, _>("action"), "count": r.get::<i64, _>("cnt")}))
     .collect();
+    let _ = scope.commit().await;
     Json(CoreResponse::success(
         serde_json::json!({"total_api_calls": total, "breakdown": serde_json::Value::Array(breakdown)}),
         "API usage retrieved",
@@ -2852,6 +2862,14 @@ pub async fn get_tenant_activity(
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
     // 真实数据源：public.audit_logs 近 7 天按日聚合
+    let db = Db::new(state.pool.clone(), "public, shared");
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return Json(CoreResponse::error("租户活动查询失败"));
+        }
+    };
     let days: Vec<serde_json::Value> = sqlx::query(
         "SELECT to_char(date_trunc('day', a.created_at), 'YYYY-MM-DD') AS day, COUNT(*)::bigint AS cnt
          FROM public.audit_logs a JOIN public.core_tenant_users u ON a.user_id = u.user_id AND u.tenant_id = $1
@@ -2859,12 +2877,13 @@ pub async fn get_tenant_activity(
          GROUP BY 1 ORDER BY 1",
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default()
     .into_iter()
     .map(|r| serde_json::json!({"date": r.get::<String, _>("day"), "count": r.get::<i64, _>("cnt")}))
     .collect();
+    let _ = scope.commit().await;
     Json(CoreResponse::success(
         serde_json::Value::Array(days),
         "Activity retrieved",
@@ -2878,6 +2897,14 @@ pub async fn get_tenant_top_endpoints(
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<serde_json::Value>> {
     // 真实数据源：public.audit_logs 近 7 天按资源类型聚合 TOP 10（中间件无完整 path，entity_type 为资源段）
+    let db = Db::new(state.pool.clone(), "public, shared");
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return Json(CoreResponse::error("租户端点统计查询失败"));
+        }
+    };
     let eps: Vec<serde_json::Value> = sqlx::query(
         "SELECT entity_type, COUNT(*)::bigint AS cnt FROM public.audit_logs a
          JOIN public.core_tenant_users u ON a.user_id = u.user_id AND u.tenant_id = $1
@@ -2885,12 +2912,13 @@ pub async fn get_tenant_top_endpoints(
          GROUP BY entity_type ORDER BY cnt DESC LIMIT 10",
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default()
     .into_iter()
     .map(|r| serde_json::json!({"endpoint": r.get::<String, _>("entity_type"), "count": r.get::<i64, _>("cnt")}))
     .collect();
+    let _ = scope.commit().await;
     Json(CoreResponse::success(
         serde_json::Value::Array(eps),
         "Top endpoints retrieved",
@@ -2933,16 +2961,25 @@ pub async fn get_tenant_real_time(
     .await
     .map(|r| r.get::<i64,_>("count"))
     .unwrap_or(0);
+    let db = Db::new(state.pool.clone(), "public, shared");
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return Json(CoreResponse::error("租户实时指标查询失败"));
+        }
+    };
     let requests_last_minute: i64 = sqlx::query(
         "SELECT COUNT(*)::bigint AS cnt FROM public.audit_logs a
          JOIN public.core_tenant_users u ON a.user_id = u.user_id AND u.tenant_id = $1
          WHERE a.created_at >= now() - interval '60 seconds'",
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .map(|r| r.get::<i64, _>("cnt"))
     .unwrap_or(0);
+    let _ = scope.commit().await;
     Json(CoreResponse::success(
         serde_json::json!({
             "active_users": active,
@@ -2998,6 +3035,15 @@ pub async fn collect_tenant_usage(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
 ) -> Json<CoreResponse<serde_json::Value>> {
+    // INSERT 内含 public.audit_logs 聚合子查询；写事务才能同时满足读 RLS 与写入。
+    let db = Db::new(state.pool.clone(), "public, shared");
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return Json(CoreResponse::error("租户用量采集失败"));
+        }
+    };
     let result = sqlx::query(
         r#"INSERT INTO public.core_tenant_usage (id, tenant_id, users_count, storage_used_mb, api_calls_count, period_start, period_end, base_cost)
         SELECT gen_random_uuid(), t.id,
@@ -3015,8 +3061,9 @@ pub async fn collect_tenant_usage(
           storage_used_mb = EXCLUDED.storage_used_mb,
           api_calls_count = EXCLUDED.api_calls_count"#,
     )
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+    let _ = scope.commit().await;
     match result {
         Ok(r) => {
             let rows = r.rows_affected();

@@ -257,7 +257,7 @@ pub async fn log_audit_event(
     req.ip_address = ip_address;
     req.user_agent = user_agent;
 
-    let service = SchemaAwareAuditLogService::new(db, None);
+    let service = SchemaAwareAuditLogService::new(db, Some("wms"));
     if let Err(e) = service.create_audit_log(&req).await {
         tracing::error!("记录审计日志失败: {}", e);
     }

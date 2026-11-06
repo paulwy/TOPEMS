@@ -2,6 +2,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_db::scope::Db;
 use utoipa::ToSchema;
 
 lazy_static! {
@@ -29,16 +30,24 @@ pub(crate) async fn record_audit_log(
     response_body: Option<serde_json::Value>,
     status: i16,
 ) {
+    let db = Db::new(pool.clone(), "public, shared");
+    let mut scope = match db.scope_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to create audit log scope: {}", e);
+            return;
+        }
+    };
     let result = sqlx::query(
         r#"
         INSERT INTO public.audit_logs (id, tenant_id, user_id, action, entity_type, entity_id, request_details, response_details, status, created_at)
         VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5, $6, $7, $8, NOW())
         "#,
     )
-    // 审计日志为无 claims 的内部路径：租户位一律绑 SQL NULL（Option::<Uuid>::None），
-    // 命中 RLS `tenant_id IS NULL` 公共分支（与 mobile sync-policy v4 同款）；
+    // 审计日志为无 claims 的内部路径：租户位绑 nil UUID，配合 scope_system 显式
+    // 命中系统通道（nil 租户 + app.rls_system='on'）；
     // 不再硬编码真实租户 ...0001 —— 超管/nil 上下文会被幸存严格策略拒绝。
-    .bind(Option::<uuid::Uuid>::None)
+    .bind(uuid::Uuid::nil())
     .bind(uuid::Uuid::parse_str(user_id).ok())
     .bind(action)
     .bind(resource_type)
@@ -46,8 +55,10 @@ pub(crate) async fn record_audit_log(
     .bind(request_body)
     .bind(response_body)
     .bind(if status < 400 { "success" } else { "failed" })
-    .execute(pool)
+    .execute(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     if let Err(e) = result {
         tracing::error!("Failed to record audit log: {}", e);

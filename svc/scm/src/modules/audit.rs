@@ -13,8 +13,10 @@ use super::ApiState;
 use crate::models::audit_log::AuditLog;
 use crate::shared::permission::tenant_bind_value;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::current_request_tenant;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
+use topems_shared_db::scope::Db;
 
 #[derive(Debug, Deserialize)]
 pub struct ListAuditLogsQuery {
@@ -212,6 +214,20 @@ pub async fn log_audit_event(
         .and_then(|h| h.to_str().ok())
         .map(|s| s.to_string());
 
+    // 显式作用域：有请求上下文时把审计落到当前租户，否则落系统 nil 租户。
+    // 统一走系统通道（nil + rls_system=on）保证 WITH CHECK 通过，tenant_id 列
+    // 仍按请求租户显式绑定，读回时租户只看到自己的行。
+    let ctx = current_request_tenant();
+    let tenant_id = ctx.map(|c| c.tenant).unwrap_or_else(Uuid::nil);
+    let scoped = Db::new(db.clone(), "scm, public, shared");
+    let mut scope = match scoped.scope_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("记录审计日志失败（作用域开启失败）: {}", e);
+            return;
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "scm",
         r#"
@@ -234,13 +250,17 @@ pub async fn log_audit_event(
     .bind(error_message)
     .bind(ip_address)
     .bind(user_agent)
-    // 审计工具函数无请求 GUC 上下文；显式写系统级 nil 租户（与既有 pool 空 GUC 退化结果一致）
-    .bind(Uuid::nil())
-    .execute(db)
+    .bind(tenant_id)
+    .execute(&mut scope)
     .await;
 
-    if let Err(e) = result {
-        tracing::error!("记录审计日志失败: {}", e);
+    match result {
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("记录审计日志提交失败: {}", e);
+            }
+        }
+        Err(e) => tracing::error!("记录审计日志失败: {}", e),
     }
 }
 

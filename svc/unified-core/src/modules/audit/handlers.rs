@@ -10,6 +10,7 @@ use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 
 use super::audit_query::AuditLogQueryParams;
 use super::models::{
@@ -475,7 +476,16 @@ pub async fn get_access_log(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    match sqlx::query_as::<_, super::audit_query::AuditLogEntry>(
+    let db = Db::new(state.pool.clone(), "public, shared");
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+
+    let result = sqlx::query_as::<_, super::audit_query::AuditLogEntry>(
         r#"
         SELECT
             id,
@@ -508,9 +518,12 @@ pub async fn get_access_log(
         "#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
-    .await
-    {
+    .fetch_optional(&mut scope)
+    .await;
+
+    let _ = scope.commit().await;
+
+    match result {
         Ok(Some(entry)) => {
             api_success(serde_json::to_value(entry).unwrap_or(serde_json::json!({})))
         }

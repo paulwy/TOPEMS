@@ -23,6 +23,7 @@ use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::AsyncL2Cache;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::commit_retry;
 use topems_shared_event::event::{
     EventPublisher, EventType, SrmSupplierCreatedPayload, SrmSupplierRegisteredPayload,
@@ -1205,6 +1206,16 @@ pub async fn record_audit_log(
 ) {
     let log_id = Uuid::new_v4();
 
+    // 显式系统通道作用域：行租户由参数显式绑定，避免裸池无 GUC 被 RLS 拒绝。
+    let scoped = Db::new(db.clone(), "srm, public, shared");
+    let mut scope = match scoped.scope_system().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("记录审计日志失败（作用域开启失败）: {}", e);
+            return;
+        }
+    };
+
     let result = sqlx::query(
         only_own_schema_query!("srm", r#"
         INSERT INTO srm.audit_logs (id, tenant_id, table_name, record_id, action, old_values, new_values, changed_by, changed_at)
@@ -1220,11 +1231,16 @@ pub async fn record_audit_log(
     .bind(new_values.flatten())
     .bind(changed_by)
     .bind(Utc::now())
-    .execute(db)
+    .execute(&mut scope)
     .await;
 
-    if let Err(e) = result {
-        tracing::error!("记录审计日志失败: {}", e);
+    match result {
+        Ok(_) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("记录审计日志提交失败: {}", e);
+            }
+        }
+        Err(e) => tracing::error!("记录审计日志失败: {}", e),
     }
 }
 

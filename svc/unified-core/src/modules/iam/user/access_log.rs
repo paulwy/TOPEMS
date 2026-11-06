@@ -8,6 +8,7 @@ use axum::{
 use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::models::record_audit_log;
@@ -163,6 +164,21 @@ pub async fn list_access_logs(
     let limit = query.limit.unwrap_or(10).clamp(1, 100);
     let offset = query.offset.unwrap_or(0).max(0);
 
+    let db = Db::new(state.pool.clone(), "public, shared");
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("数据库作用域创建失败: {}", e),
+                )),
+            );
+        }
+    };
+
     let rows = sqlx::query(
         r#"
         SELECT a.id, a.user_id, u.username, a.action, a.entity_type AS resource_type, a.entity_id::text AS resource_id,
@@ -175,12 +191,14 @@ pub async fn list_access_logs(
     )
     .bind(limit)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_else(|e| {
         tracing::error!("Failed to fetch access logs: {}", e);
         vec![]
     });
+
+    let _ = scope.commit().await;
 
     let logs_json: Vec<serde_json::Value> = rows
         .iter()
@@ -247,6 +265,21 @@ pub async fn get_user_access_logs(
     let limit = query.limit.unwrap_or(10).clamp(1, 100);
     let offset = query.offset.unwrap_or(0).max(0);
 
+    let db = Db::new(state.pool.clone(), "public, shared");
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("数据库作用域创建失败: {}", e),
+                )),
+            );
+        }
+    };
+
     let rows = sqlx::query(
         r#"
         SELECT a.id, a.user_id, u.username, a.action, a.entity_type AS resource_type, a.entity_id::text AS resource_id,
@@ -261,12 +294,14 @@ pub async fn get_user_access_logs(
     .bind(user_uuid)
     .bind(limit)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_else(|e| {
         tracing::error!("Failed to fetch user access logs: {}", e);
         vec![]
     });
+
+    let _ = scope.commit().await;
 
     let logs_json: Vec<serde_json::Value> = rows
         .iter()
@@ -359,6 +394,26 @@ pub async fn create_access_log(
     let status_str = if success { "success" } else { "failed" };
     let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
 
+    let db = Db::new(state.pool.clone(), "public, shared");
+    let mut scope = match if topems_shared_auth::middleware::tenant::current_request_tenant().is_some()
+    {
+        db.scope().await
+    } else {
+        db.scope_system().await
+    } {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(
+                    500,
+                    &format!("数据库作用域创建失败: {}", e),
+                )),
+            );
+        }
+    };
+
     let result = sqlx::query(
         r#"
         INSERT INTO public.audit_logs (user_id, action, entity_type, entity_id, ip_address, user_agent, status, response_details, created_at, tenant_id)
@@ -375,8 +430,10 @@ pub async fn create_access_log(
     .bind(status_str)
     .bind(error_message.map(|m| serde_json::json!({ "error": m })))
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
+
+    let _ = scope.commit().await;
 
     match result {
         Ok(row) => {

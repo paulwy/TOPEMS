@@ -85,6 +85,14 @@ async fn list_audit_logs(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("获取审计日志失败（作用域开启失败）: {}", e);
+            return ApiResponse::from(TopemsError::Internal("获取审计日志失败".to_string()));
+        }
+    };
+
     let result = sqlx::query_as::<_, AuditLog>(
         r#"
         SELECT id, action, entity_type, entity_id, entity_ids,
@@ -111,7 +119,7 @@ async fn list_audit_logs(
     .bind(get_tenant_id(&claims))
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -135,10 +143,13 @@ async fn list_audit_logs(
             .bind(params.start_date)
             .bind(params.end_date)
             .bind(get_tenant_id(&claims))
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await;
 
             let total = count_result.unwrap_or(0);
+            if let Err(e) = scope.commit().await {
+                tracing::error!("获取审计日志失败（提交只读事务）: {}", e);
+            }
 
             ApiResponse::success(
                 serde_json::json!({
@@ -180,6 +191,14 @@ async fn get_audit_log(
         Err(e) => return e,
     }
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("获取审计日志失败（作用域开启失败）: {}", e);
+            return ApiResponse::from(TopemsError::Internal("获取审计日志失败".to_string()));
+        }
+    };
+
     let result = sqlx::query_as::<_, AuditLog>(
         r#"
         SELECT id, action, entity_type, entity_id, entity_ids,
@@ -192,8 +211,12 @@ async fn get_audit_log(
     )
     .bind(id)
     .bind(get_tenant_id(&claims))
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("获取审计日志失败（提交只读事务）: {}", e);
+    }
 
     match result {
         Ok(Some(log)) => {

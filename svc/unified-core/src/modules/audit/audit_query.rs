@@ -21,6 +21,7 @@ use crate::AppState;
 use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
+use topems_shared_db::scope::Db;
 
 // ==================== 数据模型 ====================
 
@@ -310,6 +311,15 @@ pub async fn query_audit_logs(
             (items, total)
         }
         _ => {
+            let db = Db::new(state.pool.clone(), "public, shared");
+            let mut scope = match db.scope_read().await {
+                Ok(scope) => scope,
+                Err(e) => {
+                    tracing::error!("数据库作用域创建失败: {}", e);
+                    return ApiResponse::server_error("数据库作用域创建失败");
+                }
+            };
+
             let total: i64 = sqlx::query_scalar(
                 r#"
                 SELECT COUNT(*) FROM public.audit_logs
@@ -333,7 +343,7 @@ pub async fn query_audit_logs(
             .bind(start_date)
             .bind(end_date)
             .bind(params.search.as_deref())
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
@@ -387,9 +397,11 @@ pub async fn query_audit_logs(
             .bind(params.search.as_deref())
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
             .unwrap_or_default();
+
+            let _ = scope.commit().await;
 
             (items, total)
         }
@@ -479,28 +491,39 @@ pub async fn get_audit_log_stats(
             stats.by_user = load_login_top_users(&state).await;
         }
         _ => {
+            let db = Db::new(state.pool.clone(), "public, shared");
+            let mut scope = match db.scope_read().await {
+                Ok(scope) => scope,
+                Err(e) => {
+                    tracing::error!("数据库作用域创建失败: {}", e);
+                    return ApiResponse::server_error("数据库作用域创建失败");
+                }
+            };
+
             stats.total = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM public.audit_logs WHERE ($1::timestamptz IS NULL OR created_at >= $1) AND ($2::timestamptz IS NULL OR created_at <= $2)",
             )
             .bind(start_date)
             .bind(end_date)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
             stats.today_total = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM public.audit_logs WHERE created_at >= CURRENT_DATE",
             )
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
             stats.success_total = sqlx::query_scalar::<_, i64>(
                 "SELECT COUNT(*) FROM public.audit_logs WHERE status = 'success'",
             )
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
+
+            let _ = scope.commit().await;
 
             stats.failure_total = stats.total - stats.success_total;
 
@@ -550,12 +573,31 @@ async fn load_top_by_column(
         table = table,
         date_col = date_col,
     );
-    let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(start_date)
-        .bind(end_date)
-        .fetch_all(&state.pool)
-        .await
-        .unwrap_or_default();
+    let rows = if table == "public.audit_logs" {
+        let db = Db::new(state.pool.clone(), "public, shared");
+        let mut scope = match db.scope_read().await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::error!("数据库作用域创建失败: {}", e);
+                return Vec::new();
+            }
+        };
+        let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
+            .bind(start_date)
+            .bind(end_date)
+            .fetch_all(&mut scope)
+            .await
+            .unwrap_or_default();
+        let _ = scope.commit().await;
+        rows
+    } else {
+        sqlx::query(sqlx::AssertSqlSafe(sql))
+            .bind(start_date)
+            .bind(end_date)
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default()
+    };
     rows.into_iter()
         .map(|row| AuditLogCount {
             key: row.try_get::<String, _>("key").unwrap_or_default(),
@@ -565,6 +607,14 @@ async fn load_top_by_column(
 }
 
 async fn load_audit_top_users(state: &AppState) -> Vec<AuditLogCount> {
+    let db = Db::new(state.pool.clone(), "public, shared");
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return Vec::new();
+        }
+    };
     let rows = sqlx::query(
         r#"
         SELECT COALESCE(user_name, user_id::text, 'unknown') AS key, COUNT(*) AS count
@@ -575,9 +625,10 @@ async fn load_audit_top_users(state: &AppState) -> Vec<AuditLogCount> {
         LIMIT 10
         "#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+    let _ = scope.commit().await;
     rows.into_iter()
         .map(|row| AuditLogCount {
             key: row.try_get::<String, _>("key").unwrap_or_default(),
@@ -632,12 +683,31 @@ async fn load_trend(
         table = table,
         date_col = date_col,
     );
-    let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
-        .bind(start_date)
-        .bind(end_date)
-        .fetch_all(&state.pool)
-        .await
-        .unwrap_or_default();
+    let rows = if table == "public.audit_logs" {
+        let db = Db::new(state.pool.clone(), "public, shared");
+        let mut scope = match db.scope_read().await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::error!("数据库作用域创建失败: {}", e);
+                return Vec::new();
+            }
+        };
+        let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
+            .bind(start_date)
+            .bind(end_date)
+            .fetch_all(&mut scope)
+            .await
+            .unwrap_or_default();
+        let _ = scope.commit().await;
+        rows
+    } else {
+        sqlx::query(sqlx::AssertSqlSafe(sql))
+            .bind(start_date)
+            .bind(end_date)
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default()
+    };
     rows.into_iter()
         .map(|row| AuditLogTrend {
             date: row.try_get::<String, _>("date").unwrap_or_default(),
@@ -793,7 +863,9 @@ async fn fetch_export_rows(
             .await?
         }
         _ => {
-            sqlx::query(
+            let db = Db::new(state.pool.clone(), "public, shared");
+            let mut scope = db.scope_read().await?;
+            let rows = sqlx::query(
                 r#"
                 SELECT id, user_id::text, user_name, action, entity_type, entity_id,
                        status, error_message, ip_address, user_agent, created_at
@@ -813,8 +885,10 @@ async fn fetch_export_rows(
             .bind(params.status.as_deref())
             .bind(params.user_id.as_deref())
             .bind(limit)
-            .fetch_all(&state.pool)
-            .await?
+            .fetch_all(&mut scope)
+            .await?;
+            let _ = scope.commit().await;
+            rows
         }
     };
 

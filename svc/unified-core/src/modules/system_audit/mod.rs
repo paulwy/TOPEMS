@@ -11,6 +11,7 @@ use uuid::Uuid;
 
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
+use topems_shared_db::scope::Db;
 
 // ─── Models ──────────────────────────────────────────────────────────────────
 
@@ -73,6 +74,15 @@ pub async fn list_audit_logs(
         .and_then(|s| Uuid::parse_str(&s).ok());
     let search = params.search.clone().unwrap_or_default();
 
+    let db = Db::new(state.pool.clone(), "public, shared");
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+
     let total: i64 = sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM public.audit_logs
            WHERE ($1::uuid IS NULL OR user_id = $1)
@@ -92,7 +102,7 @@ pub async fn list_audit_logs(
     .bind(&params.start_date)
     .bind(&params.end_date)
     .bind(&search)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -118,9 +128,11 @@ pub async fn list_audit_logs(
     .bind(&search)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+
+    let _ = scope.commit().await;
 
     ApiResponse::success(
         PaginatedResponse::new(items, total, page, page_size),
@@ -132,10 +144,21 @@ pub async fn get_audit_log(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AuditLog> {
+    let db = Db::new(state.pool.clone(), "public, shared");
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+
     let log: Result<AuditLog, _> = sqlx::query_as("SELECT * FROM public.audit_logs WHERE id = $1")
         .bind(id)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await;
+
+    let _ = scope.commit().await;
 
     match log {
         Ok(v) => ApiResponse::success(v, "查询成功"),
@@ -160,6 +183,15 @@ pub async fn export_audit_logs(
         .and_then(|s| Uuid::parse_str(&s).ok());
     let search = params.search.clone().unwrap_or_default();
 
+    let db = Db::new(state.pool.clone(), "public, shared");
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+
     let items: Vec<AuditLog> = sqlx::query_as(
         r#"SELECT * FROM public.audit_logs
            WHERE ($1::uuid IS NULL OR user_id = $1)
@@ -180,9 +212,11 @@ pub async fn export_audit_logs(
     .bind(&params.start_date)
     .bind(&params.end_date)
     .bind(&search)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+
+    let _ = scope.commit().await;
 
     ApiResponse::success(
         serde_json::json!({
@@ -205,6 +239,15 @@ pub async fn get_audit_stats(
         .clone()
         .unwrap_or_else(|| "action".to_string());
 
+    let db = Db::new(state.pool.clone(), "public, shared");
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+
     let total: i64 = sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM public.audit_logs
            WHERE ($1::timestamptz IS NULL OR created_at >= $1::timestamptz)
@@ -212,7 +255,7 @@ pub async fn get_audit_stats(
     )
     .bind(&params.start_date)
     .bind(&params.end_date)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -223,7 +266,7 @@ pub async fn get_audit_stats(
     )
     .bind(&params.start_date)
     .bind(&params.end_date)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -234,7 +277,7 @@ pub async fn get_audit_stats(
     )
     .bind(&params.start_date)
     .bind(&params.end_date)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -247,7 +290,7 @@ pub async fn get_audit_stats(
         )
         .bind(&params.start_date)
         .bind(&params.end_date)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
         .unwrap_or_default(),
         "resource" => sqlx::query_as(
@@ -258,7 +301,7 @@ pub async fn get_audit_stats(
         )
         .bind(&params.start_date)
         .bind(&params.end_date)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
         .unwrap_or_default(),
         "user" => sqlx::query_as(
@@ -270,7 +313,7 @@ pub async fn get_audit_stats(
         )
         .bind(&params.start_date)
         .bind(&params.end_date)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
         .unwrap_or_default(),
         "date" => sqlx::query_as(
@@ -281,7 +324,7 @@ pub async fn get_audit_stats(
         )
         .bind(&params.start_date)
         .bind(&params.end_date)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
         .unwrap_or_default(),
         _ => Vec::new(),
@@ -291,6 +334,8 @@ pub async fn get_audit_stats(
     for (key, count) in by_group {
         group_map.insert(key, serde_json::json!(count));
     }
+
+    let _ = scope.commit().await;
 
     ApiResponse::success(
         serde_json::json!({
