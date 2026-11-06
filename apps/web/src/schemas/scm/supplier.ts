@@ -11,6 +11,9 @@ export const supplierSchema: EntitySchema = {
     resource: 'suppliers',
   },
 
+  // 批 16：写权限资源前缀（DB 实查存在三动作码）
+  permissionResource: 'scm:supplier',
+
   fields: [
     {
       // 后端真键为 supplier_no（GET /api/scm/suppliers 返回），创建兼容 alias code

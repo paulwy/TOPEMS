@@ -23,6 +23,9 @@ export const mrpPlanSchema: EntitySchema = {
     resource: 'mrpPlans',
   },
 
+  // 批 16：写权限资源前缀（DB 实查存在三动作码）
+  permissionResource: 'scm:mrp_plan',
+
   fields: [
     {
       name: 'plan_code',

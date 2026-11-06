@@ -22,6 +22,9 @@ export const supplierAdmissionSchema: EntitySchema = {
     resource: 'supplierAdmissions',
   },
 
+  // 批 16：写权限资源前缀（DB 实查存在三动作码）
+  permissionResource: 'scm:supplier_admission',
+
   fields: [
     {
       name: 'admission_no',

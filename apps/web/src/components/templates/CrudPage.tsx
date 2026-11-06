@@ -48,6 +48,7 @@ import { useTranslation } from 'react-i18next';
 import { ListPageTemplate } from './ListPageTemplate';
 import type { ColumnDef, RowAction } from './list/types';
 import { useOptionalPermission } from '@/hooks/useOptionalPermission';
+import { resolveCrudPermissionCodes } from './crudPermissions';
 
 import type { EntitySchema, BatchActionConfig, SchemaField } from '@/schema';
 import type {
@@ -322,31 +323,39 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   // 批 14：写权限收敛。未传任何权限码时 effectiveActions === actions（零回归）；
   // 'detail' 属读操作，不受写权限影响。
   const canDo = useOptionalPermission();
-  const effectiveActions = useMemo(() => {
-    const source = readOnly ? baseActions.filter((a) => a === 'detail') : baseActions;
-    if (!writePermission && !createPermission && !editPermission && !deletePermission) {
-      return source;
-    }
-    return source.filter((a) => {
-      if (a === 'detail') return true;
-      const code =
-        a === 'create'
-          ? (createPermission ?? writePermission)
-          : a === 'edit'
-            ? (editPermission ?? writePermission)
-            : (deletePermission ?? writePermission);
-      return canDo(code);
-    });
-  }, [
-    actionsProp,
-    schema.actions,
-    baseActions,
-    readOnly,
+  // 批 16：schema 声明 permissionResource 时，自动展开为三个真实细粒度码，
+  // 页面无需逐个传 createPermission/editPermission/deletePermission。
+  // 显式传入的 props 优先级更高。
+  const {
+    create: resolvedCreate,
+    edit: resolvedEdit,
+    delete: resolvedDelete,
+  } = resolveCrudPermissionCodes({
+    permissionResource: schema.permissionResource,
     writePermission,
     createPermission,
     editPermission,
     deletePermission,
+  });
+  const effectiveActions = useMemo(() => {
+    const source = readOnly ? baseActions.filter((a) => a === 'detail') : baseActions;
+    if (!resolvedCreate && !resolvedEdit && !resolvedDelete) {
+      return source;
+    }
+    return source.filter((a) => {
+      if (a === 'detail') return true;
+      const code = a === 'create' ? resolvedCreate : a === 'edit' ? resolvedEdit : resolvedDelete;
+      return canDo(code);
+    });
+  }, [
+    baseActions,
+    readOnly,
+    resolvedCreate,
+    resolvedEdit,
+    resolvedDelete,
     canDo,
+    actionsProp,
+    schema.actions,
   ]);
   const actions = effectiveActions;
 

@@ -58,6 +58,9 @@ export const purchaseRequisitionSchema: EntitySchema & SchemaExtensions = {
     resource: 'purchaseRequisitions',
   },
 
+  // 批 16：写权限资源前缀（DB 实查存在三动作码）
+  permissionResource: 'scm:purchase_requisition',
+
   fields: [
     {
       name: 'req_no',

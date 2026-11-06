@@ -8,6 +8,9 @@ export const processFlowSchema: EntitySchema = {
     module: 'mes',
     resource: 'processFlows',
   },
+
+  // 批 16：写权限资源前缀（DB 实查存在三动作码）
+  permissionResource: 'mes:process_flow',
   fields: [
     {
       name: 'code',

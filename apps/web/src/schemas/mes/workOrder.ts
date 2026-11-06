@@ -13,6 +13,9 @@ export const workOrderSchema: EntitySchema = {
     resource: 'workOrders',
   },
 
+  // 批 16：写权限资源前缀（DB 实查存在三动作码）
+  permissionResource: 'mes:work_order',
+
   fields: [
     {
       name: 'work_order_no',

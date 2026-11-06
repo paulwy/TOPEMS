@@ -14,6 +14,9 @@ export const inventoryTurnoverSchema: EntitySchema = {
     resource: 'inventoryTurnover',
   },
 
+  // 批 16：写权限资源前缀（DB 实查存在三动作码）
+  permissionResource: 'scm:inventory_turnover',
+
   fields: [
     {
       name: 'product_code',

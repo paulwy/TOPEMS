@@ -1882,6 +1882,17 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.137 审计整改第十四批：CrudPage 写权限接入前置（缺口盘点 + 补码 + scm/mes 首批接入）（批 16，2026-11-06）✅
+
+- **盘点结论（217 个 CrudPage 文件 / 208 带 api 声明 / 200 个 (模块,资源) 对）**：写码齐全 **86**；资源存在但零写码 **45**（缺 135 码）；FE 资源名 ≠ DB 资源名 **69**（命名映射问题）。
+- **关键发现**：`EntitySchema.api.resource` 是 **API 路径名**（`purchaseOrders`/`orders`/`boms`），DB 资源名是**业务实体名**（`purchase_order`/`production_order`/`bom_version_policy`）——两套命名空间，不能机械推导权限码。69 个不匹配项机械补码会造出同义双码（与批 2 收敛方向相反），故**只登记不补**。
+- **补码迁移** `20261107000005_resource_write_codes.sql`：补 135 条细粒度码（aps9/bi6/doc3/erp39/hrm3/iam3/integration9/mobile3/monitor6/qms3/rd33/tms12/workflow6），resource 字段沿用同资源既有 read 码的 colon 写法；未补资源级 `:write`（DB 现有 `:write` 全是模块级两段码，不新增第二种写语义）。幂等实测：首次 `INSERT 0 135`，二次 `INSERT 0 0`；DB 码 1037→**1172**。
+- **授权（最小权限 + 不误锁管理员）**：erp→erp_manager(39)、hrm→hrm_manager(3)、qms→qms_manager(3)、iam→admin(3)、**admin/superadmin 各全量 135**（管理员语义即全量，不补会误锁）；**employee/finance_user 等基础角色零补**；aps/bi/doc/integration/mobile/monitor/rd/tms/workflow 九域无对应 manager 角色，只建码不授权（登记）。
+- **接入机制（通用性优先）**：`EntitySchema` 新增可选 `permissionResource`（如 `'scm:purchase_order'`），CrudPage 经纯函数 `resolveCrudPermissionCodes` 展开为 create/update/delete 三真实码（显式 props > schema 前缀 > writePermission 总闸，三者皆无则不过滤）；**页面零改动**，只需 schema 声明一行。
+- **首批接入 17 个 schema**（scm 10 + mes 7，DB 实查三码齐全）：purchase_order / purchase_item / purchase_requisition / supplier / supplier_admission / delivery_appointment / inventory_turnover / mrp_plan / mrp_suggestion / price_comparison；work_order / work_report / equipment / process_flow / process_route / team / wip。
+- **验证**：新增单测 6 passed；真实角色核对 17 资源×3 码=51 码 → scm_manager **30/51**、mes_manager **21/51**（恰好各域全可见）、admin/superadmin **51/51**、employee/finance_user **0/51**（精确按职责）；**全站 vitest 624 files / 6669 passed / 0 failed**；tsc 0 error；eslint 0 error；迁移四件套 PASS（Errors 0 / Warnings 4 / drift 0）；RLS ✅；rename_groups 0；对账 fe 465 / be 577 / db **1028**（+135）。
+- **遗留（登记）**：69 个命名不匹配页面待语义映射；九域 87 条码无 manager 角色；erp 13 资源待下批接入；`audit_permission_codes.py` 不排除 `__tests__` 口径问题仍为独立项。
+
 ## v1.136 审计整改第十三批：hasPermission 三段码缺陷修正（批 15，2026-11-06）✅
 
 - **缺陷**：`permissions.ts` 对 `模块:资源:动作` 三段码沿用二段码等级近似——资源名当 action 查等级得 0，模块内任何权限等级亦 ≥0 → `0>=0` 恒真 → **该模块有任一权限即放行全部三段码**。

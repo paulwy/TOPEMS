@@ -11,6 +11,9 @@ export const purchaseItemSchema: EntitySchema = {
     resource: 'purchaseItems',
   },
 
+  // 批 16：写权限资源前缀（DB 实查存在三动作码）
+  permissionResource: 'scm:purchase_item',
+
   fields: [
     {
       name: 'order_id',

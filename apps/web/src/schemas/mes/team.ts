@@ -8,6 +8,9 @@ export const teamSchema: EntitySchema = {
     module: 'mes',
     resource: 'teams',
   },
+
+  // 批 16：写权限资源前缀（DB 实查存在三动作码）
+  permissionResource: 'mes:team',
   fields: [
     {
       name: 'team_code',
