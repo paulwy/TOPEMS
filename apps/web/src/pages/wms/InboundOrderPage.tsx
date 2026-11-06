@@ -11,7 +11,7 @@ import { wmsApi } from '@/api/wms';
 import i18n from '@/i18n';
 import { WMS_PATHS } from '@/modules/wms/config';
 // P3 批7：新建操作权限约束（BE-only 码补前端落点，见 docs/audit/P3-3_*.md）
-import { usePermission } from '@/hooks/usePermission';
+import { useOptionalPermission } from '@/hooks/useOptionalPermission';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import { SchemaForm } from '@/components/templates/list/SchemaForm';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
@@ -31,7 +31,8 @@ const inboundOrderCrudApi = createListPageCrudApi<Record<string, unknown>>(
 );
 
 const InboundOrderPage: React.FC = () => {
-  const { checkPermission } = usePermission();
+  // 批 14：改为无 Provider 依赖判定（无权限信息时放行）
+  const checkPermission = useOptionalPermission();
   const canCreate = checkPermission('wms:inbound_order:write');
   const columns = React.useMemo(
     () =>

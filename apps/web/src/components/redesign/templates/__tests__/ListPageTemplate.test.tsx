@@ -7,8 +7,8 @@ import { ListPageTemplate } from '../ListPageTemplate';
 // 批 12：ListPageTemplate 内部用 usePermission 判定 writeOnly 列；
 // 该 hook 依赖 AuthProvider，测试中显式 mock 以保证可控。
 const mockCheckPermission = vi.fn<(permission: string) => boolean>(() => true);
-vi.mock('@/hooks/usePermission', () => ({
-  usePermission: () => ({ checkPermission: mockCheckPermission }),
+vi.mock('@/hooks/useOptionalPermission', () => ({
+  useOptionalPermission: () => mockCheckPermission,
 }));
 
 interface TestRow {

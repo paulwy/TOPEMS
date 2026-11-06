@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { PageHeader, type PageHeaderProps } from '../layout';
 import { DataTable, type DataTableProps, type DataTableColumn } from '../data';
 import { EmptyState } from '../feedback';
-import { usePermission } from '@/hooks/usePermission';
+import { useOptionalPermission } from '@/hooks/useOptionalPermission';
 
 export interface ListPageTemplateProps<T extends object> extends Omit<
   React.HTMLAttributes<HTMLDivElement>,
@@ -52,7 +52,9 @@ export function ListPageTemplate<T extends object>({
   ...rest
 }: ListPageTemplateProps<T>) {
   const { t } = useTranslation();
-  const { checkPermission } = usePermission();
+  // 批 14：改用无 AuthProvider 依赖的判定（无权限信息时放行），避免模板级 hook 把
+  // 所有使用 ListPageTemplate 的页面测试打成必须挂 Provider。
+  const { checkPermission } = { checkPermission: useOptionalPermission() };
   // 批 12：写操作列按权限收敛。writePermission 未提供 → canWrite 恒 true → 不过滤，
   // 保证存量页面零回归。
   const canWrite = !writePermission || checkPermission(writePermission);

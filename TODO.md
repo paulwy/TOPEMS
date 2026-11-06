@@ -1844,6 +1844,17 @@
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.135 审计整改第十二批：CrudPage 写权限入口专项（批 14，2026-11-06）✅
+
+- **盘点**：`CrudPage` 被 284 个页面引用，改造前**无任何权限校验**（只有 `actions` / `readOnly`）。
+- **通用能力**：新增 `writePermission` / `createPermission` / `editPermission` / `deletePermission` 四个可选 props；四者全不传 → 行为完全不变（零回归）；`detail` 不受写权限影响。
+- **新 hook `useOptionalPermission`**：读 `permission_cache`（与 `usePermission` 同 key/TTL），**读不到信息（无 Provider / 未登录 / 首屏）一律放行**，避免把 284 个页面的测试打成必须挂 Provider。
+- **首轮落地**：`mes/EquipmentManagementPage`（`mes:equipment:create|update|delete`）、`scm/ScmPurchaseContractPage`（`scm:contract:create|update|delete`），6 个码均 psql 实查存在于 `public.core_permissions`。
+- **重大发现（已登记，未改）**：`permissions.ts:205 hasPermission` 对三段码走等级近似分支（把资源名当 action 查等级得 0，模块内任何权限等级亦 ≥0）→ **该模块有任一权限即放行全部三段码**，`checkPermission('scm:contract:delete')` 在仅有 create 时返回 true。修正会改变全站可见性，需专项评估（先量化误放行面）。
+- **顺带修复历史回归 32 例**：批 12 `ListPageTemplate`/`MesWorkOrderPage`、批 7 `InboundOrderPage`/`StockTakePage` 直接调 `usePermission` 致测试缺 Provider 全挂，统一改 `useOptionalPermission`。
+- **验证**：`src/components/templates`+`src/hooks`+`src/pages` **373 files / 1385 tests 全绿**（改前 16 files / 32 tests 失败）；tsc 0 error；eslint 0 error；`useOptionalPermission` 单测 7 passed。
+- **未落地**：284 页面未逐页接入（多数缺对应 DB 写码，强行接入会按钮全隐藏）；`X:create|update|delete` 与 `X:write` 两套写语义并存未统一。
+
 ## v1.134 审计整改第十一批：tier 与 module_code 体系统一 + 菜单按域过滤（批 13，2026-11-06）✅
 
 - **盘点结论**：`module_code` 与前端一级菜单是两套体系——前者仅 `erp:`/`pm:` 两前缀（50 条功能级），后者 36 个业务域 code；格式（`<域>:<功能>`）本身合法，缺的是**域覆盖**，直接按前缀过滤会把 34 个域隐藏、打挂应用。

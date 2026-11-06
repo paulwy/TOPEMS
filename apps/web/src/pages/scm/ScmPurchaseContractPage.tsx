@@ -16,6 +16,9 @@ export default function ScmPurchaseContractPage() {
         { label: t('scm.scm_purchase_contract_page.k1') },
         { label: t('scm.scm_purchase_contract_page.k0') },
       ]}
+      createPermission='scm:contract:create'
+      editPermission='scm:contract:update'
+      deletePermission='scm:contract:delete'
     />
   );
 }

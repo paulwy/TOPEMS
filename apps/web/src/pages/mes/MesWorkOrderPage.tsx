@@ -35,7 +35,7 @@ import {
   ToastContainer,
 } from '@/components/redesign';
 import type { DataTableColumn, Toast, UploadFile, DateRange } from '@/components/redesign';
-import { usePermission } from '@/hooks/usePermission';
+import { useOptionalPermission } from '@/hooks/useOptionalPermission';
 import { mesApi } from '@/api/mes';
 import type { WorkOrder as ApiWorkOrder } from '@/api/mes/types';
 import { useTranslation } from 'react-i18next';
@@ -131,7 +131,8 @@ const MesWorkOrderPage: React.FC = () => {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [attachments, setAttachments] = useState<UploadFile[]>([]);
   // 批 12：写操作权限（操作列 + 开工/完工按钮）
-  const { checkPermission } = usePermission();
+  // 批 14：改为无 Provider 依赖判定（无权限信息时放行），避免页面测试需挂 Provider
+  const checkPermission = useOptionalPermission();
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
