@@ -25,7 +25,6 @@ use topems_shared_service_client::service_client::{
 
 mod models;
 mod schema_defense;
-mod services;
 mod shared;
 
 mod event_handlers;
