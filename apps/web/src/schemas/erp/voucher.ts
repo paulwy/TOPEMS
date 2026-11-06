@@ -140,9 +140,14 @@ export const voucherSchema: EntitySchema & {
   description: i18n.t('schema:erp.voucher.meta.description'),
 
   api: {
-    module: 'erp',
+    // 批 19 订正：本页面数据全部经 @/api/finance/voucher（apiClient.finance.get('/vouchers')），
+    // 实际请求打 finance 服务，原 module: 'erp' 是错误声明（api.module 在 FE 无运行时引用，仅声明）。
+    module: 'finance',
     resource: 'vouchers',
   },
+
+  // 批 19：写权限资源前缀（凭证主数据归 finance 域，复用既有 finance:voucher 四码）
+  permissionResource: 'finance:voucher',
 
   fields: [
     {

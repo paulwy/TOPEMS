@@ -1921,6 +1921,17 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.140 审计整改第十七批：tenant 域资源码 + erp:vouchers 模块订正（批 19，2026-11-06）✅
+
+- **`erp:vouchers` 收敛（取证后动手）**：三层证据闭合——`schemas/erp/voucher.ts:14` import `@/api/finance/voucher`；`api/finance/voucher.ts:25,51…` 全部 `apiClient.finance.get/post('/vouchers')`；`svc/erp/src` 只有 prometheus gauge 与表名，**无 `/api/erp/vouchers` 路由**；`grep -rn "api.module" apps/web/src` **零引用**（该字段无运行时用途，CrudPage 请求全走 `apiAdapter` @ :504/521/545/569）；对账脚本扫字面码不读该字段 → 改 module 不改请求路径、不影响基线。已把 `module: 'erp'` 订正为 `'finance'` + 接入 `permissionResource: 'finance:voucher'`。
+- **tenant 域建码 2**（`tenant:member:update` / `delete`，迁移 `20261107000009`，`[batch19]` + ROLLBACK）：依据后端 `handlers.rs:1030 remove_member`、`:1057 update_member_role` + 前端 `TenantMembersTab.tsx:25,31` 真实写调用；幂等首次 `0 2`/`0 4`、二次 `0 0`；DB 1229→**1231**。
+- **tenant 三项分化**：`admin:tenantUsers` 有真实写 → 接入 `tenant:member`；`admin:invoices`（`TenantBillingTab.tsx:83-90` 写适配器全为空实现）→ **不接入**；`tenant:invoices`（`schemas/admin/tenantInvoice.tsx` 无任何页面引用）→ 孤儿文件不接入。
+- **不建 `tenant:member:create`**：UI create 适配器为空实现，无真实 CrudPage 写路径 → 不造无依据码（接入后新建按钮自动隐藏，消除僵尸入口）。
+- **`admin:auditLogs` 结论化**：只读页无写操作 → 维持不接入。
+- **角色规划 6 组**：workflow 6 / monitor 9 / 五模块 27 / 九域 87 仍只有 admin/superadmin；维持不造空壳角色，建议登记待拍板。
+- **验证**：vitest 624 files / 6669 passed / 1 skipped；tsc/eslint 0 error；迁移四件套 PASS（Errors 0 / drift 0）；RLS ✅；对账 fe 465 / be 577 / db **1087** / fe_orphan 41 / rename_groups 0。
+- 产出：`docs/audit/P3-9_tenant域资源码与erp模块订正_执行记录_2026-11-06.md`
+
 ## v1.139 审计整改第十六批：模块级 → 资源级 权限码细化（27 码 + 10 页面接入 + 跨域核实）（批 18，2026-11-06）✅
 
 - **缺口本质**：notification / ticket / plugin / migration / integration 五模块只有模块级码（`notification:read|write`、`ticket:admin|dashboard`、`plugin:dashboard`、migration 零三段码），无资源级码 → 8 个带 CRUD 的页面无法接入。
