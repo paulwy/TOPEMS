@@ -1943,6 +1943,18 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.143 审计整改第二十批：erp_manager 跨域只读 + 无人引用权限码盘点（批 22，2026-11-06）
+
+- **erp_manager 补 `finance:voucher:read`（只读，不补 write）**：迁移 `20261107000010_erp_manager_finance_voucher_read.sql`，`NOT EXISTS` 判重，实跑首次 `INSERT 0 1` / 二次 `0 0`，附 ROLLBACK 段。授权后持有者：admin / superadmin / finance_manager / **erp_manager**。未建新码 → `core_permissions` 仍 1087。
+- **修掉批 21 遗漏的"菜单/路由权限双轨不一致"**：navItem `erp-general-ledger.permission`（`config.ts:599`）原为 `erp:general_ledger:read`，与路由 `requiredPermissions`（finance 码）不一致 → 会造成"菜单可见但点进去 403"。已对齐为 `finance:voucher:read`。
+- **移除多余权限要求 `finance:dashboard:read`**：实测 `FinanceVoucherPage/index.tsx` 全文仅一处 `navigate(FINANCE_PATHS.dashboard)`（`:700` 跳转按钮），不消费 dashboard 数据 → 从 `voucherRoute.requiredPermissions` 移除，避免挡住仅持 voucher:read 的角色。
+- **契约断言加一例（6/6 通过）**：扫描 `path: ERP_PATHS.voucherManagement` 后的 navItem `permission`，断言必须为 `finance:voucher:read`，锁住双轨一致防回潮。
+- **`erp:general_ledger:read` 三端盘点 → 保留不删**：唯一活引用是 navItem（本批已改）；`menuPermissions.ts:66` 所在文件零引用（死文件）；`permissions.ts:542` 仅为 dev 期重复键自检清单（不参与判定）；后端零命中；DB 码 1 + 授权 2（admin/superadmin）。改后活引用归零但仍留清单与 DB → 按纪律登记，需连带清清单条目才可删，独立立项。
+- **删除死文件 `apps/web/src/config/menuPermissions.ts`（169 行）**：全站零引用（含 tests/scripts/packages 全量 grep），且多条映射已与真实 `requiredPermissions` 不符（如 `/erp/accounting-management` 映射旧码 vs 实际 `erp:accounting_subject:read`）。
+- **"无人引用权限码"盘点（登记不盲删）**：`db_only` 653 条经 `permissionResource` 覆盖重分类 → **217 条被运行时动态拼码使用（非孤儿）**；**436 条未覆盖**，其中 **409 条为 CRUD 细码属"已建码、页面未接入"（保留）**，余 27 条（read 13 / write 12 / approve 1 / tenant 1）待人工逐条判定。
+- **验证**：tsc 0 error；eslint 0；契约 6/6；迁移四件套全 PASS（names strict / migrations / validate checksums / schema-defense-drift 0 处）；RLS 通过；对账 fe 465 / be 577 / db 1087 / fe_orphan 41 / rename 0（db 不变，本批只补授权不建码）。
+- 产出：`docs/audit/P3-12_erp_manager跨域只读授权与孤儿码盘点_执行记录_2026-11-06.md`
+
 ## v1.142 审计整改第十九批：scm 合同 schema 清理 + 凭证页收敛（批 21，2026-11-06）✅
 
 - **scm 合同 schema 一步到位**：现役页面 `ScmPurchaseContractPage.tsx:13` 用的是 `purchaseContractWizardSchema`（3 步向导），`purchaseContract.ts` 是被取代的旧版（仅 `scmSchemas.test.ts:121` 断言消费）→ 删文件 + 清 `scm/index.ts` 的 `export *` + 删测试断言块与 import + 清 `ScmCrudPages3.test.tsx` 多余 mock 键；**保留 wizard 的契约断言**（活 schema 仍受测）。
