@@ -2084,6 +2084,20 @@ INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
 
+## v1.151 审计整改第三十批：架构级缺陷取证与收敛（批 30，2026-11-07）
+
+原则：**无把握不动**——纯字典表可归并，涉及业务数据双写的必须先取证，不可安全执行只出方案登记。
+
+- **供应商主数据多源（取证 6 张表）**：`scm.suppliers` **196** / `srm.suppliers` **92** / `erp.suppliers` 0 / `erp.core_erp_suppliers` 0（死表，0 writer，仅 `erp/src/modules/search.rs:160` 误读）/ 两张快照表均 0。**判定：架构上设计为双向双写，但数据上是两份独立数据集**——按 supplier_no/name/tax_id 三键 JOIN **全 0 命中**（scm_only 196 / srm_only 92），`sync_from_srm`/`sync_from_scm` 标志全 false、快照表 0 行，证明**同步管道从未真正跑过**。**mdm 无供应商能力**（master_data 92 张表 grep `%supplier%` 命中 0，只对 materials 有完整 CRUD）。→ `safe_to_merge_now=false`，**只出归一方案登记**（mdm 建表 + UNION 导入 + 视图 + 调用方改造），不动数据。登记五道分裂：管道悬空 / 死表误读 / 软删语义（scm `deleted_at` vs srm `status='deleted'`）/ category 中英文 / 编号体系。
+- **客户主数据多源**：`crm.customers` **295**（活跃 272，权威源）/ `erp.customers` 6（**全是测试残留**：1 行 MCP + 5 行 B1 验收 K1B1*，5 行已软删）/ `crm.core_crm_customers` 0（空壳）。**零重叠、零双写**；`publish_customer_event`（`svc/crm/src/services/mdm_event_service.rs:19`）全 svc 零调用 = 死代码；备份表 `crm.customers_tenant_null_backup_20260919` 177 行代码零引用。**判定 SEPARATE_SEMANTICS，权威源 crm，不可合并**。
+- **执行项：客户读取路径收敛**（`svc/erp/src/modules/search.rs:129-139`）：全局搜索「客户」原查空壳表 `crm.core_crm_customers`（0 行）**恒返回空** → 改读权威源 `crm.customers`；`contact_person`（权威表无此列）→ `COALESCE(NULLIF(email,''),NULLIF(phone,''),name)`；补齐 `AND deleted_at IS NULL`。**执行前逐项安全验证**：`crm.customers` RLS `relrowsecurity=t`/`relforcerowsecurity=t`、`tenant_id IS NULL` **实测 0 行**（策略 NULL 放行分支不构成泄露）、schema 边界宏仅校验 schema 故改表名不破、所需列全部存在。
+- **资产分类「双份」判定：不是重复，是同名不同语义**——`erp.asset_categories`（0 行，固定资产分类治理表，uuid PK + code UNIQUE + status/deleted_at/parent_id 树，路由 `/erp/asset-categories` 全 CRUD 挂载中）vs `master_data.mdm_asset_categories`（4 行，knowledge_v53 **数据资产本体**，text PK `cat-001`，实体/属性/关系/数据集全 ROOT，从 `mdm_collections` backfill）。→ `NOT_SAFE`，**不 DROP、不归并、不动数据**。
+- **顺带查出 erp 侧 0 行真因（latent bug）**：`svc/erp/src/modules/asset_category.rs:235` INSERT 列清单含 `tenant_id`，但该表**无 tenant_id 列** → POST 运行时必失败；且从未灌种子。反证：`erp.fixed_assets.asset_category` 是自由文本 String（`fixed_asset.rs:25/45/58`），**无 FK 指向分类表**。登记批 31 待修（删 `tenant_id` + list 补 `deleted_at IS NULL`）。
+- **登记项 A：report 与 bi 共用 `/api/bi` = 非真冲突**。两者同在 `svc/analytics`(8060) 内、路径树零重叠（report `/reports /templates /schedules /subscriptions /report-types /reports-center/*`；bi `/dashboard* /datasets /data-sources /comparison-analysis /widgets* /permissions/* /sync-records /analytics/* /visualization`）；`grep '/api/report' svc/**/*.rs` = 0。属批 4 已签字架构决策，**登记即关闭**。若未来拆：FE 31 行单文件 + BE 2 处 nest，网关已预接线（`ingress.yaml:133` / `init-gateway.sh:91`），只缺 traefik 一个 router 与 vite proxy 一条。
+- **登记项 B：asset/aps 无独立后端 = 已合并、功能完整**。`ls svc/` 无 asset/aps；asset → `svc/erp`(`/api/erp`，`apiClient.erp`)、aps → `svc/mes`(`/api/mes`，`runtime.ts:95`，`aps_compat.rs` 故意未 merge)；**`missing_endpoints = []`**，`MERGED_INTO_HOST_FULLY_FUNCTIONAL`，**登记即关闭**。附带确认 `assetCategory.ts:6` 的「Stub 后端尚未实现」注释已过期。
+- **验证**：`cargo check`(svc/erp) exit 0 无 warning；等价 SQL 真实库实测返回客户行、三级回退生效；**本批无 DB 迁移 / 无数据迁移 / 无需 CSV 备份**（三项判定均不可合并）；前端零改动。
+- 产出：`docs/audit/P3-20_架构级缺陷取证与收敛_批30_执行记录_2026-11-07.md`、`svc/erp/src/modules/search.rs`
+
 ## v1.150 审计整改第二十九批：菜单收敛与域分组（批 29，2026-11-07）
 
 - **精确盘点（实测）**：35 个模块 config.ts、**449** 个 navItems 元素；其中 35 个 `-dashboard` 后缀项由渲染层自动隐藏、28 个批 1~4 已手动下沉，**当前侧栏实际可见 386**，需再收敛 226。

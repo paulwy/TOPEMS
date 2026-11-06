@@ -129,10 +129,17 @@ async fn global_search(
     let customer_results: Vec<SearchResult> = sqlx::query(only_own_schema_query!(
         "erp",
         r#"
-        SELECT id, name as title, contact_person as description, 'customer' as module,
+        SELECT id, name as title,
+               COALESCE(NULLIF(email, ''), NULLIF(phone, ''), name) as description,
+               'customer' as module,
                '/crm/customers' as path, '客户' as type_name
-        FROM crm.core_crm_customers
-        WHERE LOWER(name) LIKE $1 OR LOWER(contact_person) LIKE $1 OR LOWER(phone) LIKE $1
+        FROM crm.customers
+        WHERE (
+            LOWER(name) LIKE $1
+            OR LOWER(COALESCE(email, '')) LIKE $1
+            OR LOWER(COALESCE(phone, '')) LIKE $1
+        )
+        AND deleted_at IS NULL
         LIMIT $2
         "#,
         "crm"
