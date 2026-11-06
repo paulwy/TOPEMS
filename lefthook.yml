@@ -441,6 +441,21 @@ pre-push:
       tags: database migrations
       run: node scripts/migration/check-schema-defense.mjs
 
+    # [2026-11-06 NEW Gate DRIFT] 账本 success=t 但 DDL 未落地的漂移防线：
+    # 历史事故：本地/test 的 _sqlx_migrations 声称已执行 20261105140000/160000，
+    #           production_orders 实际仍为 integer/numeric，导致 sqlx i64 解码失败；
+    #           batch_records 还残留模板误加约束。静态校验看不见这类「记账≠结构」。
+    # 判定：database/migration_drift_assertions.json 声明 source 版本 + 期望结构；
+    #       仅当目标库该版本 success=t 时才比对实际列/约束/索引，失败列具体漂移项。
+    # 触发：仅推送涉及 database/(migrations|baseline|postgres|init)、checksums、
+    #       断言清单、scripts/migration 时运行；无关改动秒级 SKIP。
+    # 成本：触发时约 0.2-0.5s（3 次 psql 查询，断言清单批量查询）；跳过 <0.1s。
+    # 失败：非零退出 + [Gate DRIFT] FAILED + 修复建议；无库/无 psql fail-closed
+    #       （可用 MIGRATION_DRIFT_DB_URL 指向 test 库，禁止静默 --no-verify 绕过）。
+    ledger-ddl-drift:
+      tags: database migrations
+      run: bash scripts/ci/check-ledger-ddl-drift.sh
+
     # [NEW] cargo check — 增量模式（2026-11-05 修订）：只编译本次 push 变更的 crate。
     # 背景：全量 check 被 utoipa-swagger-ui build.rs 网络下载失败恒阻断 + RUSTFLAGS=-D warnings
     #       使缓存失效 → 每次 push 冷编译且必失败 → 团队长期 --no-verify 绕过门禁。
