@@ -57,6 +57,8 @@ REMOTE_DSN="${DICT_WINDOW_REMOTE_DSN:-${WINDOW_REMOTE_DSN:-}}"
 LOCAL_SIM="${WINDOW_SSH_LOCAL_SIM:-0}"
 SSH_BIN="${WINDOW_SSH_BIN:-ssh}"
 SCP_BIN="${WINDOW_SCP_BIN:-scp}"
+REMOTE_PSQL_BIN="${WINDOW_REMOTE_PSQL_BIN:-/opt/homebrew/bin/psql}"
+REMOTE_PG_DUMP_BIN="${WINDOW_REMOTE_PG_DUMP_BIN:-/opt/homebrew/bin/pg_dump}"
 APP_ROLE="${DICT_APP_ROLE:-}"
 EXPECTED_TYPES="${DICT_EXPECTED_TYPES:-77}"
 EXPECTED_ITEMS="${DICT_EXPECTED_ITEMS:-397}"
@@ -124,7 +126,7 @@ remote_run() {
 }
 remote_psql() {
   local cmd
-  cmd="PGHOST=$(sq "$REMOTE_PGHOST") psql -X -v ON_ERROR_STOP=1 -d $(sq "$REMOTE_DB")"
+  cmd="PGHOST=$(sq "$REMOTE_PGHOST") $(sq "$REMOTE_PSQL_BIN") -X -v ON_ERROR_STOP=1 -d $(sq "$REMOTE_DB")"
   local a
   for a in "$@"; do cmd+=" $(sq "$a")"; done
   remote_run "$cmd"
@@ -166,7 +168,7 @@ stage_backup() {
       rdump="$REMOTE_DIR/backups/${table}_${ts}.dump"
       rcsv="$REMOTE_DIR/backups/${table}_${ts}.csv"
       echo "[backup] remote pg_dump -> $rdump"
-      remote_run "PGHOST=$(sq "$REMOTE_PGHOST") PGOPTIONS='-c app.rls_system=on' pg_dump -d $(sq "$REMOTE_DB") -Fc -t $(sq "$qualified") --enable-row-security -f $(sq "$rdump")"
+      remote_run "PGHOST=$(sq "$REMOTE_PGHOST") PGOPTIONS='-c app.rls_system=on' $(sq "$REMOTE_PG_DUMP_BIN") -d $(sq "$REMOTE_DB") -Fc -t $(sq "$qualified") --enable-row-security -f $(sq "$rdump")"
       rsha="$(remote_sha256 "$rdump")"
       copy_from_remote "$rdump" "$dump"
       lsha="$(local_sha256 "$dump")"

@@ -56,6 +56,7 @@ REMOTE_MIG_DIR="${WINDOW_REMOTE_MIG_DIR:-}"
 REMOTE_PGHOST="${WINDOW_REMOTE_PGHOST:-/tmp}"
 LOCAL_SIM="${WINDOW_SSH_LOCAL_SIM:-0}"
 SSH_BIN="${WINDOW_SSH_BIN:-ssh}"
+REMOTE_PSQL_BIN="${WINDOW_REMOTE_PSQL_BIN:-/opt/homebrew/bin/psql}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -86,7 +87,7 @@ remote_run() {
 }
 remote_psql() {
   local cmd
-  cmd="PGHOST=$(sq "$REMOTE_PGHOST") psql -X -v ON_ERROR_STOP=1 -d $(sq "$REMOTE_DB")"
+  cmd="PGHOST=$(sq "$REMOTE_PGHOST") $(sq "$REMOTE_PSQL_BIN") -X -v ON_ERROR_STOP=1 -d $(sq "$REMOTE_DB")"
   local a
   for a in "$@"; do cmd+=" $(sq "$a")"; done
   remote_run "$cmd"

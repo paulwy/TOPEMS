@@ -67,6 +67,8 @@ REMOTE_PGHOST="${WINDOW_REMOTE_PGHOST:-/tmp}"
 LOCAL_SIM="${WINDOW_SSH_LOCAL_SIM:-0}"
 SSH_BIN="${WINDOW_SSH_BIN:-ssh}"
 SCP_BIN="${WINDOW_SCP_BIN:-scp}"
+REMOTE_PSQL_BIN="${WINDOW_REMOTE_PSQL_BIN:-/opt/homebrew/bin/psql}"
+REMOTE_PG_DUMP_BIN="${WINDOW_REMOTE_PG_DUMP_BIN:-/opt/homebrew/bin/pg_dump}"
 EXPECT_COMMIT="${WINDOW_EXPECT_COMMIT:-}"
 SEED_BIN="${WINDOW_SEED_BIN:-$ROOT/target/debug/examples/seed_dict_replay}"
 BUILD_SEED="${WINDOW_BUILD_SEED:-1}"
@@ -162,7 +164,7 @@ remote_run() {
 
 remote_psql() {
   local cmd
-  cmd="PGHOST=$(sq "$REMOTE_PGHOST") psql -X -v ON_ERROR_STOP=1 -d $(sq "$REMOTE_DB")"
+  cmd="PGHOST=$(sq "$REMOTE_PGHOST") $(sq "$REMOTE_PSQL_BIN") -X -v ON_ERROR_STOP=1 -d $(sq "$REMOTE_DB")"
   local a
   for a in "$@"; do cmd+=" $(sq "$a")"; done
   remote_run "$cmd"
@@ -344,7 +346,7 @@ stage_backup() {
     if [[ $SSH_MODE -eq 1 ]]; then
       rdump="$REMOTE_DIR/backups/${base}_${ts}.dump"
       rcsv="$REMOTE_DIR/backups/${base}_${ts}.csv"
-      remote_run "PGHOST=$(sq "$REMOTE_PGHOST") PGOPTIONS='-c app.rls_system=on' pg_dump -d $(sq "$REMOTE_DB") -Fc -t $(sq "$qualified") --enable-row-security -f $(sq "$rdump")" || return 1
+      remote_run "PGHOST=$(sq "$REMOTE_PGHOST") PGOPTIONS='-c app.rls_system=on' $(sq "$REMOTE_PG_DUMP_BIN") -d $(sq "$REMOTE_DB") -Fc -t $(sq "$qualified") --enable-row-security -f $(sq "$rdump")" || return 1
       rsha="$(remote_sha256 "$rdump")"
       copy_from_remote "$rdump" "$dump" || return 1
       lsha="$(local_sha256 "$dump")"

@@ -51,7 +51,7 @@ scripts/db/window-execution.sh all \
   --expect-commit '<本轮发布 commit sha>' \
   --anchor "$ANCHOR" \
   --allow-migrations 20261107000008,20261107000013 \
-  --defer-migrations '20261105235800,20261106000000,20261106000001,20261107000001,20261107000002,20261107000003,20261107000004,20261107000005,20261107000006,20261107000007,20261107000009,20261107000010,20261107000011,20261107000012' \
+  --defer-migrations '20261105235800,20261106000000,20261106000001,20261107000001,20261107000002,20261107000003,20261107000004,20261107000005,20261107000006,20261107000007,20261107000009,20261107000010,20261107000011,20261107000012,20261107000014,20261107000015,20261107000016' \
   --base-url "$BASE_URL" --super-token "$SUPER_TOKEN" --tenant-token "$TENANT_TOKEN" \
   --tenant-id "$TENANT_ID" --notify-user-id "$NOTIFY_USER_ID"
 ```
@@ -63,7 +63,10 @@ scripts/db/window-execution.sh all \
 - 迁移白名单 fail-closed：`--only` 外且未 `--defer` 的 pending 会在任何 DDL 前 exit 1；
   `WINDOW_TARGET=prod` 时 `apply-forward` 必须带 `--prod`（脚本内强制）；
 - 发布基线：`--expect-commit` 必须等于 `git rev-parse HEAD`，工作区必须干净；本轮连带
-  batch25/26 代码（`6816f37d3`、`6bf524b2f`）一起上线。
+  batch25/26 代码（`6816f37d3`、`6bf524b2f`）及远端 4 个提交（`c28a4368b`、`e66eaa4bf`、
+  `b9beb4f90`、`7b0357aa4`）一起上线。
+- 远端已把 tier/auth/refresh 三条迁移重编号为 `000014–000016`；它们与 `07/09–12` 一样
+  属本窗口 **defer**，不应用。
 
 **脚本会在以下 5 个位置停下来等人工输入 `yes`（非交互直接 exit 3）**：
 
@@ -107,23 +110,23 @@ scripts/db/window-execution.sh all \
 
 ## 2. 时间线（本地演练实测 + prod 预估）
 
-本地演练（`20261106_162740`，scratch 库 + stub + SSH 传输模拟）：
+本地演练（`20261106_163232`，scratch 库 + stub + SSH 传输模拟，rebase 后最终代码）：
 
 | 段 | 内容 | 实测 |
 | --- | --- | --- |
-| 0a | 发布基线 + 执行物投递/sha256 | 0.87 s |
+| 0a | 发布基线 + 执行物投递/sha256 | 1.42 s |
 | 0 | 前置检查 | 0.09 s |
-| 1 | 9 表 dump + CSV（主机本地 → 取回） | 1.56 s |
-| 1b | 恢复到 scratch + 逐表指纹比对 | 0.56 s |
-| 2 | 字典回灌 + 清理 probe + 6 组核对 | 0.43 s |
+| 1 | 9 表 dump + CSV（主机本地 → 取回） | 1.46 s |
+| 1b | 恢复到 scratch + 逐表指纹比对 | 0.58 s |
+| 2 | 字典回灌 + 清理 probe + 6 组核对 | 0.63 s |
 | 3 | 回填（rfm + audit） | 0.04 s |
-| 4 | A 组清理 + B 组标记 | 0.08 s |
-| 5 | 前向迁移 2 条（08+13）+ 收紧 + 后核对 + RLS 实测 | 1.23 s |
-| 6 | stub HTTP 冒烟 | 0.07 s |
-| — | **四段合计（分段计时）** | **4.93 s** |
-| — | **整套脚本墙钟（含克隆库/基线/负例/stub/DROP）** | **9 s** |
+| 4 | A 组清理 + B 组标记 | 0.10 s |
+| 5 | 前向迁移 2 条（08+13）+ 收紧 + 后核对 + RLS 实测 | 1.30 s |
+| 6 | stub HTTP 冒烟 | 0.08 s |
+| — | **四段合计（分段计时）** | **5.69 s** |
+| — | **整套脚本墙钟（含克隆库/基线/负例/stub/DROP）** | **11 s** |
 
-> 演练只应用白名单 2 条；`07/09/10/11/12` 显式 defer 保持 pending（prod 为 14 条 defer）。
+> 演练只应用白名单 2 条；其余 pending 显式 defer 保持 pending（prod 为 17 条 defer）。
 
 prod 预估窗口 **30–45 分钟**：备份与恢复验证 5–10、字典 <2、回填 <1、清理 <1、
 发布+重启 10–15、冒烟 5、缓冲 10。`pg_dump` 为 MVCC 快照，不阻塞读写；
@@ -301,12 +304,12 @@ bash scripts/migration/apply-forward.sh \
   --ssh-host "$WINDOW_SSH_HOST" --remote-db topems_prod \
   --remote-mig-dir "$WINDOW_REMOTE_DIR/migrations" \
   --only 20261107000008,20261107000013 \
-  --defer '<其余 14 条已评审 pending>'
+  --defer '<其余 17 条已评审 pending>'
 ```
 
 - **白名单 fail-closed**：`--only` 之外且未 `--defer` 的 pending 会在任何 DDL 之前 exit 1；
   本地演练已用 `20261108000000` 负例验证（exit 1、探针表不存在、账本无新增）；
-- 本轮账本**只新增 2 条**：`08`（字典 2 张）+ `13`（7 张收紧）；其余 14 条保持 pending；
+- 本轮账本**只新增 2 条**：`08`（字典 2 张）+ `13`（7 张收紧）；其余 17 条保持 pending；
 
 - 本批窗口内必须且只收紧 **9 张表**：字典 2 张（迁移 08）+ 已回填 7 张（迁移 13）；
 - 迁移 13 删除 7 表全部历史策略，只建一条 `rls_tenant_isolation`：
@@ -400,6 +403,7 @@ DICT_WINDOW_CONFIRM=yes scripts/db/dict-replay-window.sh smoke \
 | 10 | `apply-forward` 只应用 `version > anchor`，账本缺失但版本小于 anchor 的迁移不会补 | 误以为 08 会在窗口内应用 | 窗口 anchor 必须取真实 `max(version)`；本批演练 anchor=06，发布段**只应用白名单 08+13** |
 | 11 | 旧入口会把 anchor 之后全部 pending 推到 prod（含 `tz_unify`） | 窗口污染 | `--only` 严格白名单 + `--defer` 显式声明；清单外 pending 在任何 DDL 前 exit 1；负例已验证 |
 | 12 | prod 主机仓库停在 `0c11b5b90`，直接借主机代码会跑旧逻辑 | 执行物与发布基线不一致 | 从干净 HEAD 构建 `seed_dict_replay`，与 SQL/迁移一起投递并逐件 sha256 校验；不使用主机仓库代码 |
+| 13 | 本地提交基于落后 4 个提交的 origin/main，pre-push `stale-base` 拦截 | 无法推送，且远端已重编号迁移 14–16 | `git pull --rebase origin main` 后重跑演练与门禁；defer 清单补 `14/15/16`，白名单仍为 `08+13` |
 
 ---
 
@@ -437,13 +441,13 @@ DICT_WINDOW_CONFIRM=yes scripts/db/dict-replay-window.sh smoke \
 
 ## 13. 证据索引（本轮本地）
 
-- 演练目录：`tmp/window-rehearsal-20261106_162740/`
+- 演练目录：`tmp/window-rehearsal-20261106_163232/`
   - `summary.txt`（分段耗时、总耗时、墙钟、9 表指纹）
   - `whitelist_block.txt` / `whitelist_result.txt`（清单外迁移 exit 1、零 DDL）
   - `sim/remote/`（SSH 模拟投递目录，含 SQL/迁移/seed）
   - `window/artifacts.tsv`（逐件 sha256）、`window/preflight.txt`、`window/backfill.txt`、
     `window/cleanup_a.txt`、`window/cleanup_b.txt`、`window/release.txt`、
     `window/postcheck.txt`、`window/rls_visibility.txt`、`window/dict_verify.txt`
-- 备份：`/Users/air/topems/backups/*_20261106_162745.{dump,csv,dump.sha256}`（9 张表全部指纹一致）
+- 备份：`/Users/air/topems/backups/*_20261106_163239.{dump,csv,dump.sha256}`（9 张表全部指纹一致）
 - 演练库已 DROP；`select datname ... like 'topems_window%'` 返回 0 行；主开发库 `topems` 未改动。
-- **prod 连接数：0；prod audit_logs 未读取、未写入。**
+- **prod 仅做过只读盘点（账本/角色/计数）；未产生任何 DML/DDL/重启/部署。**
