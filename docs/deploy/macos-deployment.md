@@ -128,17 +128,19 @@ python3 scripts/web_contract_smoke.py
 
 > 三项全 PASS = **生产部署三件套实跑闭环**，即 go-live-checklist §0.3 项 1 解除。
 
-#### 2.6.1 契约冒烟门禁（`web-contract-smoke`）
+#### 2.6.1 契约冒烟门禁（`web-contract-smoke` / `mobile-contract-smoke`）
 
 **默认行为（无需任何变量）**
 
-- `WEB_SMOKE_ENV` 缺省为 `local`，目标为 `http://127.0.0.1:8099`（本机 BFF / 测试库）；
+- `WEB_SMOKE_ENV` 缺省为 `local`；web 目标为 `http://127.0.0.1:8099`，mobile 目标为
+  `http://127.0.0.1:8070/api/mobile`（均为本机/测试服务）；
 - 目标主机必须是 loopback（`127.0.0.1` / `localhost` / `::1`）；非 loopback 需 `WEB_SMOKE_ALLOW_REMOTE=1`；
-- pre-commit 钩子只在暂存区含 `apps/web/src/api/`、`apps/web/src/utils/apiPath.ts`、
-  `svc/server/src/`、`lib/shared-service-client/src/` 时才触发；目标不可达/缺密钥时**明确失败并阻断提交**，
-  不再静默 SKIP（旧行为会掩盖对 prod 的写入，2026-11-06 已移除）。
+- pre-commit 钩子触发条件：web 侧为 `apps/web/src/api/`、`apps/web/src/utils/apiPath.ts`、`svc/server/src/`、
+  `lib/shared-service-client/src/`；mobile 侧为 `apps/mobile/src/api/`、`svc/mobile/src/`、
+  `lib/shared-service-client/src/`。目标不可达/缺密钥时**明确失败并阻断提交**，不再静默 SKIP
+  （旧行为会掩盖对 prod 的写入，2026-11-06 已移除）。
 
-**prod 三层拒绝（识别机制 + 绕过条件）**
+**prod 拒绝层（识别机制 + 绕过条件，web / mobile 相同）**
 
 | 层 | 识别 / 条件 | 未满足时 |
 | --- | --- | --- |
@@ -146,7 +148,7 @@ python3 scripts/web_contract_smoke.py
 | 1b. 目标位 | loopback 目标：只读 `lsof` 取监听 PID + `ps eww` 读取该进程 `DATABASE_URL` 库名，命中 `*_prod` 即视为 prod | exit 4（零请求；不打印 DSN） |
 | 2. 显式开关 | `ALLOW_PROD_SMOKE=1` | exit 4（不跳过、不降级） |
 | 3. 第二确认 | `PROD_SMOKE_CONFIRM=smoke-prod:<hostname>:<仓库目录名>` + 非空 `PROD_SMOKE_REASON` | exit 4 |
-| 4. 显式目标/密钥 | `WEB_BFF_URL` + `JWT_SECRET` 必须显式提供（prod 下禁止回落 `.env` 取密） | exit 4 / exit 3 |
+| 4. 显式目标/密钥 | web 用 `WEB_BFF_URL`，mobile 用 `MOBILE_BASE_URL`；两者都必须显式 `JWT_SECRET`（prod 下禁止回落 `.env` 取密） | exit 4 / exit 3 |
 
 - 第 1b 层是 2026-11-06 实测补上的关键一层：prod 仓库 `.env` 指向 `topems_test`，而 8099 由 launchd 以
   `DATABASE_URL=…/topems_prod` 启动；只看仓库文件会漏判，因此以目标监听进程的实际库名为准。
@@ -155,12 +157,15 @@ python3 scripts/web_contract_smoke.py
   （实测 `audit_logs` 前后计数一致）。
 - 绕过条件 = 上述四项全部满足；`--dry-run` 例外：prod 仓库位允许零网络静态检查（不读密钥、不发请求），
   但 `WEB_SMOKE_ENV=prod` 时仍要求完整授权，避免“干跑”成为绕行口子。
+- **mobile 额外约束（写库收敛）**：`prepare_data()`（直写 `mobile.mobile_users` / `iam.users` / `hrm.employees`）
+  与 `pre_create()`（POST 预创建）**只在测试环境执行**；prod 目标下一律跳过，并只执行 GET 端点，
+  写方法（POST/PUT/PATCH/DELETE）全部排除，退出码与 web 相同（2/3/4）。
 
 **为什么不会误伤本地开发与 CI**
 
 - 本地开发机：无 `TOPEMS_INSTANCE`、`DATABASE_URL` 指向 `topems` 等非 `_prod` 库 → 判定为 dev；目标监听进程的库名
-  非 prod 或读不到（`unknown`）时都不触发拒绝，默认目标即本机 8099，行为与改造前一致；
-- CI：不设置 `WEB_SMOKE_ENV=prod`，用 `--dry-run` 做静态契约提取（退出码 0、零网络）；无 BFF 时 `lsof` 无结果
+  非 prod 或读不到（`unknown`）时都不触发拒绝，web 默认本机 8099、mobile 默认本机 8070，行为与改造前一致；
+- CI：不设置 `WEB_SMOKE_ENV=prod`，用 `--dry-run` 做静态契约提取（退出码 0、零网络）；无服务时 `lsof` 无结果
   （目标位 `unknown`），普通跑法会在 2 秒内以 exit 3 明确报“目标不可达”而非挂死；无密钥时 exit 3 明确报
   “缺少 JWT_SECRET”，并提示改用 `--dry-run`。
 
@@ -168,6 +173,7 @@ python3 scripts/web_contract_smoke.py
 
 - 在 prod 仓库直接提交（未加授权）→ 钩子 exit 4 阻断提交，不产生任何 prod 写入；
 - 漏配 `ALLOW_PROD_SMOKE` / `PROD_SMOKE_CONFIRM` / `PROD_SMOKE_REASON` → 一律 fail-closed 并打印期望值；
+- mobile 若误用测试环境变量打 prod，第 1b 层会在建立连接前拦截；授权后也只会跑 GET，不会写库；
 - 强行 `--no-verify` 提交绕开本钩子属违规操作，需在变更单登记并复核；本门禁不承诺拦截 `--no-verify`。
 
 ## 3. 方案 B：原生 macOS 适配（备选/演练）

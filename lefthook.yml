@@ -367,22 +367,26 @@ pre-commit:
 
     # [Gate MCS] Mobile 契约全量实跑回归（方向1固化，117 端点）
     # 触发：mobile 前端契约 / mobile BFF / shared-service-client 变更。
-    # mobile 服务(8070)在线才执行（离线秒级跳过并提示，避免破坏无服务开发流）；
-    # 有 FAIL 阻断提交，日志落 /tmp/mobile_smoke_precommit.log。
+    # 安全边界（2026-11-06，与 Gate WCS 同一口径）：默认只打本机/测试（WEB_SMOKE_ENV=local，8070）；
+    #   prod 仓库位/目标进程连 *_prod 默认拒绝；确需 prod 必须 ALLOW_PROD_SMOKE=1 +
+    #   PROD_SMOKE_CONFIRM + PROD_SMOKE_REASON + 显式 MOBILE_BASE_URL/JWT_SECRET，且 prod 只跑 GET（不写库）。
+    #   fail-closed：目标不可达/缺密钥/漏配开关时明确失败并给出可操作提示，不再静默 SKIP。
     mobile-contract-smoke:
       tags: mobile contract smoke
       run: |
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(apps/mobile/src/api/|svc/mobile/src/|lib/shared-service-client/src/)' || true)
         [ -z "$STAGED" ] && exit 0
-        if ! lsof -iTCP:8070 -sTCP:LISTEN >/dev/null 2>&1; then
-          printf '\033[33m[Gate MCS] SKIP\033[0m mobile 服务(8070)未运行，契约回归可手动执行 python3 scripts/mobile_contract_smoke.py\n'
-          exit 0
-        fi
+        export WEB_SMOKE_ENV="${WEB_SMOKE_ENV:-local}"
         if python3 scripts/mobile_contract_smoke.py > /tmp/mobile_smoke_precommit.log 2>&1; then
-          printf '\033[32m[Gate MCS] PASS\033[0m 117 端点契约实跑回归全绿\n'
+          printf '\033[32m[Gate MCS] PASS\033[0m 目标=%s（日志 /tmp/mobile_smoke_precommit.log）\n' "$WEB_SMOKE_ENV"
+          grep -E '^\[mobile-smoke\]|^总计:' /tmp/mobile_smoke_precommit.log | tail -3
         else
-          printf '\033[31m[Gate MCS] FAIL\033[0m 见 /tmp/mobile_smoke_precommit.log 末尾 FAIL 行；若为未重启到新二进制，请重启 mobile 后重提\n'
-          exit 1
+          rc=$?
+          printf '\033[31m[Gate MCS] BLOCKED (exit %s)\033[0m 目标=%s\n' "$rc" "$WEB_SMOKE_ENV"
+          head -8 /tmp/mobile_smoke_precommit.log
+          echo "  ..."
+          tail -6 /tmp/mobile_smoke_precommit.log
+          exit "$rc"
         fi
 
     # [Gate WCS] Web 前端契约全量实跑回归（portal 契约面）。

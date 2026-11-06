@@ -768,7 +768,7 @@ SQL
   默认 `WEB_BFF_URL=http://localhost:8099`、JWT `sub = TEST_UID = e91e2228-…`、未登记 body 的 POST/PUT 发 `{}`；
   扫描 `apps/web/src/api/**` 得到 4668 个端点。
 - `scripts/mobile_contract_smoke.py` 本轮**没有运行**：`/tmp/mobile_smoke_precommit.log` 不存在
-  （mobile 钩子需 8070 在监听，未触发）。
+  （mobile 钩子需 8070 在监听，未触发）。**2026-11-06 已同口径加固**（默认 8070/本机、prod 只读、fail-closed，见 §14.4）。
 
 ### 14.2 证据链（逐条可复现）
 
@@ -839,6 +839,12 @@ c) 仅作历史方案保留。**本轮仍未停任何任务、未重启、未部
     仍要求完整授权，避免“干跑”成为绕行口子。
 - `lefthook.yml` 的 `web-contract-smoke`：移除 `lsof 8099` 静默 SKIP；`WEB_SMOKE_ENV` 缺省 `local`；
   失败透传真实退出码并打印 `[Gate WCS] BLOCKED` 与首尾日志，不再静默跳过。
+- `scripts/mobile_contract_smoke.py`（**同口径加固**）：默认 `WEB_SMOKE_ENV=local` +
+  `http://127.0.0.1:8070/api/mobile`；仓库位/目标位/授权/确认串/显式 URL 与密钥五道齐全才允许 prod；
+  `prepare_data()`（直写 `mobile.mobile_users`/`iam.users`/`hrm.employees`）与 `pre_create()` 只在测试环境执行；
+  prod 目标 `READ_ONLY=True`，跳过两者且只跑 GET（写方法全部排除）；退出码 2/3/4 与 web 一致。
+- `lefthook.yml` 的 `mobile-contract-smoke`：移除 `lsof 8070` 静默 SKIP；失败透传退出码并打印
+  `[Gate MCS] BLOCKED`，不再静默跳过。
 - 明文口令：脚本内**无硬编码口令/token**；`TEST_UID` / `TEST_UUID` 是合成 UUID；
   `JWT_SECRET` 只从环境变量或本地 `.env` 读取，缺失时报 exit 3 并提示配置方式。
 - 文档：`docs/deploy/macos-deployment.md` §2.6 + 新增 §2.6.1（默认行为、三层拒绝、绕过条件、误用后果）。
@@ -861,13 +867,29 @@ c) 仅作历史方案保留。**本轮仍未停任何任务、未重启、未部
 | H1 钩子级 prod | 暂存 mock 文件 + `TOPEMS_INSTANCE=prod` 跑 `lefthook run pre-commit` | 非零（4） | 0（10→10） |
 | H2 钩子级本地 | 同上，目标 stub | 0（4668 端点 PASS） | +4668（仅 stub） |
 
+**mobile 场景验证（与 web 同口径，stub `127.0.0.1:18096` 记录请求数）**
+
+| 场景 | 命令要点 | 退出码 | 外发请求 |
+| --- | --- | ---: | --- |
+| M-A 本地开发机 | 默认 local + `MOBILE_BASE_URL=stub` | 0（114/114 PASS） | +123（仅 stub，含 9 次测试环境预创建） |
+| M-B prod 仓库位 | `TOPEMS_INSTANCE=prod`，未授权 | **4** | **0**（184→184） |
+| M-B2 目标位 | 仓库 dev，目标监听进程 `DATABASE_URL=…/topems_prod` | **4** | **0**（prod stub 日志未创建） |
+| M-C1/C2/C3 prod 逐层缺项 | 缺 ALLOW / CONFIRM / REASON | **4** | 0 |
+| M-C4 授权齐全（只读） | 五项齐全 + stub | 0（61/61 PASS） | +61，**全部 GET**（0 写入） |
+| M-D1/D2 CI 无服务/无密钥 | 无监听端口 / `WEB_SMOKE_NO_DOTENV=1` | **3**（1 秒内） | 0 |
+| M-E1/E2/E3 非法配置 | 非法 env / instance / 非 loopback | **2** | 0 |
+| M-F1–F3 dry-run | prod 仓库位 / 授权齐全 / 无密钥 | 0 | 0 |
+| M-H1 钩子级 prod | 暂存 mock + `TOPEMS_INSTANCE=prod` | 非零（4） | 0（184→184） |
+| M-H2 钩子级本地 | 同上，目标 stub | 0（114/114 PASS） | +123（仅 stub） |
+
 **prod `audit_logs` 只读核对**：验证前基线 14:38:12 = `362 / 362 / 271`（total / 脏租户 / 合成 `…0099`），
-验证后 14:43:58 = `362 / 362 / 271`，**前后一致、无新增行**，证明拒绝路径与外发请求均为零。
+web 与 mobile 验证后 14:43:58 / 14:50:29 / 14:51:42 / 15:01:17 均保持 `362 / 362 / 271`，
+**前后一致、无新增行**，证明两条路径的拒绝与外发均为零。
 
 **残余风险（下一轮）**
 
-- `scripts/mobile_contract_smoke.py` **尚未同口径加固**：仍有 `TEST_UID` / `TEST_UUID`、`prepare_data()` 直写库、
-  默认 8099 优先；当前 mobile 钩子因 8070 未监听未触发，但一旦触发仍可能写入 prod。
+- mobile 已与 web 同口径加固；其 `prepare_data()` 直写库能力保留在测试环境（徒手执行 `python3 scripts/mobile_contract_smoke.py`
+  且 `DATABASE_URL` 指向非 prod 库时仍会写入测试库），prod 目标已强制只读并跳过全部写路径。
 - `--no-verify` 无法被门禁拦截（prod 仓库 13:40:59 / 14:07:15 已登记两次例外），需靠流程复核。
 - 钩子加固后，默认提交不再产生 `…0099` 合成探针；A 组清理与 B 组标记完成后，不会再因该钩子回涨
   （除非有人按 §2.6.1 完整授权主动跑 prod 探针）。
