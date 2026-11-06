@@ -145,11 +145,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     ),
 )]
 pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<PluginHealth>> {
-    let pool = state.document_service.pool().await;
-    let db_status = sqlx::query(only_own_schema_query!("ai", "SELECT 1", "plugin_ai"))
-        .fetch_one(&pool)
-        .await
-        .is_ok();
+    let db_status = match state.db.scope_read().await {
+        Ok(mut scope) => sqlx::query(only_own_schema_query!("ai", "SELECT 1", "plugin_ai"))
+            .fetch_one(&mut scope)
+            .await
+            .is_ok(),
+        Err(_) => false,
+    };
 
     let health = PluginHealth {
         status: if db_status {

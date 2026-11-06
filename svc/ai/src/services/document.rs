@@ -4,6 +4,7 @@ use crate::services::pdf::PdfParser;
 use crate::services::vector::{
     CreateDocumentRequest, SaveChunkRequest, SearchResult, VectorService,
 };
+use crate::services::Database;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -79,9 +80,8 @@ impl DocumentService {
             .map_err(|e| TopemsError::DatabaseQuery(format!("获取文档分块失败: {}", e)))
     }
 
-    pub async fn pool(&self) -> sqlx::PgPool {
-        // Get the pool from vector service for health checks
-        self.vector_service.read().await.db().pool().clone()
+    pub async fn database(&self) -> Database {
+        self.vector_service.read().await.db().clone()
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]

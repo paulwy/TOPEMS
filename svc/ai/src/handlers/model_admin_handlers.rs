@@ -86,7 +86,15 @@ pub async fn get_dashboard_stats(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<DashboardStats>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let pool = &state.pool;
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(ApiResponse::<DashboardStats>::from(TopemsError::internal(
+                "获取仪表盘统计失败",
+                e,
+            )))
+        }
+    };
 
     let (documents, qa_count, conv_trend, msg_trend, total_tokens, trend_tokens, active_users): (i64, i64, i64, i64, i64, i64, i64) =
         match sqlx::query(
@@ -100,12 +108,13 @@ pub async fn get_dashboard_stats(
                 (SELECT COUNT(DISTINCT user_id) FROM public.audit_logs WHERE action LIKE 'ask%' AND (tenant_id IS NULL OR tenant_id = $1))",
         )
         .bind(tenant_id)
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await
         {
             Ok(row) => (row.get(0), row.get(1), row.get(2), row.get(3), row.get(4), row.get(5), row.get(6)),
             Err(e) => return Json(ApiResponse::<DashboardStats>::from(TopemsError::internal("获取仪表盘统计失败", e))),
         };
+    let _ = scope.commit().await;
 
     Json(ApiResponse::success(
         DashboardStats {
@@ -167,10 +176,20 @@ pub async fn get_activity_trend(
         }
     };
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(ApiResponse::<Vec<TrendPoint>>::from(TopemsError::internal(
+                "获取活动趋势失败",
+                e,
+            )))
+        }
+    };
+
     match sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(tenant_id)
         .bind(days)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(rows) => {
@@ -193,6 +212,7 @@ pub async fn get_activity_trend(
             )))
         }
     }
+    let _ = scope.commit().await;
 
     Json(ApiResponse::success(points, "Success"))
 }
@@ -214,6 +234,14 @@ pub async fn get_feature_usage(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<FeatureUsageItem>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(ApiResponse::<Vec<FeatureUsageItem>>::from(
+                TopemsError::internal("获取功能使用统计失败", e),
+            ))
+        }
+    };
     let counts: Vec<(String, String, i64)> = match sqlx::query_as(
         "SELECT 'qa' AS f, '智能问答' AS l, COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL AND (tenant_id IS NULL OR tenant_id = $1)
          UNION ALL
@@ -226,7 +254,7 @@ pub async fn get_feature_usage(
     )
     // 4 个 UNION 分支共用同一个 $1 参数，Postgres 预备语句只需绑定一次
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => rows
@@ -234,6 +262,7 @@ pub async fn get_feature_usage(
             .collect(),
         Err(e) => return Json(ApiResponse::<Vec<FeatureUsageItem>>::from(TopemsError::internal("获取功能使用统计失败", e))),
     };
+    let _ = scope.commit().await;
 
     let sum: i64 = counts.iter().map(|(_, _, c)| c).sum();
     let items = counts
@@ -307,6 +336,15 @@ pub async fn list_models(
 ) -> Json<ApiResponse<Vec<ModelItem>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(ApiResponse::<Vec<ModelItem>>::from(TopemsError::internal(
+                "获取模型列表失败",
+                e,
+            )))
+        }
+    };
     match sqlx::query_as::<
         _,
         (
@@ -328,7 +366,7 @@ pub async fn list_models(
     )
     .bind(tenant_id)
     .bind(locale)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => Json(ApiResponse::success(
@@ -394,6 +432,15 @@ pub async fn get_model_config(
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let _tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(ApiResponse::<ModelConfig>::from(TopemsError::internal(
+                "获取模型配置失败",
+                e,
+            )))
+        }
+    };
     match sqlx::query_as::<_, (Uuid, f64, Option<i32>, f64, f64, f64, Option<String>)>(
         "SELECT id, temperature::float8, max_tokens, top_p::float8, frequency_penalty::float8,
                 presence_penalty::float8, system_prompt
@@ -401,7 +448,7 @@ pub async fn get_model_config(
     )
     .bind(model_id)
     .bind(tenant_opt)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some((
@@ -437,6 +484,14 @@ pub async fn update_model_config(
     Json(payload): Json<ModelConfigUpdate>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(ApiResponse::<serde_json::Value>::from(
+                TopemsError::internal("更新模型配置失败", e),
+            ))
+        }
+    };
     let result = sqlx::query(
         "UPDATE ai.ai_models SET
             temperature = COALESCE($1, temperature),
@@ -456,8 +511,9 @@ pub async fn update_model_config(
     .bind(payload.system_prompt)
     .bind(model_id)
     .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+    let _ = scope.commit().await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
@@ -514,6 +570,15 @@ pub async fn get_model_usage(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<UsageStats>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(ApiResponse::<UsageStats>::from(TopemsError::internal(
+                "获取模型使用统计失败",
+                e,
+            )))
+        }
+    };
 
     // 构建动态 WHERE 子句（$1 始终为 tenant_id）
     let mut where_clauses: Vec<String> = vec!["(tenant_id IS NULL OR tenant_id = $1)".to_string()];
@@ -553,7 +618,7 @@ pub async fn get_model_usage(
         total_query = total_query.bind(mid);
     }
 
-    let (total_tokens, total_requests) = match total_query.fetch_one(&state.pool).await {
+    let (total_tokens, total_requests) = match total_query.fetch_one(&mut scope).await {
         Ok(row) => {
             let tt: i64 = row.try_get("total_tokens").unwrap_or(0);
             let tr: i64 = row.try_get("total_requests").unwrap_or(0);
@@ -588,7 +653,7 @@ pub async fn get_model_usage(
     }
 
     let mut breakdown: Vec<UsageBreakdown> = Vec::new();
-    match breakdown_query.fetch_all(&state.pool).await {
+    match breakdown_query.fetch_all(&mut scope).await {
         Ok(rows) => {
             for row in rows {
                 let date: String = row.try_get("d").unwrap_or_default();
@@ -611,6 +676,7 @@ pub async fn get_model_usage(
             )))
         }
     }
+    let _ = scope.commit().await;
 
     Json(ApiResponse::success(
         UsageStats {

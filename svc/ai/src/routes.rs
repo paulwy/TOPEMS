@@ -590,7 +590,7 @@ pub fn create_routes(
 
     // 业务 Copilot 路由
     let copilot_state =
-        crate::handlers::business_copilot_handlers::CopilotAppState::new(pool.clone());
+        crate::handlers::business_copilot_handlers::CopilotAppState::new(app_state.db.clone());
     let business_copilot_router = Router::new()
         .route(
             "/dsh/copilot/sessions",
@@ -914,7 +914,7 @@ pub fn create_routes(
             get(workflow_handlers::get_workflow),
         )
         .layer(axum::middleware::from_fn_with_state(
-            pool,
+            pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn_with_state(
@@ -941,7 +941,7 @@ pub fn create_routes(
         .merge(crate::modules::ai_knowledge::create_routes())
         // 与其它 protected router 一致：认证在前（Claims 注入），租户解析随后
         .layer(axum::middleware::from_fn_with_state(
-            app_state.pool.clone(),
+            pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn_with_state(

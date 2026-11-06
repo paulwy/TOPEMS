@@ -3,6 +3,7 @@ pub mod permission;
 use axum::extract::FromRef;
 use std::sync::Arc;
 use topems_shared_auth::auth::AuthState;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::EventPublisher;
 
 use crate::dsh::agent::{AgentOrchestrator, AgentPerformanceMonitor};
@@ -14,8 +15,8 @@ use crate::services::audit::AiAuditService;
 #[derive(Clone)]
 pub struct AppState {
     pub auth_state: AuthState,
-    /// 常规读写连接池（遗留⑩：ai_knowledge 模块直查库使用，2026-09-08 补充）
-    pub pool: sqlx::PgPool,
+    /// 模块级数据库句柄（事务级 search_path = `ai, public`）。
+    pub db: Db,
     pub document_service: crate::services::DocumentService,
     pub vector_service: crate::services::VectorService,
     pub qa_service: crate::services::QAService,
@@ -45,5 +46,11 @@ pub struct AppState {
 impl FromRef<AppState> for AuthState {
     fn from_ref(state: &AppState) -> Self {
         state.auth_state.clone()
+    }
+}
+
+impl FromRef<AppState> for Db {
+    fn from_ref(state: &AppState) -> Self {
+        state.db.clone()
     }
 }

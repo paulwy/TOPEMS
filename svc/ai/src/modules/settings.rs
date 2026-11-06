@@ -36,8 +36,6 @@ pub struct UpdateAiSettingsRequest {
     )
 )]
 pub async fn get_settings(State(state): State<AppState>) -> Json<Value> {
-    let pool = &state.pool;
-
     // 从请求头获取租户ID
     let tenant_id = match get_tenant_id_from_header(&state).await {
         Some(id) => id,
@@ -58,15 +56,26 @@ pub async fn get_settings(State(state): State<AppState>) -> Json<Value> {
     };
 
     // 从数据库查询配置
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("获取AI配置失败: {}", e);
+            return Json(json!({
+                "success": false,
+                "message": format!("获取AI配置失败: {}", e)
+            }));
+        }
+    };
     let result = sqlx::query!(
         "SELECT default_model, max_tokens, temperature, enable_streaming, enable_function_calling, available_models FROM ai.ai_settings WHERE tenant_id = $1",
         tenant_id
     )
-    .fetch_optional(pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
         Ok(Some(row)) => {
+            let _ = scope.commit().await;
             let available_models: Vec<String> =
                 serde_json::from_value(row.available_models).unwrap_or_default();
             Json(json!({
@@ -87,8 +96,9 @@ pub async fn get_settings(State(state): State<AppState>) -> Json<Value> {
                 "INSERT INTO ai.ai_settings (tenant_id) VALUES ($1) ON CONFLICT (tenant_id) DO NOTHING",
                 tenant_id
             )
-            .execute(pool)
+            .execute(&mut scope)
             .await;
+            let _ = scope.commit().await;
 
             // 返回默认配置
             Json(json!({
@@ -128,14 +138,23 @@ pub async fn update_settings(
     State(state): State<AppState>,
     Json(req): Json<UpdateAiSettingsRequest>,
 ) -> Json<Value> {
-    let pool = &state.pool;
-
     let tenant_id = match get_tenant_id_from_header(&state).await {
         Some(id) => id,
         None => {
             return Json(json!({
                 "success": false,
                 "message": "未找到租户ID"
+            }));
+        }
+    };
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("更新AI配置失败: {}", e);
+            return Json(json!({
+                "success": false,
+                "message": format!("更新AI配置失败: {}", e)
             }));
         }
     };
@@ -168,8 +187,9 @@ pub async fn update_settings(
         req.enable_function_calling,
         req.available_models.map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null))
     )
-    .fetch_one(pool)
+    .fetch_one(&mut scope)
     .await;
+    let _ = scope.commit().await;
 
     match result {
         Ok(row) => {

@@ -37,19 +37,19 @@ const GLOBAL_TENANT_ID: &str = "00000000-0000-0000-0000-000000000000";
 #[derive(Clone)]
 pub struct CopilotAppState {
     pub session_manager: Arc<RwLock<CopilotSessionManager>>,
-    /// A-2b：真表读写（core.ai_conversations）
-    pub pool: sqlx::PgPool,
+    /// A-2b：真表读写（core.ai_conversations），事务级 search_path
+    pub db: topems_shared_db::scope::Db,
 }
 
 impl CopilotAppState {
-    pub fn new(pool: sqlx::PgPool) -> Self {
+    pub fn new(db: topems_shared_db::scope::Db) -> Self {
         Self {
             session_manager: Arc::new(RwLock::new(
                 CopilotSessionManager::with_defaults().with_llm_provider(
                     crate::dsh::provider::ProviderFactory::build_resilient_provider(),
                 ),
             )),
-            pool,
+            db,
         }
     }
 }
@@ -245,6 +245,20 @@ pub async fn create_session(
         .unwrap_or_else(uuid::Uuid::nil);
 
     // A-2b：真表落库（core.ai_conversations）
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("create_session begin failed: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError {
+                    error: "db_error".to_string(),
+                    message: "会话创建失败".to_string(),
+                }),
+            )
+                .into_response();
+        }
+    };
     let row: (uuid::Uuid, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>) =
         match sqlx::query_as(
             "INSERT INTO core.ai_conversations (tenant_id, user_id, title, module, messages, selected_records, context_data)
@@ -255,7 +269,7 @@ pub async fn create_session(
         .bind(&user_id)
         .bind(format!("copilot-{module}"))
         .bind(&module)
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await
         {
             Ok(r) => r,
@@ -271,6 +285,7 @@ pub async fn create_session(
                     .into_response();
             }
         };
+    let _ = scope.commit().await;
     let session_id = row.0.to_string();
 
     // 同步内存 manager（LLM 处理链仍用内存上下文，send_message 路径兼容）
@@ -316,6 +331,19 @@ pub async fn get_session(
         }
     };
     // A-2b：真表查询
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(_) => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(ApiError {
+                    error: "session_not_found".to_string(),
+                    message: format!("Session {} not found", session_id),
+                }),
+            )
+                .into_response()
+        }
+    };
     let row: Option<(
         String,
         String,
@@ -327,9 +355,10 @@ pub async fn get_session(
          FROM core.ai_conversations WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(sid)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
+    let _ = scope.commit().await;
 
     match row {
         Some((module, user_id, msg_count, created_at, updated_at)) => (
@@ -365,14 +394,19 @@ pub async fn delete_session(
         Err(_) => return StatusCode::NOT_FOUND.into_response(),
     };
     // A-2b：软删
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    };
     let affected = sqlx::query(
         "UPDATE core.ai_conversations SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(sid)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     .map(|r| r.rows_affected())
     .unwrap_or(0);
+    let _ = scope.commit().await;
     // 幂等删除：会话不存在也视为成功（契约 smoke 对假 id 期望 2xx）
     if affected > 0 {
         StatusCode::NO_CONTENT.into_response()
@@ -475,13 +509,18 @@ pub async fn update_selected_records(
         }
     };
     // A-2b：jsonb 落库
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    };
     let affected = sqlx::query("UPDATE core.ai_conversations SET selected_records = $2::jsonb, updated_at = now() WHERE id = $1 AND deleted_at IS NULL")
         .bind(sid)
         .bind(serde_json::to_value(&req.records).unwrap_or(serde_json::json!([])))
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
         .map(|r| r.rows_affected())
         .unwrap_or(0);
+    let _ = scope.commit().await;
     if affected > 0 {
         (
             StatusCode::OK,
@@ -527,16 +566,21 @@ pub async fn set_context_data(
         }
     };
     // A-2b：jsonb 落库（key 合并进 context_data）
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    };
     let affected = sqlx::query(
         "UPDATE core.ai_conversations SET context_data = context_data || jsonb_build_object($2, $3::jsonb), updated_at = now() WHERE id = $1 AND deleted_at IS NULL"
     )
         .bind(sid)
         .bind(&req.key)
         .bind(&req.value)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
         .map(|r| r.rows_affected())
         .unwrap_or(0);
+    let _ = scope.commit().await;
     if affected > 0 {
         (
             StatusCode::OK,
@@ -561,11 +605,19 @@ pub async fn set_context_data(
 /// 获取活跃会话列表
 pub async fn list_active_sessions(State(state): State<CopilotAppState>) -> impl IntoResponse {
     // A-2b：真表计数
-    let total: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core.ai_conversations WHERE deleted_at IS NULL")
-            .fetch_one(&state.pool)
+    let total: i64 = match state.db.scope_read().await {
+        Ok(mut scope) => {
+            let total = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM core.ai_conversations WHERE deleted_at IS NULL",
+            )
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
+            let _ = scope.commit().await;
+            total
+        }
+        Err(_) => 0,
+    };
     (
         StatusCode::OK,
         Json(ActiveSessionsResponse {
@@ -702,38 +754,42 @@ pub async fn search_faq(
     let q = query.q.as_deref().map(str::trim).filter(|s| !s.is_empty());
 
     // 1. DB 查询（本租户 ∪ 全局行）
-    let db_result: Result<Vec<(String, String, serde_json::Value, String)>, sqlx::Error> = match q {
-        Some(q) => {
-            sqlx::query_as(
-                "SELECT question, answer, keywords, category FROM core.ai_faqs
-                 WHERE deleted_at IS NULL AND status = 'active'
-                   AND module = $1
-                   AND (tenant_id = $2 OR tenant_id = $3::uuid)
-                   AND (question || ' ' || answer || ' ' || COALESCE(keywords::text, '') ILIKE '%' || $4 || '%')
-                 ORDER BY updated_at DESC",
-            )
-            .bind(module_key)
-            .bind(tenant_uuid)
-            .bind(GLOBAL_TENANT_ID)
-            .bind(q)
-            .fetch_all(&state.pool)
-            .await
-        }
-        None => {
-            sqlx::query_as(
-                "SELECT question, answer, keywords, category FROM core.ai_faqs
-                 WHERE deleted_at IS NULL AND status = 'active'
-                   AND module = $1
-                   AND (tenant_id = $2 OR tenant_id = $3::uuid)
-                 ORDER BY updated_at DESC",
-            )
-            .bind(module_key)
-            .bind(tenant_uuid)
-            .bind(GLOBAL_TENANT_ID)
-            .fetch_all(&state.pool)
-            .await
-        }
-    };
+    let db_result: Result<Vec<(String, String, serde_json::Value, String)>, sqlx::Error> =
+        match state.db.scope_read().await {
+            Ok(mut scope) => match q {
+                Some(q) => {
+                    sqlx::query_as(
+                        "SELECT question, answer, keywords, category FROM core.ai_faqs
+                         WHERE deleted_at IS NULL AND status = 'active'
+                           AND module = $1
+                           AND (tenant_id = $2 OR tenant_id = $3::uuid)
+                           AND (question || ' ' || answer || ' ' || COALESCE(keywords::text, '') ILIKE '%' || $4 || '%')
+                         ORDER BY updated_at DESC",
+                    )
+                    .bind(module_key)
+                    .bind(tenant_uuid)
+                    .bind(GLOBAL_TENANT_ID)
+                    .bind(q)
+                    .fetch_all(&mut scope)
+                    .await
+                }
+                None => {
+                    sqlx::query_as(
+                        "SELECT question, answer, keywords, category FROM core.ai_faqs
+                         WHERE deleted_at IS NULL AND status = 'active'
+                           AND module = $1
+                           AND (tenant_id = $2 OR tenant_id = $3::uuid)
+                         ORDER BY updated_at DESC",
+                    )
+                    .bind(module_key)
+                    .bind(tenant_uuid)
+                    .bind(GLOBAL_TENANT_ID)
+                    .fetch_all(&mut scope)
+                    .await
+                }
+            },
+            Err(e) => Err(e),
+        };
 
     // 2. DB 有数据 → 直接返回；否则回落 curated 静态语料（与历史行为一致）
     match db_result {
@@ -823,6 +879,20 @@ pub async fn list_admin_faqs(
         .unwrap_or_else(Uuid::nil);
 
     // 超管不加租户过滤；普通管理员只看本租户行
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("list_admin_faqs begin failed: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError {
+                    error: "db_error".to_string(),
+                    message: "FAQ 查询失败".to_string(),
+                }),
+            )
+                .into_response();
+        }
+    };
     let rows: Result<
         Vec<(
             Uuid,
@@ -849,7 +919,7 @@ pub async fn list_admin_faqs(
                     )
                     .bind(query.module.as_deref())
                     .bind(q)
-                    .fetch_all(&state.pool)
+                    .fetch_all(&mut scope)
                     .await
                 }
                 None => {
@@ -861,7 +931,7 @@ pub async fn list_admin_faqs(
                          ORDER BY updated_at DESC LIMIT 200",
                     )
                     .bind(query.module.as_deref())
-                    .fetch_all(&state.pool)
+                    .fetch_all(&mut scope)
                     .await
                 }
             }
@@ -879,7 +949,7 @@ pub async fn list_admin_faqs(
                     .bind(tenant_uuid)
                     .bind(query.module.as_deref())
                     .bind(q)
-                    .fetch_all(&state.pool)
+                    .fetch_all(&mut scope)
                     .await
                 }
                 None => {
@@ -892,11 +962,12 @@ pub async fn list_admin_faqs(
                     )
                     .bind(tenant_uuid)
                     .bind(query.module.as_deref())
-                    .fetch_all(&state.pool)
+                    .fetch_all(&mut scope)
                     .await
                 }
             }
     };
+    let _ = scope.commit().await;
 
     match rows {
         Ok(items) => {
@@ -1006,19 +1077,27 @@ pub async fn create_admin_faq(
     let keywords_json = serde_json::to_value(&keywords_vec).unwrap_or(serde_json::json!([]));
     let category = req.category.unwrap_or_default();
 
-    let row: Result<(Uuid, chrono::DateTime<chrono::Utc>), sqlx::Error> = sqlx::query_as(
-        "INSERT INTO core.ai_faqs (tenant_id, module, question, answer, keywords, category)
-         VALUES ($1, $2, $3, $4, $5::jsonb, $6)
-         RETURNING id, created_at",
-    )
-    .bind(tenant_uuid)
-    .bind(req.module.trim())
-    .bind(req.question.trim())
-    .bind(req.answer.trim())
-    .bind(keywords_json)
-    .bind(&category)
-    .fetch_one(&state.pool)
-    .await;
+    let row: Result<(Uuid, chrono::DateTime<chrono::Utc>), sqlx::Error> =
+        match state.db.scope().await {
+            Ok(mut scope) => {
+                let row = sqlx::query_as(
+                "INSERT INTO core.ai_faqs (tenant_id, module, question, answer, keywords, category)
+                 VALUES ($1, $2, $3, $4, $5::jsonb, $6)
+                 RETURNING id, created_at",
+            )
+            .bind(tenant_uuid)
+            .bind(req.module.trim())
+            .bind(req.question.trim())
+            .bind(req.answer.trim())
+            .bind(keywords_json)
+            .bind(&category)
+            .fetch_one(&mut scope)
+            .await;
+                let _ = scope.commit().await;
+                row
+            }
+            Err(e) => Err(e),
+        };
 
     match row {
         Ok((id, created_at)) => Json(ApiResponse::success(
@@ -1096,13 +1175,20 @@ pub async fn delete_admin_faq(
         .unwrap_or_else(Uuid::nil);
 
     // 超管不加租户过滤；普通管理员仅软删本租户行
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("delete_admin_faq begin failed: {}", e);
+            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        }
+    };
     let affected = if claims.is_superuser {
         sqlx::query(
             "UPDATE core.ai_faqs SET deleted_at = now(), updated_at = now()
              WHERE id = $1 AND deleted_at IS NULL",
         )
         .bind(faq_id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
         .map(|r| r.rows_affected())
         .unwrap_or(0)
@@ -1113,11 +1199,12 @@ pub async fn delete_admin_faq(
         )
         .bind(faq_id)
         .bind(tenant_uuid)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
         .map(|r| r.rows_affected())
         .unwrap_or(0)
     };
+    let _ = scope.commit().await;
 
     if affected > 0 {
         StatusCode::NO_CONTENT.into_response()
@@ -1215,6 +1302,13 @@ pub async fn update_admin_faq(
         .map(|k| serde_json::to_value(k).unwrap_or(serde_json::json!([])));
 
     // COALESCE 部分更新：传 NULL 的列保持原值；超管不加租户过滤
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("update_admin_faq begin failed: {}", e);
+            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        }
+    };
     let row: Result<
         Option<(
             Uuid,
@@ -1248,7 +1342,7 @@ pub async fn update_admin_faq(
         .bind(keywords_json)
         .bind(req.category.as_deref())
         .bind(req.status.as_deref())
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     } else {
         sqlx::query_as(
@@ -1271,9 +1365,10 @@ pub async fn update_admin_faq(
         .bind(req.category.as_deref())
         .bind(req.status.as_deref())
         .bind(tenant_uuid)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
     };
+    let _ = scope.commit().await;
 
     match row {
         Ok(Some(item)) => Json(ApiResponse::success(

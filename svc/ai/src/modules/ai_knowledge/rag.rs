@@ -8,8 +8,8 @@
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
 
-use sqlx::PgPool;
 use topems_shared_ai::ai_client::{ChatMessage, UnifiedAIClient};
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::document_processor::{generate_embedding, vector_to_pgvector_string, ProcessorError};
@@ -40,7 +40,7 @@ pub struct RetrievedChunk {
 /// - `question`：用户问题
 /// - `top_k`：返回的分块数量
 pub async fn retrieve_relevant_chunks(
-    pool: &PgPool,
+    db: &Db,
     ai_client: &Arc<UnifiedAIClient>,
     tenant_id: Uuid,
     kb_id: Uuid,
@@ -50,6 +50,10 @@ pub async fn retrieve_relevant_chunks(
     // 1. 生成问题向量
     let query_vector = generate_embedding(ai_client, question).await?;
     let vector_str = vector_to_pgvector_string(&query_vector);
+    let mut scope = db
+        .scope_read()
+        .await
+        .map_err(|e| ProcessorError::EmbeddingError(format!("开启检索事务失败: {}", e)))?;
 
     // 2. 使用 pgvector 余弦距离查询
     // <=>：余弦距离（0=完全相同，2=完全相反）
@@ -76,9 +80,10 @@ pub async fn retrieve_relevant_chunks(
     .bind(tenant_id)
     .bind(kb_id)
     .bind(top_k)
-    .fetch_all(pool)
+    .fetch_all(&mut scope)
     .await
     .map_err(|e| ProcessorError::EmbeddingError(format!("向量检索数据库查询失败: {}", e)))?;
+    let _ = scope.commit().await;
 
     let results: Vec<RetrievedChunk> = rows
         .into_iter()
@@ -176,7 +181,7 @@ pub async fn generate_answer(
 /// # 返回
 /// `AskResponse`：包含答案、引用来源、置信度、历史记录 ID
 pub async fn ask_question(
-    pool: &PgPool,
+    db: &Db,
     ai_client: &Arc<UnifiedAIClient>,
     tenant_id: Uuid,
     kb_id: Uuid,
@@ -185,8 +190,7 @@ pub async fn ask_question(
     top_k: i32,
 ) -> Result<AskResponse, ProcessorError> {
     // 1. 检索相关分块
-    let chunks =
-        retrieve_relevant_chunks(pool, ai_client, tenant_id, kb_id, question, top_k).await?;
+    let chunks = retrieve_relevant_chunks(db, ai_client, tenant_id, kb_id, question, top_k).await?;
 
     // 2. 生成答案
     let answer = generate_answer(ai_client, question, &chunks).await?;
@@ -215,6 +219,10 @@ pub async fn ask_question(
     let sources_json = serde_json::to_value(&sources).unwrap_or(serde_json::Value::Null);
 
     // 6. 记录问答历史
+    let mut scope = db
+        .scope()
+        .await
+        .map_err(|e| ProcessorError::EmbeddingError(format!("保存问答历史失败: {}", e)))?;
     let history_row: Option<(Uuid,)> = sqlx::query_as(only_own_schema_query!(
         "ai",
         r#"INSERT INTO core.knowledge_qa_history
@@ -229,9 +237,13 @@ pub async fn ask_question(
     .bind(&answer)
     .bind(&sources_json)
     .bind(user_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut scope)
     .await
     .map_err(|e| ProcessorError::EmbeddingError(format!("保存问答历史失败: {}", e)))?;
+    scope
+        .commit()
+        .await
+        .map_err(|e| ProcessorError::EmbeddingError(format!("保存问答历史失败: {}", e)))?;
 
     let history_id = history_row.map(|(id,)| id).unwrap_or_else(Uuid::new_v4);
 

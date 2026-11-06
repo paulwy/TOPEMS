@@ -80,7 +80,7 @@ pub async fn list_knowledge_bases(
     Query(query): Query<KbQuery>,
 ) -> Json<ApiResponse<Vec<KnowledgeBase>>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::list_knowledge_bases(&state.pool, tenant_id, &query).await {
+    match service::list_knowledge_bases(&state.db, tenant_id, &query).await {
         Ok(items) => Json(api_success(items)),
         Err(e) => {
             tracing::error!("[AiKnowledge] list_knowledge_bases 失败: {}", e);
@@ -124,7 +124,7 @@ pub async fn create_knowledge_base(
         return Json(ApiResponse::from(TopemsError::Unauthorized));
     };
 
-    match service::create_knowledge_base(&state.pool, tenant_id, &req, creator).await {
+    match service::create_knowledge_base(&state.db, tenant_id, &req, creator).await {
         Ok(item) => Json(api_success(item)),
         Err(e) => {
             tracing::error!("[AiKnowledge] create_knowledge_base 失败: {}", e);
@@ -155,7 +155,7 @@ pub async fn get_knowledge_base(
     AxumPath(id): AxumPath<Uuid>,
 ) -> Json<ApiResponse<KnowledgeBase>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::get_knowledge_base(&state.pool, tenant_id, id).await {
+    match service::get_knowledge_base(&state.db, tenant_id, id).await {
         Ok(Some(item)) => Json(api_success(item)),
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "知识库不存在".to_string(),
@@ -206,7 +206,7 @@ pub async fn update_knowledge_base(
     }
 
     let tenant_id = current_tenant_id(&claims);
-    match service::update_knowledge_base(&state.pool, tenant_id, id, &req).await {
+    match service::update_knowledge_base(&state.db, tenant_id, id, &req).await {
         Ok(Some(item)) => Json(api_success(item)),
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "知识库不存在".to_string(),
@@ -240,7 +240,7 @@ pub async fn delete_knowledge_base(
     AxumPath(id): AxumPath<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::delete_knowledge_base(&state.pool, tenant_id, id).await {
+    match service::delete_knowledge_base(&state.db, tenant_id, id).await {
         Ok(true) => Json(api_success(json!({ "deleted": true }))),
         Ok(false) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "知识库不存在".to_string(),
@@ -275,7 +275,7 @@ pub async fn list_documents(
     Query(query): Query<DocumentQuery>,
 ) -> Json<ApiResponse<Vec<KnowledgeDocument>>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::list_documents(&state.pool, tenant_id, &query).await {
+    match service::list_documents(&state.db, tenant_id, &query).await {
         Ok(items) => Json(api_success(items)),
         Err(e) => {
             tracing::error!("[AiKnowledge] list_documents 失败: {}", e);
@@ -411,7 +411,7 @@ pub async fn upload_document(
 
     // 创建文档记录（status=pending）
     let document = match service::create_document_from_file(
-        &state.pool,
+        &state.db,
         tenant_id,
         kb_id,
         &file_name,
@@ -438,7 +438,7 @@ pub async fn upload_document(
     };
 
     // 异步处理文档（向量化）：spawn 后台任务
-    let pool_clone = state.pool.clone();
+    let pool_clone = state.db.clone();
     let ai_client = make_ai_client();
     let doc_id = document.id;
     let tenant_id_clone = tenant_id;
@@ -480,7 +480,7 @@ pub async fn get_document(
     AxumPath(id): AxumPath<Uuid>,
 ) -> Json<ApiResponse<DocumentDetail>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::get_document_detail(&state.pool, tenant_id, id).await {
+    match service::get_document_detail(&state.db, tenant_id, id).await {
         Ok(Some(detail)) => Json(api_success(detail)),
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "文档不存在".to_string(),
@@ -516,10 +516,10 @@ pub async fn update_document(
 ) -> Json<ApiResponse<KnowledgeDocument>> {
     let tenant_id = current_tenant_id(&claims);
 
-    match service::update_document(&state.pool, tenant_id, id, &req).await {
+    match service::update_document(&state.db, tenant_id, id, &req).await {
         Ok(Some(doc)) => {
             if req.content.is_some() {
-                let pool_clone = state.pool.clone();
+                let pool_clone = state.db.clone();
                 let ai_client = make_ai_client();
                 let doc_id = doc.id;
                 let tenant_id_clone = tenant_id;
@@ -574,7 +574,7 @@ pub async fn delete_document(
     AxumPath(id): AxumPath<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = current_tenant_id(&claims);
-    match service::delete_document(&state.pool, tenant_id, id).await {
+    match service::delete_document(&state.db, tenant_id, id).await {
         Ok(true) => Json(api_success(json!({ "deleted": true }))),
         Ok(false) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "文档不存在".to_string(),
@@ -614,7 +614,7 @@ pub async fn reprocess_document(
     let tenant_id = current_tenant_id(&claims);
 
     // 校验文档存在
-    match service::get_document_detail(&state.pool, tenant_id, id).await {
+    match service::get_document_detail(&state.db, tenant_id, id).await {
         Ok(Some(_)) => {}
         Ok(None) => {
             return Json(ApiResponse::from(TopemsError::ResourceNotFound(
@@ -630,7 +630,7 @@ pub async fn reprocess_document(
     }
 
     // 异步处理
-    let pool_clone = state.pool.clone();
+    let pool_clone = state.db.clone();
     let ai_client = make_ai_client();
     tokio::spawn(async move {
         tracing::info!("[AiKnowledge] 开始重新处理文档 {}", id);
@@ -683,7 +683,7 @@ pub async fn ask_question(
     };
 
     // 校验知识库存在
-    match service::get_knowledge_base(&state.pool, tenant_id, req.kb_id).await {
+    match service::get_knowledge_base(&state.db, tenant_id, req.kb_id).await {
         Ok(Some(_)) => {}
         Ok(None) => {
             return Json(ApiResponse::from(TopemsError::ResourceNotFound(
@@ -700,7 +700,7 @@ pub async fn ask_question(
 
     let ai_client = make_ai_client();
     match rag::ask_question(
-        &state.pool,
+        &state.db,
         &ai_client,
         tenant_id,
         req.kb_id,
@@ -739,7 +739,7 @@ pub async fn list_qa_history(
 ) -> Json<ApiResponse<Vec<QaHistory>>> {
     let tenant_id = current_tenant_id(&claims);
     let user_id = current_user_id(&claims);
-    match service::list_qa_history(&state.pool, tenant_id, user_id, &query).await {
+    match service::list_qa_history(&state.db, tenant_id, user_id, &query).await {
         Ok(items) => Json(api_success(items)),
         Err(e) => {
             tracing::error!("[AiKnowledge] list_qa_history 失败: {}", e);
@@ -777,7 +777,7 @@ pub async fn submit_feedback(
     }
 
     let tenant_id = current_tenant_id(&claims);
-    match service::update_qa_feedback(&state.pool, tenant_id, id, req.feedback).await {
+    match service::update_qa_feedback(&state.db, tenant_id, id, req.feedback).await {
         Ok(true) => Json(api_success(json!({ "updated": true }))),
         Ok(false) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "问答记录不存在".to_string(),
@@ -827,7 +827,7 @@ pub async fn semantic_search(
     let tenant_id = current_tenant_id(&claims);
 
     // 校验知识库存在
-    match service::get_knowledge_base(&state.pool, tenant_id, req.kb_id).await {
+    match service::get_knowledge_base(&state.db, tenant_id, req.kb_id).await {
         Ok(Some(_)) => {}
         Ok(None) => {
             return Json(ApiResponse::from(TopemsError::ResourceNotFound(
@@ -844,7 +844,7 @@ pub async fn semantic_search(
 
     let ai_client = make_ai_client();
     let query_clone = req.query.clone();
-    match service::semantic_search(&state.pool, &ai_client, tenant_id, &req).await {
+    match service::semantic_search(&state.db, &ai_client, tenant_id, &req).await {
         Ok(results) => Json(api_success(SearchResponse {
             query: query_clone,
             results,
