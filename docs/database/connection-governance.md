@@ -387,7 +387,7 @@ schema——会话基线 `iam,shared,public` 下 `core_files` → `iam.core_file
 | 1 | `subscription`（server 内嵌，无独立 svc） | `public` | 3 | 仅 1 张表、无 JOIN、无动态 SQL | 完成 |
 | 1 | `monitor` | `public` | 13 | 单 schema、无动态 SQL、2 处 JOIN 均同 schema | 完成 |
 | 1 | `plugin-registry` | `public` | 70 | 单 schema（`core` 已显式前缀）、无动态 SQL | 完成 |
-| 2 | `tms` | `tms, public` | 76 | 5 张 `tms.*` 全限定；预热裸 `vehicles` 保持现状 | 完成 |
+| 2 | `tms` | `tms, public` | 76 | 5 张 `tms.*` 全限定；启动预热已显式 `tms.tms_vehicles`（批 3 前置修订） | 完成 |
 | 2 | `ticket` | `ticket, public` | 102 | `ticket.*` 全限定 | 完成 |
 | 2 | `gis` | `gis, public` | 140 | 单 schema；`State<PgPool>` 全部改 `State<Db>` | 完成 |
 | 2 | `pm` | `pm, public, shared` | 194 | 130 处 `scope_with` 复用请求 RLS 事务 | 完成 |
@@ -401,12 +401,23 @@ schema——会话基线 `iam,shared,public` 下 `core_files` → `iam.core_file
 `SHARED_POOL_MODULE_WEIGHT` 由 3 改为 **9**（= 批 1 的 3 + 批 2 的 6），
 `derived_db_pools()` 去掉这 6 个模块的 `+1`，预算单位仍 **31**、物理池 **29 → 23**。
 
+**批 3 前置（2026-11-06 完成，不涉及并池/池数）**
+
+| 前置 | 模块 | 结果 | 证据 |
+| --- | --- | --- | --- |
+| 预热选表 | `tms` | 裸 `vehicles` → 显式 `tms.tms_vehicles` | 本地 Redis 预热值 `total=1, items=1`（`public.vehicles` 0 行）；见 B.10.8 |
+| 4 张废弃表标注 + 路径统一 | `portal` | `core_faqs`/`core_guides`/`core_guide_lessons`/`core_guide_progress` 注释标注；独立态 `public, portal` | `GET /help/faqs` `total=12`（旧顺序 `portal, public` 为 0，新顺序为 12） |
+| 身份源统一 | `communication` | 裸 `core_users` → 显式 `iam.users`（1 处） | prod `iam.users` 5 行 / `public.core_users` 0 / `iam.core_users` 0；`GET /mail/emails` 200 |
+| search_path 静态门禁 | 全局 | 新增 `check-search-path.mjs` + 空基线，pre-commit changed-only + CI 全量 | 全量 0 违规；构造违规被阻断（exit 1）；见 C.3.1 |
+
+前置只改代码/配置与门禁，**未迁移任何模块入共享池**：`/ready` 200、物理池仍 **23**、预算单位 31、预算 62。
+
 #### B.9.3 剩余 19 个 svc 模块分批计划（4 批，风险由低到高）
 
 | 批次 | 模块（SQL 点 / 动态 SQL / 前缀固化率 / 跨 schema） | 选入理由 |
 | --- | --- | --- |
 | 2（最低） | `tms`(76/0/96%)、`ticket`(102/0/97%)、`gis`(140/0/97%)、`pm`(194/0/95%)、`mobile`(192/0/100%) | **已完成**：单业务 schema、0 动态 SQL、前缀固化 ≥95%；`mobile` 已显式声明 `mobile, public, shared` |
-| 3 | `portal`(37/5/48%)、`pdm`(163/0/7%)、`integration`(174/0/80%)、`ai`(157/1/89%，→`core`)、`communication`(120/13/31%，→`iam`) | SQL 少但依赖裸表名或动态 SQL；`portal` 嵌入路径顺序特殊；`ai`/`communication` 首次出现跨 schema |
+| 3 | `portal`(37/5/48%)、`pdm`(163/0/7%)、`integration`(174/0/80%)、`ai`(157/1/89%，→`core`)、`communication`(120/13/31%，→`iam`) | SQL 少但依赖裸表名或动态 SQL；`portal`/`communication` 前置已完成（见 B.9.2、B.10.8），**池迁移未开始** |
 | 4 | `rd`(206/2/93%，`rs`/`rd` 双 schema)、`ehs`(261/0/96%)、`lims`(264/1/51%)、`scm`(261/7/97%)、`hrm`(240/0/100%，→`iam`) | 中量 SQL + 裸表名/跨 schema/动态 SQL 混合；`rd` 需先确认 `rs` 与 `rd` 的实际落点 |
 | 5 | `srm`(233/0/98%，→`unified_core`)、`crm`(286/0/95%，→`erp`)、`qms`(333/13/93%)、`master-data`(382/2/98%)、`wms`(462/0/~100%，→`scm`/`unified_core`) | 跨 schema JOIN 增多、体量上升；`crm`/`erp` 互相引用需成对验证 |
 | 6（最高） | `analytics`(212/32/32%，7 schema)、`mes`(603/7/68%)、`erp`(445/1/82%，→`crm`/`finance`)、`finance`(715/4/79%，→`erp`)、`unified-core`(677/5/67%，7 schema/124 JOIN) | 动态 SQL 或裸表名占比最高、跨 schema 最复杂；`finance`/`erp`/`unified-core` 必须走 `scope_with` 复用请求 RLS 事务 |
@@ -422,7 +433,7 @@ prod 归属核对为批 2 前置项；本地库 `information_schema.schemata` �
 
 | 模块 | 嵌入形态 | 独立部署 | 核对结论 / 处理 |
 | --- | --- | --- | --- |
-| `portal` | `public, portal` | `portal, public, shared` | **顺序相反**（嵌入 public 优先）。按各自形态保留原值，禁止统一为 `portal, public` |
+| `portal` | `public, portal` | ~~`portal, public, shared`~~ → **`public, portal`**（批 3 前置已统一） | 已统一为 `public, portal`：`public` 的 12+12 行是活数据，`portal` 的 4 张 `core_*` 为废弃空副本（B.10.5.5） |
 | `mobile` | **未设置**（继承 `.env`） | `mobile, public, shared` | 嵌入实际基线随构建顺序变化；批 2 已**显式固化 `mobile, public, shared`**（B.10 实测其 24 张表全部 `mobile.*` 限定，解析不变） |
 | `tms` | `tms, public` | `tms, public, shared` | 嵌入缺 `shared`；保留嵌入原值 |
 | `ticket` | `ticket, public` | `ticket, public, shared` | 同上 |
@@ -557,7 +568,7 @@ C.4 的既有 5 项白名单未变。
 
 **本批遗留风险**
 
-1. `tms` 预热裸 `vehicles` 的选表仍未定（prod 两侧均 0 行，见 B.10.7），已列业务确认项，不阻塞本批。
+1. ~~`tms` 预热裸 `vehicles` 的选表仍未定~~ → 批 3 前置已改为显式 `tms.tms_vehicles`（本地预热 `total=1`，B.10.8）。
 2. `pm` 的 3 处审批审计调用仍使用 `PgPool`（lib helper 只收 `&PgPool`，不允许改 lib），属既有 API 约束。
 3. 独立部署形态仍各自 `bootstrap_service`（单进程单池，非嵌入计数）；只有嵌入聚合形态参与本次并池。
 4. 本地库 `pm.*` 存在既有的 `created_at` 绑定错位与列类型漂移（与本批无关），因此 pm 写端点验收改走 `acceptance-plans`；
@@ -720,9 +731,9 @@ C.4 的既有 5 项白名单未变。
 | --- | --- | --- | --- |
 | 前缀统一（`public.` 与裸名并存） | lims | 批 4 | 两侧 0 行，改前缀无数据影响 |
 | 重复表取舍（`bi.report_execution_records` 无引用） | analytics | 批 6 | 0 行，无写入 |
-| 裸 `core_users` → 显式 `iam.users` | communication | 批 3 | `iam.users` 5 行活 / `public.core_users` 0 行 |
-| `portal.core_*` 标注废弃 + 固化 `public, portal` | portal | 批 3 | `portal` 0 行、`public` 12+12 行 |
-| `vehicles` 选表确认 | tms | 批 2 | **prod 实测两侧均 0 行**（B.10.7）；当前保持现状，待业务确认 |
+| 裸 `core_users` → 显式 `iam.users` | communication | **批 3 前置：已完成（1 处）** | `iam.users` 5 行活 / `public.core_users` 0 行；`GET /mail/emails` 200 |
+| `portal.core_*` 标注废弃 + 固化 `public, portal` | portal | **批 3 前置：已完成** | `portal` 0 行、`public` 12+12 行；读端点 `total=12` |
+| `vehicles` 选表确认 | tms | **批 3 前置：已完成** | 结构证据指向 `tms.tms_vehicles`（业务 handler 全用它），预热改为显式前缀；B.10.8 |
 
 #### B.10.7 tms `vehicles` 选表（prod 只读实测，2026-11-06）
 
@@ -735,14 +746,30 @@ C.4 的既有 5 项白名单未变。
 
 代码用途核对（[svc/tms/src/main.rs#L124](../../svc/tms/src/main.rs#L124)）：
 
-- 该处是**启动期缓存预热**（`tokio::spawn`，失败仅告警），SQL 为未限定 `SELECT … FROM vehicles LIMIT 5`，用于验证「表可读」而非业务查询；
+- 该处是**启动期缓存预热**（`tokio::spawn`，失败仅告警），SQL 原为未限定 `SELECT … FROM vehicles LIMIT 10`，用于验证「表可读」而非业务查询；
 - 全部业务 handler（`vehicle.rs` / `dispatch` 等）都显式使用 `tms.tms_vehicles`；
 - `erp.vehicles` 亦存在（`erp` 模块的同名业务表），但不在 tms 的 `search_path` 内。
 
-**判定（按「两侧皆空不自行决定」的约定）**：两侧均 0 行，且业务侧只写 `tms.tms_vehicles`、`public.vehicles` 仅 3 列空壳，
-结构证据指向 `tms.tms_vehicles` 为权威，但**无数据可作最终判据**。
-→ 列为**待业务确认**；本批保持现状解析（`tms, public` 下裸 `vehicles` 命中 `public.vehicles`），
-已在该预热处加注释说明，不因它阻塞本批。若确认权威表为 `tms.tms_vehicles`，批 3 将把预热 SQL 改为显式前缀（不改路径）。
+**判定（批 3 前置，2026-11-06 已执行）**：两侧均 0 行，但结构证据明确指向 `tms.tms_vehicles`：
+业务 handler 全部显式读写该表，`public.vehicles` 仅 3 列空壳。预热 SQL 已改为显式
+`FROM tms.tms_vehicles`（不改 search_path），并用本地库实测预热落点：`public.vehicles` 0 行、
+`tms.tms_vehicles` 1 行，预热缓存值 `total=1, items=1`，见 B.10.8。
+
+#### B.10.8 批 3 前置完成状态（2026-11-06，真实请求 + 落点实测）
+
+| 前置 | 实现位置 | 行为证据（本地，非 prod） |
+| --- | --- | --- |
+| tms 预热选表 | [svc/tms/src/main.rs#L137-L155](../../svc/tms/src/main.rs#L137-L155) | Redis `tms:tms:vehicle:list:default:...` 值 `total=1, items=1`；`GET /api/tms/vehicles?search=B2` 200 |
+| portal 4 表标注 | [faq.rs#L1-L5](../../svc/portal/src/modules/help/faq.rs#L1-L5)、[guide.rs#L1-L6](../../svc/portal/src/modules/help/guide.rs#L1-L6)、[help/mod.rs](../../svc/portal/src/modules/help/mod.rs)、[schema_defense.rs#L1251](../../svc/portal/src/models/schema_defense.rs#L1251) | `GET /api/portal/help/faqs` `total=12`、`/help/guides` 200；同一 SQL 在 `portal, public` 下为 0、`public, portal` 下为 12 |
+| portal 固化值 | [svc/portal/src/main.rs](../../svc/portal/src/main.rs) | 独立态 `SEARCH_PATH` 改为 `public, portal`，与嵌入态一致 |
+| communication 身份源 | [svc/communication/src/mail.rs#L637](../../svc/communication/src/mail.rs#L637) | 裸 `core_users` → `iam.users`（全模块仅此 1 处）；`GET /api/communication/mail/emails` 200；prod `iam.users` 5 / `public.core_users` 0 / `iam.core_users` 0 |
+| search_path 门禁 | [check-search-path.mjs](../../scripts/ci/check-search-path.mjs)、[基线](../../scripts/ci/search-path-baseline.json)、[lefthook.yml](../../lefthook.yml) | 全量扫描 1,424 文件 / 0 违规；构造 `SET search_path TO tms, public` 被阻断（exit 1，基线 0 条） |
+
+批 3 前置**不迁池**：`/ready` 200、物理池 23、预算单位 31、预算 62 均与批 2 一致。
+
+**待决策（未自行删功能）**：tms 的三份启动预热（司机/车辆/承运商）缓存键均为
+`…:default:…`，而业务 handler 的键为 `…:all:…` 或 `…:<tenant_uuid>:…`，预热值从未被命中；
+`vehicles` 前缀修复只保证“预热读对表”，不改变“预热键不被消费”这一既有事实。是否删除预热需单独确认。
 
 
 ## C. schema 前缀规则（可执行门禁）
@@ -792,6 +819,24 @@ node scripts/ci/check-schema-prefix.mjs                 # 全量（CI）
 node scripts/ci/check-schema-prefix.mjs --changed-only  # 仅暂存文件（pre-commit）
 node scripts/ci/check-schema-prefix.mjs --report-only   # 只报告
 node scripts/ci/check-schema-prefix.mjs --json
+```
+
+### C.3.1 `search_path` 自设语句门禁（`scripts/ci/check-search-path.mjs`）
+
+规则：`svc/**` 业务代码的 SQL 里禁止 `SET search_path` / `SET LOCAL search_path` /
+`set_config('search_path', …)`；schema 作用域只能由 `Db::new(pool, "<module search_path>")`
+的事务级 `SET LOCAL` 注入（`lib/shared-db/src/scope.rs`）。`SHOW search_path` 属只读诊断，放行。
+
+- 扫描范围与 schema-prefix 门禁一致（排除测试、剥离注释，只扫字符串字面量）。
+- 基线 `scripts/ci/search-path-baseline.json` 以 `文件::语句` 为键：**首次全量 0 违规，基线为空**；
+  新增违规直接阻断（exit 1）。既有测试内的会话级 `SET`（`svc/ehs/tests`、`svc/qms/tests`）不在扫描范围。
+- 接入：pre-commit `search-path`（`--changed-only`，仅 `svc/**/*.rs` 或门禁自身变更时触发）；
+  CI `Search path gate`（全量，位于 `connection-governance` job，与 schema-prefix/pool-acquire 同级）。
+
+```bash
+node scripts/ci/check-search-path.mjs                 # 全量（CI）
+node scripts/ci/check-search-path.mjs --changed-only   # 仅暂存文件（pre-commit）
+node scripts/ci/check-search-path.mjs --update-baseline
 ```
 
 ### C.4 绕过池的调用白名单（`scripts/ci/check-pool-acquire.mjs`）
