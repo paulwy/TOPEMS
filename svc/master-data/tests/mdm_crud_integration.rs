@@ -36,7 +36,7 @@ fn make_test_state() -> AppState {
         .connect_lazy(&db_url)
         .expect("Failed to create lazy pool");
     AppState {
-        db: pool,
+        db: topems_shared_auth::ScopedPool::new(pool),
         auth_state: AuthState::new(
             "test-jwt-secret-for-integration-tests-32chars".to_string(),
             "test-refresh-secret-for-integration-tests-32chars".to_string(),

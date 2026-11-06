@@ -222,13 +222,21 @@ pub async fn update_map(
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::FactoryMapWrite).await {
         return e.0;
     }
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
 
     match sqlx::query_as::<_, Map>(
         only_own_schema_query!("gis", r#"
         UPDATE gis.maps 
         SET name = $1, description = $2, map_type = $3, projection = $4, 
             bounds = $5, center = $6, zoom_level = $7, status = COALESCE($8, status), updated_at = NOW()
-        WHERE id = $9 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $9 AND ($10::uuid IS NULL OR tenant_id = $10)
         RETURNING *
         "#),
     )
@@ -241,6 +249,7 @@ pub async fn update_map(
     .bind(&payload.zoom_level)
     .bind(&payload.status)
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     {

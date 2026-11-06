@@ -161,7 +161,7 @@ impl AuditLogService {
                 user_id, user_name, request_details, response_details,
                 status, error_message, ip_address, user_agent
             ) VALUES (
-                COALESCE($1, NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+                COALESCE($1, '00000000-0000-0000-0000-000000000000'::uuid), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
             )
             RETURNING
                 id,
@@ -465,7 +465,7 @@ impl SchemaAwareAuditLogService {
                 tenant_id, action, entity_type, entity_id, entity_ids,
                 user_id, user_name, request_details, response_details,
                 status, error_message, ip_address, user_agent
-            ) VALUES (COALESCE($1, NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+            ) VALUES (COALESCE($1, '00000000-0000-0000-0000-000000000000'::uuid),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
             RETURNING
                 id, tenant_id, action, entity_type, entity_id, entity_ids,
                 user_id::TEXT, user_name, request_details, response_details,

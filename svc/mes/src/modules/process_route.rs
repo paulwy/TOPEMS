@@ -11,19 +11,12 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::response::ApiResponse;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -509,6 +502,17 @@ pub async fn create_process_route(
     }
 }
 
+#[derive(sqlx::FromRow)]
+struct ProcessRouteUpdateRow {
+    id: Uuid,
+    code: String,
+    name: String,
+    description: Option<String>,
+    status: String,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
+}
+
 pub async fn update_process_route(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -528,7 +532,9 @@ pub async fn update_process_route(
         }
     };
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+
+    let result = sqlx::query_as::<_, ProcessRouteUpdateRow>(
         r#"
         UPDATE process_routes
         SET 
@@ -536,15 +542,16 @@ pub async fn update_process_route(
             description = COALESCE($2, description),
             status = COALESCE($3, status),
             updated_at = NOW()
-        WHERE id = $4 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $4 AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $5::uuid)
         RETURNING id, route_code AS code, route_name AS name, description, status,
             created_at, updated_at
         "#,
-        body.name,
-        body.description,
-        body.status,
-        uuid,
     )
+    .bind(body.name)
+    .bind(body.description)
+    .bind(body.status)
+    .bind(uuid)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -613,12 +620,15 @@ pub async fn delete_process_route(
         }
     };
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+
+    let result = sqlx::query(
         r#"
-        UPDATE process_routes SET deleted_at = NOW() WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        UPDATE process_routes SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
-        uuid,
     )
+    .bind(uuid)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 
@@ -832,6 +842,18 @@ pub async fn add_route_step(
     }
 }
 
+#[derive(sqlx::FromRow)]
+struct ProcessRouteStepUpdateRow {
+    id: Uuid,
+    route_id: Uuid,
+    process_id: Uuid,
+    sequence: i32,
+    estimated_time_minutes: Option<BigDecimal>,
+    work_station_id: Option<Uuid>,
+    description: Option<String>,
+    created_at: DateTime<Utc>,
+}
+
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["mes:process:write"])),
@@ -873,21 +895,24 @@ pub async fn update_route_step(
         .estimated_time_minutes
         .and_then(|v| v.to_string().parse::<BigDecimal>().ok());
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+
+    let result = sqlx::query_as::<_, ProcessRouteStepUpdateRow>(
         r#"
         UPDATE process_route_steps
         SET 
             sequence = COALESCE($1, sequence),
             estimated_time_minutes = COALESCE($2, estimated_time_minutes)
-        WHERE id = $3 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $3 AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)
         RETURNING id, route_id, process_id, sequence,
             estimated_time_minutes,
             NULL::uuid AS work_station_id, NULL::text AS description, created_at
         "#,
-        body.sequence,
-        estimated_time_minutes,
-        step_uuid,
     )
+    .bind(body.sequence)
+    .bind(estimated_time_minutes)
+    .bind(step_uuid)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -1007,6 +1032,8 @@ pub async fn reorder_route_steps(
         }
     };
 
+    let tenant_id = get_tenant_id(&claims);
+
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {
@@ -1023,16 +1050,17 @@ pub async fn reorder_route_steps(
             }
         };
 
-        if let Err(e) = sqlx::query!(
+        if let Err(e) = sqlx::query(
             r#"
             UPDATE process_route_steps
             SET sequence = $1
-            WHERE id = $2 AND route_id = $3 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+            WHERE id = $2 AND route_id = $3 AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $4::uuid)
             "#,
-            (idx + 1) as i32,
-            step_uuid,
-            route_uuid,
         )
+        .bind((idx + 1) as i32)
+        .bind(step_uuid)
+        .bind(route_uuid)
+        .bind(tenant_id)
         .execute(&mut *tx)
         .await
         {

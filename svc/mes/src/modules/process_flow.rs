@@ -12,6 +12,7 @@ use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -34,14 +35,6 @@ struct FlowStepRow {
     created_at: Option<DateTime<Utc>>,
 }
 use topems_shared_db::decimal::big_decimal_to_f64_opt;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -516,6 +509,22 @@ pub async fn create_process_flow(
     }
 }
 
+#[derive(sqlx::FromRow)]
+struct ProcessFlowUpdateRow {
+    id: Uuid,
+    code: String,
+    name: String,
+    description: Option<String>,
+    version: Option<i32>,
+    status: Option<String>,
+    route_id: Option<Uuid>,
+    production_line: Option<String>,
+    capacity: Option<f64>,
+    unit: Option<String>,
+    created_at: Option<DateTime<Utc>>,
+    updated_at: Option<DateTime<Utc>>,
+}
+
 pub async fn update_process_flow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -544,7 +553,8 @@ pub async fn update_process_flow(
     let capacity_value = capacity
         .map(|v| v.to_string().parse::<f64>().unwrap_or_default())
         .unwrap_or_default();
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+    let result = sqlx::query_as::<_, ProcessFlowUpdateRow>(
         r#"
         UPDATE process_flows
         SET 
@@ -557,21 +567,22 @@ pub async fn update_process_flow(
             unit = COALESCE($7, unit),
             status = COALESCE($8, status),
             updated_at = NOW()
-        WHERE id = $9 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $9 AND ($10::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $10::uuid)
         RETURNING id, code, name, description, version, status,
             route_id, production_line, capacity, unit,
             created_at, updated_at
         "#,
-        body.name,
-        body.description,
-        body.version,
-        route_id,
-        body.production_line,
-        capacity_value,
-        body.unit,
-        body.status,
-        uuid,
     )
+    .bind(body.name)
+    .bind(body.description)
+    .bind(body.version)
+    .bind(route_id)
+    .bind(body.production_line)
+    .bind(capacity_value)
+    .bind(body.unit)
+    .bind(body.status)
+    .bind(uuid)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -622,12 +633,15 @@ pub async fn delete_process_flow(
         }
     };
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+
+    let result = sqlx::query(
         r#"
-        UPDATE process_flows SET deleted_at = NOW() WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        UPDATE process_flows SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
-        uuid,
     )
+    .bind(uuid)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 

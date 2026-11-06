@@ -1,6 +1,6 @@
 import { test, expect, APIRequestContext } from '@playwright/test';
 import { loginViaUi, TEST_USERS } from '../../helpers/auth';
-import { buildApiContext, apiGet, API_PATHS } from '../../helpers/api';
+import { buildApiContext, apiGet, extractList, API_PATHS } from '../../helpers/api';
 
 /**
  * SRM Supplier list E2E coverage (P33-4).
@@ -12,7 +12,7 @@ test.describe('SRM - List', () => {
   });
 
   test('can navigate to the supplier list page', async ({ page }) => {
-    await page.goto('/srm/suppliers');
+    await page.goto('/srm/supplier');
     await expect(page).toHaveURL(/srm/i, { timeout: 15_000 });
     await expect(
       page
@@ -23,7 +23,8 @@ test.describe('SRM - List', () => {
   });
 
   test('can navigate to the inquiry list page', async ({ page }) => {
-    await page.goto('/srm/inquiries');
+    // 路由改名：/srm/inquiries → /srm/inquiry（SRM_PATHS.inquiry）
+    await page.goto('/srm/inquiry');
     await expect(page).toHaveURL(/srm/i, { timeout: 15_000 });
     await expect(
       page
@@ -34,7 +35,7 @@ test.describe('SRM - List', () => {
   });
 
   test('search filters the supplier list (when search box exists)', async ({ page }) => {
-    await page.goto('/srm/suppliers');
+    await page.goto('/srm/supplier');
     const search = page.getByPlaceholder(/搜索|search|供应商|名称/i).first();
     if (await search.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await search.fill('TEST-NOT-EXISTING-XYZ');
@@ -45,7 +46,7 @@ test.describe('SRM - List', () => {
   });
 
   test('pagination next button works (when present)', async ({ page }) => {
-    await page.goto('/srm/suppliers');
+    await page.goto('/srm/supplier');
     const next = page.getByRole('button', { name: /下一页|next/i }).first();
     if (await next.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await next.click();
@@ -73,13 +74,7 @@ test.describe('SRM Supplier - API', () => {
       test.skip(true, 'SRM supplier API not available');
       return;
     }
-    const arr = Array.isArray(data)
-      ? data
-      : Array.isArray((data as { items?: unknown[] })?.items)
-        ? (data as { items: unknown[] }).items
-        : Array.isArray((data as { records?: unknown[] })?.records)
-          ? (data as { records: unknown[] }).records
-          : null;
-    expect(arr, 'expected an array or paginated list').not.toBeNull();
+    // 实测：SRM 分页键是 suppliers，不是通用 items/records
+    expect(extractList(data), 'expected an array or paginated list').not.toBeNull();
   });
 });

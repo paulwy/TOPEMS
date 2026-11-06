@@ -41,7 +41,7 @@ impl PluginRegistryRealModule {
 
         // 构建完整 AppState
         let app_state = PluginRegistryAppState {
-            pool: ctx.db.clone(),
+            pool: topems_shared_auth::ScopedPool::new(ctx.db.clone()),
             auth_state: ctx.auth_state.clone(),
             metrics: ctx.metrics.clone(),
             start_time: Instant::now(),

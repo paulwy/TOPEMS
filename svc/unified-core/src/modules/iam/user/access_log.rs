@@ -357,11 +357,12 @@ pub async fn create_access_log(
     };
 
     let status_str = if success { "success" } else { "failed" };
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
 
     let result = sqlx::query(
         r#"
         INSERT INTO public.audit_logs (user_id, action, entity_type, entity_id, ip_address, user_agent, status, response_details, created_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5::inet, $6, $7, $8, NOW(), COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        VALUES ($1, $2, $3, $4, $5::inet, $6, $7, $8, NOW(), $9)
         RETURNING id, created_at
         "#,
     )
@@ -373,6 +374,7 @@ pub async fn create_access_log(
     .bind(user_agent)
     .bind(status_str)
     .bind(error_message.map(|m| serde_json::json!({ "error": m })))
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 

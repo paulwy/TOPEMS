@@ -40,14 +40,19 @@ impl ProjectService {
         self.repository.list(search, status, page, page_size).await
     }
 
-    pub async fn update_project(&self, id: Uuid, req: &UpdateProjectRequest) -> Result<Project> {
+    pub async fn update_project(
+        &self,
+        id: Uuid,
+        req: &UpdateProjectRequest,
+        tenant_id: Uuid,
+    ) -> Result<Project> {
         let existing = self.repository.get_by_id(id).await?;
         let existing = existing.ok_or_else(|| TopemsError::NotFound("项目不存在".to_string()))?;
-        self.repository.update(id, req, &existing).await
+        self.repository.update(id, req, &existing, tenant_id).await
     }
 
-    pub async fn delete_project(&self, id: Uuid) -> Result<bool> {
-        self.repository.delete(id).await
+    pub async fn delete_project(&self, id: Uuid, tenant_id: Uuid) -> Result<bool> {
+        self.repository.delete(id, tenant_id).await
     }
 
     pub async fn batch_create_projects(
@@ -57,7 +62,7 @@ impl ProjectService {
         self.repository.batch_create(projects).await
     }
 
-    pub async fn batch_delete_projects(&self, ids: &[Uuid]) -> Result<i64> {
-        self.repository.batch_delete(ids).await
+    pub async fn batch_delete_projects(&self, ids: &[Uuid], tenant_id: Uuid) -> Result<i64> {
+        self.repository.batch_delete(ids, tenant_id).await
     }
 }

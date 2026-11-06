@@ -9,7 +9,7 @@
 //           列表/详情实时聚合 order 的 matched/unmatched 金额。
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::StatusCode,
     routing::{get, post, put},
     Json, Router,
@@ -17,6 +17,8 @@ use axum::{
 use chrono::NaiveDate;
 use serde::Deserialize;
 use sqlx::Row;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::resolve_create_tenant;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -152,6 +154,7 @@ fn item_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 )]
 pub async fn list_reconcile_orders(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ListReconcileQuery>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let page = params.page.unwrap_or(1).max(1);
@@ -159,6 +162,7 @@ pub async fn list_reconcile_orders(
     let offset = (page - 1) * page_size;
 
     let keyword = params.keyword.clone();
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
 
     let total: i64 = match sqlx::query(only_own_schema_query!(
         "finance",
@@ -167,12 +171,14 @@ pub async fn list_reconcile_orders(
            AND ($2::uuid IS NULL OR counterparty_id = $2) \
            AND ($3::text IS NULL OR period = $3) \
            AND ($4::text IS NULL OR order_no ILIKE '%' || $4 || '%' \
-             OR counterparty_name ILIKE '%' || $4 || '%')"
+             OR counterparty_name ILIKE '%' || $4 || '%') \
+           AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $5::uuid)"
     ))
     .bind(&params.status)
     .bind(params.counterparty_id)
     .bind(&params.period)
     .bind(&keyword)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await
     {
@@ -193,6 +199,7 @@ pub async fn list_reconcile_orders(
            AND ($3::text IS NULL OR period = $3) \
            AND ($4::text IS NULL OR order_no ILIKE '%' || $4 || '%' \
              OR counterparty_name ILIKE '%' || $4 || '%') \
+           AND ($7::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $7::uuid) \
          ORDER BY created_at DESC LIMIT $5 OFFSET $6"))
         .bind(&params.status)
         .bind(params.counterparty_id)
@@ -200,6 +207,7 @@ pub async fn list_reconcile_orders(
         .bind(&keyword)
         .bind(page_size)
         .bind(offset)
+        .bind(tenant_id)
         .fetch_all(&state.pool)
         .await
         {
@@ -232,14 +240,18 @@ pub async fn list_reconcile_orders(
 )]
 pub async fn get_reconcile_order(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
     let row =
         match sqlx::query(only_own_schema_query!("finance",
         "SELECT id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                 total_amount, matched_amount, unmatched_amount, status, created_at, updated_at \
-         FROM finance.reconcile_orders WHERE id = $1"))
+         FROM finance.reconcile_orders WHERE id = $1 \
+           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"))
         .bind(order_id)
+        .bind(tenant_id)
         .fetch_optional(&state.pool)
         .await
         {
@@ -298,13 +310,19 @@ pub async fn get_reconcile_order(
 )]
 pub async fn get_reconcile_items(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
     let rows = match sqlx::query(only_own_schema_query!("finance",
         "SELECT id, order_id, source_type, source_id, source_no, source_date, source_amount, \
                 matched, match_id, match_amount, difference, status, remark, created_at, updated_at \
-         FROM finance.reconcile_items WHERE order_id = $1 ORDER BY created_at"))
+         FROM finance.reconcile_items WHERE order_id = $1 \
+           AND EXISTS (SELECT 1 FROM finance.reconcile_orders o WHERE o.id = $1 \
+             AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR o.tenant_id = $2::uuid)) \
+         ORDER BY created_at"))
         .bind(order_id)
+        .bind(tenant_id)
         .fetch_all(&state.pool)
         .await
     {
@@ -324,8 +342,14 @@ pub async fn get_reconcile_items(
 
 pub async fn create_reconcile_order(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReconcileRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
+    // 超管/服务身份落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400
+    let tenant_opt = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((_, msg)) => return Err((StatusCode::BAD_REQUEST, ApiResponse::bad_request(&msg))),
+    };
     let counterparty_ids: Vec<Uuid> = req
         .counterparty_ids
         .clone()
@@ -355,7 +379,7 @@ pub async fn create_reconcile_order(
         let row = match sqlx::query(only_own_schema_query!("finance",
             "INSERT INTO finance.reconcile_orders \
              (order_no, counterparty_id, period, start_date, end_date, status, tenant_id) \
-             VALUES ($1, $2, $3, $4, $5, 'pending', COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) \
+             VALUES ($1, $2, $3, $4, $5, 'pending', $6) \
              RETURNING id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                        total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"))
             .bind(&order_no)
@@ -363,6 +387,7 @@ pub async fn create_reconcile_order(
             .bind(&req.period)
             .bind(start_date)
             .bind(end_date)
+            .bind(tenant_opt)
             .fetch_one(&state.pool)
             .await
         {
@@ -385,8 +410,14 @@ pub async fn create_reconcile_order(
 /// 匹配明细通过 updateItem 写入，差异实时聚合。
 pub async fn auto_reconcile(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReconcileRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
+    // 超管/服务身份落公共行（NULL）；普通用户绑定 claims.tenant_id，缺失/非法直接 400
+    let tenant_opt = match resolve_create_tenant(&claims) {
+        Ok(t) => t,
+        Err((_, msg)) => return Err((StatusCode::BAD_REQUEST, ApiResponse::bad_request(&msg))),
+    };
     let start_date = parse_date(&req.start_date);
     let end_date = parse_date(&req.end_date);
 
@@ -408,7 +439,7 @@ pub async fn auto_reconcile(
         let row = match sqlx::query(only_own_schema_query!("finance",
             "INSERT INTO finance.reconcile_orders \
              (order_no, counterparty_id, period, start_date, end_date, status, tenant_id) \
-             VALUES ($1, $2, $3, $4, $5, 'draft', COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) \
+             VALUES ($1, $2, $3, $4, $5, 'draft', $6) \
              RETURNING id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                        total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"))
             .bind(&order_no)
@@ -416,6 +447,7 @@ pub async fn auto_reconcile(
             .bind(&req.period)
             .bind(start_date)
             .bind(end_date)
+            .bind(tenant_opt)
             .fetch_one(&state.pool)
             .await
         {
@@ -453,16 +485,20 @@ pub async fn auto_reconcile(
 )]
 pub async fn confirm_reconcile_order(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
     let row = match sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE finance.reconcile_orders SET status = 'confirmed', updated_at = NOW() \
          WHERE id = $1 \
+           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid) \
          RETURNING id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                    total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"
     ))
     .bind(order_id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await
     {
@@ -495,18 +531,22 @@ pub async fn confirm_reconcile_order(
 )]
 pub async fn dispute_reconcile_order(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
     Json(req): Json<DisputeReconcileRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
     let _remark = req.reason;
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
     let row = match sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE finance.reconcile_orders SET status = 'disputed', updated_at = NOW() \
          WHERE id = $1 \
+           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid) \
          RETURNING id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                    total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"
     ))
     .bind(order_id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await
     {
@@ -539,14 +579,18 @@ pub async fn dispute_reconcile_order(
 )]
 pub async fn cancel_reconcile_order(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "finance",
         "UPDATE finance.reconcile_orders SET status = 'cancelled', updated_at = NOW() \
-         WHERE id = $1 AND status NOT IN ('confirmed', 'cancelled')"
+         WHERE id = $1 AND status NOT IN ('confirmed', 'cancelled') \
+           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"
     ))
     .bind(order_id)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 
@@ -583,9 +627,11 @@ pub async fn cancel_reconcile_order(
 )]
 pub async fn update_reconcile_item(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((order_id, item_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateItemRequest>,
 ) -> Result<ApiResponse<serde_json::Value>, (StatusCode, ApiResponse<serde_json::Value>)> {
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
     let source_date = parse_date(&req.source_date);
     let matched = req.matched;
     let match_amount = req.match_amount;
@@ -604,7 +650,9 @@ pub async fn update_reconcile_item(
          remark = COALESCE($11, remark), \
          difference = COALESCE($9, match_amount) - COALESCE($6, source_amount), \
          updated_at = NOW() \
-         WHERE id = $2 AND order_id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) \
+         WHERE id = $2 AND order_id = $1 \
+           AND EXISTS (SELECT 1 FROM finance.reconcile_orders o WHERE o.id = $1 \
+             AND ($12::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR o.tenant_id = $12::uuid)) \
          RETURNING id, order_id, source_type, source_id, source_no, source_date, source_amount, \
                    matched, match_id, match_amount, difference, status, remark, created_at, updated_at"))
         .bind(order_id)
@@ -618,6 +666,7 @@ pub async fn update_reconcile_item(
         .bind(match_amount)
         .bind(&status)
         .bind(&req.remark)
+        .bind(tenant_id)
         .fetch_optional(&state.pool)
         .await
     {

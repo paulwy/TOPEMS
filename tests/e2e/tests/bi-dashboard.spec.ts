@@ -28,8 +28,8 @@ test.describe('BI Dashboard', () => {
     const dashboardTab = page.getByRole('tab', { name: /仪表盘|Dashboard/i });
     await expect(dashboardTab).toBeVisible();
 
-    // 应该有"创建仪表盘"按钮
-    const createBtn = page.getByRole('button', { name: /创建仪表盘|Create Dashboard/i });
+    // 应该有"创建仪表盘"按钮（空态区域与页头各有一个同名入口，取第一个即可）
+    const createBtn = page.getByRole('button', { name: /创建仪表盘|Create Dashboard/i }).first();
     await expect(createBtn).toBeVisible();
   });
 

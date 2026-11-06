@@ -81,7 +81,7 @@ impl MesRealModule {
         };
         let state = AppState {
             auth_state: ctx.auth_state.clone(),
-            pool: ctx.db.clone(),
+            pool: topems_shared_auth::ScopedPool::new(ctx.db.clone()),
             health_config,
             event_publisher: ctx.event_publisher.clone(),
             dict_cache: Arc::new(AsyncL2Cache::new_l1_only(l2_config)),
@@ -97,6 +97,10 @@ impl MesRealModule {
         // 6. 业务路由（权限中间件 + 开发验证模拟认证）
         let protected_routes = modules::create_routes()
             .layer(axum::middleware::from_fn(require_module_access("mes")))
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.db.clone(),
+                topems_shared_auth::tenant_middleware(),
+            ))
             .with_state(state.clone());
 
         // v1.110 BFF WS 接线：/ws/mes/dashboard（对齐独立 svc/mes main.rs:260）。

@@ -94,7 +94,7 @@ async fn log_audit_entry(state: &AppState, audit_log: &Value) -> Result<(), sqlx
             user_agent,
             created_at,
             tenant_id
-        ) VALUES ($1, 'access', 'http_request', $2, $3, $4, $5, $6, $7, $8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        ) VALUES ($1, 'access', 'http_request', $2, $3, $4, $5, $6, $7, $8, $9)
     "#;
 
     let request_details = json!({
@@ -124,6 +124,8 @@ async fn log_audit_entry(state: &AppState, audit_log: &Value) -> Result<(), sqlx
         .bind(audit_log["ip_address"].as_str().unwrap_or_default())
         .bind(audit_log["user_agent"].as_str().unwrap_or_default())
         .bind(audit_log["timestamp"].as_str().unwrap_or_default())
+        // 请求审计中间件运行在认证/租户中间件之前，无 Claims；显式写系统级 nil 租户（与既有 pool 空 GUC 退化结果一致）
+        .bind(uuid::Uuid::nil())
         .execute(&state.pool)
         .await
         .map(|_| ())

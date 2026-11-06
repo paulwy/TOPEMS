@@ -4,8 +4,8 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use app_state::test_app_state;
-use axum::extract::{Query, State};
+use app_state::{super_claims, test_app_state};
+use axum::extract::{Extension, Query, State};
 use serde_json::{json, Value};
 use topems_mes::modules::material_plan::{list_material_plans, ListMaterialPlansQuery};
 
@@ -46,7 +46,7 @@ async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {
         json!({})
     })
     .unwrap();
-    let resp = list_material_plans(State(state), Query(q))
+    let resp = list_material_plans(State(state), Extension(super_claims()), Query(q))
         .await
         .expect("handler error");
     serde_json::to_value(

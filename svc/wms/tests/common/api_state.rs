@@ -11,7 +11,7 @@ use topems_wms::modules::ApiState;
 
 pub fn api_state(pool: sqlx::PgPool) -> ApiState {
     ApiState {
-        db: pool,
+        db: topems_shared_auth::ScopedPool::new(pool),
         auth_state: AuthState::new(
             "topems-test-jwt-secret-key-0123456789abcdef-0123456789".to_string(),
             "topems-test-refresh-secret-0123456789abcdef-0123456789".to_string(),

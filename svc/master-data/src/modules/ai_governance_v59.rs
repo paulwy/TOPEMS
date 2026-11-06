@@ -28,6 +28,18 @@ fn req_tenant_uuid(claims: &Claims) -> Uuid {
         .unwrap_or_else(Uuid::nil)
 }
 
+/// 谓词租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
+fn tenant_of(claims: &Claims) -> Option<Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| s.parse::<Uuid>().ok())
+    }
+}
+
 macro_rules! db_exec {
     ($e:expr) => {
         match $e {
@@ -197,10 +209,12 @@ impl GovernanceAIEngine {
 
     async fn dismiss_suggestion(
         db: &PgPool,
+        tenant: Option<Uuid>,
         id: &str,
     ) -> Result<Option<GovernanceSuggestionV59>, TopemsError> {
-        let row = sqlx::query("DELETE FROM master_data.mdm_ai_suggestions WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING id, type, entity_type, entity_id, description, confidence, action, created_at::timestamptz AS created_at")
+        let row = sqlx::query("DELETE FROM master_data.mdm_ai_suggestions WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id, type, entity_type, entity_id, description, confidence, action, created_at::timestamptz AS created_at")
             .bind(id)
+            .bind(tenant)
             .fetch_optional(db)
             .await?;
         Ok(row.map(|r| ai_suggestion_from_row(&r)))
@@ -218,17 +232,19 @@ impl GovernanceAIEngine {
 
     async fn train_model(
         db: &PgPool,
+        tenant: Option<Uuid>,
         model_id: &str,
     ) -> Result<Option<GovernanceModel>, TopemsError> {
         let row = sqlx::query(
             "UPDATE master_data.mdm_ai_models
              SET accuracy = LEAST(accuracy + 0.05, 0.99),
                  last_trained = $1
-             WHERE id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+             WHERE id = $2 AND ($3::uuid IS NULL OR tenant_id = $3)
              RETURNING id, name, version, domain, accuracy, last_trained, features",
         )
         .bind(chrono::Utc::now().to_rfc3339())
         .bind(model_id)
+        .bind(tenant)
         .fetch_optional(db)
         .await?;
         Ok(row.map(|r| ai_model_from_row(&r)))
@@ -411,28 +427,38 @@ impl IntelligentMatcher {
 
     async fn manual_review(
         db: &PgPool,
+        tenant: Option<Uuid>,
         id: &str,
         status: MatchStatus,
     ) -> Result<Option<MatchResult>, TopemsError> {
         let row = sqlx::query(
             "UPDATE master_data.mdm_match_results
              SET status = $1
-             WHERE id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+             WHERE id = $2 AND ($3::uuid IS NULL OR tenant_id = $3)
              RETURNING id, source_id, target_id, match_score, match_type, confidence, status, matched_at::timestamptz AS matched_at",
         )
         .bind(match_status_str(&status))
         .bind(id)
+        .bind(tenant)
         .fetch_optional(db)
         .await?;
         Ok(row.map(|r| match_result_from_row(&r)))
     }
 
-    async fn confirm_match(db: &PgPool, id: &str) -> Result<Option<MatchResult>, TopemsError> {
-        Self::manual_review(db, id, MatchStatus::Confirmed).await
+    async fn confirm_match(
+        db: &PgPool,
+        tenant: Option<Uuid>,
+        id: &str,
+    ) -> Result<Option<MatchResult>, TopemsError> {
+        Self::manual_review(db, tenant, id, MatchStatus::Confirmed).await
     }
 
-    async fn reject_match(db: &PgPool, id: &str) -> Result<Option<MatchResult>, TopemsError> {
-        Self::manual_review(db, id, MatchStatus::Rejected).await
+    async fn reject_match(
+        db: &PgPool,
+        tenant: Option<Uuid>,
+        id: &str,
+    ) -> Result<Option<MatchResult>, TopemsError> {
+        Self::manual_review(db, tenant, id, MatchStatus::Rejected).await
     }
 
     #[allow(
@@ -659,6 +685,7 @@ impl AutoClassifier {
 
     async fn review_classification(
         db: &PgPool,
+        tenant: Option<Uuid>,
         id: &str,
         approved: bool,
         corrected_category: Option<String>,
@@ -667,12 +694,13 @@ impl AutoClassifier {
             "UPDATE master_data.mdm_classification_results
              SET category = COALESCE($1, category),
                  confidence = LEAST(CASE WHEN $2 THEN confidence + 0.05 ELSE confidence END, 0.99)
-             WHERE id = $3 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+             WHERE id = $3 AND ($4::uuid IS NULL OR tenant_id = $4)
              RETURNING id, entity_id, category, confidence, alternatives, classified_at::timestamptz AS classified_at",
         )
         .bind(&corrected_category)
         .bind(approved)
         .bind(id)
+        .bind(tenant)
         .fetch_optional(db)
         .await?;
         Ok(row.map(|r| classification_result_from_row(&r)))
@@ -1006,9 +1034,11 @@ pub async fn apply_suggestion(
 )]
 pub async fn dismiss_suggestion(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<()> {
-    match db_exec!(GovernanceAIEngine::dismiss_suggestion(&state.db, &id).await) {
+    let tenant = tenant_of(&claims);
+    match db_exec!(GovernanceAIEngine::dismiss_suggestion(&state.db, tenant, &id).await) {
         Some(_) => ApiResponse::success((), "建议已忽略"),
         None => ApiResponse::success((), "建议已忽略"),
     }
@@ -1044,9 +1074,11 @@ pub async fn get_models(State(state): State<AppState>) -> ApiResponse<Vec<Govern
 )]
 pub async fn train_model(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<GovernanceModel> {
-    match db_exec!(GovernanceAIEngine::train_model(&state.db, &id).await) {
+    let tenant = tenant_of(&claims);
+    match db_exec!(GovernanceAIEngine::train_model(&state.db, tenant, &id).await) {
         Some(m) => ApiResponse::success(m, "模型训练完成"),
         None => ApiResponse::not_found("未找到模型"),
     }
@@ -1164,15 +1196,17 @@ pub async fn get_match_results(State(state): State<AppState>) -> ApiResponse<Vec
 )]
 pub async fn review_match(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<ReviewMatchRequest>,
 ) -> ApiResponse<MatchResult> {
+    let tenant = tenant_of(&claims);
     let status = match parse_match_status(&req.action) {
         Some(s) => s,
         None => return ApiResponse::bad_request("无效的审核操作"),
     };
 
-    match db_exec!(IntelligentMatcher::manual_review(&state.db, &id, status).await) {
+    match db_exec!(IntelligentMatcher::manual_review(&state.db, tenant, &id, status).await) {
         Some(r) => ApiResponse::success(r, "匹配审核完成"),
         None => ApiResponse::not_found("未找到匹配结果"),
     }
@@ -1193,9 +1227,11 @@ pub async fn review_match(
 )]
 pub async fn confirm_match(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<MatchResult> {
-    match db_exec!(IntelligentMatcher::confirm_match(&state.db, &id).await) {
+    let tenant = tenant_of(&claims);
+    match db_exec!(IntelligentMatcher::confirm_match(&state.db, tenant, &id).await) {
         Some(r) => ApiResponse::success(r, "匹配已确认"),
         None => ApiResponse::not_found("未找到匹配结果"),
     }
@@ -1216,9 +1252,11 @@ pub async fn confirm_match(
 )]
 pub async fn reject_match(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<MatchResult> {
-    match db_exec!(IntelligentMatcher::reject_match(&state.db, &id).await) {
+    let tenant = tenant_of(&claims);
+    match db_exec!(IntelligentMatcher::reject_match(&state.db, tenant, &id).await) {
         Some(r) => ApiResponse::success(r, "匹配已拒绝"),
         None => ApiResponse::not_found("未找到匹配结果"),
     }
@@ -1379,11 +1417,13 @@ pub async fn get_entity_categories(
 )]
 pub async fn review_classification(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<ReviewClassificationRequest>,
 ) -> ApiResponse<ClassificationResult> {
+    let tenant = tenant_of(&claims);
     match db_exec!(
-        AutoClassifier::review_classification(&state.db, &id, req.approved, req.corrected_category)
+        AutoClassifier::review_classification(&state.db, tenant, &id, req.approved, req.corrected_category)
             .await
     ) {
         Some(r) => ApiResponse::success(r, "分类审核完成"),

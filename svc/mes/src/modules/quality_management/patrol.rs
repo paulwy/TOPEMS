@@ -3,18 +3,11 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListPatrolsQuery {
@@ -384,6 +377,23 @@ pub async fn create_patrol(
     }
 }
 
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct PatrolUpdateRow {
+    id: Uuid,
+    patrol_no: String,
+    production_line: Option<String>,
+    workstation_id: Option<Uuid>,
+    workstation_name: Option<String>,
+    inspector: String,
+    patrol_time: Option<String>,
+    status: Option<String>,
+    result: Option<String>,
+    findings: Option<String>,
+    memo: Option<String>,
+    created_at: Option<DateTime<Utc>>,
+    updated_at: Option<DateTime<Utc>>,
+}
+
 pub async fn update_patrol(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -407,7 +417,8 @@ pub async fn update_patrol(
         .workstation_id
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
-    let result = sqlx::query_unchecked!(
+    let tenant_id = get_tenant_id(&claims);
+    let result = sqlx::query_as::<_, PatrolUpdateRow>(
         r#"
         UPDATE quality_patrols
         SET
@@ -421,24 +432,25 @@ pub async fn update_patrol(
             findings = COALESCE($8, findings),
             memo = COALESCE($9, memo),
             updated_at = NOW()
-        WHERE id = $10 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $10 AND ($11::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $11::uuid)
         RETURNING
             id, patrol_no, production_line, workstation_id,
             workstation_name, inspector, patrol_time,
             status, result, findings, memo,
             created_at, updated_at
         "#,
-        body.production_line,
-        workstation_id,
-        body.workstation_name,
-        body.inspector,
-        body.patrol_time,
-        body.status,
-        body.result,
-        body.findings,
-        body.memo,
-        uuid,
     )
+    .bind(body.production_line)
+    .bind(workstation_id)
+    .bind(body.workstation_name)
+    .bind(body.inspector)
+    .bind(body.patrol_time)
+    .bind(body.status)
+    .bind(body.result)
+    .bind(body.findings)
+    .bind(body.memo)
+    .bind(uuid)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -487,12 +499,14 @@ pub async fn delete_patrol(
         }
     };
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+    let result = sqlx::query(
         r#"
-        UPDATE quality_patrols SET deleted_at = NOW() WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        UPDATE quality_patrols SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
-        uuid,
     )
+    .bind(uuid)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 
@@ -664,6 +678,17 @@ pub struct UpdatePatrolItemRequest {
     pub remark: Option<String>,
 }
 
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct PatrolItemUpdateRow {
+    id: Uuid,
+    patrol_id: Option<Uuid>,
+    item_name: String,
+    standard: Option<String>,
+    actual_value: Option<String>,
+    status: Option<String>,
+    remark: Option<String>,
+}
+
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["mes:quality:write"])),
@@ -696,7 +721,8 @@ pub async fn update_patrol_item(
         }
     };
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+    let result = sqlx::query_as::<_, PatrolItemUpdateRow>(
         r#"
         UPDATE quality_patrol_items
         SET
@@ -705,16 +731,17 @@ pub async fn update_patrol_item(
             actual_value = COALESCE($3, actual_value),
             status = COALESCE($4, status),
             remark = COALESCE($5, remark)
-        WHERE id = $6 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $6 AND ($7::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $7::uuid)
         RETURNING id, patrol_id, item_name, standard, actual_value, status, remark
         "#,
-        body.item_name,
-        body.standard,
-        body.actual_value.as_deref(),
-        body.status,
-        body.remark,
-        uuid,
     )
+    .bind(body.item_name)
+    .bind(body.standard)
+    .bind(body.actual_value.as_deref())
+    .bind(body.status)
+    .bind(body.remark)
+    .bind(uuid)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -757,12 +784,14 @@ pub async fn delete_patrol_item(
         }
     };
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+    let result = sqlx::query(
         r#"
-        UPDATE quality_patrol_items SET deleted_at = NOW() WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        UPDATE quality_patrol_items SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
-        uuid,
     )
+    .bind(uuid)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 

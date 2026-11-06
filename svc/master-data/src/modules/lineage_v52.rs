@@ -8,16 +8,29 @@
 //!
 //! 设计风格：ApiResponse + K1 真表（master_data schema，sqlx 直读写，store 已收敛）
 
-use axum::{extract::Path, extract::Query, extract::State, Json};
+use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use sqlx::Row;
 use std::collections::{HashMap, HashSet};
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
+
+/// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
+fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }
+}
 
 // ==================== K1：真表映射（master_data.mdm_lineage_*） ====================
 
@@ -347,6 +360,7 @@ struct LineageTracker;
 impl LineageTracker {
     async fn register(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         from_entity_type: String,
         from_entity_id: String,
         to_entity_type: String,
@@ -406,7 +420,7 @@ impl LineageTracker {
             sqlx::query(
                 r#"INSERT INTO master_data.mdm_lineage_nodes
                    (id, entity_type, entity_id, name, description, created_at, tenant_id)
-                   VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+                   VALUES ($1,$2,$3,$4,$5,$6, $7)
                    ON CONFLICT (id) DO NOTHING"#,
             )
             .bind(&node.id)
@@ -415,6 +429,7 @@ impl LineageTracker {
             .bind(&node.name)
             .bind(&node.description)
             .bind(node.created_at.to_rfc3339())
+            .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
             .execute(db)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入血缘节点失败: {e}")))?;
@@ -430,19 +445,20 @@ impl LineageTracker {
         sqlx::query(
             r#"INSERT INTO master_data.mdm_lineage_edges
                (id, from_node_id, to_node_id, edge_type, transformation_description, tenant_id)
-               VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+               VALUES ($1,$2,$3,$4,$5, $6)"#,
         )
         .bind(&edge.id)
         .bind(&edge.from_node_id)
         .bind(&edge.to_node_id)
         .bind(edge_type_to_str(&edge.edge_type))
         .bind(&edge.transformation_description)
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入血缘边失败: {e}")))?;
 
         // 图谱整体重算（读全量节点/边 → upsert 默认图）。
-        refresh_graph(db).await?;
+        refresh_graph(db, tenant).await?;
 
         Ok((from_node, to_node, edge))
     }
@@ -566,7 +582,11 @@ impl LineageTracker {
         }
     }
 
-    async fn delete_node(db: &sqlx::PgPool, node_id: &str) -> Result<(), TopemsError> {
+    async fn delete_node(
+        db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
+        node_id: &str,
+    ) -> Result<(), TopemsError> {
         let exists = sqlx::query_scalar::<_, bool>(
             "SELECT EXISTS (SELECT 1 FROM master_data.mdm_lineage_nodes WHERE id = $1)",
         )
@@ -578,20 +598,22 @@ impl LineageTracker {
             return Err(TopemsError::BusinessLogic("未找到血缘节点".to_string()));
         }
 
-        sqlx::query("DELETE FROM master_data.mdm_lineage_nodes WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))")
+        sqlx::query("DELETE FROM master_data.mdm_lineage_nodes WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
             .bind(node_id)
+            .bind(tenant)
             .execute(db)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("删除血缘节点失败: {e}")))?;
         sqlx::query(
-            "DELETE FROM master_data.mdm_lineage_edges WHERE (from_node_id = $1 OR to_node_id = $1) AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+            "DELETE FROM master_data.mdm_lineage_edges WHERE (from_node_id = $1 OR to_node_id = $1) AND ($2::uuid IS NULL OR tenant_id = $2)",
         )
         .bind(node_id)
+        .bind(tenant)
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("删除血缘边失败: {e}")))?;
 
-        refresh_graph(db).await?;
+        refresh_graph(db, tenant).await?;
 
         Ok(())
     }
@@ -619,7 +641,10 @@ async fn fetch_edges(db: &sqlx::PgPool) -> Vec<LineageEdge> {
     .unwrap_or_default()
 }
 
-async fn refresh_graph(db: &sqlx::PgPool) -> Result<(), TopemsError> {
+async fn refresh_graph(
+    db: &sqlx::PgPool,
+    tenant: Option<uuid::Uuid>,
+) -> Result<(), TopemsError> {
     let nodes = fetch_nodes(db).await;
     let edges = fetch_edges(db).await;
     let now = chrono::Utc::now().to_rfc3339();
@@ -631,7 +656,7 @@ async fn refresh_graph(db: &sqlx::PgPool) -> Result<(), TopemsError> {
     };
     sqlx::query(
         r#"INSERT INTO master_data.mdm_lineage_graphs (id, nodes, edges, version, last_updated, tenant_id)
-           VALUES ('default', $1, $2, 1, $3, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+           VALUES ('default', $1, $2, 1, $3, $4)
            ON CONFLICT (id) DO UPDATE
            SET nodes = EXCLUDED.nodes, edges = EXCLUDED.edges,
                version = master_data.mdm_lineage_graphs.version + 1,
@@ -640,6 +665,7 @@ async fn refresh_graph(db: &sqlx::PgPool) -> Result<(), TopemsError> {
     .bind(serde_json::to_value(&graph.nodes).unwrap_or_default())
     .bind(serde_json::to_value(&graph.edges).unwrap_or_default())
     .bind(&graph.last_updated)
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("刷新血缘图谱失败: {e}")))?;
@@ -667,6 +693,7 @@ impl ImpactAnalyzer {
     )]
     async fn analyze(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         req: &ImpactAnalysisRequest,
     ) -> Result<ImpactAnalysisResult, TopemsError> {
         let nodes = fetch_nodes(db).await;
@@ -769,11 +796,12 @@ impl ImpactAnalyzer {
             .map_err(|e| TopemsError::BusinessLogic(format!("影响分析序列化失败: {e}")))?;
         sqlx::query(
             r#"INSERT INTO master_data.mdm_impact_analyses (id, data, analyzed_at, tenant_id)
-               VALUES ($1, $2, $3, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+               VALUES ($1, $2, $3, $4)"#,
         )
         .bind(&result.id)
         .bind(&data)
         .bind(result.analyzed_at.to_rfc3339())
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入影响分析失败: {e}")))?;
@@ -796,6 +824,7 @@ impl ImpactAnalyzer {
 
     async fn simulate(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         entity_type: String,
         entity_id: String,
         change_type: ChangeType,
@@ -863,11 +892,12 @@ impl ImpactAnalyzer {
             .map_err(|e| TopemsError::BusinessLogic(format!("变更模拟序列化失败: {e}")))?;
         sqlx::query(
             r#"INSERT INTO master_data.mdm_impact_simulations (id, data, created_at, tenant_id)
-               VALUES ($1, $2, $3, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+               VALUES ($1, $2, $3, $4)"#,
         )
         .bind(&simulation.id)
         .bind(&data)
         .bind(&simulation.simulation_timestamp)
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入变更模拟失败: {e}")))?;
@@ -936,6 +966,7 @@ struct ChangePropagator;
 impl ChangePropagator {
     async fn propagate(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         entity_type: String,
         entity_id: String,
         change_type: ChangeType,
@@ -985,7 +1016,7 @@ impl ChangePropagator {
         sqlx::query(
             r#"INSERT INTO master_data.mdm_change_events
                (id, entity_type, entity_id, change_type, old_value, new_value, triggered_at, tenant_id)
-               VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+               VALUES ($1,$2,$3,$4,$5,$6,$7, $8)"#,
         )
         .bind(&event.id)
         .bind(&event.entity_type)
@@ -994,6 +1025,7 @@ impl ChangePropagator {
         .bind(&event.old_value)
         .bind(&event.new_value)
         .bind(event.triggered_at.to_rfc3339())
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入变更事件失败: {e}")))?;
@@ -1002,7 +1034,7 @@ impl ChangePropagator {
             sqlx::query(
                 r#"INSERT INTO master_data.mdm_propagation_logs
                    (id, change_event_id, rule_id, source_entity_id, target_entity_id, action, status, propagated_at, tenant_id)
-                   VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+                   VALUES ($1,$2,$3,$4,$5,$6,$7,$8, $9)"#,
             )
             .bind(&log.id)
             .bind(&log.change_event_id)
@@ -1012,6 +1044,7 @@ impl ChangePropagator {
             .bind(propagation_action_to_str(&log.action))
             .bind(&log.status)
             .bind(log.propagated_at.to_rfc3339())
+            .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
             .execute(db)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入传播日志失败: {e}")))?;
@@ -1032,6 +1065,7 @@ impl ChangePropagator {
 
     async fn add_rule(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         source_entity_type: String,
         target_entity_type: String,
         condition: String,
@@ -1047,13 +1081,14 @@ impl ChangePropagator {
         sqlx::query(
             r#"INSERT INTO master_data.mdm_propagation_rules
                (id, source_entity_type, target_entity_type, condition, action, tenant_id)
-               VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+               VALUES ($1,$2,$3,$4,$5, $6)"#,
         )
         .bind(&rule.id)
         .bind(&rule.source_entity_type)
         .bind(&rule.target_entity_type)
         .bind(&rule.condition)
         .bind(propagation_action_to_str(&rule.action))
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入传播规则失败: {e}")))?;
@@ -1245,12 +1280,15 @@ pub struct RollbackPropagationRequest {
 )]
 pub async fn register_lineage(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<RegisterLineageRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = tenant_of(&claims);
     let edge_type = edge_type_from_str(&req.edge_type);
 
     match LineageTracker::register(
         &state.db,
+        tenant,
         req.from_entity_type,
         req.from_entity_id,
         req.to_entity_type,
@@ -1419,9 +1457,11 @@ pub async fn export_lineage_post(
 /// 扁平契约 `POST /lineage/refresh`：全量重算血缘图谱快照（复用模块内 refresh_graph）。
 pub async fn refresh_lineage(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(_req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
-    if let Err(e) = refresh_graph(&state.db).await {
+    let tenant = tenant_of(&claims);
+    if let Err(e) = refresh_graph(&state.db, tenant).await {
         return ApiResponse::server_error(&e.classify().1);
     }
     ApiResponse::success(
@@ -1433,9 +1473,11 @@ pub async fn refresh_lineage(
 /// 扁平契约 `POST /lineage/refresh/{id}`：按节点 id 定向刷新；节点不存在返回业务 404。
 pub async fn refresh_lineage_by_id(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(_req): Json<serde_json::Value>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = tenant_of(&claims);
     let exists = sqlx::query_scalar::<_, bool>(
         "SELECT EXISTS (SELECT 1 FROM master_data.mdm_lineage_nodes WHERE id = $1)",
     )
@@ -1447,7 +1489,7 @@ pub async fn refresh_lineage_by_id(
         return ApiResponse::not_found("未找到血缘节点");
     }
 
-    if let Err(e) = refresh_graph(&state.db).await {
+    if let Err(e) = refresh_graph(&state.db, tenant).await {
         return ApiResponse::server_error(&e.classify().1);
     }
     ApiResponse::success(
@@ -1468,9 +1510,11 @@ pub async fn refresh_lineage_by_id(
 )]
 pub async fn delete_lineage(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<DeleteLineageRequest>,
 ) -> ApiResponse<()> {
-    match LineageTracker::delete_node(&state.db, &req.node_id).await {
+    let tenant = tenant_of(&claims);
+    match LineageTracker::delete_node(&state.db, tenant, &req.node_id).await {
         Ok(()) => ApiResponse::success_no_data("血缘节点已删除"),
         Err(e) => ApiResponse::not_found(&e.classify().1),
     }
@@ -1490,8 +1534,10 @@ pub async fn delete_lineage(
 )]
 pub async fn analyze_impact(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeImpactRequest>,
 ) -> ApiResponse<ImpactAnalysisResult> {
+    let tenant = tenant_of(&claims);
     let change_type = change_type_from_str(&req.change_type);
     let analysis_req = ImpactAnalysisRequest {
         target_entity_id: req.target_entity_id,
@@ -1500,7 +1546,7 @@ pub async fn analyze_impact(
         include_chain_reactions: req.include_chain_reactions,
     };
 
-    match ImpactAnalyzer::analyze(&state.db, &analysis_req).await {
+    match ImpactAnalyzer::analyze(&state.db, tenant, &analysis_req).await {
         Ok(result) => ApiResponse::success(result, "影响分析完成"),
         Err(e) => ApiResponse::not_found(&e.classify().1),
     }
@@ -1541,10 +1587,20 @@ pub async fn get_impact_report(
 )]
 pub async fn simulate_change(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<SimulateChangeRequest>,
 ) -> ApiResponse<ImpactSimulation> {
+    let tenant = tenant_of(&claims);
     let change_type = change_type_from_str(&req.change_type);
-    match ImpactAnalyzer::simulate(&state.db, req.entity_type, req.entity_id, change_type).await {
+    match ImpactAnalyzer::simulate(
+        &state.db,
+        tenant,
+        req.entity_type,
+        req.entity_id,
+        change_type,
+    )
+    .await
+    {
         Ok(simulation) => ApiResponse::success(simulation, "变更模拟完成"),
         Err(e) => ApiResponse::not_found(&e.classify().1),
     }
@@ -1585,11 +1641,14 @@ pub async fn get_affected_scope(
 )]
 pub async fn propagate_change(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<PropagateChangeRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = tenant_of(&claims);
     let change_type = change_type_from_str(&req.change_type);
     match ChangePropagator::propagate(
         &state.db,
+        tenant,
         req.entity_type,
         req.entity_id,
         change_type,
@@ -1639,11 +1698,14 @@ pub async fn get_propagation_rules(
 )]
 pub async fn add_propagation_rule(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<AddPropagationRuleRequest>,
 ) -> ApiResponse<PropagationRule> {
+    let tenant = tenant_of(&claims);
     let action = propagation_action_from_str(&req.action);
     match ChangePropagator::add_rule(
         &state.db,
+        tenant,
         req.source_entity_type,
         req.target_entity_type,
         req.condition,

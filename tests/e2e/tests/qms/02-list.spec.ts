@@ -12,7 +12,8 @@ test.describe('QMS - List', () => {
   });
 
   test('can navigate to the quality-issue list page', async ({ page }) => {
-    await page.goto('/qms/quality-issues');
+    // 路由改名：/qms/quality-issues → /qms/quality-control（质量问题/不合格品列表）
+    await page.goto('/qms/quality-control');
     await expect(page).toHaveURL(/qms/i, { timeout: 15_000 });
     await expect(
       page
@@ -23,18 +24,14 @@ test.describe('QMS - List', () => {
   });
 
   test('can navigate to the inspection list page', async ({ page }) => {
-    await page.goto('/qms/inspections');
+    // 路由改名：/qms/inspections → /qms/inspection（QMS_PATHS.inspection，空态标题「暂无检验单」）
+    await page.goto('/qms/inspection');
     await expect(page).toHaveURL(/qms/i, { timeout: 15_000 });
-    await expect(
-      page
-        .getByRole('table')
-        .or(page.getByText(/暂无数据|no data|empty/i))
-        .first()
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('heading', { name: '质量检验' })).toBeVisible({ timeout: 15_000 });
   });
 
   test('search filters the quality-issue list (when search box exists)', async ({ page }) => {
-    await page.goto('/qms/quality-issues');
+    await page.goto('/qms/quality-control');
     const search = page.getByPlaceholder(/搜索|search|编号|问题/i).first();
     if (await search.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await search.fill('TEST-NOT-EXISTING-XYZ');
@@ -45,7 +42,7 @@ test.describe('QMS - List', () => {
   });
 
   test('pagination next button works (when present)', async ({ page }) => {
-    await page.goto('/qms/quality-issues');
+    await page.goto('/qms/quality-control');
     const next = page.getByRole('button', { name: /下一页|next/i }).first();
     if (await next.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await next.click();

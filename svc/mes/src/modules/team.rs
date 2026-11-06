@@ -10,10 +10,40 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
+
+#[derive(Debug, sqlx::FromRow)]
+struct TeamMemberRow {
+    id: Uuid,
+    team_id: Uuid,
+    employee_id: String,
+    employee_name: String,
+    employee_code: Option<String>,
+    position: Option<String>,
+    join_date: Option<DateTime<Utc>>,
+    status: Option<String>,
+}
+
+#[derive(Debug, sqlx::FromRow)]
+struct TeamDetailRow {
+    id: Uuid,
+    team_code: String,
+    team_name: String,
+    team_type: Option<String>,
+    work_station_id: Option<Uuid>,
+    leader_id: Option<String>,
+    leader_name: Option<String>,
+    member_count: i32,
+    status: String,
+    description: Option<String>,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
+    work_station_name: Option<String>,
+}
 
 #[derive(Debug, sqlx::FromRow)]
 struct TeamRow {
@@ -29,14 +59,6 @@ struct TeamRow {
     description: Option<String>,
     created_at: Option<DateTime<Utc>>,
     updated_at: Option<DateTime<Utc>>,
-}
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
 }
 
 pub fn create_routes() -> Router<AppState> {
@@ -339,7 +361,7 @@ pub async fn get_team(
         return e;
     }
 
-    let result = sqlx::query!(
+    let result = sqlx::query_as::<_, TeamDetailRow>(
         r#"
         SELECT 
             t.id, t.team_code, t.team_name, t.team_type, t.work_station_id,
@@ -349,9 +371,12 @@ pub async fn get_team(
         FROM teams t
         LEFT JOIN work_stations ws ON t.work_station_id = ws.id
         WHERE t.id = $1
+          AND t.deleted_at IS NULL
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR t.tenant_id = $2::uuid)
         "#,
-        id,
     )
+    .bind(id)
+    .bind(get_tenant_id(&claims))
     .fetch_optional(&state.pool)
     .await;
 
@@ -403,27 +428,32 @@ pub async fn create_team(
         .work_station_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    let result = sqlx::query!(
+    // 租户来源统一为 Claims：tenant_id 必须随行写入，否则落 NULL 共享行，
+    // 后续以 claims 租户为谓词的 UPDATE 永远匹配不到该班组。
+    let tenant_id = get_tenant_id(&claims);
+
+    let result = sqlx::query_as::<_, TeamRow>(
         r#"
         INSERT INTO teams (
             team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
-            created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, 0, 'active', $7, $8, $8)
+            created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, 0, 'active', $7, $8, $8, $9)
         RETURNING
             id, team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
             created_at, updated_at
         "#,
-        req.team_code,
-        req.team_name,
-        req.team_type,
-        work_station_id,
-        req.leader_id.as_deref(),
-        req.leader_name,
-        req.description,
-        Utc::now(),
     )
+    .bind(req.team_code)
+    .bind(req.team_name)
+    .bind(req.team_type)
+    .bind(work_station_id)
+    .bind(req.leader_id.as_deref())
+    .bind(req.leader_name)
+    .bind(req.description)
+    .bind(Utc::now())
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -439,32 +469,34 @@ pub async fn create_team(
         for member in members {
             let emp_uuid = Uuid::parse_str(&member.employee_id).ok();
             let emp_uuid_arg = emp_uuid.as_ref().map(|u| u.to_string());
-            let _ = sqlx::query!(
+            let _ = sqlx::query(
                 r#"
                     INSERT INTO team_members (
                         team_id, employee_id, employee_name, employee_code, position, join_date
                     ) VALUES ($1, $2, $3, $4, $5, $6)
                     "#,
-                result.id,
-                emp_uuid_arg.as_deref(),
-                member.employee_name,
-                member.employee_code,
-                member.position,
-                now,
             )
+            .bind(result.id)
+            .bind(emp_uuid_arg.as_deref())
+            .bind(member.employee_name)
+            .bind(member.employee_code)
+            .bind(member.position)
+            .bind(now)
             .execute(&state.pool)
             .await;
         }
 
-        let _ = sqlx::query!(
+        let _ = sqlx::query(
             r#"
             UPDATE teams SET member_count = (
                 SELECT COUNT(*) FROM team_members WHERE team_id = $1
-            ), updated_at = $2 WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+            ), updated_at = $2 WHERE id = $1
+              AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
             "#,
-            result.id,
-            now,
         )
+        .bind(result.id)
+        .bind(now)
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
     }
@@ -478,11 +510,11 @@ pub async fn create_team(
         work_station_name: None,
         leader_id: result.leader_id,
         leader_name: result.leader_name,
-        member_count: result.member_count,
-        status: result.status,
+        member_count: result.member_count.unwrap_or(0),
+        status: result.status.unwrap_or_else(|| "active".to_string()),
         description: result.description,
-        created_at: result.created_at,
-        updated_at: result.updated_at,
+        created_at: result.created_at.unwrap_or_else(Utc::now),
+        updated_at: result.updated_at.unwrap_or_else(Utc::now),
     };
 
     ApiResponse::success(team, "班组创建成功")
@@ -506,6 +538,7 @@ pub async fn update_team(
         .and_then(|s| Uuid::parse_str(s).ok());
     // leader_id 列为 uuid：必须按 Uuid 绑定，直接绑 String 会推断为 text 导致 COALESCE 类型不匹配
     let leader_id: Option<Uuid> = req.leader_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query_as::<_, TeamRow>(
         r#"
@@ -518,7 +551,8 @@ pub async fn update_team(
             status = COALESCE($7, status),
             description = COALESCE($8, description),
             updated_at = $9
-        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $1
+          AND ($10::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $10::uuid)
         RETURNING 
             id, team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
@@ -534,6 +568,7 @@ pub async fn update_team(
     .bind(req.status)
     .bind(req.description)
     .bind(Utc::now())
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -579,13 +614,15 @@ pub async fn delete_team(
         return e;
     }
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         UPDATE teams SET deleted_at = NOW()
-        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $1
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
-        id,
     )
+    .bind(id)
+    .bind(get_tenant_id(&claims))
     .execute(&state.pool)
     .await;
 
@@ -627,17 +664,24 @@ pub async fn get_team_members(
         return e;
     }
 
-    let result = sqlx::query!(
+    // team_members 无 tenant_id 列，租户隔离经 teams 归属校验（EXISTS）
+    let result = sqlx::query_as::<_, TeamMemberRow>(
         r#"
         SELECT 
-            id, team_id, employee_id, employee_name, employee_code,
-            position, join_date, status
-        FROM team_members
-        WHERE team_id = $1 AND status = 'active'
-        ORDER BY join_date DESC
+            tm.id, tm.team_id, tm.employee_id, tm.employee_name, tm.employee_code,
+            tm.position, tm.join_date, tm.status
+        FROM team_members tm
+        WHERE tm.team_id = $1 AND tm.status = 'active'
+          AND EXISTS (
+              SELECT 1 FROM teams t
+              WHERE t.id = tm.team_id AND t.deleted_at IS NULL
+                AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR t.tenant_id = $2::uuid)
+          )
+        ORDER BY tm.join_date DESC
         "#,
-        id,
     )
+    .bind(id)
+    .bind(get_tenant_id(&claims))
     .fetch_all(&state.pool)
     .await;
 
@@ -682,8 +726,30 @@ pub async fn add_team_member(
 
     let employee_uuid = Uuid::parse_str(&req.employee_id).ok();
     let employee_uuid_arg = employee_uuid.as_ref().map(|u| u.to_string());
+    let tenant_id = get_tenant_id(&claims);
 
-    let result = sqlx::query!(
+    // team_members 无 tenant_id 列：先校验目标班组归属本租户，防止跨租户写入
+    let team_exists = sqlx::query_scalar::<_, Uuid>(
+        r#"
+        SELECT id FROM teams
+        WHERE id = $1 AND deleted_at IS NULL
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+        "#,
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.pool)
+    .await;
+    match team_exists {
+        Ok(Some(_)) => {}
+        Ok(None) => return ApiResponse::not_found("班组不存在"),
+        Err(e) => {
+            tracing::error!("Failed to check team: {}", e);
+            return ApiResponse::server_error("添加班组成员失败");
+        }
+    }
+
+    let result = sqlx::query_as::<_, TeamMemberRow>(
         r#"
         INSERT INTO team_members (
             team_id, employee_id, employee_name, employee_code, position, join_date
@@ -692,13 +758,13 @@ pub async fn add_team_member(
             id, team_id, employee_id, employee_name, employee_code,
             position, join_date, status
         "#,
-        id,
-        employee_uuid_arg.as_deref(),
-        req.employee_name,
-        req.employee_code,
-        req.position,
-        Utc::now(),
     )
+    .bind(id)
+    .bind(employee_uuid_arg.as_deref())
+    .bind(req.employee_name)
+    .bind(req.employee_code)
+    .bind(req.position)
+    .bind(Utc::now())
     .fetch_one(&state.pool)
     .await;
 
@@ -710,15 +776,17 @@ pub async fn add_team_member(
         }
     };
 
-    let _ = sqlx::query!(
+    let _ = sqlx::query(
         r#"
         UPDATE teams SET member_count = (
             SELECT COUNT(*) FROM team_members WHERE team_id = $1 AND status = 'active'
-        ), updated_at = $2 WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        ), updated_at = $2 WHERE id = $1
+          AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
         "#,
-        id,
-        Utc::now(),
     )
+    .bind(id)
+    .bind(Utc::now())
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 
@@ -761,14 +829,22 @@ pub async fn remove_team_member(
         return e;
     }
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+
+    let result = sqlx::query(
         r#"
         UPDATE team_members SET status = 'inactive'
         WHERE id = $1 AND team_id = $2
+          AND EXISTS (
+              SELECT 1 FROM teams t
+              WHERE t.id = $2
+                AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR t.tenant_id = $3::uuid)
+          )
         "#,
-        member_id,
-        id,
     )
+    .bind(member_id)
+    .bind(id)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 
@@ -781,15 +857,17 @@ pub async fn remove_team_member(
     };
 
     if result.rows_affected() > 0 {
-        let _ = sqlx::query!(
+        let _ = sqlx::query(
             r#"
             UPDATE teams SET member_count = (
                 SELECT COUNT(*) FROM team_members WHERE team_id = $1 AND status = 'active'
-            ), updated_at = $2 WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+            ), updated_at = $2 WHERE id = $1
+              AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
             "#,
-            id,
-            Utc::now(),
         )
+        .bind(id)
+        .bind(Utc::now())
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
 

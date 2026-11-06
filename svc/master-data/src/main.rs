@@ -52,7 +52,7 @@ async fn main() -> anyhow::Result<()> {
 
     // 把 ServiceContext 转换为下游 modules 依赖的 legacy AppState（零改造）
     let app_state = AppState {
-        db: ctx.db.clone(),
+        db: topems_shared_auth::ScopedPool::new(ctx.db.clone()),
         auth_state: ctx.auth_state.clone(),
         metrics: Arc::clone(&ctx.metrics),
         start_time: ctx.start_time,
@@ -140,7 +140,7 @@ async fn home() -> &'static str {
 }
 
 async fn health(State(state): State<AppState>) -> ServiceHealth {
-    let config = SimpleHealthConfig::new("topems-master-data").with_db(state.db.clone());
+    let config = SimpleHealthConfig::new("topems-master-data").with_db(state.db.inner().clone());
     simple_health_check(&config).await
 }
 

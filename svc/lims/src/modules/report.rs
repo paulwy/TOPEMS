@@ -345,24 +345,27 @@ fn is_result_conforming(result: &str, standard: &str) -> bool {
 
 pub async fn approve_report(
     State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<topems_shared_auth::auth::Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> ApiResponse<serde_json::Value> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return ApiResponse::bad_request("无效的报告ID"),
     };
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
 
     let row = sqlx::query(
         r#"
         UPDATE public.qa_lab_inspection_reports
         SET status = 'approved', updated_at = NOW()
         WHERE id = $1 AND status = 'draft'
-          AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         RETURNING id::text, report_no, sample_id::text, sample_no, sample_name, inspection_date,
                   inspector, inspection_items, conclusion, remark, status, created_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 

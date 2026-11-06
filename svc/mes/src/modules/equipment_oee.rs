@@ -8,13 +8,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 
 use topems_shared_auth::auth::Claims;
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
+use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -662,6 +656,29 @@ pub async fn get_oee_record(
     }
 }
 
+#[derive(sqlx::FromRow)]
+struct OeeRecordUpdateRow {
+    id: Uuid,
+    equipment_id: Uuid,
+    record_date: DateTime<Utc>,
+    planned_production_time: f64,
+    actual_run_time: f64,
+    downtime: Option<f64>,
+    ideal_cycle_time: f64,
+    actual_output: f64,
+    good_output: f64,
+    defective_output: Option<f64>,
+    availability: Option<f64>,
+    performance: Option<f64>,
+    quality_rate: Option<f64>,
+    oee: Option<f64>,
+    shift: Option<String>,
+    operator: Option<String>,
+    notes: Option<String>,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
+}
+
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["mes:update"])),
@@ -688,6 +705,8 @@ pub async fn update_oee_record(
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims);
+
     let existing = sqlx::query!(
         r#"
         SELECT planned_production_time, actual_run_time, downtime,
@@ -697,7 +716,7 @@ pub async fn update_oee_record(
           AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
         id,
-        get_tenant_id(&claims),
+        tenant_id,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -722,7 +741,7 @@ pub async fn update_oee_record(
     let (availability, performance, quality_rate, oee) =
         calculate_oee(planned_time, run_time, cycle_time, output, good);
 
-    let result = sqlx::query!(
+    let result = sqlx::query_as::<_, OeeRecordUpdateRow>(
         r#"
         UPDATE equipment_oee SET
             planned_production_time = COALESCE($2, planned_production_time),
@@ -740,7 +759,7 @@ pub async fn update_oee_record(
             operator = COALESCE($14, operator),
             notes = COALESCE($15, notes),
             updated_at = $16
-        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $1 AND ($17::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $17::uuid)
         RETURNING 
             id, equipment_id, record_date,
             planned_production_time, actual_run_time, downtime,
@@ -748,23 +767,24 @@ pub async fn update_oee_record(
             availability, performance, quality_rate, oee,
             shift, operator, notes, created_at, updated_at
         "#,
-        id,
-        req.planned_production_time,
-        req.actual_run_time,
-        req.downtime,
-        req.ideal_cycle_time,
-        req.actual_output,
-        req.good_output,
-        req.defective_output,
-        availability,
-        performance,
-        quality_rate,
-        oee,
-        req.shift,
-        req.operator,
-        req.notes,
-        Utc::now(),
     )
+    .bind(id)
+    .bind(req.planned_production_time)
+    .bind(req.actual_run_time)
+    .bind(req.downtime)
+    .bind(req.ideal_cycle_time)
+    .bind(req.actual_output)
+    .bind(req.good_output)
+    .bind(req.defective_output)
+    .bind(availability)
+    .bind(performance)
+    .bind(quality_rate)
+    .bind(oee)
+    .bind(req.shift)
+    .bind(req.operator)
+    .bind(req.notes)
+    .bind(Utc::now())
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -831,10 +851,13 @@ pub async fn delete_oee_record(
         return e;
     }
 
-    let result = sqlx::query!(
-        r#"UPDATE equipment_oee SET deleted_at = NOW() WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')"#,
-        id,
+    let tenant_id = get_tenant_id(&claims);
+
+    let result = sqlx::query(
+        r#"UPDATE equipment_oee SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
     )
+    .bind(id)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 

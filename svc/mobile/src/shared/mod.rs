@@ -13,6 +13,7 @@ use axum::extract::FromRef;
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::ScopedPool;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::{
     api::crm_api::CrmApi, api::hrm_api::HrmApi, api::mes_api::MesApi,
@@ -23,7 +24,7 @@ use topems_shared_service_client::service_client::{
 #[derive(Clone)]
 pub struct AppState {
     pub auth_state: AuthState,
-    pub pool: PgPool,
+    pub pool: ScopedPool,
     pub event_publisher: Option<Arc<EventPublisher>>,
     pub wms_client: TypedServiceClient<WmsApi>,
     pub hrm_client: TypedServiceClient<HrmApi>,
@@ -42,7 +43,7 @@ impl FromRef<AppState> for AuthState {
 
 impl FromRef<AppState> for PgPool {
     fn from_ref(state: &AppState) -> Self {
-        state.pool.clone()
+        state.pool.inner().clone()
     }
 }
 

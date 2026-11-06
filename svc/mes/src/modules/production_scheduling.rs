@@ -15,13 +15,7 @@ use sqlx::{types::Uuid, Row};
 use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
+use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 
 use crate::shared::aps_fsm::schedule_can_transition;
 use topems_shared_db::decimal::big_decimal_to_f64;
@@ -56,6 +50,31 @@ pub fn create_routes() -> Router<AppState> {
 }
 
 // ==================== Data Types ====================
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct ProductionScheduleRow {
+    id: Uuid,
+    schedule_no: String,
+    order_id: Option<Uuid>,
+    order_no: Option<String>,
+    product_id: Option<Uuid>,
+    product_name: String,
+    product_code: String,
+    quantity: BigDecimal,
+    work_station_id: Option<Uuid>,
+    equipment_id: Option<Uuid>,
+    process_id: Option<Uuid>,
+    planned_start_time: Option<DateTime<Utc>>,
+    planned_end_time: Option<DateTime<Utc>>,
+    actual_start_time: Option<DateTime<Utc>>,
+    actual_end_time: Option<DateTime<Utc>>,
+    status: Option<String>,
+    priority: Option<i32>,
+    sequence: Option<i32>,
+    notes: Option<String>,
+    created_at: Option<DateTime<Utc>>,
+    updated_at: Option<DateTime<Utc>>,
+}
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListProductionSchedulesQuery {
@@ -671,7 +690,9 @@ pub async fn update_production_schedule(
         return e;
     }
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+
+    let result = sqlx::query_as::<_, ProductionScheduleRow>(
         r#"
         UPDATE production_schedules SET
             work_station_id = COALESCE($2, work_station_id),
@@ -684,7 +705,7 @@ pub async fn update_production_schedule(
             status = COALESCE($9, status),
             notes = COALESCE($10, notes),
             updated_at = $11
-        WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $1 AND ($12::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $12::uuid)
         RETURNING 
             id, schedule_no, order_id, order_no,
             product_id, product_name, product_code,
@@ -694,18 +715,19 @@ pub async fn update_production_schedule(
             status, priority, sequence, notes,
             created_at, updated_at
         "#,
-        id,
-        req.work_station_id,
-        req.equipment_id,
-        req.process_id,
-        req.planned_start_time,
-        req.planned_end_time,
-        req.priority,
-        req.sequence,
-        req.status,
-        req.notes,
-        Utc::now(),
     )
+    .bind(id)
+    .bind(req.work_station_id)
+    .bind(req.equipment_id)
+    .bind(req.process_id)
+    .bind(req.planned_start_time)
+    .bind(req.planned_end_time)
+    .bind(req.priority)
+    .bind(req.sequence)
+    .bind(req.status)
+    .bind(req.notes)
+    .bind(Utc::now())
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -779,13 +801,16 @@ pub async fn delete_production_schedule(
         return e;
     }
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+
+    let result = sqlx::query(
         r#"
         UPDATE production_schedules SET deleted_at = NOW()
-        WHERE id = $1 AND status IN ('pending', 'cancelled') AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $1 AND status IN ('pending', 'cancelled') AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
-        id,
     )
+    .bind(id)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 
@@ -835,21 +860,23 @@ pub async fn adjust_schedule(
     }
 
     let now = Utc::now();
+    let tenant_id = get_tenant_id(&claims);
 
     for schedule_id in &req.schedule_ids {
-        let result = sqlx::query!(
+        let result = sqlx::query(
             r#"
             UPDATE production_schedules SET
                 work_station_id = COALESCE($2, work_station_id),
                 planned_start_time = COALESCE($3, planned_start_time),
                 updated_at = $4
-            WHERE id = $1 AND status IN ('pending', 'in_progress') AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+            WHERE id = $1 AND status IN ('pending', 'in_progress') AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $5::uuid)
             "#,
-            schedule_id,
-            req.new_work_station_id,
-            req.new_start_time,
-            now,
         )
+        .bind(schedule_id)
+        .bind(req.new_work_station_id)
+        .bind(req.new_start_time)
+        .bind(now)
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
 

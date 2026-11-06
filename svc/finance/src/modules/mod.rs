@@ -4461,6 +4461,39 @@ pub async fn update_counterparty_supplier(
 
 // ==================== RC4a 补齐: 费用审批 ====================
 
+/// 费用审批创建/更新入参。
+///
+/// `items` 显式声明为数组：此前用 `serde_json::Value` 接收，`items: "not-an-array"`
+/// 会被静默忽略并返回 200。改为强类型后由 axum Json extractor 直接返回 422。
+#[derive(Debug, Deserialize)]
+pub struct ExpenseApprovalUpsert {
+    expense_no: Option<String>,
+    employee_id: Option<String>,
+    employee_name: Option<String>,
+    department: Option<String>,
+    expense_date: Option<String>,
+    expense_type: Option<String>,
+    total_amount: Option<f64>,
+    status: Option<String>,
+    description: Option<String>,
+    approval_note: Option<String>,
+    approver_id: Option<String>,
+    approver_name: Option<String>,
+    items: Option<Vec<serde_json::Value>>,
+}
+
+/// 兼容 E2E/前端两种日期口径：RFC3339 与 `YYYY-MM-DD`。
+fn parse_expense_date(raw: &str) -> Option<DateTime<Utc>> {
+    if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(raw) {
+        return Some(dt.with_timezone(&Utc));
+    }
+    chrono::NaiveDate::parse_from_str(raw, "%Y-%m-%d")
+        .ok()
+        .and_then(|d| d.and_hms_opt(0, 0, 0))
+        .map(|d| d.and_utc())
+}
+
+
 pub async fn list_expense_approvals(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -4563,49 +4596,40 @@ pub async fn list_expense_approvals(
 pub async fn create_expense_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Json(req): Json<serde_json::Value>,
+    Json(req): Json<ExpenseApprovalUpsert>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = claims
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    let expense_no = req
-        .get("expense_no")
-        .and_then(|v| v.as_str())
-        .unwrap_or("")
-        .to_string();
+    // 必填校验：expense_no 为空串/缺失 → 400（此前空串直接落库并返回 200）
+    let expense_no = match req.expense_no.as_deref().map(str::trim) {
+        Some(s) if !s.is_empty() => s.to_string(),
+        _ => return ApiResponse::bad_request("expense_no 必填"),
+    };
     let employee_id = req
-        .get("employee_id")
-        .and_then(|v| v.as_str())
+        .employee_id
+        .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    let employee_name = req
-        .get("employee_name")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
-    let department = req
-        .get("department")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
-    let expense_date = req
-        .get("expense_date")
-        .and_then(|v| v.as_str())
-        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-        .map(|d| d.with_timezone(&chrono::Utc))
-        .unwrap_or_else(Utc::now);
-    let expense_type = req
-        .get("expense_type")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
-    let total_amount = req.get("total_amount").and_then(|v| v.as_f64());
-    let status = req
-        .get("status")
-        .and_then(|v| v.as_str())
-        .unwrap_or("pending")
-        .to_string();
-    let description = req
-        .get("description")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string());
+    let employee_name = req.employee_name;
+    let department = req.department;
+    // 日期：缺失时沿用历史行为取当前时间；显式传入但格式非法 → 400
+    let expense_date = match req.expense_date.as_deref().map(str::trim) {
+        Some(s) if !s.is_empty() => match parse_expense_date(s) {
+            Some(d) => d,
+            None => return ApiResponse::bad_request("expense_date 格式无效"),
+        },
+        _ => Utc::now(),
+    };
+    let expense_type = req.expense_type;
+    let total_amount = match req.total_amount {
+        Some(v) if !v.is_finite() || v < 0.0 => {
+            return ApiResponse::unprocessable("total_amount 不能为负数")
+        }
+        other => other,
+    };
+    let status = req.status.unwrap_or_else(|| "pending".to_string());
+    let description = req.description;
 
     let result = sqlx::query(
         only_own_schema_query!(
@@ -4697,21 +4721,138 @@ pub async fn get_expense_approval(
 
 // gate: admin-only
 pub async fn update_expense_approval(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Json(req): Json<serde_json::Value>,
+    Json(req): Json<ExpenseApprovalUpsert>,
 ) -> ApiResponse<serde_json::Value> {
-    ApiResponse::success(serde_json::json!({"id": id, "data": req}), "更新成功")
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let id_uuid = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return ApiResponse::not_found("费用审批不存在"),
+    };
+    let expense_date = match req.expense_date.as_deref().map(str::trim) {
+        Some(s) if !s.is_empty() => match parse_expense_date(s) {
+            Some(d) => Some(d),
+            None => return ApiResponse::bad_request("expense_date 格式无效"),
+        },
+        _ => None,
+    };
+    if let Some(v) = req.total_amount {
+        if !v.is_finite() || v < 0.0 {
+            return ApiResponse::unprocessable("total_amount 不能为负数");
+        }
+    }
+    let employee_id = req
+        .employee_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let approver_id = req
+        .approver_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+
+    // 此前该 handler 是纯回显桩：返回 {id,data} 但不落库（GET 复核仍为 draft）。
+    let row = sqlx::query(only_own_schema_query!(
+        "finance",
+        r#"UPDATE finance.expense_approvals SET
+               employee_id = COALESCE($2, employee_id),
+               expense_no = COALESCE($3, expense_no),
+               employee_name = COALESCE($4, employee_name),
+               department = COALESCE($5, department),
+               expense_date = COALESCE($6, expense_date),
+               expense_type = COALESCE($7, expense_type),
+               total_amount = COALESCE($8, total_amount),
+               status = COALESCE($9, status),
+               description = COALESCE($10, description),
+               approval_note = COALESCE($11, approval_note),
+               approver_id = COALESCE($12, approver_id),
+               approver_name = COALESCE($13, approver_name),
+               updated_at = NOW()
+           WHERE id = $1 AND deleted_at IS NULL
+             AND ($14::uuid IS NULL OR tenant_id = $14::uuid)
+           RETURNING id, expense_no, employee_id, employee_name, department, expense_date,
+                     expense_type, total_amount, status, description, approver_id, approver_name,
+                     approval_note, created_at, updated_at"#
+    ))
+    .bind(id_uuid)
+    .bind(employee_id)
+    .bind(req.expense_no.filter(|s| !s.trim().is_empty()))
+    .bind(req.employee_name)
+    .bind(req.department)
+    .bind(expense_date)
+    .bind(req.expense_type)
+    .bind(req.total_amount)
+    .bind(req.status)
+    .bind(req.description)
+    .bind(req.approval_note)
+    .bind(approver_id)
+    .bind(req.approver_name)
+    .bind(tenant_id)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match row {
+        Ok(Some(row)) => ApiResponse::success(
+            serde_json::json!({
+                "id": row.try_get::<Uuid, _>("id").ok(),
+                "expense_no": row.try_get::<String, _>("expense_no").ok(),
+                "employee_id": row.try_get::<Option<Uuid>, _>("employee_id").ok().flatten(),
+                "employee_name": row.try_get::<Option<String>, _>("employee_name").ok().flatten(),
+                "department": row.try_get::<Option<String>, _>("department").ok().flatten(),
+                "expense_date": row.try_get::<Option<chrono::NaiveDate>, _>("expense_date").ok().flatten(),
+                "expense_type": row.try_get::<Option<String>, _>("expense_type").ok().flatten(),
+                "total_amount": row.try_get::<Option<Decimal>, _>("total_amount").ok().flatten(),
+                "status": row.try_get::<Option<String>, _>("status").ok().flatten(),
+                "description": row.try_get::<Option<String>, _>("description").ok().flatten(),
+                "approver_id": row.try_get::<Option<Uuid>, _>("approver_id").ok().flatten(),
+                "approver_name": row.try_get::<Option<String>, _>("approver_name").ok().flatten(),
+                "approval_note": row.try_get::<Option<String>, _>("approval_note").ok().flatten(),
+                "created_at": row.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten(),
+                "updated_at": row.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten(),
+            }),
+            "更新成功",
+        ),
+        Ok(None) => ApiResponse::not_found("费用审批不存在"),
+        Err(e) => ApiResponse::from(TopemsError::DatabaseQuery(format!("更新费用审批失败: {}", e))),
+    }
 }
 
 // gate: admin-only
 pub async fn delete_expense_approval(
-    State(_state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
-    Path(_id): Path<String>,
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
 ) -> ApiResponse<String> {
-    ApiResponse::success("".to_string(), "删除成功")
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let id_uuid = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return ApiResponse::not_found("费用审批不存在"),
+    };
+
+    // 此前是空桩：无论 ID 是否存在/已删都返回 200。
+    let result = sqlx::query(only_own_schema_query!(
+        "finance",
+        r#"UPDATE finance.expense_approvals SET deleted_at = NOW()
+           WHERE id = $1 AND deleted_at IS NULL
+             AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
+    ))
+    .bind(id_uuid)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "删除成功"),
+        Ok(_) => ApiResponse::not_found("费用审批不存在"),
+        Err(e) => ApiResponse::from(TopemsError::DatabaseQuery(format!("删除费用审批失败: {}", e))),
+    }
 }
 
 // gate: admin-only

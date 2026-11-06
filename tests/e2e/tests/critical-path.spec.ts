@@ -47,7 +47,7 @@ test.describe('Critical Path - 2. Production Order (MES)', () => {
   });
 
   test('can list production orders', async () => {
-    const res = await apiGet<PaginatedResponse<unknown>>(ctx, '/api/mes/production-orders', {
+    const res = await apiGet<PaginatedResponse<unknown>>(ctx, '/api/mes/orders', {
       page: 0,
       pagesize: 10,
     });

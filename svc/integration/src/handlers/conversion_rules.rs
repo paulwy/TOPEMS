@@ -1,7 +1,8 @@
-use axum::extract::{Path, State};
+use axum::extract::{Extension, Path, State};
 use axum::Json;
 use chrono::Utc;
 use sqlx::Row;
+use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -278,13 +279,16 @@ pub async fn get_rule_executions_api(
 )]
 pub async fn execute_conversion_rule_api(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<ExecuteConversionRequest>,
 ) -> ApiResponse<ExecuteConversionResponse> {
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
     let rule = match sqlx::query_as::<_, ConversionRule>(
-        only_own_schema_query!("integration", "SELECT id, tenant_id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at, updated_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("integration", "SELECT id, tenant_id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at, updated_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"),
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await
     {
@@ -331,13 +335,14 @@ pub async fn execute_conversion_rule_api(
 
     let _ = sqlx::query(
         only_own_schema_query!("integration", "UPDATE integration.conversion_executions SET status = $1, completed_at = $2, target_record_id = $3, target_data = $4
-         WHERE id = $5 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"),
+         WHERE id = $5 AND ($6::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $6::uuid)"),
     )
     .bind("completed")
     .bind(now)
     .bind(&response.target_record_id)
     .bind(&response.target_data)
     .bind(execution_id)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 

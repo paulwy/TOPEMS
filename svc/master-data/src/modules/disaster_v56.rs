@@ -6,14 +6,27 @@
 //! - 业务连续性 (BusinessContinuityManager): 连续性计划、关键功能、影响评估
 //! - 跨地域容灾 (CrossRegionDR): 多地域活跃-活跃、复制管理、故障转移
 
-use axum::{extract::Path, extract::Query, extract::State, Json};
+use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use sqlx::Row;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
 use crate::shared::AppState;
+
+/// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
+fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }
+}
 
 // ==================== K1：真表映射（master_data.mdm_* 8 表） ====================
 
@@ -678,8 +691,10 @@ pub struct SwitchRegionsRequest {
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn create_recovery_point(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRecoveryPointRequest>,
 ) -> ApiResponse<RecoveryPoint> {
+    let tenant = tenant_of(&claims);
     let snapshot_type = req
         .snapshot_type
         .as_deref()
@@ -706,7 +721,7 @@ pub async fn create_recovery_point(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_recovery_points
            (id, snapshot_type, entity_type, entity_id, data, checksum, created_at, size_bytes, tenant_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8, $9)"#,
     )
     .bind(&rp.id)
     .bind(snapshot_type_to_str(&rp.snapshot_type))
@@ -716,6 +731,7 @@ pub async fn create_recovery_point(
     .bind(&rp.checksum)
     .bind(rp.created_at.to_rfc3339())
     .bind(rp.size_bytes)
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::internal("写入恢复点失败", e))
@@ -939,8 +955,10 @@ pub async fn get_recovery_status(State(state): State<AppState>) -> ApiResponse<s
 )]
 pub async fn create_recovery_plan(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRecoveryPlanRequest>,
 ) -> ApiResponse<RecoveryPlan> {
+    let tenant = tenant_of(&claims);
     let priority = req
         .priority
         .as_deref()
@@ -982,7 +1000,7 @@ pub async fn create_recovery_plan(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_recovery_plans
            (id, name, priority, rto_minutes, rpo_minutes, steps, status, tenant_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+           VALUES ($1,$2,$3,$4,$5,$6,$7, $8)"#,
     )
     .bind(&plan.id)
     .bind(&plan.name)
@@ -991,6 +1009,7 @@ pub async fn create_recovery_plan(
     .bind(plan.rpo_minutes)
     .bind(serde_json::to_value(&plan.steps).unwrap_or_default())
     .bind(recovery_plan_status_to_str(&plan.status))
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::internal("写入恢复计划失败", e))
@@ -1014,8 +1033,10 @@ pub async fn create_recovery_plan(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn execute_plan(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<ExecutePlanRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = tenant_of(&claims);
     let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans WHERE id = $1"
     )))
@@ -1041,11 +1062,12 @@ pub async fn execute_plan(
     let rpo_minutes = plan.rpo_minutes;
 
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_recovery_plans SET status = $2, steps = $3 WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+        r#"UPDATE master_data.mdm_recovery_plans SET status = $2, steps = $3 WHERE id = $1 AND ($4::uuid IS NULL OR tenant_id = $4)"#,
     )
     .bind(&plan_id)
     .bind(recovery_plan_status_to_str(&plan.status))
     .bind(serde_json::to_value(&plan.steps).unwrap_or_default())
+    .bind(tenant)
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::internal("更新恢复计划失败", e))
@@ -1207,8 +1229,10 @@ pub async fn test_recovery(
 )]
 pub async fn create_continuity_plan(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateContinuityPlanRequest>,
 ) -> ApiResponse<ContinuityPlan> {
+    let tenant = tenant_of(&claims);
     let strategy = req
         .recovery_strategy
         .as_deref()
@@ -1247,7 +1271,7 @@ pub async fn create_continuity_plan(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_continuity_plans
            (id, name, scope, critical_functions, recovery_strategy, test_frequency, last_tested, status, tenant_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8, $9)"#,
     )
     .bind(&plan.id)
     .bind(&plan.name)
@@ -1257,6 +1281,7 @@ pub async fn create_continuity_plan(
     .bind(&plan.test_frequency)
     .bind(Option::<String>::None)
     .bind(continuity_status_to_str(&plan.status))
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::internal("写入连续性计划失败", e)) { return ApiResponse::from(e); }
@@ -1331,9 +1356,11 @@ pub async fn get_plan(
 )]
 pub async fn update_plan(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<UpdateContinuityPlanRequest>,
 ) -> ApiResponse<ContinuityPlan> {
+    let tenant = tenant_of(&claims);
     let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
     )))
@@ -1371,7 +1398,7 @@ pub async fn update_plan(
     if let Err(e) = sqlx::query(
         r#"UPDATE master_data.mdm_continuity_plans SET
            name = $2, scope = $3, recovery_strategy = $4, test_frequency = $5, status = $6
-           WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+           WHERE id = $1 AND ($7::uuid IS NULL OR tenant_id = $7)"#,
     )
     .bind(&id)
     .bind(&plan.name)
@@ -1379,6 +1406,7 @@ pub async fn update_plan(
     .bind(strategy_to_str(&plan.recovery_strategy))
     .bind(&plan.test_frequency)
     .bind(continuity_status_to_str(&plan.status))
+    .bind(tenant)
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::internal("更新连续性计划失败", e))
@@ -1404,9 +1432,11 @@ pub async fn update_plan(
 )]
 pub async fn test_plan(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     _req: Json<TestPlanRequest>,
 ) -> ApiResponse<BCTest> {
+    let tenant = tenant_of(&claims);
     let plan = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
     )))
@@ -1422,11 +1452,12 @@ pub async fn test_plan(
 
     let now = chrono::Utc::now();
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_continuity_plans SET last_tested = $2, status = $3 WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+        r#"UPDATE master_data.mdm_continuity_plans SET last_tested = $2, status = $3 WHERE id = $1 AND ($4::uuid IS NULL OR tenant_id = $4)"#,
     )
     .bind(&id)
     .bind(now.to_rfc3339())
     .bind("tested")
+    .bind(tenant)
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::internal("更新连续性计划失败", e)) { return ApiResponse::from(e); }
@@ -1443,7 +1474,7 @@ pub async fn test_plan(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_bc_tests
            (id, plan_id, tested_at, result, duration_minutes, issues_found, tenant_id)
-           VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+           VALUES ($1,$2,$3,$4,$5,$6, $7)"#,
     )
     .bind(&bc_test.id)
     .bind(&bc_test.plan_id)
@@ -1451,6 +1482,7 @@ pub async fn test_plan(
     .bind(&bc_test.result)
     .bind(bc_test.duration_minutes)
     .bind(serde_json::to_value(&bc_test.issues_found).unwrap_or_default())
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::internal("写入演练记录失败", e))
@@ -1675,8 +1707,10 @@ pub async fn get_continuity_score(State(state): State<AppState>) -> ApiResponse<
 )]
 pub async fn configure_replication(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<ConfigureReplicationRequest>,
 ) -> ApiResponse<ReplicationConfig> {
+    let tenant = tenant_of(&claims);
     let mode = req
         .replication_mode
         .as_deref()
@@ -1695,7 +1729,7 @@ pub async fn configure_replication(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_replication_configs
            (id, source_region, target_region, replication_mode, lag_max_ms, status, tenant_id)
-           VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+           VALUES ($1,$2,$3,$4,$5,$6, $7)"#,
     )
     .bind(&config.id)
     .bind(&config.source_region)
@@ -1703,6 +1737,7 @@ pub async fn configure_replication(
     .bind(replication_mode_to_str(&config.replication_mode))
     .bind(config.lag_max_ms)
     .bind(replication_status_to_str(&config.status))
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::internal("写入复制配置失败", e))
@@ -1725,8 +1760,10 @@ pub async fn configure_replication(
 )]
 pub async fn start_replication(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<ReplicationActionRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = tenant_of(&claims);
     let config = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs WHERE id = $1"
     )))
@@ -1741,9 +1778,10 @@ pub async fn start_replication(
     };
 
     if let Err(e) = sqlx::query(
-        "UPDATE master_data.mdm_replication_configs SET status = 'running' WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "UPDATE master_data.mdm_replication_configs SET status = 'running' WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(&config.id)
+    .bind(tenant)
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::internal("启动复制失败", e))
@@ -1875,8 +1913,10 @@ pub async fn get_replication_status(
 )]
 pub async fn initiate_failover(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<InitiateFailoverRequest>,
 ) -> ApiResponse<FailoverRecord> {
+    let tenant = tenant_of(&claims);
     let trigger = req
         .trigger
         .as_deref()
@@ -1901,7 +1941,7 @@ pub async fn initiate_failover(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_failover_records
            (id, from_region, to_region, trigger, started_at, completed_at, reason, status, tenant_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8, $9)"#,
     )
     .bind(&failover.id)
     .bind(&failover.from_region)
@@ -1911,6 +1951,7 @@ pub async fn initiate_failover(
     .bind(Option::<String>::None)
     .bind(&failover.reason)
     .bind(failover_status_to_str(&failover.status))
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::internal("写入故障转移记录失败", e))
@@ -1936,9 +1977,11 @@ pub async fn initiate_failover(
 )]
 pub async fn complete_failover(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<CompleteFailoverRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = tenant_of(&claims);
     let record = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {FAILOVER_RECORD_COLS} FROM master_data.mdm_failover_records WHERE id = $1 OR id = $2"
     )))
@@ -1955,25 +1998,28 @@ pub async fn complete_failover(
 
     let completed_at = chrono::Utc::now().to_rfc3339();
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_failover_records SET status = 'completed', completed_at = $2 WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+        r#"UPDATE master_data.mdm_failover_records SET status = 'completed', completed_at = $2 WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3)"#,
     )
     .bind(&record.id)
     .bind(&completed_at)
+    .bind(tenant)
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::internal("更新故障转移记录失败", e)) { return ApiResponse::from(e); }
 
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_region_configs SET status = 'offline', primary_flag = false WHERE region_id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+        r#"UPDATE master_data.mdm_region_configs SET status = 'offline', primary_flag = false WHERE region_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
     )
     .bind(&record.from_region)
+    .bind(tenant)
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::internal("更新源地域失败", e)) { return ApiResponse::from(e); }
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_region_configs SET status = 'online', primary_flag = true WHERE region_id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+        r#"UPDATE master_data.mdm_region_configs SET status = 'online', primary_flag = true WHERE region_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
     )
     .bind(&record.to_region)
+    .bind(tenant)
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::internal("更新目标地域失败", e)) { return ApiResponse::from(e); }
@@ -2026,8 +2072,10 @@ pub async fn get_failover_history(
 )]
 pub async fn switch_regions(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<SwitchRegionsRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = tenant_of(&claims);
     let target = db_exec!(sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs WHERE region_id = $1"
     )))
@@ -2042,9 +2090,10 @@ pub async fn switch_regions(
     };
 
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_region_configs SET primary_flag = false WHERE region_id <> $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+        r#"UPDATE master_data.mdm_region_configs SET primary_flag = false WHERE region_id <> $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
     )
     .bind(&req.primary_region)
+    .bind(tenant)
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::internal("重置地域主备失败", e))
@@ -2052,9 +2101,10 @@ pub async fn switch_regions(
         return ApiResponse::from(e);
     }
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_region_configs SET primary_flag = true, status = 'online' WHERE region_id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+        r#"UPDATE master_data.mdm_region_configs SET primary_flag = true, status = 'online' WHERE region_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
     )
     .bind(&req.primary_region)
+    .bind(tenant)
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::internal("切换主地域失败", e)) { return ApiResponse::from(e); }

@@ -3,9 +3,9 @@ pub mod aps_util;
 pub mod permission;
 
 use axum::extract::FromRef;
-use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::ScopedPool;
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_core::l2_cache::AsyncL2Cache;
 use topems_shared_event::event::EventPublisher;
@@ -14,7 +14,7 @@ use topems_shared_service_client::service_client::{api::erp_api::ErpApi, TypedSe
 #[derive(Clone)]
 pub struct AppState {
     pub auth_state: AuthState,
-    pub pool: PgPool,
+    pub pool: ScopedPool,
     pub health_config: SimpleHealthConfig,
     pub event_publisher: Option<Arc<EventPublisher>>,
     // 生产执行闭环：ERP 服务客户端（报工后回传生产进度，Option 优雅降级）

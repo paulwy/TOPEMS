@@ -8,16 +8,29 @@
 //!
 //! 设计风格：ApiResponse + K1 真表（master_data schema，sqlx 直读写，store 已收敛）
 
-use axum::{extract::Path, extract::Query, extract::State, Json};
+use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use sqlx::Row;
 use std::collections::{HashMap, HashSet};
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
+
+/// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
+fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }
+}
 
 // ==================== K1：真表映射（master_data.mdm_kg_* 等 8 表） ====================
 
@@ -372,7 +385,10 @@ async fn fetch_kg_graph(db: &sqlx::PgPool) -> Option<KnowledgeGraph> {
     .map(|r| kg_graph_from_row(&r))
 }
 
-async fn refresh_kg_graph(db: &sqlx::PgPool) -> Result<(), TopemsError> {
+async fn refresh_kg_graph(
+    db: &sqlx::PgPool,
+    tenant: Option<uuid::Uuid>,
+) -> Result<(), TopemsError> {
     let nodes = fetch_kg_nodes(db).await;
     let edges = fetch_kg_edges(db).await;
     let now = chrono::Utc::now().to_rfc3339();
@@ -384,7 +400,7 @@ async fn refresh_kg_graph(db: &sqlx::PgPool) -> Result<(), TopemsError> {
     };
     sqlx::query(
         r#"INSERT INTO master_data.mdm_kg_graphs (id, nodes, edges, version, last_updated, tenant_id)
-           VALUES ('default', $1, $2, 1, $3, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+           VALUES ('default', $1, $2, 1, $3, $4)
            ON CONFLICT (id) DO UPDATE
            SET nodes = EXCLUDED.nodes, edges = EXCLUDED.edges,
                version = master_data.mdm_kg_graphs.version + 1,
@@ -393,6 +409,7 @@ async fn refresh_kg_graph(db: &sqlx::PgPool) -> Result<(), TopemsError> {
     .bind(serde_json::to_value(&graph.nodes).unwrap_or_default())
     .bind(serde_json::to_value(&graph.edges).unwrap_or_default())
     .bind(&graph.last_updated)
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("刷新知识图谱失败: {e}")))?;
@@ -419,6 +436,7 @@ struct KnowledgeGraphEngine;
 impl KnowledgeGraphEngine {
     async fn add_node(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         label: String,
         node_type: KGNodeType,
         properties: serde_json::Value,
@@ -434,7 +452,7 @@ impl KnowledgeGraphEngine {
         };
         sqlx::query(
             r#"INSERT INTO master_data.mdm_kg_nodes (id, label, node_type, properties, embeddings, created_at, tenant_id)
-               VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+               VALUES ($1,$2,$3,$4,$5,$6, $7)"#,
         )
         .bind(&node.id)
         .bind(&node.label)
@@ -442,17 +460,19 @@ impl KnowledgeGraphEngine {
         .bind(&node.properties)
         .bind(serde_json::to_value(&node.embeddings).unwrap_or_default())
         .bind(node.created_at.to_rfc3339())
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入知识图谱节点失败: {e}")))?;
 
-        refresh_kg_graph(db).await?;
+        refresh_kg_graph(db, tenant).await?;
 
         Ok(node)
     }
 
     async fn add_edge(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         source_id: String,
         target_id: String,
         relation_type: KGRelationType,
@@ -483,7 +503,7 @@ impl KnowledgeGraphEngine {
         };
         sqlx::query(
             r#"INSERT INTO master_data.mdm_kg_edges (id, source_id, target_id, relation_type, weight, confidence, tenant_id)
-               VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+               VALUES ($1,$2,$3,$4,$5,$6, $7)"#,
         )
         .bind(&edge.id)
         .bind(&edge.source_id)
@@ -491,11 +511,12 @@ impl KnowledgeGraphEngine {
         .bind(relation_type_to_str(&edge.relation_type))
         .bind(edge.weight)
         .bind(edge.confidence)
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入知识图谱边失败: {e}")))?;
 
-        refresh_kg_graph(db).await?;
+        refresh_kg_graph(db, tenant).await?;
 
         Ok(edge)
     }
@@ -693,6 +714,7 @@ impl RecommendationEngine {
     )]
     async fn get_recommendations(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         user_id: &str,
         target_id: Option<String>,
         limit: Option<i32>,
@@ -810,7 +832,7 @@ impl RecommendationEngine {
             sqlx::query(
                 r#"INSERT INTO master_data.mdm_recommendations
                    (id, target_id, item_id, score, reason, source, tenant_id)
-                   VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+                   VALUES ($1,$2,$3,$4,$5,$6, $7)"#,
             )
             .bind(&rec.id)
             .bind(&rec.target_id)
@@ -818,6 +840,7 @@ impl RecommendationEngine {
             .bind(rec.score)
             .bind(&rec.reason)
             .bind(recommendation_source_to_str(&rec.source))
+            .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
             .execute(db)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入推荐记录失败: {e}")))?;
@@ -828,6 +851,7 @@ impl RecommendationEngine {
 
     async fn record_interaction(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         user_id: String,
         item_id: String,
         interaction_type: String,
@@ -842,13 +866,14 @@ impl RecommendationEngine {
         sqlx::query(
             r#"INSERT INTO master_data.mdm_interactions
                (id, user_id, item_id, interaction_type, timestamp, tenant_id)
-               VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+               VALUES ($1,$2,$3,$4,$5, $6)"#,
         )
         .bind(&record.id)
         .bind(&record.user_id)
         .bind(&record.item_id)
         .bind(&record.interaction_type)
         .bind(&record.timestamp)
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入交互记录失败: {e}")))?;
@@ -1004,6 +1029,7 @@ struct AssetCatalogManager;
 impl AssetCatalogManager {
     async fn register_asset(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         name: String,
         asset_type: AssetType,
         description: String,
@@ -1028,7 +1054,7 @@ impl AssetCatalogManager {
         sqlx::query(
             r#"INSERT INTO master_data.mdm_assets
                (id, name, asset_type, description, owner, domain, tags, lineage_summary, quality_score, access_level, updated_at, tenant_id)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, $12)"#,
         )
         .bind(&asset.id)
         .bind(&asset.name)
@@ -1041,12 +1067,13 @@ impl AssetCatalogManager {
         .bind(asset.quality_score)
         .bind(&asset.access_level)
         .bind(asset.updated_at.to_rfc3339())
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入数据资产失败: {e}")))?;
 
         // 搜索索引同步落真表。
-        upsert_search_index(db, &asset, &description, &domain, &tags).await?;
+        upsert_search_index(db, tenant, &asset, &description, &domain, &tags).await?;
 
         Ok(asset)
     }
@@ -1124,6 +1151,7 @@ impl AssetCatalogManager {
 
     async fn update_asset(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         id: &str,
         name: Option<String>,
         description: Option<String>,
@@ -1163,7 +1191,7 @@ impl AssetCatalogManager {
             r#"UPDATE master_data.mdm_assets SET
                name = $2, description = $3, tags = $4, quality_score = $5,
                access_level = $6, updated_at = $7
-               WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+               WHERE id = $1 AND ($8::uuid IS NULL OR tenant_id = $8)"#,
         )
         .bind(id)
         .bind(&asset.name)
@@ -1172,12 +1200,14 @@ impl AssetCatalogManager {
         .bind(asset.quality_score)
         .bind(&asset.access_level)
         .bind(asset.updated_at.to_rfc3339())
+        .bind(tenant)
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新数据资产失败: {e}")))?;
 
         // 搜索索引同步刷新。
-        upsert_search_index(db, &asset, &asset.description, &asset.domain, &asset.tags).await?;
+        upsert_search_index(db, tenant, &asset, &asset.description, &asset.domain, &asset.tags)
+            .await?;
 
         Ok(asset)
     }
@@ -1245,6 +1275,7 @@ impl AssetCatalogManager {
 
 async fn upsert_search_index(
     db: &sqlx::PgPool,
+    tenant: Option<uuid::Uuid>,
     asset: &DataAsset,
     description: &str,
     domain: &str,
@@ -1281,11 +1312,12 @@ async fn upsert_search_index(
         }
         sqlx::query(
             r#"INSERT INTO master_data.mdm_search_indexes (key, value, tenant_id)
-               VALUES ($1, $2, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+               VALUES ($1, $2, $3)
                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"#,
         )
         .bind(&key)
         .bind(serde_json::to_value(&merged).unwrap_or_default())
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入搜索索引失败: {e}")))?;
@@ -1404,12 +1436,14 @@ pub struct UpdateAssetRequest {
 )]
 pub async fn add_kg_node(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<AddKGNodeRequest>,
 ) -> ApiResponse<KGNode> {
+    let tenant = tenant_of(&claims);
     let node_type = node_type_from_str(&req.node_type);
     let props = req.properties.unwrap_or_else(|| serde_json::json!({}));
 
-    match KnowledgeGraphEngine::add_node(&state.db, req.label, node_type, props).await {
+    match KnowledgeGraphEngine::add_node(&state.db, tenant, req.label, node_type, props).await {
         Ok(node) => ApiResponse::success(node, "知识图谱节点已添加"),
         Err(e) => ApiResponse::server_error(&e.classify().1),
     }
@@ -1427,11 +1461,14 @@ pub async fn add_kg_node(
 )]
 pub async fn add_kg_edge(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<AddKGEdgeRequest>,
 ) -> ApiResponse<KGEdge> {
+    let tenant = tenant_of(&claims);
     let relation_type = relation_type_from_str(&req.relation_type);
     match KnowledgeGraphEngine::add_edge(
         &state.db,
+        tenant,
         req.source_id,
         req.target_id,
         relation_type,
@@ -1561,11 +1598,14 @@ pub async fn export_kg(
 )]
 pub async fn get_recommendations(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(user_id): Path<String>,
     Query(params): Query<RecommendationQuery>,
 ) -> ApiResponse<Vec<Recommendation>> {
+    let tenant = tenant_of(&claims);
     match RecommendationEngine::get_recommendations(
         &state.db,
+        tenant,
         &user_id,
         params.target_id,
         params.limit,
@@ -1589,11 +1629,14 @@ pub async fn get_recommendations(
 )]
 pub async fn record_interaction(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<RecordInteractionRequest>,
 ) -> ApiResponse<InteractionRecord> {
+    let tenant = tenant_of(&claims);
     let interaction_type = req.interaction_type.unwrap_or_else(|| "view".to_string());
     match RecommendationEngine::record_interaction(
         &state.db,
+        tenant,
         req.user_id,
         req.item_id,
         interaction_type,
@@ -1661,13 +1704,16 @@ pub async fn get_trending_items(
 )]
 pub async fn register_asset(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<RegisterAssetRequest>,
 ) -> ApiResponse<DataAsset> {
+    let tenant = tenant_of(&claims);
     let asset_type = asset_type_from_str(&req.asset_type);
     let tags = req.tags.unwrap_or_default();
 
     match AssetCatalogManager::register_asset(
         &state.db,
+        tenant,
         req.name,
         asset_type,
         req.description,
@@ -1766,11 +1812,14 @@ pub async fn get_asset(
 )]
 pub async fn update_asset(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(req): Json<UpdateAssetRequest>,
 ) -> ApiResponse<DataAsset> {
+    let tenant = tenant_of(&claims);
     match AssetCatalogManager::update_asset(
         &state.db,
+        tenant,
         &id,
         req.name,
         req.description,

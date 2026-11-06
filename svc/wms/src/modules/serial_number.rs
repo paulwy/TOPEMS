@@ -519,7 +519,7 @@ pub async fn update_serial_number(
             unit_price = COALESCE($17, unit_price),
             remark = COALESCE($18, remark),
             updated_at = $19
-        WHERE id = $20 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $20 AND ($21::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $21::uuid)
         RETURNING *
         "#
     ))
@@ -543,6 +543,7 @@ pub async fn update_serial_number(
     .bind(&req.remark)
     .bind(now)
     .bind(serial_id)
+    .bind(topems_shared_auth::middleware::get_tenant_id_from_claims(&claims))
     .fetch_one(&state.db)
     .await;
 
@@ -802,10 +803,11 @@ pub async fn get_trace(
     let row = sqlx::query(only_own_schema_query!(
         "wms",
         r#"SELECT id, serial_no, batch_no, status, location_code, created_at, updated_at
-           FROM serial_numbers WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+           FROM serial_numbers WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
         "core"
     ))
     .bind(serial_id)
+    .bind(topems_shared_auth::middleware::get_tenant_id_from_claims(&claims))
     .fetch_optional(&state.db)
     .await;
 

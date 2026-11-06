@@ -180,15 +180,17 @@ pub async fn mark_synced(
 ) -> ApiResponse<()> {
     match Uuid::parse_str(&record_id) {
         Ok(id) => {
+            let tenant_filter: Option<Uuid> = None;
             match sqlx::query(only_own_schema_query!(
                 "mobile",
                 r#"
                 UPDATE mobile.core_mobile_offline_records
                 SET status = 'synced', updated_at = NOW()
-                WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+                WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
                 "#
             ))
             .bind(id)
+            .bind(tenant_filter)
             .execute(&pool)
             .await
             {

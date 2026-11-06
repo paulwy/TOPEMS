@@ -76,7 +76,7 @@ async fn main() -> Result<()> {
     ) = crate::shared::build_service_clients(&jwt_secret).await;
     let app_state = AppState {
         auth_state: ctx.auth_state.clone(),
-        pool: ctx.db.clone(),
+        pool: topems_shared_auth::ScopedPool::new(ctx.db.clone()),
         event_publisher: ctx.event_publisher.clone(),
         wms_client,
         hrm_client,
@@ -112,11 +112,11 @@ async fn main() -> Result<()> {
     let protected_routes = protected_routes
         .layer(axum::middleware::from_fn(request_context_middleware))
         .layer(axum::middleware::from_fn_with_state(
-            app_state.pool.clone(),
+            app_state.pool.inner().clone(),
             rls_middleware,
         ))
         .layer(axum::middleware::from_fn_with_state(
-            app_state.pool.clone(),
+            app_state.pool.inner().clone(),
             topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn(require_permission(

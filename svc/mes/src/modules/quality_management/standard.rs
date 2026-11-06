@@ -6,20 +6,13 @@ use sqlx::{types::Uuid, Row};
 use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
 use super::big_decimal_to_f64;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListStandardsQuery {
@@ -563,6 +556,22 @@ pub async fn create_standard(
     )
 }
 
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct StandardUpdateRow {
+    id: Uuid,
+    code: Option<String>,
+    name: String,
+    product_code: Option<String>,
+    product_name: Option<String>,
+    inspection_type: Option<String>,
+    status: Option<String>,
+    version: Option<i32>,
+    effective_date: Option<String>,
+    description: Option<String>,
+    created_at: Option<DateTime<Utc>>,
+    updated_at: Option<DateTime<Utc>>,
+}
+
 pub async fn update_standard(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -591,7 +600,7 @@ pub async fn update_standard(
         }
     };
 
-    let standard_result = sqlx::query_unchecked!(
+    let standard_result = sqlx::query_as::<_, StandardUpdateRow>(
         r#"
         UPDATE quality_standards
         SET
@@ -605,24 +614,25 @@ pub async fn update_standard(
             effective_date = COALESCE($8, effective_date),
             description = COALESCE($9, description),
             updated_at = NOW()
-        WHERE id = $10 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $10 AND ($11::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $11::uuid)
         RETURNING
             id, code, name, product_code, product_name,
             inspection_type, status, version,
             effective_date, description,
             created_at, updated_at
         "#,
-        body.code,
-        body.name,
-        body.product_code,
-        body.product_name,
-        body.inspection_type,
-        body.status,
-        body.version,
-        body.effective_date,
-        body.description,
-        uuid,
     )
+    .bind(body.code)
+    .bind(body.name)
+    .bind(body.product_code)
+    .bind(body.product_name)
+    .bind(body.inspection_type)
+    .bind(body.status)
+    .bind(body.version)
+    .bind(body.effective_date)
+    .bind(body.description)
+    .bind(uuid)
+    .bind(tenant_id)
     .fetch_one(&mut *tx)
     .await;
 
@@ -780,12 +790,14 @@ pub async fn delete_standard(
         }
     };
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+    let result = sqlx::query(
         r#"
-        UPDATE quality_standards SET deleted_at = NOW() WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        UPDATE quality_standards SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
-        uuid,
     )
+    .bind(uuid)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 

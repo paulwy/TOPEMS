@@ -14,12 +14,12 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::get_tenant_id_from_claims;
 use utoipa::ToSchema;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_db::tenant::{get_tenant_id, set_session_tenant_id};
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -145,15 +145,17 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
 pub async fn list_processes(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Query(query): Query<ListProcessesQuery>,
 ) -> ApiResponse<ListProcessesResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProcessRead).await {
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
-    let _ = set_session_tenant_id(&state.pool, tenant_id).await;
+    // 租户来源统一为 Claims；不再在 pool 连接上设置 session 级 GUC
+    // （set_session_tenant_id 取的是池中任意连接，既不能保证与查询同连接，还会把
+    // 租户上下文泄漏给后续复用该连接的其它请求）。
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     let page = query.page.unwrap_or(1) as i64;
     let page_size = query.page_size.unwrap_or(10).min(100) as i64;
@@ -288,7 +290,7 @@ pub async fn list_processes(
 pub async fn create_process(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateProcessRequest>,
 ) -> Response {
     if let Err(e) = check_permission::<ProductionProcessResponse>(
@@ -301,8 +303,10 @@ pub async fn create_process(
         return e.into_response();
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
-    let _ = set_session_tenant_id(&state.pool, tenant_id).await;
+    // 租户来源统一为 Claims；不再在 pool 连接上设置 session 级 GUC
+    // （set_session_tenant_id 取的是池中任意连接，既不能保证与查询同连接，还会把
+    // 租户上下文泄漏给后续复用该连接的其它请求）。
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     let now = Utc::now();
     let process_no = req.code.clone().unwrap_or_else(|| {
@@ -382,15 +386,17 @@ pub async fn create_process(
 pub async fn get_process(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProductionProcessResponse> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProcessRead).await {
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
-    let _ = set_session_tenant_id(&state.pool, tenant_id).await;
+    // 租户来源统一为 Claims；不再在 pool 连接上设置 session 级 GUC
+    // （set_session_tenant_id 取的是池中任意连接，既不能保证与查询同连接，还会把
+    // 租户上下文泄漏给后续复用该连接的其它请求）。
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"
@@ -425,7 +431,7 @@ pub async fn get_process(
 pub async fn update_process(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateProcessRequest>,
 ) -> Response {
@@ -439,8 +445,7 @@ pub async fn update_process(
         return e.into_response();
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
-    let _ = set_session_tenant_id(&state.pool, tenant_id).await;
+    let tenant_id = get_tenant_id_from_claims(&claims);
 
     let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"
@@ -454,7 +459,7 @@ pub async fn update_process(
             standard_time_minutes = COALESCE(CAST($8 AS NUMERIC), standard_time_minutes),
             work_station_id = COALESCE(NULLIF($9, '')::uuid, work_station_id),
             updated_at = $10
-        WHERE id = $1 AND status = 'active' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND status = 'active' AND ($11::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $11::uuid)
         RETURNING
             id, process_code AS process_no, process_name AS name, description, version,
             status, sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
@@ -471,6 +476,7 @@ pub async fn update_process(
     .bind(req.standard_time)
     .bind(req.work_station_id.as_deref())
     .bind(Utc::now())
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -516,13 +522,16 @@ pub async fn delete_process(
         return e;
     }
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id_from_claims(&claims);
+
+    let result = sqlx::query(
         r#"
         UPDATE mes.production_processes SET deleted_at = NOW()
-        WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
-        id,
     )
+    .bind(id)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 
@@ -539,6 +548,19 @@ pub async fn delete_process(
     } else {
         ApiResponse::not_found("生产工序不存在")
     }
+}
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct DeactivateProcessRow {
+    id: Uuid,
+    process_no: String,
+    name: String,
+    description: Option<String>,
+    version: Option<String>,
+    status: String,
+    sequence: i32,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
 }
 
 #[utoipa::path(
@@ -563,20 +585,23 @@ pub async fn deactivate_process(
         return e;
     }
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id_from_claims(&claims);
+
+    let result = sqlx::query_as::<_, DeactivateProcessRow>(
         r#"
         UPDATE mes.production_processes SET
             status = 'inactive',
             updated_at = $2
-        WHERE id = $1 AND status = 'active' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND status = 'active' AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
         RETURNING 
             id, process_code AS process_no, process_name AS name, description, version,
             status, sequence, NULL::text AS equipment_required, NULL::numeric AS estimated_duration,
             created_at, updated_at
         "#,
-        id,
-        Utc::now(),
     )
+    .bind(id)
+    .bind(Utc::now())
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 

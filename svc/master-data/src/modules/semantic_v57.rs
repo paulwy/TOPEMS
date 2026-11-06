@@ -6,13 +6,26 @@
 //! - 语义搜索 (SemanticSearchEngine): 向量相似度搜索、混合关键词+语义搜索、索引管理
 //! - 智能标签 (SmartTagger): 规则标签、ML标签推荐、标签管理
 
-use axum::{extract::Path, extract::Query, extract::State, Json};
+use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use sqlx::Row;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
+
+/// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
+fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }
+}
 
 // ==================== K1：handler 内 sqlx 错误统一出口 ====================
 
@@ -240,6 +253,7 @@ impl EnhancedKnowledgeGraph {
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     async fn add_node(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         mut node: GraphNodeV57,
     ) -> Result<GraphNodeV57, TopemsError> {
         let degree = sqlx::query(
@@ -254,7 +268,7 @@ impl EnhancedKnowledgeGraph {
 
         sqlx::query(sqlx::AssertSqlSafe(format!(
             "INSERT INTO master_data.mdm_graph_nodes ({GRAPH_NODE_COLS}, tenant_id)
-             VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+             VALUES ($1,$2,$3,$4,$5,$6,$7, $8)
              ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label, node_type = EXCLUDED.node_type,
                properties = EXCLUDED.properties, embeddings = EXCLUDED.embeddings,
                degree = EXCLUDED.degree, community_id = EXCLUDED.community_id"
@@ -266,6 +280,7 @@ impl EnhancedKnowledgeGraph {
         .bind(serde_json::to_value(&node.embeddings).unwrap_or_default())
         .bind(node.degree)
         .bind(&node.community_id)
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入图谱节点失败: {e}")))?;
@@ -273,10 +288,14 @@ impl EnhancedKnowledgeGraph {
         Ok(node)
     }
 
-    async fn add_edge(db: &sqlx::PgPool, edge: GraphEdgeV57) -> Result<GraphEdgeV57, TopemsError> {
+    async fn add_edge(
+        db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
+        edge: GraphEdgeV57,
+    ) -> Result<GraphEdgeV57, TopemsError> {
         sqlx::query(
             "INSERT INTO master_data.mdm_graph_edges (source_id, target_id, relation_type, weight, confidence, tenant_id)
-             VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+             VALUES ($1,$2,$3,$4,$5, $6)
              ON CONFLICT (source_id, target_id, relation_type) DO UPDATE SET
                weight = EXCLUDED.weight, confidence = EXCLUDED.confidence",
         )
@@ -285,6 +304,7 @@ impl EnhancedKnowledgeGraph {
         .bind(&edge.relation_type)
         .bind(edge.weight)
         .bind(edge.confidence)
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入图谱边失败: {e}")))?;
@@ -423,7 +443,10 @@ impl EnhancedKnowledgeGraph {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    async fn detect_communities(db: &sqlx::PgPool) -> Result<Vec<GraphCommunity>, TopemsError> {
+    async fn detect_communities(
+        db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
+    ) -> Result<Vec<GraphCommunity>, TopemsError> {
         let nodes = fetch_graph_nodes(db).await?;
         let edges = fetch_graph_edges(db).await?;
 
@@ -467,7 +490,7 @@ impl EnhancedKnowledgeGraph {
         for community in &detected {
             sqlx::query(
                 "INSERT INTO master_data.mdm_graph_communities (id, name, node_ids, algorithm, modularity, tenant_id)
-                 VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+                 VALUES ($1,$2,$3,$4,$5, $6)
                  ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, node_ids = EXCLUDED.node_ids,
                    algorithm = EXCLUDED.algorithm, modularity = EXCLUDED.modularity",
             )
@@ -476,6 +499,7 @@ impl EnhancedKnowledgeGraph {
             .bind(serde_json::to_value(&community.node_ids).unwrap_or_default())
             .bind(&community.algorithm)
             .bind(community.modularity)
+            .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
             .execute(db)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入社区失败: {e}")))?;
@@ -526,6 +550,7 @@ struct SemanticSearchEngine;
 impl SemanticSearchEngine {
     async fn index_entity(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         entity_type: String,
         entity_id: String,
         text: String,
@@ -543,7 +568,7 @@ impl SemanticSearchEngine {
 
         sqlx::query(sqlx::AssertSqlSafe(format!(
             "INSERT INTO master_data.mdm_semantic_search_indexes ({SEARCH_INDEX_COLS}, tenant_id)
-             VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+             VALUES ($1,$2,$3,$4,$5,$6, $7)"
         )))
         .bind(&index.id)
         .bind(&index.entity_type)
@@ -551,6 +576,7 @@ impl SemanticSearchEngine {
         .bind(serde_json::to_value(&index.embeddings).unwrap_or_default())
         .bind(&index.text)
         .bind(&index.metadata)
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入搜索索引失败: {e}")))?;
@@ -711,10 +737,14 @@ pub struct TaggedEntity {
 struct SmartTagger;
 
 impl SmartTagger {
-    async fn create_tag(db: &sqlx::PgPool, mut tag: Tag) -> Result<Tag, TopemsError> {
+    async fn create_tag(
+        db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
+        mut tag: Tag,
+    ) -> Result<Tag, TopemsError> {
         tag.usage_count = 0;
         sqlx::query(sqlx::AssertSqlSafe(format!(
-            "INSERT INTO master_data.mdm_tags ({TAG_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
+            "INSERT INTO master_data.mdm_tags ({TAG_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6, $7)"
         )))
         .bind(&tag.id)
         .bind(&tag.name)
@@ -722,6 +752,7 @@ impl SmartTagger {
         .bind(&tag.color)
         .bind(&tag.description)
         .bind(tag.usage_count)
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入标签失败: {e}")))?;
@@ -731,6 +762,7 @@ impl SmartTagger {
 
     async fn apply_tag(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         entity_type: String,
         entity_id: String,
         tag_id: String,
@@ -748,7 +780,7 @@ impl SmartTagger {
 
         sqlx::query(
             "INSERT INTO master_data.mdm_tagged_entities (entity_type, entity_id, tag_ids, confidence, applied_at, tenant_id)
-             VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+             VALUES ($1,$2,$3,$4,$5, $6)
              ON CONFLICT (entity_type, entity_id) DO UPDATE SET
                tag_ids = EXCLUDED.tag_ids, confidence = EXCLUDED.confidence, applied_at = EXCLUDED.applied_at",
         )
@@ -757,6 +789,7 @@ impl SmartTagger {
         .bind(serde_json::to_value(&tag_ids).unwrap_or_default())
         .bind(1.0)
         .bind(now.to_rfc3339())
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(db)
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("写入实体标签失败: {e}")))?;
@@ -778,6 +811,7 @@ impl SmartTagger {
 
     async fn auto_tag(
         db: &sqlx::PgPool,
+        tenant: Option<uuid::Uuid>,
         entity_type: &str,
         entity_id: &str,
         data: &serde_json::Value,
@@ -808,7 +842,7 @@ impl SmartTagger {
 
             sqlx::query(
                 "INSERT INTO master_data.mdm_tagged_entities (entity_type, entity_id, tag_ids, confidence, applied_at, tenant_id)
-                 VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+                 VALUES ($1,$2,$3,$4,$5, $6)
                  ON CONFLICT (entity_type, entity_id) DO UPDATE SET
                    tag_ids = EXCLUDED.tag_ids, confidence = EXCLUDED.confidence, applied_at = EXCLUDED.applied_at",
             )
@@ -817,6 +851,7 @@ impl SmartTagger {
             .bind(serde_json::to_value(&tag_ids).unwrap_or_default())
             .bind(0.9)
             .bind(&now)
+            .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
             .execute(db)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("写入实体标签失败: {e}")))?;
@@ -1171,8 +1206,10 @@ pub struct SuggestQuery {
 )]
 pub async fn add_graph_node(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<AddGraphNodeRequest>,
 ) -> ApiResponse<GraphNodeV57> {
+    let tenant = tenant_of(&claims);
     let id = req.id.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
     let embeddings = generate_simulated_embedding(&req.label, &req.node_type);
 
@@ -1186,7 +1223,7 @@ pub async fn add_graph_node(
         community_id: None,
     };
 
-    let result = db_exec!(EnhancedKnowledgeGraph::add_node(&state.db, node).await);
+    let result = db_exec!(EnhancedKnowledgeGraph::add_node(&state.db, tenant, node).await);
     ApiResponse::success(result, "图谱节点已创建")
 }
 
@@ -1202,8 +1239,10 @@ pub async fn add_graph_node(
 )]
 pub async fn add_graph_edge(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<AddGraphEdgeRequest>,
 ) -> ApiResponse<GraphEdgeV57> {
+    let tenant = tenant_of(&claims);
     let edge = GraphEdgeV57 {
         source_id: req.source_id,
         target_id: req.target_id,
@@ -1212,7 +1251,7 @@ pub async fn add_graph_edge(
         confidence: req.confidence.unwrap_or(1.0),
     };
 
-    let result = db_exec!(EnhancedKnowledgeGraph::add_edge(&state.db, edge).await);
+    let result = db_exec!(EnhancedKnowledgeGraph::add_edge(&state.db, tenant, edge).await);
     ApiResponse::success(result, "图谱边已创建")
 }
 
@@ -1342,8 +1381,10 @@ pub async fn get_subgraph(
 )]
 pub async fn detect_communities_handler(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<GraphCommunity>> {
-    let communities = db_exec!(EnhancedKnowledgeGraph::detect_communities(&state.db).await);
+    let tenant = tenant_of(&claims);
+    let communities = db_exec!(EnhancedKnowledgeGraph::detect_communities(&state.db, tenant).await);
     ApiResponse::success(communities, "社区检测完成")
 }
 
@@ -1361,12 +1402,15 @@ pub async fn detect_communities_handler(
 )]
 pub async fn index_entity(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<IndexEntityRequest>,
 ) -> ApiResponse<SearchIndex> {
+    let tenant = tenant_of(&claims);
     let metadata = req.metadata.unwrap_or_else(|| serde_json::json!({}));
     let result = db_exec!(
         SemanticSearchEngine::index_entity(
             &state.db,
+            tenant,
             req.entity_type,
             req.entity_id,
             req.text,
@@ -1391,8 +1435,10 @@ pub async fn index_entity(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn search_semantic_handler(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<SemanticSearchRequest>,
 ) -> ApiResponse<Vec<SearchResult>> {
+    let tenant = tenant_of(&claims);
     let top_k = req.top_k.unwrap_or(10);
     let query_embeddings = generate_simulated_embedding(&req.query, "search_query");
     let results =
@@ -1402,12 +1448,13 @@ pub async fn search_semantic_handler(
     let history_id = uuid::Uuid::new_v4().to_string();
     if let Err(e) = sqlx::query(
         "INSERT INTO master_data.mdm_search_history (id, query, results_count, created_at, tenant_id)
-         VALUES ($1,$2,$3,$4, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+         VALUES ($1,$2,$3,$4, $5)",
     )
     .bind(&history_id)
     .bind(&req.query)
     .bind(results.len() as i64)
     .bind(chrono::Utc::now().to_rfc3339())
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     {
@@ -1430,8 +1477,10 @@ pub async fn search_semantic_handler(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn search_hybrid_handler(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<HybridSearchRequest>,
 ) -> ApiResponse<Vec<SearchResult>> {
+    let tenant = tenant_of(&claims);
     let top_k = req.top_k.unwrap_or(10);
     let results = db_exec!(SemanticSearchEngine::search_hybrid(&state.db, &req.query, top_k).await);
 
@@ -1439,12 +1488,13 @@ pub async fn search_hybrid_handler(
     let history_id = uuid::Uuid::new_v4().to_string();
     if let Err(e) = sqlx::query(
         "INSERT INTO master_data.mdm_search_history (id, query, results_count, created_at, tenant_id)
-         VALUES ($1,$2,$3,$4, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+         VALUES ($1,$2,$3,$4, $5)",
     )
     .bind(&history_id)
     .bind(&req.query)
     .bind(results.len() as i64)
     .bind(chrono::Utc::now().to_rfc3339())
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     {
@@ -1537,8 +1587,10 @@ pub async fn remove_from_index(
 )]
 pub async fn create_tag(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTagRequest>,
 ) -> ApiResponse<Tag> {
+    let tenant = tenant_of(&claims);
     let tag = Tag {
         id: uuid::Uuid::new_v4().to_string(),
         name: req.name,
@@ -1548,7 +1600,7 @@ pub async fn create_tag(
         usage_count: 0,
     };
 
-    let result = db_exec!(SmartTagger::create_tag(&state.db, tag).await);
+    let result = db_exec!(SmartTagger::create_tag(&state.db, tenant, tag).await);
     ApiResponse::success(result, "标签已创建")
 }
 
@@ -1564,10 +1616,12 @@ pub async fn create_tag(
 )]
 pub async fn apply_tag(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<ApplyTagRequest>,
 ) -> ApiResponse<TaggedEntity> {
+    let tenant = tenant_of(&claims);
     let result = db_exec!(
-        SmartTagger::apply_tag(&state.db, req.entity_type, req.entity_id, req.tag_id).await
+        SmartTagger::apply_tag(&state.db, tenant, req.entity_type, req.entity_id, req.tag_id).await
     );
 
     ApiResponse::success(result, "标签已应用")
@@ -1586,10 +1640,12 @@ pub async fn apply_tag(
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn auto_tag(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<AutoTagRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = tenant_of(&claims);
     let applied = db_exec!(
-        SmartTagger::auto_tag(&state.db, &req.entity_type, &req.entity_id, &req.data).await
+        SmartTagger::auto_tag(&state.db, tenant, &req.entity_type, &req.entity_id, &req.data).await
     );
 
     ApiResponse::success(

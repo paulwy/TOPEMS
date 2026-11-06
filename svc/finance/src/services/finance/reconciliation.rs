@@ -244,7 +244,7 @@ impl ReconciliationService {
 
                 if let Some(mt) = self.classify_match(bank_item, erp_item) {
                     if Self::is_high_confidence_match(&mt) {
-                        self.mark_matched(bank_item.id, erp_item.id).await?;
+                        self.mark_matched(tenant_id, bank_item.id, erp_item.id).await?;
                         matched_pairs.push(MatchedPair {
                             bank_item_id: bank_item.id,
                             erp_item_id: erp_item.id,
@@ -268,7 +268,7 @@ impl ReconciliationService {
             // 拆分匹配：一笔银行流水对应多笔 ERP 发票
             let split_matches = self.find_split_matches(bank_item, &erp_items, &matched_erp_ids);
             for erp_item in split_matches {
-                self.mark_matched(bank_item.id, erp_item.id).await?;
+                self.mark_matched(tenant_id, bank_item.id, erp_item.id).await?;
                 matched_pairs.push(MatchedPair {
                     bank_item_id: bank_item.id,
                     erp_item_id: erp_item.id,
@@ -614,17 +614,23 @@ impl ReconciliationService {
         Ok(items)
     }
 
-    async fn mark_matched(&self, bank_item_id: Uuid, erp_item_id: Uuid) -> Result<(), TopemsError> {
+    async fn mark_matched(
+        &self,
+        tenant_id: Uuid,
+        bank_item_id: Uuid,
+        erp_item_id: Uuid,
+    ) -> Result<(), TopemsError> {
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"
             UPDATE finance.core_finance_reconciliation_items
             SET match_status = 'matched', matched_item_id = $1, updated_at = NOW()
-            WHERE id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            WHERE id = $2 AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
             "#
         ))
         .bind(erp_item_id)
         .bind(bank_item_id)
+        .bind(tenant_id)
         .execute(&self.db_pool)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
@@ -634,11 +640,12 @@ impl ReconciliationService {
             r#"
             UPDATE finance.core_finance_reconciliation_items
             SET match_status = 'matched', matched_item_id = $1, updated_at = NOW()
-            WHERE id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            WHERE id = $2 AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
             "#
         ))
         .bind(bank_item_id)
         .bind(erp_item_id)
+        .bind(tenant_id)
         .execute(&self.db_pool)
         .await
         .map_err(|e| TopemsError::Database(e.to_string()))?;
@@ -707,7 +714,7 @@ impl ReconciliationService {
         status: ReconciliationStatus,
     ) -> Result<(), TopemsError> {
         sqlx::query(
-            only_own_schema_query!("finance", "UPDATE finance.core_finance_reconciliation_sessions SET status = $1, updated_at = NOW() WHERE id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) AND tenant_id = $3"),
+            only_own_schema_query!("finance", "UPDATE finance.core_finance_reconciliation_sessions SET status = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3"),
         )
         .bind(status)
         .bind(session_id)

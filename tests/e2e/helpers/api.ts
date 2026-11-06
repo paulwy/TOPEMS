@@ -186,14 +186,35 @@ export async function fetchFirst<T>(
   return (res.items as T[])[0];
 }
 
+/**
+ * 从分页响应里取出列表数组。
+ *
+ * 各模块的分页键不统一：通用模块用 items/records/list，MES 用 orders/work_orders，
+ * SRM 用 suppliers，部分报表接口直接把数组放在 data 里。这里按已知键优先，
+ * 再退回对象里第一个数组字段，避免为每个模块重复写判定。
+ */
+export function extractList<T = unknown>(data: unknown): T[] | null {
+  if (Array.isArray(data)) return data as T[];
+  if (data && typeof data === 'object') {
+    const obj = data as Record<string, unknown>;
+    for (const key of ['items', 'records', 'list', 'rows', 'data', 'orders', 'work_orders', 'suppliers']) {
+      if (Array.isArray(obj[key])) return obj[key] as T[];
+    }
+    for (const value of Object.values(obj)) {
+      if (Array.isArray(value)) return value as T[];
+    }
+  }
+  return null;
+}
+
 export const API_PATHS = {
   auth: {
     login: '/api/core/iam/auth/login',
     refresh: '/api/core/iam/auth/refresh',
-    me: '/api/core/iam/auth/me',
+    me: '/api/core/iam/users/me',
   },
   mes: {
-    productionOrder: '/api/mes/production-orders',
+    productionOrder: '/api/mes/orders',
     workOrder: '/api/mes/work-orders',
     equipment: '/api/mes/equipment',
     workStation: '/api/mes/work-stations',
@@ -219,7 +240,7 @@ export const API_PATHS = {
   qms: {
     fmea: '/api/qms/fmea',
     spc: '/api/qms/spc/charts',
-    qualityIssue: '/api/qms/quality-issues',
+    qualityIssue: '/api/qms/issues',
     inspection: '/api/qms/inspections',
   },
   srm: {

@@ -38,6 +38,9 @@ const BROWSER_CHANNEL = process.env.E2E_BROWSER_CHANNEL;
 
 export default defineConfig({
   testDir: './tests',
+  // 每次运行先真实登录刷新会话（.auth/storage-state.json + session.json），
+  // 避免提交在仓库里的旧 token 过期后整批用例被踢回登录页
+  globalSetup: './global-setup.ts',
   fullyParallel: !IS_CI,
   forbidOnly: IS_CI,
   retries: IS_CI ? 2 : 0,
@@ -55,7 +58,7 @@ export default defineConfig({
 
   use: {
     baseURL: BASE_URL,
-    storageState: './storageState.json',
+    storageState: './.auth/storage-state.json',
     trace: DISABLE_ARTIFACTS ? 'off' : 'retain-on-failure',
     video: DISABLE_ARTIFACTS ? 'off' : 'retain-on-failure',
     screenshot: DISABLE_ARTIFACTS ? 'off' : 'only-on-failure',

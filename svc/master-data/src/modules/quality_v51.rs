@@ -8,14 +8,27 @@
 //!
 //! 设计风格：ApiResponse + K1 真表（master_data schema，sqlx 直读写，store 已收敛）
 
-use axum::{extract::Path, extract::Query, extract::State, Json};
+use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use std::collections::HashMap;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
+
+/// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
+fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }
+}
 
 // ==================== 纯函数（无副作用，可单测） ====================
 
@@ -439,8 +452,10 @@ fn compute_score(checks: &[QualityCheckV51]) -> f64 {
 )]
 pub async fn run_quality_check(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<RunQualityCheckRequest>,
 ) -> ApiResponse<Vec<QualityCheckV51>> {
+    let tenant = tenant_of(&claims);
     let rows = sqlx::query(
         "SELECT id, name, entity_type, rule_type, description, severity, parameters, enabled, created_at, updated_at
          FROM master_data.mdm_quality_rules
@@ -495,7 +510,7 @@ pub async fn run_quality_check(
     for check in &results {
         if let Err(e) = sqlx::query(
             "INSERT INTO master_data.mdm_quality_checks (id, entity_type, entity_id, rule_id, status, score, details, checked_at, tenant_id)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
         )
         .bind(&check.id)
         .bind(&check.entity_type)
@@ -505,6 +520,7 @@ pub async fn run_quality_check(
         .bind(check.score)
         .bind(&check.details)
         .bind(check.checked_at.to_rfc3339())
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(&state.db)
         .await
         {
@@ -985,8 +1001,10 @@ pub async fn get_quality_dashboard(State(state): State<AppState>) -> ApiResponse
 )]
 pub async fn apply_auto_fix(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<AutoFixRequest>,
 ) -> ApiResponse<AutoFixAction> {
+    let tenant = tenant_of(&claims);
     let strategy = req.strategy.as_deref().unwrap_or("normalize_text");
     let action_type = action_type_from_str(strategy);
 
@@ -1007,7 +1025,7 @@ pub async fn apply_auto_fix(
 
     if let Err(e) = sqlx::query(
         "INSERT INTO master_data.mdm_auto_fix_actions (id, rule_id, entity_type, entity_id, action_type, before_value, after_value, confidence, status, applied_at, tenant_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
     )
     .bind(&action.id)
     .bind(&action.rule_id)
@@ -1019,6 +1037,7 @@ pub async fn apply_auto_fix(
     .bind(action.confidence)
     .bind(fix_status_to_str(&action.status))
     .bind(action.applied_at.map(|t| t.to_rfc3339()))
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     {
@@ -1106,9 +1125,11 @@ pub async fn get_fix_actions(
 )]
 pub async fn revert_fix_action(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(_req): Json<RevertFixRequest>,
 ) -> ApiResponse<AutoFixAction> {
+    let tenant = tenant_of(&claims);
     let current: Option<String> =
         sqlx::query_scalar("SELECT status FROM master_data.mdm_auto_fix_actions WHERE id = $1")
             .bind(&id)
@@ -1127,10 +1148,11 @@ pub async fn revert_fix_action(
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE master_data.mdm_auto_fix_actions
          SET status = 'pending', after_value = NULL, applied_at = NULL
-         WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
          RETURNING {AUTO_FIX_COLS}"
     )))
     .bind(&id)
+    .bind(tenant)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(None);
@@ -1193,8 +1215,10 @@ pub async fn get_fix_history(State(state): State<AppState>) -> ApiResponse<Vec<F
 )]
 pub async fn run_fix_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<RunFixWorkflowRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let tenant = tenant_of(&claims);
     let now = chrono::Utc::now();
 
     let strategies = req.strategies.unwrap_or_else(|| {
@@ -1229,7 +1253,7 @@ pub async fn run_fix_workflow(
     for action in &applied_actions {
         if let Err(e) = sqlx::query(
             "INSERT INTO master_data.mdm_auto_fix_actions (id, rule_id, entity_type, entity_id, action_type, before_value, after_value, confidence, status, applied_at, tenant_id)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
         )
         .bind(&action.id)
         .bind(&action.rule_id)
@@ -1241,6 +1265,7 @@ pub async fn run_fix_workflow(
         .bind(action.confidence)
         .bind(fix_status_to_str(&action.status))
         .bind(action.applied_at.map(|t| t.to_rfc3339()))
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(&state.db)
         .await
         {
@@ -1275,8 +1300,10 @@ pub async fn run_fix_workflow(
 )]
 pub async fn generate_suggestions(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateSuggestionsRequest>,
 ) -> ApiResponse<Vec<GovernanceSuggestion>> {
+    let tenant = tenant_of(&claims);
     let now = chrono::Utc::now();
     let types = req
         .suggestion_types
@@ -1305,7 +1332,7 @@ pub async fn generate_suggestions(
     for s in &suggestions {
         if let Err(e) = sqlx::query(
             "INSERT INTO master_data.mdm_governance_suggestions (id, entity_type, entity_id, suggestion_type, confidence, rationale, suggested_action, ai_model_version, status, created_at, tenant_id)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
         )
         .bind(&s.id)
         .bind(&s.entity_type)
@@ -1317,6 +1344,7 @@ pub async fn generate_suggestions(
         .bind(&s.ai_model_version)
         .bind(suggestion_status_to_str(&s.status))
         .bind(s.created_at.to_rfc3339())
+        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
         .execute(&state.db)
         .await
         {
@@ -1409,9 +1437,11 @@ pub async fn get_suggestions(
 )]
 pub async fn approve_suggestion(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(_req): Json<ApproveSuggestionRequest>,
 ) -> ApiResponse<GovernanceSuggestion> {
+    let tenant = tenant_of(&claims);
     let current: Option<String> = sqlx::query_scalar(
         "SELECT status FROM master_data.mdm_governance_suggestions WHERE id = $1",
     )
@@ -1430,10 +1460,11 @@ pub async fn approve_suggestion(
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE master_data.mdm_governance_suggestions
          SET status = 'approved'
-         WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
          RETURNING {SUGGESTION_COLS}"
     )))
     .bind(&id)
+    .bind(tenant)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(None);
@@ -1461,9 +1492,11 @@ pub async fn approve_suggestion(
 )]
 pub async fn reject_suggestion(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(_req): Json<RejectSuggestionRequest>,
 ) -> ApiResponse<GovernanceSuggestion> {
+    let tenant = tenant_of(&claims);
     let current: Option<String> = sqlx::query_scalar(
         "SELECT status FROM master_data.mdm_governance_suggestions WHERE id = $1",
     )
@@ -1482,10 +1515,11 @@ pub async fn reject_suggestion(
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE master_data.mdm_governance_suggestions
          SET status = 'rejected'
-         WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
          RETURNING {SUGGESTION_COLS}"
     )))
     .bind(&id)
+    .bind(tenant)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(None);

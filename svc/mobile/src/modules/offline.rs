@@ -138,11 +138,12 @@ pub async fn sync_offline_data(
     let synced_count = payload.records_count;
     let failed_count = 0;
 
-    if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.offline_sync_records SET status = $1, synced_count = $2, failed_count = $3, completed_at = NOW() WHERE id = $4 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"))
+    if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.offline_sync_records SET status = $1, synced_count = $2, failed_count = $3, completed_at = NOW() WHERE id = $4 AND ($5::uuid IS NULL OR tenant_id = $5)"))
         .bind("completed")
         .bind(synced_count)
         .bind(failed_count)
         .bind(sync_id)
+        .bind(tenant_filter(&claims))
         .execute(&pool)
         .await
     {

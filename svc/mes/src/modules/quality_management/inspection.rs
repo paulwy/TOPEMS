@@ -6,6 +6,7 @@ use sqlx::{types::Uuid, Row};
 use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::get_tenant_id_from_claims as get_tenant_id;
 use utoipa::ToSchema;
 
 use crate::modules::approval_common::{
@@ -18,14 +19,6 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
 use super::big_decimal_to_f64;
-
-fn get_tenant_id(claims: &Claims) -> Uuid {
-    claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
-}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListInspectionsQuery {
@@ -482,6 +475,30 @@ pub async fn create_inspection(
     }
 }
 
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct InspectionUpdateRow {
+    id: Uuid,
+    inspection_no: String,
+    order_id: Option<Uuid>,
+    order_number: Option<String>,
+    product_code: String,
+    product_name: String,
+    process_id: Option<Uuid>,
+    process_name: Option<String>,
+    inspection_type: String,
+    quantity: Option<BigDecimal>,
+    qualified_quantity: Option<BigDecimal>,
+    unqualified_quantity: Option<BigDecimal>,
+    qualification_rate: Option<BigDecimal>,
+    inspector: Option<String>,
+    inspection_time: Option<String>,
+    status: Option<String>,
+    result: Option<String>,
+    memo: Option<String>,
+    created_at: Option<DateTime<Utc>>,
+    updated_at: Option<DateTime<Utc>>,
+}
+
 pub async fn update_inspection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -507,7 +524,8 @@ pub async fn update_inspection(
     let unqualified_quantity = body
         .unqualified_quantity
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let result = sqlx::query_unchecked!(
+    let tenant_id = get_tenant_id(&claims);
+    let result = sqlx::query_as::<_, InspectionUpdateRow>(
         r#"
             UPDATE quality_inspections
         SET
@@ -523,7 +541,7 @@ pub async fn update_inspection(
             result = COALESCE($6, result),
             memo = COALESCE($7, memo),
             updated_at = NOW()
-        WHERE id = $8 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        WHERE id = $8 AND ($9::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $9::uuid)
         RETURNING
             id, inspection_no, order_id, order_number,
             product_code, product_name, process_id, process_name,
@@ -532,15 +550,16 @@ pub async fn update_inspection(
             inspector, inspection_time, status, result, memo,
             created_at, updated_at
         "#,
-        qualified_quantity,
-        unqualified_quantity,
-        body.inspector,
-        body.inspection_time,
-        body.status,
-        body.result,
-        body.memo,
-        uuid,
     )
+    .bind(qualified_quantity)
+    .bind(unqualified_quantity)
+    .bind(body.inspector)
+    .bind(body.inspection_time)
+    .bind(body.status)
+    .bind(body.result)
+    .bind(body.memo)
+    .bind(uuid)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -596,12 +615,14 @@ pub async fn delete_inspection(
         }
     };
 
-    let result = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims);
+    let result = sqlx::query(
         r#"
-        UPDATE quality_inspections SET deleted_at = NOW() WHERE id = $1 AND tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, '00000000-0000-0000-0000-000000000000')
+        UPDATE quality_inspections SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
         "#,
-        uuid,
     )
+    .bind(uuid)
+    .bind(tenant_id)
     .execute(&state.pool)
     .await;
 

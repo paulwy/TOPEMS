@@ -93,7 +93,12 @@ fn default_todos() -> Vec<Todo> {
     ]
 }
 
-async fn add_local_todo(pool: &PgPool, user_id: &str, todo: NewTodo) -> Option<Todo> {
+async fn add_local_todo(
+    pool: &PgPool,
+    user_id: &str,
+    tenant_id: uuid::Uuid,
+    todo: NewTodo,
+) -> Option<Todo> {
     let service_name = get_service_name(&todo.service);
     let due_date = if todo.due_date.is_empty() {
         None
@@ -115,7 +120,7 @@ async fn add_local_todo(pool: &PgPool, user_id: &str, todo: NewTodo) -> Option<T
     .bind(service_name)
     .bind(due_date)
     .bind(&todo.priority)
-    .bind(uuid::Uuid::nil())
+    .bind(tenant_id)
     .fetch_one(pool)
     .await;
 
@@ -128,7 +133,12 @@ async fn add_local_todo(pool: &PgPool, user_id: &str, todo: NewTodo) -> Option<T
     }
 }
 
-async fn complete_local_todo(pool: &PgPool, user_id: &str, id: &str) -> bool {
+async fn complete_local_todo(
+    pool: &PgPool,
+    user_id: &str,
+    tenant_id: uuid::Uuid,
+    id: &str,
+) -> bool {
     let uuid = match uuid::Uuid::parse_str(id) {
         Ok(u) => u,
         Err(_) => return false,
@@ -138,11 +148,13 @@ async fn complete_local_todo(pool: &PgPool, user_id: &str, id: &str) -> bool {
         r#"
         UPDATE portal.portal_todos
         SET completed = TRUE, completed_at = NOW(), updated_at = NOW()
-        WHERE id = $1 AND user_id = $2::uuid AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND user_id = $2::uuid AND deleted_at IS NULL
+          AND (tenant_id IS NULL OR $3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
         "#,
     )
     .bind(uuid)
     .bind(user_id)
+    .bind(tenant_id)
     .execute(pool)
     .await;
 
@@ -155,7 +167,12 @@ async fn complete_local_todo(pool: &PgPool, user_id: &str, id: &str) -> bool {
     }
 }
 
-async fn delete_local_todo(pool: &PgPool, user_id: &str, id: &str) -> bool {
+async fn delete_local_todo(
+    pool: &PgPool,
+    user_id: &str,
+    tenant_id: uuid::Uuid,
+    id: &str,
+) -> bool {
     let uuid = match uuid::Uuid::parse_str(id) {
         Ok(u) => u,
         Err(_) => return false,
@@ -165,11 +182,13 @@ async fn delete_local_todo(pool: &PgPool, user_id: &str, id: &str) -> bool {
         r#"
         UPDATE portal.portal_todos
         SET deleted_at = NOW(), updated_at = NOW()
-        WHERE id = $1 AND user_id = $2::uuid AND deleted_at IS NULL AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $1 AND user_id = $2::uuid AND deleted_at IS NULL
+          AND (tenant_id IS NULL OR $3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
         "#,
     )
     .bind(uuid)
     .bind(user_id)
+    .bind(tenant_id)
     .execute(pool)
     .await;
 
@@ -363,7 +382,8 @@ pub async fn add_todo(
     Json(todo): Json<NewTodo>,
 ) -> AxumJson<ApiResponse<Todo>> {
     let user_id = &claims.sub;
-    match add_local_todo(&state.pool, user_id, todo).await {
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    match add_local_todo(&state.pool, user_id, tenant_id, todo).await {
         Some(new_todo) => AxumJson(ApiResponse::success(new_todo, "待办事项添加成功")),
         None => AxumJson(ApiResponse::server_error("待办事项添加失败")),
     }
@@ -385,7 +405,8 @@ pub async fn complete_todo(
     Path(id): Path<String>,
 ) -> AxumJson<ApiResponse<serde_json::Value>> {
     let user_id = &claims.sub;
-    let success = complete_local_todo(&state.pool, user_id, &id).await;
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    let success = complete_local_todo(&state.pool, user_id, tenant_id, &id).await;
     if success {
         AxumJson(ApiResponse::success(
             serde_json::json!({ "id": id, "completed": true }),
@@ -412,7 +433,8 @@ pub async fn delete_todo(
     Path(id): Path<String>,
 ) -> AxumJson<ApiResponse<serde_json::Value>> {
     let user_id = &claims.sub;
-    let success = delete_local_todo(&state.pool, user_id, &id).await;
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    let success = delete_local_todo(&state.pool, user_id, tenant_id, &id).await;
     if success {
         AxumJson(ApiResponse::success(
             serde_json::json!({ "id": id, "deleted": true }),

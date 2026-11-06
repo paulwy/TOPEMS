@@ -83,18 +83,16 @@ test.describe('CRM Customer Create - API', () => {
     await ctx?.dispose();
   });
 
-  test('POST /api/crm/customers creates a customer (or skips if unavailable)', async () => {
-    let created: { id?: string } | null = null;
-    try {
-      created = await apiPost<{ id?: string }>(ctx, API_PATHS.crm.customer, {
-        name: `E2E-CUST-${Date.now()}`,
-        phone: '13800000000',
-        email: 'e2e@test.com',
-      });
-    } catch {
-      test.skip(true, 'CRM customer create API not available');
-      return;
-    }
+  test('POST /api/crm/customers creates a customer', async () => {
+    // 实测 CreateCustomerRequest 的必填字段为 name + customer_type（无 serde default），
+    // 缺 customer_type 会 422 "missing field"，原 payload 因此一直被 catch 当作
+    // "endpoint unavailable" 跳过
+    const created = await apiPost<{ id?: string }>(ctx, API_PATHS.crm.customer, {
+      name: `E2E-CUST-${Date.now()}`,
+      customer_type: 'potential',
+      phone: '13800000000',
+      email: 'e2e@test.com',
+    });
     expect(created).toBeTruthy();
     if (created?.id) {
       try {

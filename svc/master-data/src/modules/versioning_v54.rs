@@ -17,6 +17,18 @@ use utoipa::ToSchema;
 
 use crate::shared::AppState;
 
+/// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
+fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
+    if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    }
+}
+
 // ==================== K1：真表映射（master_data.mdm_version_snapshots） ====================
 
 /// 把一行 PgRow 映射回 VersionSnapshot（列类型与结构字段一一对齐，避免 derive FromRow 对枚举的限制）。
@@ -595,8 +607,10 @@ fn compute_diff(from: &serde_json::Value, to: &serde_json::Value) -> VersionDiff
 )]
 pub async fn create_snapshot(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSnapshotRequest>,
 ) -> ApiResponse<VersionSnapshot> {
+    let tenant = tenant_of(&claims);
     // K1：版本号基于真表现有快照推导（不再读内存 Store）。
     let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
@@ -629,7 +643,7 @@ pub async fn create_snapshot(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_version_snapshots
            (id, entity_type, entity_id, version, data, hash, created_by, created_at, comment, tenant_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, $10)"#,
     )
     .bind(&snapshot.id)
     .bind(&snapshot.entity_type)
@@ -640,6 +654,7 @@ pub async fn create_snapshot(
     .bind(&snapshot.created_by)
     .bind(snapshot.created_at.to_rfc3339())
     .bind(&snapshot.comment)
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     {
@@ -649,7 +664,7 @@ pub async fn create_snapshot(
     // 审计事件写真表（权威存储）。
     if let Err(e) = sqlx::query(
         "INSERT INTO master_data.mdm_audit_events (id, event_type, category, entity_type, entity_id, user_id, old_value, new_value, ip_address, timestamp, session_id, tenant_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, $12)",
     )
     .bind(&snapshot.id)
     .bind("create")
@@ -662,6 +677,7 @@ pub async fn create_snapshot(
     .bind("127.0.0.1")
     .bind(snapshot.created_at.to_rfc3339())
     .bind(uuid::Uuid::new_v4().to_string())
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     {
@@ -825,8 +841,10 @@ async fn run_version_diff(
 )]
 pub async fn restore_version(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<RestoreVersionRequest>,
 ) -> ApiResponse<VersionSnapshot> {
+    let tenant = tenant_of(&claims);
     // K1：目标版本从真表读取。
     let target_row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
@@ -873,7 +891,7 @@ pub async fn restore_version(
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_version_snapshots
            (id, entity_type, entity_id, version, data, hash, created_by, created_at, comment, tenant_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, $10)"#,
     )
     .bind(&restored.id)
     .bind(&restored.entity_type)
@@ -884,6 +902,7 @@ pub async fn restore_version(
     .bind(&restored.created_by)
     .bind(restored.created_at.to_rfc3339())
     .bind(&restored.comment)
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     {
@@ -893,7 +912,7 @@ pub async fn restore_version(
     // 审计事件写真表（权威存储）。
     if let Err(e) = sqlx::query(
         "INSERT INTO master_data.mdm_audit_events (id, event_type, category, entity_type, entity_id, user_id, old_value, new_value, ip_address, timestamp, session_id, tenant_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, $12)",
     )
     .bind(&restored.id)
     .bind("update")
@@ -906,6 +925,7 @@ pub async fn restore_version(
     .bind("127.0.0.1")
     .bind(restored.created_at.to_rfc3339())
     .bind(uuid::Uuid::new_v4().to_string())
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     {
@@ -993,8 +1013,10 @@ pub async fn list_history(
 )]
 pub async fn create_branch(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateBranchRequest>,
 ) -> ApiResponse<VersionBranch> {
+    let tenant = tenant_of(&claims);
     let branch_type = match req.branch_type.as_deref() {
         Some(t) => branch_type_from_str(t),
         None => BranchType::Feature,
@@ -1015,7 +1037,7 @@ pub async fn create_branch(
 
     if let Err(e) = sqlx::query(
         "INSERT INTO master_data.mdm_version_branches (id, name, branch_type, parent_branch, created_at, created_by, merged_at, merged_by, status, tenant_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, $10)",
     )
     .bind(&branch.id)
     .bind(&branch.name)
@@ -1026,6 +1048,7 @@ pub async fn create_branch(
     .bind(branch.merged_at.map(|t| t.to_rfc3339()))
     .bind(&branch.merged_by)
     .bind(&branch.status)
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     {
@@ -1047,8 +1070,10 @@ pub async fn create_branch(
 )]
 pub async fn merge_branch(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<MergeBranchRequest>,
 ) -> ApiResponse<VersionBranch> {
+    let tenant = tenant_of(&claims);
     let source_exists: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM master_data.mdm_version_branches WHERE name = $1")
             .bind(&req.source_branch)
@@ -1063,12 +1088,13 @@ pub async fn merge_branch(
     let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE master_data.mdm_version_branches
          SET merged_at = $1, merged_by = $2, status = 'merged'
-         WHERE name = $3 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+         WHERE name = $3 AND ($4::uuid IS NULL OR tenant_id = $4)
          RETURNING {BRANCH_COLS}"
     )))
     .bind(&now)
     .bind("current_user")
     .bind(&req.target_branch)
+    .bind(tenant)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(None);
@@ -1437,8 +1463,10 @@ pub async fn get_compliance_audit(
 )]
 pub async fn grant_permission(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<GrantPermissionRequest>,
 ) -> ApiResponse<DataPermission> {
+    let tenant = tenant_of(&claims);
     let perm = DataPermission {
         id: uuid::Uuid::new_v4().to_string(),
         role_id: req.role_id,
@@ -1451,7 +1479,7 @@ pub async fn grant_permission(
 
     if let Err(e) = sqlx::query(
         "INSERT INTO master_data.mdm_data_permissions (id, role_id, resource_type, resource_id, action, condition, inherited, tenant_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+         VALUES ($1,$2,$3,$4,$5,$6,$7, $8)",
     )
     .bind(&perm.id)
     .bind(&perm.role_id)
@@ -1460,6 +1488,7 @@ pub async fn grant_permission(
     .bind(permission_action_to_str(&perm.action))
     .bind(&perm.condition)
     .bind(perm.inherited)
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     {
@@ -1484,10 +1513,13 @@ pub async fn grant_permission(
 )]
 pub async fn revoke_permission(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> ApiResponse<()> {
-    let result = sqlx::query("DELETE FROM master_data.mdm_data_permissions WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))")
+    let tenant = tenant_of(&claims);
+    let result = sqlx::query("DELETE FROM master_data.mdm_data_permissions WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
         .bind(&id)
+        .bind(tenant)
         .execute(&state.db)
         .await
         .unwrap_or_default();
@@ -1728,8 +1760,10 @@ pub async fn get_resource_permission(
 )]
 pub async fn create_role(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRoleRequest>,
 ) -> ApiResponse<PermissionRole> {
+    let tenant = tenant_of(&claims);
     let now = chrono::Utc::now();
 
     let role = PermissionRole {
@@ -1742,13 +1776,14 @@ pub async fn create_role(
 
     if let Err(e) = sqlx::query(
         "INSERT INTO master_data.mdm_permission_roles (id, name, description, inherited_from, created_at, tenant_id)
-         VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+         VALUES ($1,$2,$3,$4,$5, $6)",
     )
     .bind(&role.id)
     .bind(&role.name)
     .bind(&role.description)
     .bind(&role.inherited_from)
     .bind(role.created_at.to_rfc3339())
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     {
@@ -1770,8 +1805,10 @@ pub async fn create_role(
 )]
 pub async fn assign_role(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<AssignRoleRequest>,
 ) -> ApiResponse<UserRoleAssignment> {
+    let tenant = tenant_of(&claims);
     let now = chrono::Utc::now();
 
     let assignment = UserRoleAssignment {
@@ -1783,12 +1820,13 @@ pub async fn assign_role(
 
     if let Err(e) = sqlx::query(
         "INSERT INTO master_data.mdm_user_role_assignments (id, user_id, role_id, assigned_at, tenant_id)
-         VALUES ($1,$2,$3,$4, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+         VALUES ($1,$2,$3,$4, $5)",
     )
     .bind(&assignment.id)
     .bind(&assignment.user_id)
     .bind(&assignment.role_id)
     .bind(assignment.assigned_at.to_rfc3339())
+    .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
     .execute(&state.db)
     .await
     {
@@ -1810,13 +1848,16 @@ pub async fn assign_role(
 )]
 pub async fn revoke_role(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<RevokeRoleRequest>,
 ) -> ApiResponse<()> {
+    let tenant = tenant_of(&claims);
     let result = sqlx::query(
-        "DELETE FROM master_data.mdm_user_role_assignments WHERE user_id = $1 AND role_id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+        "DELETE FROM master_data.mdm_user_role_assignments WHERE user_id = $1 AND role_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3)",
     )
     .bind(&req.user_id)
     .bind(&req.role_id)
+    .bind(tenant)
     .execute(&state.db)
     .await
     .unwrap_or_default();

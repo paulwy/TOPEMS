@@ -56,7 +56,7 @@ async fn main() -> anyhow::Result<()> {
 
     let start_time = Instant::now();
     let app_state = AppState {
-        pool: ctx.db.clone(),
+        pool: topems_shared_auth::ScopedPool::new(ctx.db.clone()),
         auth_state: ctx.auth_state.clone(),
         metrics: Arc::new(SystemMetrics::new()),
         start_time,
@@ -148,7 +148,7 @@ async fn home() -> &'static str {
 }
 
 async fn health(State(state): State<AppState>) -> ServiceHealth {
-    let config = SimpleHealthConfig::new("topems-plugin-registry").with_db(state.pool.clone());
+    let config = SimpleHealthConfig::new("topems-plugin-registry").with_db(state.pool.inner().clone());
     simple_health_check(&config).await
 }
 

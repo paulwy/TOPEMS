@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { readSessionSeed } from '../helpers/session';
 
 const e2eUser = {
   id: 'behavior-guardrails-admin',
@@ -65,32 +66,43 @@ async function mockBackend(page: Page) {
   });
 }
 
+/**
+ * 手工 seed 会话必须使用 global-setup 产出的真实 token。
+ * 曾用固定假 token 写 localStorage，useAuth 解析 JWT 过期时间失败后判为
+ * 已过期并 logout，导致 9 条用例全部停在 /login（并非选择器漂移）。
+ */
 async function seedAuthenticatedSession(page: Page) {
-  await page.addInitScript((user) => {
-    Object.defineProperty(window.screen, 'width', { value: 1440, configurable: true });
-    Object.defineProperty(window.screen, 'height', { value: 900, configurable: true });
-    if (!window.localStorage.getItem('token')) {
-      window.localStorage.setItem('token', 'behavior.guardrails.token');
-      window.localStorage.setItem('refresh_token', 'behavior.guardrails.refresh');
-      window.localStorage.setItem('user', JSON.stringify(user));
-      window.localStorage.setItem('roles', JSON.stringify(['admin']));
-      window.localStorage.setItem('permissions', JSON.stringify(['*']));
-      window.localStorage.setItem('current_tenant_id', 'default');
-    }
-    if (!window.localStorage.getItem('topems-theme-storage')) {
-      window.localStorage.setItem(
-        'topems-theme-storage',
-        JSON.stringify({ state: { theme: 'light' }, version: 0 })
-      );
-    }
-  }, e2eUser);
+  const session = readSessionSeed();
+  await page.addInitScript(
+    ({ seed, fallbackUser }) => {
+      Object.defineProperty(window.screen, 'width', { value: 1440, configurable: true });
+      Object.defineProperty(window.screen, 'height', { value: 900, configurable: true });
+      if (!window.localStorage.getItem('token')) {
+        window.localStorage.setItem('token', seed.token);
+        window.localStorage.setItem('refresh_token', seed.refreshToken);
+        window.localStorage.setItem('token_expiry', String(seed.tokenExpiry));
+        window.localStorage.setItem('user', JSON.stringify({ ...fallbackUser, ...seed.user }));
+        window.localStorage.setItem('roles', JSON.stringify(seed.roles));
+        window.localStorage.setItem('permissions', JSON.stringify(seed.permissions));
+        window.localStorage.setItem('current_tenant_id', seed.tenantId);
+      }
+      if (!window.localStorage.getItem('topems-theme-storage')) {
+        window.localStorage.setItem(
+          'topems-theme-storage',
+          JSON.stringify({ state: { theme: 'light' }, version: 0 })
+        );
+      }
+    },
+    { seed: session, fallbackUser: e2eUser }
+  );
 }
 
 async function openDashboard(page: Page) {
   await mockBackend(page);
   await seedAuthenticatedSession(page);
   await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('.app-header-logo')).toBeVisible();
+  // 布局已换代到 redesign AppShell：品牌区不再是 .app-header-logo，改用 TopBar 的稳定 testid
+  await expect(page.getByTestId('topbar-profile')).toBeVisible();
 }
 
 test.describe('UI §15.3 行为铁律', () => {
@@ -99,8 +111,8 @@ test.describe('UI §15.3 行为铁律', () => {
   });
 
   test('退出登录必须先出现二次确认', async ({ page }) => {
-    await page.getByRole('button', { name: '用户菜单' }).click();
-    await page.getByRole('menuitem', { name: /退出登录/ }).click();
+    await page.getByTestId('topbar-profile').click();
+    await page.getByRole('button', { name: /退出登录/ }).click();
 
     const dialog = page.getByRole('dialog', { name: /确认退出登录/ });
     await expect(dialog).toBeVisible();
@@ -135,8 +147,8 @@ test.describe('UI §15.3 行为铁律', () => {
   });
 
   test('主题切换必须写入 localStorage 并可跨刷新保持', async ({ page }) => {
-    await page.getByRole('button', { name: '切换主题' }).click();
-    await page.getByText('暗色', { exact: true }).click();
+    // 新版 TopBar 的 ThemeSelector 以 showMenu=false 渲染，点击即直接切换主题（无“暗色”菜单项）
+    await page.getByRole('button', { name: /当前:/ }).click();
 
     await expect
       .poll(async () =>

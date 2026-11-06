@@ -1,6 +1,7 @@
-use axum::extract::{Path, State};
+use axum::extract::{Extension, Path, State};
 use axum::Json;
 use chrono::Utc;
+use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -143,8 +144,10 @@ pub async fn get_wms_scm_sync(
 )]
 pub async fn sync_wms_scm(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WmsScmSync> {
+    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
     let now = Utc::now();
     let scm_supply_id = Uuid::new_v4();
 
@@ -153,7 +156,7 @@ pub async fn sync_wms_scm(
         "UPDATE integration.wms_scm_sync SET
             scm_supply_id = $2, synced = $3, sync_status = $4,
             sync_error = NULL, last_synced_at = $5, updated_at = $6
-         WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+         WHERE id = $1 AND ($7::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $7::uuid)
          RETURNING id, wms_inventory_id, scm_supply_id, item_name, quantity, unit,
                   synced, sync_status, sync_error, last_synced_at, created_at, updated_at"
     ))
@@ -163,6 +166,7 @@ pub async fn sync_wms_scm(
     .bind("synced")
     .bind(Some(now))
     .bind(now)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await
     {

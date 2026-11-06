@@ -219,7 +219,7 @@ pub async fn log_audit_event(
             action, entity_type, entity_id, entity_ids,
             user_id, user_name, request_details, response_details,
             status, error_message, ip_address, user_agent, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         "#
     ))
     .bind(action)
@@ -234,6 +234,8 @@ pub async fn log_audit_event(
     .bind(error_message)
     .bind(ip_address)
     .bind(user_agent)
+    // 审计工具函数无请求 GUC 上下文；显式写系统级 nil 租户（与既有 pool 空 GUC 退化结果一致）
+    .bind(Uuid::nil())
     .execute(db)
     .await;
 

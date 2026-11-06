@@ -12,11 +12,18 @@ test.describe('SRM - Create', () => {
   });
 
   test('can open the create-supplier dialog and submit', async ({ page }) => {
-    await page.goto('/srm/suppliers');
+    // 路由改名：/srm/suppliers → /srm/supplier（页面提供「新增供应商」入口）
+    await page.goto('/srm/supplier');
+    // 限定在 main 区域内，避免命中侧边栏 / 顶部栏同名按钮
     const newButton = page
-      .getByRole('button', { name: /新建|新增|create|new/i })
+      .getByRole('main')
+      .getByRole('button', { name: /新建|新增|创建|create|new/i })
       .first();
-    const hasCreate = await newButton.isVisible({ timeout: 5_000 }).catch(() => false);
+    // isVisible() 不会等待元素挂载（页面还在渲染时会误判不存在），用 waitFor 正确等待
+    const hasCreate = await newButton
+      .waitFor({ state: 'visible', timeout: 5_000 })
+      .then(() => true)
+      .catch(() => false);
     if (!hasCreate) {
       test.skip(true, '新建 button not present on SRM supplier list');
       return;
@@ -64,10 +71,15 @@ test.describe('SRM Supplier Create - API', () => {
   test('POST /api/srm/suppliers creates a supplier (or skips if unavailable)', async () => {
     let created: { id?: string } | null = null;
     try {
+      // 实测：必填字段 supplier_no/name/category/status/risk_level（逐个缺失都会返回 422）
       created = await apiPost<{ id?: string }>(ctx, API_PATHS.srm.supplier, {
+        supplier_no: `SUP-E2E-${Date.now()}`,
         name: `E2E-SUP-${Date.now()}`,
         contact: 'E2E-Contact',
         phone: '13800000000',
+        category: 'raw',
+        status: 'active',
+        risk_level: 'low',
       });
     } catch {
       test.skip(true, 'SRM supplier create API not available');
