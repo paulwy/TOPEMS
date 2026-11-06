@@ -15,6 +15,7 @@ use topems_shared_core::{
 };
 
 use crate::middleware::service_identity::ServiceIdentity;
+use crate::middleware::tenant::{rls_request_tenant, scope_request_tenant};
 use crate::service::{is_service_claims, record_service_call};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -745,9 +746,10 @@ pub async fn auth_middleware(
             position_code: None,
             must_change_password: false,
         };
+        let rls_ctx = rls_request_tenant(&claims);
         parts.extensions.insert(claims);
         let req = Request::from_parts(parts, body);
-        return next.run(req).await;
+        return scope_request_tenant(rls_ctx, next.run(req)).await;
     } else if dev_mode_requested && is_prod_profile {
         tracing::warn!(
             "DEVELOPMENT_MODE 在生产环境（PROFILE/RUST_ENV/ENV=prod|production）被忽略，仍要求真实认证"
@@ -805,9 +807,10 @@ pub async fn auth_middleware(
         .into_response();
     }
 
-    parts.extensions.insert(claims);
+    parts.extensions.insert(claims.clone());
     let req = Request::from_parts(parts, body);
-    next.run(req).await
+    let rls_ctx = rls_request_tenant(&claims);
+    scope_request_tenant(rls_ctx, next.run(req)).await
 }
 
 /// P1-4 白名单：未改密用户仅放行自服务改密与登出。

@@ -73,6 +73,7 @@ impl Db {
             search_path: Arc::clone(&self.search_path),
         };
         scope.apply_search_path().await?;
+        scope.apply_request_tenant().await?;
         Ok(scope)
     }
 
@@ -84,6 +85,7 @@ impl Db {
             search_path: Arc::clone(&self.search_path),
         };
         scope.apply_search_path().await?;
+        scope.apply_request_tenant().await?;
         Ok(scope)
     }
 
@@ -115,6 +117,7 @@ impl Db {
             search_path: Arc::clone(&self.search_path),
         };
         scope.apply_search_path().await?;
+        scope.apply_request_tenant().await?;
         Ok(scope)
     }
 }
@@ -165,6 +168,27 @@ impl ScopedTxn<'_> {
             .bind(path)
             .execute(&mut *self)
             .await?;
+        Ok(())
+    }
+
+    /// 把认证中间件写入 task-local 的租户上下文落到当前作用域事务上。
+    ///
+    /// 只读/读写作用域各自 `BEGIN`，与 `tenant_middleware` 的请求事务不是同一条连接；
+    /// 不在这里补 `app.tenant_id` / `app.rls_system`，内联谓词与策略里的
+    /// `current_setting(..., true)` 就是 NULL（「未设即豁免」分支）＝跨租户放行。
+    /// 无请求上下文（后台任务/脚本）保持不设 GUC，由策略 fail-closed 拦截。
+    async fn apply_request_tenant(&mut self) -> sqlx::Result<()> {
+        let Some(ctx) = topems_shared_auth::middleware::tenant::current_request_tenant() else {
+            return Ok(());
+        };
+        sqlx::query(
+            "SELECT set_config('app.tenant_id', $1, true), \
+                    set_config('app.rls_system', $2, true)",
+        )
+        .bind(ctx.tenant.to_string())
+        .bind(if ctx.system { "on" } else { "off" })
+        .execute(&mut *self)
+        .await?;
         Ok(())
     }
 

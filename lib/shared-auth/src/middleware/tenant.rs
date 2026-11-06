@@ -16,6 +16,67 @@ use uuid::Uuid;
 pub type RlsTxnCell =
     std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
+/// 请求的 RLS 租户上下文（供 `shared-db::Db` 的独立作用域事务使用）。
+///
+/// `tenant_middleware` 只覆盖复用它事务的 `scope_with` 路径；`Db::scope()` /
+/// `scope_read()` 会各自 `BEGIN`，若不带 GUC，策略/内联谓词里的
+/// `current_setting('app.tenant_id', true)` 为 NULL 会命中「未设即豁免」分支，
+/// 等于跨租户放行。`auth_middleware` 在验签后把该上下文写入 task-local，
+/// `Db` 在每个作用域事务开始处据此 `set_config`（见 shared-db/src/scope.rs）。
+#[derive(Clone, Copy, Debug)]
+pub struct RlsRequestTenant {
+    pub tenant: Uuid,
+    /// 系统通道（超管 / service-to-service）：`app.rls_system='on'`。
+    pub system: bool,
+}
+
+tokio::task_local! {
+    static RLS_REQUEST_TENANT: RlsRequestTenant;
+}
+
+/// 当前请求的 RLS 上下文；无请求上下文（后台任务/脚本）返回 `None`。
+pub fn current_request_tenant() -> Option<RlsRequestTenant> {
+    RLS_REQUEST_TENANT.try_with(|ctx| *ctx).ok()
+}
+
+/// 在请求作用域内携带 RLS 上下文执行后续链路。
+pub async fn scope_request_tenant<F, T>(ctx: RlsRequestTenant, fut: F) -> T
+where
+    F: std::future::Future<Output = T>,
+{
+    RLS_REQUEST_TENANT.scope(ctx, fut).await
+}
+
+/// 由认证后的 Claims 推导 RLS 上下文：超管与 service 身份走系统通道（nil），
+/// 普通租户取 `tenant_id`；缺失/非法一律 nil（fail-closed，由策略/内联谓词拦截）。
+pub fn rls_request_tenant(claims: &crate::auth::Claims) -> RlsRequestTenant {
+    let system = claims.is_superuser || is_service_claims(claims);
+    let tenant = if system {
+        Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+            .unwrap_or(Uuid::nil())
+    };
+    RlsRequestTenant { tenant, system }
+}
+
+
+/// 事务/租户上下文初始化失败统一返回 500（fail-closed）。
+///
+/// 不允许 `return next.run(req)` 继续处理：那会让 handler 在没有租户 GUC 的
+/// 连接上执行查询，结果取决于策略是否 fail-closed，属于被明确否决的放行路径。
+fn internal_error(message: &str) -> Response {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        [(header::CONTENT_TYPE, "application/json")],
+        format!(r#"{{"success":false,"message":"{message}","code":500}}"#),
+    )
+        .into_response()
+}
+
 /// 请求收尾统一提交。
 ///
 /// `sqlx::Transaction` 未显式 commit 时 drop 即 ROLLBACK（写丢失）。handler 可能
@@ -174,7 +235,7 @@ pub fn tenant_middleware() -> impl Fn(
                     Ok(t) => t,
                     Err(e) => {
                         tracing::error!("Failed to begin RLS txn: {}", e);
-                        return next.run(req).await;
+                        return internal_error("事务开启失败");
                     }
                 };
                 if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -183,12 +244,16 @@ pub fn tenant_middleware() -> impl Fn(
                     .await
                 {
                     tracing::error!("Failed to set nil RLS context: {}", e);
+                    let _ = txn.rollback().await;
+                    return internal_error("租户上下文设置失败");
                 }
                 if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
                     .execute(&mut *txn)
                     .await
                 {
                     tracing::error!("Failed to enable RLS system channel: {}", e);
+                    let _ = txn.rollback().await;
+                    return internal_error("系统通道设置失败");
                 }
                 let mut req = req;
                 let txn_cell: RlsTxnCell = std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn)));
@@ -229,7 +294,7 @@ pub fn tenant_middleware() -> impl Fn(
                 Ok(t) => t,
                 Err(e) => {
                     tracing::error!("Failed to begin RLS txn: {}", e);
-                    return next.run(req).await;
+                    return internal_error("事务开启失败");
                 }
             };
             // 普通租户请求：RLS 使用 claims 中的真实租户；超管/service 已在上面
@@ -245,7 +310,11 @@ pub fn tenant_middleware() -> impl Fn(
                     tenant_id,
                     rls_tenant
                 ),
-                Err(e) => tracing::error!("Failed to set RLS context: {}", e),
+                Err(e) => {
+                    tracing::error!("Failed to set RLS context: {}", e);
+                    let _ = txn.rollback().await;
+                    return internal_error("租户上下文设置失败");
+                }
             }
             // 普通租户请求显式关闭系统通道：即使连接上有残留会话级开关，
             // 也不会把本请求提升为跨租户放行。
@@ -254,6 +323,8 @@ pub fn tenant_middleware() -> impl Fn(
                 .await
             {
                 tracing::error!("Failed to disable RLS system channel: {}", e);
+                let _ = txn.rollback().await;
+                return internal_error("系统通道设置失败");
             }
 
             let user_id = match claims.user_id() {
