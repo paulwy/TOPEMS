@@ -911,3 +911,242 @@ real 6.175s
   `ALTER COLUMN tier SET NOT NULL`（0 行，安全），不得改 `000014` 字节。
 - 证据：本文件 15.1–15.5 的现场数字、账本 checksum 对照、逐张 `to_regclass`、冒烟/健康输出；
   执行脚本墙钟 6.175s，窗口总墙钟 20:06:18 → 20:07:03。
+
+---
+
+## 16. 短窗口批次 3：权限数据 7 条（`000005/000012/000006/000007/000009/000010/000011`，2026-11-06 20:35）
+
+- 授权范围：**仅权限数据 DML**；prod 不重启、不部署、不改其它迁移字节。
+- 锚点：**`20261107000002`**（`version > anchor` 扫描到 000005–000012；当前 max 000018 不能作锚点，同 15.0 的教训）。
+- 白名单：`--only 20261107000005,000006,000007,000009,000010,000011,000012`；`--defer 20261107000015`。
+  已记账版本（000003/000004/000008/000013/000014/000016/000017/000018）由脚本按「已应用」跳过。
+- SSH 执行物模式：7 个文件投递到 `/tmp/topems_window_b3_20261106_203254/migrations/`，
+  本地/远端 sha256 **7/7 一致**；执行 `--prod`，整批**应用 7 条、失败 0**。
+
+### 16.0 与指令的一处偏差（必须显式登记）
+
+工单写「权限数据 **7 条**」且要求「账本 **585 → 592**」，但清单里同时点名 `000001`。
+现场核查：**`000001` 在 prod 与本地都未记账（pending）**，若一并应用则账本为 **593**（+8），
+与硬性验收「592」冲突。本窗口按两个数值口径（7 条 / 592）执行：
+
+- **应用 7 条**：000005、000012、000006、000007、000009、000010、000011（按版本升序）；
+- **`000001` 保持 defer**（未做任何 DML）；连同 `000015`、`000002`，窗口后 pending 共 3 条。
+- `000001` 内容核查：4 条码中 3 条缺、1 条已存在（`wms:stocktake:read`），如授权需另开窗口，
+  预计 +3 码 + 1 行账本。
+
+> 其余所有红线均未触发，详见 16.4。
+
+### 16.1 执行前备份与现场核对
+
+| 项 | 值 |
+|---|---|
+| 备份文件 | `/tmp/topems_window_b3_20261106_203254/perm_grants.dump`（`pg_dump -Fc`，3 表：`core_permissions` / `core_role_permissions` / `core_roles`） |
+| 大小 / sha256 | 64,250 B / `8e496cea3b06048c57e726f924251d232794711d8e91b9cd187620fcffa305a5` |
+| 本地留档 | `/Users/air/topems/backups/perm_grants.dump`（+ `.sha256`），同目录 `codes_before.csv` / `grants_before.csv` / `ledger_before.txt` |
+| 账本 | 585 条 `success=t`，max `20261107000018`，failed 0 |
+| 权限码 | **986** 条；指纹口径 `md5(string_agg(code, ',' ORDER BY code))` = **`f0a8e5e5fc762846a0513e46d08d1f12`** |
+| 角色授权 | **653** 行；15 个角色；**prod 无 `superadmin` 角色**（超管靠 JWT `is_superuser` 旁路）；`admin` 仅 2 条授权 |
+| 目标授权 | `erp_manager` 尚无 `finance:voucher:read`（`000010` 将新增 1 行） |
+| 字典 / 通知 / 审计 / 表 | 77 / 397、6、362、1345 |
+| 服务 | pid **74405**，启动 **2026-11-06 18:01:14** |
+
+> 指纹口径说明：既有记录里的 `af46d75…` 未写明计算式，无法复现；本窗口改用上面这条**可复现口径**并以此为准，
+> 不对旧指纹做等价判定（总数 986 与旧记录一致）。
+
+### 16.2 前端引用零交集校验（铁律，执行前）
+
+`000012` 删除集合共 **92** 个码。用 4 个维度核验：
+
+| 维度 | 覆盖量 | 与删除集合交集 |
+|---|---|---|
+| `EntitySchema.permissionResource` 派生码（`read/create/update/delete`） | 209 处声明 / 189 个前缀 / **756** 个派生码 | **0** |
+| FE 源码字面量（排除 `apps/web/src/config/permissions.ts` 定义文件） | 92 × 全量 src 扫描 | **0** |
+| 路由/菜单 `requiredPermissions` / `permission` 字面量 | **399** 个 | **0** |
+| prod DB `core_menus.permissions->>'permission'`（67 行菜单） | 92 码逐个比对 | **0**（另 `core_plugin_permissions` / `tenant_permissions` 均 0 行） |
+
+**结论：要删的码与前端/菜单引用零交集，红线未触发，可执行。**
+
+### 16.3 执行影响（逐条实测）
+
+预期口径（prod 角色集合，无 `superadmin`）：
+
+| 迁移 | INSERT 码 | INSERT 授权 | DELETE 码 | DELETE 授权 |
+|---|---|---|---|---|
+| `000005` | 135 | 180（admin 135 + erp 39 + hrm 3 + qms 3） | 0 | 0 |
+| `000006` | 30 | 54（admin 30 + mes 9 + scm 6 + wms 3 + finance 6） | 0 | 0 |
+| `000007` | 27 | 30（admin 27 + finance 3） | 0 | 0 |
+| `000009` | 2 | 2（admin 2） | 0 | 0 |
+| `000010` | 0 | 1（erp_manager `finance:voucher:read`） | 0 | 0 |
+| `000011` | 21 | 29（admin 21 + srm 8） | 0 | 0 |
+| `000012` | 0 | 0 | **92**（89 既有 + 3 支本窗口新建的 hrm 写码） | **95**（89 + 6） |
+| **合计** | **215** | **296** | **92** | **95** |
+
+执行后净变化（差集口径，hrm 3 码建后即删故不计入净增/净删）：
+
+- 权限码：986 + 215 − 92 = **1109**（实测 **1109**）
+- 角色授权：653 + 296 − 95 = **854**（实测 **854**）
+
+**顺序校验**：`000005` 先建 3 条 hrm 写码与 6 条授权，`000012` 再删；若反序，`000012` 只能删 89 条、
+且会留下 3 条「无授权、已下线仍可点」的写码。账本版本单调递增可回溯两者先后（见 16.5 checksum 表）。
+
+### 16.4 账本与结构/数据核对
+
+| 项 | 执行前 | 执行后 | 判定 |
+|---|---|---|---|
+| `_sqlx_migrations` `success=t` | 585 | **592** | +7，符合 |
+| failed | 0 | **0** | 符合 |
+| max version | 000018 | 000018 | 不变 |
+| 7 条 checksum（SHA-384） | — | 与本地 7/7 **逐字节一致** | 见 16.5 |
+| 权限码总数 | 986 | **1109** | 符合 |
+| 权限码指纹 | `f0a8e5e5…1f12` | **`d51a82b37591d52edf1e09a2ec95e97a`**（1109 码） | 重算记录 |
+| 角色授权总行 | 653 | **854** | 符合 |
+| `admin` 授权 | 2 | **214**（+212） | 符合 |
+| 字典 类型/项 | 77 / 397 | **77 / 397** | 不变 |
+| 通知行数 | 6 | **6** | 不变 |
+| 审计行数 | 362 | **362** | 不变（本窗口 DML 不经应用层，未产生新审计） |
+| 全库表数 | 1345 | **1345** | 不变（本批无 DDL） |
+| 服务 pid / 启动时间 | 74405 / 18:01:14 | **74405 / 18:01:14** | **未重启** |
+
+**红线复核**：① 删除集合含前端在用码 —— 否（16.2 四维交集 0）；
+② 超管权限变少 —— 否（超管走 `is_superuser` 旁路，冒烟 200；`admin` 授权 2 → 214）；
+③ 单条迁移影响行数与预期不符 —— 否（16.3 全部命中预期，合计 215/296/92/95）。
+**未触发中止，未做任何回滚。**
+
+### 16.5 7 条账本 checksum（prod = 本地，SHA-384）
+
+| 版本 | checksum |
+|---|---|
+| `20261107000005` | `719a9ae8a8271537cdf5ffdf9c2e3f694ab34d4642a5ef0a768a9308fbdd8f9f421444af0fbc5e4adf29898d3848efe1` |
+| `20261107000006` | `a6e7ef1439a9c7cb022e6a717476e740567e7c127cecd470e441429c05d64cf7f44c759c6d7373e30bcad10c1a77cab7` |
+| `20261107000007` | `e0d4fd3073d63d1b2cc9ed2b358abd015f8d66bf7c4646012e227b6ef8d3be83eb320aecc0374fdec6f44ed1689871f9` |
+| `20261107000009` | `51377ebe84142d7a5d7255a8a8fed48d502647bb9638710affa8afff6187b55df8cece3c755a86f7cea74f3f2e9099eb` |
+| `20261107000010` | `339dd0f1ead55a31ccaa182d04e2a33e42de4132c9b504a9b6ad109783569798d6333348debbf6cf25ff9b2d76ab5c4f` |
+| `20261107000011` | `cbfd1002b10f86f3b1f35e28e20846d5f8eb4c42ad1597edcff48425e810afab901fa5c34daf981e1a366da834a2b268` |
+| `20261107000012` | `39268de93e38e66d7a7e9d7fccacc9cd597160b3449240e1ae4d4e225a7aa422c6971afc34bf1c4df54ea418c097a838` |
+
+### 16.6 权限集合 diff（新增/删除逐条）
+
+渲染「执行前 vs 执行后」两份 CSV 快照后做集合差：
+
+- 净新增 **212** 条（215 建 − 3 条同窗口删除）；净删除 **89** 条（92 删 − 3 条本窗口新建）。
+- `000012` 的 92 个目标码**执行后全部不存在**（`DELSET_REMAIN=0`）；
+  `hrm:training_plan:*` 仅余 `read`（写码 3 条已按设计下线）。
+
+### 删除（000012，92 条中按批次 3 窗口语义实际可见 89 条净删除 + 3 条 hrm 建后即删）
+
+| 模块 | 条数 | 权限码 |
+|---|---|---|
+| `crm` | 9 | `crm:opportunity:create` `crm:opportunity:delete` `crm:opportunity:update` `crm:sales_forecast:create` `crm:sales_forecast:delete` `crm:sales_forecast:update` `crm:sales_funnel:create` `crm:sales_funnel:delete` `crm:sales_funnel:update` |
+| `ehs` | 3 | `ehs:emergency:create` `ehs:emergency:delete` `ehs:emergency:update` |
+| `finance` | 9 | `finance:budget:create` `finance:budget:delete` `finance:budget:update` `finance:consolidation:create` `finance:consolidation:delete` `finance:consolidation:update` `finance:report:create` `finance:report:delete` `finance:report:update` |
+| `hrm` | 6 | `hrm:attendance:create` `hrm:attendance:delete` `hrm:attendance:update` `hrm:report:create` `hrm:report:delete` `hrm:report:update` |
+| `lims` | 3 | `lims:result:create` `lims:result:delete` `lims:result:update` |
+| `mes` | 12 | `mes:anomaly:create` `mes:anomaly:delete` `mes:anomaly:update` `mes:energy:create` `mes:energy:delete` `mes:energy:update` `mes:kanban:create` `mes:kanban:delete` `mes:kanban:update` `mes:traceability:create` `mes:traceability:delete` `mes:traceability:update` |
+| `pdm` | 3 | `pdm:stats:create` `pdm:stats:delete` `pdm:stats:update` |
+| `pm` | 9 | `pm:report:create` `pm:report:delete` `pm:report:update` `pm:task:create` `pm:task:delete` `pm:task:update` `pm:template:create` `pm:template:delete` `pm:template:update` |
+| `qms` | 9 | `qms:inspection:create` `qms:inspection:delete` `qms:inspection:update` `qms:nonconformance:create` `qms:nonconformance:delete` `qms:nonconformance:update` `qms:quality_control:create` `qms:quality_control:delete` `qms:quality_control:update` |
+| `report` | 14 | `report:builder:create` `report:builder:delete` `report:builder:read` `report:builder:update` `report:design:create` `report:design:delete` `report:design:read` `report:design:update` `report:schedule:create` `report:schedule:delete` `report:schedule:update` `report:template:create` `report:template:delete` `report:template:update` |
+| `srm` | 3 | `srm:portal:create` `srm:portal:delete` `srm:portal:update` |
+| `wms` | 9 | `wms:inventory_check:create` `wms:inventory_check:delete` `wms:inventory_check:update` `wms:report:create` `wms:report:delete` `wms:report:update` `wms:supplier:create` `wms:supplier:delete` `wms:supplier:update` |
+
+### 新增（净增 212 条；000005 的 3 条 hrm 写码被 000012 同窗口删除，不计入净增）
+
+| 批次 | 模块 | 条数 | 权限码 |
+|---|---|---|---|
+| batch16 | `aps` | 9 | `aps:capacity:create` `aps:capacity:delete` `aps:capacity:update` `aps:forecast:create` `aps:forecast:delete` `aps:forecast:update` `aps:schedule:create` `aps:schedule:delete` `aps:schedule:update` |
+| batch16 | `bi` | 6 | `bi:data_source:create` `bi:data_source:delete` `bi:data_source:update` `bi:report:create` `bi:report:delete` `bi:report:update` |
+| batch16 | `doc` | 3 | `doc:document:create` `doc:document:delete` `doc:document:update` |
+| batch16 | `erp` | 39 | `erp:announcement:create` `erp:announcement:delete` `erp:announcement:update` `erp:asset:create` `erp:asset:delete` `erp:asset:update` `erp:bank_account:create` `erp:bank_account:delete` `erp:bank_account:update` `erp:budget:create` `erp:budget:delete` `erp:budget:update` `erp:customer:create` `erp:customer:delete` `erp:customer:update` `erp:inventory:create` `erp:inventory:delete` `erp:inventory:update` `erp:material:create` `erp:material:delete` `erp:material:update` `erp:meeting_room:create` `erp:meeting_room:delete` `erp:meeting_room:update` `erp:office_supply:create` `erp:office_supply:delete` `erp:office_supply:update` `erp:purchase_order:create` `erp:purchase_order:delete` `erp:purchase_order:update` `erp:supplier:create` `erp:supplier:delete` `erp:supplier:update` `erp:vehicle:create` `erp:vehicle:delete` `erp:vehicle:update` `erp:vehicle_request:create` `erp:vehicle_request:delete` `erp:vehicle_request:update` |
+| batch16 | `iam` | 3 | `iam:permission:create` `iam:permission:delete` `iam:permission:update` |
+| batch16 | `integration` | 9 | `integration:connection:create` `integration:connection:delete` `integration:connection:update` `integration:event:create` `integration:event:delete` `integration:event:update` `integration:mapping:create` `integration:mapping:delete` `integration:mapping:update` |
+| batch16 | `mobile` | 3 | `mobile:notification:create` `mobile:notification:delete` `mobile:notification:update` |
+| batch16 | `monitor` | 6 | `monitor:alert:create` `monitor:alert:delete` `monitor:alert:update` `monitor:log:create` `monitor:log:delete` `monitor:log:update` |
+| batch16 | `qms` | 3 | `qms:action:create` `qms:action:delete` `qms:action:update` |
+| batch16 | `rd` | 33 | `rd:bug:create` `rd:bug:delete` `rd:bug:update` `rd:build:create` `rd:build:delete` `rd:build:update` `rd:deploy:create` `rd:deploy:delete` `rd:deploy:update` `rd:doc:create` `rd:doc:delete` `rd:doc:update` `rd:experiment:create` `rd:experiment:delete` `rd:experiment:update` `rd:formula:create` `rd:formula:delete` `rd:formula:update` `rd:material:create` `rd:material:delete` `rd:material:update` `rd:milestone:create` `rd:milestone:delete` `rd:milestone:update` `rd:project:create` `rd:project:delete` `rd:project:update` `rd:settings:create` `rd:settings:delete` `rd:settings:update` `rd:test:create` `rd:test:delete` `rd:test:update` |
+| batch16 | `tms` | 12 | `tms:carrier:create` `tms:carrier:delete` `tms:carrier:update` `tms:driver:create` `tms:driver:delete` `tms:driver:update` `tms:route:create` `tms:route:delete` `tms:route:update` `tms:vehicle:create` `tms:vehicle:delete` `tms:vehicle:update` |
+| batch16 | `workflow` | 6 | `workflow:instance:create` `workflow:instance:delete` `workflow:instance:update` `workflow:monitor:create` `workflow:monitor:delete` `workflow:monitor:update` |
+| batch17 | `finance` | 6 | `finance:accounting_subject:create` `finance:accounting_subject:delete` `finance:accounting_subject:update` `finance:receivable_payable:create` `finance:receivable_payable:delete` `finance:receivable_payable:update` |
+| batch17 | `mes` | 9 | `mes:material_issue:create` `mes:material_issue:delete` `mes:material_issue:update` `mes:material_requirement:create` `mes:material_requirement:delete` `mes:material_requirement:update` `mes:material_return:create` `mes:material_return:delete` `mes:material_return:update` |
+| batch17 | `monitor` | 3 | `monitor:rule:create` `monitor:rule:delete` `monitor:rule:update` |
+| batch17 | `scm` | 6 | `scm:incoming_inspection:create` `scm:incoming_inspection:delete` `scm:incoming_inspection:update` `scm:incoming_notice:create` `scm:incoming_notice:delete` `scm:incoming_notice:update` |
+| batch17 | `wms` | 3 | `wms:stocktake:create` `wms:stocktake:delete` `wms:stocktake:update` |
+| batch17 | `workflow` | 3 | `workflow:definition:create` `workflow:definition:delete` `workflow:definition:update` |
+| batch18 | `finance` | 3 | `finance:account:create` `finance:account:delete` `finance:account:update` |
+| batch18 | `integration` | 9 | `integration:lims_qms_sync:create` `integration:lims_qms_sync:delete` `integration:lims_qms_sync:update` `integration:mes_erp_sync:create` `integration:mes_erp_sync:delete` `integration:mes_erp_sync:update` `integration:wms_scm_sync:create` `integration:wms_scm_sync:delete` `integration:wms_scm_sync:update` |
+| batch18 | `migration` | 3 | `migration:service:create` `migration:service:delete` `migration:service:update` |
+| batch18 | `notification` | 6 | `notification:archived_notification:create` `notification:archived_notification:delete` `notification:archived_notification:update` `notification:notification:create` `notification:notification:delete` `notification:notification:update` |
+| batch18 | `plugin` | 3 | `plugin:plugin:create` `plugin:plugin:delete` `plugin:plugin:update` |
+| batch18 | `ticket` | 3 | `ticket:ticket:create` `ticket:ticket:delete` `ticket:ticket:update` |
+| batch19 | `tenant` | 2 | `tenant:member:delete` `tenant:member:update` |
+| untagged | `aps` | 6 | `aps:material_plan:create` `aps:material_plan:delete` `aps:material_plan:update` `aps:production_plan:create` `aps:production_plan:delete` `aps:production_plan:update` |
+| untagged | `notification` | 4 | `notification:template:create` `notification:template:delete` `notification:template:read` `notification:template:update` |
+| untagged | `srm` | 8 | `srm:scoring_dimension:create` `srm:scoring_dimension:delete` `srm:scoring_dimension:read` `srm:scoring_dimension:update` `srm:supplier_product:create` `srm:supplier_product:delete` `srm:supplier_product:read` `srm:supplier_product:update` |
+| untagged | `workflow` | 3 | `workflow:template:create` `workflow:template:delete` `workflow:template:update` |
+
+### 16.7 角色授权受影响面
+
+| 角色 | 新增 | 删除 | 净变化 |
+|---|---|---|---|
+| `admin` | 212 | 0 | +212 |
+| `crm_manager` | 0 | 9 | -9 |
+| `ehs_manager` | 0 | 3 | -3 |
+| `erp_manager` | 40 | 0 | +40 |
+| `finance_manager` | 9 | 9 | +0 |
+| `hrm_manager` | 0 | 6 | -6 |
+| `lims_manager` | 0 | 3 | -3 |
+| `mes_manager` | 9 | 12 | -3 |
+| `pdm_manager` | 0 | 3 | -3 |
+| `pm_manager` | 0 | 9 | -9 |
+| `qms_manager` | 3 | 9 | -6 |
+| `report_manager` | 0 | 14 | -14 |
+| `scm_manager` | 6 | 0 | +6 |
+| `srm_manager` | 8 | 3 | +5 |
+| `wms_manager` | 3 | 9 | -6 |
+
+**新增明细（按角色）**
+
+- `admin`（+212）：`aps:capacity:create` `aps:capacity:delete` `aps:capacity:update` `aps:forecast:create` `aps:forecast:delete` `aps:forecast:update` `aps:material_plan:create` `aps:material_plan:delete` `aps:material_plan:update` `aps:production_plan:create` `aps:production_plan:delete` `aps:production_plan:update` `aps:schedule:create` `aps:schedule:delete` `aps:schedule:update` `bi:data_source:create` `bi:data_source:delete` `bi:data_source:update` `bi:report:create` `bi:report:delete` `bi:report:update` `doc:document:create` `doc:document:delete` `doc:document:update` `erp:announcement:create` `erp:announcement:delete` `erp:announcement:update` `erp:asset:create` `erp:asset:delete` `erp:asset:update` `erp:bank_account:create` `erp:bank_account:delete` `erp:bank_account:update` `erp:budget:create` `erp:budget:delete` `erp:budget:update` `erp:customer:create` `erp:customer:delete` `erp:customer:update` `erp:inventory:create` `erp:inventory:delete` `erp:inventory:update` `erp:material:create` `erp:material:delete` `erp:material:update` `erp:meeting_room:create` `erp:meeting_room:delete` `erp:meeting_room:update` `erp:office_supply:create` `erp:office_supply:delete` `erp:office_supply:update` `erp:purchase_order:create` `erp:purchase_order:delete` `erp:purchase_order:update` `erp:supplier:create` `erp:supplier:delete` `erp:supplier:update` `erp:vehicle:create` `erp:vehicle:delete` `erp:vehicle:update` `erp:vehicle_request:create` `erp:vehicle_request:delete` `erp:vehicle_request:update` `finance:account:create` `finance:account:delete` `finance:account:update` `finance:accounting_subject:create` `finance:accounting_subject:delete` `finance:accounting_subject:update` `finance:receivable_payable:create` `finance:receivable_payable:delete` `finance:receivable_payable:update` `iam:permission:create` `iam:permission:delete` `iam:permission:update` `integration:connection:create` `integration:connection:delete` `integration:connection:update` `integration:event:create` `integration:event:delete` `integration:event:update` `integration:lims_qms_sync:create` `integration:lims_qms_sync:delete` `integration:lims_qms_sync:update` `integration:mapping:create` `integration:mapping:delete` `integration:mapping:update` `integration:mes_erp_sync:create` `integration:mes_erp_sync:delete` `integration:mes_erp_sync:update` `integration:wms_scm_sync:create` `integration:wms_scm_sync:delete` `integration:wms_scm_sync:update` `mes:material_issue:create` `mes:material_issue:delete` `mes:material_issue:update` `mes:material_requirement:create` `mes:material_requirement:delete` `mes:material_requirement:update` `mes:material_return:create` `mes:material_return:delete` `mes:material_return:update` `migration:service:create` `migration:service:delete` `migration:service:update` `mobile:notification:create` `mobile:notification:delete` `mobile:notification:update` `monitor:alert:create` `monitor:alert:delete` `monitor:alert:update` `monitor:log:create` `monitor:log:delete` `monitor:log:update` `monitor:rule:create` `monitor:rule:delete` `monitor:rule:update` `notification:archived_notification:create` `notification:archived_notification:delete` `notification:archived_notification:update` `notification:notification:create` `notification:notification:delete` `notification:notification:update` `notification:template:create` `notification:template:delete` `notification:template:read` `notification:template:update` `plugin:plugin:create` `plugin:plugin:delete` `plugin:plugin:update` `qms:action:create` `qms:action:delete` `qms:action:update` `rd:bug:create` `rd:bug:delete` `rd:bug:update` `rd:build:create` `rd:build:delete` `rd:build:update` `rd:deploy:create` `rd:deploy:delete` `rd:deploy:update` `rd:doc:create` `rd:doc:delete` `rd:doc:update` `rd:experiment:create` `rd:experiment:delete` `rd:experiment:update` `rd:formula:create` `rd:formula:delete` `rd:formula:update` `rd:material:create` `rd:material:delete` `rd:material:update` `rd:milestone:create` `rd:milestone:delete` `rd:milestone:update` `rd:project:create` `rd:project:delete` `rd:project:update` `rd:settings:create` `rd:settings:delete` `rd:settings:update` `rd:test:create` `rd:test:delete` `rd:test:update` `scm:incoming_inspection:create` `scm:incoming_inspection:delete` `scm:incoming_inspection:update` `scm:incoming_notice:create` `scm:incoming_notice:delete` `scm:incoming_notice:update` `srm:scoring_dimension:create` `srm:scoring_dimension:delete` `srm:scoring_dimension:read` `srm:scoring_dimension:update` `srm:supplier_product:create` `srm:supplier_product:delete` `srm:supplier_product:read` `srm:supplier_product:update` `tenant:member:delete` `tenant:member:update` `ticket:ticket:create` `ticket:ticket:delete` `ticket:ticket:update` `tms:carrier:create` `tms:carrier:delete` `tms:carrier:update` `tms:driver:create` `tms:driver:delete` `tms:driver:update` `tms:route:create` `tms:route:delete` `tms:route:update` `tms:vehicle:create` `tms:vehicle:delete` `tms:vehicle:update` `wms:stocktake:create` `wms:stocktake:delete` `wms:stocktake:update` `workflow:definition:create` `workflow:definition:delete` `workflow:definition:update` `workflow:instance:create` `workflow:instance:delete` `workflow:instance:update` `workflow:monitor:create` `workflow:monitor:delete` `workflow:monitor:update` `workflow:template:create` `workflow:template:delete` `workflow:template:update`
+- `erp_manager`（+40）：`erp:announcement:create` `erp:announcement:delete` `erp:announcement:update` `erp:asset:create` `erp:asset:delete` `erp:asset:update` `erp:bank_account:create` `erp:bank_account:delete` `erp:bank_account:update` `erp:budget:create` `erp:budget:delete` `erp:budget:update` `erp:customer:create` `erp:customer:delete` `erp:customer:update` `erp:inventory:create` `erp:inventory:delete` `erp:inventory:update` `erp:material:create` `erp:material:delete` `erp:material:update` `erp:meeting_room:create` `erp:meeting_room:delete` `erp:meeting_room:update` `erp:office_supply:create` `erp:office_supply:delete` `erp:office_supply:update` `erp:purchase_order:create` `erp:purchase_order:delete` `erp:purchase_order:update` `erp:supplier:create` `erp:supplier:delete` `erp:supplier:update` `erp:vehicle:create` `erp:vehicle:delete` `erp:vehicle:update` `erp:vehicle_request:create` `erp:vehicle_request:delete` `erp:vehicle_request:update` `finance:voucher:read`
+- `finance_manager`（+9）：`finance:account:create` `finance:account:delete` `finance:account:update` `finance:accounting_subject:create` `finance:accounting_subject:delete` `finance:accounting_subject:update` `finance:receivable_payable:create` `finance:receivable_payable:delete` `finance:receivable_payable:update`
+- `mes_manager`（+9）：`mes:material_issue:create` `mes:material_issue:delete` `mes:material_issue:update` `mes:material_requirement:create` `mes:material_requirement:delete` `mes:material_requirement:update` `mes:material_return:create` `mes:material_return:delete` `mes:material_return:update`
+- `qms_manager`（+3）：`qms:action:create` `qms:action:delete` `qms:action:update`
+- `scm_manager`（+6）：`scm:incoming_inspection:create` `scm:incoming_inspection:delete` `scm:incoming_inspection:update` `scm:incoming_notice:create` `scm:incoming_notice:delete` `scm:incoming_notice:update`
+- `srm_manager`（+8）：`srm:scoring_dimension:create` `srm:scoring_dimension:delete` `srm:scoring_dimension:read` `srm:scoring_dimension:update` `srm:supplier_product:create` `srm:supplier_product:delete` `srm:supplier_product:read` `srm:supplier_product:update`
+- `wms_manager`（+3）：`wms:stocktake:create` `wms:stocktake:delete` `wms:stocktake:update`
+
+**删除明细（按角色）**
+
+- `crm_manager`（-9）：`crm:opportunity:create` `crm:opportunity:delete` `crm:opportunity:update` `crm:sales_forecast:create` `crm:sales_forecast:delete` `crm:sales_forecast:update` `crm:sales_funnel:create` `crm:sales_funnel:delete` `crm:sales_funnel:update`
+- `ehs_manager`（-3）：`ehs:emergency:create` `ehs:emergency:delete` `ehs:emergency:update`
+- `finance_manager`（-9）：`finance:budget:create` `finance:budget:delete` `finance:budget:update` `finance:consolidation:create` `finance:consolidation:delete` `finance:consolidation:update` `finance:report:create` `finance:report:delete` `finance:report:update`
+- `hrm_manager`（-6）：`hrm:attendance:create` `hrm:attendance:delete` `hrm:attendance:update` `hrm:report:create` `hrm:report:delete` `hrm:report:update`
+- `lims_manager`（-3）：`lims:result:create` `lims:result:delete` `lims:result:update`
+- `mes_manager`（-12）：`mes:anomaly:create` `mes:anomaly:delete` `mes:anomaly:update` `mes:energy:create` `mes:energy:delete` `mes:energy:update` `mes:kanban:create` `mes:kanban:delete` `mes:kanban:update` `mes:traceability:create` `mes:traceability:delete` `mes:traceability:update`
+- `pdm_manager`（-3）：`pdm:stats:create` `pdm:stats:delete` `pdm:stats:update`
+- `pm_manager`（-9）：`pm:report:create` `pm:report:delete` `pm:report:update` `pm:task:create` `pm:task:delete` `pm:task:update` `pm:template:create` `pm:template:delete` `pm:template:update`
+- `qms_manager`（-9）：`qms:inspection:create` `qms:inspection:delete` `qms:inspection:update` `qms:nonconformance:create` `qms:nonconformance:delete` `qms:nonconformance:update` `qms:quality_control:create` `qms:quality_control:delete` `qms:quality_control:update`
+- `report_manager`（-14）：`report:builder:create` `report:builder:delete` `report:builder:read` `report:builder:update` `report:design:create` `report:design:delete` `report:design:read` `report:design:update` `report:schedule:create` `report:schedule:delete` `report:schedule:update` `report:template:create` `report:template:delete` `report:template:update`
+- `srm_manager`（-3）：`srm:portal:create` `srm:portal:delete` `srm:portal:update`
+- `wms_manager`（-9）：`wms:inventory_check:create` `wms:inventory_check:delete` `wms:inventory_check:update` `wms:report:create` `wms:report:delete` `wms:report:update` `wms:supplier:create` `wms:supplier:delete` `wms:supplier:update`
+
+### 16.8 冒烟、隔离与健康
+
+| 检查 | 结果 |
+|---|---|
+| 超管 token（`is_superuser=true`）拉字典 | HTTP **200**，`total=77`（权限面正常） |
+| probe 租户 `1111…1111`（非超管，仅 `master-data:read`） | HTTP **200**，`total=0`（租户隔离生效） |
+| `/health` | **200** |
+| `/api/server/ready` | **200** |
+| 服务进程 | pid **74405**，启动时间 **2026-11-06 18:01:14**（窗口前），**未重启** |
+
+### 16.9 结论、遗留与回滚
+
+- 本窗口只做**权限码/授权数据 DML**：7 行账本、净 +212 码、净 +201 授权行；结构与字典/通知/审计零变化，服务未重启。
+- **遗留 1**：`000001`（IAM 权威同步，4 码中 3 缺）按 592 口径 defer，需另开窗口授权后应用（预计 +3 码 +1 账本）。
+- **遗留 2**：`000015`（RLS 系统上下文）显式 defer；`000002` 仍为 anchor 以下未记账（triage 已标为被 000003 取代）。
+- **回滚手册（未执行）**：本窗口无自动回滚；如需回退，按
+  `pg_restore -d topems_prod --data-only -t core_permissions -t core_role_permissions /tmp/topems_window_b3_20261106_203254/perm_grants.dump`
+  恢复两张表数据，并手工清理这 7 行 `_sqlx_migrations`（仅限评审后操作，禁止脚本自动执行）。
+- 证据目录 `/tmp/topems_window_b3_20261106_203254/`：`perm_grants.dump`、`codes_before.csv` / `codes_after.csv`、
+  `grants_before.csv` / `grants_after.csv`、`ledger_before.txt` / `ledger_after.txt`；
+  `apply.log`（本地 `/tmp/b3_apply.log`）与 sha256 投递清单。

@@ -1,3 +1,26 @@
+## 本地数据漂移修复 + 门禁数据断言（2026-11-06 第十批）
+
+- 记录：[local-data-drift-and-gate-2026-11-06.md](docs/quality/local-data-drift-and-gate-2026-11-06.md)。
+- 根因：`000005` 迁移后**带外手工 DELETE**（checksum 与文件一致、无 upsert 冲突、`000012` 未记账）；
+  本地事务内幂等补回 3 码 + 9 授权，`[batch16]` 134 → 135，账本/数据恢复一致（37 ms）。
+- 扫描：已记账权限 INSERT 迁移 declared/present 全对齐；`000005` 是唯一一处；字典/菜单无 INSERT 迁移路径。
+- 门禁：`check-ledger-ddl-drift.mjs` 新增 `data_rows`（+`skip_if_applied`），固化 4 条断言；
+  负例（删 1 码）`FAILED 3 项` exit 1（~237 ms）；恢复后 `PASS 12 项`（110 ms，触发器 102 ms）。
+
+## prod 短窗口批次 3 权限数据 7 条（2026-11-06 第十一批）
+
+- 记录：[窗口执行总表 §16](docs/quality/prod-window-execution-master-2026-11-06.md#16-短窗口批次-3权限数据-7-条0000050000120000060000070000090000100000112026-11-06-2035)。
+- 锚点 `20261107000002`；`--only 000005,000006,000007,000009,000010,000011,000012`，`--defer 000015`。
+- 偏差登记：`000001` 实为 pending（prod/本地均未记账），按「7 条 / 585→592」口径 **defer**，
+  窗口后 pending 3 条（`000001`/`000002`/`000015`）。
+- 前置：`pg_dump` 两张权限表 + `core_roles`（64 KB，sha256 `8e496cea…`）；986/653/15 角色、无 superadmin；
+  删除集合 92 码与 FE（756 派生码 / 0 字面量 / 399 路由 / 菜单 0）**四维零交集**。
+- 执行：应用 7 条、失败 0；账本 **585 → 592**，checksum 与本地 SHA-384 **7/7 一致**。
+- 数据：码 **986 → 1109**（净 +212，`hrm:training_plan` 3 写码建后即删）；授权 **653 → 854**（净 +201）；
+  `admin` 2 → 214；`000012` 92 码删后 `DELSET_REMAIN=0`。
+- 不变量：字典 77/397、通知 6、审计 362、表 1345；冒烟 super 200/77、probe 200/0（隔离）、health/ready 200；
+  pid 74405 未重启。红线全部未触发，未回滚。
+
 ## hrm:training_plan 3 码裁决（2026-11-06 第九批，只读）
 
 - 记录：[prod-pending-migration-triage §9](docs/quality/prod-pending-migration-triage-2026-11-06.md#9-补充裁决hrmtraining_plancreateupdatedelete2026-11-06-只读复核)。

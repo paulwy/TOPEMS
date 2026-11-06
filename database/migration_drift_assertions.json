@@ -70,6 +70,41 @@
       "index": "production_orders_pkey",
       "source": "20260918000014",
       "source_tokens": ["production_orders", "PRIMARY KEY"]
+    },
+    {
+      "id": "perm.batch16.hrm_training_plan_rows",
+      "kind": "data_rows",
+      "source": "20261107000005",
+      "source_tokens": ["hrm:training_plan:create", "hrm:training_plan:delete", "[batch16]"],
+      "skip_if_applied": ["20261107000012"],
+      "sql": "SELECT count(*) FROM public.core_permissions WHERE code IN ('hrm:training_plan:create','hrm:training_plan:update','hrm:training_plan:delete')",
+      "expected": 3
+    },
+    {
+      "id": "perm.batch16.hrm_training_plan_grants",
+      "kind": "data_rows",
+      "source": "20261107000005",
+      "source_tokens": ["hrm_manager", "hrm:training_plan"],
+      "skip_if_applied": ["20261107000012"],
+      "sql": "SELECT count(*) FROM public.core_role_permissions rp JOIN public.core_permissions p ON p.id = rp.permission_id JOIN public.core_roles r ON r.id = rp.role_id WHERE p.code LIKE 'hrm:training_plan:%' AND p.description LIKE '%batch16%' AND r.name IN ('admin','superadmin','hrm_manager')",
+      "expected": 9
+    },
+    {
+      "id": "perm.batch16.total_rows",
+      "kind": "data_rows",
+      "source": "20261107000005",
+      "source_tokens": ["[batch16]", "共 135 条"],
+      "skip_if_applied": ["20261107000012"],
+      "sql": "SELECT count(*) FROM public.core_permissions WHERE description LIKE '%batch16%'",
+      "expected": 135
+    },
+    {
+      "id": "perm.batch17.total_rows",
+      "kind": "data_rows",
+      "source": "20261107000006",
+      "source_tokens": ["[batch17]", "batch17"],
+      "sql": "SELECT count(*) FROM public.core_permissions WHERE description LIKE '%batch17%'",
+      "expected": 30
     }
   ]
 }

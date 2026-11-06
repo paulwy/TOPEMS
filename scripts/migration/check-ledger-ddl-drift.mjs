@@ -31,7 +31,11 @@ const MANIFEST_PATH = path.join(REPO_ROOT, "database/migration_drift_assertions.
 const MIGRATION_DIR = path.join(REPO_ROOT, "database/migrations");
 const TAG = "[Gate DRIFT]";
 const PSQL_TIMEOUT_MS = 8000;
-const VALID_KINDS = new Set(["column_type", "constraint_absent", "index_exists"]);
+// data_rows：数据型迁移（INSERT/UPDATE/DELETE）的「数据行断言」。
+// 断言字段：sql（返回标量的 SELECT，通常是 count(*)）、expected（期望计数）。
+// 可选 skip_if_applied：[版本]，其中任一版本在本库 success=t 时跳过该断言
+// （用于「A 迁移写入、B 迁移按设计删除」的成对场景，避免把正常下线误判为漂移）。
+const VALID_KINDS = new Set(["column_type", "constraint_absent", "index_exists", "data_rows"]);
 
 const startedAt = Date.now();
 
@@ -116,6 +120,17 @@ function loadManifest() {
     seen.add(a.id);
     if (!VALID_KINDS.has(a.kind)) fail([`${TAG} FAILED 断言 ${a.id} 的 kind 不支持：${a.kind}`]);
     if (!a.source) fail([`${TAG} FAILED 断言 ${a.id} 缺少 source 迁移版本`]);
+    if (a.kind === "data_rows") {
+      if (typeof a.sql !== "string" || !a.sql.trim()) {
+        fail([`${TAG} FAILED data_rows 断言 ${a.id} 缺少 sql`]);
+      }
+      if (!Number.isInteger(a.expected)) {
+        fail([`${TAG} FAILED data_rows 断言 ${a.id} 的 expected 必须是整数`]);
+      }
+      if (a.skip_if_applied !== undefined && !Array.isArray(a.skip_if_applied)) {
+        fail([`${TAG} FAILED data_rows 断言 ${a.id} 的 skip_if_applied 必须是版本数组`]);
+      }
+    }
   }
   return manifest.assertions;
 }
@@ -149,7 +164,9 @@ function assertManifestAgainstMigrations(assertions) {
 function buildStructSql(assertions) {
   const parts = assertions.map((a) => {
     let value;
-    if (a.kind === "column_type") {
+    if (a.kind === "data_rows") {
+      value = `COALESCE((${a.sql}), -1)`;
+    } else if (a.kind === "column_type") {
       const table = `to_regclass(${sqlStr(a.table)})`;
       value =
         `CASE WHEN ${table} IS NULL THEN 'TABLE_MISSING' ELSE COALESCE((` +
@@ -174,12 +191,16 @@ function buildStructSql(assertions) {
 }
 
 function expectedLabel(a) {
+  if (a.kind === "data_rows") return `数据行数 = ${a.expected}（${a.sql}）`;
   if (a.kind === "column_type") return `${a.table}.${a.column} = ${a.expected}`;
   if (a.kind === "constraint_absent") return `${a.table} 无约束 ${a.constraint}`;
   return `${a.schema}.${a.index} 索引存在`;
 }
 
 function actualLabel(a, value) {
+  if (a.kind === "data_rows") {
+    return value === "-1" ? "断言 SQL 返回空" : `数据行数 = ${value}`;
+  }
   if (a.kind === "column_type") {
     if (value === "TABLE_MISSING") return "表不存在";
     if (value === "COLUMN_MISSING") return "列不存在";
@@ -193,6 +214,7 @@ function actualLabel(a, value) {
 }
 
 function isDrift(a, value) {
+  if (a.kind === "data_rows") return value === "-1" || Number(value) !== a.expected;
   if (a.kind === "column_type") return value !== a.expected;
   if (a.kind === "constraint_absent") return value === "present" || value === "TABLE_MISSING";
   return value !== "present";
@@ -236,7 +258,11 @@ function main() {
     ]);
   }
 
-  const versions = [...new Set(assertions.map((a) => a.source))];
+  const versions = [
+    ...new Set(
+      assertions.flatMap((a) => [a.source, ...(a.skip_if_applied ?? [])]),
+    ),
+  ];
   const ledger = new Map();
   if (ledgerPresent === "present") {
     try {
@@ -296,6 +322,11 @@ function main() {
       failedLedger.push(`${a.id}（源迁移 ${a.source} 记账 success=false）`);
       continue;
     }
+    const supersededBy = (a.skip_if_applied ?? []).find((v) => ledger.get(v) === true);
+    if (supersededBy) {
+      skipped.push(`${a.id}（后续迁移 ${supersededBy} 已记账，数据按设计移除）`);
+      continue;
+    }
     enforced += 1;
     const actual = structRows.get(a.id);
     if (actual === undefined) {
@@ -306,7 +337,7 @@ function main() {
   }
 
   if (failedLedger.length > 0 || drift.length > 0) {
-    console.error(`${TAG} FAILED ${drift.length + failedLedger.length} 项漂移（记账 success=t 与实际结构不符）`);
+    console.error(`${TAG} FAILED ${drift.length + failedLedger.length} 项漂移（记账 success=t 与实际结构/数据不符）`);
     for (const item of drift) {
       console.error(`  - ${item.a.id}`);
       console.error(`      期望 ${item.expected}（源 ${item.a.source} 已记账 success=t）`);
