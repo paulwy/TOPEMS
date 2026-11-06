@@ -1,3 +1,16 @@
+## 000011 列序修复与 INSERT 形态门禁（2026-11-06 第七批）
+
+- 文档：[migration-000011-column-order-fix-2026-11-06.md](docs/quality/migration-000011-column-order-fix-2026-11-06.md)。
+- 判定：`20261107000011` 在 local/test/prod 账本均**无记录** → 属「未应用迁移」例外，
+  直接修正文件字节（别名改为 `AS v(code, resource, action, name, level)`）并同步 checksum；
+  不新增前向迁移。本地 `topems` 有 21 条账本外脏行（错位内容），已删 21 权限 + 50 授权后重放修复。
+- 门禁：新增 `scripts/migration/check-insert-column-shape.mjs` +
+  `scripts/ci/check-migration-insert-shape.sh`，接 pre-push（`lefthook.yml`）；无关改动
+  `SKIP 0.034s`，触发 `0.223s`；失败 exit 1 并打印 `path:line`。
+- 扫描：613 文件 / 230 条 INSERT，修复前仅 `000011` 命中；其余迁移无确定性问题。
+- 验证：scratch 与本地逐行 **21/21** 一致、幂等复跑 0 变更、既有权限指纹不变；
+  prod 只读（89 条批 25 码指纹 `f2480fef…`，0 DDL）。
+
 ## prod 剩余迁移分类甄别（2026-11-06 第六批，只读）
 
 - 文档：[prod-pending-migration-triage-2026-11-06.md](docs/quality/prod-pending-migration-triage-2026-11-06.md)。

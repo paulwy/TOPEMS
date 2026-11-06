@@ -26,6 +26,17 @@
       ],
       "evidence": "topems_regression 空库 migrate.sh run 516 迁移全量通过（1485 表落库）+ 二次 run 幂等 0 应用 + unified-core 连回归库 /health healthy；validate.sh Checksum errors 0 / Schema drift 0 / Errors 0；门禁 schema-defense PASS errors=0 warnings=0（PASS 408）；commit 2f6c9672b",
       "approved": true
+    },
+    {
+      "id": "B20261106-000011-column-order",
+      "date": "2026-11-06",
+      "committer": "paulwy",
+      "reason": "20261107000011 的 VALUES 行实际顺序 (code, resource, action, name, level) 与派生表别名 (code, name, resource, action, level) 不一致，导致 name/resource/action 整体错位。该迁移在 local/test/prod 的 _sqlx_migrations 均为 0 条记录（从未应用成功），属『未应用迁移』例外：修正输入字节而非改写已执行历史，故不走前向修正迁移。checksums.txt 仅更新该行。",
+      "files": [
+        "20261107000011_resource_crud_codes_batch24.sql"
+      ],
+      "evidence": "三环境账本核验：local topems 554 行/max 20261107000018、topems_prepare 0、topems_sqlx_scratch 60/max 20260831190800、topems_dict_rehearsal 552/max 20261107000009、prod 581/max 20261107000018，均无 version=20261107000011；scratch 克隆库修复脏行后重放逐行 21/21 一致、幂等复跑 INSERT 0 0；本地 topems 同样 21/21；validate.sh Errors 0；新增 pre-push 静态门禁（scripts/migration/check-insert-column-shape.mjs）全仓 613 文件/230 INSERT 仅本文件命中（修复前）；文档 docs/quality/migration-000011-column-order-fix-2026-11-06.md",
+      "approved": true
     }
   ]
 }

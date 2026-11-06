@@ -456,6 +456,22 @@ pre-push:
       tags: database migrations
       run: bash scripts/ci/check-ledger-ddl-drift.sh
 
+    # [2026-11-06 NEW Gate INSERT] 迁移 INSERT 列序/列数静态防线：
+    # 历史事故：20261107000011 的 VALUES 行实际为 (code, resource, action, name, level)，
+    #           但派生表别名声明为 (code, name, resource, action, level)，写入后
+    #           name/resource/action 三列整体错位（纯语法合法，validate.sh 看不见）。
+    # 检查：scripts/migration/check-insert-column-shape.mjs
+    #   - INSERT 列清单 vs VALUES 每条元组值数、派生 VALUES 别名数 vs 值数、
+    #     INSERT 列清单 vs SELECT 表达式数（确定性结构）；
+    #   - core_permissions 列→值组合映射后断言 action/resource 与 code 一致（语义）。
+    # 触发：仅推送涉及 database/migrations|baseline、svc/*/migrations、migrations、
+    #       本检查脚本时运行；无关改动秒级 SKIP。
+    # 成本：触发时静态扫描 613 文件 / 230 条 INSERT 约 0.1s；跳过 <0.1s。
+    # 失败：非零退出 + [Gate INSERT] FAILED + 逐条 path:line；无 node fail-closed。
+    migration-insert-shape:
+      tags: database migrations
+      run: bash scripts/ci/check-migration-insert-shape.sh
+
     # [NEW] cargo check — 增量模式（2026-11-05 修订）：只编译本次 push 变更的 crate。
     # 背景：全量 check 被 utoipa-swagger-ui build.rs 网络下载失败恒阻断 + RUSTFLAGS=-D warnings
     #       使缓存失效 → 每次 push 冷编译且必失败 → 团队长期 --no-verify 绕过门禁。

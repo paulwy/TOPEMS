@@ -23,6 +23,9 @@
 --    WHERE rp.permission_id = p.id AND p.code IN ('aps:material_plan:create','aps:material_plan:update','aps:material_plan:delete','aps:production_plan:create','aps:production_plan:update','aps:production_plan:delete','workflow:template:create','workflow:template:update','workflow:template:delete','notification:template:read','notification:template:create','notification:template:update','notification:template:delete','srm:scoring_dimension:read','srm:scoring_dimension:create','srm:scoring_dimension:update','srm:scoring_dimension:delete','srm:supplier_product:read','srm:supplier_product:create','srm:supplier_product:update','srm:supplier_product:delete');
 --   DELETE FROM public.core_permissions WHERE code IN ('aps:material_plan:create','aps:material_plan:update','aps:material_plan:delete','aps:production_plan:create','aps:production_plan:update','aps:production_plan:delete','workflow:template:create','workflow:template:update','workflow:template:delete','notification:template:read','notification:template:create','notification:template:update','notification:template:delete','srm:scoring_dimension:read','srm:scoring_dimension:create','srm:scoring_dimension:update','srm:scoring_dimension:delete','srm:supplier_product:read','srm:supplier_product:create','srm:supplier_product:update','srm:supplier_product:delete');
 
+-- 列序注意：VALUES 每行实际顺序为 (code, resource, action, name, level)，
+-- 派生表别名必须与之一致；否则 name/resource/action 会整体错位
+-- （2026-11-06 修复，本迁移在 local/test/prod 均未记账，属未应用迁移，可改字节）。
 INSERT INTO public.core_permissions (code, name, resource, action, level)
 SELECT v.code, v.name, v.resource, v.action, v.level
 FROM (VALUES
@@ -47,7 +50,7 @@ FROM (VALUES
   ('srm:supplier_product:create','srm_supplier_product','create','supplier_productcreate',1),
   ('srm:supplier_product:update','srm_supplier_product','update','supplier_productupdate',1),
   ('srm:supplier_product:delete','srm_supplier_product','delete','supplier_productdelete',1)
-) AS v(code, name, resource, action, level)
+) AS v(code, resource, action, name, level)
 WHERE NOT EXISTS (SELECT 1 FROM public.core_permissions p WHERE p.code = v.code);
 
 -- 授权：admin / superadmin 全量
