@@ -933,3 +933,465 @@ PG 直接报 `COALESCE types character varying and uuid cannot be matched`。
 
 提交按正常钩子执行，不使用 `--no-verify`，不 force push。
 
+## 13. prod 三个「潜伏 500」逐条定性（只读，2026-11-07）
+
+本节只做定性，不改代码、不改 prod 数据、不部署、不重启、不调用 prod HTTP 接口。
+取证方式：`ssh xingzhai@192.168.110.115` + `psql -d topems_prod` 只读查询；
+代码以 prod 实际部署版本（`/Users/xingzhai/topems` HEAD `0c11b5b9`，二进制构建于
+18:01）为准，不采用本地已修复的 `7feadfb70`。
+
+### 13.1 结论总表
+
+| 列 | prod 类型/可空 | 总行数 | 非 NULL | 部署代码解码类型 | 是否已发生 | 触发档 | prod 可达性 | 严重度 | 建议时点 |
+|---|---|---|---|---|---|---|---|---|---|
+| `finance.core_finance_payment_approval_config.created_by` | `uuid` / NULL | **0** | **0** | `String` | **否** | 一次操作即触发（**写** 500 + 回滚） | 超管可达（前端页对超管可见） | 低-中 | 随版本（下个窗口） |
+| `finance.core_finance_payments.approved_by` | `uuid` / NULL | **0** | **0** | `Option<String>` | **否** | 需要特定数据条件（存在非 NULL 行） | **无任何写路径**，事实不可达 | 低 | 随版本 |
+| `finance.core_finance_payments.executed_by` | `uuid` / NULL | **0** | **0** | `Option<String>` | **否** | 一次操作即触发（触发的是**写** 500，不是读 500） | 超管可经 API 直达；无前端按钮；非超管 403 | 中 | 开放「执行付款」前必须先上线 |
+
+一句话结论：
+
+- **没有一条已经发生**。两张表在 prod 均为 0 行，`pg_stat_user_tables` 的
+  `n_tup_ins/n_tup_upd/n_tup_del` 也全部为 0（自统计重置以来没有任何已提交写入）。
+- **也没有「写成功但读失败」**。旧代码下：执行付款在 UPDATE 绑定阶段即失败且不落库；
+  审批配置创建在 `RETURNING *` 解码阶段失败并回滚；`approved_by` 根本没有写路径。
+- 三列 prod 都是 `uuid`、部署代码按 `String` 解码，属于**反向不一致**（prod uuid +
+  代码 String）。不存在「prod varchar + 代码 Uuid」的线上正在发生故障，无需标红线上接口。
+- 前置事实（2026-11-07 更正）：prod 身份源是 `iam.users`（5 行，含 **1 个超管**），
+  超管经 `is_superuser` 短路 + `permissions=["*"]` **可达 finance 全部端点**；
+  `core_user_roles`=0 使其余 4 个账号解析出零权限（403）。因此触发点**对超管走得到**，
+  详见 §14。
+
+### 13.2 prod 只读取证
+
+查询（只读，未做任何 DDL/DML）：
+
+```sql
+-- 行数 / 非 NULL 计数
+SELECT count(*), count(*) FILTER (WHERE created_by IS NOT NULL),
+       count(*) FILTER (WHERE deleted_at IS NULL)
+FROM finance.core_finance_payment_approval_config;
+
+SELECT count(*), count(*) FILTER (WHERE approved_by IS NOT NULL),
+       count(*) FILTER (WHERE executed_by IS NOT NULL)
+FROM finance.core_finance_payments;
+
+-- 列类型
+SELECT table_name, column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_schema='finance'
+  AND (table_name, column_name) IN
+      (('core_finance_payment_approval_config','created_by'),
+       ('core_finance_payments','approved_by'),
+       ('core_finance_payments','executed_by'));
+
+-- 是否曾经写入过
+SELECT relname, n_live_tup, n_tup_ins, n_tup_upd, n_tup_del
+FROM pg_stat_user_tables
+WHERE schemaname='finance'
+  AND relname IN ('core_finance_payments','core_finance_payment_approval_config');
+
+-- 迁移账本（列类型来源）
+SELECT version, description, success FROM _sqlx_migrations
+WHERE version IN (20260725000000,20261007140000,20261103210000,
+                  20261020000004,20261104030000,20261104060000)
+ORDER BY version;
+```
+
+结果：
+
+| 指标 | `core_finance_payment_approval_config` | `core_finance_payments` |
+|---|---|---|
+| 总行数 | 0 | 0 |
+| `created_by` 非 NULL | 0 | — |
+| `approved_by` 非 NULL | — | 0 |
+| `executed_by` 非 NULL | — | 0 |
+| 非 NULL 取样分布 | 无样本（0 行） | 无样本（0 行） |
+| `n_tup_ins / n_tup_upd / n_tup_del` | 0 / 0 / 0 | 0 / 0 / 0 |
+| 列定义 | `uuid`，NULL | `uuid`，NULL |
+
+计数有效性校验：取证账号 `xingzhai` 为 superuser（`rolsuper=t`、`rolbypassrls=t`），
+两张表虽启用并强制 RLS，但策略为 `USING (true)`；因此 `count(*)` 不会被租户过滤，
+0 行是真实全量。
+
+列类型来源（prod 账本）：
+
+- `20260725000000_business_base_tables.sql`：建表；
+- `20261007140000_align_stub_tables_handler_contract.sql`：审批配置 `created_by`
+  （L646）、付款 `executed_by`（L1169）、`approved_by`（L1174）均为 `UUID`；
+- `20261020000004_finance_payments_created_by_varchar.sql`：仅把付款
+  `created_by` 改为 `VARCHAR(100)`；
+- `20261103210000`（db08 text 化）、`20261104030000`（db14）、
+  `20261104060000`（db17）**均不在 prod 账本**，因此 prod 没有经历「varchar/text
+  漂移再转回 uuid」的过程，列类型一直与 `20261007140000` 一致。db14 的归属见 §12.3。
+
+部署代码取证（prod 源文件，非本地仓库）：
+
+- `svc/finance/src/models/mod.rs:954` `executed_by: Option<String>`；
+- `svc/finance/src/models/mod.rs:960` `approved_by: Option<String>`；
+- `svc/finance/src/models/mod.rs:1069` `PaymentApprovalConfig.created_by: String`；
+- `svc/finance/src/services/finance/payment_workflow.rs:523` `executed_by: &str`，
+  L549 `.bind(executed_by)`；
+- `svc/finance/src/services/finance/approval_configs.rs:95`
+  `.bind(Uuid::parse_str(created_by).unwrap_or_else(|_| Uuid::nil()))`（写入 uuid，
+  但 `RETURNING *` 按 `String` 解码）。
+
+本地修复 `7feadfb70` 已把三处改为 `Option<Uuid>` / `Uuid`，但**尚未部署到 prod**。
+
+### 13.3 逐列分析
+
+#### 13.3.1 `core_finance_payment_approval_config.created_by`
+
+**是否已经在发生**：否。表 0 行、非 NULL 0，读列表不会尝试解码任何行，返回空数组 200。
+
+**哪条读路径会撞上**：
+
+1. 列表：`list_approval_configs` → `query_as::<_, Vec<PaymentApprovalConfig>>`
+   （`svc/finance/src/services/finance/approval_configs.rs:14-19`），SELECT 明确包含
+   `created_by`；HTTP 入口 `list_approval_configs_handler`
+   （`svc/finance/src/modules/mod.rs:1135-1150`）→ `GET /api/finance/approval-configs`
+   （路由 L4992）。
+2. 详情：`get_approval_config`（同文件 L43-54）→ `GET /api/finance/approval-configs/{id}`
+   （路由 L4996）。
+
+`PaymentApprovalConfig.created_by` 是**非 Optional** 的 `String`。sqlx 的
+`Row::try_get` 规则是：值为 NULL 时跳过类型兼容检查并交给 `Option<T>` 解码（
+`Option<Uuid>` 读 NULL 安全）；值非 NULL 时先执行 `T::compatible(type_info)`。
+`String` 兼容的类型只有 TEXT/VARCHAR/BPCHAR/NAME 等，**不含 UUID**，因此：
+
+- 只要存在 1 行且 `created_by` 非 NULL → `String` 与 UUID 不兼容 →
+  `Error::ColumnDecode` → `TopemsError::DatabaseQuery` → HTTP 500；
+- 即使该行 `created_by` 为 NULL，`String` 也无法解码 NULL（unexpected null）→ 500。
+
+**谁在调用**：前端页面 `/finance/approval-config`（
+`apps/web/src/modules/finance/config.ts:354-367`），路由级要求
+`finance:dashboard:admin`；页面为 `FinanceApprovalConfigPage`
+（`apps/web/src/pages/finance/FinanceApprovalConfigPage.tsx:48-80`），只做
+list/create/update/delete。后端另有 handler 级 `finance:admin` 校验
+（`svc/finance/src/modules/mod.rs:1138`）。无定时任务、无外部集成读写该表
+（`information_schema.triggers` 为空）。
+
+**用户看到什么**：若发生，响应是 HTTP 500 + JSON
+`{"code":500,"success":false,"data":null,"message":"内部服务器错误","timestamp":...}`
+（`lib/shared-core/src/error/enhanced.rs:458-465`、`756-760`；
+`err_resp` 会丢弃 `errorCode`，细节只在服务端日志）。前端 axios 对 `status>=500`
+重试 2 次（`apps/web/src/api/client.ts:91-96,120-133,685`），随后列表页显示错误文案
+（`CrudPage.tsx:937-965`），创建/更新弹 toast（`CrudPage.tsx:535-541`）。
+
+**写接口与数据一致性**：`POST /approval-configs` 的写入路径本身在旧代码下也是坏的：
+`bind(Uuid::parse_str(username).unwrap_or(nil))` 能把 INSERT 写进去，但
+`RETURNING *` 立即按 `String` 解码 UUID 而报错，事务回滚（
+`approval_configs.rs:80-97`）。因此**旧代码无法提交任何配置行**，也就无法自己制造
+「读 500」；只有人工/外部直接 INSERT 非 NULL 行才会触发。不存在「写成功但读失败」。
+
+**能否自愈**：不能自动恢复。人工插入的行会持续让列表/详情 500，直到部署
+`7feadfb70`（按 `Uuid` 解码即恢复）或清理数据。
+
+**严重度/时点**：**未发生 / 一次操作即触发（写 500 + 事务回滚）/ 超管可达**。
+以 §14 更正后的身份事实：prod 唯一超管可进该页并点「创建」，第一次即 500（数据不落库）。
+低-中。随版本（下个窗口）部署；若在此之前要让非超管使用审批配置，则必须先发版，
+否则普通账号是 403、超管是 500，两种失败都有。
+
+#### 13.3.2 `core_finance_payments.approved_by`
+
+**是否已经在发生**：否。表 0 行、非 NULL 0。
+
+**哪条读路径会撞上**：付款列表 `list_payments`
+（`svc/finance/src/services/finance/payment.rs:225-232`，SELECT 明确包含
+`approved_by`，`query_as::<_, Vec<Payment>>`）与详情 `get_payment`
+（同文件 L154-164）；HTTP 入口 `list_payments_handler`
+（`svc/finance/src/modules/mod.rs:894-923`）、`get_payment_handler`（L865-885）。
+`Option<String>` 读 NULL 安全；非 NULL uuid → 不兼容 → 500。
+
+**谁在调用**：前端 `/finance/payments`（`config.ts:339-352`），页面
+`FinancePaymentPage`（`FinancePaymentPage.tsx:7-24`）+ `paymentSchema`
+（`apps/web/src/schemas/finance/payment.ts:167`，仅 create/edit/detail/delete）；
+后端 handler 级 `finance:admin`（`modules/mod.rs:1138` 系列）与模块级
+`require_permission("finance:admin")`（`svc/server/src/modules/finance_real_module.rs:92-94`）。
+
+**写路径（关键）**：HTTP 的 `POST /payments/{id}/approve` **不写本列**。
+`approve_payment_handler` 调用的是 `service.approve_voucher`
+（`modules/mod.rs:1015-1016`），写的是 `core_finance_vouchers.approved_by`；
+真正写 `core_finance_payments.approved_by` 的
+`FinanceService::approve_payment`（`payment_workflow.rs:186-199`，UPDATE 在
+L344-346）在全仓**零调用方**（prod 源码检索 `approve_payment(` 除定义外无结果）。
+因此本列在当前代码下**永远是 NULL**，不存在可达的触发点，也不会累积坏数据。
+
+**用户看到什么**：无（没有能触发的操作）。若有外部直写非 NULL，则付款列表/详情
+500，形态同上；此时是只读失败，不涉及写入。
+
+**能否自愈**：本列没有写入者，不会恶化；外部写入的坏行需部署修复或改回 NULL。
+
+**严重度/时点**：**事实上走不到**。低。随版本部署。
+
+#### 13.3.3 `core_finance_payments.executed_by`
+
+**是否已经在发生**：否。表 0 行、非 NULL 0。
+
+**哪条读路径会撞上**：
+
+1. 列表 `payment.rs:225-232`；
+2. 详情 `payment.rs:154-164`；
+3. `execute_payment` 执行前预读 `SELECT *`（`payment_workflow.rs:526-533`）；
+4. 执行后的回读 `get_payment_response`（`payment_workflow.rs:556`）。
+
+同 13.3.2：`Option<String>` 读 NULL 安全，非 NULL uuid → 500。
+
+**谁在调用**：路由 `POST /api/finance/payments/{payment_id}/execute`
+（`modules/mod.rs:4980`）→ `execute_payment_handler`（L1063-1081，绑定在
+L1071-1075），旧代码把
+`claims.username`（`&str`）传入 `execute_payment(..., executed_by: &str)`
+（prod `payment_workflow.rs:523`）。**前端没有入口**：
+`paymentApi.execute` 定义在 `apps/web/src/api/finance/payment.ts:127-129`，但全仓
+无任何页面/组件引用 `paymentApi`（只有 api 定义文件本身）；付款页只有 CRUD 动作。
+无定时任务、无外部集成调用。
+
+**用户看到什么（重要）**：旧代码的第一次执行会在 UPDATE 绑定阶段失败：
+`&str` 参数类型为 TEXT，目标列是 UUID，PostgreSQL 报
+`column "executed_by" is of type uuid but expression is of type text`（本地
+`PREPARE p(text) AS UPDATE ... SET u = $1` 已复现，SQLSTATE 42804）→ HTTP 500
++ `success:false` JSON。UPDATE 未生效，`executed_by` 仍为 NULL，付款状态不变。
+所以这是**写失败**，不是「写成功但读失败」，不会出现「操作不可见」的错觉。
+（若未来有人把 `executed_by` 手工写成非 NULL uuid，则上面的列表/详情/预读会 500。）
+
+**能否自愈**：不会自动恢复；旧代码也无法写入本列，因此不会累积。部署
+`7feadfb70`（改绑 `Uuid::parse_str(claims.sub)`）后执行与读取同时恢复。
+
+**严重度/时点**：**未发生；一次操作即触发，但触发的是写 500**。超管可直接调
+`POST /payments/{id}/execute`（无前端按钮，但有 token 即可调用）；普通账号 403。
+中。**必须在开放「执行付款」按钮/权限之前**部署修复，建议下个窗口随版本一起上。
+
+### 13.4 prod 写接口可用性与权限实际数据
+
+> **2026-11-07 更正**：本节初稿据 `public.core_users`=0、`is_superuser`=0 判定「全部 403、
+> 事实不可达」。复核发现 prod 真实身份源是 `iam.users`（5 行、其中 1 个超管），
+> `Claims::has_permission` 对 `is_superuser` 短路放行（`lib/shared-auth/src/auth.rs:49-50`），
+> 登录时超管直接拿 `permissions=["*"]`（`svc/unified-core/src/modules/iam/auth.rs:296-300,334`），
+> 前端同样对超管短路（`apps/web/src/store/authStore.ts:81-96`）。因此 finance 端点
+> **对该超管可达**；「403 不可达」结论作废，完整身份核查见 **§14**。下列原始计数保留，仅更正结论。
+
+模块级门禁：`svc/server/src/modules/finance_real_module.rs:92-94`
+`require_permission("finance:admin")` 覆盖整个 finance 路由；缺权限时
+`lib/shared-auth/src/middleware/permission.rs:59-74` 返回 403。审批配置另有
+handler 级 `finance:admin`（`modules/mod.rs:1138/1157/1180/1200/1223`）。
+
+prod 实际数据（只读，2026-11-07 复核）：
+
+| 指标 | 值 |
+|---|---|
+| `public.core_permissions` 中 `finance:admin` | **0 行** |
+| `iam.core_permissions` 中 `finance:admin` | **0 行**（iam 该表整表 0 行） |
+| `public.core_users` / `iam.core_users` | **0 / 0**（两表都不是登录身份源） |
+| `iam.users` | **5 行，其中 `is_superuser=1` 行**（真实身份源） |
+| `core_user_roles` | **0**（非超管解析出零权限） |
+| `core_tenant_users` | **0** |
+| `core_tenants` | 1（默认租户） |
+| `finance:dashboard:admin` 的授权角色/用户 | 0 / 0 |
+| `finance:payment:create` / `finance:payment:read` 的授权角色/用户 | 1 / 0 |
+
+结论：
+
+- 对**唯一超管**：finance 全部端点可达（JWT `permissions=["*"]` + 后端/前端 `is_superuser` 短路），
+  审批配置页对超管也可见可写。
+- 对**其余 4 个账号**：`core_user_roles`=0 → 解析为空权限且非超管 → 403；
+  且 `core_tenant_users`=0，登录时 fallback 到默认租户。
+- 「写接口在 prod 可用」仅对超管成立。因此 §13.3 的潜伏会因**超管一次操作**变成真实 500，
+  不再是「事实上走不到」。
+- 作为对照，CI 的 WCS 在本地用**自签 `is_superuser=true` JWT** 调用这些端点，
+  所以本地冒烟能通过；这是与 prod 超管同构的路径，不是非超管可达性证据。
+
+### 13.5 为什么 WCS / 既有测试没暴露
+
+- 两张表 0 行：列表返回空数组 200，详情/执行对不存在的 id 走 404 业务错误，
+  都不会触发 UUID↔String 解码。
+- 旧代码的写路径本身先失败（42804）或回滚，所以不会留下非 NULL 行，
+  冒烟也不会出现「先写成功、后读失败」。
+- `7feadfb70` 修的是**类型契约**，不是数据；部署后即使有人工写入的 uuid 行，
+  读取也会恢复正常，不需要 prod 前向迁移。
+
+### 13.6 建议
+
+1. **不紧急发版，但不能无限期拖延**：三列当前 0 行、0 非 NULL，没有正在发生的 500；
+   但 prod **唯一超管可达 finance**（§14），点一次「创建审批配置」或调一次 execute 即 500。
+2. **下个窗口随版本部署 `7feadfb70`**，并在开放付款执行/审批配置管理能力之前完成。
+3. **不要**在旧二进制仍在运行时向这三列人工回填非 NULL uuid；否则会立即把
+   「潜伏」变成列表/详情 500（读路径），且必须等新二进制上线才恢复。
+4. 若业务要求 prod 启用 finance：先解决准入（补 `finance:admin` 或改用模块级
+   细粒度放行）并做用户-角色/用户-租户绑定（清单见 §14.6）；这是比三个列更前置的阻塞项。
+
+### 13.7 证据索引
+
+| 证据 | 位置 |
+|---|---|
+| prod 行数/非 NULL/类型/写入历史 | 本节 13.2 SQL 与结果（`topems_prod`，只读） |
+| prod 列类型来源 | `database/migrations/20261007140000_align_stub_tables_handler_contract.sql:646,1169,1174`；`20261020000004_finance_payments_created_by_varchar.sql` |
+| 部署代码类型（旧） | prod 源 `svc/finance/src/models/mod.rs:954,960,1069` |
+| 读路径（付款） | `svc/finance/src/services/finance/payment.rs:154-164,225-232` |
+| 读路径（审批配置） | `svc/finance/src/services/finance/approval_configs.rs:14-19,43-54` |
+| 写路径（审批配置，回滚） | `svc/finance/src/services/finance/approval_configs.rs:80-97` |
+| 写路径（执行，42804） | `svc/finance/src/services/finance/payment_workflow.rs:519-556`（prod 版签名 L523 `&str`、绑定 L549） |
+| 死写路径（approved_by） | `svc/finance/src/services/finance/payment_workflow.rs:186-199,344-346`（零调用方）；HTTP approve 实际走 `modules/mod.rs:1015-1016` 的 `approve_voucher` |
+| 模块门禁 | `svc/server/src/modules/finance_real_module.rs:92-94`；`lib/shared-auth/src/middleware/permission.rs:59-74` |
+| 500 响应形态 | `lib/shared-core/src/error/enhanced.rs:458-465,756-760`；`lib/shared-core/src/response.rs:5-19` |
+| 前端入口 | `apps/web/src/modules/finance/config.ts:339-352,354-367`；`apps/web/src/pages/finance/FinancePaymentPage.tsx:7-24`；`apps/web/src/pages/finance/FinanceApprovalConfigPage.tsx:48-80` |
+| 前端无执行入口 | `apps/web/src/api/finance/payment.ts:127-129`（无消费方）；`apps/web/src/schemas/finance/payment.ts:167`（仅 CRUD） |
+| 前端 500 重试/兜底 | `apps/web/src/api/client.ts:91-96,120-133,685`；`apps/web/src/components/templates/CrudPage.tsx:535-541,937-965` |
+
+---
+
+## 14. prod 身份体系核查：这套系统到底有没有人在用（只读，2026-11-07）
+
+- 状态：**只读完成；未创建用户、未改权限、未改任何数据**
+- 目的：确认「我们现在治理的这套 prod」是否有真实使用者，而不是凭感觉判断
+- 方法：三处用户表计数 + 登录日志/会话/刷新令牌 + 业务表写入历史 + 代码路径核对
+
+### 14.1 结论先行
+
+**判定：prod 属于「部署完成、身份可登录、处于验证/自测期」，尚未正式开用。**
+既不是「已上线在用」，也不是「空壳」。
+
+三条硬判据：
+
+1. **可用身份只剩一个超管**。`iam.users` 5 行，只有 1 行 `is_superuser=true`；
+   `core_user_roles` = **0 行**，其余 4 个账号登录后权限解析为空 → 处处 403。
+2. **会话量来自自动化节奏**。1375 条会话中 1374 条属同一超管；2026-11-06
+   04:00–08:59 集中创建 **1054 条**（约 3.5–5 次/分钟，连续 5 小时），不是人工点击密度。
+3. **业务侧没有真实单据**。finance 付款/审批配置均 0 行；有数据的表呈种子/批处理特征
+   （`finance.expense_approvals` 36 行、`crm.rfm_results` 累计 600 插/300 更/300 删、净剩 300）。
+
+同时**更正 §13.4**：finance 端点对**该超管可达**（`is_superuser` 短路 + `permissions=["*"]`），
+所以 §13 三列的触发点是「对超管走得到、对普通账号 403」。
+
+### 14.2 三处用户表实测
+
+| 表 | 行数 | 状态 | 有密码 | `last_login_at` | 备注 |
+|---|---|---|---|---|---|
+| `public.core_users` | **0** | — | — | — | 不是登录身份源 |
+| `iam.core_users` | **0** | — | — | — | 不是登录身份源 |
+| `iam.users` | **5** | 5 active | 5 | **全 NULL** | **真实登录身份源**；1 行 `is_superuser=true` |
+| `mobile.mobile_users` | **1** | — | 该表有 `password_hash` 列（未统计非空） | 无该列 | 最近创建 2026-10-26 14:03 |
+
+`iam.users` 逐行（不打印用户名/邮箱/口令）：
+
+| id 前缀 | is_superuser | status | created_at | 会话数 | 登录日志数 |
+|---|---|---|---|---|---|
+| `56f4256f` | **t** | active | 2026-10-26 15:12 | **1374** | 85 |
+| `9805d502` | f | active | 2026-10-26 17:54 | 0 | 1（失败） |
+| `65c4fa31` | f | active | 2026-11-05 12:14 | 1 | 0 |
+| `affefd7f` | f | active | 2026-11-06 05:19 | 0 | 0 |
+| `aea6af1c` | f | active | 2026-11-06 05:27 | 0 | 0 |
+
+登录实际查询的表是 `iam.users`（`svc/unified-core/src/modules/iam/auth.rs:194-205`，
+prod 部署版本 `0c11b5b9` 同结构）；`public.core_users` / `iam.core_users` 是历史副表，
+当前 0 行，不参与认证。
+
+### 14.3 登录与会话证据
+
+| 指标 | 实测 |
+|---|---|
+| `public.core_login_logs` | **90 行**（success 68 / failed 22），跨 2026-10-26 17:04 → 2026-11-06 17:34 |
+| 登录日志去重用户 | 3 个 `user_id`；86 行命中 `iam.users`，**0 行命中 `public.core_users`** |
+| 登录 UA 分类 | curl success 36、python success 24、browser success 8、browser failed 15、curl failed 7 |
+| `public.core_sessions` | **1375 行**，2 个 `user_id`，**全部命中 `iam.users`**；1374 属超管 |
+| 会话按日 | 11-04：11；11-05：309；**11-06：1055** |
+| 会话按小时（11-06） | 04 时 138、05 时 307、06 时 306、07 时 293、08 时 10、18 时 1 |
+| `public.core_refresh_tokens` | 累计插入 1056、更新 1371 |
+| `iam.core_login_logs` | 0 行（副本未使用） |
+| `core_tenant_users` | **0 行** → 登录 fallback 到默认租户 `00000000-0000-0000-0000-000000000001`（存在、active） |
+
+两个可直接引用的异常：
+
+- **登录审计断档**：11-06 有 1055 条会话创建，但当天只有 2 条失败登录日志、0 条成功登录日志。
+  成功日志写入是 `let _ = record_login_event(...)`（`auth.rs:458-468`），失败不阻断登录；
+  说明「会话创建」与「登录日志」不同源或日志静默丢弃，**不能用 login_logs 反推真实使用量**。
+- **登录时间不回写**：5 个账号 `iam.users.last_login_at` 全为 NULL，而 `core_login_logs`
+  有 90 条记录 → 该列在当前登录路径不维护，审计只能看 `core_login_logs`。
+
+### 14.4 `finance:admin` 从哪来、为什么没有
+
+| 检查项 | 结果 |
+|---|---|
+| 迁移链是否定义 | **否**。`database/migrations/` 全目录 grep `finance:admin` **0 命中** |
+| 模块权限种子是否含它 | **否**。`20260724000004_seed_module_permissions.sql:63` 只种 `finance:read`；`'finance', 'admin'` 0 命中 |
+| 唯一定义位置 | `database/init/03_init_permissions.sql:174`（初始化引导脚本，不走 `_sqlx_migrations`） |
+| 插件声明 | `svc/finance/plugin.yaml:30` 声明 `code: finance:admin`；插件声明不写库 |
+| 是否被批 25 删除 | **否**。`20261107000012_drop_unused_permission_codes_batch25.sql:53-61,150-158` 删的是 `finance:budget:*`、`finance:consolidation:*`、`finance:report:*` |
+| prod 目录现状 | `public.core_permissions` 中 `finance:admin` **0 行**；`iam.core_permissions` 整表 0 行 |
+
+**结论：属于「设计上迁移种子就没有」，不是「迁移未应用」。**
+init 脚本是装机引导用的另一条路径，prod 只跑了 `_sqlx_migrations`，所以该码从未落库。
+同类问题还有 `system:admin`：代码引用（`svc/mobile/src/shared/permission.rs:109`）但目录 0 行。
+
+另注：`finance:payment:approve` / `finance:payment:execute` 这两个码**在目录中也不存在**
+（finance 下 payment 只有 create/delete/read/update），审批/执行端点只靠 `finance:admin` 伞码。
+
+### 14.5 全库模块级 `<module>:admin` 分布
+
+目录实况：`public.core_permissions` **1109 行**；形如 `%:admin` 的 **40 条**；
+其中有角色授权的只有 **2 条**（`ai:admin` 1 个角色、`portal:admin` 1 个角色），**38 条 0 授权**。
+
+按模块前缀（45 个前缀）：
+
+| 分类 | 模块数 | 模块 |
+|---|---|---|
+| **完全没有 `<module>:admin`（0 行）** | **12** | `admin`、`aps`、`asset`、`automation`、`bi`、**`finance`**、`migration`、`oa`、`plugin`、`report`、`system`、`tenant` |
+| 有 admin 码且有授权 | **2** | `ai`（1）、`portal`（1） |
+| 有 admin 码但 **0 授权** | **31** | `analytics`、`communication`、`crm`、`doc`、`ehs`、`erp`、`file`、`gis`、`hrm`、`iam`、`im`、`integration`、`lims`、`master-data`、`mes`、`mobile`、`monitor`、`notification`、`pdm`、`pm`、`qms`、`rd`、`rs`、`scm`、`search`、`srm`、`subscription`、`ticket`、`tms`、`wms`、`workflow` |
+
+口径说明：
+
+- `admin`/`migration`/`plugin`/`tenant` 等前缀不是模块门禁码，只是码分组；
+  真正的模块门禁缺失以 `finance`、`system` 为要（二者在代码里被 `require_permission` 引用）。
+- `bi` 走的是 `bi:dashboard:admin`，不是 `bi:admin`；`finance` 连 `finance:dashboard:admin`
+  都有，却唯独没有伞码 `finance:admin` —— 这正是 finance 模块门禁对非超管恒 403 的原因。
+- 「0 授权」不等于「不可用」：超管仍可进；对非超管则必须先把码授给角色、再把角色绑给用户。
+
+### 14.6 正式开用前必须补齐（清单）
+
+按依赖顺序：
+
+1. **用户-租户绑定**：`core_tenant_users` 0 行 → 现在所有登录都 fallback 到默认租户；
+   正式多租户/单租户运营前必须补绑（`auth.rs:306-319`）。
+2. **用户-角色绑定**：`core_user_roles` 0 行 → 非超管解析零权限（`resolve_user_grants`）。
+   现有角色已备好权限（`finance_manager` 66 码，含 `finance:payment:create/read/update`、
+   `finance:approval_config:create/read/update/delete`；`admin` 角色 214 码），只差绑定。
+3. **`finance:admin` 缺口**：模块门禁 `require_permission("finance:admin")`
+   （`svc/server/src/modules/finance_real_module.rs:92-94`）对非超管恒 403。
+   二选一：(a) 补种 `finance:admin` 并授给 `finance_manager`/`admin`；
+   (b) 改用 `require_module_access("finance")`（`lib/shared-auth/src/middleware/permission.rs:84`）。
+4. **`system:admin` 缺口**：同上，代码引用但目录无行。
+5. **审批/执行权限码缺口**：`finance:payment:approve`、`finance:payment:execute` 不存在；
+   若要求「审批人 ≠ 执行人」，必须补码，不能长期靠伞码。
+6. **审计口径**：`iam.users.last_login_at` 不回写；成功登录日志与会话创建不同源，
+   需在开用前修好，否则无法回答「谁在什么时候登录过」。
+7. **类型契约**：部署 `7feadfb70`（§13），否则开用后第一次「创建审批配置」或
+   「执行付款」即 500。
+
+### 14.7 判据与反证（为什么不是「已上线在用」）
+
+| 判据 | 实测 | 指向 |
+|---|---|---|
+| 有无真实登录记录 | 有：90 条登录日志、1375 条会话 | 支持「有人进得来」 |
+| 登录来源是否人类 | 成功 68 条中 60 条为 curl/python；11-06 会话约 3.5–5 次/分钟连续 5 小时 | 指向脚本/自动化 |
+| 有无真实业务写入 | finance 付款 0、审批配置 0；有数据的表为种子/批处理形态 | 指向未开用 |
+| 最近一次管理员动作 | `core_permissions` / `core_role_permissions` 变更集中在 2026-11-06 20:35（迁移 DDL/DML） | 指向「治理动作」而非业务 |
+| 用户-角色/租户绑定 | `core_user_roles` 0、`core_tenant_users` 0 | **硬阻断**：非超管无法使用 |
+| 角色权限是否已备 | 15 角色 / 854 条角色-权限 | 说明「配置在做，人还没接进来」 |
+
+**最终表述**：prod 现在是「**一个超管 + 一套已配好但无人绑定的角色** + 自动化验证流量」，
+处于上线前的验证态；一旦按 14.6 绑定用户/角色，才会进入「已上线在用」。
+在此之前，「三个潜伏 500」的可达性只到超管，普通账号仍是 403。
+
+### 14.8 本节证据索引
+
+| 证据 | 位置/口径 |
+|---|---|
+| 用户表计数与登录时间 | `public.core_users` / `iam.core_users` / `iam.users` / `mobile.mobile_users`，只读 |
+| 登录日志与会话 | `public.core_login_logs`、`public.core_sessions`、`public.core_refresh_tokens` |
+| 登录身份源代码 | `svc/unified-core/src/modules/iam/auth.rs:194-205,296-303,306-319,329-349,458-468` |
+| 超管短路 | `lib/shared-auth/src/auth.rs:49-50`；`lib/shared-auth/src/middleware/permission.rs:59-74`；`apps/web/src/store/authStore.ts:81-96` |
+| 权限目录与授权 | `public.core_permissions`（1109 行 / 40 条 `%:admin`）、`public.core_role_permissions`（854）、`public.core_user_roles`（0） |
+| `finance:admin` 来源 | `database/init/03_init_permissions.sql:174`；`database/migrations/20260724000004_seed_module_permissions.sql:63`；`svc/finance/plugin.yaml:30`；`20261107000012_drop_unused_permission_codes_batch25.sql:53-61,150-158` |
+| 模块门禁 | `svc/server/src/modules/finance_real_module.rs:92-94`；`svc/mobile/src/shared/permission.rs:109` |
+| 租户 fallback | `svc/unified-core/src/modules/iam/auth.rs:306-319`；`public.core_tenants` 1 行（默认租户） |
+| 部署版本 | prod `/Users/xingzhai/topems` HEAD `0c11b5b9`；`_sqlx_migrations` max version `20261107000018` |
+
