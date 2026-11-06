@@ -12,6 +12,9 @@ use crate::modules::audit::record_login_event;
 use topems_shared_auth::auth::generate_refresh_token;
 use topems_shared_auth::auth::Claims;
 
+/// 用户无 active membership 时的登录租户兜底（与历史行为一致）。
+const DEFAULT_TENANT_ID: &str = "00000000-0000-0000-0000-000000000001";
+
 /// #18 HttpOnly 迁移：refresh_token 走 HttpOnly Cookie（双轨兼容）
 ///
 /// - cookie 优先：`refresh_token` 从 Cookie 头提取（Path=/，HttpOnly，SameSite=Lax）
@@ -341,20 +344,17 @@ pub async fn login(
     };
 
     // 查询用户所属租户，未关联时 fallback 到默认租户
-    let tenant_id = match sqlx::query_scalar::<_, uuid::Uuid>(
-        "SELECT tenant_id FROM core_tenant_users WHERE user_id = $1 AND status = 'active' LIMIT 1",
-    )
-    .bind(user.id)
-    .fetch_optional(&state.pool)
-    .await
-    {
-        Ok(Some(tid)) => Some(tid.to_string()),
-        Ok(None) => Some("00000000-0000-0000-0000-000000000001".to_string()),
-        Err(e) => {
-            tracing::warn!("查询用户租户信息失败: {}", e);
-            Some("00000000-0000-0000-0000-000000000001".to_string())
-        }
-    };
+    //
+    // `public.core_tenant_users` 受 RLS(FORCE) 保护，而 login 无 JWT、tenant_middleware 不会
+    // 设置 `app.tenant_id`：裸池查询命中 `flow.core_tenant_users`（空表）且 RLS 遮蔽，
+    // 恒回退 0001。membership 解析发生在租户确定之前，故在独立只读事务内显式落 nil 租户
+    // （策略 `GUC=nil OR tenant_id=GUC` 的全局分支），只暴露该用户自身的 membership 行；
+    // 之后的会话写入仍按解析出的真实租户设置 GUC。
+    let tenant_id = Some(
+        resolve_membership_tenant(&state.pool, user.id)
+            .await
+            .map_or_else(|| DEFAULT_TENANT_ID.to_string(), |t| t.to_string()),
+    );
 
     // 会话/刷新令牌写入需绑定租户（RLS FORCE），提前解析为 Uuid 供 INSERT 使用
     let tenant_uuid = tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok());
@@ -815,21 +815,12 @@ pub async fn refresh_token(
             .unwrap_or_default()
     };
 
-    // 查询用户所属租户，未关联时 fallback 到默认租户
-    let tenant_id = match sqlx::query_scalar::<_, uuid::Uuid>(
-        "SELECT tenant_id FROM core_tenant_users WHERE user_id = $1 AND status = 'active' LIMIT 1",
-    )
-    .bind(user_id)
-    .fetch_optional(&state.pool)
-    .await
-    {
-        Ok(Some(tid)) => Some(tid.to_string()),
-        Ok(None) => Some("00000000-0000-0000-0000-000000000001".to_string()),
-        Err(e) => {
-            tracing::warn!("查询用户租户信息失败: {}", e);
-            Some("00000000-0000-0000-0000-000000000001".to_string())
-        }
-    };
+    // 查询用户所属租户，未关联时 fallback 到默认租户（与 login 同口径，见 login 处注释）
+    let tenant_id = Some(
+        resolve_membership_tenant(&state.pool, user_id)
+            .await
+            .map_or_else(|| DEFAULT_TENANT_ID.to_string(), |t| t.to_string()),
+    );
 
     // 会话/刷新令牌写入需绑定租户（RLS FORCE），提前解析为 Uuid 供 INSERT 使用
     let tenant_uuid = tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok());
@@ -1131,20 +1122,11 @@ pub async fn logout(
 
     // RLS FORCE：删除/吊销需真实租户上下文（logout 无 JWT，按 core_tenant_users 解析租户，
     // 未关联时 fallback 到默认租户，与 login/refresh 同口径）
-    let tenant_id = match sqlx::query_scalar::<_, uuid::Uuid>(
-        "SELECT tenant_id FROM core_tenant_users WHERE user_id = $1 AND status = 'active' LIMIT 1",
-    )
-    .bind(user_id)
-    .fetch_optional(&state.pool)
-    .await
-    {
-        Ok(Some(tid)) => Some(tid.to_string()),
-        Ok(None) => Some("00000000-0000-0000-0000-000000000001".to_string()),
-        Err(e) => {
-            tracing::warn!("查询用户租户信息失败: {}", e);
-            Some("00000000-0000-0000-0000-000000000001".to_string())
-        }
-    };
+    let tenant_id = Some(
+        resolve_membership_tenant(&state.pool, user_id)
+            .await
+            .map_or_else(|| DEFAULT_TENANT_ID.to_string(), |t| t.to_string()),
+    );
 
     // 删除用户会话和刷新令牌
     let mut tx = match state.pool.begin().await {
@@ -1750,6 +1732,42 @@ pub async fn get_security_settings() -> Json<serde_json::Value> {
         },
         "message": "获取安全设置成功"
     }))
+}
+
+/// 解析用户所属租户（login / refresh / logout 共用）。
+///
+/// `public.core_tenant_users` 是 ENABLE+FORCE RLS 表，策略为
+/// `GUC=nil OR tenant_id=GUC`。这几条认证引导路径都发生在租户确定之前、且无 JWT，
+/// `tenant_middleware` 不会设置 `app.tenant_id`；裸池查询既会被 RLS 遮蔽（0 行），
+/// 又可能按 search_path 命中 `flow`/`iam` 下的同名空表。因此这里在独立只读事务内
+/// 显式落 nil 租户（策略的全局分支），只读取 `user_id` 命中的 membership 行，
+/// 不会放大到其它表；解析出的真实租户随后用于会话/令牌的租户上下文。
+async fn resolve_membership_tenant(pool: &sqlx::PgPool, user_id: Uuid) -> Option<Uuid> {
+    let result = async {
+        let mut tx = pool.begin().await?;
+        sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+            .bind(Uuid::nil().to_string())
+            .execute(&mut *tx)
+            .await?;
+        let tid = sqlx::query_scalar::<_, Uuid>(
+            "SELECT tenant_id FROM public.core_tenant_users \
+             WHERE user_id = $1 AND status = 'active' LIMIT 1",
+        )
+        .bind(user_id)
+        .fetch_optional(&mut *tx)
+        .await?;
+        let _ = tx.rollback().await;
+        Ok::<Option<Uuid>, sqlx::Error>(tid)
+    }
+    .await;
+
+    match result {
+        Ok(tid) => tid,
+        Err(e) => {
+            tracing::warn!("查询用户租户信息失败: {}", e);
+            None
+        }
+    }
 }
 
 /// 密码校验（登录 / 初始管理员工具共用同一实现）
