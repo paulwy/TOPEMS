@@ -115,10 +115,60 @@ bash scripts/verify-nginx-prod.sh --conf /etc/nginx/topems.conf --base https://<
   --services "erp bi hrm monitor" --probe "/health"
 
 # 3) 契约 smoke（前端契约全量实跑，0 FAIL）
+#    安全边界（2026-11-06 起）：默认只打本机/测试目标，prod 必须显式授权，缺一即 exit 4。
+#    下列五项在 prod 主机上缺任一项都会被 fail-closed 拒绝（拒绝发生在任何网络请求之前）：
+WEB_SMOKE_ENV=prod \
+ALLOW_PROD_SMOKE=1 \
+PROD_SMOKE_CONFIRM="smoke-prod:$(hostname):TOPEMS" \
+PROD_SMOKE_REASON="<变更单号/授权原因>" \
+WEB_BFF_URL=http://localhost:8099 \
+JWT_SECRET="<值，显式提供>" \
 python3 scripts/web_contract_smoke.py
 ```
 
 > 三项全 PASS = **生产部署三件套实跑闭环**，即 go-live-checklist §0.3 项 1 解除。
+
+#### 2.6.1 契约冒烟门禁（`web-contract-smoke`）
+
+**默认行为（无需任何变量）**
+
+- `WEB_SMOKE_ENV` 缺省为 `local`，目标为 `http://127.0.0.1:8099`（本机 BFF / 测试库）；
+- 目标主机必须是 loopback（`127.0.0.1` / `localhost` / `::1`）；非 loopback 需 `WEB_SMOKE_ALLOW_REMOTE=1`；
+- pre-commit 钩子只在暂存区含 `apps/web/src/api/`、`apps/web/src/utils/apiPath.ts`、
+  `svc/server/src/`、`lib/shared-service-client/src/` 时才触发；目标不可达/缺密钥时**明确失败并阻断提交**，
+  不再静默 SKIP（旧行为会掩盖对 prod 的写入，2026-11-06 已移除）。
+
+**prod 三层拒绝（识别机制 + 绕过条件）**
+
+| 层 | 识别 / 条件 | 未满足时 |
+| --- | --- | --- |
+| 1. 仓库位 | `TOPEMS_INSTANCE=prod`，或 `DATABASE_URL` / `.env` 的库名为 `topems_prod`、`*_prod` | exit 4，即使 `WEB_SMOKE_ENV=local` 也拒绝 |
+| 1b. 目标位 | loopback 目标：只读 `lsof` 取监听 PID + `ps eww` 读取该进程 `DATABASE_URL` 库名，命中 `*_prod` 即视为 prod | exit 4（零请求；不打印 DSN） |
+| 2. 显式开关 | `ALLOW_PROD_SMOKE=1` | exit 4（不跳过、不降级） |
+| 3. 第二确认 | `PROD_SMOKE_CONFIRM=smoke-prod:<hostname>:<仓库目录名>` + 非空 `PROD_SMOKE_REASON` | exit 4 |
+| 4. 显式目标/密钥 | `WEB_BFF_URL` + `JWT_SECRET` 必须显式提供（prod 下禁止回落 `.env` 取密） | exit 4 / exit 3 |
+
+- 第 1b 层是 2026-11-06 实测补上的关键一层：prod 仓库 `.env` 指向 `topems_test`，而 8099 由 launchd 以
+  `DATABASE_URL=…/topems_prod` 启动；只看仓库文件会漏判，因此以目标监听进程的实际库名为准。
+- 第 3 层把确认值绑定 `主机名 + 仓库目录`，换机、换目录即失效；`PROD_SMOKE_REASON` 会打印在日志首部，便于审计追溯。
+- 仓库位/目标位识别**只读本地配置与进程表**，不建立连接，因此拒绝路径**零请求外发**
+  （实测 `audit_logs` 前后计数一致）。
+- 绕过条件 = 上述四项全部满足；`--dry-run` 例外：prod 仓库位允许零网络静态检查（不读密钥、不发请求），
+  但 `WEB_SMOKE_ENV=prod` 时仍要求完整授权，避免“干跑”成为绕行口子。
+
+**为什么不会误伤本地开发与 CI**
+
+- 本地开发机：无 `TOPEMS_INSTANCE`、`DATABASE_URL` 指向 `topems` 等非 `_prod` 库 → 判定为 dev；目标监听进程的库名
+  非 prod 或读不到（`unknown`）时都不触发拒绝，默认目标即本机 8099，行为与改造前一致；
+- CI：不设置 `WEB_SMOKE_ENV=prod`，用 `--dry-run` 做静态契约提取（退出码 0、零网络）；无 BFF 时 `lsof` 无结果
+  （目标位 `unknown`），普通跑法会在 2 秒内以 exit 3 明确报“目标不可达”而非挂死；无密钥时 exit 3 明确报
+  “缺少 JWT_SECRET”，并提示改用 `--dry-run`。
+
+**误用后果**
+
+- 在 prod 仓库直接提交（未加授权）→ 钩子 exit 4 阻断提交，不产生任何 prod 写入；
+- 漏配 `ALLOW_PROD_SMOKE` / `PROD_SMOKE_CONFIRM` / `PROD_SMOKE_REASON` → 一律 fail-closed 并打印期望值；
+- 强行 `--no-verify` 提交绕开本钩子属违规操作，需在变更单登记并复核；本门禁不承诺拦截 `--no-verify`。
 
 ## 3. 方案 B：原生 macOS 适配（备选/演练）
 

@@ -514,7 +514,7 @@ WHERE (a.tenant_id = '00000000-0000-0000-0000-000000000000' OR a.tenant_id IS NU
 | D9 | 窗口内是否建库内备份表 | 允许 / 禁止 | 建议**禁止**，改用 dump 文件 | ⏳ 窗口确认 |
 | D10 | 明文口令 payload（B 组 `create\|user`） | 一并处理 / 另立安全项 | 建议**另立安全项**（历史数据脱敏） | ⏳ 待定 |
 | D11 | 30 张可收紧表的时点 | 清理后 / 并行 | 建议**清理确认并验证后再收紧** | ⏳ 待定 |
-| D12 | `…0099` 合成探针写入源 | 停 / 不停 / 改脚本 | **已定位为 prod 仓库 pre-commit `web-contract-smoke` 钩子**（§14）；处置由你决定，本轮未停任何任务、未改配置 | ⏳ 待你决定 |
+| D12 | `…0099` 合成探针写入源 | 停 / 不停 / 改脚本 | **已定位为 prod 仓库 pre-commit `web-contract-smoke` 钩子**（§14）；**已改造钩子**：默认只打本机/测试目标，prod 仓库位三层拒绝 + fail-closed，拒绝路径零请求（§14.4） | ✅ 已加固 |
 | D13 | prod 写权限窗口 | 由你指定时点 | A 组 DML 与 B 组标记均需授权窗口 | ⏳ 待授权 |
 
 ## 9. 证据与可复现 SQL（只读）
@@ -759,9 +759,11 @@ SQL
 `scripts/web_contract_smoke.py`，脚本默认打 `localhost:8099`（该机上的单体服务），于是把 `…0099`
 合成探针写进了 prod。**不是定时任务，也不是 mobile 脚本。**
 
-- `lefthook.yml:393-407`：仅当暂存区含 `apps/web/src/api/`、`apps/web/src/utils/apiPath.ts`、
-  `svc/server/src/`、`lib/shared-service-client/src/` 且 **8099 在监听**时，才跑该脚本；
-  有 FAIL 则 `exit 1` 阻断提交，日志固定写 `/tmp/web_smoke_precommit.log`。
+- `lefthook.yml` 的 `web-contract-smoke`：**13:52 事发时**仅当暂存区含 `apps/web/src/api/`、
+  `apps/web/src/utils/apiPath.ts`、`svc/server/src/`、`lib/shared-service-client/src/` 且 **8099 在监听**时，
+  才跑该脚本；有 FAIL 则 `exit 1` 阻断提交，日志固定写 `/tmp/web_smoke_precommit.log`。
+  **2026-11-06 已改造**：移除 `lsof 8099` 静默 SKIP，改为默认 `WEB_SMOKE_ENV=local` + prod 仓库位拒绝层，
+  失败一律透传退出码并打印 `[Gate WCS] BLOCKED`（见 §14.4）。
 - `scripts/web_contract_smoke.py`：`TEST_UUID = 00000000-0000-0000-0000-000000000099`（路径 `:id` 统一替换）、
   默认 `WEB_BFF_URL=http://localhost:8099`、JWT `sub = TEST_UID = e91e2228-…`、未登记 body 的 POST/PUT 发 `{}`；
   扫描 `apps/web/src/api/**` 得到 4668 个端点。
@@ -813,16 +815,59 @@ SQL
 | 正常业务请求 | `…0099` / `e91e…` 是脚本常量，payload 全 null/空 |
 | 8098 另一实例（PID 18497） | 钩子显式检查 8099；`web_contract_smoke.py` 默认只打 8099，不回落 8098 |
 
-### 14.4 未定位项与建议（**本轮未停任务、未改配置**）
+### 14.4 处置：已执行（钩子加固，2026-11-06）
 
-- **未定位“是谁/哪个分支的提交”**：13:52–13:57 的提交尝试没有留下 commit（被 5 FAIL 阻断），
-  也没有 shell history / CI 记录；但“钩子 + 日志 + 时间窗”三者已闭合，可确定是 prod 仓库上的
-  `web-contract-smoke` 钩子触发，**不是后台任务**。
-- 处置选项（供你决定，均未执行）：
-  a) 钩子增加“目标环境”守卫：prod 库位运行 `web_contract_smoke.py` 时要求显式 `ALLOW_PROD_SMOKE=1`，
-     否则 SKIP；
-  b) 把 prod 仓库的 8099 从钩子探测中排除（或把 `WEB_BFF_URL` 指到一次性测试库）；
-  c) 保持现状，但在清理后把“合成探针”视为常态噪声，靠 RLS + `_orphan` 标记区分。
-- 只要钩子仍能在 prod 上跑，A 组清理与 B 组标记**之后仍会回涨**（本轮已观察到 258 → 271、72 → 74）。
-- **另注**：prod 仓库 13:40:59 / 14:07:15 的提交登记了 `--no-verify` 例外（`46384cf0e` / `e80c675c3`），
-  与本轮“禁止 `--no-verify`”的约束冲突，建议复核该登记流程；本轮未触碰。
+原三个候选处置中采用并强化 **a) 目标环境守卫**；不采用 b)（不排除 8099，也不依赖“目标不可达就跳过”），
+c) 仅作历史方案保留。**本轮仍未停任何任务、未重启、未部署、未改 prod 数据。**
+
+**已落地**
+
+- `scripts/web_contract_smoke.py`
+  - 默认 `WEB_SMOKE_ENV=local` → `http://127.0.0.1:8099`，仅允许 loopback；非 loopback 需 `WEB_SMOKE_ALLOW_REMOTE=1`。
+  - prod 仓库位识别：`TOPEMS_INSTANCE=prod|production`，或 `DATABASE_URL` / 项目 `.env` 的库名为
+    `topems_prod` / `*_prod`；**只读配置、零网络**，因此拒绝路径不会产生任何 prod 请求。
+  - 目标位识别（关键补充）：prod 仓库 `.env` 实测指向 `topems_test`，只看仓库文件会漏判；
+    故对 loopback 目标只读 `lsof` 监听表 + `ps eww` 取监听进程的 `DATABASE_URL` 库名，
+    命中 `*_prod` 即拒绝（只读进程表、不建连、不打印 DSN）。
+    prod 8099 由 launchd 以 `DATABASE_URL=…/topems_prod` 启动（实测），该层可在真实 prod 仓库直接生效。
+  - prod 放行必须**全部满足**：`WEB_SMOKE_ENV=prod` + `ALLOW_PROD_SMOKE=1` +
+    `PROD_SMOKE_CONFIRM=smoke-prod:<hostname>:<仓库目录>` + 非空 `PROD_SMOKE_REASON` +
+    显式 `WEB_BFF_URL` + 显式 `JWT_SECRET`（prod 禁止回落 `.env` 取密）。
+  - 退出码：`2` 配置非法 / `3` 环境或密钥不满足（含 2 秒连通性预检）/ `4` prod 拒绝层；
+    所有拒绝均发生在 socket 之前，提示带可操作命令。
+  - `--dry-run`：仅静态提取，不读密钥、不联网；prod 仓库位允许（零网络），但 `WEB_SMOKE_ENV=prod`
+    仍要求完整授权，避免“干跑”成为绕行口子。
+- `lefthook.yml` 的 `web-contract-smoke`：移除 `lsof 8099` 静默 SKIP；`WEB_SMOKE_ENV` 缺省 `local`；
+  失败透传真实退出码并打印 `[Gate WCS] BLOCKED` 与首尾日志，不再静默跳过。
+- 明文口令：脚本内**无硬编码口令/token**；`TEST_UID` / `TEST_UUID` 是合成 UUID；
+  `JWT_SECRET` 只从环境变量或本地 `.env` 读取，缺失时报 exit 3 并提示配置方式。
+- 文档：`docs/deploy/macos-deployment.md` §2.6 + 新增 §2.6.1（默认行为、三层拒绝、绕过条件、误用后果）。
+
+**场景验证（本地 stub `127.0.0.1:18099` 记录请求数，prod 全程只读）**
+
+| 场景 | 命令要点 | 退出码 | 外发请求 |
+| --- | --- | ---: | --- |
+| A 本地开发机 | 默认 local + `WEB_BFF_URL=stub`，`--limit 5` | 0（5/5 PASS） | +5（仅 stub） |
+| B prod 仓库位模拟 | `TOPEMS_INSTANCE=prod`，未给 prod 授权 | **4** | **0**（stub 5→5） |
+| B2 目标位模拟 | 仓库 dev，目标监听进程 `DATABASE_URL=…/topems_prod` | **4** | **0**（日志文件未创建） |
+| C1 prod 缺开关 | `WEB_SMOKE_ENV=prod`，无 `ALLOW_PROD_SMOKE` | **4** | 0 |
+| C2 prod 缺第二确认 | 有 `ALLOW_PROD_SMOKE`，无 `PROD_SMOKE_CONFIRM` | **4** | 0 |
+| C3 prod 缺原因 | 有 CONFIRM，无 `PROD_SMOKE_REASON` | **4** | 0 |
+| C4 授权齐全 | 五项齐全 + stub 目标 | 0（5/5 PASS） | +5（仅 stub） |
+| D1 CI 无 BFF | `WEB_BFF_URL=127.0.0.1:18098`（无监听） | **3**（1 秒内） | 0 |
+| D2 CI 无密钥 | `WEB_SMOKE_NO_DOTENV=1` 且无 `JWT_SECRET` | **3** | 0 |
+| E1/E2/E3 非法配置 | 非法 `WEB_SMOKE_ENV` / 非法 `TOPEMS_INSTANCE` / 非 loopback 未授权 | **2** | 0 |
+| F1–F3 dry-run | prod 仓库位 / 授权齐全 / 无密钥，`--dry-run` | 0 | 0 |
+| H1 钩子级 prod | 暂存 mock 文件 + `TOPEMS_INSTANCE=prod` 跑 `lefthook run pre-commit` | 非零（4） | 0（10→10） |
+| H2 钩子级本地 | 同上，目标 stub | 0（4668 端点 PASS） | +4668（仅 stub） |
+
+**prod `audit_logs` 只读核对**：验证前基线 14:38:12 = `362 / 362 / 271`（total / 脏租户 / 合成 `…0099`），
+验证后 14:43:58 = `362 / 362 / 271`，**前后一致、无新增行**，证明拒绝路径与外发请求均为零。
+
+**残余风险（下一轮）**
+
+- `scripts/mobile_contract_smoke.py` **尚未同口径加固**：仍有 `TEST_UID` / `TEST_UUID`、`prepare_data()` 直写库、
+  默认 8099 优先；当前 mobile 钩子因 8070 未监听未触发，但一旦触发仍可能写入 prod。
+- `--no-verify` 无法被门禁拦截（prod 仓库 13:40:59 / 14:07:15 已登记两次例外），需靠流程复核。
+- 钩子加固后，默认提交不再产生 `…0099` 合成探针；A 组清理与 B 组标记完成后，不会再因该钩子回涨
+  （除非有人按 §2.6.1 完整授权主动跑 prod 探针）。

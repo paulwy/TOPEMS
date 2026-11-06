@@ -385,25 +385,28 @@ pre-commit:
           exit 1
         fi
 
-    # [Gate WCS] Web 前端契约全量实跑回归（portal 契约面，4152 端点）。
+    # [Gate WCS] Web 前端契约全量实跑回归（portal 契约面）。
     # 触发：web 前端契约 / web BFF(svc/server) / shared-service-client 变更。
-    # BFF 服务(8099)在线才执行（离线秒级跳过并提示，避免破坏无服务开发流）；
-    # 已知 39 项前端双前缀缺口已在脚本内豁免（docs/web_contract_gap_list.md 单一事实源），
-    # 新增 FAIL 照常阻断；日志落 /tmp/web_smoke_precommit.log。
+    # 安全边界（2026-11-06）：默认只打本机/测试（WEB_SMOKE_ENV=local，loopback）。
+    #   prod 仓库位（TOPEMS_INSTANCE=prod 或 .env DATABASE_URL 指向 *_prod）默认拒绝；
+    #   确需 prod 必须 ALLOW_PROD_SMOKE=1 + PROD_SMOKE_CONFIRM + PROD_SMOKE_REASON。
+    #   fail-closed：目标不可达/缺密钥/漏配开关时明确失败并给出可操作提示，不再静默 SKIP。
     web-contract-smoke:
       tags: web contract smoke
       run: |
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(apps/web/src/api/|apps/web/src/utils/apiPath.ts|svc/server/src/|lib/shared-service-client/src/)' || true)
         [ -z "$STAGED" ] && exit 0
-        if ! lsof -iTCP:8099 -sTCP:LISTEN >/dev/null 2>&1; then
-          printf '\033[33m[Gate WCS] SKIP\033[0m BFF 服务(8099)未运行，契约回归可手动执行 python3 scripts/web_contract_smoke.py\n'
-          exit 0
-        fi
+        export WEB_SMOKE_ENV="${WEB_SMOKE_ENV:-local}"
         if python3 scripts/web_contract_smoke.py > /tmp/web_smoke_precommit.log 2>&1; then
-          printf '\033[32m[Gate WCS] PASS\033[0m web 契约实跑回归全绿（4152 端点，已知双前缀 39 项豁免）\n'
+          printf '\033[32m[Gate WCS] PASS\033[0m 目标=%s（日志 /tmp/web_smoke_precommit.log）\n' "$WEB_SMOKE_ENV"
+          grep -E '^\[web-smoke\]|^总计:' /tmp/web_smoke_precommit.log | tail -3
         else
-          printf '\033[31m[Gate WCS] FAIL\033[0m 见 /tmp/web_smoke_precommit.log 末尾 FAIL 行；若为未重启到新二进制，请重启 BFF 后重提\n'
-          exit 1
+          rc=$?
+          printf '\033[31m[Gate WCS] BLOCKED (exit %s)\033[0m 目标=%s\n' "$rc" "$WEB_SMOKE_ENV"
+          head -8 /tmp/web_smoke_precommit.log
+          echo "  ..."
+          tail -6 /tmp/web_smoke_precommit.log
+          exit "$rc"
         fi
 
 pre-push:
