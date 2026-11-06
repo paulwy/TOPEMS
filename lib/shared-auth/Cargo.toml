@@ -26,6 +26,8 @@ reqwest = { workspace = true, features = ["json"] }
 
 # 数据库依赖（permission/middleware/audit_logger 使用）
 sqlx.workspace = true
+either.workspace = true
+futures-util.workspace = true
 
 # 安全依赖
 sha2.workspace = true

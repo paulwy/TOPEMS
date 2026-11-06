@@ -12,9 +12,40 @@ use uuid::Uuid;
 
 /// 请求级 RLS 事务句柄：由 `tenant_middleware` 创建并挂到请求扩展上，
 /// handler 通过 `Extension(txn_arc)` 取出，在**同一条连接**上执行带 `app.tenant_id`
-/// GUC 的查询。
-pub type RlsTxnCell =
-    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+/// GUC 的查询。同时该句柄会被放进 task-local（见 [`crate::scoped_pool`]），
+/// 让 `ScopedPool` 的查询直接复用同一事务。
+pub type RlsTxnCell = crate::scoped_pool::ScopedTxnCell;
+
+fn internal_error(message: &str) -> Response {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        [(header::CONTENT_TYPE, "application/json")],
+        format!(r#"{{"success":false,"message":"{message}","code":500}}"#),
+    )
+        .into_response()
+}
+
+/// 开启请求事务并写入租户 GUC。失败即返回 500（fail-closed），
+/// 不再以"无上下文"继续执行 handler。
+async fn begin_scoped_txn(pool: &PgPool, tenant: &str) -> Result<RlsTxnCell, Response> {
+    let mut txn = match pool.begin().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin RLS txn: {}", e);
+            return Err(internal_error("事务开启失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(tenant)
+        .execute(&mut *txn)
+        .await
+    {
+        tracing::error!("Failed to set RLS context: {}", e);
+        // txn 随 Result 返回的被丢弃 → ROLLBACK，连接不带着半初始化状态归还。
+        return Err(internal_error("租户上下文设置失败"));
+    }
+    Ok(std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn))))
+}
 
 /// 请求收尾统一提交。
 ///
@@ -170,28 +201,22 @@ pub fn tenant_middleware() -> impl Fn(
                     "service claims: set nil tenant context for {}",
                     claims.username
                 );
-                let mut txn = match pool.begin().await {
-                    Ok(t) => t,
-                    Err(e) => {
-                        tracing::error!("Failed to begin RLS txn: {}", e);
-                        return next.run(req).await;
-                    }
+                let nil = Uuid::nil().to_string();
+                let txn_cell = match begin_scoped_txn(&pool, &nil).await {
+                    Ok(c) => c,
+                    Err(resp) => return resp,
                 };
-                if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-                    .bind(Uuid::nil().to_string())
-                    .execute(&mut *txn)
-                    .await
-                {
-                    tracing::error!("Failed to set nil RLS context: {}", e);
-                }
                 let mut req = req;
-                let txn_cell: RlsTxnCell = std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn)));
                 req.extensions_mut().insert(txn_cell.clone());
                 req.extensions_mut().insert(TenantContext {
                     tenant_id: Uuid::nil(),
                     user_id: Uuid::nil(),
                 });
-                let resp = next.run(req).await;
+                let ctx = crate::scoped_pool::ScopedCtx {
+                    txn: txn_cell.clone(),
+                    tenant: nil,
+                };
+                let resp = crate::scoped_pool::scope(ctx, next.run(req)).await;
                 return finish_response(resp, txn_cell).await;
             }
 
@@ -223,7 +248,7 @@ pub fn tenant_middleware() -> impl Fn(
                 Ok(t) => t,
                 Err(e) => {
                     tracing::error!("Failed to begin RLS txn: {}", e);
-                    return next.run(req).await;
+                    return internal_error("事务开启失败");
                 }
             };
             // superuser 会话：RLS 使用 nil 租户（配合策略零值豁免条件全量可见），
@@ -233,8 +258,9 @@ pub fn tenant_middleware() -> impl Fn(
             } else {
                 tenant_id
             };
+            let rls_tenant_str = rls_tenant.to_string();
             match sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-                .bind(rls_tenant.to_string())
+                .bind(&rls_tenant_str)
                 .execute(&mut *txn)
                 .await
             {
@@ -243,7 +269,10 @@ pub fn tenant_middleware() -> impl Fn(
                     tenant_id,
                     rls_tenant
                 ),
-                Err(e) => tracing::error!("Failed to set RLS context: {}", e),
+                Err(e) => {
+                    tracing::error!("Failed to set RLS context: {}", e);
+                    return internal_error("租户上下文设置失败");
+                }
             }
 
             let user_id = match claims.user_id() {
@@ -264,7 +293,11 @@ pub fn tenant_middleware() -> impl Fn(
             req.extensions_mut()
                 .insert(TenantContext { tenant_id, user_id });
 
-            let resp = next.run(req).await;
+            let ctx = crate::scoped_pool::ScopedCtx {
+                txn: txn_cell.clone(),
+                tenant: rls_tenant_str,
+            };
+            let resp = crate::scoped_pool::scope(ctx, next.run(req)).await;
             finish_response(resp, txn_cell).await
         })
     }
