@@ -181,8 +181,6 @@ const IM_STUB_DELETE: &[&str] = &[
 
 // ===== 邮件子域兜底路径 =====
 const MAIL_STUB_GET: &[&str] = &["/health"];
-const MAIL_STUB_POST: &[&str] = &["/templates/render"];
-const MAIL_STUB_PUT: &[&str] = &["/templates/{id}/status"];
 
 /// 真实 Communication 模块：持有完整业务路由
 pub struct CommunicationRealModule {
@@ -516,21 +514,9 @@ impl CommunicationRealModule {
                 .route("/emails", post(mail::send_email))
                 .route("/emails/{id}", get(mail::get_email))
                 .route("/emails/{id}/read", post(mail::mark_as_read))
-                .route("/emails/stats", get(mail::get_stats))
-                .route("/templates", get(mail::list_templates))
-                .route("/templates", post(mail::create_template))
-                .route("/templates/{id}", get(mail::get_template))
-                .route("/templates/{id}", put(mail::update_template))
-                .route("/templates/{id}", delete(mail::delete_template))
-                .route("/templates/{id}/send", post(mail::send_with_template));
+                .route("/emails/stats", get(mail::get_stats));
             for p in MAIL_STUB_GET {
                 r = r.route(p, get(comm_stub));
-            }
-            for p in MAIL_STUB_POST {
-                r = r.route(p, post(comm_stub));
-            }
-            for p in MAIL_STUB_PUT {
-                r = r.route(p, put(comm_stub));
             }
             r.with_state(db.clone())
         };

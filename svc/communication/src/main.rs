@@ -242,21 +242,12 @@ async fn main() -> anyhow::Result<()> {
     let mail_read = Router::new()
         .route("/mail/emails", get(mail::list_emails))
         .route("/mail/emails/{id}", get(mail::get_email))
-        .route("/mail/emails/stats", get(mail::get_stats))
-        .route("/mail/templates", get(mail::list_templates))
-        .route("/mail/templates/{id}", get(mail::get_template));
+        .route("/mail/emails/stats", get(mail::get_stats));
 
     let mail_write = Router::new()
         .route("/mail/emails", post(mail::send_email))
         .route("/mail/emails/{id}/read", post(mail::mark_as_read))
-        .route(
-            "/mail/emails/send-with-template",
-            post(mail::send_with_template_by_code),
-        )
         .route("/mail/emails/resend", post(mail::resend_emails))
-        .route("/mail/templates", post(mail::create_template))
-        .route("/mail/templates/{id}", put(mail::update_template))
-        .route("/mail/templates/{id}/send", post(mail::send_with_template))
         .route("/mail/emails/{id}", delete(mail::delete_email));
 
     // 合并所有路由（Db 作为 state；租户中间件仍使用原生池），build_application 自动加 auth/rate_limit/CORS/Prometheus/telemetry

@@ -238,41 +238,6 @@ pub struct SendEmailRequest {
     pub bcc: Option<Vec<String>>,
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct EmailTemplate {
-    pub id: String,
-    pub name: String,
-    pub subject_template: String,
-    pub body_template: String,
-    pub description: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct CreateEmailTemplateRequest {
-    pub name: String,
-    pub subject_template: String,
-    pub body_template: String,
-    pub description: Option<String>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct SendWithTemplateRequest {
-    pub to: String,
-    pub variables: serde_json::Value,
-    pub cc: Option<Vec<String>>,
-    pub bcc: Option<Vec<String>>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct UpdateEmailTemplateRequest {
-    pub name: Option<String>,
-    pub subject_template: Option<String>,
-    pub body_template: Option<String>,
-    pub description: Option<String>,
-}
-
 // ===== 通知渠道模型 =====
 
 #[derive(Debug, Deserialize)]
@@ -670,82 +635,5 @@ mod tests {
         cloned.subject = "changed".to_string();
         assert_eq!(req.subject, "s");
         assert_eq!(cloned.subject, "changed");
-    }
-
-    #[test]
-    fn test_email_template_serialize() {
-        let t = EmailTemplate {
-            id: "abc".to_string(),
-            name: "n".to_string(),
-            subject_template: "{{x}}".to_string(),
-            body_template: "body".to_string(),
-            description: Some("d".to_string()),
-            created_at: "2024-01-01".to_string(),
-            updated_at: "2024-01-02".to_string(),
-        };
-        let v = serde_json::to_value(&t).unwrap();
-        assert_eq!(v["id"], "abc");
-        assert_eq!(v["name"], "n");
-        assert_eq!(v["description"], "d");
-    }
-
-    #[test]
-    fn test_email_template_clone() {
-        let t = EmailTemplate {
-            id: "1".to_string(),
-            name: "n".to_string(),
-            subject_template: "s".to_string(),
-            body_template: "b".to_string(),
-            description: None,
-            created_at: "c".to_string(),
-            updated_at: "u".to_string(),
-        };
-        let c = t.clone();
-        assert_eq!(c.id, t.id);
-        assert_eq!(c.body_template, t.body_template);
-    }
-
-    #[test]
-    fn test_create_email_template_request_deserialize() {
-        let json = serde_json::json!({
-            "name": "n",
-            "subject_template": "s",
-            "body_template": "b",
-            "description": "d"
-        });
-        let req: CreateEmailTemplateRequest = serde_json::from_value(json).unwrap();
-        assert_eq!(req.name, "n");
-        assert_eq!(req.description.as_deref(), Some("d"));
-    }
-
-    #[test]
-    fn test_send_with_template_request_deserialize() {
-        let json = serde_json::json!({
-            "to": "a@b.com",
-            "variables": {"k": "v"},
-            "cc": null,
-            "bcc": null
-        });
-        let req: SendWithTemplateRequest = serde_json::from_value(json).unwrap();
-        assert_eq!(req.to, "a@b.com");
-        assert_eq!(req.variables["k"], "v");
-        assert!(req.cc.is_none());
-    }
-
-    #[test]
-    fn test_update_email_template_request_all_none() {
-        let req: UpdateEmailTemplateRequest =
-            serde_json::from_value(serde_json::json!({})).unwrap();
-        assert!(req.name.is_none());
-        assert!(req.subject_template.is_none());
-        assert!(req.body_template.is_none());
-        assert!(req.description.is_none());
-    }
-
-    #[test]
-    fn test_update_email_template_request_partial() {
-        let json = serde_json::json!({"body_template": "new body"});
-        let req: UpdateEmailTemplateRequest = serde_json::from_value(json).unwrap();
-        assert_eq!(req.body_template.as_deref(), Some("new body"));
     }
 }

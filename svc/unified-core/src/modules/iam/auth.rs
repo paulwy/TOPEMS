@@ -60,46 +60,8 @@ fn build_refresh_token_cookie(value: &str, max_age_secs: Option<i64>) -> String 
     cookie
 }
 
-fn send_email_async(
-    from: String,
-    to: String,
-    subject: String,
-    body: String,
-    html_body: Option<String>,
-    cc: Option<Vec<String>>,
-    bcc: Option<Vec<String>>,
-) {
-    tokio::spawn(async move {
-        let client = topems_shared_core::shared_http_client();
-        let endpoint = std::env::var("COMMUNICATION_SERVICE_URL")
-            .unwrap_or_else(|_| "http://localhost:8084".to_string());
-        let params = serde_json::json!({
-            "from": from,
-            "to": to,
-            "subject": subject,
-            "body": body,
-            "html_body": html_body,
-            "cc": cc,
-            "bcc": bcc,
-        });
-        match client
-            .post(format!("{}/api/communication/mail/send", endpoint))
-            .json(&params)
-            .send()
-            .await
-        {
-            Ok(res) if res.status().is_success() => {
-                tracing::info!("Async email sent successfully to: {}", to)
-            }
-            Ok(res) => tracing::error!(
-                "Async email sending failed with status {}: {}",
-                res.status(),
-                to
-            ),
-            Err(e) => tracing::error!("Async email sending failed: {}", e),
-        }
-    });
-}
+/// 密码重置统一应答：存在/不存在账号、处理成功均返回同一文案，避免账号枚举。
+const PASSWORD_RESET_ACK: &str = "如果该邮箱已注册，重置申请已提交给系统管理员";
 
 fn hash_token(token: &str) -> String {
     let mut hasher = Sha256::new();
@@ -1314,6 +1276,36 @@ pub async fn forgot_password(
         ));
     }
 
+    // 邮件通道在 prod 不可用（SMTP 出站连接超时），改为站内通知管理员人工处置。
+    // 先确认存在可受理的管理员；该检查与邮箱是否注册无关，不会泄露账号是否存在。
+    let admin_count = match sqlx::query_scalar::<_, i64>(
+        r#"
+        SELECT COUNT(*) FROM iam.users
+        WHERE status = 'active' AND deleted_at IS NULL
+          AND (is_superuser OR 'admin' = ANY(roles))
+        "#,
+    )
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("查询密码重置受理人失败: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
+        }
+    };
+
+    if admin_count == 0 {
+        tracing::error!("密码重置请求无法受理：系统未配置管理员");
+        return Json(topems_shared_core::response::error_value(
+            503,
+            "系统未配置密码重置受理人，请联系系统管理员",
+        ));
+    }
+
     // 查找用户
     let user = match sqlx::query_as::<_, UserRow>(
         r#"
@@ -1337,7 +1329,7 @@ pub async fn forgot_password(
             tracing::warn!("Password reset requested for non-existent email: {}", email);
             return Json(serde_json::json!({
                 "success": true,
-                "message": "如果该邮箱已注册，您将收到密码重置邮件",
+                "message": PASSWORD_RESET_ACK,
                 "data": null,
                 "code": 0
             }));
@@ -1372,49 +1364,46 @@ pub async fn forgot_password(
         }
     }
 
-    // 发送密码重置邮件
-    let subject = "TOPEMS 密码重置".to_string();
-    let body = format!(
-        "尊敬的用户：\n\n您请求重置 TOPEMS 账户密码。\n\n重置令牌：{}\n\n请在1小时内使用此令牌重置密码。\n如果您没有发起此请求，请忽略此邮件。\n\n此致\nTOPEMS 团队",
-        reset_token
+    // 通知所有管理员人工处置（含重置令牌，便于在忘记密码页直接完成重置）。
+    let notification_content = format!(
+        "用户 {}（{}）请求重置密码。\n重置令牌：{}\n有效期 1 小时。可在忘记密码页使用该令牌完成重置，或在用户管理中直接重置。",
+        user.username, email, reset_token
     );
-    let html_body = format!(
+    match sqlx::query(
         r#"
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #333;">密码重置</h2>
-            <p>尊敬的用户：</p>
-            <p>您请求重置 TOPEMS 账户密码。</p>
-            <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <strong>重置令牌：</strong>
-                <code style="font-size: 16px; color: #2563eb;">{}</code>
-            </div>
-            <p>请在1小时内使用此令牌重置密码。</p>
-            <p>如果您没有发起此请求，请忽略此邮件。</p>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-            <p style="color: #999; font-size: 12px;">此致<br>TOPEMS 团队</p>
-        </div>
+        INSERT INTO public.core_notifications (id, user_id, title, content, notification_type, priority, data, created_at)
+        SELECT gen_random_uuid(), u.id, $1, $2, 'system', 2,
+               jsonb_build_object('source', 'password_reset', 'requested_email', $3, 'requested_user_id', $4),
+               NOW()
+        FROM iam.users u
+        WHERE u.status = 'active' AND u.deleted_at IS NULL
+          AND (u.is_superuser OR 'admin' = ANY(u.roles))
         "#,
-        reset_token
-    );
-
-    let from_email = std::env::var("SMTP_FROM")
-        .or_else(|_| std::env::var("SMTP_FROM_ADDRESS"))
-        .unwrap_or_else(|_| "noreply@topems.local".to_string());
-    send_email_async(
-        from_email,
-        email.to_string(),
-        subject,
-        body,
-        Some(html_body),
-        None,
-        None,
-    );
-
-    tracing::info!("Password reset email sent to: {}", email);
+    )
+    .bind("密码重置申请")
+    .bind(&notification_content)
+    .bind(email)
+    .bind(user.id.to_string())
+    .execute(&state.pool)
+    .await
+    {
+        Ok(result) => tracing::info!(
+            "Password reset request for {} notified {} admin(s)",
+            email,
+            result.rows_affected()
+        ),
+        Err(e) => {
+            tracing::error!("Failed to notify admins for password reset: {}", e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
+        }
+    }
 
     Json(serde_json::json!({
         "success": true,
-        "message": "如果该邮箱已注册，您将收到密码重置邮件",
+        "message": PASSWORD_RESET_ACK,
         "data": null,
         "code": 0
     }))

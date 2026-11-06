@@ -23,42 +23,11 @@ export interface Email {
   created_at: string;
 }
 
-export interface EmailTemplate {
-  id: string;
-  name: string;
-  subject_template: string;
-  body_template: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface SendEmailRequest {
   to: string;
   subject: string;
   body: string;
   html_body?: string;
-  cc?: string[];
-  bcc?: string[];
-}
-
-export interface CreateEmailTemplateRequest {
-  name: string;
-  subject_template: string;
-  body_template: string;
-  description?: string;
-}
-
-export interface UpdateEmailTemplateRequest {
-  name?: string;
-  subject_template?: string;
-  body_template?: string;
-  description?: string;
-}
-
-export interface SendWithTemplateRequest {
-  to: string;
-  variables: Record<string, unknown>;
   cc?: string[];
   bcc?: string[];
 }
@@ -82,32 +51,6 @@ const mailApi = {
 
   deleteEmail: async (id: string): Promise<ApiResponse<void>> => {
     return apiClient.mail.delete(`emails/${id}`);
-  },
-
-  listTemplates: async (): Promise<ApiResponse<EmailTemplate[]>> => {
-    return apiClient.mail.get('templates');
-  },
-
-  getTemplate: async (id: string): Promise<ApiResponse<EmailTemplate>> => {
-    return apiClient.mail.get(`templates/${id}`);
-  },
-
-  createTemplate: async (data: CreateEmailTemplateRequest): Promise<ApiResponse<EmailTemplate>> => {
-    return apiClient.mail.post('templates', data);
-  },
-
-  updateTemplate: async (
-    id: string,
-    data: UpdateEmailTemplateRequest
-  ): Promise<ApiResponse<EmailTemplate>> => {
-    return apiClient.mail.put(`templates/${id}`, data);
-  },
-
-  sendWithTemplate: async (
-    id: string,
-    data: SendWithTemplateRequest
-  ): Promise<ApiResponse<Email>> => {
-    return apiClient.mail.post(`templates/${id}/send`, data);
   },
 };
 

@@ -568,3 +568,208 @@ CREATE TABLE IF NOT EXISTS public.core_email_templates (
 
 若选 B：会保留一张永远 0 行、且被 search_path 遮蔽的 public 表，7 处裸名、FE 的 `code` 契约、`send-with-template` 路由、密码重置错误路径**全部仍在**——等于只做了一次「结构对齐」，功能面仍是断的。
 
+---
+
+## 11. 邮件模板链路下线（路径 A）与密码重置最小闭环（2026-11-06 本地执行）
+
+本轮按「先代码、后迁移」推进：**代码已改完并在本地验证；迁移文件已新增、仅本地应用；未部署 prod、未应用 prod 迁移**。
+范围收口：不新建模板体系、不恢复 `send-with-template`、不重建邮件子系统。
+
+### 11.1 删除的代码位置（文件#行，行号为改动前）
+
+| 文件 | 删除内容 | 行号/规模 |
+|---|---|---|
+| `svc/communication/src/mail.rs` | 7 个模板 handler：`list_templates` / `create_template` / `get_template` / `update_template` / `delete_template` / `send_with_template` / `send_with_template_by_code` | 原 820 / 925 / 1033 / 1139 / 1251 / 1339 / 2085；整文件 **-971 行** |
+| 同上 | 7 处裸名 SQL `core_email_templates` | 原 870 / 992 / 1098 / 1200 / 1309 / 1401 / 2161 |
+| `svc/communication/src/models.rs` | `EmailTemplate`、`CreateEmailTemplateRequest`、`SendWithTemplateRequest`、`UpdateEmailTemplateRequest` 及 7 个测试 | **-112 行** |
+| `svc/communication/src/main.rs` | 模板路由 6 条（`/templates` GET/POST、`/templates/{id}` GET/PUT/DELETE、`/templates/{id}/send`）+ `emails/send-with-template` | 原 246–259；现仅 emails 路由（现 L242–251） |
+| `svc/server/src/modules/communication_real_module.rs` | 同 6 条模板路由 + `MAIL_STUB_POST`（`/templates/render`）+ `MAIL_STUB_PUT`（`/templates/{id}/status`）及其循环 | **-16 行**（`MAIL_STUB_GET` 仅剩 `/health`） |
+| `svc/communication/src/openapi.rs` | `list_templates` / `create_template` / `send_with_template_by_code` 三处 `paths(...)` | **-3 行** |
+| `svc/communication/src/schema_defense.rs` | 表定义注释更新为「已下线，不再创建」；否定断言保留 | L117 `assert!(!names.contains("core_email_templates"))` |
+| 前端 `apps/web/src/api/mail/index.ts` | `templateApi`、`emailApi.sendWithTemplate`、`EmailTemplate`、`SendEmailWithTemplateRequest`、`TEMPLATE_CATEGORIES`、`Email.template_id`、`SendEmailRequest.template_id/template_data`、`PaginationParams.category` | **-86 行** |
+| 前端 `apps/web/src/api/notification/mail.ts` | 模板类型与 5 个模板方法（该文件本身为死代码） | **-57 行** |
+| 前端 `apps/web/src/components/im/MailPageHooks.tsx` | 模板 query/mutation、`activeTab`、模板表单/预览/删除状态与 handler | **-370 行** |
+| 前端 `apps/web/src/pages/im/MailPage/index.tsx` | 模板页签、5 个模板组件渲染、模板新增按钮 | **-166 行** |
+| 前端 5 个文件 | `TemplateList.tsx`(-480)、`TemplateList.module.css`(-5)、`CreateTemplateDialog.tsx`(-281)、`EditTemplateDialog.tsx`(-238)、`TemplatePreviewDialog.tsx`(-102) | 已删除 |
+| 前端 5 个文件 | `SendEmailDialog.tsx`(-97)、`ConfirmDialogs.tsx`(-20)、`types.ts`(-41)、`constants.ts`(-23)、`MailPage.test.tsx`（改为断言「标题/发送按钮」） | 已修改 |
+| `scripts/ci/schema-prefix-baseline.json` | 移除陈旧的 `mail.rs / core_email_templates` 裸名基线条目 | -4 行 |
+
+合计：**25 个文件，+210 / -3071 行**（不含新增迁移与本文档）。
+
+### 11.2 保留路径清单（未受影响的直发/通知/IM）
+
+- 直发：`GET/POST /api/communication/mail/emails`、`GET /mail/emails/stats`、`GET/DELETE /mail/emails/{id}`、`POST /mail/emails/{id}/read`、`POST /mail/emails/resend`。
+- IM：`/api/communication/im/*` 全量保留。
+- 通知：`POST /api/communication/notify/send`、`/notification/*`；`queue_email` 保留。
+- 前端：`/im/mail` 菜单与 `im:mail:read` 权限保留；MailPage 仅保留邮件列表/直发/删除/重发/统计。
+
+### 11.3 全仓零引用检索（原始结论）
+
+```text
+# 运行时源码
+$ grep -rn "core_email_templates" apps/web/src svc/communication svc/server svc/unified-core
+svc/communication/src/schema_defense.rs:7://!   core_email_templates 已随邮件模板功能下线，不再创建）
+svc/communication/src/schema_defense.rs:117:        assert!(!names.contains(&"core_email_templates"));
+
+# mail.rs 裸名 SQL
+$ grep -n "email_templates" svc/communication/src/mail.rs
+（无输出）
+
+# 模板调用（源码）
+$ grep -rn "send-with-template\|send_with_template" svc apps/web/src
+（无输出）
+
+# 两套路由
+$ grep -n "templates" svc/communication/src/main.rs svc/server/src/modules/communication_real_module.rs
+（仅 notification-templates，无 mail templates）
+```
+
+`communication.core_email_templates` 仅剩三类非运行时命中，均为预期：
+
+1. `database/migrations/20260921000107_backend_i18n_batch8_bilingual_columns.sql`——历史迁移，按「迁移不可改写」原则保留；
+2. `database/migrations/20261107000019_drop_communication_email_templates.sql`——本轮删除迁移；
+3. `fixtures/full_schema_contract.sql`——CI 导库用的全 schema 快照基线（非运行时引用；导入后由 000019 删除）。
+
+补充：`database/init/06_iam_schema.sql` 中的 `iam.core_email_templates` 是**另一个 schema 的历史 init 表**，不在 `communication.` 范围，本轮未动。`apps/web/storybook-static/` 的 `send-with-template` 命中为**未跟踪的本地构建产物**（`.gitignore` 已忽略），不在仓库内。
+
+### 11.4 编译 / 测试 / lint / 前端
+
+| 检查 | 结果 |
+|---|---|
+| `cargo fmt --all --check` | 通过 |
+| `cargo check --workspace --all-targets` | 通过（22.99s） |
+| `cargo clippy --workspace --all-targets -- -D warnings` | 通过（13.17s） |
+| `cargo test -p topems-communication` | 1 passed / 0 failed（doc-tests 0） |
+| `cargo test -p topems-server --lib` | 1 passed / 0 failed |
+| `cargo test -p topems-unified-core --lib` | **542 passed / 0 failed**（0.52s） |
+| `pnpm typecheck` | 通过 |
+| `pnpm exec eslint <10 个改动文件>` | 通过（无输出） |
+| `pnpm build` | 成功（brotli 压缩 331 文件） |
+| `pnpm exec vitest run src/pages/im/__tests__/MailPage.test.tsx` | 2 passed |
+
+### 11.5 本地冒烟（communication:8084 / unified-core:8000，superadmin JWT）
+
+| 请求 | HTTP | 响应关键字段 |
+|---|---|---|
+| `GET /api/communication/mail/emails` | **200** | `{"success":true,"data":[],"message":"list_emails success"}` |
+| `GET /api/communication/mail/templates` | **404** | 空 body |
+| `GET /api/communication/mail/templates/tid` | **404** | 空 body |
+| `POST /api/communication/mail/emails/send-with-template` | **405** | 空 body |
+| `POST /api/communication/mail/emails`（直发，`{to,subject,body}`） | **200** | `{"code":0,"data":{"email_id":"6638a253-…","subject":"smoke-direct","to":"smoke@example.invalid"},"message":"邮件发送成功","success":true}` |
+| `POST /api/communication/notify/send` | **200** | 返回 `data.id`，落库 1 行 |
+| `POST /api/core/iam/auth/forgot-password`（已存在邮箱） | **200** | `{"code":0,"message":"如果该邮箱已注册，重置申请已提交给系统管理员","success":true}`；落库 2 条管理员通知 |
+| 同上（不存在邮箱） | **200** | 同一文案、同一 code，**0 落库** |
+| 同上（`email=""`） | **200** | body `{"code":400,"message":"邮箱不能为空"}` |
+
+**关于 405 而非 404（如实记录）**：模板路由删除后，`POST /mail/emails/send-with-template` 的路径仍被 `/mail/emails/{id}` 段匹配，但该路径未注册 POST → axum 返回 **405**；`/mail/templates*` 无任何匹配 → **404**。二者均说明模板 handler 已不存在；未额外添加 tombstone 路由（超出「删除」的最小改动）。
+冒烟数据已清理：`core_notifications` 7→4（删除 3 条：1 条 smoke + 2 条密码重置通知）、`core_emails` 1→0、`password_resets` 1→0。
+
+### 11.6 迁移与守卫
+
+文件：`database/migrations/20261107000019_drop_communication_email_templates.sql`（前向迁移，单条 `DO $$ … $$`）。
+
+守卫逻辑（任一不满足即失败回滚，不静默跳过）：
+
+1. `to_regclass('communication.core_email_templates') IS NULL` → `RAISE NOTICE` 并成功返回（幂等）；
+2. `relkind <> 'r'`（视图/外表等）→ `RAISE EXCEPTION`；
+3. 行数 `<> 0` → `RAISE EXCEPTION`（要求副本 0 行）；
+4. 存在指向该表的入向外键（`pg_constraint.contype='f' AND confrelid=…`）→ `RAISE EXCEPTION`；
+5. 通过后 `DROP TABLE communication.core_email_templates RESTRICT`。
+
+本地执行证据：
+- 0 行场景：`apply-forward.sh --db topems --anchor 20261107000018 --only 20261107000019` 成功；`_sqlx_migrations` 账本 `max=20261107000019`（description=`drop communication email templates`），`to_regclass` 返回 `NULL`。
+- 1 行负例：先插 1 行再执行 → 守卫 `RAISE EXCEPTION`，psql 退出码 3，表仍在（fail-closed 生效）。
+- `schema_defense`：已无该表建表语句，否定断言 `assert!(!names.contains("core_email_templates"))` 保留（L117）。
+
+### 11.7 上线顺序与检查点（必须遵守）
+
+迁移**只能在新代码上线后应用**，否则旧二进制仍会访问已删表。
+
+1. **发布新二进制**：`topems-communication`（8084）与 `topems-server`（8099，含 `communication_real_module`）全部换成不含模板路由/裸名 SQL 的版本。
+2. **检查点 A**：新版本健康；`GET /api/communication/mail/templates` 为 404；服务日志中不再出现 `core_email_templates` 查询或模板 handler 调用。
+3. **观察窗口**：建议 ≥1 个发布周期（至少 24h），确认无 `relation "core_email_templates" does not exist` 报错、无模板接口调用。
+4. **备份**：副本 0 行，`pg_dump --schema-only -t communication.core_email_templates` 可选；不做数据备份。
+5. **应用迁移**：`apply-forward.sh --only 20261107000019`。
+6. **检查点 B**：账本 +1（到 `20261107000019`）；`to_regclass('communication.core_email_templates')` 为 `NULL`；应用日志无新增错误；直发 `/mail/emails` 与通知创建仍正常。
+7. **回滚**：按迁移文件顶部 `down` 重建空表 DDL；但**功能不会自动恢复**（见 11.10）。
+
+反向顺序的后果：先删表、后发新码 → 旧二进制调用模板接口报 `relation "core_email_templates" does not exist`（500），直发/通知不受影响。
+
+### 11.8 密码重置现状与「顺手修」
+
+**断点（改动前）**：
+
+- 前端：[ForgotPasswordPage.tsx](file:///Users/air/TOPEMS/apps/web/src/pages/shared/ForgotPasswordPage.tsx) L80 → `authApi.requestPasswordReset` → [auth.ts](file:///Users/air/TOPEMS/apps/web/src/api/iam/auth.ts) L70-71 `POST /api/core/iam/auth/forgot-password`。
+- 后端：[auth.rs](file:///Users/air/TOPEMS/svc/unified-core/src/modules/iam/auth.rs) `forgot_password`（现 L1264）查 `iam.users`、写 `unified_core.password_resets`，随后调用 `send_email_async`（原 L63–102）投递到 `POST {COMMUNICATION_SERVICE_URL}/api/communication/mail/send`。
+- **真实路由不存在**：communication 只有 `/api/communication/mail/emails`，且受 `communication:admin` 鉴权；该内部调用既无 Authorization，也打错路径 → **静默 404**，用户仍看到「邮件已发送」。
+- prod 影响：用户点「忘记密码」→ HTTP 200 + 「邮件已发送」，但实际**没有任何邮件或其它投递**，属于**静默失败**（不是 404 暴露给用户）。
+- 替代通道：`public.core_notifications` 可用（prod 6 行、admin 收件人 1 个），站内通知页面已存在；也可由管理员手工重置。
+- SMTP 判定：prod `.env` 键名齐全（`SMTP_HOST/PORT/USERNAME/PASSWORD/FROM_ADDRESS`），但从 prod 主机 TCP 连接 `SMTP_HOST:SMTP_PORT` **超时** → 直发链路不可用，因此**不选改投 `/mail/emails`**。
+
+**修复（方案 B：通知中心，最小闭环）**：
+
+| 位置 | 改动 |
+|---|---|
+| `auth.rs` L64 | 新增统一应答常量 `PASSWORD_RESET_ACK`（存在/不存在账号同一文案，防枚举） |
+| `auth.rs` 原 L63–102 | 删除 `send_email_async`（不再依赖 SMTP/内部 HTTP） |
+| `auth.rs` L1281–1310 | 管理员预检：`SELECT COUNT(*) FROM iam.users WHERE status='active' AND deleted_at IS NULL AND (is_superuser OR 'admin' = ANY(roles))`；查询失败→`error_value(500)`；0 人→`error_value(503,"系统未配置密码重置受理人，请联系系统管理员")` |
+| `auth.rs` L1374 | 向所有 active admin 批量插入 `public.core_notifications`（`notification_type='system'`，`data` 含 `source=password_reset`、`requested_email`、`requested_user_id`；正文含 1 小时有效的重置令牌与处置说明） |
+| `auth.rs` L1332 / L1406 | 用户不存在与成功均返回 HTTP 200 + `{code:0,"message":PASSWORD_RESET_ACK}` |
+| i18n `zh/en pages.json` | 4 组文案：k5/k6/k19/k22/k25 改为「申请已提交 / 已通知管理员处理」，不再承诺「重置邮件已发送」 |
+
+选择理由：prod 直发依赖的 SMTP 出站不可达；内部 HTTP 投递需先解决鉴权与路径；通知中心已有表、页面与收件人，**零新增依赖**，改动仅限 `forgot_password` 一个函数。
+
+**改动前后对比（本地实测）**：
+
+| 场景 | 改前 | 改后 |
+|---|---|---|
+| 已注册邮箱 | 200「邮件已发送」；内部 404 静默，无投递 | 200 `code:0` ACK；写入 2 条管理员通知 |
+| 未注册邮箱 | 同样 200「邮件已发送」 | 200 同一 ACK；0 落库（不可枚举） |
+| `email` 为空 | — | 200 外壳 + `code:400`「邮箱不能为空」 |
+| 无管理员 | 无提示 | 200 外壳 + `code:503`「系统未配置密码重置受理人」 |
+| 通知写入失败 | — | 200 外壳 + `code:500`「内部服务器错误」 |
+
+### 11.9 SMTP 实际不可用时的产品行为（把选择权交回用户）
+
+若 prod SMTP 始终无法投递，密码重置的最终形态是：
+
+1. 用户提交邮箱 → 立即看到「如果该邮箱已注册，重置申请已提交给系统管理员」；
+2. 管理员在通知中心收到一条「密码重置申请」，按正文中的一次性令牌（1 小时有效）人工处置；
+3. 用户**不会**收到自助重置邮件，需要联系管理员完成重置。
+
+这是**「人工受理」而非「自助重置」**的产品行为。对当前 0 邮件出站、用户量小的 prod 可以接受；若要求用户自助完成，需要单独立项恢复 SMTP 出站或提供站内自助重置页（本轮不做）。
+
+### 11.10 影响面与恢复成本
+
+- **恢复邮件模板功能不是回滚迁移就能完成**，需要：① 重建表（`communication.core_email_templates` 或改 `public.` 权威表并同步改限定名）+ ② 新 API 契约（补 `code` 字段与 `send-with-template` 路由，接入鉴权）+ ③ 前端模板页签/下拉/CRUD 改造 + ④ 全链路测试。
+- 既有契约不一致（**本轮未修，留待后续**）：前端直发发送 `to_addresses/cc_addresses/bcc_addresses`，后端 `SendEmailRequest` 为 `to/cc/bcc`；本轮仅验证后端契约下直发可用，前端直发页的字段映射仍是既有问题（同样影响 `im` 页的重发逻辑）。
+- 通知中心链路与 `/im/mail` 菜单不受影响；`im:mail:read` 权限保留。
+
+### 11.11 「顺手修」边界
+
+**改了**：
+
+- `svc/unified-core/src/modules/iam/auth.rs`：`forgot_password` 投递方式（邮件 → 站内通知管理员）、统一应答、管理员预检；
+- `apps/web/src/i18n/locales/{zh,en}/pages.json`：4 组密码重置文案。
+
+**没改**：
+
+- 未新建模板体系、未恢复 `send-with-template`、未改 `/mail/emails` 路由；
+- 未改直发契约（`to` vs `to_addresses` 不一致仍存在，见 11.10）；
+- 未改 SMTP 配置或 prod 出站网络；
+- 未改 `unified_core.password_resets` 表结构与令牌消费逻辑（自助重置确认页仍在，但邮件不再投递链接）；
+- 未改通知中心前端（管理员处置走现有通知页面）；
+- **未部署 prod、未应用 prod 迁移**。
+
+### 11.12 本轮证据汇总
+
+- 删除位置与保留清单：11.1 / 11.2
+- 零引用检索：11.3
+- 编译/测试/lint/前端：11.4
+- 本地冒烟状态码：11.5（200 / 404 / 405 / 200 / 200）
+- 迁移守卫定义与本地执行：11.6
+- 上线顺序与检查点：11.7
+- 密码重置断点、改动前后对比、错误路径：11.8
+- SMTP 不可用时的产品行为：11.9
+- 影响面与未修项：11.10 / 11.11
+

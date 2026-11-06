@@ -2,9 +2,9 @@
 //!
 //! - Service tag: `communication`
 //! - Schema: `communication`
-//! - Tables: 1（core_notifications / core_emails / core_email_templates /
-//!   core_notification_templates / core_geofences 的权威表均在 `public`，
-//!   不再由启动期 DDL 在 communication 重建副本）
+//! - Tables: 1（core_notifications / core_emails / core_notification_templates /
+//!   core_geofences 的权威表均在 `public`，不再由启动期 DDL 在 communication 重建副本；
+//!   core_email_templates 已随邮件模板功能下线，不再创建）
 //!
 //! This module drives idempotent table creation and column reconciliation via
 //! `topems_shared_db::schema::run_schema_defense`, mirroring the pattern used by

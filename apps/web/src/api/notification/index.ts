@@ -557,14 +557,7 @@ export type {
   TemplateCloneRequest,
 } from './template';
 
-export type {
-  Email,
-  EmailTemplate,
-  SendEmailRequest,
-  CreateEmailTemplateRequest,
-  UpdateEmailTemplateRequest,
-  SendWithTemplateRequest,
-} from './mail';
+export type { Email, SendEmailRequest } from './mail';
 
 export type {
   NotificationCategory,
