@@ -25,25 +25,30 @@ use crate::plugin;
 
 pub use crate::openapi::ApiDoc;
 
-pub fn create_routes(state: AppState) -> Router {
+pub fn create_routes(state: AppState, pool: sqlx::PgPool) -> Router {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
         .route("/api/plugins/info", get(plugin::get_plugin_info))
         .route("/api/plugins/health", get(plugin::plugin_health_check))
         .with_state(state.clone());
-    create_routes_inner(state, public_routes, true)
+    create_routes_inner(state, pool, public_routes, true)
 }
 
 /// 嵌入模式（server 模块化单体）：跳过 /、/health、/api/plugins/* 与 openapi
 /// （分别与宿主根路由、plugin-registry 服务、宿主 openapi 路由冲突），
 /// 仅保留受保护业务路由（自带 /api/integration 前缀）。
-pub fn create_routes_embedded(state: AppState) -> Router {
+pub fn create_routes_embedded(state: AppState, pool: sqlx::PgPool) -> Router {
     let public_routes = Router::new().with_state(state.clone());
-    create_routes_inner(state, public_routes, false)
+    create_routes_inner(state, pool, public_routes, false)
 }
 
-fn create_routes_inner(state: AppState, public_routes: Router<()>, with_openapi: bool) -> Router {
+fn create_routes_inner(
+    state: AppState,
+    pool: sqlx::PgPool,
+    public_routes: Router<()>,
+    with_openapi: bool,
+) -> Router {
     let rate_limit_config = RateLimitConfig::new(100, 60)
         .with_by_user_id(false)
         .with_by_ip(true);
@@ -197,7 +202,7 @@ fn create_routes_inner(state: AppState, public_routes: Router<()>, with_openapi:
             delete(conversion_rules::delete_conversion_rule_api),
         )
         .layer(from_fn_with_state(
-            state.pool.clone(),
+            pool.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
         .layer(from_fn(require_permission("integration:admin")))
@@ -205,7 +210,7 @@ fn create_routes_inner(state: AppState, public_routes: Router<()>, with_openapi:
             state.auth_state.clone(),
             auth_middleware,
         ))
-        .layer(from_fn_with_state(state.pool.clone(), rls_middleware))
+        .layer(from_fn_with_state(pool, rls_middleware))
         .layer(rate_limit_layer)
         .with_state(state);
 

@@ -54,6 +54,13 @@ pub async fn list_conversations(
         .unwrap_or("topems-user")
         .to_string();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("list_conversations failed: {e}");
+            return Json(ApiResponse::server_error("查询会话列表失败"));
+        }
+    };
     match sqlx::query(only_own_schema_query!(
         "ai",
         r#"SELECT id, title, created_at, updated_at FROM core.ai_conversations
@@ -63,7 +70,7 @@ pub async fn list_conversations(
     ))
     .bind(tenant_id)
     .bind(&user_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => {
@@ -91,6 +98,13 @@ pub async fn get_conversation(
         .unwrap_or("topems-user")
         .to_string();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("get_conversation failed: {e}");
+            return Json(ApiResponse::server_error("查询会话失败"));
+        }
+    };
     match sqlx::query(only_own_schema_query!(
         "ai",
         r#"SELECT id, title, created_at, updated_at FROM core.ai_conversations
@@ -100,7 +114,7 @@ pub async fn get_conversation(
     .bind(id)
     .bind(tenant_id)
     .bind(&user_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(row)) => Json(ApiResponse::success(
@@ -135,7 +149,14 @@ pub async fn create_conversation(
         .to_string();
     let title = req.title.unwrap_or_else(|| "新对话".to_string());
 
-    match sqlx::query(only_own_schema_query!(
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("create_conversation failed: {e}");
+            return Json(ApiResponse::server_error("创建会话失败"));
+        }
+    };
+    let result = sqlx::query(only_own_schema_query!(
         "ai",
         r#"INSERT INTO core.ai_conversations (tenant_id, user_id, title)
            VALUES ($1, $2, $3)
@@ -145,9 +166,10 @@ pub async fn create_conversation(
     .bind(tenant_id)
     .bind(&user_id)
     .bind(&title)
-    .fetch_one(&state.pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    let _ = scope.commit().await;
+    match result {
         Ok(row) => {
             let dto = ConversationDto::from(&row);
             Json(ApiResponse::success(dto, "会话已创建"))
@@ -173,7 +195,14 @@ pub async fn delete_conversation(
         .unwrap_or("topems-user")
         .to_string();
 
-    match sqlx::query(only_own_schema_query!(
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("delete_conversation failed: {e}");
+            return Json(ApiResponse::server_error("删除会话失败"));
+        }
+    };
+    let result = sqlx::query(only_own_schema_query!(
         "ai",
         r#"DELETE FROM core.ai_conversations WHERE id = $1 AND tenant_id = $2 AND user_id = $3"#,
         "core"
@@ -181,9 +210,10 @@ pub async fn delete_conversation(
     .bind(id)
     .bind(tenant_id)
     .bind(&user_id)
-    .execute(&state.pool)
-    .await
-    {
+    .execute(&mut scope)
+    .await;
+    let _ = scope.commit().await;
+    match result {
         Ok(_) => Json(ApiResponse::success(true, "会话已删除")),
         Err(e) => {
             tracing::error!("delete_conversation failed: {e}");
@@ -227,6 +257,13 @@ pub async fn list_messages(
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     // 会话存在性校验：不存在则内层 404（语义与 get_conversation 一致）
     let tenant_id = get_tenant_id_from_claims(&_claims);
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("list_messages failed: {e}");
+            return Json(ApiResponse::server_error("查询会话消息失败"));
+        }
+    };
     match sqlx::query(only_own_schema_query!(
         "ai",
         "SELECT 1 FROM core.ai_conversations WHERE id = $1 AND tenant_id = $2",
@@ -234,7 +271,7 @@ pub async fn list_messages(
     ))
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(_)) => Json(ApiResponse::success(Vec::new(), "消息列表（待上游支持）")),

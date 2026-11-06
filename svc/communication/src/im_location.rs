@@ -1,12 +1,16 @@
 use axum::{
     extract::{Path, Query, State},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool};
+use sqlx::FromRow;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::{Db, ScopedTxn};
 use uuid::Uuid;
+
+type RlsTxnCell =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 use topems_shared_core::response::ApiResponse;
 
@@ -192,9 +196,22 @@ pub struct UnifiedPoiResult {
 }
 
 pub async fn send_location_message(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<SendLocationRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
     // 使用 parse_coordinates 校验坐标格式（必须为 {lat,lng}/{lat,lon}/全名键对象）
     let (lat, lon) = match parse_coordinates(&payload.coordinates) {
         Some(coords) => coords,
@@ -230,7 +247,7 @@ pub async fn send_location_message(
     .bind(payload.gis_map_id)
     .bind(&map_provider)
     .bind(&payload.description)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(msg) => msg,
@@ -241,7 +258,7 @@ pub async fn send_location_message(
     };
 
     // 检查该位置是否触发当前会话的活跃地理围栏（enter 事件）
-    let geofence_alerts = check_geofence_triggers(&pool, &payload.chat_id, lat, lon).await;
+    let geofence_alerts = check_geofence_triggers(&mut scope, &payload.chat_id, lat, lon).await;
 
     ApiResponse::success(
         serde_json::json!({
@@ -254,17 +271,17 @@ pub async fn send_location_message(
 
 /// 查询会话的活跃围栏并判断 (lat, lon) 是否落入任一围栏
 async fn check_geofence_triggers(
-    pool: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     chat_id: &Uuid,
     lat: f64,
     lon: f64,
 ) -> Vec<serde_json::Value> {
     let geofences = match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
         "public",
-        "SELECT * FROM core_geofences WHERE chat_id = $1 AND status = 'active'"
+        "SELECT * FROM public.core_geofences WHERE chat_id = $1 AND status = 'active'"
     ))
     .bind(chat_id)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await
     {
         Ok(g) => g,
@@ -295,15 +312,28 @@ async fn check_geofence_triggers(
 }
 
 pub async fn list_location_messages(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(chat_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
     match sqlx::query_as::<_, LocationMessage>(only_own_schema_query!(
         "public",
         "SELECT * FROM core_location_messages WHERE chat_id = $1 ORDER BY created_at DESC LIMIT 50"
     ))
     .bind(chat_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(messages) => ApiResponse::success(
@@ -318,9 +348,22 @@ pub async fn list_location_messages(
 }
 
 pub async fn create_geofence(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Json(payload): Json<CreateImGeofenceRequest>,
 ) -> ApiResponse<GeofenceSyncResult> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
     let event_types = serde_json::json!(payload
         .event_types
         .unwrap_or_else(|| vec!["enter".to_string()]));
@@ -332,7 +375,7 @@ pub async fn create_geofence(
     let created = match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
         "public",
         r#"
-        INSERT INTO core_geofences (
+        INSERT INTO public.core_geofences (
             name, description, chat_id, creator_id, shape_type,
             coordinates, radius, event_types, trigger_cooldown,
             notify_channels, notify_users, status, start_at, end_at
@@ -354,7 +397,7 @@ pub async fn create_geofence(
     .bind(&notify_users)
     .bind(payload.start_at)
     .bind(payload.end_at)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(g) => g,
@@ -380,11 +423,11 @@ pub async fn create_geofence(
 
                 let _ = sqlx::query(only_own_schema_query!(
                     "public",
-                    "UPDATE core_geofences SET gis_fence_id = $1 WHERE id = $2"
+                    "UPDATE public.core_geofences SET gis_fence_id = $1 WHERE id = $2"
                 ))
                 .bind(gis_id)
                 .bind(created.id)
-                .execute(&pool)
+                .execute(&mut scope)
                 .await;
 
                 sync_result.geofence.gis_fence_id = Some(gis_id);
@@ -404,15 +447,28 @@ pub async fn create_geofence(
 }
 
 pub async fn get_geofence(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ImGeofence> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
     match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
         "public",
-        "SELECT * FROM core_geofences WHERE id = $1"
+        "SELECT * FROM public.core_geofences WHERE id = $1"
     ))
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(g) => ApiResponse::success(g, "获取地理围栏成功"),
@@ -422,10 +478,23 @@ pub async fn get_geofence(
 }
 
 pub async fn list_geofences(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Query(params): Query<GeofenceQuery>,
 ) -> ApiResponse<serde_json::Value> {
-    let mut sql = String::from("SELECT * FROM core_geofences WHERE 1=1");
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+    let mut sql = String::from("SELECT * FROM public.core_geofences WHERE 1=1");
     let mut bind_chat_id: Option<Uuid> = None;
     let mut bind_status: Option<String> = None;
     let mut bind_shape_type: Option<String> = None;
@@ -463,7 +532,7 @@ pub async fn list_geofences(
         query = query.bind(shp);
     }
 
-    let result = query.fetch_all(&pool).await;
+    let result = query.fetch_all(&mut scope).await;
 
     match result {
         Ok(geofences) => ApiResponse::success(
@@ -478,16 +547,29 @@ pub async fn list_geofences(
 }
 
 pub async fn update_geofence(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateImGeofenceRequest>,
 ) -> ApiResponse<GeofenceSyncResult> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
     let current = match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
         "public",
-        "SELECT * FROM core_geofences WHERE id = $1"
+        "SELECT * FROM public.core_geofences WHERE id = $1"
     ))
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(g) => g,
@@ -512,7 +594,7 @@ pub async fn update_geofence(
     let updated = match sqlx::query_as::<_, ImGeofence>(only_own_schema_query!(
         "public",
         r#"
-        UPDATE core_geofences
+        UPDATE public.core_geofences
         SET name = $1, description = $2, coordinates = $3, radius = $4,
             event_types = $5, status = $6, updated_at = NOW()
         WHERE id = $7
@@ -526,7 +608,7 @@ pub async fn update_geofence(
     .bind(&event_types)
     .bind(&status)
     .bind(id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(g) => g,
@@ -565,15 +647,28 @@ pub async fn update_geofence(
 }
 
 pub async fn delete_geofence(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<bool> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
     match sqlx::query(only_own_schema_query!(
         "public",
-        "DELETE FROM core_geofences WHERE id = $1"
+        "DELETE FROM public.core_geofences WHERE id = $1"
     ))
     .bind(id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         Ok(result) => {
@@ -588,7 +683,7 @@ pub async fn delete_geofence(
 }
 
 pub async fn unified_search_pois(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Json(payload): Json<SearchPoiRequest>,
 ) -> ApiResponse<UnifiedPoiResult> {
     let mut items: Vec<UnifiedPoiItem> = Vec::new();
@@ -733,7 +828,7 @@ async fn sync_geofence_to_gis_internal(geofence: &ImGeofence) -> Result<Option<U
 }
 
 #[allow(dead_code)]
-pub fn create_location_routes() -> Router<PgPool> {
+pub fn create_location_routes() -> Router<Db> {
     Router::new()
         // Location messages
         .route(

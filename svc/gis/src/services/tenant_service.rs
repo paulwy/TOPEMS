@@ -1,17 +1,17 @@
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::models::*;
 
 pub struct TenantService {
-    pool: PgPool,
+    db: Db,
     tenant_id: Option<Uuid>,
 }
 
 impl TenantService {
-    pub fn new(pool: PgPool, tenant_id: Option<Uuid>) -> Self {
-        Self { pool, tenant_id }
+    pub fn new(db: Db, tenant_id: Option<Uuid>) -> Self {
+        Self { db, tenant_id }
     }
 
     fn effective_tenant(&self) -> Uuid {
@@ -24,12 +24,17 @@ impl TenantService {
     }
 
     pub async fn list_factory_maps(&self) -> Result<Vec<FactoryMap>, sqlx::Error> {
-        sqlx::query_as::<_, FactoryMap>(
+        let mut scope = self.db.scope_read().await?;
+        let result = sqlx::query_as::<_, FactoryMap>(
             only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, map_type, file_url, bounds, description, created_at, updated_at FROM gis.factory_maps WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 100"),
         )
         .bind(self.tenant_id)
-        .fetch_all(&self.pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        if result.is_ok() {
+            scope.commit().await?;
+        }
+        result
     }
 
     pub async fn create_factory_map(
@@ -41,7 +46,8 @@ impl TenantService {
         bounds: Option<serde_json::Value>,
         description: Option<&str>,
     ) -> Result<FactoryMap, sqlx::Error> {
-        sqlx::query_as::<_, FactoryMap>(
+        let mut scope = self.db.scope().await?;
+        let result = sqlx::query_as::<_, FactoryMap>(
             only_own_schema_query!("gis", r#"
             INSERT INTO gis.factory_maps (tenant_id, name, code, map_type, file_url, bounds, description)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -55,18 +61,27 @@ impl TenantService {
         .bind(file_url)
         .bind(bounds)
         .bind(description)
-        .fetch_one(&self.pool)
-        .await
+        .fetch_one(&mut scope)
+        .await;
+        if result.is_ok() {
+            scope.commit().await?;
+        }
+        result
     }
 
     pub async fn get_factory_map(&self, id: Uuid) -> Result<Option<FactoryMap>, sqlx::Error> {
-        sqlx::query_as::<_, FactoryMap>(
+        let mut scope = self.db.scope_read().await?;
+        let result = sqlx::query_as::<_, FactoryMap>(
             only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, map_type, file_url, bounds, description, created_at, updated_at FROM gis.factory_maps WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(id)
         .bind(self.tenant_id)
-        .fetch_optional(&self.pool)
-        .await
+        .fetch_optional(&mut scope)
+        .await;
+        if result.is_ok() {
+            scope.commit().await?;
+        }
+        result
     }
 
     pub async fn update_factory_map(
@@ -79,7 +94,8 @@ impl TenantService {
         bounds: Option<serde_json::Value>,
         description: Option<&str>,
     ) -> Result<Option<FactoryMap>, sqlx::Error> {
-        sqlx::query_as::<_, FactoryMap>(only_own_schema_query!(
+        let mut scope = self.db.scope().await?;
+        let result = sqlx::query_as::<_, FactoryMap>(only_own_schema_query!(
             "gis",
             r#"
             UPDATE gis.factory_maps 
@@ -99,64 +115,95 @@ impl TenantService {
         .bind(bounds)
         .bind(description)
         .bind(self.tenant_id)
-        .fetch_optional(&self.pool)
-        .await
+        .fetch_optional(&mut scope)
+        .await;
+        if result.is_ok() {
+            scope.commit().await?;
+        }
+        result
     }
 
     pub async fn delete_factory_map(&self, id: Uuid) -> Result<bool, sqlx::Error> {
+        let mut scope = self.db.scope().await?;
         let result = sqlx::query(only_own_schema_query!(
             "gis",
             "UPDATE gis.factory_maps SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
         ))
         .bind(id)
         .bind(self.tenant_id)
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await?;
+        scope.commit().await?;
         Ok(result.rows_affected() > 0)
     }
 
     pub async fn list_device_locations(&self) -> Result<Vec<DeviceLocation>, sqlx::Error> {
-        sqlx::query_as::<_, DeviceLocation>(
+        let mut scope = self.db.scope_read().await?;
+        let result = sqlx::query_as::<_, DeviceLocation>(
             only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
         )
         .bind(self.tenant_id)
-        .fetch_all(&self.pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        if result.is_ok() {
+            scope.commit().await?;
+        }
+        result
     }
 
     pub async fn list_pipelines(&self) -> Result<Vec<Pipeline>, sqlx::Error> {
-        sqlx::query_as::<_, Pipeline>(
+        let mut scope = self.db.scope_read().await?;
+        let result = sqlx::query_as::<_, Pipeline>(
             only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
         )
         .bind(self.tenant_id)
-        .fetch_all(&self.pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        if result.is_ok() {
+            scope.commit().await?;
+        }
+        result
     }
 
     pub async fn list_warehouse_locations(&self) -> Result<Vec<WarehouseLocation>, sqlx::Error> {
-        sqlx::query_as::<_, WarehouseLocation>(
+        let mut scope = self.db.scope_read().await?;
+        let result = sqlx::query_as::<_, WarehouseLocation>(
             only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
         )
         .bind(self.tenant_id)
-        .fetch_all(&self.pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        if result.is_ok() {
+            scope.commit().await?;
+        }
+        result
     }
 
     pub async fn list_locations(&self) -> Result<Vec<Location>, sqlx::Error> {
-        sqlx::query_as::<_, Location>(
+        let mut scope = self.db.scope_read().await?;
+        let result = sqlx::query_as::<_, Location>(
             only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
         )
         .bind(self.tenant_id)
-        .fetch_all(&self.pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        if result.is_ok() {
+            scope.commit().await?;
+        }
+        result
     }
 
     pub async fn list_devices(&self) -> Result<Vec<Device>, sqlx::Error> {
-        sqlx::query_as::<_, Device>(
+        let mut scope = self.db.scope_read().await?;
+        let result = sqlx::query_as::<_, Device>(
             only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
         )
         .bind(self.tenant_id)
-        .fetch_all(&self.pool)
-        .await
+        .fetch_all(&mut scope)
+        .await;
+        if result.is_ok() {
+            scope.commit().await?;
+        }
+        result
     }
 }

@@ -52,16 +52,27 @@ pub async fn get_marketplace_summary(
 
     let locale = Locale::from_headers(&headers).as_sql();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open read scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to open database scope: {}",
+                e
+            )));
+        }
+    };
+
     let total: (i64,) =
         sqlx::query_as("SELECT COUNT(*) FROM core.core_plugins WHERE is_published = true")
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or((0,));
 
     let categories: Vec<PluginCategory> = sqlx::query_as(
         "SELECT id, name, description, sort_order, is_active, created_at FROM core.core_plugin_categories WHERE is_active = true ORDER BY sort_order",
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -69,7 +80,7 @@ pub async fn get_marketplace_summary(
         "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true AND is_featured = true ORDER BY install_count DESC LIMIT 6"
     )
     .bind(locale)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -77,7 +88,7 @@ pub async fn get_marketplace_summary(
         "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true ORDER BY published_at DESC LIMIT 6",
     )
     .bind(locale)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -85,9 +96,11 @@ pub async fn get_marketplace_summary(
         "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true AND rating_count > 0 ORDER BY rating DESC LIMIT 6"
     )
     .bind(locale)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+
+    let _ = scope.commit().await;
 
     let summary = MarketplaceSummary {
         total_plugins: total.0,
@@ -109,12 +122,25 @@ pub async fn list_categories(
 ) -> Json<CoreResponse<Vec<PluginCategory>>> {
     tracing::info!("[Plugin] Listing categories");
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open read scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to open database scope: {}",
+                e
+            )));
+        }
+    };
+
     let categories: Vec<PluginCategory> = sqlx::query_as(
         "SELECT id, name, description, sort_order, is_active, created_at FROM core.core_plugin_categories WHERE is_active = true ORDER BY sort_order",
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+
+    let _ = scope.commit().await;
 
     Json(CoreResponse::success(categories, "Categories retrieved"))
 }
@@ -160,13 +186,24 @@ pub async fn list_plugins(
     });
     let is_free = filters.is_free;
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open read scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to open database scope: {}",
+                e
+            )));
+        }
+    };
+
     let total: (i64,) = sqlx::query_as(
         "SELECT COUNT(*) FROM core.core_plugins WHERE is_published = true AND ($1::text IS NULL OR category = $1) AND ($2::text IS NULL OR (name ILIKE $2 OR description ILIKE $2)) AND ($3::boolean IS NULL OR is_free = $3)",
     )
     .bind(category)
     .bind(search_pattern.as_deref())
     .bind(is_free)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or((0,));
 
@@ -189,18 +226,21 @@ pub async fn list_plugins(
         .bind(is_free)
         .bind(page_size as i64)
         .bind(offset as i64)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(p) => p,
         Err(e) => {
             tracing::error!("[Plugin] Failed to fetch plugins: {:?}", e);
+            let _ = scope.rollback().await;
             return Json(CoreResponse::error(&format!(
                 "Failed to fetch plugins: {}",
                 e
             )));
         }
     };
+
+    let _ = scope.commit().await;
 
     let response = PluginListResponse {
         plugins,
@@ -222,12 +262,24 @@ pub async fn get_plugin(
     tracing::info!("[Plugin] Getting plugin: {}", code);
 
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open read scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to open database scope: {}",
+                e
+            )));
+        }
+    };
     let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&code)
         .bind(locale)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
+
+    let _ = scope.commit().await;
 
     match plugin {
         Some(p) => Json(CoreResponse::success(p, "Plugin retrieved")),
@@ -252,13 +304,26 @@ pub async fn get_plugin_versions(
 ) -> Json<CoreResponse<Vec<PluginVersion>>> {
     tracing::info!("[Plugin] Getting versions for plugin: {}", plugin_id);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open read scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to open database scope: {}",
+                e
+            )));
+        }
+    };
+
     let versions: Vec<PluginVersion> = sqlx::query_as(
         "SELECT id, plugin_id, version, release_notes, download_url, is_latest, is_stable, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 ORDER BY created_at DESC",
     )
     .bind(plugin_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+
+    let _ = scope.commit().await;
 
     Json(CoreResponse::success(versions, "Versions retrieved"))
 }
@@ -283,13 +348,26 @@ pub async fn get_plugin_reviews(
 ) -> Json<CoreResponse<Vec<PluginReview>>> {
     tracing::info!("[Plugin] Getting reviews for plugin: {}", plugin_id);
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open read scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to open database scope: {}",
+                e
+            )));
+        }
+    };
+
     let reviews: Vec<PluginReview> = sqlx::query_as(
         "SELECT id, plugin_id, user_id, rating, title, content, is_featured, helpful_count, created_at FROM core.core_plugin_reviews WHERE plugin_id = $1 ORDER BY is_featured DESC, helpful_count DESC, created_at DESC"
     )
     .bind(plugin_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+
+    let _ = scope.commit().await;
 
     Json(CoreResponse::success(reviews, "Reviews retrieved"))
 }
@@ -323,6 +401,17 @@ pub async fn create_review(
     let user_id = claims.user_id().unwrap_or_else(|_| Uuid::nil());
     let user_name = claims.username.clone();
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("Failed to open write scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to create review: {}",
+                e
+            )));
+        }
+    };
+
     let review_result = sqlx::query_as(
         r#"
         INSERT INTO core.core_plugin_reviews (plugin_id, user_id, user_name, rating, title, content)
@@ -336,13 +425,17 @@ pub async fn create_review(
     .bind(req.rating)
     .bind(&req.title)
     .bind(&req.content)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match review_result {
-        Ok(review) => Json(CoreResponse::success(review, "Review created")),
+        Ok(review) => {
+            let _ = scope.commit().await;
+            Json(CoreResponse::success(review, "Review created"))
+        }
         Err(e) => {
             tracing::error!("Failed to create review: {}", e);
+            let _ = scope.rollback().await;
             Json(CoreResponse::error(&format!(
                 "Failed to create review: {}",
                 e

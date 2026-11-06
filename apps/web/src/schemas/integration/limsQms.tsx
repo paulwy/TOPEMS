@@ -136,6 +136,9 @@ export const limsQmsSyncSchema: EntitySchema = {
     resource: 'limsQmsSyncs',
   },
 
+  // 批 18：写权限资源前缀（模块级码 → 资源级码）
+  permissionResource: 'integration:lims_qms_sync',
+
   fields: limsQmsFields,
 
   list: {

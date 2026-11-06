@@ -97,6 +97,9 @@ export const ticketSchema: EntitySchema = {
     resource: 'tickets',
   },
 
+  // 批 18：写权限资源前缀（模块级码 → 资源级码）
+  permissionResource: 'ticket:ticket',
+
   fields: [
     {
       name: 'ticket_no',

@@ -17,8 +17,13 @@ use lettre::{
     },
     Transport,
 };
-use sqlx::{PgPool, Row};
+use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_db::scope::Db;
+
+type RlsTxnCell =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+
 fn get_tenant_id(claims: &Claims) -> Uuid {
     claims
         .tenant_id
@@ -187,9 +192,32 @@ lazy_static::lazy_static! {
     )
 )]
 pub async fn list_emails(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Communication mail list_emails called for user: {}",
         claims.username
@@ -221,7 +249,7 @@ pub async fn list_emails(
         "iam"
     ))
     .bind(user_id)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -269,10 +297,33 @@ pub async fn list_emails(
     )
 )]
 pub async fn send_email(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<SendEmailRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Communication mail send_email called with: {:?} by user: {}",
         payload,
@@ -303,7 +354,7 @@ pub async fn send_email(
         "iam"
     ))
     .bind(Uuid::parse_str(&claims.sub).unwrap_or_default())
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(email)) => email,
@@ -349,7 +400,7 @@ pub async fn send_email(
             .bind(&payload.body)
             .bind(&payload.html_body)
             .bind(tenant_bind)
-            .execute(&pool)
+            .execute(&mut scope)
             .await;
 
             Json(serde_json::json!({
@@ -386,10 +437,33 @@ pub async fn send_email(
     tag = "email"
 )]
 pub async fn get_email(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Communication mail get_email called with id: {} for user: {}",
         id,
@@ -437,7 +511,7 @@ pub async fn get_email(
     ))
     .bind(email_id)
     .bind(user_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -485,10 +559,33 @@ pub async fn get_email(
     tag = "email"
 )]
 pub async fn delete_email(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Communication mail delete_email called with id: {} for user: {}",
         id,
@@ -536,7 +633,7 @@ pub async fn delete_email(
         ))
         .bind(email_id)
         .bind(user_id)
-        .fetch_one(&pool)
+        .fetch_one(&mut scope)
         .await
         .unwrap_or(false);
 
@@ -555,7 +652,7 @@ pub async fn delete_email(
         "UPDATE public.core_emails SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
     ))
     .bind(email_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({
@@ -593,10 +690,33 @@ pub async fn delete_email(
     tag = "email"
 )]
 pub async fn mark_as_read(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Communication mail mark_as_read called with id: {} for user: {}",
         id,
@@ -634,14 +754,15 @@ pub async fn mark_as_read(
         r#"
         SELECT EXISTS(
             SELECT 1 FROM public.core_emails e
-            JOIN core_users u_to ON e.to_email = u_to.email
+            JOIN iam.users u_to ON e.to_email = u_to.email
             WHERE e.id = $1 AND u_to.id = $2
         )
-        "#
+        "#,
+        "iam"
     ))
     .bind(email_id)
     .bind(user_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(false);
 
@@ -659,7 +780,7 @@ pub async fn mark_as_read(
         "UPDATE public.core_emails SET is_read = TRUE, read_at = NOW() WHERE id = $1"
     ))
     .bind(email_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({
@@ -697,10 +818,33 @@ pub async fn mark_as_read(
     tag = "email"
 )]
 pub async fn list_templates(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Communication mail list_templates called for user: {}",
         claims.username
@@ -729,7 +873,7 @@ pub async fn list_templates(
         "#
     ))
     .bind(locale)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -779,10 +923,33 @@ pub async fn list_templates(
     tag = "email"
 )]
 pub async fn create_template(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateEmailTemplateRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Communication mail create_template called with: {:?} by user: {}",
         payload,
@@ -833,7 +1000,7 @@ pub async fn create_template(
     .bind(&payload.body_template)
     .bind(&payload.description)
     .bind(tenant_bind)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -864,11 +1031,34 @@ pub async fn create_template(
 }
 
 pub async fn get_template(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     headers: HeaderMap,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Communication mail get_template called with id: {} for user: {}",
         id,
@@ -911,7 +1101,7 @@ pub async fn get_template(
     ))
     .bind(template_id)
     .bind(locale)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -947,11 +1137,34 @@ pub async fn get_template(
 }
 
 pub async fn update_template(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(payload): Json<UpdateEmailTemplateRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Communication mail update_template called with id: {} and payload: {:?} by user: {}",
         id,
@@ -999,7 +1212,7 @@ pub async fn update_template(
     .bind(&payload.body_template)
     .bind(&payload.description)
     .bind(template_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -1036,10 +1249,33 @@ pub async fn update_template(
 }
 
 pub async fn delete_template(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Communication mail delete_template called with id: {} for user: {}",
         id,
@@ -1073,7 +1309,7 @@ pub async fn delete_template(
         "UPDATE core_email_templates SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
     ))
     .bind(template_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({
@@ -1101,11 +1337,34 @@ pub async fn delete_template(
 }
 
 pub async fn send_with_template(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(payload): Json<SendWithTemplateRequest>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "Communication mail send_with_template called with id: {} and payload: {:?} by user: {}",
         id,
@@ -1144,7 +1403,7 @@ pub async fn send_with_template(
         "#
     ))
     .bind(template_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let (subject_template, body_template) = match result {
@@ -1446,7 +1705,7 @@ pub fn send_email_async(
 /// 2. DashMap 仅作进程内状态镜像（供 get_queue_status/get_queue_stats 即时查询）；
 /// 3. 落库失败时退化为纯内存队列兜底（仍尝试即时发送），并记录 error 日志。
 pub fn queue_email(
-    pool: &PgPool,
+    db: &Db,
     from: String,
     to: String,
     subject: String,
@@ -1474,55 +1733,65 @@ pub fn queue_email(
     // DashMap 进程内镜像（供状态查询；落库失败时由 drain_memory_queue 兜底发送）
     EMAIL_QUEUE.insert(id.clone(), queued_email);
 
-    let pool = pool.clone();
+    let db = db.clone();
     let id_for_task = id.clone();
     tokio::spawn(async move {
         // 持久化写库（主路径）
-        match sqlx::query(only_own_schema_query!(
-            "public",
-            "INSERT INTO core_email_queue \
-             (id, from_email, to_email, subject, body, html_body, cc, bcc, attempts, max_attempts, status, tenant_id) \
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, 3, 'pending', $9::uuid)"
-        ))
-        .bind(&id_for_task)
-        .bind(&from)
-        .bind(&to)
-        .bind(&subject)
-        .bind(&body)
-        .bind(&html_body)
-        .bind(cc.unwrap_or_default())
-        .bind(bcc.unwrap_or_default())
-        .bind(Uuid::nil())
-        .execute(&pool)
-        .await
-        {
-            Ok(_) => tracing::info!("Email queued (persisted): {}", id_for_task),
+        match db.scope().await {
+            Ok(mut scope) => {
+                match sqlx::query(only_own_schema_query!(
+                    "public",
+                    "INSERT INTO core_email_queue \
+                     (id, from_email, to_email, subject, body, html_body, cc, bcc, attempts, max_attempts, status, tenant_id) \
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, 3, 'pending', $9::uuid)"
+                ))
+                .bind(&id_for_task)
+                .bind(&from)
+                .bind(&to)
+                .bind(&subject)
+                .bind(&body)
+                .bind(&html_body)
+                .bind(cc.unwrap_or_default())
+                .bind(bcc.unwrap_or_default())
+                .bind(Uuid::nil())
+                .execute(&mut scope)
+                .await
+                {
+                    Ok(_) => tracing::info!("Email queued (persisted): {}", id_for_task),
+                    Err(e) => {
+                        // 落库失败：内存兜底（重启仍会丢，故 error 级别告警），
+                        // 后续 process_queue 会经 drain_memory_queue 即时尝试发送
+                        tracing::error!(
+                            "邮件入队落库失败（降级内存队列，重启会丢信）: {}",
+                            e
+                        );
+                    }
+                }
+                if let Err(e) = scope.commit().await {
+                    tracing::error!("邮件入队事务提交失败（降级内存队列）: {}", e);
+                }
+            }
             Err(e) => {
-                // 落库失败：内存兜底（重启仍会丢，故 error 级别告警），
-                // 后续 process_queue 会经 drain_memory_queue 即时尝试发送
-                tracing::error!(
-                    "邮件入队落库失败（降级内存队列，重启会丢信）: {}",
-                    e
-                );
+                tracing::error!("邮件入队落库失败（降级内存队列，重启会丢信）: {}", e);
             }
         }
 
-        process_queue(&pool).await;
+        process_queue(&db).await;
     });
 
     id
 }
 
 /// 触发队列消费：DB 持久队列为主，内存镜像兜底。
-pub async fn process_queue(pool: &PgPool) {
-    process_persisted_queue(pool).await;
+pub async fn process_queue(db: &Db) {
+    process_persisted_queue(db).await;
     drain_memory_queue().await;
 }
 
 /// DB 持久队列消费：拉取 pending → 标记 sending → 发送 → 回写状态。
 /// 失败未超 max_attempts 保持 pending（下次入队/下次触发时重发，带服务端即时重试）；
 /// 超过 max_attempts 标记 failed + error_message，待人工重发。
-async fn process_persisted_queue(pool: &PgPool) {
+async fn process_persisted_queue(db: &Db) {
     type QueueRow = (
         String,
         String,
@@ -1535,6 +1804,13 @@ async fn process_persisted_queue(pool: &PgPool) {
         i32,
         i32,
     );
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("邮件队列拉取 pending 失败: {}", e);
+            return;
+        }
+    };
     let rows = match sqlx::query_as::<_, QueueRow>(only_own_schema_query!(
         "public",
         "SELECT id, from_email, to_email, subject, body, html_body, cc, bcc, attempts, max_attempts \
@@ -1543,7 +1819,7 @@ async fn process_persisted_queue(pool: &PgPool) {
          ORDER BY created_at ASC \
          LIMIT 20"
     ))
-    .fetch_all(pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => rows,
@@ -1562,7 +1838,7 @@ async fn process_persisted_queue(pool: &PgPool) {
             "UPDATE core_email_queue SET status = 'sending', updated_at = NOW() WHERE id = $1"
         ))
         .bind(&id)
-        .execute(pool)
+        .execute(&mut scope)
         .await;
 
         match send_email_with_lettre(
@@ -1580,7 +1856,7 @@ async fn process_persisted_queue(pool: &PgPool) {
                     "UPDATE core_email_queue SET status = 'sent', sent_at = NOW(), updated_at = NOW() WHERE id = $1"
                 ))
                 .bind(&id)
-                .execute(pool)
+                .execute(&mut scope)
                 .await;
                 tracing::info!("Email queued {} sent successfully (persisted)", id);
             }
@@ -1599,7 +1875,7 @@ async fn process_persisted_queue(pool: &PgPool) {
                 .bind(next_attempts)
                 .bind(status)
                 .bind(e.to_string())
-                .execute(pool)
+                .execute(&mut scope)
                 .await;
                 if status == "failed" {
                     tracing::error!(
@@ -1619,6 +1895,10 @@ async fn process_persisted_queue(pool: &PgPool) {
                 }
             }
         }
+    }
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("邮件队列状态回写事务提交失败: {}", e);
     }
 }
 
@@ -1725,40 +2005,63 @@ pub fn get_queue_stats() -> serde_json::Value {
     tag = "email"
 )]
 pub async fn get_stats(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!("mail get_stats by user: {}", claims.username);
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "public",
         "SELECT COUNT(*) FROM public.core_emails WHERE deleted_at IS NULL"
     ))
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let sent_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "public",
         "SELECT COUNT(*) FROM public.core_emails WHERE sent_at IS NOT NULL AND deleted_at IS NULL"
     ))
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let pending_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "public",
         "SELECT COUNT(*) FROM public.core_emails WHERE sent_at IS NULL AND deleted_at IS NULL"
     ))
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let today_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!("public",
         "SELECT COUNT(*) FROM public.core_emails WHERE sent_at::date = CURRENT_DATE AND deleted_at IS NULL"))
-        .fetch_one(&pool).await.unwrap_or(0);
+        .fetch_one(&mut scope).await.unwrap_or(0);
     let last_sent_at: Option<chrono::DateTime<chrono::Utc>> =
         sqlx::query_scalar(only_own_schema_query!(
             "public",
             "SELECT MAX(sent_at) FROM public.core_emails WHERE sent_at IS NOT NULL AND deleted_at IS NULL"
         ))
-        .fetch_optional(&pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
     Json(serde_json::json!({
@@ -1780,10 +2083,33 @@ pub async fn get_stats(
     tag = "email"
 )]
 pub async fn send_with_template_by_code(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!(
         "mail send_with_template_by_code by user: {}",
         claims.username
@@ -1833,7 +2159,7 @@ pub async fn send_with_template_by_code(
 
     let result = sqlx::query(only_own_schema_query!("public",
         "SELECT subject_template, body_template FROM core_email_templates WHERE name = $1 AND deleted_at IS NULL LIMIT 1"))
-        .bind(&template_code).fetch_optional(&pool).await;
+        .bind(&template_code).fetch_optional(&mut scope).await;
     let (subject_template, body_template) = match result {
         Ok(Some(row)) => (
             row.get::<String, _>("subject_template"),
@@ -1880,7 +2206,7 @@ pub async fn send_with_template_by_code(
             };
             let _ = sqlx::query(only_own_schema_query!("public",
                 "INSERT INTO public.core_emails (id, from_email, to_email, subject, body, tenant_id, sent_at) VALUES ($1,$2,$3,$4,$5,$6,NOW())"))
-                .bind(email_id).bind("system@topems.io").bind(&to).bind(&subject).bind(&body).bind(tenant_bind).execute(&pool).await;
+                .bind(email_id).bind("system@topems.io").bind(&to).bind(&subject).bind(&body).bind(tenant_bind).execute(&mut scope).await;
             Json(
                 serde_json::json!({"success":true,"message":"模板邮件发送成功","code":200,
                 "data":{"id":email_id.to_string(),"to":to,"subject":subject}}),
@@ -1904,10 +2230,33 @@ pub async fn send_with_template_by_code(
     tag = "email"
 )]
 pub async fn resend_emails(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
+    let mut txn_guard = txn_arc.lock().await;
+    let Some(txn) = txn_guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "数据库事务不可用",
+            "data": null,
+            "code": 500
+        }));
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "数据库事务不可用",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
     tracing::info!("mail resend_emails by user: {}", claims.username);
     let email_ids: Vec<String> = payload
         .get("email_ids")
@@ -1937,7 +2286,7 @@ pub async fn resend_emails(
         };
         match sqlx::query(only_own_schema_query!("public",
             "SELECT from_email, to_email, subject, body FROM public.core_emails WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"))
-            .bind(email_id).bind(get_tenant_id(&claims)).fetch_optional(&pool).await
+            .bind(email_id).bind(get_tenant_id(&claims)).fetch_optional(&mut scope).await
         {
             Ok(Some(row)) => {
                 let from_email = row.get::<String,_>("from_email");
@@ -1948,7 +2297,7 @@ pub async fn resend_emails(
                     Ok(_) => {
                         success += 1;
                         let _ = sqlx::query(only_own_schema_query!("public","UPDATE public.core_emails SET sent_at = NOW() WHERE id = $1"))
-                            .bind(email_id).execute(&pool).await;
+                            .bind(email_id).execute(&mut scope).await;
                     }
                     Err(_) => { failed += 1; failed_ids.push(id_str.clone()); }
                 }
@@ -2246,8 +2595,9 @@ mod tests {
             .connect(&std::env::var("DATABASE_URL").unwrap_or_default())
             .await
             .unwrap();
+        let db = Db::new(pool, "communication, public");
         let id = queue_email(
-            &pool,
+            &db,
             "from@x.com".to_string(),
             "to@x.com".to_string(),
             "subject".to_string(),

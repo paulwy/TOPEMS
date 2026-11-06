@@ -12,22 +12,21 @@ use axum::Router;
 use std::sync::Arc;
 use topems_integration::mes_erp_sync::MesErpSyncService;
 use topems_integration::models::AppState as IntegrationAppState;
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
+use topems_shared_db::scope::Db;
 
 /// 真实 Integration 模块：持有完整业务路由
 pub struct IntegrationRealModule {
     routes: Router,
-    pool: sqlx::PgPool,
+    db: Db,
 }
 
 impl IntegrationRealModule {
     /// 异步构建真实 Integration 模块
     pub async fn build() -> Result<Self> {
-        // 与独立 integration 服务一致：search_path 优先 integration schema。
-        // 全局 SEARCH_PATH=flow,mobile,rs,erp,public,iam,shared 不含 integration，
-        // 无前缀 SQL（FROM erp_connections / erp_mappings / external_erp_sync_logs）会解析失败。
-        std::env::set_var("SEARCH_PATH", "integration, public");
+        // 与独立 integration 服务一致：search_path 由业务 Db 作用域显式设置，
+        // 不再修改进程级 SEARCH_PATH（避免污染宿主其他模块的会话基线）。
         let config = ServiceConfig {
             name: "topems-integration",
             port: 8094,
@@ -41,8 +40,9 @@ impl IntegrationRealModule {
             init_telemetry: false,
         };
 
-        let ctx = bootstrap_service(&config).await?;
+        let ctx = bootstrap_service_shared(&config).await?;
         topems_shared_db::database::probe_connection(&ctx.db).await?;
+        let db = Db::new(ctx.db.clone(), "integration, public");
 
         // 从环境变量获取服务 URL
         let lims_url = std::env::var("LIMS_SERVICE_URL")
@@ -67,7 +67,7 @@ impl IntegrationRealModule {
 
         // 构建完整 AppState
         let app_state = IntegrationAppState {
-            pool: ctx.db.clone(),
+            db: db.clone(),
             lims_url,
             qms_url,
             mes_url,
@@ -84,6 +84,7 @@ impl IntegrationRealModule {
         let routes = axum::Router::new()
             .merge(topems_integration::routes::create_routes_embedded(
                 app_state,
+                ctx.db.clone(),
             ))
             .layer(axum::middleware::from_fn_with_state(
                 ctx.auth_state.clone(),
@@ -95,10 +96,7 @@ impl IntegrationRealModule {
                 topems_shared_db::rls::rls_middleware,
             ));
 
-        Ok(Self {
-            routes,
-            pool: ctx.db,
-        })
+        Ok(Self { routes, db })
     }
 }
 
@@ -117,7 +115,14 @@ impl Module for IntegrationRealModule {
     }
 
     async fn health_check(&self) -> ModuleHealth {
-        let db_healthy = sqlx::query("SELECT 1").execute(&self.pool).await.is_ok();
+        let db_healthy = self.db.check_health().await.is_ok();
+        let stats = self.db.stats();
+        tracing::debug!(
+            pool_size = stats.size,
+            pool_idle = stats.idle,
+            pool_max = stats.max,
+            "[integration] 健康检查连接池统计"
+        );
 
         if db_healthy {
             ModuleHealth::healthy(self.name(), self.group())

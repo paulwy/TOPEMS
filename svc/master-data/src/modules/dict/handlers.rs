@@ -1,34 +1,23 @@
 use axum::{
-    extract::{Extension, Path, Query, State},
+    extract::{Path, Query, State},
     http::HeaderMap,
-    Json,
+    Extension, Json,
 };
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::{resolve_create_tenant, RlsTxnCell};
+use topems_shared_core::locale::Locale;
+use topems_shared_core::response::api_success;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared_core::locale::Locale;
-use topems_shared_core::response::api_success;
-use topems_shared_core::response::ApiResponse;
 
 use super::models::{
     BatchCreateDictItemsRequest, CreateDictItemRequest, CreateDictTypeRequest, DictItem,
     DictItemListResponse, DictItemQuery, DictType, DictTypeListResponse, DictTypeQuery,
     UpdateDictItemRequest, UpdateDictTypeRequest,
 };
-
-/// 请求租户：超管/无租户 → None（全量）；普通用户 → claims 租户。
-fn tenant_of(claims: &Claims) -> Option<uuid::Uuid> {
-    if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    }
-}
 
 fn dict_type_columns(locale_placeholder: &str) -> String {
     format!(
@@ -49,6 +38,18 @@ fn csv_field(s: &str) -> String {
         format!("\"{}\"", s.replace('"', "\"\""))
     } else {
         s.to_string()
+    }
+}
+
+/// 写路径落库租户：
+/// - 普通用户 → `claims.tenant_id`（`tenant_middleware` 已确保存在且合法）；
+/// - 超管 / 服务身份 → 系统租户 `…0001`（与标准字典种子同一归属），
+///   不再落 `tenant_id = 0`。
+fn create_tenant_id(claims: &Claims) -> Result<Uuid, String> {
+    match resolve_create_tenant(claims) {
+        Ok(Some(tenant_id)) => Ok(tenant_id),
+        Ok(None) => Ok(Uuid::from_u128(1)),
+        Err((_code, message)) => Err(message),
     }
 }
 
@@ -73,6 +74,7 @@ fn csv_field(s: &str) -> String {
 )]
 pub async fn list_dict_types(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
     Query(query): Query<DictTypeQuery>,
 ) -> ApiResponse<DictTypeListResponse> {
@@ -84,8 +86,21 @@ pub async fn list_dict_types(
     let status = query.status.clone();
     let search = query.search.clone();
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.rls_db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     let total: i64 = match sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_dict_types
+        r#"SELECT COUNT(*) FROM public.core_dict_types
            WHERE deleted_at IS NULL AND ($1::text IS NULL OR category = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR code ILIKE '%' || $3 || '%' OR name ILIKE '%' || $3 || '%')"#,
@@ -93,7 +108,7 @@ pub async fn list_dict_types(
     .bind(category.clone())
     .bind(status.clone())
     .bind(search.clone())
-    .fetch_one(&state.db)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -104,7 +119,7 @@ pub async fn list_dict_types(
     };
 
     let sql = format!(
-        r#"SELECT {} FROM core_dict_types
+        r#"SELECT {} FROM public.core_dict_types
            WHERE deleted_at IS NULL AND ($1::text IS NULL OR category = $1)
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR code ILIKE '%' || $3 || '%' OR name ILIKE '%' || $3 || '%')
@@ -120,7 +135,7 @@ pub async fn list_dict_types(
         .bind(page_size)
         .bind(offset)
         .bind(Locale::from_headers(&headers).as_sql())
-        .fetch_all(&state.db)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(v) => v,
@@ -154,18 +169,32 @@ pub async fn list_dict_types(
 )]
 pub async fn get_dict_type(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DictType> {
     let sql = format!(
-        r#"SELECT {} FROM core_dict_types WHERE deleted_at IS NULL AND id = $1"#,
+        r#"SELECT {} FROM public.core_dict_types WHERE deleted_at IS NULL AND id = $1"#,
         dict_type_columns("$2")
     );
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.rls_db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
 
     let dict_type: Option<DictType> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .bind(Locale::from_headers(&headers).as_sql())
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(v) => v,
@@ -195,11 +224,11 @@ pub async fn get_dict_type(
 )]
 pub async fn create_dict_type(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateDictTypeRequest>,
 ) -> ApiResponse<DictType> {
-    let tenant = tenant_of(&claims);
     if req.code.trim().is_empty() {
         return ApiResponse::from(TopemsError::ValidationFailed(
             "字典类型编码不能为空".to_string(),
@@ -211,11 +240,29 @@ pub async fn create_dict_type(
         ));
     }
 
+    let tenant_id = match create_tenant_id(&claims) {
+        Ok(id) => id,
+        Err(message) => return ApiResponse::from(TopemsError::ValidationFailed(message)),
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.rls_db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     let sql = format!(
-        r#"INSERT INTO core_dict_types (code, name, name_en, category, description, status, tenant_id)
-           VALUES ($1, $2, $3, $4, $5, 'active', $7)
+        r#"INSERT INTO public.core_dict_types (code, name, name_en, category, description, status, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, 'active', $6)
            RETURNING {}"#,
-        dict_type_columns("$6")
+        dict_type_columns("$7")
     );
 
     let dict_type: DictType = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
@@ -224,9 +271,9 @@ pub async fn create_dict_type(
         .bind(req.name_en)
         .bind(req.category.unwrap_or_else(|| "general".to_string()))
         .bind(req.description)
+        .bind(tenant_id)
         .bind(Locale::from_headers(&headers).as_sql())
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .fetch_one(&state.db)
+        .fetch_one(&mut scope)
         .await
     {
         Ok(v) => v,
@@ -256,12 +303,13 @@ pub async fn create_dict_type(
 )]
 pub async fn update_dict_type(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDictTypeRequest>,
 ) -> ApiResponse<DictType> {
     let sql = format!(
-        r#"UPDATE core_dict_types
+        r#"UPDATE public.core_dict_types
            SET code = COALESCE($1, code),
                name = COALESCE($2, name),
                name_en = COALESCE($8, name_en),
@@ -274,6 +322,19 @@ pub async fn update_dict_type(
         dict_type_columns("$9")
     );
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.rls_db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     let dict_type: Option<DictType> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(req.code)
         .bind(req.name)
@@ -284,7 +345,7 @@ pub async fn update_dict_type(
         .bind(id)
         .bind(req.name_en)
         .bind(Locale::from_headers(&headers).as_sql())
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(v) => v,
@@ -316,12 +377,27 @@ pub async fn update_dict_type(
 )]
 pub async fn delete_dict_type(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
-    let result = sqlx::query(r#"UPDATE core_dict_types SET deleted_at = NOW() WHERE id = $1"#)
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.rls_db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
+    let result =
+        sqlx::query(r#"UPDATE public.core_dict_types SET deleted_at = NOW() WHERE id = $1"#)
+            .bind(id)
+            .execute(&mut scope)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => api_success("字典类型删除成功".to_string()),
@@ -354,6 +430,7 @@ pub async fn delete_dict_type(
 )]
 pub async fn list_dict_items(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
     Path(dict_type_id): Path<Uuid>,
     Query(query): Query<DictItemQuery>,
@@ -365,8 +442,21 @@ pub async fn list_dict_items(
     let search = query.search.clone();
     let status = query.status.clone();
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.rls_db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     let total: i64 = match sqlx::query_scalar(
-        r#"SELECT COUNT(*) FROM core_dict_items
+        r#"SELECT COUNT(*) FROM public.core_dict_items
            WHERE deleted_at IS NULL AND dict_type_id = $1
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR code ILIKE '%' || $3 || '%' OR name ILIKE '%' || $3 || '%')"#,
@@ -374,7 +464,7 @@ pub async fn list_dict_items(
     .bind(dict_type_id)
     .bind(status.clone())
     .bind(search.clone())
-    .fetch_one(&state.db)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -385,7 +475,7 @@ pub async fn list_dict_items(
     };
 
     let sql = format!(
-        r#"SELECT {} FROM core_dict_items
+        r#"SELECT {} FROM public.core_dict_items
            WHERE deleted_at IS NULL AND dict_type_id = $1
              AND ($2::text IS NULL OR status = $2)
              AND ($3::text IS NULL OR code ILIKE '%' || $3 || '%' OR name ILIKE '%' || $3 || '%')
@@ -401,7 +491,7 @@ pub async fn list_dict_items(
         .bind(page_size)
         .bind(offset)
         .bind(Locale::from_headers(&headers).as_sql())
-        .fetch_all(&state.db)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(v) => v,
@@ -435,18 +525,32 @@ pub async fn list_dict_items(
 )]
 pub async fn get_dict_item(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DictItem> {
     let sql = format!(
-        r#"SELECT {} FROM core_dict_items WHERE deleted_at IS NULL AND id = $1"#,
+        r#"SELECT {} FROM public.core_dict_items WHERE deleted_at IS NULL AND id = $1"#,
         dict_item_columns("$2")
     );
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.rls_db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
 
     let dict_item: Option<DictItem> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .bind(Locale::from_headers(&headers).as_sql())
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(v) => v,
@@ -476,11 +580,11 @@ pub async fn get_dict_item(
 )]
 pub async fn create_dict_item(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateDictItemRequest>,
 ) -> ApiResponse<DictItem> {
-    let tenant = tenant_of(&claims);
     if req.code.trim().is_empty() {
         return ApiResponse::from(TopemsError::ValidationFailed(
             "字典项编码不能为空".to_string(),
@@ -492,11 +596,29 @@ pub async fn create_dict_item(
         ));
     }
 
+    let tenant_id = match create_tenant_id(&claims) {
+        Ok(id) => id,
+        Err(message) => return ApiResponse::from(TopemsError::ValidationFailed(message)),
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.rls_db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     let sql = format!(
-        r#"INSERT INTO core_dict_items (dict_type_id, code, name, name_en, value, sort_order, parent_id, extra_data, status, tenant_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $10)
+        r#"INSERT INTO public.core_dict_items (dict_type_id, code, name, name_en, value, sort_order, parent_id, extra_data, status, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9)
            RETURNING {}"#,
-        dict_item_columns("$9")
+        dict_item_columns("$10")
     );
 
     let dict_item: DictItem = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
@@ -508,9 +630,9 @@ pub async fn create_dict_item(
         .bind(req.sort_order.unwrap_or(0))
         .bind(req.parent_id)
         .bind(req.extra_data)
+        .bind(tenant_id)
         .bind(Locale::from_headers(&headers).as_sql())
-        .bind(tenant.unwrap_or_else(uuid::Uuid::nil))
-        .fetch_one(&state.db)
+        .fetch_one(&mut scope)
         .await
     {
         Ok(v) => v,
@@ -540,12 +662,13 @@ pub async fn create_dict_item(
 )]
 pub async fn update_dict_item(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDictItemRequest>,
 ) -> ApiResponse<DictItem> {
     let sql = format!(
-        r#"UPDATE core_dict_items
+        r#"UPDATE public.core_dict_items
            SET code = COALESCE($1, code),
                name = COALESCE($2, name),
                name_en = COALESCE($10, name_en),
@@ -560,6 +683,19 @@ pub async fn update_dict_item(
         dict_item_columns("$11")
     );
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.rls_db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     let dict_item: Option<DictItem> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(req.code)
         .bind(req.name)
@@ -572,7 +708,7 @@ pub async fn update_dict_item(
         .bind(id)
         .bind(req.name_en)
         .bind(Locale::from_headers(&headers).as_sql())
-        .fetch_optional(&state.db)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(v) => v,
@@ -604,12 +740,27 @@ pub async fn update_dict_item(
 )]
 pub async fn delete_dict_item(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
-    let result = sqlx::query(r#"UPDATE core_dict_items SET deleted_at = NOW() WHERE id = $1"#)
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.rls_db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
+    let result =
+        sqlx::query(r#"UPDATE public.core_dict_items SET deleted_at = NOW() WHERE id = $1"#)
+            .bind(id)
+            .execute(&mut scope)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => api_success("字典项删除成功".to_string()),
@@ -635,6 +786,8 @@ pub async fn delete_dict_item(
 )]
 pub async fn batch_create_dict_items(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<BatchCreateDictItemsRequest>,
 ) -> ApiResponse<Vec<DictItem>> {
@@ -644,19 +797,29 @@ pub async fn batch_create_dict_items(
         ));
     }
 
-    let mut tx = match state.db.begin().await {
-        Ok(tx) => tx,
+    let tenant_id = match create_tenant_id(&claims) {
+        Ok(id) => id,
+        Err(message) => return ApiResponse::from(TopemsError::ValidationFailed(message)),
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.rls_db.scope_with(txn).await {
+        Ok(scope) => scope,
         Err(e) => {
-            tracing::error!("开启事务失败: {}", e);
-            return ApiResponse::from(TopemsError::Internal("开启事务失败".to_string()));
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
         }
     };
 
     let insert_sql = format!(
-        r#"INSERT INTO core_dict_items (dict_type_id, code, name, name_en, value, sort_order, parent_id, extra_data, status, tenant_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        r#"INSERT INTO public.core_dict_items (dict_type_id, code, name, name_en, value, sort_order, parent_id, extra_data, status, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9)
            RETURNING {}"#,
-        dict_item_columns("$9")
+        dict_item_columns("$10")
     );
 
     let mut results: Vec<DictItem> = Vec::with_capacity(req.items.len());
@@ -670,23 +833,24 @@ pub async fn batch_create_dict_items(
             .bind(item.sort_order.unwrap_or(0))
             .bind(item.parent_id)
             .bind(item.extra_data)
+            .bind(tenant_id)
             .bind(Locale::from_headers(&headers).as_sql())
-            .fetch_one(&mut *tx)
+            .fetch_one(&mut scope)
             .await
         {
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("批量创建字典项失败: {}", e);
-                let _ = tx.rollback().await;
+                // 复用请求事务时不能只靠"未提交"兜底：本请求若继续返回 2xx，
+                // 中间件会提交已经插入的部分行。这里显式回滚并摘除事务句柄。
+                drop(scope);
+                if let Some(txn) = guard.take() {
+                    let _ = txn.rollback().await;
+                }
                 return ApiResponse::from(TopemsError::Internal("批量创建字典项失败".to_string()));
             }
         };
         results.push(dict_item);
-    }
-
-    if let Err(e) = tx.commit().await {
-        tracing::error!("提交事务失败: {}", e);
-        return ApiResponse::from(TopemsError::Internal("提交事务失败".to_string()));
     }
 
     api_success(results)
@@ -707,20 +871,34 @@ pub async fn batch_create_dict_items(
 )]
 pub async fn export_dict_items(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<RlsTxnCell>,
     headers: HeaderMap,
     Path(dict_type_id): Path<Uuid>,
 ) -> String {
     let sql = format!(
-        r#"SELECT {} FROM core_dict_items
+        r#"SELECT {} FROM public.core_dict_items
            WHERE deleted_at IS NULL AND dict_type_id = $1
            ORDER BY sort_order ASC, created_at DESC"#,
         dict_item_columns("$2")
     );
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return "导出失败: 数据库事务不可用".to_string();
+    };
+    let mut scope = match state.rls_db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return format!("导出失败: {}", e);
+        }
+    };
+
     let items: Vec<DictItem> = match sqlx::query_as(sqlx::AssertSqlSafe(sql))
         .bind(dict_type_id)
         .bind(Locale::from_headers(&headers).as_sql())
-        .fetch_all(&state.db)
+        .fetch_all(&mut scope)
         .await
     {
         Ok(v) => v,

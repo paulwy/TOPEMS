@@ -1,9 +1,9 @@
 use axum::extract::FromRef;
 use reqwest::Client;
-use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::auth::AuthState;
 use topems_shared_core::config::CacheConfig;
+use topems_shared_db::scope::Db;
 use topems_shared_event::cache::CacheManager;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_event::service_discovery::{LocalServiceRegistry, PortalServiceAggregator};
@@ -20,7 +20,9 @@ pub struct AppState {
     pub service_registry: Arc<LocalServiceRegistry>,
     pub service_aggregator: Arc<PortalServiceAggregator>,
     pub http_client: Client,
-    pub pool: PgPool,
+    /// 连接治理 B：模块不再持有连接池，业务 SQL 经 `Db` 作用域
+    /// （事务级 `search_path = "public, portal"`）。
+    pub db: Db,
     pub event_publisher: Option<Arc<EventPublisher>>,
     pub dashboard_cache: CacheManager,
     pub notification_client: TypedServiceClient<NotificationApi>,
@@ -40,9 +42,9 @@ impl FromRef<AppState> for AuthState {
     }
 }
 
-impl FromRef<AppState> for PgPool {
+impl FromRef<AppState> for Db {
     fn from_ref(state: &AppState) -> Self {
-        state.pool.clone()
+        state.db.clone()
     }
 }
 
@@ -63,7 +65,7 @@ impl AppState {
     }
 
     #[allow(clippy::unwrap_used)]
-    pub async fn new(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Self {
+    pub async fn new(db: Db, event_publisher: Option<Arc<EventPublisher>>) -> Self {
         let aggregator = PortalServiceAggregator::new();
         aggregator.init_default_services().await;
 
@@ -81,7 +83,7 @@ impl AppState {
             service_registry: Arc::new(LocalServiceRegistry::new()),
             service_aggregator: Arc::new(aggregator),
             http_client: topems_shared_core::shared_http_client(),
-            pool,
+            db,
             event_publisher,
             dashboard_cache,
             notification_client: Self::build_client::<NotificationApi>(&mono_base)

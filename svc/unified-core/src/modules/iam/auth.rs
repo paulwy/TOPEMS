@@ -744,64 +744,14 @@ pub async fn refresh_token(
 
     let refresh_token_hash = hash_token(&refresh_token);
 
-    // RLS FORCE：refresh 请求无 JWT，中间件不设置连接上下文；此处以系统级上下文
-    // （全 0 = RLS 策略管理分支）校验 token 归属，后续写路径再落真实租户上下文。
-    let row = {
-        let mut ctx_tx = match state.pool.begin().await {
-            Ok(tx) => tx,
-            Err(e) => {
-                tracing::error!("开启事务失败: {}", e);
-                return (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(topems_shared_core::response::error_value(
-                        500,
-                        "内部服务器错误",
-                    )),
-                )
-                    .into_response();
-            }
-        };
-        if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-            .bind("00000000-0000-0000-0000-000000000000")
-            .execute(&mut *ctx_tx)
-            .await
-        {
-            tracing::error!("设置租户上下文失败: {}", e);
-            let _ = ctx_tx.rollback().await;
-            return (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(topems_shared_core::response::error_value(
-                    500,
-                    "内部服务器错误",
-                )),
-            )
-                .into_response();
-        }
-        let r = sqlx::query(
-            "SELECT rt.user_id, u.username, u.is_superuser, u.email,
-               (u.status = 'active') AS is_active,
-               COALESCE(u.must_change_password, false) AS must_change_password,
-               COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM public.core_user_roles ur
-                         JOIN public.core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
-               COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM public.core_user_roles ur
-                         JOIN public.core_role_permissions rp ON rp.role_id = ur.role_id
-                         JOIN public.core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
-               rt.id as refresh_token_id
-             FROM public.core_refresh_tokens rt
-             JOIN iam.users u ON rt.user_id = u.id
-             WHERE rt.token_hash = $1 AND rt.expires_at > NOW() AND rt.revoked_at IS NULL",
-        )
+    // RLS：refresh 请求无 JWT/租户上下文，应用角色（topems_app）看不到
+    // public.core_refresh_tokens 的任何行（策略没有「全 0 = 管理分支」）。
+    // 改用表 owner（topems）的 SECURITY DEFINER 函数读取：函数内固定 search_path，
+    // 以 owner 权限绕过 RLS，不依赖请求侧租户 GUC。
+    let row = sqlx::query("SELECT * FROM public.iam_refresh_token_lookup($1)")
         .bind(&refresh_token_hash)
-        .fetch_optional(&mut *ctx_tx)
+        .fetch_optional(&state.pool)
         .await;
-        match ctx_tx.commit().await {
-            Ok(()) => r,
-            Err(e) => {
-                tracing::error!("提交租户上下文事务失败: {}", e);
-                Err(e)
-            }
-        }
-    };
 
     let row = match row {
         Ok(Some(r)) => r,
@@ -931,7 +881,7 @@ pub async fn refresh_token(
     let refresh_expires_at =
         chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours * 7);
 
-    let old_refresh_token_id: Uuid = row.get("refresh_token_id");
+    let old_refresh_token_id: Uuid = row.get("id");
 
     let tx_result = state.pool.begin().await;
     let mut tx = match tx_result {
@@ -1113,47 +1063,14 @@ pub async fn logout(
     hasher.update(refresh_token.as_bytes());
     let token_hash = hex::encode(hasher.finalize());
 
-    // RLS FORCE：logout 请求无 JWT，中间件不设置连接上下文；以系统级上下文
-    // （全 0 = RLS 策略管理分支）校验 token 归属，后续删除/吊销落真实租户上下文。
-    let user_id: Result<Option<Uuid>, sqlx::Error> = {
-        let mut ctx_tx = match state.pool.begin().await {
-            Ok(tx) => tx,
-            Err(e) => {
-                tracing::error!("开启事务失败: {}", e);
-                return (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(topems_shared_core::response::error_value(500, "登出失败")),
-                )
-                    .into_response();
-            }
-        };
-        if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-            .bind("00000000-0000-0000-0000-000000000000")
-            .execute(&mut *ctx_tx)
-            .await
-        {
-            tracing::error!("设置租户上下文失败: {}", e);
-            let _ = ctx_tx.rollback().await;
-            return (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(topems_shared_core::response::error_value(500, "登出失败")),
-            )
-                .into_response();
-        }
-        let r = sqlx::query_scalar(
-            "SELECT user_id FROM public.core_refresh_tokens WHERE token_hash = $1 AND revoked_at IS NULL",
-        )
-        .bind(&token_hash)
-        .fetch_optional(&mut *ctx_tx)
-        .await;
-        match ctx_tx.commit().await {
-            Ok(()) => r,
-            Err(e) => {
-                tracing::error!("提交租户上下文事务失败: {}", e);
-                Err(e)
-            }
-        }
-    };
+    // RLS：logout 请求无 JWT/租户上下文，应用角色（topems_app）看不到
+    // public.core_refresh_tokens 的任何行。改用表 owner（topems）的
+    // SECURITY DEFINER 函数查询 token 归属，不依赖请求侧租户 GUC。
+    let user_id: Result<Option<Uuid>, sqlx::Error> =
+        sqlx::query_scalar("SELECT user_id FROM public.iam_refresh_token_lookup($1)")
+            .bind(&token_hash)
+            .fetch_optional(&state.pool)
+            .await;
 
     let user_id = match user_id {
         Ok(uid) => uid,
@@ -1192,6 +1109,25 @@ pub async fn logout(
     };
 
     tracing::info!("IAM auth logout called for user_id: {}", user_id);
+
+    // 真正吊销当前 refresh token：特权函数写 revoked_at/revoked_reason，
+    // 不受 RLS 租户上下文影响。返回 false 表示已被并发吊销或参数非法（幂等放行）。
+    match sqlx::query_scalar::<_, bool>("SELECT public.iam_refresh_token_revoke($1)")
+        .bind(&token_hash)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(true) => {}
+        Ok(false) => tracing::warn!("refresh token 吊销未命中（可能已被并发吊销）"),
+        Err(e) => {
+            tracing::error!("吊销 refresh token 失败: {}", e);
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(topems_shared_core::response::error_value(500, "登出失败")),
+            )
+                .into_response();
+        }
+    }
 
     // RLS FORCE：删除/吊销需真实租户上下文（logout 无 JWT，按 core_tenant_users 解析租户，
     // 未关联时 fallback 到默认租户，与 login/refresh 同口径）

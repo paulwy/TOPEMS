@@ -4,8 +4,7 @@ use crate::shared::AppState;
 use axum::extract::State;
 use axum::Json;
 use topems_shared_bootstrap::{
-    check_database_health, check_iam_health, health_status_str, overall_health_message,
-    rollup_health_status,
+    check_iam_health, health_status_str, overall_health_message, rollup_health_status,
 };
 use topems_shared_core::health::{DependencyHealth, HealthStatus, ServiceHealth};
 use topems_shared_core::response::ApiResponse;
@@ -45,9 +44,25 @@ pub async fn health_check_detailed(
         }
     };
 
+    let db_dep = match state.db.check_health().await {
+        Ok(_) => DependencyHealth {
+            name: "database".to_string(),
+            status: HealthStatus::Healthy,
+            message: "数据库连接正常".to_string(),
+        },
+        Err(e) => {
+            tracing::error!("数据库健康检查失败: {}", e);
+            DependencyHealth {
+                name: "database".to_string(),
+                status: HealthStatus::Unhealthy,
+                message: format!("数据库连接失败: {}", e),
+            }
+        }
+    };
+
     let dependencies = vec![
         check_iam_health().await,
-        check_database_health(&state.document_service.pool().await).await,
+        db_dep,
         check_ai_service_health().await,
         mcp_dep,
     ];

@@ -11,13 +11,14 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::time::Instant;
 use topems_plugin_registry::shared::AppState as PluginRegistryAppState;
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
+use topems_shared_db::scope::Db;
 
 /// 真实 Plugin Registry 模块：持有完整业务路由
 pub struct PluginRegistryRealModule {
     routes: Router,
-    pool: sqlx::PgPool,
+    db: Db,
 }
 
 impl PluginRegistryRealModule {
@@ -36,12 +37,14 @@ impl PluginRegistryRealModule {
             init_telemetry: false,
         };
 
-        let ctx = bootstrap_service(&config).await?;
-        topems_shared_db::database::probe_connection(&ctx.db).await?;
+        let ctx = bootstrap_service_shared(&config).await?;
+        // 沿用模块原有 SEARCH_PATH：public（业务表均为 core.* 全限定名）。
+        let db = Db::new(ctx.db.clone(), "public");
+        db.check_health().await?;
 
         // 构建完整 AppState
         let app_state = PluginRegistryAppState {
-            pool: topems_shared_auth::ScopedPool::new(ctx.db.clone()),
+            db: db.clone(),
             auth_state: ctx.auth_state.clone(),
             metrics: ctx.metrics.clone(),
             start_time: Instant::now(),
@@ -63,10 +66,7 @@ impl PluginRegistryRealModule {
                 topems_plugin_registry::shared::middleware::jwt_auth_middleware,
             ));
 
-        Ok(Self {
-            routes,
-            pool: ctx.db,
-        })
+        Ok(Self { routes, db })
     }
 }
 
@@ -85,7 +85,7 @@ impl Module for PluginRegistryRealModule {
     }
 
     async fn health_check(&self) -> ModuleHealth {
-        let db_healthy = sqlx::query("SELECT 1").execute(&self.pool).await.is_ok();
+        let db_healthy = self.db.check_health().await.is_ok();
 
         if db_healthy {
             ModuleHealth::healthy(self.name(), self.group())

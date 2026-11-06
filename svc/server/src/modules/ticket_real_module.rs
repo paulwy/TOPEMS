@@ -1,7 +1,7 @@
 //! 真实 Ticket 服务接入模块（TicketRealModule）—— 模块化单体剩余服务接入
 //!
 //! 将真实 `topems-ticket` 服务（lib 形态）作为模块接入统一入口。
-//! ticket 使用 `handlers::ticket_routes() -> Router<PgPool>`（无 ApiState，简化模式），
+//! ticket 使用 `handlers::ticket_routes() -> Router<Db>`（无 ApiState，简化模式），
 //! 含 feedback 兼容路由（feedback 已合并至 ticket）。
 //!
 //! 由 feature `module-ticket` 门控（默认不启用，按客户需求裁剪）。
@@ -12,8 +12,9 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
 use topems_shared_auth::middleware::require_permission;
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::EventPublisher;
 use topems_ticket::feedback_compat;
 use topems_ticket::handlers;
@@ -21,19 +22,16 @@ use topems_ticket::ticket_ext;
 use topems_unified_core::middleware::tier_gate::{tier_gate_middleware, TierGateConfig};
 use topems_unified_core::modules::subscription::PlanTier;
 
-/// 真实 Ticket 模块：持有数据库连接池 + 完整业务路由（ticket + feedback 兼容）
+/// 真实 Ticket 模块：持有数据库作用域句柄 + 完整业务路由（ticket + feedback 兼容）
 pub struct TicketRealModule {
     routes: Router,
-    db: sqlx::PgPool,
+    db: Db,
     event_publisher: Option<Arc<EventPublisher>>,
 }
 
 impl TicketRealModule {
     /// 异步构建真实 Ticket 模块
     pub async fn build() -> Result<Self> {
-        // 与独立部署 main.rs 一致：search_path ticket, public（ticket 表在 ticket schema）
-        std::env::set_var("SEARCH_PATH", "ticket, public");
-
         let config = ServiceConfig {
             name: "topems-ticket",
             port: 8086,
@@ -49,10 +47,13 @@ impl TicketRealModule {
         };
 
         // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标
-        let ctx = bootstrap_service(&config).await?;
+        let ctx = bootstrap_service_shared(&config).await?;
+        // 连接治理 B：共享池之上固化本模块 search_path（显式传值，不依赖 .env）
+        let db = Db::new(ctx.db.clone(), "ticket, public");
 
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
+        db.check_health().await?;
 
         // 2. Ticket 数据库初始化（C-1：自建 DDL 已移除，迁移权威唯一仲裁；
         //    与独立部署 main.rs 一致，Schema 防御由宿主统一路径保障）
@@ -64,7 +65,7 @@ impl TicketRealModule {
             .layer(axum::middleware::from_fn(require_permission(
                 "ticket:admin",
             )))
-            .with_state(ctx.db.clone())
+            .with_state(db.clone())
             // V1.3 tier 治理：ticket 为 Free 层模块（对照组，永不裁剪）
             .layer(axum::middleware::from_fn_with_state(
                 tier_gate_config.clone(),
@@ -91,7 +92,7 @@ impl TicketRealModule {
 
         Ok(Self {
             routes,
-            db: ctx.db.clone(),
+            db,
             event_publisher: ctx.event_publisher.clone(),
         })
     }
@@ -113,11 +114,12 @@ impl Module for TicketRealModule {
 
     async fn health_check(&self) -> ModuleHealth {
         let mut health = ModuleHealth::healthy("ticket-real", ModuleGroup::Core);
-        let db_ok = self.db.size() > 0;
+        let stats = self.db.stats();
+        let db_ok = stats.size > 0 && self.db.check_health().await.is_ok();
         health.dependencies.push(crate::module::DependencyHealth {
             name: "PostgreSQL",
             healthy: db_ok,
-            detail: format!("连接池大小 {}", self.db.size()),
+            detail: format!("连接池大小 {}", stats.size),
         });
         if self.event_publisher.is_some() {
             health.dependencies.push(crate::module::DependencyHealth {

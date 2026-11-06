@@ -104,6 +104,16 @@ pub async fn list_tenant_plugins(
     tracing::info!("[Plugin] Listing plugins for tenant: {}", tenant_id);
 
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open read scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to open database scope: {}",
+                e
+            )));
+        }
+    };
     let installations: Vec<TenantPluginWithDetails> = sqlx::query_as(
         r#"
         SELECT
@@ -121,9 +131,11 @@ pub async fn list_tenant_plugins(
     )
     .bind(tenant_id)
     .bind(locale)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+
+    let _ = scope.commit().await;
 
     Json(CoreResponse::success(
         installations,
@@ -157,6 +169,16 @@ pub async fn list_my_plugins(
     );
 
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open read scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to open database scope: {}",
+                e
+            )));
+        }
+    };
     let installations: Vec<TenantPluginWithDetails> = sqlx::query_as(
         r#"
         SELECT
@@ -174,9 +196,11 @@ pub async fn list_my_plugins(
     )
     .bind(tenant_id)
     .bind(locale)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
+
+    let _ = scope.commit().await;
 
     Json(CoreResponse::success(installations, "My plugins retrieved"))
 }
@@ -194,17 +218,30 @@ async fn install_plugin_inner(
     );
 
     let locale = Locale::from_headers(headers).as_sql();
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open write scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to install plugin: {}",
+                e
+            )));
+        }
+    };
     let plugin: Option<Plugin> =
         sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1 AND is_published = true")
             .bind(&plugin_code)
             .bind(locale)
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut scope)
             .await
             .unwrap_or(None);
 
     let plugin = match plugin {
         Some(p) => p,
-        None => return Json(CoreResponse::error("Plugin not found")),
+        None => {
+            let _ = scope.rollback().await;
+            return Json(CoreResponse::error("Plugin not found"));
+        }
     };
 
     let deps: Vec<String> = if let Some(deps_json) = &plugin.dependencies {
@@ -235,7 +272,7 @@ async fn install_plugin_inner(
             )
             .bind(tenant_id)
             .bind(dep_code)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             .ok()
             .flatten();
@@ -246,6 +283,7 @@ async fn install_plugin_inner(
         }
 
         if !missing_deps.is_empty() {
+            let _ = scope.rollback().await;
             return Json(CoreResponse::error(&format!(
                 "Missing dependencies: [{}]. Please install and activate them first.",
                 missing_deps.join(", ")
@@ -269,7 +307,7 @@ async fn install_plugin_inner(
     } else {
         "subscription"
     })
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match installation_result {
@@ -278,13 +316,21 @@ async fn install_plugin_inner(
                 "UPDATE core.core_plugins SET install_count = install_count + 1 WHERE id = $1",
             )
             .bind(plugin.id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await
             .ok();
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[Plugin] Failed to commit install: {}", e);
+                return Json(CoreResponse::error(&format!(
+                    "Failed to install plugin: {}",
+                    e
+                )));
+            }
             Json(CoreResponse::success(installation, "Plugin installed"))
         }
         Err(e) => {
             tracing::error!("Failed to install plugin: {}", e);
+            let _ = scope.rollback().await;
             Json(CoreResponse::error(&format!(
                 "Failed to install plugin: {}",
                 e
@@ -368,16 +414,29 @@ async fn uninstall_plugin_inner(
     }
 
     let locale = Locale::from_headers(headers).as_sql();
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open write scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to uninstall plugin: {}",
+                e
+            )));
+        }
+    };
     let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .bind(locale)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
 
     let plugin = match plugin {
         Some(p) => p,
-        None => return Json(CoreResponse::error("Plugin not found")),
+        None => {
+            let _ = scope.rollback().await;
+            return Json(CoreResponse::error("Plugin not found"));
+        }
     };
 
     let dependent_plugins: Vec<String> = sqlx::query_scalar(
@@ -392,11 +451,12 @@ async fn uninstall_plugin_inner(
     )
     .bind(tenant_id)
     .bind(&plugin_code)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
     if !dependent_plugins.is_empty() && req.uninstall_tier != UninstallTier::Disable {
+        let _ = scope.rollback().await;
         return Json(CoreResponse::error(&format!(
             "Cannot uninstall: [{}] depend(s) on this plugin. Please uninstall them first or use disable tier.",
             dependent_plugins.join(", ")
@@ -415,7 +475,7 @@ async fn uninstall_plugin_inner(
             )
             .bind(tenant_id)
             .bind(plugin.id)
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut scope)
             .await
             .unwrap_or(None);
 
@@ -436,6 +496,7 @@ async fn uninstall_plugin_inner(
                     }
                 }
                 None => {
+                    let _ = scope.rollback().await;
                     return Json(CoreResponse::error("Plugin not installed for this tenant"));
                 }
             }
@@ -449,7 +510,7 @@ async fn uninstall_plugin_inner(
             )
             .bind(tenant_id)
             .bind(plugin.id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await;
 
             match result {
@@ -471,11 +532,13 @@ async fn uninstall_plugin_inner(
                             backup_url: None,
                         }
                     } else {
+                        let _ = scope.rollback().await;
                         return Json(CoreResponse::error("Plugin not installed for this tenant"));
                     }
                 }
                 Err(e) => {
                     tracing::error!("[Plugin] Failed to uninstall plugin: {}", e);
+                    let _ = scope.rollback().await;
                     return Json(CoreResponse::error(&format!(
                         "Failed to uninstall plugin: {}",
                         e
@@ -507,7 +570,7 @@ async fn uninstall_plugin_inner(
             )
             .bind(tenant_id)
             .bind(plugin.id)
-            .execute(&state.pool)
+            .execute(&mut scope)
             .await;
 
             match result {
@@ -531,6 +594,7 @@ async fn uninstall_plugin_inner(
                 }
                 Err(e) => {
                     tracing::error!("[Plugin] Failed to delete plugin: {}", e);
+                    let _ = scope.rollback().await;
                     return Json(CoreResponse::error(&format!(
                         "Failed to delete plugin: {}",
                         e
@@ -539,6 +603,8 @@ async fn uninstall_plugin_inner(
             }
         }
     };
+
+    let _ = scope.commit().await;
 
     Json(CoreResponse::success(result, "Plugin uninstalled"))
 }
@@ -623,6 +689,17 @@ async fn activate_plugin_inner(
         tenant_id
     );
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open write scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to activate plugin: {}",
+                e
+            )));
+        }
+    };
+
     let installation: Option<TenantPlugin> = sqlx::query_as(
         r#"
         UPDATE core.core_tenant_plugins
@@ -633,13 +710,19 @@ async fn activate_plugin_inner(
     )
     .bind(tenant_id)
     .bind(&plugin_code)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
 
     match installation {
-        Some(tp) => Json(CoreResponse::success(tp, "Plugin activated")),
-        None => Json(CoreResponse::error("Plugin not installed")),
+        Some(tp) => {
+            let _ = scope.commit().await;
+            Json(CoreResponse::success(tp, "Plugin activated"))
+        }
+        None => {
+            let _ = scope.rollback().await;
+            Json(CoreResponse::error("Plugin not installed"))
+        }
     }
 }
 
@@ -718,6 +801,17 @@ async fn deactivate_plugin_inner(
         tenant_id
     );
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open write scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to deactivate plugin: {}",
+                e
+            )));
+        }
+    };
+
     let installation: Option<TenantPlugin> = sqlx::query_as(
         r#"
         UPDATE core.core_tenant_plugins
@@ -728,13 +822,19 @@ async fn deactivate_plugin_inner(
     )
     .bind(tenant_id)
     .bind(&plugin_code)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
 
     match installation {
-        Some(tp) => Json(CoreResponse::success(tp, "Plugin deactivated")),
-        None => Json(CoreResponse::error("Plugin not installed")),
+        Some(tp) => {
+            let _ = scope.commit().await;
+            Json(CoreResponse::success(tp, "Plugin deactivated"))
+        }
+        None => {
+            let _ = scope.rollback().await;
+            Json(CoreResponse::error("Plugin not installed"))
+        }
     }
 }
 
@@ -851,13 +951,24 @@ pub async fn get_available_plugins(
         pattern
     });
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open read scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to open database scope: {}",
+                e
+            )));
+        }
+    };
+
     let plugins: Vec<Plugin> = sqlx::query_as(
         "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true AND ($2::text IS NULL OR category = $2) AND ($3::text IS NULL OR (name ILIKE $3 OR description ILIKE $3)) ORDER BY is_featured DESC, install_count DESC LIMIT 50",
     )
     .bind(locale)
     .bind(category)
     .bind(search_pattern.as_deref())
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -869,7 +980,7 @@ pub async fn get_available_plugins(
         )
         .bind(tenant_id)
         .bind(plugin.id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
 
@@ -879,6 +990,8 @@ pub async fn get_available_plugins(
             tenant_plugin,
         });
     }
+
+    let _ = scope.commit().await;
 
     Json(CoreResponse::success(result, "Available plugins retrieved"))
 }
@@ -896,11 +1009,20 @@ pub async fn get_available_plugins(
 )]
 pub async fn upload_plugin(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
     Json(req): Json<UploadPluginRequest>,
 ) -> Json<CoreResponse<Plugin>> {
     tracing::info!("[Plugin] Uploading new plugin: {}", req.name);
-    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open write scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to upload plugin: {}",
+                e
+            )));
+        }
+    };
 
     let plugin_result: Result<Plugin, sqlx::Error> = sqlx::query_as(
         r#"
@@ -910,7 +1032,7 @@ pub async fn upload_plugin(
             dependencies, author_name, author_url, homepage_url,
             screenshots, tags, category, is_published, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, false, $17)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, false, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#,
     )
@@ -930,12 +1052,12 @@ pub async fn upload_plugin(
     .bind(serde_json::to_value(&req.screenshots).unwrap_or(serde_json::Value::Array(vec![])))
     .bind(serde_json::to_value(&req.tags).unwrap_or(serde_json::Value::Array(vec![])))
     .bind(&req.category)
-    .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match plugin_result {
         Ok(plugin) => {
+            let _ = scope.commit().await;
             tracing::info!("[Plugin] Plugin uploaded successfully: {}", plugin.code);
             Json(CoreResponse::success(
                 plugin,
@@ -944,6 +1066,7 @@ pub async fn upload_plugin(
         }
         Err(e) => {
             tracing::error!("Failed to upload plugin: {}", e);
+            let _ = scope.rollback().await;
             Json(CoreResponse::error(&format!(
                 "Failed to upload plugin: {}",
                 e
@@ -980,16 +1103,29 @@ pub async fn upload_plugin_version(
 
     // Get plugin id
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open write scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to upload plugin version: {}",
+                e
+            )));
+        }
+    };
     let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .bind(locale)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
 
     let plugin = match plugin {
         Some(p) => p,
-        None => return Json(CoreResponse::error("Plugin not found")),
+        None => {
+            let _ = scope.rollback().await;
+            return Json(CoreResponse::error("Plugin not found"));
+        }
     };
 
     let version_result = sqlx::query_as(
@@ -1011,7 +1147,7 @@ pub async fn upload_plugin_version(
     .bind(&req.checksum)
     .bind(req.file_size)
     .bind(&req.min_app_version)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match version_result {
@@ -1019,9 +1155,16 @@ pub async fn upload_plugin_version(
             sqlx::query("UPDATE core.core_plugins SET version = $1 WHERE id = $2")
                 .bind(&req.version)
                 .bind(plugin.id)
-                .execute(&state.pool)
+                .execute(&mut scope)
                 .await
                 .ok();
+            if let Err(e) = scope.commit().await {
+                tracing::error!("[Plugin] Failed to commit version upload: {}", e);
+                return Json(CoreResponse::error(&format!(
+                    "Failed to upload plugin version: {}",
+                    e
+                )));
+            }
             tracing::info!(
                 "[Plugin] Version {} uploaded for plugin: {}",
                 req.version,
@@ -1031,6 +1174,7 @@ pub async fn upload_plugin_version(
         }
         Err(e) => {
             tracing::error!("Failed to upload plugin version: {}", e);
+            let _ = scope.rollback().await;
             Json(CoreResponse::error(&format!(
                 "Failed to upload plugin version: {}",
                 e
@@ -1059,6 +1203,17 @@ pub async fn publish_plugin(
 ) -> Json<CoreResponse<Plugin>> {
     tracing::info!("[Plugin] Publishing plugin: {}", plugin_code);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open write scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to publish plugin: {}",
+                e
+            )));
+        }
+    };
+
     let plugin: Option<Plugin> = sqlx::query_as(
         r#"
         UPDATE core.core_plugins
@@ -1068,16 +1223,20 @@ pub async fn publish_plugin(
         "#,
     )
     .bind(&plugin_code)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
 
     match plugin {
         Some(p) => {
+            let _ = scope.commit().await;
             tracing::info!("[Plugin] Plugin published: {}", plugin_code);
             Json(CoreResponse::success(p, "Plugin published"))
         }
-        None => Json(CoreResponse::error("Plugin not found")),
+        None => {
+            let _ = scope.rollback().await;
+            Json(CoreResponse::error("Plugin not found"))
+        }
     }
 }
 
@@ -1101,6 +1260,17 @@ pub async fn unpublish_plugin(
 ) -> Json<CoreResponse<Plugin>> {
     tracing::info!("[Plugin] Unpublishing plugin: {}", plugin_code);
 
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open write scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to unpublish plugin: {}",
+                e
+            )));
+        }
+    };
+
     let plugin: Option<Plugin> = sqlx::query_as(
         r#"
         UPDATE core.core_plugins
@@ -1110,16 +1280,20 @@ pub async fn unpublish_plugin(
         "#,
     )
     .bind(&plugin_code)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
 
     match plugin {
         Some(p) => {
+            let _ = scope.commit().await;
             tracing::info!("[Plugin] Plugin unpublished: {}", plugin_code);
             Json(CoreResponse::success(p, "Plugin unpublished"))
         }
-        None => Json(CoreResponse::error("Plugin not found")),
+        None => {
+            let _ = scope.rollback().await;
+            Json(CoreResponse::error("Plugin not found"))
+        }
     }
 }
 
@@ -1143,6 +1317,17 @@ pub async fn update_plugin(
     Json(req): Json<UpdatePluginRequest>,
 ) -> Json<CoreResponse<Plugin>> {
     tracing::info!("[Plugin] Updating plugin: {}", plugin_code);
+
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open write scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to update plugin: {}",
+                e
+            )));
+        }
+    };
 
     let plugin: Option<Plugin> = sqlx::query_as(
         r#"
@@ -1178,16 +1363,20 @@ pub async fn update_plugin(
             .map(|t| serde_json::to_value(t).unwrap_or_default()),
     )
     .bind(&req.category)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
 
     match plugin {
         Some(p) => {
+            let _ = scope.commit().await;
             tracing::info!("[Plugin] Plugin updated: {}", plugin_code);
             Json(CoreResponse::success(p, "Plugin updated"))
         }
-        None => Json(CoreResponse::error("Plugin not found")),
+        None => {
+            let _ = scope.rollback().await;
+            Json(CoreResponse::error("Plugin not found"))
+        }
     }
 }
 

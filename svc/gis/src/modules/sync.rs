@@ -8,10 +8,10 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -127,10 +127,14 @@ pub struct OfflineDataResponse {
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 批量上报设备位置（支持离线同步）- 优化版本
 pub async fn batch_upload_positions(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     TenantRequest { ctx }: TenantRequest,
     Json(payload): Json<BatchPositionUpload>,
 ) -> ApiResponse<usize> {
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     if payload.positions.is_empty() {
         return ApiResponse::success(0, "没有需要同步的位置数据");
     }
@@ -158,8 +162,11 @@ pub async fn batch_upload_positions(
     });
 
     let query = query_builder.build();
-    match query.execute(&pool).await {
+    match query.execute(&mut scope).await {
         Ok(result) => {
+            if let Err(e) = scope.commit().await {
+                return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+            }
             let synced_count = result.rows_affected() as usize;
             ApiResponse::success(synced_count, &format!("成功同步 {} 个位置", synced_count))
         }
@@ -171,10 +178,14 @@ pub async fn batch_upload_positions(
 
 /// 批量上传取证记录（支持离线同步）
 pub async fn batch_upload_evidence(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     TenantRequest { ctx }: TenantRequest,
     Json(payload): Json<BatchEvidenceUpload>,
 ) -> ApiResponse<SyncResponse> {
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     if payload.evidence_list.is_empty() {
         return ApiResponse::success(
             SyncResponse {
@@ -214,7 +225,7 @@ pub async fn batch_upload_evidence(
         .bind(&evidence.tags)
         .bind(&evidence.description)
         .bind(&evidence.metadata)
-        .fetch_one(&pool)
+        .fetch_one(&mut scope)
         .await
         {
             Ok(record) => {
@@ -245,6 +256,9 @@ pub async fn batch_upload_evidence(
         synced_positions: success_count,
         errors,
     };
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
     ApiResponse::success(
         response,
         &format!(
@@ -258,11 +272,15 @@ pub async fn batch_upload_evidence(
 
 /// 下载离线业务数据
 pub async fn download_offline_data(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     TenantRequest { ctx }: TenantRequest,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<OfflineDataRequest>,
 ) -> ApiResponse<OfflineDataResponse> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -279,7 +297,7 @@ pub async fn download_offline_data(
             only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
         )
         .bind(tenant_id)
-        .fetch_all(&pool)
+        .fetch_all(&mut scope)
         .await
         {
             Ok(data) => devices = data,
@@ -309,7 +327,7 @@ pub async fn download_offline_data(
             q = q.bind(date_to);
         }
 
-        match q.fetch_all(&pool).await {
+        match q.fetch_all(&mut scope).await {
             Ok(data) => tracks = data,
             Err(e) => return ApiResponse::from(TopemsError::internal("下载轨迹数据失败", e)),
         }
@@ -321,7 +339,7 @@ pub async fn download_offline_data(
                 only_own_schema_query!("gis", "SELECT id, track_id, position, altitude, speed, heading, accuracy, battery_level, timestamp, created_at FROM gis.track_positions WHERE track_id = ANY($1) ORDER BY timestamp ASC"),
             )
             .bind(&track_ids)
-            .fetch_all(&pool)
+            .fetch_all(&mut scope)
             .await
             {
                 Ok(data) => track_positions = data,
@@ -338,7 +356,7 @@ pub async fn download_offline_data(
             only_own_schema_query!("gis", "SELECT id, tenant_id, title, evidence_type, position, file_url, thumbnail_url, duration, file_size, file_hash, recorded_by, recorded_at, tags, description, metadata, created_at, updated_at FROM gis.evidence_records WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY recorded_at DESC"),
         )
         .bind(tenant_id)
-        .fetch_all(&pool)
+        .fetch_all(&mut scope)
         .await
         {
             Ok(data) => evidence = data,
@@ -346,6 +364,9 @@ pub async fn download_offline_data(
         }
     }
 
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
     ApiResponse::success(
         OfflineDataResponse {
             devices,
@@ -368,10 +389,14 @@ pub struct SyncStatusResponse {
 }
 
 pub async fn get_sync_status(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     TenantRequest { ctx }: TenantRequest,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<SyncStatusResponse> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -386,7 +411,7 @@ pub async fn get_sync_status(
         "#
     ))
     .bind(tenant_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await;
 
     let pending_count = match result {
@@ -394,6 +419,9 @@ pub async fn get_sync_status(
         Err(_) => 0,
     };
 
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
     ApiResponse::success(
         SyncStatusResponse {
             server_time: Utc::now(),

@@ -35,6 +35,7 @@ import {
   ToastContainer,
 } from '@/components/redesign';
 import type { DataTableColumn, Toast, UploadFile, DateRange } from '@/components/redesign';
+import { useOptionalPermission } from '@/hooks/useOptionalPermission';
 import { mesApi } from '@/api/mes';
 import type { WorkOrder as ApiWorkOrder } from '@/api/mes/types';
 import { useTranslation } from 'react-i18next';
@@ -129,6 +130,9 @@ const MesWorkOrderPage: React.FC = () => {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [attachments, setAttachments] = useState<UploadFile[]>([]);
+  // 批 12：写操作权限（操作列 + 开工/完工按钮）
+  // 批 14：改为无 Provider 依赖判定（无权限信息时放行），避免页面测试需挂 Provider
+  const checkPermission = useOptionalPermission();
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -466,6 +470,8 @@ const MesWorkOrderPage: React.FC = () => {
       header: t('mes.work_order_page.actions'),
       align: 'right',
       width: 150,
+      // 批 12：写操作列由 ListPageTemplate 按 writePermission 整列隐藏
+      writeOnly: true,
       render: (row) => (
         <div className={css.il15}>
           <Button
@@ -508,6 +514,7 @@ const MesWorkOrderPage: React.FC = () => {
           title: t('mes.work_order_page.k10'),
           subtitle: t('mes.work_order_page.subtitle'),
         }}
+        writePermission='mes:work_order:write'
         toolbar={
           <>
             <div className={css.il17}>
@@ -765,17 +772,18 @@ const MesWorkOrderPage: React.FC = () => {
             )}
 
             {/* 操作按钮 */}
-            {selectedOrder.status === 'pending' && (
-              <div style={styles.footerRow}>
-                <Button
-                  variant='primary'
-                  leftIcon={<Play size={16} />}
-                  onClick={() => pushToast('success', t('mes.work_order_page.toast_started'))}
-                >
-                  {t('mes.work_order_page.btn_start_prod')}
-                </Button>
-              </div>
-            )}
+            {selectedOrder.status === 'pending' &&
+              checkPermission('mes:production_order:start') && (
+                <div style={styles.footerRow}>
+                  <Button
+                    variant='primary'
+                    leftIcon={<Play size={16} />}
+                    onClick={() => pushToast('success', t('mes.work_order_page.toast_started'))}
+                  >
+                    {t('mes.work_order_page.btn_start_prod')}
+                  </Button>
+                </div>
+              )}
             {selectedOrder.status === 'in_progress' && (
               <div style={styles.footerRow}>
                 <Button
@@ -785,13 +793,15 @@ const MesWorkOrderPage: React.FC = () => {
                 >
                   {t('mes.work_order_page.k6')}
                 </Button>
-                <Button
-                  variant='primary'
-                  leftIcon={<CheckCircle size={16} />}
-                  onClick={() => pushToast('success', t('mes.work_order_page.toast_completed'))}
-                >
-                  {t('mes.work_order_page.btn_complete')}
-                </Button>
+                {checkPermission('mes:production_order:complete') && (
+                  <Button
+                    variant='primary'
+                    leftIcon={<CheckCircle size={16} />}
+                    onClick={() => pushToast('success', t('mes.work_order_page.toast_completed'))}
+                  >
+                    {t('mes.work_order_page.btn_complete')}
+                  </Button>
+                )}
               </div>
             )}
             {selectedOrder.status === 'paused' && (

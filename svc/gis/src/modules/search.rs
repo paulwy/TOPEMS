@@ -3,10 +3,10 @@ use axum::{
     extract::{Extension, Query, State},
     Router,
 };
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_db::scope::Db;
 
 #[utoipa::path(
     get,
@@ -19,10 +19,14 @@ use topems_shared_core::response::ApiResponse;
     tag = "search"
 )]
 pub async fn search_locations(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -44,7 +48,7 @@ pub async fn search_locations(
         )
         .bind(&search_pattern)
         .bind(tenant_opt)
-        .fetch_all(&pool)
+        .fetch_all(&mut scope)
         .await
         {
             for device in devices {
@@ -66,7 +70,7 @@ pub async fn search_locations(
         )
         .bind(&search_pattern)
         .bind(tenant_opt)
-        .fetch_all(&pool)
+        .fetch_all(&mut scope)
         .await
         {
             for pipeline in pipelines {
@@ -88,7 +92,7 @@ pub async fn search_locations(
         )
         .bind(&search_pattern)
         .bind(tenant_opt)
-        .fetch_all(&pool)
+        .fetch_all(&mut scope)
         .await
         {
             for warehouse in warehouses {
@@ -109,7 +113,7 @@ pub async fn search_locations(
         )
         .bind(&search_pattern)
         .bind(tenant_opt)
-        .fetch_all(&pool)
+        .fetch_all(&mut scope)
         .await
         {
             for location in locations {
@@ -126,6 +130,9 @@ pub async fn search_locations(
         }
     }
 
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("搜索失败", e));
+    }
     ApiResponse::success(
         serde_json::json!({
             "results": results,
@@ -136,6 +143,6 @@ pub async fn search_locations(
     )
 }
 
-pub fn create_routes() -> Router<PgPool> {
+pub fn create_routes() -> Router<Db> {
     Router::new().route("/search", axum::routing::get(search_locations))
 }

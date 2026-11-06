@@ -77,7 +77,7 @@ where
     tag = "TMS - Route"
 )]
 pub async fn list_routes(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
     headers: HeaderMap,
@@ -89,6 +89,14 @@ pub async fn list_routes(
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -121,7 +129,7 @@ pub async fn list_routes(
     .bind(Locale::from_headers(&headers).as_sql())
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -137,7 +145,7 @@ pub async fn list_routes(
             .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&mut **txn)
+            .fetch_one(&mut scope)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -167,7 +175,7 @@ pub async fn list_routes(
     tag = "TMS - Route"
 )]
 pub async fn create_route(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Extension(txn_arc): Extension<
@@ -179,6 +187,14 @@ pub async fn create_route(
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -201,19 +217,11 @@ pub async fn create_route(
     .bind(tenant_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
-        Ok(route) => {
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("rls commit failed: {}", e);
-                    return ApiResponse::server_error("提交事务失败");
-                }
-            }
-            ApiResponse::success(route, "路线创建成功")
-        }
+        Ok(route) => ApiResponse::success(route, "路线创建成功"),
         Err(e) => {
             tracing::error!("创建路线失败: {}", e);
             ApiResponse::from(TopemsError::Internal("路线创建失败".to_string()))
@@ -234,7 +242,7 @@ pub async fn create_route(
     tag = "TMS - Route"
 )]
 pub async fn get_route(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -246,6 +254,14 @@ pub async fn get_route(
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -264,7 +280,7 @@ pub async fn get_route(
     .bind(id)
     .bind(tenant_id)
     .bind(Locale::from_headers(&headers).as_sql())
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -291,7 +307,7 @@ pub async fn get_route(
     tag = "TMS - Route"
 )]
 pub async fn update_route(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -304,6 +320,14 @@ pub async fn update_route(
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
@@ -331,20 +355,11 @@ pub async fn update_route(
     .bind(&req.status)
     .bind(now)
     .bind(tenant_id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(Some(route)) => {
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-
-                    return ApiResponse::server_error("事务提交失败");
-                }
-            }
-            ApiResponse::success(route, "路线更新成功")
-        }
+        Ok(Some(route)) => ApiResponse::success(route, "路线更新成功"),
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("路线不存在".to_string())),
         Err(e) => {
             tracing::error!("更新路线失败: {}", e);
@@ -366,7 +381,7 @@ pub async fn update_route(
     tag = "TMS - Route"
 )]
 pub async fn delete_route(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -379,25 +394,24 @@ pub async fn delete_route(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query("DELETE FROM tms.tms_routes WHERE id = $1 AND tenant_id = $2")
         .bind(id)
         .bind(tenant_id)
-        .execute(&mut **txn)
+        .execute(&mut scope)
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-
-                    return ApiResponse::server_error("事务提交失败");
-                }
-            }
-            ApiResponse::success("".to_string(), "路线删除成功")
-        }
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "路线删除成功"),
         Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("路线不存在".to_string())),
         Err(e) => {
             tracing::error!("删除路线失败: {}", e);

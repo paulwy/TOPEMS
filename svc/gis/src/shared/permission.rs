@@ -1,12 +1,11 @@
 #![allow(dead_code)]
 
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::permission::{
-    check_module_permission, ModuleCode, ModulePermission as SharedModulePermission,
-    PermissionAction,
+    ModuleCode, ModulePermission as SharedModulePermission, PermissionAction,
 };
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum GisPermission {
@@ -87,13 +86,47 @@ impl std::fmt::Display for GisPermission {
 
 pub type ModulePermission = GisPermission;
 
+/// 连接治理 B：业务路径不再持有 `PgPool`，此处只接收 `Db` 句柄保持调用方签名一致。
+/// 判定逻辑与 shared-auth `check_module_permission` 完全一致（该函数本身不访问数据库）。
 pub async fn check_permission<T>(
-    db: &PgPool,
+    _db: &Db,
     claims: &Claims,
     permission: &GisPermission,
 ) -> Result<(), axum::Json<ApiResponse<T>>> {
     let shared_perm = permission.to_shared();
-    check_module_permission(db, claims, &shared_perm).await
+    check_claims_permission(claims, &shared_perm)
+}
+
+fn check_claims_permission<T>(
+    claims: &Claims,
+    permission: &SharedModulePermission,
+) -> Result<(), axum::Json<ApiResponse<T>>> {
+    if claims.is_superuser {
+        return Ok(());
+    }
+
+    let module_manage =
+        SharedModulePermission::new(permission.module.clone(), PermissionAction::Admin);
+    if claims.has_permission(&module_manage.to_string()) {
+        return Ok(());
+    }
+
+    if claims.has_permission(&permission.to_string()) {
+        return Ok(());
+    }
+
+    let module_read =
+        SharedModulePermission::new(permission.module.clone(), PermissionAction::Read);
+    if permission.action.level() == module_read.action.level()
+        && claims.has_permission(&module_read.to_string())
+    {
+        return Ok(());
+    }
+
+    Err(axum::Json(ApiResponse::error(
+        403,
+        &format!("权限不足：需要 {} 权限", permission),
+    )))
 }
 
 #[cfg(test)]

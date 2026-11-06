@@ -5,8 +5,9 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{postgres::PgRow, PgPool, Row};
+use sqlx::{postgres::PgRow, Row};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
@@ -94,9 +95,20 @@ pub async fn sync_offline_data(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<OfflineSyncRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -128,7 +140,7 @@ pub async fn sync_offline_data(
         .bind(0)
         .bind(0)
         .bind(tenant_filter(&claims))
-        .execute(&pool)
+        .execute(&mut scope)
         .await
     {
         tracing::error!("创建同步记录失败: {}", e);
@@ -138,32 +150,35 @@ pub async fn sync_offline_data(
     let synced_count = payload.records_count;
     let failed_count = 0;
 
-    if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.offline_sync_records SET status = $1, synced_count = $2, failed_count = $3, completed_at = NOW() WHERE id = $4 AND ($5::uuid IS NULL OR tenant_id = $5)"))
+    if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.offline_sync_records SET status = $1, synced_count = $2, failed_count = $3, completed_at = NOW() WHERE id = $4 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"))
         .bind("completed")
         .bind(synced_count)
         .bind(failed_count)
         .bind(sync_id)
-        .bind(tenant_filter(&claims))
-        .execute(&pool)
+        .execute(&mut scope)
         .await
     {
         tracing::error!("更新同步状态失败: {}", e);
     }
 
-    let response = OfflineSyncResponse {
-        sync_id,
-        sync_type: payload.sync_type,
-        status: "completed".to_string(),
-        synced_count,
-        failed_count,
-        server_time: Utc::now(),
-        next_sync_time: Some(Utc::now() + chrono::Duration::minutes(5)),
-    };
+    let __mobile_response = {
+        let response = OfflineSyncResponse {
+            sync_id,
+            sync_type: payload.sync_type,
+            status: "completed".to_string(),
+            synced_count,
+            failed_count,
+            server_time: Utc::now(),
+            next_sync_time: Some(Utc::now() + chrono::Duration::minutes(5)),
+        };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(response, "离线数据同步成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(response, "离线数据同步成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -181,8 +196,19 @@ pub async fn get_offline_status(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -206,7 +232,7 @@ pub async fn get_offline_status(
     let last_sync = match sqlx::query(only_own_schema_query!("mobile", "SELECT completed_at FROM mobile.offline_sync_records WHERE user_id = $1 AND status = 'completed' AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY completed_at DESC LIMIT 1"))
         .bind(user_id)
         .bind(tenant_filter(&claims))
-        .fetch_optional(&pool)
+        .fetch_optional(&mut scope)
         .await
     {
         Ok(Some(row)) => row.try_get("completed_at").ok(),
@@ -222,7 +248,7 @@ pub async fn get_offline_status(
     )
     .bind(user_id)
     .bind(tenant_filter(&claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(row) => row.try_get::<i64, _>(0).unwrap_or(0) as i32,
@@ -232,22 +258,26 @@ pub async fn get_offline_status(
         }
     };
 
-    let response = OfflineStatusResponse {
-        last_sync_time: last_sync,
-        pending_records: pending_count,
-        sync_status: if pending_count > 0 {
-            "pending"
-        } else {
-            "synced"
-        }
-        .to_string(),
-        network_status: "online".to_string(),
-    };
+    let __mobile_response = {
+        let response = OfflineStatusResponse {
+            last_sync_time: last_sync,
+            pending_records: pending_count,
+            sync_status: if pending_count > 0 {
+                "pending"
+            } else {
+                "synced"
+            }
+            .to_string(),
+            network_status: "online".to_string(),
+        };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(response, "获取离线状态成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(response, "获取离线状态成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[cfg(test)]

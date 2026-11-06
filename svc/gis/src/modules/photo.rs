@@ -6,10 +6,10 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,9 +33,13 @@ pub struct CreateLocationPhoto {
     tag = "photo"
 )]
 pub async fn list_location_photos(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -44,13 +48,20 @@ pub async fn list_location_photos(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    match sqlx::query_as::<_, LocationPhoto>(
+    let result = sqlx::query_as::<_, LocationPhoto>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
     )
     .bind(tenant_opt)
-    .fetch_all(&pool)
-    .await
-    {
+    .fetch_all(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(photos) => ApiResponse::success(
             serde_json::json!({
                 "location_photos": photos,
@@ -76,10 +87,14 @@ pub async fn list_location_photos(
     tag = "photo"
 )]
 pub async fn get_location_photo(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<LocationPhoto> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -88,12 +103,19 @@ pub async fn get_location_photo(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    match sqlx::query_as::<_, LocationPhoto>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"))
+    let result = sqlx::query_as::<_, LocationPhoto>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"))
         .bind(id)
         .bind(tenant_opt)
-        .fetch_one(&pool)
-        .await
-    {
+        .fetch_one(&mut scope)
+        .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(photo) => ApiResponse::success(photo, "获取位置照片成功"),
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("位置照片未找到"),
         Err(e) => ApiResponse::from(TopemsError::internal("数据库查询失败", e)),
@@ -111,13 +133,17 @@ pub async fn get_location_photo(
     tag = "photo"
 )]
 pub async fn create_location_photo(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateLocationPhoto>,
 ) -> ApiResponse<LocationPhoto> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::LocationPhotoWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::LocationPhotoWrite).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let taken_at = payload.taken_at.unwrap_or_else(Utc::now);
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
     // description：优先 caption；否则把 photo_type 与 tags 拼成一段文本
@@ -143,7 +169,7 @@ pub async fn create_location_photo(
     };
     // 真实表 position 为 jsonb NOT NULL，前端 DTO 无位置字段，先写空对象占位
     let position = serde_json::json!({});
-    match sqlx::query_as::<_, LocationPhoto>(
+    let result = sqlx::query_as::<_, LocationPhoto>(
         only_own_schema_query!("gis", r#"
         INSERT INTO gis.location_photos (map_id, photo_url, description, taken_by, taken_at, position, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -157,9 +183,16 @@ pub async fn create_location_photo(
     .bind(taken_at)
     .bind(&position)
     .bind(tenant_id)
-    .fetch_one(&pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(photo) => ApiResponse::success(photo, "创建位置照片成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("数据库插入失败", e)),
     }
@@ -179,24 +212,35 @@ pub async fn create_location_photo(
     tag = "photo"
 )]
 pub async fn delete_location_photo(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<bool> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::LocationPhotoWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::LocationPhotoWrite).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
 
-    match sqlx::query(only_own_schema_query!(
+    let result = sqlx::query(only_own_schema_query!(
         "gis",
         "DELETE FROM gis.location_photos WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(id)
     .bind(tenant_id)
-    .execute(&pool)
-    .await
-    {
+    .execute(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(result) => {
             if result.rows_affected() > 0 {
                 ApiResponse::success(true, "删除位置照片成功")
@@ -222,10 +266,14 @@ pub async fn delete_location_photo(
     tag = "photo"
 )]
 pub async fn list_location_photos_by_map(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(map_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -234,14 +282,21 @@ pub async fn list_location_photos_by_map(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    match sqlx::query_as::<_, LocationPhoto>(
+    let result = sqlx::query_as::<_, LocationPhoto>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE map_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),
     )
     .bind(map_id)
     .bind(tenant_opt)
-    .fetch_all(&pool)
-    .await
-    {
+    .fetch_all(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(photos) => ApiResponse::success(
             serde_json::json!({
                 "location_photos": photos,
@@ -253,7 +308,7 @@ pub async fn list_location_photos_by_map(
     }
 }
 
-pub fn create_routes() -> Router<PgPool> {
+pub fn create_routes() -> Router<Db> {
     Router::new()
         .route("/location-photos", axum::routing::get(list_location_photos))
         .route(

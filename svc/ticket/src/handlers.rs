@@ -6,13 +6,14 @@ use axum::{
 };
 use chrono::{Duration, Utc};
 use serde_json::json;
-use sqlx::{PgPool, Row};
+use sqlx::Row;
 use std::str::FromStr;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_db::scope::Db;
 
 use crate::models::{
     AddCommentRequest, AutomationRule, CreateAutomationRuleRequest, CreateKnowledgeArticleRequest,
@@ -26,12 +27,12 @@ use crate::sla_service::TicketSlaService;
 
 #[derive(Clone)]
 pub struct TicketService {
-    pool: PgPool,
+    db: Db,
 }
 
 impl TicketService {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(db: Db) -> Self {
+        Self { db }
     }
 
     pub fn generate_ticket_no(&self) -> String {
@@ -65,6 +66,7 @@ impl TicketService {
             .map(|h| Utc::now() + Duration::hours(h as i64));
         let ticket_id = Uuid::new_v4();
         let now = Utc::now();
+        let mut scope = self.db.scope().await?;
 
         sqlx::query(
             r#"
@@ -92,7 +94,7 @@ impl TicketService {
         .bind(now)
         .bind(&req.tags)
         .bind(&req.metadata)
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await?;
 
         // 自动化规则应用：按租户启用规则评估并应用变更（assignee/severity/tags）
@@ -102,7 +104,7 @@ impl TicketService {
         )
         .bind(tenant_id)
         .bind(locale)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut scope)
         .await?;
 
         if !rules.is_empty() {
@@ -142,7 +144,7 @@ impl TicketService {
                 .bind(&effects.severity)
                 .bind(&effects.add_tags)
                 .bind(now)
-                .execute(&self.pool)
+                .execute(&mut scope)
                 .await?;
             }
         }
@@ -161,9 +163,10 @@ impl TicketService {
         .bind("created")
         .bind(TicketStatus::Open.as_str())
         .bind(now)
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await?;
 
+        scope.commit().await?;
         self.get_ticket(tenant_id, ticket_id).await
     }
 
@@ -172,6 +175,7 @@ impl TicketService {
         tenant_id: Uuid,
         ticket_id: Uuid,
     ) -> Result<Ticket, sqlx::Error> {
+        let mut scope = self.db.scope_read().await?;
         let ticket = sqlx::query_as::<_, Ticket>(
             r#"
             SELECT id, ticket_no, tenant_id, title, description, ticket_type, severity, status,
@@ -183,9 +187,10 @@ impl TicketService {
         )
         .bind(ticket_id)
         .bind(tenant_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(ticket)
     }
 
@@ -198,6 +203,7 @@ impl TicketService {
         let page = query.page.unwrap_or(1).max(1);
         let page_size = query.page_size.unwrap_or(20).min(100);
         let offset = ((page - 1) * page_size) as i64;
+        let mut scope = self.db.scope_read().await?;
 
         let rows = sqlx::query_as::<_, Ticket>(
             r#"
@@ -229,7 +235,7 @@ impl TicketService {
         .bind(query.sla_breached)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let total: i64 = sqlx::query_scalar(
@@ -254,9 +260,10 @@ impl TicketService {
         .bind(query.reporter_id)
         .bind(&query.source_service)
         .bind(&query.source_business_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(TicketListResponse {
             items: rows,
             total,
@@ -301,6 +308,7 @@ impl TicketService {
         } else {
             existing.closed_at
         };
+        let mut scope = self.db.scope().await?;
 
         sqlx::query(
             r#"
@@ -330,7 +338,7 @@ impl TicketService {
         .bind(now)
         .bind(ticket_id)
         .bind(tenant_id)
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await?;
 
         if let Some(new_status) = &req.status {
@@ -350,7 +358,7 @@ impl TicketService {
                 .bind(&existing.status)
                 .bind(new_status)
                 .bind(now)
-                .execute(&self.pool)
+                .execute(&mut scope)
                 .await?;
             }
         }
@@ -371,11 +379,12 @@ impl TicketService {
                 .bind(existing.assignee_id.map(|x| x.to_string()))
                 .bind(new_assignee.to_string())
                 .bind(now)
-                .execute(&self.pool)
+                .execute(&mut scope)
                 .await?;
             }
         }
 
+        scope.commit().await?;
         self.get_ticket(tenant_id, ticket_id)
             .await
             .map_err(Into::into)
@@ -392,6 +401,7 @@ impl TicketService {
         let comment_id = Uuid::new_v4();
         let now = Utc::now();
         let is_internal = req.is_internal.unwrap_or(false);
+        let mut scope = self.db.scope().await?;
 
         sqlx::query(
             r#"
@@ -408,7 +418,7 @@ impl TicketService {
         .bind(&req.content)
         .bind(is_internal)
         .bind(now)
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await?;
 
         sqlx::query(
@@ -417,10 +427,10 @@ impl TicketService {
         .bind(now)
         .bind(ticket_id)
         .bind(tenant_id)
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await?;
 
-        sqlx::query_as::<_, TicketComment>(
+        let comment = sqlx::query_as::<_, TicketComment>(
             r#"
             SELECT id, ticket_id, tenant_id, user_id, user_name, content, is_internal, created_at
             FROM ticket.core_ticket_comments
@@ -428,8 +438,11 @@ impl TicketService {
             "#,
         )
         .bind(comment_id)
-        .fetch_one(&self.pool)
-        .await
+        .fetch_one(&mut scope)
+        .await?;
+
+        scope.commit().await?;
+        Ok(comment)
     }
 
     pub async fn list_comments(
@@ -437,7 +450,8 @@ impl TicketService {
         tenant_id: Uuid,
         ticket_id: Uuid,
     ) -> Result<Vec<TicketComment>, sqlx::Error> {
-        sqlx::query_as::<_, TicketComment>(
+        let mut scope = self.db.scope_read().await?;
+        let comments = sqlx::query_as::<_, TicketComment>(
             r#"
             SELECT id, ticket_id, tenant_id, user_id, user_name, content, is_internal, created_at
             FROM ticket.core_ticket_comments
@@ -447,8 +461,11 @@ impl TicketService {
         )
         .bind(ticket_id)
         .bind(tenant_id)
-        .fetch_all(&self.pool)
-        .await
+        .fetch_all(&mut scope)
+        .await?;
+
+        scope.commit().await?;
+        Ok(comments)
     }
 
     pub async fn list_activities(
@@ -456,7 +473,8 @@ impl TicketService {
         tenant_id: Uuid,
         ticket_id: Uuid,
     ) -> Result<Vec<TicketActivity>, sqlx::Error> {
-        sqlx::query_as::<_, TicketActivity>(
+        let mut scope = self.db.scope_read().await?;
+        let activities = sqlx::query_as::<_, TicketActivity>(
             r#"
             SELECT id, ticket_id, tenant_id, user_id, action, from_value, to_value, created_at
             FROM ticket.core_ticket_activities
@@ -466,8 +484,11 @@ impl TicketService {
         )
         .bind(ticket_id)
         .bind(tenant_id)
-        .fetch_all(&self.pool)
-        .await
+        .fetch_all(&mut scope)
+        .await?;
+
+        scope.commit().await?;
+        Ok(activities)
     }
 
     pub async fn delete_ticket(
@@ -476,6 +497,7 @@ impl TicketService {
         ticket_id: Uuid,
         user_id: Option<Uuid>,
     ) -> Result<bool, sqlx::Error> {
+        let mut scope = self.db.scope().await?;
         let result = sqlx::query(
             r#"
             UPDATE ticket.core_tickets SET status = 'cancelled', closed_at = $1, updated_at = $1
@@ -485,7 +507,7 @@ impl TicketService {
         .bind(Utc::now())
         .bind(ticket_id)
         .bind(tenant_id)
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await?;
 
         if result.rows_affected() > 0 {
@@ -503,54 +525,57 @@ impl TicketService {
             .bind("cancelled")
             .bind("cancelled")
             .bind(Utc::now())
-            .execute(&self.pool)
+            .execute(&mut scope)
             .await?;
+            scope.commit().await?;
             Ok(true)
         } else {
+            scope.rollback().await?;
             Ok(false)
         }
     }
 
     pub async fn get_stats(&self, tenant_id: Uuid) -> Result<TicketStats, sqlx::Error> {
+        let mut scope = self.db.scope_read().await?;
         let total: i64 =
             sqlx::query_scalar("SELECT COUNT(*) FROM ticket.core_tickets WHERE tenant_id = $1")
                 .bind(tenant_id)
-                .fetch_one(&self.pool)
+                .fetch_one(&mut scope)
                 .await?;
 
         let open: i64 = sqlx::query_scalar(
             "SELECT COUNT(*) FROM ticket.core_tickets WHERE tenant_id = $1 AND status = 'open'",
         )
         .bind(tenant_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let in_progress: i64 = sqlx::query_scalar(
             "SELECT COUNT(*) FROM ticket.core_tickets WHERE tenant_id = $1 AND status = 'in_progress'",
         )
         .bind(tenant_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let pending: i64 = sqlx::query_scalar(
             "SELECT COUNT(*) FROM ticket.core_tickets WHERE tenant_id = $1 AND status = 'pending'",
         )
         .bind(tenant_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let resolved: i64 = sqlx::query_scalar(
             "SELECT COUNT(*) FROM ticket.core_tickets WHERE tenant_id = $1 AND status = 'resolved'",
         )
         .bind(tenant_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let closed: i64 = sqlx::query_scalar(
             "SELECT COUNT(*) FROM ticket.core_tickets WHERE tenant_id = $1 AND status IN ('closed', 'cancelled')",
         )
         .bind(tenant_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let sla_breached: i64 = sqlx::query_scalar(
@@ -563,14 +588,14 @@ impl TicketService {
             "#,
         )
         .bind(tenant_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let severity_rows = sqlx::query(
             "SELECT severity, COUNT(*) AS cnt FROM ticket.core_tickets WHERE tenant_id = $1 GROUP BY severity",
         )
         .bind(tenant_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut scope)
         .await?;
         let by_severity: Vec<SeverityCount> = severity_rows
             .into_iter()
@@ -584,7 +609,7 @@ impl TicketService {
             "SELECT ticket_type, COUNT(*) AS cnt FROM ticket.core_tickets WHERE tenant_id = $1 GROUP BY ticket_type",
         )
         .bind(tenant_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut scope)
         .await?;
         let by_type: Vec<TypeCount> = type_rows
             .into_iter()
@@ -598,7 +623,7 @@ impl TicketService {
             "SELECT source_service, COUNT(*) AS cnt FROM ticket.core_tickets WHERE tenant_id = $1 GROUP BY source_service",
         )
         .bind(tenant_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut scope)
         .await?;
         let by_source: Vec<SourceCount> = source_rows
             .into_iter()
@@ -608,6 +633,7 @@ impl TicketService {
             })
             .collect();
 
+        scope.commit().await?;
         Ok(TicketStats {
             total,
             open,
@@ -626,12 +652,12 @@ impl TicketService {
 // ==================== HTTP Handlers ====================
 
 pub async fn create_ticket_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateTicketRequest>,
 ) -> ApiResponse<Ticket> {
-    let service = TicketService::new(pool);
+    let service = TicketService::new(db);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let reporter_id = Uuid::parse_str(&claims.sub).ok();
@@ -647,11 +673,11 @@ pub async fn create_ticket_handler(
 }
 
 pub async fn list_tickets_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<TicketQuery>,
 ) -> ApiResponse<TicketListResponse> {
-    let service = TicketService::new(pool);
+    let service = TicketService::new(db);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
@@ -662,11 +688,11 @@ pub async fn list_tickets_handler(
 }
 
 pub async fn get_ticket_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Ticket> {
-    let service = TicketService::new(pool);
+    let service = TicketService::new(db);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
@@ -680,12 +706,12 @@ pub async fn get_ticket_handler(
 }
 
 pub async fn update_ticket_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTicketRequest>,
 ) -> ApiResponse<Ticket> {
-    let service = TicketService::new(pool);
+    let service = TicketService::new(db);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let user_id = Uuid::parse_str(&claims.sub).ok();
@@ -701,11 +727,11 @@ pub async fn update_ticket_handler(
 }
 
 pub async fn delete_ticket_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = TicketService::new(pool);
+    let service = TicketService::new(db);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let user_id = Uuid::parse_str(&claims.sub).ok();
@@ -718,12 +744,12 @@ pub async fn delete_ticket_handler(
 }
 
 pub async fn add_comment_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<AddCommentRequest>,
 ) -> ApiResponse<TicketComment> {
-    let service = TicketService::new(pool);
+    let service = TicketService::new(db);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let user_id = match Uuid::parse_str(&claims.sub) {
@@ -742,11 +768,11 @@ pub async fn add_comment_handler(
 }
 
 pub async fn list_comments_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<TicketComment>> {
-    let service = TicketService::new(pool);
+    let service = TicketService::new(db);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
@@ -757,11 +783,11 @@ pub async fn list_comments_handler(
 }
 
 pub async fn list_activities_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<TicketActivity>> {
-    let service = TicketService::new(pool);
+    let service = TicketService::new(db);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
@@ -772,10 +798,10 @@ pub async fn list_activities_handler(
 }
 
 pub async fn get_stats_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<TicketStats> {
-    let service = TicketService::new(pool);
+    let service = TicketService::new(db);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
@@ -788,12 +814,12 @@ pub async fn get_stats_handler(
 // ==================== SLA Handlers ====================
 
 pub async fn get_ticket_sla_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<TicketSlaInfo> {
-    let ticket_service = TicketService::new(pool.clone());
-    let sla_service = TicketSlaService::new(pool);
+    let ticket_service = TicketService::new(db.clone());
+    let sla_service = TicketSlaService::new(db.clone());
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
@@ -814,12 +840,12 @@ pub async fn get_ticket_sla_handler(
 }
 
 pub async fn trigger_sla_escalation_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<SlaEscalationEvent>> {
-    let ticket_service = TicketService::new(pool.clone());
-    let sla_service = TicketSlaService::new(pool);
+    let ticket_service = TicketService::new(db.clone());
+    let sla_service = TicketSlaService::new(db.clone());
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
@@ -840,10 +866,10 @@ pub async fn trigger_sla_escalation_handler(
 }
 
 pub async fn get_sla_stats_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<TicketSlaStats> {
-    let service = TicketSlaService::new(pool);
+    let service = TicketSlaService::new(db);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -871,12 +897,12 @@ pub async fn get_sla_stats_handler(
     )
 )]
 pub async fn create_sla_policy_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateSlaPolicyRequest>,
 ) -> ApiResponse<TicketSlaPolicy> {
-    let service = TicketSlaService::new(pool);
+    let service = TicketSlaService::new(db);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let locale = Locale::from_headers(&headers).as_sql();
@@ -898,11 +924,11 @@ pub async fn create_sla_policy_handler(
     )
 )]
 pub async fn list_sla_policies_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<TicketSlaPolicy>> {
-    let service = TicketSlaService::new(pool);
+    let service = TicketSlaService::new(db);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -930,12 +956,12 @@ pub async fn list_sla_policies_handler(
     tag = "sla"
 )]
 pub async fn get_sla_policy_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> ApiResponse<TicketSlaPolicy> {
-    let service = TicketSlaService::new(pool);
+    let service = TicketSlaService::new(db);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
@@ -966,13 +992,13 @@ pub async fn get_sla_policy_handler(
     tag = "sla"
 )]
 pub async fn update_sla_policy_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateSlaPolicyRequest>,
 ) -> ApiResponse<TicketSlaPolicy> {
-    let service = TicketSlaService::new(pool);
+    let service = TicketSlaService::new(db);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let locale = Locale::from_headers(&headers).as_sql();
@@ -996,11 +1022,11 @@ pub async fn update_sla_policy_handler(
     tag = "sla"
 )]
 pub async fn delete_sla_policy_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
-    let service = TicketSlaService::new(pool);
+    let service = TicketSlaService::new(db);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
 
@@ -1025,7 +1051,7 @@ pub async fn delete_sla_policy_handler(
     )
 )]
 pub async fn create_automation_rule_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAutomationRuleRequest>,
 ) -> ApiResponse<AutomationRule> {
@@ -1035,6 +1061,10 @@ pub async fn create_automation_rule_handler(
     let now = Utc::now();
     let priority = req.priority.unwrap_or(100);
     let enabled = req.enabled.unwrap_or(true);
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let result = sqlx::query_as::<_, AutomationRule>(
         r#"INSERT INTO ticket.ticket_automation_rules
         (id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at)
@@ -1052,11 +1082,19 @@ pub async fn create_automation_rule_handler(
     .bind(priority)
     .bind(enabled)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await;
     match result {
-        Ok(rule) => ApiResponse::success(rule, "自动化规则创建成功"),
-        Err(e) => ApiResponse::from(TopemsError::internal("创建自动化规则失败", e)),
+        Ok(rule) => {
+            if let Err(e) = scope.commit().await {
+                return ApiResponse::from(TopemsError::internal("提交失败", e));
+            }
+            ApiResponse::success(rule, "自动化规则创建成功")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("创建自动化规则失败", e))
+        }
     }
 }
 
@@ -1071,7 +1109,7 @@ pub async fn create_automation_rule_handler(
     )
 )]
 pub async fn list_automation_rules_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<AutomationRule>> {
@@ -1084,17 +1122,27 @@ pub async fn list_automation_rules_handler(
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     match sqlx::query_as::<_, AutomationRule>(
         "SELECT id, tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
          FROM ticket.ticket_automation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY priority ASC, created_at ASC",
     )
     .bind(tenant_opt)
     .bind(locale)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await
     {
-        Ok(rules) => ApiResponse::success(rules, "自动化规则列表获取成功"),
-        Err(e) => ApiResponse::from(TopemsError::internal("获取自动化规则列表失败", e)),
+        Ok(rules) => {
+            let _ = scope.commit().await;
+            ApiResponse::success(rules, "自动化规则列表获取成功")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("获取自动化规则列表失败", e))
+        }
     }
 }
 
@@ -1112,7 +1160,7 @@ pub async fn list_automation_rules_handler(
     )
 )]
 pub async fn get_automation_rule_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -1126,6 +1174,10 @@ pub async fn get_automation_rule_handler(
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     match sqlx::query_as::<_, AutomationRule>(
         "SELECT id, tenant_id, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
          FROM ticket.ticket_automation_rules WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
@@ -1133,12 +1185,21 @@ pub async fn get_automation_rule_handler(
     .bind(id)
     .bind(tenant_opt)
     .bind(locale)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
-        Ok(Some(rule)) => ApiResponse::success(rule, "自动化规则获取成功"),
-        Ok(None) => ApiResponse::not_found("自动化规则不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("获取自动化规则失败", e)),
+        Ok(Some(rule)) => {
+            let _ = scope.commit().await;
+            ApiResponse::success(rule, "自动化规则获取成功")
+        }
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("自动化规则不存在")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("获取自动化规则失败", e))
+        }
     }
 }
 
@@ -1157,7 +1218,7 @@ pub async fn get_automation_rule_handler(
     )
 )]
 pub async fn update_automation_rule_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAutomationRuleRequest>,
@@ -1165,6 +1226,10 @@ pub async fn update_automation_rule_handler(
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let now = Utc::now();
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let result = sqlx::query_as::<_, AutomationRule>(
         r#"UPDATE ticket.ticket_automation_rules SET
         name = COALESCE($3, name),
@@ -1190,12 +1255,23 @@ pub async fn update_automation_rule_handler(
     .bind(req.priority)
     .bind(req.enabled)
     .bind(now)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
     match result {
-        Ok(Some(rule)) => ApiResponse::success(rule, "自动化规则更新成功"),
-        Ok(None) => ApiResponse::not_found("自动化规则不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("更新自动化规则失败", e)),
+        Ok(Some(rule)) => {
+            if let Err(e) = scope.commit().await {
+                return ApiResponse::from(TopemsError::internal("提交失败", e));
+            }
+            ApiResponse::success(rule, "自动化规则更新成功")
+        }
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("自动化规则不存在")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("更新自动化规则失败", e))
+        }
     }
 }
 
@@ -1213,23 +1289,36 @@ pub async fn update_automation_rule_handler(
     )
 )]
 pub async fn delete_automation_rule_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     match sqlx::query("DELETE FROM ticket.ticket_automation_rules WHERE id = $1 AND tenant_id = $2")
         .bind(id)
         .bind(tenant_id)
-        .execute(&pool)
+        .execute(&mut scope)
         .await
     {
         Ok(res) if res.rows_affected() > 0 => {
+            if let Err(e) = scope.commit().await {
+                return ApiResponse::from(TopemsError::internal("提交失败", e));
+            }
             ApiResponse::success(json!({"deleted": true}), "自动化规则已删除")
         }
-        Ok(_) => ApiResponse::not_found("自动化规则不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("删除自动化规则失败", e)),
+        Ok(_) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("自动化规则不存在")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("删除自动化规则失败", e))
+        }
     }
 }
 
@@ -1247,7 +1336,7 @@ pub async fn delete_automation_rule_handler(
     )
 )]
 pub async fn create_knowledge_article_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateKnowledgeArticleRequest>,
 ) -> ApiResponse<KnowledgeArticle> {
@@ -1256,6 +1345,10 @@ pub async fn create_knowledge_article_handler(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let keywords = req.keywords.unwrap_or_default();
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let result = sqlx::query_as::<_, KnowledgeArticle>(
         r#"INSERT INTO ticket.ticket_knowledge_articles
         (id, tenant_id, title, content, category, keywords, created_at, updated_at)
@@ -1269,11 +1362,19 @@ pub async fn create_knowledge_article_handler(
     .bind(&req.category)
     .bind(&keywords)
     .bind(now)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await;
     match result {
-        Ok(article) => ApiResponse::success(article, "知识文章创建成功"),
-        Err(e) => ApiResponse::from(TopemsError::internal("创建知识文章失败", e)),
+        Ok(article) => {
+            if let Err(e) = scope.commit().await {
+                return ApiResponse::from(TopemsError::internal("提交失败", e));
+            }
+            ApiResponse::success(article, "知识文章创建成功")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("创建知识文章失败", e))
+        }
     }
 }
 
@@ -1288,7 +1389,7 @@ pub async fn create_knowledge_article_handler(
     )
 )]
 pub async fn list_knowledge_articles_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResponse<Vec<KnowledgeArticle>> {
@@ -1303,17 +1404,25 @@ pub async fn list_knowledge_articles_handler(
     let _tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let q = params.get("q").cloned().unwrap_or_default();
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let articles = match sqlx::query_as::<_, KnowledgeArticle>(
         "SELECT id, tenant_id, title, content, category, keywords, created_at, updated_at
          FROM ticket.ticket_knowledge_articles WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY updated_at DESC",
     )
     .bind(tenant_opt)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await
     {
-        Ok(a) => a,
+        Ok(a) => {
+            let _ = scope.commit().await;
+            a
+        }
         Err(e) => {
-            return ApiResponse::from(TopemsError::internal("获取知识文章列表失败", e))
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("获取知识文章列表失败", e));
         }
     };
     if q.trim().is_empty() {
@@ -1349,7 +1458,7 @@ pub async fn list_knowledge_articles_handler(
     )
 )]
 pub async fn get_knowledge_article_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<KnowledgeArticle> {
@@ -1363,18 +1472,31 @@ pub async fn get_knowledge_article_handler(
     };
     let _tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     match sqlx::query_as::<_, KnowledgeArticle>(
         "SELECT id, tenant_id, title, content, category, keywords, created_at, updated_at
          FROM ticket.ticket_knowledge_articles WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
     .bind(tenant_opt)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
-        Ok(Some(a)) => ApiResponse::success(a, "知识文章获取成功"),
-        Ok(None) => ApiResponse::not_found("知识文章不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("获取知识文章失败", e)),
+        Ok(Some(a)) => {
+            let _ = scope.commit().await;
+            ApiResponse::success(a, "知识文章获取成功")
+        }
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("知识文章不存在")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("获取知识文章失败", e))
+        }
     }
 }
 
@@ -1393,7 +1515,7 @@ pub async fn get_knowledge_article_handler(
     )
 )]
 pub async fn update_knowledge_article_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateKnowledgeArticleRequest>,
@@ -1401,6 +1523,10 @@ pub async fn update_knowledge_article_handler(
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let now = Utc::now();
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let result = sqlx::query_as::<_, KnowledgeArticle>(
         r#"UPDATE ticket.ticket_knowledge_articles SET
         title = COALESCE($3, title),
@@ -1418,12 +1544,23 @@ pub async fn update_knowledge_article_handler(
     .bind(&req.category)
     .bind(&req.keywords)
     .bind(now)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await;
     match result {
-        Ok(Some(a)) => ApiResponse::success(a, "知识文章更新成功"),
-        Ok(None) => ApiResponse::not_found("知识文章不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("更新知识文章失败", e)),
+        Ok(Some(a)) => {
+            if let Err(e) = scope.commit().await {
+                return ApiResponse::from(TopemsError::internal("提交失败", e));
+            }
+            ApiResponse::success(a, "知识文章更新成功")
+        }
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("知识文章不存在")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("更新知识文章失败", e))
+        }
     }
 }
 
@@ -1441,25 +1578,38 @@ pub async fn update_knowledge_article_handler(
     )
 )]
 pub async fn delete_knowledge_article_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     match sqlx::query(
         "DELETE FROM ticket.ticket_knowledge_articles WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         Ok(res) if res.rows_affected() > 0 => {
+            if let Err(e) = scope.commit().await {
+                return ApiResponse::from(TopemsError::internal("提交失败", e));
+            }
             ApiResponse::success(json!({"deleted": true}), "知识文章已删除")
         }
-        Ok(_) => ApiResponse::not_found("知识文章不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("删除知识文章失败", e)),
+        Ok(_) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("知识文章不存在")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("删除知识文章失败", e))
+        }
     }
 }
 
@@ -1477,12 +1627,16 @@ fn tenant_id_of(claims: &Claims) -> Uuid {
 
 /// PUT /tickets/{id}/comments/{comment_id} —— 更新评论内容
 pub async fn update_comment_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path((ticket_id, comment_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateCommentRequest>,
 ) -> ApiResponse<TicketComment> {
     let tenant_id = tenant_id_of(&claims);
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     match sqlx::query(
         "UPDATE ticket.core_ticket_comments SET content = COALESCE($1, content), \
          is_internal = COALESCE($2, is_internal) \
@@ -1493,33 +1647,51 @@ pub async fn update_comment_handler(
     .bind(comment_id)
     .bind(ticket_id)
     .bind(tenant_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         Ok(res) if res.rows_affected() > 0 => {}
-        Ok(_) => return ApiResponse::not_found("评论不存在"),
-        Err(e) => return ApiResponse::from(TopemsError::internal("更新评论失败", e)),
+        Ok(_) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::not_found("评论不存在");
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("更新评论失败", e));
+        }
     }
     match sqlx::query_as::<_, TicketComment>(
         "SELECT id, ticket_id, tenant_id, user_id, user_name, content, is_internal, created_at \
          FROM ticket.core_ticket_comments WHERE id = $1",
     )
     .bind(comment_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     {
-        Ok(comment) => ApiResponse::success(comment, "评论已更新"),
-        Err(e) => ApiResponse::from(TopemsError::internal("查询评论失败", e)),
+        Ok(comment) => {
+            if let Err(e) = scope.commit().await {
+                return ApiResponse::from(TopemsError::internal("提交失败", e));
+            }
+            ApiResponse::success(comment, "评论已更新")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("查询评论失败", e))
+        }
     }
 }
 
 /// DELETE /tickets/{id}/comments/{comment_id} —— 删除评论
 pub async fn delete_comment_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path((ticket_id, comment_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_id_of(&claims);
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     match sqlx::query(
         "DELETE FROM ticket.core_ticket_comments \
          WHERE id = $1 AND ticket_id = $2 AND tenant_id = $3",
@@ -1527,24 +1699,37 @@ pub async fn delete_comment_handler(
     .bind(comment_id)
     .bind(ticket_id)
     .bind(tenant_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         Ok(res) if res.rows_affected() > 0 => {
+            if let Err(e) = scope.commit().await {
+                return ApiResponse::from(TopemsError::internal("提交失败", e));
+            }
             ApiResponse::success(json!({"deleted": true}), "评论已删除")
         }
-        Ok(_) => ApiResponse::not_found("评论不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("删除评论失败", e)),
+        Ok(_) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("评论不存在")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("删除评论失败", e))
+        }
     }
 }
 
 /// GET /tickets/{id}/activities/{activity_id} —— 单条活动
 pub async fn get_activity_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path((ticket_id, activity_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<TicketActivity> {
     let tenant_id = tenant_id_of(&claims);
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     match sqlx::query_as::<_, TicketActivity>(
         "SELECT id, ticket_id, tenant_id, user_id, action, from_value, to_value, created_at \
          FROM ticket.core_ticket_activities \
@@ -1553,22 +1738,31 @@ pub async fn get_activity_handler(
     .bind(activity_id)
     .bind(ticket_id)
     .bind(tenant_id)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
-        Ok(Some(activity)) => ApiResponse::success(activity, "查询成功"),
-        Ok(None) => ApiResponse::not_found("活动不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("查询活动失败", e)),
+        Ok(Some(activity)) => {
+            let _ = scope.commit().await;
+            ApiResponse::success(activity, "查询成功")
+        }
+        Ok(None) => {
+            let _ = scope.rollback().await;
+            ApiResponse::not_found("活动不存在")
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::from(TopemsError::internal("查询活动失败", e))
+        }
     }
 }
 
 /// GET /tickets/{id}/activities/timeline —— 活动时间线（复用活动列表查询）
 pub async fn list_activities_timeline_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(ticket_id): Path<Uuid>,
 ) -> ApiResponse<Vec<TicketActivity>> {
-    let service = TicketService::new(pool);
+    let service = TicketService::new(db);
     let tenant_id = tenant_id_of(&claims);
     match service.list_activities(tenant_id, ticket_id).await {
         Ok(list) => ApiResponse::success(list, "查询成功"),
@@ -1580,12 +1774,12 @@ pub async fn list_activities_timeline_handler(
 
 /// POST /tickets/{id}/assign —— 指派处理人
 pub async fn assign_ticket_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(body): Json<serde_json::Value>,
 ) -> ApiResponse<Ticket> {
-    let service = TicketService::new(pool.clone());
+    let service = TicketService::new(db.clone());
     let tenant_id = tenant_id_of(&claims);
     if let Err(e) = service.get_ticket(tenant_id, id).await {
         return match e {
@@ -1598,6 +1792,10 @@ pub async fn assign_ticket_handler(
         .and_then(|v| v.as_str())
         .and_then(|s| Uuid::parse_str(s).ok());
     if let Some(a) = assignee_id {
+        let mut scope = match db.scope().await {
+            Ok(s) => s,
+            Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+        };
         if let Err(e) = sqlx::query(
             "UPDATE ticket.core_tickets SET assignee_id = $1, updated_at = $2 \
              WHERE id = $3 AND tenant_id = $4",
@@ -1606,10 +1804,14 @@ pub async fn assign_ticket_handler(
         .bind(Utc::now())
         .bind(id)
         .bind(tenant_id)
-        .execute(&pool)
+        .execute(&mut scope)
         .await
         {
+            let _ = scope.rollback().await;
             return ApiResponse::from(TopemsError::internal("指派工单失败", e));
+        }
+        if let Err(e) = scope.commit().await {
+            return ApiResponse::from(TopemsError::internal("提交失败", e));
         }
     }
     match service.get_ticket(tenant_id, id).await {
@@ -1620,12 +1822,12 @@ pub async fn assign_ticket_handler(
 
 /// POST /tickets/{id}/resolve —— 标记解决
 pub async fn resolve_ticket_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(_body): Json<serde_json::Value>,
 ) -> ApiResponse<Ticket> {
-    let service = TicketService::new(pool.clone());
+    let service = TicketService::new(db.clone());
     let tenant_id = tenant_id_of(&claims);
     if let Err(e) = service.get_ticket(tenant_id, id).await {
         return match e {
@@ -1634,6 +1836,10 @@ pub async fn resolve_ticket_handler(
         };
     }
     let now = Utc::now();
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     if let Err(e) = sqlx::query(
         "UPDATE ticket.core_tickets SET status = 'resolved', \
          resolved_at = COALESCE(resolved_at, $1), updated_at = $1 \
@@ -1642,10 +1848,14 @@ pub async fn resolve_ticket_handler(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
+        let _ = scope.rollback().await;
         return ApiResponse::from(TopemsError::internal("解决工单失败", e));
+    }
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("提交失败", e));
     }
     match service.get_ticket(tenant_id, id).await {
         Ok(t) => ApiResponse::success(t, "工单已解决"),
@@ -1655,12 +1865,12 @@ pub async fn resolve_ticket_handler(
 
 /// POST /tickets/{id}/close —— 关闭工单
 pub async fn close_ticket_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(_body): Json<serde_json::Value>,
 ) -> ApiResponse<Ticket> {
-    let service = TicketService::new(pool.clone());
+    let service = TicketService::new(db.clone());
     let tenant_id = tenant_id_of(&claims);
     if let Err(e) = service.get_ticket(tenant_id, id).await {
         return match e {
@@ -1669,6 +1879,10 @@ pub async fn close_ticket_handler(
         };
     }
     let now = Utc::now();
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     if let Err(e) = sqlx::query(
         "UPDATE ticket.core_tickets SET status = 'closed', \
          closed_at = COALESCE(closed_at, $1), updated_at = $1 \
@@ -1677,10 +1891,14 @@ pub async fn close_ticket_handler(
     .bind(now)
     .bind(id)
     .bind(tenant_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
+        let _ = scope.rollback().await;
         return ApiResponse::from(TopemsError::internal("关闭工单失败", e));
+    }
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("提交失败", e));
     }
     match service.get_ticket(tenant_id, id).await {
         Ok(t) => ApiResponse::success(t, "工单已关闭"),
@@ -1692,12 +1910,12 @@ pub async fn close_ticket_handler(
 
 /// GET /tickets/{id}/sla/escalations —— SLA 升级历史
 pub async fn list_sla_escalations_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<SlaEscalationEvent>> {
-    let ticket_service = TicketService::new(pool.clone());
-    let sla_service = TicketSlaService::new(pool);
+    let ticket_service = TicketService::new(db.clone());
+    let sla_service = TicketSlaService::new(db.clone());
     let tenant_id = tenant_id_of(&claims);
     if let Err(e) = ticket_service.get_ticket(tenant_id, id).await {
         return match e {
@@ -1713,12 +1931,12 @@ pub async fn list_sla_escalations_handler(
 
 /// POST /tickets/{id}/sla/calculate —— 重算工单 SLA
 pub async fn calculate_ticket_sla_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<TicketSlaInfo> {
-    let ticket_service = TicketService::new(pool.clone());
-    let sla_service = TicketSlaService::new(pool);
+    let ticket_service = TicketService::new(db.clone());
+    let sla_service = TicketSlaService::new(db.clone());
     let tenant_id = tenant_id_of(&claims);
     let ticket = match ticket_service.get_ticket(tenant_id, id).await {
         Ok(t) => t,
@@ -1735,7 +1953,7 @@ pub async fn calculate_ticket_sla_handler(
 
 /// GET /tickets/dashboard/summary —— 汇总（按状态实时聚合 core_tickets）
 pub async fn dashboard_summary_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
     let opt_tenant: Option<Uuid> = if claims.is_superuser {
@@ -1743,16 +1961,26 @@ pub async fn dashboard_summary_handler(
     } else {
         Some(tenant_id_of(&claims))
     };
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let rows = match sqlx::query(
         "SELECT status, count(*)::bigint AS c FROM ticket.core_tickets \
          WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) GROUP BY status",
     )
     .bind(opt_tenant)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await
     {
-        Ok(rows) => rows,
-        Err(e) => return ApiResponse::from(TopemsError::internal("查询看板汇总失败", e)),
+        Ok(rows) => {
+            let _ = scope.commit().await;
+            rows
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("查询看板汇总失败", e));
+        }
     };
     let mut open = 0i64;
     let mut in_progress = 0i64;
@@ -1832,22 +2060,32 @@ pub async fn dashboard_assignee_load_handler() -> ApiResponse<serde_json::Value>
 
 /// GET /tickets/dashboard/my —— 我的工单概览（实时聚合 core_tickets）
 pub async fn dashboard_my_handler(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = tenant_id_of(&claims);
     let me = Uuid::parse_str(&claims.sub).unwrap_or(Uuid::nil());
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let rows = match sqlx::query(
         "SELECT status, count(*)::bigint AS c FROM ticket.core_tickets \
          WHERE deleted_at IS NULL AND tenant_id = $1 AND assignee_id = $2 GROUP BY status",
     )
     .bind(tenant_id)
     .bind(me)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await
     {
-        Ok(rows) => rows,
-        Err(e) => return ApiResponse::from(TopemsError::internal("查询我的看板失败", e)),
+        Ok(rows) => {
+            let _ = scope.commit().await;
+            rows
+        }
+        Err(e) => {
+            let _ = scope.rollback().await;
+            return ApiResponse::from(TopemsError::internal("查询我的看板失败", e));
+        }
     };
     let mut open = 0i64;
     let mut in_progress = 0i64;
@@ -1871,7 +2109,7 @@ pub async fn dashboard_my_handler(
 
 // ==================== Routes ====================
 
-pub fn ticket_routes() -> Router<PgPool> {
+pub fn ticket_routes() -> Router<Db> {
     Router::new()
         .route(
             "/tickets",

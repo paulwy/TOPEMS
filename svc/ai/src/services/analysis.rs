@@ -250,6 +250,11 @@ impl AnalysisService {
         limit: usize,
         tenant_id: Uuid,
     ) -> Result<Vec<AnalysisResult>, TopemsError> {
+        let mut scope = self
+            .db
+            .scope_read()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("查询分析历史失败: {}", e)))?;
         let query = if let Some(type_) = analysis_type {
             sqlx::query(only_own_schema_query!(
                 "ai",
@@ -282,7 +287,11 @@ impl AnalysisService {
         };
 
         let rows = query
-            .fetch_all(self.db.pool())
+            .fetch_all(&mut scope)
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("查询分析历史失败: {}", e)))?;
+        scope
+            .commit()
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("查询分析历史失败: {}", e)))?;
 
@@ -388,6 +397,11 @@ impl AnalysisService {
         confidence: Option<f64>,
         tenant_id: Uuid,
     ) -> Result<(), TopemsError> {
+        let mut scope = self
+            .db
+            .scope()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("保存分析结果失败: {}", e)))?;
         sqlx::query(
             only_own_schema_query!("ai", r#"
             INSERT INTO ai.analysis_results (tenant_id, analysis_type, input_text, result, confidence)
@@ -399,9 +413,13 @@ impl AnalysisService {
         .bind(input_text)
         .bind(result)
         .bind(confidence)
-        .execute(self.db.pool())
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("保存分析结果失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("保存分析结果失败: {}", e)))?;
 
         Ok(())
     }

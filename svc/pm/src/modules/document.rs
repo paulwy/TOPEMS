@@ -1,14 +1,14 @@
 use axum::{
-    extract::{Extension, Path},
+    extract::{Extension, Path, State},
     routing::get,
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::models::document::{
@@ -20,7 +20,7 @@ use crate::modules::effective_tenant_id;
 type RlsTxnArc =
     std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
-pub fn create_routes(pool: PgPool) -> Router {
+pub fn create_routes(db: Db) -> Router {
     Router::new()
         .route(
             "/projects/{project_id}/documents",
@@ -44,7 +44,7 @@ pub fn create_routes(pool: PgPool) -> Router {
             "/folders/{id}",
             get(get_folder).put(update_folder).delete(delete_folder),
         )
-        .with_state(pool)
+        .with_state(db)
 }
 
 #[utoipa::path(
@@ -61,6 +61,7 @@ pub fn create_routes(pool: PgPool) -> Router {
     tag = "document"
 )]
 async fn get_project_documents(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<ProjectDocument>> {
@@ -69,11 +70,18 @@ async fn get_project_documents(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let documents = sqlx::query_as::<_, ProjectDocument>(
         only_own_schema_query!("pm", "SELECT id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at FROM pm.project_documents WHERE project_id = $1 ORDER BY created_at DESC"),
     )
     .bind(project_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match documents {
@@ -99,6 +107,7 @@ async fn get_project_documents(
     tag = "document"
 )]
 async fn get_document(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProjectDocument> {
@@ -107,10 +116,17 @@ async fn get_document(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let document =
         sqlx::query_as::<_, ProjectDocument>(only_own_schema_query!("pm", "SELECT id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at FROM pm.project_documents WHERE id = $1"))
             .bind(id)
-            .fetch_one(&mut **txn)
+            .fetch_one(&mut scope)
             .await;
 
     match document {
@@ -124,6 +140,7 @@ async fn get_document(
 }
 
 async fn create_document(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
@@ -134,6 +151,13 @@ async fn create_document(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -156,7 +180,7 @@ async fn create_document(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match document {
@@ -169,6 +193,7 @@ async fn create_document(
 }
 
 async fn update_document(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDocumentRequest>,
@@ -177,6 +202,13 @@ async fn update_document(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let document = sqlx::query_as::<_, ProjectDocument>(only_own_schema_query!(
         "pm",
@@ -196,7 +228,7 @@ async fn update_document(
     .bind(req.tags.clone())
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match document {
@@ -210,6 +242,7 @@ async fn update_document(
 }
 
 async fn delete_document(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
@@ -218,12 +251,19 @@ async fn delete_document(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "DELETE FROM pm.project_documents WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
-    .execute(&mut **txn)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -250,6 +290,7 @@ async fn delete_document(
     tag = "document"
 )]
 async fn get_document_versions(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<DocumentVersion>> {
@@ -258,11 +299,18 @@ async fn get_document_versions(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let versions = sqlx::query_as::<_, DocumentVersion>(
         only_own_schema_query!("pm", "SELECT id, document_id, version, file_path, file_hash, change_note, created_by, created_at FROM pm.document_versions WHERE document_id = $1 ORDER BY version DESC"),
     )
     .bind(id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match versions {
@@ -275,6 +323,7 @@ async fn get_document_versions(
 }
 
 async fn create_document_version(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
@@ -286,10 +335,17 @@ async fn create_document_version(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let doc_result =
         sqlx::query_as::<_, ProjectDocument>(only_own_schema_query!("pm", "SELECT id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at FROM pm.project_documents WHERE id = $1"))
             .bind(id)
-            .fetch_one(&mut **txn)
+            .fetch_one(&mut scope)
             .await;
 
     let document = match doc_result {
@@ -321,7 +377,7 @@ async fn create_document_version(
     .bind(req.created_by)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     if version.is_ok() {
@@ -331,7 +387,7 @@ async fn create_document_version(
             .bind(file_hash)
             .bind(now)
             .bind(id)
-            .execute(&mut **txn)
+            .execute(&mut scope)
             .await;
     }
 
@@ -358,6 +414,7 @@ async fn create_document_version(
     tag = "document"
 )]
 async fn get_project_folders(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<DocumentFolder>> {
@@ -366,11 +423,18 @@ async fn get_project_folders(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let folders = sqlx::query_as::<_, DocumentFolder>(
         only_own_schema_query!("pm", "SELECT id, project_id, folder_name, parent_id, description, created_by, created_at, updated_at FROM pm.document_folders WHERE project_id = $1 ORDER BY folder_name"),
     )
     .bind(project_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match folders {
@@ -396,6 +460,7 @@ async fn get_project_folders(
     tag = "document"
 )]
 async fn get_folder(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<DocumentFolder> {
@@ -404,11 +469,18 @@ async fn get_folder(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let folder = sqlx::query_as::<_, DocumentFolder>(
         only_own_schema_query!("pm", "SELECT id, project_id, folder_name, parent_id, description, created_by, created_at, updated_at FROM pm.document_folders WHERE id = $1"),
     )
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match folder {
@@ -422,6 +494,7 @@ async fn get_folder(
 }
 
 async fn create_folder(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
@@ -432,6 +505,13 @@ async fn create_folder(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -449,7 +529,7 @@ async fn create_folder(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match folder {
@@ -462,6 +542,7 @@ async fn create_folder(
 }
 
 async fn update_folder(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateFolderRequest>,
@@ -470,6 +551,13 @@ async fn update_folder(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let folder = sqlx::query_as::<_, DocumentFolder>(only_own_schema_query!(
         "pm",
@@ -483,7 +571,7 @@ async fn update_folder(
     .bind(req.description)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match folder {
@@ -497,6 +585,7 @@ async fn update_folder(
 }
 
 async fn delete_folder(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
@@ -505,12 +594,19 @@ async fn delete_folder(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "DELETE FROM pm.document_folders WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
-    .execute(&mut **txn)
+    .execute(&mut scope)
     .await;
 
     match result {

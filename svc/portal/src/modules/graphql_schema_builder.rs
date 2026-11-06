@@ -51,7 +51,7 @@ pub type PortalSchema = Schema<QueryRoot, MutationRoot, SubscriptionRoot>;
 const APQ_CACHE_CAPACITY: usize = 256;
 
 pub fn build_schema(state: AppState) -> PortalSchema {
-    let pool = state.pool.clone();
+    let db = state.db.clone();
 
     // V42.0 Track E: 初始化企业级安全规则（字段权限 + 掩码规则）
     init_enterprise_security();
@@ -74,7 +74,7 @@ pub fn build_schema(state: AppState) -> PortalSchema {
         .data(global_event_bus().clone())
         // V35.0 Phase 5: 注册 DataLoader
         .data(DataLoader::new(ServiceHealthLoader, tokio::spawn))
-        .data(DataLoader::new(TodoLoader::new(pool), tokio::spawn))
+        .data(DataLoader::new(TodoLoader::new(db), tokio::spawn))
         // V35.0 Phase 5: 查询复杂度限制（防止恶意复杂查询）
         .limit_complexity(MAX_QUERY_COMPLEXITY)
         // V35.0 Phase 5: 查询深度限制（防止过深嵌套查询）

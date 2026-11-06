@@ -14,6 +14,11 @@ export interface DataTableColumn<T> {
   align?: DataTableAlign;
   sortable?: boolean;
   render?: (row: T, index: number) => React.ReactNode;
+  /**
+   * 写操作列标记（批 12）：标记为 true 的列（通常是操作列）由 ListPageTemplate
+   * 在调用方无 writePermission 时整列隐藏；未标记的列行为不变（默认不参与过滤）。
+   */
+  writeOnly?: boolean;
 }
 
 export interface DataTableProps<T> extends React.TableHTMLAttributes<HTMLTableElement> {

@@ -1,4 +1,3 @@
-export { workOrderSchema } from './workOrder';
 export { equipmentSchema } from './equipment';
 export { equipmentOeeSchema } from './equipmentOee';
 export { qualitySchema } from './quality';

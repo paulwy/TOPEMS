@@ -11,7 +11,9 @@ use std::time::Instant;
 
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
-use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
+use topems_shared_bootstrap::{
+    bootstrap_service_shared, resolve_port, run, Application, ServiceConfig,
+};
 use topems_shared_core::health::{build_health_response, ServiceHealth};
 use topems_shared_core::response::ApiResponse;
 
@@ -29,8 +31,6 @@ fn get_uptime() -> u64 {
 #[tokio::main]
 #[allow(clippy::expect_used)]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "portal, public, shared");
-
     let config = ServiceConfig {
         name: "topems-portal",
         port: 8063,
@@ -43,7 +43,7 @@ async fn main() -> anyhow::Result<()> {
         legacy_prefixes: &["/api/core/portal/v1"],
         init_telemetry: true,
     };
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_shared(&config).await?;
     START_TIME.get_or_init(Instant::now);
 
     // 自定义 Prometheus Gauge
@@ -69,7 +69,11 @@ async fn main() -> anyhow::Result<()> {
 
     // public 入口路由（健康 / 插件 / 指标 / 首页；无业务 state 依赖）。
     // AppState 仅作为 state 类型标记，由 build_router 的 Router<AppState> 参数推断。
-    let app_state = AppState::new(ctx.db.clone(), ctx.event_publisher.clone()).await;
+    // 与嵌入态（portal_real_module.rs）统一：共享运行时池 + 事务级 `public, portal`。
+    // 帮助中心表（core_faqs/core_guides/core_guide_lessons/core_guide_progress）在 portal
+    // schema 的副本已废弃（prod 全 0 行），权威数据在 public；顺序必须 public 在前。
+    let db = topems_shared_db::scope::Db::new(ctx.db.clone(), "public, portal");
+    let app_state = AppState::new(db, ctx.event_publisher.clone()).await;
     let public_routes = Router::new()
         .route("/health", get(health_check))
         .route("/api/health/detailed", get(health_check_detailed))

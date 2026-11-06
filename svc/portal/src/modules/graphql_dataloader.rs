@@ -7,6 +7,8 @@ use async_graphql::dataloader::Loader;
 use futures_util::future::join_all;
 use std::collections::HashMap;
 
+use topems_shared_db::scope::Db;
+
 use crate::modules::graphql_helpers::{probe_service_health, service_url};
 use crate::modules::graphql_types::{ServiceHealthGql, UnifiedTodoGql};
 
@@ -44,12 +46,12 @@ impl Loader<String> for ServiceHealthLoader {
 /// 解决 N+1 问题：当多个查询同时请求不同 todo 的详情时，
 /// DataLoader 会自动合并为一次数据库查询。
 pub struct TodoLoader {
-    pool: sqlx::PgPool,
+    db: Db,
 }
 
 impl TodoLoader {
-    pub fn new(pool: sqlx::PgPool) -> Self {
-        Self { pool }
+    pub fn new(db: Db) -> Self {
+        Self { db }
     }
 }
 
@@ -65,14 +67,24 @@ impl Loader<uuid::Uuid> for TodoLoader {
             return Ok(HashMap::new());
         }
 
-        // 批量查询：一次 SQL 获取所有请求的 todo
+        // 批量查询：一次 SQL 获取所有请求的 todo（只读作用域：search_path = "public, portal"）
+        let mut scope = match self.db.scope_read().await {
+            Ok(scope) => scope,
+            Err(e) => {
+                tracing::warn!("TodoLoader 打开只读作用域失败: {}", e);
+                return Ok(HashMap::new());
+            }
+        };
         let rows = sqlx::query(
             r#"SELECT id, title, created_at FROM portal.portal_todos
                WHERE id = ANY($1) AND deleted_at IS NULL"#,
         )
         .bind(keys)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut scope)
         .await;
+        if let Err(e) = scope.commit().await {
+            tracing::warn!("TodoLoader 提交只读作用域失败: {}", e);
+        }
 
         let mut result = HashMap::new();
         if let Ok(rows) = rows {

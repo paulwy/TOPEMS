@@ -9,8 +9,8 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_db::scope::Db;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -149,8 +149,19 @@ pub async fn get_all_tasks(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -161,7 +172,8 @@ pub async fn get_all_tasks(
         }
     };
 
-    let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
+    let __mobile_response = {
+        let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
          WHERE deleted_at IS NULL AND (assignee = $1 OR assignee IS NULL) AND ($2::uuid IS NULL OR tenant_id = $2::uuid) 
@@ -169,7 +181,8 @@ pub async fn get_all_tasks(
     )
     .bind(&user_id)
     .bind(tenant_filter(&claims))
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
+
     .await
     {
         Ok(t) => t,
@@ -179,19 +192,33 @@ pub async fn get_all_tasks(
         }
     };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(tasks, "获取任务列表成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(tasks, "获取任务列表成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn get_task(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -210,7 +237,7 @@ pub async fn get_task(
     .bind(id)
     .bind(&user_id)
     .bind(tenant_filter(&claims))
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(t)) => t,
@@ -223,16 +250,29 @@ pub async fn get_task(
         }
     };
 
-    (StatusCode::OK, ApiResponse::success(task, "获取任务成功"))
+    let __mobile_response = { (StatusCode::OK, ApiResponse::success(task, "获取任务成功")) };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn create_task(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<CreateTaskRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -277,43 +317,58 @@ pub async fn create_task(
     .bind(Utc::now())
     .bind(Utc::now())
     .bind(tenant_filter)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         tracing::error!("创建任务失败: {}", e);
         return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("创建失败"));
     }
 
-    let task = MobileTask {
-        id: task_id,
-        title: payload.title,
-        description: payload.description,
-        task_type: payload.task_type,
-        priority,
-        status,
-        assignee: Some(assignee),
-        location_lat: payload.location_lat,
-        location_lng: payload.location_lng,
-        due_date: payload.due_date,
-        completed_at: None,
-        created_at: Utc::now(),
-        updated_at: Utc::now(),
-    };
+    let __mobile_response = {
+        let task = MobileTask {
+            id: task_id,
+            title: payload.title,
+            description: payload.description,
+            task_type: payload.task_type,
+            priority,
+            status,
+            assignee: Some(assignee),
+            location_lat: payload.location_lat,
+            location_lng: payload.location_lng,
+            due_date: payload.due_date,
+            completed_at: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
 
-    (
-        StatusCode::CREATED,
-        ApiResponse::success(task, "创建任务成功"),
-    )
+        (
+            StatusCode::CREATED,
+            ApiResponse::success(task, "创建任务成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn update_task(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateTaskRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -339,7 +394,7 @@ pub async fn update_task(
     .bind(id)
     .bind(&user_id)
     .bind(tenant_filter)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(t)) => t,
@@ -387,24 +442,37 @@ pub async fn update_task(
     .bind(id)
     .bind(&user_id)
     .bind(tenant_filter)
-    .execute(&pool)
+    .execute(&mut scope)
     .await
     {
         tracing::error!("更新任务失败: {}", e);
         return (StatusCode::INTERNAL_SERVER_ERROR, ApiResponse::server_error("更新失败"));
     }
 
-    (StatusCode::OK, ApiResponse::success((), "更新成功"))
+    let __mobile_response = { (StatusCode::OK, ApiResponse::success((), "更新成功")) };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn update_task_status(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateStatusRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -441,52 +509,67 @@ pub async fn update_task_status(
     .bind(id)
     .bind(&user_id)
     .bind(tenant_filter)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            let task = sqlx::query_as::<_, MobileTask>(
+    let __mobile_response = {
+        match result {
+            Ok(r) if r.rows_affected() > 0 => {
+                let task = sqlx::query_as::<_, MobileTask>(
                 only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
                  FROM mobile.mobile_tasks WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)")
             )
             .bind(id)
             .bind(tenant_filter)
-            .fetch_one(&pool)
+            .fetch_one(&mut scope)
             .await;
 
-            match task {
-                Ok(t) => (StatusCode::OK, ApiResponse::success(t, "状态更新成功")),
-                Err(e) => {
-                    tracing::error!("查询任务失败: {}", e);
-                    (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        ApiResponse::server_error("查询任务失败"),
-                    )
+                match task {
+                    Ok(t) => (StatusCode::OK, ApiResponse::success(t, "状态更新成功")),
+                    Err(e) => {
+                        tracing::error!("查询任务失败: {}", e);
+                        (
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                            ApiResponse::server_error("查询任务失败"),
+                        )
+                    }
                 }
             }
+            Ok(_) => (
+                StatusCode::NOT_FOUND,
+                ApiResponse::not_found("任务不存在或无权修改"),
+            ),
+            Err(e) => {
+                tracing::error!("更新任务状态失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("更新失败"),
+                )
+            }
         }
-        Ok(_) => (
-            StatusCode::NOT_FOUND,
-            ApiResponse::not_found("任务不存在或无权修改"),
-        ),
-        Err(e) => {
-            tracing::error!("更新任务状态失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("更新失败"),
-            )
-        }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn delete_task(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -511,23 +594,29 @@ pub async fn delete_task(
     .bind(id)
     .bind(&user_id)
     .bind(tenant_filter)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => (StatusCode::OK, ApiResponse::success((), "删除成功")),
-        Ok(_) => (
-            StatusCode::NOT_FOUND,
-            ApiResponse::not_found("任务不存在或无权删除"),
-        ),
-        Err(e) => {
-            tracing::error!("删除任务失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("删除失败"),
-            )
+    let __mobile_response = {
+        match result {
+            Ok(r) if r.rows_affected() > 0 => {
+                (StatusCode::OK, ApiResponse::success((), "删除成功"))
+            }
+            Ok(_) => (
+                StatusCode::NOT_FOUND,
+                ApiResponse::not_found("任务不存在或无权删除"),
+            ),
+            Err(e) => {
+                tracing::error!("删除任务失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("删除失败"),
+                )
+            }
         }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 // ===== 页面级缺口补充 handler（前端 task.ts 单数路径对齐，2026-10-05）=====
@@ -537,8 +626,19 @@ pub async fn get_my_tasks(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -549,7 +649,8 @@ pub async fn get_my_tasks(
         }
     };
 
-    let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
+    let __mobile_response = {
+        let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
          WHERE deleted_at IS NULL AND assignee = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) 
@@ -557,7 +658,8 @@ pub async fn get_my_tasks(
     )
     .bind(&user_id)
     .bind(tenant_filter(&claims))
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
+
     .await
     {
         Ok(t) => t,
@@ -570,13 +672,16 @@ pub async fn get_my_tasks(
         }
     };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(
-            serde_json::json!({ "items": tasks, "total": tasks.len() }),
-            "获取我的任务成功",
-        ),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(
+                serde_json::json!({ "items": tasks, "total": tasks.len() }),
+                "获取我的任务成功",
+            ),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 待办任务（status = pending）
@@ -584,8 +689,19 @@ pub async fn get_pending_tasks(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -596,7 +712,8 @@ pub async fn get_pending_tasks(
         }
     };
 
-    let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
+    let __mobile_response = {
+        let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
          WHERE deleted_at IS NULL AND status = 'pending' AND (assignee = $1 OR assignee IS NULL) AND ($2::uuid IS NULL OR tenant_id = $2::uuid) 
@@ -604,7 +721,8 @@ pub async fn get_pending_tasks(
     )
     .bind(&user_id)
     .bind(tenant_filter(&claims))
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
+
     .await
     {
         Ok(t) => t,
@@ -617,13 +735,16 @@ pub async fn get_pending_tasks(
         }
     };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(
-            serde_json::json!({ "items": tasks, "total": tasks.len() }),
-            "获取待办任务成功",
-        ),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(
+                serde_json::json!({ "items": tasks, "total": tasks.len() }),
+                "获取待办任务成功",
+            ),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 逾期任务（due_date 已过且未完成）
@@ -631,8 +752,19 @@ pub async fn get_overdue_tasks(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -643,7 +775,8 @@ pub async fn get_overdue_tasks(
         }
     };
 
-    let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
+    let __mobile_response = {
+        let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
          WHERE deleted_at IS NULL AND due_date < NOW() AND status != 'completed' AND (assignee = $1 OR assignee IS NULL) AND ($2::uuid IS NULL OR tenant_id = $2::uuid) 
@@ -651,7 +784,8 @@ pub async fn get_overdue_tasks(
     )
     .bind(&user_id)
     .bind(tenant_filter(&claims))
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
+
     .await
     {
         Ok(t) => t,
@@ -664,13 +798,16 @@ pub async fn get_overdue_tasks(
         }
     };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(
-            serde_json::json!({ "items": tasks, "total": tasks.len() }),
-            "获取逾期任务成功",
-        ),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(
+                serde_json::json!({ "items": tasks, "total": tasks.len() }),
+                "获取逾期任务成功",
+            ),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 完成任务（前端 /task/{id}/complete 无 body）
@@ -678,9 +815,20 @@ pub async fn complete_task(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -705,23 +853,29 @@ pub async fn complete_task(
     .bind(id)
     .bind(&user_id)
     .bind(tenant_filter)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => (StatusCode::OK, ApiResponse::success((), "任务已完成")),
-        Ok(_) => (
-            StatusCode::NOT_FOUND,
-            ApiResponse::not_found("任务不存在或无权操作"),
-        ),
-        Err(e) => {
-            tracing::error!("完成任务失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("操作失败"),
-            )
+    let __mobile_response = {
+        match result {
+            Ok(r) if r.rows_affected() > 0 => {
+                (StatusCode::OK, ApiResponse::success((), "任务已完成"))
+            }
+            Ok(_) => (
+                StatusCode::NOT_FOUND,
+                ApiResponse::not_found("任务不存在或无权操作"),
+            ),
+            Err(e) => {
+                tracing::error!("完成任务失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("操作失败"),
+                )
+            }
         }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 重新打开任务
@@ -729,9 +883,20 @@ pub async fn reopen_task(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -756,25 +921,29 @@ pub async fn reopen_task(
     .bind(id)
     .bind(&user_id)
     .bind(tenant_filter)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            (StatusCode::OK, ApiResponse::success((), "任务已重新打开"))
+    let __mobile_response = {
+        match result {
+            Ok(r) if r.rows_affected() > 0 => {
+                (StatusCode::OK, ApiResponse::success((), "任务已重新打开"))
+            }
+            Ok(_) => (
+                StatusCode::NOT_FOUND,
+                ApiResponse::not_found("任务不存在或无权操作"),
+            ),
+            Err(e) => {
+                tracing::error!("重新打开任务失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    ApiResponse::server_error("操作失败"),
+                )
+            }
         }
-        Ok(_) => (
-            StatusCode::NOT_FOUND,
-            ApiResponse::not_found("任务不存在或无权操作"),
-        ),
-        Err(e) => {
-            tracing::error!("重新打开任务失败: {}", e);
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                ApiResponse::server_error("操作失败"),
-            )
-        }
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 搜索任务（标题模糊匹配）
@@ -782,9 +951,20 @@ pub async fn search_tasks(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Query(params): Query<SearchTasksParams>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -796,7 +976,8 @@ pub async fn search_tasks(
     };
 
     let keyword = params.keyword.unwrap_or_default();
-    let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
+    let __mobile_response = {
+        let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
         only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
          FROM mobile.mobile_tasks 
          WHERE deleted_at IS NULL AND title ILIKE '%' || $2 || '%' AND (assignee = $1 OR assignee IS NULL) AND ($3::uuid IS NULL OR tenant_id = $3::uuid) 
@@ -805,7 +986,8 @@ pub async fn search_tasks(
     .bind(&user_id)
     .bind(&keyword)
     .bind(tenant_filter(&claims))
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
+
     .await
     {
         Ok(t) => t,
@@ -818,13 +1000,16 @@ pub async fn search_tasks(
         }
     };
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(
-            serde_json::json!({ "items": tasks, "total": tasks.len() }),
-            "搜索任务成功",
-        ),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(
+                serde_json::json!({ "items": tasks, "total": tasks.len() }),
+                "搜索任务成功",
+            ),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 批量更新状态（前端 /task/batch/status）
@@ -832,9 +1017,20 @@ pub async fn batch_update_status(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<BatchStatusRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -855,30 +1051,35 @@ pub async fn batch_update_status(
 
     let mut success = 0;
     let mut failed = 0;
-    for id in payload.ids {
-        let result = sqlx::query(
+
+    let __mobile_response = {
+        for id in payload.ids {
+            let result = sqlx::query(
             only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = $3, updated_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL AND ($4::uuid IS NULL OR tenant_id = $4::uuid)"),
         )
         .bind(id)
         .bind(&user_id)
         .bind(&payload.status)
         .bind(tenant_filter)
-        .execute(&pool)
+        .execute(&mut scope)
         .await;
 
-        match result {
-            Ok(r) if r.rows_affected() > 0 => success += 1,
-            _ => failed += 1,
+            match result {
+                Ok(r) if r.rows_affected() > 0 => success += 1,
+                _ => failed += 1,
+            }
         }
-    }
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(
-            serde_json::json!({ "success": success, "failed": failed }),
-            "批量更新状态完成",
-        ),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(
+                serde_json::json!({ "success": success, "failed": failed }),
+                "批量更新状态完成",
+            ),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[cfg(test)]

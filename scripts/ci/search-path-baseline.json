@@ -1,0 +1,5 @@
+{
+  "generated": "2026-11-06",
+  "note": "既存 search_path 自设语句基线（业务代码不应再新增）。规则见 docs/database/connection-governance.md；新增条目必须人工 review。",
+  "entries": []
+}

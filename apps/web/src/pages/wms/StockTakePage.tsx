@@ -32,14 +32,15 @@ import { apiLogger } from '@/utils/logger';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 // P3 批7：盘点写/管理操作权限约束（BE-only 码补前端落点）
-import { usePermission } from '@/hooks/usePermission';
+import { useOptionalPermission } from '@/hooks/useOptionalPermission';
 
 const StockTakePage: React.FC = () => {
   const theme = useTheme();
   const { t } = useTranslation();
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
-  const { checkPermission } = usePermission();
+  // 批 14：改为无 Provider 依赖判定（无权限信息时放行）
+  const checkPermission = useOptionalPermission();
   const canWrite = checkPermission('wms:stocktake:write');
   const canAdmin = checkPermission('wms:stocktake:admin');
 

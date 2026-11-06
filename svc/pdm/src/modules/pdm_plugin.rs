@@ -65,7 +65,7 @@ pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
     responses((status = 200, description = "OK")),
 )]
 pub async fn plugin_health_check(State(state): State<AppState>) -> ApiResponse<String> {
-    let db_healthy = sqlx::query("SELECT 1").fetch_one(&state.pool).await.is_ok();
+    let db_healthy = state.db.check_health().await.is_ok();
 
     if db_healthy {
         ApiResponse::success("healthy".to_string(), "Plugin is healthy")

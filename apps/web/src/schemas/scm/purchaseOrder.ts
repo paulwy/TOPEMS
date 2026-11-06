@@ -11,6 +11,9 @@ export const purchaseOrderSchema: EntitySchema = {
     resource: 'purchaseOrders',
   },
 
+  // 批 16：写权限资源前缀（DB 实查存在三动作码）
+  permissionResource: 'scm:purchase_order',
+
   fields: [
     {
       // 后端真键为 order_number（GET /api/scm/purchase-orders 返回）

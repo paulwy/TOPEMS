@@ -13,25 +13,23 @@ use std::sync::Arc;
 use topems_pdm::modules;
 use topems_pdm::shared::AppState;
 use topems_shared_auth::middleware::require_module_access;
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::EventPublisher;
 
-/// 真实 PDM 模块：持有数据库连接池 + 完整业务路由
+/// 真实 PDM 模块：持有数据库作用域句柄 + 完整业务路由
 pub struct PdmRealModule {
     routes: Router,
-    db: sqlx::PgPool,
+    db: Db,
     event_publisher: Option<Arc<EventPublisher>>,
 }
 
 impl PdmRealModule {
     /// 异步构建真实 PDM 模块
     pub async fn build() -> Result<Self> {
-        // search_path 优先 pdm schema
-        std::env::set_var("SEARCH_PATH", "pdm, public");
-
         let config = ServiceConfig {
             name: "topems-pdm",
             port: 8031,
@@ -46,8 +44,10 @@ impl PdmRealModule {
             init_telemetry: false,
         };
 
-        // 1. 服务引导：数据库连接池 + 认证 + 事件发布器 + 指标
-        let ctx = bootstrap_service(&config).await?;
+        // 1. 服务引导：复用进程级共享运行时池 + 认证 + 事件发布器 + 指标
+        let ctx = bootstrap_service_shared(&config).await?;
+        // 连接治理 B：共享池之上固化本模块 search_path（显式传值，不依赖 .env）
+        let db = Db::new(ctx.db.clone(), "pdm, public");
 
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
@@ -70,7 +70,7 @@ impl PdmRealModule {
         };
         let state = AppState {
             auth_state: ctx.auth_state.clone(),
-            pool: ctx.db.clone(),
+            db: db.clone(),
             health_config: SimpleHealthConfig::new("topems-pdm").with_db(ctx.db.clone()),
             event_publisher: ctx.event_publisher.clone(),
             dict_cache,
@@ -106,7 +106,7 @@ impl PdmRealModule {
 
         Ok(Self {
             routes,
-            db: ctx.db.clone(),
+            db,
             event_publisher: ctx.event_publisher.clone(),
         })
     }
@@ -129,11 +129,12 @@ impl Module for PdmRealModule {
 
     async fn health_check(&self) -> ModuleHealth {
         let mut health = ModuleHealth::healthy("pdm-real", ModuleGroup::Wms);
-        let db_ok = self.db.size() > 0;
+        let stats = self.db.stats();
+        let db_ok = stats.size > 0;
         health.dependencies.push(crate::module::DependencyHealth {
             name: "PostgreSQL",
             healthy: db_ok,
-            detail: format!("连接池大小 {}", self.db.size()),
+            detail: format!("连接池大小 {}", stats.size),
         });
         if self.event_publisher.is_some() {
             health.dependencies.push(crate::module::DependencyHealth {

@@ -213,8 +213,10 @@ pub struct BudgetSnapshot {
     pub expected_pools: u32,
     /// 已提交池占用的额度总和（= Σ 各池 max_connections）。
     pub allocated: u32,
-    /// 已成功创建的池数量。
+    /// 已成功创建的池数量（**预算单位**：共享运行时池按其合并模块数计）。
     pub pools: u32,
+    /// 已成功创建的**物理池**数量（共享运行时池只算 1）。
+    pub physical_pools: u32,
     /// 历史峰值 allocated（含未提交的临时预留）。
     pub peak_allocated: u32,
 }
@@ -225,6 +227,7 @@ pub struct Ledger {
     cfg: BudgetConfig,
     allocated: u32,
     pools: u32,
+    physical_pools: u32,
     peak_allocated: u32,
 }
 
@@ -234,6 +237,7 @@ impl Ledger {
             cfg,
             allocated: 0,
             pools: 0,
+            physical_pools: 0,
             peak_allocated: 0,
         }
     }
@@ -248,6 +252,7 @@ impl Ledger {
             expected_pools: self.cfg.expected_pools,
             allocated: self.allocated,
             pools: self.pools,
+            physical_pools: self.physical_pools,
             peak_allocated: self.peak_allocated,
         }
     }
@@ -257,18 +262,36 @@ impl Ledger {
     /// `requested` 是该池的单池上限（`DB_MODULE_MAX_CONNECTIONS` 或服务配置）；
     /// 结果同时受「公平份额」和「预算余额」约束，且不小于 1（除非余额已为 0）。
     fn next_grant(&self, requested: u32) -> u32 {
-        if requested == 0 {
+        self.next_grant_weighted(requested, 1)
+    }
+
+    /// 按「预算单位权重」计算额度。
+    ///
+    /// 共享运行时池合并了 N 个模块，但仍只占 1 个物理池；为不挤占其并发能力，
+    /// 它在公平分摊中按 `weight=N` 参与（`denom = max(expected_pools, pools + weight)`），
+    /// 授予上限为 `share × weight`。`expected_pools` 也按预算单位计（共享池计 N）。
+    fn next_grant_weighted(&self, requested: u32, weight: u32) -> u32 {
+        if requested == 0 || weight == 0 {
             return 0;
         }
-        let denom = self.cfg.expected_pools.max(self.pools.saturating_add(1));
+        let denom = self
+            .cfg
+            .expected_pools
+            .max(self.pools.saturating_add(weight));
         let share = (self.cfg.total / denom).max(1);
+        let weighted_share = share.saturating_mul(weight);
         let remaining = self.cfg.total.saturating_sub(self.allocated);
-        requested.min(share).min(remaining)
+        requested.min(weighted_share).min(remaining)
     }
 
     /// 预留额度；返回 `None` 表示预算已耗尽（不允许超发）。
     pub fn try_reserve(&mut self, requested: u32) -> Option<u32> {
-        let grant = self.next_grant(requested);
+        self.try_reserve_weighted(requested, 1)
+    }
+
+    /// 按预算单位权重预留额度（见 [`Self::next_grant_weighted`]）。
+    pub fn try_reserve_weighted(&mut self, requested: u32, weight: u32) -> Option<u32> {
+        let grant = self.next_grant_weighted(requested, weight);
         if grant == 0 {
             return None;
         }
@@ -277,9 +300,10 @@ impl Ledger {
         Some(grant)
     }
 
-    /// 池创建成功：额度转为永久占用，池计数 +1。
-    fn commit(&mut self) {
-        self.pools = self.pools.saturating_add(1);
+    /// 池创建成功：额度转为永久占用，池计数按预算单位 +`weight`，物理池 +1。
+    fn commit(&mut self, weight: u32) {
+        self.pools = self.pools.saturating_add(weight);
+        self.physical_pools = self.physical_pools.saturating_add(1);
     }
 
     /// 池创建失败 / 提前返回：归还临时预留。
@@ -302,6 +326,7 @@ pub struct PoolReservation {
     committed: bool,
     label: &'static str,
     requested: u32,
+    weight: u32,
 }
 
 impl PoolReservation {
@@ -313,7 +338,7 @@ impl PoolReservation {
     /// 标记池创建成功：额度永久保留，之后 `Drop` 不再归还。
     pub fn commit(mut self) {
         if let Ok(mut ledger) = self.ledger.lock() {
-            ledger.commit();
+            ledger.commit(self.weight);
         }
         self.committed = true;
         tracing::info!(
@@ -352,21 +377,34 @@ pub fn reserve_from(
     label: &'static str,
     requested: u32,
 ) -> Result<PoolReservation> {
+    reserve_from_weighted(ledger, label, requested, 1)
+}
+
+/// 按预算单位权重申请额度（共享运行时池用 `weight` = 合并的模块数）。
+pub fn reserve_from_weighted(
+    ledger: &'static Mutex<Ledger>,
+    label: &'static str,
+    requested: u32,
+    weight: u32,
+) -> Result<PoolReservation> {
+    let weight = weight.max(1);
     let mut guard = ledger
         .lock()
         .map_err(|_| TopemsError::Database("连接预算账本锁 poisoned".to_string()))?;
-    match guard.try_reserve(requested) {
+    match guard.try_reserve_weighted(requested, weight) {
         Some(granted) => {
             let snap = guard.snapshot();
             drop(guard);
             tracing::info!(
-                "[db-budget] 池 {} 预约额度 granted={}/{}，已分配 {}/{}，池数 {}",
+                "[db-budget] 池 {} 预约额度 granted={}/{}（权重 {}），已分配 {}/{}，预算单位 {}，物理池 {}",
                 label,
                 granted,
                 requested,
+                weight,
                 snap.allocated,
                 snap.total,
-                snap.pools
+                snap.pools,
+                snap.physical_pools
             );
             Ok(PoolReservation {
                 ledger,
@@ -374,6 +412,7 @@ pub fn reserve_from(
                 committed: false,
                 label,
                 requested,
+                weight,
             })
         }
         None => {
@@ -404,6 +443,15 @@ pub fn reserve_pool(label: &'static str, requested: u32) -> Result<PoolReservati
     reserve_from(global_ledger(), label, requested)
 }
 
+/// 向进程级账本按权重申请额度（共享运行时池：`weight` = 合并的模块数）。
+pub fn reserve_pool_weighted(
+    label: &'static str,
+    requested: u32,
+    weight: u32,
+) -> Result<PoolReservation> {
+    reserve_from_weighted(global_ledger(), label, requested, weight)
+}
+
 /// 进程级预算快照。
 pub fn snapshot() -> BudgetSnapshot {
     global_ledger()
@@ -414,6 +462,7 @@ pub fn snapshot() -> BudgetSnapshot {
             expected_pools: 0,
             allocated: 0,
             pools: 0,
+            physical_pools: 0,
             peak_allocated: 0,
         })
 }
@@ -466,6 +515,32 @@ mod tests {
         let snap = l.lock().unwrap().snapshot();
         assert_eq!(snap.pools, 31);
         assert_eq!(snap.allocated, 62);
+    }
+
+    /// B 批次 3 形状：18 个物理池 = 12 模块池 + 2 advanced + 2 core + 1 迁移 + 1 共享池；
+    /// 共享池合并 14 个已迁移模块（批次 1 的 3 + 批次 2 的 6 + 批次 3 的 5），按 14 个预算单位参与。
+    /// 预期 31 单位、预算 62：普通池各 2（34），共享池 28，Σ = 62，无池额度不足。
+    #[test]
+    fn weighted_shared_pool_fits_budget_with_fourteen_modules() {
+        static L: OnceLock<Mutex<Ledger>> = OnceLock::new();
+        let l = ledger(&L, 31 * DEFAULT_CONNECTIONS_PER_POOL, 31);
+        for _ in 0..7 {
+            reserve_from(l, "business", 3).unwrap().commit();
+        }
+        let shared = reserve_from_weighted(l, "shared", 14 * 3, 14).unwrap();
+        assert_eq!(shared.granted(), 28, "共享池应按 14 个预算单位拿到 28");
+        shared.commit();
+        for n in 8..=17 {
+            let r = reserve_from(l, "business", 3)
+                .unwrap_or_else(|e| panic!("第 {n} 个池不应额度不足: {e}"));
+            assert_eq!(r.granted(), 2);
+            r.commit();
+        }
+        let snap = l.lock().unwrap().snapshot();
+        assert_eq!(snap.pools, 31, "预算单位：17 普通 + 14 共享");
+        assert_eq!(snap.physical_pools, 18, "物理池：17 普通 + 1 共享");
+        assert_eq!(snap.allocated, 62);
+        assert!(snap.allocated <= snap.total);
     }
 
     /// 预算比池数少 1：最后一个池必须显式报出「额度不足」+ 数字，而不是静默跳过。

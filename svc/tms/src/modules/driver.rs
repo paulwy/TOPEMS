@@ -138,6 +138,14 @@ pub async fn list_drivers(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
     let result = sqlx::query_as::<_, Driver>(
         r#"
         SELECT id, driver_no, name, phone, license_no, license_type, status, carrier_id, tenant_id, created_at, updated_at
@@ -154,7 +162,7 @@ pub async fn list_drivers(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -170,7 +178,7 @@ pub async fn list_drivers(
             .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
-            .fetch_one(&mut **txn)
+            .fetch_one(&mut scope)
             .await;
 
             let total = count_result.unwrap_or(0);
@@ -230,6 +238,14 @@ pub async fn create_driver(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
     let tenant_id = get_tenant_id(&claims, &headers);
@@ -251,18 +267,11 @@ pub async fn create_driver(
     .bind(tenant_id)
     .bind(now)
     .bind(now)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
         Ok(driver) => {
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("rls commit failed: {}", e);
-                    return ApiResponse::server_error("提交事务失败");
-                }
-            }
-
             // 失效列表缓存（创建后列表数据可能变化）
             state.dict_cache.clear_l1();
 
@@ -305,7 +314,7 @@ pub async fn create_driver(
     tag = "TMS - Driver"
 )]
 pub async fn get_driver(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -317,6 +326,14 @@ pub async fn get_driver(
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
     };
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -332,7 +349,7 @@ pub async fn get_driver(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -359,7 +376,7 @@ pub async fn get_driver(
     tag = "TMS - Driver"
 )]
 pub async fn update_driver(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -372,6 +389,14 @@ pub async fn update_driver(
     let Some(txn) = guard.as_mut() else {
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
@@ -399,20 +424,11 @@ pub async fn update_driver(
     .bind(req.carrier_id)
     .bind(now)
     .bind(tenant_id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(Some(driver)) => {
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-
-                    return ApiResponse::server_error("事务提交失败");
-                }
-            }
-            ApiResponse::success(driver, "司机更新成功")
-        }
+        Ok(Some(driver)) => ApiResponse::success(driver, "司机更新成功"),
         Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("司机不存在".to_string())),
         Err(e) => {
             tracing::error!("更新司机失败: {}", e);
@@ -434,7 +450,7 @@ pub async fn update_driver(
     tag = "TMS - Driver"
 )]
 pub async fn delete_driver(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -447,25 +463,24 @@ pub async fn delete_driver(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query("DELETE FROM tms.tms_drivers WHERE id = $1 AND tenant_id = $2")
         .bind(id)
         .bind(tenant_id)
-        .execute(&mut **txn)
+        .execute(&mut scope)
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-
-                    return ApiResponse::server_error("事务提交失败");
-                }
-            }
-            ApiResponse::success("".to_string(), "司机删除成功")
-        }
+        Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "司机删除成功"),
         Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("司机不存在".to_string())),
         Err(e) => {
             tracing::error!("删除司机失败: {}", e);
@@ -500,7 +515,7 @@ const DRIVER_RETURN: &str = r#"id, driver_no, name, phone, license_no, license_t
     tag = "TMS - Driver"
 )]
 pub async fn submit_verification(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -514,6 +529,14 @@ pub async fn submit_verification(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -522,7 +545,7 @@ pub async fn submit_verification(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match current {
@@ -540,18 +563,11 @@ pub async fn submit_verification(
             .bind(id)
             .bind(now)
             .bind(tenant_id)
-            .fetch_optional(&mut **txn)
+            .fetch_optional(&mut scope)
             .await;
 
             match result {
                 Ok(Some(driver)) => {
-                    if let Some(t) = guard.take() {
-                        if let Err(e) = t.commit().await {
-                            tracing::error!("事务提交失败: {}", e);
-
-                            return ApiResponse::server_error("事务提交失败");
-                        }
-                    }
                     tracing::info!(
                         "driver {} submit_verification: {} -> suspended, operator={}",
                         id,
@@ -592,7 +608,7 @@ pub async fn submit_verification(
     tag = "TMS - Driver"
 )]
 pub async fn approve_driver(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -606,6 +622,14 @@ pub async fn approve_driver(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -614,7 +638,7 @@ pub async fn approve_driver(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match current {
@@ -632,18 +656,11 @@ pub async fn approve_driver(
             .bind(id)
             .bind(now)
             .bind(tenant_id)
-            .fetch_optional(&mut **txn)
+            .fetch_optional(&mut scope)
             .await;
 
             match result {
                 Ok(Some(driver)) => {
-                    if let Some(t) = guard.take() {
-                        if let Err(e) = t.commit().await {
-                            tracing::error!("事务提交失败: {}", e);
-
-                            return ApiResponse::server_error("事务提交失败");
-                        }
-                    }
                     tracing::info!(
                         "driver {} approved: {} -> active, operator={}",
                         id,
@@ -684,7 +701,7 @@ pub async fn approve_driver(
     tag = "TMS - Driver"
 )]
 pub async fn reject_driver(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -698,6 +715,14 @@ pub async fn reject_driver(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
@@ -706,7 +731,7 @@ pub async fn reject_driver(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match current {
@@ -725,18 +750,11 @@ pub async fn reject_driver(
             .bind(id)
             .bind(now)
             .bind(tenant_id)
-            .fetch_optional(&mut **txn)
+            .fetch_optional(&mut scope)
             .await;
 
             match result {
                 Ok(Some(driver)) => {
-                    if let Some(t) = guard.take() {
-                        if let Err(e) = t.commit().await {
-                            tracing::error!("事务提交失败: {}", e);
-
-                            return ApiResponse::server_error("事务提交失败");
-                        }
-                    }
                     tracing::info!(
                         "driver {} rejected: {} -> inactive, operator={}, requires_approval={}",
                         id,

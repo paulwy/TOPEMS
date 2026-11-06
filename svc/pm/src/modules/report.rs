@@ -1,12 +1,13 @@
 use axum::{
-    extract::{Extension, Path},
+    extract::{Extension, Path, State},
     routing::{get, post},
     Json, Router,
 };
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
-use sqlx::{PgPool, Row};
+use sqlx::Row;
 use topems_shared_auth::auth::Claims;
+use topems_shared_db::scope::Db;
 fn get_tenant_id(claims: &Claims) -> Uuid {
     claims
         .tenant_id
@@ -27,7 +28,7 @@ use crate::modules::effective_tenant_id;
 type RlsTxnArc =
     std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
-pub fn create_routes(pool: PgPool) -> Router {
+pub fn create_routes(db: Db) -> Router {
     Router::new()
         .route(
             "/projects/{project_id}/reports",
@@ -48,7 +49,7 @@ pub fn create_routes(pool: PgPool) -> Router {
                 .put(update_template)
                 .delete(delete_template),
         )
-        .with_state(pool)
+        .with_state(db)
 }
 
 #[utoipa::path(
@@ -65,6 +66,7 @@ pub fn create_routes(pool: PgPool) -> Router {
     tag = "report"
 )]
 async fn get_project_reports(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<ProjectReport>> {
@@ -73,11 +75,18 @@ async fn get_project_reports(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let reports = sqlx::query_as::<_, ProjectReport>(
         only_own_schema_query!("pm", "SELECT id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at, updated_at FROM pm.project_reports WHERE project_id = $1 ORDER BY generated_at DESC"),
     )
     .bind(project_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match reports {
@@ -103,6 +112,7 @@ async fn get_project_reports(
     tag = "report"
 )]
 async fn get_report(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProjectReport> {
@@ -111,10 +121,17 @@ async fn get_report(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let report =
         sqlx::query_as::<_, ProjectReport>(only_own_schema_query!("pm", "SELECT id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, created_by, created_at, updated_at FROM pm.project_reports WHERE id = $1"))
             .bind(id)
-            .fetch_one(&mut **txn)
+            .fetch_one(&mut scope)
             .await;
 
     match report {
@@ -128,6 +145,7 @@ async fn get_report(
 }
 
 async fn create_report(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
@@ -138,6 +156,13 @@ async fn create_report(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -156,7 +181,7 @@ async fn create_report(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match report {
@@ -182,6 +207,7 @@ async fn create_report(
     tag = "report"
 )]
 async fn generate_report(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
@@ -193,13 +219,20 @@ async fn generate_report(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     let project_data = sqlx::query(only_own_schema_query!("pm", "SELECT name, code, project_type, status, progress, budget, start_date, end_date FROM pm.projects WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"))
         .bind(project_id)
         .bind(get_tenant_id(&claims))
-        .fetch_one(&mut **txn)
+        .fetch_one(&mut scope)
         .await;
 
     let project_info = match project_data {
@@ -219,7 +252,7 @@ async fn generate_report(
     let phases_data = sqlx::query(only_own_schema_query!("pm", "SELECT name, sequence_number, progress, status FROM pm.project_phases WHERE project_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid) ORDER BY sequence_number"))
         .bind(project_id)
         .bind(get_tenant_id(&claims))
-        .fetch_all(&mut **txn)
+        .fetch_all(&mut scope)
         .await;
 
     let phases_info = match phases_data {
@@ -242,7 +275,7 @@ async fn generate_report(
         "SELECT name, date, status FROM pm.project_milestones WHERE project_id = $1 ORDER BY date"
     ))
     .bind(project_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     let milestones_info = match milestones_data {
@@ -264,7 +297,7 @@ async fn generate_report(
         "SELECT total_amount::numeric, spent_amount::numeric, remaining_amount FROM pm.budgets WHERE project_id = $1"
     ))
     .bind(project_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     let budget_info = match budget_data {
@@ -307,7 +340,7 @@ async fn generate_report(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match report {
@@ -349,6 +382,7 @@ fn generate_summary(data: &serde_json::Value) -> Option<String> {
     tag = "report"
 )]
 async fn list_templates(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
 ) -> ApiResponse<Vec<ReportTemplate>> {
     let mut guard = txn_arc.lock().await;
@@ -356,10 +390,17 @@ async fn list_templates(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let templates = sqlx::query_as::<_, ReportTemplate>(
         only_own_schema_query!("pm", "SELECT id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at FROM pm.report_templates WHERE is_active = true ORDER BY template_name"),
     )
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match templates {
@@ -385,6 +426,7 @@ async fn list_templates(
     tag = "report"
 )]
 async fn get_template(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ReportTemplate> {
@@ -393,11 +435,18 @@ async fn get_template(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let template = sqlx::query_as::<_, ReportTemplate>(
         only_own_schema_query!("pm", "SELECT id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at FROM pm.report_templates WHERE id = $1"),
     )
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match template {
@@ -411,6 +460,7 @@ async fn get_template(
 }
 
 async fn create_template(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
@@ -420,6 +470,13 @@ async fn create_template(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -437,7 +494,7 @@ async fn create_template(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match template {
@@ -450,6 +507,7 @@ async fn create_template(
 }
 
 async fn update_template(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<CreateReportTemplateRequest>,
@@ -458,6 +516,13 @@ async fn update_template(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let template = sqlx::query_as::<_, ReportTemplate>(only_own_schema_query!(
         "pm",
@@ -471,7 +536,7 @@ async fn update_template(
     .bind(req.content)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match template {
@@ -485,6 +550,7 @@ async fn update_template(
 }
 
 async fn delete_template(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
@@ -493,12 +559,19 @@ async fn delete_template(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "UPDATE pm.report_templates SET is_active = false WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
-    .execute(&mut **txn)
+    .execute(&mut scope)
     .await;
 
     match result {

@@ -3,10 +3,11 @@ use axum::{
     Router,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row};
+use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_db::scope::Db;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GisStatistics {
@@ -33,9 +34,14 @@ pub struct GisStatistics {
     tag = "stats"
 )]
 pub async fn get_statistics(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<GisStatistics> {
+    // 只读作用域：10 条统计查询共用同一事务（SET LOCAL search_path=gis, public）。
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -50,7 +56,7 @@ pub async fn get_statistics(
         "SELECT COUNT(*) FROM gis.device_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
     .bind(tenant_opt)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
     .unwrap_or(0);
@@ -60,7 +66,7 @@ pub async fn get_statistics(
         "SELECT COUNT(*) FROM gis.pipelines WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
     .bind(tenant_opt)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
     .unwrap_or(0);
@@ -70,7 +76,7 @@ pub async fn get_statistics(
         "SELECT COUNT(*) FROM gis.warehouse_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
     .bind(tenant_opt)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
     .unwrap_or(0);
@@ -80,7 +86,7 @@ pub async fn get_statistics(
         "SELECT COUNT(*) FROM gis.evidence_records WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
     .bind(tenant_opt)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
     .unwrap_or(0);
@@ -90,7 +96,7 @@ pub async fn get_statistics(
         "SELECT COUNT(*) FROM gis.business_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
     .bind(tenant_opt)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
     .unwrap_or(0);
@@ -100,7 +106,7 @@ pub async fn get_statistics(
         "SELECT COUNT(*) FROM gis.factory_maps WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
     .bind(tenant_opt)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
     .unwrap_or(0);
@@ -110,7 +116,7 @@ pub async fn get_statistics(
         "SELECT COUNT(*) FROM gis.map_markers WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
     .bind(tenant_opt)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
     .unwrap_or(0);
@@ -120,7 +126,7 @@ pub async fn get_statistics(
         "SELECT COUNT(*) FROM gis.location_photos WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
     .bind(tenant_opt)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
     .unwrap_or(0);
@@ -130,7 +136,7 @@ pub async fn get_statistics(
         "SELECT COUNT(*) FROM gis.device_locations WHERE status = 'active' AND ($1::uuid IS NULL OR tenant_id = $1)"
     ))
     .bind(tenant_opt)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
     .unwrap_or(0);
@@ -140,10 +146,14 @@ pub async fn get_statistics(
         "SELECT COUNT(*) FROM gis.pipelines WHERE status = 'active' AND ($1::uuid IS NULL OR tenant_id = $1)"
     ))
     .bind(tenant_opt)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .map(|row| row.get::<i64, _>(0))
     .unwrap_or(0);
+
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("查询统计失败", e));
+    }
 
     let stats = GisStatistics {
         device_points,
@@ -161,6 +171,6 @@ pub async fn get_statistics(
     ApiResponse::success(stats, "获取GIS统计数据成功")
 }
 
-pub fn create_routes() -> Router<PgPool> {
+pub fn create_routes() -> Router<Db> {
     Router::new().route("/statistics", axum::routing::get(get_statistics))
 }

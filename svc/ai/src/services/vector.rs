@@ -72,6 +72,7 @@ impl VectorService {
 
     /// 创建文档记录
     pub async fn create_document(&self, doc: &CreateDocumentRequest) -> Result<Uuid, sqlx::Error> {
+        let mut scope = self.db.scope().await?;
         let id: Uuid = sqlx::query_scalar(
             only_own_schema_query!("ai", r#"
             INSERT INTO ai.documents (tenant_id, title, file_name, file_path, file_size, mime_type, category, tags, description, status)
@@ -89,8 +90,9 @@ impl VectorService {
         .bind(&doc.tags)
         .bind(&doc.description)
         .bind("pending")
-        .fetch_one(self.db.pool())
+        .fetch_one(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(id)
     }
@@ -103,6 +105,7 @@ impl VectorService {
         error_message: Option<&str>,
         tenant_id: Uuid,
     ) -> Result<(), sqlx::Error> {
+        let mut scope = self.db.scope().await?;
         sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -116,8 +119,9 @@ impl VectorService {
         .bind(error_message)
         .bind(id)
         .bind(tenant_id)
-        .execute(self.db.pool())
+        .execute(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(())
     }
@@ -128,6 +132,7 @@ impl VectorService {
         id: Uuid,
         tenant_id: Uuid,
     ) -> Result<Option<Document>, sqlx::Error> {
+        let mut scope = self.db.scope_read().await?;
         let doc = sqlx::query_as::<_, DocumentRow>(only_own_schema_query!(
             "ai",
             r#"
@@ -140,14 +145,16 @@ impl VectorService {
         ))
         .bind(id)
         .bind(tenant_id)
-        .fetch_optional(self.db.pool())
+        .fetch_optional(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(doc.map(|r| r.into()))
     }
 
     /// 获取所有文档
     pub async fn list_documents(&self, tenant_id: Uuid) -> Result<Vec<Document>, sqlx::Error> {
+        let mut scope = self.db.scope_read().await?;
         let docs = sqlx::query_as::<_, DocumentRow>(only_own_schema_query!(
             "ai",
             r#"
@@ -161,14 +168,16 @@ impl VectorService {
             "plugin_ai"
         ))
         .bind(tenant_id)
-        .fetch_all(self.db.pool())
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(docs.into_iter().map(|r| r.into()).collect())
     }
 
     /// 删除文档（级联删除向量）
     pub async fn delete_document(&self, id: Uuid, tenant_id: Uuid) -> Result<bool, sqlx::Error> {
+        let mut scope = self.db.scope().await?;
         let result = sqlx::query(only_own_schema_query!(
             "ai",
             "UPDATE ai.documents SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
@@ -176,8 +185,9 @@ impl VectorService {
         ))
         .bind(id)
         .bind(tenant_id)
-        .execute(self.db.pool())
+        .execute(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(result.rows_affected() > 0)
     }
@@ -188,6 +198,7 @@ impl VectorService {
         chunk: &SaveChunkRequest,
         tenant_id: Uuid,
     ) -> Result<Uuid, sqlx::Error> {
+        let mut scope = self.db.scope().await?;
         let id: Uuid = sqlx::query_scalar(only_own_schema_query!(
             "ai",
             r#"
@@ -202,8 +213,9 @@ impl VectorService {
         .bind(chunk.chunk_index)
         .bind(&chunk.content)
         .bind(&chunk.metadata)
-        .fetch_one(self.db.pool())
+        .fetch_one(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(id)
     }
@@ -214,6 +226,7 @@ impl VectorService {
         vectors: &[SaveVectorRequest],
         tenant_id: Uuid,
     ) -> Result<(), sqlx::Error> {
+        let mut scope = self.db.scope().await?;
         for vector in vectors {
             sqlx::query(only_own_schema_query!(
                 "ai",
@@ -228,9 +241,10 @@ impl VectorService {
             .bind(vector.document_id)
             .bind(vector.chunk_index)
             .bind(tenant_id)
-            .execute(self.db.pool())
+            .execute(&mut scope)
             .await?;
         }
+        scope.commit().await?;
         Ok(())
     }
 
@@ -252,6 +266,7 @@ impl VectorService {
                 .join(",")
         );
 
+        let mut scope = self.db.scope_read().await?;
         let rows = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -273,8 +288,9 @@ impl VectorService {
         .bind(&embedding_str)
         .bind(top_k as i64)
         .bind(tenant_id)
-        .fetch_all(self.db.pool())
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         let results = rows
             .iter()
@@ -297,12 +313,13 @@ impl VectorService {
     )]
     /// 获取统计信息
     pub async fn get_stats(&self) -> Result<VectorStats, sqlx::Error> {
+        let mut scope = self.db.scope_read().await?;
         let doc_count: i64 = sqlx::query_scalar(only_own_schema_query!(
             "ai",
             "SELECT COUNT(*) FROM ai.documents",
             "plugin_ai"
         ))
-        .fetch_one(self.db.pool())
+        .fetch_one(&mut scope)
         .await?;
 
         let chunk_count: i64 = sqlx::query_scalar(only_own_schema_query!(
@@ -310,20 +327,21 @@ impl VectorService {
             "SELECT COUNT(*) FROM ai.document_chunks",
             "plugin_ai"
         ))
-        .fetch_one(self.db.pool())
+        .fetch_one(&mut scope)
         .await?;
 
         let vector_count: i64 = sqlx::query_scalar(
             only_own_schema_query!("ai", "SELECT COUNT(*) FROM ai.document_chunks WHERE deleted_at IS NULL AND embedding IS NOT NULL", "plugin_ai"),
         )
-        .fetch_one(self.db.pool())
+        .fetch_one(&mut scope)
         .await?;
 
         let dimension: Option<i64> = sqlx::query_scalar(
             only_own_schema_query!("ai", "SELECT vector_dimensions FROM ai.document_chunks WHERE deleted_at IS NULL AND embedding IS NOT NULL LIMIT 1", "plugin_ai"),
         )
-        .fetch_optional(self.db.pool())
+        .fetch_optional(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(VectorStats {
             total_documents: doc_count as usize,
@@ -335,20 +353,22 @@ impl VectorService {
 
     /// 清空所有向量数据
     pub async fn clear_all(&self) -> Result<(), sqlx::Error> {
+        let mut scope = self.db.scope().await?;
         sqlx::query(only_own_schema_query!(
             "ai",
             "DELETE FROM ai.document_chunks",
             "plugin_ai"
         ))
-        .execute(self.db.pool())
+        .execute(&mut scope)
         .await?;
         sqlx::query(only_own_schema_query!(
             "ai",
             "DELETE FROM ai.documents",
             "plugin_ai"
         ))
-        .execute(self.db.pool())
+        .execute(&mut scope)
         .await?;
+        scope.commit().await?;
         Ok(())
     }
 
@@ -360,6 +380,7 @@ impl VectorService {
         top_k: usize,
         tenant_id: Uuid,
     ) -> Result<Vec<SearchResult>, sqlx::Error> {
+        let mut scope = self.db.scope_read().await?;
         let rows = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -382,8 +403,9 @@ impl VectorService {
         .bind(query)
         .bind(top_k as i64)
         .bind(tenant_id)
-        .fetch_all(self.db.pool())
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         let results = rows
             .iter()
@@ -481,6 +503,7 @@ impl VectorService {
         document_id: Uuid,
         tenant_id: Uuid,
     ) -> Result<Vec<DocumentChunk>, sqlx::Error> {
+        let mut scope = self.db.scope_read().await?;
         let chunks = sqlx::query_as::<_, DocumentChunkRow>(only_own_schema_query!(
             "ai",
             r#"
@@ -493,8 +516,9 @@ impl VectorService {
         ))
         .bind(document_id)
         .bind(tenant_id)
-        .fetch_all(self.db.pool())
+        .fetch_all(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(chunks.into_iter().map(|r| r.into()).collect())
     }
@@ -505,6 +529,7 @@ impl VectorService {
         id: Uuid,
         tenant_id: Uuid,
     ) -> Result<Option<VectorEmbedding>, sqlx::Error> {
+        let mut scope = self.db.scope_read().await?;
         let row = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -516,8 +541,9 @@ impl VectorService {
         ))
         .bind(id)
         .bind(tenant_id)
-        .fetch_optional(self.db.pool())
+        .fetch_optional(&mut scope)
         .await?;
+        scope.commit().await?;
 
         if let Some(row) = row {
             Ok(Some(VectorEmbedding {
@@ -537,6 +563,7 @@ impl VectorService {
 
     /// 删除向量记录
     pub async fn delete_vector(&self, id: Uuid, tenant_id: Uuid) -> Result<bool, sqlx::Error> {
+        let mut scope = self.db.scope().await?;
         let result = sqlx::query(only_own_schema_query!(
             "ai",
             "UPDATE ai.document_chunks SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
@@ -544,8 +571,9 @@ impl VectorService {
         ))
         .bind(id)
         .bind(tenant_id)
-        .execute(self.db.pool())
+        .execute(&mut scope)
         .await?;
+        scope.commit().await?;
 
         Ok(result.rows_affected() > 0)
     }

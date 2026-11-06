@@ -5993,6 +5993,7 @@ dependencies = [
  "topems-shared-auth",
  "topems-shared-bootstrap",
  "topems-shared-core",
+ "topems-shared-db",
  "tracing",
  "utoipa",
  "uuid",

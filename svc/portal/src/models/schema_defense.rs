@@ -1247,6 +1247,9 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
         ],
     ),
+    // 帮助中心 4 表（core_faqs / core_guides / core_guide_lessons / core_guide_progress）
+    // 在 portal schema 的副本已废弃：权威在 public（prod 实测 public faq/guide 各 12 行，
+    // portal 4 表全 0）。此处定义仅为两态（嵌入/独立）历史 DDL 自检保留，不再作为数据源。
     (
         "core_faqs",
         &[

@@ -72,6 +72,16 @@ pub async fn list_settings(
 ) -> ApiResponse<std::collections::HashMap<String, JsonValue>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
+    // 读出作用域（只读事务 + SET LOCAL search_path=public）。
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            return ApiResponse::<std::collections::HashMap<String, JsonValue>>::from(
+                TopemsError::internal("获取设置列表失败", e),
+            )
+        }
+    };
+
     let rows = if let Some(cat) = &params.category {
         sqlx::query(
             "SELECT key, value FROM public.monitor_settings
@@ -80,7 +90,7 @@ pub async fn list_settings(
         )
         .bind(tenant_id)
         .bind(cat)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     } else {
         sqlx::query(
@@ -89,9 +99,15 @@ pub async fn list_settings(
              ORDER BY key",
         )
         .bind(tenant_id)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await
     };
+
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::<std::collections::HashMap<String, JsonValue>>::from(
+            TopemsError::internal("获取设置列表失败", e),
+        );
+    }
 
     let mut map = std::collections::HashMap::new();
     match rows {
@@ -133,6 +149,14 @@ pub async fn batch_update_settings(
 
     for (key, value) in &payload.settings {
         let category = key.split('_').next().map(|s| s.to_string());
+        // 逐 key 独立事务：与改造前的 autocommit 语义一致（单条失败不影响其它 key）。
+        let mut scope = match state.db.scope().await {
+            Ok(s) => s,
+            Err(e) => {
+                tracing::error!("设置保存作用域创建失败: {}", e);
+                continue;
+            }
+        };
         let result = sqlx::query(
             "INSERT INTO public.monitor_settings (tenant_id, key, value, category)
              VALUES ($1, $2, $3, $4)
@@ -143,10 +167,10 @@ pub async fn batch_update_settings(
         .bind(key)
         .bind(value)
         .bind(category)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
-        if result.is_ok() {
+        if result.is_ok() && scope.commit().await.is_ok() {
             updated += 1;
         }
     }
@@ -178,15 +202,25 @@ pub async fn get_setting(
 ) -> ApiResponse<SettingItem> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match sqlx::query(
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::<SettingItem>::from(TopemsError::internal("操作失败", e)),
+    };
+
+    let fetched = sqlx::query(
         "SELECT key, value, category FROM public.monitor_settings
          WHERE (tenant_id IS NULL OR tenant_id = $1) AND key = $2",
     )
     .bind(tenant_id)
     .bind(&key)
-    .fetch_optional(&state.pool)
-    .await
-    {
+    .fetch_optional(&mut scope)
+    .await;
+
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::<SettingItem>::from(TopemsError::internal("操作失败", e));
+    }
+
+    match fetched {
         Ok(Some(row)) => {
             let k: String = row.try_get("key").unwrap_or(key);
             let v: JsonValue = row.try_get("value").unwrap_or(JsonValue::Null);
@@ -230,7 +264,14 @@ pub async fn update_setting(
         .category
         .or_else(|| key.split('_').next().map(|s| s.to_string()));
 
-    match sqlx::query(
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            return ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e))
+        }
+    };
+
+    let result = sqlx::query(
         "INSERT INTO public.monitor_settings (tenant_id, key, value, category)
          VALUES ($1, $2, $3, $4)
          ON CONFLICT (tenant_id, key) DO UPDATE
@@ -240,11 +281,18 @@ pub async fn update_setting(
     .bind(&key)
     .bind(&payload.value)
     .bind(category)
-    .execute(&state.pool)
-    .await
-    {
-        Ok(_) => ApiResponse::success(serde_json::json!({ "key": key }), "设置更新成功"),
-        Err(e) => ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e)),
+    .execute(&mut scope)
+    .await;
+
+    match result {
+        Ok(_) => match scope.commit().await {
+            Ok(()) => ApiResponse::success(serde_json::json!({ "key": key }), "设置更新成功"),
+            Err(e) => ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e)),
+        },
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e))
+        }
     }
 }
 
@@ -269,18 +317,33 @@ pub async fn delete_setting(
 ) -> ApiResponse<serde_json::Value> {
     let tenant_id = get_tenant_id_from_claims(&claims);
 
-    match sqlx::query(
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            return ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e))
+        }
+    };
+
+    let result = sqlx::query(
         "DELETE FROM public.monitor_settings WHERE (tenant_id IS NULL OR tenant_id = $1) AND key = $2",
     )
     .bind(tenant_id)
     .bind(&key)
-    .execute(&state.pool)
-    .await
-    {
-        Ok(r) if r.rows_affected() > 0 => {
-            ApiResponse::success(serde_json::json!({ "key": key }), "设置删除成功")
+    .execute(&mut scope)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => match scope.commit().await {
+            Ok(()) => ApiResponse::success(serde_json::json!({ "key": key }), "设置删除成功"),
+            Err(e) => ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e)),
+        },
+        Ok(_) => {
+            let _ = scope.rollback().await;
+            ApiResponse::<serde_json::Value>::not_found("设置不存在")
         }
-        Ok(_) => ApiResponse::<serde_json::Value>::not_found("设置不存在"),
-        Err(e) => ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e)),
+        Err(e) => {
+            let _ = scope.rollback().await;
+            ApiResponse::<serde_json::Value>::from(TopemsError::internal("操作失败", e))
+        }
     }
 }

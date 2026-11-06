@@ -4,8 +4,9 @@ use axum::{
     response::IntoResponse,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row};
+use sqlx::Row;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::{Db, ScopedTxn};
 use uuid::Uuid;
 
 use topems_shared_auth::auth::{AuthState, Claims};
@@ -61,7 +62,7 @@ pub struct Shortcut {
 #[allow(clippy::as_conversions)]
 pub async fn get_workbench_data(
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     State(workflow_client): State<TypedServiceClient<WorkflowApi>>,
     State(notification_client): State<TypedServiceClient<NotificationApi>>,
     State(hrm_client): State<TypedServiceClient<HrmApi>>,
@@ -70,6 +71,17 @@ pub async fn get_workbench_data(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -123,22 +135,26 @@ pub async fn get_workbench_data(
 
     let today_quality_pass_rate = get_today_quality_pass_rate(&qms_client, &bearer_token).await;
 
-    let shortcuts = get_shortcuts(&pool, &user_id, tenant_filter).await;
+    let shortcuts = get_shortcuts(&mut scope, &user_id, tenant_filter).await;
 
-    let workbench_data = MobileWorkbenchData {
-        pending_tasks,
-        pending_approvals,
-        unread_notifications,
-        today_attendance_status,
-        today_production_output,
-        today_quality_pass_rate,
-        shortcuts,
+    let __mobile_response = {
+        let workbench_data = MobileWorkbenchData {
+            pending_tasks,
+            pending_approvals,
+            unread_notifications,
+            today_attendance_status,
+            today_production_output,
+            today_quality_pass_rate,
+            shortcuts,
+        };
+
+        (
+            StatusCode::OK,
+            ApiResponse::success(workbench_data, "获取工作台数据成功"),
+        )
     };
-
-    (
-        StatusCode::OK,
-        ApiResponse::success(workbench_data, "获取工作台数据成功"),
-    )
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 async fn check_attendance_status(
@@ -203,13 +219,17 @@ async fn get_today_quality_pass_rate(
     }
 }
 
-async fn get_shortcuts(pool: &PgPool, user_id: &str, tenant_filter: Option<Uuid>) -> Vec<Shortcut> {
+async fn get_shortcuts(
+    scope: &mut ScopedTxn<'_>,
+    user_id: &str,
+    tenant_filter: Option<Uuid>,
+) -> Vec<Shortcut> {
     let rows = sqlx::query(
         only_own_schema_query!("mobile", "SELECT id::text AS id, name, icon, COALESCE(action_type, '') as path, '#1890ff' as color FROM mobile.shortcuts WHERE (user_id = $1 OR user_id IS NULL) AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY sort_order"),
     )
     .bind(user_id)
     .bind(tenant_filter)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await;
 
     match rows {

@@ -2,7 +2,6 @@ use axum::extract::{Extension, Path, State};
 use axum::Json;
 use chrono::Utc;
 use sqlx::Row;
-use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -26,8 +25,23 @@ use crate::models::AppState;
 )]
 pub async fn list_conversion_rules_api(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> ApiResponse<Vec<ConversionRule>> {
-    match list_conversion_rules(&state.pool).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
+    match list_conversion_rules(&mut scope).await {
         Ok(rules) => ApiResponse::success(rules, "Conversion rules retrieved successfully"),
         Err(e) => {
             tracing::error!("Failed to fetch conversion rules: {}", e);
@@ -51,13 +65,28 @@ pub async fn list_conversion_rules_api(
 )]
 pub async fn get_conversion_rule_api(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ConversionRule> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, ConversionRule>(
         only_own_schema_query!("integration", "SELECT id, tenant_id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at, updated_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(rule) => ApiResponse::success(rule, "Conversion rule found"),
@@ -81,10 +110,24 @@ pub async fn get_conversion_rule_api(
 )]
 pub async fn create_conversion_rule_api(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateConversionRuleRequest>,
 ) -> ApiResponse<ConversionRule> {
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
 
     let rule = ConversionRule {
         id,
@@ -111,7 +154,7 @@ pub async fn create_conversion_rule_api(
         updated_at: now,
     };
 
-    match insert_conversion_rule(&state.pool, &rule).await {
+    match insert_conversion_rule(&mut scope, &rule).await {
         Ok(_) => ApiResponse::success(rule, "Conversion rule created successfully"),
         Err(e) => {
             tracing::error!("Failed to create conversion rule: {}", e);
@@ -136,10 +179,25 @@ pub async fn create_conversion_rule_api(
 )]
 pub async fn update_conversion_rule_api(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateConversionRuleRequest>,
 ) -> ApiResponse<ConversionRule> {
     let now = Utc::now();
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
 
     let row = sqlx::query(
         only_own_schema_query!("integration", "UPDATE integration.conversion_rules SET name = COALESCE($1, name), description = COALESCE($2, description), trigger_type = COALESCE($3, trigger_type), trigger_condition = COALESCE($4, trigger_condition), field_mappings = COALESCE($5, field_mappings), transform_script = COALESCE($6, transform_script), status = COALESCE($7, status), priority = COALESCE($8, priority), is_enabled = COALESCE($9, is_enabled), max_retries = COALESCE($10, max_retries), retry_interval_secs = COALESCE($11, retry_interval_secs), stop_on_failure = COALESCE($12, stop_on_failure), updated_at = $13 WHERE id = $14 RETURNING id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at, updated_at, tenant_id")
@@ -158,7 +216,7 @@ pub async fn update_conversion_rule_api(
     .bind(req.stop_on_failure)
     .bind(now)
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match row {
@@ -211,14 +269,29 @@ pub async fn update_conversion_rule_api(
 )]
 pub async fn delete_conversion_rule_api(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query(only_own_schema_query!(
         "integration",
         "UPDATE integration.conversion_rules SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     {
         Ok(result) => {
@@ -250,9 +323,24 @@ pub async fn delete_conversion_rule_api(
 )]
 pub async fn get_rule_executions_api(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<ConversionExecution>> {
-    match get_rule_executions(&state.pool, id, 100).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
+    match get_rule_executions(&mut scope, id, 100).await {
         Ok(executions) => {
             ApiResponse::success(executions, "Rule executions retrieved successfully")
         }
@@ -279,17 +367,29 @@ pub async fn get_rule_executions_api(
 )]
 pub async fn execute_conversion_rule_api(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<Uuid>,
     Json(req): Json<ExecuteConversionRequest>,
 ) -> ApiResponse<ExecuteConversionResponse> {
-    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     let rule = match sqlx::query_as::<_, ConversionRule>(
-        only_own_schema_query!("integration", "SELECT id, tenant_id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at, updated_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"),
+        only_own_schema_query!("integration", "SELECT id, tenant_id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at, updated_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(r) => r,
@@ -321,7 +421,7 @@ pub async fn execute_conversion_rule_api(
     .bind("running")
     .bind(now)
     .bind(rule.tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     let response = ExecuteConversionResponse {
@@ -335,15 +435,14 @@ pub async fn execute_conversion_rule_api(
 
     let _ = sqlx::query(
         only_own_schema_query!("integration", "UPDATE integration.conversion_executions SET status = $1, completed_at = $2, target_record_id = $3, target_data = $4
-         WHERE id = $5 AND ($6::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $6::uuid)"),
+         WHERE id = $5 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"),
     )
     .bind("completed")
     .bind(now)
     .bind(&response.target_record_id)
     .bind(&response.target_data)
     .bind(execution_id)
-    .bind(tenant_id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     ApiResponse::success(response, "Conversion executed successfully")
@@ -364,14 +463,29 @@ pub async fn execute_conversion_rule_api(
 )]
 pub async fn enable_conversion_rule_api(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ConversionRule> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, ConversionRule>(
         only_own_schema_query!("integration", "UPDATE integration.conversion_rules SET is_enabled = true, status = 'active', updated_at = $2 WHERE id = $1 RETURNING *"),
     )
     .bind(id)
     .bind(Utc::now())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(rule) => ApiResponse::success(rule, "Conversion rule enabled successfully"),
@@ -398,14 +512,29 @@ pub async fn enable_conversion_rule_api(
 )]
 pub async fn disable_conversion_rule_api(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ConversionRule> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, ConversionRule>(
         only_own_schema_query!("integration", "UPDATE integration.conversion_rules SET is_enabled = false, status = 'inactive', updated_at = $2 WHERE id = $1 RETURNING *"),
     )
     .bind(id)
     .bind(Utc::now())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(rule) => ApiResponse::success(rule, "Conversion rule disabled successfully"),

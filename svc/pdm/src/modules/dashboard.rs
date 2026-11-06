@@ -50,9 +50,26 @@ struct NamedCountRow {
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_dashboard(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<topems_shared_auth::middleware::tenant::RlsTxnCell>,
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
 ) -> ApiResponse<serde_json::Value> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+            "数据库事务不可用".to_string(),
+        ));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(topems_shared_core::error::TopemsError::Internal(
+                "数据库事务不可用".to_string(),
+            ));
+        }
+    };
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -69,7 +86,7 @@ pub async fn get_dashboard(
         "SELECT COUNT(*) FROM pdm_documents WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status IN ('review', 'pending')",
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -77,7 +94,7 @@ pub async fn get_dashboard(
         "SELECT COUNT(*) FROM pdm_boms WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active'",
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -85,12 +102,12 @@ pub async fn get_dashboard(
         "SELECT COUNT(*) FROM pdm_boms WHERE ($1::uuid IS NULL OR tenant_id = $1)",
     )
     .bind(tenant_id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
     let document_types = fetch_named_counts(
-        &state,
+        &mut scope,
         tenant_id,
         r#"
         SELECT COALESCE(document_type, 'other') AS name, COUNT(*) AS value
@@ -103,7 +120,7 @@ pub async fn get_dashboard(
     .await;
 
     let change_trend = fetch_named_counts(
-        &state,
+        &mut scope,
         tenant_id,
         r#"
         SELECT COALESCE(status, 'unknown') AS name, COUNT(*) AS value
@@ -116,7 +133,7 @@ pub async fn get_dashboard(
     .await;
 
     let project_distribution = fetch_named_counts(
-        &state,
+        &mut scope,
         tenant_id,
         r#"
         SELECT COALESCE(status, 'unknown') AS name, COUNT(*) AS value
@@ -152,13 +169,13 @@ pub async fn get_dashboard(
 }
 
 async fn fetch_named_counts(
-    state: &AppState,
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
     tenant_id: Option<Uuid>,
     sql: &str,
 ) -> Vec<NamedCount> {
     sqlx::query_as::<_, NamedCountRow>(sqlx::AssertSqlSafe(sql))
         .bind(tenant_id)
-        .fetch_all(&state.pool)
+        .fetch_all(scope)
         .await
         .unwrap_or_default()
         .into_iter()

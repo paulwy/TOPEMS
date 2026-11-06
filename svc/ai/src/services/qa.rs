@@ -3,7 +3,7 @@
 use crate::modules::models::{QAHistory, SearchResult};
 use crate::services::db::Database;
 use serde::{Deserialize, Serialize};
-use sqlx::{Executor, Row};
+use sqlx::Row;
 use topems_shared_ai::ai_client::{
     create_client, AIModelConfig, AIProviderType, ChatMessage, UnifiedAIClient,
 };
@@ -280,6 +280,11 @@ impl QAService {
         limit: usize,
         tenant_id: Uuid,
     ) -> Result<Vec<QAHistory>, TopemsError> {
+        let mut scope = self
+            .db
+            .scope_read()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("查询问答历史失败: {}", e)))?;
         let rows = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -294,9 +299,13 @@ impl QAService {
         .bind(offset as i64)
         .bind(limit as i64)
         .bind(tenant_id)
-        .fetch_all(self.db.pool())
+        .fetch_all(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询问答历史失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("查询问答历史失败: {}", e)))?;
 
         let history = rows
             .iter()
@@ -322,6 +331,11 @@ impl QAService {
 
     /// 获取问答历史总数
     pub async fn get_qa_history_count(&self, tenant_id: Uuid) -> Result<i64, TopemsError> {
+        let mut scope = self
+            .db
+            .scope_read()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("查询问答历史总数失败: {}", e)))?;
         let count: i64 = sqlx::query_scalar(only_own_schema_query!(
             "ai",
             r#"
@@ -330,9 +344,13 @@ impl QAService {
             "plugin_ai"
         ))
         .bind(tenant_id)
-        .fetch_one(self.db.pool())
+        .fetch_one(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询问答历史总数失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("查询问答历史总数失败: {}", e)))?;
 
         Ok(count)
     }
@@ -346,6 +364,11 @@ impl QAService {
         limit: usize,
         tenant_id: Uuid,
     ) -> Result<Vec<QAHistory>, TopemsError> {
+        let mut scope = self
+            .db
+            .scope_read()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("搜索问答历史失败: {}", e)))?;
         let rows = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -362,9 +385,13 @@ impl QAService {
         .bind(offset as i64)
         .bind(limit as i64)
         .bind(tenant_id)
-        .fetch_all(self.db.pool())
+        .fetch_all(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("搜索问答历史失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("搜索问答历史失败: {}", e)))?;
 
         let history = rows
             .iter()
@@ -394,6 +421,11 @@ impl QAService {
         query: &str,
         tenant_id: Uuid,
     ) -> Result<i64, TopemsError> {
+        let mut scope = self
+            .db
+            .scope_read()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("搜索问答历史总数失败: {}", e)))?;
         let count: i64 = sqlx::query_scalar(only_own_schema_query!(
             "ai",
             r#"
@@ -405,9 +437,13 @@ impl QAService {
         ))
         .bind(format!("%{}%", query))
         .bind(tenant_id)
-        .fetch_one(self.db.pool())
+        .fetch_one(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("搜索问答历史总数失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("搜索问答历史总数失败: {}", e)))?;
 
         Ok(count)
     }
@@ -418,6 +454,11 @@ impl QAService {
         qa_id: Uuid,
         tenant_id: Uuid,
     ) -> Result<bool, TopemsError> {
+        let mut scope = self
+            .db
+            .scope()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("删除问答历史失败: {}", e)))?;
         let result = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -429,9 +470,13 @@ impl QAService {
         ))
         .bind(qa_id)
         .bind(tenant_id)
-        .execute(self.db.pool())
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("删除问答历史失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("删除问答历史失败: {}", e)))?;
 
         Ok(result.rows_affected() > 0)
     }
@@ -443,6 +488,11 @@ impl QAService {
         qa_ids: &[Uuid],
         tenant_id: Uuid,
     ) -> Result<i64, TopemsError> {
+        let mut scope = self
+            .db
+            .scope()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("批量删除问答历史失败: {}", e)))?;
         let result = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -454,9 +504,13 @@ impl QAService {
         ))
         .bind(qa_ids)
         .bind(tenant_id)
-        .execute(self.db.pool())
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("批量删除问答历史失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("批量删除问答历史失败: {}", e)))?;
 
         Ok(result.rows_affected() as i64)
     }
@@ -469,6 +523,11 @@ impl QAService {
         rating: Option<i32>,
         tenant_id: Uuid,
     ) -> Result<(), TopemsError> {
+        let mut scope = self
+            .db
+            .scope()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新反馈失败: {}", e)))?;
         sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -482,9 +541,13 @@ impl QAService {
         .bind(rating)
         .bind(qa_id)
         .bind(tenant_id)
-        .execute(self.db.pool())
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("更新反馈失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新反馈失败: {}", e)))?;
 
         Ok(())
     }
@@ -521,16 +584,15 @@ impl QAService {
             Some((i, o)) => (Some(i as i64), Some(o as i64)),
             None => (None, None),
         };
-        let mut txn = self
+        let mut scope = self
             .db
-            .pool()
-            .begin()
+            .scope()
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("写入 usage 日志失败: {}", e)))?;
         // 显式设置租户上下文（与 save_qa_history 一致，保证 RLS 租户隔离正确）
         sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
             .bind(tenant_id.to_string())
-            .execute(&mut *txn)
+            .execute(&mut scope)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("写入 usage 日志失败: {}", e)))?;
         let result = sqlx::query(only_own_schema_query!(
@@ -548,10 +610,11 @@ impl QAService {
         .bind(duration_ms)
         .bind(tokens_in)
         .bind(tokens_out)
-        .execute(&mut *txn)
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("写入 usage 日志失败: {}", e)))?;
-        txn.commit()
+        scope
+            .commit()
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("写入 usage 日志失败: {}", e)))?;
         let _ = result;
@@ -856,16 +919,15 @@ impl QAService {
         sources: Option<&[SearchResult]>,
         tenant_id: Uuid,
     ) -> Result<Uuid, TopemsError> {
-        let mut txn = self
+        let mut scope = self
             .db
-            .pool()
-            .begin()
+            .scope()
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("保存问答历史失败: {}", e)))?;
         // 显式设置租户上下文（连接池共享连接，避免残留/缺失 GUC 触发 RLS 误判）
         sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
             .bind(tenant_id.to_string())
-            .execute(&mut *txn)
+            .execute(&mut scope)
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("保存问答历史失败: {}", e)))?;
         let id: Uuid = sqlx::query_scalar(only_own_schema_query!(
@@ -882,10 +944,11 @@ impl QAService {
         .bind(answer)
         .bind(context)
         .bind(sources.map(|s| serde_json::to_value(s).unwrap_or(serde_json::json!([]))))
-        .fetch_one(&mut *txn)
+        .fetch_one(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("保存问答历史失败: {}", e)))?;
-        txn.commit()
+        scope
+            .commit()
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("保存问答历史失败: {}", e)))?;
 
@@ -971,13 +1034,14 @@ impl QAService {
             return Ok(Vec::new());
         }
 
-        let results = self
+        let mut scope = self
             .db
-            .pool()
-            .fetch_all(
-                sqlx::query(only_own_schema_query!(
-                    "ai",
-                    r#"
+            .scope_read()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("语义搜索失败: {}", e)))?;
+        let results = sqlx::query(only_own_schema_query!(
+            "ai",
+            r#"
                     SELECT
                         c.document_id,
                         c.id AS chunk_id,
@@ -990,19 +1054,23 @@ impl QAService {
                     ORDER BY c.embedding <=> $1::vector
                     LIMIT $2
                     "#,
-                    "plugin_ai"
-                ))
-                .bind(format!(
-                    "[{}]",
-                    query_embedding
-                        .iter()
-                        .map(|v| v.to_string())
-                        .collect::<Vec<_>>()
-                        .join(",")
-                ))
-                .bind(top_k as i64)
-                .bind(tenant_id),
-            )
+            "plugin_ai"
+        ))
+        .bind(format!(
+            "[{}]",
+            query_embedding
+                .iter()
+                .map(|v| v.to_string())
+                .collect::<Vec<_>>()
+                .join(",")
+        ))
+        .bind(top_k as i64)
+        .bind(tenant_id)
+        .fetch_all(&mut scope)
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("语义搜索失败: {}", e)))?;
+        scope
+            .commit()
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("语义搜索失败: {}", e)))?;
 
@@ -1032,13 +1100,14 @@ impl QAService {
     ) -> Result<Vec<SearchResult>, TopemsError> {
         let vector_results = self.semantic_search(query, top_k * 2, tenant_id).await?;
 
-        let keyword_results = self
+        let mut scope = self
             .db
-            .pool()
-            .fetch_all(
-                sqlx::query(only_own_schema_query!(
-                    "ai",
-                    r#"
+            .scope_read()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("关键词搜索失败: {}", e)))?;
+        let keyword_results = sqlx::query(only_own_schema_query!(
+            "ai",
+            r#"
                     SELECT
                         c.document_id,
                         c.id AS chunk_id,
@@ -1052,11 +1121,15 @@ impl QAService {
                     ORDER BY keyword_score DESC
                     LIMIT $2
                     "#,
-                    "plugin_ai"
-                ))
-                .bind(query)
-                .bind((top_k * 2) as i64),
-            )
+            "plugin_ai"
+        ))
+        .bind(query)
+        .bind((top_k * 2) as i64)
+        .fetch_all(&mut scope)
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(format!("关键词搜索失败: {}", e)))?;
+        scope
+            .commit()
             .await
             .map_err(|e| TopemsError::DatabaseQuery(format!("关键词搜索失败: {}", e)))?;
 

@@ -113,6 +113,14 @@ pub async fn get_shipment_trend(
 ) -> ApiResponse<Vec<ShipmentTrendItem>> {
     tracing::info!("获取TMS运输趋势数据");
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("建立分析查询作用域失败: {}", e);
+            return ApiResponse::success(Vec::new(), "获取成功");
+        }
+    };
+
     let rows: Vec<(Option<String>, Option<i64>)> = sqlx::query_as(
         "SELECT 
             dates.date::text as date,
@@ -128,7 +136,7 @@ pub async fn get_shipment_trend(
          ) s ON dates.date = s.date
          ORDER BY dates.date"
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -139,6 +147,10 @@ pub async fn get_shipment_trend(
             count: count.unwrap_or(0),
         })
         .collect();
+
+    if let Err(e) = scope.commit().await {
+        tracing::warn!("分析查询事务提交失败: {}", e);
+    }
 
     ApiResponse::success(items, "获取成功")
 }
@@ -160,6 +172,14 @@ pub async fn get_vehicle_ranking(
 ) -> ApiResponse<Vec<VehicleRankingItem>> {
     tracing::info!("获取TMS车辆运单排名");
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("建立分析查询作用域失败: {}", e);
+            return ApiResponse::success(Vec::new(), "获取成功");
+        }
+    };
+
     let rows: Vec<(Option<String>, Option<String>, Option<i64>)> = sqlx::query_as(
         "SELECT s.vehicle_id::text as vehicle_id, v.vehicle_no, COUNT(*) as shipment_count
          FROM tms.tms_shipments s
@@ -169,7 +189,7 @@ pub async fn get_vehicle_ranking(
          ORDER BY shipment_count DESC
          LIMIT 10",
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -183,6 +203,10 @@ pub async fn get_vehicle_ranking(
             },
         )
         .collect();
+
+    if let Err(e) = scope.commit().await {
+        tracing::warn!("分析查询事务提交失败: {}", e);
+    }
 
     ApiResponse::success(items, "获取成功")
 }
@@ -205,8 +229,16 @@ pub async fn get_status_distribution(
 ) -> ApiResponse<Vec<StatusDistributionItem>> {
     tracing::info!("获取TMS运单状态分布");
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("建立分析查询作用域失败: {}", e);
+            return ApiResponse::success(Vec::new(), "获取成功");
+        }
+    };
+
     let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM tms.tms_shipments")
-        .fetch_one(&state.db)
+        .fetch_one(&mut scope)
         .await
         .unwrap_or(0);
 
@@ -216,7 +248,7 @@ pub async fn get_status_distribution(
          GROUP BY status
          ORDER BY count DESC",
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -236,6 +268,10 @@ pub async fn get_status_distribution(
             }
         })
         .collect();
+
+    if let Err(e) = scope.commit().await {
+        tracing::warn!("分析查询事务提交失败: {}", e);
+    }
 
     ApiResponse::success(items, "获取成功")
 }
@@ -258,6 +294,14 @@ pub async fn get_carrier_performance(
 ) -> ApiResponse<Vec<CarrierPerformanceItem>> {
     tracing::info!("获取TMS承运商绩效数据");
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("建立分析查询作用域失败: {}", e);
+            return ApiResponse::success(Vec::new(), "获取成功");
+        }
+    };
+
     let rows: Vec<(
         Option<String>,
         Option<String>,
@@ -277,7 +321,7 @@ pub async fn get_carrier_performance(
          ORDER BY total_shipments DESC
          LIMIT 20",
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -303,6 +347,10 @@ pub async fn get_carrier_performance(
         )
         .collect();
 
+    if let Err(e) = scope.commit().await {
+        tracing::warn!("分析查询事务提交失败: {}", e);
+    }
+
     ApiResponse::success(items, "获取成功")
 }
 
@@ -323,6 +371,14 @@ pub async fn get_route_efficiency(
     headers: HeaderMap,
 ) -> ApiResponse<Vec<RouteEfficiencyItem>> {
     tracing::info!("获取TMS路线效率数据");
+
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("建立分析查询作用域失败: {}", e);
+            return ApiResponse::success(Vec::new(), "获取成功");
+        }
+    };
 
     let locale = Locale::from_headers(&headers).as_sql();
     let rows: Vec<(
@@ -347,7 +403,7 @@ pub async fn get_route_efficiency(
          LIMIT 20",
     )
     .bind(locale)
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -374,6 +430,10 @@ pub async fn get_route_efficiency(
         )
         .collect();
 
+    if let Err(e) = scope.commit().await {
+        tracing::warn!("分析查询事务提交失败: {}", e);
+    }
+
     ApiResponse::success(items, "获取成功")
 }
 
@@ -395,6 +455,14 @@ pub async fn get_driver_performance(
 ) -> ApiResponse<Vec<DriverPerformanceItem>> {
     tracing::info!("获取TMS司机绩效数据");
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("建立分析查询作用域失败: {}", e);
+            return ApiResponse::success(Vec::new(), "获取成功");
+        }
+    };
+
     let rows: Vec<(
         Option<String>,
         Option<String>,
@@ -414,7 +482,7 @@ pub async fn get_driver_performance(
          ORDER BY total_deliveries DESC
          LIMIT 20",
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -440,6 +508,10 @@ pub async fn get_driver_performance(
         )
         .collect();
 
+    if let Err(e) = scope.commit().await {
+        tracing::warn!("分析查询事务提交失败: {}", e);
+    }
+
     ApiResponse::success(items, "获取成功")
 }
 
@@ -459,6 +531,14 @@ pub async fn get_shipment_trend_enhanced(
     Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ShipmentTrendEnhancedItem>> {
     tracing::info!("获取TMS运单趋势增强数据");
+
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("建立分析查询作用域失败: {}", e);
+            return ApiResponse::success(Vec::new(), "获取成功");
+        }
+    };
 
     let rows: Vec<(
         Option<String>,
@@ -496,7 +576,7 @@ pub async fn get_shipment_trend_enhanced(
          ) s ON months.month = s.month
          ORDER BY months.month",
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -513,6 +593,10 @@ pub async fn get_shipment_trend_enhanced(
             },
         )
         .collect();
+
+    if let Err(e) = scope.commit().await {
+        tracing::warn!("分析查询事务提交失败: {}", e);
+    }
 
     ApiResponse::success(items, "获取成功")
 }
@@ -535,10 +619,18 @@ pub async fn get_vehicle_utilization(
 ) -> ApiResponse<Vec<VehicleUtilizationItem>> {
     tracing::info!("获取TMS车辆利用率数据");
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("建立分析查询作用域失败: {}", e);
+            return ApiResponse::success(Vec::new(), "获取成功");
+        }
+    };
+
     // 先获取总运单数
     let total_shipments: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM tms.tms_shipments WHERE vehicle_id IS NOT NULL")
-            .fetch_one(&state.db)
+            .fetch_one(&mut scope)
             .await
             .unwrap_or(0);
 
@@ -553,7 +645,7 @@ pub async fn get_vehicle_utilization(
          ORDER BY shipment_count DESC
          LIMIT 20",
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -575,6 +667,10 @@ pub async fn get_vehicle_utilization(
         })
         .collect();
 
+    if let Err(e) = scope.commit().await {
+        tracing::warn!("分析查询事务提交失败: {}", e);
+    }
+
     ApiResponse::success(items, "获取成功")
 }
 
@@ -595,6 +691,14 @@ pub async fn get_freight_cost_trend(
     Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<Vec<FreightCostTrendItem>> {
     tracing::info!("获取TMS运费成本趋势数据");
+
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("建立分析查询作用域失败: {}", e);
+            return ApiResponse::success(Vec::new(), "获取成功");
+        }
+    };
 
     let rows: Vec<(Option<String>, Option<f64>, Option<i64>)> = sqlx::query_as(
         "SELECT 
@@ -620,7 +724,7 @@ pub async fn get_freight_cost_trend(
          ) s ON months.month = s.month
          ORDER BY months.month",
     )
-    .fetch_all(&state.db)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -641,6 +745,10 @@ pub async fn get_freight_cost_trend(
             }
         })
         .collect();
+
+    if let Err(e) = scope.commit().await {
+        tracing::warn!("分析查询事务提交失败: {}", e);
+    }
 
     ApiResponse::success(items, "获取成功")
 }

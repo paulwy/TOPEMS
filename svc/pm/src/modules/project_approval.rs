@@ -12,6 +12,7 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_db::approval::{
     create_approval_and_log, execute_transition_and_log, reject_and_log,
 };
+use topems_shared_db::scope::Db;
 use topems_shared_service_client::service_client::api::workflow_api::{
     CreateInstanceRequest, WorkflowApi,
 };
@@ -27,11 +28,16 @@ type RlsTxnArc =
 /// 项目审批状态：组合数据库连接池与 Flow 工作流客户端
 #[derive(Clone)]
 pub struct ApprovalState {
-    pub pool: PgPool,
+    pub pool: Db,
+    pub approval_pool: PgPool,
     pub workflow_client: TypedServiceClient<WorkflowApi>,
 }
 
-pub fn create_routes(pool: PgPool, workflow_client: TypedServiceClient<WorkflowApi>) -> Router {
+pub fn create_routes(
+    db: Db,
+    approval_pool: PgPool,
+    workflow_client: TypedServiceClient<WorkflowApi>,
+) -> Router {
     Router::new()
         .route(
             "/projects/{project_id}/approval",
@@ -42,7 +48,8 @@ pub fn create_routes(pool: PgPool, workflow_client: TypedServiceClient<WorkflowA
             post(handle_approval_action),
         )
         .with_state(ApprovalState {
-            pool,
+            pool: db,
+            approval_pool,
             workflow_client,
         })
 }
@@ -70,6 +77,7 @@ fn get_approval_workflow_id() -> Option<Uuid> {
     ),
 )]
 async fn get_approval(
+    State(state): State<ApprovalState>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<ProjectApproval> {
@@ -78,11 +86,18 @@ async fn get_approval(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match state.pool.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query_as::<_, ProjectApproval>(
         only_own_schema_query!("pm", "SELECT id, project_id, status, current_step, total_steps, approvals, comments, created_by, created_at, updated_at FROM pm.project_approvals WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1"),
     )
     .bind(project_id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -174,6 +189,13 @@ async fn submit_approval(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match state.pool.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
 
     let result = sqlx::query_as::<_, ProjectApproval>(only_own_schema_query!(
         "pm",
@@ -201,17 +223,17 @@ async fn submit_approval(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
         Ok(approval) => {
             // 业务逻辑：更新项目状态为待审批
-            let _ = update_project_status(&mut **txn, project_id, "pending_approval").await;
+            let _ = update_project_status(&mut scope, project_id, "pending_approval").await;
             // 审计日志：记录审批发起（V282 集成 shared-db approval）
             let approver_uuid = Uuid::parse_str(&req.approver_id).unwrap_or_else(|_| Uuid::nil());
             let _ = create_approval_and_log(
-                &state.pool,
+                &state.approval_pool,
                 "project",
                 project_id,
                 "pending",
@@ -262,12 +284,19 @@ async fn handle_approval_action(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match state.pool.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
 
     let result = sqlx::query_as::<_, ProjectApproval>(
         only_own_schema_query!("pm", "SELECT id, project_id, status, current_step, total_steps, approvals, comments, created_by, created_at, updated_at FROM pm.project_approvals WHERE project_id = $1 AND status = 'pending' ORDER BY created_at DESC LIMIT 1 FOR UPDATE")
     )
     .bind(project_id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     let approval = match result {
@@ -367,7 +396,7 @@ async fn handle_approval_action(
         .bind(req.comment.as_deref())
         .bind(now)
         .bind(approval.id)
-        .fetch_one(&mut **txn)
+        .fetch_one(&mut scope)
         .await;
 
         match update_result {
@@ -378,10 +407,10 @@ async fn handle_approval_action(
                 } else {
                     "draft"
                 };
-                let _ = update_project_status(&mut **txn, project_id, status).await;
+                let _ = update_project_status(&mut scope, project_id, status).await;
                 // 审计日志：记录审批驳回/取消（V282 集成 shared-db approval）
                 let _ = reject_and_log(
-                    &state.pool,
+                    &state.approval_pool,
                     "project",
                     project_id,
                     approval.id,
@@ -461,17 +490,17 @@ async fn handle_approval_action(
         .bind(req.comment)
         .bind(now)
         .bind(approval.id)
-        .fetch_one(&mut **txn)
+        .fetch_one(&mut scope)
         .await;
 
         match update_result {
             Ok(updated) => {
                 if is_final_step {
                     // 业务逻辑：审批通过，更新项目状态
-                    let _ = update_project_status(&mut **txn, project_id, "approved").await;
+                    let _ = update_project_status(&mut scope, project_id, "approved").await;
                     // 审计日志：记录审批通过（V282 集成 shared-db approval）
                     let _ = execute_transition_and_log(
-                        &state.pool,
+                        &state.approval_pool,
                         None,
                         "project",
                         project_id,
@@ -494,7 +523,7 @@ async fn handle_approval_action(
 }
 
 async fn update_project_status(
-    conn: &mut sqlx::PgConnection,
+    conn: &mut topems_shared_db::scope::ScopedTxn<'_>,
     project_id: Uuid,
     status: &str,
 ) -> Result<(), sqlx::Error> {

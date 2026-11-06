@@ -1,6 +1,8 @@
 # 数据库连接治理（A 全局预算 / B 单池 + ScopedConn）
 
-> 状态：A 已实现并本地验证；B 设计完成、试点（search）已完成并验证。
+> 状态：A 已实现并本地验证；B 设计完成，试点（search）与**批次 1**（subscription / monitor /
+> plugin-registry）、**批次 2**（tms / ticket / gis / pm / mobile + search 并池）已完成并本地验证；
+> 剩余 19 个 svc 模块分 4 批（见 B.9）。
 > 关联：`docs/database/database-primary-instance.md`、`plan` 第四十九轮连接排查。
 
 ## 0. 结论速览
@@ -9,7 +11,7 @@
 | --- | --- | --- |
 | 进程总连接上限 | 无（各池 `max_connections` 相加，生产理论 ≈ 496） | **≤ `DB_TOTAL_CONNECTION_BUDGET`（嵌入默认 = 池数 × 2 = 62）** |
 | 生产实测峰值 | 73（`idle` 72，无 `idle in transaction`，稳定非泄漏） | 待重启后复测（代码层已硬性封顶） |
-| 池实例数（嵌入模式） | 28 业务池 + 28 迁移池 + 1 个 ai 独立池（max 100 / min 10） | **30 业务池 + 1 个共享迁移池 = 31**；ai 复用 bootstrap 池 |
+| 池实例数（嵌入模式） | 28 业务池 + 28 迁移池 + 1 个 ai 独立池（max 100 / min 10） | **28 业务池 + 1 共享迁移池 = 31**；ai 复用 bootstrap 池。批次 1 后：29；批次 2 后：23（21 业务池 + 1 共享运行时池 + 1 迁移池）；**批次 3 后：18（16 业务池 + 1 共享运行时池 + 1 迁移池）** |
 | application_name | 空（无法按模块归因） | 每池可区分（`DB_APPLICATION_NAME` / `TOPEMS_SERVICE_NAME`） |
 
 A 的改动**需要重启服务才生效**；本次未重启、未部署 prod。
@@ -114,19 +116,26 @@ grant == 0 → 返回错误（fail-fast，绝不超发）
 
 **池数推导（唯一事实来源：`svc/server/src/main.rs` 的模块 build 列表）**
 
-| 来源 | 计数 |
+| 来源 | 计数（预算单位） |
 | --- | --- |
-| 每个 `*_real_module`（finance/erp/.../subscription，共 26 个默认启用的单池模块） | 各 +1 |
+| 每个 `*_real_module`（finance/erp/...，共 **12** 个未迁移的默认启用单池模块） | 各 +1 |
+| 共享运行时池（批次 1 的 3 个 + 批次 2 的 6 个 + 批次 3 的 5 个 = **14** 个模块，合并为 **1 个物理池**） | +`SHARED_POOL_MODULE_WEIGHT`（当前 14） |
 | `module-advanced`：master-data + analytics | +2 |
 | `module-core`（unified-core）：自身 bootstrap + `build_router_embedded` 内部再次 bootstrap | +2 |
 | 进程级共享迁移池（`create_migrate_pool` 单例，`MIGRATE_URL` 为空时不建） | +1 |
 | `platform` / `dashboard`（纯聚合模块，不建池） | 显式排除 |
-| **默认合计** | **31** |
+| **默认合计（预算单位）** | **31** |
+| **默认物理池数（启动核对口径）** | **18** = 31 − (14 − 1) |
 
 - 推导函数按 cfg feature 门控，与 build 列表**同源**；新增/移除模块必须同步修改。
+- `derived_db_pools()` 返回**预算单位**；物理池数 = 预算单位 − (`SHARED_POOL_MODULE_WEIGHT` − 1)，
+  启动核对按物理池数比较（`snapshot.physical_pools`）。
 - 一致性校验：`DB_EXPECTED_POOLS` 与推导值不符 → 告警「配置值 vs 推导值」，采用推导值；
   启动末尾再用实际建池数核对（实际 > 推导 → 漏计告警；无降级却少于推导 → 未建池告警）。
-- 默认预算 `31 × 2 = 62`，31 池各得 2，`/ready` = 200（实测）。
+- 默认预算 `31 × 2 = 62`：17 个非共享物理池各得 2（34）+ 共享池按权重 14 得 28 = **62**，
+  `/ready` = 200（批次 1、2、3 均实测）。
+- 未迁移模块数（12）随批次推进减少，但**预算单位总数 31 保持不变**：每迁移一个模块，
+  `derived_db_pools()` 的 `+1` 移入 `SHARED_POOL_MODULE_WEIGHT`，只减少物理池、不改变预算份额。
 
 **额度耗尽语义（fail-fast，不静默降级）**
 
@@ -249,7 +258,7 @@ impl<'c> Executor<'c> for &'c mut ScopedTxn<'_> { /* 委托给 &mut PgConnection
 | 阶段 | 动作 | 旧路径状态 |
 | --- | --- | --- |
 | 0（本次） | 试点 1 个模块（search）改 `Db`/`ScopedTxn` | 其余 26 模块继续 `PgPool`；双路径并存 |
-| 1（逐模块） | 每个模块：state 改 `Db`；handler 入参改 `&mut ScopedTxn`；删 `pool.acquire()` | 同进程内两套写法并存，但都指向同一 bootstrap 池 |
+| 1（逐模块） | 每个模块：state 改 `Db`；handler 入参改 `&mut ScopedTxn`；删 `pool.acquire()` | 未迁移模块仍各自建池；已迁移模块（批次 1 起）共用 `shared-runtime` 物理池（见 B.9） |
 | 2（封口） | `ModuleContext { db: PgPool }` 改为 `db: Db`；`create_database_pool` 返回类型改为 `Db`（不再对外暴露 `PgPool`） | **编译期堵死**：任何 `ctx.db` 当 `Executor`/`acquire()` 的写法直接 E0277/E0599，不靠约定 |
 | 3（收尾） | 删除 `SEARCH_PATH` 会话级 `after_connect` 设置；CI 扫描 `SET `/`SET LOCAL`/`set_config(`/`.acquire()` | 会话级 search_path 彻底退出 |
 
@@ -260,8 +269,9 @@ impl<'c> Executor<'c> for &'c mut ScopedTxn<'_> { /* 委托给 &mut PgConnection
 
 统计口径：`grep -c "sqlx::query"`（每处 = 一个需要换 `Executor` 入参的调用点）。
 
-- **已完成：1 / 28**（`svc/search`，13 处 SQL、4 个 HTTP 入口 + 3 个 MCP 工具）；
-- **剩余：27 个模块**，累计约 6,000 处调用点，按量分三批：
+- **已完成：3 / 28**（`svc/search` 13 处 SQL；`svc/monitor` 13 处；`svc/plugin-registry` 70 处）；
+  另 `subscription`（server 内嵌模块，无独立 svc，不在 28 个 svc 清单内）已随批次 1 迁移；
+- **剩余：25 个 svc 模块**（原 27 个减去 monitor / plugin-registry），累计约 6,000 处调用点；
 
 | 批次 | 模块（SQL 处数） | 难度 |
 | --- | --- | --- |
@@ -337,9 +347,10 @@ TOPEMS_IT_DATABASE_URL='postgresql://xingzhai@127.0.0.1:15432/topems_test' \
 （`/api/search` + `/api/search/`），与嵌入形态 `search_real_module` 挂载方式一致；
 修复后同请求 200 且真实命中。
 
-**双路径共存实测**：试点模块与其余 27 个模块同进程运行时共用同一 bootstrap 池
-（A 已把总额封顶），`Db` 与直接 `PgPool` 写法并存但指向同一池，未发现连接归属冲突；
-`search_path` 的作用域化只影响本模块自身事务，不改其他模块的会话基线。
+**双路径共存实测（更正）**：试点模块 `search` 当时仍走自己的 `bootstrap_service` 池，
+与会话级 `PgPool` 写法并存但**指向不同物理池**（A 只把进程总额封顶）；`search_path`
+的作用域化只影响本模块自身事务，不改其他模块的会话基线。真正的物理池合并从批次 1
+开始（3 个模块共 1 池，见 B.9），`search` 自身并池放到批 2 收口。
 
 **schema 落点证据（运行时，非代码推断）**：`search_documents` 用的是未限定表名
 `FROM core_files`，而 test 库中 `public.core_files` / `flow.core_files` / `iam.core_files`
@@ -355,6 +366,641 @@ schema——会话基线 `iam,shared,public` 下 `core_files` → `iam.core_file
 下 → `public.core_files`。本试点按 `public` 语义验证通过（两处列结构一致、test 库两表均空），
 但**生产数据实际落点必须在切换前逐模块核对**；B 全量阶段的正确做法是迁移时把未限定表名
 全部显式加 schema 前缀，而不是依赖作用域默认值（否则等于把数据源隐式改掉）。
+
+### B.9 批次进度与分批计划（批次 1 完成，2026-11-06）
+
+#### B.9.1 风险排序依据（静态扫描，近似值）
+
+| 维度 | 统计口径 | 为什么影响风险 |
+| --- | --- | --- |
+| SQL 调用点 | `sqlx::query*` 行数 | 决定改签名的面；>400 时 helper 层层传 `&mut ScopedTxn` 易漏 |
+| 跨 schema 业务 JOIN | 同模块内出现 ≥2 个业务 schema 的限定引用 | `search_path` 只决定**未限定**表名；跨 schema 部分改作用域后仍按前缀解析，但事务/隔离语义更易出错 |
+| 动态表名 | `format!` 拼 SQL 的行数 | 无法静态核对表名，落点只能靠运行期证据 |
+| 会话级 `SET` | 生产代码 | 本次扫描生产代码 **0 处**；仅 `svc/ehs/tests`、`svc/qms/tests` 使用，迁移时改 `SET LOCAL` |
+| schema 前缀固化率 | 限定引用 /（限定 + 裸 `FROM`） | 固化率越低，行为越依赖 `search_path`，越不能动原有路径顺序 |
+
+#### B.9.2 已完成批次
+
+| 批次 | 模块 | 原 `SEARCH_PATH` | SQL 点 | 风险备注 | 状态 |
+| --- | --- | --- | --- | --- | --- |
+| 0 | `search` | `public` | 13 | 试点；批 2 已并池收口（`bootstrap_service_shared`） | 完成 |
+| 1 | `subscription`（server 内嵌，无独立 svc） | `public` | 3 | 仅 1 张表、无 JOIN、无动态 SQL | 完成 |
+| 1 | `monitor` | `public` | 13 | 单 schema、无动态 SQL、2 处 JOIN 均同 schema | 完成 |
+| 1 | `plugin-registry` | `public` | 70 | 单 schema（`core` 已显式前缀）、无动态 SQL | 完成 |
+| 2 | `tms` | `tms, public` | 76 | 5 张 `tms.*` 全限定；启动预热已显式 `tms.tms_vehicles`（批 3 前置修订） | 完成 |
+| 2 | `ticket` | `ticket, public` | 102 | `ticket.*` 全限定 | 完成 |
+| 2 | `gis` | `gis, public` | 140 | 单 schema；`State<PgPool>` 全部改 `State<Db>` | 完成 |
+| 2 | `pm` | `pm, public, shared` | 194 | 130 处 `scope_with` 复用请求 RLS 事务 | 完成 |
+| 2 | `mobile` | `mobile, public, shared`（显式） | 192 | 24 张表全限定；此前靠继承 `.env`，本批写死 | 完成 |
+| 2 | `search`（并池收口） | `public` | 13 | 代码早已迁 `Db`，仅换 `bootstrap_service_shared` | 完成 |
+| 3 | `portal` | `public, portal` | 37 | 帮助中心裸 `core_*` 落 `public`（权威）；GraphQL/仪表盘走 `portal.*` | 完成 |
+| 3 | `pdm` | `pdm, public` | 148 | 裸 `pdm_*` 大量；115 个 handler 接入请求 RLS 事务 | 完成 |
+| 3 | `integration` | `integration, public` | 174 | 混合裸表与 `integration.*`；后台同步服务保留共享池 | 完成 |
+| 3 | `ai` | `ai, public` | 141 | 以 `ai.*` 为主；`Database` 改持 `Db`，仅 DDL/RAG/审计保留共享池 | 完成 |
+| 3 | `communication` | `communication, public` | 120 | 裸 `core_*` 大量；71+14+8 个 handler 接入请求事务 | 完成 |
+
+批次 1 的 3 个模块统一走 `bootstrap_service_shared` + `Db::new(ctx.db.clone(), "public")`，
+不再各自 `bootstrap_service`；三者合计 **3 个物理池 → 1 个 `shared-runtime` 池**。
+
+批次 2 的 5 个模块 + `search` 同样迁入该池，合计 **6 个物理池 → 共享池**（不新增池）。
+`SHARED_POOL_MODULE_WEIGHT` 由 3 改为 **9**（= 批 1 的 3 + 批 2 的 6），
+`derived_db_pools()` 去掉这 6 个模块的 `+1`，预算单位仍 **31**、物理池 **29 → 23**。
+
+**批 3 前置（2026-11-06 完成，不涉及并池/池数）**
+
+| 前置 | 模块 | 结果 | 证据 |
+| --- | --- | --- | --- |
+| 预热选表 | `tms` | 裸 `vehicles` → 显式 `tms.tms_vehicles` | 本地 Redis 预热值 `total=1, items=1`（`public.vehicles` 0 行）；见 B.10.8 |
+| 4 张废弃表标注 + 路径统一 | `portal` | `core_faqs`/`core_guides`/`core_guide_lessons`/`core_guide_progress` 注释标注；独立态 `public, portal` | `GET /help/faqs` `total=12`（旧顺序 `portal, public` 为 0，新顺序为 12） |
+| 身份源统一 | `communication` | 裸 `core_users` → 显式 `iam.users`（1 处） | prod `iam.users` 5 行 / `public.core_users` 0 / `iam.core_users` 0；`GET /mail/emails` 200 |
+| search_path 静态门禁 | 全局 | 新增 `check-search-path.mjs` + 空基线，pre-commit changed-only + CI 全量 | 全量 0 违规；构造违规被阻断（exit 1）；见 C.3.1 |
+
+前置只改代码/配置与门禁，**未迁移任何模块入共享池**：`/ready` 200、物理池仍 **23**、预算单位 31、预算 62。
+
+批次 3 完成（2026-11-06）：`portal` / `pdm` / `integration` / `ai` / `communication` 五模块迁入共享池，
+`SHARED_POOL_MODULE_WEIGHT` 9 → **14**，`derived_db_pools()` 去掉 5 个 `+1`；
+预算单位仍 **31**、物理池 **23 → 18**、共享池 grant 18 → 28、预算 62 自洽。详见 B.10.9。
+
+#### B.9.3 剩余 19 个 svc 模块分批计划（4 批，风险由低到高）
+
+| 批次 | 模块（SQL 点 / 动态 SQL / 前缀固化率 / 跨 schema） | 选入理由 |
+| --- | --- | --- |
+| 2（最低） | `tms`(76/0/96%)、`ticket`(102/0/97%)、`gis`(140/0/97%)、`pm`(194/0/95%)、`mobile`(192/0/100%) | **已完成**：单业务 schema、0 动态 SQL、前缀固化 ≥95%；`mobile` 已显式声明 `mobile, public, shared` |
+| 3 | `portal`(37/5/48%)、`pdm`(163/0/7%)、`integration`(174/0/80%)、`ai`(157/1/89%，→`core`)、`communication`(120/13/31%，→`iam`) | **已完成**（2026-11-06）：裸表名/动态 SQL 已按固化值落地；前置见 B.10.8，结果见 B.10.9 |
+| 4 | `rd`(206/2/93%，`rs`/`rd` 双 schema)、`ehs`(261/0/96%)、`lims`(264/1/51%)、`scm`(261/7/97%)、`hrm`(240/0/100%，→`iam`) | 中量 SQL + 裸表名/跨 schema/动态 SQL 混合；`rd` 需先确认 `rs` 与 `rd` 的实际落点 |
+| 5 | `srm`(233/0/98%，→`unified_core`)、`crm`(286/0/95%，→`erp`)、`qms`(333/13/93%)、`master-data`(382/2/98%)、`wms`(462/0/~100%，→`scm`/`unified_core`) | 跨 schema JOIN 增多、体量上升；`crm`/`erp` 互相引用需成对验证 |
+| 6（最高） | `analytics`(212/32/32%，7 schema)、`mes`(603/7/68%)、`erp`(445/1/82%，→`crm`/`finance`)、`finance`(715/4/79%，→`erp`)、`unified-core`(677/5/67%，7 schema/124 JOIN) | 动态 SQL 或裸表名占比最高、跨 schema 最复杂；`finance`/`erp`/`unified-core` 必须走 `scope_with` 复用请求 RLS 事务 |
+| 批 2 附加 | `search` 并池收口 | 代码已迁 `Db`，仅需把 `bootstrap_service` 换成 `bootstrap_service_shared`，物理池 −1 |
+
+剩余批次：**4 批**（批 3–批 6）；若批 5/6 出现回归问题，可再按模块拆分，不改变风险排序。
+
+#### B.9.4 原 `SEARCH_PATH` 与 schema 归属核对（不一致清单）
+
+扫描口径：嵌入形态取 `svc/server/src/modules/*_real_module.rs` 中 `SEARCH_PATH` /
+`Db::new` 实参；独立部署取 `svc/*/src/main.rs`。**本批未连 prod**（无 prod 只读凭据），
+prod 归属核对为批 2 前置项；本地库 `information_schema.schemata` 已全量比对。
+
+| 模块 | 嵌入形态 | 独立部署 | 核对结论 / 处理 |
+| --- | --- | --- | --- |
+| `portal` | `public, portal` | ~~`portal, public, shared`~~ → **`public, portal`**（批 3 前置已统一） | 已统一为 `public, portal`：`public` 的 12+12 行是活数据，`portal` 的 4 张 `core_*` 为废弃空副本（B.10.5.5） |
+| `mobile` | **未设置**（继承 `.env`） | `mobile, public, shared` | 嵌入实际基线随构建顺序变化；批 2 已**显式固化 `mobile, public, shared`**（B.10 实测其 24 张表全部 `mobile.*` 限定，解析不变） |
+| `tms` | `tms, public` | `tms, public, shared` | 嵌入缺 `shared`；保留嵌入原值 |
+| `ticket` | `ticket, public` | `ticket, public, shared` | 同上 |
+| `gis` | `gis, public` | `gis, public, shared` | 同上 |
+| `pdm` | `pdm, public` | `pdm, public, shared` | 同上（且裸表名 93%，路径顺序不可动） |
+| `lims` | `lims, public` | `lims, public, shared` | 同上 |
+| `ehs` | `ehs, public` | `ehs, public, shared` | 同上 |
+| `erp` | `erp, public` | `erp, public, shared` | 同上 |
+| `finance` | `finance, public` | `finance, public, shared` | 同上 |
+| `ai` | `ai, public` | `ai, public, shared` | 同上 |
+| `communication` | `communication, public` | `communication, public, shared` | 同上 |
+| `analytics` | `bi, public` | `bi, public, shared` | 同上；schema 名为 `bi` 而非 `analytics` |
+| `rd` | `rs, public` | `rs, public` | 两者一致，但本地库同时存在 `rd` 与 `rs`，静态扫描两 schema 都有引用 → 批 4 前须确认表实际落点 |
+| `integration` | `integration, public` | `integration, public` | 一致 |
+| `unified-core` | `public` | `public` | 一致（`core`/`iam`/`flow` 均显式前缀） |
+| `crm`/`hrm`/`scm`/`pm`/`wms`/`srm`/`master-data` | `…, public, shared` | `…, public, shared` | 一致 |
+| `monitor`/`plugin-registry`/`subscription` | `public` | `public`（或仅嵌入） | 一致（批次 1） |
+
+本地库 schema 清单已覆盖所有首 schema（`ai/bi/communication/crm/ehs/erp/finance/gis/hrm/
+integration/lims/master_data/mes/mobile/pdm/pm/portal/qms/rd/rs/scm/srm/ticket/tms/wms/
+unified_core/core/public`），无缺失。**prod 归属未在本批核对**，不得默认与本地一致。
+
+#### B.9.5 批次 1 验收结果
+
+**池数与预算（真实启动，默认配置）**
+
+- 物理池 **31 → 29**（3 个模块合并为 1 个 `shared-runtime` 池，−2）；预算单位仍 31（共享池按权重 3 参与公平分摊）。
+- 启动日志：`shared-runtime 预约额度 granted=6/9（权重 3）`；末尾
+  `启动核对：注册表推导 31 预算单位（物理池 29），实际建池 29，降级 0，预算 62，已分配 62`。
+- 默认预算自洽：28 个非共享物理池 × 2 = 56 + 共享池 6 = **62**；`/api/server/health` 200（`degraded=0`），`/api/server/ready` **200**。
+
+**端点与落点（真实请求，本地 8099）**
+
+| 模块 | 请求 | 结果 | 落点证据（psql 实测） |
+| --- | --- | --- | --- |
+| monitor | `GET /api/monitor/settings` | 200，返回 `batch1_probe`/`batch1_run3` | `public.monitor_settings`（tenant 1，更新于 05:49:52） |
+| monitor | `PUT /api/monitor/settings`（batch_update） | 200，`{"updated":1,...}` | 同上，`updated_at` 前进 |
+| subscription | `POST /api/subscriptions`（upsert） | 200 | `public.subscriptions` tenant 1 `advanced/active`，更新于 05:49:52 |
+| subscription | `GET /api/subscriptions/current`（tenant A / B） | 200：A=`advanced`，B=`free`/`none` | 显式 `tenant_id` 谓词隔离生效 |
+| plugin-registry | `GET /api/plugin/marketplace` | 200，36 个插件 | — |
+| plugin-registry | `POST /api/plugin/runtime/ai/unregister` | 200 | `core.core_plugin_instances` 该插件 `runtime_status=stopped`、`stopped_at` 非空 |
+
+三个模块均在 `search_path=public` 下运行（原值），`current_schema()` 实测为 `public`（
+`lib/shared-db/tests/scope_search_path_it.rs` 3 passed，含 `SHOW search_path = public`、
+commit/rollback 后恢复基线、`scope_with` 复用请求事务时 `app.tenant_id` 保留）。
+**租户隔离说明**：这 3 个模块改造前就是「池 autocommit + 显式 `tenant_id` 谓词」，
+不走请求级 RLS 事务；改造后语义不变，隔离由双租户实测证明。`scope_with` 路径的
+`app.tenant_id` 保真由上述集成测试覆盖（批 6 的 RLS 模块将直接复用该路径）。
+
+**连接占用（270 个并发请求，3 轮 × 90）**
+
+- 请求全部 200（270/270）；`pg_stat_activity` 采样总连接 **8–9**（空闲模块池已按 `idle_timeout` 回收），
+  `topems-shared-runtime` 峰值 **2** 条（1 active + 1 idle），远低于 grant 6。
+- 说明：并发 90 未把共享池压满，故未触发排队；上限由池 `max=6` 与预算双重约束。
+
+**回归**：`cargo check --workspace`、`cargo clippy --workspace --all-targets -- -D warnings` 通过；
+单测 `topems-shared-db --lib` 176、`topems-monitor --lib` 140、`topems-plugin-registry --lib` 249
+全部通过；`scope_search_path_it` 3 passed。
+
+**白名单**：批次 1 **未新增绕过项**，3 个模块的全部 SQL 都经 `Db::scope`/`scope_read`；
+唯一保留的 `PgPool` 入参是 `tenant_middleware`（需要 `begin` 请求事务，设计内，见 B.8）。
+C.4 的既有 5 项白名单未变。
+
+**本批遗留风险**
+
+1. `search` 仍自建池（批 2 收口），当前物理池 29 中仍含它。
+2. `mobile` 嵌入形态未声明 `SEARCH_PATH`，现依赖 `.env` 的 `iam,shared,public`；批 2 必须先固化再迁移。
+3. `portal` 嵌入/独立路径顺序相反、`rd` 的 `rs`/`rd` 双 schema、多处嵌入缺 `shared`，
+   均需按 B.9.4 逐模块确认，不能套用 `public`。
+4. 本批未连 prod 核对 schema 归属；批 2 开始前需用 prod 只读账号跑一次 `information_schema` 比对。
+5. 若批 2 把 `search` 并入共享池：需同时把 `SHARED_POOL_MODULE_WEIGHT` 改为 4、从
+   `derived_db_pools()` 去掉 `search` 的 `+1`。届时预算单位仍 31、物理池降为 28、
+   共享池 grant = (62/28).max(1) × 4 = 8（27 个非共享池 × 2 + 8 = 62），否则会出现
+   「池数降了但预算分配仍按旧 weight」的不自洽。（**批 2 实际取值已修正为 weight 9**，
+   见 B.9.6：6 个模块并入，物理池 23，共享 grant 18。）
+
+#### B.9.6 批次 2 验收结果（2026-11-06，真实启动 + 真实请求）
+
+**范围**：`tms` / `ticket` / `gis` / `pm` / `mobile` 迁共享池 + `search` 并池收口。
+
+**固化值（逐模块自己的值，已写入 `Db::new`）**
+
+| 模块 | 固化值 | 位置 |
+| --- | --- | --- |
+| tms | `tms, public` | `svc/tms/src/main.rs#L68`、`svc/server/src/modules/tms_real_module.rs#L49` |
+| ticket | `ticket, public` | `svc/ticket/src/main.rs#L37`、`svc/server/src/modules/ticket_real_module.rs#L52` |
+| gis | `gis, public` | `svc/gis/src/main.rs#L47`、`svc/server/src/modules/gis_real_module.rs#L49` |
+| pm | `pm, public, shared` | `svc/pm/src/main.rs#L112`、`svc/server/src/modules/pm_real_module.rs#L81` |
+| mobile | `mobile, public, shared`（显式，不再继承 `.env`） | `svc/mobile/src/main.rs#L62`、`svc/server/src/modules/mobile_real_module.rs#L46` |
+| search | `public`（并池收口） | `svc/server/src/modules/search_real_module.rs#L45` |
+
+各模块持有连接的方式统一改为 `Db`（`AppState` 字段或 handler 提取器），`std::env::set_var("SEARCH_PATH", …)`
+已从上述 6 个嵌入模块与其独立 `main.rs` 删除。
+
+**池数与预算（真实启动，默认配置，本地 8099）**
+
+- 物理池 **29 → 23**（6 个模块合并进既有 `shared-runtime` 池，不新增池）。
+- 预算单位仍 **31**；共享池权重 `SHARED_POOL_MODULE_WEIGHT` 3 → **9**（批 1 的 3 + 批 2 的 6）。
+- 启动日志实测：`池 shared-runtime 预约额度 granted=18/27（权重 9），已分配 34/62，预算单位 8，物理池 8`；
+  `启动核对：注册表推导 31 预算单位（物理池 23），实际建池 23，降级 0，预算 62，已分配 62`。
+- 预算自洽：22 个非共享物理池 × 2 = 44 + 共享池 18 = **62**；`/api/server/health` 200（`degraded_count=0`），`/api/server/ready` **200**。
+- `derived_db_pools()` 已去掉 tms/ticket/gis/pm/mobile/search 的 6 个 `+1`，并把这 6 个 feature 计入共享权重组。
+
+**端点与落点（真实请求，本地 8099，`tenant_id=…0001`）**
+
+| 模块 | 读端点 | 写端点 | 落点证据（psql 实测） |
+| --- | --- | --- | --- |
+| tms | `GET /api/tms/vehicles?search=B2-TMS` 200（`total=1`） | `POST /api/tms/vehicles` 200 | `tms.tms_vehicles` 新增 `B2-TMS-001`；`public.vehicles` **0 行**（可区分） |
+| ticket | `GET /api/ticket/tickets` 200 | `POST /api/ticket/tickets` 200 | `ticket.core_tickets` 新增 `TK20261105000000`；`public.core_tickets` 未写入 |
+| gis | `GET /api/gis/pipelines` 200 | `POST /api/gis/pipelines` 200 | `gis.pipelines` 新增 `B2-P-001` |
+| pm | `GET /api/pm/statistics` 200 | `POST /api/pm/projects/{id}/acceptance-plans` 200 | `pm.acceptance_plans` 新增 `B2-AP-001` |
+| mobile | `GET /api/mobile/analytics/usage` 200 | `POST /api/mobile/devices/register` 201 | `mobile.devices` 新增 `b2-device-001/002`（tenant 1） |
+| search | `/api/search/health` 200、`/api/search/recent` 200 | —（本批仅并池） | `application_name=topems-shared-runtime`（无 `search-module` 池） |
+
+**租户隔离（`scope_with` 复用请求事务）**
+
+- tms / pm 的写与读 handler 全部改为 `db.scope_with(txn)`（不 commit/rollback，由 `tenant_middleware` 统一处理）。
+- 双租户实测：tenant A（`…0001`）在 `GET /api/tms/vehicles?search=B2-TMS` 看到写入的 1 行；
+  tenant B（`…0002`）在**同一 handler 路径**返回 0 行；`ticket` / `gis` 同样 A 有、B 无。
+  说明复用请求事务后租户谓词/`app.tenant_id` 仍生效（批 1 的 `scope_search_path_it` 亦覆盖 GUC 保真）。
+
+**连接占用（900 并发请求，60 worker，5 个模块端点轮询）**
+
+- 900/900 返回 200；`pg_stat_activity` 采样（118 次）总连接峰值 **38**，
+  `topems-shared-runtime` 峰值 **3**（远低于 grant 18；请求快、缓存命中高，未压满池）。
+
+**回归**
+
+- `cargo check --workspace` 通过；`cargo clippy --workspace --all-targets -- -D warnings` 通过；`cargo fmt --all --check` 通过。
+- 单测：`topems-tms` 172、`topems-ticket` 226、`topems-gis` 156、`topems-pm` 497、`topems-mobile` 250、`topems-search` 179 全部通过；
+  `topems-shared-db --lib database::budget` 12 passed（含新增的 9 权重形状测试）。
+
+**本批遗留风险**
+
+1. ~~`tms` 预热裸 `vehicles` 的选表仍未定~~ → 批 3 前置已改为显式 `tms.tms_vehicles`（本地预热 `total=1`，B.10.8）。
+2. `pm` 的 3 处审批审计调用仍使用 `PgPool`（lib helper 只收 `&PgPool`，不允许改 lib），属既有 API 约束。
+3. 独立部署形态仍各自 `bootstrap_service`（单进程单池，非嵌入计数）；只有嵌入聚合形态参与本次并池。
+4. 本地库 `pm.*` 存在既有的 `created_at` 绑定错位与列类型漂移（与本批无关），因此 pm 写端点验收改走 `acceptance-plans`；
+   `mobile` 的 `device` 写入依赖 `mobile.mobile_users` 中的真实用户，属既有数据前置。
+
+
+### B.10 批次前置：search_path 归属核对（2026-11-06，仅核对不改代码）
+
+#### B.10.1 证据来源与限制
+
+| 证据 | 来源 | 性质 |
+| --- | --- | --- |
+| prod 表存在性 / 列结构 | `database/baseline/prod_schema_20261105235700.sql.gz`（prod `pg_dump`，2026-11-05 23:57） | **prod 快照**，非本地库 |
+| prod 活数据（行数 / 最近写入） | SSH `xingzhai@192.168.110.115` → 远端 `/opt/homebrew/bin/psql -d topems_prod`，仅 `SELECT`（2026-11-06 06:40 CST） | **prod 实测** |
+| prod 运行形态 | 远端 `launchctl list` / `ps aux` / plist `EnvironmentVariables` / `pg_stat_activity`（同上时刻） | **prod 实测** |
+| 代码引用的表 | 仓库 SQL 字符串静态扫描（`FROM/JOIN/INSERT INTO/UPDATE/DELETE FROM`），按各模块嵌入路径解析 | 代码事实 |
+
+**访问方式（修正）**：prod PostgreSQL 只监听 `localhost:5432`，不对内网开放，因此 `pg_isready 192.168.110.115:5432` 必然无响应——这不等于不可达。
+既有做法是 SSH 到 prod 主机后在本机用 psql 连接（也可用 `ssh -L 15432:127.0.0.1:5432` 隧道）；凭据来自 launchd plist 的内联 `DATABASE_URL`，不是仓库内的 DSN。
+本轮按此执行：**仅 `SELECT` / `information_schema` / `pg_catalog`，未执行任何 DDL/DML，未重启、未部署**。本地库未参与本轮结论。
+
+**prod 运行形态实测**：
+
+- `launchctl list` 仅 `com.topems.server`（PID 1243），进程为 `/Users/xingzhai/topems/bin/topems-server`；无独立 portal / lims / analytics 进程，nginx 与 vite 除外。
+- plist `EnvironmentVariables`：`SEARCH_PATH = flow, mobile, rs, erp, public, iam, shared`、`DATABASE_URL` 指向 `localhost:5432/topems_prod`、`DB_MAX_CONNECTIONS = 8`。
+  → 该基线**不含 `portal`**，portal 模块的裸 `core_*` 只能落到 `public`，与 B.10.5 的实测行数一致。
+- `pg_stat_activity`：76 个 client backend 全部来自 `::1`（同一进程），但 **`application_name` 全部为空**——prod 运行的二进制早于批 1 的命名下发，无法按模块归因；
+  “单一聚合形态”由进程清单与 plist 证明，不依赖 `application_name`。
+
+#### B.10.2 逐模块核对结果（19 个，已去重）
+
+| 模块 | 原嵌入路径 | 原独立路径 | prod 归属（代码实际读写的表） | 建议固化值 | 会改变解析？ | 风险 / 备注 |
+| --- | --- | --- | --- | --- | --- | --- |
+| subscription | `public` | `public` | `public.subscriptions` | `public` | 否 | 一致 |
+| monitor | `public` | `public` | `public.alerts` / `monitor_settings` / `monitor_thresholds` | `public` | 否 | 裸表为远端模块 SQL 模板，不在本库执行 |
+| plugin-registry | `public` | `public` | `core.core_plugin_*`（8 张全限定） | `public` | 否 | 全部 `core.` 限定；`schema_boundary.json` 的 `core, public` 仅为门禁配置，非运行值 |
+| search | `public`（`Db::new`） | `public` | `public.search_entity_projections`、`iam.users`、裸 `core_files`→`public.core_files` | `public` | 否 | `iam.core_files` 为 prod-only（迁移链未回放）；[handlers.rs#L211](../../svc/search/src/handlers.rs#L211) 已注明归属 public |
+| tms | `tms, public` | `tms, public, shared` | `tms.tms_*`（5）+ 裸 `vehicles`→`public.vehicles` | `tms, public` | 否（prod 不变；独立去 shared 无差异） | 预热 [main.rs#L124](../../svc/tms/src/main.rs#L124) 查裸 `vehicles`，业务表是 `tms.tms_vehicles`。**prod 实测两侧均 0 行**（B.10.7），选表待业务确认；当前保持现状（`public` 第二顺位兜底） |
+| ticket | `ticket, public` | `ticket, public, shared` | `ticket.*`（7） | `ticket, public` | 否 | `sla` 命中为注释，非表 |
+| gis | `gis, public` | `gis, public, shared` | `gis.*`（19）+ `gis.gis_map_markers` | `gis, public` | 否 | 单 schema |
+| pm | `pm, public, shared` | `pm, public, shared` | `pm.*`（34）+ `pm.pm_budget_items`/`pm_tasks` | `pm, public, shared` | 否 | 一致 |
+| mobile | **未声明**（继承进程 env） | `mobile, public, shared` | `mobile.*`（24 张，**全部限定**） | `mobile, public, shared` | 否 | 嵌入态实际基线随构建顺序变化（prod 聚合 `flow,mobile,rs,erp,public,iam,shared`）；全限定故当前无影响，但需显式固化 |
+| portal | `public, portal` | `portal, public, shared` | 裸 `core_faqs`/`core_guides`/`core_guide_lessons`→**public**（活数据 12/12 行）；`portal.portal_todos/quick_actions/announcements/user_preferences` 空表 | `public, portal`（两种形态统一） | **是（仅独立形态）** | prod 实测：`public` 是活数据（12 条 FAQ + 12 条指南，均非空业务列，2026-10-26 写入）；`portal` 与 `iam` 副本 **0 行**（空壳）。嵌入写 public 与 prod 一致；独立 `portal, public` 会读到空表 |
+| pdm | `pdm, public` | `pdm, public, shared` | `pdm.*`（19）+ 裸 `pdm_products`/`pdm_materials`/`pdm_change_notices`→**pdm** | `pdm, public` | 否 | `public.pdm_products` 列不同（`name/code` vs `product_no/version`），**不是同一模型**，不可合并 |
+| lims | `lims, public` | `lims, public, shared` | `lims.*` + `public.qa_lab_*`（显式）+ 裸 `qa_lab_*`→**lims** | `lims, public` | 否（路径不变） | **模块内已分裂**：裸写 `qa_lab_instruments`→lims；[inspection_task.rs#L229](../../svc/lims/src/modules/inspection_task.rs#L229) 显式写 `public.qa_lab_records`，[inspection_record.rs#L130](../../svc/lims/src/modules/inspection_record.rs#L130) 裸写→lims；统计读 `public.qa_lab_instruments`。**prod 实测两侧全为 0 行**（见 B.10.5.2），分裂仅存于代码 |
+| ehs | `ehs, public` | `ehs, public, shared` | `ehs.*`（36 张全限定） | `ehs, public` | 否 | 裸表命中均为别名/注释；`schema_boundary.json` 记 `schema=public` 已过时 |
+| erp | `erp, public` | `erp, public, shared` | `erp.*`（32）+ 显式 `crm.core_crm_customers`/`finance.core_finance_accounts`/`public.audit_logs`；裸 `announcements`/`vehicles`/`meeting_*`→erp | `erp, public` | 否 | 裸同名表 erp/public 并存，erp 优先是既有语义 |
+| finance | `finance, public` | `finance, public, shared` | `finance.*`（约 68）+ 显式 `erp.opening_balances`；裸 `payables`/`receivables`/`expenses`→**finance** | `finance, public` | 否 | 写入方为 finance（[operational.rs#L1055](../../svc/finance/src/modules/operational.rs#L1055)）；erp 另有同名副本，二者独立 |
+| ai | `ai, public` | `ai, public, shared` | `ai.*`（11）+ `core.*`（6）+ `public.audit_logs` | `ai, public` | 否 | 裸 `FROM users` 只出现在注入测试/示例串，非真实查询；`schema_boundary.json` 的 `ai_service` 已过时 |
+| communication | `communication, public` | `communication, public, shared` | `communication.core_notifications/templates/geofences`（裸写）+ `public.core_emails` + `iam.users` + 裸 `core_users`→**public.core_users** | `communication, public` | 否 | **身份源两套**：显式 `iam.users` 与裸 `public.core_users` 并存。prod 实测 `iam.users` **5 行且今日仍在更新**，`public.core_users` **0 行** → `iam.users` 为权威；`core_notifications`/`core_emails` 两侧均 0 行 |
+| analytics | `bi, public` | `bi, public, shared` | 裸 `analytics_*`→**bi**（写入）；显式 `analytics.report_execution_records`（写入）；裸 `core_users/roles`→public | `bi, public` | 否 | 双表：`bi.report_execution_records` 无人使用（重复）；`public.core_roles` 由 unified-core 写；`iam.users` 另存。**prod 实测 `bi` 与 `analytics` 两侧相关表全为 0 行**（B.10.5.3），该模块 prod 从未产生数据 |
+| rd | `rs, public` | `rs, public` | `rs.*`（16）+ 显式 `rd.bugs` | `rs, rd, public` | 否（当前无裸 `bugs`） | `rs` 是权威业务 schema；`rd` schema 仅 4 张表，`bugs` 由其承载（[rd_ci_cd.rs#L202](../../svc/rd/src/rd_ci_cd.rs#L202)） |
+
+#### B.10.3 差异清单（会改变行为的逐条说明）
+
+1. **portal（唯一会改变解析的模块）**：3 张裸表 `core_faqs`/`core_guides`/`core_guide_lessons` 在 `iam`、`portal`、`public` 三处都存在。
+   嵌入 `public, portal` → public；独立 `portal, public, shared` → portal。prod 实测 **public 12/12 行（活）**，`portal` 与 `iam` 均 **0 行**。
+   统一为 `public, portal` 后：prod 不变；独立部署会把读写从空壳 `portal` 切到有数据的 `public`，**方向是“空 → 活”，不需要搬数据**（详见 B.10.5.5）。
+2. **`shared` 缺失（tms/ticket/gis/pdm/lims/ehs/erp/finance/ai/communication/analytics）**：prod `shared` 只有 `audit_logs`，而这些模块都没有裸查 `audit_logs`（erp/finance/analytics 用的是显式 `public.audit_logs`）。**去掉 `shared` 不改变任何解析**，属纯配置收敛。
+3. **mobile 未声明**：嵌入态没有模块级 `SEARCH_PATH`，基线取决于前面模块对进程 env 的覆盖（prod 聚合为 `flow,mobile,rs,erp,public,iam,shared`），独立态为 `mobile, public, shared`。因 24 张表全部 `mobile.*` 限定，**当前解析不受影响**；但这是顺序依赖隐患，批 2 必须显式固化。
+4. **rd / rs 落点（明确结论）**：**`rs` 是权威**（16 张 `rs.*` 全限定 + 裸 `rs_*` 解析到 rs）；**`rd` 只承载 `bugs`**（4 张表，代码仅一处显式读）。建议 `rs, rd, public`：`rs` 优先保证既有解析，`rd` 仅作补充；当前没有裸 `bugs`，所以**不改变现有结果**。
+5. **lims 的内部裂开（不是路径问题）**：`qa_lab_instruments` 写在 `lims`，但部分查询显式读 `public.qa_lab_instruments`；`qa_lab_records` 同一模块内一处写 `public.`、一处写裸名（→lims）。
+   prod 实测 **两侧全部 0 行**（`public.qa_lab_*` 11 张、`lims.qa_lab_*` 9 张，`qa_lab_samples`/`qa_lab_tasks` 仅 public 存在），说明 prod 从未产生 lims 数据，
+   分裂只是代码隐患而非数据分裂。批 4 前统一前缀即可，**无需数据合并**。
+6. **analytics 双表**：`bi.analytics_dashboards` 等由裸名写入（权威）；`analytics.report_execution_records` 由显式写入（权威）；`bi.report_execution_records` 无任何引用（重复表）。
+   prod 实测 `bi.report_execution_records`、`analytics.report_execution_records` 以及两侧 `analytics_*` 均为 **0 行**，故“取舍”是纯代码/迁移清理，无数据风险。
+7. **communication / analytics 的身份源**：`iam.users`（显式）与 `public.core_users`（裸名）并存。prod 实测 **`iam.users` 5 行（今日 05:27 仍在更新，全部 active）、`public.core_users` 0 行、`iam.core_users` 0 行** → **`iam.users` 是唯一活的身份源**，`public.core_users` 是空壳。
+   角色数据落 `public.core_roles`（15 行）/`public.core_role_permissions`（653 行），`iam.core_roles` 为 0 行——身份与角色分属两处，路径保持现状即可，代码侧应把裸 `core_users` 改为显式 `iam.users`。
+
+#### B.10.4 先修配置 vs 先修代码
+
+| 类别 | 模块 | 动作 |
+| --- | --- | --- |
+| **先修配置**（仅固化路径，无 SQL 改动） | tms、ticket、gis、pm、mobile、ehs、erp、finance、ai、communication、analytics、pdm、lims、rd | 把路径写死到 `Db::new`；停止 `std::env::set_var("SEARCH_PATH", …)` 的进程级突变（B 的 `SET LOCAL` 已按作用域生效） |
+| **先修代码**（路径解决不了） | lims（前缀统一）、analytics（重复表取舍）、communication（裸 `core_users`→`iam.users`）、tms（`vehicles` 是否应为 `tms.tms_vehicles`）、portal 独立形态（注释标注 `portal.core_*` 废弃） | 各自排入所属批次前置；不得用改 search_path 掩盖 |
+| ~~必须先补 prod 凭据~~ | ~~portal、lims、analytics、communication~~ | 已于 2026-11-06 经 SSH 只读实测补齐，结论见 B.10.5 |
+
+#### B.10.5 活数据实测结论（prod 只读，2026-11-06 06:40 CST）
+
+> 来源：SSH `xingzhai@192.168.110.115` → 本机 `/opt/homebrew/bin/psql -d topems_prod`，仅 `SELECT`；**不是本地库**。
+> 原“待确认”5 项已全部关闭。
+
+##### B.10.5.1 portal（`core_faqs` / `core_guides` / `core_guide_lessons`）
+
+| 表 | 行数 | `max(updated_at)` | 非空业务列 | tenant 数 |
+| --- | --: | --- | --: | --: |
+| `public.core_faqs` | **12** | 2026-10-26 14:19:13.94399+08 | 12（question+answer 均非空） | 1 |
+| `public.core_guides` | **12** | 2026-10-26 14:19:13.946214+08 | 12（title 非空） | 1 |
+| `portal.core_faqs` / `core_guides` | **0** / **0** | — | 0 | — |
+| `iam.core_faqs` / `core_guides` | **0** / **0** | — | 0 | — |
+| `public.core_guide_lessons` / `portal.*` / `iam.*` | 0 / 0 / 0 | — | 0 | — |
+| `portal.portal_todos` / `quick_actions` / `announcements` / `user_preferences` / `health_checks` / `dashboard_stats` / `federation_transactions` | **全部 0** | — | — | — |
+
+判定：**`public` 是唯一活副本；`portal` 与 `iam` 的 `core_*` 是空壳**。prod plist 的 `SEARCH_PATH` 不含 `portal`，与“写入落在 public”完全吻合。
+
+##### B.10.5.2 lims（`public.qa_lab_*` vs `lims.qa_lab_*`）
+
+| 表 | public 行数 | lims 行数 |
+| --- | --: | --: |
+| `qa_lab_records` | 0 | 0 |
+| `qa_lab_instruments` | 0 | 0 |
+| `qa_lab_calibration_records` | 0 | 0 |
+| `qa_lab_inspection_reports` | 0 | 0 |
+| `qa_lab_processes` | 0 | 0 |
+| `qa_lab_reagents` / `reagent_alerts` / `reagent_history` / `sample_lifecycle` | 各 0 | 各 0 |
+| `qa_lab_samples` / `qa_lab_tasks` | 0 / 0 | **不存在**（仅 public） |
+
+判定：**不是并行双写，是两侧全空**。代码里 `public.` 与裸名并存确实存在，但 prod 从未写入 lims 业务；结构差异仍在（`lims.qa_lab_instruments` 15 列含 `name_en`/`organization_id`，`lims.qa_lab_records` 含 `organization_id`，public 为 13/9 列），但无数据可合并。
+
+##### B.10.5.3 analytics（`bi` 双表）
+
+| 表 | 行数 | 最近写入 |
+| --- | --: | --- |
+| `bi.report_execution_records` | **0** | 无（`started_at`/`completed_at` 全空） |
+| `analytics.report_execution_records` | **0** | 无 |
+| `bi.analytics_dashboards` / `datasets` / `self_service_reports` / `sync_records` | 各 0 | 无 |
+| `analytics.analytics_dashboards` / `datasets` / `self_service_reports` / `sync_records` | 各 0 | 无 |
+
+判定：**`bi.report_execution_records` 从未被写入**，与“无任何代码引用”一致，属可直接下线的重复表；`analytics.*` 侧同样为空，说明 prod 未使用该模块。
+
+##### B.10.5.4 communication 身份源
+
+| 表 | 行数 | `max(updated_at)` | 活跃行 |
+| --- | --: | --- | --: |
+| `iam.users` | **5** | **2026-11-06 05:27:44.38938+08** | 5（`is_active`） |
+| `public.core_users` | **0** | — | 0 |
+| `iam.core_users` | **0** | — | 0 |
+| `public.core_roles` / `core_role_permissions` | 15 / 653 | — | — |
+| `iam.core_roles` / `core_role_permissions` | 0 / 0 | — | — |
+| `communication.core_notifications` / `public.core_notifications` | 0 / 0 | — | — |
+| `communication.core_emails` / `public.core_emails` | 0 / 0 | — | — |
+
+判定：**`iam.users` 是唯一权威身份源**（prod 仍在写入）；`public.core_users` 空壳。角色/权限仍在 `public`，身份与角色分属两个 schema，属既有设计，不要合并。
+
+##### B.10.5.5 portal 处置建议（推荐：认定 `portal` 副本废弃，不搬数据）
+
+**推荐做法**：把 portal 模块的固化值统一为 **`public, portal`**；`portal` schema 内的 4 张 `core_*` 保留空表但标注废弃（代码注释 + 本文档 + 后续迁移不引用），**不做反向数据迁移**。
+
+理由：
+
+1. 方向只能是 `portal → public`（`portal` 0 行），而 0 行没有可搬的数据；搬数据等于空操作。
+2. prod 已长期以 `public` 为活数据（12 条 FAQ / 12 条指南，2026-10-26 写入，租户 1）；固化 `public, portal` 与 prod 现状**完全一致**，不改变任何 prod 解析。
+3. `portal.portal_*`（todos/quick_actions/announcements/user_preferences 等）在 `public` 没有同名表，仍由第二顺位 `portal` 承载，功能不受影响。
+4. 独立部署若继续用 `portal, public, shared`，会在空表上读写并与 prod 数据分叉；统一后独立部署第一次启动就能看到 prod 的 12+12 条数据。
+
+影响面：仅 portal 模块的 `core_faqs`/`core_guides`/`core_guide_lessons`/`core_guide_progress` 4 张表；无数据丢失（源为空），无 schema 变更（不 DROP），`iam.core_*` 空壳同样不删。
+后续若要彻底清理，可在独立迁移中 `DROP TABLE portal.core_*`（需另行评审，本轮不做 DDL）。
+
+#### B.10.6 批 2 前置结论
+
+- **19 个模块的固化值可以全部落地**：prod 解析结果除“独立 portal 形态”外全部不变；该形态的变化已证明是“空 → 活”，无数据风险。
+- **批 2 已执行并完成**：5 个模块（tms/ticket/gis/pm/mobile）+ search 并池按 B.10.2 执行，结果见 B.9.6。
+- `mobile` 必须显式声明 `mobile, public, shared`，不得继续依赖进程 env。（已落地）
+- `tms` 固化值必须保留 `public`（否则 [main.rs#L124](../../svc/tms/src/main.rs#L124) 的裸 `vehicles` 会改变解析）；`vehicles` 选表问题 prod 实测两侧均 0 行（B.10.7），列为待业务确认，未阻塞本批。
+- `search` 并池同时调整共享权重：实际按「6 个模块并入」取 `SHARED_POOL_MODULE_WEIGHT = 9`（非 4），
+  `derived_db_pools()` 去掉 6 个 `+1`；预算单位 31 不变、物理池 23、共享 grant 18、预算 62 自洽。
+- **仍需改代码、但不阻塞批 2 的项**：见下表。
+
+| 项 | 模块 | 批 | prod 实测依据 |
+| --- | --- | --- | --- |
+| 前缀统一（`public.` 与裸名并存） | lims | 批 4 | 两侧 0 行，改前缀无数据影响 |
+| 重复表取舍（`bi.report_execution_records` 无引用） | analytics | 批 6 | 0 行，无写入 |
+| 裸 `core_users` → 显式 `iam.users` | communication | **批 3 前置：已完成（1 处）** | `iam.users` 5 行活 / `public.core_users` 0 行；`GET /mail/emails` 200 |
+| `portal.core_*` 标注废弃 + 固化 `public, portal` | portal | **批 3 前置：已完成** | `portal` 0 行、`public` 12+12 行；读端点 `total=12` |
+| `vehicles` 选表确认 | tms | **批 3 前置：已完成** | 结构证据指向 `tms.tms_vehicles`（业务 handler 全用它），预热改为显式前缀；B.10.8 |
+
+#### B.10.7 tms `vehicles` 选表（prod 只读实测，2026-11-06）
+
+> 来源：SSH `xingzhai@192.168.110.115` → 本机 `/opt/homebrew/bin/psql -d topems_prod`，仅 `SELECT` / `information_schema` / `pg_catalog`。
+
+| 表 | prod 行数（`count(*)`） | 列数 | 结构要点 |
+| --- | --: | --: | --- |
+| `public.vehicles` | **0** | **3** | 仅 `id` / `deleted_at` / `created_at`（空壳，无业务列） |
+| `tms.tms_vehicles` | **0** | **12** | 含业务列（车牌/车型/载重/状态/tenant 等），代码业务 handler 全部显式读写此表 |
+
+代码用途核对（[svc/tms/src/main.rs#L124](../../svc/tms/src/main.rs#L124)）：
+
+- 该处是**启动期缓存预热**（`tokio::spawn`，失败仅告警），SQL 原为未限定 `SELECT … FROM vehicles LIMIT 10`，用于验证「表可读」而非业务查询；
+- 全部业务 handler（`vehicle.rs` / `dispatch` 等）都显式使用 `tms.tms_vehicles`；
+- `erp.vehicles` 亦存在（`erp` 模块的同名业务表），但不在 tms 的 `search_path` 内。
+
+**判定（批 3 前置，2026-11-06 已执行）**：两侧均 0 行，但结构证据明确指向 `tms.tms_vehicles`：
+业务 handler 全部显式读写该表，`public.vehicles` 仅 3 列空壳。预热 SQL 已改为显式
+`FROM tms.tms_vehicles`（不改 search_path），并用本地库实测预热落点：`public.vehicles` 0 行、
+`tms.tms_vehicles` 1 行，预热缓存值 `total=1, items=1`，见 B.10.8。
+
+#### B.10.8 批 3 前置完成状态（2026-11-06，真实请求 + 落点实测）
+
+| 前置 | 实现位置 | 行为证据（本地，非 prod） |
+| --- | --- | --- |
+| tms 预热选表 | [svc/tms/src/main.rs#L137-L155](../../svc/tms/src/main.rs#L137-L155) | Redis `tms:tms:vehicle:list:default:...` 值 `total=1, items=1`；`GET /api/tms/vehicles?search=B2` 200 |
+| portal 4 表标注 | [faq.rs#L1-L5](../../svc/portal/src/modules/help/faq.rs#L1-L5)、[guide.rs#L1-L6](../../svc/portal/src/modules/help/guide.rs#L1-L6)、[help/mod.rs](../../svc/portal/src/modules/help/mod.rs)、[schema_defense.rs#L1251](../../svc/portal/src/models/schema_defense.rs#L1251) | `GET /api/portal/help/faqs` `total=12`、`/help/guides` 200；同一 SQL 在 `portal, public` 下为 0、`public, portal` 下为 12 |
+| portal 固化值 | [svc/portal/src/main.rs](../../svc/portal/src/main.rs) | 独立态 `SEARCH_PATH` 改为 `public, portal`，与嵌入态一致 |
+| communication 身份源 | [svc/communication/src/mail.rs#L637](../../svc/communication/src/mail.rs#L637) | 裸 `core_users` → `iam.users`（全模块仅此 1 处）；`GET /api/communication/mail/emails` 200；prod `iam.users` 5 / `public.core_users` 0 / `iam.core_users` 0 |
+| search_path 门禁 | [check-search-path.mjs](../../scripts/ci/check-search-path.mjs)、[基线](../../scripts/ci/search-path-baseline.json)、[lefthook.yml](../../lefthook.yml) | 全量扫描 1,424 文件 / 0 违规；构造 `SET search_path TO tms, public` 被阻断（exit 1，基线 0 条） |
+
+批 3 前置**不迁池**：`/ready` 200、物理池 23、预算单位 31、预算 62 均与批 2 一致。
+
+**tms 三份启动预热判定（2026-11-06，批 3 附带项）：死缓存，已删除**
+
+| 方向 | 键（L1/L2 同串，L2 另有实例前缀 `tms:`） | 位置 |
+| --- | --- | --- |
+| 预热写入 | `tms:driver:list:default:page:1:page_size:10:search:none:status:all` 等三份 | 原 [svc/tms/src/main.rs](../../svc/tms/src/main.rs)（批 3 已删） |
+| 业务读取（司机） | `tms:driver:list:{tenant_key}:page:{page}:page_size:{page_size}:search:{search}:status:{status}` | [driver.rs#L110](../../svc/tms/src/modules/driver.rs#L110) |
+| 业务读取（车辆） | `tms:vehicle:list:{tenant_key}:page:...:search:...:status:...` | [vehicle.rs#L107](../../svc/tms/src/modules/vehicle.rs#L107) |
+| 业务读取（承运商） | `tms:carrier:list:{tenant_key}:...:status:{status}:locale:{locale}` | [carrier.rs#L112](../../svc/tms/src/modules/carrier.rs#L112) |
+
+`tenant_key` 只有两种取值：超管 `all`、普通租户 `<tenant_uuid>`（三处均为
+`tenant_id.map_or("all", |t| t.to_string())`）；承运商还多一个 `:locale:` 后缀。
+全仓库 grep `list:default` 只命中三处预热与文档，**没有任何读取方**；因此三份预热写入的键
+在业务侧永远不可能命中，属死代码。批 3 已删除三份预热（连同只为它们服务的 `warm_query`），
+`vehicles` 的空壳选表问题随删除一并消失。
+
+#### B.10.9 批 3 落地状态（2026-11-06，真实启动 + 真实请求）
+
+| 模块 | 固化 search_path | 主要读端点（200） | 写端点（200） | 落点证据 |
+| --- | --- | --- | --- | --- |
+| `portal` | `public, portal` | `/api/portal/help/faqs` | `POST /api/portal/todos` | 待办落 `portal.portal_todos`（无 `public` 同名表）；FAQ 走 `public` |
+| `pdm` | `pdm, public` | `/api/pdm/materials` | `POST /api/pdm/materials` | `B3-PDM-001` 仅在 `pdm.pdm_materials`（1 行），`public.pdm_materials` 0 行 |
+| `integration` | `integration, public` | `/api/integration/erp/connections` | `POST /api/integration/erp/connections` | `B3-ERP` 仅在 `integration.erp_connections`，`public` 0 行 |
+| `ai` | `ai, public` | `/api/ai/models` | `POST /api/ai/prompts/templates` | 模板落 `ai.ai_prompt_templates`（`public` 无同名表） |
+| `communication` | `communication, public` | `/api/communication/notification/notification-templates` | `POST .../notification-templates` | ~~`B3模板` 仅在 `communication.core_notification_templates`，`public` 0 行~~ **该落点是影子表，验收不成立（见 B.10.10）**：权威表 `public.core_notification_templates` 0 行，写入的 2 行落在启动期 DDL 复活的 `communication` 副本 |
+
+- **租户隔离（`scope_with` 复用请求事务）实测**：向本地 `integration.lims_qms_sync` 写入
+  tenant A 的固定行，`POST /api/integration/lims-qms/{id}/sync`：tenant B → **404**（`app.tenant_id=B`
+  在复用事务中生效，行不可见），tenant A → **200** 并更新成功。`pdm`/`ai` 的列表端点同样验证
+  A 可见 1 条、B 可见 0 条；`communication` 那一条当时读写的是 `communication` 影子表
+  （RLS 关闭、无 `tenant_id`），**不能作为 `public` 权威表租户隔离的证据**，已由 B.10.10 重做。
+- **嵌入启动实测**：日志 `[db-budget] 启动核对：注册表推导 31 预算单位（物理池 18），实际建池 18，降级 0，预算 62，已分配 62`；
+  `/api/server/ready` = **200**、`/health` degraded=0。
+- **连接占用**：3 并发 × 60 轮（每轮 5 个模块主读端点，共 900 请求）采样：
+  `topems-shared-runtime` 峰值 **3**、全库连接峰值 **35**（预算 62）。
+- **回归**：`cargo check --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、
+  `cargo fmt --check` 全通过；5 个模块 + `shared-db` + `shared-bootstrap` 单测
+  992/210/194/322/582/120/176 全通过（0 失败）。
+- **不再自建池**：五模块源码内 `bootstrap_service(` / `create_database_pool` / `PgPoolOptions`
+  为 0（communication 仅测试内惰性池）；生产入口全部 `bootstrap_service_shared` + `Db::new`。
+
+#### B.10.10 通知链路修复（2026-11-06，代码 → 迁移 → 验证）
+
+**根因判定：C（缺列 + 代码写错），主因是 B。**
+
+- 启动期 `schema_defense` 的 `CREATE TABLE IF NOT EXISTS "communication"."core_notifications"(id UUID PRIMARY KEY)`
+  每次启动重建迁移已 DROP 的 12 列空壳（无 `tenant_id`），把废弃副本复活。
+- `notification.rs` 34 处 SQL 写裸名，communication 的固化 `search_path` 为 `communication, public`，
+  裸名优先命中副本 → INSERT 显式写 `tenant_id` 时 `SQLSTATE 42703`（列不存在）。
+- 权威表 `public.core_notifications`（13 列、含 `tenant_id`、RLS 开启）本身结构与 INSERT 列清单一致。
+
+**改动（先代码，后迁移）**
+
+| 项 | 位置 | 内容 |
+| --- | --- | --- |
+| 停止重建副本 | [schema_defense.rs](../../svc/communication/src/schema_defense.rs) | `TABLE_DEFS` 6 → 3，删除 `core_notifications` / `core_emails` / `core_email_templates`（三张权威表均在 `public`）；测试改为断言这三张不出现 |
+| 显式 schema | [notification.rs](../../svc/communication/src/notification.rs) | 34 处裸 `core_notifications` → `public.core_notifications`（INSERT/列表/未读数/统计/已读/删除/广播全覆盖），文件内裸名计数 0 |
+| HTTP 契约 | 同上 `send_notification` / `create_notification` | 写失败由「200 + `success:false`」改为真实状态码：坏 body **400**、无权限 **403**、事务/DB 失败 **500**；成功仍 200 + `success:true`。前端 `apps/web/src/api/notification/batch.ts` 的 `sendNotification` 无 UI 调用方，`client.ts` 对非 2xx 走 reject，影响低 |
+| 前向迁移 | [20261107000003_drop_communication_notification_shadow_tables.sql](../../database/migrations/20261107000003_drop_communication_notification_shadow_tables.sql) | 守卫式 `DROP TABLE IF EXISTS communication.{core_notifications,core_emails,core_email_templates}`：要求 `public` 权威表存在 + 副本 0 行，否则 `RAISE NOTICE` 跳过；不 CASCADE；历史迁移字节与既有 checksums 行不变 |
+
+**验证（全部通过，本地）**
+
+| 项 | 证据 |
+| --- | --- |
+| 解析落点 | `SET search_path TO communication, public; SELECT to_regclass('core_notifications')` → `public.core_notifications`；`communication.core_notifications` → NULL |
+| 重启不复活 | 重启 4 次后仍为 NULL；启动日志无这三张表的建表/补列记录；`schema_defense` 审计不再报该表 |
+| 创建 | `POST /api/communication/notification/notifications` → **200** + `success:true`；`SELECT count(*) FROM public.core_notifications WHERE title='B3-FIX-A'` = **1**，`communication` 侧无该行 |
+| 列表 | A 租户列表仅见 `B3-FIX-A`、B 仅见 `B3-FIX-B`（`public` 表 RLS 生效；超管 `B3-FIX-SUPER` 走 `tenant_id=0`） |
+| 已读 | `PUT /notifications/{id}` 200，`public` 侧 `is_read=t`、`read_at` 非空 |
+| 删除 | `DELETE /notifications/{id}` 200，`public` 侧 `deleted_at` 非空 |
+| 回归 | `cargo check --workspace`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo fmt --check` 通过；`cargo test -p topems-communication` 208 + 202 + 1 passed / 0 failed |
+
+**A4 自纠：批 3 的 communication 写验收不成立。** `core_notification_templates` 的 2 行
+（`B3-TPL-A` / `B3模板`）实际落在 `communication.core_notification_templates`——该表被
+`20261027200000_core_schema_duplicates_cleanup.sql` DROP 后由启动期 DDL 复活，无 `tenant_id`、
+RLS 关闭；权威表 `public.core_notification_templates` 为 **0 行**。B.10.9 该行与
+「communication A/B 租户隔离」结论均已按此更正。
+
+**遗留（已在 2026-11-06 处置，见 B.10.11）**：`communication.core_notification_templates` /
+`core_geofences` 等同类影子表仍由 `schema_defense` 复活，属本轮 B 扫描的高危清单，见
+[runtime-ddl-shadow-audit.md](../quality/runtime-ddl-shadow-audit.md)。
+
+#### B.10.11 高危 4 张运行期影子表清理（2026-11-06）
+
+范围：`master_data.core_dict_types`、`master_data.core_dict_items`、
+`communication.core_notification_templates`、`communication.core_geofences`。
+
+**数据前置处理（本地）**
+
+| 对象 | 处理 | 证据 |
+| --- | --- | --- |
+| `master_data.core_dict_*` | 旧版运行期种子 38 类 / 189 项（`tenant_id` 全 NULL、`name_en` 全空、2026-07-13 30ms 内批量写入）先 `pg_dump` 备份，再删除 | 备份 `/Users/air/topems/backups/local_shadow_dict_20261106.dump`；删除后两表 0 行 |
+| `communication.core_notification_templates` | 删除批 3 测试行 `B3-TPL-A` / `B3模板` | 删除 2 行，表归零 |
+| `public.core_dict_*` | 现版 `seed_dict_data` 重灌（临时 example 调用，跑完即删） | **73 类 / 379 项**，`tenant_id` 全为 `…0001`，`name_en` 全 NULL（现版 seed 不写该列） |
+| `public.core_geofences` | 本地该表仅有 `id/deleted_at` 2 列（历史漂移；prod 为完整 20 列），按 `20261029173000` 的 17 条 `ADD COLUMN` 本地补列 | 补列后 20 列 |
+
+**代码**
+
+| 位置 | 内容 |
+| --- | --- |
+| `svc/master-data/src/schema_defense.rs#L21` | `TABLE_DEFS` 7→5，删除两张字典副本定义；文件头注明权威在 `public` |
+| `svc/master-data/src/modules/dict/handlers.rs`、`seed.rs` | 裸名 `core_dict_types` 8 处、`core_dict_items` 9 处 → `public.*` |
+| `svc/communication/src/schema_defense.rs#L28` | `TABLE_DEFS` 3→1（仅 `core_location_messages`）；测试断言 5 张表不得再出现 |
+| `svc/communication/src/notification.rs` | `core_notification_templates` 7 处裸名 → `public.*` |
+| `svc/communication/src/im_location.rs` | `core_geofences` 8 处裸名 → `public.*` |
+
+**迁移**：[20261107000004_drop_high_risk_shadow_tables.sql](../../database/migrations/20261107000004_drop_high_risk_shadow_tables.sql)
+按依赖顺序（先 `core_dict_items` 后 `core_dict_types`）删除 4 张副本；每张要求 `public` 权威表存在且副本 0 行，
+否则 `RAISE NOTICE` 跳过；**不用 CASCADE**；本地应用后 `_sqlx_migrations` 新增 `20261107000004 success=t`。
+
+**验证（本地）**
+
+- 裸名命中数：`core_dict_types 8→0`、`core_dict_items 9→0`、`core_notification_templates 7→0`、`core_geofences 8→0`。
+- 连续两次重启：两次 `/api/server/ready` 均 200；4 张副本 `to_regclass(...) IS NULL`；两份启动日志中
+  针对这 4 张表的 `CREATE TABLE` / `ALTER TABLE` 命中数均为 **0**。
+- 通知模板租户隔离：A/B 各建一条（`B4-TPL-A` / `B4-TPL-B`），列表 A 只见 A、B 只见 B；
+  `public.core_notification_templates` 中 `tenant_id` 分别为 `…0001` / `…0002`。
+- 围栏：`public.core_geofences` 无 `tenant_id`、无 RLS，隔离依赖 `chat_id` 过滤；A 用 A 会话、B 用 B 会话各
+  只看到自己的围栏，属应用层过滤而非租户策略。
+- 字典：读写落点均为 `public`，但**租户隔离不成立**（见下）。
+
+**新发现（存量风险，本轮未改）**
+
+1. `public.core_dict_types/items` 的 `rls_tenant_isolation` 把 GUC `app.tenant_id` 为 NULL / 空 / `0` 视为全放行；
+   而 `master-data` 的 dict handlers 直连池、未注入请求租户。实测：本地 B 租户可读到 A 租户的 73 类种子；
+   prod 在无 GUC 下 `SELECT` 可见全部 7 类 / 24 项。dict 写接口还会以 `tenant_id = 0` 落库（A 新建的
+   `B4-DICT-A` 即 `tenant_id=…0000`），对全部租户可见。
+   建议：将 dict handlers 切到请求级 `scope_with`（复用 `RlsTxnCell`）并绑定 claims 租户，随后把策略中的
+   NULL/空/`0` 全放行分支收紧；改策略前先在 prod 只读验证受影响调用方。
+2. **prod 字典本身灌不全**：`public.core_dict_types` 仅 7 行，其中 6 个业务类 `department_type` / `education` /
+   `employee_status` / `gender` / `marital_status` / `position_level`（24 项），另 1 行 `zz_b4_probe2` 为历史测试残留；
+   现版标准种子为 73 类 / 379 项，**缺 71 类 / 约 355 项**，且 4 个现存类不在现版种子清单内。
+   建议单独排期：备份后按 `seed_dict_data` 灌入标准种子（需显式设置租户 GUC），再清理 `zz_b4_probe2`；本轮 prod 未做任何 DML。
+
+#### B.10.12 字典租户隔离修复（2026-11-06）
+
+**根因**（B.10.11 遗留）：`public.core_dict_types/items` 的租户策略把 `app.tenant_id` 为 NULL / 空 /
+`0` 视为全放行；同时 dict handlers 直连 `PgPool`，没有复用 `tenant_middleware` 的请求事务与租户 GUC，
+导致读跨租户、写落 `tenant_id=0`。
+
+**1. handlers 改为请求级事务**
+
+| 文件 | 改动 |
+| --- | --- |
+| `svc/master-data/src/modules/dict/handlers.rs` | 11 个 handler（types/items 的 list/get/create/update/delete、batch、export）全部改为 `Extension<RlsTxnCell>`，`state.rls_db.scope_with(txn)` 后在同一事务内执行；COUNT 与 SELECT 共享同一快照 |
+| `svc/master-data/src/shared/mod.rs` | `AppState` 新增 `rls_db: topems_shared_db::Db`（`search_path = master_data, public, shared`），原 `db` 保留给未治理模块 |
+| `svc/server/src/modules/master_data_real_module.rs`、`svc/master-data/src/main.rs`、`tests/mdm_crud_integration.rs` | 同步构造 `rls_db` |
+
+写路径租户绑定（`create_tenant_id`）：
+
+- 普通用户：`claims.tenant_id`（middleware 已保证存在且合法）；
+- 超管 / service token：系统租户 `00000000-0000-0000-0000-000000000001`（与标准种子一致），
+  **不再以全零 UUID 落库**；
+- `batch_create_dict_items` 失败时显式 rollback 并摘除事务句柄，避免复用请求事务导致部分提交。
+
+**2. 显式系统通道 `app.rls_system`**
+
+| 通道 | 设置点 | 作用 |
+| --- | --- | --- |
+| 超管 HTTP 会话 | `tenant_middleware` 的 `claims.is_superuser` 分支：`app.tenant_id=nil` + `app.rls_system='on'` | 保持管理端跨租户读写 |
+| service token | 同一分支（`is_service_claims`） | 服务间调用无租户维度，保持全量 |
+| 启动期 / 运维 seed | `seed_dict_data` 事务内 `set_config('app.rls_system','on',true)` | seed 可读写，仍固定写 `…0001` |
+| 普通租户请求 | 显式 `set_config('app.rls_system','off',true)` | 防止连接残留把请求提升为跨租户 |
+| 迁移 / DBA 脚本 | 需在同一会话或事务内 `SET app.rls_system='on'`（或使用 superuser/bypassrls 账号） | 否则 fail-closed |
+
+迁移脚本本身只做 DDL，不读写字典行，不需要系统通道。历史迁移字节未改。
+
+**3. 策略收紧**
+
+[20261107000008_dict_tenant_isolation_strict.sql](../../database/migrations/20261107000008_dict_tenant_isolation_strict.sql)：
+
+1. 对 `public.core_dict_types` / `core_dict_items` 逐一 `DROP` 该表全部历史策略（本地 `tenant_isolation_core_dict_*`、
+   prod `rls_tenant_isolation`），避免多条 permissive 策略按 OR 叠加；
+2. 重建唯一策略：
+
+```sql
+USING (
+  COALESCE(current_setting('app.rls_system', true), '') = 'on'
+  OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid
+)
+```
+
+`WITH CHECK` 同表达式；GUC 缺失时比较为 NULL → 不放行（fail-closed）。表不存在时跳过，不 CASCADE、不删数据；
+末尾断言每表恰好 1 条策略且包含 `app.rls_system`。
+
+**4. 验证（本地，2026-11-06）**
+
+| 项 | 结果 |
+| --- | --- |
+| 策略直查（无显式 GUC） | types 0 行（DB 级默认 `…0000` 不再放行） |
+| `app.tenant_id=…0001` | 73 类；`=A(1111…)` 0 类 / 0 项 |
+| `app.rls_system='on'` | 73 类 / 379 项 |
+| seed 重灌（清空后经系统通道） | `system_types=73 items=379 distinct_tenants=1` |
+| A/B 列表 | A total=1 仅见 `zz_iso_a`；B total=1 仅见 `zz_iso_b` |
+| A/B 交叉 GET | A 读 B id = 404；B 读 A id = 404；A 读自己 = 200 |
+| 写落库 | `zz_iso_a → 1111…`、`zz_iso_b → 2222…`、`item_a → 1111…`（无全零） |
+| 超管列表 | total=75（73 系统 + A + B），跨租户读取正常 |
+| 门禁 | `cargo check --workspace`、`clippy --workspace --all-targets -- -D warnings`、`fmt --check` 全绿；`topems-master-data` / `topems-shared-auth` 测试通过 |
+| 迁移账本 | 本地 `_sqlx_migrations` 新增 `20261107000008 success=t`；`checksums.txt` 仅新增行 |
+
+**5. prod 影响面（只读核对，未执行 DML）**
+
+- `core_dict_types` 7 行 / `core_dict_items` 24 行，`tenant_id` 全为 `…0001`，**无 NULL、无全零行**；
+  `category='system'` 为 0 → `seed_dict_data` 幂等守卫不会跳过。
+- 新策略对 prod 的行为变化只在“无 GUC 的直连路径”：由原先全表可见变为 0 行；应用 HTTP 普通租户、
+  超管/service 均不受影响（有 middleware 注入）。
+- 回灌与 `zz_b4_probe2` 清理的执行方案（备份、显式 GUC、核对 SQL、回滚、窗口）见
+  [prod-dict-seed-replay-plan-2026-11-06.md](prod-dict-seed-replay-plan-2026-11-06.md)。
+
+#### B.10.13 字典 legacy 保留与回灌窗口（2026-11-06 第二批）
+
+- **legacy 4 类**：`department_type` / `education` / `marital_status` / `position_level`（合计 17 项）
+  由 [legacy.rs](../../svc/master-data/src/modules/dict/legacy.rs) 的 `LEGACY_DICT_TYPES` 统一标注；
+  单测断言它们不在标准种子、且 `seed.rs` 无 `DELETE`/`TRUNCATE`。说明见
+  [dict-legacy-types.md](dict-legacy-types.md)。
+- **回灌为合并**：`seed_dict_data` 仅 `INSERT ... ON CONFLICT`；prod 预期 `77 类 / 397 项`
+  （73 标准 + 4 legacy；379 标准项 + 17 legacy + 1 存量 `regular`）。
+- **窗口**：备份 → 回灌 → 清理 probe → 6 组核对 → 发布 → 冒烟；脚本
+  [dict-replay-window.sh](../../scripts/db/dict-replay-window.sh)，清单
+  [dict-replay-window-checklist-2026-11-06.md](dict-replay-window-checklist-2026-11-06.md)，
+  演练 [dict-replay-rehearsal-2026-11-06.md](dict-replay-rehearsal-2026-11-06.md)。
+- **下一批 RLS**：其余 359 张表仍含 NULL/0 放行分支（扣除字典 2 张后 357）；7 张有 NULL/0 存量行，
+  必须先回填再收紧；7 张未 `FORCE RLS`。只读评估见
+  [rls-tenant-isolation-next-batch-2026-11-06.md](../quality/rls-tenant-isolation-next-batch-2026-11-06.md)。
+
+
 
 ## C. schema 前缀规则（可执行门禁）
 
@@ -403,6 +1049,24 @@ node scripts/ci/check-schema-prefix.mjs                 # 全量（CI）
 node scripts/ci/check-schema-prefix.mjs --changed-only  # 仅暂存文件（pre-commit）
 node scripts/ci/check-schema-prefix.mjs --report-only   # 只报告
 node scripts/ci/check-schema-prefix.mjs --json
+```
+
+### C.3.1 `search_path` 自设语句门禁（`scripts/ci/check-search-path.mjs`）
+
+规则：`svc/**` 业务代码的 SQL 里禁止 `SET search_path` / `SET LOCAL search_path` /
+`set_config('search_path', …)`；schema 作用域只能由 `Db::new(pool, "<module search_path>")`
+的事务级 `SET LOCAL` 注入（`lib/shared-db/src/scope.rs`）。`SHOW search_path` 属只读诊断，放行。
+
+- 扫描范围与 schema-prefix 门禁一致（排除测试、剥离注释，只扫字符串字面量）。
+- 基线 `scripts/ci/search-path-baseline.json` 以 `文件::语句` 为键：**首次全量 0 违规，基线为空**；
+  新增违规直接阻断（exit 1）。既有测试内的会话级 `SET`（`svc/ehs/tests`、`svc/qms/tests`）不在扫描范围。
+- 接入：pre-commit `search-path`（`--changed-only`，仅 `svc/**/*.rs` 或门禁自身变更时触发）；
+  CI `Search path gate`（全量，位于 `connection-governance` job，与 schema-prefix/pool-acquire 同级）。
+
+```bash
+node scripts/ci/check-search-path.mjs                 # 全量（CI）
+node scripts/ci/check-search-path.mjs --changed-only   # 仅暂存文件（pre-commit）
+node scripts/ci/check-search-path.mjs --update-baseline
 ```
 
 ### C.4 绕过池的调用白名单（`scripts/ci/check-pool-acquire.mjs`）

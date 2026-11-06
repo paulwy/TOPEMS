@@ -11,13 +11,14 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::time::Instant;
 use topems_monitor::shared::AppState as MonitorAppState;
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
+use topems_shared_db::scope::Db;
 
 /// 真实 Monitor 模块：持有完整业务路由
 pub struct MonitorRealModule {
     routes: Router,
-    pool: sqlx::PgPool,
+    db: Db,
 }
 
 impl MonitorRealModule {
@@ -36,12 +37,14 @@ impl MonitorRealModule {
             init_telemetry: false,
         };
 
-        let ctx = bootstrap_service(&config).await?;
-        topems_shared_db::database::probe_connection(&ctx.db).await?;
+        let ctx = bootstrap_service_shared(&config).await?;
+        // 沿用模块原有 SEARCH_PATH：public。
+        let db = Db::new(ctx.db.clone(), "public");
+        db.check_health().await?;
 
         // 构建完整 AppState
         let app_state = MonitorAppState {
-            pool: ctx.db.clone(),
+            db: db.clone(),
             auth_state: ctx.auth_state.clone(),
             metrics: ctx.metrics.clone(),
             start_time: Instant::now(),
@@ -65,10 +68,7 @@ impl MonitorRealModule {
                 topems_shared_db::rls::rls_middleware,
             ));
 
-        Ok(Self {
-            routes,
-            pool: ctx.db,
-        })
+        Ok(Self { routes, db })
     }
 }
 
@@ -87,7 +87,7 @@ impl Module for MonitorRealModule {
     }
 
     async fn health_check(&self) -> ModuleHealth {
-        let db_healthy = sqlx::query("SELECT 1").execute(&self.pool).await.is_ok();
+        let db_healthy = self.db.check_health().await.is_ok();
 
         if db_healthy {
             ModuleHealth::healthy(self.name(), self.group())

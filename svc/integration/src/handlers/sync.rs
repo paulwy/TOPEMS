@@ -134,11 +134,26 @@ impl From<SyncTaskRow> for SyncTask {
 )]
 pub async fn create_task(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateSyncTaskRequest>,
 ) -> ApiResponse<SyncTask> {
     let tenant_id = Uuid::nil();
     let now = chrono::Utc::now();
     let task_id = Uuid::new_v4();
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
 
     match sqlx::query_as::<_, SyncTaskRow>(only_own_schema_query!(
         "integration",
@@ -160,7 +175,7 @@ pub async fn create_task(
     .bind(now)
     .bind(now)
     .bind(now)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(row) => ApiResponse::success(row.into(), "同步任务创建成功"),
@@ -186,15 +201,30 @@ pub async fn create_task(
 )]
 pub async fn get_task(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     axum::extract::Path(task_id): axum::extract::Path<String>,
 ) -> ApiResponse<Option<SyncTask>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match Uuid::parse_str(&task_id) {
         Ok(id) => {
             let row = sqlx::query_as::<_, SyncTaskRow>(
                 only_own_schema_query!("integration", "SELECT id, tenant_id, sync_type, source_module, target_module, operation, entity_type, entity_ids, status, error_message, started_at, finished_at, created_at, updated_at, data FROM integration.core_inter_module_sync WHERE id = $1 AND deleted_at IS NULL"),
             )
             .bind(id)
-            .fetch_optional(&state.pool)
+            .fetch_optional(&mut scope)
             .await;
 
             match row {
@@ -227,6 +257,9 @@ pub async fn update_status(
     State(state): State<AppState>,
     axum::extract::Path(task_id): axum::extract::Path<String>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<UpdateStatusRequest>,
 ) -> ApiResponse<SyncTask> {
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
@@ -237,6 +270,18 @@ pub async fn update_status(
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok())
     };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match Uuid::parse_str(&task_id) {
         Ok(id) => {
             let now = chrono::Utc::now();
@@ -255,7 +300,7 @@ pub async fn update_status(
             .bind(now)
             .bind(now)
             .bind(tenant_filter)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(row) => ApiResponse::success(row.into(), "同步任务状态更新成功"),
@@ -278,7 +323,24 @@ pub async fn update_status(
         (status = 200, description = "OK"),
     ),
 )]
-pub async fn get_pending(State(state): State<AppState>) -> ApiResponse<Vec<SyncTask>> {
+pub async fn get_pending(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> ApiResponse<Vec<SyncTask>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, SyncTaskRow>(
         only_own_schema_query!("integration", r#"
         SELECT id, tenant_id, sync_type, source_module, target_module, operation, entity_type, entity_ids, status, error_message, started_at, finished_at, created_at, updated_at, data FROM integration.core_inter_module_sync
@@ -286,7 +348,7 @@ pub async fn get_pending(State(state): State<AppState>) -> ApiResponse<Vec<SyncT
         ORDER BY created_at ASC
         "#),
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => {
@@ -309,41 +371,58 @@ pub async fn get_pending(State(state): State<AppState>) -> ApiResponse<Vec<SyncT
         (status = 200, description = "OK"),
     ),
 )]
-pub async fn get_statistics(State(state): State<AppState>) -> ApiResponse<SyncStatistics> {
+pub async fn get_statistics(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> ApiResponse<SyncStatistics> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     let result: Result<SyncStatistics, sqlx::Error> = async {
         let total_tasks = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
             "integration",
             "SELECT COUNT(*) FROM integration.core_inter_module_sync"
         ))
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let pending_tasks = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
             "integration",
             "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'pending'"
         ))
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let success_tasks = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
             "integration",
             "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'success'"
         ))
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let failed_tasks = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
             "integration",
             "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'failed'"
         ))
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let in_progress_tasks = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
             "integration",
             "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'in_progress'"
         ))
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         Ok(SyncStatistics {
@@ -379,6 +458,9 @@ pub async fn get_statistics(State(state): State<AppState>) -> ApiResponse<SyncSt
 pub async fn retry_failed(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<RetryFailedRequest>,
 ) -> ApiResponse<serde_json::Value> {
     let now = chrono::Utc::now();
@@ -389,6 +471,17 @@ pub async fn retry_failed(
             .tenant_id
             .as_deref()
             .and_then(|s| Uuid::parse_str(s).ok())
+    };
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
     };
     let result = if req.sync_type.is_some() && req.source_module.is_some() {
         sqlx::query(only_own_schema_query!(
@@ -403,7 +496,7 @@ pub async fn retry_failed(
         .bind(req.sync_type.unwrap_or_default())
         .bind(req.source_module.unwrap_or_default())
         .bind(tenant_filter)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     } else if req.sync_type.is_some() {
         sqlx::query(only_own_schema_query!(
@@ -417,7 +510,7 @@ pub async fn retry_failed(
         .bind(now)
         .bind(req.sync_type.unwrap_or_default())
         .bind(tenant_filter)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     } else if req.source_module.is_some() {
         sqlx::query(only_own_schema_query!(
@@ -431,7 +524,7 @@ pub async fn retry_failed(
         .bind(now)
         .bind(req.source_module.unwrap_or_default())
         .bind(tenant_filter)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     } else {
         sqlx::query(only_own_schema_query!(
@@ -444,7 +537,7 @@ pub async fn retry_failed(
         ))
         .bind(now)
         .bind(tenant_filter)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await
     };
 
@@ -473,8 +566,23 @@ pub async fn retry_failed(
 )]
 pub async fn trigger_scm_wms(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<TriggerSyncRequest>,
 ) -> ApiResponse<SyncTask> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match Uuid::parse_str(&req.entity_id) {
         Ok(id) => {
             let now = chrono::Utc::now();
@@ -494,7 +602,7 @@ pub async fn trigger_scm_wms(
             .bind(now)
             .bind(now)
             .bind(now)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(row) => ApiResponse::success(row.into(), "触发SCM→WMS同步成功"),
@@ -523,8 +631,23 @@ pub async fn trigger_scm_wms(
 )]
 pub async fn trigger_wms_crm(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<TriggerSyncRequest>,
 ) -> ApiResponse<SyncTask> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match Uuid::parse_str(&req.entity_id) {
         Ok(id) => {
             let now = chrono::Utc::now();
@@ -544,7 +667,7 @@ pub async fn trigger_wms_crm(
             .bind(now)
             .bind(now)
             .bind(now)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(row) => ApiResponse::success(row.into(), "触发WMS→CRM同步成功"),
@@ -573,8 +696,23 @@ pub async fn trigger_wms_crm(
 )]
 pub async fn trigger_srm_scm(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<TriggerSyncRequest>,
 ) -> ApiResponse<SyncTask> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match Uuid::parse_str(&req.entity_id) {
         Ok(id) => {
             let now = chrono::Utc::now();
@@ -593,7 +731,7 @@ pub async fn trigger_srm_scm(
             .bind(id)
             .bind(now)
             .bind(now)
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await
             {
                 Ok(row) => ApiResponse::success(row.into(), "触发SRM→SCM同步成功"),
@@ -664,27 +802,42 @@ struct SyncStatsAggRow {
 )]
 pub async fn get_integration_sync_stats(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> ApiResponse<IntegrationSyncStatsResp> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     let result: Result<IntegrationSyncStatsResp, sqlx::Error> = async {
         let (total_syncs,): (i64,) = sqlx::query_as(only_own_schema_query!(
             "integration",
             "SELECT COUNT(*) FROM integration.core_inter_module_sync"
         ))
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let (success_count,): (i64,) = sqlx::query_as(only_own_schema_query!(
             "integration",
             "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'success'"
         ))
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let (_failed_count,): (i64,) = sqlx::query_as(only_own_schema_query!(
             "integration",
             "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'failed'"
         ))
-        .fetch_one(&state.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let last_sync: Option<chrono::DateTime<chrono::Utc>> =
@@ -692,7 +845,7 @@ pub async fn get_integration_sync_stats(
                 "integration",
                 "SELECT MAX(created_at) FROM integration.core_inter_module_sync"
             ))
-            .fetch_one(&state.pool)
+            .fetch_one(&mut scope)
             .await?;
 
         let rows: Vec<SyncStatsAggRow> = sqlx::query_as(only_own_schema_query!(
@@ -704,7 +857,7 @@ pub async fn get_integration_sync_stats(
              FROM integration.core_inter_module_sync
              GROUP BY sync_type"
         ))
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let integration_stats = rows
@@ -776,6 +929,9 @@ struct SyncHistoryRow {
 )]
 pub async fn get_sync_history(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     axum::extract::Query(q): axum::extract::Query<SyncHistoryQuery>,
 ) -> ApiResponse<Vec<SyncHistoryItemResp>> {
     let page = q.page.unwrap_or(1).max(1);
@@ -825,8 +981,20 @@ pub async fn get_sync_history(
     }
     query = query.bind(page_size).bind(offset);
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     let result: Result<Vec<SyncHistoryItemResp>, sqlx::Error> = async {
-        let rows = query.fetch_all(&state.pool).await?;
+        let rows = query.fetch_all(&mut scope).await?;
         Ok(rows
             .into_iter()
             .map(|r| SyncHistoryItemResp {

@@ -5,10 +5,10 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_db::scope::Db;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -70,16 +70,20 @@ pub struct RouteRequest {
     )
 )]
 pub async fn create_location(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateLocation>,
 ) -> ApiResponse<Location> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::DeviceLocationWrite).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
 
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
-    match sqlx::query_as::<_, Location>(
+    let result = sqlx::query_as::<_, Location>(
         only_own_schema_query!("gis", r#"
         INSERT INTO gis.locations (name, code, location_type, position, address, description, properties, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -94,9 +98,16 @@ pub async fn create_location(
     .bind(&payload.description)
     .bind(&payload.properties)
     .bind(tenant_id)
-    .fetch_one(&pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(location) => ApiResponse::success(location, "创建位置成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("创建位置失败", e)),
     }
@@ -114,9 +125,13 @@ pub async fn create_location(
     )
 )]
 pub async fn list_locations(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -125,13 +140,20 @@ pub async fn list_locations(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    match sqlx::query_as::<_, Location>(
+    let result = sqlx::query_as::<_, Location>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
     )
     .bind(tenant_opt)
-    .fetch_all(&pool)
-    .await
-    {
+    .fetch_all(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(locations) => ApiResponse::success(
             serde_json::json!({
                 "locations": locations,
@@ -159,10 +181,14 @@ pub async fn list_locations(
     )
 )]
 pub async fn get_location(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Location> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -171,14 +197,21 @@ pub async fn get_location(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    match sqlx::query_as::<_, Location>(
+    let result = sqlx::query_as::<_, Location>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
     )
     .bind(id)
     .bind(tenant_opt)
-    .fetch_one(&pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(location) => ApiResponse::success(location, "获取位置成功"),
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("位置未找到"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
@@ -187,30 +220,26 @@ pub async fn get_location(
 
 /// 更新位置
 pub async fn update_location(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateLocation>,
 ) -> ApiResponse<Location> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::DeviceLocationWrite).await {
         return e.0;
     }
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
 
-    match sqlx::query_as::<_, Location>(only_own_schema_query!(
+    let result = sqlx::query_as::<_, Location>(only_own_schema_query!(
         "gis",
         r#"
         UPDATE gis.locations 
         SET name = $1, location_type = $2, position = $3, address = $4, 
             description = $5, properties = $6, status = COALESCE($7, status), updated_at = NOW()
-        WHERE id = $8 AND ($9::uuid IS NULL OR tenant_id = $9)
+        WHERE id = $8 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#
     ))
@@ -222,10 +251,16 @@ pub async fn update_location(
     .bind(&payload.properties)
     .bind(&payload.status)
     .bind(id)
-    .bind(tenant_opt)
-    .fetch_one(&pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(location) => ApiResponse::success(location, "更新位置成功"),
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("位置未找到"),
         Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
@@ -234,24 +269,35 @@ pub async fn update_location(
 
 /// 删除位置
 pub async fn delete_location(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<bool> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::DeviceLocationWrite).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
 
-    match sqlx::query(only_own_schema_query!(
+    let result = sqlx::query(only_own_schema_query!(
         "gis",
         "UPDATE gis.locations SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(id)
     .bind(tenant_id)
-    .execute(&pool)
-    .await
-    {
+    .execute(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(result) => {
             if result.rows_affected() > 0 {
                 ApiResponse::success(true, "删除位置成功")
@@ -265,9 +311,13 @@ pub async fn delete_location(
 
 /// 位置搜索
 pub async fn search_locations(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<SearchLocation>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let search_pattern = format!("%{}%", payload.query);
 
     let query = if payload.location_type.is_some() {
@@ -276,18 +326,22 @@ pub async fn search_locations(
         "id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND name ILIKE $1 OR code ILIKE $1 ORDER BY created_at DESC"
     };
 
-    match if payload.location_type.is_some() {
+    let result = if payload.location_type.is_some() {
         sqlx::query_as::<_, Location>(sqlx::AssertSqlSafe(query))
             .bind(&search_pattern)
             .bind(&payload.location_type)
-            .fetch_all(&pool)
+            .fetch_all(&mut scope)
             .await
     } else {
         sqlx::query_as::<_, Location>(sqlx::AssertSqlSafe(query))
             .bind(&search_pattern)
-            .fetch_all(&pool)
+            .fetch_all(&mut scope)
             .await
-    } {
+    };
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("搜索失败", e));
+    }
+    match result {
         Ok(locations) => ApiResponse::success(
             serde_json::json!({
                 "locations": locations,
@@ -303,16 +357,27 @@ pub async fn search_locations(
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 /// 附近位置查询
 pub async fn nearby_locations(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<NearbyRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     // Get all locations and filter by distance
-    match sqlx::query_as::<_, Location>(
+    let result = sqlx::query_as::<_, Location>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND status = 'active'"),
     )
-    .fetch_all(&pool)
-    .await
-    {
+    .fetch_all(&mut scope)
+    .await;
+    let commit_res = match &result {
+        Ok(_) => scope.commit().await,
+        Err(_) => Ok(()),
+    };
+    if let Err(e) = commit_res {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
+    match result {
         Ok(locations) => {
             let nearby = locations
                 .into_iter()
@@ -388,7 +453,7 @@ fn extract_coords(position: &serde_json::Value) -> (f64, f64) {
 
 /// 路径规划
 pub async fn plan_route(
-    State(_pool): State<PgPool>,
+    State(_db): State<Db>,
     Json(payload): Json<RouteRequest>,
 ) -> ApiResponse<serde_json::Value> {
     // Simplified route planning - just return a straight line

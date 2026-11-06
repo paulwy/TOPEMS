@@ -14,13 +14,14 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::routing::get;
 use axum::Router;
 use topems_shared_auth::middleware::require_permission;
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
+use topems_shared_db::scope::Db;
 
 /// 真实 Mobile 模块：持有数据库连接池 + 移动端完整业务路由
 pub struct MobileRealModule {
     routes: Router,
-    pool: sqlx::PgPool,
+    db: Db,
 }
 
 impl MobileRealModule {
@@ -39,8 +40,11 @@ impl MobileRealModule {
             init_telemetry: false,
         };
 
-        let ctx = bootstrap_service(&config).await?;
+        let ctx = bootstrap_service_shared(&config).await?;
         topems_shared_db::database::probe_connection(&ctx.db).await?;
+        // mobile 模块固化的 schema 作用域（不再继承 .env 的 SEARCH_PATH）。
+        let db = Db::new(ctx.db.clone(), "mobile, public, shared");
+        db.check_health().await?;
 
         // 1. 7 个服务客户端统一初始化（与独立部署一致的 service token）
         let (
@@ -56,7 +60,7 @@ impl MobileRealModule {
         // 2. 构造 mobile AppState（复用 svc/mobile 类型）
         let state = topems_mobile::shared::AppState {
             auth_state: ctx.auth_state.clone(),
-            pool: topems_shared_auth::ScopedPool::new(ctx.db.clone()),
+            pool: db.clone(),
             event_publisher: ctx.event_publisher.clone(),
             wms_client,
             hrm_client,
@@ -76,10 +80,6 @@ impl MobileRealModule {
             .layer(axum::middleware::from_fn(require_permission(
                 "mobile:admin",
             )))
-            .layer(axum::middleware::from_fn_with_state(
-                ctx.db.clone(),
-                topems_shared_auth::tenant_middleware(),
-            ))
             .with_state(state);
 
         // 4. 组装：api_prefix + 统一 JWT 认证（与独立部署一致）
@@ -98,14 +98,11 @@ impl MobileRealModule {
 
         tracing::info!(
             "✅ 真实 mobile 模块已接入统一入口（db={}，prefix={}，业务路由 99 条）",
-            ctx.db.size(),
+            db.stats().size,
             config.api_prefix
         );
 
-        Ok(Self {
-            routes,
-            pool: ctx.db,
-        })
+        Ok(Self { routes, db })
     }
 }
 
@@ -124,7 +121,8 @@ impl Module for MobileRealModule {
     }
 
     async fn health_check(&self) -> ModuleHealth {
-        let db_healthy = sqlx::query("SELECT 1").execute(&self.pool).await.is_ok();
+        let stats = self.db.stats();
+        let db_healthy = self.db.check_health().await.is_ok() && stats.size > 0;
 
         if db_healthy {
             ModuleHealth::healthy(self.name(), self.group())

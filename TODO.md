@@ -1,3 +1,102 @@
+## 字典 legacy 保留 + 回灌窗口演练（2026-11-06 第二批）
+
+- **legacy 标注**：4 个非标准类（`department_type`/`education`/`marital_status`/`position_level`）
+  纳入 [legacy.rs](svc/master-data/src/modules/dict/legacy.rs) 的 `LEGACY_DICT_TYPES`；单测断言它们不在
+  标准种子、seed 源码无 `DELETE`/`TRUNCATE`。文档：[dict-legacy-types.md](docs/database/dict-legacy-types.md)。
+- **回灌是合并**：本地演练实测回灌后 `78 类 / 397 项`，清理 `zz_b4_probe2` 后 **77 类 / 397 项**；
+  legacy 4 类分项 **4/4/4/5（17 项）** 完整保留。
+- **窗口脚本**：[dict-replay-window.sh](scripts/db/dict-replay-window.sh)（backup/replay/cleanup/verify/
+  release/smoke/两条回滚）；核对 SQL [dict_replay_verify.sql](scripts/db/sql/dict_replay_verify.sql) 6 组断言。
+- **窗口清单**：[dict-replay-window-checklist-2026-11-06.md](docs/database/dict-replay-window-checklist-2026-11-06.md)
+  （先灌后发、30–45 分钟、回滚判据与双路径）。
+- **本地演练**：[dict-replay-rehearsal-2026-11-06.md](docs/database/dict-replay-rehearsal-2026-11-06.md)；
+  增量回滚 6/24、备份恢复 7/24，均保留 legacy。演练发现 `pg_restore -t schema.table` 不匹配 + 默认忽略
+  FK 错误导致静默丢行，已修复为 `-n public -t` 两步 + `--exit-on-error`。
+- **下一批 RLS 评估（只读，未改代码/迁移）**：359 张表仍含 NULL/0 放行分支（扣除本批 2 张字典表后 357）；
+  37 张高风险（7 张先回填 + 30 张普通高），其中 **7 张有 NULL/0 租户存量行，必须先回填再收紧**（`public.audit_logs`、
+  `crm.rfm_results`、`crm.crm_master_data_refs`、`crm.returns`、`crm.customers`、`ehs.qa_ehs_risks`、
+  `ehs.qa_ehs_environment_monitors`）；7 张未 `FORCE RLS`。清单见
+  [rls-tenant-isolation-next-batch-2026-11-06.md](docs/quality/rls-tenant-isolation-next-batch-2026-11-06.md)。
+- **遗留（需拍板）**：① 7 张脏租户表回填口径（回填 or 清理）；② 后台任务/裸名 SQL 调用清单需服务负责人确认；
+  ③ prod 窗口执行（等授权）。
+
+## 字典租户隔离修复（2026-11-06）
+
+- **代码**：`master-data` 全部 dict handlers 从直连池改为请求级 `RlsTxnCell` + `scope_with`（复用
+  `tenant_middleware` 注入的事务与 `app.tenant_id`）；写路径（types/items/batch）显式绑定租户：
+  普通用户 = `claims.tenant_id`，超管/service = 系统租户 `…0001`，不再落 `tenant_id=0`。
+- **系统通道**：新增显式 GUC `app.rls_system='on'`，仅 `tenant_middleware` 的超管/service 分支与
+  `seed_dict_data` 事务内设置；普通请求显式置 `off`。策略不再把 NULL/空/`0` 视为放行。
+- **迁移**：`20261107000008_dict_tenant_isolation_strict.sql` 重建两张字典表策略（先清空历史策略，
+  再建唯一 `rls_tenant_isolation`：`rls_system='on' OR tenant_id=app.tenant_id`）；本地已应用，账本新增一行。
+- **证据（本地）**：A/B 双向列表互不可见 + 交叉 GET 均 404；落库 `tenant_id` 分别为 A/B 租户；
+  seed 在系统通道下重灌 **73 类 / 379 项**（单租户 `…0001`）；超管列表可见 A+B（75 行）。
+- **prod 影响面（只读）**：7 类 / 24 项全部 `…0001`，无 NULL/0；`category='system'` 为 0（seed 守卫不会跳过）；
+  无 GUC 直连将 fail-closed，DBA 排查需 `SET app.rls_system='on'`。
+- **prod 回灌方案**（未执行）：[prod-dict-seed-replay-plan-2026-11-06.md](docs/database/prod-dict-seed-replay-plan-2026-11-06.md)。
+- **遗留**：prod 回灌与 `zz_b4_probe2` 清理待窗口执行；4 个非标准存量类保留需业务确认。
+
+## 高危 4 张运行期影子表清理（2026-11-06）
+
+| 表 | 裸名命中 | 处置 |
+| --- | --- | --- |
+| `master_data.core_dict_types` | 8 → 0 | `TABLE_DEFS` 删除 + SQL 改 `public.*` |
+| `master_data.core_dict_items` | 9 → 0 | 同上 |
+| `communication.core_notification_templates` | 7 → 0 | 同上 |
+| `communication.core_geofences` | 8 → 0 | 同上 |
+
+- 前向迁移 `20261107000004_drop_high_risk_shadow_tables.sql`：守卫（权威表存在 + 副本 0 行）、不 CASCADE；
+  本地 `_sqlx_migrations` 新增 `success=t`，4/4 副本不存在。
+- 连续两次重启 `/ready` 均 200，4 张副本仍 NULL；两份日志对 4 张表的建表/补列命中 **0**。
+- 本地数据：旧版字典 38 类 / 189 项备份后清理，现版 seed 重灌 `public` 为 **73 类 / 379 项**（tenant `…0001`，
+  `name_en` 全 NULL）；批 3 模板测试 2 行已删；本地 `public.core_geofences` 由 2 列补到 20 列（prod 本就完整）。
+- 租户隔离：模板 A/B 互不可见（落 `public`，tenant `…0001/…0002`）；围栏靠 `chat_id` 过滤（无 tenant_id/RLS）；
+  **字典不通过**——`rls_tenant_isolation` 把 GUC 未设置/空/`0` 视为全放行，dict handlers 直连池不注入租户，
+  B 可见 A 的 73 类，写接口以 `tenant_id=0` 落库。
+- **prod 只读新发现**：`public.core_dict_types` 仅 7 行（6 业务类 + `zz_b4_probe2` 测试残留）/ 24 项；
+  标准种子 73 类 / 379 项，缺 71 类；4 个现存类不在现版种子清单内。建议单独排期回灌 + 清理残留，本轮无 prod DML。
+
+**后续（需拍板）**：① dict handlers 切请求级 `scope_with` 并收紧 RLS 全放行分支；② prod 字典回灌与
+`zz_b4_probe2` 清理；③ 中危 16 张按审计文档继续（portal 帮助中心/联邦网关/master_data 自造）。
+
+## 通知链路修复 + 运行期 DDL 影子表扫描（2026-11-06）
+
+### A. 通知链路（已完成并验证）
+
+**根因 C（主因代码）**：communication 固化 `search_path=communication, public`；启动期
+`schema_defense` 用 `CREATE TABLE IF NOT EXISTS` 复活迁移已 DROP 的 12 列空壳
+`communication.core_notifications`（无 `tenant_id`），`notification.rs` 34 处裸名 SQL 命中副本 →
+INSERT 显式写 `tenant_id` 报 `SQLSTATE 42703`。
+
+| 改动 | 位置 |
+| --- | --- |
+| `TABLE_DEFS` 6 → 3，删除 `core_notifications` / `core_emails` / `core_email_templates` 副本定义 | `svc/communication/src/schema_defense.rs` |
+| 34 处裸名 → `public.core_notifications`；文件内裸名 0 | `svc/communication/src/notification.rs` |
+| 契约：坏 body 400 / 无权限 403 / 事务与 DB 失败 500；成功仍 200 | 同上 |
+| 守卫式前向迁移，删 3 张 0 行副本（不 CASCADE、不改历史迁移字节） | `database/migrations/20261107000003_drop_communication_notification_shadow_tables.sql` |
+
+**验证**：`to_regclass` 解析到 `public`、`communication` 侧 NULL；重启 4 次不复活且启动日志无重建；
+创建 200 且 `public` 侧 1 行 / 副本 0 行；A/B 列表互相不可见（RLS 生效）；已读 `is_read=t`、删除
+`deleted_at` 非空；`check` / `clippy -D warnings` / `fmt --check` 通过，communication 单测 411 passed。
+
+**A4 自纠**：批 3「communication 写验收」不成立——`core_notification_templates` 的 2 行落在
+启动期复活的 `communication` 影子表（无 `tenant_id`、RLS 关），权威 `public` 侧 0 行；
+`docs/database/connection-governance.md` B.10.9 已更正，新增 B.10.10 记录本轮修复。
+
+### B. 运行期 DDL 复活已删表（清单已完成，未批量改）
+
+全仓 26 服务 / 607 条 `TABLE_DEFS` / 55 处模块级运行期 DDL；与 598 个迁移比对后分档：
+
+| 档 | 数量 | 代表 |
+| --- | --- | --- |
+| 高（权威同名 + 裸名命中 + 缺 `tenant_id` 或 RLS 关） | **4** | `master_data.core_dict_types`、`master_data.core_dict_items`、`communication.core_notification_templates`、`communication.core_geofences` |
+| 中 | 16 | `portal.core_faqs` 等（全限定或空表无写入方） |
+| 低 | 587 | `*_ledger` 类运行时台账，无同名权威表 |
+
+**结论**：22 个服务调用 `run_schema_migration_and_verify`，空壳表循环会持续复活被 DROP 的表；
+`master_data` 字典副本与 `communication` 模板副本 RLS 关闭/allow-all，**存在租户隔离失效**。
+清单与处置建议见 `docs/quality/runtime-ddl-shadow-audit.md`；本轮不改，等确认后按「先代码去裸名/删定义 → 再前向迁移删影子」推进。
+
 ## 第四十九轮（2026-11-05）：prod 连接占用排查（topems-server 72/100）
 
 **观测（prod 只读，18:47–18:54，SSH 隧道 127.0.0.1:15432）**
@@ -1843,6 +1942,111 @@
 > - **模板要点（本批固化）**：手写形态 mock `@/components/templates/ListPageTemplate`（记录 props + data-testid）；redesign 形态 mock `@/components/redesign` 13+ 组件（Modal 渲染 footer、StatTile label:value、Tabs 可点击、Drawer、ToastContainer、FileUpload 等）；页面直引 i18n 实例时 `vi.mock('@/i18n', () => ({ default: { t: (k) => k } }))`；useNotificationStore mock 需支持 selector 形态（`useNotificationStore((state) => state.addNotification)`）；异步行操作必须 `await act(async () => ...)` 防 act 泄漏（泄漏会导致后续用例 render 空 body）；多个同名数值用 getAllByText + toHaveLength；placeholder 断言用 getByPlaceholderText
 > - 验证：5 页 38/38 passed（单跑+合并跑）；eslint 0（--fix 后复检）；tsc 0；全量残余 43 failed 不变（theme.palette 扩展色断点等，见上一批登记）。
 > - 提交：本批（5 测试文件 + TODO 小节）待推送。
+
+## v1.142 审计整改第十九批：scm 合同 schema 清理 + 凭证页收敛（批 21，2026-11-06）✅
+
+- **scm 合同 schema 一步到位**：现役页面 `ScmPurchaseContractPage.tsx:13` 用的是 `purchaseContractWizardSchema`（3 步向导），`purchaseContract.ts` 是被取代的旧版（仅 `scmSchemas.test.ts:121` 断言消费）→ 删文件 + 清 `scm/index.ts` 的 `export *` + 删测试断言块与 import + 清 `ScmCrudPages3.test.tsx` 多余 mock 键；**保留 wizard 的契约断言**（活 schema 仍受测）。
+- **凭证页收敛（finance 权威）**：逐项对比 114 行 erp 版 vs 807 行 finance 版 —— 导入/详情分录/批量提交审批过账/删除二次确认/科目 Tab/统计卡片 finance 版全有，**erp 版零独有功能** → 删 `pages/erp/VoucherPage.tsx` + 2 个测试 + `schemas/erp/voucher.ts`。
+- **入口不丢**：保留 `voucherRoute` 的 `path: ERP_PATHS.voucherManagement`（`/erp/voucher-management`）、菜单标题、`code`、`tier` 不变，仅 `element` 换成 `import('@/pages/finance/FinanceVoucherPage')`（lazy key `FinanceVoucherPage`）→ 书签/面包屑/外部链接全有效。
+- **权限码对齐（避免可见但 403）**：后端 `/finance/vouchers` 实际鉴权为 `finance:voucher:read`（`svc/finance/src/modules/mod.rs:290`、`cqrs_routes.rs:130`），而 erp_manager 对 `finance:voucher:*` 持有 0 条 → 该路由 `requiredPermissions` 由 `erp:general_ledger:read` 改为 `finance:voucher:read` + `finance:dashboard:read`。影响：erp_manager 不再见该入口（原为"可见但点了 403"），如需 ERP 内看凭证须授其 finance:voucher:read，待拍板。
+- **新增契约测试** `src/__tests__/erpVoucherRouteContract.test.ts`（5 用例全过）：路径不变、落点指向 finance、权限码一致、已删文件不存在、权威页存在。（初次放 `modules/erp/__tests__` 被 vitest include 规则跳过，已移位）
+- **验证**：tsc 0 error（两次）；eslint 0；契约测试 5/5；全量 vitest 621 files / 6640 passed / 1 skipped / 2 failed（`PluginManager` hook 超时 + `smoke-batch` ForceChangePasswordPage 超时，单独复跑两文件 1524/1524 全过 = 并行 flaky）；对账不变 fe 465/be 577/db 1087/fe_orphan 41/rename 0；无迁移。
+- 产出：`docs/audit/P3-11_scm合同schema清理与凭证页收敛_执行记录_2026-11-06.md`
+
+## v1.141 审计整改第十八批：孤儿 schema 清理（批 20，2026-11-06）✅
+
+- **`erp/voucher.ts` 搬家判定不成立**：核实 `schemas/finance/voucher.ts:16` 已存在同名导出（`finance/index.ts:12` 转发），`erp/voucher.ts` 被活页面 `pages/erp/VoucherPage.tsx:17` 消费（路由 `modules/erp/config.ts:169`），两文件 diff 511 行 = 两个不同 schema 服务两个活页面 → 不搬；真问题是两套凭证页面功能重复，登记待拍板。
+- **全量孤儿扫描（227 schema 文件）**：文件级 + 符号级双层交叉，删除 3 个零引用 schema ——
+  `admin/tenantInvoice.tsx`（被同名 `.ts` 遮蔽、`index.ts` 转发的是 `.ts`）、`wms/outboundOrder.ts`（仅测试自嗨，index 转发的是 `./outbound`）、`mes/workOrder.ts`（页面批 3 已删、全站零消费）；
+  连带删 2 个测试 + 1 个 css + 清 `mes/index.ts` 转发行，共 7 项变更。
+- **一次误删已回滚（如实记录）**：初次误判 `wms/outbound.ts` 为孤儿（`grep | head -8` 截断导致漏看 `pages/wms/OutboundOrderPage.tsx:14`、`OutboundPage.tsx:11` 的引用），tsc 报 2 处 TS2724 后立即 `git checkout` 回滚并改全量 grep 复核；教训：清理批量判断禁用截断输出。
+- **有引用不删**：`scm/purchaseContract.ts`（页面已删但 `scmSchemas.test.ts:14` 真实断言）登记待判定；`hrm` 工厂函数（经 index 重命名导出）保留。
+- **wms 3 个孤儿页面残留**：全站 grep 无引用，已干净。
+- **验证**：tsc 0 error；eslint 0；vitest **622 files / 6647 passed / 1 skipped**（-22 用例=删的 2 个测试；1 failed 为 `smoke-batch` ForceChangePasswordPage 120s 超时，单跑 1498/1498 全通过，flaky 与本批无关）；对账不变（无权限码改动）；无迁移。
+- 产出：`docs/audit/P3-10_孤儿schema清理_执行记录_2026-11-06.md`
+
+## v1.140 审计整改第十七批：tenant 域资源码 + erp:vouchers 模块订正（批 19，2026-11-06）✅
+
+- **`erp:vouchers` 收敛（取证后动手）**：三层证据闭合——`schemas/erp/voucher.ts:14` import `@/api/finance/voucher`；`api/finance/voucher.ts:25,51…` 全部 `apiClient.finance.get/post('/vouchers')`；`svc/erp/src` 只有 prometheus gauge 与表名，**无 `/api/erp/vouchers` 路由**；`grep -rn "api.module" apps/web/src` **零引用**（该字段无运行时用途，CrudPage 请求全走 `apiAdapter` @ :504/521/545/569）；对账脚本扫字面码不读该字段 → 改 module 不改请求路径、不影响基线。已把 `module: 'erp'` 订正为 `'finance'` + 接入 `permissionResource: 'finance:voucher'`。
+- **tenant 域建码 2**（`tenant:member:update` / `delete`，迁移 `20261107000009`，`[batch19]` + ROLLBACK）：依据后端 `handlers.rs:1030 remove_member`、`:1057 update_member_role` + 前端 `TenantMembersTab.tsx:25,31` 真实写调用；幂等首次 `0 2`/`0 4`、二次 `0 0`；DB 1229→**1231**。
+- **tenant 三项分化**：`admin:tenantUsers` 有真实写 → 接入 `tenant:member`；`admin:invoices`（`TenantBillingTab.tsx:83-90` 写适配器全为空实现）→ **不接入**；`tenant:invoices`（`schemas/admin/tenantInvoice.tsx` 无任何页面引用）→ 孤儿文件不接入。
+- **不建 `tenant:member:create`**：UI create 适配器为空实现，无真实 CrudPage 写路径 → 不造无依据码（接入后新建按钮自动隐藏，消除僵尸入口）。
+- **`admin:auditLogs` 结论化**：只读页无写操作 → 维持不接入。
+- **角色规划 6 组**：workflow 6 / monitor 9 / 五模块 27 / 九域 87 仍只有 admin/superadmin；维持不造空壳角色，建议登记待拍板。
+- **验证**：vitest 624 files / 6669 passed / 1 skipped；tsc/eslint 0 error；迁移四件套 PASS（Errors 0 / drift 0）；RLS ✅；对账 fe 465 / be 577 / db **1087** / fe_orphan 41 / rename_groups 0。
+- 产出：`docs/audit/P3-9_tenant域资源码与erp模块订正_执行记录_2026-11-06.md`
+
+## v1.139 审计整改第十六批：模块级 → 资源级 权限码细化（27 码 + 10 页面接入 + 跨域核实）（批 18，2026-11-06）✅
+
+- **缺口本质**：notification / ticket / plugin / migration / integration 五模块只有模块级码（`notification:read|write`、`ticket:admin|dashboard`、`plugin:dashboard`、migration 零三段码），无资源级码 → 8 个带 CRUD 的页面无法接入。
+- **建码（逐条核实实体，不造无依据的码）**：9 资源 × 3 = **27 码**（迁移 `20261107000007_module_resource_level_codes.sql`，`[batch18]` 标记 + 回滚）。依据：notification←`core_notifications` 表 + `/api/core/notification`；notification:archived←`archived_notifications` 表；integration 三个←`/api/integration/lims-qms`、`svc/integration/src/mes_erp_sync.rs` + `/api/integration/mes-erp`、wms-scm 同步模块；ticket←`core_tickets` 表 + `/api/ticket`；plugin←`core_plugins` 表 + `svc/plugin-registry`；migration←`core_migration_history` + `svc/unified-core/modules/migration`；finance:account←`core_finance_accounts` 表 + `/api/finance/accounts` 路由。幂等实测 首次 `INSERT 0 27` + 授权 `0 54`/`0 3`，二次 `0 0`；DB 1202 → **1229**。
+- **跨域 3 项核实后分化**：① `erp:fixedAssets`（entity `finance_fixed_asset`，`svc/erp/src/modules/fixed_asset.rs` 存在）→ 接**同域 `erp:asset`**（四码齐），不改 module；② `finance:accounts`（`api.module=finance`，路由 `/api/finance/accounts` 存在，表 `core_finance_accounts`）→ 补 `finance:account:*` 后接入（**归 finance 域而非补 `admin:account`**，后者是系统账号，语义不同）；③ `erp:vouchers` → **停手登记**：接 `finance:voucher` 属跨域、补 `erp:voucher` 会与既有 `finance:voucher` 造同义双码（违反收敛方向），正解是改 `api.module` 但会动请求路径（`/api/erp/vouchers`→`/api/finance/vouchers`），按纪律先停。
+- **接入 10 个页面**：notification 2 + integration 3 + ticket 1 + plugin 1 + migration 1 + fixedAsset 1 + account 1，全部 `permissionResource` 一行、页面零改动；累计注入 **83 个文件**（批16 17 + 批17 56 + 批18 10）。
+- **角色核对（10 前缀 × 3 = 30 码）**：admin/superadmin **30/30**；erp_manager 3（`erp:asset` 既有）；finance_manager 3（`finance:account`）；其余 14 个域经理 **0**；employee/finance_user **0**。
+- **角色规划登记（不造角色）**：workflow 6 码、monitor 9 码、notification/ticket/plugin/migration/integration 27 码、九域 87 码，均只有 admin/superadmin 持有；建议按业务线新建 `workflow_manager`/`monitor_manager`/`support_manager` 或维持 admin-only——**属产品决策，不自行造空壳角色**。
+- **验证**：全站 vitest **624 files / 6669 passed / 1 skipped / 0 failed**（与基线一致）；tsc 0 error；eslint 0 error；迁移四件套 PASS（Errors 0 / Warnings 4 / Checksum 0 / drift 0）；RLS ✅；rename_groups 0；对账 fe 465 / be 577 / db **1085**（+27）。
+- **遗留**：`erp:vouchers` 待确认实际请求路径；`admin:invoices`/`tenant:invoices`/`admin:tenantUsers` 属 tenant 模块（零三段码），需 tenant 域资源码规划；`admin:auditLogs` 维持只读不接入；角色规划 6 组待拍板。
+
+## v1.138 审计整改第十五批：API 资源名 → DB 资源名 语义映射（69 项逐条判定 + 补 30 码 + 56 个 schema 接入）（批 17，2026-11-06）✅
+
+- **判定方法**：69 项逐条读 `entity` + API 方法 + DB 同模块资源清单做**人工语义判定**，不依赖字符串相似度（相似度最高的候选多次是错的，如 `mes:materialIssues` 最高分是 `mes:material`，但领料单 ≠ 物料主数据）。
+- **三类结论**：① 可直接映射 **36** 项（DB 已有 create/update/delete 三码，如 `orders→production_order`、`bomVersions→bom`、`purchaseContracts→contract`、`inboundOrders→inbound`、`eightD→eightd`）；② 需补码 **10** 项（30 码）；③ 语义不明/一对多/跨域/无实体码 **23** 项（**不接入，登记**）。
+- **补码迁移** `20261107000006_api_resource_semantic_mapping_codes.sql`：30 条码（workflow3/wms3/finance6/monitor3/mes9/scm6），`[batch17]` 标记 + 回滚段。其中 **4 项对既有资源补动作**（workflow:definition、wms:stocktake、finance:receivable_payable、monitor:rule）；**6 项新建资源**（mes 领料/需求/退料、scm 来料检验/到货通知、finance 会计科目），均给出"为何不与既有资源合并"的语义依据（领料单 ≠ material 物料主数据、来料检验 ≠ supplier_admission 供应商准入、会计科目 ≠ ledger 总账）。幂等实测：首次 `INSERT 0 30` + 授权 `0 60`/`0 24`，二次 `0 0`；DB 码 1172 → **1202**。
+- **授权**：admin/superadmin 各 30（不补会误锁管理员）；mes_manager 9、scm_manager 6、finance_manager 6、wms_manager 3；**employee/finance_user 等基础角色 0**；workflow/monitor 无对应 manager 角色只建码（登记）。
+- **接入**：本批修改 **56 个 schema**（① 36 + ② 10 + erp 域批 16 已补码的 13 项，去重 1 处同文件多资源），沿用 `permissionResource` 机制，**页面零改动**；累计注入 **73 个文件 / 69 个去重前缀**。
+- **真实角色核对（69 前缀 × 3 动作 = 207 码）**：admin/superadmin **207/207**；**各域经理本域 100% 可见、跨域 0**——mes_manager 48/48、scm_manager 42/42、erp_manager 39/39、wms_manager 12/12、finance_manager 6/6、ehs_manager 15、hrm/lims/qms_manager 9、pdm_manager 6、crm/srm_manager 3；employee/finance_user **0/207**；pm_manager/report_manager 0（无归属前缀）。
+- **验证**：全站 vitest **624 files / 6669 passed / 1 skipped / 0 failed**（与基线一致）；tsc 0 error；eslint 0 error（修 1 处 prettier 缩进）；迁移四件套 PASS（Errors 0 / Warnings 4 / drift 0 / checksum 0）；RLS ✅；rename_groups 0；对账 fe 465 / be 577 / db **1058**（+30）。
+- **遗留（登记）**：③ 类 23 项中 6 项属"模块级资源码缺失"（notification/migration/integration/ticket/plugin），需先做模块资源码细化，独立批次；`erp:fixedAssets`/`erp:vouchers`/`finance:accounts` 三项跨域语义应通过"改 schema 的 api.module"解决而非接跨域码；workflow/monitor 需 manager 角色规划。
+
+## v1.137 审计整改第十四批：CrudPage 写权限接入前置（缺口盘点 + 补码 + scm/mes 首批接入）（批 16，2026-11-06）✅
+
+- **盘点结论（217 个 CrudPage 文件 / 208 带 api 声明 / 200 个 (模块,资源) 对）**：写码齐全 **86**；资源存在但零写码 **45**（缺 135 码）；FE 资源名 ≠ DB 资源名 **69**（命名映射问题）。
+- **关键发现**：`EntitySchema.api.resource` 是 **API 路径名**（`purchaseOrders`/`orders`/`boms`），DB 资源名是**业务实体名**（`purchase_order`/`production_order`/`bom_version_policy`）——两套命名空间，不能机械推导权限码。69 个不匹配项机械补码会造出同义双码（与批 2 收敛方向相反），故**只登记不补**。
+- **补码迁移** `20261107000005_resource_write_codes.sql`：补 135 条细粒度码（aps9/bi6/doc3/erp39/hrm3/iam3/integration9/mobile3/monitor6/qms3/rd33/tms12/workflow6），resource 字段沿用同资源既有 read 码的 colon 写法；未补资源级 `:write`（DB 现有 `:write` 全是模块级两段码，不新增第二种写语义）。幂等实测：首次 `INSERT 0 135`，二次 `INSERT 0 0`；DB 码 1037→**1172**。
+- **授权（最小权限 + 不误锁管理员）**：erp→erp_manager(39)、hrm→hrm_manager(3)、qms→qms_manager(3)、iam→admin(3)、**admin/superadmin 各全量 135**（管理员语义即全量，不补会误锁）；**employee/finance_user 等基础角色零补**；aps/bi/doc/integration/mobile/monitor/rd/tms/workflow 九域无对应 manager 角色，只建码不授权（登记）。
+- **接入机制（通用性优先）**：`EntitySchema` 新增可选 `permissionResource`（如 `'scm:purchase_order'`），CrudPage 经纯函数 `resolveCrudPermissionCodes` 展开为 create/update/delete 三真实码（显式 props > schema 前缀 > writePermission 总闸，三者皆无则不过滤）；**页面零改动**，只需 schema 声明一行。
+- **首批接入 17 个 schema**（scm 10 + mes 7，DB 实查三码齐全）：purchase_order / purchase_item / purchase_requisition / supplier / supplier_admission / delivery_appointment / inventory_turnover / mrp_plan / mrp_suggestion / price_comparison；work_order / work_report / equipment / process_flow / process_route / team / wip。
+- **验证**：新增单测 6 passed；真实角色核对 17 资源×3 码=51 码 → scm_manager **30/51**、mes_manager **21/51**（恰好各域全可见）、admin/superadmin **51/51**、employee/finance_user **0/51**（精确按职责）；**全站 vitest 624 files / 6669 passed / 0 failed**；tsc 0 error；eslint 0 error；迁移四件套 PASS（Errors 0 / Warnings 4 / drift 0）；RLS ✅；rename_groups 0；对账 fe 465 / be 577 / db **1028**（+135）。
+- **遗留（登记）**：69 个命名不匹配页面待语义映射；九域 87 条码无 manager 角色；erp 13 资源待下批接入；`audit_permission_codes.py` 不排除 `__tests__` 口径问题仍为独立项。
+
+## v1.136 审计整改第十三批：hasPermission 三段码缺陷修正（批 15，2026-11-06）✅
+
+- **缺陷**：`permissions.ts` 对 `模块:资源:动作` 三段码沿用二段码等级近似——资源名当 action 查等级得 0，模块内任何权限等级亦 ≥0 → `0>=0` 恒真 → **该模块有任一权限即放行全部三段码**。
+- **量化**：FE 源码 2282 处三段码引用（449 唯一值）全部受影响；DB 20 角色/2760 授权中 **80/160 个 (角色,模块) 组是"部分持有"**（employee 在 mes 仅持 1/93 码、在 finance 持 2/75 码）。**误放行面极大，按拍板一步到位修正，不做分级。**
+- **修正规则（定稿并写入判定层，不改任何页面引用）**：① 三段码精确匹配；② `<模块>:<资源>:admin` / `<模块>:admin` 通配放行；③ **`X:write` 作为聚合码单向覆盖 create/update/delete**（DB 483 个细粒度码 vs 50 个 write 码，反向不成立）；④ admin↔iam 等价与基础设施 iam 联动保留；⑤ 删除等级近似分支；两段码等级语义不变。
+- **收紧实测**：20 角色对 461 个 FE 三段码合计可见 1534 → **1170（-364，-23.7%）**；employee 260→0、erp_manager 25→0 经核实正确（两者持有码中**三段码为 0**，原先可见全是误放行）；域经理基本零收紧；超级管理员走 `is_superuser` 前置放行不受影响。
+- **验证**：新增 `permissions.threeSegment.test.ts` 11 passed · `useOptionalPermission` 7 passed · **全站 vitest 623 files / 6663 passed / 0 failed** · tsc 0 error · eslint 0 error · RLS ✅ · rename_groups 0。
+- **对账口径**：fe 461 / orphan 42（较批 14 +19/+7），来源是新增单测字面量被 audit 脚本计入（脚本不排除 `__tests__`），真实代码零新增引用。
+- **无 DB 改动**（纯前端判定层，无迁移/回滚脚本；回滚方式 `git revert`）。
+
+## v1.135 审计整改第十二批：CrudPage 写权限入口专项（批 14，2026-11-06）✅
+
+- **盘点**：`CrudPage` 被 284 个页面引用，改造前**无任何权限校验**（只有 `actions` / `readOnly`）。
+- **通用能力**：新增 `writePermission` / `createPermission` / `editPermission` / `deletePermission` 四个可选 props；四者全不传 → 行为完全不变（零回归）；`detail` 不受写权限影响。
+- **新 hook `useOptionalPermission`**：读 `permission_cache`（与 `usePermission` 同 key/TTL），**读不到信息（无 Provider / 未登录 / 首屏）一律放行**，避免把 284 个页面的测试打成必须挂 Provider。
+- **首轮落地**：`mes/EquipmentManagementPage`（`mes:equipment:create|update|delete`）、`scm/ScmPurchaseContractPage`（`scm:contract:create|update|delete`），6 个码均 psql 实查存在于 `public.core_permissions`。
+- **重大发现（已登记，未改）**：`permissions.ts:205 hasPermission` 对三段码走等级近似分支（把资源名当 action 查等级得 0，模块内任何权限等级亦 ≥0）→ **该模块有任一权限即放行全部三段码**，`checkPermission('scm:contract:delete')` 在仅有 create 时返回 true。修正会改变全站可见性，需专项评估（先量化误放行面）。
+- **顺带修复历史回归 32 例**：批 12 `ListPageTemplate`/`MesWorkOrderPage`、批 7 `InboundOrderPage`/`StockTakePage` 直接调 `usePermission` 致测试缺 Provider 全挂，统一改 `useOptionalPermission`。
+- **验证**：`src/components/templates`+`src/hooks`+`src/pages` **373 files / 1385 tests 全绿**（改前 16 files / 32 tests 失败）；tsc 0 error；eslint 0 error；`useOptionalPermission` 单测 7 passed。
+- **未落地**：284 页面未逐页接入（多数缺对应 DB 写码，强行接入会按钮全隐藏）；`X:create|update|delete` 与 `X:write` 两套写语义并存未统一。
+
+## v1.134 审计整改第十一批：tier 与 module_code 体系统一 + 菜单按域过滤（批 13，2026-11-06）✅
+
+- **盘点结论**：`module_code` 与前端一级菜单是两套体系——前者仅 `erp:`/`pm:` 两前缀（50 条功能级），后者 36 个业务域 code；格式（`<域>:<功能>`）本身合法，缺的是**域覆盖**，直接按前缀过滤会把 34 个域隐藏、打挂应用。
+- **tier 36 域映射定稿**：basic 15（admin iam notification workflow doc erp mes wms scm crm finance asset hrm oa master）/ standard 11（pm qms aps lims pdm srm tms ehs bi report mobile）/ enterprise 10（ai gis monitor plugin im integration automation rd registry ticket）。FE `config/moduleTiers.ts` 与 BE `modules/tenant/tier.rs` **同源双份**。
+- **FE 菜单过滤**：`useTenantModules` 拉租户模块 → 按 module_code 前缀聚合业务域；`is_active && (expires_at 空或未到期)` 才生效；**无记录/接口异常/加载中一律 `null` 兜底放行**，`GlobalLayoutV3` 一级导航按 `activeDomains` 过滤。一次性生效，无灰度开关。
+- **BE 适配**：`activate_basic_modules` 在功能级循环前新增域级循环写 `<domain>:core`（复用同一 SQL 模板，sqlx 缓存可复用、`ON CONFLICT DO NOTHING` 幂等）。
+- **DB 无改动**：tier 列批 11 已落地；表 0 行无存量改写；按拍板不预置激活记录。
+- **验证**：FE 单测 9 passed（三级不重叠/并集 36/聚合/到期/兜底）、BE `tier::tests` 2 passed、`cargo check` ✅、typecheck ✅、eslint ✅、`src/layouts`+`src/hooks` 113 tests passed、迁移四件套 Errors 0、RLS ✅、drift 0、权限基线 fe 442/be 577/db 893/rename_groups 0。
+- **未落地登记**：存量 50 条 `erp:*`/`pm:*` 不改写（已合法且改授权表有风险）；菜单过滤正例未实测（表 0 行，需造数）；`models.rs` 注释仍为 advanced/infrastructure，随批 14 清理。
+
+## v1.133 审计整改第十批：ListPageTemplate 行操作权限开关 + mes 首批约束（批 12，2026-11-06）✅
+
+- **通用能力**：`DataTableColumn.writeOnly?: boolean`（标记写操作列）+ `ListPageTemplateProps.writePermission?: string`；模板内 `canWrite = !writePermission || checkPermission(...)`，无权限时整列隐藏。**不传 writePermission 则不过滤**——存量数十页面零回归，可增量采用。
+- **mes 落地（MesWorkOrderPage）**：操作列（编辑/删除）按 `mes:work_order:write` 整列隐藏；详情抽屉「开始生产」按 `mes:production_order:start`、「完工」按 `mes:production_order:complete` 条件渲染。
+- **mes 36 项未落地（登记）**：纯后端无 UI 落点 10 项；语义重叠码（`mes:process:*` vs `mes:production_process:*`）需先判定废弃；`CrudPage` 适配类页面（anomaly/aps/capacity/cost/energy/forecast/equipment/quality 等）需按 `showCreateButton` 等入口逐页确认，下一批处理。
+- **门禁**：tsc ✅；eslint 0 error（--fix 12 处 prettier）；vitest ListPageTemplate 6 passed（新增 3 用例）；`src/pages/mes` 7 files/28 tests passed。
+- **下一批建议**：`CrudPage` 写权限入口专项（`canEdit`/`canDelete`，覆盖 mes/erp/scm 数十页面）。
 
 ## v1.132 审计整改第九批：P4 tier 激活机制落地（批 11，2026-11-06）✅（DB 修复完成）
 

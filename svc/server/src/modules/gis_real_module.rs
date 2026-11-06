@@ -13,21 +13,19 @@ use axum::Router;
 use std::sync::Arc;
 use topems_gis::embedded::{self, AppState};
 use topems_gis::modules::websocket::{WebSocketConfig, WebSocketManager};
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
+use topems_shared_db::scope::Db;
 
-/// 真实 GIS 模块：持有数据库连接池 + 完整业务路由
+/// 真实 GIS 模块：持有数据库句柄 + 完整业务路由
 pub struct GisRealModule {
     routes: Router,
-    db: sqlx::PgPool,
+    db: Db,
 }
 
 impl GisRealModule {
     /// 异步构建真实 GIS 模块
     pub async fn build() -> Result<Self> {
-        // search_path 优先 gis schema
-        std::env::set_var("SEARCH_PATH", "gis, public");
-
         let config = ServiceConfig {
             name: "topems-gis",
             port: 8071,
@@ -42,11 +40,13 @@ impl GisRealModule {
             init_telemetry: false,
         };
 
-        // 1. 服务引导：数据库连接池 + 认证 + 指标
-        let ctx = bootstrap_service(&config).await?;
+        // 1. 服务引导：进程级共享池 + 认证 + 指标
+        let ctx = bootstrap_service_shared(&config).await?;
 
         // 启动期连通性探测：SELECT 1 后立即归还连接（不跨 await 持有）
         topems_shared_db::database::probe_connection(&ctx.db).await?;
+        // 连接治理 B：模块 schema 作用域固化在 Db 中（事务内 SET LOCAL search_path）。
+        let db = Db::new(ctx.db.clone(), "gis, public");
 
         // 2. GIS 建表 + schema 防御（失败不阻塞嵌入，独立部署行为一致）
         if let Err(e) = topems_gis::db::schema::init_tables(&ctx.db).await {
@@ -59,13 +59,13 @@ impl GisRealModule {
         // 3. 构建业务 AppState（与独立部署 main.rs 一致）
         let ws_config = WebSocketConfig::from_env();
         let state = AppState {
-            pool: ctx.db.clone(),
+            pool: db.clone(),
             auth_state: ctx.auth_state.clone(),
             ws_manager: Arc::new(WebSocketManager::new(ws_config)),
         };
 
         // 4. 业务路由（公开 + 受保护，鉴权/限流中间件已在 embedded 内挂载）
-        let business_routes = embedded::build_business_router(&state);
+        let business_routes = embedded::build_business_router(&state, ctx.db.clone());
 
         let routes = Router::new()
             .nest(config.api_prefix, business_routes)
@@ -78,14 +78,11 @@ impl GisRealModule {
 
         tracing::info!(
             "✅ 真实 gis 模块已接入统一入口（db={}，prefix={}）",
-            ctx.db.size(),
+            db.stats().size,
             config.api_prefix
         );
 
-        Ok(Self {
-            routes,
-            db: ctx.db.clone(),
-        })
+        Ok(Self { routes, db })
     }
 }
 
@@ -105,11 +102,12 @@ impl Module for GisRealModule {
 
     async fn health_check(&self) -> ModuleHealth {
         let mut health = ModuleHealth::healthy("gis-real", ModuleGroup::Core);
-        let db_ok = self.db.size() > 0;
+        let db_ok = self.db.check_health().await.is_ok();
+        let stats = self.db.stats();
         health.dependencies.push(crate::module::DependencyHealth {
             name: "PostgreSQL",
             healthy: db_ok,
-            detail: format!("连接池大小 {}", self.db.size()),
+            detail: format!("连接池大小 {}（空闲 {}）", stats.size, stats.idle),
         });
         health
     }

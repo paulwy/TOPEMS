@@ -17,6 +17,9 @@ export const migrationSchema: EntitySchema = {
     resource: 'services',
   },
 
+  // 批 18：写权限资源前缀（模块级码 → 资源级码）
+  permissionResource: 'migration:service',
+
   fields: [
     {
       name: 'name',

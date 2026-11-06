@@ -126,7 +126,7 @@ pub async fn get_plugin_info() -> ApiResponse<PluginInfo> {
 
 /// 插件健康检查
 pub async fn plugin_health_check(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -136,7 +136,15 @@ pub async fn plugin_health_check(
         tracing::error!("rls txn missing: RLS 事务中间件未注入");
         return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
     };
-    match sqlx::query("SELECT 1").fetch_one(&mut **txn).await {
+    // 复用请求级 RLS 事务并叠加事务级 search_path（提交/回滚由 tenant_middleware 负责）
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立 RLS 事务作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+    match sqlx::query("SELECT 1").fetch_one(&mut scope).await {
         Ok(_) => ApiResponse::success((), "Healthy"),
         Err(e) => ApiResponse::from({
             tracing::warn!("Database error: {}", e);

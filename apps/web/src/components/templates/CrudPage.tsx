@@ -47,6 +47,8 @@ import { useTranslation } from 'react-i18next';
 
 import { ListPageTemplate } from './ListPageTemplate';
 import type { ColumnDef, RowAction } from './list/types';
+import { useOptionalPermission } from '@/hooks/useOptionalPermission';
+import { resolveCrudPermissionCodes } from './crudPermissions';
 
 import type { EntitySchema, BatchActionConfig, SchemaField } from '@/schema';
 import type {
@@ -182,6 +184,17 @@ export interface CrudPageProps<T = Record<string, unknown>> {
   /** 是否只读模式（隐藏新增、编辑、删除按钮） */
   readOnly?: boolean;
   /**
+   * 写权限码（批 14）：传了则 create/edit/delete 三个入口统一按它收敛，
+   * 无该权限时按钮与行操作隐藏。**不传则完全不过滤**，存量页面行为不变。
+   */
+  writePermission?: string;
+  /** 细粒度覆盖 `writePermission`：新增按钮权限码 */
+  createPermission?: string;
+  /** 细粒度覆盖 `writePermission`：编辑入口权限码 */
+  editPermission?: string;
+  /** 细粒度覆盖 `writePermission`：删除入口权限码 */
+  deletePermission?: string;
+  /**
    * 是否显示内部 ListPageTemplate 的标题区。
    * 默认 false：外层 PageContainer 已提供页面标题，内部标题隐藏避免双标题；
    * 仅当页面没有外层标题（如嵌入微前端场景）时置为 true。
@@ -209,6 +222,10 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   actions: actionsProp,
   readOnly = false,
   showHeaderTitle = false,
+  writePermission,
+  createPermission,
+  editPermission,
+  deletePermission,
 }: CrudPageProps<T>) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -303,7 +320,44 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
 
   // ── 行操作 ──
   const baseActions = actionsProp || schema.actions || ['create', 'edit', 'detail', 'delete'];
-  const actions = readOnly ? baseActions.filter((a) => a === 'detail') : baseActions;
+  // 批 14：写权限收敛。未传任何权限码时 effectiveActions === actions（零回归）；
+  // 'detail' 属读操作，不受写权限影响。
+  const canDo = useOptionalPermission();
+  // 批 16：schema 声明 permissionResource 时，自动展开为三个真实细粒度码，
+  // 页面无需逐个传 createPermission/editPermission/deletePermission。
+  // 显式传入的 props 优先级更高。
+  const {
+    create: resolvedCreate,
+    edit: resolvedEdit,
+    delete: resolvedDelete,
+  } = resolveCrudPermissionCodes({
+    permissionResource: schema.permissionResource,
+    writePermission,
+    createPermission,
+    editPermission,
+    deletePermission,
+  });
+  const effectiveActions = useMemo(() => {
+    const source = readOnly ? baseActions.filter((a) => a === 'detail') : baseActions;
+    if (!resolvedCreate && !resolvedEdit && !resolvedDelete) {
+      return source;
+    }
+    return source.filter((a) => {
+      if (a === 'detail') return true;
+      const code = a === 'create' ? resolvedCreate : a === 'edit' ? resolvedEdit : resolvedDelete;
+      return canDo(code);
+    });
+  }, [
+    baseActions,
+    readOnly,
+    resolvedCreate,
+    resolvedEdit,
+    resolvedDelete,
+    canDo,
+    actionsProp,
+    schema.actions,
+  ]);
+  const actions = effectiveActions;
 
   const rowActions: RowAction<T>[] = useMemo(() => {
     const result: RowAction<T>[] = [];

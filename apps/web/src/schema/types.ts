@@ -324,6 +324,16 @@ export interface EntitySchema<T = Record<string, unknown>> {
   /** API 配置（可选，支持本地数据或自定义 apiAdapter） */
   api?: ApiConfig;
 
+  /**
+   * 写权限资源前缀（批 16）：形如 `'scm:purchase_order'`。
+   *
+   * 声明后 CrudPage 自动按 `<前缀>:create` / `:update` / `:delete` 三个真实权限码
+   * 收敛写入口（无权限时按钮隐藏）；**不声明则完全不过滤**，存量页面行为不变。
+   * 注意：`api.resource` 是 API 路径名（如 `purchaseOrders`），与 DB 权限资源名
+   * （如 `scm:purchase_order`）不是同一命名空间，故不能自动推导，必须显式声明。
+   */
+  permissionResource?: string;
+
   /** 字段定义 */
   fields: SchemaField[];
 

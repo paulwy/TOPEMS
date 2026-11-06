@@ -14,22 +14,21 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
 use topems_portal::shared::AppState;
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::EventPublisher;
 
-/// 真实 Portal 模块：持有数据库连接池 + 完整业务路由（含 GraphQL 聚合层）
+/// 真实 Portal 模块：持有数据库作用域句柄 + 完整业务路由（含 GraphQL 聚合层）
 pub struct PortalRealModule {
     routes: Router,
-    db: sqlx::PgPool,
+    db: Db,
     event_publisher: Option<Arc<EventPublisher>>,
 }
 
 impl PortalRealModule {
     /// 异步构建真实 Portal 模块
     pub async fn build() -> Result<Self> {
-        std::env::set_var("SEARCH_PATH", "public, portal");
-
         let config = ServiceConfig {
             name: "topems-portal",
             port: 8063,
@@ -54,7 +53,10 @@ impl PortalRealModule {
             format!("http://localhost:{}", server_port),
         );
 
-        let ctx = bootstrap_service(&config).await?;
+        let ctx = bootstrap_service_shared(&config).await?;
+        // 共享运行时池之上固化本模块 search_path（public 在前，避免裸表名解析到
+        // portal schema 的废弃空副本；权威数据在 public）。
+        let db = Db::new(ctx.db.clone(), "public, portal");
         topems_shared_db::database::probe_connection(&ctx.db).await?;
 
         // 嵌入模式无独立 public 入口（server 统一提供 /health /metrics 与 dev 声明注入），
@@ -77,7 +79,7 @@ impl PortalRealModule {
 
         Ok(Self {
             routes,
-            db: ctx.db.clone(),
+            db,
             event_publisher: ctx.event_publisher.clone(),
         })
     }
@@ -99,11 +101,12 @@ impl Module for PortalRealModule {
 
     async fn health_check(&self) -> ModuleHealth {
         let mut health = ModuleHealth::healthy("portal-real", ModuleGroup::Core);
-        let db_ok = self.db.size() > 0;
+        let stats = self.db.stats();
+        let db_ok = stats.size > 0;
         health.dependencies.push(crate::module::DependencyHealth {
             name: "PostgreSQL",
             healthy: db_ok,
-            detail: format!("连接池大小 {}", self.db.size()),
+            detail: format!("连接池大小 {}", stats.size),
         });
         if self.event_publisher.is_some() {
             health.dependencies.push(crate::module::DependencyHealth {

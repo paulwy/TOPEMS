@@ -3,11 +3,11 @@ use axum::{
     routing::get,
     Router,
 };
-use sqlx::PgPool;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
-pub fn create_routes(pool: PgPool) -> Router {
+pub fn create_routes(db: Db) -> Router {
     Router::new()
         .route(
             "/service-integrations",
@@ -17,7 +17,7 @@ pub fn create_routes(pool: PgPool) -> Router {
             "/service-integrations/{id}",
             get(get_integration).put(update_integration),
         )
-        .with_state(pool)
+        .with_state(db)
 }
 
 #[utoipa::path(
@@ -30,11 +30,11 @@ pub fn create_routes(pool: PgPool) -> Router {
     ),
     tag = "service_integration"
 )]
-async fn list_integrations(State(_pool): State<PgPool>) -> ApiResponse<Vec<()>> {
+async fn list_integrations(State(_db): State<Db>) -> ApiResponse<Vec<()>> {
     ApiResponse::success(vec![], "获取服务集成列表成功")
 }
 
-async fn create_integration(State(_pool): State<PgPool>) -> ApiResponse<()> {
+async fn create_integration(State(_db): State<Db>) -> ApiResponse<()> {
     ApiResponse::success((), "创建服务集成成功")
 }
 
@@ -51,11 +51,11 @@ async fn create_integration(State(_pool): State<PgPool>) -> ApiResponse<()> {
     ),
     tag = "service_integration"
 )]
-async fn get_integration(State(_pool): State<PgPool>, Path(_id): Path<Uuid>) -> ApiResponse<()> {
+async fn get_integration(State(_db): State<Db>, Path(_id): Path<Uuid>) -> ApiResponse<()> {
     ApiResponse::success((), "获取服务集成成功")
 }
 
-async fn update_integration(State(_pool): State<PgPool>, Path(_id): Path<Uuid>) -> ApiResponse<()> {
+async fn update_integration(State(_db): State<Db>, Path(_id): Path<Uuid>) -> ApiResponse<()> {
     ApiResponse::success((), "更新服务集成成功")
 }
 
@@ -63,6 +63,7 @@ async fn update_integration(State(_pool): State<PgPool>, Path(_id): Path<Uuid>) 
 mod tests {
     use super::*;
     use sqlx::postgres::PgConnectOptions;
+    use sqlx::PgPool;
     use std::str::FromStr;
 
     fn make_pool() -> PgPool {
@@ -72,7 +73,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_routes_returns_router() {
-        let router = create_routes(make_pool());
+        let router = create_routes(Db::new(make_pool(), "pm, public, shared"));
         let _ = router;
     }
 }

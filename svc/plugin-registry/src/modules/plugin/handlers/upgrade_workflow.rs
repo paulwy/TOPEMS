@@ -89,16 +89,29 @@ pub async fn start_plugin_upgrade(
     );
 
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open read scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to open database scope: {}",
+                e
+            )));
+        }
+    };
     let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .bind(locale)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
 
     let plugin = match plugin {
         Some(p) => p,
-        None => return Json(CoreResponse::error("Plugin not found")),
+        None => {
+            let _ = scope.rollback().await;
+            return Json(CoreResponse::error("Plugin not found"));
+        }
     };
 
     let current_version = plugin.version.clone();
@@ -112,13 +125,16 @@ pub async fn start_plugin_upgrade(
     )
     .bind(plugin.id)
     .bind(&req.target_version)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
 
     if target_version_info.is_none() {
+        let _ = scope.rollback().await;
         return Json(CoreResponse::error("Target version not found"));
     }
+
+    let _ = scope.commit().await;
 
     let task_id = uuid::Uuid::new_v4();
 
@@ -168,14 +184,31 @@ async fn execute_upgrade(
     tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
 
     // Step 4: Update plugin version in database
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open write scope: {}", e);
+            return UpgradeResult {
+                task_id,
+                from_version: from_version.to_string(),
+                to_version: to_version.to_string(),
+                success: false,
+                message: "Upgrade failed".to_string(),
+                backup_created: Some(backup_created),
+                rollback_available: backup_created,
+            };
+        }
+    };
+
     let update_result = sqlx::query("UPDATE core.core_plugins SET version = $1 WHERE id = $2")
         .bind(to_version)
         .bind(plugin.id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
     match update_result {
         Ok(_) => {
+            let _ = scope.commit().await;
             tracing::info!(
                 "[Plugin] Upgrade completed successfully for: {}",
                 plugin.code
@@ -192,6 +225,7 @@ async fn execute_upgrade(
         }
         Err(e) => {
             tracing::error!("[Plugin] Upgrade failed for {}: {}", plugin.code, e);
+            let _ = scope.rollback().await;
             UpgradeResult {
                 task_id,
                 from_version: from_version.to_string(),
@@ -232,14 +266,25 @@ pub async fn verify_plugin_version(
     );
 
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open read scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to open database scope: {}",
+                e
+            )));
+        }
+    };
     let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .bind(locale)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
 
     if plugin.is_none() {
+        let _ = scope.rollback().await;
         let checks = vec![VerificationCheck {
             name: "Plugin exists".to_string(),
             passed: false,
@@ -268,9 +313,11 @@ pub async fn verify_plugin_version(
     )
     .bind(&plugin_code)
     .bind(&version)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
+
+    let _ = scope.commit().await;
 
     if version_exists.is_some() {
         checks.push(VerificationCheck {

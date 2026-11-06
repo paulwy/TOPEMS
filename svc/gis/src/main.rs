@@ -6,11 +6,15 @@ use std::sync::Arc;
 use topems_shared_db::database::create_migrate_pool;
 use utoipa::OpenApi;
 
-use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
+use topems_shared_bootstrap::{
+    bootstrap_service_shared, check_iam_health, health_status_str, overall_health_message,
+    resolve_port, rollup_health_status, run, Application, ServiceConfig,
+};
 use topems_shared_core::api_version::{create_api_info_router, register_routes_with_legacy_alias};
 use topems_shared_core::cors::create_cors_layer;
 use topems_shared_core::logging::request_context_middleware;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use topems_shared_observability::telemetry::telemetry_middleware;
 
 use topems_gis::embedded::{self, AppState};
@@ -26,8 +30,6 @@ async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    std::env::set_var("SEARCH_PATH", "gis, public, shared");
-
     let config = ServiceConfig {
         name: "topems-gis",
         port: 8071,
@@ -40,7 +42,9 @@ async fn main() -> Result<()> {
         legacy_prefixes: &["/api/core/gis/v1"],
         init_telemetry: true,
     };
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_shared(&config).await?;
+    // 连接治理 B：模块 schema 作用域固化在 Db 中（事务内 SET LOCAL search_path）。
+    let db = Db::new(ctx.db.clone(), "gis, public");
 
     // 自定义 Prometheus Gauge
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
@@ -76,7 +80,7 @@ async fn main() -> Result<()> {
         tracing::warn!("GIS schema defense 失败（不阻塞启动）: {}", e);
     }
 
-    if let Err(e) = event_handlers::start_event_subscribers(ctx.db.clone()).await {
+    if let Err(e) = event_handlers::start_event_subscribers(db.clone()).await {
         tracing::warn!("⚠️ GIS 事件订阅者启动失败: {}", e);
     }
 
@@ -87,7 +91,7 @@ async fn main() -> Result<()> {
         ws_config.idle_timeout_secs
     );
     let state = AppState {
-        pool: ctx.db.clone(),
+        pool: db,
         auth_state: ctx.auth_state.clone(),
         ws_manager: Arc::new(modules::websocket::WebSocketManager::new(ws_config)),
     };
@@ -111,7 +115,7 @@ async fn main() -> Result<()> {
         .with_state(state.clone());
 
     // 业务路由（公开 + 受保护）：独立部署与 server 统一入口（module-gis）共用同一组装
-    let gis_routes = embedded::build_business_router(&state);
+    let gis_routes = embedded::build_business_router(&state, ctx.db.clone());
 
     let app = register_routes_with_legacy_alias(
         system_routes,
@@ -144,14 +148,41 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-use topems_shared_bootstrap::{build_detailed_service_health, build_simple_status_response};
+use topems_shared_core::health::{DependencyHealth, HealthStatus, ServiceHealth};
 
 async fn health_check(State(state): State<AppState>) -> Json<ApiResponse<String>> {
-    build_simple_status_response(&state.pool).await
+    let database_health = if state.pool.check_health().await.is_ok() {
+        HealthStatus::Healthy
+    } else {
+        HealthStatus::Unhealthy
+    };
+    let iam_health = check_iam_health().await;
+    let overall_status = rollup_health_status(&[database_health, iam_health.status]);
+    let status_str = health_status_str(&overall_status).to_string();
+    Json(ApiResponse::success(status_str, "健康检查"))
 }
 
-async fn health_check_detailed(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<topems_shared_core::health::ServiceHealth>> {
-    build_detailed_service_health(&state.pool, "topems-gis", None, vec![]).await
+async fn health_check_detailed(State(state): State<AppState>) -> Json<ApiResponse<ServiceHealth>> {
+    let database_health = match state.pool.check_health().await {
+        Ok(_) => DependencyHealth {
+            name: "database".to_string(),
+            status: HealthStatus::Healthy,
+            message: "数据库连接正常".to_string(),
+        },
+        Err(e) => {
+            tracing::error!("数据库健康检查失败: {}", e);
+            DependencyHealth {
+                name: "database".to_string(),
+                status: HealthStatus::Unhealthy,
+                message: format!("数据库连接失败: {}", e),
+            }
+        }
+    };
+    let dependencies = vec![database_health, check_iam_health().await];
+    let statuses: Vec<HealthStatus> = dependencies.iter().map(|d| d.status.clone()).collect();
+    let overall_status = rollup_health_status(&statuses);
+    let health =
+        ServiceHealth::healthy_with_message("topems-gis", overall_health_message(&overall_status))
+            .with_dependencies(dependencies);
+    Json(ApiResponse::success(health, "详细健康检查"))
 }

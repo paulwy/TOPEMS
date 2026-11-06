@@ -1,14 +1,14 @@
 use axum::{
-    extract::{Extension, Path},
+    extract::{Extension, Path, State},
     routing::get,
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::models::project_resource::{
@@ -32,7 +32,7 @@ pub fn resource_utilization(allocated_hours: f64, actual_hours: f64) -> f64 {
 type RlsTxnArc =
     std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
-pub fn create_routes(pool: PgPool) -> Router {
+pub fn create_routes(db: Db) -> Router {
     Router::new()
         .route(
             "/projects/{project_id}/resources",
@@ -44,7 +44,7 @@ pub fn create_routes(pool: PgPool) -> Router {
                 .put(update_resource)
                 .delete(remove_resource),
         )
-        .with_state(pool)
+        .with_state(db)
 }
 
 /// 列对齐 pm.project_resources 真库（含补列）：resource_type/resource_name/quantity/cost/
@@ -65,6 +65,7 @@ pub fn create_routes(pool: PgPool) -> Router {
     ),
 )]
 async fn list_resources(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<ProjectResource>> {
@@ -73,11 +74,18 @@ async fn list_resources(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query_as::<_, ProjectResource>(
         only_own_schema_query!("pm", "SELECT id, project_id, resource_type, resource_name, resource_service, quantity, cost, resource_id, role, actual_hours, actual_cost, start_date, end_date, allocation_percent, status, created_by, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY resource_type ASC"),
     )
     .bind(project_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match result {
@@ -105,6 +113,7 @@ async fn list_resources(
     ),
 )]
 async fn add_resource(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
@@ -115,6 +124,13 @@ async fn add_resource(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -154,7 +170,7 @@ async fn add_resource(
     .bind(now)
     .bind(now)
     .bind(tenant_id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
@@ -183,6 +199,7 @@ async fn add_resource(
     ),
 )]
 async fn get_resource(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<ProjectResource> {
@@ -191,12 +208,19 @@ async fn get_resource(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query_as::<_, ProjectResource>(
         only_own_schema_query!("pm", "SELECT id, project_id, resource_type, resource_name, resource_service, quantity, cost, resource_id, role, actual_hours, actual_cost, start_date, end_date, allocation_percent, status, created_by, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -227,6 +251,7 @@ async fn get_resource(
     ),
 )]
 async fn update_resource(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateResourceRequest>,
@@ -235,6 +260,13 @@ async fn update_resource(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let now = Utc::now();
 
@@ -273,7 +305,7 @@ async fn update_resource(
     .bind(now)
     .bind(project_id)
     .bind(id)
-    .fetch_optional(&mut **txn)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
@@ -303,6 +335,7 @@ async fn update_resource(
     ),
 )]
 async fn remove_resource(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<bool> {
@@ -311,13 +344,20 @@ async fn remove_resource(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "UPDATE pm.project_resources SET deleted_at = NOW() WHERE project_id = $1 AND id = $2"
     ))
     .bind(project_id)
     .bind(id)
-    .execute(&mut **txn)
+    .execute(&mut scope)
     .await;
 
     match result {

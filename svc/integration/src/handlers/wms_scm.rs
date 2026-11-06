@@ -1,7 +1,6 @@
 use axum::extract::{Extension, Path, State};
 use axum::Json;
 use chrono::Utc;
-use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -18,14 +17,31 @@ use crate::models::{AppState, CreateWmsScmSyncRequest, WmsScmSync};
         (status = 200, description = "OK"),
     ),
 )]
-pub async fn list_wms_scm_sync(State(state): State<AppState>) -> ApiResponse<Vec<WmsScmSync>> {
+pub async fn list_wms_scm_sync(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> ApiResponse<Vec<WmsScmSync>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, WmsScmSync>(only_own_schema_query!(
         "integration",
         "SELECT id, wms_inventory_id, scm_supply_id, item_name, quantity, unit,
                 synced, sync_status, sync_error, last_synced_at, created_at, updated_at
            FROM integration.wms_scm_sync ORDER BY updated_at DESC LIMIT 100"
     ))
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(syncs) => ApiResponse::success(syncs, "WMS↔SCM syncs retrieved successfully"),
@@ -48,6 +64,9 @@ pub async fn list_wms_scm_sync(State(state): State<AppState>) -> ApiResponse<Vec
 )]
 pub async fn create_wms_scm_sync(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateWmsScmSyncRequest>,
 ) -> ApiResponse<WmsScmSync> {
     let id = Uuid::new_v4();
@@ -60,6 +79,18 @@ pub async fn create_wms_scm_sync(
             return ApiResponse::from(TopemsError::ValidationFailed(
                 "Invalid WMS inventory ID".to_string(),
             ));
+        }
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
         }
     };
 
@@ -82,7 +113,7 @@ pub async fn create_wms_scm_sync(
     .bind(now)
     .bind(now)
     .bind(Uuid::nil())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(sync) => ApiResponse::success(sync, "WMS↔SCM sync created successfully"),
@@ -108,8 +139,23 @@ pub async fn create_wms_scm_sync(
 )]
 pub async fn get_wms_scm_sync(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WmsScmSync> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, WmsScmSync>(only_own_schema_query!(
         "integration",
         "SELECT id, wms_inventory_id, scm_supply_id, item_name, quantity, unit,
@@ -117,7 +163,7 @@ pub async fn get_wms_scm_sync(
            FROM integration.wms_scm_sync WHERE id = $1"
     ))
     .bind(id)
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(sync) => ApiResponse::success(sync, "WMS↔SCM sync found"),
@@ -144,19 +190,32 @@ pub async fn get_wms_scm_sync(
 )]
 pub async fn sync_wms_scm(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<WmsScmSync> {
-    let tenant_id = topems_shared_auth::middleware::get_tenant_id_from_claims(&claims);
     let now = Utc::now();
     let scm_supply_id = Uuid::new_v4();
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
 
     let updated_sync = match sqlx::query_as::<_, WmsScmSync>(only_own_schema_query!(
         "integration",
         "UPDATE integration.wms_scm_sync SET
             scm_supply_id = $2, synced = $3, sync_status = $4,
             sync_error = NULL, last_synced_at = $5, updated_at = $6
-         WHERE id = $1 AND ($7::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $7::uuid)
+         WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
          RETURNING id, wms_inventory_id, scm_supply_id, item_name, quantity, unit,
                   synced, sync_status, sync_error, last_synced_at, created_at, updated_at"
     ))
@@ -166,8 +225,7 @@ pub async fn sync_wms_scm(
     .bind("synced")
     .bind(Some(now))
     .bind(now)
-    .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(s)) => s,

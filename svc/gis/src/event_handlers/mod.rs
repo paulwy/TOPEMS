@@ -1,7 +1,7 @@
 use chrono::Utc;
-use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
     EhsHazardReportedPayload, Event, EventResult, EventSubscriber, EventType,
     ScmShipmentReceivedPayload, StockInboundPayload, StockOutboundPayload,
@@ -11,11 +11,11 @@ type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 pub struct GisEventHandlers {
-    pub db: PgPool,
+    pub db: Db,
 }
 
 impl GisEventHandlers {
-    pub fn new(db: PgPool) -> Self {
+    pub fn new(db: Db) -> Self {
         Self { db }
     }
 
@@ -57,6 +57,7 @@ impl GisEventHandlers {
         let now = Utc::now();
         let marker_id = uuid::Uuid::new_v4();
 
+        let mut scope = self.db.scope().await?;
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
             only_own_schema_query!("gis", "INSERT INTO gis_map_markers (id, marker_type, source_type, source_id, title, description, level, location, status, created_at, updated_at, tenant_id)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $9, '00000000-0000-0000-0000-000000000000')
@@ -77,9 +78,12 @@ impl GisEventHandlers {
         .bind(level.unwrap_or("normal"))
         .bind(location.unwrap_or(""))
         .bind(now)
-        .fetch_one(&self.db)
+        .fetch_one(&mut scope)
         .await;
 
+        if result.is_ok() {
+            scope.commit().await?;
+        }
         match result {
             Ok(id) => {
                 tracing::info!(
@@ -259,7 +263,7 @@ impl GisEventHandlers {
     }
 }
 
-pub async fn start_event_subscribers(db: PgPool) -> Result<(), TopemsError> {
+pub async fn start_event_subscribers(db: Db) -> Result<(), TopemsError> {
     let handlers = GisEventHandlers::new(db);
     let subscriber = handlers
         .build_subscriber()

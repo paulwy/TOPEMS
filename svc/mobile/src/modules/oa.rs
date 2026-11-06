@@ -6,10 +6,10 @@ use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use chrono::{DateTime, Datelike, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_db::scope::{Db, ScopedTxn};
 use uuid::Uuid;
 
 /// 默认租户：mobile.oa_* 的 tenant_id 列已是 uuid，绑 String 会报
@@ -184,42 +184,54 @@ pub struct AnnouncementQuery {
     tag = "meetings"
 )]
 pub async fn list_meetings(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Query(q): Query<MeetingQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let tid = tenant_id();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
-    match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
-        "mobile",
-        "SELECT * FROM mobile.oa_meetings WHERE tenant_id = $1 \
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
+            "mobile",
+            "SELECT * FROM mobile.oa_meetings WHERE tenant_id = $1 \
          AND ($2::text IS NULL OR status = $2) \
          ORDER BY start_time DESC LIMIT $3 OFFSET $4"
-    ))
-    .bind(tid)
-    .bind(q.status)
-    .bind(page_size)
-    .bind(offset)
-    .fetch_all(&pool)
-    .await
-    {
-        Ok(rows) => {
-            let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
-                "mobile",
-                "SELECT COUNT(*) FROM mobile.oa_meetings WHERE tenant_id = $1"
-            ))
-            .bind(tid)
-            .fetch_one(&pool)
-            .await
-            .unwrap_or(0);
-            ApiResponse::success(
-                serde_json::json!({"items": rows, "total": total, "page": page, "page_size": page_size}),
-                "ok",
-            )
+        ))
+        .bind(tid)
+        .bind(q.status)
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&mut scope)
+        .await
+        {
+            Ok(rows) => {
+                let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                    "mobile",
+                    "SELECT COUNT(*) FROM mobile.oa_meetings WHERE tenant_id = $1"
+                ))
+                .bind(tid)
+                .fetch_one(&mut scope)
+                .await
+                .unwrap_or(0);
+                ApiResponse::success(
+                    serde_json::json!({"items": rows, "total": total, "page": page, "page_size": page_size}),
+                    "ok",
+                )
+            }
+            Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
         }
-        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -237,28 +249,49 @@ pub async fn list_meetings(
 )]
 pub async fn get_meeting(
     Extension(claims): Extension<Claims>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<OaMeeting> {
-    match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
         "SELECT * FROM mobile.oa_meetings WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
     .bind(tenant_filter(&claims))
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
+
     .await
     {
         Ok(Some(m)) => ApiResponse::success(m, "ok"),
         Ok(None) => ApiResponse::not_found("会议不存在"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn create_meeting(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(req): Json<CreateMeetingRequest>,
 ) -> ApiResponse<OaMeeting> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let tid = tenant_id();
     let id = Uuid::new_v4();
     let start = DateTime::parse_from_rfc3339(&req.start_time)
@@ -271,7 +304,8 @@ pub async fn create_meeting(
         .attendee_ids
         .map(|ids| serde_json::json!(ids.iter().map(|uid| serde_json::json!({"user_id": uid, "role": "guest", "response": "pending"})).collect::<Vec<_>>()))
         .unwrap_or(serde_json::json!([]));
-    match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
         "INSERT INTO mobile.oa_meetings (id, tenant_id, title, description, type, status, start_time, end_time, location, video_url, attendees, created_at, updated_at) \
          VALUES ($1,$2,$3,$4,$5,'scheduled',$6,$7,$8,$9,$10,NOW(),NOW()) RETURNING *"
@@ -286,20 +320,32 @@ pub async fn create_meeting(
     .bind(req.location)
     .bind(req.video_url)
     .bind(attendees)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
+
     .await
     {
         Ok(m) => ApiResponse::success(m, "创建成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("创建失败", e)),
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn update_meeting(
     Extension(claims): Extension<Claims>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<OaMeeting> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let title = req.get("title").and_then(|v| v.as_str().map(String::from));
     let description = req
         .get("description")
@@ -311,7 +357,8 @@ pub async fn update_meeting(
     let video_url = req
         .get("video_url")
         .and_then(|v| v.as_str().map(String::from));
-    match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_meetings SET title = COALESCE($1, title), description = COALESCE($2, description), \
          status = COALESCE($3, status), location = COALESCE($4, location), video_url = COALESCE($5, video_url), \
@@ -324,33 +371,50 @@ pub async fn update_meeting(
     .bind(video_url)
     .bind(id)
     .bind(tenant_filter(&claims))
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
+
     .await
     {
         Ok(Some(m)) => ApiResponse::success(m, "更新成功"),
         Ok(None) => ApiResponse::not_found("会议不存在"),
         Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn delete_meeting(
     Extension(claims): Extension<Claims>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
-    match sqlx::query(only_own_schema_query!(
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+    let __mobile_response = {
+        match sqlx::query(only_own_schema_query!(
         "mobile",
         "DELETE FROM mobile.oa_meetings WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
     .bind(tenant_filter(&claims))
-    .execute(&pool)
+    .execute(&mut scope)
+
     .await
     {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
         Ok(_) => ApiResponse::not_found("会议不存在"),
         Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -368,22 +432,35 @@ pub async fn delete_meeting(
 )]
 pub async fn join_meeting(
     Extension(claims): Extension<Claims>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<OaMeeting> {
-    match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_meetings SET status = 'in_progress', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING *"
     ))
     .bind(id)
     .bind(tenant_filter(&claims))
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
+
     .await
     {
         Ok(Some(m)) => ApiResponse::success(m, "已加入会议"),
         Ok(None) => ApiResponse::not_found("会议不存在"),
         Err(e) => ApiResponse::from(TopemsError::internal("操作失败", e)),
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -401,22 +478,35 @@ pub async fn join_meeting(
 )]
 pub async fn leave_meeting(
     Extension(claims): Extension<Claims>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<OaMeeting> {
-    match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaMeeting>(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_meetings SET status = 'completed', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING *"
     ))
     .bind(id)
     .bind(tenant_filter(&claims))
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
+
     .await
     {
         Ok(Some(m)) => ApiResponse::success(m, "已离开会议"),
         Ok(None) => ApiResponse::not_found("会议不存在"),
         Err(e) => ApiResponse::from(TopemsError::internal("操作失败", e)),
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 // ===== Calendar Events =====
@@ -432,27 +522,40 @@ pub async fn leave_meeting(
     tag = "calendar"
 )]
 pub async fn list_calendar_events(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Query(_q): Query<CalendarEventQuery>,
 ) -> ApiResponse<Vec<OaCalendarEvent>> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let tid = tenant_id();
-    match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
         "mobile",
         "SELECT * FROM mobile.oa_calendar_events WHERE tenant_id = $1 ORDER BY start_time DESC LIMIT 100"
     ))
     .bind(tid)
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
+
     .await
     {
         Ok(rows) => ApiResponse::success(rows, "ok"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 // ===== schedule 死代码端点轻量兜底（2026-10-05，页面未调用，占位实现防 404）=====
 
 async fn fetch_events_in_range(
-    pool: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     start: DateTime<Utc>,
     end: DateTime<Utc>,
 ) -> Result<Vec<OaCalendarEvent>, sqlx::Error> {
@@ -464,46 +567,79 @@ async fn fetch_events_in_range(
     .bind(tid)
     .bind(start)
     .bind(end)
-    .fetch_all(pool)
+    .fetch_all(&mut *scope)
     .await
 }
 
 /// 事件详情（前端 GET /schedule/events/{id}）
 pub async fn get_schedule_event(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> ApiResponse<Option<OaCalendarEvent>> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let tid = tenant_id();
-    match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
-        "mobile",
-        "SELECT * FROM mobile.oa_calendar_events WHERE tenant_id = $1 AND id = $2"
-    ))
-    .bind(tid)
-    .bind(id)
-    .fetch_optional(&pool)
-    .await
-    {
-        Ok(row) => ApiResponse::success(row, "ok"),
-        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
-    }
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
+            "mobile",
+            "SELECT * FROM mobile.oa_calendar_events WHERE tenant_id = $1 AND id = $2"
+        ))
+        .bind(tid)
+        .bind(id)
+        .fetch_optional(&mut scope)
+        .await
+        {
+            Ok(row) => ApiResponse::success(row, "ok"),
+            Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
+        }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 今日事件（前端 GET /schedule/events/today）
-pub async fn list_today_events(State(pool): State<PgPool>) -> ApiResponse<Vec<OaCalendarEvent>> {
+pub async fn list_today_events(State(db): State<Db>) -> ApiResponse<Vec<OaCalendarEvent>> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let now = chrono::Utc::now();
     let start = DateTime::<Utc>::from_naive_utc_and_offset(
         now.date_naive().and_hms_opt(0, 0, 0).unwrap(),
         Utc,
     );
     let end = start + chrono::Duration::days(1);
-    match fetch_events_in_range(&pool, start, end).await {
-        Ok(rows) => ApiResponse::success(rows, "ok"),
-        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
-    }
+
+    let __mobile_response = {
+        match fetch_events_in_range(&mut scope, start, end).await {
+            Ok(rows) => ApiResponse::success(rows, "ok"),
+            Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
+        }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 本周事件（前端 GET /schedule/events/week）
-pub async fn list_week_events(State(pool): State<PgPool>) -> ApiResponse<Vec<OaCalendarEvent>> {
+pub async fn list_week_events(State(db): State<Db>) -> ApiResponse<Vec<OaCalendarEvent>> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let now = chrono::Utc::now();
     let today = now.date_naive();
     let weekday = today.weekday().num_days_from_monday();
@@ -511,10 +647,15 @@ pub async fn list_week_events(State(pool): State<PgPool>) -> ApiResponse<Vec<OaC
     let start =
         DateTime::<Utc>::from_naive_utc_and_offset(monday.and_hms_opt(0, 0, 0).unwrap(), Utc);
     let end = start + chrono::Duration::days(7);
-    match fetch_events_in_range(&pool, start, end).await {
-        Ok(rows) => ApiResponse::success(rows, "ok"),
-        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
-    }
+
+    let __mobile_response = {
+        match fetch_events_in_range(&mut scope, start, end).await {
+            Ok(rows) => ApiResponse::success(rows, "ok"),
+            Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
+        }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[derive(Debug, Deserialize)]
@@ -525,9 +666,17 @@ pub struct MonthEventParams {
 
 /// 本月事件（前端 GET /schedule/events/month?year=&month=）
 pub async fn list_month_events(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Query(params): Query<MonthEventParams>,
 ) -> ApiResponse<Vec<OaCalendarEvent>> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let now = chrono::Utc::now();
     let year = params.year.unwrap_or(now.year());
     let month = params
@@ -562,10 +711,15 @@ pub async fn list_month_events(
             Utc,
         )
     };
-    match fetch_events_in_range(&pool, start, end).await {
-        Ok(rows) => ApiResponse::success(rows, "ok"),
-        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
-    }
+
+    let __mobile_response = {
+        match fetch_events_in_range(&mut scope, start, end).await {
+            Ok(rows) => ApiResponse::success(rows, "ok"),
+            Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
+        }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[derive(Debug, Deserialize)]
@@ -579,9 +733,17 @@ pub struct MyEventsParams {
 
 /// 我的事件（前端 GET /schedule/events/my → 查表全量分页）
 pub async fn list_my_events(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Query(params): Query<MyEventsParams>,
 ) -> ApiResponse<serde_json::Value> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let tid = tenant_id();
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
@@ -602,7 +764,7 @@ pub async fn list_my_events(
         .bind(&end_filter)
         .bind(page_size)
         .bind(offset)
-        .fetch_all(&pool)
+        .fetch_all(&mut scope)
         .await
         {
             Ok(r) => r,
@@ -611,10 +773,14 @@ pub async fn list_my_events(
             }
         };
 
-    ApiResponse::success(
-        serde_json::json!({ "items": events, "total": events.len() }),
-        "ok",
-    )
+    let __mobile_response = {
+        ApiResponse::success(
+            serde_json::json!({ "items": events, "total": events.len() }),
+            "ok",
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 我参与的事件（前端 GET /schedule/events/attending → 空列表占位，需 attendees 表）
@@ -624,77 +790,121 @@ pub async fn list_attending_events() -> ApiResponse<Vec<OaCalendarEvent>> {
 
 /// 更新事件状态（前端 PUT /schedule/events/{id}/status → 占位兜底）
 pub async fn update_event_status(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Json(payload): Json<serde_json::Value>,
 ) -> ApiResponse<()> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let tid = tenant_id();
     let status = payload
         .get("status")
         .and_then(|v| v.as_str())
         .unwrap_or("confirmed");
-    match sqlx::query(only_own_schema_query!(
+    let __mobile_response = {
+        match sqlx::query(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_calendar_events SET updated_at = NOW() WHERE tenant_id = $1 AND id = $2"
     ))
-    .bind(tid)
-    .bind(id)
-    .execute(&pool)
-    .await
-    {
-        Ok(_) => ApiResponse::success(
-            (),
-            &("事件状态已更新（占位：status=".to_owned() + status + "）"),
-        ),
-        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
-    }
+        .bind(tid)
+        .bind(id)
+        .execute(&mut scope)
+        .await
+        {
+            Ok(_) => ApiResponse::success(
+                (),
+                &("事件状态已更新（占位：status=".to_owned() + status + "）"),
+            ),
+            Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
+        }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 添加参与者（前端 POST /schedule/events/{id}/attendees → 占位兜底）
 pub async fn add_event_attendee(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Json(_payload): Json<serde_json::Value>,
 ) -> ApiResponse<()> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let tid = tenant_id();
-    match sqlx::query(only_own_schema_query!(
+    let __mobile_response = {
+        match sqlx::query(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_calendar_events SET updated_at = NOW() WHERE tenant_id = $1 AND id = $2"
     ))
-    .bind(tid)
-    .bind(id)
-    .execute(&pool)
-    .await
-    {
-        Ok(_) => ApiResponse::success((), "参与者已添加（占位实现，待 attendees 表）"),
-        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
-    }
+        .bind(tid)
+        .bind(id)
+        .execute(&mut scope)
+        .await
+        {
+            Ok(_) => ApiResponse::success((), "参与者已添加（占位实现，待 attendees 表）"),
+            Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
+        }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 /// 移除参与者（前端 DELETE /schedule/events/{id}/attendees/{userId} → 占位兜底）
 pub async fn remove_event_attendee(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     axum::extract::Path((id, _user_id)): axum::extract::Path<(Uuid, String)>,
 ) -> ApiResponse<()> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let tid = tenant_id();
-    match sqlx::query(only_own_schema_query!(
+    let __mobile_response = {
+        match sqlx::query(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_calendar_events SET updated_at = NOW() WHERE tenant_id = $1 AND id = $2"
     ))
-    .bind(tid)
-    .bind(id)
-    .execute(&pool)
-    .await
-    {
-        Ok(_) => ApiResponse::success((), "参与者已移除（占位实现，待 attendees 表）"),
-        Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
-    }
+        .bind(tid)
+        .bind(id)
+        .execute(&mut scope)
+        .await
+        {
+            Ok(_) => ApiResponse::success((), "参与者已移除（占位实现，待 attendees 表）"),
+            Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
+        }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn create_calendar_event(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(req): Json<CreateCalendarEventRequest>,
 ) -> ApiResponse<OaCalendarEvent> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let tid = tenant_id();
     let id = Uuid::new_v4();
     let start = DateTime::parse_from_rfc3339(&req.start_time)
@@ -703,7 +913,8 @@ pub async fn create_calendar_event(
     let end = DateTime::parse_from_rfc3339(&req.end_time)
         .unwrap_or_else(|_| Utc::now().into())
         .with_timezone(&Utc);
-    match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
         "mobile",
         "INSERT INTO mobile.oa_calendar_events (id, tenant_id, title, description, type, start_time, end_time, all_day, location, is_reminder, reminder_minutes, color, created_at, updated_at) \
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW(),NOW()) RETURNING *"
@@ -720,12 +931,16 @@ pub async fn create_calendar_event(
     .bind(req.is_reminder.unwrap_or(false))
     .bind(req.reminder_minutes)
     .bind(req.color)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
+
     .await
     {
         Ok(e) => ApiResponse::success(e, "创建成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("创建失败", e)),
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -743,10 +958,18 @@ pub async fn create_calendar_event(
 )]
 pub async fn update_calendar_event(
     Extension(claims): Extension<Claims>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<OaCalendarEvent> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let title = req.get("title").and_then(|v| v.as_str().map(String::from));
     let description = req
         .get("description")
@@ -755,7 +978,8 @@ pub async fn update_calendar_event(
         .get("location")
         .and_then(|v| v.as_str().map(String::from));
     let color = req.get("color").and_then(|v| v.as_str().map(String::from));
-    match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_calendar_events SET title = COALESCE($1, title), description = COALESCE($2, description), \
          location = COALESCE($3, location), color = COALESCE($4, color), updated_at = NOW() WHERE id = $5 AND ($6::uuid IS NULL OR tenant_id = $6::uuid) RETURNING *"
@@ -766,33 +990,50 @@ pub async fn update_calendar_event(
     .bind(color)
     .bind(id)
     .bind(tenant_filter(&claims))
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
+
     .await
     {
         Ok(Some(e)) => ApiResponse::success(e, "更新成功"),
         Ok(None) => ApiResponse::not_found("事件不存在"),
         Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn delete_calendar_event(
     Extension(claims): Extension<Claims>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
-    match sqlx::query(only_own_schema_query!(
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+    let __mobile_response = {
+        match sqlx::query(only_own_schema_query!(
         "mobile",
         "DELETE FROM mobile.oa_calendar_events WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
     .bind(tenant_filter(&claims))
-    .execute(&pool)
+    .execute(&mut scope)
+
     .await
     {
         Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
         Ok(_) => ApiResponse::not_found("事件不存在"),
         Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 // ===== Tasks =====
@@ -808,44 +1049,56 @@ pub async fn delete_calendar_event(
     tag = "tasks"
 )]
 pub async fn list_oa_tasks(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Query(q): Query<OaTaskQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let tid = tenant_id();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
-    match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
-        "mobile",
-        "SELECT * FROM mobile.oa_tasks WHERE tenant_id = $1 \
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
+            "mobile",
+            "SELECT * FROM mobile.oa_tasks WHERE tenant_id = $1 \
          AND ($2::text IS NULL OR status = $2) \
          AND ($3::text IS NULL OR priority = $3) \
          ORDER BY created_at DESC LIMIT $4 OFFSET $5"
-    ))
-    .bind(tid)
-    .bind(q.status)
-    .bind(q.priority)
-    .bind(page_size)
-    .bind(offset)
-    .fetch_all(&pool)
-    .await
-    {
-        Ok(rows) => {
-            let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
-                "mobile",
-                "SELECT COUNT(*) FROM mobile.oa_tasks WHERE tenant_id = $1"
-            ))
-            .bind(tid)
-            .fetch_one(&pool)
-            .await
-            .unwrap_or(0);
-            ApiResponse::success(
-                serde_json::json!({"items": rows, "total": total, "page": page, "page_size": page_size}),
-                "ok",
-            )
+        ))
+        .bind(tid)
+        .bind(q.status)
+        .bind(q.priority)
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&mut scope)
+        .await
+        {
+            Ok(rows) => {
+                let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                    "mobile",
+                    "SELECT COUNT(*) FROM mobile.oa_tasks WHERE tenant_id = $1"
+                ))
+                .bind(tid)
+                .fetch_one(&mut scope)
+                .await
+                .unwrap_or(0);
+                ApiResponse::success(
+                    serde_json::json!({"items": rows, "total": total, "page": page, "page_size": page_size}),
+                    "ok",
+                )
+            }
+            Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
         }
-        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -863,28 +1116,48 @@ pub async fn list_oa_tasks(
 )]
 pub async fn get_oa_task(
     Extension(claims): Extension<Claims>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<OaTask> {
-    match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
         "SELECT * FROM mobile.oa_tasks WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
-    .bind(id)
-    .bind(tenant_filter(&claims))
-    .fetch_optional(&pool)
-    .await
-    {
-        Ok(Some(t)) => ApiResponse::success(t, "ok"),
-        Ok(None) => ApiResponse::not_found("任务不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
-    }
+        .bind(id)
+        .bind(tenant_filter(&claims))
+        .fetch_optional(&mut scope)
+        .await
+        {
+            Ok(Some(t)) => ApiResponse::success(t, "ok"),
+            Ok(None) => ApiResponse::not_found("任务不存在"),
+            Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
+        }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn create_oa_task(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(req): Json<CreateOaTaskRequest>,
 ) -> ApiResponse<OaTask> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let tid = tenant_id();
     let id = Uuid::new_v4();
     let due = req.due_date.and_then(|d| {
@@ -896,7 +1169,8 @@ pub async fn create_oa_task(
         .tags
         .map(|t| serde_json::json!(t))
         .unwrap_or(serde_json::json!([]));
-    match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
         "INSERT INTO mobile.oa_tasks (id, tenant_id, title, description, priority, status, assignee, due_date, tags, project_id, created_at, updated_at) \
          VALUES ($1,$2,$3,$4,$5,'todo',$6,$7,$8,$9,NOW(),NOW()) RETURNING *"
@@ -910,20 +1184,32 @@ pub async fn create_oa_task(
     .bind(due)
     .bind(tags)
     .bind(req.project_id)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
+
     .await
     {
         Ok(t) => ApiResponse::success(t, "创建成功"),
         Err(e) => ApiResponse::from(TopemsError::internal("创建失败", e)),
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn update_oa_task(
     Extension(claims): Extension<Claims>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> ApiResponse<OaTask> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let title = req.get("title").and_then(|v| v.as_str().map(String::from));
     let description = req
         .get("description")
@@ -935,7 +1221,8 @@ pub async fn update_oa_task(
     let assignee = req
         .get("assignee")
         .and_then(|v| v.as_str().map(String::from));
-    match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_tasks SET title = COALESCE($1, title), description = COALESCE($2, description), \
          status = COALESCE($3, status), priority = COALESCE($4, priority), assignee = COALESCE($5, assignee), \
@@ -948,33 +1235,49 @@ pub async fn update_oa_task(
     .bind(assignee)
     .bind(id)
     .bind(tenant_filter(&claims))
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
+
     .await
     {
         Ok(Some(t)) => ApiResponse::success(t, "更新成功"),
         Ok(None) => ApiResponse::not_found("任务不存在"),
         Err(e) => ApiResponse::from(TopemsError::internal("更新失败", e)),
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn delete_oa_task(
     Extension(claims): Extension<Claims>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
-    match sqlx::query(only_own_schema_query!(
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+    let __mobile_response = {
+        match sqlx::query(only_own_schema_query!(
         "mobile",
         "DELETE FROM mobile.oa_tasks WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
-    .bind(id)
-    .bind(tenant_filter(&claims))
-    .execute(&pool)
-    .await
-    {
-        Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
-        Ok(_) => ApiResponse::not_found("任务不存在"),
-        Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
-    }
+        .bind(id)
+        .bind(tenant_filter(&claims))
+        .execute(&mut scope)
+        .await
+        {
+            Ok(r) if r.rows_affected() > 0 => ApiResponse::success((), "删除成功"),
+            Ok(_) => ApiResponse::not_found("任务不存在"),
+            Err(e) => ApiResponse::from(TopemsError::internal("删除失败", e)),
+        }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -992,22 +1295,35 @@ pub async fn delete_oa_task(
 )]
 pub async fn complete_oa_task(
     Extension(claims): Extension<Claims>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<OaTask> {
-    match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaTask>(only_own_schema_query!(
         "mobile",
         "UPDATE mobile.oa_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING *"
     ))
     .bind(id)
     .bind(tenant_filter(&claims))
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
+
     .await
     {
         Ok(Some(t)) => ApiResponse::success(t, "任务已完成"),
         Ok(None) => ApiResponse::not_found("任务不存在"),
         Err(e) => ApiResponse::from(TopemsError::internal("操作失败", e)),
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 // ===== Announcements =====
@@ -1023,42 +1339,54 @@ pub async fn complete_oa_task(
     tag = "announcements"
 )]
 pub async fn list_announcements(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Query(q): Query<AnnouncementQuery>,
 ) -> ApiResponse<serde_json::Value> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let tid = tenant_id();
     let page = q.page.unwrap_or(1).max(1);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
-    match sqlx::query_as::<_, OaAnnouncement>(only_own_schema_query!(
-        "mobile",
-        "SELECT * FROM mobile.oa_announcements WHERE tenant_id = $1 \
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaAnnouncement>(only_own_schema_query!(
+            "mobile",
+            "SELECT * FROM mobile.oa_announcements WHERE tenant_id = $1 \
          AND ($2::text IS NULL OR priority = $2) \
          ORDER BY published_at DESC LIMIT $3 OFFSET $4"
-    ))
-    .bind(tid)
-    .bind(q.priority)
-    .bind(page_size)
-    .bind(offset)
-    .fetch_all(&pool)
-    .await
-    {
-        Ok(rows) => {
-            let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
-                "mobile",
-                "SELECT COUNT(*) FROM mobile.oa_announcements WHERE tenant_id = $1"
-            ))
-            .bind(tid)
-            .fetch_one(&pool)
-            .await
-            .unwrap_or(0);
-            ApiResponse::success(
-                serde_json::json!({"items": rows, "total": total, "page": page, "page_size": page_size}),
-                "ok",
-            )
+        ))
+        .bind(tid)
+        .bind(q.priority)
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&mut scope)
+        .await
+        {
+            Ok(rows) => {
+                let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                    "mobile",
+                    "SELECT COUNT(*) FROM mobile.oa_announcements WHERE tenant_id = $1"
+                ))
+                .bind(tid)
+                .fetch_one(&mut scope)
+                .await
+                .unwrap_or(0);
+                ApiResponse::success(
+                    serde_json::json!({"items": rows, "total": total, "page": page, "page_size": page_size}),
+                    "ok",
+                )
+            }
+            Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
         }
-        Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
-    }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -1076,22 +1404,35 @@ pub async fn list_announcements(
 )]
 pub async fn get_announcement(
     Extension(claims): Extension<Claims>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<OaAnnouncement> {
-    match sqlx::query_as::<_, OaAnnouncement>(only_own_schema_query!(
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
+    let __mobile_response = {
+        match sqlx::query_as::<_, OaAnnouncement>(only_own_schema_query!(
         "mobile",
         "SELECT * FROM mobile.oa_announcements WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
     .bind(tenant_filter(&claims))
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
+
     .await
     {
         Ok(Some(a)) => ApiResponse::success(a, "ok"),
         Ok(None) => ApiResponse::not_found("公告不存在"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询失败", e)),
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -1107,10 +1448,15 @@ pub async fn get_announcement(
     ),
     tag = "announcements"
 )]
-pub async fn mark_announcement_read(
-    State(pool): State<PgPool>,
-    Path(id): Path<Uuid>,
-) -> ApiResponse<()> {
+pub async fn mark_announcement_read(State(db): State<Db>, Path(id): Path<Uuid>) -> ApiResponse<()> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let user_id = "default_user".to_string();
     let _ = sqlx::query(only_own_schema_query!(
         "mobile",
@@ -1118,9 +1464,12 @@ pub async fn mark_announcement_read(
     ))
     .bind(id)
     .bind(&user_id)
-    .execute(&pool)
+    .execute(&mut scope)
     .await;
-    ApiResponse::success((), "已标记已读")
+
+    let __mobile_response = { ApiResponse::success((), "已标记已读") };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 // ===== OA Stats =====
@@ -1135,14 +1484,22 @@ pub async fn mark_announcement_read(
     ),
     tag = "task"
 )]
-pub async fn get_oa_stats(State(pool): State<PgPool>) -> ApiResponse<serde_json::Value> {
+pub async fn get_oa_stats(State(db): State<Db>) -> ApiResponse<serde_json::Value> {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return ApiResponse::server_error("数据库作用域创建失败");
+        }
+    };
     let tid = tenant_id();
     let meetings_today = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "mobile",
         "SELECT COUNT(*) FROM mobile.oa_meetings WHERE tenant_id = $1 AND start_time::date = CURRENT_DATE"
     ))
     .bind(tid)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let pending_tasks = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -1150,7 +1507,7 @@ pub async fn get_oa_stats(State(pool): State<PgPool>) -> ApiResponse<serde_json:
         "SELECT COUNT(*) FROM mobile.oa_tasks WHERE tenant_id = $1 AND status != 'completed'"
     ))
     .bind(tid)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
     let total_announcements = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -1158,24 +1515,29 @@ pub async fn get_oa_stats(State(pool): State<PgPool>) -> ApiResponse<serde_json:
         "SELECT COUNT(*) FROM mobile.oa_announcements WHERE tenant_id = $1"
     ))
     .bind(tid)
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
-    ApiResponse::success(
-        serde_json::json!({
-            "total_meetings_today": meetings_today,
-            "upcoming_meetings": meetings_today,
-            "meetings_this_week": meetings_today,
-            "pending_tasks": pending_tasks,
-            "completed_tasks_today": 0,
-            "unread_announcements": total_announcements,
-            "calendar_events_today": 0,
-            "by_priority": [
-                {"priority": "high", "count": 0},
-                {"priority": "medium", "count": 0},
-                {"priority": "low", "count": 0}
-            ]
-        }),
-        "ok",
-    )
+
+    let __mobile_response = {
+        ApiResponse::success(
+            serde_json::json!({
+                "total_meetings_today": meetings_today,
+                "upcoming_meetings": meetings_today,
+                "meetings_this_week": meetings_today,
+                "pending_tasks": pending_tasks,
+                "completed_tasks_today": 0,
+                "unread_announcements": total_announcements,
+                "calendar_events_today": 0,
+                "by_priority": [
+                    {"priority": "high", "count": 0},
+                    {"priority": "medium", "count": 0},
+                    {"priority": "low", "count": 0}
+                ]
+            }),
+            "ok",
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }

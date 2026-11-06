@@ -1,4 +1,4 @@
-use axum::extract::State;
+use axum::extract::{Extension, State};
 use axum::Json;
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
@@ -17,7 +17,24 @@ use crate::models::{AppState, CreateIntegrationEventRequest, IntegrationEvent, S
         (status = 200, description = "OK"),
     ),
 )]
-pub async fn get_sync_stats(State(state): State<AppState>) -> ApiResponse<SyncStats> {
+pub async fn get_sync_stats(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> ApiResponse<SyncStats> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     let lims_qms_result = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT COUNT(*) as total,
@@ -25,7 +42,7 @@ pub async fn get_sync_stats(State(state): State<AppState>) -> ApiResponse<SyncSt
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
            FROM integration.lims_qms_sync"
     ))
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let (lims_qms_total, lims_qms_synced, lims_qms_failed) = match lims_qms_result {
@@ -44,7 +61,7 @@ pub async fn get_sync_stats(State(state): State<AppState>) -> ApiResponse<SyncSt
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
            FROM integration.mes_erp_sync"
     ))
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let (mes_erp_total, mes_erp_synced, mes_erp_failed) = match mes_erp_result {
@@ -63,7 +80,7 @@ pub async fn get_sync_stats(State(state): State<AppState>) -> ApiResponse<SyncSt
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
            FROM integration.wms_scm_sync"
     ))
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let (wms_scm_total, wms_scm_synced, wms_scm_failed) = match wms_scm_result {
@@ -85,7 +102,7 @@ pub async fn get_sync_stats(State(state): State<AppState>) -> ApiResponse<SyncSt
             SELECT MAX(last_synced_at) as last_synced_at FROM integration.wms_scm_sync
         ) t"
     ))
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     let last_sync = last_sync_result
@@ -117,14 +134,31 @@ pub async fn get_sync_stats(State(state): State<AppState>) -> ApiResponse<SyncSt
         (status = 200, description = "OK"),
     ),
 )]
-pub async fn list_events(State(state): State<AppState>) -> ApiResponse<Vec<IntegrationEvent>> {
+pub async fn list_events(
+    State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> ApiResponse<Vec<IntegrationEvent>> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match sqlx::query_as::<_, IntegrationEvent>(only_own_schema_query!(
         "integration",
         "SELECT id, source_system, target_system, event_type, source_record_id,
                 target_record_id, payload, status, error_message, synced_at, created_at
            FROM integration.integration_events ORDER BY created_at DESC LIMIT 100"
     ))
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(events) => ApiResponse::success(events, "Events retrieved successfully"),
@@ -147,10 +181,25 @@ pub async fn list_events(State(state): State<AppState>) -> ApiResponse<Vec<Integ
 )]
 pub async fn create_event(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<CreateIntegrationEventRequest>,
 ) -> ApiResponse<IntegrationEvent> {
     let id = Uuid::new_v4();
     let source_uuid = req.source_record_id.and_then(|s| Uuid::parse_str(&s).ok());
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
 
     match sqlx::query_as::<_, IntegrationEvent>(only_own_schema_query!(
         "integration",
@@ -167,7 +216,7 @@ pub async fn create_event(
     .bind(source_uuid)
     .bind(req.payload)
     .bind(Uuid::nil())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(event) => ApiResponse::success(event, "Event created successfully"),

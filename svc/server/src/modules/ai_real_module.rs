@@ -22,19 +22,18 @@ use topems_ai::services::{
     QAService, RecommendationService, VectorService,
 };
 use topems_shared_ai::ai_client::{AIModelConfig, AIProviderType};
-use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_bootstrap::{bootstrap_service_shared, ServiceConfig};
 use topems_shared_core::error::Result;
+use topems_shared_db::scope::Db;
 
 pub struct AiRealModule {
     routes: Router,
-    db: sqlx::PgPool,
+    db: Db,
 }
 
 impl AiRealModule {
     /// 异步构建真实 AI 模块（嵌入模式）
     pub async fn build() -> Result<Self> {
-        std::env::set_var("SEARCH_PATH", "ai, public");
-
         let config = ServiceConfig {
             name: "topems-ai",
             port: 8013,
@@ -50,21 +49,26 @@ impl AiRealModule {
 
         let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
 
-        // 通用资源（telemetry、auth_state、event_publisher）
-        let ctx = bootstrap_service(&config).await?;
+        // 连接治理 B：复用进程级共享运行时池
+        let ctx = bootstrap_service_shared(&config).await?;
         topems_shared_db::database::probe_connection(&ctx.db).await?;
 
-        // AI 专用 Database：复用 bootstrap 的进程级池（连接治理 A，避免第二个 max=100 的池）
-        let db = Database::from_parts(ctx.db.clone(), ctx.migrate_pool.clone());
+        // AI 专用 Database：共享池 + 事务级 search_path = ai, public
+        let ai_db = Db::new(ctx.db.clone(), "ai, public");
+        let db = Database::from_parts(ai_db.clone(), ctx.migrate_pool.clone());
 
         // 迁移 / schema 防御 / ai_knowledge 初始化（失败仅告警不阻塞启动）
         if let Err(e) = db.run_migrations().await {
             tracing::warn!("⚠️ AI 迁移失败（表已存在则跳过）: {}", e);
         }
-        if let Err(e) =
-            topems_ai::schema_defense::run_schema_migration_and_verify(db.ddl_pool()).await
-        {
-            tracing::error!("[ai] Schema 防御检查失败: {:?}", e);
+        if let Some(ddl_pool) = db.ddl_pool() {
+            if let Err(e) =
+                topems_ai::schema_defense::run_schema_migration_and_verify(ddl_pool).await
+            {
+                tracing::error!("[ai] Schema 防御检查失败: {:?}", e);
+            }
+        } else {
+            tracing::warn!("⚠️ 未配置迁移池（migrate_pool），跳过 ai schema 防御检查");
         }
 
         // 读取 AI 配置
@@ -131,7 +135,6 @@ impl AiRealModule {
         let _ = DIFY_CONFIG.set(dify_config);
 
         // 创建服务
-        let pool = db.pool().clone();
         let vector_service = VectorService::new(db);
         let file_service_url = std::env::var("FILE_SERVICE_URL")
             .unwrap_or_else(|_| "http://localhost:8000".to_string());
@@ -232,7 +235,7 @@ impl AiRealModule {
         // 创建应用状态
         let app_state = topems_ai::shared::AppState {
             auth_state: ctx.auth_state.clone(),
-            pool: pool.clone(),
+            db: ai_db.clone(),
             document_service,
             vector_service,
             qa_service,
@@ -243,7 +246,7 @@ impl AiRealModule {
             dify_service,
             workflow_orchestrator,
             event_publisher: ctx.event_publisher.clone(),
-            audit: topems_ai::services::audit::AiAuditService::new(pool.clone()),
+            audit: topems_ai::services::audit::AiAuditService::new(ctx.db.clone()),
             dsh_agent_orchestrator: None,
             dsh_agent_performance_monitor: Some(
                 topems_ai::dsh::agent::AgentPerformanceMonitor::with_defaults(),
@@ -258,7 +261,7 @@ impl AiRealModule {
         // 创建路由（create_routes 处理 auth/tenant/rate_limit/cors/prometheus/telemetry）
         let router = topems_ai::routes::create_routes(
             app_state,
-            pool,
+            ctx.db.clone(),
             prometheus_layer,
             metric_handle,
             false, // 嵌入模式跳过 GET /api（与 server 聚合 /api 冲突）
@@ -275,7 +278,7 @@ impl AiRealModule {
             config.api_prefix
         );
 
-        Ok(Self { routes, db: ctx.db })
+        Ok(Self { routes, db: ai_db })
     }
 }
 
@@ -295,7 +298,10 @@ impl Module for AiRealModule {
     }
 
     async fn health_check(&self) -> ModuleHealth {
-        let db_healthy = sqlx::query("SELECT 1").execute(&self.db).await.is_ok();
+        let db_healthy = match self.db.scope_read().await {
+            Ok(mut scope) => sqlx::query("SELECT 1").execute(&mut scope).await.is_ok(),
+            Err(_) => false,
+        };
         if db_healthy {
             ModuleHealth::healthy(self.name(), self.group())
         } else {

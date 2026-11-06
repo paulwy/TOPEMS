@@ -1,9 +1,9 @@
 pub mod permission;
 
 use axum::extract::FromRef;
-use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::auth::AuthState;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::EventPublisher;
 
 // ── 迁移完成（WorkflowServiceClient → TypedServiceClient<WorkflowApi>）──
@@ -23,7 +23,7 @@ use topems_shared_service_client::TypedServiceClient;
 #[derive(Clone)]
 pub struct AppState {
     pub auth_state: AuthState,
-    pub pool: PgPool,
+    pub pool: Db,
     pub workflow_client: TypedServiceClient<WorkflowApi>,
     pub event_publisher: Option<Arc<EventPublisher>>,
 }
@@ -34,7 +34,7 @@ impl FromRef<AppState> for AuthState {
     }
 }
 
-impl FromRef<AppState> for PgPool {
+impl FromRef<AppState> for Db {
     fn from_ref(state: &AppState) -> Self {
         state.pool.clone()
     }

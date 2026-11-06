@@ -12,13 +12,14 @@ use utoipa::OpenApi;
 
 use topems_shared_auth::middleware::require_module_access;
 use topems_shared_bootstrap::{
-    bootstrap_service, build_application, create_health_state, create_standard_health_routes,
-    default_init_db, run, ServiceConfig,
+    bootstrap_service_shared, build_application, create_health_state,
+    create_standard_health_routes, default_init_db, run, ServiceConfig,
 };
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
 };
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler, L2CacheConfig};
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{CacheInvalidatedPayload, EventSubscriber, EventType};
 
 use modules::tms_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
@@ -26,9 +27,6 @@ use shared::AppState;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // 设置search_path环境变量（供lib使用）
-    std::env::set_var("SEARCH_PATH", "tms, public, shared");
-
     let config = ServiceConfig {
         name: "topems-tms",
         port: 8073,
@@ -40,7 +38,7 @@ async fn main() -> Result<()> {
         ..Default::default()
     };
 
-    let ctx = bootstrap_service(&config).await?;
+    let ctx = bootstrap_service_shared(&config).await?;
 
     if let Err(e) = default_init_db(
         ctx.migrate_pool.as_ref().unwrap_or(&ctx.db),
@@ -52,6 +50,9 @@ async fn main() -> Result<()> {
     {
         tracing::warn!("数据库初始化警告: {}", e);
     }
+
+    // 连接治理 B：共享池之上按模块固化 search_path（显式传值，不依赖 .env）
+    let db = Db::new(ctx.db.clone(), "tms, public");
 
     // 多级缓存初始化（L1: moka 进程内缓存 + L2: Redis 分布式缓存）
     let l2_config = L2CacheConfig {
@@ -78,118 +79,12 @@ async fn main() -> Result<()> {
         }
     };
 
-    // 缓存预热：服务启动时异步加载常用字典数据，避免首次请求缓存未命中
-    {
-        let cache = dict_cache.clone();
-        let pool = ctx.db.clone();
-        tokio::spawn(async move {
-            tracing::info!("[tms] 开始缓存预热...");
-
-            // 预热司机列表（第一页，默认参数）
-            match sqlx::query_scalar::<_, serde_json::Value>(
-                r#"
-                SELECT json_build_object(
-                    'items', COALESCE(json_agg(t), '[]'::json),
-                    'total', (SELECT COUNT(*) FROM tms.tms_drivers WHERE deleted_at IS NULL),
-                    'page', 1,
-                    'page_size', 10
-                ) as data
-                FROM (
-                    SELECT d.* FROM tms.tms_drivers d
-                    WHERE d.deleted_at IS NULL
-                    ORDER BY d.created_at DESC
-                    LIMIT 10 OFFSET 0
-                ) t
-                "#,
-            )
-            .fetch_optional(&pool)
-            .await
-            {
-                Ok(Some(data)) => {
-                    let cache_key =
-                        "tms:driver:list:default:page:1:page_size:10:search:none:status:all";
-                    cache.set(cache_key.to_string(), data).await;
-                    tracing::info!("[tms] 司机列表缓存预热完成");
-                }
-                Ok(None) => {
-                    tracing::info!("[tms] 司机列表为空，跳过预热");
-                }
-                Err(e) => {
-                    tracing::warn!("[tms] 司机列表缓存预热失败: {}", e);
-                }
-            }
-
-            // 预热车辆列表（第一页，默认参数）
-            match sqlx::query_scalar::<_, serde_json::Value>(
-                r#"
-                SELECT json_build_object(
-                    'items', COALESCE(json_agg(t), '[]'::json),
-                    'total', (SELECT COUNT(*) FROM vehicles WHERE deleted_at IS NULL),
-                    'page', 1,
-                    'page_size', 10
-                ) as data
-                FROM (
-                    SELECT v.* FROM vehicles v
-                    WHERE v.deleted_at IS NULL
-                    ORDER BY v.created_at DESC
-                    LIMIT 10 OFFSET 0
-                ) t
-                "#,
-            )
-            .fetch_optional(&pool)
-            .await
-            {
-                Ok(Some(data)) => {
-                    let cache_key =
-                        "tms:vehicle:list:default:page:1:page_size:10:search:none:status:all";
-                    cache.set(cache_key.to_string(), data).await;
-                    tracing::info!("[tms] 车辆列表缓存预热完成");
-                }
-                Ok(None) => {
-                    tracing::info!("[tms] 车辆列表为空，跳过预热");
-                }
-                Err(e) => {
-                    tracing::warn!("[tms] 车辆列表缓存预热失败: {}", e);
-                }
-            }
-
-            // 预热承运商列表（第一页，默认参数）
-            match sqlx::query_scalar::<_, serde_json::Value>(
-                r#"
-                SELECT json_build_object(
-                    'items', COALESCE(json_agg(t), '[]'::json),
-                    'total', (SELECT COUNT(*) FROM tms.tms_carriers WHERE deleted_at IS NULL),
-                    'page', 1,
-                    'page_size', 10
-                ) as data
-                FROM (
-                    SELECT c.* FROM tms.tms_carriers c
-                    WHERE c.deleted_at IS NULL
-                    ORDER BY c.created_at DESC
-                    LIMIT 10 OFFSET 0
-                ) t
-                "#,
-            )
-            .fetch_optional(&pool)
-            .await
-            {
-                Ok(Some(data)) => {
-                    let cache_key =
-                        "tms:carrier:list:default:page:1:page_size:10:search:none:status:all";
-                    cache.set(cache_key.to_string(), data).await;
-                    tracing::info!("[tms] 承运商列表缓存预热完成");
-                }
-                Ok(None) => {
-                    tracing::info!("[tms] 承运商列表为空，跳过预热");
-                }
-                Err(e) => {
-                    tracing::warn!("[tms] 承运商列表缓存预热失败: {}", e);
-                }
-            }
-
-            tracing::info!("[tms] 缓存预热完成");
-        });
-    }
+    // 启动期缓存预热已删除（2026-11-06）：原三份预热（司机/车辆/承运商）写入
+    // `tms:<entity>:list:default:page:1:page_size:10:...`，但业务读路径从不用 `default`
+    // 作为租户段——`driver.rs` / `vehicle.rs` 的列表键为 `tms:<entity>:list:<tenant_key>:...`
+    // （超管 `all`、普通租户 uuid），`carrier.rs` 还多一个 `:locale:` 后缀；
+    // 全仓库 grep 无任何读取 `list:default` 的代码。预热键永远不可能被命中，属死代码。
+    // 车辆预热此前还读错了空壳 `public.vehicles`，一并随删除消失。
 
     // 缓存失效事件订阅（事件驱动缓存一致性）
     {
@@ -250,7 +145,7 @@ async fn main() -> Result<()> {
     }
 
     let app_state = AppState {
-        db: ctx.db.clone(),
+        db,
         auth_state: ctx.auth_state.clone(),
         metrics: ctx.metrics.clone(),
         start_time: ctx.start_time,

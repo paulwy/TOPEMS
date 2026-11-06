@@ -1,14 +1,14 @@
 use axum::extract::FromRef;
-use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
 use topems_shared_auth::auth::AuthState;
 use topems_shared_core::health::SystemMetrics;
+use topems_shared_db::scope::Db;
 
 #[derive(Clone)]
 pub struct AppState {
-    // 注意：monitor/ 子模块（alert_evaluator.rs / metrics.rs）直接访问字段名 .pool
-    pub pool: PgPool,
+    /// 连接治理 B：模块不再持有连接池，所有查询经 `Db` 的作用域（事务内 SET LOCAL search_path=public）。
+    pub db: Db,
     pub auth_state: AuthState,
     pub metrics: Arc<SystemMetrics>,
     pub start_time: Instant,
@@ -19,11 +19,5 @@ pub struct AppState {
 impl FromRef<AppState> for AuthState {
     fn from_ref(state: &AppState) -> Self {
         state.auth_state.clone()
-    }
-}
-
-impl FromRef<AppState> for PgPool {
-    fn from_ref(state: &AppState) -> Self {
-        state.pool.clone()
     }
 }

@@ -3,17 +3,16 @@ pub mod util;
 
 use axum::extract::FromRef;
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
 use topems_shared_auth::auth::AuthState;
-use topems_shared_auth::ScopedPool;
 use topems_shared_core::health::SystemMetrics;
+use topems_shared_db::scope::Db;
 
 #[derive(Clone)]
 pub struct AppState {
-    // 插件模块 handlers 直接访问 .pool
-    pub pool: ScopedPool,
+    // 连接治理 B：模块唯一可见的数据库句柄（作用域事务，不暴露池）
+    pub db: Db,
     pub auth_state: AuthState,
     pub metrics: Arc<SystemMetrics>,
     pub start_time: Instant,
@@ -22,12 +21,6 @@ pub struct AppState {
 impl FromRef<AppState> for AuthState {
     fn from_ref(state: &AppState) -> Self {
         state.auth_state.clone()
-    }
-}
-
-impl FromRef<AppState> for PgPool {
-    fn from_ref(state: &AppState) -> Self {
-        state.pool.inner().clone()
     }
 }
 

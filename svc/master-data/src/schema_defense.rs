@@ -1,6 +1,6 @@
 //! Auto-generated schema defense for the master-data service.
 //!
-//! Service: master-data | Schema: public | Tables: 7
+//! Service: master-data | Schema: master_data | Tables: 5（core_dict_types / core_dict_items 的权威表在 `public`，不再由启动期 DDL 建副本）
 //!
 //! 开发规范：新增列必须两处同步（详见 docs/development/backend/database-development.md）
 //!   (1) 服务的 CREATE TABLE IF NOT EXISTS xxx ( ... ) 文本里加列
@@ -13,37 +13,12 @@ use sqlx::PgPool;
 pub const SERVICE_SCHEMA: &str = "master_data";
 pub const SERVICE_TAG: &str = "master-data";
 
-/// master-data 7 张表的列定义单一事实源。不含 PRIMARY KEY 的 id 列（verify 阶段自动拼 "id"）。
+/// master-data 5 张表的列定义单一事实源。不含 PRIMARY KEY 的 id 列（verify 阶段自动拼 "id"）。
+///
+/// `core_dict_types` / `core_dict_items` 不在此列：权威表在 `public`，两者曾由本文件
+/// 在 `master_data` 建空壳副本，SQL 裸名命中后导致生产字典读空。见
+/// `docs/quality/runtime-ddl-shadow-audit.md` 高危清单第 1、2 项。
 pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
-    (
-        "core_dict_types",
-        &[
-            ("code", "VARCHAR(100) NOT NULL UNIQUE"),
-            ("name", "VARCHAR(200) NOT NULL"),
-            ("category", "VARCHAR(100) NOT NULL DEFAULT 'general'"),
-            ("description", "TEXT"),
-            ("status", "VARCHAR(20) NOT NULL DEFAULT 'active'"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("deleted_at", "TIMESTAMP"),
-        ],
-    ),
-    (
-        "core_dict_items",
-        &[
-            ("dict_type_id", "UUID NOT NULL"),
-            ("code", "VARCHAR(100) NOT NULL"),
-            ("name", "VARCHAR(200) NOT NULL"),
-            ("value", "TEXT"),
-            ("sort_order", "INTEGER NOT NULL DEFAULT 0"),
-            ("parent_id", "UUID"),
-            ("extra_data", "JSONB"),
-            ("status", "VARCHAR(20) NOT NULL DEFAULT 'active'"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
-            ("deleted_at", "TIMESTAMP"),
-        ],
-    ),
     (
         "schema_registry",
         &[

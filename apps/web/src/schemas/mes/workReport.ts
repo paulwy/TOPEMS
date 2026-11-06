@@ -13,6 +13,9 @@ export const workReportSchema: EntitySchema = {
     resource: 'workReports',
   },
 
+  // 批 16：写权限资源前缀（DB 实查存在三动作码）
+  permissionResource: 'mes:work_report',
+
   fields: [
     {
       name: 'report_no',

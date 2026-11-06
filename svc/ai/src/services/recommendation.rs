@@ -108,6 +108,11 @@ impl RecommendationService {
         top_k: usize,
         tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, TopemsError> {
+        let mut scope = self
+            .db
+            .scope_read()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("查询文档失败: {}", e)))?;
         let query = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -121,9 +126,13 @@ impl RecommendationService {
         ))
         .bind(top_k as i64)
         .bind(tenant_id)
-        .fetch_all(self.db.pool())
+        .fetch_all(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询文档失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("查询文档失败: {}", e)))?;
 
         let mut items = Vec::new();
         for row in query {
@@ -373,6 +382,11 @@ impl RecommendationService {
     }
 
     pub async fn get_user_profile(&self, user_id: Uuid) -> Result<UserProfile, TopemsError> {
+        let mut scope = self
+            .db
+            .scope_read()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("查询用户画像失败: {}", e)))?;
         let profile = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -383,9 +397,13 @@ impl RecommendationService {
             "plugin_ai"
         ))
         .bind(user_id)
-        .fetch_optional(self.db.pool())
+        .fetch_optional(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询用户画像失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("查询用户画像失败: {}", e)))?;
 
         match profile {
             Some(row) => Ok(UserProfile {
@@ -412,6 +430,11 @@ impl RecommendationService {
     ) -> Result<UserProfile, TopemsError> {
         let now = chrono::Utc::now();
 
+        let mut scope = self
+            .db
+            .scope()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新用户画像失败: {}", e)))?;
         let _ = sqlx::query(
             only_own_schema_query!("ai", r#"
             INSERT INTO ai.user_profiles (user_id, preferences, recent_interactions, created_at, updated_at)
@@ -427,9 +450,13 @@ impl RecommendationService {
         .bind(updates.get("recent_interactions").unwrap_or(&serde_json::json!([])))
         .bind(now)
         .bind(now)
-        .execute(self.db.pool())
+        .execute(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("更新用户画像失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新用户画像失败: {}", e)))?;
 
         self.get_user_profile(user_id).await
     }
@@ -441,6 +468,11 @@ impl RecommendationService {
         top_k: usize,
         tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, TopemsError> {
+        let mut scope = self
+            .db
+            .scope_read()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("查询文章失败: {}", e)))?;
         let query = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -454,9 +486,13 @@ impl RecommendationService {
         ))
         .bind(top_k as i64)
         .bind(tenant_id)
-        .fetch_all(self.db.pool())
+        .fetch_all(&mut scope)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询文章失败: {}", e)))?;
+        scope
+            .commit()
+            .await
+            .map_err(|e| TopemsError::DatabaseQuery(format!("查询文章失败: {}", e)))?;
 
         let mut items = Vec::new();
         for row in query {

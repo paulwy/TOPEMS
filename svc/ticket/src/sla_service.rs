@@ -1,7 +1,8 @@
 use chrono::Datelike;
 use chrono::Timelike;
 use chrono::{DateTime, Duration, Utc, Weekday};
-use sqlx::{PgPool, Row};
+use sqlx::Row;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::models::{
@@ -67,12 +68,12 @@ pub fn ticket_age_days(created_at: i64, now: i64) -> i64 {
 
 #[derive(Clone)]
 pub struct TicketSlaService {
-    pool: PgPool,
+    db: Db,
 }
 
 impl TicketSlaService {
-    pub fn new(pool: PgPool) -> Self {
-        Self { pool }
+    pub fn new(db: Db) -> Self {
+        Self { db }
     }
 
     fn default_sla_hours(severity: &str) -> (f64, f64) {
@@ -261,6 +262,7 @@ impl TicketSlaService {
     }
 
     async fn match_policy(&self, ticket: &Ticket) -> Result<Option<TicketSlaPolicy>, sqlx::Error> {
+        let mut scope = self.db.scope_read().await?;
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
             SELECT id, tenant_id, name, description, ticket_type, severity, response_hours, resolution_hours, escalation_levels, escalation_hours_1, escalation_hours_2, escalation_hours_3, working_hours_only, business_hours_start, business_hours_end, weekend_excluded, is_default, is_active, created_at, updated_at FROM ticket.core_ticket_sla_policies
@@ -279,9 +281,10 @@ impl TicketSlaService {
         .bind(ticket.tenant_id)
         .bind(&ticket.ticket_type)
         .bind(&ticket.severity)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(policy)
     }
 
@@ -290,6 +293,7 @@ impl TicketSlaService {
         tenant_id: Uuid,
         ticket_id: Uuid,
     ) -> Result<Vec<SlaEscalationEvent>, sqlx::Error> {
+        let mut scope = self.db.scope_read().await?;
         let events = sqlx::query_as::<_, SlaEscalationEvent>(
             r#"
             SELECT id, ticket_id, tenant_id, level, escalation_time, escalated_to, reason, created_at FROM ticket.core_ticket_sla_escalations
@@ -299,9 +303,10 @@ impl TicketSlaService {
         )
         .bind(ticket_id)
         .bind(tenant_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(events)
     }
 
@@ -381,6 +386,7 @@ impl TicketSlaService {
     ) -> Result<SlaEscalationEvent, sqlx::Error> {
         let event_id = Uuid::new_v4();
         let now = Utc::now();
+        let mut scope = self.db.scope().await?;
 
         sqlx::query(
             r#"
@@ -396,7 +402,7 @@ impl TicketSlaService {
         .bind(now)
         .bind(&reason)
         .bind(now)
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await?;
 
         sqlx::query(
@@ -412,7 +418,7 @@ impl TicketSlaService {
         .bind("sla_escalated")
         .bind(level.to_string())
         .bind(now)
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await?;
 
         let event = sqlx::query_as::<_, SlaEscalationEvent>(
@@ -421,9 +427,10 @@ impl TicketSlaService {
             "#,
         )
         .bind(event_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(event)
     }
 
@@ -435,6 +442,7 @@ impl TicketSlaService {
     ) -> Result<TicketSlaPolicy, sqlx::Error> {
         let policy_id = Uuid::new_v4();
         let now = Utc::now();
+        let mut scope = self.db.scope().await?;
 
         if req.is_default.unwrap_or(false) {
             sqlx::query(
@@ -446,7 +454,7 @@ impl TicketSlaService {
             )
             .bind(now)
             .bind(tenant_id)
-            .execute(&self.pool)
+            .execute(&mut scope)
             .await?;
         }
 
@@ -481,9 +489,10 @@ impl TicketSlaService {
         .bind(true)
         .bind(now)
         .bind(now)
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await?;
 
+        scope.commit().await?;
         self.get_policy(Some(tenant_id), policy_id, locale).await
     }
 
@@ -493,6 +502,7 @@ impl TicketSlaService {
         policy_id: Uuid,
         locale: &str,
     ) -> Result<TicketSlaPolicy, sqlx::Error> {
+        let mut scope = self.db.scope_read().await?;
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
             SELECT id, tenant_id,
@@ -508,9 +518,10 @@ impl TicketSlaService {
         .bind(policy_id)
         .bind(tenant_id)
         .bind(locale)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(policy)
     }
 
@@ -519,6 +530,7 @@ impl TicketSlaService {
         tenant_id: Option<Uuid>,
         locale: &str,
     ) -> Result<Vec<TicketSlaPolicy>, sqlx::Error> {
+        let mut scope = self.db.scope_read().await?;
         let policies = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
             SELECT id, tenant_id,
@@ -534,9 +546,10 @@ impl TicketSlaService {
         )
         .bind(tenant_id)
         .bind(locale)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(policies)
     }
 
@@ -548,6 +561,7 @@ impl TicketSlaService {
         locale: &str,
     ) -> Result<TicketSlaPolicy, sqlx::Error> {
         let now = Utc::now();
+        let mut scope = self.db.scope().await?;
 
         if req.is_default.unwrap_or(false) {
             sqlx::query(
@@ -560,7 +574,7 @@ impl TicketSlaService {
             .bind(now)
             .bind(tenant_id)
             .bind(policy_id)
-            .execute(&self.pool)
+            .execute(&mut scope)
             .await?;
         }
 
@@ -598,9 +612,10 @@ impl TicketSlaService {
         .bind(now)
         .bind(policy_id)
         .bind(tenant_id)
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await?;
 
+        scope.commit().await?;
         self.get_policy(Some(tenant_id), policy_id, locale).await
     }
 
@@ -609,6 +624,7 @@ impl TicketSlaService {
         tenant_id: Uuid,
         policy_id: Uuid,
     ) -> Result<bool, sqlx::Error> {
+        let mut scope = self.db.scope().await?;
         let result = sqlx::query(
             r#"
             UPDATE ticket.core_ticket_sla_policies SET deleted_at = NOW()
@@ -617,9 +633,10 @@ impl TicketSlaService {
         )
         .bind(policy_id)
         .bind(tenant_id)
-        .execute(&self.pool)
+        .execute(&mut scope)
         .await?;
 
+        scope.commit().await?;
         Ok(result.rows_affected() > 0)
     }
 
@@ -628,6 +645,7 @@ impl TicketSlaService {
         &self,
         tenant_id: Option<Uuid>,
     ) -> Result<TicketSlaStats, sqlx::Error> {
+        let mut scope = self.db.scope_read().await?;
         let total: i64 = sqlx::query_scalar(
             r#"
             SELECT COUNT(*) FROM ticket.core_tickets
@@ -636,7 +654,7 @@ impl TicketSlaService {
             "#,
         )
         .bind(tenant_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let breached: i64 = sqlx::query_scalar(
@@ -648,7 +666,7 @@ impl TicketSlaService {
             "#,
         )
         .bind(tenant_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let on_time = total - breached;
@@ -666,7 +684,7 @@ impl TicketSlaService {
             "#,
         )
         .bind(tenant_id)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut scope)
         .await?;
 
         let avg_response: Option<f64> = sqlx::query_scalar(
@@ -682,7 +700,7 @@ impl TicketSlaService {
             "#,
         )
         .bind(tenant_id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(&mut scope)
         .await?
         .flatten();
 
@@ -699,7 +717,7 @@ impl TicketSlaService {
             "#,
         )
         .bind(tenant_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let by_severity: Vec<SlaSeverityStat> = severity_rows
@@ -733,7 +751,7 @@ impl TicketSlaService {
             "#,
         )
         .bind(tenant_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let by_type: Vec<SlaTypeStat> = type_rows
@@ -769,7 +787,7 @@ impl TicketSlaService {
             "#,
         )
         .bind(tenant_id)
-        .fetch_all(&self.pool)
+        .fetch_all(&mut scope)
         .await?;
 
         let breach_trend: Vec<SlaBreachTrendItem> = trend_rows
@@ -781,6 +799,7 @@ impl TicketSlaService {
             })
             .collect();
 
+        scope.commit().await?;
         Ok(TicketSlaStats {
             total,
             on_time,

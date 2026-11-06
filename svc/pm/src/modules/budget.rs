@@ -1,15 +1,15 @@
 use axum::{
-    extract::{Extension, Path},
+    extract::{Extension, Path, State},
     http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::models::budget::{
@@ -27,7 +27,7 @@ type RlsTxnArc =
 /// 登记/更新预算项前校验「预算项合计 ≤ 预算总额」，超支即 422 拒绝并回显口径。
 /// 预算不存在（含跨租户不可见）→ 404。incoming 为 None（部分更新未涉及金额）时放行。
 async fn assert_budget_not_exceeded(
-    conn: &mut sqlx::PgConnection,
+    conn: &mut topems_shared_db::scope::ScopedTxn<'_>,
     budget_id: Uuid,
     exclude_item_id: Option<Uuid>,
     incoming: Option<Decimal>,
@@ -122,7 +122,7 @@ pub fn calculate_spi(ev: f64, pv: f64) -> f64 {
     ev / pv
 }
 
-pub fn create_routes(pool: PgPool) -> Router {
+pub fn create_routes(db: Db) -> Router {
     Router::new()
         .route(
             "/projects/{project_id}/budgets",
@@ -139,7 +139,7 @@ pub fn create_routes(pool: PgPool) -> Router {
             "/budgets/{id}/items/{item_id}",
             put(update_budget_item).delete(delete_budget_item),
         )
-        .with_state(pool)
+        .with_state(db)
 }
 
 #[utoipa::path(
@@ -156,6 +156,7 @@ pub fn create_routes(pool: PgPool) -> Router {
     tag = "budget"
 )]
 async fn get_project_budgets(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<Budget>> {
@@ -164,11 +165,18 @@ async fn get_project_budgets(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let budgets = sqlx::query_as::<_, Budget>(
         only_own_schema_query!("pm", "SELECT id, project_id, budget_code, budget_name, budget_type, total_amount, allocated_amount, spent_amount, remaining_amount, status, start_date, end_date, description, created_by, created_at, updated_at FROM pm.budgets WHERE project_id = $1 ORDER BY version DESC"),
     )
     .bind(project_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match budgets {
@@ -194,6 +202,7 @@ async fn get_project_budgets(
     tag = "budget"
 )]
 async fn get_budget(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Budget> {
@@ -202,9 +211,16 @@ async fn get_budget(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let budget = sqlx::query_as::<_, Budget>(only_own_schema_query!("pm", "SELECT id, project_id, budget_code, budget_name, budget_type, total_amount, allocated_amount, spent_amount, remaining_amount, status, start_date, end_date, description, created_by, created_at, updated_at FROM pm.budgets WHERE id = $1"))
         .bind(id)
-        .fetch_one(&mut **txn)
+        .fetch_one(&mut scope)
         .await;
 
     match budget {
@@ -218,6 +234,7 @@ async fn get_budget(
 }
 
 async fn create_budget(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
@@ -229,6 +246,13 @@ async fn create_budget(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -251,7 +275,7 @@ async fn create_budget(
     .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match budget {
@@ -292,6 +316,7 @@ async fn create_budget(
 }
 
 async fn update_budget(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
@@ -302,6 +327,13 @@ async fn update_budget(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"status": req.status, "total_amount": req.total_amount}));
@@ -321,7 +353,7 @@ async fn update_budget(
     .bind(req.status)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match budget {
@@ -391,6 +423,7 @@ async fn update_budget(
     tag = "budget"
 )]
 async fn submit_budget(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
@@ -401,6 +434,13 @@ async fn submit_budget(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let budget = sqlx::query_as::<_, Budget>(only_own_schema_query!(
         "pm",
@@ -408,7 +448,7 @@ async fn submit_budget(
     ))
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match budget {
@@ -471,6 +511,7 @@ async fn submit_budget(
     tag = "budget"
 )]
 async fn approve_budget(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
@@ -481,6 +522,13 @@ async fn approve_budget(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let budget = sqlx::query_as::<_, Budget>(only_own_schema_query!(
         "pm",
@@ -488,7 +536,7 @@ async fn approve_budget(
     ))
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match budget {
@@ -551,6 +599,7 @@ async fn approve_budget(
     tag = "budget"
 )]
 async fn get_budget_items(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<BudgetItem>> {
@@ -559,11 +608,18 @@ async fn get_budget_items(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let items = sqlx::query_as::<_, BudgetItem>(
         only_own_schema_query!("pm", "SELECT id, budget_id, item_code, item_name, category, subcategory, budget_amount, allocated_amount, spent_amount, description, created_at, updated_at FROM pm.budget_items WHERE budget_id = $1"),
     )
     .bind(id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match items {
@@ -576,6 +632,7 @@ async fn get_budget_items(
 }
 
 async fn create_budget_item(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
@@ -587,9 +644,16 @@ async fn create_budget_item(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     // 超支硬拦截（拍板 A）：登记支出项前校验预算项合计 ≤ 预算总额
     if let Err((code, msg)) =
-        assert_budget_not_exceeded(&mut **txn, id, None, Some(req.budget_amount)).await
+        assert_budget_not_exceeded(&mut scope, id, None, Some(req.budget_amount)).await
     {
         return ApiResponse::error(code, msg.as_str());
     }
@@ -610,7 +674,7 @@ async fn create_budget_item(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match item {
@@ -637,6 +701,7 @@ async fn create_budget_item(
     tag = "budget"
 )]
 async fn update_budget_item(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
     Json(req): Json<UpdateBudgetItemRequest>,
@@ -646,9 +711,16 @@ async fn update_budget_item(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     // 超支硬拦截（拍板 A）：更新金额时校验（排除自身）预算项合计 ≤ 预算总额
     if let Err((code, msg)) =
-        assert_budget_not_exceeded(&mut **txn, id, Some(item_id), req.budget_amount).await
+        assert_budget_not_exceeded(&mut scope, id, Some(item_id), req.budget_amount).await
     {
         return ApiResponse::error(code, msg.as_str());
     }
@@ -671,7 +743,7 @@ async fn update_budget_item(
     .bind(Utc::now())
     .bind(item_id)
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match item {
@@ -685,6 +757,7 @@ async fn update_budget_item(
 }
 
 async fn delete_budget_item(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<()> {
@@ -693,13 +766,20 @@ async fn delete_budget_item(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "DELETE FROM pm.budget_items WHERE id = $1 AND budget_id = $2 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(item_id)
     .bind(id)
-    .execute(&mut **txn)
+    .execute(&mut scope)
     .await;
 
     match result {

@@ -8,10 +8,10 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_db::scope::Db;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -84,16 +84,20 @@ pub struct UpdateMapLayer {
     )
 )]
 pub async fn create_map(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateMap>,
 ) -> ApiResponse<Map> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::FactoryMapWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::FactoryMapWrite).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
 
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
-    match sqlx::query_as::<_, Map>(
+    let result = sqlx::query_as::<_, Map>(
         only_own_schema_query!("gis", r#"
         INSERT INTO gis.maps (name, code, description, map_type, projection, bounds, center, zoom_level, created_by, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -110,10 +114,13 @@ pub async fn create_map(
     .bind(&payload.zoom_level)
     .bind(claims.sub.parse::<Uuid>().ok())
     .bind(tenant_id)
-    .fetch_one(&pool)
-    .await
-    {
-        Ok(map) => ApiResponse::success(map, "创建地图成功"),
+    .fetch_one(&mut scope)
+    .await;
+    match result {
+        Ok(map) => match scope.commit().await {
+            Ok(()) => ApiResponse::success(map, "创建地图成功"),
+            Err(e) => ApiResponse::from(TopemsError::internal("提交事务失败", e)),
+        },
         Err(e) => ApiResponse::from(TopemsError::internal("创建地图失败", e)),
     }
 }
@@ -130,9 +137,13 @@ pub async fn create_map(
     )
 )]
 pub async fn list_maps(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -141,11 +152,14 @@ pub async fn list_maps(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    match sqlx::query_as::<_, Map>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM gis.maps WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"))
+    let result = sqlx::query_as::<_, Map>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM gis.maps WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"))
         .bind(tenant_opt)
-        .fetch_all(&pool)
-        .await
-    {
+        .fetch_all(&mut scope)
+        .await;
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("查询地图失败", e));
+    }
+    match result {
         Ok(maps) => ApiResponse::success(
             serde_json::json!({
                 "maps": maps,
@@ -173,10 +187,14 @@ pub async fn list_maps(
     )
 )]
 pub async fn get_map(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Map> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -185,12 +203,15 @@ pub async fn get_map(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    match sqlx::query_as::<_, Map>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM gis.maps WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"))
+    let result = sqlx::query_as::<_, Map>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM gis.maps WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"))
         .bind(id)
         .bind(tenant_opt)
-        .fetch_one(&pool)
-        .await
-    {
+        .fetch_one(&mut scope)
+        .await;
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("查询地图失败", e));
+    }
+    match result {
         Ok(map) => ApiResponse::success(map, "获取地图成功"),
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("地图未找到"),
         Err(e) => ApiResponse::from(TopemsError::internal("查询地图失败", e)),
@@ -214,29 +235,25 @@ pub async fn get_map(
     )
 )]
 pub async fn update_map(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateMap>,
 ) -> ApiResponse<Map> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::FactoryMapWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::FactoryMapWrite).await {
         return e.0;
     }
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
     };
 
-    match sqlx::query_as::<_, Map>(
+    let result = sqlx::query_as::<_, Map>(
         only_own_schema_query!("gis", r#"
         UPDATE gis.maps 
         SET name = $1, description = $2, map_type = $3, projection = $4, 
             bounds = $5, center = $6, zoom_level = $7, status = COALESCE($8, status), updated_at = NOW()
-        WHERE id = $9 AND ($10::uuid IS NULL OR tenant_id = $10)
+        WHERE id = $9 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#),
     )
@@ -249,11 +266,13 @@ pub async fn update_map(
     .bind(&payload.zoom_level)
     .bind(&payload.status)
     .bind(id)
-    .bind(tenant_opt)
-    .fetch_one(&pool)
-    .await
-    {
-        Ok(map) => ApiResponse::success(map, "更新地图成功"),
+    .fetch_one(&mut scope)
+    .await;
+    match result {
+        Ok(map) => match scope.commit().await {
+            Ok(()) => ApiResponse::success(map, "更新地图成功"),
+            Err(e) => ApiResponse::from(TopemsError::internal("提交事务失败", e)),
+        },
         Err(sqlx::Error::RowNotFound) => ApiResponse::not_found("地图未找到"),
         Err(e) => ApiResponse::from(TopemsError::internal("更新地图失败", e)),
     }
@@ -275,41 +294,52 @@ pub async fn update_map(
     )
 )]
 pub async fn delete_map(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<bool> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::FactoryMapWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::FactoryMapWrite).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
 
-    match sqlx::query(only_own_schema_query!(
+    let result = sqlx::query(only_own_schema_query!(
         "gis",
         "UPDATE gis.maps SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(id)
     .bind(tenant_id)
-    .execute(&pool)
-    .await
-    {
-        Ok(result) => {
-            if result.rows_affected() > 0 {
-                ApiResponse::success(true, "删除地图成功")
-            } else {
-                ApiResponse::not_found("地图未找到")
+    .execute(&mut scope)
+    .await;
+    match result {
+        Ok(result) => match scope.commit().await {
+            Ok(()) => {
+                if result.rows_affected() > 0 {
+                    ApiResponse::success(true, "删除地图成功")
+                } else {
+                    ApiResponse::not_found("地图未找到")
+                }
             }
-        }
+            Err(e) => ApiResponse::from(TopemsError::internal("提交事务失败", e)),
+        },
         Err(e) => ApiResponse::from(TopemsError::internal("删除地图失败", e)),
     }
 }
 
 /// 获取地图图层列表
 pub async fn list_map_layers(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(map_id): Path<Uuid>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -318,14 +348,17 @@ pub async fn list_map_layers(
             .as_deref()
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    match sqlx::query_as::<_, MapLayer>(
+    let result = sqlx::query_as::<_, MapLayer>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, layer_type, source_type, source_url, source_data, style_config, opacity, visible, z_index, min_zoom, max_zoom, properties, created_at, updated_at FROM gis.map_layers WHERE map_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY z_index DESC, created_at DESC"),
     )
     .bind(map_id)
     .bind(tenant_opt)
-    .fetch_all(&pool)
-    .await
-    {
+    .fetch_all(&mut scope)
+    .await;
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("查询图层失败", e));
+    }
+    match result {
         Ok(layers) => ApiResponse::success(
             serde_json::json!({
                 "layers": layers,
@@ -339,17 +372,21 @@ pub async fn list_map_layers(
 
 /// 添加地图图层
 pub async fn add_map_layer(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(map_id): Path<Uuid>,
     Json(payload): Json<CreateMapLayer>,
 ) -> ApiResponse<MapLayer> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::FactoryMapWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::FactoryMapWrite).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
 
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
-    match sqlx::query_as::<_, MapLayer>(only_own_schema_query!(
+    let result = sqlx::query_as::<_, MapLayer>(only_own_schema_query!(
         "gis",
         r#"
         INSERT INTO gis.map_layers (map_id, name, layer_type, source_type, source_url, source_data,
@@ -372,41 +409,51 @@ pub async fn add_map_layer(
     .bind(&payload.max_zoom)
     .bind(&payload.properties)
     .bind(tenant_id)
-    .fetch_one(&pool)
-    .await
-    {
-        Ok(layer) => ApiResponse::success(layer, "添加图层成功"),
+    .fetch_one(&mut scope)
+    .await;
+    match result {
+        Ok(layer) => match scope.commit().await {
+            Ok(()) => ApiResponse::success(layer, "添加图层成功"),
+            Err(e) => ApiResponse::from(TopemsError::internal("提交事务失败", e)),
+        },
         Err(e) => ApiResponse::from(TopemsError::internal("添加图层失败", e)),
     }
 }
 
 /// 删除地图图层
 pub async fn delete_map_layer(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path((_map_id, layer_id)): Path<(Uuid, Uuid)>,
 ) -> ApiResponse<bool> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::FactoryMapWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::FactoryMapWrite).await {
         return e.0;
     }
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_id = topems_shared_auth::get_tenant_id_from_claims(&claims);
 
-    match sqlx::query(only_own_schema_query!(
+    let result = sqlx::query(only_own_schema_query!(
         "gis",
         "DELETE FROM gis.map_layers WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(layer_id)
     .bind(tenant_id)
-    .execute(&pool)
-    .await
-    {
-        Ok(result) => {
-            if result.rows_affected() > 0 {
-                ApiResponse::success(true, "删除图层成功")
-            } else {
-                ApiResponse::not_found("图层未找到")
+    .execute(&mut scope)
+    .await;
+    match result {
+        Ok(result) => match scope.commit().await {
+            Ok(()) => {
+                if result.rows_affected() > 0 {
+                    ApiResponse::success(true, "删除图层成功")
+                } else {
+                    ApiResponse::not_found("图层未找到")
+                }
             }
-        }
+            Err(e) => ApiResponse::from(TopemsError::internal("提交事务失败", e)),
+        },
         Err(e) => ApiResponse::from(TopemsError::internal("删除图层失败", e)),
     }
 }

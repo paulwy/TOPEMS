@@ -24,13 +24,14 @@ use services::{
     QAService, RecommendationService, VectorService,
 };
 use topems_shared_ai::ai_client::{AIModelConfig, AIProviderType};
-use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
+use topems_shared_bootstrap::{
+    bootstrap_service_shared, resolve_port, run, Application, ServiceConfig,
+};
+use topems_shared_db::scope::Db;
 
 #[tokio::main]
 #[allow(clippy::expect_used)] // tokio::main 宏展开内含 runtime.build().expect()，启动失败即崩溃属预期
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "ai, public, shared"); // shared schema 已清理（2026-09-08，死表 + 历史数据，全仓零引用）
-
     let config = ServiceConfig {
         name: "topems-ai",
         port: 8013,
@@ -69,16 +70,18 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("📦 PostgreSQL + pgvector 持久化存储");
     tracing::info!("📄 PDF 文档解析支持");
 
-    // 使用 bootstrap_service 初始化通用资源（telemetry、auth_state、event_publisher）
-    let ctx = bootstrap_service(&config).await?;
+    // 连接治理 B：复用进程级共享运行时池，模块 schema 作用域由 Db 在事务内固化
+    let ctx = bootstrap_service_shared(&config).await?;
 
-    // AI 专用 Database：复用 bootstrap 的进程级池（连接治理 A，避免第二个 max=100 的池）
-    let db = Database::from_parts(ctx.db.clone(), ctx.migrate_pool.clone());
+    // AI 专用 Database：共享池 + 事务级 search_path = ai, public
+    let db = Database::from_parts(
+        Db::new(ctx.db.clone(), "ai, public"),
+        ctx.migrate_pool.clone(),
+    );
     tracing::info!("✅ 数据库连接成功");
 
     if let Err(e) =
-        event_handlers::start_event_subscribers(db.pool().clone(), ctx.event_publisher.clone())
-            .await
+        event_handlers::start_event_subscribers(ctx.db.clone(), ctx.event_publisher.clone()).await
     {
         tracing::warn!("⚠️ AI 事件订阅者启动失败: {}", e);
     }
@@ -93,8 +96,12 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("✅ 数据库表结构已就绪");
 
     // V69.3 Schema 防御：增量补齐列 + 一致性自检（DDL 走 MIGRATE_URL owner 池，失败不阻塞启动）
-    if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(db.ddl_pool()).await {
-        tracing::error!("[ai] Schema 防御检查失败: {:?}", e);
+    if let Some(ddl_pool) = db.ddl_pool() {
+        if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(ddl_pool).await {
+            tracing::error!("[ai] Schema 防御检查失败: {:?}", e);
+        }
+    } else {
+        tracing::warn!("⚠️ 未配置迁移池（migrate_pool），跳过 ai schema 防御检查");
     }
 
     // 遗留⑩/会话存储闭环：建表 DDL 已收敛至迁移链（D7 双源消除），schema 防御见上
@@ -164,7 +171,7 @@ async fn main() -> anyhow::Result<()> {
         .map_err(|_| anyhow::anyhow!("DIFY_CONFIG already initialized"))?;
 
     // 创建服务
-    let pool = db.pool().clone();
+    let shared_db = db.db().clone();
     let vector_service = VectorService::new(db);
     let file_service_url =
         std::env::var("FILE_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
@@ -277,7 +284,7 @@ async fn main() -> anyhow::Result<()> {
     // 创建应用状态
     let app_state = crate::shared::AppState {
         auth_state: ctx.auth_state.clone(),
-        pool: pool.clone(),
+        db: shared_db,
         document_service,
         vector_service,
         qa_service,
@@ -288,7 +295,7 @@ async fn main() -> anyhow::Result<()> {
         dify_service,
         workflow_orchestrator,
         event_publisher: ctx.event_publisher.clone(),
-        audit: crate::services::audit::AiAuditService::new(pool.clone()),
+        audit: crate::services::audit::AiAuditService::new(ctx.db.clone()),
         dsh_agent_orchestrator: None,
         dsh_agent_performance_monitor: Some(
             crate::dsh::agent::AgentPerformanceMonitor::with_defaults(),
@@ -300,8 +307,13 @@ async fn main() -> anyhow::Result<()> {
     };
 
     // 创建路由（routes::create_routes 处理所有中间件：auth、tenant、rate_limit、cors、prometheus、telemetry）
-    let router =
-        crate::routes::create_routes(app_state, pool, prometheus_layer, metric_handle, true);
+    let router = crate::routes::create_routes(
+        app_state,
+        ctx.db.clone(),
+        prometheus_layer,
+        metric_handle,
+        true,
+    );
 
     // 启动时自动注册到统一核心
     let core_url = std::env::var("CORE_URL").ok();

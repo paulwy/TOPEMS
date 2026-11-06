@@ -2,9 +2,10 @@ use axum::{
     extract::{Extension, Path, State},
     http::HeaderMap,
 };
-use sqlx::{PgPool, Row};
+use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use topems_shared_service_client::service_client::api::iam_api::IamApi;
 use topems_shared_service_client::TypedServiceClient;
 
@@ -72,11 +73,15 @@ async fn save_favorites(state: &AppState, headers: &HeaderMap, favorites: &[Stri
     }
 }
 
-async fn load_quick_actions(
-    pool: &PgPool,
-    state: &AppState,
-    headers: &HeaderMap,
-) -> Vec<QuickAction> {
+async fn load_quick_actions(db: &Db, state: &AppState, headers: &HeaderMap) -> Vec<QuickAction> {
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("Failed to open quick actions scope: {}, using defaults", e);
+            return default_quick_actions();
+        }
+    };
+
     let result = sqlx::query(
         r#"
         SELECT id, name, description, icon, action_type, target_url, service_code, sort_order
@@ -85,8 +90,12 @@ async fn load_quick_actions(
         ORDER BY sort_order ASC, name ASC
         "#,
     )
-    .fetch_all(pool)
+    .fetch_all(&mut scope)
     .await;
+
+    if let Err(e) = scope.commit().await {
+        tracing::warn!("Failed to commit quick actions scope: {}", e);
+    }
 
     let rows = match result {
         Ok(rows) => rows,
@@ -169,7 +178,7 @@ pub async fn get_quick_actions(
     Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<QuickAction>> {
-    let actions = load_quick_actions(&state.pool, &state, &headers).await;
+    let actions = load_quick_actions(&state.db, &state, &headers).await;
     ApiResponse::success(actions, "快捷操作列表获取成功")
 }
 
@@ -188,7 +197,7 @@ pub async fn get_favorite_actions(
     Extension(_claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> ApiResponse<Vec<QuickAction>> {
-    let actions = load_quick_actions(&state.pool, &state, &headers).await;
+    let actions = load_quick_actions(&state.db, &state, &headers).await;
     let favorites: Vec<_> = actions.into_iter().filter(|a| a.is_favorite).collect();
     ApiResponse::success(favorites, "收藏的快捷操作获取成功")
 }
@@ -212,7 +221,7 @@ pub async fn toggle_favorite_action(
     Path(id): Path<String>,
     headers: HeaderMap,
 ) -> ApiResponse<QuickAction> {
-    let mut actions = load_quick_actions(&state.pool, &state, &headers).await;
+    let mut actions = load_quick_actions(&state.db, &state, &headers).await;
 
     let mut favorites: Vec<String> = actions
         .iter()

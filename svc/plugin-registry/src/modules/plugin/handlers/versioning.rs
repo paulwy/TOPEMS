@@ -159,16 +159,29 @@ pub async fn check_plugin_updates(
     tracing::info!("[Plugin] Checking updates for plugin: {}", plugin_code);
 
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open read scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to open database scope: {}",
+                e
+            )));
+        }
+    };
     let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .bind(locale)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
 
     let plugin = match plugin {
         Some(p) => p,
-        None => return Json(CoreResponse::error("Plugin not found")),
+        None => {
+            let _ = scope.rollback().await;
+            return Json(CoreResponse::error("Plugin not found"));
+        }
     };
 
     let current_version = plugin.version.clone();
@@ -177,9 +190,11 @@ pub async fn check_plugin_updates(
         "SELECT id, plugin_id, version, release_notes, download_url, is_latest, is_stable, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
     )
     .bind(plugin.id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
+
+    let _ = scope.commit().await;
 
     let latest_version_info = latest_version.clone();
     let latest_version_str = latest_version
@@ -252,16 +267,29 @@ pub async fn rollback_plugin_version(
     );
 
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open write scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to rollback version: {}",
+                e
+            )));
+        }
+    };
     let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .bind(locale)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
 
     let plugin = match plugin {
         Some(p) => p,
-        None => return Json(CoreResponse::error("Plugin not found")),
+        None => {
+            let _ = scope.rollback().await;
+            return Json(CoreResponse::error("Plugin not found"));
+        }
     };
 
     let current_version = plugin.version.clone();
@@ -271,22 +299,24 @@ pub async fn rollback_plugin_version(
     )
     .bind(plugin.id)
     .bind(&target_version)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     .unwrap_or(None);
 
     if target_version_info.is_none() {
+        let _ = scope.rollback().await;
         return Json(CoreResponse::error("Target version not found"));
     }
 
     let result = sqlx::query("UPDATE core.core_plugins SET version = $1 WHERE id = $2")
         .bind(&target_version)
         .bind(plugin.id)
-        .execute(&state.pool)
+        .execute(&mut scope)
         .await;
 
     match result {
         Ok(_) => {
+            let _ = scope.commit().await;
             let rollback_result = RollbackResult {
                 previous_version: current_version,
                 target_version,
@@ -301,6 +331,7 @@ pub async fn rollback_plugin_version(
         }
         Err(e) => {
             tracing::error!("[Plugin] Failed to rollback version: {}", e);
+            let _ = scope.rollback().await;
             let rollback_result = RollbackResult {
                 previous_version: current_version,
                 target_version,
@@ -331,9 +362,19 @@ pub async fn check_all_updates(
     tracing::info!("[Plugin] Checking updates for all plugins");
 
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to open read scope: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to open database scope: {}",
+                e
+            )));
+        }
+    };
     let plugins: Vec<Plugin> = match sqlx::query_as("SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true")
             .bind(locale)
-            .fetch_all(&state.pool)
+            .fetch_all(&mut scope)
             .await
         {
             Ok(p) => p,
@@ -352,7 +393,7 @@ pub async fn check_all_updates(
             "SELECT id, plugin_id, version, release_notes, download_url, is_latest, is_stable, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
         )
         .bind(plugin.id)
-        .fetch_optional(&state.pool)
+        .fetch_optional(&mut scope)
         .await
         .unwrap_or(None);
 
@@ -381,6 +422,8 @@ pub async fn check_all_updates(
             update_available_at: latest_version_info.map(|v| v.created_at),
         });
     }
+
+    let _ = scope.commit().await;
 
     Json(CoreResponse::success(results, "All updates checked"))
 }

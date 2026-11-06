@@ -15,7 +15,8 @@ use axum::{
     Json,
 };
 use serde_json::{json, Value};
-use sqlx::{Pool, Postgres, Row};
+use sqlx::Row;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
@@ -47,8 +48,19 @@ pub async fn list_inspection_tasks(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<topems_shared::AuthState>,
-    State(pool): State<Pool<Postgres>>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
     let rows = match sqlx::query(
         r#"SELECT id, title, description, patrol_type, status, checked_by::text AS checked_by, checked_at, created_at
@@ -57,7 +69,7 @@ pub async fn list_inspection_tasks(
            ORDER BY created_at DESC"#,
     )
     .bind(tenant_filter(&claims))
-    .fetch_all(&pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => rows,
@@ -69,25 +81,30 @@ pub async fn list_inspection_tasks(
             );
         }
     };
-    let tasks: Vec<Value> = rows
-        .iter()
-        .map(|r| {
-            json!({
-                "id": r.get::<Uuid, _>("id"),
-                "title": r.get::<String, _>("title"),
-                "description": r.get::<Option<String>, _>("description"),
-                "type": r.get::<Option<String>, _>("patrol_type"),
-                "status": r.get::<String, _>("status"),
-                "checkedBy": r.get::<Option<String>, _>("checked_by"),
-                "checkedAt": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("checked_at"),
-                "createdAt": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+
+    let __mobile_response = {
+        let tasks: Vec<Value> = rows
+            .iter()
+            .map(|r| {
+                json!({
+                    "id": r.get::<Uuid, _>("id"),
+                    "title": r.get::<String, _>("title"),
+                    "description": r.get::<Option<String>, _>("description"),
+                    "type": r.get::<Option<String>, _>("patrol_type"),
+                    "status": r.get::<String, _>("status"),
+                    "checkedBy": r.get::<Option<String>, _>("checked_by"),
+                    "checkedAt": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("checked_at"),
+                    "createdAt": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                })
             })
-        })
-        .collect();
-    (
-        StatusCode::OK,
-        ApiResponse::success(json!(tasks), "巡检任务列表"),
-    )
+            .collect();
+        (
+            StatusCode::OK,
+            ApiResponse::success(json!(tasks), "巡检任务列表"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -104,8 +121,19 @@ pub async fn get_usage_stats(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<topems_shared::AuthState>,
-    State(pool): State<Pool<Postgres>>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
     let stats = sqlx::query(
         r#"SELECT
@@ -115,7 +143,7 @@ pub async fn get_usage_stats(
              (SELECT COUNT(*) FROM mobile.push_notifications WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid)) AS notification_count"#,
     )
     .bind(tenant_filter(&claims))
-    .fetch_one(&pool)
+    .fetch_one(&mut scope)
     .await;
     let v = match stats {
         Ok(r) => json!({
@@ -131,7 +159,10 @@ pub async fn get_usage_stats(
             json!({"modules": []})
         }
     };
-    (StatusCode::OK, ApiResponse::success(v, "使用量统计"))
+
+    let __mobile_response = { (StatusCode::OK, ApiResponse::success(v, "使用量统计")) };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -147,7 +178,7 @@ pub async fn get_usage_stats(
 pub async fn get_user_settings(
     headers: HeaderMap,
     State(auth_state): State<topems_shared::AuthState>,
-    State(_pool): State<Pool<Postgres>>,
+    State(_db): State<Db>,
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
     let settings = json!({
@@ -173,14 +204,25 @@ pub async fn get_push_config(
     headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     State(auth_state): State<topems_shared::AuthState>,
-    State(pool): State<Pool<Postgres>>,
+    State(db): State<Db>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
     let row = sqlx::query(
         r#"SELECT channel_config FROM mobile.push_config WHERE ($1::uuid IS NULL OR tenant_id = $1::uuid) LIMIT 1"#,
     )
     .bind(tenant_filter(&claims))
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
         .await;
     let v = match row {
         Ok(Some(r)) => r.get::<Value, _>("channel_config"),
@@ -193,15 +235,29 @@ pub async fn get_push_config(
             "quietHours": {"enabled": false, "start": "22:00", "end": "07:00"}
         }),
     };
-    (StatusCode::OK, ApiResponse::success(v, "推送配置"))
+
+    let __mobile_response = { (StatusCode::OK, ApiResponse::success(v, "推送配置")) };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 pub async fn update_push_config(
     headers: HeaderMap,
     State(auth_state): State<topems_shared::AuthState>,
-    State(pool): State<Pool<Postgres>>,
+    State(db): State<Db>,
     Json(payload): Json<Value>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     // push_config.user_id 为 NOT NULL，必须绑定当前登录用户，否则触发约束冲突（500 根因）。
     let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => match Uuid::parse_str(&id) {
@@ -230,7 +286,8 @@ pub async fn update_push_config(
         .and_then(|c| c.tenant_id)
         .and_then(|t| Uuid::parse_str(&t).ok())
         .unwrap_or(Uuid::nil());
-    match sqlx::query(
+    let __mobile_response = {
+        match sqlx::query(
         r#"INSERT INTO mobile.push_config (tenant_id, user_id, channel_config, updated_at)
            VALUES ($1, $2, $3, NOW())
            ON CONFLICT (tenant_id, user_id) DO UPDATE SET channel_config = EXCLUDED.channel_config, updated_at = NOW()"#,
@@ -238,7 +295,8 @@ pub async fn update_push_config(
     .bind(tenant_id)
     .bind(user_id)
     .bind(&payload)
-    .execute(&pool)
+    .execute(&mut scope)
+
     .await
     {
         Ok(_) => (
@@ -253,6 +311,9 @@ pub async fn update_push_config(
             )
         }
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -271,10 +332,21 @@ pub async fn update_push_config(
 pub async fn update_push_template(
     headers: HeaderMap,
     State(auth_state): State<topems_shared::AuthState>,
-    State(pool): State<Pool<Postgres>>,
+    State(db): State<Db>,
     Path(id): Path<Uuid>,
     Json(payload): Json<Value>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
     let name = payload.get("name").and_then(|v| v.as_str()).unwrap_or("");
     let title_template = payload
@@ -286,15 +358,15 @@ pub async fn update_push_template(
         .and_then(|v| v.as_str())
         .unwrap_or("");
     let is_active = payload.get("isActive").and_then(|v| v.as_bool());
-    let tenant_filter: Option<Uuid> = None;
-    match sqlx::query(
+    let __mobile_response = {
+        match sqlx::query(
         r#"UPDATE mobile.push_templates
            SET name = COALESCE(NULLIF($2, ''), name),
                title_template = COALESCE(NULLIF($3, ''), title_template),
                body_template = COALESCE(NULLIF($4, ''), body_template),
                is_active = COALESCE($5, is_active),
                updated_at = NOW()
-           WHERE id = $1 AND ($6::uuid IS NULL OR tenant_id = $6)
+           WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
            RETURNING id, name, notification_type, title_template, body_template, is_active, created_at"#,
     )
     .bind(id)
@@ -302,8 +374,8 @@ pub async fn update_push_template(
     .bind(title_template)
     .bind(body_template)
     .bind(is_active)
-    .bind(tenant_filter)
-    .fetch_optional(&pool)
+    .fetch_optional(&mut scope)
+
     .await
     {
         Ok(Some(row)) => {
@@ -334,4 +406,7 @@ pub async fn update_push_template(
             )
         }
     }
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }

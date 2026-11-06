@@ -8,14 +8,33 @@ use sqlx::PgPool;
 /// 预置系统基础字典数据
 ///
 /// 包含：通用状态、性别、是/否、用户类型、审批状态、优先级、货币、单位等
+///
+/// **只做合并、不做删除**：二次执行时按 `code` / `(dict_type_id, code)` 走 `ON CONFLICT`，
+/// 不会清表、不会覆盖已有租户归属；4 个历史存量类（`department_type` / `education` /
+/// `marital_status` / `position_level`，见 [`super::legacy::LEGACY_DICT_TYPES`]）及其 items
+/// 必须原样保留。`legacy.rs` 的单元测试会静态断言本文件不出现删除字典行的 SQL。
+///
+/// 该函数不经过请求中间件，必须显式打开系统通道（`app.rls_system='on'`）：
+/// 紧收后的 `rls_tenant_isolation` 不再把"无租户 GUC / 全零 GUC"视为放行，
+/// 否则 seed 的读写都会被 RLS 拒绝或看不见既有行。
 pub async fn seed_dict_data(pool: &PgPool) -> Result<(), sqlx::Error> {
+    let mut tx = pool.begin().await?;
+    sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+        .execute(&mut *tx)
+        .await?;
+    sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind("00000000-0000-0000-0000-000000000001")
+        .execute(&mut *tx)
+        .await?;
+
     // 检查是否已初始化（避免重复插入）
     let count: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_dict_types WHERE category = 'system'")
-            .fetch_one(pool)
+        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_dict_types WHERE category = 'system'")
+            .fetch_one(&mut *tx)
             .await?;
 
     if count > 0 {
+        tx.rollback().await?;
         tracing::info!("字典数据已存在，跳过初始化（{} 条系统字典类型）", count);
         return Ok(());
     }
@@ -27,7 +46,7 @@ pub async fn seed_dict_data(pool: &PgPool) -> Result<(), sqlx::Error> {
     for (type_code, type_name, items) in &system_dicts {
         // 插入字典类型
         let type_id: uuid::Uuid = sqlx::query_scalar(
-            r#"INSERT INTO core_dict_types (code, name, category, description, tenant_id)
+            r#"INSERT INTO public.core_dict_types (code, name, category, description, tenant_id)
                VALUES ($1, $2, 'system', $3, '00000000-0000-0000-0000-000000000001')
                ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name
                RETURNING id"#,
@@ -35,13 +54,13 @@ pub async fn seed_dict_data(pool: &PgPool) -> Result<(), sqlx::Error> {
         .bind(type_code)
         .bind(type_name)
         .bind(format!("系统预置 - {}", type_name))
-        .fetch_one(pool)
+        .fetch_one(&mut *tx)
         .await?;
 
         // 批量插入字典项
         for (idx, (code, name, value)) in items.iter().enumerate() {
             sqlx::query(
-                r#"INSERT INTO core_dict_items (dict_type_id, code, name, value, sort_order, tenant_id)
+                r#"INSERT INTO public.core_dict_items (dict_type_id, code, name, value, sort_order, tenant_id)
                    VALUES ($1, $2, $3, $4, $5, '00000000-0000-0000-0000-000000000001')
                    ON CONFLICT (dict_type_id, code) DO UPDATE SET name = EXCLUDED.name, value = EXCLUDED.value"#,
             )
@@ -50,10 +69,12 @@ pub async fn seed_dict_data(pool: &PgPool) -> Result<(), sqlx::Error> {
             .bind(name)
             .bind(value)
             .bind(idx as i32)
-            .execute(pool)
+            .execute(&mut *tx)
             .await?;
         }
     }
+
+    tx.commit().await?;
 
     tracing::info!(
         "系统基础字典数据初始化完成（{} 个字典类型）",
@@ -65,7 +86,7 @@ pub async fn seed_dict_data(pool: &PgPool) -> Result<(), sqlx::Error> {
 type DictItemDef = (&'static str, &'static str, Option<&'static str>);
 type DictTypeDef = (&'static str, &'static str, &'static [DictItemDef]);
 
-fn get_system_dict_definitions() -> Vec<DictTypeDef> {
+pub(crate) fn get_system_dict_definitions() -> Vec<DictTypeDef> {
     vec![
         // 通用状态
         (

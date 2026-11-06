@@ -163,15 +163,24 @@ pub async fn list_prompt_templates(
          FROM ai.ai_prompt_templates WHERE {where_sql} ORDER BY updated_at DESC LIMIT $5 OFFSET $6"
     );
 
-    let total: i64 = match sqlx::query(sqlx::AssertSqlSafe(q_count))
-        .bind(tenant_id)
-        .bind(&search)
-        .bind(&category)
-        .bind(is_fav)
-        .fetch_one(&state.pool)
-        .await
-    {
-        Ok(row) => row.get(0),
+    let total: i64 = match state.db.scope_read().await {
+        Ok(mut scope) => {
+            match sqlx::query(sqlx::AssertSqlSafe(q_count))
+                .bind(tenant_id)
+                .bind(&search)
+                .bind(&category)
+                .bind(is_fav)
+                .fetch_one(&mut scope)
+                .await
+            {
+                Ok(row) => row.get(0),
+                Err(e) => {
+                    return Json(ApiResponse::<PromptTemplateList>::from(
+                        TopemsError::internal("获取提示词模板列表失败", e),
+                    ))
+                }
+            }
+        }
         Err(e) => {
             return Json(ApiResponse::<PromptTemplateList>::from(
                 TopemsError::internal("获取提示词模板列表失败", e),
@@ -179,31 +188,38 @@ pub async fn list_prompt_templates(
         }
     };
 
-    let items = match sqlx::query(sqlx::AssertSqlSafe(q_list))
-        .bind(tenant_id)
-        .bind(&search)
-        .bind(&category)
-        .bind(is_fav)
-        .bind(page_size)
-        .bind(offset)
-        .bind(locale)
-        .fetch_all(&state.pool)
-        .await
-    {
-        Ok(rows) => {
-            let mut out = Vec::new();
-            for row in rows {
-                match to_out(&row) {
-                    Ok(item) => out.push(item),
-                    Err(e) => {
-                        return Json(ApiResponse::<PromptTemplateList>::from(
-                            TopemsError::internal("获取提示词模板列表失败", e),
-                        ))
+    let items = match state.db.scope_read().await {
+        Ok(mut scope) => match sqlx::query(sqlx::AssertSqlSafe(q_list))
+            .bind(tenant_id)
+            .bind(&search)
+            .bind(&category)
+            .bind(is_fav)
+            .bind(page_size)
+            .bind(offset)
+            .bind(locale)
+            .fetch_all(&mut scope)
+            .await
+        {
+            Ok(rows) => {
+                let mut out = Vec::new();
+                for row in rows {
+                    match to_out(&row) {
+                        Ok(item) => out.push(item),
+                        Err(e) => {
+                            return Json(ApiResponse::<PromptTemplateList>::from(
+                                TopemsError::internal("获取提示词模板列表失败", e),
+                            ))
+                        }
                     }
                 }
+                out
             }
-            out
-        }
+            Err(e) => {
+                return Json(ApiResponse::<PromptTemplateList>::from(
+                    TopemsError::internal("获取提示词模板列表失败", e),
+                ))
+            }
+        },
         Err(e) => {
             return Json(ApiResponse::<PromptTemplateList>::from(
                 TopemsError::internal("获取提示词模板列表失败", e),
@@ -249,6 +265,14 @@ pub async fn get_prompt_template(
 ) -> Json<ApiResponse<PromptTemplateOut>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let locale = Locale::from_headers(&headers).as_sql();
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(ApiResponse::<PromptTemplateOut>::from(
+                TopemsError::internal("获取提示词模板失败", e),
+            ))
+        }
+    };
     match sqlx::query(
         "SELECT id,
                 CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
@@ -258,7 +282,7 @@ pub async fn get_prompt_template(
     .bind(id)
     .bind(tenant_id)
     .bind(locale)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(row)) => match to_out(&row) {
@@ -277,7 +301,15 @@ pub async fn create_prompt_template(
     Json(payload): Json<PromptTemplatePayload>,
 ) -> Json<ApiResponse<PromptTemplateOut>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match sqlx::query(
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(ApiResponse::<PromptTemplateOut>::from(
+                TopemsError::internal("创建提示词模板失败", e),
+            ))
+        }
+    };
+    let result = sqlx::query(
         "INSERT INTO ai.ai_prompt_templates (tenant_id, name, description, category, fields, prompt_template)
          VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING id, name, description, category, fields, prompt_template, is_favorite, usage_count::bigint, created_at, updated_at",
@@ -288,14 +320,19 @@ pub async fn create_prompt_template(
     .bind(&payload.category)
     .bind(&payload.fields)
     .bind(&payload.prompt_template)
-    .fetch_one(&state.pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    let _ = scope.commit().await;
+    match result {
         Ok(row) => match to_out(&row) {
             Ok(item) => Json(ApiResponse::success(item, "Created")),
-            Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(TopemsError::internal("创建提示词模板失败", e))),
+            Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(
+                TopemsError::internal("创建提示词模板失败", e),
+            )),
         },
-        Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(TopemsError::internal("创建提示词模板失败", e))),
+        Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(
+            TopemsError::internal("创建提示词模板失败", e),
+        )),
     }
 }
 
@@ -307,7 +344,15 @@ pub async fn update_prompt_template(
     Json(payload): Json<PromptTemplatePayload>,
 ) -> Json<ApiResponse<PromptTemplateOut>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match sqlx::query(
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(ApiResponse::<PromptTemplateOut>::from(
+                TopemsError::internal("更新提示词模板失败", e),
+            ))
+        }
+    };
+    let result = sqlx::query(
         "UPDATE ai.ai_prompt_templates SET
             name = $3, description = $4, category = $5, fields = $6, prompt_template = $7, updated_at = NOW()
          WHERE id = $1 AND (tenant_id IS NULL OR tenant_id = $2)
@@ -320,15 +365,20 @@ pub async fn update_prompt_template(
     .bind(&payload.category)
     .bind(&payload.fields)
     .bind(&payload.prompt_template)
-    .fetch_optional(&state.pool)
-    .await
-    {
+    .fetch_optional(&mut scope)
+    .await;
+    let _ = scope.commit().await;
+    match result {
         Ok(Some(row)) => match to_out(&row) {
             Ok(item) => Json(ApiResponse::success(item, "Success")),
-            Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(TopemsError::internal("更新提示词模板失败", e))),
+            Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(
+                TopemsError::internal("更新提示词模板失败", e),
+            )),
         },
         Ok(None) => Json(ApiResponse::<PromptTemplateOut>::not_found("模板不存在")),
-        Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(TopemsError::internal("更新提示词模板失败", e))),
+        Err(e) => Json(ApiResponse::<PromptTemplateOut>::from(
+            TopemsError::internal("更新提示词模板失败", e),
+        )),
     }
 }
 
@@ -339,17 +389,30 @@ pub async fn delete_prompt_template(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<String>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match sqlx::query(
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(ApiResponse::<String>::from(TopemsError::internal(
+                "删除提示词模板失败",
+                e,
+            )))
+        }
+    };
+    let result = sqlx::query(
         "DELETE FROM ai.ai_prompt_templates WHERE id = $1 AND (tenant_id IS NULL OR tenant_id = $2)",
     )
     .bind(id)
     .bind(tenant_id)
-    .execute(&state.pool)
-    .await
-    {
+    .execute(&mut scope)
+    .await;
+    let _ = scope.commit().await;
+    match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(id.to_string(), "Success")),
         Ok(_) => Json(ApiResponse::<String>::not_found("模板不存在")),
-        Err(e) => Json(ApiResponse::<String>::from(TopemsError::internal("删除提示词模板失败", e))),
+        Err(e) => Json(ApiResponse::<String>::from(TopemsError::internal(
+            "删除提示词模板失败",
+            e,
+        ))),
     }
 }
 
@@ -373,16 +436,26 @@ pub async fn toggle_prompt_favorite(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<FavoriteResult>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match sqlx::query(
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(ApiResponse::<FavoriteResult>::from(TopemsError::internal(
+                "切换提示词收藏失败",
+                e,
+            )))
+        }
+    };
+    let result = sqlx::query(
         "UPDATE ai.ai_prompt_templates SET is_favorite = NOT is_favorite, updated_at = NOW()
          WHERE id = $1 AND (tenant_id IS NULL OR tenant_id = $2)
          RETURNING id, is_favorite",
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
-    .await
-    {
+    .fetch_optional(&mut scope)
+    .await;
+    let _ = scope.commit().await;
+    match result {
         Ok(Some(row)) => Json(ApiResponse::success(
             FavoriteResult {
                 id: row.try_get("id").unwrap_or(id),
@@ -414,13 +487,21 @@ pub async fn get_prompt_categories(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<PromptCategory>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(ApiResponse::<Vec<PromptCategory>>::from(
+                TopemsError::internal("获取提示词分类失败", e),
+            ))
+        }
+    };
     match sqlx::query(
         "SELECT category, COUNT(*) AS count FROM ai.ai_prompt_templates
          WHERE (tenant_id IS NULL OR tenant_id = $1)
          GROUP BY category ORDER BY count DESC",
     )
     .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(rows) => {
@@ -461,6 +542,15 @@ pub async fn use_prompt_template(
     Json(payload): Json<UsePromptRequest>,
 ) -> Json<ApiResponse<UsePromptResult>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.db.scope().await {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(ApiResponse::<UsePromptResult>::from(TopemsError::internal(
+                "使用提示词模板失败",
+                e,
+            )))
+        }
+    };
     let template = match sqlx::query(
         "UPDATE ai.ai_prompt_templates SET usage_count = usage_count + 1, updated_at = NOW()
          WHERE id = $1 AND (tenant_id IS NULL OR tenant_id = $2)
@@ -468,7 +558,7 @@ pub async fn use_prompt_template(
     )
     .bind(id)
     .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(Some(row)) => row
@@ -482,6 +572,7 @@ pub async fn use_prompt_template(
             )))
         }
     };
+    let _ = scope.commit().await;
 
     // 变量替换：{name} 与 {{name}} 两种占位形式
     let mut formatted = template;

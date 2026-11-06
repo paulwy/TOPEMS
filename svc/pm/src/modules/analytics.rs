@@ -2,10 +2,14 @@
 //! 提供项目创建趋势等聚合查询
 //! 路径前缀: /pm/analytics
 
-use axum::{extract::Extension, routing::get, Router};
+use axum::{
+    extract::{Extension, State},
+    routing::get,
+    Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
-use sqlx::PgPool;
+use topems_shared_db::scope::Db;
 
 use topems_shared_auth::auth::Claims;
 fn get_tenant_id(claims: &Claims) -> Uuid {
@@ -49,6 +53,7 @@ pub struct ProjectStatusItem {
     tag = "analytics"
 )]
 pub async fn get_project_trend(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(_claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ProjectTrendItem>> {
@@ -56,6 +61,13 @@ pub async fn get_project_trend(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
 
     tracing::info!("获取PM项目创建趋势数据");
@@ -75,7 +87,7 @@ pub async fn get_project_trend(
          ) p ON dates.date = p.date
          ORDER BY dates.date"
     )
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -103,6 +115,7 @@ pub async fn get_project_trend(
 )]
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_project_status(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<Vec<ProjectStatusItem>> {
@@ -110,6 +123,13 @@ pub async fn get_project_status(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
 
     tracing::info!("获取PM项目状态分布");
@@ -119,7 +139,7 @@ pub async fn get_project_status(
         "SELECT COUNT(*) FROM pm.projects WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)",
     )
     .bind(tenant_uuid)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await
     .unwrap_or(0);
 
@@ -131,7 +151,7 @@ pub async fn get_project_status(
          ORDER BY count DESC",
     )
     .bind(tenant_uuid)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await
     .unwrap_or_default();
 
@@ -157,7 +177,7 @@ pub async fn get_project_status(
 
 // ===== 路由注册 =====
 
-pub fn create_routes(db: PgPool) -> Router {
+pub fn create_routes(db: Db) -> Router {
     Router::new()
         .route("/analytics/project-trend", get(get_project_trend))
         .route("/analytics/project-status", get(get_project_status))

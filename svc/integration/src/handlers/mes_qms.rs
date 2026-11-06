@@ -21,6 +21,9 @@ use topems_shared_auth::get_tenant_id_from_claims;
 pub async fn list_mes_qms_sync_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Query(query): Query<HashMap<String, String>>,
 ) -> ApiResponse<Vec<mes_qms_integration::MesQmsSync>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -32,13 +35,20 @@ pub async fn list_mes_qms_sync_api(
         .and_then(|s| s.parse::<i64>().ok())
         .unwrap_or(100);
 
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match mes_qms_integration::list_mes_qms_sync(
-        &state.pool,
-        tenant_id,
-        sync_type,
-        direction,
-        status,
-        limit,
+        &mut scope, tenant_id, sync_type, direction, status, limit,
     )
     .await
     {
@@ -65,9 +75,24 @@ pub async fn list_mes_qms_sync_api(
 )]
 pub async fn get_mes_qms_sync_api(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
-    match mes_qms_integration::get_mes_qms_sync(&state.pool, id).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
+    match mes_qms_integration::get_mes_qms_sync(&mut scope, id).await {
         Ok(Some(sync)) => ApiResponse::success(sync, "MES↔QMS sync found"),
         Ok(None) => ApiResponse::not_found("MES↔QMS sync not found"),
         Err(e) => {
@@ -88,8 +113,23 @@ pub async fn get_mes_qms_sync_api(
 )]
 pub async fn get_mes_qms_stats_api(
     State(state): State<AppState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
 ) -> ApiResponse<mes_qms_integration::SyncStats> {
-    match mes_qms_integration::get_mes_qms_sync_stats(&state.pool).await {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
+    match mes_qms_integration::get_mes_qms_sync_stats(&mut scope).await {
         Ok(stats) => ApiResponse::success(stats, "MES↔QMS sync stats retrieved successfully"),
         Err(e) => {
             tracing::error!("Failed to fetch MES↔QMS stats: {}", e);
@@ -112,11 +152,26 @@ pub async fn get_mes_qms_stats_api(
 pub async fn trigger_qms_inspection_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<mes_qms_integration::TriggerInspectionRequest>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match mes_qms_integration::trigger_qms_inspection(
-        &state.pool,
+        &mut scope,
         tenant_id,
         &state.mes_url,
         &state.qms_url,
@@ -145,11 +200,26 @@ pub async fn trigger_qms_inspection_api(
 pub async fn sync_quality_result_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<mes_qms_integration::SyncQualityResultRequest>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match mes_qms_integration::sync_quality_result_to_mes(
-        &state.pool,
+        &mut scope,
         tenant_id,
         &state.mes_url,
         &state.qms_url,
@@ -181,11 +251,26 @@ pub async fn sync_quality_result_api(
 pub async fn sync_trace_chain_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<mes_qms_integration::TraceChainSyncRequest>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match mes_qms_integration::sync_trace_chain_data(
-        &state.pool,
+        &mut scope,
         tenant_id,
         &state.mes_url,
         &state.qms_url,
@@ -214,11 +299,26 @@ pub async fn sync_trace_chain_api(
 pub async fn defect_handling_api(
     State(state): State<AppState>,
     Extension(claims): Extension<topems_shared_auth::auth::Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
     Json(req): Json<mes_qms_integration::DefectHandlingRequest>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+    };
+    let mut scope = match state.db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("建立作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("数据库事务不可用".to_string()));
+        }
+    };
+
     match mes_qms_integration::handle_defect_handling(
-        &state.pool,
+        &mut scope,
         tenant_id,
         &state.mes_url,
         &state.qms_url,
@@ -254,7 +354,7 @@ pub async fn retry_mes_qms_sync_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<mes_qms_integration::MesQmsSync> {
-    match mes_qms_integration::retry_failed_sync(&state.pool, &state.mes_url, &state.qms_url, id)
+    match mes_qms_integration::retry_failed_sync(&state.db, &state.mes_url, &state.qms_url, id)
         .await
     {
         Ok(sync) => ApiResponse::success(sync, "MES↔QMS sync retried successfully"),

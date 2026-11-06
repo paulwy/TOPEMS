@@ -5,11 +5,11 @@ use axum::{
 };
 use csv::ReaderBuilder;
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImportRequest {
@@ -28,9 +28,13 @@ pub struct ImportRequest {
     tag = "import-export"
 )]
 pub async fn import_data(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<ImportRequest>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let mut results: Vec<String> = Vec::new();
     let mut errors: Vec<String> = Vec::new();
 
@@ -41,7 +45,7 @@ pub async fn import_data(
                 match result {
                     Ok(record) => {
                         let record: DeviceLocationRecord = record;
-                        if let Err(e) = insert_device_location(&pool, &record).await {
+                        if let Err(e) = insert_device_location(&mut scope, &record).await {
                             errors.push(format!("第{}行: {}", i + 2, e));
                         } else {
                             results.push(format!("第{}行: 成功", i + 2));
@@ -59,7 +63,7 @@ pub async fn import_data(
                 match result {
                     Ok(record) => {
                         let record: PipelineRecord = record;
-                        if let Err(e) = insert_pipeline(&pool, &record).await {
+                        if let Err(e) = insert_pipeline(&mut scope, &record).await {
                             errors.push(format!("第{}行: {}", i + 2, e));
                         } else {
                             results.push(format!("第{}行: 成功", i + 2));
@@ -77,7 +81,7 @@ pub async fn import_data(
                 match result {
                     Ok(record) => {
                         let record: WarehouseRecord = record;
-                        if let Err(e) = insert_warehouse_location(&pool, &record).await {
+                        if let Err(e) = insert_warehouse_location(&mut scope, &record).await {
                             errors.push(format!("第{}行: {}", i + 2, e));
                         } else {
                             results.push(format!("第{}行: 成功", i + 2));
@@ -94,6 +98,9 @@ pub async fn import_data(
         }
     }
 
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
     ApiResponse::success(
         serde_json::json!({
             "success_count": results.len(),
@@ -116,7 +123,7 @@ struct DeviceLocationRecord {
 }
 
 async fn insert_device_location(
-    pool: &PgPool,
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
     record: &DeviceLocationRecord,
 ) -> Result<(), TopemsError> {
     let position: serde_json::Value = serde_json::from_str(&record.position)
@@ -136,7 +143,7 @@ async fn insert_device_location(
     .bind(status)
     .bind(&record.description)
     .bind(sqlx::types::Uuid::nil())
-    .execute(pool)
+    .execute(scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("插入失败: {}", e)))?;
 
@@ -153,7 +160,10 @@ struct PipelineRecord {
     description: Option<String>,
 }
 
-async fn insert_pipeline(pool: &PgPool, record: &PipelineRecord) -> Result<(), TopemsError> {
+async fn insert_pipeline(
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
+    record: &PipelineRecord,
+) -> Result<(), TopemsError> {
     let path: serde_json::Value = serde_json::from_str(&record.path)
         .map_err(|e| TopemsError::ValidationFailed(format!("路径解析失败: {}", e)))?;
     let status = record.status.as_deref().unwrap_or("active");
@@ -172,7 +182,7 @@ async fn insert_pipeline(pool: &PgPool, record: &PipelineRecord) -> Result<(), T
     .bind(status)
     .bind(&record.description)
     .bind(sqlx::types::Uuid::nil())
-    .execute(pool)
+    .execute(scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("插入失败: {}", e)))?;
 
@@ -189,7 +199,7 @@ struct WarehouseRecord {
 }
 
 async fn insert_warehouse_location(
-    pool: &PgPool,
+    scope: &mut topems_shared_db::scope::ScopedTxn<'_>,
     record: &WarehouseRecord,
 ) -> Result<(), TopemsError> {
     let position: serde_json::Value = serde_json::from_str(&record.position)
@@ -209,7 +219,7 @@ async fn insert_warehouse_location(
     .bind(status)
     .bind(&record.description)
     .bind(sqlx::types::Uuid::nil())
-    .execute(pool)
+    .execute(scope)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("插入失败: {}", e)))?;
 
@@ -227,9 +237,13 @@ async fn insert_warehouse_location(
     tag = "import-export"
 )]
 pub async fn export_geojson(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
+    let mut scope = match db.scope_read().await {
+        Ok(s) => s,
+        Err(e) => return ApiResponse::from(TopemsError::internal("数据库连接失败", e)),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -243,7 +257,7 @@ pub async fn export_geojson(
 
     if let Ok(devices) = sqlx::query_as::<_, DeviceLocation>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"))
         .bind(tenant_opt)
-        .fetch_all(&pool)
+        .fetch_all(&mut scope)
         .await
     {
         for device in devices {
@@ -263,7 +277,7 @@ pub async fn export_geojson(
 
     if let Ok(pipelines) = sqlx::query_as::<_, Pipeline>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines WHERE ($1::uuid IS NULL OR tenant_id = $1)"))
         .bind(tenant_opt)
-        .fetch_all(&pool)
+        .fetch_all(&mut scope)
         .await
     {
         for pipeline in pipelines {
@@ -284,7 +298,7 @@ pub async fn export_geojson(
     if let Ok(warehouses) =
         sqlx::query_as::<_, WarehouseLocation>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"))
             .bind(tenant_opt)
-            .fetch_all(&pool)
+            .fetch_all(&mut scope)
             .await
     {
         for warehouse in warehouses {
@@ -304,7 +318,7 @@ pub async fn export_geojson(
 
     if let Ok(locations) = sqlx::query_as::<_, BusinessLocation>(only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"))
         .bind(tenant_opt)
-        .fetch_all(&pool)
+        .fetch_all(&mut scope)
         .await
     {
         for location in locations {
@@ -328,10 +342,13 @@ pub async fn export_geojson(
         "features": features
     });
 
+    if let Err(e) = scope.commit().await {
+        return ApiResponse::from(TopemsError::internal("事务提交失败", e));
+    }
     ApiResponse::success(geojson, "导出GeoJSON成功")
 }
 
-pub fn create_routes() -> Router<PgPool> {
+pub fn create_routes() -> Router<Db> {
     Router::new()
         .route("/import", axum::routing::post(import_data))
         .route("/geojson/export", axum::routing::get(export_geojson))

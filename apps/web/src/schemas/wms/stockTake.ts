@@ -13,6 +13,9 @@ export const stockTakeSchema: EntitySchema = {
     resource: 'stockTakes',
   },
 
+  // 批 17：写权限资源前缀（API 资源名 → DB 资源名语义映射）
+  permissionResource: 'wms:stocktake',
+
   fields: [
     {
       name: 'stock_take_number',

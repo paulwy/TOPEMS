@@ -25,6 +25,7 @@ pub mod task;
 
 use axum::{extract::Extension, Router};
 use std::sync::Arc;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
 use topems_shared_service_client::TypedServiceClient;
@@ -32,40 +33,39 @@ use topems_shared_service_client::TypedServiceClient;
 use crate::services::audit::PmAuditService;
 
 pub fn create_routes(
-    pool: sqlx::PgPool,
+    db: Db,
+    audit_pool: sqlx::PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
     workflow_client: TypedServiceClient<WorkflowApi>,
 ) -> Router {
-    let audit_service = PmAuditService::new(pool.clone());
+    let audit_service = PmAuditService::new(audit_pool.clone());
     Router::new()
-        .merge(project::create_routes(
-            pool.clone(),
-            event_publisher.clone(),
-        ))
-        .merge(project_phase::create_routes(pool.clone()))
-        .merge(project_milestone::create_routes(pool.clone()))
-        .merge(project_member::create_routes(pool.clone()))
-        .merge(project_resource::create_routes(pool.clone()))
-        .merge(project_expense::create_routes(pool.clone()))
-        .merge(project_benefit::create_routes(pool.clone()))
+        .merge(project::create_routes(db.clone(), event_publisher.clone()))
+        .merge(project_phase::create_routes(db.clone()))
+        .merge(project_milestone::create_routes(db.clone()))
+        .merge(project_member::create_routes(db.clone()))
+        .merge(project_resource::create_routes(db.clone()))
+        .merge(project_expense::create_routes(db.clone()))
+        .merge(project_benefit::create_routes(db.clone()))
         .merge(project_approval::create_routes(
-            pool.clone(),
+            db.clone(),
+            audit_pool.clone(),
             workflow_client,
         ))
-        .merge(project_type_config::create_routes(pool.clone()))
-        .merge(service_integration::create_routes(pool.clone()))
-        .merge(contract::create_routes(pool.clone()))
-        .merge(budget::create_routes(pool.clone()))
-        .merge(risk::create_routes(pool.clone()))
-        .merge(quality::create_routes(pool.clone()))
-        .merge(acceptance::create_routes(pool.clone()))
-        .merge(settlement::create_routes(pool.clone(), event_publisher))
-        .merge(document::create_routes(pool.clone()))
-        .merge(report::create_routes(pool.clone()))
-        .merge(notification::create_routes(pool.clone()))
-        .merge(task::create_routes(pool.clone()))
-        .merge(statistics::create_routes(pool.clone()))
-        .merge(analytics::create_routes(pool))
+        .merge(project_type_config::create_routes(db.clone()))
+        .merge(service_integration::create_routes(db.clone()))
+        .merge(contract::create_routes(db.clone()))
+        .merge(budget::create_routes(db.clone()))
+        .merge(risk::create_routes(db.clone()))
+        .merge(quality::create_routes(db.clone()))
+        .merge(acceptance::create_routes(db.clone()))
+        .merge(settlement::create_routes(db.clone(), event_publisher))
+        .merge(document::create_routes(db.clone()))
+        .merge(report::create_routes(db.clone()))
+        .merge(notification::create_routes(db.clone()))
+        .merge(task::create_routes(db.clone()))
+        .merge(statistics::create_routes(db.clone()))
+        .merge(analytics::create_routes(db))
         .layer(Extension(audit_service))
 }
 
@@ -102,8 +102,9 @@ mod tests {
     #[tokio::test]
     async fn test_create_routes_returns_router() {
         let pool = make_pool();
+        let db = Db::new(pool.clone(), "pm, public, shared");
         let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default().unwrap();
-        let router = create_routes(pool, None, workflow_client);
+        let router = create_routes(db, pool, None, workflow_client);
         let _ = router;
     }
 }

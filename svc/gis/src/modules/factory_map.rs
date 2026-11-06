@@ -6,9 +6,9 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -22,7 +22,7 @@ pub struct CreateFactoryMap {
 }
 
 pub async fn list_factory_maps(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
 ) -> ApiResponse<serde_json::Value> {
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
@@ -33,7 +33,7 @@ pub async fn list_factory_maps(
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let service = TenantService::new(pool, tenant_opt);
+    let service = TenantService::new(db, tenant_opt);
 
     match service.list_factory_maps().await {
         Ok(maps) => ApiResponse::success(
@@ -48,11 +48,11 @@ pub async fn list_factory_maps(
 }
 
 pub async fn create_factory_map(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateFactoryMap>,
 ) -> ApiResponse<FactoryMap> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::FactoryMapWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::FactoryMapWrite).await {
         return e.0;
     }
 
@@ -66,7 +66,7 @@ pub async fn create_factory_map(
     };
     let tenant_id = tenant_opt
         .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
-    let service = TenantService::new(pool, Some(tenant_id));
+    let service = TenantService::new(db, Some(tenant_id));
 
     match service
         .create_factory_map(
@@ -85,7 +85,7 @@ pub async fn create_factory_map(
 }
 
 pub async fn get_factory_map(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<FactoryMap> {
@@ -97,7 +97,7 @@ pub async fn get_factory_map(
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let service = TenantService::new(pool, tenant_opt);
+    let service = TenantService::new(db, tenant_opt);
 
     match service.get_factory_map(id).await {
         Ok(Some(map)) => ApiResponse::success(map, "获取厂区地图成功"),
@@ -117,12 +117,12 @@ pub struct UpdateFactoryMap {
 }
 
 pub async fn update_factory_map(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateFactoryMap>,
 ) -> ApiResponse<FactoryMap> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::FactoryMapWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::FactoryMapWrite).await {
         return e.0;
     }
 
@@ -134,7 +134,7 @@ pub async fn update_factory_map(
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let service = TenantService::new(pool, tenant_opt);
+    let service = TenantService::new(db, tenant_opt);
 
     match service
         .update_factory_map(
@@ -155,11 +155,11 @@ pub async fn update_factory_map(
 }
 
 pub async fn delete_factory_map(
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<String> {
-    if let Err(e) = check_permission(&pool, &claims, &GisPermission::FactoryMapWrite).await {
+    if let Err(e) = check_permission(&db, &claims, &GisPermission::FactoryMapWrite).await {
         return e.0;
     }
 
@@ -171,7 +171,7 @@ pub async fn delete_factory_map(
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let service = TenantService::new(pool, tenant_opt);
+    let service = TenantService::new(db, tenant_opt);
 
     match service.delete_factory_map(id).await {
         Ok(true) => ApiResponse::success("".to_string(), "删除厂区地图成功"),

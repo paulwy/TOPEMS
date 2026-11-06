@@ -239,6 +239,9 @@ export default function EquipmentManagementPage() {
         breadcrumbs={[{ label: 'MES' }, { label: i18n.t('mes.equipment_management_page.k0') }]}
         headerContent={statsContent}
         customRowActions={customRowActions as unknown as RowAction<Record<string, unknown>>[]}
+        createPermission='mes:equipment:create'
+        editPermission='mes:equipment:update'
+        deletePermission='mes:equipment:delete'
       />
       <Dialog
         open={showMaintenanceDialog}

@@ -58,6 +58,9 @@ export const budgetSchema: EntitySchema = {
     resource: 'budgets',
   },
 
+  // 批 17：写权限资源前缀（API 资源名 → DB 资源名语义映射）
+  permissionResource: 'erp:budget',
+
   fields: [
     {
       name: 'budget_type',

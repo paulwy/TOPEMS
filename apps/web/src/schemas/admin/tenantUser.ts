@@ -101,6 +101,9 @@ export const tenantUserSchema: EntitySchema = {
     resource: 'tenantUsers',
   },
 
+  // 批 19：写权限资源前缀（租户成员改角色/移除，打 unified-core /tenant/{id}/users）
+  permissionResource: 'tenant:member',
+
   fields: [
     {
       name: 'id',

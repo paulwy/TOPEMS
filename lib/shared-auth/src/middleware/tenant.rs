@@ -12,40 +12,9 @@ use uuid::Uuid;
 
 /// 请求级 RLS 事务句柄：由 `tenant_middleware` 创建并挂到请求扩展上，
 /// handler 通过 `Extension(txn_arc)` 取出，在**同一条连接**上执行带 `app.tenant_id`
-/// GUC 的查询。同时该句柄会被放进 task-local（见 [`crate::scoped_pool`]），
-/// 让 `ScopedPool` 的查询直接复用同一事务。
-pub type RlsTxnCell = crate::scoped_pool::ScopedTxnCell;
-
-fn internal_error(message: &str) -> Response {
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        [(header::CONTENT_TYPE, "application/json")],
-        format!(r#"{{"success":false,"message":"{message}","code":500}}"#),
-    )
-        .into_response()
-}
-
-/// 开启请求事务并写入租户 GUC。失败即返回 500（fail-closed），
-/// 不再以"无上下文"继续执行 handler。
-async fn begin_scoped_txn(pool: &PgPool, tenant: &str) -> Result<RlsTxnCell, Response> {
-    let mut txn = match pool.begin().await {
-        Ok(t) => t,
-        Err(e) => {
-            tracing::error!("Failed to begin RLS txn: {}", e);
-            return Err(internal_error("事务开启失败"));
-        }
-    };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-        .bind(tenant)
-        .execute(&mut *txn)
-        .await
-    {
-        tracing::error!("Failed to set RLS context: {}", e);
-        // txn 随 Result 返回的被丢弃 → ROLLBACK，连接不带着半初始化状态归还。
-        return Err(internal_error("租户上下文设置失败"));
-    }
-    Ok(std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn))))
-}
+/// GUC 的查询。
+pub type RlsTxnCell =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
 /// 请求收尾统一提交。
 ///
@@ -193,30 +162,42 @@ pub fn tenant_middleware() -> impl Fn(
 
             // 服务身份（service token）与超管会话豁免租户上下文：服务间调用是全局
             // 基础设施，无租户维度（service token 不携带 tenant_id）；超管亦无
-            // tenant_id。两者都将租户上下文固定为 nil UUID —— 配合 RLS 策略中的
-            // `OR current = nil` 豁免条件，超管/服务间调用在受限 DB 用户下仍可全量
-            // 访问（与 owner 绕过行为一致），而普通用户请求维持租户隔离。
+            // tenant_id。两者都将租户上下文固定为 nil UUID，并打开显式系统通道
+            // `app.rls_system='on'` —— 新策略只认这一开关做全量放行，不再把
+            // NULL/空/`0` 的租户 GUC 当作放行条件；普通租户请求维持租户隔离。
             if is_service_claims(claims) || claims.is_superuser {
                 tracing::debug!(
                     "service claims: set nil tenant context for {}",
                     claims.username
                 );
-                let nil = Uuid::nil().to_string();
-                let txn_cell = match begin_scoped_txn(&pool, &nil).await {
-                    Ok(c) => c,
-                    Err(resp) => return resp,
+                let mut txn = match pool.begin().await {
+                    Ok(t) => t,
+                    Err(e) => {
+                        tracing::error!("Failed to begin RLS txn: {}", e);
+                        return next.run(req).await;
+                    }
                 };
+                if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+                    .bind(Uuid::nil().to_string())
+                    .execute(&mut *txn)
+                    .await
+                {
+                    tracing::error!("Failed to set nil RLS context: {}", e);
+                }
+                if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'on', true)")
+                    .execute(&mut *txn)
+                    .await
+                {
+                    tracing::error!("Failed to enable RLS system channel: {}", e);
+                }
                 let mut req = req;
+                let txn_cell: RlsTxnCell = std::sync::Arc::new(tokio::sync::Mutex::new(Some(txn)));
                 req.extensions_mut().insert(txn_cell.clone());
                 req.extensions_mut().insert(TenantContext {
                     tenant_id: Uuid::nil(),
                     user_id: Uuid::nil(),
                 });
-                let ctx = crate::scoped_pool::ScopedCtx {
-                    txn: txn_cell.clone(),
-                    tenant: nil,
-                };
-                let resp = crate::scoped_pool::scope(ctx, next.run(req)).await;
+                let resp = next.run(req).await;
                 return finish_response(resp, txn_cell).await;
             }
 
@@ -248,19 +229,14 @@ pub fn tenant_middleware() -> impl Fn(
                 Ok(t) => t,
                 Err(e) => {
                     tracing::error!("Failed to begin RLS txn: {}", e);
-                    return internal_error("事务开启失败");
+                    return next.run(req).await;
                 }
             };
-            // superuser 会话：RLS 使用 nil 租户（配合策略零值豁免条件全量可见），
-            // TenantContext 保留实际租户供业务过滤使用
-            let rls_tenant = if claims.is_superuser {
-                Uuid::nil()
-            } else {
-                tenant_id
-            };
-            let rls_tenant_str = rls_tenant.to_string();
+            // 普通租户请求：RLS 使用 claims 中的真实租户；超管/service 已在上面
+            // 的系统通道分支返回，不会走到这里。
+            let rls_tenant = tenant_id;
             match sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
-                .bind(&rls_tenant_str)
+                .bind(rls_tenant.to_string())
                 .execute(&mut *txn)
                 .await
             {
@@ -269,10 +245,15 @@ pub fn tenant_middleware() -> impl Fn(
                     tenant_id,
                     rls_tenant
                 ),
-                Err(e) => {
-                    tracing::error!("Failed to set RLS context: {}", e);
-                    return internal_error("租户上下文设置失败");
-                }
+                Err(e) => tracing::error!("Failed to set RLS context: {}", e),
+            }
+            // 普通租户请求显式关闭系统通道：即使连接上有残留会话级开关，
+            // 也不会把本请求提升为跨租户放行。
+            if let Err(e) = sqlx::query("SELECT set_config('app.rls_system', 'off', true)")
+                .execute(&mut *txn)
+                .await
+            {
+                tracing::error!("Failed to disable RLS system channel: {}", e);
             }
 
             let user_id = match claims.user_id() {
@@ -293,11 +274,7 @@ pub fn tenant_middleware() -> impl Fn(
             req.extensions_mut()
                 .insert(TenantContext { tenant_id, user_id });
 
-            let ctx = crate::scoped_pool::ScopedCtx {
-                txn: txn_cell.clone(),
-                tenant: rls_tenant_str,
-            };
-            let resp = crate::scoped_pool::scope(ctx, next.run(req)).await;
+            let resp = next.run(req).await;
             finish_response(resp, txn_cell).await
         })
     }

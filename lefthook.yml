@@ -337,6 +337,16 @@ pre-commit:
         [ -z "$STAGED" ] && exit 0
         node scripts/ci/check-schema-prefix.mjs --changed-only
 
+    # [Gate SPX] search_path 自设语句门禁：业务代码禁止 SQL 内 SET search_path /
+    # set_config('search_path', ...)（作用域统一由 Db 的事务级 SET LOCAL 注入）。
+    # 既存违规按 scripts/ci/search-path-baseline.json 放行；新增阻断。
+    search-path:
+      tags: database rust schema
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$|^scripts/ci/check-search-path\.mjs$|^scripts/ci/search-path-baseline\.json$' || true)
+        [ -z "$STAGED" ] && exit 0
+        node scripts/ci/check-search-path.mjs --changed-only
+
     # [Gate PA] 绕过池调用门禁：svc/ 下禁止直接 pool.acquire（白名单带 reason）
     pool-acquire:
       tags: database rust connection

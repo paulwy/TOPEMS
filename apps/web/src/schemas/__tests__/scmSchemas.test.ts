@@ -11,7 +11,6 @@ import { incomingInspectionSchema } from '../scm/incomingInspection';
 import { incomingNoticeSchema } from '../scm/incomingNotice';
 import { inventoryTurnoverSchema } from '../scm/inventoryTurnover';
 import { priceComparisonSchema } from '../scm/priceComparison';
-import { purchaseContractSchema } from '../scm/purchaseContract';
 import { purchaseContractWizardSchema } from '../scm/purchaseContractWizard';
 import { purchaseItemSchema } from '../scm/purchaseItem';
 import { supplierAdmissionSchema } from '../scm/supplierAdmission';
@@ -115,13 +114,6 @@ const SCHEMA_ROWS: Array<{
     entity: 'priceComparison',
     resource: 'priceComparisons',
     fields: ['comparison_no', 'title'],
-  },
-  {
-    name: 'purchaseContract',
-    schema: purchaseContractSchema,
-    entity: 'purchaseContract',
-    resource: 'purchaseContracts',
-    fields: ['contractNo', 'supplier_id'],
   },
   {
     name: 'purchaseContractWizard',

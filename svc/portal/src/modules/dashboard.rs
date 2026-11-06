@@ -200,13 +200,24 @@ async fn fetch_user_pending_approvals(state: &AppState, user_id: &str, headers: 
 #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn fetch_user_local_pending_tasks(state: &AppState, claims: &Claims) -> u64 {
     let user_id = &claims.sub;
-    match sqlx::query(
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("Failed to open local pending tasks scope: {}", e);
+            return 0;
+        }
+    };
+    let result = sqlx::query(
         "SELECT COUNT(*) as cnt FROM portal.portal_todos WHERE user_id = $1 AND completed = false",
     )
     .bind(user_id)
-    .fetch_one(&state.pool)
-    .await
-    {
+    .fetch_one(&mut scope)
+    .await;
+    if let Err(e) = scope.commit().await {
+        tracing::warn!("Failed to commit local pending tasks scope: {}", e);
+    }
+
+    match result {
         Ok(row) => {
             let cnt: i64 = row.try_get("cnt").unwrap_or(0);
             cnt.max(0) as u64

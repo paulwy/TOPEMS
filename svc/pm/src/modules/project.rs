@@ -6,15 +6,14 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use sqlx::Row;
 use std::sync::Arc;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::middleware::get_tenant_id_from_claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use topems_shared_event::event::{
     commit_retry, EventPublisher, EventType, PmProjectCreatedPayload,
 };
@@ -67,7 +66,7 @@ pub fn project_completion_pct(completed_phases: usize, total_phases: usize) -> f
 
 #[derive(Clone)]
 pub struct AppState {
-    pub pool: PgPool,
+    pub pool: Db,
     pub event_publisher: Option<Arc<EventPublisher>>,
 }
 
@@ -137,9 +136,9 @@ pub struct ProjectGanttResponse {
     pub resources: Vec<GanttResource>,
 }
 
-pub fn create_routes(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Router {
+pub fn create_routes(db: Db, event_publisher: Option<Arc<EventPublisher>>) -> Router {
     let state = AppState {
-        pool,
+        pool: db,
         event_publisher,
     };
     Router::new()
@@ -178,13 +177,19 @@ pub fn create_routes(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>)
 )]
 async fn list_projects(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     axum::extract::Query(query): axum::extract::Query<ProjectQuery>,
 ) -> ApiResponse<ProjectListResponse> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).clamp(1, 1000);
-    let tenant_id = get_tenant_id_from_claims(&claims);
+
+    let mut scope = match state.pool.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
 
     let result = sqlx::query_as::<_, Project>(only_own_schema_query!(
         "pm",
@@ -196,13 +201,15 @@ async fn list_projects(
                parent_id, workspace_id, cost_center_id, cost_center_name,
                created_by, created_at, updated_at
         FROM pm.projects
-        WHERE ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+        WHERE (current_setting('app.tenant_id', true) IS NULL
+               OR current_setting('app.tenant_id', true) = ''
+               OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000'
+               OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
         ORDER BY created_at DESC
         "#
     ))
     .bind(Locale::from_headers(&headers).as_sql())
-    .bind(tenant_id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let projects = match result {
@@ -212,6 +219,11 @@ async fn list_projects(
             return ApiResponse::server_error("获取项目列表失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交数据库事务失败: {}", e);
+        return ApiResponse::server_error("提交数据库事务失败");
+    }
 
     let filtered_projects: Vec<Project> = projects
         .into_iter()
@@ -266,6 +278,14 @@ async fn create_project(
         serde_json::json!({"name": req.name, "code": req.code, "project_type": req.project_type}),
     );
 
+    let mut scope = match state.pool.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, Project>(
         only_own_schema_query!("pm", r#"
         INSERT INTO pm.projects (
@@ -308,11 +328,15 @@ async fn create_project(
     .bind(now)
     .bind(&req.name_en)
     .bind(Locale::from_headers(&headers).as_sql())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
         Ok(project) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交数据库事务失败: {}", e);
+                return ApiResponse::server_error("提交数据库事务失败");
+            }
             let entity_id = Some(project.id);
             if let Err(e) = audit
                 .log_project_operation(
@@ -359,6 +383,7 @@ async fn create_project(
             ApiResponse::success(project, "创建项目成功")
         }
         Err(sqlx::Error::RowNotFound) => {
+            let _ = scope.rollback().await;
             if let Err(e) = audit
                 .log_project_operation(
                     "create_project",
@@ -375,6 +400,7 @@ async fn create_project(
             ApiResponse::conflict("项目代码已存在")
         }
         Err(e) => {
+            let _ = scope.rollback().await;
             if let Err(audit_err) = audit
                 .log_project_operation(
                     "create_project",
@@ -411,11 +437,17 @@ async fn create_project(
 )]
 async fn get_project(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> ApiResponse<Project> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let mut scope = match state.pool.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let result = sqlx::query_as::<_, Project>(only_own_schema_query!(
         "pm",
         r#"
@@ -426,17 +458,25 @@ async fn get_project(
                parent_id, workspace_id, cost_center_id, cost_center_name,
                created_by, created_at, updated_at
         FROM pm.projects WHERE deleted_at IS NULL AND id = $1
-        AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $3::uuid)
+        AND (current_setting('app.tenant_id', true) IS NULL
+             OR current_setting('app.tenant_id', true) = ''
+             OR current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000'
+             OR tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
         "#
     ))
     .bind(id)
     .bind(Locale::from_headers(&headers).as_sql())
-    .bind(tenant_id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
-        Ok(Some(project)) => ApiResponse::success(project, "获取项目成功"),
+        Ok(Some(project)) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交数据库事务失败: {}", e);
+                return ApiResponse::server_error("提交数据库事务失败");
+            }
+            ApiResponse::success(project, "获取项目成功")
+        }
         Ok(None) => ApiResponse::not_found("项目不存在"),
         Err(e) => {
             tracing::error!("获取项目失败: {}", e);
@@ -471,6 +511,14 @@ async fn update_project(
     let now = Utc::now();
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"status": req.status}));
+
+    let mut scope = match state.pool.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
 
     let result = sqlx::query_as::<_, Project>(only_own_schema_query!(
         "pm",
@@ -519,11 +567,15 @@ async fn update_project(
     .bind(now)
     .bind(id)
     .bind(Locale::from_headers(&headers).as_sql())
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     match result {
         Ok(Some(project)) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交数据库事务失败: {}", e);
+                return ApiResponse::server_error("提交数据库事务失败");
+            }
             if let Err(e) = audit
                 .log_project_operation(
                     "update_project",
@@ -540,6 +592,7 @@ async fn update_project(
             ApiResponse::success(project, "更新项目成功")
         }
         Ok(None) => {
+            let _ = scope.rollback().await;
             if let Err(e) = audit
                 .log_project_operation(
                     "update_project",
@@ -556,6 +609,7 @@ async fn update_project(
             ApiResponse::not_found("项目不存在")
         }
         Err(e) => {
+            let _ = scope.rollback().await;
             if let Err(audit_err) = audit
                 .log_project_operation(
                     "update_project",
@@ -597,16 +651,27 @@ async fn delete_project(
     headers: HeaderMap,
 ) -> ApiResponse<bool> {
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+    let mut scope = match state.pool.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "UPDATE pm.projects SET deleted_at = NOW() WHERE id = $1"
     ))
     .bind(id)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
 
     match result {
         Ok(result) if result.rows_affected() > 0 => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("提交数据库事务失败: {}", e);
+                return ApiResponse::server_error("提交数据库事务失败");
+            }
             if let Err(e) = audit
                 .log_project_operation("delete_project", Some(id), user_id, None, "success", None)
                 .await
@@ -616,6 +681,7 @@ async fn delete_project(
             ApiResponse::success(true, "删除项目成功")
         }
         Ok(_) => {
+            let _ = scope.rollback().await;
             if let Err(e) = audit
                 .log_project_operation(
                     "delete_project",
@@ -632,6 +698,7 @@ async fn delete_project(
             ApiResponse::not_found("项目不存在")
         }
         Err(e) => {
+            let _ = scope.rollback().await;
             if let Err(audit_err) = audit
                 .log_project_operation(
                     "delete_project",
@@ -675,12 +742,20 @@ async fn get_project_dashboard(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProjectDashboardResponse> {
+    let mut scope = match state.pool.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let project_result = sqlx::query_as::<_, Project>(only_own_schema_query!(
         "pm",
         "SELECT * FROM pm.projects WHERE deleted_at IS NULL AND id = $1"
     ))
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await;
 
     let project = match project_result {
@@ -698,7 +773,7 @@ async fn get_project_dashboard(
             "SELECT * FROM pm.project_phases WHERE project_id = $1"
         ))
         .bind(id)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await;
 
     let phases = phases_result.unwrap_or_default();
@@ -731,7 +806,7 @@ async fn get_project_dashboard(
             "SELECT * FROM pm.project_members WHERE project_id = $1"
         ))
         .bind(id)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await;
 
     let members: Vec<serde_json::Value> = members_result
@@ -744,6 +819,11 @@ async fn get_project_dashboard(
             })
         })
         .collect();
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交数据库事务失败: {}", e);
+        return ApiResponse::server_error("提交数据库事务失败");
+    }
 
     let mut risks = Vec::new();
     if let Some(risk_level) = &project.risk_level {
@@ -801,13 +881,21 @@ async fn get_project_gantt(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProjectGanttResponse> {
+    let mut scope = match state.pool.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let phases_result =
         sqlx::query_as::<_, crate::models::project_phase::ProjectPhase>(only_own_schema_query!(
             "pm",
             "SELECT * FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC"
         ))
         .bind(id)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await;
 
     let phases: Vec<GanttPhase> = match phases_result {
@@ -838,7 +926,7 @@ async fn get_project_gantt(
             ),
         )
         .bind(id)
-        .fetch_all(&state.pool)
+        .fetch_all(&mut scope)
         .await;
 
     let milestones: Vec<GanttMilestone> = match milestones_result {
@@ -857,6 +945,11 @@ async fn get_project_gantt(
             Vec::new()
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交数据库事务失败: {}", e);
+        return ApiResponse::server_error("提交数据库事务失败");
+    }
 
     let response = ProjectGanttResponse {
         phases,
@@ -1215,11 +1308,19 @@ pub struct KanbanBoardResponse {
     ),
 )]
 async fn get_kanban_board(State(state): State<AppState>) -> ApiResponse<KanbanBoardResponse> {
+    let mut scope = match state.pool.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "SELECT id::TEXT, title, description, priority, status, assignee, COALESCE(progress, 0) AS progress FROM pm.pm_tasks WHERE deleted_at IS NULL ORDER BY created_at DESC"
     ))
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let rows = match result {
@@ -1229,6 +1330,11 @@ async fn get_kanban_board(State(state): State<AppState>) -> ApiResponse<KanbanBo
             return ApiResponse::server_error("获取看板任务失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交数据库事务失败: {}", e);
+        return ApiResponse::server_error("提交数据库事务失败");
+    }
 
     let mut backlog: Vec<KanbanCard> = Vec::new();
     let mut in_progress: Vec<KanbanCard> = Vec::new();
@@ -1300,6 +1406,14 @@ async fn get_kanban_board(State(state): State<AppState>) -> ApiResponse<KanbanBo
 async fn get_milestones_timeline(
     State(state): State<AppState>,
 ) -> ApiResponse<Vec<serde_json::Value>> {
+    let mut scope = match state.pool.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         r#"
@@ -1313,7 +1427,7 @@ async fn get_milestones_timeline(
             ORDER BY m.due_date NULLS LAST, m.created_at
             "#
     ))
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await;
 
     let rows = match result {
@@ -1323,6 +1437,11 @@ async fn get_milestones_timeline(
             return ApiResponse::server_error("获取里程碑时间线失败");
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交数据库事务失败: {}", e);
+        return ApiResponse::server_error("提交数据库事务失败");
+    }
 
     let items: Vec<serde_json::Value> = rows
         .into_iter()

@@ -5,9 +5,10 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{postgres::PgRow, PgPool, Row};
+use sqlx::{postgres::PgRow, Row};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
+use topems_shared_db::scope::{Db, ScopedTxn};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -198,9 +199,20 @@ pub fn extract_url_from_qr(qr_data: &str) -> Option<&str> {
 pub async fn scan_barcode(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<BarcodeScanRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -233,21 +245,25 @@ pub async fn scan_barcode(
         }
     };
     let response_json = serde_json::to_value(&response).ok();
-    save_scan_record(
-        &pool,
-        user_id,
-        &scan_type,
-        &payload.barcode,
-        response_json,
-        payload.location_lat,
-        payload.location_lng,
-    )
-    .await;
+    let __mobile_response = {
+        save_scan_record(
+            &mut scope,
+            user_id,
+            &scan_type,
+            &payload.barcode,
+            response_json,
+            payload.location_lat,
+            payload.location_lng,
+        )
+        .await;
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(response, "条形码扫描成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(response, "条形码扫描成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 #[utoipa::path(
     post,
@@ -260,9 +276,20 @@ pub async fn scan_barcode(
 pub async fn scan_qrcode(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<QrCodeScanRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -298,21 +325,25 @@ pub async fn scan_qrcode(
         }
     };
     let response_json = serde_json::to_value(&response).ok();
-    save_scan_record(
-        &pool,
-        user_id,
-        "qrcode",
-        &payload.qr_data,
-        response_json,
-        payload.location_lat,
-        payload.location_lng,
-    )
-    .await;
+    let __mobile_response = {
+        save_scan_record(
+            &mut scope,
+            user_id,
+            "qrcode",
+            &payload.qr_data,
+            response_json,
+            payload.location_lat,
+            payload.location_lng,
+        )
+        .await;
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(response, "二维码扫描成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(response, "二维码扫描成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 #[utoipa::path(
@@ -328,9 +359,20 @@ pub async fn scan_qrcode(
 pub async fn image_ocr(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
-    State(pool): State<PgPool>,
+    State(db): State<Db>,
     Json(payload): Json<ImageOcrRequest>,
 ) -> impl IntoResponse {
+    // 数据库作用域（事务级 search_path）。
+    let mut scope = match db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("数据库作用域创建失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                ApiResponse::server_error("数据库作用域创建失败"),
+            );
+        }
+    };
     let user_id_str = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
         Ok(id) => id,
         Err(_) => {
@@ -371,25 +413,29 @@ pub async fn image_ocr(
         }
     };
     let response_json = serde_json::to_value(&response).ok();
-    save_scan_record(
-        &pool,
-        user_id,
-        "ocr",
-        &payload.image_base64.chars().take(100).collect::<String>(),
-        response_json,
-        payload.location_lat,
-        payload.location_lng,
-    )
-    .await;
+    let __mobile_response = {
+        save_scan_record(
+            &mut scope,
+            user_id,
+            "ocr",
+            &payload.image_base64.chars().take(100).collect::<String>(),
+            response_json,
+            payload.location_lat,
+            payload.location_lng,
+        )
+        .await;
 
-    (
-        StatusCode::OK,
-        ApiResponse::success(response, "OCR识别成功"),
-    )
+        (
+            StatusCode::OK,
+            ApiResponse::success(response, "OCR识别成功"),
+        )
+    };
+    let _ = scope.commit().await;
+    __mobile_response
 }
 
 async fn save_scan_record(
-    pool: &PgPool,
+    scope: &mut ScopedTxn<'_>,
     user_id: Uuid,
     scan_type: &str,
     scan_data: &str,
@@ -405,7 +451,7 @@ async fn save_scan_record(
         .bind(location_lat)
         .bind(location_lng)
         .bind(None::<Uuid>)
-        .execute(pool)
+        .execute(&mut *scope)
         .await
     {
         tracing::error!("保存扫描记录失败: {}", e);

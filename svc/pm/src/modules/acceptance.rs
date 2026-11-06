@@ -1,15 +1,15 @@
 use axum::{
-    extract::{Extension, Path},
+    extract::{Extension, Path, State},
     http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::models::acceptance::{
@@ -23,7 +23,7 @@ use crate::services::audit::PmAuditService;
 type RlsTxnArc =
     std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
 
-pub fn create_routes(pool: PgPool) -> Router {
+pub fn create_routes(db: Db) -> Router {
     Router::new()
         .route(
             "/projects/{project_id}/acceptance-plans",
@@ -47,7 +47,7 @@ pub fn create_routes(pool: PgPool) -> Router {
             get(get_record).put(update_record),
         )
         .route("/acceptance-plans/{plan_id}/records", post(create_record))
-        .with_state(pool)
+        .with_state(db)
 }
 
 #[utoipa::path(
@@ -64,6 +64,7 @@ pub fn create_routes(pool: PgPool) -> Router {
     tag = "acceptance"
 )]
 async fn get_project_plans(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<AcceptancePlan>> {
@@ -72,11 +73,18 @@ async fn get_project_plans(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let plans = sqlx::query_as::<_, AcceptancePlan>(
         only_own_schema_query!("pm", "SELECT id, project_id, plan_code, plan_name, acceptance_type, milestone_id, phase_id, acceptance_criteria, expected_date, status, participants, documents_required, created_at, updated_at FROM pm.acceptance_plans WHERE project_id = $1 ORDER BY expected_date"),
     )
     .bind(project_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match plans {
@@ -102,6 +110,7 @@ async fn get_project_plans(
     tag = "acceptance"
 )]
 async fn get_plan(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AcceptancePlan> {
@@ -110,11 +119,18 @@ async fn get_plan(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let plan = sqlx::query_as::<_, AcceptancePlan>(
         only_own_schema_query!("pm", "SELECT id, project_id, plan_code, plan_name, acceptance_type, milestone_id, phase_id, acceptance_criteria, expected_date, status, participants, documents_required, created_at, updated_at FROM pm.acceptance_plans WHERE id = $1"),
     )
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match plan {
@@ -128,6 +144,7 @@ async fn get_plan(
 }
 
 async fn create_plan(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
@@ -140,6 +157,13 @@ async fn create_plan(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -167,7 +191,7 @@ async fn create_plan(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match plan {
@@ -208,6 +232,7 @@ async fn create_plan(
 }
 
 async fn update_plan(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
@@ -218,6 +243,13 @@ async fn update_plan(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"status": req.status}));
@@ -243,7 +275,7 @@ async fn update_plan(
     .bind(req.documents_required)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match plan {
@@ -313,6 +345,7 @@ async fn update_plan(
     tag = "acceptance"
 )]
 async fn get_plan_items(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(plan_id): Path<Uuid>,
 ) -> ApiResponse<Vec<AcceptanceItem>> {
@@ -321,11 +354,18 @@ async fn get_plan_items(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let items = sqlx::query_as::<_, AcceptanceItem>(
         only_own_schema_query!("pm", "SELECT id, plan_id, item_code, item_name, item_description, required_standard, actual_result, is_passed, created_at FROM pm.acceptance_items WHERE plan_id = $1 ORDER BY created_at"),
     )
     .bind(plan_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match items {
@@ -338,6 +378,7 @@ async fn get_plan_items(
 }
 
 async fn create_plan_item(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(plan_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
@@ -348,6 +389,13 @@ async fn create_plan_item(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -365,7 +413,7 @@ async fn create_plan_item(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match item {
@@ -391,6 +439,7 @@ async fn create_plan_item(
     tag = "acceptance"
 )]
 async fn update_plan_item(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAcceptanceItemRequest>,
@@ -399,6 +448,13 @@ async fn update_plan_item(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let item = sqlx::query_as::<_, AcceptanceItem>(only_own_schema_query!(
         "pm",
@@ -414,7 +470,7 @@ async fn update_plan_item(
     .bind(req.comments)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match item {
@@ -428,6 +484,7 @@ async fn update_plan_item(
 }
 
 async fn delete_plan_item(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<()> {
@@ -436,12 +493,19 @@ async fn delete_plan_item(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let result = sqlx::query(only_own_schema_query!(
         "pm",
         "DELETE FROM pm.acceptance_items WHERE id = $1 AND (NULLIF(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000')::UUID IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
-    .execute(&mut **txn)
+    .execute(&mut scope)
     .await;
 
     match result {
@@ -468,6 +532,7 @@ async fn delete_plan_item(
     tag = "acceptance"
 )]
 async fn get_project_records(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<AcceptanceRecord>> {
@@ -476,11 +541,18 @@ async fn get_project_records(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let records = sqlx::query_as::<_, AcceptanceRecord>(
         only_own_schema_query!("pm", "SELECT id, project_id, plan_id, acceptance_date, status, conclusion, score, accepted_by, attendees, findings, recommendations, created_by, created_at, updated_at FROM pm.acceptance_records WHERE project_id = $1 ORDER BY acceptance_date DESC"),
     )
     .bind(project_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match records {
@@ -506,6 +578,7 @@ async fn get_project_records(
     tag = "acceptance"
 )]
 async fn get_record(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<AcceptanceRecord> {
@@ -514,11 +587,18 @@ async fn get_record(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let record = sqlx::query_as::<_, AcceptanceRecord>(
         only_own_schema_query!("pm", "SELECT id, project_id, plan_id, acceptance_date, status, conclusion, score, accepted_by, attendees, findings, recommendations, created_by, created_at, updated_at FROM pm.acceptance_records WHERE id = $1"),
     )
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match record {
@@ -545,6 +625,7 @@ async fn get_record(
     tag = "acceptance"
 )]
 async fn create_record(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(plan_id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
@@ -556,11 +637,18 @@ async fn create_record(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let plan = sqlx::query_as::<_, AcceptancePlan>(
         only_own_schema_query!("pm", "SELECT id, project_id, plan_code, plan_name, acceptance_type, milestone_id, phase_id, acceptance_criteria, expected_date, status, participants, documents_required, created_at, updated_at FROM pm.acceptance_plans WHERE id = $1"),
     )
     .bind(plan_id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     let plan = match plan {
@@ -597,7 +685,7 @@ async fn create_record(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match record {
@@ -610,6 +698,7 @@ async fn create_record(
 }
 
 async fn update_record(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateAcceptanceRecordRequest>,
@@ -618,6 +707,13 @@ async fn update_record(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let record = sqlx::query_as::<_, AcceptanceRecord>(only_own_schema_query!(
         "pm",
@@ -639,7 +735,7 @@ async fn update_record(
     .bind(req.recommendations)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match record {
@@ -664,6 +760,7 @@ mod tests {
     use super::*;
     use chrono::Datelike;
     use sqlx::postgres::PgConnectOptions;
+    use sqlx::PgPool;
     use std::str::FromStr;
 
     fn make_pool() -> PgPool {
@@ -673,7 +770,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_routes_returns_router() {
-        let router = create_routes(make_pool());
+        let router = create_routes(Db::new(make_pool(), "pm, public, shared"));
         let _ = router;
     }
 

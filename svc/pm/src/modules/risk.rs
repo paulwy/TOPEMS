@@ -1,15 +1,15 @@
 use axum::{
-    extract::{Extension, Path},
+    extract::{Extension, Path, State},
     http::HeaderMap,
     routing::get,
     Json, Router,
 };
 use chrono::Utc;
-use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 use uuid::Uuid;
 
 use crate::models::risk::{
@@ -50,7 +50,7 @@ pub fn risk_level_from_score(score: u32) -> &'static str {
     }
 }
 
-pub fn create_routes(pool: PgPool) -> Router {
+pub fn create_routes(db: Db) -> Router {
     Router::new()
         .route(
             "/projects/{project_id}/risks",
@@ -61,7 +61,7 @@ pub fn create_routes(pool: PgPool) -> Router {
             "/risks/{id}/events",
             get(get_risk_events).post(create_risk_event),
         )
-        .with_state(pool)
+        .with_state(db)
 }
 
 #[utoipa::path(
@@ -78,6 +78,7 @@ pub fn create_routes(pool: PgPool) -> Router {
     tag = "risk"
 )]
 async fn get_project_risks(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
 ) -> ApiResponse<Vec<ProjectRisk>> {
@@ -86,11 +87,18 @@ async fn get_project_risks(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let risks = sqlx::query_as::<_, ProjectRisk>(
         only_own_schema_query!("pm", "SELECT id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_at, updated_at FROM pm.project_risks WHERE project_id = $1 ORDER BY risk_score DESC"),
     )
     .bind(project_id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match risks {
@@ -116,6 +124,7 @@ async fn get_project_risks(
     tag = "risk"
 )]
 async fn get_risk(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<ProjectRisk> {
@@ -124,9 +133,16 @@ async fn get_risk(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let risk = sqlx::query_as::<_, ProjectRisk>(only_own_schema_query!("pm", "SELECT id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, risk_level, status, mitigation_plan, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_at, updated_at FROM pm.project_risks WHERE id = $1"))
         .bind(id)
-        .fetch_one(&mut **txn)
+        .fetch_one(&mut scope)
         .await;
 
     match risk {
@@ -140,6 +156,7 @@ async fn get_risk(
 }
 
 async fn create_risk(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(project_id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
@@ -152,6 +169,13 @@ async fn create_risk(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -183,7 +207,7 @@ async fn create_risk(
     .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match risk {
@@ -224,6 +248,7 @@ async fn create_risk(
 }
 
 async fn update_risk(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
@@ -234,6 +259,13 @@ async fn update_risk(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let details = Some(serde_json::json!({"status": req.status, "risk_score": req.risk_score}));
@@ -273,7 +305,7 @@ async fn update_risk(
     .bind(parse_date_opt(&req.response_due_date))
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match risk {
@@ -343,6 +375,7 @@ async fn update_risk(
     tag = "risk"
 )]
 async fn get_risk_events(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<Vec<RiskEvent>> {
@@ -351,11 +384,18 @@ async fn get_risk_events(
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
     };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
+    };
     let events = sqlx::query_as::<_, RiskEvent>(
         only_own_schema_query!("pm", "SELECT id, risk_id, event_type, event_description, occurred_at, reported_by, created_at FROM pm.risk_events WHERE risk_id = $1 ORDER BY occurred_at DESC"),
     )
     .bind(id)
-    .fetch_all(&mut **txn)
+    .fetch_all(&mut scope)
     .await;
 
     match events {
@@ -368,6 +408,7 @@ async fn get_risk_events(
 }
 
 async fn create_risk_event(
+    State(db): State<Db>,
     Extension(txn_arc): Extension<RlsTxnArc>,
     Path(id): Path<Uuid>,
     Extension(ctx): Extension<TenantContext>,
@@ -378,6 +419,13 @@ async fn create_risk_event(
     let txn = match guard.as_mut() {
         Some(txn) => txn,
         None => return ApiResponse::server_error("rls transaction unavailable"),
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("初始化数据库作用域失败: {}", e);
+            return ApiResponse::server_error("初始化数据库作用域失败");
+        }
     };
     let event_id = Uuid::new_v4();
     let now = Utc::now();
@@ -393,7 +441,7 @@ async fn create_risk_event(
     .bind(now)
     .bind(req.reported_by)
     .bind(effective_tenant_id(&ctx, &claims))
-    .fetch_one(&mut **txn)
+    .fetch_one(&mut scope)
     .await;
 
     match event {
@@ -417,6 +465,7 @@ mod tests {
     use super::*;
     use chrono::Datelike;
     use sqlx::postgres::PgConnectOptions;
+    use sqlx::PgPool;
     use std::str::FromStr;
 
     fn make_pool() -> PgPool {
@@ -426,7 +475,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_routes_returns_router() {
-        let router = create_routes(make_pool());
+        let router = create_routes(Db::new(make_pool(), "pm, public, shared"));
         let _ = router;
     }
 

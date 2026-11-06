@@ -166,14 +166,18 @@ const dashboardRoute: RouteConfigV2<DashboardPageProps> = {
 
 const voucherRoute: RouteConfigV2<VoucherPageProps> = {
   path: ERP_PATHS.voucherManagement,
-  element: lazyWithRetry(() => import('@/pages/erp/VoucherPage'), 'VoucherPage'),
+  // 批 21：凭证收敛至 finance 域权威页（原 erp/VoucherPage 为 finance 版子集，已删除）。
+  // ERP 入口路径与权限要求保持不变，落点切到 FinanceVoucherPage，用户入口不丢。
+  element: lazyWithRetry(() => import('@/pages/finance/FinanceVoucherPage'), 'FinanceVoucherPage'),
   module: 'erp',
   code: 'erp-general-ledger',
   title: i18n.t('erp.nav.erp-general-ledger'),
   titleKey: 'erp.nav.erp-general-ledger',
   template: 'list',
   group: 'business',
-  requiredPermissions: ['erp:general_ledger:read', 'erp:dashboard:read'],
+  // 批 21：落点已切至 finance 权威页，后端 /finance/vouchers 实际鉴权码为 finance:voucher:read，
+  // 故可见性改为 finance 码（避免"菜单可见但接口 403"）。菜单路径 /erp/voucher-management 保持不变。
+  requiredPermissions: ['finance:voucher:read', 'finance:dashboard:read'],
   action: 'read',
   tier: 'basic',
 };
