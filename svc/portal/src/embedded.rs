@@ -69,7 +69,10 @@ pub async fn build_router(
         tracing::warn!("⚠️ PORTAL 事件订阅者启动失败: {}", e);
     }
 
-    let app_state = AppState::new(db.clone(), event_publisher.clone()).await;
+    // 连接治理 B：共享运行时池之上固化本模块 search_path（public 在前，
+    // 否则裸表名 core_faqs/core_guides 会解析到 portal 的空副本）。
+    let scoped_db = topems_shared_db::scope::Db::new(db.clone(), "public, portal");
+    let app_state = AppState::new(scoped_db, event_publisher.clone()).await;
 
     // V68.1 A2.4.2: 帮助中心数据表 DDL 已收敛至迁移链（D7 双源消除），不再运行时自建
 
@@ -302,14 +305,14 @@ pub async fn build_router(
             post(modules::help::guide::add_lesson),
         )
         .layer(axum::middleware::from_fn_with_state(
-            app_state.pool.clone(),
+            db.clone(),
             rls_middleware,
         ))
         .layer(axum::middleware::from_fn(require_permission(
             "portal:admin",
         )))
         .layer(axum::middleware::from_fn_with_state(
-            app_state.pool.clone(),
+            db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn_with_state(
@@ -319,11 +322,11 @@ pub async fn build_router(
 
     let personal_routes = personal_routes
         .layer(axum::middleware::from_fn_with_state(
-            app_state.pool.clone(),
+            db.clone(),
             rls_middleware,
         ))
         .layer(axum::middleware::from_fn_with_state(
-            app_state.pool.clone(),
+            db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn_with_state(

@@ -12,9 +12,10 @@ use axum::{
     http::HeaderMap,
     Json as AxumJson,
 };
-use sqlx::{PgPool, Row};
+use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::scope::Db;
 
 use crate::{
     models::{NewTodo, Todo},
@@ -22,7 +23,23 @@ use crate::{
     utils::user_context::extract_bearer_token,
 };
 
-async fn load_local_todos(pool: &PgPool, user_id: &str) -> Vec<Todo> {
+type RequestTxn =
+    std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>;
+
+async fn load_local_todos(db: &Db, txn_arc: &RequestTxn, user_id: &str) -> Vec<Todo> {
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return default_todos();
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("Failed to open local todo scope: {}, using defaults", e);
+            return default_todos();
+        }
+    };
+
     let result = sqlx::query(
         r#"
         SELECT id, title, service_code, service_name, due_date, priority,
@@ -36,8 +53,12 @@ async fn load_local_todos(pool: &PgPool, user_id: &str) -> Vec<Todo> {
         "#,
     )
     .bind(user_id)
-    .fetch_all(pool)
+    .fetch_all(&mut scope)
     .await;
+
+    if let Err(e) = scope.commit().await {
+        tracing::warn!("Failed to commit local todo scope: {}", e);
+    }
 
     match result {
         Ok(rows) => rows.iter().map(row_to_todo).collect(),
@@ -93,12 +114,30 @@ fn default_todos() -> Vec<Todo> {
     ]
 }
 
-async fn add_local_todo(pool: &PgPool, user_id: &str, todo: NewTodo) -> Option<Todo> {
+async fn add_local_todo(
+    db: &Db,
+    txn_arc: &RequestTxn,
+    user_id: &str,
+    todo: NewTodo,
+) -> Option<Todo> {
     let service_name = get_service_name(&todo.service);
     let due_date = if todo.due_date.is_empty() {
         None
     } else {
         todo.due_date.parse::<chrono::NaiveDate>().ok()
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return None;
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to open todo scope: {}", e);
+            return None;
+        }
     };
 
     let result = sqlx::query(
@@ -116,11 +155,17 @@ async fn add_local_todo(pool: &PgPool, user_id: &str, todo: NewTodo) -> Option<T
     .bind(due_date)
     .bind(&todo.priority)
     .bind(uuid::Uuid::nil())
-    .fetch_one(pool)
+    .fetch_one(&mut scope)
     .await;
 
     match result {
-        Ok(row) => Some(row_to_todo(&row)),
+        Ok(row) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit todo scope: {}", e);
+                return None;
+            }
+            Some(row_to_todo(&row))
+        }
         Err(e) => {
             tracing::error!("Failed to add todo: {}", e);
             None
@@ -128,10 +173,23 @@ async fn add_local_todo(pool: &PgPool, user_id: &str, todo: NewTodo) -> Option<T
     }
 }
 
-async fn complete_local_todo(pool: &PgPool, user_id: &str, id: &str) -> bool {
+async fn complete_local_todo(db: &Db, txn_arc: &RequestTxn, user_id: &str, id: &str) -> bool {
     let uuid = match uuid::Uuid::parse_str(id) {
         Ok(u) => u,
         Err(_) => return false,
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return false;
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to open todo scope: {}", e);
+            return false;
+        }
     };
 
     let result = sqlx::query(
@@ -143,11 +201,17 @@ async fn complete_local_todo(pool: &PgPool, user_id: &str, id: &str) -> bool {
     )
     .bind(uuid)
     .bind(user_id)
-    .execute(pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(r) => r.rows_affected() > 0,
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit todo scope: {}", e);
+                return false;
+            }
+            r.rows_affected() > 0
+        }
         Err(e) => {
             tracing::error!("Failed to complete todo: {}", e);
             false
@@ -155,10 +219,23 @@ async fn complete_local_todo(pool: &PgPool, user_id: &str, id: &str) -> bool {
     }
 }
 
-async fn delete_local_todo(pool: &PgPool, user_id: &str, id: &str) -> bool {
+async fn delete_local_todo(db: &Db, txn_arc: &RequestTxn, user_id: &str, id: &str) -> bool {
     let uuid = match uuid::Uuid::parse_str(id) {
         Ok(u) => u,
         Err(_) => return false,
+    };
+
+    let mut guard = txn_arc.lock().await;
+    let Some(txn) = guard.as_mut() else {
+        tracing::error!("rls txn missing: RLS 事务中间件未注入");
+        return false;
+    };
+    let mut scope = match db.scope_with(txn).await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("Failed to open todo scope: {}", e);
+            return false;
+        }
     };
 
     let result = sqlx::query(
@@ -170,11 +247,17 @@ async fn delete_local_todo(pool: &PgPool, user_id: &str, id: &str) -> bool {
     )
     .bind(uuid)
     .bind(user_id)
-    .execute(pool)
+    .execute(&mut scope)
     .await;
 
     match result {
-        Ok(r) => r.rows_affected() > 0,
+        Ok(r) => {
+            if let Err(e) = scope.commit().await {
+                tracing::error!("Failed to commit todo scope: {}", e);
+                return false;
+            }
+            r.rows_affected() > 0
+        }
         Err(e) => {
             tracing::error!("Failed to delete todo: {}", e);
             false
@@ -212,12 +295,14 @@ pub async fn get_todos(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
+    Extension(txn_arc): Extension<RequestTxn>,
 ) -> AxumJson<ApiResponse<Vec<Todo>>> {
     let user_id = &claims.sub;
     let token = extract_bearer_token(&headers);
 
-    let (local_todos, notification_todos, workflow_todos) = tokio::join!(
-        load_local_todos(&state.pool, user_id),
+    // 本地待办走请求级 RLS 事务（SQL 依赖 app.tenant_id）；HTTP 聚合再并发执行。
+    let local_todos = load_local_todos(&state.db, &txn_arc, user_id).await;
+    let (notification_todos, workflow_todos) = tokio::join!(
         fetch_notification_todos(&state, token.as_deref()),
         fetch_workflow_todos(&state, token.as_deref()),
     );
@@ -360,10 +445,11 @@ fn format_service_name(service_type: &str) -> String {
 pub async fn add_todo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RequestTxn>,
     Json(todo): Json<NewTodo>,
 ) -> AxumJson<ApiResponse<Todo>> {
     let user_id = &claims.sub;
-    match add_local_todo(&state.pool, user_id, todo).await {
+    match add_local_todo(&state.db, &txn_arc, user_id, todo).await {
         Some(new_todo) => AxumJson(ApiResponse::success(new_todo, "待办事项添加成功")),
         None => AxumJson(ApiResponse::server_error("待办事项添加失败")),
     }
@@ -382,10 +468,11 @@ pub async fn add_todo(
 pub async fn complete_todo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RequestTxn>,
     Path(id): Path<String>,
 ) -> AxumJson<ApiResponse<serde_json::Value>> {
     let user_id = &claims.sub;
-    let success = complete_local_todo(&state.pool, user_id, &id).await;
+    let success = complete_local_todo(&state.db, &txn_arc, user_id, &id).await;
     if success {
         AxumJson(ApiResponse::success(
             serde_json::json!({ "id": id, "completed": true }),
@@ -409,10 +496,11 @@ pub async fn complete_todo(
 pub async fn delete_todo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<RequestTxn>,
     Path(id): Path<String>,
 ) -> AxumJson<ApiResponse<serde_json::Value>> {
     let user_id = &claims.sub;
-    let success = delete_local_todo(&state.pool, user_id, &id).await;
+    let success = delete_local_todo(&state.db, &txn_arc, user_id, &id).await;
     if success {
         AxumJson(ApiResponse::success(
             serde_json::json!({ "id": id, "deleted": true }),

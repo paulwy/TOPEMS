@@ -95,6 +95,11 @@ pub async fn impl_create_todo(
     let state = ctx.data::<AppState>()?;
     let uid = user_id.unwrap_or_else(|| "system".to_string());
 
+    let mut scope = state
+        .db
+        .scope()
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("创建待办失败: {}", e)))?;
     let row = sqlx::query(
         r#"INSERT INTO portal.portal_todos
            (user_id, title, service_code, service_name, priority, todo_type, tenant_id)
@@ -104,9 +109,13 @@ pub async fn impl_create_todo(
     .bind(&uid)
     .bind(&title)
     .bind(uuid::Uuid::nil())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     .map_err(|e| async_graphql::Error::new(format!("创建待办失败: {}", e)))?;
+    scope
+        .commit()
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("创建待办失败: {}", e)))?;
 
     use sqlx::Row;
     let id: uuid::Uuid = row.try_get("id")?;
@@ -130,15 +139,24 @@ pub async fn impl_complete_todo(ctx: &Context<'_>, id: String) -> async_graphql:
     let uuid = uuid::Uuid::parse_str(&id)
         .map_err(|e| async_graphql::Error::new(format!("无效的 ID: {}", e)))?;
 
+    let mut scope = state
+        .db
+        .scope()
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("更新待办失败: {}", e)))?;
     let result = sqlx::query(
         r#"UPDATE portal.portal_todos
            SET completed = TRUE, completed_at = NOW(), updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(uuid)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     .map_err(|e| async_graphql::Error::new(format!("更新待办失败: {}", e)))?;
+    scope
+        .commit()
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("更新待办失败: {}", e)))?;
 
     Ok(result.rows_affected() > 0)
 }
@@ -148,15 +166,24 @@ pub async fn impl_delete_todo(ctx: &Context<'_>, id: String) -> async_graphql::R
     let uuid = uuid::Uuid::parse_str(&id)
         .map_err(|e| async_graphql::Error::new(format!("无效的 ID: {}", e)))?;
 
+    let mut scope = state
+        .db
+        .scope()
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("删除待办失败: {}", e)))?;
     let result = sqlx::query(
         r#"UPDATE portal.portal_todos
            SET deleted_at = NOW(), updated_at = NOW()
            WHERE id = $1 AND deleted_at IS NULL"#,
     )
     .bind(uuid)
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await
     .map_err(|e| async_graphql::Error::new(format!("删除待办失败: {}", e)))?;
+    scope
+        .commit()
+        .await
+        .map_err(|e| async_graphql::Error::new(format!("删除待办失败: {}", e)))?;
 
     Ok(result.rows_affected() > 0)
 }

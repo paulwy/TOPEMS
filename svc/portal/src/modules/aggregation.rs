@@ -422,22 +422,36 @@ async fn fetch_workflow_todos(state: &AppState, token: Option<&str>) -> Vec<Unif
 }
 
 async fn fetch_local_todos(state: &AppState, user_id: &str) -> Vec<UnifiedTodoItem> {
-    match sqlx::query("SELECT id, title, description, priority, created_at, due_date FROM portal.portal_todos WHERE user_id = $1 AND completed = false ORDER BY created_at DESC LIMIT 20")
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::warn!("Failed to open local todos scope: {}", e);
+            return Vec::new();
+        }
+    };
+    let result = sqlx::query("SELECT id, title, description, priority, created_at, due_date FROM portal.portal_todos WHERE user_id = $1 AND completed = false ORDER BY created_at DESC LIMIT 20")
         .bind(user_id)
-        .fetch_all(&state.pool)
-        .await
-    {
+        .fetch_all(&mut scope)
+        .await;
+    if let Err(e) = scope.commit().await {
+        tracing::warn!("Failed to commit local todos scope: {}", e);
+    }
+
+    match result {
         Ok(rows) => rows
             .iter()
             .map(|row| UnifiedTodoItem {
                 id: row.get::<uuid::Uuid, _>("id").to_string(),
                 title: row.get("title"),
-                description: row.get::<Option<String>, _>("description").unwrap_or_default(),
+                description: row
+                    .get::<Option<String>, _>("description")
+                    .unwrap_or_default(),
                 source: "portal".to_string(),
                 source_url: "/portal/todos".to_string(),
-                priority: row.get::<Option<String>, _>("priority").unwrap_or_else(|| "normal".to_string()),
-                created_at: row
-                    .get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
+                priority: row
+                    .get::<Option<String>, _>("priority")
+                    .unwrap_or_else(|| "normal".to_string()),
+                created_at: row.get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
                 due_date: row
                     .get::<Option<chrono::DateTime<chrono::Utc>>, _>("due_date")
                     .map(|dt| dt.to_rfc3339()),

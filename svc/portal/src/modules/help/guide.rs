@@ -121,6 +121,14 @@ pub async fn list_guides(
     let category = query.category.clone();
     let keyword = query.keyword.clone();
 
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("开启指南只读作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询指南失败".to_string()));
+        }
+    };
+
     let total: i64 = match sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM core_guides
            WHERE is_active = true
@@ -129,7 +137,7 @@ pub async fn list_guides(
     )
     .bind(category.clone())
     .bind(keyword.clone())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -152,7 +160,7 @@ pub async fn list_guides(
     .bind(keyword)
     .bind(page_size)
     .bind(offset)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -161,6 +169,11 @@ pub async fn list_guides(
             return ApiResponse::from(TopemsError::Internal("查询指南列表失败".to_string()));
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交指南只读作用域失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal("查询指南列表失败".to_string()));
+    }
 
     api_success(GuideListResponse {
         items,
@@ -187,12 +200,20 @@ pub async fn get_guide(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> ApiResponse<GuideDetailResponse> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("开启指南只读作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询指南详情失败".to_string()));
+        }
+    };
+
     let guide: Option<Guide> = match sqlx::query_as(
         r#"SELECT id, title, description, category, duration, lessons_count, is_active, sort_order, created_at, updated_at
            FROM core_guides WHERE id = $1 AND is_active = true"#,
     )
     .bind(id)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -212,7 +233,7 @@ pub async fn get_guide(
            FROM core_guide_lessons WHERE guide_id = $1 AND is_active = true ORDER BY sort_order ASC"#,
     )
     .bind(id)
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -221,6 +242,11 @@ pub async fn get_guide(
             return ApiResponse::from(TopemsError::Internal("查询指南课程失败".to_string()));
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交指南只读作用域失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal("查询指南详情失败".to_string()));
+    }
 
     api_success(GuideDetailResponse {
         guide,
@@ -250,6 +276,14 @@ pub async fn create_guide(
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("开启指南写作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("创建指南失败".to_string()));
+        }
+    };
+
     let guide: Guide = match sqlx::query_as(
         r#"INSERT INTO core_guides (id, title, description, category, duration, lessons_count, is_active, sort_order, created_at, updated_at, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, true, $7, $8, $9, $10)
@@ -265,7 +299,7 @@ pub async fn create_guide(
     .bind(now)
     .bind(now)
     .bind(Uuid::nil())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -274,6 +308,11 @@ pub async fn create_guide(
             return ApiResponse::from(TopemsError::Internal("创建指南失败".to_string()));
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交指南写作用域失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal("创建指南失败".to_string()));
+    }
 
     api_success(guide)
 }
@@ -305,6 +344,14 @@ pub async fn add_lesson(
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
 
+    let mut scope = match state.db.scope().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("开启指南写作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("添加课程失败".to_string()));
+        }
+    };
+
     let lesson: GuideLesson = match sqlx::query_as(
         r#"INSERT INTO core_guide_lessons (id, guide_id, title, content, duration, sort_order, is_active, created_at, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, true, $7, $8)
@@ -318,7 +365,7 @@ pub async fn add_lesson(
     .bind(req.sort_order.unwrap_or(0))
     .bind(now)
     .bind(Uuid::nil())
-    .fetch_one(&state.pool)
+    .fetch_one(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -332,8 +379,13 @@ pub async fn add_lesson(
         r#"UPDATE core_guides SET lessons_count = lessons_count + 1 WHERE id = $1"#,
         guide_id
     )
-    .execute(&state.pool)
+    .execute(&mut scope)
     .await;
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交指南写作用域失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal("添加课程失败".to_string()));
+    }
 
     api_success(lesson)
 }
@@ -349,10 +401,18 @@ pub async fn add_lesson(
     tag = "Guide"
 )]
 pub async fn get_guide_categories(State(state): State<AppState>) -> ApiResponse<Vec<String>> {
+    let mut scope = match state.db.scope_read().await {
+        Ok(scope) => scope,
+        Err(e) => {
+            tracing::error!("开启指南只读作用域失败: {}", e);
+            return ApiResponse::from(TopemsError::Internal("查询指南分类失败".to_string()));
+        }
+    };
+
     let categories: Vec<String> = match sqlx::query_scalar(
         r#"SELECT DISTINCT category FROM core_guides WHERE is_active = true ORDER BY category"#,
     )
-    .fetch_all(&state.pool)
+    .fetch_all(&mut scope)
     .await
     {
         Ok(v) => v,
@@ -361,6 +421,11 @@ pub async fn get_guide_categories(State(state): State<AppState>) -> ApiResponse<
             return ApiResponse::from(TopemsError::Internal("查询指南分类失败".to_string()));
         }
     };
+
+    if let Err(e) = scope.commit().await {
+        tracing::error!("提交指南只读作用域失败: {}", e);
+        return ApiResponse::from(TopemsError::Internal("查询指南分类失败".to_string()));
+    }
 
     api_success(categories)
 }

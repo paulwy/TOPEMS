@@ -1,20 +1,22 @@
 pub mod faq;
 pub mod guide;
 
-use sqlx::PgPool;
+use topems_shared_db::scope::Db;
 
 /// 帮助中心初始化数据。
 ///
 /// ⚠️ 裸表名 `core_faqs` / `core_guides` 依赖 portal 的 search_path `public, portal`：
 /// portal schema 的副本已废弃（prod 全 0 行），权威写入目标是 `public`（prod faq/guide 各 12 行）。
 /// 禁止把 search_path 顺序改回 `portal, public`，否则种子数据会写进废弃副本。
-async fn seed_help_data(pool: &PgPool) -> Result<(), sqlx::Error> {
+async fn seed_help_data(db: &Db) -> Result<(), sqlx::Error> {
+    let mut scope = db.scope().await?;
     let faq_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_faqs")
-        .fetch_one(pool)
+        .fetch_one(&mut scope)
         .await?;
 
     if faq_count > 0 {
         tracing::info!("帮助中心数据已存在，跳过初始化");
+        scope.commit().await?;
         return Ok(());
     }
 
@@ -89,7 +91,7 @@ async fn seed_help_data(pool: &PgPool) -> Result<(), sqlx::Error> {
             .bind(*answer)
             .bind(*category)
             .bind(uuid::Uuid::nil())
-            .execute(pool)
+            .execute(&mut scope)
             .await?;
     }
 
@@ -190,9 +192,11 @@ async fn seed_help_data(pool: &PgPool) -> Result<(), sqlx::Error> {
         .bind(*duration)
         .bind(*lessons_count)
         .bind(uuid::Uuid::nil())
-        .execute(pool)
+        .execute(&mut scope)
         .await?;
     }
+
+    scope.commit().await?;
 
     tracing::info!(
         "帮助中心数据初始化完成（{} 条FAQ，{} 条指南）",
