@@ -11,7 +11,7 @@ mod shared;
 use axum::{extract::State, routing::get, Router};
 use utoipa::OpenApi;
 
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{
     bootstrap_service_shared, build_application, default_init_db, prometheus_metrics_handler, run,
     ServiceConfig,
@@ -182,7 +182,9 @@ async fn main() -> anyhow::Result<()> {
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
-        .layer(axum::middleware::from_fn(require_permission("pdm:admin")))
+        // 模块门只负责「能进 pdm + 读」；写仍要求 pdm:admin（避免 pdm:read 提权）。
+        .layer(axum::middleware::from_fn(require_module_write("pdm")))
+        .layer(axum::middleware::from_fn(require_module_access("pdm")))
         .with_state(api_state.clone());
 
     let openapi_json = serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_default();

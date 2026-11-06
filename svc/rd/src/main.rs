@@ -1,7 +1,7 @@
 use axum::{routing::get, Json, Router};
 use prometheus::{default_registry, Gauge};
 use serde::Serialize;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, build_detailed_service_health,
     build_simple_status_response, prometheus_metrics_handler, run, Application, ServiceConfig,
@@ -109,8 +109,10 @@ async fn main() -> anyhow::Result<()> {
 
     // ── protected_routes（业务路由 + State<ApiState>） ────────────────────
     // auth / rls / rate_limit 中间件由 build_application 在 protected 层自动叠加
+    // 模块门只负责「能进 rd + 读」；写仍要求 rd:admin（避免 rd:read 提权）。
     let protected_routes = modules::create_routes()
-        .layer(axum::middleware::from_fn(require_permission("rd:admin")))
+        .layer(axum::middleware::from_fn(require_module_write("rd")))
+        .layer(axum::middleware::from_fn(require_module_access("rd")))
         .with_state(api_state.clone())
         .layer(axum::middleware::from_fn_with_state(
             ctx.db.clone(),

@@ -12,7 +12,7 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use prometheus::{default_registry, Gauge};
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes,
     default_init_db, run, ServiceConfig,
@@ -213,7 +213,10 @@ async fn main() -> Result<(), TopemsError> {
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
-        .layer(axum::middleware::from_fn(require_permission("srm:admin")));
+        // 模块门只负责「能进 srm + 读」；写仍要求 srm:admin（避免 srm:read 提权）。
+        // 供应商自助门户 portal_routes 不在本门内（其 handler 内部做细粒度校验）。
+        .layer(axum::middleware::from_fn(require_module_write("srm")))
+        .layer(axum::middleware::from_fn(require_module_access("srm")));
 
     // 供应商自助门户路由：从全量 srm:admin 粗粒度伞码放开。
     // 仅预应用 tenant_middleware；端点内部 check_permission(SupplierRead) 做细粒度校验，

@@ -7,8 +7,8 @@ pub mod tenant;
 pub use department::{department_middleware, require_department};
 pub use module::{require_module_active, require_module_permission};
 pub use permission::{
-    require_all_permissions, require_any_permission, require_module_access, require_permission,
-    require_role, require_superuser,
+    require_all_permissions, require_any_permission, require_module_access, require_module_write,
+    require_permission, require_role, require_superuser,
 };
 pub use service_identity::{service_identity_middleware, ServiceIdentity};
 pub use tenant::{

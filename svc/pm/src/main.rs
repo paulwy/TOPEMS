@@ -5,7 +5,7 @@
 use anyhow::Result;
 use axum::routing::get;
 use prometheus::{default_registry, Gauge};
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{
     bootstrap_service_shared, build_application, create_health_state,
     create_standard_health_routes, run, ServiceConfig,
@@ -120,7 +120,9 @@ async fn main() -> Result<()> {
         ctx.db.clone(),
         topems_shared_auth::tenant_middleware(),
     ))
-    .layer(axum::middleware::from_fn(require_permission("pm:admin")));
+    // 模块门只负责「能进 pm + 读」；写仍要求 pm:admin（避免 pm:read 提权）。
+    .layer(axum::middleware::from_fn(require_module_write("pm")))
+    .layer(axum::middleware::from_fn(require_module_access("pm")));
 
     // ── OpenAPI JSON ─────────────────────────────────────────────────
     let openapi_json = Some(

@@ -11,7 +11,7 @@ use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
-use topems_shared_auth::middleware::require_module_access;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
 use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
@@ -109,6 +109,7 @@ impl SrmRealModule {
                 db.clone(),
                 topems_shared_auth::tenant_middleware(),
             ))
+            .layer(axum::middleware::from_fn(require_module_write("srm")))
             .layer(axum::middleware::from_fn(require_module_access("srm")));
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)

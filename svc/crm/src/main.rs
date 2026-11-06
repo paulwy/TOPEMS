@@ -32,7 +32,7 @@ mod event_handlers;
 pub mod modules;
 
 use modules::ApiState;
-use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::middleware::{require_module_access, require_module_write};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -372,7 +372,9 @@ async fn main() -> Result<()> {
             ctx.db.clone(),
             topems_shared_auth::tenant_middleware(),
         ))
-        .layer(axum::middleware::from_fn(require_permission("crm:admin")))
+        // 模块门只负责「能进 crm + 读」；写仍要求 crm:admin（避免 crm:read 提权）。
+        .layer(axum::middleware::from_fn(require_module_write("crm")))
+        .layer(axum::middleware::from_fn(require_module_access("crm")))
         .with_state(api_state);
 
     // OpenAPI 文档
