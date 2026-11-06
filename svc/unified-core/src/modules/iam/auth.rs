@@ -1066,12 +1066,11 @@ pub async fn logout(
     // RLS：logout 请求无 JWT/租户上下文，应用角色（topems_app）看不到
     // public.core_refresh_tokens 的任何行。改用表 owner（topems）的
     // SECURITY DEFINER 函数查询 token 归属，不依赖请求侧租户 GUC。
-    let user_id: Result<Option<Uuid>, sqlx::Error> = sqlx::query_scalar(
-        "SELECT user_id FROM public.iam_refresh_token_lookup($1)",
-    )
-    .bind(&token_hash)
-    .fetch_optional(&state.pool)
-    .await;
+    let user_id: Result<Option<Uuid>, sqlx::Error> =
+        sqlx::query_scalar("SELECT user_id FROM public.iam_refresh_token_lookup($1)")
+            .bind(&token_hash)
+            .fetch_optional(&state.pool)
+            .await;
 
     let user_id = match user_id {
         Ok(uid) => uid,
